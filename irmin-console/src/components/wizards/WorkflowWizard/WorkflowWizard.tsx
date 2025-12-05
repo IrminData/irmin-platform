@@ -23,7 +23,7 @@ const createDefaultWorkflowable = (type: WorkflowableType): Workflowable => {
     case 'action':
       return {
         type: 'action' as const,
-        executable: '',
+        script_id: '',
         input: [],
       };
     case 'import':

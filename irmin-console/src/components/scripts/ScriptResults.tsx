@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AiOutlineSave } from 'react-icons/ai';
 import { MdPlayArrow } from 'react-icons/md';
 import {
+  TbDatabase,
   TbExclamationCircle,
   TbLogs,
   TbStepInto,
@@ -13,17 +14,21 @@ import {
 
 import LogFeed from '@/components/logs/LogFeed';
 import TableViewer from '@/components/repository/objects/ObjectViewer/TableViewer';
+import SchemaViewer from '@/components/repository/objects/SchemaViewer';
 import { Button } from '@/components/ui/button';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import ActionInputEditor from '@/components/workflow/ActionInputEditor';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { useWorkspaceSchema } from '@/hooks/api';
 import { useResourceAllowed } from '@/hooks/utils';
 
 import { nsDurationToMs } from '@/utils/nsDurationToMs';
 
-import type { ScriptResult } from '@/types/core/EditorItems';
+import type { ScriptResult } from '@/types/core/Script';
 import type { ActionInputData } from '@/types/core/Workflow';
+import type { JSONValue } from '@/types/internal/GenericJSON';
 
 /**
  * Script Results component
@@ -55,6 +60,7 @@ const ScriptResults = ({
 }) => {
   const { dict } = useLocale();
   const { isResourceAllowed } = useResourceAllowed();
+  const workspaceSchema = useWorkspaceSchema();
 
   const [activeTab, setActiveTab] = useState('data');
 
@@ -66,12 +72,12 @@ const ScriptResults = ({
   const [processingRun, setProcessingRun] = useState(false);
 
   const canSave = useMemo(
-    () => isResourceAllowed('editor_script', 'update'),
+    () => isResourceAllowed('script', 'update'),
     [isResourceAllowed]
   );
 
   const canRun = useMemo(
-    () => isResourceAllowed('editor_script', 'create'),
+    () => isResourceAllowed('script', 'create'),
     [isResourceAllowed]
   );
 
@@ -106,7 +112,7 @@ const ScriptResults = ({
   return (
     <div
       className={`
-        flex flex-1 flex-col overflow-hidden border-t border-gray-200
+        flex size-full flex-col overflow-hidden border-t border-gray-200
         bg-background
         dark:border-gray-800
       `}
@@ -172,6 +178,22 @@ const ScriptResults = ({
             </Button>
           </div>
         )}
+        <div
+          className={`
+            border-accent
+            ${activeTab === 'schema' ? 'border-b-2' : ''}
+          `}
+        >
+          <Button
+            size='sm'
+            variant={'ghost'}
+            className={`rounded-b-none`}
+            onClick={() => setActiveTab('schema')}
+            icon={<TbDatabase />}
+          >
+            {dict.repository.schema.schema}
+          </Button>
+        </div>
         <div className='ml-auto flex gap-2 text-right'>
           {result?.structured_results &&
             Object.keys(result.structured_results).length > 0 && (
@@ -233,11 +255,11 @@ const ScriptResults = ({
         </div>
       </div>
       {activeTab === 'data' && (
-        <>
+        <div className='flex-1 overflow-y-auto'>
           {currentDataFileContent ? (
             <TableViewer
               title={currentDataFile?.split('/').pop() ?? currentDataFile ?? ''}
-              data={currentDataFileContent}
+              data={currentDataFileContent as Record<string, JSONValue>[]}
               metadata={{
                 rowsReturned: currentDataFileContent.length,
                 timeTaken: nsDurationToMs(result?.duration ?? 0),
@@ -249,10 +271,10 @@ const ScriptResults = ({
               {dict.common.noResults}
             </div>
           )}
-        </>
+        </div>
       )}
       {activeTab === 'logs' && (
-        <>
+        <div className='flex-1 overflow-y-auto'>
           {showLoadingOnLogs ? (
             <div
               className={`
@@ -267,15 +289,28 @@ const ScriptResults = ({
               {dict.logs.noLogsFound}
             </div>
           )}
-        </>
+        </div>
       )}
       {activeTab === 'inputs' && setInputFiles && (
-        <div className='w-full overflow-y-auto px-4 py-12'>
+        <div className='flex-1 overflow-y-auto px-4 py-12'>
           <ActionInputEditor
             initialData={inputFiles}
             onChange={setInputFiles}
             disableSaveButton={true}
           />
+        </div>
+      )}
+      {activeTab === 'schema' && (
+        <div className='flex-1 overflow-y-auto p-4'>
+          {workspaceSchema.loading ? (
+            <LoadingSkeleton className='size-full' />
+          ) : workspaceSchema.schema ? (
+            <SchemaViewer schema={workspaceSchema.schema} isExpanded={true} />
+          ) : (
+            <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
+              {dict.common.noResults}
+            </div>
+          )}
         </div>
       )}
     </div>

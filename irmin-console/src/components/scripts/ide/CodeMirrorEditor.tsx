@@ -22,8 +22,6 @@ import { useTheme } from 'next-themes';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import type { IrminFileLanguage } from '@/types/core/EditorItems';
-
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
   ssr: false,
 });
@@ -36,7 +34,7 @@ const CodeMirrorEditor = ({
   containerStyles,
   ...editorProps
 }: ReactCodeMirrorProps & {
-  language: IrminFileLanguage;
+  language: string;
   content: string;
   editorHeight?: string;
   containerStyles?: CSSProperties;
@@ -56,13 +54,13 @@ const CodeMirrorEditor = ({
   );
 
   const placeholder = useMemo(() => {
-    if (language === 'js') return dict.editor.writeYourJS;
-    if (language === 'go') return dict.editor.writeYourGo;
-    if (language === 'py') return dict.editor.writeYourPython;
-    if (language === 'sql') return dict.editor.writeYourSQL;
-    if (language === 'md') return dict.editor.writeYourMarkdown;
-    if (language === 'json') return dict.editor.writeYourJSON;
-    return dict.editor.writeYourText;
+    if (language === 'js') return dict.scripts.writeYourJS;
+    if (language === 'go') return dict.scripts.writeYourGo;
+    if (language === 'py') return dict.scripts.writeYourPython;
+    if (language === 'sql') return dict.scripts.writeYourSQL;
+    if (language === 'md') return dict.scripts.writeYourMarkdown;
+    if (language === 'json') return dict.scripts.writeYourJSON;
+    return dict.scripts.writeYourText;
   }, [language, dict]);
 
   const extensions = useMemo(() => {

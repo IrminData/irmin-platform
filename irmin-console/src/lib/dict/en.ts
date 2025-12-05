@@ -52,6 +52,7 @@ const en = {
     info: 'Info',
     yes: 'Yes',
     no: 'No',
+    optional: 'Optional',
 
     // Content
     name: 'Name',
@@ -65,6 +66,8 @@ const en = {
     lastModified: 'Last modified',
     size: 'Size',
     color: 'Color',
+    owner: 'Owner',
+    tags: 'Tags',
 
     // Forms
     fieldRequired: 'This field is required',
@@ -90,6 +93,10 @@ const en = {
     areYouSureYouWantToDelete: 'Are you sure you want to delete this item?',
     areYouSureYouWantToTransferOwnership:
       'Are you sure you want to transfer the ownership of this item?',
+    deleteConfirmation: 'Are you sure you want to delete',
+    saved: 'Saved successfully',
+    deleted: 'Deleted successfully',
+    saveChanges: 'Save Changes',
 
     // Contact and support
     contactUs: 'Contact Us',
@@ -136,7 +143,7 @@ const en = {
     workspaces: 'Workspaces',
     settings: 'Settings',
     usefulLinks: 'Useful links',
-    editor: 'Editor',
+    scripts: 'Scripts',
     queries: 'Queries',
     workspaceSettings: 'Workspace',
     goToWebsite: 'Go to website',
@@ -155,7 +162,7 @@ const en = {
       workspaceDocumentation: 'Workspace Documentation',
       myProfile: 'My Profile',
       manageWorkspaces: 'Manage Workspaces',
-      editor: 'Editor',
+      scripts: 'Scripts',
       workspaceSettings: 'Workspace settings',
       createWorkflow: 'Create new workflow',
       createConnection: 'Create new connection',
@@ -172,7 +179,7 @@ const en = {
         workspaceDocumentation: 'View workspace documentation',
         myProfile: 'View and edit your profile',
         manageWorkspaces: 'Manage your workspaces',
-        editor: 'Write and run scripts',
+        scripts: 'Write and run scripts',
         workspaceSettings: 'Edit workspace settings',
         workflows: 'View and manage workflows',
         actions: 'View and manage action workflows',
@@ -538,6 +545,7 @@ const en = {
       executablePath: 'Executable path',
       executablePathDescription:
         'Path to the action script e.g. /path/to/script.py',
+      executableScript: 'Script',
       connectionWritePath: 'Write Path',
       connectionWritePathDescription:
         'Path to write within the connection e.g. /path/to/write',
@@ -642,7 +650,7 @@ const en = {
   },
 
   // === DEVELOPMENT TOOLS ===
-  editor: {
+  scripts: {
     writeYourJS: 'Write your JavaScript here...',
     writeYourGo: 'Write your Go script here...',
     writeYourSQL: 'Write your SQL query here...',
@@ -658,10 +666,20 @@ const en = {
       'Browse repositories to find the one you want to write your script in',
     scriptExecutionStarted: 'Script execution started',
     scriptNeedsToBeSaved:
-      'Script needs to be saved before running. Save the script in the editor and run it again.',
+      'Script needs to be saved before running. Save the script and run it again.',
+    selectScript: 'Select a script',
+    searchScripts: 'Search scripts...',
+    createScript: 'Create Script',
+    updateScript: 'Update Script',
+    owner: 'Owner',
+    scriptManagement: 'Script Management',
+    scripts: 'Scripts',
+    scriptName: 'Script name',
+    scriptDescription: 'Script description',
   },
 
   query: {
+    queries: 'Queries',
     queryExecutionStarted: 'Query execution started',
     results: 'Results',
     errors: 'Errors',
@@ -678,6 +696,7 @@ const en = {
     selectedQuery: 'Selected query',
     editor: 'SQL Editor',
     syntaxHelper: 'Syntax helper',
+    searchQueries: 'Search queries...',
   },
 
   queryHelper: {
@@ -1155,6 +1174,16 @@ const en = {
     workflowSearchEmptyTitle: 'No workflows match your search',
     workflowSearchEmptyDescription:
       'Adjust your search term to see workflow documentation.',
+    scriptSectionDescription:
+      'Executable scripts for data processing and automation.',
+    scriptSearchEmptyTitle: 'No scripts match your search',
+    scriptSearchEmptyDescription:
+      'Adjust your search term to see script documentation.',
+    querySectionDescription:
+      'Saved SQL queries for data analysis and reporting.',
+    querySearchEmptyTitle: 'No queries match your search',
+    querySearchEmptyDescription:
+      'Adjust your search term to see query documentation.',
     scheduleLabel: 'Schedule',
     workspaceEmptyTitle: 'Workspace is empty',
     workspaceEmptyDescription:
@@ -1192,6 +1221,10 @@ const en = {
     destination: 'Destination',
     searchPlaceholder: 'Type to search...',
     noItemsFound: 'No items found',
+    tags: 'Tags',
+    search: 'Search',
+    loading: 'Loading...',
+    noItems: 'No items found',
 
     emptyState: {
       repositories: {
@@ -1258,9 +1291,9 @@ const en = {
         description:
           'Start by uploading files or create a workflow to populate this repository.',
       },
-      editor: {
-        title: 'No files or folders',
-        description: 'Create your first file or folder to get started',
+      scripts: {
+        title: 'No scripts yet',
+        description: 'Create your first script to get started',
       },
       generic: {
         title: 'No items found',

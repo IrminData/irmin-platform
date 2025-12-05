@@ -163,10 +163,10 @@ function generateStaticSearchItems({
         type: 'irmin',
       },
       {
-        title: dict.consoleNavigation.staticSearchItems.editor,
+        title: dict.consoleNavigation.staticSearchItems.scripts,
         description:
-          dict.consoleNavigation.staticSearchItems.description.editor,
-        link: `/${locale}/workspace/${workspace}/editor`,
+          dict.consoleNavigation.staticSearchItems.description.scripts,
+        link: `/${locale}/workspace/${workspace}/scripts`,
         type: 'irmin',
       },
       {

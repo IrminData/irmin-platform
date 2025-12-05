@@ -3,8 +3,6 @@
 import type React from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 
-import type { IrminFileLanguage } from '@/types/core/EditorItems';
-
 import CodeMirrorEditor from './CodeMirrorEditor';
 
 /**
@@ -28,7 +26,7 @@ const ResizableCodeEditor = ({
 }: {
   content: string;
   updateTabContent: (_value: string) => void;
-  language: IrminFileLanguage;
+  language: string;
   editorHeight: string;
   setEditorHeight: (_height: string) => void;
 }) => {

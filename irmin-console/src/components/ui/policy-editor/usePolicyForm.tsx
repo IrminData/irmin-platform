@@ -110,6 +110,7 @@ export function usePolicyForm({
         policyResourceOptions={
           policyResourceOptionsQuery.data?.data ?? {
             queries: [],
+            scripts: [],
             workflows: [],
             connections: [],
             repositories: [],
@@ -166,6 +167,7 @@ export function usePolicyForm({
           policyResourceOptions={
             policyResourceOptionsQuery.data?.data ?? {
               queries: [],
+              scripts: [],
               workflows: [],
               connections: [],
               repositories: [],

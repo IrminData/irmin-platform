@@ -161,8 +161,8 @@ export default function PolicyForm({
               <SelectItem value={'workspace'}>
                 {String(formatResourceName('workspace'))}
               </SelectItem>
-              <SelectItem value={'editor_script'}>
-                {String(formatResourceName('editor_script'))}
+              <SelectItem value={'script'}>
+                {String(formatResourceName('script'))}
               </SelectItem>
               <SelectItem value={'query'}>
                 {String(formatResourceName('query'))}
@@ -239,6 +239,12 @@ export default function PolicyForm({
               <SelectValue placeholder={dict.policy.allResources} />
             </SelectTrigger>
             <SelectContent>
+              {formData.resource === 'script' &&
+                policyResourceOptions.scripts.map((script) => (
+                  <SelectItem key={script.id} value={script.id}>
+                    {script.label}
+                  </SelectItem>
+                ))}
               {formData.resource === 'query' &&
                 policyResourceOptions.queries.map((query) => (
                   <SelectItem key={query.id} value={query.id}>

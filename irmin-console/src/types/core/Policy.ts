@@ -1,13 +1,22 @@
 import type { Role } from './Role';
 import type { User } from './User';
 
+/**
+ * Policy effect - allow or deny
+ */
 export type PolicyEffect = 'allow' | 'deny';
 
+/**
+ * Policy action types
+ */
 export type PolicyAction = 'create' | 'read' | 'update' | 'delete';
 
+/**
+ * Policy resource types
+ */
 export type PolicyResource =
   | 'workspace'
-  | 'editor_script'
+  | 'script'
   | 'query'
   | 'workflow'
   | 'workflow_run'
@@ -25,8 +34,14 @@ export type PolicyResource =
   | 'billing'
   | 'workspace_tag';
 
+/**
+ * Policy principal types
+ */
 export type PolicyPrincipal = 'workspace_user' | 'role' | 'everyone';
 
+/**
+ * Policy represents an access control policy
+ */
 export interface Policy {
   /** Unique identifier for the policy */
   id: string;
@@ -71,30 +86,43 @@ export interface Policy {
   user?: User;
 }
 
+/**
+ * Role policy summary
+ */
 export interface RolePolicySummary {
   role: Role;
-  isOwner: boolean;
+  is_owner: boolean;
   policies: Policy[];
 }
 
+/**
+ * User policy summary
+ */
 export interface UserPolicySummary {
-  userId: string;
+  user_id: string;
   email: string;
-  isOwner: boolean;
-  roleIds: string[];
+  is_owner: boolean;
+  role_ids: string[];
   policies: Policy[];
 }
 
+/**
+ * Policy resource option for dropdowns
+ */
 interface PolicyResourceOption {
   id: string;
   label: string;
 }
 
+/**
+ * All policy resource options
+ */
 export interface PolicyResourceOptions {
   queries: PolicyResourceOption[];
+  scripts: PolicyResourceOption[];
   workflows: PolicyResourceOption[];
   connections: PolicyResourceOption[];
   repositories: PolicyResourceOption[];
-  tags: PolicyResourceOption[];
   users: PolicyResourceOption[];
+  tags: PolicyResourceOption[];
 }

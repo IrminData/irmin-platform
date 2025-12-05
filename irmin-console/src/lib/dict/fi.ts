@@ -52,6 +52,7 @@ const fi = {
     info: 'Info',
     yes: 'Kyllä',
     no: 'Ei',
+    optional: 'Valinnainen',
 
     // Content
     name: 'Nimi',
@@ -65,6 +66,8 @@ const fi = {
     lastModified: 'Viimeksi muokattu',
     size: 'Koko',
     color: 'Väri',
+    owner: 'Omistaja',
+    tags: 'Tagit',
 
     // Forms
     fieldRequired: 'Kenttä on pakollinen',
@@ -91,6 +94,10 @@ const fi = {
       'Oletko varma, että haluat poistaa tämän kohteen?',
     areYouSureYouWantToTransferOwnership:
       'Oletko varma, että haluat vaihtaa tämän kohteen omistajan?',
+    deleteConfirmation: 'Oletko varma, että haluat poistaa',
+    saved: 'Tallennettu onnistuneesti',
+    deleted: 'Poistettu onnistuneesti',
+    saveChanges: 'Tallenna muutokset',
 
     // Contact and support
     contactUs: 'Ota yhteyttä',
@@ -137,7 +144,7 @@ const fi = {
     workspaces: 'Työtilat',
     settings: 'Asetukset',
     usefulLinks: 'Hyödylliset linkit',
-    editor: 'Editori',
+    scripts: 'Skriptit',
     queries: 'Kyselyt',
     workspaceSettings: 'Työtila',
     goToWebsite: 'Siirry verkkosivustolle',
@@ -156,7 +163,7 @@ const fi = {
       workspaceDocumentation: 'Työtilan Dokumentaatio',
       myProfile: 'Oma Profiili',
       manageWorkspaces: 'Hallitse Työtiloja',
-      editor: 'Muokkaustyökalu',
+      scripts: 'Skriptit',
       workspaceSettings: 'Työtilan asetukset',
       createWorkflow: 'Luo uusi prosessi',
       createConnection: 'Luo uusi yhteys',
@@ -173,7 +180,7 @@ const fi = {
         workspaceDocumentation: 'Näytä työtilan dokumentaatio',
         myProfile: 'Näytä ja muokkaa profiiliasi',
         manageWorkspaces: 'Hallitse työtilojasi',
-        editor: 'Kirjoita ja suorita skriptejä',
+        scripts: 'Kirjoita ja suorita skriptejä',
         workspaceSettings: 'Muokkaa työtilan asetuksia',
         workflows: 'Näytä ja hallitse prosesseja',
         actions: 'Näytä ja hallitse toimintoja',
@@ -524,6 +531,7 @@ const fi = {
       executablePath: 'Suoritettava polku',
       executablePathDescription:
         'Polku suoritettavaan skriptiin (esim. /path/to/script.py)',
+      executableScript: 'Skripti',
       connectionWritePath: 'Kirjoittamisen polku',
       connectionWritePathDescription:
         'Polku, johon data kirjoitetaan (esim. /path/to/write)',
@@ -625,7 +633,7 @@ const fi = {
   },
 
   // === DEVELOPMENT TOOLS ===
-  editor: {
+  scripts: {
     writeYourJS: 'Kirjoita JavaScriptisi tähän...',
     writeYourGo: 'Kirjoita Go-skriptisi tähän...',
     writeYourSQL: 'Kirjoita SQL-kyselysi tähän...',
@@ -641,10 +649,20 @@ const fi = {
       'Selaa data-arkistoja löytääksesi ne, joissa haluat kirjoittaa skriptin',
     scriptExecutionStarted: 'Skriptin suoritus aloitettu',
     scriptNeedsToBeSaved:
-      'Skripti on tallennettava ennen suorittamista. Tallenna skripti editoriin ja suorita se uudelleen.',
+      'Skripti on tallennettava ennen suorittamista. Tallenna skripti ja suorita se uudelleen.',
+    selectScript: 'Valitse skripti',
+    searchScripts: 'Hae skriptejä...',
+    createScript: 'Luo skripti',
+    updateScript: 'Päivitä skripti',
+    owner: 'Omistaja',
+    scriptManagement: 'Skriptien hallinta',
+    scripts: 'Skriptit',
+    scriptName: 'Skriptin nimi',
+    scriptDescription: 'Skriptin kuvaus',
   },
 
   query: {
+    queries: 'Kyselyt',
     queryExecutionStarted: 'Kyselyn suoritus aloitettu',
     results: 'Tulokset',
     errors: 'Virheet',
@@ -661,6 +679,7 @@ const fi = {
     selectedQuery: 'Valittu kysely',
     editor: 'SQL-editori',
     syntaxHelper: 'Syntaksiavustaja',
+    searchQueries: 'Hae kyselyjä...',
   },
 
   queryHelper: {
@@ -1140,6 +1159,16 @@ const fi = {
     workflowSearchEmptyTitle: 'Yhtään työnkulkua ei löydy haulla',
     workflowSearchEmptyDescription:
       'Säädä hakuehtoja nähdäksesi työnkulkujen dokumentaation.',
+    scriptSectionDescription:
+      'Suoritettavat skriptit datankäsittelyyn ja automaatioon.',
+    scriptSearchEmptyTitle: 'Yhtään skriptiä ei vastaa hakuasi',
+    scriptSearchEmptyDescription:
+      'Muuta hakutermiäsi nähdäksesi skriptien dokumentaatio.',
+    querySectionDescription:
+      'Tallennetut SQL-kyselyt data-analyysiin ja raportointiin.',
+    querySearchEmptyTitle: 'Yhtään kyselyä ei vastaa hakuasi',
+    querySearchEmptyDescription:
+      'Muuta hakutermiäsi nähdäksesi kyselyiden dokumentaatio.',
     scheduleLabel: 'Aikataulu',
     workspaceEmptyTitle: 'Työtila on tyhjä',
     workspaceEmptyDescription:
@@ -1177,6 +1206,10 @@ const fi = {
     destination: 'Kohde',
     searchPlaceholder: 'Kirjoita hakusana...',
     noItemsFound: 'Ei kohteita',
+    tags: 'Tagit',
+    search: 'Hae',
+    loading: 'Ladataan...',
+    noItems: 'Ei kohteita',
     emptyState: {
       repositories: {
         title: 'Ei vielä repositorioita',
@@ -1242,9 +1275,9 @@ const fi = {
         description:
           'Aloita lataamalla tiedostoja tai luo työnkulku täyttääksesi tämän repositorion.',
       },
-      editor: {
-        title: 'Ei tiedostoja tai kansioita',
-        description: 'Luo ensimmäinen tiedosto tai kansio aloittaaksesi.',
+      scripts: {
+        title: 'Ei vielä skriptejä',
+        description: 'Luo ensimmäinen skripti aloittaaksesi.',
       },
       generic: {
         title: 'Kohteita ei löytynyt',

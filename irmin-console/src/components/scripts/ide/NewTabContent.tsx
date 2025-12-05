@@ -18,14 +18,14 @@ const NewTabContent = ({ addNewTab }: { addNewTab: () => void }) => {
       >
         <LinkCard
           onClick={addNewTab}
-          title={dict.editor.newScriptTitle}
-          description={dict.editor.newScriptSubtitle}
+          title={dict.scripts.newScriptTitle}
+          description={dict.scripts.newScriptSubtitle}
           icon={<TbFile />}
         />
         <LinkCard
           href='repositories'
-          title={dict.editor.browseRepositories}
-          description={dict.editor.browseRepositoriesDescription}
+          title={dict.scripts.browseRepositories}
+          description={dict.scripts.browseRepositoriesDescription}
           icon={<TbDatabase />}
         />
       </div>

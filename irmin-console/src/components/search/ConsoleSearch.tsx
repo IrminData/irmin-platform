@@ -8,12 +8,14 @@ import { useParams, useRouter } from 'next/navigation';
 import { GoWorkflow } from 'react-icons/go';
 import { LuSearchX } from 'react-icons/lu';
 import {
+  TbCode,
   TbDashboard,
   TbDatabase,
   TbFile,
   TbFolder,
   TbRun,
   TbSearch,
+  TbSql,
   TbTable,
   TbTools,
   TbUser,
@@ -245,6 +247,10 @@ export default function ConsoleSearch() {
         return <TbRun size={12} />;
       case 'workspace':
         return <TbDashboard size={12} />;
+      case 'script':
+        return <TbCode size={12} />;
+      case 'query':
+        return <TbSql size={12} />;
       case 'irmin':
       default:
         return <TbTools size={12} />;
@@ -368,6 +374,9 @@ export default function ConsoleSearch() {
                         {type === 'user' && dict.workspace.users}
                         {type === 'workspace' &&
                           dict.consoleNavigation.workspaces}
+                        {type === 'script' &&
+                          (dict.scripts?.scripts || 'Scripts')}
+                        {type === 'query' && (dict.query?.queries || 'Queries')}
                         {type === 'irmin' && dict.consoleNavigation.irmin}
                         {type === 'structured-object' && 'Structured Objects'}
                         {type === 'binary-object' && 'Binary Objects'}

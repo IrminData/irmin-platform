@@ -74,7 +74,7 @@ function PipelineStageEditor({
         write: true,
         read: true,
         type: 'action',
-        executable: '',
+        script_id: '',
         order_sequence: prevStages.length,
       },
     ]);

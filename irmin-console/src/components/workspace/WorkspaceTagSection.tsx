@@ -181,6 +181,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
       <div className='flex flex-col gap-2'>
         {/* Related assets */}
         {(assets?.queries && assets.queries.length > 0) ||
+        (assets?.scripts && assets.scripts.length > 0) ||
         (assets?.repositories && assets.repositories.length > 0) ||
         (assets?.workflows && assets.workflows.length > 0) ||
         (assets?.connections && assets.connections.length > 0) ||
@@ -209,6 +210,36 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
                       <TableRow key={query.id}>
                         <TableCell className=''>{query.name}</TableCell>
                         <TableCell>{query.description}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {/* Scripts */}
+            {assets?.scripts && assets.scripts.length > 0 && (
+              <div>
+                <h3
+                  className={`
+                    mb-3 pl-2 text-gray-700
+                    dark:text-gray-300
+                  `}
+                >
+                  {dict.scripts.scripts} ({assets.scripts.length})
+                </h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{dict.common.name}</TableHead>
+                      <TableHead>{dict.common.description}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {assets.scripts.map((script) => (
+                      <TableRow key={script.id}>
+                        <TableCell className=''>{script.name}</TableCell>
+                        <TableCell>{script.description}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

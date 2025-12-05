@@ -2,8 +2,8 @@
 
 import { useCallback } from 'react';
 
-import FileSelector from '@/components/editor/FileSelector';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
+import ScriptSelector from '@/components/scripts/ScriptSelector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -60,14 +60,14 @@ export default function ActionWorkflow({
     <>
       <div className='flex flex-col gap-2'>
         <Label>{dict.workflow.executableScriptFile}</Label>
-        <FileSelector
-          currentSelectedFile={workflowable.executable ?? null}
-          onSelectFile={(filePath) =>
+        <ScriptSelector
+          currentSelectedScriptId={workflowable.script_id ?? null}
+          onSelectScript={(scriptId) =>
             setWorkflowData((prev) => ({
               ...prev,
               workflowable: {
                 ...(prev.workflowable as Action),
-                executable: filePath,
+                script_id: scriptId,
               },
             }))
           }

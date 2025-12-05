@@ -16,10 +16,10 @@ import {
   TbUpload,
 } from 'react-icons/tb';
 
-import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
 import CreateSavedQueryModal from '@/components/query/CreateQueryModal';
 import SqlHelper from '@/components/query/helper/SqlHelper';
 import QueryResults from '@/components/query/QueryResults';
+import CodeMirrorEditor from '@/components/scripts/ide/CodeMirrorEditor';
 import { Button } from '@/components/ui/button';
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import DisplayTitle from '@/components/ui/display-title';

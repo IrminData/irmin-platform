@@ -162,8 +162,8 @@ export interface ActionInputData {
  */
 export interface Action {
   type: 'action';
-  /** Path to the script to execute */
-  executable: string;
+  /** Script ID to execute */
+  script_id: string;
   /** Input data repositories, refs and paths */
   input?: ActionInputData[];
   /** Slug of the repository to store the results */
@@ -204,8 +204,8 @@ export type PipelineStage = {
  */
 interface PipelineStageAction {
   type: 'action';
-  /** Path to the Action Script to be executed */
-  executable: string;
+  /** Script ID to be executed */
+  script_id: string;
 }
 
 /**

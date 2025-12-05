@@ -9,7 +9,7 @@ import { usePDF } from 'react-to-pdf';
 import { BsFilePdf, BsPerson, BsSearch, BsTag } from 'react-icons/bs';
 import { GoWorkflow } from 'react-icons/go';
 import { HiOutlineDocumentText } from 'react-icons/hi';
-import { TbClipboardX, TbDatabase, TbRun } from 'react-icons/tb';
+import { TbClipboardX, TbCode, TbDatabase, TbRun, TbSql } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,13 @@ import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { useConnections, useRepositories, useWorkflows } from '@/hooks/api';
+import {
+  useConnections,
+  useRepositories,
+  useStoredQueries,
+  useWorkflows,
+} from '@/hooks/api';
+import { useScripts } from '@/hooks/api/useScripts';
 
 import MDXViewer from './MDXViewer';
 
@@ -178,6 +184,8 @@ export default function DocumentationSection() {
   const { connectionsQuery } = useConnections();
   const { workflowsQuery } = useWorkflows();
   const { repositoriesQuery } = useRepositories();
+  const { scriptsQuery } = useScripts();
+  const { storedQueriesQuery } = useStoredQueries();
   const { workspaceSlug, workspaceQuery } = useWorkspaceContext();
   const { profile } = useIAM();
   const { dict, locale } = useLocale();
@@ -200,6 +208,14 @@ export default function DocumentationSection() {
   const workflows = useMemo(
     () => workflowsQuery.data?.data ?? [],
     [workflowsQuery.data?.data]
+  );
+  const scripts = useMemo(
+    () => scriptsQuery.data?.data ?? [],
+    [scriptsQuery.data?.data]
+  );
+  const queries = useMemo(
+    () => storedQueriesQuery.data?.data ?? [],
+    [storedQueriesQuery.data?.data]
   );
 
   const connectionById = useMemo(() => {
@@ -289,7 +305,9 @@ export default function DocumentationSection() {
     workspaceQuery.isLoading ||
     connectionsQuery.isLoading ||
     workflowsQuery.isLoading ||
-    repositoriesQuery.isLoading
+    repositoriesQuery.isLoading ||
+    scriptsQuery.isLoading ||
+    storedQueriesQuery.isLoading
   ) {
     return (
       <DocumentationSkeleton
@@ -306,6 +324,8 @@ export default function DocumentationSection() {
     connectionsQuery.error,
     workflowsQuery.error,
     repositoriesQuery.error,
+    scriptsQuery.error,
+    storedQueriesQuery.error,
   ].filter(Boolean);
 
   if (errors.length > 0) {
@@ -319,6 +339,8 @@ export default function DocumentationSection() {
               if (connectionsQuery.error) connectionsQuery.refetch();
               if (workflowsQuery.error) workflowsQuery.refetch();
               if (repositoriesQuery.error) repositoriesQuery.refetch();
+              if (scriptsQuery.error) scriptsQuery.refetch();
+              if (storedQueriesQuery.error) storedQueriesQuery.refetch();
             }}
             title={dict.common.somethingWentWrong}
           />
@@ -331,6 +353,8 @@ export default function DocumentationSection() {
     repositories: repositories.length,
     connections: connections.length,
     workflows: workflows.length,
+    scripts: scripts.length,
+    queries: queries.length,
     importWorkflows: workflows.filter((w) => w.type === 'import').length,
     exportWorkflows: workflows.filter((w) => w.type === 'export').length,
     actionWorkflows: workflows.filter((w) => w.type === 'action').length,
@@ -343,13 +367,17 @@ export default function DocumentationSection() {
   const filteredRepositories = matchSearch(repositories, searchTerm);
   const filteredConnections = matchSearch(connections, searchTerm);
   const filteredWorkflows = matchSearch(workflows, searchTerm);
+  const filteredScripts = matchSearch(scripts, searchTerm);
+  const filteredQueries = matchSearch(queries, searchTerm);
 
   if (!workspace) return null;
 
   const isWorkspaceEmpty =
     repositories.length === 0 &&
     connections.length === 0 &&
-    workflows.length === 0;
+    workflows.length === 0 &&
+    scripts.length === 0 &&
+    queries.length === 0;
 
   if (isWorkspaceEmpty) {
     return (
@@ -507,6 +535,18 @@ export default function DocumentationSection() {
                       {dict.workflow.workflows}
                     </dt>
                     <dd className='text-base font-medium'>{stats.workflows}</dd>
+                  </div>
+                  <div>
+                    <dt className='text-muted-foreground'>
+                      {dict.scripts.scripts}
+                    </dt>
+                    <dd className='text-base font-medium'>{stats.scripts}</dd>
+                  </div>
+                  <div>
+                    <dt className='text-muted-foreground'>
+                      {dict.query.queries}
+                    </dt>
+                    <dd className='text-base font-medium'>{stats.queries}</dd>
                   </div>
                   <div>
                     <dt className='text-muted-foreground'>
@@ -966,6 +1006,190 @@ export default function DocumentationSection() {
                             )}
                           </dl>
                           {workflowNotes}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+
+          {scripts.length > 0 && (
+            <section className='space-y-6'>
+              <div className='flex items-center gap-3'>
+                <div className='rounded-lg bg-muted p-2'>
+                  <TbCode className='size-5 text-muted-foreground' />
+                </div>
+                <div>
+                  <h2 className='text-2xl'>{dict.scripts.scripts}</h2>
+                  <p className='text-sm text-muted-foreground'>
+                    {dict.documentation.scriptSectionDescription}
+                  </p>
+                </div>
+              </div>
+
+              {filteredScripts.length === 0 ? (
+                <EmptyState
+                  icon={<TbClipboardX className='size-full' />}
+                  title={dict.documentation.scriptSearchEmptyTitle}
+                  description={dict.documentation.scriptSearchEmptyDescription}
+                  size='md'
+                  action={{
+                    label: dict.documentation.clearSearch,
+                    onClick: () => setSearchTerm(''),
+                    variant: 'outline',
+                  }}
+                />
+              ) : (
+                <div
+                  className={`
+                    grid grid-cols-1 gap-6
+                    lg:grid-cols-2
+                  `}
+                >
+                  {filteredScripts.map((script) => {
+                    const owner = ownerSummary(script.owner);
+                    const scriptTags = renderTags(script.tags);
+                    return (
+                      <Card key={`script-${script.id}`}>
+                        <CardHeader>
+                          <CardTitle>{script.name}</CardTitle>
+                          {script.description && (
+                            <CardDescription>
+                              {script.description}
+                            </CardDescription>
+                          )}
+                        </CardHeader>
+                        <CardContent>
+                          <dl className='space-y-3 text-sm'>
+                            <div className='flex flex-col gap-1'>
+                              <dt className={`text-muted-foreground`}>
+                                {dict.repository.objects.type}
+                              </dt>
+                              <dd className='capitalize'>{script.language}</dd>
+                            </div>
+                            {owner && (
+                              <div className='flex flex-col gap-1'>
+                                <dt
+                                  className={`
+                                    flex items-center gap-2 text-sm
+                                    text-muted-foreground
+                                  `}
+                                >
+                                  <BsPerson className='size-4' />
+                                  {dict.list.owner}
+                                </dt>
+                                <dd className={`font-medium text-foreground`}>
+                                  {owner.name}
+                                  {owner.email ? ` • ${owner.email}` : ''}
+                                </dd>
+                              </div>
+                            )}
+                            {scriptTags && (
+                              <div className='flex flex-col gap-1'>
+                                <dt
+                                  className={`
+                                    flex items-center gap-2
+                                    text-muted-foreground
+                                  `}
+                                >
+                                  <BsTag className='size-4' />
+                                  {dict.repository.tags.tags}
+                                </dt>
+                                <dd>{scriptTags}</dd>
+                              </div>
+                            )}
+                          </dl>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+
+          {queries.length > 0 && (
+            <section className='space-y-6'>
+              <div className='flex items-center gap-3'>
+                <div className='rounded-lg bg-muted p-2'>
+                  <TbSql className='size-5 text-muted-foreground' />
+                </div>
+                <div>
+                  <h2 className='text-2xl'>{dict.query.queries}</h2>
+                  <p className='text-sm text-muted-foreground'>
+                    {dict.documentation.querySectionDescription}
+                  </p>
+                </div>
+              </div>
+
+              {filteredQueries.length === 0 ? (
+                <EmptyState
+                  icon={<TbClipboardX className='size-full' />}
+                  title={dict.documentation.querySearchEmptyTitle}
+                  description={dict.documentation.querySearchEmptyDescription}
+                  size='md'
+                  action={{
+                    label: dict.documentation.clearSearch,
+                    onClick: () => setSearchTerm(''),
+                    variant: 'outline',
+                  }}
+                />
+              ) : (
+                <div
+                  className={`
+                    grid grid-cols-1 gap-6
+                    lg:grid-cols-2
+                  `}
+                >
+                  {filteredQueries.map((query) => {
+                    const owner = ownerSummary(query.owner);
+                    const queryTags = renderTags(query.tags);
+                    return (
+                      <Card key={`query-${query.id}`}>
+                        <CardHeader>
+                          <CardTitle>{query.name}</CardTitle>
+                          {query.description && (
+                            <CardDescription>
+                              {query.description}
+                            </CardDescription>
+                          )}
+                        </CardHeader>
+                        <CardContent>
+                          <dl className='space-y-3 text-sm'>
+                            {owner && (
+                              <div className='flex flex-col gap-1'>
+                                <dt
+                                  className={`
+                                    flex items-center gap-2 text-sm
+                                    text-muted-foreground
+                                  `}
+                                >
+                                  <BsPerson className='size-4' />
+                                  {dict.list.owner}
+                                </dt>
+                                <dd className={`font-medium text-foreground`}>
+                                  {owner.name}
+                                  {owner.email ? ` • ${owner.email}` : ''}
+                                </dd>
+                              </div>
+                            )}
+                            {queryTags && (
+                              <div className='flex flex-col gap-1'>
+                                <dt
+                                  className={`
+                                    flex items-center gap-2
+                                    text-muted-foreground
+                                  `}
+                                >
+                                  <BsTag className='size-4' />
+                                  {dict.repository.tags.tags}
+                                </dt>
+                                <dd>{queryTags}</dd>
+                              </div>
+                            )}
+                          </dl>
                         </CardContent>
                       </Card>
                     );

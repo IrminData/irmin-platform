@@ -12,7 +12,6 @@ import ConnectionService from './resources/ConnectionService';
 import ConnectorService from './resources/ConnectorService';
 import CredentialService from './resources/CredentialService';
 import DiffService from './resources/DiffService';
-import EditorItemsService from './resources/EditorItemsService';
 import InviteService from './resources/InviteService';
 import LogService from './resources/LogService';
 import ObjectService from './resources/ObjectService';
@@ -24,6 +23,7 @@ import RepositoryCommitService from './resources/RepositoryCommitService';
 import RepositoryService from './resources/RepositoryService';
 import RepositoryTagService from './resources/RepositoryTagService';
 import RoleService from './resources/RoleService';
+import ScriptsService from './resources/ScriptsService';
 import SearchService from './resources/SearchService';
 import TagService from './resources/TagService';
 import UserService from './resources/UserService';
@@ -49,7 +49,7 @@ class IrminCore {
     process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev/api';
   public appBase = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
-  public editorItemService: EditorItemsService;
+  public scriptsService: ScriptsService;
   public connectionService: ConnectionService;
   public connectorService: ConnectorService;
   public repositoryService: RepositoryService;
@@ -85,7 +85,7 @@ class IrminCore {
 
     // Create a new instance of each service class
     // Pass the current IrminCore instance to each service class
-    this.editorItemService = new EditorItemsService(this);
+    this.scriptsService = new ScriptsService(this);
     this.connectionService = new ConnectionService(this);
     this.connectorService = new ConnectorService(this);
     this.repositoryService = new RepositoryService(this);

@@ -2,6 +2,7 @@ import type { Connection } from '@/types/core/Connection';
 import type { Invite } from '@/types/core/Invite';
 import type { Repository } from '@/types/core/Repository';
 import type { RepositoryObject } from '@/types/core/RepositoryObject';
+import type { StoredScript } from '@/types/core/Script';
 import type { StoredQuery } from '@/types/core/StoredQuery';
 import type { User } from '@/types/core/User';
 import type { Workflow } from '@/types/core/Workflow';
@@ -21,6 +22,7 @@ export interface SearchResult {
   workflow?: Workflow;
   connection?: Connection;
   query?: StoredQuery;
+  script?: StoredScript;
   user?: User;
   invite?: Invite;
 }

@@ -247,12 +247,9 @@ export const rolesQueryKey = ['roles'] as const;
 // Credentials related query keys
 export const credentialsQueryKey = ['credentials'] as const;
 
-// Editor related query keys
-export const editorItemsQueryKey = (workspaceSlug: string) =>
-  ['editor-items', workspaceSlug] as const;
-
-export const editorItemQueryKey = (workspaceSlug: string, path: string) =>
-  ['editor-item', workspaceSlug, path] as const;
+// Scripts related query keys
+export const scriptsQueryKey = (workspaceSlug: string, scriptId?: string) =>
+  ['scripts', workspaceSlug, scriptId] as const;
 
 // Log related query keys
 export const logEventsQueryKey = (

@@ -2,17 +2,22 @@
 
 import { useMemo, useState } from 'react';
 
-import { AiOutlineSave } from 'react-icons/ai';
-import { MdPlayArrow } from 'react-icons/md';
-import { TbExclamationCircle, TbLogs, TbTable } from 'react-icons/tb';
+import {
+  TbDatabase,
+  TbExclamationCircle,
+  TbLogs,
+  TbTable,
+} from 'react-icons/tb';
 
 import LogFeed from '@/components/logs/LogFeed';
 import TableViewer from '@/components/repository/objects/ObjectViewer/TableViewer';
+import SchemaViewer from '@/components/repository/objects/SchemaViewer';
 import { Button } from '@/components/ui/button';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useResourceAllowed } from '@/hooks/utils';
+import { useWorkspaceSchema } from '@/hooks/api';
 
 import { nsDurationToMs } from '@/utils/nsDurationToMs';
 
@@ -27,45 +32,23 @@ import type { QueryResult } from '@/types/core/StoredQuery';
  * @param props.title - Title of the query results
  * @param props.result - The result data to display
  * @param props.loading - Whether to show a loading skeleton
- * @param props.onSave - Function to save the data
- * @param props.onRun - Function to run the data
  */
 const QueryResults = ({
   title,
   result,
   loading,
-  onSave,
-  onRun,
 }: {
   title: string;
   result: QueryResult | null;
   loading?: boolean;
-  onSave?: () => Promise<void>;
-  onRun?: () => Promise<void>;
 }) => {
   const { dict } = useLocale();
-  const { isResourceAllowed } = useResourceAllowed();
+  const workspaceSchema = useWorkspaceSchema();
 
   const [activeTab, setActiveTab] = useState('data');
 
-  const [processingSave, setProcessingSave] = useState(false);
-  const [processingRun, setProcessingRun] = useState(false);
-
-  const showLoadingOnData = useMemo(
-    () => loading || processingRun,
-    [loading, processingRun]
-  );
+  const showLoadingOnData = useMemo(() => loading, [loading]);
   const logs = useMemo(() => result?.logs ?? [], [result?.logs]);
-
-  const canSave = useMemo(
-    () => isResourceAllowed('query', 'update'),
-    [isResourceAllowed]
-  );
-
-  const canRun = useMemo(
-    () => isResourceAllowed('query', 'create'),
-    [isResourceAllowed]
-  );
 
   return (
     <div
@@ -118,51 +101,21 @@ const QueryResults = ({
             {result?.has_errors ? `(${dict.query.errors})` : ''}
           </Button>
         </div>
-        <div className='mb-2 ml-auto flex gap-2 text-right'>
-          {onSave && (
-            <Button
-              icon={<AiOutlineSave />}
-              variant='secondary'
-              size='sm'
-              className='text-xs'
-              loading={processingSave}
-              disabled={!canSave}
-              onClick={async () => {
-                setProcessingSave(true);
-                try {
-                  await onSave();
-                } catch (error) {
-                  console.error(error);
-                } finally {
-                  setProcessingSave(false);
-                }
-              }}
-            >
-              {dict.common.save}
-            </Button>
-          )}
-          {onRun && (
-            <Button
-              icon={<MdPlayArrow />}
-              variant='accent'
-              size='sm'
-              className='px-4 text-xs'
-              loading={processingRun || loading}
-              disabled={!canRun}
-              onClick={async () => {
-                setProcessingRun(true);
-                try {
-                  await onRun();
-                } catch (error) {
-                  console.error(error);
-                } finally {
-                  setProcessingRun(false);
-                }
-              }}
-            >
-              {dict.query.run}
-            </Button>
-          )}
+        <div
+          className={`
+            border-accent
+            ${activeTab === 'schema' ? 'border-b-2' : ''}
+          `}
+        >
+          <Button
+            size='sm'
+            variant={'ghost'}
+            className={`rounded-b-none`}
+            onClick={() => setActiveTab('schema')}
+            icon={<TbDatabase />}
+          >
+            {dict.repository.schema.schema}
+          </Button>
         </div>
       </div>
       {activeTab === 'data' && result?.data && (
@@ -191,6 +144,19 @@ const QueryResults = ({
             </div>
           )}
         </>
+      )}
+      {activeTab === 'schema' && (
+        <div className='flex-1 overflow-y-auto p-4'>
+          {workspaceSchema.loading ? (
+            <LoadingSkeleton className='size-full' />
+          ) : workspaceSchema.schema ? (
+            <SchemaViewer schema={workspaceSchema.schema} isExpanded={true} />
+          ) : (
+            <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
+              {dict.common.noResults}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

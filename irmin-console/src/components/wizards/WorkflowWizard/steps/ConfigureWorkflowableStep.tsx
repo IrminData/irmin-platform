@@ -110,8 +110,8 @@ function ConfigureWorkflowableStep({
       }
       case 'action': {
         const actionWorkflowable = workflowable as Action;
-        if (!actionWorkflowable.executable) {
-          irminAlert('error', 'Please select an executable script file');
+        if (!actionWorkflowable.script_id) {
+          irminAlert('error', 'Please select an executable script');
           return false;
         }
         break;

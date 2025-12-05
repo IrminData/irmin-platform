@@ -4,6 +4,7 @@ import IrminCore from '@/lib/core';
 import {
   connectionsQueryKey,
   repositoriesQueryKey,
+  scriptsQueryKey,
   storedQueriesQueryKey,
   workspaceTagsQueryKey,
 } from '@/lib/queryKeys';
@@ -69,6 +70,11 @@ const invalidateEntityQueries = (
     case 'queries':
       void queryClient.invalidateQueries({
         queryKey: storedQueriesQueryKey(workspaceSlug),
+      });
+      break;
+    case 'scripts':
+      void queryClient.invalidateQueries({
+        queryKey: scriptsQueryKey(workspaceSlug),
       });
       break;
     case 'workflows':

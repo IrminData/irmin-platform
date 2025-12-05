@@ -21,6 +21,7 @@ import { useLocale } from '@/context/LocaleContext';
 import {
   useConnections,
   useRepositories,
+  useScripts,
   useWorkflow,
   useWorkflowRuns,
 } from '@/hooks/api';
@@ -42,6 +43,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
   const { currentPage, totalPages, goToPage, workflowRunsQuery } =
     useWorkflowRuns(workflowID);
   const { connectionsQuery } = useConnections();
+  const { scriptsQuery } = useScripts();
 
   const canViewWorkflow = useMemo(
     () => isResourceAllowed('workflow', 'read', workflowID),
@@ -331,7 +333,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                   {dict.workflow.executableScriptFile}
                 </p>
                 <Link
-                  href={`${workspaceUrl}/editor?path=${workflow.workflowable.executable}`}
+                  href={`${workspaceUrl}/scripts?script=${workflow.workflowable.script_id}`}
                   target='_blank'
                   className={`
                     transition-all
@@ -339,7 +341,9 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                   `}
                 >
                   <p className='text-base'>
-                    {workflow.workflowable.executable}
+                    {scriptsQuery.data?.data?.find(
+                      (s) => s.id === workflow.workflowable.script_id
+                    )?.name ?? workflow.workflowable.script_id}
                   </p>
                 </Link>
               </div>

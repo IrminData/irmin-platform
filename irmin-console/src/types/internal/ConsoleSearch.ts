@@ -10,6 +10,8 @@ export type ConsoleSearchItemType =
   | 'group-object'
   | 'user'
   | 'workspace'
+  | 'script'
+  | 'query'
   | 'irmin';
 
 /**

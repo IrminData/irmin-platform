@@ -1,6 +1,7 @@
 import type { Connection } from './Connection';
 import type { Repository } from './Repository';
 import type { RepositoryObject } from './RepositoryObject';
+import type { StoredScript } from './Script';
 import type { StoredQuery } from './StoredQuery';
 import type { Workflow } from './Workflow';
 
@@ -24,6 +25,8 @@ export interface Tag {
 interface TaggedAssets {
   /** Queries tagged with this tag */
   queries: StoredQuery[];
+  /** Scripts tagged with this tag */
+  scripts: StoredScript[];
   /** Repositories tagged with this tag */
   repositories: Repository[];
   /** Workflows tagged with this tag */
@@ -52,6 +55,7 @@ export interface TagWithAssets {
 export type TagEntityType =
   | 'repositories'
   | 'queries'
+  | 'scripts'
   | 'workflows'
   | 'connections'
   | 'repository_objects';

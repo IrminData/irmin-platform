@@ -92,10 +92,10 @@ const useConsoleNavigationLinks = (): {
           hide: !isResourceAllowed('workflow', 'read'),
         },
         {
-          title: dict.consoleNavigation.editor,
-          href: `${workspaceUrl}/editor`,
+          title: dict.consoleNavigation.scripts,
+          href: `${workspaceUrl}/scripts`,
           icon: <TbFile />,
-          hide: !isResourceAllowed('editor_script', 'read'),
+          hide: !isResourceAllowed('script', 'read'),
         },
         {
           title: dict.consoleNavigation.queries,

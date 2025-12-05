@@ -7,8 +7,8 @@ import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 import IrminCore from '@/lib/core';
 
 import ConnectionPathSelector from '@/components/connection/ConnectionPathSelector';
-import FileSelector from '@/components/editor/FileSelector';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
+import ScriptSelector from '@/components/scripts/ScriptSelector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,7 +34,7 @@ import type { PipelineStage } from '@/types/core/Workflow';
 
 const defaultStage: PipelineStage = {
   type: 'action',
-  executable: '',
+  script_id: '',
   description: '',
   write: false,
   read: false,
@@ -309,7 +309,7 @@ function Stage({
                 if (value === 'action') {
                   setStage((prevStage) => ({
                     type: 'action',
-                    executable: '',
+                    script_id: '',
                     description: prevStage.description,
                     write: prevStage.write,
                     read: prevStage.read,
@@ -363,45 +363,19 @@ function Stage({
 
           {stage.type === 'action' && (
             <div className='flex flex-col gap-2'>
-              <Label htmlFor={`executable-${index}`}>
-                {dict.workflow.pipeline.executablePath}
+              <Label htmlFor={`script-id-${index}`}>
+                {dict.workflow.pipeline.executableScript ?? 'Script'}
               </Label>
-              {!readOnly ? (
-                <FileSelector
-                  currentSelectedFile={stage.executable ?? null}
-                  onSelectFile={(filePath) =>
-                    setStage((prevStage) => ({
-                      ...prevStage,
-                      executable: filePath,
-                    }))
-                  }
-                />
-              ) : (
-                <div className='flex flex-col gap-2'>
-                  <Input
-                    id={`executable-${index}`}
-                    placeholder={
-                      dict.workflow.pipeline.executablePathDescription
-                    }
-                    value={stage.executable}
-                    onChange={(e) =>
-                      setStage((prevStage) => ({
-                        ...prevStage,
-                        executable: e.target.value,
-                      }))
-                    }
-                    readOnly={readOnly}
-                  />
-                  <Button
-                    href={`${workspaceUrl}/editor?path=${stage.executable}`}
-                    target='_blank'
-                    variant='secondary'
-                    className='w-full'
-                  >
-                    {dict.workflow.openInEditor}
-                  </Button>
-                </div>
-              )}
+              <ScriptSelector
+                currentSelectedScriptId={stage.script_id ?? null}
+                onSelectScript={(scriptId) =>
+                  setStage((prevStage) => ({
+                    ...prevStage,
+                    script_id: scriptId,
+                  }))
+                }
+                disabled={readOnly}
+              />
             </div>
           )}
 

@@ -144,10 +144,10 @@ export default function AssistantSection({
 
       // Track open editor tabs for scripting agent context (only when on editor page)
       // Check if the current route is related to the editor
-      if (pathname && pathname.includes('/editor')) {
-        const openTabs = searchParams.getAll('path');
+      if (pathname && pathname.includes('/scripts')) {
+        const openTabs = searchParams.getAll('script');
         if (openTabs && openTabs.length > 0) {
-          ctx['editor-script-paths'] = openTabs.join(',');
+          ctx['script-ids'] = openTabs.join(',');
         }
       }
     }
