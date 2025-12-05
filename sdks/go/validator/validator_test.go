@@ -750,7 +750,7 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 
 	// Test valid action stage - provide all fields to satisfy struct validation
 	t.Run("valid action stage", func(t *testing.T) {
-		executable := "/bin/sh"
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		connectionWritePath := "/write/path"
 		repository := "test-repo"
@@ -763,7 +763,7 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 			Read:          true,
 			OrderSequence: 1,
 			Type:          models.PipelineStageTypeAction,
-			Executable:    &executable,
+			ScriptID:      &scriptID,
 			// Provide values for all fields to satisfy struct tag validation
 			ConnectionID:        &connectionID,
 			ConnectionWritePath: &connectionWritePath,
@@ -778,8 +778,8 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 		}
 	})
 
-	// Test invalid action stage - missing executable
-	t.Run("invalid action stage - missing executable", func(t *testing.T) {
+	// Test invalid action stage - missing script ID
+	t.Run("invalid action stage - missing script ID", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		connectionWritePath := "/write/path"
 		repository := "test-repo"
@@ -792,7 +792,7 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 			Read:          true,
 			OrderSequence: 1,
 			Type:          models.PipelineStageTypeAction,
-			// Missing Executable
+			// Missing ScriptID
 			ConnectionID:        &connectionID,
 			ConnectionWritePath: &connectionWritePath,
 			Repository:          &repository,
@@ -802,7 +802,7 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 
 		err := validator.Validate(stage)
 		if err == nil {
-			t.Error("Expected validation error for action stage with missing executable")
+			t.Error("Expected validation error for action stage with missing script ID")
 		}
 	})
 
@@ -810,7 +810,7 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 	t.Run("valid connection stage", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		connectionWritePath := "/path/to/write"
-		executable := "/bin/executable"
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		repository := "test-repo"
 		repositoryBranch := "main"
 		repositoryWritePath := "/repo/write/path"
@@ -824,7 +824,7 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 			ConnectionID:        &connectionID,
 			ConnectionWritePath: &connectionWritePath,
 			// Provide values for all fields to satisfy struct tag validation
-			Executable:          &executable,
+			ScriptID:            &scriptID,
 			Repository:          &repository,
 			RepositoryBranch:    &repositoryBranch,
 			RepositoryWritePath: &repositoryWritePath,
@@ -839,7 +839,7 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 	// Test invalid connection stage - missing connection ID
 	t.Run("invalid connection stage - missing connection ID", func(t *testing.T) {
 		connectionWritePath := "/write/path"
-		executable := "/bin/executable"
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		repository := "test-repo"
 		repositoryBranch := "main"
 		repositoryWritePath := "/repo/write/path"
@@ -852,7 +852,7 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 			Type:          models.PipelineStageTypeConnection,
 			// Missing ConnectionID
 			ConnectionWritePath: &connectionWritePath,
-			Executable:          &executable,
+			ScriptID:            &scriptID,
 			Repository:          &repository,
 			RepositoryBranch:    &repositoryBranch,
 			RepositoryWritePath: &repositoryWritePath,
@@ -870,7 +870,7 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 		repositoryBranch := "main"
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		connectionWritePath := "/write/path"
-		executable := "/bin/executable"
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		repositoryWritePath := "/repo/write/path"
 
 		stage := models.PipelineStage{
@@ -882,7 +882,7 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 			Repository:       &repository,
 			RepositoryBranch: &repositoryBranch,
 			// Provide values for all fields to satisfy struct tag validation
-			Executable:          &executable,
+			ScriptID:            &scriptID,
 			ConnectionID:        &connectionID,
 			ConnectionWritePath: &connectionWritePath,
 			RepositoryWritePath: &repositoryWritePath,
@@ -898,7 +898,7 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 	t.Run("invalid repository stage - missing repository", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		connectionWritePath := "/write/path"
-		executable := "/bin/executable"
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		repositoryBranch := "main"
 		repositoryWritePath := "/repo/write/path"
 
@@ -910,7 +910,7 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 			Type:          models.PipelineStageTypeRepository,
 			// Missing Repository
 			RepositoryBranch:    &repositoryBranch,
-			Executable:          &executable,
+			ScriptID:            &scriptID,
 			ConnectionID:        &connectionID,
 			ConnectionWritePath: &connectionWritePath,
 			RepositoryWritePath: &repositoryWritePath,
@@ -930,7 +930,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 	// Test valid pipeline workflowable - provide all fields to satisfy struct validation
 	t.Run("valid pipeline workflowable", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
-		executable := "/bin/sh"
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		connectionWritePath := "/write/path"
 		repository := "test-repo"
 		repositoryBranch := "main"
@@ -949,7 +949,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 					Read:                true,
 					OrderSequence:       1,
 					Type:                models.PipelineStageTypeAction,
-					Executable:          &executable,
+					ScriptID:            &scriptID,
 					ConnectionID:        &connectionID,
 					ConnectionWritePath: &connectionWritePath,
 					Repository:          &repository,
@@ -963,7 +963,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			RepositoryBranch:        "main",
 			ImportToRepositoryPath:  "/import",
 			ExportToConnectionPath:  "/export",
-			Executable:              "dummy-executable",
+			ScriptID:                scriptID,
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
 			ResultsRepositoryPath:   &resultsRepositoryPath,
@@ -978,6 +978,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 	// Test invalid pipeline workflowable - missing stages
 	t.Run("invalid pipeline workflowable - missing stages", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		resultsRepository := "results-repo"
 		resultsRepositoryBranch := "main"
 		resultsRepositoryPath := "/results"
@@ -991,7 +992,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			RepositoryBranch:        "main",
 			ImportToRepositoryPath:  "/import",
 			ExportToConnectionPath:  "/export",
-			Executable:              "dummy-executable",
+			ScriptID:                scriptID,
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
 			ResultsRepositoryPath:   &resultsRepositoryPath,
@@ -1006,13 +1007,14 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 	// Test valid action workflowable - provide all fields to satisfy struct validation
 	t.Run("valid action workflowable", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		resultsRepository := "results-repo"
 		resultsRepositoryBranch := "main"
 		resultsRepositoryPath := "/results"
 
 		workflowable := models.Workflowable{
-			Type:       models.WorkflowableTypeAction,
-			Executable: "my-executable",
+			Type:     models.WorkflowableTypeAction,
+			ScriptID: scriptID,
 			Input: []models.ActionInputData{
 				{
 					Repository:     "my-repo",
@@ -1037,8 +1039,8 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 		}
 	})
 
-	// Test invalid action workflowable - missing executable
-	t.Run("invalid action workflowable - missing executable", func(t *testing.T) {
+	// Test invalid action workflowable - missing script ID
+	t.Run("invalid action workflowable - missing script ID", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		resultsRepository := "results-repo"
 		resultsRepositoryBranch := "main"
@@ -1046,7 +1048,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 
 		workflowable := models.Workflowable{
 			Type: models.WorkflowableTypeAction,
-			// Missing Executable
+			// Missing ScriptID
 			Input: []models.ActionInputData{
 				{
 					Repository:     "my-repo",
@@ -1066,13 +1068,14 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 
 		err := validator.Validate(workflowable)
 		if err == nil {
-			t.Error("Expected validation error for action workflowable with missing executable")
+			t.Error("Expected validation error for action workflowable with missing script ID")
 		}
 	})
 
 	// Test valid import workflowable - provide all fields to satisfy struct validation
 	t.Run("valid import workflowable", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		sourceField := "source_field"
 		destinationField := "dest_field"
 		resultsRepository := "results-repo"
@@ -1096,7 +1099,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			ImportToRepositoryPath:    "/repo/path",
 			// Provide defaults for all other fields
 			ExportToConnectionPath:  "/export",
-			Executable:              "dummy-executable",
+			ScriptID:                scriptID,
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
 			ResultsRepositoryPath:   &resultsRepositoryPath,
@@ -1110,6 +1113,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 
 	// Test invalid import workflowable - missing connection ID
 	t.Run("invalid import workflowable - missing connection ID", func(t *testing.T) {
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		sourceField := "source_field"
 		destinationField := "dest_field"
 		resultsRepository := "results-repo"
@@ -1132,7 +1136,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			ImportFromConnectionPaths: []string{"/import/path"},
 			ImportToRepositoryPath:    "/repo/path",
 			ExportToConnectionPath:    "/export",
-			Executable:                "dummy-executable",
+			ScriptID:                  scriptID,
 			ResultsRepository:         &resultsRepository,
 			ResultsRepositoryBranch:   &resultsRepositoryBranch,
 			ResultsRepositoryPath:     &resultsRepositoryPath,
@@ -1147,6 +1151,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 	// Test valid export workflowable - provide all fields to satisfy struct validation
 	t.Run("valid export workflowable", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		sourceField := "source_field"
 		destinationField := "dest_field"
 		resultsRepository := "results-repo"
@@ -1170,7 +1175,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			ExportToConnectionPath:    "/export/path",
 			// Provide defaults for all other fields
 			ImportToRepositoryPath:  "/import",
-			Executable:              "dummy-executable",
+			ScriptID:                scriptID,
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
 			ResultsRepositoryPath:   &resultsRepositoryPath,
@@ -1185,6 +1190,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 	// Test invalid export workflowable - missing field mappings
 	t.Run("invalid export workflowable - missing field mappings", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		resultsRepository := "results-repo"
 		resultsRepositoryBranch := "main"
 		resultsRepositoryPath := "/results"
@@ -1198,7 +1204,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			ExportFromRepositoryPaths: []string{"/repo/path"},
 			ExportToConnectionPath:    "/export/path",
 			ImportToRepositoryPath:    "/import",
-			Executable:                "dummy-executable",
+			ScriptID:                  scriptID,
 			ResultsRepository:         &resultsRepository,
 			ResultsRepositoryBranch:   &resultsRepositoryBranch,
 			ResultsRepositoryPath:     &resultsRepositoryPath,
@@ -1526,10 +1532,10 @@ func TestValidatePipelineStagesFixed(t *testing.T) {
 	sqidManager := sqids.NewSQIDManager("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 	validator := validator.NewValidator(sqidManager)
 
-	// For action stages, the custom validator only checks that Executable is provided
+	// For action stages, the custom validator only checks that ScriptID is provided
 	// But the struct tags still validate other fields, so we need to provide all fields
 	t.Run("action stage with all required fields", func(t *testing.T) {
-		executable := "/bin/sh"
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		connectionWritePath := "/write/path"
 		repository := "test-repo"
@@ -1542,7 +1548,7 @@ func TestValidatePipelineStagesFixed(t *testing.T) {
 			Read:          true,
 			OrderSequence: 1,
 			Type:          models.PipelineStageTypeAction,
-			Executable:    &executable,
+			ScriptID:      &scriptID,
 			// Provide values for all fields to satisfy struct tag validation
 			ConnectionID:        &connectionID,
 			ConnectionWritePath: &connectionWritePath,
@@ -1560,7 +1566,7 @@ func TestValidatePipelineStagesFixed(t *testing.T) {
 	t.Run("connection stage with all required fields", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		connectionWritePath := "/write/path"
-		executable := "/bin/executable"
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		repository := "test-repo"
 		repositoryBranch := "main"
 		repositoryWritePath := "/repo/write/path"
@@ -1574,7 +1580,7 @@ func TestValidatePipelineStagesFixed(t *testing.T) {
 			ConnectionID:        &connectionID,
 			ConnectionWritePath: &connectionWritePath,
 			// Provide values for all fields to satisfy struct tag validation
-			Executable:          &executable,
+			ScriptID:            &scriptID,
 			Repository:          &repository,
 			RepositoryBranch:    &repositoryBranch,
 			RepositoryWritePath: &repositoryWritePath,
@@ -1589,7 +1595,7 @@ func TestValidatePipelineStagesFixed(t *testing.T) {
 	t.Run("repository stage with all required fields", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		connectionWritePath := "/write/path"
-		executable := "/bin/executable"
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		repository := "test-repo"
 		repositoryBranch := "main"
 		repositoryWritePath := "/repo/write/path"
@@ -1603,7 +1609,7 @@ func TestValidatePipelineStagesFixed(t *testing.T) {
 			Repository:       &repository,
 			RepositoryBranch: &repositoryBranch,
 			// Provide values for all fields to satisfy struct tag validation
-			Executable:          &executable,
+			ScriptID:            &scriptID,
 			ConnectionID:        &connectionID,
 			ConnectionWritePath: &connectionWritePath,
 			RepositoryWritePath: &repositoryWritePath,
@@ -1623,7 +1629,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 
 	t.Run("pipeline workflowable with all fields", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
-		executable := "/bin/sh"
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		connectionWritePath := "/write/path"
 		repository := "test-repo"
 		repositoryBranch := "main"
@@ -1642,7 +1648,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 					Read:                true,
 					OrderSequence:       1,
 					Type:                models.PipelineStageTypeAction,
-					Executable:          &executable,
+					ScriptID:            &scriptID,
 					ConnectionID:        &connectionID,
 					ConnectionWritePath: &connectionWritePath,
 					Repository:          &repository,
@@ -1656,7 +1662,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 			RepositoryBranch:        "main",
 			ImportToRepositoryPath:  "/import",
 			ExportToConnectionPath:  "/export",
-			Executable:              "dummy-executable",
+			ScriptID:                scriptID,
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
 			ResultsRepositoryPath:   &resultsRepositoryPath,
@@ -1670,13 +1676,14 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 
 	t.Run("action workflowable with all fields", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		resultsRepository := "results-repo"
 		resultsRepositoryBranch := "main"
 		resultsRepositoryPath := "/results"
 
 		workflowable := models.Workflowable{
-			Type:       models.WorkflowableTypeAction,
-			Executable: "my-executable",
+			Type:     models.WorkflowableTypeAction,
+			ScriptID: scriptID,
 			Input: []models.ActionInputData{
 				{
 					Repository:     "my-repo",
@@ -1703,6 +1710,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 
 	t.Run("import workflowable complete", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		sourceField := "source_field"
 		destinationField := "dest_field"
 		resultsRepository := "results-repo"
@@ -1726,7 +1734,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 			ImportToRepositoryPath:    "/repo/path",
 			// Provide defaults for all other fields
 			ExportToConnectionPath:  "/export",
-			Executable:              "dummy-executable",
+			ScriptID:                scriptID,
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
 			ResultsRepositoryPath:   &resultsRepositoryPath,
@@ -1740,6 +1748,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 
 	t.Run("export workflowable complete", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
+		scriptID, _ := sqidManager.Encode("scripts", 123)
 		sourceField := "source_field"
 		destinationField := "dest_field"
 		resultsRepository := "results-repo"
@@ -1763,7 +1772,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 			ExportToConnectionPath:    "/export/path",
 			// Provide defaults for all other fields
 			ImportToRepositoryPath:  "/import",
-			Executable:              "dummy-executable",
+			ScriptID:                scriptID,
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
 			ResultsRepositoryPath:   &resultsRepositoryPath,

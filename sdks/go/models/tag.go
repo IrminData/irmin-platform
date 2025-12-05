@@ -21,11 +21,12 @@ type TagWithAssets struct {
 
 // TaggedAssets represents all assets associated with a specific tag.
 type TaggedAssets struct {
-	Queries           []StoredQuery `json:"queries"            validate:"dive"`
-	Repositories      []Repository  `json:"repositories"       validate:"dive"`
-	Workflows         []Workflow    `json:"workflows"          validate:"dive"`
-	Connections       []Connection  `json:"connections"        validate:"dive"`
-	RepositoryObjects []Object      `json:"repository_objects" validate:"dive"`
+	Queries           []StoredQuery  `json:"queries"            validate:"dive"`
+	Scripts           []StoredScript `json:"scripts"            validate:"dive"`
+	Repositories      []Repository   `json:"repositories"       validate:"dive"`
+	Workflows         []Workflow     `json:"workflows"          validate:"dive"`
+	Connections       []Connection   `json:"connections"        validate:"dive"`
+	RepositoryObjects []Object       `json:"repository_objects" validate:"dive"`
 }
 
 type TagEntityType string
@@ -33,6 +34,7 @@ type TagEntityType string
 const (
 	TagEntityTypeRepository TagEntityType = "repositories"
 	TagEntityTypeQuery      TagEntityType = "queries"
+	TagEntityTypeScript     TagEntityType = "scripts"
 	TagEntityTypeWorkflow   TagEntityType = "workflows"
 	TagEntityTypeConnection TagEntityType = "connections"
 	TagEntityTypeObject     TagEntityType = "repository_objects"

@@ -144,15 +144,14 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) CancelWorkflowRun\(ctx context.Context, workspace, workflowID, runID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.CancelWorkflowRun>)
   - [func \(c \*Client\) CheckPermission\(ctx context.Context, workspace string, resource irminmodels.PolicyResource, action irminmodels.PolicyAction, resourceID \*string\) \(bool, error\)](<#Client.CheckPermission>)
   - [func \(c \*Client\) CompareRefs\(ctx context.Context, workspace, repository, baseRef, compareRef string\) \(\*irminmodels.Diff, \*irminmodels.IrminAPIResponse, error\)](<#Client.CompareRefs>)
-  - [func \(c \*Client\) CopyEditorItem\(ctx context.Context, workspace, path string, req MoveEditorItemRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CopyEditorItem>)
   - [func \(c \*Client\) CopyObject\(ctx context.Context, workspace, repository, path, ref string, req MoveObjectRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.CopyObject>)
   - [func \(c \*Client\) CreateBranch\(ctx context.Context, workspace, repository string, req CreateBranchRequest\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateBranch>)
   - [func \(c \*Client\) CreateCommit\(ctx context.Context, workspace, repository string, req CreateCommitRequest\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateCommit>)
   - [func \(c \*Client\) CreateConnection\(ctx context.Context, workspace string, req CreateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateConnection>)
-  - [func \(c \*Client\) CreateEditorFolder\(ctx context.Context, workspace, path string, req CreateEditorItemRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CreateEditorFolder>)
   - [func \(c \*Client\) CreatePolicy\(ctx context.Context, workspace string, req CreatePolicyRequest\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreatePolicy>)
   - [func \(c \*Client\) CreateRepository\(ctx context.Context, workspace string, req CreateRepositoryRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateRepository>)
   - [func \(c \*Client\) CreateStoredQuery\(ctx context.Context, workspace string, req CreateQueryRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateStoredQuery>)
+  - [func \(c \*Client\) CreateStoredScript\(ctx context.Context, workspace string, req CreateScriptRequest\) \(\*irminmodels.StoredScript, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateStoredScript>)
   - [func \(c \*Client\) CreateTag\(ctx context.Context, workspace, repository string, req CreateRepositoryTagRequest\) \(\*irminmodels.GitTag, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateTag>)
   - [func \(c \*Client\) CreateToken\(ctx context.Context, req CreateCredentialRequest\) \(\*irminmodels.APIToken, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateToken>)
   - [func \(c \*Client\) CreateWorkflow\(ctx context.Context, workspace string, req WorkflowRequest\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateWorkflow>)
@@ -162,12 +161,12 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) DeleteBranch\(ctx context.Context, workspace, repository, branch string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteBranch>)
   - [func \(c \*Client\) DeleteConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteConnection>)
   - [func \(c \*Client\) DeleteConnector\(ctx context.Context, connectorID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteConnector>)
-  - [func \(c \*Client\) DeleteEditorItem\(ctx context.Context, workspace, path string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteEditorItem>)
   - [func \(c \*Client\) DeleteInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteInvite>)
   - [func \(c \*Client\) DeleteObject\(ctx context.Context, workspace, repository, ref, path string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteObject>)
   - [func \(c \*Client\) DeletePolicy\(ctx context.Context, workspace, policyID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeletePolicy>)
   - [func \(c \*Client\) DeleteRepository\(ctx context.Context, workspace, slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteRepository>)
   - [func \(c \*Client\) DeleteStoredQuery\(ctx context.Context, workspace, queryID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteStoredQuery>)
+  - [func \(c \*Client\) DeleteStoredScript\(ctx context.Context, workspace, scriptID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteStoredScript>)
   - [func \(c \*Client\) DeleteTag\(ctx context.Context, workspace, repository, tag string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteTag>)
   - [func \(c \*Client\) DeleteToken\(ctx context.Context, tokenID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteToken>)
   - [func \(c \*Client\) DeleteWorkflow\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkflow>)
@@ -176,6 +175,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) DownloadObject\(ctx context.Context, workspace, repository, path, ref string\) \(\[\]byte, error\)](<#Client.DownloadObject>)
   - [func \(c \*Client\) ExecuteSQL\(ctx context.Context, workspace string, req ExecuteSQLRequest\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteSQL>)
   - [func \(c \*Client\) ExecuteStoredQuery\(ctx context.Context, workspace, queryID string\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteStoredQuery>)
+  - [func \(c \*Client\) ExecuteStoredScript\(ctx context.Context, workspace, scriptID string, req ExecuteScriptRequest\) \(\*irminmodels.ScriptResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteStoredScript>)
   - [func \(c \*Client\) FetchAPI\(ctx context.Context, opts RequestOptions, out any\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.FetchAPI>)
   - [func \(c \*Client\) FetchAPIEnhanced\(ctx context.Context, opts RequestOptions, out any\) \(\*irminmodels.IrminAPIResponse, \*irminvalidator.ValidationResultError, error\)](<#Client.FetchAPIEnhanced>)
   - [func \(c \*Client\) FetchBinary\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.FetchBinary>)
@@ -194,7 +194,6 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) GetConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnection>)
   - [func \(c \*Client\) GetConnectionSchema\(ctx context.Context, workspace, connectionID, operationMethod, path string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnectionSchema>)
   - [func \(c \*Client\) GetConnector\(ctx context.Context, connectorID string\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnector>)
-  - [func \(c \*Client\) GetEditorItemContent\(ctx context.Context, workspace, path string\) \(\*string, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetEditorItemContent>)
   - [func \(c \*Client\) GetInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetInvite>)
   - [func \(c \*Client\) GetObjectAtPath\(ctx context.Context, workspace, repository, path, ref string\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectAtPath>)
   - [func \(c \*Client\) GetObjectContent\(ctx context.Context, workspace, repository, path, ref string\) \(\[\]byte, error\)](<#Client.GetObjectContent>)
@@ -208,6 +207,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) GetProfile\(ctx context.Context\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetProfile>)
   - [func \(c \*Client\) GetRepository\(ctx context.Context, workspace, slug string\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetRepository>)
   - [func \(c \*Client\) GetStoredQuery\(ctx context.Context, workspace, queryID string\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetStoredQuery>)
+  - [func \(c \*Client\) GetStoredScript\(ctx context.Context, workspace, scriptID string\) \(\*irminmodels.StoredScript, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetStoredScript>)
   - [func \(c \*Client\) GetTag\(ctx context.Context, workspace, repository, tag string\) \(\*irminmodels.GitTag, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetTag>)
   - [func \(c \*Client\) GetUncommittedChanges\(ctx context.Context, workspace, repository, branch string\) \(\*irminmodels.Diff, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetUncommittedChanges>)
   - [func \(c \*Client\) GetUser\(ctx context.Context, workspace, userID string\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetUser>)
@@ -222,13 +222,13 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) ListCommits\(ctx context.Context, workspace, repository, ref, after string, perPage int\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListCommits>)
   - [func \(c \*Client\) ListConnections\(ctx context.Context, workspace string\) \(\[\]irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnections>)
   - [func \(c \*Client\) ListConnectors\(ctx context.Context\) \(\[\]irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnectors>)
-  - [func \(c \*Client\) ListEditorItems\(ctx context.Context, workspace, path string\) \(\[\]irminmodels.EditorItem, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListEditorItems>)
   - [func \(c \*Client\) ListInviteInbox\(ctx context.Context\) \(\[\]irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListInviteInbox>)
   - [func \(c \*Client\) ListInvitesToWorkspace\(ctx context.Context, workspace string\) \(\[\]irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListInvitesToWorkspace>)
   - [func \(c \*Client\) ListPolicies\(ctx context.Context, workspace string, params ListPoliciesParams\) \(\[\]irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListPolicies>)
   - [func \(c \*Client\) ListRepositories\(ctx context.Context, workspace string\) \(\[\]irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListRepositories>)
   - [func \(c \*Client\) ListRoles\(ctx context.Context\) \(\[\]irminmodels.Role, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListRoles>)
   - [func \(c \*Client\) ListStoredQueries\(ctx context.Context, workspace string\) \(\[\]irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListStoredQueries>)
+  - [func \(c \*Client\) ListStoredScripts\(ctx context.Context, workspace string\) \(\[\]irminmodels.StoredScript, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListStoredScripts>)
   - [func \(c \*Client\) ListTags\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.GitTag, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListTags>)
   - [func \(c \*Client\) ListTokens\(ctx context.Context\) \(\[\]irminmodels.APIToken, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListTokens>)
   - [func \(c \*Client\) ListUsers\(ctx context.Context, workspace string\) \(\[\]irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListUsers>)
@@ -238,7 +238,6 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) ListWorkspaceTags\(ctx context.Context, workspace string\) \(\[\]irminmodels.Tag, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkspaceTags>)
   - [func \(c \*Client\) ListWorkspaces\(ctx context.Context\) \(\[\]irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkspaces>)
   - [func \(c \*Client\) MergeRefs\(ctx context.Context, workspace, repository string, req MergeRefsRequest\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.MergeRefs>)
-  - [func \(c \*Client\) MoveEditorItem\(ctx context.Context, workspace, path string, req MoveEditorItemRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.MoveEditorItem>)
   - [func \(c \*Client\) MoveObject\(ctx context.Context, workspace, repository, path, ref string, req MoveObjectRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.MoveObject>)
   - [func \(c \*Client\) PauseWorkflow\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.PauseWorkflow>)
   - [func \(c \*Client\) RegisterNewConnector\(ctx context.Context, req ConnectorRequest\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.RegisterNewConnector>)
@@ -247,8 +246,6 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) Request\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
   - [func \(c \*Client\) ResendInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ResendInvite>)
   - [func \(c \*Client\) RevertChanges\(ctx context.Context, workspace, repository string, req RevertUncommittedChangesRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RevertChanges>)
-  - [func \(c \*Client\) RunScript\(ctx context.Context, workspace, path string, inputs \[\]irminmodels.ActionInputData\) \(\*irminmodels.ScriptResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.RunScript>)
-  - [func \(c \*Client\) SaveEditorItem\(ctx context.Context, workspace, path string, req CreateEditorItemRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.SaveEditorItem>)
   - [func \(c \*Client\) Search\(ctx context.Context, workspace string, params irminmodels.SearchFilters\) \(\*irminmodels.SearchResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.Search>)
   - [func \(c \*Client\) SendInvite\(ctx context.Context, workspace string, req SendInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.SendInvite>)
   - [func \(c \*Client\) StartWorkflow\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.StartWorkflow>)
@@ -256,6 +253,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) TransferConnection\(ctx context.Context, workspace, connectionID string, req TransferConnectionOwnershipRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferConnection>)
   - [func \(c \*Client\) TransferRepository\(ctx context.Context, workspace, slug string, req TransferRepositoryOwnershipRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferRepository>)
   - [func \(c \*Client\) TransferStoredQuery\(ctx context.Context, workspace, queryID string, req TransferQueryOwnershipRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferStoredQuery>)
+  - [func \(c \*Client\) TransferStoredScript\(ctx context.Context, workspace, scriptID string, req TransferScriptOwnershipRequest\) \(\*irminmodels.StoredScript, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferStoredScript>)
   - [func \(c \*Client\) TransferWorkflow\(ctx context.Context, workspace, workflowID, newOwnerID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferWorkflow>)
   - [func \(c \*Client\) TransferWorkspace\(ctx context.Context, workspaceSlug string, req TransferOwnershipRequest\) \(\*irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferWorkspace>)
   - [func \(c \*Client\) TriggerWorkflowRun\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.TriggerWorkflowRun>)
@@ -268,6 +266,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) UpdateRegisteredConnector\(ctx context.Context, connectorID string, req ConnectorRequest\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateRegisteredConnector>)
   - [func \(c \*Client\) UpdateRepository\(ctx context.Context, workspace, slug string, req UpdateRepositoryRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateRepository>)
   - [func \(c \*Client\) UpdateStoredQuery\(ctx context.Context, workspace, queryID string, req UpdateQueryRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateStoredQuery>)
+  - [func \(c \*Client\) UpdateStoredScript\(ctx context.Context, workspace, scriptID string, req UpdateScriptRequest\) \(\*irminmodels.StoredScript, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateStoredScript>)
   - [func \(c \*Client\) UpdateUserRoles\(ctx context.Context, workspace, userID string, req UpdateUserRolesRequest\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateUserRoles>)
   - [func \(c \*Client\) UpdateWorkflow\(ctx context.Context, workspace, workflowID string, req UpdateWorkflowRequest\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateWorkflow>)
   - [func \(c \*Client\) UpdateWorkflowSchedule\(ctx context.Context, workspace, workflowID string, schedule irminmodels.Schedule\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateWorkflowSchedule>)
@@ -287,20 +286,18 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type CreateCommitRequest](<#CreateCommitRequest>)
 - [type CreateConnectionRequest](<#CreateConnectionRequest>)
 - [type CreateCredentialRequest](<#CreateCredentialRequest>)
-- [type CreateEditorItemRequest](<#CreateEditorItemRequest>)
 - [type CreatePolicyRequest](<#CreatePolicyRequest>)
 - [type CreateQueryRequest](<#CreateQueryRequest>)
 - [type CreateRepositoryRequest](<#CreateRepositoryRequest>)
 - [type CreateRepositoryTagRequest](<#CreateRepositoryTagRequest>)
+- [type CreateScriptRequest](<#CreateScriptRequest>)
 - [type CreateTagRequest](<#CreateTagRequest>)
 - [type CreateWorkspaceRequest](<#CreateWorkspaceRequest>)
-- [type EditorItemType](<#EditorItemType>)
-- [type ExecuteEditorItemRequest](<#ExecuteEditorItemRequest>)
 - [type ExecuteSQLRequest](<#ExecuteSQLRequest>)
+- [type ExecuteScriptRequest](<#ExecuteScriptRequest>)
 - [type FormFile](<#FormFile>)
 - [type ListPoliciesParams](<#ListPoliciesParams>)
 - [type MergeRefsRequest](<#MergeRefsRequest>)
-- [type MoveEditorItemRequest](<#MoveEditorItemRequest>)
 - [type MoveObjectRequest](<#MoveObjectRequest>)
 - [type RequestOptions](<#RequestOptions>)
 - [type RevertUncommittedChangesRequest](<#RevertUncommittedChangesRequest>)
@@ -309,6 +306,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type TransferOwnershipRequest](<#TransferOwnershipRequest>)
 - [type TransferQueryOwnershipRequest](<#TransferQueryOwnershipRequest>)
 - [type TransferRepositoryOwnershipRequest](<#TransferRepositoryOwnershipRequest>)
+- [type TransferScriptOwnershipRequest](<#TransferScriptOwnershipRequest>)
 - [type TransferWorkflowOwnershipRequest](<#TransferWorkflowOwnershipRequest>)
 - [type UpdateBranchRequest](<#UpdateBranchRequest>)
 - [type UpdateConnectionConfigurationRequest](<#UpdateConnectionConfigurationRequest>)
@@ -318,6 +316,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type UpdateProfileRequest](<#UpdateProfileRequest>)
 - [type UpdateQueryRequest](<#UpdateQueryRequest>)
 - [type UpdateRepositoryRequest](<#UpdateRepositoryRequest>)
+- [type UpdateScriptRequest](<#UpdateScriptRequest>)
 - [type UpdateTagRequest](<#UpdateTagRequest>)
 - [type UpdateUserRolesRequest](<#UpdateUserRolesRequest>)
 - [type UpdateWorkflowRequest](<#UpdateWorkflowRequest>)
@@ -424,15 +423,6 @@ func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef
 
 CompareRefs compares two refs in a repository and returns the differences.
 
-<a name="Client.CopyEditorItem"></a>
-### func \(\*Client\) CopyEditorItem
-
-```go
-func (c *Client) CopyEditorItem(ctx context.Context, workspace, path string, req MoveEditorItemRequest) (*irminmodels.IrminAPIResponse, error)
-```
-
-
-
 <a name="Client.CopyObject"></a>
 ### func \(\*Client\) CopyObject
 
@@ -469,15 +459,6 @@ func (c *Client) CreateConnection(ctx context.Context, workspace string, req Cre
 
 
 
-<a name="Client.CreateEditorFolder"></a>
-### func \(\*Client\) CreateEditorFolder
-
-```go
-func (c *Client) CreateEditorFolder(ctx context.Context, workspace, path string, req CreateEditorItemRequest) (*irminmodels.IrminAPIResponse, error)
-```
-
-
-
 <a name="Client.CreatePolicy"></a>
 ### func \(\*Client\) CreatePolicy
 
@@ -501,6 +482,15 @@ func (c *Client) CreateRepository(ctx context.Context, workspace string, req Cre
 
 ```go
 func (c *Client) CreateStoredQuery(ctx context.Context, workspace string, req CreateQueryRequest) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+```
+
+
+
+<a name="Client.CreateStoredScript"></a>
+### func \(\*Client\) CreateStoredScript
+
+```go
+func (c *Client) CreateStoredScript(ctx context.Context, workspace string, req CreateScriptRequest) (*irminmodels.StoredScript, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -586,15 +576,6 @@ func (c *Client) DeleteConnector(ctx context.Context, connectorID string) (*irmi
 
 DeleteConnector deletes a connector from the system. Requests to this endpoint must be authenticated with a system token.
 
-<a name="Client.DeleteEditorItem"></a>
-### func \(\*Client\) DeleteEditorItem
-
-```go
-func (c *Client) DeleteEditorItem(ctx context.Context, workspace, path string) (*irminmodels.IrminAPIResponse, error)
-```
-
-
-
 <a name="Client.DeleteInvite"></a>
 ### func \(\*Client\) DeleteInvite
 
@@ -636,6 +617,15 @@ func (c *Client) DeleteRepository(ctx context.Context, workspace, slug string) (
 
 ```go
 func (c *Client) DeleteStoredQuery(ctx context.Context, workspace, queryID string) (*irminmodels.IrminAPIResponse, error)
+```
+
+
+
+<a name="Client.DeleteStoredScript"></a>
+### func \(\*Client\) DeleteStoredScript
+
+```go
+func (c *Client) DeleteStoredScript(ctx context.Context, workspace, scriptID string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -708,6 +698,15 @@ func (c *Client) ExecuteSQL(ctx context.Context, workspace string, req ExecuteSQ
 
 ```go
 func (c *Client) ExecuteStoredQuery(ctx context.Context, workspace, queryID string) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error)
+```
+
+
+
+<a name="Client.ExecuteStoredScript"></a>
+### func \(\*Client\) ExecuteStoredScript
+
+```go
+func (c *Client) ExecuteStoredScript(ctx context.Context, workspace, scriptID string, req ExecuteScriptRequest) (*irminmodels.ScriptResult, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -876,15 +875,6 @@ func (c *Client) GetConnector(ctx context.Context, connectorID string) (*irminmo
 
 
 
-<a name="Client.GetEditorItemContent"></a>
-### func \(\*Client\) GetEditorItemContent
-
-```go
-func (c *Client) GetEditorItemContent(ctx context.Context, workspace, path string) (*string, *irminmodels.IrminAPIResponse, error)
-```
-
-
-
 <a name="Client.GetInvite"></a>
 ### func \(\*Client\) GetInvite
 
@@ -998,6 +988,15 @@ func (c *Client) GetRepository(ctx context.Context, workspace, slug string) (*ir
 
 ```go
 func (c *Client) GetStoredQuery(ctx context.Context, workspace, queryID string) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+```
+
+
+
+<a name="Client.GetStoredScript"></a>
+### func \(\*Client\) GetStoredScript
+
+```go
+func (c *Client) GetStoredScript(ctx context.Context, workspace, scriptID string) (*irminmodels.StoredScript, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1128,15 +1127,6 @@ func (c *Client) ListConnectors(ctx context.Context) ([]irminmodels.Connector, *
 
 
 
-<a name="Client.ListEditorItems"></a>
-### func \(\*Client\) ListEditorItems
-
-```go
-func (c *Client) ListEditorItems(ctx context.Context, workspace, path string) ([]irminmodels.EditorItem, *irminmodels.IrminAPIResponse, error)
-```
-
-
-
 <a name="Client.ListInviteInbox"></a>
 ### func \(\*Client\) ListInviteInbox
 
@@ -1187,6 +1177,15 @@ func (c *Client) ListRoles(ctx context.Context) ([]irminmodels.Role, *irminmodel
 
 ```go
 func (c *Client) ListStoredQueries(ctx context.Context, workspace string) ([]irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+```
+
+
+
+<a name="Client.ListStoredScripts"></a>
+### func \(\*Client\) ListStoredScripts
+
+```go
+func (c *Client) ListStoredScripts(ctx context.Context, workspace string) ([]irminmodels.StoredScript, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1272,15 +1271,6 @@ func (c *Client) MergeRefs(ctx context.Context, workspace, repository string, re
 
 MergeRefs merges one ref into another.
 
-<a name="Client.MoveEditorItem"></a>
-### func \(\*Client\) MoveEditorItem
-
-```go
-func (c *Client) MoveEditorItem(ctx context.Context, workspace, path string, req MoveEditorItemRequest) (*irminmodels.IrminAPIResponse, error)
-```
-
-
-
 <a name="Client.MoveObject"></a>
 ### func \(\*Client\) MoveObject
 
@@ -1353,24 +1343,6 @@ func (c *Client) RevertChanges(ctx context.Context, workspace, repository string
 
 
 
-<a name="Client.RunScript"></a>
-### func \(\*Client\) RunScript
-
-```go
-func (c *Client) RunScript(ctx context.Context, workspace, path string, inputs []irminmodels.ActionInputData) (*irminmodels.ScriptResult, *irminmodels.IrminAPIResponse, error)
-```
-
-
-
-<a name="Client.SaveEditorItem"></a>
-### func \(\*Client\) SaveEditorItem
-
-```go
-func (c *Client) SaveEditorItem(ctx context.Context, workspace, path string, req CreateEditorItemRequest) (*irminmodels.IrminAPIResponse, error)
-```
-
-
-
 <a name="Client.Search"></a>
 ### func \(\*Client\) Search
 
@@ -1430,6 +1402,15 @@ func (c *Client) TransferRepository(ctx context.Context, workspace, slug string,
 
 ```go
 func (c *Client) TransferStoredQuery(ctx context.Context, workspace, queryID string, req TransferQueryOwnershipRequest) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+```
+
+
+
+<a name="Client.TransferStoredScript"></a>
+### func \(\*Client\) TransferStoredScript
+
+```go
+func (c *Client) TransferStoredScript(ctx context.Context, workspace, scriptID string, req TransferScriptOwnershipRequest) (*irminmodels.StoredScript, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1538,6 +1519,15 @@ func (c *Client) UpdateRepository(ctx context.Context, workspace, slug string, r
 
 ```go
 func (c *Client) UpdateStoredQuery(ctx context.Context, workspace, queryID string, req UpdateQueryRequest) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+```
+
+
+
+<a name="Client.UpdateStoredScript"></a>
+### func \(\*Client\) UpdateStoredScript
+
+```go
+func (c *Client) UpdateStoredScript(ctx context.Context, workspace, scriptID string, req UpdateScriptRequest) (*irminmodels.StoredScript, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1737,18 +1727,6 @@ type CreateCredentialRequest struct {
 }
 ```
 
-<a name="CreateEditorItemRequest"></a>
-## type CreateEditorItemRequest
-
-CreateEditorItemRequest represents the JSON request body for creating an editor file.
-
-```go
-type CreateEditorItemRequest struct {
-    Content *string        `json:"content,omitempty" example:"This is the content of the file"`
-    Type    EditorItemType `json:"type"              example:"file"                            validate:"required"`
-}
-```
-
 <a name="CreatePolicyRequest"></a>
 ## type CreatePolicyRequest
 
@@ -1810,6 +1788,21 @@ type CreateRepositoryTagRequest struct {
 }
 ```
 
+<a name="CreateScriptRequest"></a>
+## type CreateScriptRequest
+
+CreateScriptRequest represents the JSON request body for creating a script.
+
+```go
+type CreateScriptRequest struct {
+    Name        string   `json:"name"                  validate:"required,max=255"    example:"data-processor.py"`
+    Description *string  `json:"description,omitempty" validate:"max=500"             example:"Data processor for the project"`
+    Content     *string  `json:"content,omitempty"                                    example:"print('Hello, World!')"`
+    Language    *string  `json:"language,omitempty"                                   example:"py"`
+    Tags        []string `json:"tags,omitempty"        validate:"dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
+}
+```
+
 <a name="CreateTagRequest"></a>
 ## type CreateTagRequest
 
@@ -1835,35 +1828,6 @@ type CreateWorkspaceRequest struct {
 }
 ```
 
-<a name="EditorItemType"></a>
-## type EditorItemType
-
-
-
-```go
-type EditorItemType string
-```
-
-<a name="EditorItemTypeFile"></a>
-
-```go
-const (
-    EditorItemTypeFile   EditorItemType = "file"
-    EditorItemTypeFolder EditorItemType = "folder"
-)
-```
-
-<a name="ExecuteEditorItemRequest"></a>
-## type ExecuteEditorItemRequest
-
-ExecuteEditorItemRequest represents the JSON request body for executing editor items.
-
-```go
-type ExecuteEditorItemRequest struct {
-    Input []irminmodels.ActionInputData `json:"input,omitempty"`
-}
-```
-
 <a name="ExecuteSQLRequest"></a>
 ## type ExecuteSQLRequest
 
@@ -1872,6 +1836,17 @@ ExecuteSQLRequest represents the JSON request body for executing SQL.
 ```go
 type ExecuteSQLRequest struct {
     SQL string `json:"sql,omitempty" validate:"validsql" example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
+}
+```
+
+<a name="ExecuteScriptRequest"></a>
+## type ExecuteScriptRequest
+
+ExecuteScriptRequest represents the JSON request body for executing a script.
+
+```go
+type ExecuteScriptRequest struct {
+    Input []irminmodels.ActionInputData `json:"input,omitempty"`
 }
 ```
 
@@ -1919,17 +1894,6 @@ type MergeRefsRequest struct {
     Strategy    string `json:"strategy"              validate:"required,oneof=default dest-wins source-wins" example:"default"`
     Squash      bool   `json:"squash,omitempty"                                                              example:"false"`
     AllowEmpty  bool   `json:"allow_empty,omitempty"                                                         example:"false"`
-}
-```
-
-<a name="MoveEditorItemRequest"></a>
-## type MoveEditorItemRequest
-
-MoveEditorItemRequest represents the JSON request body for moving editor items.
-
-```go
-type MoveEditorItemRequest struct {
-    DestinationPath string `json:"destination_path" validate:"required" example:"/path/to/new/location"`
 }
 ```
 
@@ -2027,6 +1991,17 @@ TransferRepositoryOwnershipRequest represents the JSON request body for transfer
 
 ```go
 type TransferRepositoryOwnershipRequest struct {
+    NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
+}
+```
+
+<a name="TransferScriptOwnershipRequest"></a>
+## type TransferScriptOwnershipRequest
+
+TransferScriptOwnershipRequest represents the JSON request body for transferring script ownership.
+
+```go
+type TransferScriptOwnershipRequest struct {
     NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
 }
 ```
@@ -2148,6 +2123,20 @@ type UpdateRepositoryRequest struct {
     IsImmutable                       *bool   `json:"is_immutable,omitempty"                                                        example:"false"`
     GarbageDefaultRetentionDays       *int    `json:"garbage_default_retention_days,omitempty"                                      example:"30"`
     GarbageDefaultBranchRetentionDays *int    `json:"garbage_default_branch_retention_days,omitempty"                               example:"30"`
+}
+```
+
+<a name="UpdateScriptRequest"></a>
+## type UpdateScriptRequest
+
+UpdateScriptRequest represents the JSON request body for updating a script.
+
+```go
+type UpdateScriptRequest struct {
+    Name        *string `json:"name,omitempty"        validate:"max=255" example:"data-processor.py"`
+    Description *string `json:"description,omitempty" validate:"max=500" example:"Data processor for the project"`
+    Content     *string `json:"content,omitempty"                        example:"print('Hello, World!')"`
+    Language    *string `json:"language,omitempty"                       example:"py"`
 }
 ```
 
@@ -2547,8 +2536,6 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type Diff](<#Diff>)
 - [type DynamicField](<#DynamicField>)
 - [type DynamicFields](<#DynamicFields>)
-- [type EditorItem](<#EditorItem>)
-- [type EditorItemType](<#EditorItemType>)
 - [type FieldMapping](<#FieldMapping>)
 - [type FieldType](<#FieldType>)
 - [type GarbageCollectionRules](<#GarbageCollectionRules>)
@@ -2588,6 +2575,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type SearchResult](<#SearchResult>)
 - [type SelectOption](<#SelectOption>)
 - [type StoredQuery](<#StoredQuery>)
+- [type StoredScript](<#StoredScript>)
 - [type Tag](<#Tag>)
 - [type TagEntityType](<#TagEntityType>)
 - [type TagWithAssets](<#TagWithAssets>)
@@ -2938,41 +2926,6 @@ DynamicFields represents a list of dynamic fields for a form.
 
 ```go
 type DynamicFields map[string]DynamicField
-```
-
-<a name="EditorItem"></a>
-## type EditorItem
-
-
-
-```go
-type EditorItem struct {
-    Name         string         `json:"name"               validate:"required,max=255"           example:"file.txt"`
-    Path         string         `json:"path"               validate:"required"                   example:"/path/to/file.txt"`
-    Type         EditorItemType `json:"type"               validate:"required,oneof=file folder" example:"file"`
-    Content      *string        `json:"content,omitempty"                                        example:"This is the content of the file"`
-    Language     *string        `json:"language,omitempty" validate:"required_if=Type file"      example:"js"` // js, py, go, etc.
-    Children     []EditorItem   `json:"children,omitempty" validate:"dive,excluded_if=Type file"`
-    LastModified time.Time      `json:"last_modified"      validate:"required"                   example:"2025-01-15T10:30:00Z"`
-}
-```
-
-<a name="EditorItemType"></a>
-## type EditorItemType
-
-
-
-```go
-type EditorItemType string
-```
-
-<a name="EditorItemTypeFile"></a>
-
-```go
-const (
-    EditorItemTypeFile   EditorItemType = "file"
-    EditorItemTypeFolder EditorItemType = "folder"
-)
 ```
 
 <a name="FieldMapping"></a>
@@ -3335,18 +3288,18 @@ type PipelineStage struct {
     Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository,validpipelinestage" example:"repository"`
 
     // Action stage specific
-    Executable *string `json:"executable,omitempty" validate:"min=1" example:"python data_processor.py"`
+    ScriptID *string `json:"script_id,omitempty" validate:"validsqid=scripts,required_if=Type action" example:"scr_8x2m9k4n7p5q"`
 
     // Connection stage specific
-    ConnectionID        *string   `json:"connection_id,omitempty"         validate:"validsqid=connections" example:"conn_8x2m9k4n7p5q"`
-    ConnectionWritePath *string   `json:"connection_write_path,omitempty"                                  example:"/exports/processed_data.csv"`
-    ConnectionReadPaths *[]string `json:"connection_read_paths,omitempty" validate:"dive"                  example:"/imports/raw_data.csv,/imports/metadata.json"`
+    ConnectionID        *string   `json:"connection_id,omitempty"         validate:"validsqid=connections,required_if=Type connection" example:"conn_8x2m9k4n7p5q"`
+    ConnectionWritePath *string   `json:"connection_write_path,omitempty"                                                              example:"/exports/processed_data.csv"`
+    ConnectionReadPaths *[]string `json:"connection_read_paths,omitempty" validate:"dive"                                              example:"/imports/raw_data.csv,/imports/metadata.json"`
 
     // Repository stage specific
-    Repository          *string   `json:"repository,omitempty"            example:"customer-analytics"`
-    RepositoryBranch    *string   `json:"repository_branch,omitempty"     example:"main"`
-    RepositoryWritePath *string   `json:"repository_write_path,omitempty" example:"/processed/customers.json"              validate:"omitempty"`
-    RepositoryReadPaths *[]string `json:"repository_read_paths,omitempty" example:"/raw/customers.csv,/config/schema.json" validate:"dive"`
+    Repository          *string   `json:"repository,omitempty"            validate:"required_if=Type repository" example:"customer-analytics"`
+    RepositoryBranch    *string   `json:"repository_branch,omitempty"                                            example:"main"`
+    RepositoryWritePath *string   `json:"repository_write_path,omitempty" validate:"omitempty"                   example:"/processed/customers.json"`
+    RepositoryReadPaths *[]string `json:"repository_read_paths,omitempty" validate:"dive"                        example:"/raw/customers.csv,/config/schema.json"`
 }
 ```
 
@@ -3377,13 +3330,13 @@ Policy represents a policy in the API response.
 ```go
 type Policy struct {
     // ID is the unique identifier for the policy
-    ID  string `json:"id"                    validate:"required,validsqid=policies"                                                                                                                                                                                                    example:"pol_8x2m9k4n7p5q"`
+    ID  string `json:"id"                    validate:"required,validsqid=policies"                                                                                                                                                                                             example:"pol_8x2m9k4n7p5q"`
     // Effect specifies whether the policy is an allow or deny policy
-    Effect PolicyEffect `json:"effect"                validate:"required,oneof=allow deny"                                                                                                                                                                                                      example:"allow"`
+    Effect PolicyEffect `json:"effect"                validate:"required,oneof=allow deny"                                                                                                                                                                                               example:"allow"`
     // Action specifies the action that the policy is applied to
-    Action PolicyAction `json:"action"                validate:"required,oneof=create read update delete"                                                                                                                                                                                       example:"read"`
+    Action PolicyAction `json:"action"                validate:"required,oneof=create read update delete"                                                                                                                                                                                example:"read"`
     // Resource specifies the resource type that the policy is applied to
-    Resource PolicyResource `json:"resource"              validate:"required,oneof=workspace editor_script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag" example:"repository"`
+    Resource PolicyResource `json:"resource"              validate:"required,oneof=workspace script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag" example:"repository"`
     // ResourceID is used to specify which resource the policy is applied to.
     // When undefined, the policy is applied to all resources of the given type.
     //
@@ -3407,9 +3360,9 @@ type Policy struct {
     // Note that some resources point to their parent resource's ID:
     // - repository objects, branches, tags, and commits point to their repository's ID
     // - workflow runs point to their workflow's ID
-    ResourceID *string `json:"resource_id,omitempty"                                                                                                                                                                                                                                           example:"repo_8x2m9k4n7p5q"`
+    ResourceID *string `json:"resource_id,omitempty"                                                                                                                                                                                                                                    example:"repo_8x2m9k4n7p5q"`
     // Principal specifies which group of users the policy is applied to
-    Principal PolicyPrincipal `json:"principal"             validate:"required,oneof=workspace_user role everyone"                                                                                                                                                                                    example:"role"`
+    Principal PolicyPrincipal `json:"principal"             validate:"required,oneof=workspace_user role everyone"                                                                                                                                                                             example:"role"`
     // Role is used to give a policy to a specific role
     Role *Role `json:"role,omitempty"`
     // User is used to give a policy to a specific workspace user
@@ -3498,9 +3451,9 @@ type PolicyResource string
 const (
     // PolicyResourceWorkspace represents a workspace resource.
     PolicyResourceWorkspace PolicyResource = "workspace"
-    // PolicyResourceEditorScript represents script editor resource.
-    PolicyResourceEditorScript PolicyResource = "editor_script"
-    // PolicyResourceQuery represents a query resource.
+    // PolicyResourceScript represents stored script resource.
+    PolicyResourceScript PolicyResource = "script"
+    // PolicyResourceQuery represents a stored query resource.
     PolicyResourceQuery PolicyResource = "query"
     // PolicyResourceWorkflow represents a workflow resource.
     PolicyResourceWorkflow PolicyResource = "workflow"
@@ -3555,6 +3508,7 @@ PolicyResourceOptions represents all possible policy resource options for a give
 ```go
 type PolicyResourceOptions struct {
     Queries      []PolicyResourceOption `json:"queries"      validate:"required,dive"`
+    Scripts      []PolicyResourceOption `json:"scripts"      validate:"required,dive"`
     Workflows    []PolicyResourceOption `json:"workflows"    validate:"required,dive"`
     Connections  []PolicyResourceOption `json:"connections"  validate:"required,dive"`
     Repositories []PolicyResourceOption `json:"repositories" validate:"required,dive"`
@@ -3719,14 +3673,14 @@ SearchFilters represents the search filter options \(importing from controllers\
 
 ```go
 type SearchFilters struct {
-    Query    string   `json:"query"               validate:"required,min=3"                                                                example:"customer data"`
-    Types    []string `json:"types"               validate:"dive,oneof=workflow repository connection query user repository_object invite" example:"repository,workflow"`
-    Tags     []string `json:"tags"                validate:"dive,validsqid=tags"                                                           example:"tag_8x2m9k4n7p5q,tag_9y3n0l5o8r6s"`
-    OwnerID  *string  `json:"owner_id,omitempty"  validate:"omitempty,validsqid=users"                                                     example:"usr_2k8n9q1m7p3x4z"`
-    DateFrom *string  `json:"date_from,omitempty" validate:"omitempty,datetime"                                                            example:"2025-01-01T00:00:00Z"`
-    DateTo   *string  `json:"date_to,omitempty"   validate:"omitempty,datetime"                                                            example:"2025-12-31T23:59:59Z"`
-    Limit    int      `json:"limit"               validate:"required,max=100"                                                              example:"20"`
-    Offset   int      `json:"offset"              validate:"min=0"                                                                         example:"0"`
+    Query    string   `json:"query"               validate:"required,min=3"                                                                       example:"customer data"`
+    Types    []string `json:"types"               validate:"dive,oneof=workflow repository connection query script user repository_object invite" example:"repository,workflow"`
+    Tags     []string `json:"tags"                validate:"dive,validsqid=tags"                                                                  example:"tag_8x2m9k4n7p5q,tag_9y3n0l5o8r6s"`
+    OwnerID  *string  `json:"owner_id,omitempty"  validate:"omitempty,validsqid=users"                                                            example:"usr_2k8n9q1m7p3x4z"`
+    DateFrom *string  `json:"date_from,omitempty" validate:"omitempty,datetime"                                                                   example:"2025-01-01T00:00:00Z"`
+    DateTo   *string  `json:"date_to,omitempty"   validate:"omitempty,datetime"                                                                   example:"2025-12-31T23:59:59Z"`
+    Limit    int      `json:"limit"               validate:"required,max=100"                                                                     example:"20"`
+    Offset   int      `json:"offset"              validate:"min=0"                                                                                example:"0"`
 }
 ```
 
@@ -3751,16 +3705,17 @@ SearchResult represents a unified search result with typed entity data.
 
 ```go
 type SearchResult struct {
-    Type      WorkspaceSearchResultType `json:"type"      validate:"required,oneof=workflow repository connection query user repository_object invite" example:"repository"`
-    Relevance float64                   `json:"relevance" validate:"required,gte=0,lte=5"                                                              example:"4.2"`
+    Type      WorkspaceSearchResultType `json:"type"      validate:"required,oneof=workflow repository connection query script user repository_object invite" example:"repository"`
+    Relevance float64                   `json:"relevance" validate:"required,gte=0,lte=5"                                                                     example:"4.2"`
 
-    Repository       *Repository  `json:"repository,omitempty"`
-    RepositoryObject *Object      `json:"repository_object,omitempty"`
-    Workflow         *Workflow    `json:"workflow,omitempty"`
-    Connection       *Connection  `json:"connection,omitempty"`
-    Query            *StoredQuery `json:"query,omitempty"`
-    User             *User        `json:"user,omitempty"`
-    Invite           *Invite      `json:"invite,omitempty"`
+    Repository       *Repository   `json:"repository,omitempty"`
+    RepositoryObject *Object       `json:"repository_object,omitempty"`
+    Workflow         *Workflow     `json:"workflow,omitempty"`
+    Connection       *Connection   `json:"connection,omitempty"`
+    Query            *StoredQuery  `json:"query,omitempty"`
+    Script           *StoredScript `json:"script,omitempty"`
+    User             *User         `json:"user,omitempty"`
+    Invite           *Invite       `json:"invite,omitempty"`
 }
 ```
 
@@ -3791,6 +3746,25 @@ type StoredQuery struct {
     Tags        []Tag     `json:"tags,omitempty" validate:"dive"`
     CreatedAt   time.Time `json:"created_at"     validate:"required"                   example:"2025-01-15T10:30:00Z"`
     UpdatedAt   time.Time `json:"updated_at"     validate:"required"                   example:"2025-12-01T14:22:30Z"`
+}
+```
+
+<a name="StoredScript"></a>
+## type StoredScript
+
+
+
+```go
+type StoredScript struct {
+    ID          string    `json:"id"                    validate:"required,validsqid=scripts" example:"scr_8x2m9k4n7p5q"`
+    Name        string    `json:"name"                  validate:"required,max=255"           example:"script.py"`
+    Description *string   `json:"description,omitempty" validate:"max=500"                    example:"Data processor for the project"`
+    Content     *string   `json:"content,omitempty"                                           example:"This is the content of the file"`
+    Language    *string   `json:"language,omitempty"                                          example:"js"` // js, py, go, etc.
+    Owner       User      `json:"owner"                 validate:"required"`
+    Tags        []Tag     `json:"tags,omitempty"        validate:"dive"`
+    CreatedAt   time.Time `json:"created_at"            validate:"required"                   example:"2025-01-15T10:30:00Z"`
+    UpdatedAt   time.Time `json:"updated_at"            validate:"required"                   example:"2025-12-01T14:22:30Z"`
 }
 ```
 
@@ -3827,6 +3801,7 @@ type TagEntityType string
 const (
     TagEntityTypeRepository TagEntityType = "repositories"
     TagEntityTypeQuery      TagEntityType = "queries"
+    TagEntityTypeScript     TagEntityType = "scripts"
     TagEntityTypeWorkflow   TagEntityType = "workflows"
     TagEntityTypeConnection TagEntityType = "connections"
     TagEntityTypeObject     TagEntityType = "repository_objects"
@@ -3853,11 +3828,12 @@ TaggedAssets represents all assets associated with a specific tag.
 
 ```go
 type TaggedAssets struct {
-    Queries           []StoredQuery `json:"queries"            validate:"dive"`
-    Repositories      []Repository  `json:"repositories"       validate:"dive"`
-    Workflows         []Workflow    `json:"workflows"          validate:"dive"`
-    Connections       []Connection  `json:"connections"        validate:"dive"`
-    RepositoryObjects []Object      `json:"repository_objects" validate:"dive"`
+    Queries           []StoredQuery  `json:"queries"            validate:"dive"`
+    Scripts           []StoredScript `json:"scripts"            validate:"dive"`
+    Repositories      []Repository   `json:"repositories"       validate:"dive"`
+    Workflows         []Workflow     `json:"workflows"          validate:"dive"`
+    Connections       []Connection   `json:"connections"        validate:"dive"`
+    RepositoryObjects []Object       `json:"repository_objects" validate:"dive"`
 }
 ```
 
@@ -4021,11 +3997,11 @@ type Workflowable struct {
     Live   bool            `json:"live,omitempty"   example:"true"`
     Stages []PipelineStage `json:"stages,omitempty"                validate:"dive"`
 
-    Executable              string            `json:"executable,omitempty"                validate:"required_if=Type action" example:"python analyze_data.py"`
+    ScriptID                string            `json:"script_id,omitempty"                 validate:"validsqid=scripts,required_if=Type action" example:"scr_8x2m9k4n7p5q"`
     Input                   []ActionInputData `json:"input,omitempty"                     validate:"dive"`
-    ResultsRepository       *string           `json:"results_repository,omitempty"                                           example:"analytics-results"`
-    ResultsRepositoryBranch *string           `json:"results_repository_branch,omitempty"                                    example:"main"`
-    ResultsRepositoryPath   *string           `json:"results_repository_path,omitempty"   validate:"omitempty"               example:"/results/analysis.json"`
+    ResultsRepository       *string           `json:"results_repository,omitempty"                                                             example:"analytics-results"`
+    ResultsRepositoryBranch *string           `json:"results_repository_branch,omitempty"                                                      example:"main"`
+    ResultsRepositoryPath   *string           `json:"results_repository_path,omitempty"   validate:"omitempty"                                 example:"/results/analysis.json"`
 }
 ```
 
@@ -4082,6 +4058,7 @@ const (
     WorkspaceSearchResultTypeRepository       WorkspaceSearchResultType = "repository"
     WorkspaceSearchResultTypeConnection       WorkspaceSearchResultType = "connection"
     WorkspaceSearchResultTypeQuery            WorkspaceSearchResultType = "query"
+    WorkspaceSearchResultTypeScript           WorkspaceSearchResultType = "script"
     WorkspaceSearchResultTypeUser             WorkspaceSearchResultType = "user"
     WorkspaceSearchResultTypeRepositoryObject WorkspaceSearchResultType = "repository_object"
     WorkspaceSearchResultTypeInvite           WorkspaceSearchResultType = "invite"

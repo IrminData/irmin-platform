@@ -79,11 +79,10 @@ func (v *Validator) validatePipelineStage(fl validator.FieldLevel) bool {
 
 // validateActionPipelineStage validates action-type pipeline stages.
 func (v *Validator) validateActionPipelineStage(parentStruct reflect.Value) bool {
-	executableField := parentStruct.FieldByName("Executable")
+	scriptIDField := parentStruct.FieldByName("ScriptID")
 
-	// Action stages must have an executable
-	if !executableField.IsValid() || executableField.IsNil() ||
-		(executableField.Elem().IsValid() && executableField.Elem().String() == "") {
+	// Action stages must have a valid script ID
+	if !v.validateResourceID(scriptIDField, "scripts") {
 		return false
 	}
 
@@ -269,23 +268,23 @@ func (v *Validator) validateActionWorkflowable(_ reflect.Value) bool {
 	return true
 }
 
-// validateConnectionID validates that a connection ID field is a valid SQID.
-func (v *Validator) validateConnectionID(connectionIDField reflect.Value) bool {
-	if !connectionIDField.IsValid() {
+// validateResourceID validates that a resource ID field is a valid SQID for a given resource type.
+func (v *Validator) validateResourceID(resourceIDField reflect.Value, resourceType string) bool {
+	if !resourceIDField.IsValid() {
 		return false
 	}
 
-	var connectionID string
-	if connectionIDField.Kind() == reflect.Ptr {
-		if connectionIDField.IsNil() {
+	var resourceID string
+	if resourceIDField.Kind() == reflect.Ptr {
+		if resourceIDField.IsNil() {
 			return false
 		}
-		connectionID = connectionIDField.Elem().String()
+		resourceID = resourceIDField.Elem().String()
 	} else {
-		connectionID = connectionIDField.String()
+		resourceID = resourceIDField.String()
 	}
 
-	if connectionID == "" {
+	if resourceID == "" {
 		return false
 	}
 
@@ -294,8 +293,8 @@ func (v *Validator) validateConnectionID(connectionIDField reflect.Value) bool {
 		return true
 	}
 
-	// Validate that the connection ID is a valid SQID for connection type
-	decoded, err := v.sqidManager.Decode("connections", connectionID)
+	// Validate that the resource ID is a valid SQID for the resource type
+	decoded, err := v.sqidManager.Decode(resourceType, resourceID)
 	if err != nil {
 		return false
 	}
@@ -306,4 +305,10 @@ func (v *Validator) validateConnectionID(connectionIDField reflect.Value) bool {
 	}
 
 	return true
+}
+
+// validateConnectionID validates that a connection ID field is a valid SQID.
+// Deprecated: Use validateResourceID instead.
+func (v *Validator) validateConnectionID(connectionIDField reflect.Value) bool {
+	return v.validateResourceID(connectionIDField, "connections")
 }

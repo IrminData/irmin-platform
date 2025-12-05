@@ -77,12 +77,6 @@ func (c *Client) CompareRefs(
 ) (*irminmodels.Diff, *irminmodels.IrminAPIResponse, error)
     CompareRefs compares two refs in a repository and returns the differences.
 
-func (c *Client) CopyEditorItem(
-	ctx context.Context,
-	workspace, path string,
-	req MoveEditorItemRequest,
-) (*irminmodels.IrminAPIResponse, error)
-
 func (c *Client) CopyObject(
 	ctx context.Context,
 	workspace, repository, path, ref string,
@@ -108,12 +102,6 @@ func (c *Client) CreateConnection(
 	req CreateConnectionRequest,
 ) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
 
-func (c *Client) CreateEditorFolder(
-	ctx context.Context,
-	workspace, path string,
-	req CreateEditorItemRequest,
-) (*irminmodels.IrminAPIResponse, error)
-
 func (c *Client) CreatePolicy(
 	ctx context.Context,
 	workspace string,
@@ -132,6 +120,12 @@ func (c *Client) CreateStoredQuery(
 	workspace string,
 	req CreateQueryRequest,
 ) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CreateStoredScript(
+	ctx context.Context,
+	workspace string,
+	req CreateScriptRequest,
+) (*irminmodels.StoredScript, *irminmodels.IrminAPIResponse, error)
 
 func (c *Client) CreateTag(
 	ctx context.Context,
@@ -182,8 +176,6 @@ func (c *Client) DeleteConnector(ctx context.Context, connectorID string) (*irmi
     DeleteConnector deletes a connector from the system. Requests to this
     endpoint must be authenticated with a system token.
 
-func (c *Client) DeleteEditorItem(ctx context.Context, workspace, path string) (*irminmodels.IrminAPIResponse, error)
-
 func (c *Client) DeleteInvite(ctx context.Context, inviteID string) (*irminmodels.IrminAPIResponse, error)
 
 func (c *Client) DeleteObject(
@@ -199,6 +191,11 @@ func (c *Client) DeleteRepository(ctx context.Context, workspace, slug string) (
 func (c *Client) DeleteStoredQuery(
 	ctx context.Context,
 	workspace, queryID string,
+) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) DeleteStoredScript(
+	ctx context.Context,
+	workspace, scriptID string,
 ) (*irminmodels.IrminAPIResponse, error)
 
 func (c *Client) DeleteTag(
@@ -235,6 +232,12 @@ func (c *Client) ExecuteStoredQuery(
 	ctx context.Context,
 	workspace, queryID string,
 ) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ExecuteStoredScript(
+	ctx context.Context,
+	workspace, scriptID string,
+	req ExecuteScriptRequest,
+) (*irminmodels.ScriptResult, *irminmodels.IrminAPIResponse, error)
 
 func (c *Client) FetchAPI(ctx context.Context, opts RequestOptions, out any) (*irminmodels.IrminAPIResponse, error)
     FetchAPI sends a request and attempts to parse the response into
@@ -356,11 +359,6 @@ func (c *Client) GetConnector(
 	connectorID string,
 ) (*irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
 
-func (c *Client) GetEditorItemContent(
-	ctx context.Context,
-	workspace, path string,
-) (*string, *irminmodels.IrminAPIResponse, error)
-
 func (c *Client) GetInvite(
 	ctx context.Context,
 	inviteID string,
@@ -431,6 +429,11 @@ func (c *Client) GetStoredQuery(
 	workspace, queryID string,
 ) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) GetStoredScript(
+	ctx context.Context,
+	workspace, scriptID string,
+) (*irminmodels.StoredScript, *irminmodels.IrminAPIResponse, error)
+
 func (c *Client) GetTag(
 	ctx context.Context,
 	workspace, repository, tag string,
@@ -499,11 +502,6 @@ func (c *Client) ListConnections(
 
 func (c *Client) ListConnectors(ctx context.Context) ([]irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
 
-func (c *Client) ListEditorItems(
-	ctx context.Context,
-	workspace, path string,
-) ([]irminmodels.EditorItem, *irminmodels.IrminAPIResponse, error)
-
 func (c *Client) ListInviteInbox(ctx context.Context) ([]irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
 
 func (c *Client) ListInvitesToWorkspace(
@@ -529,6 +527,11 @@ func (c *Client) ListStoredQueries(
 	ctx context.Context,
 	workspace string,
 ) ([]irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListStoredScripts(
+	ctx context.Context,
+	workspace string,
+) ([]irminmodels.StoredScript, *irminmodels.IrminAPIResponse, error)
 
 func (c *Client) ListTags(
 	ctx context.Context,
@@ -573,12 +576,6 @@ func (c *Client) MergeRefs(
 ) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
     MergeRefs merges one ref into another.
 
-func (c *Client) MoveEditorItem(
-	ctx context.Context,
-	workspace, path string,
-	req MoveEditorItemRequest,
-) (*irminmodels.IrminAPIResponse, error)
-
 func (c *Client) MoveObject(
 	ctx context.Context,
 	workspace, repository, path, ref string,
@@ -619,18 +616,6 @@ func (c *Client) RevertChanges(
 	ctx context.Context,
 	workspace, repository string,
 	req RevertUncommittedChangesRequest,
-) (*irminmodels.IrminAPIResponse, error)
-
-func (c *Client) RunScript(
-	ctx context.Context,
-	workspace, path string,
-	inputs []irminmodels.ActionInputData,
-) (*irminmodels.ScriptResult, *irminmodels.IrminAPIResponse, error)
-
-func (c *Client) SaveEditorItem(
-	ctx context.Context,
-	workspace, path string,
-	req CreateEditorItemRequest,
 ) (*irminmodels.IrminAPIResponse, error)
 
 func (c *Client) Search(
@@ -675,6 +660,12 @@ func (c *Client) TransferStoredQuery(
 	workspace, queryID string,
 	req TransferQueryOwnershipRequest,
 ) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) TransferStoredScript(
+	ctx context.Context,
+	workspace, scriptID string,
+	req TransferScriptOwnershipRequest,
+) (*irminmodels.StoredScript, *irminmodels.IrminAPIResponse, error)
 
 func (c *Client) TransferWorkflow(
 	ctx context.Context,
@@ -748,6 +739,12 @@ func (c *Client) UpdateStoredQuery(
 	workspace, queryID string,
 	req UpdateQueryRequest,
 ) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) UpdateStoredScript(
+	ctx context.Context,
+	workspace, scriptID string,
+	req UpdateScriptRequest,
+) (*irminmodels.StoredScript, *irminmodels.IrminAPIResponse, error)
 
 func (c *Client) UpdateUserRoles(ctx context.Context,
 	workspace, userID string,
@@ -869,13 +866,6 @@ type CreateCredentialRequest struct {
     CreateCredentialRequest represents the JSON request body for creating API
     credentials.
 
-type CreateEditorItemRequest struct {
-	Content *string        `json:"content,omitempty" example:"This is the content of the file"`
-	Type    EditorItemType `json:"type"              example:"file"                            validate:"required"`
-}
-    CreateEditorItemRequest represents the JSON request body for creating an
-    editor file.
-
 type CreatePolicyRequest struct {
 	Effect     irminmodels.PolicyEffect    `json:"effect"                validate:"required,oneof=allow deny"                                                                                                                                                                                                      example:"allow"`
 	Action     irminmodels.PolicyAction    `json:"action"                validate:"required,oneof=create read update delete"                                                                                                                                                                                       example:"read"`
@@ -915,6 +905,15 @@ type CreateRepositoryTagRequest struct {
     CreateRepositoryTagRequest represents the JSON request body for creating a
     repository tag.
 
+type CreateScriptRequest struct {
+	Name        string   `json:"name"                  validate:"required,max=255"    example:"data-processor.py"`
+	Description *string  `json:"description,omitempty" validate:"max=500"             example:"Data processor for the project"`
+	Content     *string  `json:"content,omitempty"                                    example:"print('Hello, World!')"`
+	Language    *string  `json:"language,omitempty"                                   example:"py"`
+	Tags        []string `json:"tags,omitempty"        validate:"dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
+}
+    CreateScriptRequest represents the JSON request body for creating a script.
+
 type CreateTagRequest struct {
 	Name        string `json:"name"                  validate:"required,validslug" example:"v1.0.0"`
 	Color       string `json:"color,omitempty"       validate:"iscolor"            example:"#000000"`
@@ -929,22 +928,16 @@ type CreateWorkspaceRequest struct {
     CreateWorkspaceRequest represents the JSON request body for creating a
     workspace.
 
-type EditorItemType string
-
-const (
-	EditorItemTypeFile   EditorItemType = "file"
-	EditorItemTypeFolder EditorItemType = "folder"
-)
-type ExecuteEditorItemRequest struct {
-	Input []irminmodels.ActionInputData `json:"input,omitempty"`
-}
-    ExecuteEditorItemRequest represents the JSON request body for executing
-    editor items.
-
 type ExecuteSQLRequest struct {
 	SQL string `json:"sql,omitempty" validate:"validsql" example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
 }
     ExecuteSQLRequest represents the JSON request body for executing SQL.
+
+type ExecuteScriptRequest struct {
+	Input []irminmodels.ActionInputData `json:"input,omitempty"`
+}
+    ExecuteScriptRequest represents the JSON request body for executing a
+    script.
 
 type FormFile struct {
 	FieldName string    // The form field name
@@ -975,12 +968,6 @@ type MergeRefsRequest struct {
 	AllowEmpty  bool   `json:"allow_empty,omitempty"                                                         example:"false"`
 }
     MergeRefsRequest represents the JSON request body for merging refs.
-
-type MoveEditorItemRequest struct {
-	DestinationPath string `json:"destination_path" validate:"required" example:"/path/to/new/location"`
-}
-    MoveEditorItemRequest represents the JSON request body for moving editor
-    items.
 
 type MoveObjectRequest struct {
 	NewPath string `json:"new_path" validate:"required" example:"path/to/new/location"`
@@ -1038,6 +1025,12 @@ type TransferRepositoryOwnershipRequest struct {
 }
     TransferRepositoryOwnershipRequest represents the JSON request body for
     transferring repository ownership.
+
+type TransferScriptOwnershipRequest struct {
+	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
+}
+    TransferScriptOwnershipRequest represents the JSON request body for
+    transferring script ownership.
 
 type TransferWorkflowOwnershipRequest struct {
 	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
@@ -1108,6 +1101,14 @@ type UpdateRepositoryRequest struct {
 }
     UpdateRepositoryRequest represents the JSON request body for updating a
     repository.
+
+type UpdateScriptRequest struct {
+	Name        *string `json:"name,omitempty"        validate:"max=255" example:"data-processor.py"`
+	Description *string `json:"description,omitempty" validate:"max=500" example:"Data processor for the project"`
+	Content     *string `json:"content,omitempty"                        example:"print('Hello, World!')"`
+	Language    *string `json:"language,omitempty"                       example:"py"`
+}
+    UpdateScriptRequest represents the JSON request body for updating a script.
 
 type UpdateTagRequest struct {
 	Name        *string `json:"name,omitempty"        validate:"validslug" example:"v1.0.0"`
