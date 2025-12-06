@@ -9,6 +9,7 @@ import {
   IoLink,
   IoPlay,
 } from 'react-icons/io5';
+import { RiFlowChart } from 'react-icons/ri';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -26,7 +27,8 @@ type WizardType =
   | 'data-export'
   | 'repository'
   | 'connection'
-  | 'workflow';
+  | 'workflow'
+  | 'pipeline';
 
 interface WizardSelectorProps {
   /** Array of wizard types to display. If not specified, all available wizards will be shown */
@@ -55,6 +57,7 @@ export default function WizardSelector({
     'repository',
     'connection',
     'workflow',
+    'pipeline',
   ];
 
   // Use provided availableWizards or default to all wizards
@@ -135,6 +138,17 @@ export default function WizardSelector({
           />
         )}
 
+      {/* Pipeline Wizard */}
+      {shouldShowWizard('pipeline') &&
+        isResourceAllowed('workflow', 'create') && (
+          <WizardButton
+            onClick={() => openWizard('pipeline')}
+            icon={<RiFlowChart className='text-xl' />}
+            title={dict.workflow.create.configurePipeline}
+            description={dict.wizard.workflowDescription}
+          />
+        )}
+
       {/* Data Import Wizard Modal */}
       <DataImportWizardModal
         isOpen={
@@ -189,6 +203,18 @@ export default function WizardSelector({
         }
         closeModal={closeModal}
         workflowType={undefined}
+      />
+
+      {/* Pipeline Wizard Modal */}
+      <WorkflowWizardModal
+        isOpen={
+          isModalOpen &&
+          selectedWizard === 'pipeline' &&
+          shouldShowWizard('pipeline') &&
+          isResourceAllowed('workflow', 'create')
+        }
+        closeModal={closeModal}
+        workflowType='pipeline'
       />
     </div>
   );

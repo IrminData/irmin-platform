@@ -53,6 +53,11 @@ function SelectWorkflowTypeStep({
   }[] = useMemo(
     () => [
       {
+        type: 'pipeline',
+        icon: <RiFlowChart size={18} className='mr-4' />,
+        label: dict.workflow.pipeline.pipeline,
+      },
+      {
         type: 'action',
         icon: <TbPlayerPlay size={18} className='mr-4' />,
         label: dict.workflow.action,
@@ -66,11 +71,6 @@ function SelectWorkflowTypeStep({
         type: 'export',
         icon: <TbDatabaseExport size={18} className='mr-4' />,
         label: dict.workflow.export,
-      },
-      {
-        type: 'pipeline',
-        icon: <RiFlowChart size={18} className='mr-4' />,
-        label: dict.workflow.pipeline.pipeline,
       },
     ],
     [dict]

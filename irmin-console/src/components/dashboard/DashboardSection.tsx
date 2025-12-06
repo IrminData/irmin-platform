@@ -173,7 +173,9 @@ const DashboardSection = () => {
           <div
             className={`flex w-full flex-row items-stretch justify-start gap-2`}
           >
-            <WizardSelector availableWizards={['data-import', 'data-export']} />
+            <WizardSelector
+              availableWizards={['data-import', 'data-export', 'pipeline']}
+            />
           </div>
           {/* List cards */}
           <div

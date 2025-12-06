@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 
 import { RiFlowChart } from 'react-icons/ri';
 import {
+  TbCode,
   TbDatabaseExport,
   TbDatabaseImport,
   TbPlayerPlay,
@@ -42,10 +43,10 @@ export default function WorkflowsLayoutWrapper({
         link: `${baseUrl}`,
       },
       {
-        icon: <TbPlayerPlay />,
-        name: dict.workflow.actions,
-        slug: 'action-workflows',
-        link: `${baseUrl}/actions`,
+        icon: <RiFlowChart />,
+        name: dict.workflow.pipelines,
+        slug: 'pipeline-workflows',
+        link: `${baseUrl}/pipelines`,
       },
       {
         icon: <TbDatabaseImport />,
@@ -60,10 +61,10 @@ export default function WorkflowsLayoutWrapper({
         link: `${baseUrl}/exports`,
       },
       {
-        icon: <RiFlowChart />,
-        name: dict.workflow.pipelines,
-        slug: 'pipeline-workflows',
-        link: `${baseUrl}/pipelines`,
+        icon: <TbCode />,
+        name: dict.workflow.actions,
+        slug: 'action-workflows',
+        link: `${baseUrl}/actions`,
       },
       {
         icon: <TbPlayerPlay />,
