@@ -1,49 +1,29 @@
-'use client';
+import RepositoryObjectSection from '@/components/repository/RepositoryObjectSection';
 
-import { notFound, useSearchParams } from 'next/navigation';
-
-import RepositorySection from '@/components/repository/RepositorySection';
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
-
-import { useRepositoryObject } from '@/hooks/api';
+import type { PageSearchParams } from '@/types/internal/PageSearchParams';
 
 import type { RepositoryRouteParams } from '../layout';
 
 /**
- * Page to view a repository object from a specific path at a specific ref
+ * Page to view a repository object from a specific path at a specific ref.
+ * GitHub-like layout with filetree at top, content in middle, and details sidebar.
  */
-export default function RepositoryObjectPage({
-  params,
-}: {
-  params: RepositoryRouteParams;
+export default async function RepositoryObjectPage(props: {
+  params: Promise<RepositoryRouteParams>;
+  searchParams: Promise<PageSearchParams>;
 }) {
-  const searchParams = useSearchParams();
-  const ref = searchParams.get('ref');
-  const path = searchParams.get('path');
-
-  const { repositoryObjectQuery } = useRepositoryObject(
-    params.repository,
-    ref ? ref : undefined,
-    path ? path : undefined
-  );
-
-  if (repositoryObjectQuery.isError) {
-    console.error(repositoryObjectQuery.error);
-    return notFound();
-  }
-
-  if (repositoryObjectQuery.isLoading || !repositoryObjectQuery.data?.data) {
-    return (
-      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
-        <LoadingSkeleton />
-      </div>
-    );
-  }
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+  const ref =
+    typeof searchParams.ref === 'string' ? searchParams.ref : undefined;
+  const path =
+    typeof searchParams.path === 'string' ? searchParams.path : undefined;
 
   return (
-    <RepositorySection
-      initialSelectedObject={repositoryObjectQuery.data.data}
-      initialObjectContentViewerOpen={true}
+    <RepositoryObjectSection
+      repositorySlug={params.repository}
+      repositoryRef={ref}
+      path={path}
     />
   );
 }

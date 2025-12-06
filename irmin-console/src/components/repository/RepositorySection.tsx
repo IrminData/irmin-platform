@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { AiOutlinePlayCircle } from 'react-icons/ai';
-import { IoClose } from 'react-icons/io5';
 import {
   TbBookmark,
   TbChevronUp,
@@ -26,7 +25,6 @@ import DisplayTitle from '@/components/ui/display-title';
 import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import { QueryError } from '@/components/ui/error/QueryError';
 import SafeComponent from '@/components/ui/error/SafeComponent';
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import PageSkeleton from '@/components/ui/loading/PageSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -48,7 +46,6 @@ import type { Tag } from '@/types/core/Tag';
 
 import ObjectDetails from './objects/ObjectDetails';
 import ObjectList from './objects/ObjectList';
-import ObjectViewer from './objects/ObjectViewer';
 import UploadObjectModal from './objects/UploadObjectModal';
 
 /**
@@ -56,15 +53,12 @@ import UploadObjectModal from './objects/UploadObjectModal';
  *
  * @param props - The component props
  * @param props.initialSelectedObject - The initial selected object to display
- * @param props.initialObjectContentViewerOpen - Whether the object content viewer should be open initially
  * @returns The repository section component
  */
 export default function RepositorySection({
   initialSelectedObject,
-  initialObjectContentViewerOpen = false,
 }: {
   initialSelectedObject?: RepositoryObject;
-  initialObjectContentViewerOpen?: boolean;
 }) {
   return (
     <SafeComponent
@@ -72,20 +66,15 @@ export default function RepositorySection({
       title='Repository Section Error'
       description='The repository section encountered an error. Please try refreshing the page.'
     >
-      <RepositorySectionContent
-        initialSelectedObject={initialSelectedObject}
-        initialObjectContentViewerOpen={initialObjectContentViewerOpen}
-      />
+      <RepositorySectionContent initialSelectedObject={initialSelectedObject} />
     </SafeComponent>
   );
 }
 
 function RepositorySectionContent({
   initialSelectedObject,
-  initialObjectContentViewerOpen = false,
 }: {
   initialSelectedObject?: RepositoryObject;
-  initialObjectContentViewerOpen?: boolean;
 }) {
   const { irminModal } = usePopup();
   const { dict } = useLocale();
@@ -175,15 +164,10 @@ function RepositorySectionContent({
     [pathname, router, searchParams]
   );
 
-  const { repositoryObjectContentQuery, downloadObjectAsZipMutation } =
-    useRepositoryObjectContent(
-      repository.slug,
-      currentRef,
-      selectedObject?.path
-    );
-
-  const [objectContentViewerOpen, setObjectContentViewerOpen] = useState(
-    initialObjectContentViewerOpen
+  const { downloadObjectAsZipMutation } = useRepositoryObjectContent(
+    repository.slug,
+    currentRef,
+    selectedObject?.path
   );
 
   const [customQuery, setCustomQuery] = useState<string | null>(null);
@@ -505,7 +489,6 @@ function RepositorySectionContent({
               <ObjectDetails
                 selectedObject={selectedObject}
                 closeDetails={() => handleObjectSelection(undefined)}
-                viewObject={() => setObjectContentViewerOpen(true)}
                 setCurrentPath={setCurrentDirectoryPath}
               />
             </div>
@@ -531,64 +514,6 @@ function RepositorySectionContent({
             result={queryResult}
             loading={queryLoading}
           />
-        </div>
-      )}
-      {objectContentViewerOpen && !queryResultsOpen && selectedObject && (
-        <div
-          id='object-content-modal'
-          className={`
-            fixed inset-0 z-50 flex animate-in items-center justify-center
-            bg-background/30 backdrop-blur-[2px] fade-in
-          `}
-        >
-          <div className='w-full max-w-[90vw]'>
-            <div
-              className={`rounded-lg border border-border bg-popover shadow-lg`}
-            >
-              <div
-                className={`
-                  flex flex-row items-center justify-between border-b px-4 pt-4
-                  pb-2
-                  dark:border-b-gray-800
-                `}
-              >
-                <h2 className='text-lg font-normal'>{selectedObject.path}</h2>
-                <ButtonWithTooltip
-                  size='icon'
-                  variant='ghost'
-                  className='ml-4 rounded-full'
-                  onClick={() => setObjectContentViewerOpen(false)}
-                  aria-label={dict.common.close}
-                  tooltip={dict.common.close}
-                  icon={<IoClose size={24} />}
-                />
-              </div>
-              <div
-                className={`
-                  relative max-h-[calc(100vh-200px)] overflow-scroll px-0 pt-0
-                `}
-              >
-                {repositoryObjectContentQuery.data ? (
-                  <div className='w-full rounded bg-background'>
-                    <ObjectViewer
-                      object={selectedObject}
-                      objectContent={repositoryObjectContentQuery.data}
-                    />
-                  </div>
-                ) : repositoryObjectContentQuery.error ? (
-                  <QueryError
-                    error={repositoryObjectContentQuery.error}
-                    onRetry={() => repositoryObjectContentQuery.refetch()}
-                    title={dict.common.somethingWentWrong}
-                    size='sm'
-                    className='p-8'
-                  />
-                ) : (
-                  <LoadingSkeleton className='h-96 w-full' />
-                )}
-              </div>
-            </div>
-          </div>
         </div>
       )}
     </>

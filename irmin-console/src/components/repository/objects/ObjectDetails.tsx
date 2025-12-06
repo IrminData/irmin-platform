@@ -217,7 +217,7 @@ export default function ObjectDetails({
     if (viewObject) viewObject();
     else {
       router.push(
-        `${baseUrl}/object?path=${selectedObject.path}&ref=${currentRef}`
+        `${baseUrl}/object?path=${encodeURIComponent(selectedObject.path)}&ref=${encodeURIComponent(currentRef ?? 'main')}`
       );
     }
   }, [selectedObject, baseUrl, currentRef, viewObject, router]);
