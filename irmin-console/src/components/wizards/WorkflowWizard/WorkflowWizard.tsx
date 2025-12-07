@@ -1,7 +1,11 @@
 'use client';
 
 import type { Dispatch, SetStateAction } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+
+import { IoInformationCircle } from 'react-icons/io5';
+
+import { useLocale } from '@/context/LocaleContext';
 
 import type {
   Workflow,
@@ -30,20 +34,20 @@ const createDefaultWorkflowable = (type: WorkflowableType): Workflowable => {
       return {
         type: 'import' as const,
         connection_id: '',
-        import_from_connection_paths: [],
+        import_from_connection_paths: ['/'],
         repository: '',
         repository_branch: '',
-        import_to_repository_path: '',
+        import_to_repository_path: '/',
         field_mappings: [],
       };
     case 'export':
       return {
         type: 'export' as const,
         connection_id: '',
-        export_from_repository_paths: [],
+        export_from_repository_paths: ['/'],
         repository: '',
         repository_branch: '',
-        export_to_connection_path: '',
+        export_to_connection_path: '/',
         field_mappings: [],
       };
     case 'pipeline':
@@ -82,47 +86,22 @@ export default function WorkflowWizard({
   onComplete?: (workflow: Workflow) => void;
   onCancel?: () => void;
 }) {
-  const [wizardData, setWizardData] =
-    useState<WorkflowWizardData>(initialWorkflowData);
+  const { dict } = useLocale();
 
-  // Initialize workflowable if type is provided but workflowable is undefined
-  useEffect(() => {
-    if (initialWorkflowData.type && !initialWorkflowData.workflowable) {
-      const defaultWorkflowable = createDefaultWorkflowable(
-        initialWorkflowData.type
-      );
-      queueMicrotask(() => {
-        setWizardData((prev) => ({
-          ...prev,
-          workflowable: defaultWorkflowable,
-        }));
-      });
-    }
-  }, [initialWorkflowData.type, initialWorkflowData.workflowable]);
+  // Initialize state with proper defaults
+  const [wizardData, setWizardData] = useState<WorkflowWizardData>(() => {
+    const initial: WorkflowWizardData = {
+      ...initialWorkflowData,
+      tags: initialWorkflowData.tags ?? initialWizardTags,
+    };
 
-  // Initialize workflowable when type is selected via UI
-  useEffect(() => {
-    if (wizardData.type && !wizardData.workflowable) {
-      const defaultWorkflowable = createDefaultWorkflowable(wizardData.type);
-      queueMicrotask(() => {
-        setWizardData((prev) => ({
-          ...prev,
-          workflowable: defaultWorkflowable,
-        }));
-      });
+    // Initialize workflowable if type is provided
+    if (initial.type && !initial.workflowable) {
+      initial.workflowable = createDefaultWorkflowable(initial.type);
     }
-  }, [wizardData.type, wizardData.workflowable]);
 
-  useEffect(() => {
-    if (!initialWorkflowData.tags && !wizardData.tags) {
-      queueMicrotask(() => {
-        setWizardData((prev) => ({
-          ...prev,
-          tags: initialWizardTags,
-        }));
-      });
-    }
-  }, [initialWorkflowData.tags, wizardData.tags]);
+    return initial;
+  });
 
   // Function to go to the next step
   const goNext = useCallback(() => {
@@ -150,9 +129,23 @@ export default function WorkflowWizard({
   }, [currentStep, setCurrentStep, initialWorkflowData]);
 
   // Function to update wizard data
+  // Automatically initializes workflowable when type changes
   const updateWizardData = useCallback(
     (updates: Partial<WorkflowWizardData>) => {
-      setWizardData((prev) => ({ ...prev, ...updates }));
+      setWizardData((prev) => {
+        const newData = { ...prev, ...updates };
+
+        // If type changed and workflowable is missing, initialize it
+        if (
+          updates.type &&
+          updates.type !== prev.type &&
+          !newData.workflowable
+        ) {
+          newData.workflowable = createDefaultWorkflowable(updates.type);
+        }
+
+        return newData;
+      });
     },
     []
   );
@@ -160,8 +153,33 @@ export default function WorkflowWizard({
   const hasFieldMappings =
     wizardData.type === 'import' || wizardData.type === 'export';
 
+  const workflowTypeDescription = useMemo(() => {
+    const type = wizardData.type || initialWorkflowData.type;
+    return type ? dict.workflow.create.typeDescription[type] : null;
+  }, [
+    wizardData.type,
+    initialWorkflowData.type,
+    dict.workflow.create.typeDescription,
+  ]);
+
   return (
     <>
+      {workflowTypeDescription && (
+        <div
+          className={`
+            mx-4 mb-4 flex items-start gap-3 rounded-lg border
+            border-accent-foreground/10 bg-accent/10 p-3
+            dark:border-accent-foreground dark:bg-accent/10
+          `}
+        >
+          <IoInformationCircle
+            className={`mt-0.5 size-5 shrink-0 text-accent`}
+          />
+          <p className={`text-sm text-accent-foreground`}>
+            {workflowTypeDescription}
+          </p>
+        </div>
+      )}
       {!initialWorkflowData.type && currentStep === 1 && (
         <SelectWorkflowTypeStep
           wizardData={wizardData}

@@ -470,6 +470,8 @@ const en = {
     openInEditor: 'Open in editor',
     executableScriptFile: 'Executable script file',
     scriptInputData: 'Input data',
+    selectRepository: 'Select repository',
+    selectConnection: 'Select connection',
 
     scriptInputFiles: {
       title: 'Script Input Files',
@@ -531,6 +533,16 @@ const en = {
       confirmAndCreate: 'Confirm and create',
       confirmAndContinue: 'Confirm and continue',
       goBack: 'Go back',
+      typeDescription: {
+        import:
+          'Import workflows facilitate the ingestion of data from external sources into Irmin repositories.',
+        export:
+          'Export workflows enable the transfer of data from Irmin repositories to external systems or destinations.',
+        action:
+          'Action workflows execute custom code, accepting input data and returning output data.',
+        pipeline:
+          'Pipeline workflows move data through a series of stages, passing results from one stage to the next.',
+      },
     },
 
     pipeline: {
@@ -556,6 +568,14 @@ const en = {
       moveDown: 'Move down',
       savePipelineStages: 'Save pipeline stages',
       noStages: 'No stages',
+      stageTypeDescription: {
+        action:
+          'Action stages execute custom scripts to process data, accepting input from previous stages and producing output for subsequent stages.',
+        connection:
+          'Connection stages interact with external data sources, reading from or writing to connections like databases, APIs, or file systems.',
+        repository:
+          'Repository stages read from or write to Irmin repositories, enabling data versioning and storage within the pipeline workflow.',
+      },
     },
 
     schedule: {

@@ -2,6 +2,7 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
+import { IoInformationCircle } from 'react-icons/io5';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 
 import IrminCore from '@/lib/core';
@@ -360,6 +361,30 @@ function Stage({
               </SelectContent>
             </Select>
           </div>
+
+          {stage.type &&
+            dict.workflow.pipeline.stageTypeDescription[
+              stage.type as keyof typeof dict.workflow.pipeline.stageTypeDescription
+            ] && (
+              <div
+                className={`
+                  flex items-start gap-3 rounded-lg border
+                  border-accent-foreground/10 bg-accent/10 p-3
+                  dark:border-accent-foreground dark:bg-accent/10
+                `}
+              >
+                <IoInformationCircle
+                  className={`mt-0.5 size-5 shrink-0 text-accent`}
+                />
+                <p className={`text-sm text-accent-foreground`}>
+                  {
+                    dict.workflow.pipeline.stageTypeDescription[
+                      stage.type as keyof typeof dict.workflow.pipeline.stageTypeDescription
+                    ]
+                  }
+                </p>
+              </div>
+            )}
 
           {stage.type === 'action' && (
             <div className='flex flex-col gap-2'>

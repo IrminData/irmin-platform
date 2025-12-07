@@ -446,7 +446,7 @@ function WorkflowScheduleForm({
                     disabled={isUpdatingSchedule}
                   >
                     <SelectTrigger className='w-full'>
-                      <SelectValue>{trigger.event}</SelectValue>
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={'pre-commit'}>
@@ -492,7 +492,7 @@ function WorkflowScheduleForm({
                     {dict.repository.repository}
                   </Label>
                   <Select
-                    value={trigger.repository}
+                    value={trigger.repository || undefined}
                     onValueChange={(value) => {
                       updateTriggerField(index, 'repository', value);
                       const repo = repositoriesQuery.data?.data?.find(
@@ -508,11 +508,7 @@ function WorkflowScheduleForm({
                       id={`triggers.${index}.repository`}
                       className='w-full'
                     >
-                      <SelectValue>
-                        {repositoriesQuery.data?.data?.find(
-                          (repo) => trigger.repository === repo.slug
-                        )?.name ?? trigger.repository}
-                      </SelectValue>
+                      <SelectValue placeholder={dict.repository.repository} />
                     </SelectTrigger>
                     <SelectContent>
                       {repositoriesQuery.data?.data?.map((repo) => (
@@ -558,7 +554,7 @@ function WorkflowScheduleForm({
                     disabled={isUpdatingSchedule}
                   >
                     <SelectTrigger className='w-full'>
-                      <SelectValue>{trigger.event}</SelectValue>
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={'pre-workflow-run'}>

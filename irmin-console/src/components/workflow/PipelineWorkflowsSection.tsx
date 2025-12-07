@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { IoAdd } from 'react-icons/io5';
+import { IoAdd, IoInformationCircle } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
@@ -93,6 +93,18 @@ function PipelineWorkflowsSection({
         >
           {dict.workflow.create.createNewPipelineWorkflow}
         </Button>
+      </div>
+      <div
+        className={`
+          my-2 flex items-start gap-3 rounded-lg border
+          border-accent-foreground/10 bg-accent/10 p-3
+          dark:border-accent-foreground dark:bg-accent/10
+        `}
+      >
+        <IoInformationCircle className={`mt-0.5 size-5 shrink-0 text-accent`} />
+        <p className={`text-sm text-accent-foreground`}>
+          {dict.workflow.create.typeDescription.pipeline}
+        </p>
       </div>
       <WorkflowWizardModal
         isOpen={isOpen && isResourceAllowed('workflow', 'create')}

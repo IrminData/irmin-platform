@@ -40,7 +40,7 @@ export default function PipelineWorkflow({
   return (
     <>
       <PipelineStageEditor
-        initialStages={[]}
+        initialStages={workflowable.stages ?? []}
         onSubmit={handlePipelineStagesSubmit}
         readOnly={false}
         hideSaveButton={true}

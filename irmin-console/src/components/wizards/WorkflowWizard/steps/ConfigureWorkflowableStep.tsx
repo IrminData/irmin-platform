@@ -36,14 +36,15 @@ function ConfigureWorkflowableStep({
   const workflowable = useMemo(() => wizardData.workflowable, [wizardData]);
 
   const validateWorkflowable = useCallback((): boolean => {
-    if (!workflowable) {
+    const currentWorkflowable = wizardData.workflowable;
+    if (!currentWorkflowable) {
       irminAlert('error', 'Workflowable configuration is missing');
       return false;
     }
 
-    switch (workflowable.type) {
+    switch (currentWorkflowable.type) {
       case 'import': {
-        const importWorkflowable = workflowable as Import;
+        const importWorkflowable = currentWorkflowable as Import;
         if (!importWorkflowable.connection_id) {
           irminAlert('error', 'Please select a connection');
           return false;
@@ -76,7 +77,7 @@ function ConfigureWorkflowableStep({
         break;
       }
       case 'export': {
-        const exportWorkflowable = workflowable as Export;
+        const exportWorkflowable = currentWorkflowable as Export;
         if (!exportWorkflowable.connection_id) {
           irminAlert('error', 'Please select a connection');
           return false;
@@ -109,7 +110,7 @@ function ConfigureWorkflowableStep({
         break;
       }
       case 'action': {
-        const actionWorkflowable = workflowable as Action;
+        const actionWorkflowable = currentWorkflowable as Action;
         if (!actionWorkflowable.script_id) {
           irminAlert('error', 'Please select an executable script');
           return false;
@@ -125,7 +126,7 @@ function ConfigureWorkflowableStep({
     }
 
     return true;
-  }, [workflowable, irminAlert]);
+  }, [wizardData.workflowable, irminAlert]);
 
   const handleNextStep = useCallback(() => {
     if (validateWorkflowable()) {
@@ -149,7 +150,15 @@ function ConfigureWorkflowableStep({
   // Create a setWorkflowData function that updates the wizard data
   const setWorkflowData = useCallback(
     (updater: React.SetStateAction<WorkflowRequest>) => {
-      const currentRequest = convertToWorkflowRequest(wizardData);
+      const currentRequest: WorkflowRequest = {
+        type: wizardData.type || 'action',
+        name: wizardData.name || '',
+        description: wizardData.description || '',
+        documentation: wizardData.documentation || '',
+        workflowable: wizardData.workflowable,
+        schedule: wizardData.schedule,
+      };
+
       const newRequest =
         typeof updater === 'function' ? updater(currentRequest) : updater;
 
@@ -162,7 +171,7 @@ function ConfigureWorkflowableStep({
         schedule: newRequest.schedule,
       });
     },
-    [wizardData, updateWizardData, convertToWorkflowRequest]
+    [updateWizardData, wizardData]
   );
 
   // Early return if workflowable is not defined

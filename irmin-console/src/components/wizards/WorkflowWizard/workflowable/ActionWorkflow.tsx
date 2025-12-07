@@ -76,7 +76,7 @@ export default function ActionWorkflow({
       <div className='flex flex-col gap-2'>
         <Label>{dict.workflow.scriptResultDestinationRepository}</Label>
         <Select
-          value={workflowable.results_repository}
+          value={workflowable.results_repository || undefined}
           onValueChange={(value) => {
             if (!value) return;
             setWorkflowData((prev) => ({
@@ -96,11 +96,7 @@ export default function ActionWorkflow({
           disabled={repositoriesQuery.isLoading}
         >
           <SelectTrigger className='w-full'>
-            <SelectValue>
-              {repositoriesQuery.data?.data?.find(
-                (repo) => workflowable.results_repository === repo.slug
-              )?.name ?? workflowable.results_repository}
-            </SelectValue>
+            <SelectValue placeholder={dict.workflow.selectRepository} />
           </SelectTrigger>
           <SelectContent>
             {repositoriesQuery.data?.data?.map((repo) => (

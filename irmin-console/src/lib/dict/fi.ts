@@ -461,6 +461,9 @@ const fi = {
     openInEditor: 'Avaa editorissa',
     executableScriptFile: 'Suoritettava skriptitiedosto',
     scriptInputData: 'Syötteet',
+    selectRepository: 'Valitse data-arkisto',
+    selectConnection: 'Valitse yhteys',
+
     scriptInputFiles: {
       title: 'Skriptin syötetiedostot',
       inputFile: 'Syötetiedosto',
@@ -518,6 +521,16 @@ const fi = {
       confirmAndCreate: 'Vahvista ja luo',
       confirmAndContinue: 'Vahvista ja jatka',
       goBack: 'Mene takaisin',
+      typeDescription: {
+        import:
+          'Tuontiprosessit helpottavat tietojen tuomista ulkoisista lähteistä Irmin-säilöihin.',
+        export:
+          'Vientiprosessit mahdollistavat tietojen siirron Irmin-säilöistä ulkoisiin järjestelmiin tai kohteisiin.',
+        action:
+          'Toimintoprosessit suorittavat mukautettua koodia, joka hyväksyy syötteen ja palauttaa tuloksen.',
+        pipeline:
+          'Dataputkiprosessit siirtävät tietoja useiden vaiheiden läpi, välittäen tuloksia vaiheesta seuraavaan.',
+      },
     },
     pipeline: {
       pipeline: 'Dataputki',
@@ -542,6 +555,14 @@ const fi = {
       moveDown: 'Siirrä alas',
       savePipelineStages: 'Tallenna vaiheet',
       noStages: 'Ei vaiheita',
+      stageTypeDescription: {
+        action:
+          'Toimintovaiheet suorittavat mukautettuja skriptejä datan käsittelyyn, vastaanottaen syötettä edellisistä vaiheista ja tuottaen tulosta seuraaville vaiheille.',
+        connection:
+          'Yhteyden vaiheet vuorovaikuttavat ulkoisten tietolähteiden kanssa, lukien tai kirjoittaen yhteyksiin kuten tietokantoihin, API:hin tai tiedostojärjestelmiin.',
+        repository:
+          'Arkiston vaiheet lukevat tai kirjoittavat Irmin-arkistoihin, mahdollistaen datan versionhallinnan ja tallennuksen prosessin työnkulussa.',
+      },
     },
     schedule: {
       workflowSchedule: 'Prosessin aikataulu',

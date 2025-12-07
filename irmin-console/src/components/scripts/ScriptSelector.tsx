@@ -66,18 +66,14 @@ export default function ScriptSelector({
       `}
     >
       <Select
-        value={currentSelectedScriptId ?? ''}
+        value={currentSelectedScriptId || undefined}
         onValueChange={onSelectScript}
         disabled={disabled || scriptsQuery.isLoading}
       >
         <SelectTrigger className='w-full'>
           <SelectValue
             placeholder={dict.scripts?.selectScript ?? 'Select a script'}
-          >
-            {selectedScript
-              ? `${selectedScript.name} (${selectedScript.language ?? 'unknown'})`
-              : currentSelectedScriptId}
-          </SelectValue>
+          />
         </SelectTrigger>
         <SelectContent>
           <div className='p-2'>

@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import ConnectionPathSelector from '@/components/connection/ConnectionPathSelector';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
 import { Button } from '@/components/ui/button';
@@ -43,12 +45,39 @@ export default function ExportWorkflow({
     segmentsAfter: 1,
   });
 
+  // Auto-set repository branch to default branch when repository is set but branch is empty
+  useEffect(() => {
+    if (
+      workflowable.repository &&
+      !workflowable.repository_branch &&
+      repositoriesQuery.data?.data
+    ) {
+      const selectedRepo = repositoriesQuery.data.data.find(
+        (repo) => repo.slug === workflowable.repository
+      );
+      if (selectedRepo?.default_branch) {
+        setWorkflowData((prev) => ({
+          ...prev,
+          workflowable: {
+            ...(prev.workflowable as Export),
+            repository_branch: selectedRepo.default_branch,
+          },
+        }));
+      }
+    }
+  }, [
+    workflowable.repository,
+    workflowable.repository_branch,
+    repositoriesQuery.data?.data,
+    setWorkflowData,
+  ]);
+
   return (
     <>
       <div className='flex flex-col gap-2'>
         <Label>{dict.workflow.exportDestinationConnection}</Label>
         <Select
-          value={workflowable.connection_id}
+          value={workflowable.connection_id || undefined}
           onValueChange={(value) => {
             if (!value) return;
             setWorkflowData((prev) => ({
@@ -62,11 +91,7 @@ export default function ExportWorkflow({
           disabled={connectionsQuery.isLoading}
         >
           <SelectTrigger className='w-full'>
-            <SelectValue>
-              {connectionsQuery.data?.data?.find(
-                (conn) => workflowable.connection_id === conn.id
-              )?.name ?? workflowable.connection_id}
-            </SelectValue>
+            <SelectValue placeholder={dict.workflow.selectConnection} />
           </SelectTrigger>
           <SelectContent>
             {connectionsQuery.data?.data?.map((conn) => (
@@ -119,31 +144,25 @@ export default function ExportWorkflow({
       <div className='flex flex-col gap-2'>
         <Label>{dict.workflow.exportSourceRepository}</Label>
         <Select
-          value={workflowable.repository}
+          value={workflowable.repository || undefined}
           onValueChange={(value) => {
             if (!value) return;
+            const selectedRepo = repositoriesQuery.data?.data?.find(
+              (repo) => repo.slug === value
+            );
             setWorkflowData((prev) => ({
               ...prev,
               workflowable: {
                 ...(prev.workflowable as Export),
                 repository: value,
-                repository_branch:
-                  repositoriesQuery.data?.data?.find(
-                    (repo) => repo.slug === value
-                  )?.default_branch ??
-                  workflowable.repository_branch ??
-                  '',
+                repository_branch: selectedRepo?.default_branch ?? '',
               },
             }));
           }}
           disabled={repositoriesQuery.isLoading}
         >
           <SelectTrigger className='w-full'>
-            <SelectValue>
-              {repositoriesQuery.data?.data?.find(
-                (repo) => workflowable.repository === repo.slug
-              )?.name ?? workflowable.repository}
-            </SelectValue>
+            <SelectValue placeholder={dict.workflow.selectRepository} />
           </SelectTrigger>
           <SelectContent>
             {repositoriesQuery.data?.data?.map((repo) => (
