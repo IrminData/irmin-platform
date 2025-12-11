@@ -174,7 +174,7 @@ ctx := context.Background()
 
 // Git-like data versioning
 repo, _, err := client.CreateRepository(ctx, "workspace-id", request)
-branches, _, err := client.GetRepositoryBranches(ctx, "workspace-id", "repo-id")
+branches, _, err := client.ListBranches(ctx, "workspace-id", "repo-id")
 commits, _, err := client.GetRepositoryCommits(ctx, "workspace-id", "repo-id", "branch")
 ```
 

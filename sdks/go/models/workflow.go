@@ -45,18 +45,20 @@ type PipelineStage struct {
 	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository,validpipelinestage" example:"repository"`
 
 	// Action stage specific
-	ScriptID *string `json:"script_id,omitempty" validate:"validsqid=scripts,required_if=Type action" example:"scr_8x2m9k4n7p5q"`
+	ExecutableType ActionExecutableType `json:"executable_type,omitempty" validate:"omitempty,oneof=script query,required_if=Type action"          example:"script"`
+	ScriptID       *string              `json:"script_id,omitempty"       validate:"omitempty,validsqid=scripts,required_if=ExecutableType script" example:"scr_8x2m9k4n7p5q"`
+	QueryID        *string              `json:"query_id,omitempty"        validate:"omitempty,validsqid=queries,required_if=ExecutableType query"  example:"qry_8x2m9k4n7p5q"`
 
 	// Connection stage specific
 	ConnectionID        *string   `json:"connection_id,omitempty"         validate:"validsqid=connections,required_if=Type connection" example:"conn_8x2m9k4n7p5q"`
 	ConnectionWritePath *string   `json:"connection_write_path,omitempty"                                                              example:"/exports/processed_data.csv"`
-	ConnectionReadPaths *[]string `json:"connection_read_paths,omitempty" validate:"dive"                                              example:"/imports/raw_data.csv,/imports/metadata.json"`
+	ConnectionReadPaths *[]string `json:"connection_read_paths,omitempty" validate:"omitempty,dive"                                    example:"/imports/raw_data.csv,/imports/metadata.json"`
 
 	// Repository stage specific
 	Repository          *string   `json:"repository,omitempty"            validate:"required_if=Type repository" example:"customer-analytics"`
 	RepositoryBranch    *string   `json:"repository_branch,omitempty"                                            example:"main"`
 	RepositoryWritePath *string   `json:"repository_write_path,omitempty" validate:"omitempty"                   example:"/processed/customers.json"`
-	RepositoryReadPaths *[]string `json:"repository_read_paths,omitempty" validate:"dive"                        example:"/raw/customers.csv,/config/schema.json"`
+	RepositoryReadPaths *[]string `json:"repository_read_paths,omitempty" validate:"omitempty,dive"              example:"/raw/customers.csv,/config/schema.json"`
 }
 
 type ActionInputData struct {
@@ -64,6 +66,13 @@ type ActionInputData struct {
 	RepositoryRef  string `json:"repository_ref"  validate:"required"  example:"main"`
 	RepositoryPath string `json:"repository_path" validate:"omitempty" example:"/data/customers.csv"`
 }
+
+type ActionExecutableType string
+
+const (
+	ActionExecutableTypeScript ActionExecutableType = "script"
+	ActionExecutableTypeQuery  ActionExecutableType = "query"
+)
 
 type Workflowable struct {
 	Type WorkflowableType `json:"type" validate:"required,oneof=import action export pipeline,validworkflowable" example:"import"`
@@ -86,16 +95,17 @@ type Workflowable struct {
 
 	// Pipeline workflowable
 
-	Live   bool            `json:"live,omitempty"   example:"true"`
-	Stages []PipelineStage `json:"stages,omitempty"                validate:"dive"`
+	Stages []PipelineStage `json:"stages,omitempty" validate:"dive"`
 
 	// Action workflowable
 
-	ScriptID                string            `json:"script_id,omitempty"                 validate:"validsqid=scripts,required_if=Type action" example:"scr_8x2m9k4n7p5q"`
-	Input                   []ActionInputData `json:"input,omitempty"                     validate:"dive"`
-	ResultsRepository       *string           `json:"results_repository,omitempty"                                                             example:"analytics-results"`
-	ResultsRepositoryBranch *string           `json:"results_repository_branch,omitempty"                                                      example:"main"`
-	ResultsRepositoryPath   *string           `json:"results_repository_path,omitempty"   validate:"omitempty"                                 example:"/results/analysis.json"`
+	ExecutableType          ActionExecutableType `json:"executable_type,omitempty"           validate:"omitempty,oneof=script query,required_if=Type action"          example:"script"`
+	ScriptID                *string              `json:"script_id,omitempty"                 validate:"required_if=ExecutableType script,omitempty,validsqid=scripts" example:"scr_8x2m9k4n7p5q"`
+	QueryID                 *string              `json:"query_id,omitempty"                  validate:"required_if=ExecutableType query,omitempty,validsqid=queries"  example:"qry_8x2m9k4n7p5q"`
+	Input                   []ActionInputData    `json:"input,omitempty"                     validate:"dive"`
+	ResultsRepository       *string              `json:"results_repository,omitempty"                                                                                 example:"analytics-results"`
+	ResultsRepositoryBranch *string              `json:"results_repository_branch,omitempty"                                                                          example:"main"`
+	ResultsRepositoryPath   *string              `json:"results_repository_path,omitempty"   validate:"omitempty"                                                     example:"/results/analysis.json"`
 }
 
 type Workflow struct {

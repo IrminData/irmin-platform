@@ -748,8 +748,8 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 	sqidManager := sqids.NewSQIDManager("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 	validator := validator.NewValidator(sqidManager)
 
-	// Test valid action stage - provide all fields to satisfy struct validation
-	t.Run("valid action stage", func(t *testing.T) {
+	// Test valid action stage with script - provide all fields to satisfy struct validation
+	t.Run("valid action stage with script", func(t *testing.T) {
 		scriptID, _ := sqidManager.Encode("scripts", 123)
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		connectionWritePath := "/write/path"
@@ -758,12 +758,13 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 		repositoryWritePath := "/repo/write/path"
 
 		stage := models.PipelineStage{
-			Description:   "Run script",
-			Write:         false,
-			Read:          true,
-			OrderSequence: 1,
-			Type:          models.PipelineStageTypeAction,
-			ScriptID:      &scriptID,
+			Description:    "Run script",
+			Write:          false,
+			Read:           true,
+			OrderSequence:  1,
+			Type:           models.PipelineStageTypeAction,
+			ExecutableType: models.ActionExecutableTypeScript,
+			ScriptID:       &scriptID,
 			// Provide values for all fields to satisfy struct tag validation
 			ConnectionID:        &connectionID,
 			ConnectionWritePath: &connectionWritePath,
@@ -774,11 +775,42 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 
 		err := validator.Validate(stage)
 		if err != nil {
-			t.Errorf("Expected valid action stage, got error: %v", err)
+			t.Errorf("Expected valid action stage with script, got error: %v", err)
 		}
 	})
 
-	// Test invalid action stage - missing script ID
+	// Test valid action stage with query
+	t.Run("valid action stage with query", func(t *testing.T) {
+		queryID, _ := sqidManager.Encode("queries", 123)
+		connectionID, _ := sqidManager.Encode("connections", 123)
+		connectionWritePath := "/write/path"
+		repository := "test-repo"
+		repositoryBranch := "main"
+		repositoryWritePath := "/repo/write/path"
+
+		stage := models.PipelineStage{
+			Description:    "Run query",
+			Write:          false,
+			Read:           true,
+			OrderSequence:  1,
+			Type:           models.PipelineStageTypeAction,
+			ExecutableType: models.ActionExecutableTypeQuery,
+			QueryID:        &queryID,
+			// Provide values for all fields to satisfy struct tag validation
+			ConnectionID:        &connectionID,
+			ConnectionWritePath: &connectionWritePath,
+			Repository:          &repository,
+			RepositoryBranch:    &repositoryBranch,
+			RepositoryWritePath: &repositoryWritePath,
+		}
+
+		err := validator.Validate(stage)
+		if err != nil {
+			t.Errorf("Expected valid action stage with query, got error: %v", err)
+		}
+	})
+
+	// Test invalid action stage - missing script ID when ExecutableType is script
 	t.Run("invalid action stage - missing script ID", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		connectionWritePath := "/write/path"
@@ -787,11 +819,12 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 		repositoryWritePath := "/repo/write/path"
 
 		stage := models.PipelineStage{
-			Description:   "Run script",
-			Write:         false,
-			Read:          true,
-			OrderSequence: 1,
-			Type:          models.PipelineStageTypeAction,
+			Description:    "Run script",
+			Write:          false,
+			Read:           true,
+			OrderSequence:  1,
+			Type:           models.PipelineStageTypeAction,
+			ExecutableType: models.ActionExecutableTypeScript,
 			// Missing ScriptID
 			ConnectionID:        &connectionID,
 			ConnectionWritePath: &connectionWritePath,
@@ -803,6 +836,35 @@ func TestValidator_ValidatePipelineStages(t *testing.T) {
 		err := validator.Validate(stage)
 		if err == nil {
 			t.Error("Expected validation error for action stage with missing script ID")
+		}
+	})
+
+	// Test invalid action stage - missing query ID when ExecutableType is query
+	t.Run("invalid action stage - missing query ID", func(t *testing.T) {
+		connectionID, _ := sqidManager.Encode("connections", 123)
+		connectionWritePath := "/write/path"
+		repository := "test-repo"
+		repositoryBranch := "main"
+		repositoryWritePath := "/repo/write/path"
+
+		stage := models.PipelineStage{
+			Description:    "Run query",
+			Write:          false,
+			Read:           true,
+			OrderSequence:  1,
+			Type:           models.PipelineStageTypeAction,
+			ExecutableType: models.ActionExecutableTypeQuery,
+			// Missing QueryID
+			ConnectionID:        &connectionID,
+			ConnectionWritePath: &connectionWritePath,
+			Repository:          &repository,
+			RepositoryBranch:    &repositoryBranch,
+			RepositoryWritePath: &repositoryWritePath,
+		}
+
+		err := validator.Validate(stage)
+		if err == nil {
+			t.Error("Expected validation error for action stage with missing query ID")
 		}
 	})
 
@@ -941,7 +1003,6 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 
 		workflowable := models.Workflowable{
 			Type: models.WorkflowableTypePipeline,
-			Live: true,
 			Stages: []models.PipelineStage{
 				{
 					Description:         "Run script",
@@ -949,6 +1010,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 					Read:                true,
 					OrderSequence:       1,
 					Type:                models.PipelineStageTypeAction,
+					ExecutableType:      models.ActionExecutableTypeScript,
 					ScriptID:            &scriptID,
 					ConnectionID:        &connectionID,
 					ConnectionWritePath: &connectionWritePath,
@@ -963,7 +1025,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			RepositoryBranch:        "main",
 			ImportToRepositoryPath:  "/import",
 			ExportToConnectionPath:  "/export",
-			ScriptID:                scriptID,
+			ScriptID:                &scriptID,
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
 			ResultsRepositoryPath:   &resultsRepositoryPath,
@@ -985,14 +1047,13 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 
 		workflowable := models.Workflowable{
 			Type: models.WorkflowableTypePipeline,
-			Live: true,
 			// Missing Stages
 			ConnectionID:            connectionID,
 			Repository:              "dummy-repo",
 			RepositoryBranch:        "main",
 			ImportToRepositoryPath:  "/import",
 			ExportToConnectionPath:  "/export",
-			ScriptID:                scriptID,
+			ScriptID:                &scriptID,
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
 			ResultsRepositoryPath:   &resultsRepositoryPath,
@@ -1013,8 +1074,9 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 		resultsRepositoryPath := "/results"
 
 		workflowable := models.Workflowable{
-			Type:     models.WorkflowableTypeAction,
-			ScriptID: scriptID,
+			Type:           models.WorkflowableTypeAction,
+			ExecutableType: models.ActionExecutableTypeScript,
+			ScriptID:       &scriptID,
 			Input: []models.ActionInputData{
 				{
 					Repository:     "my-repo",
@@ -1047,7 +1109,8 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 		resultsRepositoryPath := "/results"
 
 		workflowable := models.Workflowable{
-			Type: models.WorkflowableTypeAction,
+			Type:           models.WorkflowableTypeAction,
+			ExecutableType: models.ActionExecutableTypeScript,
 			// Missing ScriptID
 			Input: []models.ActionInputData{
 				{
@@ -1099,7 +1162,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			ImportToRepositoryPath:    "/repo/path",
 			// Provide defaults for all other fields
 			ExportToConnectionPath:  "/export",
-			ScriptID:                scriptID,
+			ScriptID:                &scriptID,
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
 			ResultsRepositoryPath:   &resultsRepositoryPath,
@@ -1136,7 +1199,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			ImportFromConnectionPaths: []string{"/import/path"},
 			ImportToRepositoryPath:    "/repo/path",
 			ExportToConnectionPath:    "/export",
-			ScriptID:                  scriptID,
+			ScriptID:                  &scriptID,
 			ResultsRepository:         &resultsRepository,
 			ResultsRepositoryBranch:   &resultsRepositoryBranch,
 			ResultsRepositoryPath:     &resultsRepositoryPath,
@@ -1175,7 +1238,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			ExportToConnectionPath:    "/export/path",
 			// Provide defaults for all other fields
 			ImportToRepositoryPath:  "/import",
-			ScriptID:                scriptID,
+			ScriptID:                &scriptID,
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
 			ResultsRepositoryPath:   &resultsRepositoryPath,
@@ -1204,7 +1267,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			ExportFromRepositoryPaths: []string{"/repo/path"},
 			ExportToConnectionPath:    "/export/path",
 			ImportToRepositoryPath:    "/import",
-			ScriptID:                  scriptID,
+			ScriptID:                  &scriptID,
 			ResultsRepository:         &resultsRepository,
 			ResultsRepositoryBranch:   &resultsRepositoryBranch,
 			ResultsRepositoryPath:     &resultsRepositoryPath,
@@ -1532,9 +1595,9 @@ func TestValidatePipelineStagesFixed(t *testing.T) {
 	sqidManager := sqids.NewSQIDManager("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 	validator := validator.NewValidator(sqidManager)
 
-	// For action stages, the custom validator only checks that ScriptID is provided
+	// For action stages, the custom validator checks ScriptID or QueryID based on ExecutableType
 	// But the struct tags still validate other fields, so we need to provide all fields
-	t.Run("action stage with all required fields", func(t *testing.T) {
+	t.Run("action stage with script and all required fields", func(t *testing.T) {
 		scriptID, _ := sqidManager.Encode("scripts", 123)
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		connectionWritePath := "/write/path"
@@ -1543,12 +1606,13 @@ func TestValidatePipelineStagesFixed(t *testing.T) {
 		repositoryWritePath := "/repo/write/path"
 
 		stage := models.PipelineStage{
-			Description:   "Run script",
-			Write:         false,
-			Read:          true,
-			OrderSequence: 1,
-			Type:          models.PipelineStageTypeAction,
-			ScriptID:      &scriptID,
+			Description:    "Run script",
+			Write:          false,
+			Read:           true,
+			OrderSequence:  1,
+			Type:           models.PipelineStageTypeAction,
+			ExecutableType: models.ActionExecutableTypeScript,
+			ScriptID:       &scriptID,
 			// Provide values for all fields to satisfy struct tag validation
 			ConnectionID:        &connectionID,
 			ConnectionWritePath: &connectionWritePath,
@@ -1559,7 +1623,37 @@ func TestValidatePipelineStagesFixed(t *testing.T) {
 
 		err := validator.Validate(stage)
 		if err != nil {
-			t.Errorf("Expected valid action stage with all fields, got error: %v", err)
+			t.Errorf("Expected valid action stage with script and all fields, got error: %v", err)
+		}
+	})
+
+	t.Run("action stage with query and all required fields", func(t *testing.T) {
+		queryID, _ := sqidManager.Encode("queries", 123)
+		connectionID, _ := sqidManager.Encode("connections", 123)
+		connectionWritePath := "/write/path"
+		repository := "test-repo"
+		repositoryBranch := "main"
+		repositoryWritePath := "/repo/write/path"
+
+		stage := models.PipelineStage{
+			Description:    "Run query",
+			Write:          false,
+			Read:           true,
+			OrderSequence:  1,
+			Type:           models.PipelineStageTypeAction,
+			ExecutableType: models.ActionExecutableTypeQuery,
+			QueryID:        &queryID,
+			// Provide values for all fields to satisfy struct tag validation
+			ConnectionID:        &connectionID,
+			ConnectionWritePath: &connectionWritePath,
+			Repository:          &repository,
+			RepositoryBranch:    &repositoryBranch,
+			RepositoryWritePath: &repositoryWritePath,
+		}
+
+		err := validator.Validate(stage)
+		if err != nil {
+			t.Errorf("Expected valid action stage with query and all fields, got error: %v", err)
 		}
 	})
 
@@ -1640,7 +1734,6 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 
 		workflowable := models.Workflowable{
 			Type: models.WorkflowableTypePipeline,
-			Live: true,
 			Stages: []models.PipelineStage{
 				{
 					Description:         "Run script",
@@ -1648,6 +1741,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 					Read:                true,
 					OrderSequence:       1,
 					Type:                models.PipelineStageTypeAction,
+					ExecutableType:      models.ActionExecutableTypeScript,
 					ScriptID:            &scriptID,
 					ConnectionID:        &connectionID,
 					ConnectionWritePath: &connectionWritePath,
@@ -1662,7 +1756,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 			RepositoryBranch:        "main",
 			ImportToRepositoryPath:  "/import",
 			ExportToConnectionPath:  "/export",
-			ScriptID:                scriptID,
+			ScriptID:                &scriptID,
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
 			ResultsRepositoryPath:   &resultsRepositoryPath,
@@ -1682,8 +1776,9 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 		resultsRepositoryPath := "/results"
 
 		workflowable := models.Workflowable{
-			Type:     models.WorkflowableTypeAction,
-			ScriptID: scriptID,
+			Type:           models.WorkflowableTypeAction,
+			ExecutableType: models.ActionExecutableTypeScript,
+			ScriptID:       &scriptID,
 			Input: []models.ActionInputData{
 				{
 					Repository:     "my-repo",
@@ -1734,7 +1829,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 			ImportToRepositoryPath:    "/repo/path",
 			// Provide defaults for all other fields
 			ExportToConnectionPath:  "/export",
-			ScriptID:                scriptID,
+			ScriptID:                &scriptID,
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
 			ResultsRepositoryPath:   &resultsRepositoryPath,
@@ -1772,7 +1867,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 			ExportToConnectionPath:    "/export/path",
 			// Provide defaults for all other fields
 			ImportToRepositoryPath:  "/import",
-			ScriptID:                scriptID,
+			ScriptID:                &scriptID,
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
 			ResultsRepositoryPath:   &resultsRepositoryPath,

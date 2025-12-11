@@ -84,10 +84,31 @@ func (v *Validator) validatePipelineStage(fl validator.FieldLevel) bool {
 
 // validateActionPipelineStage validates action-type pipeline stages.
 func (v *Validator) validateActionPipelineStage(parentStruct reflect.Value) bool {
+	executableTypeField := parentStruct.FieldByName("ExecutableType")
 	scriptIDField := parentStruct.FieldByName("ScriptID")
+	queryIDField := parentStruct.FieldByName("QueryID")
 
-	// Action stages must have a valid script ID
-	if !v.validateResourceID(scriptIDField, "scripts") {
+	// Get ExecutableType value
+	var executableType string
+	if executableTypeField.IsValid() {
+		executableType = executableTypeField.String()
+	}
+
+	// Validate based on ExecutableType
+	switch executableType {
+	case "script":
+		// Action stages with script executable type must have a valid script ID
+		if !v.validateResourceID(scriptIDField, "scripts") {
+			return false
+		}
+	case "query":
+		// Action stages with query executable type must have a valid query ID
+		if !v.validateResourceID(queryIDField, "queries") {
+			return false
+		}
+	default:
+		// Action stages must have a valid ExecutableType (script or query)
+		// If ExecutableType is not set or invalid, validation fails
 		return false
 	}
 
@@ -267,9 +288,35 @@ func (v *Validator) validatePipelineWorkflowable(parentStruct reflect.Value) boo
 }
 
 // validateActionWorkflowable validates action-type workflowables.
-func (v *Validator) validateActionWorkflowable(_ reflect.Value) bool {
-	// Action workflowables are valid by default
-	// Specific validation is handled by standard field validators
+func (v *Validator) validateActionWorkflowable(parentStruct reflect.Value) bool {
+	executableTypeField := parentStruct.FieldByName("ExecutableType")
+	scriptIDField := parentStruct.FieldByName("ScriptID")
+	queryIDField := parentStruct.FieldByName("QueryID")
+
+	// Get ExecutableType value
+	var executableType string
+	if executableTypeField.IsValid() {
+		executableType = executableTypeField.String()
+	}
+
+	// Validate based on ExecutableType
+	switch executableType {
+	case "script":
+		// Action workflowables with script executable type must have a valid script ID
+		if !v.validateResourceID(scriptIDField, "scripts") {
+			return false
+		}
+	case "query":
+		// Action workflowables with query executable type must have a valid query ID
+		if !v.validateResourceID(queryIDField, "queries") {
+			return false
+		}
+	default:
+		// Action workflowables must have a valid ExecutableType (script or query)
+		// If ExecutableType is not set or invalid, validation fails
+		return false
+	}
+
 	return true
 }
 
