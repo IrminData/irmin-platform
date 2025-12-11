@@ -9,7 +9,7 @@ import IrminCore from '@/lib/core';
 
 import ConnectionPathSelector from '@/components/connection/ConnectionPathSelector';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
-import ScriptSelector from '@/components/scripts/ScriptSelector';
+import InlineScriptEditor from '@/components/scripts/InlineScriptEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -387,21 +387,16 @@ function Stage({
             )}
 
           {stage.type === 'action' && (
-            <div className='flex flex-col gap-2'>
-              <Label htmlFor={`script-id-${index}`}>
-                {dict.workflow.pipeline.executableScript ?? 'Script'}
-              </Label>
-              <ScriptSelector
-                currentSelectedScriptId={stage.script_id ?? null}
-                onSelectScript={(scriptId) =>
-                  setStage((prevStage) => ({
-                    ...prevStage,
-                    script_id: scriptId,
-                  }))
-                }
-                disabled={readOnly}
-              />
-            </div>
+            <InlineScriptEditor
+              currentScriptId={stage.script_id ?? null}
+              onScriptIdChange={(scriptId) =>
+                setStage((prevStage) => ({
+                  ...prevStage,
+                  script_id: scriptId,
+                }))
+              }
+              disabled={readOnly}
+            />
           )}
 
           {stage.type === 'connection' && (

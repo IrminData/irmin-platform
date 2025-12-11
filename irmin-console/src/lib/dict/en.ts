@@ -543,6 +543,25 @@ const en = {
         pipeline:
           'Pipeline workflows move data through a series of stages, passing results from one stage to the next.',
       },
+      validation: {
+        workflowableConfigurationMissing:
+          'Workflowable configuration is missing',
+        pleaseSelectConnection: 'Please select a connection',
+        pleaseSelectDestinationRepository:
+          'Please select a destination repository',
+        pleaseSpecifyDestinationBranch: 'Please specify a destination branch',
+        pleaseSpecifyDestinationPathInRepository:
+          'Please specify a destination path in repository',
+        pleaseAddAtLeastOneSourcePathFromConnection:
+          'Please add at least one source path from connection',
+        pleaseSelectSourceRepository: 'Please select a source repository',
+        pleaseSpecifySourceBranch: 'Please specify a source branch',
+        pleaseSpecifyDestinationPathInConnection:
+          'Please specify a destination path in connection',
+        pleaseAddAtLeastOneSourcePathFromRepository:
+          'Please add at least one source path from repository',
+        pleaseSelectExecutableScript: 'Please select an executable script',
+      },
     },
 
     pipeline: {
@@ -696,6 +715,14 @@ const en = {
     scripts: 'Scripts',
     scriptName: 'Script name',
     scriptDescription: 'Script description',
+    scriptNotFound: 'Script not found. Resetting to blank editor.',
+    scriptDeleted: 'Script was deleted. Resetting to blank editor.',
+    unsavedChangesDiscard:
+      'You have unsaved changes. Do you want to discard them?',
+    failedToCreateScript: 'Failed to create script',
+    failedToUpdateScript: 'Failed to update script',
+    saving: 'Saving...',
+    reset: 'Reset',
   },
 
   query: {

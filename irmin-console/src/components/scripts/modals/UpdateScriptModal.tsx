@@ -126,11 +126,11 @@ export default function UpdateScriptModal({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className='flex flex-col gap-4 pb-6'
+      className='flex flex-col gap-4 pb-4'
       id='update-script-modal'
     >
       <div className='flex flex-col gap-2'>
-        <Label htmlFor='script-name'>{dict.common?.name ?? 'Name'}</Label>
+        <Label htmlFor='script-name'>{dict.common.name}</Label>
         <Controller
           name='name'
           control={control}
@@ -140,7 +140,7 @@ export default function UpdateScriptModal({
               id='script-name'
               type='text'
               disabled={loading}
-              placeholder={dict.scripts?.scriptName ?? 'Script name'}
+              placeholder={dict.scripts.scriptName}
               {...field}
             />
           )}
@@ -151,9 +151,7 @@ export default function UpdateScriptModal({
       </div>
 
       <div className='flex flex-col gap-2'>
-        <Label htmlFor='script-description'>
-          {dict.common?.description ?? 'Description'}
-        </Label>
+        <Label htmlFor='script-description'>{dict.common.description}</Label>
         <Controller
           name='description'
           control={control}
@@ -161,10 +159,7 @@ export default function UpdateScriptModal({
             <Textarea
               id='script-description'
               disabled={loading}
-              placeholder={
-                dict.scripts?.scriptDescription ??
-                'Describe what this script does...'
-              }
+              placeholder={dict.scripts.scriptDescription}
               rows={3}
               {...field}
             />
@@ -178,7 +173,7 @@ export default function UpdateScriptModal({
       </div>
 
       <div className='flex flex-col gap-2'>
-        <Label htmlFor='script-owner'>{dict.common?.owner ?? 'Owner'}</Label>
+        <Label htmlFor='script-owner'>{dict.common.owner}</Label>
         <Controller
           name='owner_id'
           control={control}

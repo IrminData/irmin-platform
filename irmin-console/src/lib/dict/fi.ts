@@ -531,6 +531,23 @@ const fi = {
         pipeline:
           'Dataputkiprosessit siirtävät tietoja useiden vaiheiden läpi, välittäen tuloksia vaiheesta seuraavaan.',
       },
+      validation: {
+        workflowableConfigurationMissing: 'Prosessin konfiguraatio puuttuu',
+        pleaseSelectConnection: 'Valitse yhteys',
+        pleaseSelectDestinationRepository: 'Valitse kohdedata-arkisto',
+        pleaseSpecifyDestinationBranch: 'Määritä kohdehaara',
+        pleaseSpecifyDestinationPathInRepository:
+          'Määritä kohdepolku data-arkistossa',
+        pleaseAddAtLeastOneSourcePathFromConnection:
+          'Lisää vähintään yksi lähdepolku yhteydestä',
+        pleaseSelectSourceRepository: 'Valitse lähdedata-arkisto',
+        pleaseSpecifySourceBranch: 'Määritä lähdehaara',
+        pleaseSpecifyDestinationPathInConnection:
+          'Määritä kohdepolku yhteydessä',
+        pleaseAddAtLeastOneSourcePathFromRepository:
+          'Lisää vähintään yksi lähdepolku data-arkistosta',
+        pleaseSelectExecutableScript: 'Valitse suoritettava skripti',
+      },
     },
     pipeline: {
       pipeline: 'Dataputki',
@@ -680,6 +697,14 @@ const fi = {
     scripts: 'Skriptit',
     scriptName: 'Skriptin nimi',
     scriptDescription: 'Skriptin kuvaus',
+    scriptNotFound: 'Skriptiä ei löytynyt. Palautetaan tyhjä editori.',
+    scriptDeleted: 'Skripti poistettiin. Palautetaan tyhjä editori.',
+    unsavedChangesDiscard:
+      'Sinulla on tallentamattomia muutoksia. Haluatko hylätä ne?',
+    failedToCreateScript: 'Skriptin luominen epäonnistui',
+    failedToUpdateScript: 'Skriptin päivitys epäonnistui',
+    saving: 'Tallennetaan...',
+    reset: 'Palauta',
   },
 
   query: {

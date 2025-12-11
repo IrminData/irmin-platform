@@ -248,7 +248,7 @@ export default function ScriptsSection() {
                 onClick={openNewTab}
                 disabled={!isResourceAllowed('script', 'create') || loading}
               >
-                {dict.scripts?.createScript ?? 'Create Script'}
+                {dict.scripts.createScript}
               </Button>
             </div>
             <div className='border-b p-2'>
@@ -279,7 +279,7 @@ export default function ScriptsSection() {
               <QueryError
                 error={scriptsError}
                 onRetry={() => refetchScripts()}
-                title={dict.common?.somethingWentWrong}
+                title={dict.common.somethingWentWrong}
                 size='sm'
                 className='m-4'
               />
@@ -369,11 +369,7 @@ export default function ScriptsSection() {
                     if (!currentTab) return;
                     if (scriptExecutionInProgress) return;
                     if (enableSaveButton || !currentTab.scriptId) {
-                      irminAlert(
-                        'info',
-                        dict.scripts?.scriptNeedsToBeSaved ??
-                          'Script needs to be saved before execution'
-                      );
+                      irminAlert('info', dict.scripts.scriptNeedsToBeSaved);
                       return;
                     }
                     executeScript(currentTab.scriptId);
@@ -400,9 +396,7 @@ export default function ScriptsSection() {
                 icon={<TbX size={22} />}
                 className='absolute top-2 right-2'
               />
-              <Badge className='mt-2'>
-                {dict.scripts?.scriptManagement ?? 'Script'}
-              </Badge>
+              <Badge className='mt-2'>{dict.scripts.scriptManagement}</Badge>
               <p className='text-sm'>{selectedScript.name}</p>
               {selectedScript.description && (
                 <p className='mb-2 text-xs text-foreground/50'>
@@ -418,7 +412,7 @@ export default function ScriptsSection() {
                 `}
               >
                 <p className='mb-1 text-xs font-medium text-foreground/70'>
-                  {dict.common?.owner ?? 'Owner'}
+                  {dict.common.owner}
                 </p>
                 <p className='text-sm'>
                   {selectedScript.owner.first_name}{' '}

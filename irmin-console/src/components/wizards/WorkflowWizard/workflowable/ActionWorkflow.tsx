@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
-import ScriptSelector from '@/components/scripts/ScriptSelector';
+import InlineScriptEditor from '@/components/scripts/InlineScriptEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -56,23 +56,38 @@ export default function ActionWorkflow({
     [setWorkflowData]
   );
 
+  // Use ref to store the latest setWorkflowData to avoid dependency issues
+  const setWorkflowDataRef = useRef(setWorkflowData);
+  useEffect(() => {
+    setWorkflowDataRef.current = setWorkflowData;
+  }, [setWorkflowData]);
+
+  const handleScriptIdChange = useCallback((scriptId: string) => {
+    setWorkflowDataRef.current((prev) => {
+      const currentScriptId = (prev.workflowable as Action).script_id || '';
+      const newScriptId = scriptId || '';
+
+      // Prevent unnecessary updates if the value hasn't actually changed
+      if (currentScriptId === newScriptId) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        workflowable: {
+          ...(prev.workflowable as Action),
+          script_id: newScriptId,
+        },
+      };
+    });
+  }, []);
+
   return (
     <>
-      <div className='flex flex-col gap-2'>
-        <Label>{dict.workflow.executableScriptFile}</Label>
-        <ScriptSelector
-          currentSelectedScriptId={workflowable.script_id ?? null}
-          onSelectScript={(scriptId) =>
-            setWorkflowData((prev) => ({
-              ...prev,
-              workflowable: {
-                ...(prev.workflowable as Action),
-                script_id: scriptId,
-              },
-            }))
-          }
-        />
-      </div>
+      <InlineScriptEditor
+        currentScriptId={workflowable.script_id || null}
+        onScriptIdChange={handleScriptIdChange}
+      />
       <div className='flex flex-col gap-2'>
         <Label>{dict.workflow.scriptResultDestinationRepository}</Label>
         <Select

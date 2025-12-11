@@ -150,8 +150,10 @@ export default function WorkflowWizard({
     []
   );
 
-  const hasFieldMappings =
-    wizardData.type === 'import' || wizardData.type === 'export';
+  const hasFieldMappings = useMemo(
+    () => wizardData.type === 'import' || wizardData.type === 'export',
+    [wizardData.type]
+  );
 
   const workflowTypeDescription = useMemo(() => {
     const type = wizardData.type || initialWorkflowData.type;

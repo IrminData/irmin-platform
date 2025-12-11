@@ -71,14 +71,12 @@ export default function ScriptSelector({
         disabled={disabled || scriptsQuery.isLoading}
       >
         <SelectTrigger className='w-full'>
-          <SelectValue
-            placeholder={dict.scripts?.selectScript ?? 'Select a script'}
-          />
+          <SelectValue placeholder={dict.scripts.selectScript} />
         </SelectTrigger>
         <SelectContent>
           <div className='p-2'>
             <Input
-              placeholder={dict.list?.search ?? 'Search scripts...'}
+              placeholder={dict.list.search}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className='mb-2'
@@ -86,11 +84,11 @@ export default function ScriptSelector({
           </div>
           {scriptsQuery.isLoading ? (
             <SelectItem value='loading' disabled>
-              {dict.list?.loading ?? 'Loading...'}
+              {dict.list.loading}
             </SelectItem>
           ) : filteredScripts.length === 0 ? (
             <SelectItem value='no-scripts' disabled>
-              {dict.list?.noItems ?? 'No scripts found'}
+              {dict.list.noItems}
             </SelectItem>
           ) : (
             filteredScripts.map((script: StoredScript) => (
@@ -105,12 +103,12 @@ export default function ScriptSelector({
       {selectedScript && (
         <div className='text-sm text-muted-foreground'>
           <div>
-            <strong>{dict.scripts?.owner ?? 'Owner'}:</strong>{' '}
+            <strong>{dict.scripts.owner}:</strong>{' '}
             {selectedScript.owner.first_name} {selectedScript.owner.last_name}
           </div>
           {selectedScript.tags && selectedScript.tags.length > 0 && (
             <div>
-              <strong>{dict.list?.tags ?? 'Tags'}:</strong>{' '}
+              <strong>{dict.list.tags}:</strong>{' '}
               {selectedScript.tags.map((tag) => tag.name).join(', ')}
             </div>
           )}
@@ -124,7 +122,7 @@ export default function ScriptSelector({
           onClick={() => window.open(`${scriptsUrl}?create`, '_blank')}
           disabled={disabled}
         >
-          {dict.scripts?.createScript ?? 'Create Script'}
+          {dict.scripts.createScript}
         </Button>
       )}
     </div>

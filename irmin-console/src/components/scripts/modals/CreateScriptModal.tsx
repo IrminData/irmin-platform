@@ -62,7 +62,7 @@ export default function CreateScriptModal({
   }, []);
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className='space-y-4'>
+    <form onSubmit={handleSubmit(handleFormSubmit)} className='space-y-4 pb-4'>
       <div>
         <Label htmlFor='script-name'>{dict.common.name}</Label>
         <Input
@@ -81,7 +81,7 @@ export default function CreateScriptModal({
 
       <div>
         <Label htmlFor='script-description'>
-          {dict.common.description} ({dict.common.optional || 'Optional'})
+          {dict.common.description} ({dict.common.optional})
         </Label>
         <Textarea
           id='script-description'
@@ -92,7 +92,7 @@ export default function CreateScriptModal({
       </div>
 
       <div>
-        <Label>{dict.common.tags || 'Tags'}</Label>
+        <Label>{dict.common.tags}</Label>
         <WorkspaceTagSelector
           selectedTags={selectedTags}
           onTagsChange={handleTagsChange}

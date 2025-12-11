@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 
 import { Button } from '@/components/ui/button';
 
@@ -33,12 +33,13 @@ function ConfigureWorkflowableStep({
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
 
-  const workflowable = useMemo(() => wizardData.workflowable, [wizardData]);
-
   const validateWorkflowable = useCallback((): boolean => {
     const currentWorkflowable = wizardData.workflowable;
     if (!currentWorkflowable) {
-      irminAlert('error', 'Workflowable configuration is missing');
+      irminAlert(
+        'error',
+        dict.workflow.create.validation.workflowableConfigurationMissing
+      );
       return false;
     }
 
@@ -46,21 +47,31 @@ function ConfigureWorkflowableStep({
       case 'import': {
         const importWorkflowable = currentWorkflowable as Import;
         if (!importWorkflowable.connection_id) {
-          irminAlert('error', 'Please select a connection');
+          irminAlert(
+            'error',
+            dict.workflow.create.validation.pleaseSelectConnection
+          );
           return false;
         }
         if (!importWorkflowable.repository) {
-          irminAlert('error', 'Please select a destination repository');
+          irminAlert(
+            'error',
+            dict.workflow.create.validation.pleaseSelectDestinationRepository
+          );
           return false;
         }
         if (!importWorkflowable.repository_branch) {
-          irminAlert('error', 'Please specify a destination branch');
+          irminAlert(
+            'error',
+            dict.workflow.create.validation.pleaseSpecifyDestinationBranch
+          );
           return false;
         }
         if (!importWorkflowable.import_to_repository_path) {
           irminAlert(
             'error',
-            'Please specify a destination path in repository'
+            dict.workflow.create.validation
+              .pleaseSpecifyDestinationPathInRepository
           );
           return false;
         }
@@ -70,7 +81,8 @@ function ConfigureWorkflowableStep({
         ) {
           irminAlert(
             'error',
-            'Please add at least one source path from connection'
+            dict.workflow.create.validation
+              .pleaseAddAtLeastOneSourcePathFromConnection
           );
           return false;
         }
@@ -79,21 +91,31 @@ function ConfigureWorkflowableStep({
       case 'export': {
         const exportWorkflowable = currentWorkflowable as Export;
         if (!exportWorkflowable.connection_id) {
-          irminAlert('error', 'Please select a connection');
+          irminAlert(
+            'error',
+            dict.workflow.create.validation.pleaseSelectConnection
+          );
           return false;
         }
         if (!exportWorkflowable.repository) {
-          irminAlert('error', 'Please select a source repository');
+          irminAlert(
+            'error',
+            dict.workflow.create.validation.pleaseSelectSourceRepository
+          );
           return false;
         }
         if (!exportWorkflowable.repository_branch) {
-          irminAlert('error', 'Please specify a source branch');
+          irminAlert(
+            'error',
+            dict.workflow.create.validation.pleaseSpecifySourceBranch
+          );
           return false;
         }
         if (!exportWorkflowable.export_to_connection_path) {
           irminAlert(
             'error',
-            'Please specify a destination path in connection'
+            dict.workflow.create.validation
+              .pleaseSpecifyDestinationPathInConnection
           );
           return false;
         }
@@ -103,7 +125,8 @@ function ConfigureWorkflowableStep({
         ) {
           irminAlert(
             'error',
-            'Please add at least one source path from repository'
+            dict.workflow.create.validation
+              .pleaseAddAtLeastOneSourcePathFromRepository
           );
           return false;
         }
@@ -112,7 +135,10 @@ function ConfigureWorkflowableStep({
       case 'action': {
         const actionWorkflowable = currentWorkflowable as Action;
         if (!actionWorkflowable.script_id) {
-          irminAlert('error', 'Please select an executable script');
+          irminAlert(
+            'error',
+            dict.workflow.create.validation.pleaseSelectExecutableScript
+          );
           return false;
         }
         break;
@@ -126,7 +152,7 @@ function ConfigureWorkflowableStep({
     }
 
     return true;
-  }, [wizardData.workflowable, irminAlert]);
+  }, [wizardData.workflowable, irminAlert, dict]);
 
   const handleNextStep = useCallback(() => {
     if (validateWorkflowable()) {
@@ -173,6 +199,8 @@ function ConfigureWorkflowableStep({
     },
     [updateWizardData, wizardData]
   );
+
+  const workflowable = wizardData.workflowable;
 
   // Early return if workflowable is not defined
   if (!workflowable) {

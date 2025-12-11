@@ -347,13 +347,13 @@ export const ScriptEditorProvider = ({
           )
         );
 
-        irminAlert('success', dict.common?.saved ?? 'Saved successfully');
+        irminAlert('success', dict.common.saved);
       } else {
         // Create new script - show modal for metadata
         // Capture tabId to identify which tab to update, but retrieve latest state at execution time
         const tabIdToSave = currentTab.id;
         irminModal.show(
-          dict.scripts?.createScript ?? 'Create Script',
+          dict.scripts.createScript,
           <CreateScriptModal
             workspaceSlug={workspaceSlug}
             defaultName={currentTab.name.replace(/\.\w+$/, '')}
@@ -401,10 +401,7 @@ export const ScriptEditorProvider = ({
                 router.push(`${pathname}?${newSearchParams.toString()}`);
 
                 irminModal.close();
-                irminAlert(
-                  'success',
-                  dict.common?.saved ?? 'Script created successfully'
-                );
+                irminAlert('success', dict.common.saved);
               } catch (error) {
                 console.error('Error creating script:', error);
                 irminAlert(
@@ -466,7 +463,7 @@ export const ScriptEditorProvider = ({
   const updateScriptMetadata = useCallback(
     (script: StoredScript) => {
       irminModal.show(
-        dict.scripts?.updateScript ?? 'Update Script',
+        dict.scripts.updateScript,
         <UpdateScriptModal
           script={script}
           updateScriptMutation={updateScriptMutation}
@@ -551,10 +548,7 @@ export const ScriptEditorProvider = ({
           closeTab(tabToClose.id);
         }
 
-        irminAlert(
-          'success',
-          dict.common?.deleted ?? 'Script deleted successfully'
-        );
+        irminAlert('success', dict.common.deleted);
         return true;
       } catch (error) {
         console.error('Error deleting script:', error);
@@ -579,10 +573,7 @@ export const ScriptEditorProvider = ({
   const executeScript = useCallback(
     async (scriptId: string) => {
       if (!scriptId) return;
-      irminAlert(
-        'info',
-        dict.scripts?.scriptExecutionStarted ?? 'Script execution started'
-      );
+      irminAlert('info', dict.scripts.scriptExecutionStarted);
 
       try {
         const res = await executeScriptMutation.mutateAsync({

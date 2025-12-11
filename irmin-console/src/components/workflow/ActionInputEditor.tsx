@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
 import { Button } from '@/components/ui/button';
@@ -43,12 +43,44 @@ function ActionInputEditor({
   const { repositoriesQuery } = useRepositories();
   const [inputFiles, setInputFiles] = useState<ActionInputData[]>(initialData);
 
+  // Use ref to store the latest onChange callback to avoid dependency issues
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  // Track previous initialData to detect external changes
+  const prevInitialDataRef = useRef<ActionInputData[]>(initialData);
+
+  // Sync initialData with local state when it changes from parent (controlled mode)
+  // This is necessary for controlled component behavior
+  useEffect(() => {
+    if (!disableSaveButton) {
+      const prevData = prevInitialDataRef.current;
+      const hasChanged =
+        prevData.length !== initialData.length ||
+        prevData.some(
+          (item, index) =>
+            item.repository !== initialData[index]?.repository ||
+            item.repository_ref !== initialData[index]?.repository_ref ||
+            item.repository_path !== initialData[index]?.repository_path
+        );
+
+      if (hasChanged) {
+        prevInitialDataRef.current = initialData;
+        // Sync props to state in controlled mode - this is a valid use case
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setInputFiles(initialData);
+      }
+    }
+  }, [initialData, disableSaveButton]);
+
   // Notify parent of changes when save button is disabled
   useEffect(() => {
     if (disableSaveButton) {
-      onChange(inputFiles);
+      onChangeRef.current(inputFiles);
     }
-  }, [inputFiles, disableSaveButton, onChange]);
+  }, [inputFiles, disableSaveButton]);
 
   // Add a new input file
   const addInputFile = useCallback(() => {
