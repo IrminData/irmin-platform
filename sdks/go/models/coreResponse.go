@@ -9,7 +9,7 @@ type IrminAPIPaginationMetadata struct {
 	// Number of items per page
 	PerPage *int `json:"per_page,omitempty"    validate:"omitempty,gte=1" example:"20"`
 	// Total number of pages available
-	TotalPages *int `json:"total_pages,omitempty" validate:"omitempty,gte=1" example:"8"`
+	TotalPages *int `json:"total_pages,omitempty" validate:"omitempty,gte=0" example:"8"`
 	// HasMore indicates if there are more items available
 	HasMore *bool `json:"has_more,omitempty"                               example:"true"`
 	// Next is the next page number or token, if applicable
