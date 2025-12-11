@@ -339,7 +339,7 @@ func (c *Client) CopyObject(
 		"/repositories/%s/branches/%s/objects/copy?dest_path=%s",
 		repositoryID,
 		branch,
-		destinationPath,
+		url.QueryEscape(destinationPath),
 	)
 	var metadata ObjectMetadata
 	if doRequestErr := c.doRequest("POST", endpoint, reqData, []int{http.StatusCreated}, &metadata); doRequestErr != nil {
