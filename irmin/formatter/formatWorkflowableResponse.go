@@ -97,15 +97,30 @@ func formatActionWorkflowable(
 		return nil
 	}
 
+	var scriptSqid *string
+	var querySqid *string
+
 	// Construct the script sqid
-	scriptSqid, scriptSqidErr := sqidManager.Encode("scripts", uint64(actionWorkflowable.ScriptID))
-	if scriptSqidErr != nil {
-		return nil
+	if actionWorkflowable.ScriptID != nil {
+		encoded, scriptSqidErr := sqidManager.Encode("scripts", uint64(*actionWorkflowable.ScriptID))
+		if scriptSqidErr != nil {
+			return nil
+		}
+		scriptSqid = &encoded
+	}
+	if actionWorkflowable.QueryID != nil {
+		encoded, querySqidErr := sqidManager.Encode("queries", uint64(*actionWorkflowable.QueryID))
+		if querySqidErr != nil {
+			return nil
+		}
+		querySqid = &encoded
 	}
 
 	response := &irminmodels.Workflowable{
-		Type:     irminmodels.WorkflowableTypeAction,
-		ScriptID: scriptSqid,
+		Type:           irminmodels.WorkflowableTypeAction,
+		ExecutableType: actionWorkflowable.ExecutableType,
+		ScriptID:       scriptSqid,
+		QueryID:        querySqid,
 	}
 
 	if actionWorkflowable.ResultsRepository != nil {
@@ -141,16 +156,35 @@ func formatActionWorkflowable(
 func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDManager) irminmodels.PipelineStage {
 	switch stage.Type {
 	case db.PipelineStageTypeAction:
-		scriptSqid, scriptSqidErr := sqidManager.Encode("scripts", uint64(*stage.ScriptID))
-		if scriptSqidErr != nil {
-			return irminmodels.PipelineStage{}
+		var scriptSqid *string
+		var querySqid *string
+
+		// Construct the script sqid
+		if stage.ScriptID != nil {
+			encoded, scriptSqidErr := sqidManager.Encode("scripts", uint64(*stage.ScriptID))
+			if scriptSqidErr != nil {
+				return irminmodels.PipelineStage{}
+			}
+			scriptSqid = &encoded
 		}
+
+		// Construct the query sqid
+		if stage.QueryID != nil {
+			encoded, querySqidErr := sqidManager.Encode("queries", uint64(*stage.QueryID))
+			if querySqidErr != nil {
+				return irminmodels.PipelineStage{}
+			}
+			querySqid = &encoded
+		}
+
 		return irminmodels.PipelineStage{
-			Description: stage.Description,
-			Write:       stage.Write,
-			Read:        stage.Read,
-			Type:        irminmodels.PipelineStageTypeAction,
-			ScriptID:    &scriptSqid,
+			Description:    stage.Description,
+			Write:          stage.Write,
+			Read:           stage.Read,
+			Type:           irminmodels.PipelineStageTypeAction,
+			ExecutableType: stage.ExecutableType,
+			ScriptID:       scriptSqid,
+			QueryID:        querySqid,
 		}
 	case db.PipelineStageTypeConnection:
 		connectionSqid, _ := sqidManager.Encode("connections", uint64(*stage.ConnectionID))
@@ -201,7 +235,6 @@ func formatPipelineWorkflowable(
 
 	response := &irminmodels.Workflowable{
 		Type: irminmodels.WorkflowableTypePipeline,
-		Live: pipelineWorkflowable.Live,
 	}
 
 	// Sort the stages by order sequence

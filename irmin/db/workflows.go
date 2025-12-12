@@ -71,18 +71,20 @@ type ActionWorkflowableInput struct {
 
 type ActionWorkflowable struct {
 	gorm.Model
-	ScriptID                uint                      `json:"script_id"                 gorm:"index"`
-	Script                  StoredScript              `json:"script"                    gorm:"foreignKey:ScriptID"`
-	ResultsRepository       *Repository               `json:"results_repository"        gorm:"foreignKey:ResultsRepositoryID"`
-	ResultsRepositoryID     *uint                     `json:"results_repository_id"     gorm:"index"`
-	ResultsRepositoryBranch *string                   `json:"results_repository_branch"`
-	ResultsRepositoryPath   *string                   `json:"results_repository_path"`
-	Inputs                  []ActionWorkflowableInput `json:"inputs"                    gorm:"foreignKey:ActionWorkflowableID"`
+	ExecutableType          irminmodels.ActionExecutableType `json:"executable_type"`
+	ScriptID                *uint                            `json:"script_id"                 gorm:"index"`
+	Script                  *StoredScript                    `json:"script"                    gorm:"foreignKey:ScriptID"`
+	QueryID                 *uint                            `json:"query_id"                  gorm:"index"`
+	Query                   *StoredQuery                     `json:"query"                     gorm:"foreignKey:QueryID"`
+	ResultsRepository       *Repository                      `json:"results_repository"        gorm:"foreignKey:ResultsRepositoryID"`
+	ResultsRepositoryID     *uint                            `json:"results_repository_id"     gorm:"index"`
+	ResultsRepositoryBranch *string                          `json:"results_repository_branch"`
+	ResultsRepositoryPath   *string                          `json:"results_repository_path"`
+	Inputs                  []ActionWorkflowableInput        `json:"inputs"                    gorm:"foreignKey:ActionWorkflowableID"`
 }
 
 type PipelineWorkflowable struct {
 	gorm.Model
-	Live   bool            `json:"live"`
 	Stages []PipelineStage `json:"stages" gorm:"foreignKey:PipelineID"`
 }
 
@@ -106,8 +108,11 @@ type PipelineStage struct {
 
 	// Action stage specific
 
-	ScriptID *uint         `json:"script_id,omitempty"`
-	Script   *StoredScript `json:"script,omitempty"    gorm:"foreignKey:ScriptID"`
+	ExecutableType irminmodels.ActionExecutableType `json:"executable_type,omitempty"`
+	ScriptID       *uint                            `json:"script_id,omitempty"`
+	Script         *StoredScript                    `json:"script,omitempty"          gorm:"foreignKey:ScriptID"`
+	QueryID        *uint                            `json:"query_id,omitempty"`
+	Query          *StoredQuery                     `json:"query,omitempty"           gorm:"foreignKey:QueryID"`
 
 	// Connection stage specific
 
@@ -194,10 +199,11 @@ func (d *Database) GetExportWorkflowableByID(id uint) (*ExportWorkflowable, erro
 // GetActionWorkflowableByID retrieves an action workflowable by its ID.
 func (d *Database) GetActionWorkflowableByID(id uint) (*ActionWorkflowable, error) {
 	var actionWorkflow ActionWorkflowable
-	result := d.Preload("Repository").
+	result := d.Preload("ResultsRepository").
 		Preload("Inputs").
 		Preload("Inputs.Repository").
 		Preload("Script").
+		Preload("Query").
 		First(&actionWorkflow, id)
 	return &actionWorkflow, result.Error
 }
@@ -210,6 +216,7 @@ func (d *Database) GetPipelineWorkflowableByID(id uint) (*PipelineWorkflowable, 
 		Preload("Stages.Connection.Connector").
 		Preload("Stages.Repository").
 		Preload("Stages.Script").
+		Preload("Stages.Query").
 		First(&pipeline, id)
 	return &pipeline, result.Error
 }

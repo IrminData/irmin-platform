@@ -11188,6 +11188,17 @@ const docTemplate = `{
                 }
             }
         },
+        "irminmodels.ActionExecutableType": {
+            "type": "string",
+            "enum": [
+                "script",
+                "query"
+            ],
+            "x-enum-varnames": [
+                "ActionExecutableTypeScript",
+                "ActionExecutableTypeQuery"
+            ]
+        },
         "irminmodels.ActionInputData": {
             "type": "object",
             "required": [
@@ -11871,7 +11882,7 @@ const docTemplate = `{
                 "total_pages": {
                     "description": "Total number of pages available",
                     "type": "integer",
-                    "minimum": 1,
+                    "minimum": 0,
                     "example": 8
                 }
             }
@@ -12348,9 +12359,26 @@ const docTemplate = `{
                     "maxLength": 200,
                     "example": "Process customer data"
                 },
+                "executable_type": {
+                    "description": "Action stage specific",
+                    "enum": [
+                        "script",
+                        "query"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.ActionExecutableType"
+                        }
+                    ],
+                    "example": "script"
+                },
                 "order_sequence": {
                     "type": "integer",
                     "example": 1
+                },
+                "query_id": {
+                    "type": "string",
+                    "example": "qry_8x2m9k4n7p5q"
                 },
                 "read": {
                     "type": "boolean",
@@ -12380,7 +12408,6 @@ const docTemplate = `{
                     "example": "/processed/customers.json"
                 },
                 "script_id": {
-                    "description": "Action stage specific",
                     "type": "string",
                     "example": "scr_8x2m9k4n7p5q"
                 },
@@ -13578,6 +13605,18 @@ const docTemplate = `{
                     "type": "string",
                     "example": "conn_8x2m9k4n7p5q"
                 },
+                "executable_type": {
+                    "enum": [
+                        "script",
+                        "query"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.ActionExecutableType"
+                        }
+                    ],
+                    "example": "script"
+                },
                 "export_from_repository_paths": {
                     "type": "array",
                     "items": {
@@ -13619,9 +13658,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/irminmodels.ActionInputData"
                     }
                 },
-                "live": {
-                    "type": "boolean",
-                    "example": true
+                "query_id": {
+                    "type": "string",
+                    "example": "qry_8x2m9k4n7p5q"
                 },
                 "repository": {
                     "type": "string",

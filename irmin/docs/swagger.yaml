@@ -710,6 +710,14 @@ definitions:
     - name
     - updated_at
     type: object
+  irminmodels.ActionExecutableType:
+    enum:
+    - script
+    - query
+    type: string
+    x-enum-varnames:
+    - ActionExecutableTypeScript
+    - ActionExecutableTypeQuery
   irminmodels.ActionInputData:
     properties:
       repository:
@@ -1237,7 +1245,7 @@ definitions:
       total_pages:
         description: Total number of pages available
         example: 8
-        minimum: 1
+        minimum: 0
         type: integer
     type: object
   irminmodels.IrminAPIResponse:
@@ -1579,9 +1587,20 @@ definitions:
         example: Process customer data
         maxLength: 200
         type: string
+      executable_type:
+        allOf:
+        - $ref: '#/definitions/irminmodels.ActionExecutableType'
+        description: Action stage specific
+        enum:
+        - script
+        - query
+        example: script
       order_sequence:
         example: 1
         type: integer
+      query_id:
+        example: qry_8x2m9k4n7p5q
+        type: string
       read:
         example: true
         type: boolean
@@ -1603,7 +1622,6 @@ definitions:
         example: /processed/customers.json
         type: string
       script_id:
-        description: Action stage specific
         example: scr_8x2m9k4n7p5q
         type: string
       type:
@@ -2509,6 +2527,13 @@ definitions:
       connection_id:
         example: conn_8x2m9k4n7p5q
         type: string
+      executable_type:
+        allOf:
+        - $ref: '#/definitions/irminmodels.ActionExecutableType'
+        enum:
+        - script
+        - query
+        example: script
       export_from_repository_paths:
         example:
         - /processed/customers.json
@@ -2538,9 +2563,9 @@ definitions:
         items:
           $ref: '#/definitions/irminmodels.ActionInputData'
         type: array
-      live:
-        example: true
-        type: boolean
+      query_id:
+        example: qry_8x2m9k4n7p5q
+        type: string
       repository:
         example: customer-analytics
         type: string

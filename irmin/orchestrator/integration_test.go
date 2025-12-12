@@ -62,7 +62,8 @@ func TestWorkflowExecution_EndToEnd(t *testing.T) {
 	// Create a test action workflowable
 	repoPath := "/test.py"
 	actionWorkflowable := &db.ActionWorkflowable{
-		ScriptID:              script.ID,
+		ExecutableType:        irminmodels.ActionExecutableTypeScript,
+		ScriptID:              &script.ID,
 		ResultsRepositoryID:   &repo.ID,
 		ResultsRepositoryPath: &repoPath,
 	}

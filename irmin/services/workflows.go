@@ -970,15 +970,51 @@ func (api *APIServices) createActionWorkflowable(
 		return nil, errors.New("action configuration is required")
 	}
 
-	// Process input data (using transaction connection)
+	// Process input data
+	inputData, err := api.processActionWorkflowableInputs(txDB, workspace, config.Input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Handle repository if specified
+	repository, err := api.getActionWorkflowableRepository(txDB, workspace, config.Repository)
+	if err != nil && !errors.Is(err, errRepositoryNotSpecified) {
+		return nil, err
+	}
+
+	// Validate and process executable type
+	scriptID, queryID, err := api.processActionWorkflowableExecutable(txDB, config)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create workflowable
+	workflowable, err := api.buildActionWorkflowable(config, repository, scriptID, queryID, inputData)
+	if err != nil {
+		return nil, err
+	}
+
+	if createActionWorkflowableErr := txDB.Create(&workflowable).Error; createActionWorkflowableErr != nil {
+		return nil, createActionWorkflowableErr
+	}
+	return &workflowable, nil
+}
+
+// processActionWorkflowableInputs processes input data for an action workflowable.
+func (api *APIServices) processActionWorkflowableInputs(
+	txDB *db.Database,
+	workspace *db.Workspace,
+	inputs []irminmodels.ActionInputData,
+) ([]db.ActionWorkflowableInput, error) {
 	var inputData []db.ActionWorkflowableInput
-	for _, inputObject := range config.Input {
-		repository, getRepoErr := txDB.GetRepositoryBySlugAndWorkspaceID(
+
+	for _, inputObject := range inputs {
+		repository, err := txDB.GetRepositoryBySlugAndWorkspaceID(
 			inputObject.Repository,
 			workspace.ID,
 		)
-		if getRepoErr != nil {
-			return nil, getRepoErr
+		if err != nil {
+			return nil, err
 		}
 
 		path := strings.TrimPrefix(inputObject.RepositoryPath, "/")
@@ -989,65 +1025,137 @@ func (api *APIServices) createActionWorkflowable(
 		})
 	}
 
-	// Handle repository if specified (using transaction connection)
-	var repository *db.Repository
-	if config.Repository != "" {
-		var getRepositoryBySlugAndWorkspaceIDErr error
-		repository, getRepositoryBySlugAndWorkspaceIDErr = txDB.GetRepositoryBySlugAndWorkspaceID(
-			config.Repository,
-			workspace.ID,
-		)
-		if getRepositoryBySlugAndWorkspaceIDErr != nil {
-			return nil, getRepositoryBySlugAndWorkspaceIDErr
-		}
+	return inputData, nil
+}
+
+var errRepositoryNotSpecified = errors.New("repository not specified")
+
+// getActionWorkflowableRepository retrieves the repository for an action workflowable if specified.
+func (api *APIServices) getActionWorkflowableRepository(
+	txDB *db.Database,
+	workspace *db.Workspace,
+	repositorySlug string,
+) (*db.Repository, error) {
+	if repositorySlug == "" {
+		return nil, errRepositoryNotSpecified
 	}
 
-	// Find the script by ID (using transaction connection)
-	if config.ScriptID == "" {
-		return nil, errors.New("script ID is required for action workflowable")
-	}
-	scriptID, err := api.SQIDManager.Decode("scripts", config.ScriptID)
-	if err != nil {
-		return nil, err
-	}
-	script, err := txDB.GetStoredScriptByID(uint(scriptID))
+	repository, err := txDB.GetRepositoryBySlugAndWorkspaceID(
+		repositorySlug,
+		workspace.ID,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create workflowable
-	var workflowable db.ActionWorkflowable
+	return repository, nil
+}
+
+// processActionWorkflowableExecutable validates and processes the executable type for an action workflowable.
+func (api *APIServices) processActionWorkflowableExecutable(
+	txDB *db.Database,
+	config *irminmodels.Workflowable,
+) (*uint, *uint, error) {
+	// Validate ExecutableType
+	if config.ExecutableType == "" {
+		return nil, nil, errors.New("executable type is required for action workflowable")
+	}
+	if config.ExecutableType != irminmodels.ActionExecutableTypeScript &&
+		config.ExecutableType != irminmodels.ActionExecutableTypeQuery {
+		return nil, nil, fmt.Errorf("invalid executable type: %s", config.ExecutableType)
+	}
+
+	// Handle script or query based on ExecutableType
+	switch config.ExecutableType {
+	case irminmodels.ActionExecutableTypeScript:
+		return api.processActionWorkflowableScript(txDB, config.ScriptID)
+	case irminmodels.ActionExecutableTypeQuery:
+		return api.processActionWorkflowableQuery(txDB, config.QueryID)
+	default:
+		return nil, nil, fmt.Errorf("invalid executable type: %s", config.ExecutableType)
+	}
+}
+
+// processActionWorkflowableScript processes a script executable for an action workflowable.
+func (api *APIServices) processActionWorkflowableScript(
+	txDB *db.Database,
+	scriptID *string,
+) (*uint, *uint, error) {
+	if scriptID == nil {
+		return nil, nil, errors.New("script ID is required for script executable type")
+	}
+	decodedScriptID, err := api.SQIDManager.Decode("scripts", *scriptID)
+	if err != nil {
+		return nil, nil, err
+	}
+	script, err := txDB.GetStoredScriptByID(uint(decodedScriptID))
+	if err != nil {
+		return nil, nil, err
+	}
+	return &script.ID, nil, nil
+}
+
+// processActionWorkflowableQuery processes a query executable for an action workflowable.
+func (api *APIServices) processActionWorkflowableQuery(
+	txDB *db.Database,
+	queryID *string,
+) (*uint, *uint, error) {
+	if queryID == nil {
+		return nil, nil, errors.New("query ID is required for query executable type")
+	}
+	decodedQueryID, err := api.SQIDManager.Decode("queries", *queryID)
+	if err != nil {
+		return nil, nil, err
+	}
+	query, err := txDB.GetStoredQueryByID(uint(decodedQueryID))
+	if err != nil {
+		return nil, nil, err
+	}
+	return nil, &query.ID, nil
+}
+
+// buildActionWorkflowable builds an ActionWorkflowable from the provided components.
+func (api *APIServices) buildActionWorkflowable(
+	config *irminmodels.Workflowable,
+	repository *db.Repository,
+	scriptID *uint,
+	queryID *uint,
+	inputData []db.ActionWorkflowableInput,
+) (db.ActionWorkflowable, error) {
 	if repository != nil {
 		// Validate that required repository result fields are provided
 		if config.ResultsRepositoryBranch == nil {
-			return nil, errors.New("results repository branch is required when repository is specified")
+			return db.ActionWorkflowable{}, errors.New(
+				"results repository branch is required when repository is specified",
+			)
 		}
 		if config.ResultsRepositoryPath == nil {
-			return nil, errors.New("results repository path is required when repository is specified")
+			return db.ActionWorkflowable{}, errors.New(
+				"results repository path is required when repository is specified",
+			)
 		}
 
 		repositoryID := repository.ID
 		branch := *config.ResultsRepositoryBranch
 		path := strings.TrimPrefix(*config.ResultsRepositoryPath, "/")
 
-		workflowable = db.ActionWorkflowable{
-			ScriptID:                script.ID,
+		return db.ActionWorkflowable{
+			ExecutableType:          config.ExecutableType,
+			ScriptID:                scriptID,
+			QueryID:                 queryID,
 			ResultsRepositoryID:     &repositoryID,
 			ResultsRepositoryBranch: &branch,
 			ResultsRepositoryPath:   &path,
 			Inputs:                  inputData,
-		}
-	} else {
-		workflowable = db.ActionWorkflowable{
-			ScriptID: script.ID,
-			Inputs:   inputData,
-		}
+		}, nil
 	}
 
-	if createActionWorkflowableErr := txDB.Create(&workflowable).Error; createActionWorkflowableErr != nil {
-		return nil, createActionWorkflowableErr
-	}
-	return &workflowable, nil
+	return db.ActionWorkflowable{
+		ExecutableType: config.ExecutableType,
+		ScriptID:       scriptID,
+		QueryID:        queryID,
+		Inputs:         inputData,
+	}, nil
 }
 
 // createPipelineWorkflowable is a helper function to create pipeline workflowable.
@@ -1080,7 +1188,6 @@ func (api *APIServices) createPipelineWorkflowable(
 
 	// Create workflowable
 	pipelineWorkflowable := &db.PipelineWorkflowable{
-		Live:   config.Live,
 		Stages: stages,
 	}
 	if createPipelineWorkflowableErr := txDB.Create(pipelineWorkflowable).Error; createPipelineWorkflowableErr != nil {
@@ -1115,10 +1222,46 @@ func (api *APIServices) processActionStage(
 	stage irminmodels.PipelineStage,
 ) error {
 	newStage.Type = db.PipelineStageTypeAction
-	if stage.ScriptID == nil {
-		return errors.New("script ID is required")
+
+	// Validate ExecutableType
+	if err := api.validateExecutableType(stage.ExecutableType); err != nil {
+		return err
 	}
 
+	newStage.ExecutableType = stage.ExecutableType
+
+	// Handle script or query based on ExecutableType
+	switch stage.ExecutableType {
+	case irminmodels.ActionExecutableTypeScript:
+		return api.processScriptStage(txDB, newStage, stage)
+	case irminmodels.ActionExecutableTypeQuery:
+		return api.processQueryStage(txDB, newStage, stage)
+	default:
+		return fmt.Errorf("invalid executable type: %s", stage.ExecutableType)
+	}
+}
+
+// validateExecutableType validates that the executable type is valid.
+func (api *APIServices) validateExecutableType(executableType irminmodels.ActionExecutableType) error {
+	if executableType == "" {
+		return errors.New("executable type is required for action stage")
+	}
+	if executableType != irminmodels.ActionExecutableTypeScript &&
+		executableType != irminmodels.ActionExecutableTypeQuery {
+		return fmt.Errorf("invalid executable type: %s", executableType)
+	}
+	return nil
+}
+
+// processScriptStage processes a script-based action stage.
+func (api *APIServices) processScriptStage(
+	txDB *db.Database,
+	newStage *db.PipelineStage,
+	stage irminmodels.PipelineStage,
+) error {
+	if stage.ScriptID == nil {
+		return errors.New("script ID is required for script executable type")
+	}
 	scriptID, err := api.SQIDManager.Decode("scripts", *stage.ScriptID)
 	if err != nil {
 		return err
@@ -1127,8 +1270,28 @@ func (api *APIServices) processActionStage(
 	if err != nil {
 		return err
 	}
-
 	newStage.ScriptID = &script.ID
+	return nil
+}
+
+// processQueryStage processes a query-based action stage.
+func (api *APIServices) processQueryStage(
+	txDB *db.Database,
+	newStage *db.PipelineStage,
+	stage irminmodels.PipelineStage,
+) error {
+	if stage.QueryID == nil {
+		return errors.New("query ID is required for query executable type")
+	}
+	queryID, err := api.SQIDManager.Decode("queries", *stage.QueryID)
+	if err != nil {
+		return err
+	}
+	query, err := txDB.GetStoredQueryByID(uint(queryID))
+	if err != nil {
+		return err
+	}
+	newStage.QueryID = &query.ID
 	return nil
 }
 

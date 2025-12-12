@@ -304,9 +304,7 @@ func TestPipelineWorkflowableExecution(t *testing.T) {
 	defer database.Delete(connection)
 
 	// Create a pipeline workflowable
-	pipelineWorkflowable := &db.PipelineWorkflowable{
-		Live: false,
-	}
+	pipelineWorkflowable := &db.PipelineWorkflowable{}
 	err = database.Create(pipelineWorkflowable).Error
 	if err != nil {
 		t.Fatalf("Failed to create test pipeline workflowable: %v", err)

@@ -3,11 +3,16 @@ package orchestrator
 import (
 	"bytes"
 	"context"
+	"encoding/csv"
+	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lib"
+	"maps"
 	"slices"
 	"strings"
+
+	sandbox "irmin-api/compute-sandbox"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -111,35 +116,58 @@ func (o *Orchestrator) handleActionStage(
 		computeInputFiles = previousStageResults
 	}
 
-	// Run the executable file in the compute sandbox
-	computeResult, err := o.computeSandbox.ExecutedStoredScript(
-		ctx,
-		computeInputFiles,
-		workflow.Owner,
-		stage.Script,
-	)
+	var computeResult sandbox.ExecutionResult
+	var err error
+
+	// Execute based on executable type
+	if stage.ExecutableType == irminmodels.ActionExecutableTypeQuery {
+		// Execute query
+		if stage.Query == nil {
+			logs = append(logs, "Query is not set for query executable type")
+			return logs, errors.New("query is not set for query executable type")
+		}
+
+		queryResult := o.dataEngine.ExecuteQuery(ctx, &workflow.Owner, &workflow.Workspace, stage.Query.SQL)
+
+		// Convert QueryResult to ExecutionResult
+		computeResult = convertQueryResultToExecutionResult(queryResult)
+		if queryResult.HasErrors {
+			err = fmt.Errorf("query execution failed: %v", queryResult.Logs)
+		}
+	} else {
+		// Execute script (default behavior)
+		if stage.Script == nil {
+			logs = append(logs, "Script is not set for script executable type")
+			return logs, errors.New("script is not set for script executable type")
+		}
+
+		computeResult, err = o.computeSandbox.ExecutedStoredScript(
+			ctx,
+			computeInputFiles,
+			workflow.Owner,
+			stage.Script,
+		)
+	}
+
+	// Always append the logs from the compute result to the workflow run logs
+	logs = append(logs, computeResult.Logs)
+
 	if err != nil {
 		if ctx.Err() != nil {
 			// If cancelled, append cancellation message but keep all logs
-			logs = append(logs, computeResult.Logs)
 			logs = append(
 				logs,
-				fmt.Sprintf("Workflow execution cancelled during action compute execution: %v", ctx.Err()),
+				fmt.Sprintf("Workflow execution cancelled during action execution: %v", ctx.Err()),
 			)
 			return logs, ctx.Err()
 		}
-		logs = append(logs, "Failed to execute workflowable in compute sandbox.")
+		logs = append(logs, "Failed to execute workflowable in action execution.")
 		return logs, err
 	}
 
-	// Append the logs from the compute result to the workflow run logs
-	logs = append(logs, computeResult.Logs)
-
 	if stage.Read {
 		// Set the results of the previous stage to the compute result
-		for k, v := range computeResult.ResultFiles {
-			previousStageResults[k] = v
-		}
+		maps.Copy(previousStageResults, computeResult.ResultFiles)
 	}
 
 	return logs, nil
@@ -484,4 +512,61 @@ func (o *Orchestrator) handleRepositorySingleObjectRead(
 	// Append the content to the previous stage results
 	previousStageResults[irminObject.Name] = content
 	return logs, nil
+}
+
+// convertQueryResultToExecutionResult converts a QueryResult to an ExecutionResult.
+// Query results are converted to CSV format and stored in ResultFiles.
+func convertQueryResultToExecutionResult(queryResult *irminmodels.QueryResult) sandbox.ExecutionResult {
+	result := sandbox.ExecutionResult{
+		StartTime:   queryResult.StartedAt,
+		EndTime:     queryResult.FinishedAt,
+		Logs:        strings.Join(queryResult.Logs, "\n"),
+		ResultFiles: make(map[string][]byte),
+	}
+
+	// Convert query data to CSV if there's data
+	if len(queryResult.Data) > 0 && len(queryResult.Columns) > 0 {
+		csvData, err := convertQueryDataToCSV(queryResult.Data, queryResult.Columns)
+		if err != nil {
+			result.Logs += fmt.Sprintf("\nError converting query data to CSV: %v", err)
+		} else {
+			result.ResultFiles["query_results.csv"] = csvData
+		}
+	}
+
+	return result
+}
+
+// convertQueryDataToCSV converts query data rows and columns to CSV format.
+func convertQueryDataToCSV(data []map[string]interface{}, columns []string) ([]byte, error) {
+	var csvBuffer bytes.Buffer
+	writer := csv.NewWriter(&csvBuffer)
+
+	// Write header
+	if err := writer.Write(columns); err != nil {
+		return nil, fmt.Errorf("writing CSV header: %w", err)
+	}
+
+	// Write rows
+	for _, row := range data {
+		record := make([]string, len(columns))
+		for i, col := range columns {
+			val := row[col]
+			if val == nil {
+				record[i] = ""
+			} else {
+				record[i] = fmt.Sprintf("%v", val)
+			}
+		}
+		if err := writer.Write(record); err != nil {
+			return nil, fmt.Errorf("writing CSV row: %w", err)
+		}
+	}
+
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return nil, fmt.Errorf("flushing CSV: %w", err)
+	}
+
+	return csvBuffer.Bytes(), nil
 }
