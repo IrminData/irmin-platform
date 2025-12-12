@@ -8,6 +8,7 @@ import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 import IrminCore from '@/lib/core';
 
 import ConnectionPathSelector from '@/components/connection/ConnectionPathSelector';
+import InlineQueryEditor from '@/components/query/InlineQueryEditor';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
 import InlineScriptEditor from '@/components/scripts/InlineScriptEditor';
 import { Button } from '@/components/ui/button';
@@ -35,7 +36,9 @@ import type { PipelineStage } from '@/types/core/Workflow';
 
 const defaultStage: PipelineStage = {
   type: 'action',
-  script_id: '',
+  executable_type: 'script',
+  script_id: undefined,
+  query_id: undefined,
   description: '',
   write: false,
   read: false,
@@ -308,14 +311,32 @@ function Stage({
               value={stage.type}
               onValueChange={(value) => {
                 if (value === 'action') {
-                  setStage((prevStage) => ({
-                    type: 'action',
-                    script_id: '',
-                    description: prevStage.description,
-                    write: prevStage.write,
-                    read: prevStage.read,
-                    order_sequence: prevStage.order_sequence,
-                  }));
+                  setStage((prevStage) => {
+                    const prevActionStage =
+                      prevStage.type === 'action'
+                        ? (prevStage as Extract<
+                            PipelineStage,
+                            { type: 'action' }
+                          >)
+                        : null;
+                    return {
+                      type: 'action',
+                      executable_type:
+                        prevActionStage?.executable_type || 'script',
+                      script_id:
+                        prevActionStage?.executable_type === 'script'
+                          ? prevActionStage.script_id
+                          : undefined,
+                      query_id:
+                        prevActionStage?.executable_type === 'query'
+                          ? prevActionStage.query_id
+                          : undefined,
+                      description: prevStage.description,
+                      write: prevStage.write,
+                      read: prevStage.read,
+                      order_sequence: prevStage.order_sequence,
+                    };
+                  });
                 } else if (value === 'connection') {
                   setStage((prevStage) => ({
                     type: 'connection',
@@ -387,16 +408,84 @@ function Stage({
             )}
 
           {stage.type === 'action' && (
-            <InlineScriptEditor
-              currentScriptId={stage.script_id ?? null}
-              onScriptIdChange={(scriptId) =>
-                setStage((prevStage) => ({
-                  ...prevStage,
-                  script_id: scriptId,
-                }))
-              }
-              disabled={readOnly}
-            />
+            <>
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`executable-type-${index}`}>
+                  {dict.workflow.executableType}
+                </Label>
+                <Select
+                  value={stage.executable_type || 'script'}
+                  onValueChange={(value) => {
+                    if (value === 'script') {
+                      setStage((prevStage) => {
+                        if (prevStage.type !== 'action') return prevStage;
+                        return {
+                          ...prevStage,
+                          executable_type: 'script',
+                          script_id: prevStage.script_id,
+                          query_id: undefined,
+                        };
+                      });
+                    } else if (value === 'query') {
+                      setStage((prevStage) => {
+                        if (prevStage.type !== 'action') return prevStage;
+                        return {
+                          ...prevStage,
+                          executable_type: 'query',
+                          script_id: undefined,
+                          query_id: prevStage.query_id,
+                        };
+                      });
+                    }
+                  }}
+                  disabled={readOnly}
+                >
+                  <SelectTrigger
+                    id={`executable-type-${index}`}
+                    className='w-full'
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='script'>
+                      {dict.scripts.script}
+                    </SelectItem>
+                    <SelectItem value='query'>{dict.query.query}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {(!stage.executable_type ||
+                stage.executable_type === 'script') && (
+                <InlineScriptEditor
+                  currentScriptId={stage.script_id ?? null}
+                  onScriptIdChange={(scriptId) =>
+                    setStage((prevStage) => {
+                      if (prevStage.type !== 'action') return prevStage;
+                      return {
+                        ...prevStage,
+                        script_id: scriptId,
+                      };
+                    })
+                  }
+                  disabled={readOnly}
+                />
+              )}
+              {stage.executable_type === 'query' && (
+                <InlineQueryEditor
+                  currentQueryId={stage.query_id ?? null}
+                  onQueryIdChange={(queryId) =>
+                    setStage((prevStage) => {
+                      if (prevStage.type !== 'action') return prevStage;
+                      return {
+                        ...prevStage,
+                        query_id: queryId,
+                      };
+                    })
+                  }
+                  disabled={readOnly}
+                />
+              )}
+            </>
           )}
 
           {stage.type === 'connection' && (

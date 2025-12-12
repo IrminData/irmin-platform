@@ -2,11 +2,7 @@
 
 import { useCallback } from 'react';
 
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import PipelineStageEditor from '@/components/workflow/PipelineStageEditor';
-
-import { useLocale } from '@/context/LocaleContext';
 
 import type { Pipeline, PipelineStage } from '@/types/core/Workflow';
 import type { WorkflowRequest } from '@/types/internal/WorkflowInput';
@@ -22,8 +18,6 @@ export default function PipelineWorkflow({
   workflowData,
   setWorkflowData,
 }: PipelineWorkflowProps) {
-  const { dict } = useLocale();
-
   const handlePipelineStagesSubmit = useCallback(
     (stages: PipelineStage[]) => {
       setWorkflowData({
@@ -38,29 +32,12 @@ export default function PipelineWorkflow({
   );
 
   return (
-    <>
-      <PipelineStageEditor
-        initialStages={[]}
-        onSubmit={handlePipelineStagesSubmit}
-        readOnly={false}
-        hideSaveButton={true}
-        defaultCollapsed={false}
-      />
-      <div className='flex flex-col gap-2'>
-        <Label>{dict.workflow.pipeline.livePipeline}</Label>
-        <Switch
-          checked={workflowable.live ?? false}
-          onCheckedChange={(checked) =>
-            setWorkflowData((prev) => ({
-              ...prev,
-              workflowable: {
-                ...(prev.workflowable as Pipeline),
-                live: checked,
-              },
-            }))
-          }
-        />
-      </div>
-    </>
+    <PipelineStageEditor
+      initialStages={workflowable.stages ?? []}
+      onSubmit={handlePipelineStagesSubmit}
+      readOnly={false}
+      hideSaveButton={true}
+      defaultCollapsed={false}
+    />
   );
 }

@@ -134,10 +134,18 @@ function ConfigureWorkflowableStep({
       }
       case 'action': {
         const actionWorkflowable = currentWorkflowable as Action;
-        if (!actionWorkflowable.script_id) {
+        const executableType = actionWorkflowable.executable_type || 'script';
+        if (executableType === 'script' && !actionWorkflowable.script_id) {
           irminAlert(
             'error',
             dict.workflow.create.validation.pleaseSelectExecutableScript
+          );
+          return false;
+        }
+        if (executableType === 'query' && !actionWorkflowable.query_id) {
+          irminAlert(
+            'error',
+            dict.workflow.create.validation.pleaseSelectExecutableQuery
           );
           return false;
         }

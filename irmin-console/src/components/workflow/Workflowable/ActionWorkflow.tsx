@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
+import InlineQueryEditor from '@/components/query/InlineQueryEditor';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
-import ScriptSelector from '@/components/scripts/ScriptSelector';
+import InlineScriptEditor from '@/components/scripts/InlineScriptEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -56,23 +57,117 @@ export default function ActionWorkflow({
     [setWorkflowData]
   );
 
+  // Use ref to store the latest setWorkflowData to avoid dependency issues
+  const setWorkflowDataRef = useRef(setWorkflowData);
+  useEffect(() => {
+    setWorkflowDataRef.current = setWorkflowData;
+  }, [setWorkflowData]);
+
+  const handleScriptIdChange = useCallback((scriptId: string) => {
+    setWorkflowDataRef.current((prev) => {
+      const currentScriptId = (prev.workflowable as Action).script_id || '';
+      const newScriptId = scriptId || '';
+
+      // Prevent unnecessary updates if the value hasn't actually changed
+      if (currentScriptId === newScriptId) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        workflowable: {
+          ...(prev.workflowable as Action),
+          script_id: newScriptId,
+        },
+      };
+    });
+  }, []);
+
+  const handleQueryIdChange = useCallback((queryId: string) => {
+    setWorkflowDataRef.current((prev) => {
+      const currentQueryId = (prev.workflowable as Action).query_id || '';
+      const newQueryId = queryId || '';
+
+      // Prevent unnecessary updates if the value hasn't actually changed
+      if (currentQueryId === newQueryId) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        workflowable: {
+          ...(prev.workflowable as Action),
+          query_id: newQueryId,
+        },
+      };
+    });
+  }, []);
+
+  const handleExecutableTypeChange = useCallback((value: string) => {
+    setWorkflowDataRef.current((prev) => {
+      const currentAction = prev.workflowable as Action;
+      const currentExecutableType = currentAction.executable_type || 'script';
+
+      // Prevent unnecessary updates if the value hasn't actually changed
+      if (currentExecutableType === value) {
+        return prev;
+      }
+
+      if (value === 'script') {
+        return {
+          ...prev,
+          workflowable: {
+            ...currentAction,
+            executable_type: 'script',
+            script_id: currentAction.script_id,
+            query_id: undefined,
+          },
+        };
+      } else if (value === 'query') {
+        return {
+          ...prev,
+          workflowable: {
+            ...currentAction,
+            executable_type: 'query',
+            script_id: undefined,
+            query_id: currentAction.query_id,
+          },
+        };
+      }
+      return prev;
+    });
+  }, []);
+
   return (
     <>
       <div className='flex flex-col gap-2'>
-        <Label>{dict.workflow.executableScriptFile}</Label>
-        <ScriptSelector
-          currentSelectedScriptId={workflowable.script_id ?? null}
-          onSelectScript={(scriptId) =>
-            setWorkflowData((prev) => ({
-              ...prev,
-              workflowable: {
-                ...(prev.workflowable as Action),
-                script_id: scriptId,
-              },
-            }))
-          }
-        />
+        <Label>{dict.workflow.executableType}</Label>
+        <Select
+          value={workflowable.executable_type || 'script'}
+          onValueChange={handleExecutableTypeChange}
+        >
+          <SelectTrigger className='w-full'>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='script'>{dict.scripts.script}</SelectItem>
+            <SelectItem value='query'>{dict.query.query}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
+      {(!workflowable.executable_type ||
+        workflowable.executable_type === 'script') && (
+        <InlineScriptEditor
+          currentScriptId={workflowable.script_id || null}
+          onScriptIdChange={handleScriptIdChange}
+        />
+      )}
+      {workflowable.executable_type === 'query' && (
+        <InlineQueryEditor
+          currentQueryId={workflowable.query_id || null}
+          onQueryIdChange={handleQueryIdChange}
+        />
+      )}
       <div className='flex flex-col gap-2'>
         <Label>{dict.workflow.scriptResultDestinationRepository}</Label>
         <Select

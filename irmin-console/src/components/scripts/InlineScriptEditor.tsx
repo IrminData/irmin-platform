@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { IoSave } from 'react-icons/io5';
+import { TbExternalLink } from 'react-icons/tb';
 
 import SqlHelper from '@/components/query/helper/SqlHelper';
 import CodeMirrorEditor from '@/components/scripts/ide/CodeMirrorEditor';
@@ -22,6 +23,7 @@ import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useScript, useScripts } from '@/hooks/api/useScripts';
+import { useBaseUrl } from '@/hooks/utils';
 
 interface InlineScriptEditorProps {
   currentScriptId: string | null;
@@ -43,6 +45,13 @@ export default function InlineScriptEditor({
   const { irminModal, irminAlert, irminConfirm } = usePopup();
   const { scriptsQuery, createScriptMutation, updateScriptMutation } =
     useScripts();
+
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'workspace',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
 
   const [editorContent, setEditorContent] = useState('');
   const [language, setLanguage] = useState('go');
@@ -349,7 +358,7 @@ export default function InlineScriptEditor({
   return (
     <div className='flex h-full flex-col gap-2'>
       <div className='flex flex-col gap-2'>
-        <Label>{dict.workflow.executableScriptFile}</Label>
+        <Label>{dict.workflow.pipeline.executableScript}</Label>
         <Select
           value={selectedScriptValue}
           onValueChange={handleSelectValueChange}
@@ -379,6 +388,17 @@ export default function InlineScriptEditor({
             )}
           </SelectContent>
         </Select>
+        {normalizedScriptId && (
+          <Button
+            href={`${workspaceUrl}/scripts?script=${normalizedScriptId}`}
+            target='_blank'
+            variant='secondary'
+            className='w-full'
+            icon={<TbExternalLink />}
+          >
+            {dict.list.view}
+          </Button>
+        )}
       </div>
 
       {/* Editor Controls */}

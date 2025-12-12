@@ -468,10 +468,10 @@ const en = {
     scheduled: 'Scheduled',
     notScheduled: 'Not scheduled',
     openInEditor: 'Open in editor',
-    executableScriptFile: 'Executable script file',
     scriptInputData: 'Input data',
     selectRepository: 'Select repository',
     selectConnection: 'Select connection',
+    executableType: 'Executable type',
 
     scriptInputFiles: {
       title: 'Script Input Files',
@@ -494,7 +494,6 @@ const en = {
     exportSourceRepository: 'Export from repository',
     exportSourceBranch: 'Export from branch',
     exportSourcePath: 'Export from path',
-    livePipeline: 'Live pipeline',
     triggeredBy: 'Triggered by',
     duration: 'Duration',
     addPath: 'Add Path',
@@ -561,12 +560,12 @@ const en = {
         pleaseAddAtLeastOneSourcePathFromRepository:
           'Please add at least one source path from repository',
         pleaseSelectExecutableScript: 'Please select an executable script',
+        pleaseSelectExecutableQuery: 'Please select an executable query',
       },
     },
 
     pipeline: {
       pipeline: 'Pipeline',
-      livePipeline: 'Live pipeline',
       addNewStage: 'Add new stage',
       addStage: 'Add stage',
       stage: 'Stage',
@@ -576,7 +575,8 @@ const en = {
       executablePath: 'Executable path',
       executablePathDescription:
         'Path to the action script e.g. /path/to/script.py',
-      executableScript: 'Script',
+      executableScript: 'Executable script',
+      executableQuery: 'Executable query',
       connectionWritePath: 'Write Path',
       connectionWritePathDescription:
         'Path to write within the connection e.g. /path/to/write',
@@ -690,6 +690,7 @@ const en = {
 
   // === DEVELOPMENT TOOLS ===
   scripts: {
+    script: 'Script',
     writeYourJS: 'Write your JavaScript here...',
     writeYourGo: 'Write your Go script here...',
     writeYourSQL: 'Write your SQL query here...',
@@ -726,6 +727,7 @@ const en = {
   },
 
   query: {
+    query: 'Query',
     queries: 'Queries',
     queryExecutionStarted: 'Query execution started',
     results: 'Results',
@@ -743,7 +745,11 @@ const en = {
     selectedQuery: 'Selected query',
     editor: 'SQL Editor',
     syntaxHelper: 'Syntax helper',
+    queryNotFound: 'Query not found',
+    queryDeleted: 'Query was deleted',
     searchQueries: 'Search queries...',
+    failedToCreateQuery: 'Failed to create query',
+    failedToUpdateQuery: 'Failed to update query',
   },
 
   queryHelper: {

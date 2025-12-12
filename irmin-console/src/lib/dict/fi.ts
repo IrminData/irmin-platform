@@ -459,10 +459,10 @@ const fi = {
     scheduled: 'Aikataulutettu',
     notScheduled: 'Ei aikataulutettu',
     openInEditor: 'Avaa editorissa',
-    executableScriptFile: 'Suoritettava skriptitiedosto',
     scriptInputData: 'Syötteet',
     selectRepository: 'Valitse data-arkisto',
     selectConnection: 'Valitse yhteys',
+    executableType: 'Suoritettavan tyyppi',
 
     scriptInputFiles: {
       title: 'Skriptin syötetiedostot',
@@ -484,7 +484,6 @@ const fi = {
     exportSourceRepository: 'Vientilähteen data-arkisto',
     exportSourceBranch: 'Vientilähteen haara',
     exportSourcePath: 'Vientilähteen polku',
-    livePipeline: 'Live-dataputki',
     triggeredBy: 'Laukaisija',
     duration: 'Kesto',
     // New translations for MultiplePathsSelector
@@ -547,11 +546,11 @@ const fi = {
         pleaseAddAtLeastOneSourcePathFromRepository:
           'Lisää vähintään yksi lähdepolku data-arkistosta',
         pleaseSelectExecutableScript: 'Valitse suoritettava skripti',
+        pleaseSelectExecutableQuery: 'Valitse suoritettava kysely',
       },
     },
     pipeline: {
       pipeline: 'Dataputki',
-      livePipeline: 'Live-dataputki',
       addNewStage: 'Lisää uusi vaihe',
       addStage: 'Lisää vaihe',
       stage: 'Vaihe',
@@ -561,7 +560,8 @@ const fi = {
       executablePath: 'Suoritettava polku',
       executablePathDescription:
         'Polku suoritettavaan skriptiin (esim. /path/to/script.py)',
-      executableScript: 'Skripti',
+      executableScript: 'Suoritettava skripti',
+      executableQuery: 'Suoritettava kysely',
       connectionWritePath: 'Kirjoittamisen polku',
       connectionWritePathDescription:
         'Polku, johon data kirjoitetaan (esim. /path/to/write)',
@@ -672,6 +672,7 @@ const fi = {
 
   // === DEVELOPMENT TOOLS ===
   scripts: {
+    script: 'Skripti',
     writeYourJS: 'Kirjoita JavaScriptisi tähän...',
     writeYourGo: 'Kirjoita Go-skriptisi tähän...',
     writeYourSQL: 'Kirjoita SQL-kyselysi tähän...',
@@ -708,6 +709,7 @@ const fi = {
   },
 
   query: {
+    query: 'Kysely',
     queries: 'Kyselyt',
     queryExecutionStarted: 'Kyselyn suoritus aloitettu',
     results: 'Tulokset',
@@ -725,7 +727,11 @@ const fi = {
     selectedQuery: 'Valittu kysely',
     editor: 'SQL-editori',
     syntaxHelper: 'Syntaksiavustaja',
+    queryNotFound: 'Kyselyä ei löytynyt',
+    queryDeleted: 'Kyselyä ei ole enää saatavilla',
     searchQueries: 'Hae kyselyjä...',
+    failedToCreateQuery: 'Kyselyn luominen epäonnistui',
+    failedToUpdateQuery: 'Kyselyn päivitys epäonnistui',
   },
 
   queryHelper: {

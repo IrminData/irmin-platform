@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useSearchParams } from 'next/navigation';
+
 import { AiOutlinePlayCircle } from 'react-icons/ai';
 import {
   TbChevronRight,
@@ -53,6 +55,7 @@ export default function QueriesSection() {
   const { workspaceSlug } = useWorkspaceContext();
   const workspaceSchema = useWorkspaceSchema();
   const { isResourceAllowed } = useResourceAllowed();
+  const searchParams = useSearchParams();
   const {
     storedQueriesQuery,
     createStoredQueryMutation,
@@ -90,6 +93,35 @@ export default function QueriesSection() {
     setEdited(false);
     cleanup();
   }, [selectedQuery, cleanup]);
+
+  // Handle query parameter from URL
+  const handledQueryIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (storedQueriesQuery.isLoading) return;
+    const queryId = searchParams.get('query');
+
+    // Reset ref if query parameter was removed
+    if (!queryId) {
+      handledQueryIdRef.current = null;
+      return;
+    }
+
+    // Skip if we've already handled this query ID
+    if (handledQueryIdRef.current === queryId) {
+      return;
+    }
+
+    const queries = storedQueriesQuery.data?.data ?? [];
+    const query = queries.find((q) => q.id === queryId);
+    if (query) {
+      handledQueryIdRef.current = queryId;
+      setSelectedQuery(query);
+    }
+  }, [
+    searchParams,
+    storedQueriesQuery.isLoading,
+    storedQueriesQuery.data?.data,
+  ]);
 
   // Tag editing functionality
   const { addTagToEntityMutation, removeTagFromEntityMutation } =

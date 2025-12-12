@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 
+import InlineQueryEditor from '@/components/query/InlineQueryEditor';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
 import InlineScriptEditor from '@/components/scripts/InlineScriptEditor';
 import { Button } from '@/components/ui/button';
@@ -82,12 +83,91 @@ export default function ActionWorkflow({
     });
   }, []);
 
+  const handleQueryIdChange = useCallback((queryId: string) => {
+    setWorkflowDataRef.current((prev) => {
+      const currentQueryId = (prev.workflowable as Action).query_id || '';
+      const newQueryId = queryId || '';
+
+      // Prevent unnecessary updates if the value hasn't actually changed
+      if (currentQueryId === newQueryId) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        workflowable: {
+          ...(prev.workflowable as Action),
+          query_id: newQueryId,
+        },
+      };
+    });
+  }, []);
+
+  const handleExecutableTypeChange = useCallback((value: string) => {
+    setWorkflowDataRef.current((prev) => {
+      const currentAction = prev.workflowable as Action;
+      const currentExecutableType = currentAction.executable_type || 'script';
+
+      // Prevent unnecessary updates if the value hasn't actually changed
+      if (currentExecutableType === value) {
+        return prev;
+      }
+
+      if (value === 'script') {
+        return {
+          ...prev,
+          workflowable: {
+            ...currentAction,
+            executable_type: 'script',
+            script_id: currentAction.script_id,
+            query_id: undefined,
+          },
+        };
+      } else if (value === 'query') {
+        return {
+          ...prev,
+          workflowable: {
+            ...currentAction,
+            executable_type: 'query',
+            script_id: undefined,
+            query_id: currentAction.query_id,
+          },
+        };
+      }
+      return prev;
+    });
+  }, []);
+
   return (
     <>
-      <InlineScriptEditor
-        currentScriptId={workflowable.script_id || null}
-        onScriptIdChange={handleScriptIdChange}
-      />
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.workflow.executableType}</Label>
+        <Select
+          value={workflowable.executable_type || 'script'}
+          onValueChange={handleExecutableTypeChange}
+        >
+          <SelectTrigger className='w-full'>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='script'>{dict.scripts.script}</SelectItem>
+            <SelectItem value='query'>{dict.query.query}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {(!workflowable.executable_type ||
+        workflowable.executable_type === 'script') && (
+        <InlineScriptEditor
+          currentScriptId={workflowable.script_id || null}
+          onScriptIdChange={handleScriptIdChange}
+        />
+      )}
+      {workflowable.executable_type === 'query' && (
+        <InlineQueryEditor
+          currentQueryId={workflowable.query_id || null}
+          onQueryIdChange={handleQueryIdChange}
+        />
+      )}
       <div className='flex flex-col gap-2'>
         <Label>{dict.workflow.scriptResultDestinationRepository}</Label>
         <Select

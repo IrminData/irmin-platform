@@ -27,7 +27,9 @@ const createDefaultWorkflowable = (type: WorkflowableType): Workflowable => {
     case 'action':
       return {
         type: 'action' as const,
-        script_id: '',
+        executable_type: 'script',
+        script_id: undefined,
+        query_id: undefined,
         input: [],
       };
     case 'import':
@@ -53,7 +55,6 @@ const createDefaultWorkflowable = (type: WorkflowableType): Workflowable => {
     case 'pipeline':
       return {
         type: 'pipeline' as const,
-        live: false,
         stages: [],
       };
     default:

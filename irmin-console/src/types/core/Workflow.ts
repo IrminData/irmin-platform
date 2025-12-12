@@ -162,8 +162,12 @@ export interface ActionInputData {
  */
 export interface Action {
   type: 'action';
+  /** Executable type */
+  executable_type?: 'script' | 'query';
   /** Script ID to execute */
-  script_id: string;
+  script_id?: string;
+  /** Query ID to execute */
+  query_id?: string;
   /** Input data repositories, refs and paths */
   input?: ActionInputData[];
   /** Slug of the repository to store the results */
@@ -179,8 +183,6 @@ export interface Action {
  */
 export interface Pipeline {
   type: 'pipeline';
-  /** Whether the pipeline runs continuously or follows a Workflow Schedule */
-  live: boolean;
   /** Chain of thins, in order, to pass the data through */
   stages: PipelineStage[];
 }
@@ -204,8 +206,12 @@ export type PipelineStage = {
  */
 interface PipelineStageAction {
   type: 'action';
+  /** Executable type */
+  executable_type: 'script' | 'query';
   /** Script ID to be executed */
-  script_id: string;
+  script_id?: string;
+  /** Query ID to be executed */
+  query_id?: string;
 }
 
 /**

@@ -22,6 +22,7 @@ import {
   useConnections,
   useRepositories,
   useScripts,
+  useStoredQueries,
   useWorkflow,
   useWorkflowRuns,
 } from '@/hooks/api';
@@ -44,6 +45,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
     useWorkflowRuns(workflowID);
   const { connectionsQuery } = useConnections();
   const { scriptsQuery } = useScripts();
+  const { storedQueriesQuery } = useStoredQueries();
 
   const canViewWorkflow = useMemo(
     () => isResourceAllowed('workflow', 'read', workflowID),
@@ -327,27 +329,51 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                   : dict.workflow.notScheduled}
               </p>
             </div>
-            {workflow.type === 'action' && (
-              <div className='flex flex-col gap-1'>
-                <p className='text-sm opacity-60'>
-                  {dict.workflow.executableScriptFile}
-                </p>
-                <Link
-                  href={`${workspaceUrl}/scripts?script=${workflow.workflowable.script_id}`}
-                  target='_blank'
-                  className={`
-                    transition-all
-                    hover:underline hover:opacity-40
-                  `}
-                >
-                  <p className='text-base'>
-                    {scriptsQuery.data?.data?.find(
-                      (s) => s.id === workflow.workflowable.script_id
-                    )?.name ?? workflow.workflowable.script_id}
+            {workflow.type === 'action' &&
+              (!workflow.workflowable.executable_type ||
+                workflow.workflowable.executable_type === 'script') && (
+                <div className='flex flex-col gap-1'>
+                  <p className='text-sm opacity-60'>
+                    {dict.workflow.pipeline.executableScript}
                   </p>
-                </Link>
-              </div>
-            )}
+                  <Link
+                    href={`${workspaceUrl}/scripts?script=${workflow.workflowable.script_id}`}
+                    target='_blank'
+                    className={`
+                      transition-all
+                      hover:underline hover:opacity-40
+                    `}
+                  >
+                    <p className='text-base'>
+                      {scriptsQuery.data?.data?.find(
+                        (s) => s.id === workflow.workflowable.script_id
+                      )?.name ?? workflow.workflowable.script_id}
+                    </p>
+                  </Link>
+                </div>
+              )}
+            {workflow.type === 'action' &&
+              workflow.workflowable.executable_type === 'query' && (
+                <div className='flex flex-col gap-1'>
+                  <p className='text-sm opacity-60'>
+                    {dict.workflow.pipeline.executableQuery}
+                  </p>
+                  <Link
+                    href={`${workspaceUrl}/queries?query=${workflow.workflowable.query_id}`}
+                    target='_blank'
+                    className={`
+                      transition-all
+                      hover:underline hover:opacity-40
+                    `}
+                  >
+                    <p className='text-base'>
+                      {storedQueriesQuery.data?.data?.find(
+                        (q) => q.id === workflow.workflowable.query_id
+                      )?.name ?? workflow.workflowable.query_id}
+                    </p>
+                  </Link>
+                </div>
+              )}
             {workflow.type === 'action' &&
               workflow.workflowable.results_repository && (
                 <div className='flex flex-col gap-1'>
@@ -558,18 +584,6 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                   {workflow.workflowable.export_from_repository_paths?.join(
                     ', '
                   ) ?? '/'}
-                </p>
-              </div>
-            )}
-            {workflow.type === 'pipeline' && (
-              <div className='flex flex-col gap-1'>
-                <p className='text-sm opacity-60'>
-                  {dict.workflow.livePipeline}
-                </p>
-                <p className='text-base'>
-                  {workflow.workflowable.live
-                    ? dict.common.yes
-                    : dict.common.no}
                 </p>
               </div>
             )}

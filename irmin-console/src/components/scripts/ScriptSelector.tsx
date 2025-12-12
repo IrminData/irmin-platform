@@ -1,3 +1,4 @@
+/* eslint-disable import-x/no-unused-modules */
 'use client';
 
 import { useState } from 'react';
