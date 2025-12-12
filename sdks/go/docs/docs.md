@@ -3069,7 +3069,7 @@ type IrminAPIPaginationMetadata struct {
     // Number of items per page
     PerPage *int `json:"per_page,omitempty"    validate:"omitempty,gte=1" example:"20"`
     // Total number of pages available
-    TotalPages *int `json:"total_pages,omitempty" validate:"omitempty,gte=1" example:"8"`
+    TotalPages *int `json:"total_pages,omitempty" validate:"omitempty,gte=0" example:"8"`
     // HasMore indicates if there are more items available
     HasMore *bool `json:"has_more,omitempty"                               example:"true"`
     // Next is the next page number or token, if applicable
@@ -3214,7 +3214,8 @@ type Object struct {
     SizeBytes             int64             `json:"size_bytes,omitempty"              validate:"omitempty,min=0"                        example:"1048576"`
     LastModified          string            `json:"last_modified,omitempty"                                                             example:"2025-12-01T14:22:30Z"`
     Metadata              map[string]string `json:"metadata,omitempty"`
-    SQLSelectorExample    string            `json:"sql_selector_example,omitempty"` // Constructed SQL selector for the object, like $["workspace;repo;file.json@main"]
+    S3PathSelector        string            `json:"s3_path_selector,omitempty"        validate:"omitempty"                              example:"s3://workspace-slug-repository-slug/main/file.json"`
+    SQLSelector           string            `json:"sql_selector,omitempty"            validate:"omitempty"                              example:"$['workspace-slug;repository-slug;file.json@main']"`
     Tags                  []Tag             `json:"tags,omitempty"                    validate:"dive,omitempty"`
     Children              []Object          `json:"children,omitempty"                validate:"dive,omitempty"`
 }
@@ -3227,19 +3228,20 @@ type Object struct {
 
 ```go
 type ObjectSchema struct {
-    Name               string     `json:"name"                           validate:"max=255"                                             example:"customers.json"`
-    Path               string     `json:"path"                                                                                          example:"/data/customers/customers.json"`
-    Type               ObjectType `json:"type"                           validate:"required,oneof=group structured binary"              example:"structured"`
-    LastModified       *string    `json:"last_modified,omitempty"                                                                       example:"2025-12-01T14:22:30Z"`
-    Description        *string    `json:"description,omitempty"                                                                         example:"Customer data in JSON format with contact information"`
-    SQLSelectorExample *string    `json:"sql_selector_example,omitempty"                                                                example:"$['workspace;repo;file.json@main']"`
+    Name           string     `json:"name"                       validate:"max=255"                                             example:"customers.json"`
+    Path           string     `json:"path"                                                                                      example:"/data/customers/customers.json"`
+    Type           ObjectType `json:"type"                       validate:"required,oneof=group structured binary"              example:"structured"`
+    LastModified   *string    `json:"last_modified,omitempty"                                                                   example:"2025-12-01T14:22:30Z"`
+    Description    *string    `json:"description,omitempty"                                                                     example:"Customer data in JSON format with contact information"`
+    S3PathSelector string     `json:"s3_path_selector,omitempty" validate:"omitempty"                                           example:"s3://workspace-slug-repository-slug/main/file.json"`
+    SQLSelector    string     `json:"sql_selector,omitempty"     validate:"omitempty"                                           example:"$['workspace-slug;repository-slug;file.json@main']"`
     // Structured schema
-    Schema *JSONSchema `json:"schema,omitempty"               validate:"required_if=Type structured"`
+    Schema *JSONSchema `json:"schema,omitempty"           validate:"required_if=Type structured"`
     // Structured or Binary schema
-    Size        *int    `json:"size,omitempty"                                                                                example:"1048576"`
-    ContentType *string `json:"content_type,omitempty"         validate:"required_if=Type binary,required_if=Type structured" example:"application/json"`
+    Size        *int    `json:"size,omitempty"                                                                            example:"1048576"`
+    ContentType *string `json:"content_type,omitempty"     validate:"required_if=Type binary,required_if=Type structured" example:"application/json"`
     // Group schema
-    Children     []ObjectSchema           `json:"children,omitempty"             validate:"dive,required_if=Type group"`
+    Children     []ObjectSchema           `json:"children,omitempty"         validate:"dive,required_if=Type group"`
     Restrictions *GroupSchemaRestrictions `json:"restrictions,omitempty"` // Restrictions are not required, but are available for group schemas
 }
 ```

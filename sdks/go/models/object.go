@@ -25,7 +25,8 @@ type Object struct {
 	SizeBytes             int64             `json:"size_bytes,omitempty"              validate:"omitempty,min=0"                        example:"1048576"`
 	LastModified          string            `json:"last_modified,omitempty"                                                             example:"2025-12-01T14:22:30Z"`
 	Metadata              map[string]string `json:"metadata,omitempty"`
-	SQLSelectorExample    string            `json:"sql_selector_example,omitempty"` // Constructed SQL selector for the object, like $["workspace;repo;file.json@main"]
+	S3PathSelector        string            `json:"s3_path_selector,omitempty"        validate:"omitempty"                              example:"s3://workspace-slug-repository-slug/main/file.json"`
+	SQLSelector           string            `json:"sql_selector,omitempty"            validate:"omitempty"                              example:"$['workspace-slug;repository-slug;file.json@main']"`
 	Tags                  []Tag             `json:"tags,omitempty"                    validate:"dive,omitempty"`
 	Children              []Object          `json:"children,omitempty"                validate:"dive,omitempty"`
 }
