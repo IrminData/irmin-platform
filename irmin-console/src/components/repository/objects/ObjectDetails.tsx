@@ -370,8 +370,8 @@ export default function ObjectDetails({
             />
           </div>
         )}
-        {(selectedObject.sql_selector_example ||
-          selectedObjectSchema?.sql_selector_example) && (
+        {(selectedObject.sql_selector ||
+          selectedObjectSchema?.sql_selector) && (
           <div className='mt-2 flex w-full flex-col gap-2'>
             <div className='flex flex-col gap-1'>
               <span className='text-[10px] text-muted-foreground'>
@@ -389,8 +389,8 @@ export default function ObjectDetails({
                     whitespace-nowrap
                   `}
                 >
-                  {selectedObject.sql_selector_example ||
-                    selectedObjectSchema?.sql_selector_example}
+                  {selectedObject.sql_selector ||
+                    selectedObjectSchema?.sql_selector}
                 </code>
                 <Button
                   variant='ghost'
@@ -398,8 +398,8 @@ export default function ObjectDetails({
                   className='size-6 p-0'
                   onClick={async () => {
                     const selectorText =
-                      selectedObject.sql_selector_example ||
-                      selectedObjectSchema?.sql_selector_example ||
+                      selectedObject.sql_selector ||
+                      selectedObjectSchema?.sql_selector ||
                       '';
                     await navigator.clipboard.writeText(selectorText);
                     setSelectorCopied(true);
@@ -418,7 +418,9 @@ export default function ObjectDetails({
                 />
               </div>
             </div>
-            {workspaceSlug && selectedObject.repository_slug && (
+            {(selectedObject.s3_path_selector ||
+              selectedObjectSchema?.s3_path_selector ||
+              (workspaceSlug && selectedObject.repository_slug)) && (
               <div className='flex flex-col gap-1'>
                 <span className='text-[10px] text-muted-foreground'>
                   Alternative S3 path:
@@ -435,14 +437,23 @@ export default function ObjectDetails({
                       whitespace-nowrap
                     `}
                   >
-                    {`s3://${workspaceSlug}-${selectedObject.repository_slug}/${selectedObject.ref || 'main'}/${selectedObject.path}`}
+                    {selectedObject.s3_path_selector ||
+                      selectedObjectSchema?.s3_path_selector ||
+                      (workspaceSlug && selectedObject.repository_slug
+                        ? `s3://${workspaceSlug}-${selectedObject.repository_slug}/${selectedObject.ref || 'main'}/${selectedObject.path}`
+                        : '')}
                   </code>
                   <Button
                     variant='ghost'
                     size='sm'
                     className='size-6 p-0'
                     onClick={async () => {
-                      const s3Path = `s3://${workspaceSlug}-${selectedObject.repository_slug}/${selectedObject.ref || 'main'}/${selectedObject.path}`;
+                      const s3Path =
+                        selectedObject.s3_path_selector ||
+                        selectedObjectSchema?.s3_path_selector ||
+                        (workspaceSlug && selectedObject.repository_slug
+                          ? `s3://${workspaceSlug}-${selectedObject.repository_slug}/${selectedObject.ref || 'main'}/${selectedObject.path}`
+                          : '');
                       await navigator.clipboard.writeText(s3Path);
                     }}
                     title={dict.common.copy}

@@ -32,6 +32,8 @@ export interface RepositoryObject {
   tags?: Tag[];
   /** (optional) If the object is a group, this will contain the children objects */
   children?: RepositoryObject[];
-  /** (optional) An example SQL selector for this object */
-  sql_selector_example?: string;
+  /** (optional) An example SQL selector for this object, like '$["workspace-slug;repository-slug;file.json@main"]' */
+  sql_selector?: string;
+  /** (optional) An example S3 path selector for this object, like "s3://workspace-slug-repository-slug/main/file.json" */
+  s3_path_selector?: string;
 }

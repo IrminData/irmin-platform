@@ -355,7 +355,7 @@ function RepositorySectionContent({
                 <SqlHelper
                   currentSql={queryField}
                   repositoryObject={selectedObject}
-                  selector={selectedObject?.sql_selector_example}
+                  selector={selectedObject?.sql_selector}
                   title={selectedObject?.name}
                 />
               </div>

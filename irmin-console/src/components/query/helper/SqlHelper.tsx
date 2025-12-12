@@ -92,9 +92,9 @@ export default function SqlHelper({
 
   // Prefer object's selector, then schema's, then passed selector
   const displaySelector =
-    repositoryObject?.sql_selector_example ||
-    effectiveSchema?.sql_selector_example ||
-    selector;
+    repositoryObject?.sql_selector || effectiveSchema?.sql_selector || selector;
+  const displayS3Path =
+    repositoryObject?.s3_path_selector || effectiveSchema?.s3_path_selector;
   const displayName =
     repositoryObject?.name ||
     effectiveSchema?.name ||
@@ -308,9 +308,11 @@ export default function SqlHelper({
                       {dict.queryHelper.alternativeS3Description}
                     </p>
                     <div className='rounded-md bg-muted p-2 font-mono text-xs'>
-                      {context && workspaceSlug
-                        ? `read_json('s3://${workspaceSlug}-${context.repository}/${context.ref || 'main'}/sample.json')`
-                        : `read_json('s3://workspace-repository/branch/sample.json')`}
+                      {displayS3Path
+                        ? `read_json('${displayS3Path}')`
+                        : context && workspaceSlug
+                          ? `read_json('s3://${workspaceSlug}-${context.repository}/${context.ref || 'main'}/sample.json')`
+                          : `read_json('s3://workspace-repository/branch/sample.json')`}
                     </div>
                     <p className='mt-2 text-xs text-muted-foreground'>
                       {dict.queryHelper.s3FormatNote}
@@ -643,10 +645,10 @@ export default function SqlHelper({
                             }
                           />
                         )}
-                        {context && workspaceSlug && (
+                        {(displayS3Path || (context && workspaceSlug)) && (
                           <ExampleItem
                             title={dict.queryHelper.alternativeS3Example}
-                            code={`SELECT * FROM read_json('s3://${workspaceSlug}-${context.repository}/${context.ref || 'main'}/sample.json') LIMIT 10;`}
+                            code={`SELECT * FROM read_json('${displayS3Path || (workspaceSlug && context ? `s3://${workspaceSlug}-${context.repository}/${context.ref || 'main'}/sample.json` : 's3://workspace-repository/branch/sample.json')}') LIMIT 10;`}
                             explanation={
                               dict.queryHelper.alternativeS3ExampleExplanation
                             }

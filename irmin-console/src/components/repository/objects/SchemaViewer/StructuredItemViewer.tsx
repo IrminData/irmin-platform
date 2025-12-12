@@ -116,7 +116,7 @@ export function StructuredItemViewer({
             </span>
             {item.content_type && <span>MIME: {item.content_type}</span>}
           </div>
-          {item.sql_selector_example && (
+          {item.sql_selector && (
             <div className='mt-2 w-full max-w-full'>
               <div
                 className={`
@@ -130,7 +130,7 @@ export function StructuredItemViewer({
                     whitespace-nowrap
                   `}
                 >
-                  {item.sql_selector_example}
+                  {item.sql_selector}
                 </code>
                 <Button
                   variant='ghost'
@@ -138,7 +138,7 @@ export function StructuredItemViewer({
                   className='size-6 p-0'
                   onClick={async () => {
                     await navigator.clipboard.writeText(
-                      item.sql_selector_example || ''
+                      item.sql_selector || ''
                     );
                     setCopied(true);
                     setTimeout(() => setCopied(false), 2000);
@@ -170,11 +170,11 @@ export function StructuredItemViewer({
               schema={item}
               title={item.name}
               currentSql={
-                item.sql_selector_example
-                  ? `SELECT * FROM ${item.sql_selector_example} LIMIT 10`
+                item.sql_selector
+                  ? `SELECT * FROM ${item.sql_selector} LIMIT 10`
                   : undefined
               }
-              selector={item.sql_selector_example}
+              selector={item.sql_selector}
             />
           </div>
           {expanded && (
