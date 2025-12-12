@@ -64,12 +64,27 @@ func (api *APIServices) GetRepositoryObject(
 			if obj == nil {
 				return
 			}
-			obj.SQLSelectorExample = lib.ConstructSQLSelector(
+			sqlSelector, s3PathSelector, constructErr := lib.ConstructSQLSelector(
 				workspace.Slug,
 				repository.Slug,
 				obj.Path,
 				ref,
+				repository.DefaultBranch,
 			)
+			if constructErr != nil {
+				api.Logger.ErrorContext(
+					c,
+					"Error constructing SQL selector and S3 path selector",
+					"error",
+					constructErr,
+					"path",
+					obj.Path,
+				)
+			} else {
+				obj.SQLSelector = sqlSelector
+				obj.S3PathSelector = s3PathSelector
+			}
+			// Continue processing children even if this object failed
 			for i := range obj.Children {
 				populateSelector(&obj.Children[i])
 			}

@@ -1483,12 +1483,15 @@ definitions:
         example: customer-analytics
         maxLength: 100
         type: string
+      s3_path_selector:
+        example: s3://workspace-slug-repository-slug/main/file.json
+        type: string
       size_bytes:
         example: 1048576
         minimum: 0
         type: integer
-      sql_selector_example:
-        description: Constructed SQL selector for the object, like $["workspace;repo;file.json@main"]
+      sql_selector:
+        example: $['workspace-slug;repository-slug;file.json@main']
         type: string
       tags:
         items:
@@ -1535,6 +1538,9 @@ definitions:
         allOf:
         - $ref: '#/definitions/irminmodels.GroupSchemaRestrictions'
         description: Restrictions are not required, but are available for group schemas
+      s3_path_selector:
+        example: s3://workspace-slug-repository-slug/main/file.json
+        type: string
       schema:
         allOf:
         - $ref: '#/definitions/irminmodels.JSONSchema'
@@ -1543,8 +1549,8 @@ definitions:
         description: Structured or Binary schema
         example: 1048576
         type: integer
-      sql_selector_example:
-        example: $['workspace;repo;file.json@main']
+      sql_selector:
+        example: $['workspace-slug;repository-slug;file.json@main']
         type: string
       type:
         allOf:

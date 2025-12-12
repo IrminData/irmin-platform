@@ -12210,14 +12210,18 @@ const docTemplate = `{
                     "maxLength": 100,
                     "example": "customer-analytics"
                 },
+                "s3_path_selector": {
+                    "type": "string",
+                    "example": "s3://workspace-slug-repository-slug/main/file.json"
+                },
                 "size_bytes": {
                     "type": "integer",
                     "minimum": 0,
                     "example": 1048576
                 },
-                "sql_selector_example": {
-                    "description": "Constructed SQL selector for the object, like $[\"workspace;repo;file.json@main\"]",
-                    "type": "string"
+                "sql_selector": {
+                    "type": "string",
+                    "example": "$['workspace-slug;repository-slug;file.json@main']"
                 },
                 "tags": {
                     "type": "array",
@@ -12282,6 +12286,10 @@ const docTemplate = `{
                         }
                     ]
                 },
+                "s3_path_selector": {
+                    "type": "string",
+                    "example": "s3://workspace-slug-repository-slug/main/file.json"
+                },
                 "schema": {
                     "description": "Structured schema",
                     "allOf": [
@@ -12295,9 +12303,9 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 1048576
                 },
-                "sql_selector_example": {
+                "sql_selector": {
                     "type": "string",
-                    "example": "$['workspace;repo;file.json@main']"
+                    "example": "$['workspace-slug;repository-slug;file.json@main']"
                 },
                 "type": {
                     "enum": [

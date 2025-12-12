@@ -96,11 +96,30 @@ func (api *APIServices) GetRepositoryObjectSchema(
 		if s.Type == irminmodels.ObjectTypeGroup || s.Type == irminmodels.ObjectTypeStructured ||
 			s.Type == irminmodels.ObjectTypeBinary {
 			if s.Path != "" {
-				selector := lib.ConstructSQLSelector(workspace.Slug, repository.Slug, s.Path, ref)
-				s.SQLSelectorExample = &selector
+				selector, s3PathSelector, constructErr := lib.ConstructSQLSelector(
+					workspace.Slug,
+					repository.Slug,
+					s.Path,
+					ref,
+					repository.DefaultBranch,
+				)
+				if constructErr != nil {
+					api.Logger.ErrorContext(
+						ctx,
+						"Error constructing SQL selector and S3 path selector",
+						"error",
+						constructErr,
+						"path",
+						s.Path,
+					)
+				} else {
+					s.SQLSelector = selector
+					s.S3PathSelector = s3PathSelector
+				}
 			}
 		}
 
+		// Continue processing children even if this object failed
 		for i := range s.Children {
 			populateSelector(&s.Children[i])
 		}
@@ -443,16 +462,18 @@ func (api *APIServices) getObjectSchemaWithSelector(
 		return nil, err
 	}
 
-	api.populateSQLSelector(objSchema, workspace.Slug, repository.Slug, ref)
+	api.populateSQLSelector(ctx, objSchema, workspace.Slug, repository.Slug, ref, repository.DefaultBranch)
 	return objSchema, nil
 }
 
 // populateSQLSelector recursively sets the SQL selector example for all objects in the schema.
 func (api *APIServices) populateSQLSelector(
+	ctx context.Context,
 	schema *irminmodels.ObjectSchema,
 	workspaceSlug string,
 	repositorySlug string,
 	ref string,
+	defaultBranch string,
 ) {
 	if schema == nil {
 		return
@@ -462,12 +483,31 @@ func (api *APIServices) populateSQLSelector(
 	if (schema.Type == irminmodels.ObjectTypeGroup ||
 		schema.Type == irminmodels.ObjectTypeStructured ||
 		schema.Type == irminmodels.ObjectTypeBinary) && schema.Path != "" {
-		selector := lib.ConstructSQLSelector(workspaceSlug, repositorySlug, schema.Path, ref)
-		schema.SQLSelectorExample = &selector
+		selector, s3PathSelector, constructErr := lib.ConstructSQLSelector(
+			workspaceSlug,
+			repositorySlug,
+			schema.Path,
+			ref,
+			defaultBranch,
+		)
+		if constructErr != nil {
+			api.Logger.WarnContext(
+				ctx,
+				"Error constructing SQL selector and S3 path selector",
+				"error",
+				constructErr,
+				"path",
+				schema.Path,
+			)
+		} else {
+			schema.SQLSelector = selector
+			schema.S3PathSelector = s3PathSelector
+		}
 	}
 
+	// Continue processing children even if this object failed
 	for i := range schema.Children {
-		api.populateSQLSelector(&schema.Children[i], workspaceSlug, repositorySlug, ref)
+		api.populateSQLSelector(ctx, &schema.Children[i], workspaceSlug, repositorySlug, ref, defaultBranch)
 	}
 }
 

@@ -4277,7 +4277,8 @@ type RepositoryObject struct {
     SizeBytes             int64                  `json:"size_bytes,omitempty"`
     LastModified          string                 `json:"last_modified,omitempty"`
     Metadata              map[string]string      `json:"metadata,omitempty"                gorm:"type:jsonb;serializer:json"`
-    SQLSelectorExample    string                 `json:"sql_selector_example,omitempty"    gorm:"-"` // This field is not stored in the database, since it's just a computed value.
+    S3PathSelector        string                 `json:"s3_path_selector,omitempty"        gorm:"-"` // This field is not stored in the database, since it's just a computed value.
+    SQLSelector           string                 `json:"sql_selector,omitempty"            gorm:"-"` // This field is not stored in the database, since it's just a computed value.
 
     ParentID *uint              `json:"parent_id,omitempty" gorm:"index"`
     Parent   *RepositoryObject  `json:"parent,omitempty"    gorm:"foreignKey:ParentID;references:ID"`
@@ -8545,7 +8546,7 @@ import "irmin-api/lib"
 - [Constants](<#constants>)
 - [Variables](<#variables>)
 - [func AssignDefaultRolesToUsersWithoutRoles\(d \*db.Database\) error](<#AssignDefaultRolesToUsersWithoutRoles>)
-- [func ConstructSQLSelector\(workspaceSlug, repositorySlug, objectPath, ref string\) string](<#ConstructSQLSelector>)
+- [func ConstructSQLSelector\(workspaceSlug, repositorySlug, objectPath, ref, defaultBranch string\) \(string, string, error\)](<#ConstructSQLSelector>)
 - [func CreateAuditLogEventAsync\(d \*db.Database, logger \*slog.Logger, event \*db.LogEvent\)](<#CreateAuditLogEventAsync>)
 - [func CreateWorkflowRun\(tx \*gorm.DB, workflow \*db.Workflow, user \*db.User, trigger \*db.WorkflowTrigger\) \(\*db.WorkflowRun, error\)](<#CreateWorkflowRun>)
 - [func DecodePolicyResourceID\(sqid string, resource db.PolicyResource, sqidManager \*irminsqids.SQIDManager\) \(\*uint, error\)](<#DecodePolicyResourceID>)
@@ -8631,10 +8632,10 @@ AssignDefaultRolesToUsersWithoutRoles assigns the default role to any users in w
 ## func ConstructSQLSelector
 
 ```go
-func ConstructSQLSelector(workspaceSlug, repositorySlug, objectPath, ref string) string
+func ConstructSQLSelector(workspaceSlug, repositorySlug, objectPath, ref, defaultBranch string) (string, string, error)
 ```
 
-ConstructSQLSelector constructs the Irmin SQL selector string. Format: $\["workspace;repository;object@ref"\]
+ConstructSQLSelector constructs the Irmin SQL selector string and the S3 path selector. Format: $\["workspace;repository;object@ref"\], and the S3 path selector is "s3://workspace\-slug\-repository\-slug/ref/object.json"
 
 <a name="CreateAuditLogEventAsync"></a>
 ## func CreateAuditLogEventAsync
