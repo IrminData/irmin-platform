@@ -3821,7 +3821,7 @@ const docTemplate = `{
                 "total_pages": {
                     "description": "Total number of pages available",
                     "type": "integer",
-                    "minimum": 1,
+                    "minimum": 0,
                     "example": 8
                 }
             }
@@ -4047,6 +4047,10 @@ const docTemplate = `{
                     "description": "Structured or Binary schema",
                     "type": "integer",
                     "example": 1048576
+                },
+                "sql_selector_example": {
+                    "type": "string",
+                    "example": "$['workspace;repo;file.json@main']"
                 },
                 "type": {
                     "enum": [
