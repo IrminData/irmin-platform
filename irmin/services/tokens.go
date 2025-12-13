@@ -21,7 +21,15 @@ func (api *APIServices) ListAPITokens(c context.Context, user *db.User) ([]db.AP
 		return nil, getAPITokensByUserIDErr
 	}
 
-	return tokens, nil
+	// Filter out hidden tokens.
+	visibleTokens := make([]db.APIToken, 0, len(tokens))
+	for _, token := range tokens {
+		if !token.Hidden {
+			visibleTokens = append(visibleTokens, token)
+		}
+	}
+
+	return visibleTokens, nil
 }
 
 func (api *APIServices) CreateAPIToken(
