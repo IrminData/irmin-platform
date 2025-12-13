@@ -1128,6 +1128,9 @@ const en = {
     revealToken: 'Reveal token',
     copied: 'Copied!',
     copyToken: 'Copy token',
+    explainer:
+      'API tokens allow you to call the Irmin API or use Irmin MCP under your name with your permissions.',
+    learnMoreApiDocs: 'Learn more in the API documentation',
   },
 
   policy: {

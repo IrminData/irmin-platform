@@ -1112,6 +1112,9 @@ const fi = {
     revealToken: 'Näytä avain',
     copied: 'Kopioitu!',
     copyToken: 'Kopioi avain',
+    explainer:
+      'API avaimet mahdollistavat Irmin API:n käytön tai Irmin MCP:n käytön nimissäsi, käyttöoikeuksillasi.',
+    learnMoreApiDocs: 'Lue lisää API dokumentaatiosta',
   },
 
   policy: {

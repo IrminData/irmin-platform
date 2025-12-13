@@ -10,8 +10,8 @@ This repository contains the code for Irmin Console frontend, built using Next.j
 
 Ensure you have the following installed:
 
-- Node.js (22.x)
-- pnpm (10.12.1). See [pnpm Installation Guide](https://pnpm.io/installation) for installation details.
+- Node.js (24.x)
+- pnpm (10.24.0+). See [pnpm Installation Guide](https://pnpm.io/installation) for installation details.
 
 ## Environment Configuration (.env)
 
@@ -24,6 +24,7 @@ cp .env.example .env
 # Add your API keys and update other variables as required:
 # API_SYSTEM_TOKEN=your_irmin_system_token
 # CLERK_SECRET_KEY=your_clerk_secret_key
+# NEXT_PUBLIC_API_DOCS_URL=https://docs.irmin.co
 ```
 
 ## Running the Project
