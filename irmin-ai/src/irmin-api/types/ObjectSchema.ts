@@ -27,8 +27,10 @@ export type ObjectSchema = {
   children?: ObjectSchema[];
   /** (optional) restrictions on the group */
   restrictions?: GroupSchemaRestrictions;
-  /** An example SQL selector for this object, e.g., $["workspace;repo;file.json@main"] */
-  sql_selector_example?: string;
+  /** An example SQL selector for this object, like '$["workspace-slug;repository-slug;file.json@main"]' */
+  sql_selector?: string;
+  /** An example S3 path selector for this object, like "s3://workspace-slug-repository-slug/main/file.json" */
+  s3_path_selector?: string;
 };
 
 /**
