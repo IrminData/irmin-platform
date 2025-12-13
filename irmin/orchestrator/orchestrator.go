@@ -555,7 +555,11 @@ func (o *Orchestrator) processRepositoryEvent(ctx context.Context, event *lakefs
 	return o.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Get the repository from the event
 		var repository db.Repository
-		if err := tx.Where("lakefs_repo_id = ?", event.RepositoryID).First(&repository).Error; err != nil {
+		if err := tx.Where(&db.Repository{LakeFSRepoID: event.RepositoryID}).
+			Preload("Owner").
+			Preload("Workspace").
+			Preload("Tags").
+			First(&repository).Error; err != nil {
 			o.logger.ErrorContext(ctx, "failed to get repository", "error", err, "repository_id", event.RepositoryID)
 			return err
 		}
@@ -563,19 +567,26 @@ func (o *Orchestrator) processRepositoryEvent(ctx context.Context, event *lakefs
 		o.logger.InfoContext(ctx, "found repository", "repository", repository)
 
 		var triggers []db.WorkflowTrigger
-		if err := tx.Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
+		if findErr := tx.Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
 			Where("type = ? AND repository_id = ? AND deleted_at IS NULL", db.RepositoryTriggerType, repository.ID).
-			Find(&triggers).Error; err != nil {
-			return err
+			Find(&triggers).Error; findErr != nil {
+			return findErr
 		}
 
 		o.logger.InfoContext(ctx, "found triggers", "triggers", triggers)
 
 		// Process each trigger
 		for _, t := range triggers {
-			if err := o.processRepositoryTrigger(ctx, tx, &t, event); err != nil {
+			if triggerErr := o.processRepositoryTrigger(ctx, tx, &t, event); triggerErr != nil {
 				// Log error but continue processing other triggers
-				o.logger.ErrorContext(ctx, "error processing repository trigger", "error", err, "trigger_id", t.ID)
+				o.logger.ErrorContext(
+					ctx,
+					"error processing repository trigger",
+					"error",
+					triggerErr,
+					"trigger_id",
+					t.ID,
+				)
 				continue
 			}
 		}
