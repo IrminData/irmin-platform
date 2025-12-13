@@ -3,6 +3,7 @@ package orchestrator
 import (
 	"context"
 	"fmt"
+	irmincache "irmin-api/cache"
 	connectorsclient "irmin-api/connectors-client"
 	"irmin-api/db"
 	"irmin-api/lakefs"
@@ -386,6 +387,25 @@ func (o *Orchestrator) commitWorkflowChanges(
 		"commit_hash", commit.Hash,
 	)
 	logs = append(logs, fmt.Sprintf("Changes committed to branch '%s' (commit: %s)", branch, commit.Hash))
+
+	// Invalidate commits and objects cache for this repository
+	if o.cacheStorage != nil {
+		commitsPath := fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/commits", workspace, repository)
+		if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+			o.cacheStorage,
+			commitsPath,
+		); invalidationErr != nil {
+			o.logger.ErrorContext(ctx, "Error invalidating commits cache", "error", invalidationErr)
+		}
+
+		objectsPath := fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", workspace, repository)
+		if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+			o.cacheStorage,
+			objectsPath,
+		); invalidationErr != nil {
+			o.logger.ErrorContext(ctx, "Error invalidating objects cache", "error", invalidationErr)
+		}
+	}
 
 	return logs
 }
