@@ -20,6 +20,7 @@ import (
 func (o *Orchestrator) executeActionWorkflowable(
 	ctx context.Context,
 	workflow *db.Workflow,
+	run *db.WorkflowRun,
 	workflowable *db.ActionWorkflowable,
 ) ([]string, error) {
 	var logs []string
@@ -57,7 +58,7 @@ func (o *Orchestrator) executeActionWorkflowable(
 	}
 
 	// Save results if needed
-	resultLogs, err := o.saveActionResults(ctx, workflow, workflowable, computeResult)
+	resultLogs, err := o.saveActionResults(ctx, workflow, run, workflowable, computeResult)
 	logs = append(logs, resultLogs...)
 
 	return logs, err
@@ -186,6 +187,7 @@ func (o *Orchestrator) executeScriptWorkflowable(
 func (o *Orchestrator) saveActionResults(
 	ctx context.Context,
 	workflow *db.Workflow,
+	run *db.WorkflowRun,
 	workflowable *db.ActionWorkflowable,
 	computeResult sandbox.ExecutionResult,
 ) ([]string, error) {
@@ -195,6 +197,10 @@ func (o *Orchestrator) saveActionResults(
 		return logs, nil
 	}
 
+	// Track how many files were successfully saved and the branch used
+	savedFiles := 0
+	var usedBranch string
+
 	for fileName, fileContent := range computeResult.ResultFiles {
 		// Check for context cancellation during result saving
 		if ctx.Err() != nil {
@@ -202,11 +208,36 @@ func (o *Orchestrator) saveActionResults(
 			return logs, ctx.Err()
 		}
 
-		resultLogs, err := o.saveSingleResultFile(ctx, workflow, workflowable, fileName, fileContent)
+		resultLogs, branch, err := o.saveSingleResultFile(ctx, workflow, workflowable, fileName, fileContent)
 		logs = append(logs, resultLogs...)
 		if err != nil {
 			continue
 		}
+		usedBranch = branch
+		savedFiles++
+	}
+
+	// Commit changes if at least one file was successfully saved
+	if savedFiles > 0 {
+		// Get author from workflow owner
+		author := workflow.Owner.Email
+		if workflow.Owner.FirstName != "" && workflow.Owner.LastName != "" {
+			author = fmt.Sprintf("%s %s <%s>", workflow.Owner.FirstName, workflow.Owner.LastName, workflow.Owner.Email)
+		}
+
+		// Commit the changes
+		commitLogs := o.commitWorkflowChanges(
+			ctx,
+			workflow.Workspace.Slug,
+			workflowable.ResultsRepository.Slug,
+			usedBranch,
+			workflow.Name,
+			"Action",
+			run.ID,
+			"", // no stage info for actions
+			author,
+		)
+		logs = append(logs, commitLogs...)
 	}
 
 	return logs, nil
@@ -219,8 +250,25 @@ func (o *Orchestrator) saveSingleResultFile(
 	workflowable *db.ActionWorkflowable,
 	fileName string,
 	fileContent []byte,
-) ([]string, error) {
+) ([]string, string, error) {
 	var logs []string
+
+	// Determine the branch to use: specified branch or default branch
+	branch := workflowable.ResultsRepositoryBranch
+	if branch == nil || *branch == "" {
+		if workflowable.ResultsRepository != nil && workflowable.ResultsRepository.DefaultBranch != "" {
+			branch = &workflowable.ResultsRepository.DefaultBranch
+			o.logger.InfoContext(
+				ctx,
+				"Using repository default branch",
+				"repository", workflowable.ResultsRepository.Slug,
+				"branch", *branch,
+			)
+			logs = append(logs, fmt.Sprintf("Using default branch '%s' for results", *branch))
+		} else {
+			return logs, "", errors.New("results repository branch is not specified and repository has no default branch")
+		}
+	}
 
 	// Create multipart file from the byte array
 	file := bytes.NewReader(fileContent)
@@ -231,7 +279,7 @@ func (o *Orchestrator) saveSingleResultFile(
 		workflow.Workspace.Slug,
 		workflowable.ResultsRepository.Slug,
 		uploadObjectToPath,
-		*workflowable.ResultsRepositoryBranch,
+		*branch,
 		file,
 	)
 	if err != nil {
@@ -242,11 +290,11 @@ func (o *Orchestrator) saveSingleResultFile(
 				"Error saving result object ('%s') to %s@%s/%s.",
 				fileName,
 				workflowable.ResultsRepository.Slug,
-				*workflowable.ResultsRepositoryBranch,
+				*branch,
 				uploadObjectToPath,
 			),
 		)
-		return logs, err
+		return logs, *branch, err
 	}
 
 	// Save the object to the database in a go routine
@@ -256,7 +304,7 @@ func (o *Orchestrator) saveSingleResultFile(
 			o.logger,
 			o.env,
 			newObject,
-			*workflowable.ResultsRepositoryBranch,
+			*branch,
 			*workflowable.ResultsRepositoryID,
 		)
 		if saveObjectErr != nil {
@@ -265,5 +313,5 @@ func (o *Orchestrator) saveSingleResultFile(
 	}()
 
 	logs = append(logs, fmt.Sprintf("Result object ('%s') saved to repository.", fileName))
-	return logs, nil
+	return logs, *branch, nil
 }

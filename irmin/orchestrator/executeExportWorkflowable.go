@@ -11,10 +11,13 @@ import (
 func (o *Orchestrator) executeExportWorkflowable(
 	ctx context.Context,
 	workflow *db.Workflow,
+	run *db.WorkflowRun,
 	workflowable *db.ExportWorkflowable,
 ) ([]string, error) {
 	return o.executeWorkflowableCommon(
 		ctx,
+		workflow,
+		run,
 		workflowable.ConnectionID,
 		[]string{workflowable.ExportToConnectionPath},
 		&workflow.Workspace,

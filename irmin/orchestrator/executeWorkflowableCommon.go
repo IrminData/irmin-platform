@@ -190,6 +190,8 @@ func (o *Orchestrator) saveDirectoryObjectToDB(
 // It takes an operation type to determine whether to perform import or export.
 func (o *Orchestrator) executeWorkflowableCommon(
 	ctx context.Context,
+	workflow *db.Workflow,
+	run *db.WorkflowRun,
 	connectionID uint,
 	connectionPaths []string,
 	workspace *db.Workspace,
@@ -270,5 +272,120 @@ func (o *Orchestrator) executeWorkflowableCommon(
 		)
 	}
 
+	// Commit changes if import operation was successful (no errors)
+	// Export operations only read from the repository, so they should not commit
+	if operation == operationImport && len(result.errors) == 0 {
+		// Get author from workflow owner
+		author := workflow.Owner.Email
+		if workflow.Owner.FirstName != "" && workflow.Owner.LastName != "" {
+			author = fmt.Sprintf("%s %s <%s>", workflow.Owner.FirstName, workflow.Owner.LastName, workflow.Owner.Email)
+		}
+
+		// Commit the changes
+		commitLogs := o.commitWorkflowChanges(
+			ctx,
+			workspace.Slug,
+			repository.Slug,
+			repositoryBranch,
+			workflow.Name,
+			string(operation),
+			run.ID,
+			"", // no stage info for import/export
+			author,
+		)
+		logs = append(logs, commitLogs...)
+	}
+
 	return logs, nil
+}
+
+// commitWorkflowChanges commits changes to a repository branch with workflow metadata in the commit message.
+// This function is non-fatal - if the commit fails or there are no changes, it logs the result but doesn't return an error.
+func (o *Orchestrator) commitWorkflowChanges(
+	ctx context.Context,
+	workspace string,
+	repository string,
+	branch string,
+	workflowName string,
+	workflowType string,
+	runID uint,
+	stageInfo string,
+	author string,
+) []string {
+	var logs []string
+
+	// Check for context cancellation before committing
+	if ctx.Err() != nil {
+		o.logger.InfoContext(ctx, "Skipping commit due to context cancellation")
+		return logs
+	}
+
+	// Construct commit message with workflow metadata
+	var commitMessage string
+	if stageInfo != "" {
+		// Pipeline stage commit
+		commitMessage = fmt.Sprintf(
+			"[Workflow Pipeline] %s - %s - Run #%d\n\nAutomated commit from pipeline stage execution.\nStage: %s\nRun ID: %d",
+			workflowName,
+			stageInfo,
+			runID,
+			stageInfo,
+			runID,
+		)
+	} else {
+		// Regular workflow commit
+		commitMessage = fmt.Sprintf(
+			"[Workflow %s] %s - Run #%d\n\nAutomated commit from workflow execution.\nType: %s\nRun ID: %d",
+			workflowType,
+			workflowName,
+			runID,
+			workflowType,
+			runID,
+		)
+	}
+
+	// Attempt to commit changes (allowEmpty=false to skip if no changes)
+	commit, commitErr := o.dataEngine.CommitChanges(
+		workspace,
+		repository,
+		branch,
+		commitMessage,
+		author,
+		false, // allowEmpty
+	)
+
+	if commitErr != nil {
+		// Check if error is due to no changes (this is expected and not a failure)
+		if strings.Contains(commitErr.Error(), "no changes") ||
+			strings.Contains(commitErr.Error(), "nothing to commit") {
+			o.logger.InfoContext(ctx, "No changes to commit for workflow", "workflow", workflowName, "run_id", runID)
+			logs = append(logs, "No changes to commit")
+			return logs
+		}
+
+		// Log error but don't fail the workflow
+		o.logger.ErrorContext(
+			ctx,
+			"Failed to commit workflow changes",
+			"error", commitErr,
+			"workflow", workflowName,
+			"run_id", runID,
+			"branch", branch,
+		)
+		logs = append(logs, fmt.Sprintf("Warning: Failed to commit changes: %v", commitErr))
+		return logs
+	}
+
+	// Success
+	o.logger.InfoContext(
+		ctx,
+		"Successfully committed workflow changes",
+		"workflow", workflowName,
+		"run_id", runID,
+		"branch", branch,
+		"commit_hash", commit.Hash,
+	)
+	logs = append(logs, fmt.Sprintf("Changes committed to branch '%s' (commit: %s)", branch, commit.Hash))
+
+	return logs
 }

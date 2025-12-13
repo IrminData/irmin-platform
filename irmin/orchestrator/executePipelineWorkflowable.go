@@ -26,6 +26,7 @@ import (
 func (o *Orchestrator) executePipelineWorkflowable(
 	ctx context.Context,
 	workflow *db.Workflow,
+	run *db.WorkflowRun,
 	workflowable *db.PipelineWorkflowable,
 ) ([]string, error) {
 	var logs []string
@@ -49,11 +50,11 @@ func (o *Orchestrator) executePipelineWorkflowable(
 	for key, stage := range workflowable.Stages {
 		// Check for context cancellation before each stage
 		if ctx.Err() != nil {
-			logs = append(logs, fmt.Sprintf("Workflow execution cancelled before stage %d: %v", key, ctx.Err()))
+			logs = append(logs, fmt.Sprintf("Workflow execution cancelled before stage %d: %v", key+1, ctx.Err()))
 			return logs, ctx.Err()
 		}
 
-		logs = append(logs, fmt.Sprintf("Executing stage %d", key))
+		logs = append(logs, fmt.Sprintf("Executing stage %d", key+1))
 
 		var stageLogs []string
 		var errResult error
@@ -76,7 +77,9 @@ func (o *Orchestrator) executePipelineWorkflowable(
 			stageLogs, errResult = o.handleRepositoryStage(
 				ctx,
 				workflow,
+				run,
 				&stage,
+				key+1,
 				previousStageResults,
 			)
 		default:
@@ -303,67 +306,24 @@ func (o *Orchestrator) handleConnectionRead(
 func (o *Orchestrator) handleRepositoryStage(
 	ctx context.Context,
 	workflow *db.Workflow,
+	run *db.WorkflowRun,
 	stage *db.PipelineStage,
+	stageNumber int,
 	previousStageResults map[string][]byte,
 ) ([]string, error) {
 	var logs []string
 
 	if stage.Write {
-		// Upload the previous stage results to the repository
-		for fileName, fileContent := range previousStageResults {
-			// Check for context cancellation during each file upload
-			if ctx.Err() != nil {
-				return logs, fmt.Errorf("workflow execution cancelled during repository write: %w", ctx.Err())
-			}
+		writeLogs, uploadedFiles, branch, err := o.handleRepositoryWrite(ctx, workflow, stage, previousStageResults)
+		logs = append(logs, writeLogs...)
+		if err != nil {
+			return logs, err
+		}
 
-			// Create multipart file from the byte array
-			file := bytes.NewReader(fileContent)
-			// Construct the path to save the file
-			uploadObjectToPath := strings.Trim(*stage.RepositoryWritePath, "/") + "/" + fileName
-			// Upload the object to the path in the repository at ref
-			newObject, err := o.dataEngine.UploadObject(
-				workflow.Workspace.Slug,
-				stage.Repository.Slug,
-				uploadObjectToPath,
-				*stage.RepositoryBranch,
-				file,
-			)
-			if err != nil {
-				o.logger.ErrorContext(
-					ctx,
-					"Error uploading object to Data Engine",
-					"error",
-					err,
-					"path",
-					uploadObjectToPath,
-				)
-				logs = append(
-					logs,
-					fmt.Sprintf(
-						"Error saving result object ('%s') to %s@%s/%s.",
-						fileName,
-						stage.Repository.Slug,
-						*stage.RepositoryBranch,
-						uploadObjectToPath,
-					),
-				)
-				continue
-			}
-			// Save the object to the database in a go routine
-			go func() {
-				_, saveObjectErr := lib.SaveObject(
-					o.db,
-					o.logger,
-					o.env,
-					newObject,
-					*stage.RepositoryBranch,
-					*stage.RepositoryID,
-				)
-				if saveObjectErr != nil {
-					o.logger.ErrorContext(ctx, "Error saving object to database", "error", saveObjectErr)
-				}
-			}()
-			logs = append(logs, fmt.Sprintf("Result object ('%s') saved to repository.", fileName))
+		// Commit changes if at least one file was successfully uploaded
+		if uploadedFiles > 0 {
+			commitLogs := o.commitPipelineStageChanges(ctx, workflow, run, stage, stageNumber, branch)
+			logs = append(logs, commitLogs...)
 		}
 	}
 
@@ -376,6 +336,137 @@ func (o *Orchestrator) handleRepositoryStage(
 	}
 
 	return logs, nil
+}
+
+// handleRepositoryWrite uploads files from previous stage to the repository.
+func (o *Orchestrator) handleRepositoryWrite(
+	ctx context.Context,
+	workflow *db.Workflow,
+	stage *db.PipelineStage,
+	previousStageResults map[string][]byte,
+) ([]string, int, string, error) {
+	var logs []string
+	uploadedFiles := 0
+
+	// Determine the branch to use: specified branch or default branch
+	branch := stage.RepositoryBranch
+	if branch == nil || *branch == "" {
+		if stage.Repository != nil && stage.Repository.DefaultBranch != "" {
+			branch = &stage.Repository.DefaultBranch
+			o.logger.InfoContext(
+				ctx,
+				"Using repository default branch",
+				"repository", stage.Repository.Slug,
+				"branch", *branch,
+			)
+			logs = append(logs, fmt.Sprintf("Using default branch '%s' for repository writes", *branch))
+		} else {
+			return logs, uploadedFiles, "", errors.New("repository branch is not specified and repository has no default branch")
+		}
+	}
+
+	// Upload the previous stage results to the repository
+	for fileName, fileContent := range previousStageResults {
+		// Check for context cancellation during each file upload
+		if ctx.Err() != nil {
+			return logs, uploadedFiles, *branch, fmt.Errorf(
+				"workflow execution cancelled during repository write: %w",
+				ctx.Err(),
+			)
+		}
+
+		// Create multipart file from the byte array
+		file := bytes.NewReader(fileContent)
+		// Construct the path to save the file
+		uploadObjectToPath := strings.Trim(*stage.RepositoryWritePath, "/") + "/" + fileName
+		// Upload the object to the path in the repository at ref
+		newObject, err := o.dataEngine.UploadObject(
+			workflow.Workspace.Slug,
+			stage.Repository.Slug,
+			uploadObjectToPath,
+			*branch,
+			file,
+		)
+		if err != nil {
+			o.logger.ErrorContext(
+				ctx,
+				"Error uploading object to Data Engine",
+				"error",
+				err,
+				"path",
+				uploadObjectToPath,
+			)
+			logs = append(
+				logs,
+				fmt.Sprintf(
+					"Error saving result object ('%s') to %s@%s/%s.",
+					fileName,
+					stage.Repository.Slug,
+					*branch,
+					uploadObjectToPath,
+				),
+			)
+			continue
+		}
+		// Save the object to the database in a go routine
+		go func() {
+			_, saveObjectErr := lib.SaveObject(
+				o.db,
+				o.logger,
+				o.env,
+				newObject,
+				*branch,
+				*stage.RepositoryID,
+			)
+			if saveObjectErr != nil {
+				o.logger.ErrorContext(ctx, "Error saving object to database", "error", saveObjectErr)
+			}
+		}()
+		logs = append(logs, fmt.Sprintf("Result object ('%s') saved to repository.", fileName))
+		uploadedFiles++
+	}
+
+	return logs, uploadedFiles, *branch, nil
+}
+
+// commitPipelineStageChanges commits changes for a pipeline stage.
+func (o *Orchestrator) commitPipelineStageChanges(
+	ctx context.Context,
+	workflow *db.Workflow,
+	run *db.WorkflowRun,
+	stage *db.PipelineStage,
+	stageNumber int,
+	branch string,
+) []string {
+	// Get author from workflow owner
+	author := workflow.Owner.Email
+	if workflow.Owner.FirstName != "" && workflow.Owner.LastName != "" {
+		author = fmt.Sprintf(
+			"%s %s <%s>",
+			workflow.Owner.FirstName,
+			workflow.Owner.LastName,
+			workflow.Owner.Email,
+		)
+	}
+
+	// Construct stage info for commit message
+	stageInfo := fmt.Sprintf("Stage %d", stageNumber)
+	if stage.Description != "" {
+		stageInfo = fmt.Sprintf("Stage %d (%s)", stageNumber, stage.Description)
+	}
+
+	// Commit the changes
+	return o.commitWorkflowChanges(
+		ctx,
+		workflow.Workspace.Slug,
+		stage.Repository.Slug,
+		branch,
+		workflow.Name,
+		"Pipeline",
+		run.ID,
+		stageInfo,
+		author,
+	)
 }
 
 // handleRepositoryRead handles reading objects from a repository stage.

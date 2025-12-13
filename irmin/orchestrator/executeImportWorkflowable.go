@@ -11,10 +11,13 @@ import (
 func (o *Orchestrator) executeImportWorkflowable(
 	ctx context.Context,
 	workflow *db.Workflow,
+	run *db.WorkflowRun,
 	workflowable *db.ImportWorkflowable,
 ) ([]string, error) {
 	return o.executeWorkflowableCommon(
 		ctx,
+		workflow,
+		run,
 		workflowable.ConnectionID,
 		workflowable.ImportFromConnectionPaths,
 		&workflow.Workspace,

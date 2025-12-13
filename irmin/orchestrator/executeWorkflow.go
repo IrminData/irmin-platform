@@ -113,6 +113,7 @@ func (o *Orchestrator) getMaxRuntime(workflow *db.Workflow) int {
 func (o *Orchestrator) executeWorkflowableByType(
 	ctx context.Context,
 	workflow *db.Workflow,
+	run *db.WorkflowRun,
 	wf any,
 ) ([]string, error) {
 	switch workflow.Type {
@@ -126,7 +127,7 @@ func (o *Orchestrator) executeWorkflowableByType(
 					wf,
 				)
 		}
-		return o.executeActionWorkflowable(ctx, workflow, actionWorkflowable)
+		return o.executeActionWorkflowable(ctx, workflow, run, actionWorkflowable)
 
 	case irminmodels.WorkflowableTypeExport:
 		exportWorkflowable, ok := wf.(*db.ExportWorkflowable)
@@ -138,7 +139,7 @@ func (o *Orchestrator) executeWorkflowableByType(
 					wf,
 				)
 		}
-		return o.executeExportWorkflowable(ctx, workflow, exportWorkflowable)
+		return o.executeExportWorkflowable(ctx, workflow, run, exportWorkflowable)
 
 	case irminmodels.WorkflowableTypeImport:
 		importWorkflowable, ok := wf.(*db.ImportWorkflowable)
@@ -150,7 +151,7 @@ func (o *Orchestrator) executeWorkflowableByType(
 					wf,
 				)
 		}
-		return o.executeImportWorkflowable(ctx, workflow, importWorkflowable)
+		return o.executeImportWorkflowable(ctx, workflow, run, importWorkflowable)
 
 	case irminmodels.WorkflowableTypePipeline:
 		pipelineWorkflowable, ok := wf.(*db.PipelineWorkflowable)
@@ -162,7 +163,7 @@ func (o *Orchestrator) executeWorkflowableByType(
 					wf,
 				)
 		}
-		return o.executePipelineWorkflowable(ctx, workflow, pipelineWorkflowable)
+		return o.executePipelineWorkflowable(ctx, workflow, run, pipelineWorkflowable)
 
 	default:
 		return []string{fmt.Sprintf("Unknown workflow type: %s", workflow.Type)},
@@ -243,7 +244,7 @@ func (o *Orchestrator) executeWorkflowWithContext(
 			break
 		}
 
-		logs, err := o.executeWorkflowableByType(ctx, workflow, wf)
+		logs, err := o.executeWorkflowableByType(ctx, workflow, run, wf)
 		allAttemptsLogs = append(allAttemptsLogs, logs...)
 
 		if err != nil {
