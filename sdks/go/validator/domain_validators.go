@@ -138,12 +138,31 @@ func (v *Validator) validateConnectionPipelineStage(parentStruct reflect.Value) 
 
 	// If it's a read stage, must have read paths
 	if readField.IsValid() && readField.Bool() {
-		if !readPathsField.IsValid() || readPathsField.Len() == 0 {
-			return false
-		}
+		return v.validateReadPaths(readPathsField)
 	}
 
 	return true
+}
+
+// validateReadPaths validates that a read paths field is non-empty.
+// Handles both direct slices and pointers to slices.
+func (v *Validator) validateReadPaths(readPathsField reflect.Value) bool {
+	if !readPathsField.IsValid() {
+		return false
+	}
+
+	// Handle pointer to slice: dereference before checking length
+	var pathsLen int
+	if readPathsField.Kind() == reflect.Pointer {
+		if readPathsField.IsNil() {
+			return false
+		}
+		pathsLen = readPathsField.Elem().Len()
+	} else {
+		pathsLen = readPathsField.Len()
+	}
+
+	return pathsLen > 0
 }
 
 // validateRepositoryPipelineStage validates repository-type pipeline stages.
