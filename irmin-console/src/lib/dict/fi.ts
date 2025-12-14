@@ -237,7 +237,7 @@ const fi = {
       apiExampleCurl:
         'curl -X GET "<API_URL>/api/v1/workspaces" \\\n  -H "Authorization: Bearer <api-avain>" \\\n  -H "Content-Type: application/json"',
       apiExampleNote:
-        'Korvaa <API_URL> yllä olevalla API-pohjaosoitteella ja <api-avain> API-avaimella avainten sivulta.',
+        'Korvaa <api-avain> yllä olevalla API-avaimella avainten sivulta.',
       mcpUsageNote:
         'MCP-palvelimen käyttämiseen tarvitset API-avaimen. Luo sellainen profiilisi asetuksista.',
       mcpAuthHeader: 'Authorization: Bearer <api-avain>',
@@ -598,7 +598,13 @@ const fi = {
       stage: 'Vaihe',
       descriptionPlaceholder: 'Kuvaile, mitä tämä dataputken vaihe tekee',
       write: 'Kirjoita',
+      writeDescription: 'Käytä edellisten vaiheiden tuloksia',
       read: 'Lue',
+      readDescription: 'Välitä tulokset seuraaville vaiheille',
+      firstStageCannotWrite:
+        'ensimmäinen vaihe ei voi käyttää edellisiä tuloksia',
+      lastStageCannotRead:
+        'viimeisellä vaiheella ei ole seuraavia vaiheita, joille välittää tulokset',
       executablePath: 'Suoritettava polku',
       executablePathDescription:
         'Polku suoritettavaan skriptiin (esim. /path/to/script.py)',

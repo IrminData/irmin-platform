@@ -3,7 +3,15 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { IoInformationCircle } from 'react-icons/io5';
-import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
+import {
+  TbArrowDown,
+  TbArrowUp,
+  TbChevronDown,
+  TbChevronRight,
+  TbDatabaseExport,
+  TbDatabaseImport,
+  TbTrash,
+} from 'react-icons/tb';
 
 import IrminCore from '@/lib/core';
 
@@ -11,6 +19,7 @@ import ConnectionPathSelector from '@/components/connection/ConnectionPathSelect
 import InlineQueryEditor from '@/components/query/InlineQueryEditor';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
 import InlineScriptEditor from '@/components/scripts/InlineScriptEditor';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -68,6 +77,7 @@ function Stage({
   removeStage,
   readOnly,
   defaultCollapsed = false,
+  isLastStage = false,
 }: {
   index: number;
   initialStage?: PipelineStage;
@@ -77,6 +87,7 @@ function Stage({
   removeStage?: () => void;
   readOnly: boolean;
   defaultCollapsed?: boolean;
+  isLastStage?: boolean;
 }) {
   const { connectionsQuery } = useConnections();
   const { repositoriesQuery } = useRepositories();
@@ -175,74 +186,122 @@ function Stage({
     segmentsAfter: 1,
   });
 
+  const getStageTypeBadgeVariant = (type: string) => {
+    switch (type) {
+      case 'action':
+        return 'default';
+      case 'connection':
+        return 'secondary';
+      case 'repository':
+        return 'outline';
+      default:
+        return 'default';
+    }
+  };
+
   return (
-    <div className='space-y-4 rounded-lg border border-foreground/20 p-4'>
-      <div className='flex items-center justify-between'>
-        <div className='flex items-center gap-2'>
+    <div
+      className={`
+        relative z-10 rounded-lg border border-foreground/20 bg-card shadow-xs
+        transition-all
+        hover:shadow-md
+      `}
+    >
+      <div className='flex items-center justify-between gap-4 p-4'>
+        <div className='flex flex-1 items-center gap-4'>
           <Button
             type='button'
             variant='ghost'
             size='icon'
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className='size-6'
+            className='size-8 shrink-0'
           >
             {isCollapsed ? (
-              <TbChevronRight className='size-4' />
+              <TbChevronRight className='size-5' />
             ) : (
-              <TbChevronDown className='size-4' />
+              <TbChevronDown className='size-5' />
             )}
           </Button>
-          <h3 className='flex items-center gap-2 text-lg font-semibold'>
-            {dict.workflow.pipeline.stage} {index + 1}
-            <span className='text-sm text-muted-foreground'>
-              {stage.type === 'action' && (
-                <span className='text-xs text-muted-foreground'>
-                  {dict.workflow.action}
-                  {stage.description ? `: ${stage.description}` : ''}
-                </span>
-              )}
-              {stage.type === 'connection' && (
-                <span className='text-xs text-muted-foreground'>
-                  {dict.connections.connection}
-                  {stage.description ? `: ${stage.description}` : ''}
-                </span>
-              )}
-              {stage.type === 'repository' && (
-                <span className='text-xs text-muted-foreground'>
-                  {dict.repository.repository}
-                  {stage.description ? `: ${stage.description}` : ''}
-                </span>
-              )}
-            </span>
-          </h3>
+
+          <div className='flex flex-1 items-center gap-3 overflow-hidden'>
+            <Badge variant={getStageTypeBadgeVariant(stage.type)}>
+              {stage.type === 'action' && dict.workflow.action}
+              {stage.type === 'connection' && dict.connections.connection}
+              {stage.type === 'repository' && dict.repository.repository}
+            </Badge>
+
+            {stage.description && (
+              <span className='truncate text-sm font-medium text-foreground/80'>
+                {stage.description}
+              </span>
+            )}
+            {!stage.description && (
+              <span className='text-sm text-muted-foreground italic'>
+                {dict.workflow.pipeline.descriptionPlaceholder}
+              </span>
+            )}
+          </div>
+
+          <div
+            className={`
+              hidden items-center gap-2
+              sm:flex
+            `}
+          >
+            {stage.read && (
+              <Badge variant='outline' className='gap-1 text-xs'>
+                <TbDatabaseExport className='size-3' />
+                {dict.workflow.pipeline.read}
+              </Badge>
+            )}
+            {stage.write && (
+              <Badge variant='outline' className='gap-1 text-xs'>
+                <TbDatabaseImport className='size-3' />
+                {dict.workflow.pipeline.write}
+              </Badge>
+            )}
+          </div>
         </div>
+
         {!readOnly && (
-          <div className='space-x-2'>
+          <div className='flex items-center gap-1'>
             {moveStageUp && (
               <Button
                 type='button'
                 onClick={() => moveStageUp()}
-                variant='outline'
+                variant='ghost'
+                size='icon'
+                className='size-8'
+                title={dict.workflow.pipeline.moveUp}
               >
-                {dict.workflow.pipeline.moveUp}
+                <TbArrowUp className='size-4' />
               </Button>
             )}
             {moveStageDown && (
               <Button
                 type='button'
                 onClick={() => moveStageDown()}
-                variant='outline'
+                variant='ghost'
+                size='icon'
+                className='size-8'
+                title={dict.workflow.pipeline.moveDown}
               >
-                {dict.workflow.pipeline.moveDown}
+                <TbArrowDown className='size-4' />
               </Button>
             )}
             {removeStage && (
               <Button
                 type='button'
                 onClick={() => removeStage()}
-                variant='destructive'
+                variant='ghost'
+                size='icon'
+                className={`
+                  size-8 text-destructive
+                  hover:text-destructive
+                `}
+                title={dict.common.remove}
               >
-                {dict.common.remove}
+                <TbTrash className='size-4' />
               </Button>
             )}
           </div>
@@ -250,7 +309,7 @@ function Stage({
       </div>
 
       {!isCollapsed && (
-        <>
+        <div className='space-y-4 border-t bg-background p-4'>
           <div className='flex flex-col gap-2'>
             <Label htmlFor={`description-${index}`}>
               {dict.common.description}
@@ -269,38 +328,79 @@ function Stage({
             />
           </div>
 
-          <div className='flex items-center space-x-2'>
-            <Switch
-              id={`write-${index}`}
-              checked={stage.write}
-              onCheckedChange={(checked) =>
-                setStage((prevStage) => ({
-                  ...prevStage,
-                  write: checked,
-                }))
-              }
-              disabled={readOnly}
-            />
-            <Label htmlFor={`write-${index}`}>
-              {dict.workflow.pipeline.write}
-            </Label>
-          </div>
+          <div
+            className={`
+              grid gap-4
+              sm:grid-cols-2
+            `}
+          >
+            <div className='flex items-center space-x-2 rounded-md border p-3'>
+              <Switch
+                id={`write-${index}`}
+                checked={stage.write}
+                onCheckedChange={(checked) =>
+                  setStage((prevStage) => ({
+                    ...prevStage,
+                    write: checked,
+                  }))
+                }
+                disabled={readOnly || index === 0}
+              />
+              <div className='flex flex-col'>
+                <div className='flex items-center gap-2'>
+                  <Label
+                    htmlFor={`write-${index}`}
+                    className={index === 0 ? 'text-muted-foreground' : ''}
+                  >
+                    {dict.workflow.pipeline.write}
+                  </Label>
+                  <span className='text-xs font-normal text-muted-foreground'>
+                    {dict.workflow.pipeline.writeDescription}
+                  </span>
+                </div>
+                {index === 0 && (
+                  <span
+                    className={`pt-1 pl-1 text-xs text-muted-foreground italic`}
+                  >
+                    {dict.workflow.pipeline.firstStageCannotWrite}
+                  </span>
+                )}
+              </div>
+            </div>
 
-          <div className='flex items-center space-x-2'>
-            <Switch
-              id={`read-${index}`}
-              checked={stage.read}
-              onCheckedChange={(checked) =>
-                setStage((prevStage) => ({
-                  ...prevStage,
-                  read: checked,
-                }))
-              }
-              disabled={readOnly}
-            />
-            <Label htmlFor={`read-${index}`}>
-              {dict.workflow.pipeline.read}
-            </Label>
+            <div className='flex items-center space-x-2 rounded-md border p-3'>
+              <Switch
+                id={`read-${index}`}
+                checked={stage.read}
+                onCheckedChange={(checked) =>
+                  setStage((prevStage) => ({
+                    ...prevStage,
+                    read: checked,
+                  }))
+                }
+                disabled={readOnly || isLastStage}
+              />
+              <div className='flex flex-col'>
+                <div className='flex items-center gap-2'>
+                  <Label
+                    htmlFor={`read-${index}`}
+                    className={isLastStage ? 'text-muted-foreground' : ''}
+                  >
+                    {dict.workflow.pipeline.read}
+                  </Label>
+                  <span className='text-xs font-normal text-muted-foreground'>
+                    {dict.workflow.pipeline.readDescription}
+                  </span>
+                </div>
+                {isLastStage && (
+                  <span
+                    className={`pt-1 pl-1 text-xs text-muted-foreground italic`}
+                  >
+                    {dict.workflow.pipeline.lastStageCannotRead}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className='flex flex-col gap-2'>
@@ -784,7 +884,7 @@ function Stage({
               )}
             </>
           )}
-        </>
+        </div>
       )}
     </div>
   );

@@ -52,7 +52,7 @@ const WorkspaceApiMcpSection = () => {
   }, [dict, apiBaseUrl]);
 
   return (
-    <ContentWrapper wrapperClassName='py-8'>
+    <ContentWrapper wrapperClassName='py-8 lg:px-12'>
       <DisplayTitle className='mb-8'>
         {dict.workspace.api.settings}
       </DisplayTitle>

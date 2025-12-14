@@ -237,7 +237,7 @@ const en = {
       apiExampleCurl:
         'curl -X GET "<API_URL>/api/v1/workspaces" \\\n  -H "Authorization: Bearer <your-api-token>" \\\n  -H "Content-Type: application/json"',
       apiExampleNote:
-        'Replace <API_URL> with the API Base URL above and <your-api-token> with your API token from the tokens page.',
+        'Replace <your-api-token> above with your personalAPI token from the tokens page.',
       mcpUsageNote:
         'To use the MCP server, you need an API token. Create one in your profile settings.',
       mcpAuthHeader: 'Authorization: Bearer <your-api-token>',
@@ -613,7 +613,12 @@ const en = {
       stage: 'Stage',
       descriptionPlaceholder: 'Describe what this pipeline stage does',
       write: 'Write',
+      writeDescription: 'Use results from previous stages',
       read: 'Read',
+      readDescription: 'Pass results to next stages',
+      firstStageCannotWrite: 'first stage cannot consume previous results',
+      lastStageCannotRead:
+        'last stage has no subsequent stages to pass results to',
       executablePath: 'Executable path',
       executablePathDescription:
         'Path to the action script e.g. /path/to/script.py',
