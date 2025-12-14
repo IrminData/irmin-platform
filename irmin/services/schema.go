@@ -84,47 +84,12 @@ func (api *APIServices) GetRepositoryObjectSchema(
 		return nil, fmt.Errorf("failed to get object schema: %w", err)
 	}
 
-	// Recursively set the SQL selector example
-	var populateSelector func(*irminmodels.ObjectSchema)
-	populateSelector = func(s *irminmodels.ObjectSchema) {
-		if s == nil {
-			return
-		}
-
-		// Only populate selector for "root" objects (Group, Structured, Binary)
-		// Descendants (like columns) shouldn't have a selector unless we want to support column selection syntax
-		if s.Type == irminmodels.ObjectTypeGroup || s.Type == irminmodels.ObjectTypeStructured ||
-			s.Type == irminmodels.ObjectTypeBinary {
-			if s.Path != "" {
-				selector, s3PathSelector, constructErr := lib.ConstructSQLSelector(
-					workspace.Slug,
-					repository.Slug,
-					s.Path,
-					ref,
-					repository.DefaultBranch,
-				)
-				if constructErr != nil {
-					api.Logger.ErrorContext(
-						ctx,
-						"Error constructing SQL selector and S3 path selector",
-						"error",
-						constructErr,
-						"path",
-						s.Path,
-					)
-				} else {
-					s.SQLSelector = selector
-					s.S3PathSelector = s3PathSelector
-				}
-			}
-		}
-
-		// Continue processing children even if this object failed
-		for i := range s.Children {
-			populateSelector(&s.Children[i])
-		}
+	// Populate SQL selector for the root object and recursively for children
+	// Only file objects (structured/binary) should have selectors
+	// Groups (directories) don't need selectors, but their children do
+	if schema != nil {
+		api.populateSQLSelector(ctx, schema, workspace.Slug, repository.Slug, ref, repository.DefaultBranch)
 	}
-	populateSelector(schema)
 
 	return schema, nil
 }
@@ -479,9 +444,9 @@ func (api *APIServices) populateSQLSelector(
 		return
 	}
 
-	// Only populate selector for "root" objects (Group, Structured, Binary)
-	if (schema.Type == irminmodels.ObjectTypeGroup ||
-		schema.Type == irminmodels.ObjectTypeStructured ||
+	// Only populate selector for non-group objects (Structured, Binary)
+	// Groups (directories) don't need selectors as they don't contain queryable data
+	if (schema.Type == irminmodels.ObjectTypeStructured ||
 		schema.Type == irminmodels.ObjectTypeBinary) && schema.Path != "" {
 		selector, s3PathSelector, constructErr := lib.ConstructSQLSelector(
 			workspaceSlug,

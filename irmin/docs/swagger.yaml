@@ -1643,7 +1643,6 @@ definitions:
         type: boolean
     required:
     - description
-    - order_sequence
     - type
     type: object
   irminmodels.PipelineStageType:

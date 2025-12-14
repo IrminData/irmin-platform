@@ -253,7 +253,8 @@ func (api *APIServices) CreateWorkflow(
 			Preload("Import").
 			Preload("Export").
 			Preload("Action").
-			Preload("Pipeline").
+			Preload("Pipeline.Stages").
+			Preload("Tags").
 			First(&workflow, workflow.ID).
 			Error
 	})
@@ -380,7 +381,8 @@ func (api *APIServices) UpdateWorkflowable(
 			Preload("Import").
 			Preload("Export").
 			Preload("Action").
-			Preload("Pipeline").
+			Preload("Pipeline.Stages").
+			Preload("Tags").
 			First(workflow, workflow.ID).
 			Error
 	})
@@ -1168,6 +1170,11 @@ func (api *APIServices) createPipelineWorkflowable(
 		return nil, errors.New("pipeline configuration is required")
 	}
 
+	// Validate pipeline stages
+	if err := api.validatePipelineStages(config.Stages); err != nil {
+		return nil, err
+	}
+
 	// Process stages
 	var stages []db.PipelineStage
 	for orderSequence, stage := range config.Stages {
@@ -1194,6 +1201,33 @@ func (api *APIServices) createPipelineWorkflowable(
 		return nil, createPipelineWorkflowableErr
 	}
 	return pipelineWorkflowable, nil
+}
+
+// validatePipelineStages validates pipeline stage configurations.
+func (api *APIServices) validatePipelineStages(stages []irminmodels.PipelineStage) error {
+	if len(stages) == 0 {
+		return errors.New("pipeline must have at least one stage")
+	}
+
+	// For multi-stage pipelines, validate first and last stages
+	if len(stages) > 1 {
+		// Validate first stage: cannot be writeable (no previous results to consume)
+		if stages[0].Write {
+			return errors.New("first pipeline stage cannot be writeable (no previous results to consume)")
+		}
+
+		// Validate last stage: cannot be readable (no subsequent stage to pass results to)
+		lastStageIndex := len(stages) - 1
+		if stages[lastStageIndex].Read {
+			return errors.New("last pipeline stage cannot be readable (no subsequent stage to pass results to)")
+		}
+	}
+	// Single-stage pipelines can have any combination of Read/Write as they may:
+	// - Read from external source and write to output (Read=true, Write=false)
+	// - Read input and write to external destination (Read=false, Write=true)
+	// - Or both (Read=true, Write=true)
+
+	return nil
 }
 
 // processStageByType processes a stage based on its type.

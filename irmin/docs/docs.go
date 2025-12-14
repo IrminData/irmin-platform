@@ -12352,7 +12352,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "description",
-                "order_sequence",
                 "type"
             ],
             "properties": {

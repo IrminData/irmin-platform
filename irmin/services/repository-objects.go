@@ -63,46 +63,71 @@ func (api *APIServices) GetRepositoryObject(
 	detailsFromPath := irminutils.ParseObjectDetailsFromPath(path)
 
 	// Check permissions if object exists
-	if repositoryObjectDB != nil {
-		// Recursively populate SQL selector for object and all descendants
-		var populateSelector func(*db.RepositoryObject)
-		populateSelector = func(obj *db.RepositoryObject) {
-			if obj == nil {
-				return
-			}
-			sqlSelector, s3PathSelector, constructErr := lib.ConstructSQLSelector(
-				workspace.Slug,
-				repository.Slug,
-				obj.Path,
-				ref,
-				repository.DefaultBranch,
-			)
-			if constructErr != nil {
-				api.Logger.ErrorContext(
-					c,
-					"Error constructing SQL selector and S3 path selector",
-					"error",
-					constructErr,
-					"path",
-					obj.Path,
-				)
-			} else {
-				obj.SQLSelector = sqlSelector
-				obj.S3PathSelector = s3PathSelector
-			}
-			// Continue processing children even if this object failed
-			for i := range obj.Children {
-				populateSelector(&obj.Children[i])
-			}
-		}
-		populateSelector(repositoryObjectDB)
+	if repositoryObjectDB == nil {
+		return repositoryObjectDB, detailsFromPath, ref, err
+	}
 
-		if validateErr := api.validateObjectPermissions(c, user, workspace, repositoryObjectDB); validateErr != nil {
-			return nil, detailsFromPath, ref, validateErr
-		}
+	// Populate SQL selector for the root object and recursively for children
+	// Only file objects (structured/binary) should have selectors
+	// Groups (directories) don't need selectors, but their children do
+	api.populateSelectorsForObject(
+		c,
+		repositoryObjectDB,
+		workspace.Slug,
+		repository.Slug,
+		ref,
+		repository.DefaultBranch,
+	)
+
+	if validateErr := api.validateObjectPermissions(c, user, workspace, repositoryObjectDB); validateErr != nil {
+		return nil, detailsFromPath, ref, validateErr
 	}
 
 	return repositoryObjectDB, detailsFromPath, ref, err
+}
+
+// populateSelectorsForObject recursively populates SQL and S3 path selectors for an object and its children.
+// Only structured/binary objects get selectors; groups are traversed but don't get selectors themselves.
+func (api *APIServices) populateSelectorsForObject(
+	c context.Context,
+	object *db.RepositoryObject,
+	workspaceSlug string,
+	repositorySlug string,
+	ref string,
+	defaultBranch string,
+) {
+	if object == nil {
+		return
+	}
+
+	// Populate selector for non-group objects (structured/binary)
+	if object.Type != irminmodels.ObjectTypeGroup && object.Path != "" {
+		sqlSelector, s3PathSelector, constructErr := lib.ConstructSQLSelector(
+			workspaceSlug,
+			repositorySlug,
+			object.Path,
+			ref,
+			defaultBranch,
+		)
+		if constructErr != nil {
+			api.Logger.ErrorContext(
+				c,
+				"Error constructing SQL selector and S3 path selector",
+				"error",
+				constructErr,
+				"path",
+				object.Path,
+			)
+		} else {
+			object.SQLSelector = sqlSelector
+			object.S3PathSelector = s3PathSelector
+		}
+	}
+
+	// Recursively populate selectors for children
+	for i := range object.Children {
+		api.populateSelectorsForObject(c, &object.Children[i], workspaceSlug, repositorySlug, ref, defaultBranch)
+	}
 }
 
 // validateObjectPermissions checks user permissions for a repository object
