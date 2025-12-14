@@ -17,6 +17,10 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+const (
+	queryParamValueTrue = "true"
+)
+
 type APIControllers struct {
 	Services          *services.APIServices
 	DB                *db.Database

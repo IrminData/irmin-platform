@@ -333,6 +333,7 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 				workspace,
 				repository,
 				object,
+				true, // Always limit response for MCP
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object content", "error", err)

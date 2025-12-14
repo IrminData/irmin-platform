@@ -7,6 +7,7 @@ import (
 	"irmin-api/engine"
 	"irmin-api/lib"
 	"irmin-api/permissions"
+	"irmin-api/utils"
 	"strconv"
 	"strings"
 	"time"
@@ -451,6 +452,7 @@ func (api *APIServices) ExecuteSQL(
 	user *db.User,
 	workspace *db.Workspace,
 	req irmincore.ExecuteSQLRequest,
+	limitResponse bool,
 ) (*irminmodels.QueryResult, error) {
 	// Make sure this is allowed
 	isAllowed, err := api.PermissionService.IsAllowed(
@@ -497,6 +499,11 @@ func (api *APIServices) ExecuteSQL(
 	// Execute the SQL
 	result := dataEngine.ExecuteQuery(c, user, workspace, req.SQL)
 
+	// Limit response data if requested
+	if limitResponse {
+		result = api.limitQueryResultSize(result)
+	}
+
 	// Check for errors
 	if result.HasErrors {
 		api.Logger.ErrorContext(c, "Error executing SQL query", "error", result.Logs)
@@ -516,4 +523,36 @@ func (api *APIServices) ExecuteSQL(
 	}
 
 	return result, nil
+}
+
+// limitQueryResultSize limits the size of query result data to prevent large responses.
+func (api *APIServices) limitQueryResultSize(
+	result *irminmodels.QueryResult,
+) *irminmodels.QueryResult {
+	if result.Data == nil {
+		return result
+	}
+
+	limitResult := utils.LimitJSONResponseSize(result.Data, utils.DefaultMaxJSONResponseSizeBytes)
+
+	// Always use the limiter's returned data when trimming occurred
+	if limitResult.WasTrimmed {
+		// Type assert to expected type, or use empty slice if type assertion fails
+		if trimmedData, ok := limitResult.Data.([]map[string]any); ok {
+			result.Data = trimmedData
+		} else {
+			// Limiter returned a non-slice (oversized non-array data) - return empty array
+			// The error message is already in result.Logs (see below)
+			result.Data = []map[string]any{}
+		}
+	}
+
+	if limitResult.LogMessage != "" {
+		if result.Logs == nil {
+			result.Logs = []string{}
+		}
+		result.Logs = append(result.Logs, limitResult.LogMessage)
+	}
+
+	return result
 }

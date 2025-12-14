@@ -5864,6 +5864,119 @@
                 }
             }
         },
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/content/structured": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get the parsed structured content of a data file (CSV, JSON, etc.) from a repository",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repository-objects"
+                ],
+                "summary": "Get structured object content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository slug",
+                        "name": "repository_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Object path within the repository (must be structured data file)",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"main\"",
+                        "description": "Reference (branch, tag, or commit) to get content from",
+                        "name": "ref",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"false\"",
+                        "description": "Limit response size for large files",
+                        "name": "limit-response",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Structured content retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - object is not structured data",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Object not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "413": {
+                        "description": "Content too large - file exceeds maximum size limit",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/copy": {
             "post": {
                 "security": [
@@ -6342,106 +6455,6 @@
                     },
                     "400": {
                         "description": "Bad request - invalid parameters",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden - insufficient permissions",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Object not found",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/structured": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Get the parsed structured content of a data file (CSV, JSON, etc.) from a repository",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "repository-objects"
-                ],
-                "summary": "Get structured object content",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Workspace slug",
-                        "name": "workspace_slug",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Repository slug",
-                        "name": "repository_slug",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Object path within the repository (must be structured data file)",
-                        "name": "path",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "default": "\"main\"",
-                        "description": "Reference (branch, tag, or commit) to get content from",
-                        "name": "ref",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Structured content retrieved successfully",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - object is not structured data",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }

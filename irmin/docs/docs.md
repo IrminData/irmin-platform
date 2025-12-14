@@ -1615,7 +1615,7 @@ RepositoryObjectsSchema godoc @Summary Get object schema @Description Get the sc
 func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error
 ```
 
-RepositoryObjectsStructuredContent godoc @Summary Get structured object content @Description Get the parsed structured content of a data file \(CSV, JSON, etc.\) from a repository @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param path query string true "Object path within the repository \(must be structured data file\)" @Param ref query string false "Reference \(branch, tag, or commit\) to get content from" default\("main"\) @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=object\} "Structured content retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- object is not structured data" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Object not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects/structured \[get\]
+RepositoryObjectsStructuredContent godoc @Summary Get structured object content @Description Get the parsed structured content of a data file \(CSV, JSON, etc.\) from a repository @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param path query string true "Object path within the repository \(must be structured data file\)" @Param ref query string false "Reference \(branch, tag, or commit\) to get content from" default\("main"\) @Param limit\-response query string false "Limit response size for large files" default\("false"\) @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=object\} "Structured content retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- object is not structured data" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Object not found" @Failure 413 \{object\} irminmodels.IrminAPIResponse "Content too large \- file exceeds maximum size limit" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects/content/structured \[get\]
 
 <a name="APIControllers.RepositoryRevertUncommittedChanges"></a>
 ### func \(\*APIControllers\) RepositoryRevertUncommittedChanges
@@ -9990,8 +9990,8 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) DeleteWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow\) error](<#APIServices.DeleteWorkflow>)
   - [func \(api \*APIServices\) DeleteWorkspace\(ctx context.Context, user \*db.User, workspace \*db.Workspace\) error](<#APIServices.DeleteWorkspace>)
   - [func \(api \*APIServices\) DeleteWorkspaceTag\(c context.Context, user \*db.User, workspace \*db.Workspace, tagWithAssets \*db.TagWithAssets\) error](<#APIServices.DeleteWorkspaceTag>)
-  - [func \(api \*APIServices\) ExecuteSQL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.ExecuteSQLRequest\) \(\*irminmodels.QueryResult, error\)](<#APIServices.ExecuteSQL>)
-  - [func \(api \*APIServices\) ExecuteScript\(c context.Context, user \*db.User, workspace \*db.Workspace, script \*db.StoredScript, req irmincore.ExecuteScriptRequest\) \(\*irminmodels.ScriptResult, error\)](<#APIServices.ExecuteScript>)
+  - [func \(api \*APIServices\) ExecuteSQL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.ExecuteSQLRequest, limitResponse bool\) \(\*irminmodels.QueryResult, error\)](<#APIServices.ExecuteSQL>)
+  - [func \(api \*APIServices\) ExecuteScript\(c context.Context, user \*db.User, workspace \*db.Workspace, script \*db.StoredScript, req irmincore.ExecuteScriptRequest, limitResponse bool\) \(\*irminmodels.ScriptResult, error\)](<#APIServices.ExecuteScript>)
   - [func \(api \*APIServices\) GenerateSchemaFromUploadedFile\(ctx context.Context, locale string, filename string, fileReader io.Reader\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GenerateSchemaFromUploadedFile>)
   - [func \(api \*APIServices\) GetConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connectionSqid string\) \(\*db.Connection, error\)](<#APIServices.GetConnection>)
   - [func \(api \*APIServices\) GetConnectionSchema\(ctx context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, operationMethod string, path string\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetConnectionSchema>)
@@ -10009,10 +10009,10 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) GetRepositoryBySlug\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repositorySlug string\) \(\*db.Repository, error\)](<#APIServices.GetRepositoryBySlug>)
   - [func \(api \*APIServices\) GetRepositoryCommit\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, hash string\) \(\*irminmodels.Commit, error\)](<#APIServices.GetRepositoryCommit>)
   - [func \(api \*APIServices\) GetRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, objectPath string, objectRef string\) \(\*db.RepositoryObject, irminutils.ObjectDetails, string, error\)](<#APIServices.GetRepositoryObject>)
-  - [func \(api \*APIServices\) GetRepositoryObjectContent\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(\[\]byte, error\)](<#APIServices.GetRepositoryObjectContent>)
+  - [func \(api \*APIServices\) GetRepositoryObjectContent\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, limitResponse bool\) \(\[\]byte, error\)](<#APIServices.GetRepositoryObjectContent>)
   - [func \(api \*APIServices\) GetRepositoryObjectHistory\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(\[\]irminmodels.Commit, error\)](<#APIServices.GetRepositoryObjectHistory>)
   - [func \(api \*APIServices\) GetRepositoryObjectSchema\(ctx context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, ref string\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetRepositoryObjectSchema>)
-  - [func \(api \*APIServices\) GetRepositoryObjectStructuredContent\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(map\[string\]\[\]map\[string\]any, error\)](<#APIServices.GetRepositoryObjectStructuredContent>)
+  - [func \(api \*APIServices\) GetRepositoryObjectStructuredContent\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, limitResponse bool\) \(map\[string\]\[\]map\[string\]any, error\)](<#APIServices.GetRepositoryObjectStructuredContent>)
   - [func \(api \*APIServices\) GetRepositoryTag\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, tagName string\) \(\*irminmodels.GitTag, error\)](<#APIServices.GetRepositoryTag>)
   - [func \(api \*APIServices\) GetRepositoryUncommittedChanges\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, branch \*irminmodels.Branch\) \(\*irminmodels.Diff, error\)](<#APIServices.GetRepositoryUncommittedChanges>)
   - [func \(api \*APIServices\) GetScript\(c context.Context, user \*db.User, workspace \*db.Workspace, scriptSqid string\) \(\*db.StoredScript, error\)](<#APIServices.GetScript>)
@@ -10166,6 +10166,15 @@ var (
     ErrWorkflowAlreadyRunning                 = errors.New("workflow already running")
     ErrBranchAlreadyExists                    = errors.New("branch already exists")
     ErrNoContentExtracted                     = errors.New("no content could be extracted from AI response")
+)
+```
+
+<a name="ErrContentTooLarge"></a>
+
+```go
+var (
+    // ErrContentTooLarge is returned when object content exceeds size limits
+    ErrContentTooLarge = errors.New("content too large to display")
 )
 ```
 
@@ -10526,7 +10535,7 @@ func (api *APIServices) DeleteWorkspaceTag(c context.Context, user *db.User, wor
 ### func \(\*APIServices\) ExecuteSQL
 
 ```go
-func (api *APIServices) ExecuteSQL(c context.Context, locale string, user *db.User, workspace *db.Workspace, req irmincore.ExecuteSQLRequest) (*irminmodels.QueryResult, error)
+func (api *APIServices) ExecuteSQL(c context.Context, locale string, user *db.User, workspace *db.Workspace, req irmincore.ExecuteSQLRequest, limitResponse bool) (*irminmodels.QueryResult, error)
 ```
 
 
@@ -10535,7 +10544,7 @@ func (api *APIServices) ExecuteSQL(c context.Context, locale string, user *db.Us
 ### func \(\*APIServices\) ExecuteScript
 
 ```go
-func (api *APIServices) ExecuteScript(c context.Context, user *db.User, workspace *db.Workspace, script *db.StoredScript, req irmincore.ExecuteScriptRequest) (*irminmodels.ScriptResult, error)
+func (api *APIServices) ExecuteScript(c context.Context, user *db.User, workspace *db.Workspace, script *db.StoredScript, req irmincore.ExecuteScriptRequest, limitResponse bool) (*irminmodels.ScriptResult, error)
 ```
 
 
@@ -10697,7 +10706,7 @@ func (api *APIServices) GetRepositoryObject(c context.Context, locale string, us
 ### func \(\*APIServices\) GetRepositoryObjectContent
 
 ```go
-func (api *APIServices) GetRepositoryObjectContent(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, object *db.RepositoryObject) ([]byte, error)
+func (api *APIServices) GetRepositoryObjectContent(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, object *db.RepositoryObject, limitResponse bool) ([]byte, error)
 ```
 
 
@@ -10724,7 +10733,7 @@ GetRepositoryObjectSchema gets the schema for a repository object.
 ### func \(\*APIServices\) GetRepositoryObjectStructuredContent
 
 ```go
-func (api *APIServices) GetRepositoryObjectStructuredContent(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, object *db.RepositoryObject) (map[string][]map[string]any, error)
+func (api *APIServices) GetRepositoryObjectStructuredContent(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, object *db.RepositoryObject, limitResponse bool) (map[string][]map[string]any, error)
 ```
 
 
@@ -11500,6 +11509,7 @@ import "irmin-api/utils"
 - [Variables](<#variables>)
 - [func Abs\(x float64\) float64](<#Abs>)
 - [func Average\(numbers \[\]float64\) float64](<#Average>)
+- [func CheckByteSizeLimit\(content \[\]byte, maxSizeBytes int64\) \[\]byte](<#CheckByteSizeLimit>)
 - [func ConstructEditorStorageNamespace\(workspaceSlug string\) string](<#ConstructEditorStorageNamespace>)
 - [func ConstructLakeFSRepositoryName\(workspace, repository string\) string](<#ConstructLakeFSRepositoryName>)
 - [func ConstructLakeFSRepositoryPrefix\(workspace string\) string](<#ConstructLakeFSRepositoryPrefix>)
@@ -11544,6 +11554,8 @@ import "irmin-api/utils"
   - [func AsyncWithContext\[T any\]\(ctx context.Context, f func\(\) \(T, error\)\) FutureResult\[T\]](<#AsyncWithContext>)
 - [type GarbageCollectionSettings](<#GarbageCollectionSettings>)
   - [func ParseGarbageCollectionSettings\(fields map\[string\]string\) \(\*GarbageCollectionSettings, error\)](<#ParseGarbageCollectionSettings>)
+- [type LimitJSONResponseSizeResult](<#LimitJSONResponseSizeResult>)
+  - [func LimitJSONResponseSize\(data any, maxSizeBytes int64\) LimitJSONResponseSizeResult](<#LimitJSONResponseSize>)
 - [type ParsedIrminQuery](<#ParsedIrminQuery>)
   - [func ParseIrminQuery\(query string, replaceFn ReplaceFn\) \(ParsedIrminQuery, error\)](<#ParseIrminQuery>)
 - [type ParsedQueryPlaceholder](<#ParsedQueryPlaceholder>)
@@ -11551,6 +11563,24 @@ import "irmin-api/utils"
 
 
 ## Constants
+
+<a name="DefaultMaxJSONResponseSizeBytes"></a>
+
+```go
+const (
+    // DefaultMaxJSONResponseSizeBytes is the default maximum JSON response size (5MB)
+    DefaultMaxJSONResponseSizeBytes = 5 * 1024 * 1024
+
+    // DefaultMaxBinaryResponseSizeBytes is the default maximum binary response size (20MB)
+    DefaultMaxBinaryResponseSizeBytes = 20 * 1024 * 1024
+
+    // DefaultMaxResponseSizeBytes is deprecated, use DefaultMaxJSONResponseSizeBytes or DefaultMaxBinaryResponseSizeBytes
+    DefaultMaxResponseSizeBytes = DefaultMaxJSONResponseSizeBytes
+
+    // BytesPerMB represents bytes in a megabyte
+    BytesPerMB = bytesPerKB * 1024
+)
+```
 
 <a name="KiB"></a>
 
@@ -11622,6 +11652,24 @@ Params:
 Returns:
 
 - float64: the average of the numbers
+
+<a name="CheckByteSizeLimit"></a>
+## func CheckByteSizeLimit
+
+```go
+func CheckByteSizeLimit(content []byte, maxSizeBytes int64) []byte
+```
+
+CheckByteSizeLimit checks if byte content exceeds the size limit and returns an error message if it does. Returns nil if within limit.
+
+Parameters:
+
+- content: The byte content to check
+- maxSizeBytes: Maximum size in bytes
+
+Returns:
+
+- \[\]byte: Error message as bytes if limit exceeded, nil if within limit
 
 <a name="ConstructEditorStorageNamespace"></a>
 ## func ConstructEditorStorageNamespace
@@ -12118,6 +12166,43 @@ func ParseGarbageCollectionSettings(fields map[string]string) (*GarbageCollectio
 ```
 
 ParseGarbageCollectionSettings parses garbage collection settings from form fields.
+
+<a name="LimitJSONResponseSizeResult"></a>
+## type LimitJSONResponseSizeResult
+
+LimitJSONResponseSizeResult contains the result of limiting JSON response size
+
+```go
+type LimitJSONResponseSizeResult struct {
+    Data       any    // The trimmed data (or original if not trimmed)
+    LogMessage string // Log message to add to response logs
+    WasTrimmed bool   // Whether the data was actually trimmed
+}
+```
+
+<a name="LimitJSONResponseSize"></a>
+### func LimitJSONResponseSize
+
+```go
+func LimitJSONResponseSize(data any, maxSizeBytes int64) LimitJSONResponseSizeResult
+```
+
+LimitJSONResponseSize checks if JSON\-serializable data exceeds the size limit and attempts to trim it. It works with slice/array types. If the data is not a slice or cannot be trimmed, it returns a warning message.
+
+Note: This function is designed specifically for JSON responses \(queries, scripts\). For binary content \(images, files\), use CheckByteSizeLimit instead.
+
+Size is measured using JSON marshaling, which approximates the API response size. This is intentional \- we're measuring the serialized payload size that will be sent over the wire.
+
+To prevent pathological cases where marshaling huge datasets would cause OOM, this function applies a hard row limit \(10,000\) before checking size.
+
+Parameters:
+
+- data: The JSON\-serializable data to check and potentially trim \(must be a slice/array\)
+- maxSizeBytes: Maximum size in bytes
+
+Returns:
+
+- LimitJSONResponseSizeResult with trimmed data, log message, and trimming status
 
 <a name="ParsedIrminQuery"></a>
 ## type ParsedIrminQuery

@@ -8,6 +8,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
+	"irmin-api/services"
 	"irmin-api/utils"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
@@ -583,6 +584,9 @@ func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error {
 		})
 	}
 
+	// Check for limit-response query parameter
+	limitResponse := c.Query("limit-response") == queryParamValueTrue
+
 	// Get the content of the object in the repository at ref
 	content, getObjectContentErr := api.Services.GetRepositoryObjectContent(
 		c,
@@ -591,8 +595,19 @@ func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error {
 		params.workspace,
 		params.repository,
 		object,
+		limitResponse,
 	)
 	if getObjectContentErr != nil {
+		// Check if error is due to content being too large
+		if errors.Is(getObjectContentErr, services.ErrContentTooLarge) {
+			return utils.WriteResponse(c, fiber.StatusRequestEntityTooLarge, irminmodels.IrminAPIResponse{
+				Errors: []string{fmt.Sprintf(
+					"File too large to display (%.2f MB). Maximum size: %.2f MB. Please download the file instead.",
+					float64(object.SizeBytes)/utils.BytesPerMB,
+					float64(utils.DefaultMaxBinaryResponseSizeBytes)/utils.BytesPerMB,
+				)},
+			})
+		}
 		api.Logger.Error("Error retrieving object content from Data Engine", "error", getObjectContentErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(params.dict, "error_occurred")},
@@ -620,13 +635,15 @@ func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error {
 // @Param repository_slug path string true "Repository slug"
 // @Param path query string true "Object path within the repository (must be structured data file)"
 // @Param ref query string false "Reference (branch, tag, or commit) to get content from" default("main")
+// @Param limit-response query string false "Limit response size for large files" default("false")
 // @Success 200 {object} irminmodels.IrminAPIResponse{data=object} "Structured content retrieved successfully"
 // @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - object is not structured data"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
 // @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Object not found"
+// @Failure 413 {object} irminmodels.IrminAPIResponse "Content too large - file exceeds maximum size limit"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
-// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/structured [get]
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/content/structured [get]
 func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error {
 	params, validateLocalParamsErr := api.validateObjectParams(c)
 	if validateLocalParamsErr != nil {
@@ -642,6 +659,9 @@ func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error
 		})
 	}
 
+	// Check for limit-response query parameter
+	limitResponse := c.Query("limit-response") == queryParamValueTrue
+
 	// Get the structured content of the object in the repository at ref
 	parsedResults, getObjectStructuredContentErr := api.Services.GetRepositoryObjectStructuredContent(
 		c,
@@ -650,8 +670,19 @@ func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error
 		params.workspace,
 		params.repository,
 		object,
+		limitResponse,
 	)
 	if getObjectStructuredContentErr != nil {
+		// Check if error is due to content being too large
+		if errors.Is(getObjectStructuredContentErr, services.ErrContentTooLarge) {
+			return utils.WriteResponse(c, fiber.StatusRequestEntityTooLarge, irminmodels.IrminAPIResponse{
+				Errors: []string{fmt.Sprintf(
+					"File too large to display (%.2f MB). Maximum size: %.2f MB. Please download the file instead.",
+					float64(object.SizeBytes)/utils.BytesPerMB,
+					float64(utils.DefaultMaxBinaryResponseSizeBytes)/utils.BytesPerMB,
+				)},
+			})
+		}
 		api.Logger.Error(
 			"Error retrieving object structured content from Data Engine",
 			"error",

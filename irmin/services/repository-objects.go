@@ -9,12 +9,18 @@ import (
 	"irmin-api/engine"
 	"irmin-api/lib"
 	"irmin-api/permissions"
+	"irmin-api/utils"
 	"time"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"gorm.io/gorm"
+)
+
+var (
+	// ErrContentTooLarge is returned when object content exceeds size limits
+	ErrContentTooLarge = errors.New("content too large to display")
 )
 
 func (api *APIServices) GetRepositoryObject(
@@ -756,6 +762,7 @@ func (api *APIServices) GetRepositoryObjectContent(
 	workspace *db.Workspace,
 	repository *db.Repository,
 	object *db.RepositoryObject,
+	limitResponse bool,
 ) ([]byte, error) {
 	// Make sure this is allowed
 	isAllowed, err := api.PermissionService.IsAllowed(
@@ -785,6 +792,16 @@ func (api *APIServices) GetRepositoryObjectContent(
 		return nil, ErrAccessDenied
 	}
 
+	// Check size limit before fetching content to avoid loading large objects into memory
+	if limitResponse && object.SizeBytes > utils.DefaultMaxBinaryResponseSizeBytes {
+		api.Logger.WarnContext(c, "Object content exceeds size limit, refusing to fetch",
+			"size_mb", float64(object.SizeBytes)/utils.BytesPerMB,
+			"limit_mb", float64(utils.DefaultMaxBinaryResponseSizeBytes)/utils.BytesPerMB,
+			"path", object.Path,
+		)
+		return nil, ErrContentTooLarge
+	}
+
 	// Initialize Data Engine client
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
@@ -799,6 +816,19 @@ func (api *APIServices) GetRepositoryObjectContent(
 		return nil, err
 	}
 
+	// Safety check: Verify actual content size matches expectations when limiting responses
+	// This catches cases where object metadata might be stale or incorrect
+	if limitResponse {
+		if errorMsg := utils.CheckByteSizeLimit(content, utils.DefaultMaxBinaryResponseSizeBytes); errorMsg != nil {
+			api.Logger.WarnContext(c, "Content size mismatch detected",
+				"metadata_size", object.SizeBytes,
+				"actual_size", len(content),
+				"path", object.Path,
+			)
+			return nil, ErrContentTooLarge
+		}
+	}
+
 	return content, nil
 }
 
@@ -809,6 +839,7 @@ func (api *APIServices) GetRepositoryObjectStructuredContent(
 	workspace *db.Workspace,
 	repository *db.Repository,
 	object *db.RepositoryObject,
+	limitResponse bool,
 ) (map[string][]map[string]any, error) {
 	// Make sure this is allowed
 	isAllowed, err := api.PermissionService.IsAllowed(
@@ -844,7 +875,7 @@ func (api *APIServices) GetRepositoryObjectStructuredContent(
 	}
 
 	// Get the object content
-	content, err := api.GetRepositoryObjectContent(c, locale, user, workspace, repository, object)
+	content, err := api.GetRepositoryObjectContent(c, locale, user, workspace, repository, object, limitResponse)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error getting object content", "error", err)
 		return nil, err

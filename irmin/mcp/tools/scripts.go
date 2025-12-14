@@ -308,6 +308,7 @@ func (mcpTools *MCPTools) registerExecuteScriptTool() {
 				irmincore.ExecuteScriptRequest{
 					Input: args.Inputs,
 				},
+				true, // Always limit response for MCP
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("script execution failed", "error", err)

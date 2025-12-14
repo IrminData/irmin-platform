@@ -373,8 +373,11 @@ func (api *APIControllers) ExecuteScript(c fiber.Ctx) error {
 		return validationErr
 	}
 
+	// Check for limit-response query parameter
+	limitResponse := c.Query("limit-response") == queryParamValueTrue
+
 	// Execute the script
-	result, err := api.Services.ExecuteScript(c, user, workspace, script, req)
+	result, err := api.Services.ExecuteScript(c, user, workspace, script, req, limitResponse)
 	if err != nil {
 		api.Logger.Error("Error executing stored script", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

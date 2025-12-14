@@ -69,6 +69,10 @@ var (
 )
     Sentinel errors used for consistent HTTP mapping in controllers
 
+var (
+	// ErrContentTooLarge is returned when object content exceeds size limits
+	ErrContentTooLarge = errors.New("content too large to display")
+)
 
 TYPES
 
@@ -358,6 +362,7 @@ func (api *APIServices) ExecuteSQL(
 	user *db.User,
 	workspace *db.Workspace,
 	req irmincore.ExecuteSQLRequest,
+	limitResponse bool,
 ) (*irminmodels.QueryResult, error)
 
 func (api *APIServices) ExecuteScript(
@@ -366,6 +371,7 @@ func (api *APIServices) ExecuteScript(
 	workspace *db.Workspace,
 	script *db.StoredScript,
 	req irmincore.ExecuteScriptRequest,
+	limitResponse bool,
 ) (*irminmodels.ScriptResult, error)
 
 func (api *APIServices) GenerateSchemaFromUploadedFile(
@@ -506,6 +512,7 @@ func (api *APIServices) GetRepositoryObjectContent(
 	workspace *db.Workspace,
 	repository *db.Repository,
 	object *db.RepositoryObject,
+	limitResponse bool,
 ) ([]byte, error)
 
 func (api *APIServices) GetRepositoryObjectHistory(
@@ -535,6 +542,7 @@ func (api *APIServices) GetRepositoryObjectStructuredContent(
 	workspace *db.Workspace,
 	repository *db.Repository,
 	object *db.RepositoryObject,
+	limitResponse bool,
 ) (map[string][]map[string]any, error)
 
 func (api *APIServices) GetRepositoryTag(

@@ -1030,16 +1030,19 @@ func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error
     "Workspace slug" @Param repository_slug path string true "Repository slug"
     @Param path query string true "Object path within the repository (must be
     structured data file)" @Param ref query string false "Reference (branch,
-    tag, or commit) to get content from" default("main") @Success 200
-    {object} irminmodels.IrminAPIResponse{data=object} "Structured content
-    retrieved successfully" @Failure 400 {object} irminmodels.IrminAPIResponse
-    "Bad request - object is not structured data" @Failure 401 {object}
-    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
-    authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
-    "Forbidden - insufficient permissions" @Failure 404 {object}
-    irminmodels.IrminAPIResponse "Object not found" @Failure 500 {object}
-    irminmodels.IrminAPIResponse "Internal server error" @Router
-    /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/structured
+    tag, or commit) to get content from" default("main") @Param limit-response
+    query string false "Limit response size for large files" default("false")
+    @Success 200 {object} irminmodels.IrminAPIResponse{data=object}
+    "Structured content retrieved successfully" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - object is not
+    structured data" @Failure 401 {object} irminmodels.IrminAPIResponse
+    "Unauthorized - invalid or missing authentication" @Failure 403
+    {object} irminmodels.IrminAPIResponse "Forbidden - insufficient
+    permissions" @Failure 404 {object} irminmodels.IrminAPIResponse
+    "Object not found" @Failure 413 {object} irminmodels.IrminAPIResponse
+    "Content too large - file exceeds maximum size limit" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/content/structured
     [get]
 
 func (api *APIControllers) RepositoryRevertUncommittedChanges(c fiber.Ctx) error

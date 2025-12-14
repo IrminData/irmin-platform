@@ -230,7 +230,7 @@ func (mcpTools *MCPTools) registerExecuteSQLTool() {
 				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
-			// Execute the SQL
+			// Execute the SQL (always limit response for MCP)
 			sqlResult, err := mcpTools.apiServices.ExecuteSQL(
 				ctx,
 				"en",
@@ -239,6 +239,7 @@ func (mcpTools *MCPTools) registerExecuteSQLTool() {
 				irmincore.ExecuteSQLRequest{
 					SQL: args.SQL,
 				},
+				true, // Always limit response for MCP
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("SQL execution failed", "error", err)
@@ -287,7 +288,7 @@ func (mcpTools *MCPTools) registerExecuteQueryTool() {
 				return helpers.MCPError("Failed to get query"), struct{}{}, nil
 			}
 
-			// Execute the SQL from the stored query
+			// Execute the SQL from the stored query (always limit response for MCP)
 			queryResult, err := mcpTools.apiServices.ExecuteSQL(
 				ctx,
 				"en",
@@ -296,6 +297,7 @@ func (mcpTools *MCPTools) registerExecuteQueryTool() {
 				irmincore.ExecuteSQLRequest{
 					SQL: query.SQL,
 				},
+				true, // Always limit response for MCP
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("stored query execution failed", "error", err)

@@ -9,6 +9,7 @@ import (
 	"irmin-api/lib"
 	"irmin-api/permissions"
 	"irmin-api/utils"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -399,6 +400,7 @@ func (api *APIServices) ExecuteScript(
 	workspace *db.Workspace,
 	script *db.StoredScript,
 	req irmincore.ExecuteScriptRequest,
+	limitResponse bool,
 ) (*irminmodels.ScriptResult, error) {
 	// Make sure this is allowed
 	isAllowed, err := api.PermissionService.IsAllowed(
@@ -505,6 +507,11 @@ func (api *APIServices) ExecuteScript(
 		api.Logger.ErrorContext(c, "Error parsing structured files", "error", parseStructuredFileErr)
 	}
 
+	// Limit response if requested
+	if limitResponse {
+		parsedResults = api.limitScriptResultSize(c, parsedResults)
+	}
+
 	// Log completion event
 	if hasErrors {
 		lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
@@ -531,4 +538,81 @@ func (api *APIServices) ExecuteScript(
 		HasErrors:         hasErrors,
 		Logs:              strings.Split(computeResult.Logs, "\n"),
 	}, nil
+}
+
+const (
+	// maxScriptResultFiles is the maximum number of result files to include when limiting responses
+	maxScriptResultFiles = 10
+)
+
+// limitScriptResultSize limits the size of script result data to prevent large responses.
+// It applies both per-file size limits and a maximum file count to prevent the combined
+// payload from exceeding the intended response size cap.
+func (api *APIServices) limitScriptResultSize(
+	c context.Context,
+	results map[string][]map[string]any,
+) map[string][]map[string]any {
+	if results == nil {
+		return results
+	}
+
+	// Limit the number of files to prevent combined payload from exceeding size cap
+	fileCount := len(results)
+	if fileCount > maxScriptResultFiles {
+		api.Logger.WarnContext(c, "Script result file count exceeds limit",
+			"total_files", fileCount,
+			"max_files", maxScriptResultFiles,
+			"files_dropped", fileCount-maxScriptResultFiles,
+		)
+	}
+
+	limitedResults := make(map[string][]map[string]any, min(fileCount, maxScriptResultFiles))
+	filesProcessed := 0
+
+	// Sort file names to ensure consistent ordering across runs
+	fileNames := make([]string, 0, fileCount)
+	for fileName := range results {
+		fileNames = append(fileNames, fileName)
+	}
+	sort.Strings(fileNames)
+
+	for _, fileName := range fileNames {
+		// Stop processing after reaching the maximum file count
+		if filesProcessed >= maxScriptResultFiles {
+			break
+		}
+		filesProcessed++
+
+		fileData := results[fileName]
+		if fileData == nil {
+			limitedResults[fileName] = fileData
+			continue
+		}
+
+		limitResult := utils.LimitJSONResponseSize(fileData, utils.DefaultMaxJSONResponseSizeBytes)
+
+		// Always use the limiter's returned data when trimming occurred
+		if limitResult.WasTrimmed {
+			// Type assert to expected type, or use empty slice if type assertion fails
+			if trimmedData, ok := limitResult.Data.([]map[string]any); ok {
+				limitedResults[fileName] = trimmedData
+			} else {
+				// Limiter returned a non-slice (oversized non-array data) - return empty array
+				// The warning message is already logged below
+				limitedResults[fileName] = []map[string]any{}
+			}
+		} else {
+			// No trimming needed, use original data
+			limitedResults[fileName] = fileData
+		}
+
+		if limitResult.LogMessage != "" {
+			api.Logger.WarnContext(c, "Script result file trimmed",
+				"file", fileName,
+				"message", limitResult.LogMessage,
+			)
+		}
+	}
+
+	return limitedResults
 }

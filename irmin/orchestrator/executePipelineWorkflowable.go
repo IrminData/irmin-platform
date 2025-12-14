@@ -629,7 +629,7 @@ func convertQueryResultToExecutionResult(queryResult *irminmodels.QueryResult) s
 }
 
 // convertQueryDataToCSV converts query data rows and columns to CSV format.
-func convertQueryDataToCSV(data []map[string]interface{}, columns []string) ([]byte, error) {
+func convertQueryDataToCSV(data []map[string]any, columns []string) ([]byte, error) {
 	var csvBuffer bytes.Buffer
 	writer := csv.NewWriter(&csvBuffer)
 

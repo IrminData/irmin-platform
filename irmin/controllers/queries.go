@@ -371,8 +371,11 @@ func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error {
 		return validationErr
 	}
 
+	// Check for limit-response query parameter
+	limitResponse := c.Query("limit-response") == queryParamValueTrue
+
 	// Execute the SQL
-	result, err := api.Services.ExecuteSQL(c, locale, user, workspace, req)
+	result, err := api.Services.ExecuteSQL(c, locale, user, workspace, req, limitResponse)
 	if err != nil {
 		api.Logger.Error("Error executing SQL query", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -412,10 +415,13 @@ func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
+	// Check for limit-response query parameter
+	limitResponse := c.Query("limit-response") == queryParamValueTrue
+
 	// Execute the SQL
 	result, err := api.Services.ExecuteSQL(c, locale, user, workspace, irmincore.ExecuteSQLRequest{
 		SQL: query.SQL,
-	})
+	}, limitResponse)
 	if err != nil {
 		api.Logger.Error("Error executing stored query", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
