@@ -35,21 +35,21 @@ export class ScriptingAgent extends BaseAgent {
 
       // Only include the necessary tools
       const requiredToolNames = [
-        'list_scripts',
-        'get_script_content',
-        'create_script',
-        'update_script',
-        'execute_script',
-        'list_repositories',
-        'get_repository',
-        'list_repository_objects',
-        'get_repository_object_schema',
-        'list_repository_branches',
-        'list_repository_tags',
-        'list_repository_commits',
-        'list_workflows',
-        'get_workflow',
-        'retrieve_docs_context',
+        'irmin_list_scripts',
+        'irmin_get_script_content',
+        'irmin_create_script',
+        'irmin_update_script',
+        'irmin_execute_script',
+        'irmin_list_repositories',
+        'irmin_get_repository',
+        'irmin_list_repository_objects',
+        'irmin_get_repository_object_schema',
+        'irmin_list_repository_branches',
+        'irmin_list_repository_tags',
+        'irmin_list_repository_commits',
+        'irmin_list_workflows',
+        'irmin_get_workflow',
+        'irmin_retrieve_docs_context',
       ];
       const filteredTools = mcpTools.filter((tool) =>
         requiredToolNames.includes(tool.name)
@@ -94,7 +94,7 @@ export class ScriptingAgent extends BaseAgent {
         llmToolSelectorMiddleware({
           model: cheaperLLM,
           maxTools: 10,
-          alwaysInclude: ['retrieve_docs_context'],
+          alwaysInclude: ['irmin_retrieve_docs_context'],
         }),
         modelFallbackMiddleware(fallbackLLM),
       ],

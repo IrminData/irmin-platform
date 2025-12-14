@@ -37,13 +37,13 @@ export class QueryAgent extends BaseAgent {
 
       // Only include the necessary tools
       const requiredToolNames = [
-        'list_repositories',
-        'list_repository_objects',
-        'list_repository_branches',
-        'list_repository_tags',
-        'get_repository_object_schema',
-        'retrieve_docs_context',
-        'execute_sql',
+        'irmin_list_repositories',
+        'irmin_list_repository_objects',
+        'irmin_list_repository_branches',
+        'irmin_list_repository_tags',
+        'irmin_get_repository_object_schema',
+        'irmin_retrieve_docs_context',
+        'irmin_execute_sql',
       ];
       const filteredTools = mcpTools.filter((tool) =>
         requiredToolNames.includes(tool.name)

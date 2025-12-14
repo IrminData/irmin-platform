@@ -22,7 +22,7 @@ Context and Schema Information
 - Only use repository listing tools when you need to get updated information or when the user specifically requests it.
 
 Reading docs and explainers (MCP docs tools)
-- retrieve_docs_context tool allows to query documentation entries from a vector store
+- irmin_retrieve_docs_context tool allows to query documentation entries from a vector store
 
 SQL Querying in Irmin
 - Irmin uses DuckDB for SQL querying. Queries can only be run on data stored in repositories, not on connections directly.

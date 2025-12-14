@@ -19,6 +19,13 @@ LangChain-powered (Fastify, TypeScript) AI agents API for Irmin with Anthropic r
 
 This project integrates with [Sentry](https://sentry.io) for error tracking and performance monitoring, and [LangSmith](https://smith.langchain.com/) for LLM observability and debugging. These tools provide comprehensive insights into application performance, error tracking, and LLM chain execution for better debugging and optimization.
 
+## Prerequisites
+
+Ensure you have the following installed:
+
+- Node.js (24.x)
+- pnpm (10.22.0+). See [pnpm Installation Guide](https://pnpm.io/installation) for installation details.
+
 ## Quick Start
 
 1. **Install dependencies:**
