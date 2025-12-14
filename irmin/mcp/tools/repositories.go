@@ -40,15 +40,15 @@ func (mcpTools *MCPTools) RegisterRepositoryTools() {
 	mcpTools.registerUpdateRepositoryTool()
 }
 
-// registerListRepositoriesTool registers the list_repositories tool for listing repositories in a workspace
+// registerListRepositoriesTool registers the irmin_list_repositories tool for listing repositories in a workspace
 //
 //nolint:dupl // This tool is similar to other tools which list things, but for a different resource
 func (mcpTools *MCPTools) registerListRepositoriesTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "list_repositories",
-			Description: "List repositories in a workspace. Data objects are stored in, and queried from repositories.",
+			Name:        "irmin_list_repositories",
+			Description: "List all repositories in a specified workspace. Repositories are Git-like data stores with versioning capabilities where data objects are stored and queried. Returns an array of repository objects with name, slug, default branch, storage location, and configuration details. Requires workspace_slug parameter. Use this to discover available repositories before performing data operations.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listRepositoriesArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -90,11 +90,14 @@ func (mcpTools *MCPTools) registerListRepositoriesTool() {
 	)
 }
 
-// registerGetRepositoryTool registers the get_repository tool for getting a repository by slug
+// registerGetRepositoryTool registers the irmin_get_repository tool for getting a repository by slug
 func (mcpTools *MCPTools) registerGetRepositoryTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
-		&sdkmcp.Tool{Name: "get_repository", Description: "Get a repository by slug"},
+		&sdkmcp.Tool{
+			Name:        "irmin_get_repository",
+			Description: "Retrieve detailed information about a specific repository by its slug identifier. Returns comprehensive repository metadata including name, description, default branch, storage backend configuration, and version control settings. Requires workspace_slug and repository_slug parameters. Use this to inspect repository configuration before performing operations.",
+		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
@@ -138,13 +141,13 @@ func (mcpTools *MCPTools) registerGetRepositoryTool() {
 	)
 }
 
-// registerCreateRepositoryTool registers the create_repository tool for creating a new repository
+// registerCreateRepositoryTool registers the irmin_create_repository tool for creating a new repository
 func (mcpTools *MCPTools) registerCreateRepositoryTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "create_repository",
-			Description: "Create a new repository in a workspace. It's recommended to read the documentation for repositories first, use `retrieve_docs_context` tool for more information.",
+			Name:        "irmin_create_repository",
+			Description: "Create a new Git-like versioned data repository in a workspace. Repositories store structured and unstructured data with full version control capabilities. Requires workspace_slug and repository configuration (name, storage backend, default branch). Returns the created repository object. Use irmin_retrieve_docs_context tool with 'repositories' query before creating to understand configuration options and best practices.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createRepositoryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -198,12 +201,15 @@ func (mcpTools *MCPTools) registerCreateRepositoryTool() {
 	)
 }
 
-// registerUpdateRepositoryTool registers the update_repository tool for updating an existing repository
+// registerUpdateRepositoryTool registers the irmin_update_repository tool for updating an existing repository
 func (mcpTools *MCPTools) registerUpdateRepositoryTool() {
 	// Add the update_repository tool for updating an existing repository
 	sdkmcp.AddTool(
 		mcpTools.server,
-		&sdkmcp.Tool{Name: "update_repository", Description: "Update an existing repository"},
+		&sdkmcp.Tool{
+			Name:        "irmin_update_repository",
+			Description: "Update metadata and configuration of an existing repository. Allows modification of name, description, and other repository settings while preserving all stored data and version history. Requires workspace_slug, repository_slug, and update parameters. Returns the updated repository object. Cannot change the storage backend or default branch after creation.",
+		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateRepositoryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)

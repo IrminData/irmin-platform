@@ -53,15 +53,15 @@ func (mcpTools *MCPTools) RegisterConnectionTools() {
 	mcpTools.registerConnectionSchemaTool()
 }
 
-// registerListConnectionsTool registers the list_connections tool for listing connections in a workspace
+// registerListConnectionsTool registers the irmin_list_connections tool for listing connections in a workspace
 //
 //nolint:dupl // This is not a duplicate, it's a different tool, with similar flow compared to other tools
 func (mcpTools *MCPTools) registerListConnectionsTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "list_connections",
-			Description: "List connections in a workspace. Connections store the configurations for the Connectors used to connect and interact with external services.",
+			Name:        "irmin_list_connections",
+			Description: "List all configured connections in a workspace. Connections are configured instances of connectors with stored credentials and settings for accessing external systems. Returns an array of connection objects with ID, name, connector type, configuration status, and metadata. Requires workspace_slug. Use this to discover available data sources and destinations before setting up data workflows.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listConnectionsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -104,13 +104,16 @@ func (mcpTools *MCPTools) registerListConnectionsTool() {
 	)
 }
 
-// registerGetConnectionTool registers the get_connection tool for getting a connection by ID
+// registerGetConnectionTool registers the irmin_get_connection tool for getting a connection by ID
 //
 //nolint:dupl // Similar pattern to other get tools, but for a different resource type
 func (mcpTools *MCPTools) registerGetConnectionTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
-		&sdkmcp.Tool{Name: "get_connection", Description: "Get a connection by ID"},
+		&sdkmcp.Tool{
+			Name:        "irmin_get_connection",
+			Description: "Retrieve detailed information about a specific connection. Returns complete connection metadata including name, description, connector type, configuration status, and last tested timestamp. Does not expose sensitive credential values. Requires workspace_slug and connection_id (SQID). Use this to inspect connection details before using it in workflows or queries.",
+		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getConnectionArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
@@ -148,13 +151,13 @@ func (mcpTools *MCPTools) registerGetConnectionTool() {
 	)
 }
 
-// registerCreateConnectionTool registers the create_connection tool for creating a new connection in a workspace
+// registerCreateConnectionTool registers the irmin_create_connection tool for creating a new connection in a workspace
 func (mcpTools *MCPTools) registerCreateConnectionTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "create_connection",
-			Description: "Create a new connection in a workspace. In order to create a connection, you need to provide the connector_id and the values for the configuration fields for the connector. The configuration fields are returned by the show_required_connector_configuration_fields tool. Always validate the connection configuration with the connector before creating a new connection or updating the configuration of an existing one. Use the `validate_connector_configuration` tool.",
+			Name:        "irmin_create_connection",
+			Description: "Create a new connection to an external data source or destination. Requires workspace_slug, name, connector_id (SQID), details (authentication credentials), and settings (connection-specific configuration). Optionally provide description and documentation. Returns the created connection object. Always validate configuration with irmin_validate_connector_configuration before creating to ensure credentials are correct and connectivity works.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createConnectionArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -206,13 +209,13 @@ func (mcpTools *MCPTools) registerCreateConnectionTool() {
 	)
 }
 
-// registerUpdateConnectionTool registers the update_connection tool for updating a connection in a workspace
+// registerUpdateConnectionTool registers the irmin_update_connection tool for updating a connection in a workspace
 func (mcpTools *MCPTools) registerUpdateConnectionTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "update_connection",
-			Description: "Update a connection in a workspace. This will update the connection and all associated data.",
+			Name:        "irmin_update_connection",
+			Description: "Update metadata of an existing connection including name, description, and documentation. Cannot modify credentials or settings through this tool - those must be reconfigured through the connector interface. Requires workspace_slug, connection_id (SQID), and update parameters. Returns the updated connection object. Use this to maintain clear documentation and naming for connections.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateConnectionArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -268,11 +271,14 @@ func (mcpTools *MCPTools) registerUpdateConnectionTool() {
 	)
 }
 
-// registerConnectionSchemaTool registers the connection_schema tool for getting the schema of a connection
+// registerConnectionSchemaTool registers the irmin_get_connection_schema tool for getting the schema of a connection
 func (mcpTools *MCPTools) registerConnectionSchemaTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
-		&sdkmcp.Tool{Name: "get_connection_schema", Description: "Get the schema of a connection"},
+		&sdkmcp.Tool{
+			Name:        "irmin_get_connection_schema",
+			Description: "Retrieve the data schema available through a connection for a specific operation. Shows available tables, collections, or endpoints with their structure for pull (import) or push (export) operations. Requires workspace_slug, connection_id (SQID), operation_method ('pull' or 'push'), and optionally path to scope the schema query. Returns schema information for the external data source. Use this before configuring workflows to understand available data structures.",
+		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args connectionSchemaArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)

@@ -57,13 +57,13 @@ func (mcpTools *MCPTools) RegisterWorkflowsTools() {
 	mcpTools.registerUpdateWorkflowScheduleTool()
 }
 
-// registerListWorkflowsTool registers the list_workflows tool for listing workflows in a workspace
+// registerListWorkflowsTool registers the irmin_list_workflows tool for listing workflows in a workspace
 func (mcpTools *MCPTools) registerListWorkflowsTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "list_workflows",
-			Description: "List workflows in a workspace. Workflows are used to orchestrate the execution of data ingestion, export, and other operations.",
+			Name:        "irmin_list_workflows",
+			Description: "List all workflows in a workspace. Workflows orchestrate automated data operations like data ingestion from connections, script execution, and data transformations on schedules or triggers. Returns an array of workflow objects with ID, name, workflowable configuration, schedule, execution status, and metadata. Requires workspace_slug. Use this to discover existing automation before creating new workflows or triggering executions.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listWorkflowsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -111,15 +111,15 @@ func (mcpTools *MCPTools) registerListWorkflowsTool() {
 	)
 }
 
-// registerGetWorkflowTool registers the get_workflow tool for getting a workflow by ID
+// registerGetWorkflowTool registers the irmin_get_workflow tool for getting a workflow by ID
 //
 //nolint:dupl // This is not a duplicate, but the outline is similar to other tools
 func (mcpTools *MCPTools) registerGetWorkflowTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "get_workflow",
-			Description: "Get a workflow by ID.",
+			Name:        "irmin_get_workflow",
+			Description: "Retrieve detailed information about a specific workflow including its configuration, schedule, last execution status, and complete workflowable definition. Returns comprehensive workflow object with execution history. Requires workspace_slug and workflow_id (SQID). Use this to inspect workflow configuration before modifying it or to debug execution issues.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getWorkflowArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -162,15 +162,15 @@ func (mcpTools *MCPTools) registerGetWorkflowTool() {
 	)
 }
 
-// registerCreateWorkflowTool registers the create_workflow tool for creating a new workflow
+// registerCreateWorkflowTool registers the irmin_create_workflow tool for creating a new workflow
 //
 //nolint:dupl // This is not a duplicate, but the outline is similar to other tools
 func (mcpTools *MCPTools) registerCreateWorkflowTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "create_workflow",
-			Description: "Create a new workflow, with workflowable and schedule configuration. It's recommended to read the documentation for workflows first, use `retrieve_docs_context` tool for more information.",
+			Name:        "irmin_create_workflow",
+			Description: "Create a new automated workflow with workflowable action and schedule configuration. Workflows can pull data from connections, execute scripts, or perform other data operations on a schedule. Requires workspace_slug and workflow parameters (name, workflowable config, schedule). Returns the created workflow object. Use irmin_retrieve_docs_context with 'irmin' collection to learn about workflow types and configuration options before creating.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createWorkflowArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -213,13 +213,13 @@ func (mcpTools *MCPTools) registerCreateWorkflowTool() {
 	)
 }
 
-// registerUpdateWorkflowTool registers the update_workflow tool for updating a workflow
+// registerUpdateWorkflowTool registers the irmin_update_workflow tool for updating a workflow
 func (mcpTools *MCPTools) registerUpdateWorkflowTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "update_workflow",
-			Description: "Update the basic workflow configuration, like name and description, but not the workflowable or schedule configuration.",
+			Name:        "irmin_update_workflow",
+			Description: "Update basic workflow metadata including name, description, and documentation. Does not modify the workflowable action or schedule configuration - use dedicated tools for those. Requires workspace_slug, workflow_id (SQID), and update parameters. Returns the updated workflow object. Use this to maintain clear documentation for workflows.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateWorkflowArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -279,13 +279,13 @@ func (mcpTools *MCPTools) registerUpdateWorkflowTool() {
 	)
 }
 
-// registerUpdateWorkflowableConfigTool registers the update_workflowable_config tool for updating the workflowable configuration of a workflow
+// registerUpdateWorkflowableConfigTool registers the irmin_update_workflowable_config tool for updating the workflowable configuration of a workflow
 func (mcpTools *MCPTools) registerUpdateWorkflowableConfigTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "update_workflowable_config",
-			Description: "Update the workflowable configuration of a workflow.",
+			Name:        "irmin_update_workflowable_config",
+			Description: "Update the workflowable action configuration of a workflow, changing what operation it performs. Workflowable defines the actual action (data pull, script execution, etc.) and its parameters. Requires workspace_slug, workflow_id (SQID), and new workflowable configuration. Returns the updated workflow object. Use this to modify workflow behavior while preserving schedule and metadata.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateWorkflowWorkflowableArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -341,13 +341,13 @@ func (mcpTools *MCPTools) registerUpdateWorkflowableConfigTool() {
 	)
 }
 
-// registerUpdateWorkflowScheduleTool registers the update_workflow_schedule tool for updating the schedule configuration of a workflow
+// registerUpdateWorkflowScheduleTool registers the irmin_update_workflow_schedule tool for updating the schedule configuration of a workflow
 func (mcpTools *MCPTools) registerUpdateWorkflowScheduleTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "update_workflow_schedule",
-			Description: "Update the schedule configuration of a workflow.",
+			Name:        "irmin_update_workflow_schedule",
+			Description: "Update the execution schedule of a workflow, controlling when and how often it runs. Supports cron expressions, fixed intervals, and manual-only triggers. Requires workspace_slug, workflow_id (SQID), and new schedule configuration. Returns the updated workflow object. Use this to adjust workflow timing without changing what it does.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateWorkflowScheduleArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user

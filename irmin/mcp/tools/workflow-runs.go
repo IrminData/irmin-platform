@@ -32,13 +32,13 @@ func (mcpTools *MCPTools) RegisterWorkflowRunsTools() {
 	mcpTools.registerCancelWorkflowRunTool()
 }
 
-// registerCreateWorkflowRunTool registers the create_workflow_run tool for creating a new workflow run
+// registerCreateWorkflowRunTool registers the irmin_create_workflow_run tool for creating a new workflow run
 func (mcpTools *MCPTools) registerCreateWorkflowRunTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "create_workflow_run",
-			Description: "Create a new workflow run for a given workflow, executing the workflow. The workflow will be executed in the background, with logs and status updates available in the workflow run.",
+			Name:        "irmin_create_workflow_run",
+			Description: "Manually trigger a workflow execution, creating a new workflow run. The workflow executes asynchronously in the background with progress tracked through status updates and logs. Returns the created workflow run object with execution ID and initial status. Requires workspace_slug and workflow_id (SQID). Use irmin_list_workflow_runs to monitor execution progress and view logs.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createWorkflowRunArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -83,13 +83,13 @@ func (mcpTools *MCPTools) registerCreateWorkflowRunTool() {
 	)
 }
 
-// registerCancelWorkflowRunTool registers the cancel_workflow_run tool for cancelling a workflow run
+// registerCancelWorkflowRunTool registers the irmin_cancel_workflow_run tool for cancelling a workflow run
 func (mcpTools *MCPTools) registerCancelWorkflowRunTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "cancel_workflow_run",
-			Description: "Cancel an existing workflow run. The workflow run will be set to cancelled, and the workflow will stop executing.",
+			Name:        "irmin_cancel_workflow_run",
+			Description: "Cancel a currently executing or queued workflow run. Stops the workflow execution and marks the run as cancelled. Cannot cancel completed or failed runs. Requires workspace_slug, workflow_id (SQID), and run_id (SQID). Returns the updated workflow run object with cancelled status. Use this to stop long-running workflows or abort queued executions.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args cancelWorkflowRunArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -140,13 +140,13 @@ func (mcpTools *MCPTools) registerCancelWorkflowRunTool() {
 	)
 }
 
-// registerListWorkflowRunsTool registers the list_workflow_runs tool for listing workflow runs in a workspace
+// registerListWorkflowRunsTool registers the irmin_list_workflow_runs tool for listing workflow runs in a workspace
 func (mcpTools *MCPTools) registerListWorkflowRunsTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "list_workflow_runs",
-			Description: "List the workflow runs for a given workflow. Workflow runs are executions of a workflow that have been run, with statuses, timestamps, logs, and other metadata.",
+			Name:        "irmin_list_workflow_runs",
+			Description: "List execution history for a specific workflow showing all workflow runs. Returns an array of workflow run objects with execution status (queued, running, completed, failed, cancelled), start/end timestamps, duration, logs, and error details. Supports pagination via per_page and page parameters. Requires workspace_slug and workflow_id (SQID). Use this to monitor workflow execution history, debug failures, or verify successful data operations.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listWorkflowRunsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user

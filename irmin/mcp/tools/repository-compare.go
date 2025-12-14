@@ -38,13 +38,13 @@ func (mcpTools *MCPTools) RegisterRepositoryCompareTools() {
 	mcpTools.registerMergeRepositoryRefsTool()
 }
 
-// registerCompareRepositoryRefsTool registers the compare_repository_refs tool for comparing two references in a repository
+// registerCompareRepositoryRefsTool registers the irmin_compare_repository_refs tool for comparing two references in a repository
 func (mcpTools *MCPTools) registerCompareRepositoryRefsTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "compare_repository_refs",
-			Description: "Compare two references in a repository. References can be branches, tags or commit hashes.",
+			Name:        "irmin_compare_repository_refs",
+			Description: "Compare two references (branches, tags, or commit hashes) to see differences in data. Shows which objects were added, modified, or deleted between the base_ref and compare_ref. Returns a diff object with detailed change information. Requires workspace_slug, repository_slug, base_ref (target), and compare_ref (source). Use this before merging branches to preview changes or to analyze data evolution between versions.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args compareRepositoryRefsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -97,13 +97,13 @@ func (mcpTools *MCPTools) registerCompareRepositoryRefsTool() {
 	)
 }
 
-// registerMergeRepositoryRefsTool registers the merge_repository_refs tool for merging two references in a repository
+// registerMergeRepositoryRefsTool registers the irmin_merge_repository_refs tool for merging two references in a repository
 func (mcpTools *MCPTools) registerMergeRepositoryRefsTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "merge_repository_refs",
-			Description: "Merge one reference into another in a repository. References can be branches, tags or commit hashes.",
+			Name:        "irmin_merge_repository_refs",
+			Description: "Merge changes from one reference into another, creating a merge commit. Integrates data modifications from compare_ref (source) into base_ref (destination). Requires workspace_slug, repository_slug, base_ref, and compare_ref. Optionally specify merge strategy: 'default' (smart merge), 'dest-wins' (base takes precedence), or 'source-wins' (compare takes precedence). Returns the created merge commit. Use this to incorporate feature branch changes into main branches after review and testing.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args mergeRepositoryRefsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user

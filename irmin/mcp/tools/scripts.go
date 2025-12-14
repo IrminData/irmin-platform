@@ -45,15 +45,15 @@ func (mcpTools *MCPTools) RegisterScriptsTools() {
 	mcpTools.registerExecuteScriptTool()
 }
 
-// registerListScriptsTool registers the list_scripts tool for listing scripts in a workspace
+// registerListScriptsTool registers the irmin_list_scripts tool for listing scripts in a workspace
 //
 //nolint:dupl // This tool is similar to other tools which list things, but for a different resource
 func (mcpTools *MCPTools) registerListScriptsTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "list_scripts",
-			Description: "List all scripts in the workspace. Scripts are stored scripts that can be executed to perform actions. Scripts can accept input data files and return data files. Scripts can then either be executed separately or be used in a workflow.",
+			Name:        "irmin_list_scripts",
+			Description: "List all stored scripts in a workspace. Scripts are reusable Python or JavaScript code that can process data objects and be used in workflows or executed standalone. Returns an array of script objects with ID, name, language, input/output schema, and metadata. Requires workspace_slug. Use this to discover available scripts for data transformation workflows.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listScriptsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -96,13 +96,13 @@ func (mcpTools *MCPTools) registerListScriptsTool() {
 	)
 }
 
-// registerGetScriptContentTool registers the get_script_content tool for getting the content of a script in the workspace
+// registerGetScriptContentTool registers the irmin_get_script_content tool for getting the content of a script in the workspace
 func (mcpTools *MCPTools) registerGetScriptContentTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "get_script_content",
-			Description: "Get the content of a script in the workspace. The script content is returned as a string.",
+			Name:        "irmin_get_script_content",
+			Description: "Retrieve the source code of a stored script. Returns the complete script content as a string along with script ID and name. Requires workspace_slug and script_id (SQID). Use this to inspect, debug, or understand script logic before execution or modification.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getScriptContentArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -151,15 +151,15 @@ func (mcpTools *MCPTools) registerGetScriptContentTool() {
 	)
 }
 
-// registerCreateScriptTool registers the create_script tool for creating a new stored script
+// registerCreateScriptTool registers the irmin_create_script tool for creating a new stored script
 //
 //nolint:dupl // Similar pattern to create_query tool, but for a different resource type
 func (mcpTools *MCPTools) registerCreateScriptTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "create_script",
-			Description: "Create a new stored script in a workspace. It's recommended to read the documentation for scripts first, use `retrieve_docs_context` tool for more information.",
+			Name:        "irmin_create_script",
+			Description: "Create a new stored script for data transformation or processing. Scripts can be Python or JavaScript code that accepts data object inputs and produces outputs. Requires workspace_slug and script parameters (name, language, content, input/output schema). Returns the created script object with unique ID. Use irmin_retrieve_docs_context with 'irmin' collection to learn about script capabilities and sandbox environment before creating.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createScriptArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -203,13 +203,13 @@ func (mcpTools *MCPTools) registerCreateScriptTool() {
 	)
 }
 
-// registerUpdateScriptTool registers the update_script tool for updating an existing stored script
+// registerUpdateScriptTool registers the irmin_update_script tool for updating an existing stored script
 func (mcpTools *MCPTools) registerUpdateScriptTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "update_script",
-			Description: "Update an existing stored script. It's recommended to read the documentation for scripts first, use `retrieve_docs_context` tool for more information.",
+			Name:        "irmin_update_script",
+			Description: "Modify an existing stored script's code, name, description, or input/output schema. Useful for fixing bugs, adding features, or adjusting script configuration. Requires workspace_slug, script_id (SQID), and update parameters. Returns the updated script object. Use irmin_retrieve_docs_context with 'irmin' collection for script development guidance.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateScriptArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			user, ok := mcpTools.getUser(ctx)
@@ -265,13 +265,13 @@ func (mcpTools *MCPTools) registerUpdateScriptTool() {
 	)
 }
 
-// registerExecuteScriptTool registers the execute_script tool for executing a script in the workspace
+// registerExecuteScriptTool registers the irmin_execute_script tool for executing a script in the workspace
 func (mcpTools *MCPTools) registerExecuteScriptTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "execute_script",
-			Description: "Execute a script in the workspace. The script will be executed and the output data, metadata and logs, such as errors, will be returned.",
+			Name:        "irmin_execute_script",
+			Description: "Execute a stored script with provided data object inputs in a secure sandbox. Scripts run with resource limits and return output data, metadata, and execution logs including any errors. Requires workspace_slug, script_id (SQID), and inputs array (repository object references). Returns execution results with output data and logs. Use this to transform data, validate data quality, or perform custom data processing operations.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args executeScriptArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user

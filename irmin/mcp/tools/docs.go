@@ -26,13 +26,13 @@ func (mcpTools *MCPTools) RegisterDocsTools() {
 	mcpTools.registerRetrieveDocsContextTool()
 }
 
-// registerRetrieveDocsContextTool registers the retrieve_docs_context tool for getting context from documentation
+// registerRetrieveDocsContextTool registers the irmin_retrieve_docs_context tool for getting context from documentation
 func (mcpTools *MCPTools) registerRetrieveDocsContextTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "retrieve_docs_context",
-			Description: "Retrieve relevant context from Irmin and/or DuckDB documentation. Use 'collections' parameter to specify 'irmin' (for platform features) or 'duckdb' (specifically for SQL syntax and guides), or both. Defaults to both. The 'query' should be a natural language question or keywords describing the specific topic or syntax you are looking for.",
+			Name:        "irmin_retrieve_docs_context",
+			Description: "Retrieve relevant documentation context using semantic search across Irmin platform docs and DuckDB SQL reference. Returns context-aware documentation snippets for specific features, concepts, or SQL syntax. Requires a natural language query describing what you need to learn. Optionally specify collections array: 'irmin' (platform features, repositories, workflows, scripts) or 'duckdb' (SQL syntax, functions, query optimization). Defaults to searching both. Use this before creating repositories, workflows, queries, or scripts to understand configuration options and best practices.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args RetrieveContextRequest) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user

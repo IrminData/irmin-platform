@@ -45,13 +45,16 @@ func (mcpTools *MCPTools) RegisterQueryTools() {
 	mcpTools.registerExecuteQueryTool()
 }
 
-// registerListQueriesTool registers the list_stored_queries tool for listing stored queries in a workspace
+// registerListQueriesTool registers the irmin_list_stored_queries tool for listing stored queries in a workspace
 //
 //nolint:dupl // This tool is similar to other tools which list things, but for a different resource
 func (mcpTools *MCPTools) registerListQueriesTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
-		&sdkmcp.Tool{Name: "list_stored_queries", Description: "List stored queries in a workspace"},
+		&sdkmcp.Tool{
+			Name:        "irmin_list_stored_queries",
+			Description: "List all saved SQL queries in a workspace. Stored queries are reusable SQL statements with names and descriptions for data analysis. Returns an array of query objects with ID, name, SQL statement, and metadata. Requires workspace_slug. Use this to discover available queries before executing them or to find queries to modify.",
+		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listQueriesArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
@@ -92,15 +95,15 @@ func (mcpTools *MCPTools) registerListQueriesTool() {
 	)
 }
 
-// registerCreateQueryTool registers the create_query tool for creating a new stored query
+// registerCreateQueryTool registers the irmin_create_query tool for creating a new stored query
 //
 //nolint:dupl // Similar pattern to create_script tool, but for a different resource type
 func (mcpTools *MCPTools) registerCreateQueryTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "create_query",
-			Description: "Create a new stored query in a workspace. It's recommended to read the documentation for queries first, use `retrieve_docs_context` tool for more information.",
+			Name:        "irmin_create_query",
+			Description: "Save a SQL query for reuse with a descriptive name. Stored queries can be shared and executed by ID, making complex analyses reproducible. Requires workspace_slug and query parameters (name, SQL statement, optional description). Returns the created query object with unique ID. Use irmin_retrieve_docs_context with 'duckdb' collection before creating to understand SQL syntax and available functions.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createQueryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -144,13 +147,13 @@ func (mcpTools *MCPTools) registerCreateQueryTool() {
 	)
 }
 
-// registerUpdateQueryTool registers the update_query tool for updating an existing stored query
+// registerUpdateQueryTool registers the irmin_update_query tool for updating an existing stored query
 func (mcpTools *MCPTools) registerUpdateQueryTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "update_query",
-			Description: "Update an existing stored query. It's recommended to read the documentation for queries first, use `retrieve_docs_context` tool for more information.",
+			Name:        "irmin_update_query",
+			Description: "Modify an existing stored query's SQL statement, name, or description. Useful for refining queries or fixing errors while preserving the query ID. Requires workspace_slug, query_id (SQID), and update parameters. Returns the updated query object. Use irmin_retrieve_docs_context with 'duckdb' collection for SQL syntax reference when modifying queries.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateQueryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			user, ok := mcpTools.getUser(ctx)
@@ -206,13 +209,13 @@ func (mcpTools *MCPTools) registerUpdateQueryTool() {
 	)
 }
 
-// registerExecuteSQLTool registers the execute_sql tool for executing arbitrary SQL queries
+// registerExecuteSQLTool registers the irmin_execute_sql tool for executing arbitrary SQL queries
 func (mcpTools *MCPTools) registerExecuteSQLTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "execute_sql",
-			Description: "Execute an arbitrary SQL query on the workspace data. It's recommended to read the documentation for queries first, use `retrieve_docs_context` tool for more information.",
+			Name:        "irmin_execute_sql",
+			Description: "Execute ad-hoc SQL queries on workspace data using DuckDB analytics engine. Query any repository object as a table using path-based syntax (e.g., SELECT * FROM 'repo/branch/path/file.json'). Supports JOINs across multiple objects, aggregations, and complex analytics. Returns query results as JSON with automatic response size limiting for MCP. Requires workspace_slug and sql string. Use irmin_retrieve_docs_context with 'duckdb' collection to learn SQL syntax and irmin_get_repository_object_schema to understand table structures.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args executeSQLArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			user, ok := mcpTools.getUser(ctx)
@@ -251,11 +254,14 @@ func (mcpTools *MCPTools) registerExecuteSQLTool() {
 	)
 }
 
-// registerExecuteQueryTool registers the execute_query tool for executing stored queries
+// registerExecuteQueryTool registers the irmin_execute_query tool for executing stored queries
 func (mcpTools *MCPTools) registerExecuteQueryTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
-		&sdkmcp.Tool{Name: "execute_query", Description: "Execute a stored query and return the results"},
+		&sdkmcp.Tool{
+			Name:        "irmin_execute_query",
+			Description: "Execute a previously saved SQL query by its ID. Runs the stored SQL statement against current workspace data and returns results as JSON with automatic response size limiting. Requires workspace_slug and query_id (SQID). Use this for reproducible analyses, scheduled reporting, or executing complex queries without rewriting SQL each time.",
+		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args executeQueryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			user, ok := mcpTools.getUser(ctx)
 			if !ok || user == nil || user.ID == 0 {

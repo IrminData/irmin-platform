@@ -33,15 +33,15 @@ func (mcpTools *MCPTools) RegisterRepositoryTagsTools() {
 	mcpTools.registerDeleteRepositoryTagTool()
 }
 
-// registerListRepositoryTagsTool registers the list_repository_tags tool for listing repository tags in a workspace
+// registerListRepositoryTagsTool registers the irmin_list_repository_tags tool for listing repository tags in a workspace
 //
 //nolint:dupl // This is not a duplicate, it's a different tool, with similar flow compared to other tools
 func (mcpTools *MCPTools) registerListRepositoryTagsTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "list_repository_tags",
-			Description: "List tags in a repository. Tags are used to mark a specific commit in the repository, as an easy way to reference it later.",
+			Name:        "irmin_list_repository_tags",
+			Description: "List all tags in a repository. Tags are immutable named references to specific commits, useful for marking releases, milestones, or important data snapshots. Returns an array of tag objects with name and target commit SHA. Requires workspace_slug and repository_slug. Use this to discover available tagged versions for data analysis or rollback operations.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listRepositoryTagsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -86,15 +86,15 @@ func (mcpTools *MCPTools) registerListRepositoryTagsTool() {
 	)
 }
 
-// registerCreateRepositoryTagTool registers the create_repository_tag tool for creating a new tag in a repository
+// registerCreateRepositoryTagTool registers the irmin_create_repository_tag tool for creating a new tag in a repository
 //
 //nolint:dupl // This is not a duplicate, it's a different tool, with similar flow compared to other tools
 func (mcpTools *MCPTools) registerCreateRepositoryTagTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "create_repository_tag",
-			Description: "Create a new tag in a repository. Tags are used to mark a specific commit in the repository, as an easy way to reference it later.",
+			Name:        "irmin_create_repository_tag",
+			Description: "Create an immutable named tag pointing to a specific commit in the repository. Tags provide human-readable references to important data versions like production releases or quarterly snapshots. Requires workspace_slug, repository_slug, tag_name, and commit_hash. Returns the created tag object. Use this to mark significant data milestones for easy reference in queries and data operations.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createRepositoryTagArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -149,13 +149,13 @@ func (mcpTools *MCPTools) registerCreateRepositoryTagTool() {
 	)
 }
 
-// registerDeleteRepositoryTagTool registers the delete_repository_tag tool for deleting a tag in a repository
+// registerDeleteRepositoryTagTool registers the irmin_delete_repository_tag tool for deleting a tag in a repository
 func (mcpTools *MCPTools) registerDeleteRepositoryTagTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "delete_repository_tag",
-			Description: "Delete a tag in a repository. Tags are used to mark a specific commit in the repository, as an easy way to reference it later.",
+			Name:        "irmin_delete_repository_tag",
+			Description: "Delete a tag from a repository. This removes the named reference but does not affect the underlying commit or data. Requires workspace_slug, repository_slug, and tag_name. Returns success confirmation. Use this to clean up obsolete or incorrectly created tags. Cannot be undone, so ensure the tag is no longer needed before deletion.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args deleteRepositoryTagArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user

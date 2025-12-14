@@ -37,13 +37,13 @@ func (mcpTools *MCPTools) RegisterRepositoryCommitsTools() {
 	mcpTools.registerRevertRepositoryUncommittedChangesTool()
 }
 
-// registerListRepositoryCommitsTool registers the list_repository_commits tool for listing repository commits in a workspace
+// registerListRepositoryCommitsTool registers the irmin_list_repository_commits tool for listing repository commits in a workspace
 func (mcpTools *MCPTools) registerListRepositoryCommitsTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "list_repository_commits",
-			Description: "List commits in a repository branch. Commits are used to store the different versions of the data in the repository.",
+			Name:        "irmin_list_repository_commits",
+			Description: "List commit history for a repository branch. Commits represent snapshots of data at specific points in time, forming the version history. Returns an array of commit objects with SHA, message, author, timestamp, and parent commits. Supports pagination via after cursor and per_page parameters. Requires workspace_slug and repository_slug. Use this to inspect the data lineage and understand what changes were made over time.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listRepositoryCommitsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -116,15 +116,15 @@ func (mcpTools *MCPTools) registerListRepositoryCommitsTool() {
 	)
 }
 
-// registerCreateRepositoryCommitTool registers the create_repository_commit tool for creating a new commit in a repository
+// registerCreateRepositoryCommitTool registers the irmin_create_repository_commit tool for creating a new commit in a repository
 //
 //nolint:dupl // This is not a duplicate, it's a different tool, with similar flow compared to other tools
 func (mcpTools *MCPTools) registerCreateRepositoryCommitTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "create_repository_commit",
-			Description: "Create a new commit in a repository branch, committing all the uncommitted changes in the branch, permamently saving them in the version history.",
+			Name:        "irmin_create_repository_commit",
+			Description: "Create a new commit to permanently save all uncommitted changes on a branch. Commits snapshot the current state of all data objects and add them to the version history. Requires workspace_slug, repository_slug, and a descriptive commit message. Optionally specify branch_name (defaults to repository's default branch). Returns the created commit object with SHA. Use this after making data changes to preserve them in the repository history before merging or sharing.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createRepositoryCommitArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -179,13 +179,13 @@ func (mcpTools *MCPTools) registerCreateRepositoryCommitTool() {
 	)
 }
 
-// registerRevertRepositoryUncommittedChangesTool registers the revert_repository_uncommitted_changes tool for reverting the uncommitted changes in a repository
+// registerRevertRepositoryUncommittedChangesTool registers the irmin_revert_repository_uncommitted_changes tool for reverting the uncommitted changes in a repository
 func (mcpTools *MCPTools) registerRevertRepositoryUncommittedChangesTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "revert_repository_uncommitted_changes",
-			Description: "Revert the uncommitted changes in a repository branch, restoring the branch to the previous commit.",
+			Name:        "irmin_revert_repository_uncommitted_changes",
+			Description: "Discard all uncommitted changes on a branch, restoring it to the state of the last commit. This operation is destructive and cannot be undone. All pending modifications to data objects will be permanently lost. Requires workspace_slug, repository_slug, and optionally branch_name. Returns success confirmation. Use this to abandon unwanted changes or reset a branch to a clean state.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args revertRepositoryUncommittedChangesArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user

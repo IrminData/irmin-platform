@@ -35,13 +35,13 @@ func (mcpTools *MCPTools) RegisterConnectorTools() {
 	mcpTools.registerValidateConnectorConfigurationTool()
 }
 
-// registerListConnectorsTool registers the list_connectors tool for listing connectors available on the platform
+// registerListConnectorsTool registers the irmin_list_connectors tool for listing connectors available on the platform
 func (mcpTools *MCPTools) registerListConnectorsTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "list_connectors",
-			Description: "List connectors available to be used for data ingestion, export, and other operations.",
+			Name:        "irmin_list_connectors",
+			Description: "List all available connector templates for integrating external data sources and destinations. Connectors are pre-built integrations for services like databases (PostgreSQL, MySQL), APIs (REST, GraphQL), cloud storage (S3, GCS), and SaaS platforms. Returns an array of connector objects with ID, name, type, capabilities, and supported operations. Use this to discover available integrations before creating connections.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, _ struct{}) (*sdkmcp.CallToolResult, struct{}, error) {
 			// List the connectors
@@ -71,13 +71,13 @@ func (mcpTools *MCPTools) registerListConnectorsTool() {
 	)
 }
 
-// registerShowRequiredConnectorConfigurationFieldsTool registers the show_required_connector_configuration_fields tool for showing the required configuration fields for a connector
+// registerShowRequiredConnectorConfigurationFieldsTool registers the irmin_show_required_connector_configuration_fields tool for showing the required configuration fields for a connector
 func (mcpTools *MCPTools) registerShowRequiredConnectorConfigurationFieldsTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "show_required_connector_configuration_fields",
-			Description: "Show the required configuration fields for a connector. The values for these fields need to be supplied when creating a new connection, to authenticate and establish a connection with the external system.",
+			Name:        "irmin_show_required_connector_configuration_fields",
+			Description: "Retrieve the configuration schema for a specific connector, showing required fields for authentication and settings. Returns dynamic field definitions including field names, types, validation rules, and dependencies. Configuration has two parts: 'details' (authentication credentials) and 'settings' (connection-specific options). Requires connector_id (SQID), configuration_type ('details' or 'settings'), and current_configuration (for dynamic field resolution). Use this before creating a connection to understand what configuration values are needed.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args showRequiredConnectorConfigurationFieldsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Parse the connector ID from the SQID
@@ -120,13 +120,13 @@ func (mcpTools *MCPTools) registerShowRequiredConnectorConfigurationFieldsTool()
 	)
 }
 
-// registerValidateConnectorConfigurationTool registers the validate_connector_configuration tool for validating the configuration of a connector
+// registerValidateConnectorConfigurationTool registers the irmin_validate_connector_configuration tool for validating the configuration of a connector
 func (mcpTools *MCPTools) registerValidateConnectorConfigurationTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "validate_connector_configuration",
-			Description: "Validate the configuration of a connector. This is used to validate the configuration of a connector before creating a new connection.",
+			Name:        "irmin_validate_connector_configuration",
+			Description: "Test connector configuration values before creating a connection. Validates credentials, checks connectivity, and verifies permissions by making a test request to the external service. Returns validation results with success status and any error messages. Requires connector_id (SQID) and configuration object with details and settings. Always use this tool before creating or updating a connection to catch configuration errors early.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args validateConnectorConfigurationArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Parse the connector ID from the SQID

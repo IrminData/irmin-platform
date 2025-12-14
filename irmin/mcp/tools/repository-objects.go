@@ -84,13 +84,13 @@ func (mcpTools *MCPTools) RegisterRepositoryObjectsTools() {
 	mcpTools.registerDeleteRepositoryObjectTool()
 }
 
-// registerListRepositoryObjectsTool registers the list_repository_objects tool for listing repository objects in a workspace
+// registerListRepositoryObjectsTool registers the irmin_list_repository_objects tool for listing repository objects in a workspace
 func (mcpTools *MCPTools) registerListRepositoryObjectsTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "list_repository_objects",
-			Description: "List objects in a repository. Objects are essentially the different datafiles and folders in the repository. These objects can be structured (e.g. JSON, YAML, XML) or unstructured (e.g. binary data, images, videos, etc.).",
+			Name:        "irmin_list_repository_objects",
+			Description: "List all data objects (files and folders) in a repository at a specific reference. Objects can be structured data (JSON, CSV, XML, YAML) or unstructured files (images, videos, documents). Returns a hierarchical tree structure with object metadata including path, type, size, and modification info. Requires workspace_slug and repository_slug. Optionally specify ref (branch, tag, or commit) to list objects at that version. Use this to explore repository contents before reading or querying data.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listRepositoryObjectsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -159,13 +159,13 @@ func (mcpTools *MCPTools) registerListRepositoryObjectsTool() {
 	)
 }
 
-// registerGetRepositoryObjectSchemaTool registers the get_repository_object_schema tool for getting the schema of a repository object in a workspace
+// registerGetRepositoryObjectSchemaTool registers the irmin_get_repository_object_schema tool for getting the schema of a repository object in a workspace
 func (mcpTools *MCPTools) registerGetRepositoryObjectSchemaTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "get_repository_object_schema",
-			Description: "Get the schema, with column name, types, and descriptions, of a repository object in a repository. The schema can be used to write SQL queries to analyze the data in the repository object, without actually having to get the data into memory.",
+			Name:        "irmin_get_repository_object_schema",
+			Description: "Retrieve the data schema for a structured repository object, showing column names, data types, and descriptions without loading the full content. Essential for writing SQL queries against large datasets. Returns schema metadata derived from the object structure. Requires workspace_slug, repository_slug, and path. Optionally specify branch (defaults to repository's default branch). Use this before querying to understand available columns and write efficient SQL queries.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryObjectSchemaArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -269,13 +269,13 @@ func isAllowedTextType(mimeType string) bool {
 	return false
 }
 
-// registerGetRepositoryObjectContentTool registers the get_repository_object_content tool for getting the content of a repository object in a workspace
+// registerGetRepositoryObjectContentTool registers the irmin_get_repository_object_content tool for getting the content of a repository object in a workspace
 func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "get_repository_object_content",
-			Description: "Get the content of a repository object in a repository. The content can be a JSON, YAML, XML, TXT, CSV, etc.",
+			Name:        "irmin_get_repository_object_content",
+			Description: "Retrieve the full content of a text-based repository object. Supports structured formats (JSON, CSV, YAML, XML) and text files (TXT, SQL, markdown). Returns the raw file content with MIME type metadata. Requires workspace_slug, repository_slug, and path. Optionally specify branch. Large files are automatically size-limited for MCP. Binary files cannot be fetched via MCP. Use this to read configuration files, examine data samples, or analyze individual data objects.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryObjectContentArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -370,13 +370,13 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 	)
 }
 
-// registerGetRepositoryObjectHistoryTool registers the get_repository_object_history tool for getting the history of a repository object in a workspace
+// registerGetRepositoryObjectHistoryTool registers the irmin_get_repository_object_history tool for getting the history of a repository object in a workspace
 func (mcpTools *MCPTools) registerGetRepositoryObjectHistoryTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "get_repository_object_history",
-			Description: "Get the history of changes to a repository object in a repository. The history comes in the form of a list of commits, which have modified the object. The history can be used to understand the changes that have been made to the object over time.",
+			Name:        "irmin_get_repository_object_history",
+			Description: "Retrieve the version history of a specific data object, showing all commits that modified it. Returns an array of commits with SHA, message, author, timestamp, and change type. Requires workspace_slug, repository_slug, and path. Optionally specify branch to trace history along that branch. Use this to understand when and why data was changed, track data lineage, or find who made specific modifications.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryObjectHistoryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -449,13 +449,13 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectHistoryTool() {
 	)
 }
 
-// registerSaveTextRepositoryObjectTool registers the save_text_repository_object tool for saving a text repository object in a workspace, which can be something like a TXT, JSON, CSV, YAML, XML, etc.
+// registerSaveTextRepositoryObjectTool registers the irmin_save_text_repository_object tool for saving a text repository object in a workspace, which can be something like a TXT, JSON, CSV, YAML, XML, etc.
 func (mcpTools *MCPTools) registerSaveTextRepositoryObjectTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "save_text_repository_object",
-			Description: "Save a text repository object in a repository. Saving can mean creating a new object or overwriting an existing object. The text content can be a JSON, YAML, XML, TXT, CSV, etc.",
+			Name:        "irmin_save_text_repository_object",
+			Description: "Create a new text-based data object or overwrite an existing one with text content. Supports structured formats (JSON, CSV, YAML, XML) and plain text. The operation creates an uncommitted change that must be committed separately. Requires workspace_slug, repository_slug, path (full path with filename), and content string. Optionally specify branch. Returns the saved object metadata. Use this to add or update configuration files, data files, or any text-based content in the repository.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args saveTextRepositoryObjectArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -530,13 +530,13 @@ func (mcpTools *MCPTools) registerSaveTextRepositoryObjectTool() {
 	)
 }
 
-// registerUploadRepositoryObjectFromURLTool registers the upload_repository_object_from_url tool for uploading a repository object from a URL in a workspace
+// registerUploadRepositoryObjectFromURLTool registers the irmin_upload_repository_object_from_url tool for uploading a repository object from a URL in a workspace
 func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "upload_repository_object_from_url",
-			Description: "Upload a file from a URL to a specific path in a repository on a given branch. Uploading can mean creating a new object or overwriting an existing object. The file can be anything, like a JSON, Excel, CSV, XML, YAML, text, image, video, etc. A GET request with the provided headers will be made to the URL to get the file.",
+			Name:        "irmin_upload_repository_object_from_url",
+			Description: "Upload any file type to the repository by fetching it from a URL. Supports all file types including structured data (JSON, CSV, Excel), documents (PDF, TXT), and media files. Makes a GET request to the specified URL with optional custom headers. Creates an uncommitted change that must be committed separately. Requires workspace_slug, repository_slug, path, and url. Optionally provide headers for authentication. Returns uploaded object metadata. Use this to import external data sources or sync files from web APIs.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args uploadRepositoryObjectFromURLArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -608,15 +608,15 @@ func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 	)
 }
 
-// registerMoveOrCopyRepositoryObjectTool registers the move_or_copy_repository_object tool for moving or copying a repository object in a workspace
+// registerMoveOrCopyRepositoryObjectTool registers the irmin_move_or_copy_repository_object tool for moving or copying a repository object in a workspace
 //
 //nolint:gocognit // Nothing complex, just wanted to put both copy and move in the same tool
 func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "move_or_copy_repository_object",
-			Description: "Move or copy a repository object in a repository from one path to another.",
+			Name:        "irmin_move_or_copy_repository_object",
+			Description: "Move or copy a data object from one path to another within the repository. Move removes the original, copy creates a duplicate. Both operations create uncommitted changes requiring a commit. Requires workspace_slug, repository_slug, action ('move' or 'copy'), path (source), and new_path (destination). Optionally specify branch. Returns the resulting object metadata. Use this to reorganize repository structure, duplicate data for testing, or rename objects.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args moveOrCopyRepositoryObjectArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -714,11 +714,14 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 	)
 }
 
-// registerDeleteRepositoryObjectTool registers the delete_repository_object tool for deleting a repository object in a workspace
+// registerDeleteRepositoryObjectTool registers the irmin_delete_repository_object tool for deleting a repository object in a workspace
 func (mcpTools *MCPTools) registerDeleteRepositoryObjectTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
-		&sdkmcp.Tool{Name: "delete_repository_object", Description: "Delete a repository object in a repository."},
+		&sdkmcp.Tool{
+			Name:        "irmin_delete_repository_object",
+			Description: "Delete a data object from the repository. This operation creates an uncommitted change that must be committed to be permanent. The object can be recovered by reverting uncommitted changes before committing. Requires workspace_slug, repository_slug, and path. Optionally specify branch. Returns success confirmation. Use this to remove obsolete data, clean up test files, or manage repository content.",
+		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args deleteRepositoryObjectArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)

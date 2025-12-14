@@ -17,13 +17,13 @@ func (mcpTools *MCPTools) RegisterWorkspaceTools() {
 	mcpTools.registerCreateWorkspaceTool()
 }
 
-// registerListWorkspacesTool registers the list_workspaces tool for listing workspaces accessible to the current user
+// registerListWorkspacesTool registers the irmin_list_workspaces tool for listing workspaces accessible to the current user
 func (mcpTools *MCPTools) registerListWorkspacesTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "list_workspaces",
-			Description: "List workspaces accessible to the current user. Most tool calls require a workspace to be specified.",
+			Name:        "irmin_list_workspaces",
+			Description: "List all workspaces accessible to the authenticated user. Returns an array of workspace objects containing name, slug, description, creation date, and associated metadata. Requires authentication via Bearer token. Use this tool at the start of operations to discover available workspaces, as most other Irmin tools require a workspace_slug parameter to specify which workspace to operate on.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, _ struct{}) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -59,11 +59,14 @@ func (mcpTools *MCPTools) registerListWorkspacesTool() {
 	)
 }
 
-// registerCreateWorkspaceTool registers the create_workspace tool for creating a new workspace
+// registerCreateWorkspaceTool registers the irmin_create_workspace tool for creating a new workspace
 func (mcpTools *MCPTools) registerCreateWorkspaceTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
-		&sdkmcp.Tool{Name: "create_workspace", Description: "Create a new workspace for the current user"},
+		&sdkmcp.Tool{
+			Name:        "irmin_create_workspace",
+			Description: "Create a new workspace for the authenticated user. A workspace is a top-level organizational unit that contains repositories, connections, workflows, and queries. Requires a name (alphanumeric with hyphens/underscores) and optional description. Returns the created workspace object with its unique slug identifier. Use this when you need to set up a new isolated environment for data management operations.",
+		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args irmincore.CreateWorkspaceRequest) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
