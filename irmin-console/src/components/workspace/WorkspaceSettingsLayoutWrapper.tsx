@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 
 import {
+  TbCode,
   TbInvoice,
   TbMail,
   TbSettings,
@@ -90,6 +91,13 @@ export default function WorkspaceSettingsLayoutWrapper({
         active: pathname === `${workspaceUrl}/settings/billing`,
         icon: <TbInvoice size={14} />,
         hide: !isResourceAllowed('billing', 'read'),
+      },
+      {
+        name: dict.workspace.apiMcp,
+        link: `${workspaceUrl}/settings/api-mcp`,
+        active: pathname === `${workspaceUrl}/settings/api-mcp`,
+        icon: <TbCode size={14} />,
+        hide: !isResourceAllowed('workspace', 'read'),
       },
     ],
     [pathname, dict, workspaceUrl, isResourceAllowed]

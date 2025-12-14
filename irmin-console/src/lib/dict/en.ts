@@ -216,6 +216,41 @@ const en = {
     billingSettings: 'Billing Settings',
     billingNote:
       'You can currently only manage billing by contacting our team.',
+    apiMcp: 'API/MCP',
+    api: {
+      settings: 'API/MCP Settings',
+      restApi: 'REST API',
+      mcp: 'MCP',
+      apiBaseUrl: 'API Base URL',
+      mcpUrl: 'MCP Server URL',
+      apiDescription:
+        'Use the REST API to programmatically interact with your workspace data, repositories, workflows, and more.',
+      mcpDescription:
+        'Use the Model Context Protocol (MCP) server to integrate Irmin with AI assistants and development tools like Claude Desktop.',
+      getApiToken: 'Get API Token',
+      getMcpToken: 'Get MCP Token',
+      viewApiDocs: 'View API Documentation',
+      apiUsageNote:
+        'To use the API, you need an API token. Create one in your profile settings.',
+      apiExampleTitle: 'Example API Request',
+      apiExampleDescription: 'Make a request to the API using curl:',
+      apiExampleCurl:
+        'curl -X GET "<API_URL>/api/v1/workspaces" \\\n  -H "Authorization: Bearer <your-api-token>" \\\n  -H "Content-Type: application/json"',
+      apiExampleNote:
+        'Replace <API_URL> with the API Base URL above and <your-api-token> with your API token from the tokens page.',
+      mcpUsageNote:
+        'To use the MCP server, you need an API token. Create one in your profile settings.',
+      mcpAuthHeader: 'Authorization: Bearer <your-api-token>',
+      mcpAuthHeaderLabel: 'Authorization Header',
+      mcpClaudeDesktopTitle: 'Add to Claude Desktop',
+      mcpClaudeDesktopDescription:
+        'Add this configuration to your Claude Desktop config file:',
+      mcpClaudeDesktopConfig:
+        '{\n  "mcpServers": {\n    "irmin": {\n      "url": "<MCP_URL>",\n      "headers": {\n        "Authorization": "Bearer <your-api-token>"\n      }\n    }\n  }\n}',
+      mcpConfigNote:
+        'Replace <MCP_URL> with the MCP Server URL above and <your-api-token> with your API token from the tokens page.',
+      viewMcpDocs: 'View MCP Documentation',
+    },
     addTags: 'Add tags',
     failedToLoadTags: 'Failed to load tags',
     failedToLoadWorkspaces: 'Failed to load workspaces',

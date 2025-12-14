@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  TbCode,
   TbInvoice,
   TbLogs,
   TbMail,
@@ -8,6 +9,7 @@ import {
   TbSettings,
   TbTag,
   TbUser,
+  TbUsersGroup,
 } from 'react-icons/tb';
 
 import AssistantSection from '@/components/assistant/AssistantSection';
@@ -31,7 +33,7 @@ import { DashboardWorkflowRunsFeed } from './DashboardWorkflowRunsFeed';
  * Dashboard section for the workspace.
  */
 const DashboardSection = () => {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const { workspaceQuery } = useWorkspaceContext();
 
   const { isResourceAllowed, loading: isResourceAllowedLoading } =
@@ -78,6 +80,14 @@ const DashboardSection = () => {
         <div className='flex flex-col gap-4 px-4 pb-12'>
           {/* Navigation Buttons */}
           <div className='flex flex-row gap-2'>
+            <Button
+              href={`${locale}/profile`}
+              variant='gray'
+              size='sm'
+              icon={<TbUser className='size-4' />}
+            >
+              {dict.consoleNavigation.myProfile}
+            </Button>
             {isResourceAllowed('workspace', 'read') && (
               <Button
                 href={`${workspaceUrl}/settings`}
@@ -103,7 +113,7 @@ const DashboardSection = () => {
                 href={`${workspaceUrl}/settings/users`}
                 variant='gray'
                 size='sm'
-                icon={<TbUser className='size-4' />}
+                icon={<TbUsersGroup className='size-4' />}
               >
                 {dict.workspace.users}
               </Button>
@@ -148,6 +158,14 @@ const DashboardSection = () => {
                 {dict.documentation.documentation}
               </Button>
             )}
+            <Button
+              href={`${workspaceUrl}/settings/api-mcp`}
+              variant='gray'
+              size='sm'
+              icon={<TbCode className='size-4' />}
+            >
+              {dict.workspace.apiMcp}
+            </Button>
           </div>
           {/* AI Assistant and Workflow Runs */}
           <div
