@@ -1421,6 +1421,41 @@ const fi = {
     noFieldsToMap:
       'Kenttien yhdistäminen ei ole käytettävissä, koska toisella tai molemmilla puolilla ei ole ennalta määriteltyjä kenttiä. Kentät luodaan automaattisesti työnkulkua suoritettaessa.',
   },
+
+  dataSizeWarning: {
+    // Titles
+    tableTooLarge: 'Taulukko liian suuri',
+    jsonTooLarge: 'JSON liian suuri',
+    fileTooLarge: 'Tiedosto liian suuri',
+    largeTableWarning: 'Suuren taulukon varoitus',
+    largeJsonWarning: 'Suuren JSON:n varoitus',
+    largeFileWarning: 'Suuren tiedoston varoitus',
+
+    // Messages - Errors
+    tableTooLargeMessage:
+      'Tämä taulukko on liian suuri renderöitäväksi turvallisesti selaimessasi. Lataa se CSV-muodossa sen sijaan.',
+    jsonTooLargeMessage:
+      'Tämä JSON-objekti on liian suuri renderöitäväksi turvallisesti selaimessasi. Lataa se sen sijaan.',
+    fileTooLargeMessage:
+      'Tämä tiedosto on liian suuri näytettäväksi selaimessasi. Lataa se sen sijaan.',
+
+    // Messages - Warnings
+    largeTableMessage:
+      'Tämä taulukko on suuri ja saattaa aiheuttaa suorituskykyongelmia. Voit ladata sen tai yrittää renderöidä sen joka tapauksessa.',
+    largeJsonMessage:
+      'Tämä JSON-objekti on suuri ja saattaa aiheuttaa suorituskykyongelmia. Voit ladata sen tai yrittää renderöidä sen joka tapauksessa.',
+    largeFileMessage:
+      'Tämä tiedosto on suuri ja sen lataaminen saattaa kestää jonkin aikaa.',
+
+    // Actions
+    renderAnyway: 'Renderöi joka tapauksessa',
+    downloadCsv: 'Lataa CSV',
+
+    // Additional info
+    sizeLabel: 'Koko:',
+    performanceWarning:
+      'Suurten tietojen renderöinti saattaa hidastaa selainta tai aiheuttaa sen jumittumisen.',
+  },
 };
 
 export default fi;

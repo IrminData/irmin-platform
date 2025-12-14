@@ -286,13 +286,16 @@ class ScriptsService {
     workspace,
     scriptId,
     inputs = [],
+    limitResponse,
   }: {
     workspace: string;
     scriptId: string;
     inputs?: ActionInputData[];
+    limitResponse?: boolean;
   }): Promise<IrminAPIResponse<ScriptResult>> {
     try {
-      const endpoint = `/v1/workspaces/${workspace}/scripts/${scriptId}/execute`;
+      const queryParams = limitResponse ? '?limit-response=true' : '';
+      const endpoint = `/v1/workspaces/${workspace}/scripts/${scriptId}/execute${queryParams}`;
       const requestBody: ExecuteScriptRequest = {
         input: inputs,
       };

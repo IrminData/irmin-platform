@@ -5,7 +5,11 @@ import { memo, useEffect, useMemo } from 'react';
 import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer';
 import '@cyntler/react-doc-viewer/dist/index.css';
 
+import DataSizeWarning from '@/components/ui/DataSizeWarning';
+
 import { useLocale } from '@/context/LocaleContext';
+
+import { MAX_SAFE_BLOB_SIZE } from '@/utils/dataSizeUtils';
 
 import type { RepositoryObject } from '@/types/core/RepositoryObject';
 
@@ -66,6 +70,19 @@ const BlobViewer = ({
   }, [url]);
 
   if (!url) return null;
+
+  // Check if blob is too large
+  if (blob.size > MAX_SAFE_BLOB_SIZE) {
+    return (
+      <DataSizeWarning
+        dataSize={blob.size}
+        type='blob'
+        severity='warning'
+        contentType={object.content_type ?? undefined}
+        downloadUrl={url}
+      />
+    );
+  }
 
   // Determine how to render the content based on the MIME type
   if (allowedMimeTypes.includes(object.content_type ?? '')) {

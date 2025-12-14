@@ -178,12 +178,19 @@ export function useStoredQueries() {
   });
 
   const executeStoredQueryMutation = useMutation({
-    mutationFn: async (queryID: string) => {
+    mutationFn: async ({
+      queryID,
+      limitResponse,
+    }: {
+      queryID: string;
+      limitResponse?: boolean;
+    }) => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
       return await core.queryService.executeStoredQuery({
         workspace: workspaceSlug,
         queryID,
+        limitResponse,
       });
     },
     onSuccess: (res) => {

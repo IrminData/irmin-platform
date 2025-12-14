@@ -58,7 +58,8 @@ export const repositoryObjectContentQueryKey = (
   workspaceSlug: string,
   repositorySlug: string,
   ref: string,
-  path: string
+  path: string,
+  limitResponse?: boolean
 ) =>
   [
     'repository-object-content',
@@ -66,6 +67,7 @@ export const repositoryObjectContentQueryKey = (
     repositorySlug,
     ref,
     path,
+    limitResponse,
   ] as const;
 
 export const repositoryObjectSchemaQueryKey = (

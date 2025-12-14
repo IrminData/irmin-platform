@@ -277,18 +277,22 @@ class QueryService {
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
    * @param props.queryID - The stored query's ID.
+   * @param props.limitResponse - Whether to limit the response to 1000 rows.
    * @returns IrminAPIResponse containing an array of result rows.
    */
   async executeStoredQuery({
     workspace,
     queryID,
+    limitResponse,
   }: {
     workspace: string;
     queryID: string;
+    limitResponse?: boolean;
   }): Promise<IrminAPIResponse<QueryResult>> {
     try {
+      const queryParams = limitResponse ? '?limit-response=true' : '';
       const response = await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/queries/${queryID}/execute`,
+        `/v1/workspaces/${workspace}/queries/${queryID}/execute${queryParams}`,
         { method: 'POST' }
       );
       return response as IrminAPIResponse<QueryResult>;
@@ -304,22 +308,26 @@ class QueryService {
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
    * @param props.sql - The SQL statement to execute.
+   * @param props.limitResponse - Whether to limit the response to 1000 rows.
    * @returns IrminAPIResponse containing an array of result rows.
    */
   async executeSQL({
     workspace,
     sql,
+    limitResponse,
   }: {
     workspace: string;
     sql?: string;
+    limitResponse?: boolean;
   }): Promise<IrminAPIResponse<QueryResult>> {
     try {
       const requestBody: ExecuteSQLRequest = {
         sql,
       };
 
+      const queryParams = limitResponse ? '?limit-response=true' : '';
       const response = await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/sql`,
+        `/v1/workspaces/${workspace}/sql${queryParams}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

@@ -3,7 +3,6 @@ import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
-  repositoryObjectContentQueryKey,
   repositoryObjectHistoryQueryKey,
   repositoryObjectQueryKey,
   repositoryObjectSchemaQueryKey,
@@ -63,13 +62,18 @@ export const useInvalidateObjectQueries = (repositorySlug: string) => {
         ),
       });
       // Invalidate the query for the object's content
+      // Use predicate to match all queries regardless of limitResponse parameter
       void queryClient.invalidateQueries({
-        queryKey: repositoryObjectContentQueryKey(
-          workspaceSlug,
-          repositorySlug,
-          ref,
-          path
-        ),
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return (
+            queryKey[0] === 'repository-object-content' &&
+            queryKey[1] === workspaceSlug &&
+            queryKey[2] === repositorySlug &&
+            queryKey[3] === ref &&
+            queryKey[4] === path
+          );
+        },
       });
       // Invalidate the query for the object's schema
       void queryClient.invalidateQueries({

@@ -579,6 +579,7 @@ export const ScriptEditorProvider = ({
         const res = await executeScriptMutation.mutateAsync({
           scriptId,
           inputs: scriptInputFiles,
+          limitResponse: true,
         });
         setScriptExecutionResult(res.data ?? null);
       } catch (error) {

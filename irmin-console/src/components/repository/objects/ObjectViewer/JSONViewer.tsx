@@ -6,6 +6,11 @@ import dynamic from 'next/dynamic';
 
 import { useTheme } from 'next-themes';
 
+import DataSizeWarning from '@/components/ui/DataSizeWarning';
+
+import { canSafelyRenderJSON, estimateDataSize } from '@/utils/dataSizeUtils';
+import { downloadJSON } from '@/utils/downloadUtils';
+
 import type { JSONValue } from '@/types/internal/GenericJSON';
 
 const ReactJsonView = dynamic(() => import('@microlink/react-json-view'), {
@@ -19,8 +24,29 @@ const JSONViewer = ({ data, name }: { data: JSONValue; name?: string }) => {
     [resolvedTheme]
   );
 
+  const isSafe = useMemo(
+    () => (data && typeof data === 'object' ? canSafelyRenderJSON(data) : true),
+    [data]
+  );
+
+  const dataSize = useMemo(
+    () => (data && typeof data === 'object' ? estimateDataSize(data) : 0),
+    [data]
+  );
+
   if (!data || typeof data !== 'object') {
     return null;
+  }
+
+  if (!isSafe) {
+    return (
+      <DataSizeWarning
+        dataSize={dataSize}
+        type='json'
+        severity='error'
+        onDownload={() => downloadJSON(data, name ?? 'data')}
+      />
+    );
   }
 
   return (

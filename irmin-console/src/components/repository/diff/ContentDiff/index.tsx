@@ -58,7 +58,7 @@ const ContentDiff = ({
 
   if (baseText && compareText) {
     return (
-      <div className='flex flex-col'>
+      <div className='flex flex-col overflow-x-scroll'>
         <div className='flex flex-row items-center gap-2'>
           <div className='flex w-1/2 flex-row items-center gap-2 p-2'>
             <p className='text-sm'>
@@ -121,7 +121,7 @@ const ContentDiff = ({
               {dict.common.download}
             </Button>
           </div>
-          <div className='max-w-full overflow-scroll text-xs'>
+          <div className='max-w-full overflow-x-scroll text-xs'>
             <ObjectViewer object={item.object} objectContent={baseContent} />
           </div>
         </div>
@@ -146,7 +146,7 @@ const ContentDiff = ({
               {dict.common.download}
             </Button>
           </div>
-          <div className='max-w-full overflow-scroll text-xs'>
+          <div className='max-w-full overflow-x-scroll text-xs'>
             <ObjectViewer object={item.object} objectContent={compareContent} />
           </div>
         </div>

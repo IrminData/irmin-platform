@@ -15,7 +15,8 @@ import type { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 export const useRepositoryObjectContent = (
   repositorySlug: string,
   ref?: string,
-  path?: string
+  path?: string,
+  limitResponse?: boolean
 ) => {
   const { getToken } = useIAM();
   const { locale } = useLocale();
@@ -28,7 +29,8 @@ export const useRepositoryObjectContent = (
       workspaceSlug,
       repositorySlug,
       ref ?? '',
-      path ?? ''
+      path ?? '',
+      limitResponse
     ),
     queryFn: async () => {
       const token = await getToken();
@@ -38,6 +40,7 @@ export const useRepositoryObjectContent = (
         repository: repositorySlug,
         path: path ?? '',
         ref: ref ?? '',
+        limitResponse,
       });
     },
     enabled: !!ref && !!path,

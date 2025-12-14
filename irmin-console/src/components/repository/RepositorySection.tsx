@@ -167,7 +167,8 @@ function RepositorySectionContent({
   const { downloadObjectAsZipMutation } = useRepositoryObjectContent(
     repository.slug,
     currentRef,
-    selectedObject?.path
+    selectedObject?.path,
+    true
   );
 
   const [customQuery, setCustomQuery] = useState<string | null>(null);

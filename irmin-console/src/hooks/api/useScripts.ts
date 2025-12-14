@@ -173,7 +173,7 @@ export function useScripts() {
   const executeScriptMutation = useMutation<
     IrminAPIResponse<ScriptResult>,
     Error,
-    ScriptExecuteInput
+    ScriptExecuteInput & { limitResponse?: boolean }
   >({
     mutationFn: async (data) => {
       const token = await getToken();
@@ -182,6 +182,7 @@ export function useScripts() {
         workspace: workspaceSlug,
         scriptId: data.scriptId,
         inputs: data.inputs ?? [],
+        limitResponse: data.limitResponse ?? true, // Always limit script results
       });
     },
     onSuccess: (res) => {

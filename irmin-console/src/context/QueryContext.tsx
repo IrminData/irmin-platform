@@ -16,7 +16,7 @@ import { useLocale } from './LocaleContext';
 interface QueryContextProps {
   loading: boolean;
   result: QueryResult | null;
-  executeSql: (_content: string) => Promise<void>;
+  executeSql: (_content: string, _limitResponse?: boolean) => Promise<void>;
   cleanup: () => void;
 }
 
@@ -43,10 +43,13 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
    * The script can be either Irmin SQL query or a script to be executed in the Compute Sandbox.
    */
   const handleExecuteSql = useCallback(
-    async (content: string) => {
+    async (content: string, limitResponse?: boolean) => {
       try {
         irminAlert('info', dict.query.queryExecutionStarted);
-        const res = await executeSQLMutation.mutateAsync(content);
+        const res = await executeSQLMutation.mutateAsync({
+          sql: content,
+          limitResponse,
+        });
         if (res.message) irminAlert('info', res.message);
         setQueryResult(res.data ?? null);
       } catch (error) {

@@ -42,12 +42,14 @@ export function useRepositoryDiffContent(
           repository: repositorySlug,
           path: objectPath ?? '',
           ref: base,
+          limitResponse: true,
         }),
         core.objectService.getObjectContent({
           workspace: workspaceSlug,
           repository: repositorySlug,
           path: objectPath ?? '',
           ref: compare,
+          limitResponse: true,
         }),
       ]);
       return {

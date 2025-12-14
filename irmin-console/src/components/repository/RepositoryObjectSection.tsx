@@ -75,7 +75,8 @@ export default function RepositoryObjectSection({
   const { repositoryObjectContentQuery } = useRepositoryObjectContent(
     repositorySlug,
     effectiveRef,
-    path
+    path,
+    true
   );
 
   const { repositoryObjectSchemaQuery } = useRepositoryObjectSchema(

@@ -47,33 +47,29 @@ export default function RepositoryCompareSection() {
   const baseFromParams = searchParams.get('base') || null;
   const compareFromParams = searchParams.get('compare') || null;
 
-  // Create a stable key from URL params to detect changes
-  // Use JSON encoding to avoid collisions when ref names contain underscores
-  const urlParamsKey = useMemo(
-    () => JSON.stringify([baseFromParams ?? null, compareFromParams ?? null]),
-    [baseFromParams, compareFromParams]
-  );
+  // Track URL params to detect navigation changes
+  const urlParamsKey = `${baseFromParams ?? ''}|${compareFromParams ?? ''}`;
 
-  // Use derived state based on query params
-  // Store the URL params key to detect when URL changes
-  const [lastUrlParamsKey, setLastUrlParamsKey] = useState(urlParamsKey);
-  const [localBaseRef, setLocalBaseRef] = useState<string | undefined>();
-  const [localCompareRef, setLocalCompareRef] = useState<string | undefined>();
+  // Local state for user interactions, stored with the URL params key when set
+  // This allows automatic invalidation when URL params change
+  const [localState, setLocalState] = useState<{
+    baseRef?: string;
+    compareRef?: string;
+    urlParamsKey: string;
+  }>({ urlParamsKey });
 
-  // Reset local state when URL params change
-  useEffect(() => {
-    if (lastUrlParamsKey !== urlParamsKey) {
-      setLastUrlParamsKey(urlParamsKey);
-      if (baseFromParams || compareFromParams) {
-        setLocalBaseRef(undefined);
-        setLocalCompareRef(undefined);
-      }
-    }
-  }, [lastUrlParamsKey, urlParamsKey, baseFromParams, compareFromParams]);
-
-  // Determine which ref to use (local state takes precedence over query params)
-  const baseRef = localBaseRef ?? baseFromParams ?? defaultRef;
-  const compareRef = localCompareRef ?? compareFromParams ?? currentRef;
+  // Determine which ref to use
+  // Local state only takes precedence if URL params haven't changed
+  // Priority: local state (if URL matches) > URL params > defaults
+  const baseRef =
+    localState.urlParamsKey === urlParamsKey && localState.baseRef !== undefined
+      ? localState.baseRef
+      : (baseFromParams ?? defaultRef);
+  const compareRef =
+    localState.urlParamsKey === urlParamsKey &&
+    localState.compareRef !== undefined
+      ? localState.compareRef
+      : (compareFromParams ?? currentRef);
 
   const { diffQuery, mergeRefsMutation } = useRepositoryDiff(
     repository.slug,
@@ -266,8 +262,11 @@ export default function RepositoryCompareSection() {
                 currentRef={baseRef}
                 onSelect={(ref) => {
                   clearSearchParams();
-                  setLocalBaseRef(ref.value);
-                  setLocalCompareRef(compareRef);
+                  setLocalState({
+                    baseRef: ref.value,
+                    compareRef,
+                    urlParamsKey: '|',
+                  });
                 }}
               />
             </div>
@@ -277,8 +276,11 @@ export default function RepositoryCompareSection() {
               icon={<TbArrowLeft size={18} />}
               onClick={() => {
                 clearSearchParams();
-                setLocalBaseRef(compareRef);
-                setLocalCompareRef(baseRef);
+                setLocalState({
+                  baseRef: compareRef,
+                  compareRef: baseRef,
+                  urlParamsKey: '|',
+                });
               }}
               tooltip={dict.repository.compare.switchDirection}
             />
@@ -295,8 +297,11 @@ export default function RepositoryCompareSection() {
                 currentRef={compareRef}
                 onSelect={(ref) => {
                   clearSearchParams();
-                  setLocalBaseRef(baseRef);
-                  setLocalCompareRef(ref.value);
+                  setLocalState({
+                    baseRef,
+                    compareRef: ref.value,
+                    urlParamsKey: '|',
+                  });
                 }}
               />
             </div>

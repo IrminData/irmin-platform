@@ -138,16 +138,19 @@ class ObjectService {
     repository,
     path,
     ref,
+    limitResponse,
   }: {
     workspace: string;
     repository: string;
     path: string;
     ref?: string;
+    limitResponse?: boolean;
   }): Promise<IrminAPIBinaryResponse | null> {
     try {
       const urlParams = new URLSearchParams();
       urlParams.append('path', path);
       if (ref) urlParams.append('ref', ref);
+      if (limitResponse) urlParams.append('limit-response', 'true');
       const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/content?${urlParams.toString()}`;
       const response = await this.irminCore.fetchBinary(
         url,
@@ -169,6 +172,7 @@ class ObjectService {
    * @param props.repository - The repository slug.
    * @param props.path - The path of the object.
    * @param props.ref - The ref (branch, tag or commit hash).
+   * @param props.limitResponse - (optional) Limit response size for large files.
    * @returns IrminAPIResponse containing the structured content.
    */
   async getObjectStructuredContent({
@@ -176,16 +180,19 @@ class ObjectService {
     repository,
     path,
     ref,
+    limitResponse,
   }: {
     workspace: string;
     repository: string;
     path: string;
     ref?: string;
+    limitResponse?: boolean;
   }): Promise<IrminAPIResponse<JSONValue>> {
     try {
       const urlParams = new URLSearchParams();
       urlParams.append('path', path);
       if (ref) urlParams.append('ref', ref);
+      if (limitResponse) urlParams.append('limit-response', 'true');
       const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/content/structured?${urlParams.toString()}`;
       const response = (await this.irminCore.fetchAPI(url, {
         method: 'GET',

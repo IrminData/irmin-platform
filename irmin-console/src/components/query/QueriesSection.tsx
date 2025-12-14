@@ -281,7 +281,7 @@ export default function QueriesSection() {
    */
   const handleRunQuery = useMemo(
     () => async () => {
-      await executeSql(editorContent);
+      await executeSql(editorContent, true);
     },
     [executeSql, editorContent]
   );

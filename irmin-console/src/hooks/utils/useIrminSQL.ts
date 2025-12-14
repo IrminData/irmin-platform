@@ -12,12 +12,19 @@ export function useIrminSQL() {
   const { workspaceSlug } = useWorkspaceContext();
 
   const executeSQLMutation = useMutation({
-    mutationFn: async (sql: string) => {
+    mutationFn: async ({
+      sql,
+      limitResponse,
+    }: {
+      sql: string;
+      limitResponse?: boolean;
+    }) => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
       return await core.queryService.executeSQL({
         workspace: workspaceSlug,
         sql,
+        limitResponse,
       });
     },
   });

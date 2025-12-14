@@ -163,7 +163,10 @@ export default function RefSelector({
   }, [currentRef, branchOptions, tagOptions]);
 
   return (
-    <div className='relative flex w-full min-w-max flex-col' id={id ?? 'ref-selector'}>
+    <div
+      className='relative flex w-full min-w-max flex-col'
+      id={id ?? 'ref-selector'}
+    >
       <span
         className={`
           absolute -top-2 z-10 w-full pr-12 pl-2 text-xs text-gray-800

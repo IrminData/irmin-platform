@@ -1438,6 +1438,40 @@ const en = {
     noFieldsToMap:
       'Field mappings are not available because one or both sides do not have predefined fields. Fields will be created automatically during the workflow execution.',
   },
+
+  dataSizeWarning: {
+    // Titles
+    tableTooLarge: 'Table Too Large',
+    jsonTooLarge: 'JSON Too Large',
+    fileTooLarge: 'File Too Large',
+    largeTableWarning: 'Large Table Warning',
+    largeJsonWarning: 'Large JSON Warning',
+    largeFileWarning: 'Large File Warning',
+
+    // Messages - Errors
+    tableTooLargeMessage:
+      'This table is too large to render safely in your browser. Please download it as CSV instead.',
+    jsonTooLargeMessage:
+      'This JSON object is too large to render safely in your browser. Please download it instead.',
+    fileTooLargeMessage:
+      'This file is too large to display in your browser. Please download it instead.',
+
+    // Messages - Warnings
+    largeTableMessage:
+      'This table is large and may cause performance issues. You can download it or try to render it anyway.',
+    largeJsonMessage:
+      'This JSON object is large and may cause performance issues. You can download it or try to render it anyway.',
+    largeFileMessage: 'This file is large and may take time to load.',
+
+    // Actions
+    renderAnyway: 'Render Anyway',
+    downloadCsv: 'Download CSV',
+
+    // Additional info
+    sizeLabel: 'Size:',
+    performanceWarning:
+      'Rendering large data may cause your browser to slow down or become unresponsive.',
+  },
 };
 
 export default en;

@@ -8,12 +8,14 @@ import { TbSearch } from 'react-icons/tb';
 import AdvancedDatatable from '@/components/repository/objects/ObjectViewer/AdvancedDatatable';
 import JSONViewer from '@/components/repository/objects/ObjectViewer/JSONViewer';
 import { Button } from '@/components/ui/button';
+import DataSizeWarning from '@/components/ui/DataSizeWarning';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import { checkIfSimpleArrayOfObjects } from '@/utils/checkIfSimpleArrayOfObjects';
-import { downloadCSV } from '@/utils/csv';
+import { canSafelyRenderTable } from '@/utils/dataSizeUtils';
+import { downloadCSV } from '@/utils/downloadUtils';
 
 import type { TableCellValue } from '@/types/internal/Datatable';
 import type { JSONValue } from '@/types/internal/GenericJSON';
@@ -49,10 +51,31 @@ const TableViewer = ({
     Record<string, TableCellValue>[]
   >([]);
 
+  // Reset forceRender when data changes to re-enable safety checks
+  const [forceRenderState, setForceRenderState] = useState({
+    data,
+    forceRender: false,
+  });
+
+  const forceRender =
+    forceRenderState.data === data && forceRenderState.forceRender;
+
   const isSimpleArrayOfObjects = useMemo(
     () => checkIfSimpleArrayOfObjects(data),
     [data]
   );
+
+  const rowCount = useMemo(() => {
+    if (!isSimpleArrayOfObjects || !Array.isArray(data)) return 0;
+    return data.length;
+  }, [isSimpleArrayOfObjects, data]);
+
+  const renderStatus = useMemo(() => {
+    if (!isSimpleArrayOfObjects || !Array.isArray(data)) {
+      return { safe: true, hardLimit: false };
+    }
+    return canSafelyRenderTable(data);
+  }, [isSimpleArrayOfObjects, data]);
 
   // Update the filtered items when the filter text changes (for simple array of objects)
   useEffect(() => {
@@ -84,6 +107,38 @@ const TableViewer = ({
       clearTimeout(timer);
     };
   }, [filterText, data, isSimpleArrayOfObjects]);
+
+  // Check if table is too large to render
+  if (isSimpleArrayOfObjects && !forceRender) {
+    // Hard limit - block rendering
+    if (renderStatus.hardLimit) {
+      return (
+        <DataSizeWarning
+          dataSize={rowCount}
+          type='table'
+          severity='error'
+          onDownload={() =>
+            downloadCSV(data as Record<string, TableCellValue>[], title)
+          }
+        />
+      );
+    }
+
+    // Warning threshold - allow user to continue
+    if (!renderStatus.safe) {
+      return (
+        <DataSizeWarning
+          dataSize={rowCount}
+          type='table'
+          severity='warning'
+          onDownload={() =>
+            downloadCSV(data as Record<string, TableCellValue>[], title)
+          }
+          onContinue={() => setForceRenderState({ data, forceRender: true })}
+        />
+      );
+    }
+  }
 
   return (
     <>

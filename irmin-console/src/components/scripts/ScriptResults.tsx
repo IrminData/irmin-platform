@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AiOutlineSave } from 'react-icons/ai';
 import { MdPlayArrow } from 'react-icons/md';
 import {
+  TbAlertTriangle,
   TbDatabase,
   TbExclamationCircle,
   TbLogs,
@@ -24,6 +25,11 @@ import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceSchema } from '@/hooks/api';
 import { useResourceAllowed } from '@/hooks/utils';
 
+import {
+  estimateDataSize,
+  formatByteSize,
+  MAX_SAFE_JSON_SIZE,
+} from '@/utils/dataSizeUtils';
 import { nsDurationToMs } from '@/utils/nsDurationToMs';
 
 import type { ScriptResult } from '@/types/core/Script';
@@ -97,6 +103,19 @@ const ScriptResults = ({
     return null;
   }, [currentDataFile, result]);
 
+  // Check total memory usage of all result files
+  const totalDataSize = useMemo(() => {
+    if (!result?.structured_results) return 0;
+    return Object.values(result.structured_results).reduce(
+      (sum, data) => sum + estimateDataSize(data),
+      0
+    );
+  }, [result?.structured_results]);
+
+  const showMemoryWarning = useMemo(() => {
+    return totalDataSize > MAX_SAFE_JSON_SIZE * 2;
+  }, [totalDataSize]);
+
   const showLoadingOnData = useMemo(
     () => loading || processingRun,
     [loading, processingRun]
@@ -118,6 +137,23 @@ const ScriptResults = ({
       `}
       id='query-results'
     >
+      {/* Memory warning banner */}
+      {showMemoryWarning && (
+        <div
+          className={`
+            flex items-center gap-2 border-b border-yellow-200 bg-yellow-50 px-4
+            py-2 text-xs text-yellow-800
+            dark:border-yellow-900/50 dark:bg-yellow-900/20 dark:text-yellow-200
+          `}
+        >
+          <TbAlertTriangle className='size-4 flex-shrink-0' />
+          <span>
+            Multiple large result files loaded ({formatByteSize(totalDataSize)}
+            ). This may cause performance issues.
+          </span>
+        </div>
+      )}
+
       {/* Tab Buttons */}
       <div
         className={`
