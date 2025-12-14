@@ -146,18 +146,18 @@ function Stage({
         connectionSchemaFetchedFor.current = connectionId;
         const token = await getToken();
         const irminCore = new IrminCore(locale, token);
-        const [newPushSchema, newPullSchema] = await Promise.all([
-          irminCore.connectionService.fetchConnectionSchema({
+        const newPushSchema =
+          await irminCore.connectionService.fetchConnectionSchema({
             workspace: workspaceSlug,
             connectionID: connectionId,
             operationMethod: 'push',
-          }),
-          irminCore.connectionService.fetchConnectionSchema({
+          });
+        const newPullSchema =
+          await irminCore.connectionService.fetchConnectionSchema({
             workspace: workspaceSlug,
             connectionID: connectionId,
             operationMethod: 'pull',
-          }),
-        ]);
+          });
         setConnectionPushSchema(newPushSchema?.data ?? null);
         setConnectionPullSchema(newPullSchema?.data ?? null);
       } catch (error) {

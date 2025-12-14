@@ -62,6 +62,9 @@ export default function RepositoryHeader() {
     segmentsAfter: 1,
   });
 
+  // The repositories list URL
+  const repositoriesListUrl = `${workspaceUrl}/repositories`;
+
   const tabs = useMemo(
     () => [
       {
@@ -229,7 +232,7 @@ export default function RepositoryHeader() {
       </div>
       <TabsWithBackButton
         onBackClick={() => {
-          router.back();
+          router.push(repositoriesListUrl);
         }}
         backTooltip={dict.common.back}
         tabs={tabs}

@@ -1,6 +1,8 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { GoGitMerge } from 'react-icons/go';
 import { TbArrowLeft, TbRefresh } from 'react-icons/tb';
@@ -14,10 +16,14 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import { useRepositoryBranches, useRepositoryDiff } from '@/hooks/api';
+import {
+  useRepositoryBranches,
+  useRepositoryDiff,
+  useRepositoryTags,
+} from '@/hooks/api';
 import { useResourceAllowed } from '@/hooks/utils';
 
-import BranchSelector from './branches/BranchSelector';
+import RefSelector from './branches/RefSelector';
 import DiffView from './diff/DiffVIew';
 import MergeModalContent from './diff/MergeModalContent';
 import NoDiffWarning from './diff/NoDiffWarning';
@@ -32,15 +38,71 @@ export default function RepositoryCompareSection() {
   const { repository, currentRef, defaultRef } = useRepositoryContext();
   const { isResourceAllowed } = useResourceAllowed();
   const { repositoryBranchesQuery } = useRepositoryBranches(repository.slug);
+  const { repositoryTagsQuery } = useRepositoryTags(repository.slug);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const [baseRef, setBaseRef] = useState<string | undefined>(defaultRef);
-  const [compareRef, setCompareRef] = useState<string | undefined>(currentRef);
+  // Get refs from query params or defaults
+  // Normalize empty strings to null to ensure proper fallback behavior
+  const baseFromParams = searchParams.get('base') || null;
+  const compareFromParams = searchParams.get('compare') || null;
+
+  // Create a stable key from URL params to detect changes
+  // Use JSON encoding to avoid collisions when ref names contain underscores
+  const urlParamsKey = useMemo(
+    () => JSON.stringify([baseFromParams ?? null, compareFromParams ?? null]),
+    [baseFromParams, compareFromParams]
+  );
+
+  // Use derived state based on query params
+  // Store the URL params key to detect when URL changes
+  const [lastUrlParamsKey, setLastUrlParamsKey] = useState(urlParamsKey);
+  const [localBaseRef, setLocalBaseRef] = useState<string | undefined>();
+  const [localCompareRef, setLocalCompareRef] = useState<string | undefined>();
+
+  // Reset local state when URL params change
+  useEffect(() => {
+    if (lastUrlParamsKey !== urlParamsKey) {
+      setLastUrlParamsKey(urlParamsKey);
+      if (baseFromParams || compareFromParams) {
+        setLocalBaseRef(undefined);
+        setLocalCompareRef(undefined);
+      }
+    }
+  }, [lastUrlParamsKey, urlParamsKey, baseFromParams, compareFromParams]);
+
+  // Determine which ref to use (local state takes precedence over query params)
+  const baseRef = localBaseRef ?? baseFromParams ?? defaultRef;
+  const compareRef = localCompareRef ?? compareFromParams ?? currentRef;
 
   const { diffQuery, mergeRefsMutation } = useRepositoryDiff(
     repository.slug,
     baseRef,
     compareRef
   );
+
+  // Log error details to console for debugging, but don't expose to users
+  useEffect(() => {
+    if (diffQuery.isError && diffQuery.error) {
+      console.error('Diff query error:', diffQuery.error);
+    }
+  }, [diffQuery.isError, diffQuery.error]);
+
+  /**
+   * Clear search params when user interacts with local controls.
+   */
+  const clearSearchParams = useCallback(() => {
+    if (baseFromParams || compareFromParams) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('base');
+      params.delete('compare');
+      const queryString = params.toString();
+      router.replace(
+        queryString ? `?${queryString}` : window.location.pathname,
+        { scroll: false }
+      );
+    }
+  }, [baseFromParams, compareFromParams, searchParams, router]);
 
   const canViewDiff = useMemo(
     () => isResourceAllowed('repository_commit', 'read', repository.id),
@@ -69,7 +131,7 @@ export default function RepositoryCompareSection() {
    * Check if refs can be modified.
    */
   const notImmutable = useMemo(() => {
-    // Can't merge if loading
+    // Can't merge if loading branches
     if (repositoryBranchesQuery.isLoading) return false;
     // Can't merge if the current repository is immutable
     if (repository.is_immutable) return false;
@@ -88,6 +150,22 @@ export default function RepositoryCompareSection() {
     repository,
     repositoryBranchesQuery.data?.data,
   ]);
+
+  /**
+   * Check if repository or base branch is actually immutable.
+   * Used to determine if ImmutableWarning should be shown.
+   */
+  const isActuallyImmutable = useMemo(() => {
+    // Repository is immutable
+    if (repository.is_immutable) return true;
+    // Check if base ref is an immutable branch
+    const baseBranch = repositoryBranchesQuery.data?.data?.find(
+      (b) => b.name === baseRef
+    );
+    if (baseBranch?.is_immutable) return true;
+    // Not immutable
+    return false;
+  }, [repository.is_immutable, repositoryBranchesQuery.data?.data, baseRef]);
 
   /**
    * Merge the comparison in to the base.
@@ -176,13 +254,20 @@ export default function RepositoryCompareSection() {
             `}
           >
             <div className='min-w-60'>
-              <BranchSelector
+              <RefSelector
+                id='ref-selector-base'
                 branches={repositoryBranchesQuery.data?.data ?? []}
-                loading={repositoryBranchesQuery.isLoading}
+                tags={repositoryTagsQuery.data?.data ?? []}
+                loading={
+                  repositoryBranchesQuery.isLoading ||
+                  repositoryTagsQuery.isLoading
+                }
                 label={dict.repository.compare.baseBranch}
                 currentRef={baseRef}
-                onSelect={(branch) => {
-                  setBaseRef(branch.value);
+                onSelect={(ref) => {
+                  clearSearchParams();
+                  setLocalBaseRef(ref.value);
+                  setLocalCompareRef(compareRef);
                 }}
               />
             </div>
@@ -191,19 +276,27 @@ export default function RepositoryCompareSection() {
               variant='ghost'
               icon={<TbArrowLeft size={18} />}
               onClick={() => {
-                setBaseRef(compareRef);
-                setCompareRef(baseRef);
+                clearSearchParams();
+                setLocalBaseRef(compareRef);
+                setLocalCompareRef(baseRef);
               }}
               tooltip={dict.repository.compare.switchDirection}
             />
             <div className='min-w-60'>
-              <BranchSelector
+              <RefSelector
+                id='ref-selector-compare'
                 branches={repositoryBranchesQuery.data?.data ?? []}
-                loading={repositoryBranchesQuery.isLoading}
+                tags={repositoryTagsQuery.data?.data ?? []}
+                loading={
+                  repositoryBranchesQuery.isLoading ||
+                  repositoryTagsQuery.isLoading
+                }
                 label={dict.repository.compare.compareBranch}
                 currentRef={compareRef}
-                onSelect={(branch) => {
-                  setCompareRef(branch.value);
+                onSelect={(ref) => {
+                  clearSearchParams();
+                  setLocalBaseRef(baseRef);
+                  setLocalCompareRef(ref.value);
                 }}
               />
             </div>
@@ -240,17 +333,49 @@ export default function RepositoryCompareSection() {
           </div>
         </div>
         {diffQuery.isLoading && <LoadingSkeleton className='h-96' />}
-        {!diffQuery.isLoading && !notImmutable && <ImmutableWarning />}
-        {!diffQuery.isLoading && !canMerge && <NoDiffWarning />}
-        {!diffQuery.isLoading &&
-          canMerge &&
-          notImmutable &&
-          diffQuery.data?.data && (
+        {!diffQuery.isLoading && diffQuery.isError && (
+          <div
+            className={`
+              w-full rounded-lg border border-red-200 bg-red-50 px-4 py-8
+              dark:border-red-900 dark:bg-red-950/20
+            `}
+          >
+            <p
+              className={`
+                mx-auto mb-2 max-w-lg text-center text-lg text-red-700
+                lg:text-xl
+                dark:text-red-400
+              `}
+            >
+              {dict.repository.compare.failedToLoadDiff}
+            </p>
+            <p
+              className={`
+                mx-auto max-w-lg text-center text-sm text-red-600
+                dark:text-red-500
+              `}
+            >
+              {dict.repository.compare.failedToLoadDiffSubtitle}
+            </p>
+          </div>
+        )}
+        {!diffQuery.isLoading && !diffQuery.isError && diffQuery.data?.data && (
+          <>
+            {isActuallyImmutable && <ImmutableWarning />}
             <DiffView
               diff={diffQuery.data.data}
               baseRef={baseRef}
               compareRef={compareRef}
             />
+          </>
+        )}
+        {!diffQuery.isLoading &&
+          !diffQuery.isError &&
+          !diffQuery.data?.data && (
+            <>
+              {isActuallyImmutable && <ImmutableWarning />}
+              {!isActuallyImmutable && <NoDiffWarning />}
+            </>
           )}
       </div>
     </SafeComponent>

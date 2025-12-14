@@ -2,11 +2,14 @@
 
 import { useMemo } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import NormalList from '@/components/ui/list/NormalList';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { Commit } from '@/types/core/Commit';
 import type { GridRow } from '@/types/internal/ListProps';
@@ -27,8 +30,10 @@ export default function CommitList({
 }) {
   const { dict, locale } = useLocale();
   const { irminAlert } = usePopup();
+  const router = useRouter();
 
-  const { viewRef } = useRepositoryContext();
+  const { viewRef, repository } = useRepositoryContext();
+  const { workspaceSlug } = useWorkspaceContext();
 
   const rows: GridRow[] = useMemo(
     () =>
@@ -58,6 +63,18 @@ export default function CommitList({
             onClick: () => viewRef(commit.hash),
           },
           {
+            label: dict.repository.commit.changes,
+            primary: false,
+            disabled: !commit.previous_hash,
+            onClick: () => {
+              if (commit.previous_hash) {
+                router.push(
+                  `/${locale ?? 'en'}/workspace/${workspaceSlug}/repositories/${repository.slug}/compare?base=${commit.previous_hash}&compare=${commit.hash}`
+                );
+              }
+            },
+          },
+          {
             label: dict.repository.commit.copyHash,
             primary: false,
             onClick: () => {
@@ -67,7 +84,16 @@ export default function CommitList({
           },
         ],
       })) ?? [],
-    [dict, irminAlert, locale, viewRef, commits]
+    [
+      dict,
+      irminAlert,
+      locale,
+      viewRef,
+      router,
+      workspaceSlug,
+      repository.slug,
+      commits,
+    ]
   );
 
   return (
