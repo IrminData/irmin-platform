@@ -5,6 +5,15 @@
 package irmincore // import "github.com/IrminData/irmin-sdk-go/api"
 
 
+FUNCTIONS
+
+func AddLimitResponseParam(endpoint string) string
+    AddLimitResponseParam appends the limit-response query parameter to an
+    endpoint URL. It preserves the original query string format by using simple
+    string concatenation to avoid re-encoding or reordering existing parameters.
+    Handles fragments correctly.
+
+
 TYPES
 
 type Client struct {
@@ -225,17 +234,20 @@ func (c *Client) DownloadObject(ctx context.Context, workspace, repository, path
 func (c *Client) ExecuteSQL(
 	ctx context.Context,
 	workspace string,
+	limitResponse bool,
 	req ExecuteSQLRequest,
 ) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error)
 
 func (c *Client) ExecuteStoredQuery(
 	ctx context.Context,
 	workspace, queryID string,
+	limitResponse bool,
 ) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error)
 
 func (c *Client) ExecuteStoredScript(
 	ctx context.Context,
 	workspace, scriptID string,
+	limitResponse bool,
 	req ExecuteScriptRequest,
 ) (*irminmodels.ScriptResult, *irminmodels.IrminAPIResponse, error)
 
@@ -370,7 +382,11 @@ func (c *Client) GetObjectAtPath(
 ) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
     GetObjectAtPath fetches the object at the given path and ref.
 
-func (c *Client) GetObjectContent(ctx context.Context, workspace, repository, path, ref string) ([]byte, error)
+func (c *Client) GetObjectContent(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+	limitResponse bool,
+) ([]byte, error)
     GetObjectContent fetches the content of an object at the given path and ref.
 
 func (c *Client) GetObjectHistory(
@@ -388,6 +404,7 @@ func (c *Client) GetObjectSchema(
 func (c *Client) GetObjectStructuredContent(
 	ctx context.Context,
 	workspace, repository, path, ref string,
+	limitResponse bool,
 ) (map[string]any, *irminmodels.IrminAPIResponse, error)
     GetObjectStructuredContent fetches the parsed structured content of an
     object at the given path and ref.

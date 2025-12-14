@@ -429,3 +429,36 @@ func (c *Client) FetchAPIEnhanced(
 func (c *Client) FetchBinary(ctx context.Context, opts RequestOptions) ([]byte, error) {
 	return c.Request(ctx, opts)
 }
+
+// AddLimitResponseParam appends the limit-response query parameter to an endpoint URL.
+// It preserves the original query string format by using simple string concatenation
+// to avoid re-encoding or reordering existing parameters. Handles fragments correctly.
+func AddLimitResponseParam(endpoint string) string {
+	// Find the fragment position if it exists
+	fragmentPos := -1
+	queryPos := -1
+
+	for i := range len(endpoint) {
+		if endpoint[i] == '?' && queryPos == -1 {
+			queryPos = i
+		}
+		if endpoint[i] == '#' {
+			fragmentPos = i
+			break
+		}
+	}
+
+	// Determine the correct separator based on whether query params already exist
+	separator := "?"
+	if queryPos != -1 {
+		separator = "&"
+	}
+
+	// If there's a fragment, insert the parameter before it
+	if fragmentPos != -1 {
+		return endpoint[:fragmentPos] + separator + "limit-response=true" + endpoint[fragmentPos:]
+	}
+
+	// No fragment, just append
+	return endpoint + separator + "limit-response=true"
+}

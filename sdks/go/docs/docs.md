@@ -135,6 +135,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 
 ## Index
 
+- [func AddLimitResponseParam\(endpoint string\) string](<#AddLimitResponseParam>)
 - [type Client](<#Client>)
   - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
   - [func NewClientWithSQIDManager\(baseURL, token, locale string, sqidManager \*irminsqids.SQIDManager\) \*Client](<#NewClientWithSQIDManager>)
@@ -173,9 +174,9 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) DeleteWorkspace\(ctx context.Context, slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkspace>)
   - [func \(c \*Client\) DeleteWorkspaceTag\(ctx context.Context, workspace, tagID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkspaceTag>)
   - [func \(c \*Client\) DownloadObject\(ctx context.Context, workspace, repository, path, ref string\) \(\[\]byte, error\)](<#Client.DownloadObject>)
-  - [func \(c \*Client\) ExecuteSQL\(ctx context.Context, workspace string, req ExecuteSQLRequest\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteSQL>)
-  - [func \(c \*Client\) ExecuteStoredQuery\(ctx context.Context, workspace, queryID string\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteStoredQuery>)
-  - [func \(c \*Client\) ExecuteStoredScript\(ctx context.Context, workspace, scriptID string, req ExecuteScriptRequest\) \(\*irminmodels.ScriptResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteStoredScript>)
+  - [func \(c \*Client\) ExecuteSQL\(ctx context.Context, workspace string, limitResponse bool, req ExecuteSQLRequest\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteSQL>)
+  - [func \(c \*Client\) ExecuteStoredQuery\(ctx context.Context, workspace, queryID string, limitResponse bool\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteStoredQuery>)
+  - [func \(c \*Client\) ExecuteStoredScript\(ctx context.Context, workspace, scriptID string, limitResponse bool, req ExecuteScriptRequest\) \(\*irminmodels.ScriptResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteStoredScript>)
   - [func \(c \*Client\) FetchAPI\(ctx context.Context, opts RequestOptions, out any\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.FetchAPI>)
   - [func \(c \*Client\) FetchAPIEnhanced\(ctx context.Context, opts RequestOptions, out any\) \(\*irminmodels.IrminAPIResponse, \*irminvalidator.ValidationResultError, error\)](<#Client.FetchAPIEnhanced>)
   - [func \(c \*Client\) FetchBinary\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.FetchBinary>)
@@ -196,10 +197,10 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) GetConnector\(ctx context.Context, connectorID string\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnector>)
   - [func \(c \*Client\) GetInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetInvite>)
   - [func \(c \*Client\) GetObjectAtPath\(ctx context.Context, workspace, repository, path, ref string\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectAtPath>)
-  - [func \(c \*Client\) GetObjectContent\(ctx context.Context, workspace, repository, path, ref string\) \(\[\]byte, error\)](<#Client.GetObjectContent>)
+  - [func \(c \*Client\) GetObjectContent\(ctx context.Context, workspace, repository, path, ref string, limitResponse bool\) \(\[\]byte, error\)](<#Client.GetObjectContent>)
   - [func \(c \*Client\) GetObjectHistory\(ctx context.Context, workspace, repository, path, ref string\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectHistory>)
   - [func \(c \*Client\) GetObjectSchema\(ctx context.Context, workspace, repository, path, ref string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectSchema>)
-  - [func \(c \*Client\) GetObjectStructuredContent\(ctx context.Context, workspace, repository, path, ref string\) \(map\[string\]any, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectStructuredContent>)
+  - [func \(c \*Client\) GetObjectStructuredContent\(ctx context.Context, workspace, repository, path, ref string, limitResponse bool\) \(map\[string\]any, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectStructuredContent>)
   - [func \(c \*Client\) GetPolicy\(ctx context.Context, workspace, policyID string\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicy>)
   - [func \(c \*Client\) GetPolicyResourceOptions\(ctx context.Context, workspace string\) \(\*irminmodels.PolicyResourceOptions, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicyResourceOptions>)
   - [func \(c \*Client\) GetPolicyRoleSummary\(ctx context.Context, workspace string\) \(\[\]irminmodels.RolePolicySummary, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicyRoleSummary>)
@@ -324,6 +325,15 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type UploadObjectFromURLRequest](<#UploadObjectFromURLRequest>)
 - [type WorkflowRequest](<#WorkflowRequest>)
 
+
+<a name="AddLimitResponseParam"></a>
+## func AddLimitResponseParam
+
+```go
+func AddLimitResponseParam(endpoint string) string
+```
+
+AddLimitResponseParam appends the limit\-response query parameter to an endpoint URL. It preserves the original query string format by using simple string concatenation to avoid re\-encoding or reordering existing parameters. Handles fragments correctly.
 
 <a name="Client"></a>
 ## type Client
@@ -688,7 +698,7 @@ DownloadObject creates a zip file of the object at the given path and ref and re
 ### func \(\*Client\) ExecuteSQL
 
 ```go
-func (c *Client) ExecuteSQL(ctx context.Context, workspace string, req ExecuteSQLRequest) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ExecuteSQL(ctx context.Context, workspace string, limitResponse bool, req ExecuteSQLRequest) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -697,7 +707,7 @@ func (c *Client) ExecuteSQL(ctx context.Context, workspace string, req ExecuteSQ
 ### func \(\*Client\) ExecuteStoredQuery
 
 ```go
-func (c *Client) ExecuteStoredQuery(ctx context.Context, workspace, queryID string) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ExecuteStoredQuery(ctx context.Context, workspace, queryID string, limitResponse bool) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -706,7 +716,7 @@ func (c *Client) ExecuteStoredQuery(ctx context.Context, workspace, queryID stri
 ### func \(\*Client\) ExecuteStoredScript
 
 ```go
-func (c *Client) ExecuteStoredScript(ctx context.Context, workspace, scriptID string, req ExecuteScriptRequest) (*irminmodels.ScriptResult, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ExecuteStoredScript(ctx context.Context, workspace, scriptID string, limitResponse bool, req ExecuteScriptRequest) (*irminmodels.ScriptResult, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -897,7 +907,7 @@ GetObjectAtPath fetches the object at the given path and ref.
 ### func \(\*Client\) GetObjectContent
 
 ```go
-func (c *Client) GetObjectContent(ctx context.Context, workspace, repository, path, ref string) ([]byte, error)
+func (c *Client) GetObjectContent(ctx context.Context, workspace, repository, path, ref string, limitResponse bool) ([]byte, error)
 ```
 
 GetObjectContent fetches the content of an object at the given path and ref.
@@ -924,7 +934,7 @@ GetObjectSchema fetches the schema of an object at the given path and ref.
 ### func \(\*Client\) GetObjectStructuredContent
 
 ```go
-func (c *Client) GetObjectStructuredContent(ctx context.Context, workspace, repository, path, ref string) (map[string]any, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetObjectStructuredContent(ctx context.Context, workspace, repository, path, ref string, limitResponse bool) (map[string]any, *irminmodels.IrminAPIResponse, error)
 ```
 
 GetObjectStructuredContent fetches the parsed structured content of an object at the given path and ref.

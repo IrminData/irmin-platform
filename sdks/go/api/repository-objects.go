@@ -150,16 +150,25 @@ func (c *Client) UploadObjectFromURL(
 }
 
 // GetObjectContent fetches the content of an object at the given path and ref.
-func (c *Client) GetObjectContent(ctx context.Context, workspace, repository, path, ref string) ([]byte, error) {
+func (c *Client) GetObjectContent(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+	limitResponse bool,
+) ([]byte, error) {
+	endpoint := fmt.Sprintf(
+		"/v1/workspaces/%s/repositories/%s/objects/content?ref=%s&path=%s",
+		workspace,
+		repository,
+		ref,
+		path,
+	)
+	if limitResponse {
+		endpoint = AddLimitResponseParam(endpoint)
+	}
+
 	apiResp, err := c.FetchBinary(ctx, RequestOptions{
-		Method: http.MethodGet,
-		Endpoint: fmt.Sprintf(
-			"/v1/workspaces/%s/repositories/%s/objects/content?ref=%s&path=%s",
-			workspace,
-			repository,
-			ref,
-			path,
-		),
+		Method:   http.MethodGet,
+		Endpoint: endpoint,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("fetch content error: %w", err)
@@ -171,17 +180,23 @@ func (c *Client) GetObjectContent(ctx context.Context, workspace, repository, pa
 func (c *Client) GetObjectStructuredContent(
 	ctx context.Context,
 	workspace, repository, path, ref string,
+	limitResponse bool,
 ) (map[string]any, *irminmodels.IrminAPIResponse, error) {
+	endpoint := fmt.Sprintf(
+		"/v1/workspaces/%s/repositories/%s/objects/content/structured?ref=%s&path=%s",
+		workspace,
+		repository,
+		ref,
+		path,
+	)
+	if limitResponse {
+		endpoint = AddLimitResponseParam(endpoint)
+	}
+
 	var structuredContent map[string]any
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
-		Method: http.MethodGet,
-		Endpoint: fmt.Sprintf(
-			"/v1/workspaces/%s/repositories/%s/objects/content/structured?ref=%s&path=%s",
-			workspace,
-			repository,
-			ref,
-			path,
-		),
+		Method:   http.MethodGet,
+		Endpoint: endpoint,
 	}, &structuredContent)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch structured content error: %w", err)

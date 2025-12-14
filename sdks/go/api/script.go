@@ -136,12 +136,19 @@ func (c *Client) TransferStoredScript(
 func (c *Client) ExecuteStoredScript(
 	ctx context.Context,
 	workspace, scriptID string,
+	limitResponse bool,
 	req ExecuteScriptRequest,
 ) (*irminmodels.ScriptResult, *irminmodels.IrminAPIResponse, error) {
 	var result irminmodels.ScriptResult
+
+	endpoint := fmt.Sprintf("/v1/workspaces/%s/scripts/%s/execute", workspace, scriptID)
+	if limitResponse {
+		endpoint = AddLimitResponseParam(endpoint)
+	}
+
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/scripts/%s/execute", workspace, scriptID),
+		Endpoint:    endpoint,
 		ContentType: "application/json",
 		Body:        req,
 	}, &result)

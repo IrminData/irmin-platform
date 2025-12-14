@@ -134,11 +134,18 @@ func (c *Client) TransferStoredQuery(
 func (c *Client) ExecuteStoredQuery(
 	ctx context.Context,
 	workspace, queryID string,
+	limitResponse bool,
 ) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error) {
 	var result irminmodels.QueryResult
+
+	endpoint := fmt.Sprintf("/v1/workspaces/%s/queries/%s/execute", workspace, queryID)
+	if limitResponse {
+		endpoint = AddLimitResponseParam(endpoint)
+	}
+
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/queries/%s/execute", workspace, queryID),
+		Endpoint:    endpoint,
 		ContentType: "application/x-www-form-urlencoded",
 	}, &result)
 	if err != nil {
@@ -150,12 +157,19 @@ func (c *Client) ExecuteStoredQuery(
 func (c *Client) ExecuteSQL(
 	ctx context.Context,
 	workspace string,
+	limitResponse bool,
 	req ExecuteSQLRequest,
 ) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error) {
 	var result irminmodels.QueryResult
+
+	endpoint := fmt.Sprintf("/v1/workspaces/%s/sql", workspace)
+	if limitResponse {
+		endpoint = AddLimitResponseParam(endpoint)
+	}
+
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/sql", workspace),
+		Endpoint:    endpoint,
 		ContentType: "application/json",
 		Body:        req,
 	}, &result)
