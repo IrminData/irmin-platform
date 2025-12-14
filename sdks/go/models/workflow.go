@@ -41,7 +41,7 @@ type PipelineStage struct {
 	Description   string            `json:"description"    validate:"required,max=200"                                               example:"Process customer data"`
 	Write         bool              `json:"write"                                                                                    example:"true"`
 	Read          bool              `json:"read"                                                                                     example:"true"`
-	OrderSequence int               `json:"order_sequence" validate:"required"                                                       example:"1"`
+	OrderSequence int               `json:"order_sequence"                                                                           example:"1"`
 	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository,validpipelinestage" example:"repository"`
 
 	// Action stage specific
@@ -50,9 +50,9 @@ type PipelineStage struct {
 	QueryID        *string              `json:"query_id,omitempty"        validate:"omitempty,validsqid=queries,required_if=ExecutableType query"  example:"qry_8x2m9k4n7p5q"`
 
 	// Connection stage specific
-	ConnectionID        *string   `json:"connection_id,omitempty"         validate:"validsqid=connections,required_if=Type connection" example:"conn_8x2m9k4n7p5q"`
-	ConnectionWritePath *string   `json:"connection_write_path,omitempty"                                                              example:"/exports/processed_data.csv"`
-	ConnectionReadPaths *[]string `json:"connection_read_paths,omitempty" validate:"omitempty,dive"                                    example:"/imports/raw_data.csv,/imports/metadata.json"`
+	ConnectionID        *string   `json:"connection_id,omitempty"         validate:"required_if=Type connection" example:"conn_8x2m9k4n7p5q"`
+	ConnectionWritePath *string   `json:"connection_write_path,omitempty"                                        example:"/exports/processed_data.csv"`
+	ConnectionReadPaths *[]string `json:"connection_read_paths,omitempty" validate:"omitempty,dive"              example:"/imports/raw_data.csv,/imports/metadata.json"`
 
 	// Repository stage specific
 	Repository          *string   `json:"repository,omitempty"            validate:"required_if=Type repository" example:"customer-analytics"`

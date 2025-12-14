@@ -123,7 +123,7 @@ func (v *Validator) validateConnectionPipelineStage(parentStruct reflect.Value) 
 	writePathField := parentStruct.FieldByName("ConnectionWritePath")
 	readPathsField := parentStruct.FieldByName("ConnectionReadPaths")
 
-	// Connection stages must have a connection ID
+	// Connection stages must have a valid connection ID (validated as SQID)
 	if !v.validateConnectionID(connectionIDField) {
 		return false
 	}
