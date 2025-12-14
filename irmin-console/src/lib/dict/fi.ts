@@ -1104,6 +1104,7 @@ const fi = {
     createAPIToken: 'Luo API avain',
     validFor: 'Voimassa (sekunneissa)',
     expiresAt: 'Vanhenee',
+    expiresOn: 'Vanhenee',
     revokeToken: 'Poista avain',
     yourAPIToken: 'Sinun API avain',
     storeTokenDescription:
@@ -1115,6 +1116,18 @@ const fi = {
     explainer:
       'API avaimet mahdollistavat Irmin API:n käytön tai Irmin MCP:n käytön nimissäsi, käyttöoikeuksillasi.',
     learnMoreApiDocs: 'Lue lisää API dokumentaatiosta',
+    valueMustBePositive: 'Arvon on oltava positiivinen',
+    valueMustBeValidNumber: 'Arvon on oltava kelvollinen numero',
+    valueTooLarge: 'Arvo on liian suuri ja aiheuttaisi ylivuodon',
+    durations: {
+      oneHour: '1 tunti',
+      sixHours: '6 tuntia',
+      oneDay: '1 päivä',
+      sevenDays: '7 päivää',
+      thirtyDays: '30 päivää',
+      ninetyDays: '90 päivää',
+      custom: 'Mukautettu (sekunteina)',
+    },
   },
 
   policy: {

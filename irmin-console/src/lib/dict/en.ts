@@ -1120,6 +1120,7 @@ const en = {
     createAPIToken: 'Create API token',
     validFor: 'Valid for (in seconds)',
     expiresAt: 'Expires at',
+    expiresOn: 'Expires on',
     revokeToken: 'Revoke token',
     yourAPIToken: 'Your API Token',
     storeTokenDescription:
@@ -1131,6 +1132,18 @@ const en = {
     explainer:
       'API tokens allow you to call the Irmin API or use Irmin MCP under your name with your permissions.',
     learnMoreApiDocs: 'Learn more in the API documentation',
+    valueMustBePositive: 'Value must be positive',
+    valueMustBeValidNumber: 'Value must be a valid number',
+    valueTooLarge: 'Value is too large and would cause overflow',
+    durations: {
+      oneHour: '1 hour',
+      sixHours: '6 hours',
+      oneDay: '1 day',
+      sevenDays: '7 days',
+      thirtyDays: '30 days',
+      ninetyDays: '90 days',
+      custom: 'Custom (seconds)',
+    },
   },
 
   policy: {
