@@ -6,6 +6,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/lib"
+	"irmin-api/services"
 	"irmin-api/utils"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
@@ -33,26 +34,24 @@ import (
 func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the filters from the query string.
 	query, err := utils.ParseQueryParams(c, nil, []string{"type"})
 	if err != nil {
-		api.Logger.Error("Error parsing query params", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error parsing query params",
+			fmt.Errorf("%w: %w", services.ErrInvalidQueryParams, err),
+			dict,
+		)
 	}
 
 	// Get the workflows
 	workflows, err := api.Services.ListWorkflows(c, user, workspace, query["type"])
 	if err != nil {
-		api.Logger.Error("Error getting workflows", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to list workflows", err, dict)
 	}
 
 	// Create a wrapper function that adapts FormatWorkflowResponse to the expected signature
@@ -67,10 +66,12 @@ func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if err != nil {
-		api.Logger.Error("Error formatting workflow response", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format workflows",
+			services.NewInternalErrorf("error formatting workflows: %v", err),
+			dict,
+		)
 	}
 
 	// Return the response.
@@ -97,23 +98,29 @@ func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
 func (api *APIControllers) WorkflowsShow(c fiber.Ctx) error {
 	_, dict, _, _, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the workflow from locals
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
 	if !workflowOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for WorkflowsShow",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Get the workflow response.
 	workflowResponse, formatWorkflowResponseErr := formatter.FormatWorkflowResponse(api.DB, workflow, api.SQIDManager)
 	if formatWorkflowResponseErr != nil {
-		api.Logger.Error("Error getting workflow response", "error", formatWorkflowResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format workflow response",
+			services.NewInternalErrorf("error formatting workflow response: %v", formatWorkflowResponseErr),
+			dict,
+		)
 	}
 
 	// Return the response.
@@ -140,33 +147,36 @@ func (api *APIControllers) WorkflowsShow(c fiber.Ctx) error {
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/workflows/{workflow_slug} [patch]
 //
-//nolint:dupl // This is not a duplicate, it's a different endpoint, which functions in a similar way.
+//nolint:dupl // Similar pattern to WorkflowableUpdate but updates different workflow properties
 func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the workflow from locals
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
 	if !workflowOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for WorkflowsUpdate",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse and validate the JSON request body
 	var req irmincore.UpdateWorkflowRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Update the workflow
 	workflow, err = api.Services.UpdateWorkflow(c, user, workspace, workflow, req)
 	if err != nil {
-		api.Logger.Error("Error updating workflow", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to update workflow", err, dict)
 	}
 
 	// Get the workflow response.
@@ -176,10 +186,12 @@ func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatWorkflowResponseErr != nil {
-		api.Logger.Error("Error getting workflow response", "error", formatWorkflowResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format workflow response",
+			services.NewInternalErrorf("error formatting workflow response: %v", formatWorkflowResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches for workflows in this workspace (all users)
@@ -215,32 +227,32 @@ func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
 func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Parse and validate the JSON request body
 	var req irmincore.WorkflowRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Create the workflow
 	workflow, err := api.Services.CreateWorkflow(c, user, workspace, req)
 	if err != nil {
-		api.Logger.Error("Error creating workflow", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to create workflow", err, dict)
 	}
 
 	// Get the workflow response
 	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, workflow, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error getting workflow response", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format workflow response",
+			services.NewInternalErrorf("error formatting workflow response: %v", err),
+			dict,
+		)
 	}
 
 	// Invalidate caches for workflows in this workspace (all users)
@@ -279,38 +291,43 @@ func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the workflow from locals
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
 	if !workflowOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for WorkflowableUpdate",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse and validate the JSON request body
 	var req irminmodels.Workflowable
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Update the workflowable
 	workflow, err = api.Services.UpdateWorkflowable(c, user, workspace, workflow, req)
 	if err != nil {
-		api.Logger.Error("Error updating workflowable", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to update workflowable", err, dict)
 	}
 
 	// Get the workflow response
 	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, workflow, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error getting workflow response", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format workflow response",
+			services.NewInternalErrorf("error formatting workflow response: %v", err),
+			dict,
+		)
 	}
 
 	// Invalidate caches for workflows in this workspace (all users)
@@ -347,41 +364,41 @@ func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the workflow from locals
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
 	if !workflowOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ScheduleUpdate",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the schedule object from the request body.
 	schedule, err := lib.ParseScheduleFromRequest(c, api.DB, *workspace, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error creating schedule object", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(c, "Error creating schedule object", err, dict)
 	}
 
 	// Update the workflow schedule
 	workflow, err = api.Services.UpdateWorkflowSchedule(c, user, workspace, workflow, schedule)
 	if err != nil {
-		api.Logger.Error("Error updating workflow schedule", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to update workflow schedule", err, dict)
 	}
 
 	// Get the workflow response.
 	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, workflow, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error getting workflow response", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format workflow response",
+			services.NewInternalErrorf("error formatting workflow response: %v", err),
+			dict,
+		)
 	}
 
 	// Invalidate caches for workflows in this workspace (all users)
@@ -414,26 +431,29 @@ func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error {
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Workflow not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/workflows/{workflow_slug} [delete]
+//
+//nolint:dupl // Similar to UsersDestroy and WorkspaceTagsDestroy but operates on different entity types
 func (api *APIControllers) WorkflowsDestroy(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the workflow from locals
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
 	if !workflowOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for WorkflowsDestroy",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Delete the workflow
 	err = api.Services.DeleteWorkflow(c, user, workspace, workflow)
 	if err != nil {
-		api.Logger.Error("Error deleting workflow", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to delete workflow", err, dict)
 	}
 
 	// Invalidate caches for workflows in this workspace (all users)
@@ -472,29 +492,32 @@ func (api *APIControllers) WorkflowsDestroy(c fiber.Ctx) error {
 func (api *APIControllers) TransferWorkflowOwnership(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the workflow from locals
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
 	if !workflowOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for StartWorkflow",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse and validate the JSON request body
 	var req irmincore.TransferWorkflowOwnershipRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Transfer the workflow ownership
 	workflow, err = api.Services.TransferWorkflowOwnership(c, user, workspace, workflow, req)
 	if err != nil {
-		api.Logger.Error("Error transferring workflow ownership", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to transfer workflow ownership", err, dict)
 	}
 
 	// Get the workflow response.
@@ -504,10 +527,12 @@ func (api *APIControllers) TransferWorkflowOwnership(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatWorkflowResponseErr != nil {
-		api.Logger.Error("Error getting workflow response", "error", formatWorkflowResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format workflow response",
+			services.NewInternalErrorf("error formatting workflow response: %v", formatWorkflowResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches for workflows in this workspace (all users)
@@ -545,23 +570,24 @@ func (api *APIControllers) TransferWorkflowOwnership(c fiber.Ctx) error {
 func (api *APIControllers) PauseWorkflow(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the workflow from locals
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
 	if !workflowOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for PauseWorkflow",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Update the workflow record to pause it.
 	workflow, err = api.Services.PauseWorkflow(c, user, workspace, workflow)
 	if err != nil {
-		api.Logger.Error("Error pausing workflow", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to pause workflow", err, dict)
 	}
 
 	// Get the workflow response.
@@ -571,10 +597,12 @@ func (api *APIControllers) PauseWorkflow(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatWorkflowResponseErr != nil {
-		api.Logger.Error("Error getting workflow response", "error", formatWorkflowResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format workflow response",
+			services.NewInternalErrorf("error formatting workflow response: %v", formatWorkflowResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches for workflows in this workspace (all users)
@@ -612,23 +640,24 @@ func (api *APIControllers) PauseWorkflow(c fiber.Ctx) error {
 func (api *APIControllers) StartWorkflow(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the workflow from locals
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
 	if !workflowOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for StartWorkflow",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Start the workflow
 	workflow, err = api.Services.StartWorkflow(c, user, workspace, workflow)
 	if err != nil {
-		api.Logger.Error("Error starting workflow", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to start workflow", err, dict)
 	}
 
 	// Get the workflow response.
@@ -638,10 +667,12 @@ func (api *APIControllers) StartWorkflow(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatWorkflowResponseErr != nil {
-		api.Logger.Error("Error getting workflow response", "error", formatWorkflowResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format workflow response",
+			services.NewInternalErrorf("error formatting workflow response: %v", formatWorkflowResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches for workflows in this workspace (all users)

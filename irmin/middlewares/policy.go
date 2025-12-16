@@ -3,9 +3,8 @@ package middlewares
 import (
 	"irmin-api/db"
 	"irmin-api/locales"
-	"irmin-api/utils"
+	"irmin-api/services"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -16,7 +15,12 @@ func (api *APIMiddlewares) PolicyMiddleware(c fiber.Ctx) error {
 	user, userOk := c.Locals("user").(*db.User)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	if !dictOk || !userOk || !workspaceOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals in PolicyMiddleware",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Get the policy sqid from the request URL
@@ -25,9 +29,7 @@ func (api *APIMiddlewares) PolicyMiddleware(c fiber.Ctx) error {
 	// Get the policy
 	policy, err := api.Services.GetPolicy(c, user, workspace, policySQID)
 	if err != nil {
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(c, "Error retrieving policy", err, dict)
 	}
 
 	// Set the policy in the context for subsequent handlers

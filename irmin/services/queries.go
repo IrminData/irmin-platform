@@ -40,7 +40,7 @@ func getStoredEntity[T any](
 	isAllowed, err := api.PermissionService.IsAllowed(user, workspace, resource, nil, db.PolicyActionRead)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -106,7 +106,7 @@ func (api *APIServices) ListWorkspaceQueries(
 	queries, getQueriesErr := api.DB.GetStoredQueriesByWorkspaceID(workspace.ID)
 	if getQueriesErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching queries", "error", getQueriesErr)
-		return nil, getQueriesErr
+		return nil, NewInternalErrorf("error fetching queries: %w", getQueriesErr)
 	}
 
 	// Filter queries based on user permissions
@@ -121,7 +121,7 @@ func (api *APIServices) ListWorkspaceQueries(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error filtering queries by permissions", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error filtering queries by permissions: %w", err)
 	}
 
 	return filteredQueries, nil
@@ -177,14 +177,14 @@ func (api *APIServices) CreateQuery(
 		}
 		if saveErr := tx.Create(query).Error; saveErr != nil {
 			api.Logger.ErrorContext(c, "Error creating stored query", "error", saveErr)
-			return saveErr
+			return NewInternalErrorf("error creating stored query: %w", saveErr)
 		}
 
 		// Add tags if provided
 		if len(req.Tags) > 0 {
 			if addTagsErr := api.addQueryTags(tx, query, req.Tags, workspace.ID); addTagsErr != nil {
 				api.Logger.ErrorContext(c, "Error adding tags to query", "error", addTagsErr)
-				return addTagsErr
+				return NewInternalErrorf("error adding tags to query: %w", addTagsErr)
 			}
 		}
 
@@ -208,7 +208,7 @@ func (api *APIServices) CreateQuery(
 	query, getQueryByIDErr := api.DB.GetStoredQueryByID(query.ID)
 	if getQueryByIDErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching query", "error", getQueryByIDErr)
-		return nil, getQueryByIDErr
+		return nil, NewInternalErrorf("error fetching query: %w", getQueryByIDErr)
 	}
 
 	return query, nil
@@ -261,7 +261,7 @@ func (api *APIServices) UpdateQuery(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -328,7 +328,7 @@ func (api *APIServices) DeleteQuery(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return err
+		return NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -350,7 +350,7 @@ func (api *APIServices) DeleteQuery(
 	})
 	if deleteStoredQueryErr != nil {
 		api.Logger.ErrorContext(c, "Error deleting stored query", "error", deleteStoredQueryErr)
-		return deleteStoredQueryErr
+		return NewInternalErrorf("error deleting stored query: %w", deleteStoredQueryErr)
 	}
 
 	// Log the event
@@ -382,7 +382,7 @@ func (api *APIServices) TransferQueryOwnership(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -414,7 +414,7 @@ func (api *APIServices) TransferQueryOwnership(
 	inWorkspace, isUserInWorkspaceErr := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
 	if isUserInWorkspaceErr != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is in workspace", "error", isUserInWorkspaceErr)
-		return nil, isUserInWorkspaceErr
+		return nil, NewInternalErrorf("error checking if user is in workspace: %w", isUserInWorkspaceErr)
 	}
 	if !inWorkspace {
 		return nil, ErrNewOwnerInvalid
@@ -424,14 +424,14 @@ func (api *APIServices) TransferQueryOwnership(
 	newOwner, getNewOwnerErr := api.DB.GetUser(uint(newOwnerID))
 	if getNewOwnerErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching new owner information", "error", getNewOwnerErr)
-		return nil, getNewOwnerErr
+		return nil, NewInternalErrorf("error fetching new owner information: %w", getNewOwnerErr)
 	}
 
 	// Update the stored query in the database
 	query.OwnerID = uint(newOwnerID)
 	if saveErr := api.DB.Save(&query).Error; saveErr != nil {
 		api.Logger.ErrorContext(c, "Error updating stored query", "error", saveErr)
-		return nil, saveErr
+		return nil, NewInternalErrorf("error updating stored query: %w", saveErr)
 	}
 
 	// Log the event
@@ -464,7 +464,7 @@ func (api *APIServices) ExecuteSQL(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -482,7 +482,7 @@ func (api *APIServices) ExecuteSQL(
 	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
-		return nil, createDataEngineClientErr
+		return nil, NewInternalErrorf("error creating data engine client: %w", createDataEngineClientErr)
 	}
 
 	// Set permission checker

@@ -30,7 +30,7 @@ func (api *APIServices) CompareRepositoryRefs(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -54,14 +54,14 @@ func (api *APIServices) CompareRepositoryRefs(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Compare the refs
 	diff, err := dataEngine.CompareRefs(c, workspace.Slug, repository.Slug, baseRef, compareRef)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error comparing refs", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error comparing refs: %w", err)
 	}
 
 	return diff, nil
@@ -85,7 +85,7 @@ func (api *APIServices) MergeRepositoryRefs(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -124,7 +124,7 @@ func (api *APIServices) MergeRepositoryRefs(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Merge the refs
@@ -142,12 +142,15 @@ func (api *APIServices) MergeRepositoryRefs(
 
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error merging refs", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error merging refs: %w", err)
 	}
 
 	// Delete the cached objects for the target branch
 	dbDeleteErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		return api.DB.DeleteObjects(tx, nil, &repository.ID, &baseRef)
+		if deleteErr := api.DB.DeleteObjects(tx, nil, &repository.ID, &baseRef); deleteErr != nil {
+			return NewInternalErrorf("error deleting cached objects: %w", deleteErr)
+		}
+		return nil
 	})
 	if dbDeleteErr != nil {
 		api.Logger.WarnContext(c, "Error deleting cached objects for branch", "error", dbDeleteErr)

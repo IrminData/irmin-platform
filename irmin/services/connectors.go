@@ -19,7 +19,7 @@ func (api *APIServices) ListConnectors(c context.Context) ([]db.Connector, error
 	connectors, getAllConnectorsErr := api.DB.GetAllConnectors()
 	if getAllConnectorsErr != nil {
 		api.Logger.ErrorContext(c, "Error retrieving connectors", "error", getAllConnectorsErr)
-		return nil, getAllConnectorsErr
+		return nil, NewInternalErrorf("error retrieving connectors: %w", getAllConnectorsErr)
 	}
 
 	return connectors, nil
@@ -32,7 +32,7 @@ func (api *APIServices) GetConnector(c context.Context, connectorID uint) (*db.C
 	connector, getConnectorErr := api.DB.GetConnector(connectorID)
 	if getConnectorErr != nil {
 		api.Logger.ErrorContext(c, "Error retrieving connector", "error", getConnectorErr)
-		return nil, getConnectorErr
+		return nil, NewInternalErrorf("error retrieving connector: %w", getConnectorErr)
 	}
 
 	return connector, nil
@@ -113,7 +113,7 @@ func (api *APIServices) CreateConnector(
 	saveConnectorErr := api.DB.Save(connector).Error
 	if saveConnectorErr != nil {
 		api.Logger.ErrorContext(c, "Error updating connector", "error", saveConnectorErr)
-		return nil, saveConnectorErr
+		return nil, NewInternalErrorf("error updating connector: %w", saveConnectorErr)
 	}
 
 	return connector, nil
@@ -169,7 +169,7 @@ func (api *APIServices) DeleteConnector(c context.Context, connector *db.Connect
 	})
 	if deleteConnectorErr != nil {
 		api.Logger.ErrorContext(c, "Error deleting connector", "error", deleteConnectorErr)
-		return deleteConnectorErr
+		return NewInternalErrorf("error deleting connector: %w", deleteConnectorErr)
 	}
 
 	return nil
@@ -200,7 +200,7 @@ func (api *APIServices) GetConnectorConfigurationFields(
 	)
 	if getConfigFieldsErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching connection configuration fields", "error", getConfigFieldsErr)
-		return nil, getConfigFieldsErr
+		return nil, NewInternalErrorf("error fetching connection configuration fields: %w", getConfigFieldsErr)
 	}
 
 	return configurationFields, nil
@@ -225,7 +225,7 @@ func (api *APIServices) ValidateConnectorConfiguration(
 	testResponse, validateConfigFieldsErr := connectorClient.ValidateConfigFields(c, detailsStr, settingsStr)
 	if validateConfigFieldsErr != nil && testResponse == nil {
 		api.Logger.ErrorContext(c, "Error testing connection", "error", validateConfigFieldsErr)
-		return nil, validateConfigFieldsErr
+		return nil, NewInternalErrorf("error testing connection: %w", validateConfigFieldsErr)
 	}
 
 	return testResponse, nil

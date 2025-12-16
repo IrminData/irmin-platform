@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"irmin-api/db"
@@ -16,11 +15,6 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"gorm.io/gorm"
-)
-
-var (
-	// ErrContentTooLarge is returned when object content exceeds size limits
-	ErrContentTooLarge = errors.New("content too large to display")
 )
 
 func (api *APIServices) GetRepositoryObject(
@@ -159,7 +153,7 @@ func (api *APIServices) validateGroupObjectPermissions(
 	)
 	if allowedErr != nil {
 		api.Logger.ErrorContext(c, "Error checking if user has read access to object", "error", allowedErr)
-		return allowedErr
+		return NewInternalErrorf("error checking permissions: %w", allowedErr)
 	}
 	if !allowed {
 		return ErrAccessDenied
@@ -185,7 +179,7 @@ func (api *APIServices) validateNonGroupObjectPermissions(
 	)
 	if filterErr != nil {
 		api.Logger.ErrorContext(c, "Error filtering objects by permissions", "error", filterErr)
-		return filterErr
+		return NewInternalErrorf("error filtering objects by permissions: %w", filterErr)
 	}
 
 	repositoryObjectDB.Children = filteredObjectChildren
@@ -212,7 +206,7 @@ func (api *APIServices) UploadRepositoryObject(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Upload the object to the data engine
@@ -225,7 +219,7 @@ func (api *APIServices) UploadRepositoryObject(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error uploading object to Data Engine", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error uploading object to data engine: %w", err)
 	}
 
 	var repositoryObject *db.RepositoryObject
@@ -242,11 +236,14 @@ func (api *APIServices) UploadRepositoryObject(
 			objectRef,
 			tags,
 		)
-		return saveErr
+		if saveErr != nil {
+			return NewInternalErrorf("error saving object and tags: %w", saveErr)
+		}
+		return nil
 	})
 
 	if transactionErr != nil {
-		return nil, transactionErr
+		return nil, NewInternalErrorf("error in database transaction: %w", transactionErr)
 	}
 
 	// Log the event
@@ -288,7 +285,7 @@ func (api *APIServices) UploadRepositoryObjectFromURL(
 	safeBody, err := lib.DownloadFileFromURL(c, url, headers)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error downloading file from URL", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error downloading file from URL: %w", err)
 	}
 	defer safeBody.Close()
 
@@ -296,7 +293,7 @@ func (api *APIServices) UploadRepositoryObjectFromURL(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Upload the file to the data engine
@@ -309,7 +306,7 @@ func (api *APIServices) UploadRepositoryObjectFromURL(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error uploading file to Data Engine", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error uploading file to data engine: %w", err)
 	}
 
 	var repositoryObject *db.RepositoryObject
@@ -326,11 +323,14 @@ func (api *APIServices) UploadRepositoryObjectFromURL(
 			objectRef,
 			tags,
 		)
-		return saveErr
+		if saveErr != nil {
+			return NewInternalErrorf("error saving object and tags: %w", saveErr)
+		}
+		return nil
 	})
 
 	if transactionErr != nil {
-		return nil, transactionErr
+		return nil, NewInternalErrorf("error in database transaction: %w", transactionErr)
 	}
 
 	return repositoryObject, nil
@@ -352,7 +352,7 @@ func (api *APIServices) ensureCreateAndModifyPermissions(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return err
+		return NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -377,7 +377,7 @@ func (api *APIServices) ensureCreateAndModifyPermissions(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return err
+		return NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -414,7 +414,7 @@ func (api *APIServices) MoveRepositoryObject(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -446,7 +446,7 @@ func (api *APIServices) MoveRepositoryObject(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -471,7 +471,7 @@ func (api *APIServices) MoveRepositoryObject(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Move the object in the data engine
@@ -484,7 +484,7 @@ func (api *APIServices) MoveRepositoryObject(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error moving object in Data Engine", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error moving object in data engine: %w", err)
 	}
 
 	// Use a single transaction to ensure atomicity of cache updates for move
@@ -498,7 +498,7 @@ func (api *APIServices) MoveRepositoryObject(
 		)
 		if deleteOldObjectErr != nil {
 			api.Logger.ErrorContext(c, "Error deleting old object from cache during move", "error", deleteOldObjectErr)
-			return deleteOldObjectErr
+			return NewInternalErrorf("error deleting old object from cache: %w", deleteOldObjectErr)
 		}
 
 		// Save the new object to the database using the same tx
@@ -514,7 +514,7 @@ func (api *APIServices) MoveRepositoryObject(
 		)
 		if saveErr != nil {
 			api.Logger.ErrorContext(c, "Error saving moved object to database (tx)", "error", saveErr)
-			return saveErr
+			return NewInternalErrorf("error saving moved object: %w", saveErr)
 		}
 		return nil
 	})
@@ -537,7 +537,10 @@ func (api *APIServices) MoveRepositoryObject(
 		RepositoryObjectID: &repositoryObject.ID,
 	})
 
-	return repositoryObject, transactionErr
+	if transactionErr != nil {
+		return repositoryObject, NewInternalErrorf("error in database transaction: %w", transactionErr)
+	}
+	return repositoryObject, nil
 }
 
 func (api *APIServices) CopyRepositoryObject(
@@ -559,7 +562,7 @@ func (api *APIServices) CopyRepositoryObject(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -591,7 +594,7 @@ func (api *APIServices) CopyRepositoryObject(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -616,7 +619,7 @@ func (api *APIServices) CopyRepositoryObject(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Copy the object in the data engine
@@ -629,7 +632,7 @@ func (api *APIServices) CopyRepositoryObject(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error copying object in Data Engine", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error copying object in data engine: %w", err)
 	}
 
 	// Save the new object to the database
@@ -647,7 +650,7 @@ func (api *APIServices) CopyRepositoryObject(
 		)
 		if saveErr != nil {
 			api.Logger.ErrorContext(c, "Error saving copied object to database (tx)", "error", saveErr)
-			return saveErr
+			return NewInternalErrorf("error saving copied object: %w", saveErr)
 		}
 		return nil
 	})
@@ -670,7 +673,10 @@ func (api *APIServices) CopyRepositoryObject(
 		RepositoryObjectID: &repositoryObject.ID,
 	})
 
-	return repositoryObject, transactionErr
+	if transactionErr != nil {
+		return repositoryObject, NewInternalErrorf("error in database transaction: %w", transactionErr)
+	}
+	return repositoryObject, nil
 }
 
 func (api *APIServices) DeleteRepositoryObject(
@@ -691,7 +697,7 @@ func (api *APIServices) DeleteRepositoryObject(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return err
+		return NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -719,7 +725,7 @@ func (api *APIServices) DeleteRepositoryObject(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return err
+		return NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -741,13 +747,13 @@ func (api *APIServices) DeleteRepositoryObject(
 		dataEngine, dataEngineErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 		if dataEngineErr != nil {
 			api.Logger.ErrorContext(c, "error creating data engine client", "error", dataEngineErr)
-			return dataEngineErr
+			return NewInternalErrorf("error creating data engine client: %w", dataEngineErr)
 		}
 
 		// Delete the object from the data engine
 		if deleteEngineObjectErr := dataEngine.DeleteObject(workspace.Slug, repository.Slug, object.Path, object.RepositoryRef, tx); deleteEngineObjectErr != nil {
 			api.Logger.ErrorContext(c, "Error deleting object from Data Engine", "error", deleteEngineObjectErr)
-			return deleteEngineObjectErr
+			return NewInternalErrorf("error deleting object from data engine: %w", deleteEngineObjectErr)
 		}
 
 		// Delete the object cache from the database after successful engine deletion
@@ -758,14 +764,14 @@ func (api *APIServices) DeleteRepositoryObject(
 		)
 		if deleteDatabaseObjectErr != nil {
 			api.Logger.ErrorContext(c, "Error deleting object from database", "error", deleteDatabaseObjectErr)
-			return deleteDatabaseObjectErr
+			return NewInternalErrorf("error deleting object from database: %w", deleteDatabaseObjectErr)
 		}
 
 		return nil
 	})
 
 	if transactionErr != nil {
-		return transactionErr
+		return NewInternalErrorf("error in database transaction: %w", transactionErr)
 	}
 
 	// Log the event
@@ -799,7 +805,7 @@ func (api *APIServices) GetRepositoryObjectContent(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -831,14 +837,14 @@ func (api *APIServices) GetRepositoryObjectContent(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Get the object content from the data engine
 	content, err := dataEngine.GetObjectContent(workspace.Slug, repository.Slug, object.Path, object.RepositoryRef)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error retrieving object content from Data Engine", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error retrieving object content from data engine: %w", err)
 	}
 
 	// Safety check: Verify actual content size matches expectations when limiting responses
@@ -876,7 +882,7 @@ func (api *APIServices) GetRepositoryObjectStructuredContent(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -903,7 +909,7 @@ func (api *APIServices) GetRepositoryObjectStructuredContent(
 	content, err := api.GetRepositoryObjectContent(c, locale, user, workspace, repository, object, limitResponse)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error getting object content", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error getting object content: %w", err)
 	}
 
 	// Parse the file content
@@ -915,7 +921,7 @@ func (api *APIServices) GetRepositoryObjectStructuredContent(
 	)
 	if parseStructuredFileErr != nil {
 		api.Logger.ErrorContext(c, "Error parsing structured files", "error", parseStructuredFileErr)
-		return nil, parseStructuredFileErr
+		return nil, NewInternalErrorf("error parsing structured files: %w", parseStructuredFileErr)
 	}
 
 	// If there are no results, return a 404
@@ -1025,7 +1031,7 @@ func (api *APIServices) processGroupObjectDownload(
 	files map[string][]byte,
 ) error {
 	if group == nil {
-		return errors.New("group object is nil")
+		return NewInternalError("group object is nil")
 	}
 	if group.Type != irminmodels.ObjectTypeGroup {
 		return fmt.Errorf("object %q is not a group", group.Name)
@@ -1035,11 +1041,11 @@ func (api *APIServices) processGroupObjectDownload(
 		child := &group.Children[i]
 		if child.Type == irminmodels.ObjectTypeGroup {
 			if err := api.processGroupObjectDownload(child, workspace, repository, objectRef, dataEngine, files); err != nil {
-				return err
+				return NewInternalErrorf("error processing group object download: %w", err)
 			}
 		} else {
 			if err := api.processSingleObjectDownload(child, workspace, repository, objectRef, dataEngine, files); err != nil {
-				return err
+				return NewInternalErrorf("error processing single object download: %w", err)
 			}
 		}
 	}
@@ -1057,7 +1063,7 @@ func (api *APIServices) processSingleObjectDownload(
 ) error {
 	content, err := dataEngine.GetObjectContent(workspace.Slug, repository.Slug, object.Path, objectRef)
 	if err != nil {
-		return err
+		return NewInternalErrorf("error getting object content from data engine: %w", err)
 	}
 	files[object.Path] = content
 	return nil
@@ -1081,7 +1087,7 @@ func (api *APIServices) GetRepositoryObjectHistory(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -1109,7 +1115,7 @@ func (api *APIServices) GetRepositoryObjectHistory(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -1129,14 +1135,14 @@ func (api *APIServices) GetRepositoryObjectHistory(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Get the object history from the data engine
 	history, err := dataEngine.GetObjectChanges(workspace.Slug, repository.Slug, object.Path, object.RepositoryRef)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error retrieving object history from Data Engine", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error retrieving object history from data engine: %w", err)
 	}
 
 	return history, nil
@@ -1163,7 +1169,7 @@ func (api *APIServices) saveObjectAndTags(
 	)
 	if saveErr != nil {
 		api.Logger.ErrorContext(c, "Error saving object to database", "error", saveErr)
-		return nil, saveErr
+		return nil, NewInternalErrorf("error saving object to database: %w", saveErr)
 	}
 
 	// Add tags
@@ -1172,13 +1178,13 @@ func (api *APIServices) saveObjectAndTags(
 			tagID, tagDecodeErr := api.SQIDManager.Decode("tags", tagSqid)
 			if tagDecodeErr != nil {
 				api.Logger.ErrorContext(c, "Error decoding tag SQID", "error", tagDecodeErr)
-				return nil, tagDecodeErr
+				return nil, NewInternalErrorf("error decoding tag SQID: %w", tagDecodeErr)
 			}
 
 			// Verify tag belongs to the workspace
 			var tag db.Tag
 			if tagErr := tx.First(&tag, uint(tagID)).Error; tagErr != nil {
-				return nil, tagErr
+				return nil, NewInternalErrorf("error fetching tag from database: %w", tagErr)
 			}
 			if tag.WorkspaceID != workspace.ID {
 				return nil, ErrInvalidRequest
@@ -1187,7 +1193,7 @@ func (api *APIServices) saveObjectAndTags(
 			// Add tag using the transaction
 			if tagAddErr := tx.Model(repositoryObject).Association("Tags").Append(&db.Tag{Model: gorm.Model{ID: uint(tagID)}}); tagAddErr != nil {
 				api.Logger.ErrorContext(c, "Error adding tag to repository object", "error", tagAddErr)
-				return nil, tagAddErr
+				return nil, NewInternalErrorf("error adding tag to repository object: %w", tagAddErr)
 			}
 		}
 	}

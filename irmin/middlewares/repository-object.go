@@ -3,9 +3,9 @@ package middlewares
 import (
 	"irmin-api/db"
 	"irmin-api/locales"
+	"irmin-api/services"
 	"irmin-api/utils"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -17,16 +17,23 @@ func (api *APIMiddlewares) RepositoryObjectMiddleware(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	repository, repositoryOk := c.Locals("repository").(*db.Repository)
 	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals in RepositoryObjectMiddleware",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the query parameters.
 	params, err := utils.ParseQueryParams(c, nil, []string{"ref", "path"})
 	if err != nil {
-		api.Logger.Error("Error parsing query parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error parsing query parameters",
+			services.NewInternalErrorf("error parsing query parameters: %v", err),
+			dict,
+		)
 	}
 
 	// Get the object from the service

@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"irmin-api/utils"
-
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
@@ -23,17 +21,13 @@ import (
 func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
 	locale, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the workspace schema
 	schema, err := api.Services.GetWorkspaceSchema(c, locale, user, workspace, true, true)
 	if err != nil {
-		api.Logger.Error("Error getting workspace schema", "error", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error getting workspace schema", err, dict)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

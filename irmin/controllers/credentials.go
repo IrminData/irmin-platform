@@ -1,13 +1,12 @@
 package controllers
 
 import (
-	"errors"
+	"fmt"
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
 	"irmin-api/services"
-	"irmin-api/utils"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -30,16 +29,18 @@ func (api *APIControllers) CredentialsIndex(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
 	if !dictOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for CredentialsIndex",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Get the API tokens for the user.
 	tokens, err := api.Services.ListAPITokens(c, user)
 	if err != nil {
-		api.Logger.Error("Error retrieving API tokens", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to list API tokens", err, dict)
 	}
 
 	// Structure the response.
@@ -49,10 +50,12 @@ func (api *APIControllers) CredentialsIndex(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatErr != nil {
-		api.Logger.Error("Error formatting API tokens", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format API tokens",
+			services.NewInternalErrorf("error formatting API tokens: %v", formatErr),
+			dict,
+		)
 	}
 
 	// Return the API tokens.
@@ -79,31 +82,37 @@ func (api *APIControllers) CredentialsStore(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
 	if !dictOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for CredentialsStore",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse JSON request body
 	var req irmincore.CreateCredentialRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Create the API token.
 	apiToken, err := api.Services.CreateAPIToken(c, user, req)
 	if err != nil {
-		api.Logger.Error("Error creating API token", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to create API token", err, dict)
 	}
 
 	// Conver the API token to an API token response.
 	sqid, encodeSQIDErr := api.SQIDManager.Encode("api_tokens", uint64(apiToken.ID))
 	if encodeSQIDErr != nil {
-		api.Logger.Error("Error encoding SQID", "error", encodeSQIDErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to encode API token SQID",
+			services.NewInternalErrorf("error encoding API token SQID: %v", encodeSQIDErr),
+			dict,
+		)
 	}
 	apiTokenResponse := irminmodels.APIToken{
 		ID:        sqid,
@@ -146,43 +155,34 @@ func (api *APIControllers) CredentialsDestroy(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
 	if !dictOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for CredentialsDestroy",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the token from the request URL.
 	tokenSqid := c.Params("credential")
 	if tokenSqid == "" {
-		api.Logger.Error("No token provided")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "No token provided", services.ErrInvalidRequest, dict)
 	}
 
 	// Decode the SQID to get the token ID.
 	id, decodeSQIDErr := api.SQIDManager.Decode("api_tokens", tokenSqid)
 	if decodeSQIDErr != nil {
-		api.Logger.Error("Error decoding SQID", "error", decodeSQIDErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to decode API token SQID",
+			fmt.Errorf("%w: %w", services.ErrInvalidRequest, decodeSQIDErr),
+			dict,
+		)
 	}
 
 	// Delete the API token.
 	if err := api.Services.DeleteAPIToken(c, user, uint(id)); err != nil {
-		api.Logger.Error("Error deleting API token", "error", err)
-		if errors.Is(err, services.ErrAPITokenNotBelongToUser) {
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "access_denied")},
-			})
-		}
-		if errors.Is(err, services.ErrAPITokenIsHidden) {
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "access_denied")},
-			})
-		}
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to delete API token", err, dict)
 	}
 
 	// Invalidate user-specific cache for credentials list

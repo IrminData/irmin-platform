@@ -21,7 +21,7 @@ func (api *APIServices) GetWorkspaceUser(
 	userID, err := api.SQIDManager.Decode("users", workspaceUserSqid)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error decoding user sqid", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error decoding user SQID: %w", err)
 	}
 
 	// Make sure this is allowed
@@ -45,7 +45,7 @@ func (api *APIServices) GetWorkspaceUser(
 	workspaceMember, err := api.DB.GetWorkspaceUser(workspace.ID, uint(userID))
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error retrieving user", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error retrieving user: %w", err)
 	}
 
 	return workspaceMember, nil
@@ -60,7 +60,7 @@ func (api *APIServices) ListWorkspaceUsers(
 	workspaceUsers, getUsersErr := api.DB.GetUsersInWorkspace(workspace.ID)
 	if getUsersErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching users", "error", getUsersErr)
-		return nil, getUsersErr
+		return nil, NewInternalErrorf("error fetching users: %w", getUsersErr)
 	}
 
 	// Filter users based on user permissions
@@ -75,7 +75,7 @@ func (api *APIServices) ListWorkspaceUsers(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error filtering users by permissions", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error filtering users by permissions: %w", err)
 	}
 
 	return filteredUsers, nil
@@ -103,7 +103,7 @@ func (api *APIServices) RemoveUserFromWorkspace(
 	})
 	if txErr != nil {
 		api.Logger.ErrorContext(c, "Error removing user from workspace", "error", txErr)
-		return txErr
+		return NewInternalErrorf("error in database transaction: %w", txErr)
 	}
 
 	// Log the event
@@ -143,14 +143,14 @@ func (api *APIServices) UpdateWorkspaceUserRoles(
 	})
 	if txErr != nil {
 		api.Logger.ErrorContext(c, "Error updating workspace user roles", "error", txErr)
-		return nil, txErr
+		return nil, NewInternalErrorf("error in database transaction: %w", txErr)
 	}
 
 	// Refetch updated user
 	updatedWorkspaceMember, err := api.DB.GetWorkspaceUser(workspace.ID, workspaceMember.UserID)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error fetching workspace user", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error fetching workspace user: %w", err)
 	}
 
 	// Log the event

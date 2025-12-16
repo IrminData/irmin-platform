@@ -30,7 +30,7 @@ func (api *APIServices) GetRepositoryBranch(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -52,14 +52,14 @@ func (api *APIServices) GetRepositoryBranch(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Get the branch from the data engine.
 	dataEngineBranch, err := dataEngine.GetBranch(c, workspace.Slug, repository.Slug, branchName)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error retrieving branch from Data Engine", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error retrieving branch from data engine: %w", err)
 	}
 
 	return dataEngineBranch, nil
@@ -82,7 +82,7 @@ func (api *APIServices) ListRepositoryBranches(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -102,14 +102,14 @@ func (api *APIServices) ListRepositoryBranches(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Get the branches from the data engine
 	branches, err := dataEngine.ListBranches(c, workspace.Slug, repository.Slug)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error retrieving branches from Data Engine", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error retrieving branches from data engine: %w", err)
 	}
 
 	return branches, nil
@@ -133,7 +133,7 @@ func (api *APIServices) CreateRepositoryBranch(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -155,7 +155,7 @@ func (api *APIServices) CreateRepositoryBranch(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Determine the branch to create from
@@ -168,7 +168,7 @@ func (api *APIServices) CreateRepositoryBranch(
 	branch, err := dataEngine.CreateBranch(workspace.Slug, repository.Slug, req.Name, fromBranch, req.IsImmutable)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error creating branch in Data Engine", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating branch in data engine: %w", err)
 	}
 
 	// Log the event
@@ -202,7 +202,7 @@ func (api *APIServices) UpdateRepositoryBranch(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -234,7 +234,10 @@ func (api *APIServices) UpdateRepositoryBranch(
 
 	// Delete the cached objects for the branch
 	dbDeleteErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		return api.DB.DeleteObjects(tx, nil, &repository.ID, &branch.Name)
+		if deleteErr := api.DB.DeleteObjects(tx, nil, &repository.ID, &branch.Name); deleteErr != nil {
+			return NewInternalErrorf("error deleting cached objects: %w", deleteErr)
+		}
+		return nil
 	})
 	if dbDeleteErr != nil {
 		api.Logger.ErrorContext(c, "Error deleting cached objects for branch", "error", dbDeleteErr)
@@ -244,7 +247,7 @@ func (api *APIServices) UpdateRepositoryBranch(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Update the branch in the data engine
@@ -258,7 +261,7 @@ func (api *APIServices) UpdateRepositoryBranch(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error updating branch in Data Engine", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error updating branch in data engine: %w", err)
 	}
 
 	// Log the event
@@ -291,7 +294,7 @@ func (api *APIServices) DeleteRepositoryBranch(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return err
+		return NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -311,7 +314,10 @@ func (api *APIServices) DeleteRepositoryBranch(
 
 	// Delete the cached objects for the branch
 	dbDeleteErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		return api.DB.DeleteObjects(tx, nil, &repository.ID, &branch.Name)
+		if deleteErr := api.DB.DeleteObjects(tx, nil, &repository.ID, &branch.Name); deleteErr != nil {
+			return NewInternalErrorf("error deleting cached objects: %w", deleteErr)
+		}
+		return nil
 	})
 	if dbDeleteErr != nil {
 		api.Logger.ErrorContext(c, "Error deleting cached objects for branch", "error", dbDeleteErr)
@@ -321,14 +327,14 @@ func (api *APIServices) DeleteRepositoryBranch(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return err
+		return NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Delete the branch in the data engine
 	err = dataEngine.DeleteBranch(workspace.Slug, repository.Slug, branch.Name)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error deleting branch in Data Engine", "error", err)
-		return err
+		return NewInternalErrorf("error deleting branch in data engine: %w", err)
 	}
 
 	// Log the event
@@ -361,7 +367,7 @@ func (api *APIServices) GetRepositoryUncommittedChanges(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -383,14 +389,14 @@ func (api *APIServices) GetRepositoryUncommittedChanges(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Get uncommitted changes
 	diff, err := dataEngine.GetUncommittedChanges(workspace.Slug, repository.Slug, branch.Name)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error getting uncommitted changes", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error getting uncommitted changes: %w", err)
 	}
 
 	return diff, nil

@@ -9952,6 +9952,12 @@ import "irmin-api/services"
 
 - [Constants](<#constants>)
 - [Variables](<#variables>)
+- [func GetInternalErrorMessage\(err error\) string](<#GetInternalErrorMessage>)
+- [func GetTranslationKeyForError\(err error\) string](<#GetTranslationKeyForError>)
+- [func IsInternalError\(err error\) bool](<#IsInternalError>)
+- [func MapErrorToStatusCode\(err error\) int](<#MapErrorToStatusCode>)
+- [func NewInternalError\(msg string\) error](<#NewInternalError>)
+- [func NewInternalErrorf\(format string, args ...any\) error](<#NewInternalErrorf>)
 - [type APIServices](<#APIServices>)
   - [func NewAPIServices\(db \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, orchestrator \*orchestrator.Orchestrator, sqidManager \*irminsqids.SQIDManager, localeManager \*locales.LocaleManager, permissionService \*permissions.Service, cacheStorage fiber.Storage\) \*APIServices](<#NewAPIServices>)
   - [func \(api \*APIServices\) AcceptInvite\(c context.Context, user \*db.User, invite \*db.Invite\) error](<#APIServices.AcceptInvite>)
@@ -10088,6 +10094,9 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ZipRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(\[\]byte, string, error\)](<#APIServices.ZipRepositoryObject>)
 - [type AuthCache](<#AuthCache>)
 - [type AuthCacheEntry](<#AuthCacheEntry>)
+- [type ErrorHandler](<#ErrorHandler>)
+  - [func NewErrorHandler\(logger \*slog.Logger, lm \*locales.LocaleManager\) \*ErrorHandler](<#NewErrorHandler>)
+  - [func \(eh \*ErrorHandler\) HandleServiceError\(c fiber.Ctx, consoleLogPrefix string, err error, dict locales.Dictionary\) error](<#ErrorHandler.HandleServiceError>)
 - [type InviteTransactionResult](<#InviteTransactionResult>)
 - [type PolicyFilters](<#PolicyFilters>)
 - [type TagEntityOperation](<#TagEntityOperation>)
@@ -10135,7 +10144,9 @@ const (
 var (
     ErrNotFound                               = errors.New("not found")
     ErrInvalidRequest                         = errors.New("invalid request")
+    ErrInvalidQueryParams                     = errors.New("invalid query parameters")
     ErrAccessDenied                           = errors.New("access denied")
+    ErrContentTooLarge                        = errors.New("content too large to display")
     ErrSystemUserRequired                     = errors.New("system user required")
     ErrWorkspaceNotMember                     = errors.New("user not a member of the workspace")
     ErrWorkspaceNotOwner                      = errors.New("user is not the owner of the workspace")
@@ -10169,14 +10180,59 @@ var (
 )
 ```
 
-<a name="ErrContentTooLarge"></a>
+<a name="GetInternalErrorMessage"></a>
+## func GetInternalErrorMessage
 
 ```go
-var (
-    // ErrContentTooLarge is returned when object content exceeds size limits
-    ErrContentTooLarge = errors.New("content too large to display")
-)
+func GetInternalErrorMessage(err error) string
 ```
+
+GetInternalErrorMessage strips the internal prefix for logging purposes. This allows server\-side logs to display the actual error message without the prefix.
+
+<a name="GetTranslationKeyForError"></a>
+## func GetTranslationKeyForError
+
+```go
+func GetTranslationKeyForError(err error) string
+```
+
+GetTranslationKeyForError maps service errors to their corresponding translation keys. This ensures that sentinel errors with spaces in their messages \(e.g., "not found"\) are mapped to proper translation keys with underscores \(e.g., "not\_found"\).
+
+<a name="IsInternalError"></a>
+## func IsInternalError
+
+```go
+func IsInternalError(err error) bool
+```
+
+IsInternalError checks if an error is marked as internal\-only and should not be exposed to clients.
+
+<a name="MapErrorToStatusCode"></a>
+## func MapErrorToStatusCode
+
+```go
+func MapErrorToStatusCode(err error) int
+```
+
+MapErrorToStatusCode maps service layer errors to appropriate HTTP status codes
+
+<a name="NewInternalError"></a>
+## func NewInternalError
+
+```go
+func NewInternalError(msg string) error
+```
+
+NewInternalError creates an error that should not be exposed to clients. The error message will be logged server\-side but clients will receive a generic error.
+
+<a name="NewInternalErrorf"></a>
+## func NewInternalErrorf
+
+```go
+func NewInternalErrorf(format string, args ...any) error
+```
+
+NewInternalErrorf creates a formatted internal error that should not be exposed to clients. The error message will be logged server\-side but clients will receive a generic error.
 
 <a name="APIServices"></a>
 ## type APIServices
@@ -11417,6 +11473,36 @@ type AuthCacheEntry struct {
     ExpiresAt time.Time
 }
 ```
+
+<a name="ErrorHandler"></a>
+## type ErrorHandler
+
+ErrorHandler provides common error handling functionality for controllers and middlewares.
+
+```go
+type ErrorHandler struct {
+    Logger *slog.Logger
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewErrorHandler"></a>
+### func NewErrorHandler
+
+```go
+func NewErrorHandler(logger *slog.Logger, lm *locales.LocaleManager) *ErrorHandler
+```
+
+NewErrorHandler creates a new error handler instance.
+
+<a name="ErrorHandler.HandleServiceError"></a>
+### func \(\*ErrorHandler\) HandleServiceError
+
+```go
+func (eh *ErrorHandler) HandleServiceError(c fiber.Ctx, consoleLogPrefix string, err error, dict locales.Dictionary) error
+```
+
+HandleServiceError handles errors from the service layer with proper translation and logging. It checks if the error is internal\-only and either exposes it to the client or returns a generic error.
 
 <a name="InviteTransactionResult"></a>
 ## type InviteTransactionResult

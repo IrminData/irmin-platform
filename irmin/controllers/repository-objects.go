@@ -101,18 +101,18 @@ func (api *APIControllers) RepositoryObjectsIndex(c fiber.Ctx) error {
 	// Get the object from the state
 	object, objectOk := c.Locals("object").(*db.RepositoryObject)
 	if !objectOk || object == nil {
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "object_not_found")},
-		})
+		return api.handleServiceError(c, "Object not found", services.ErrNotFound, params.dict)
 	}
 
 	// Structure the response
 	objectResponse, formatErr := formatter.FormatRepositoryObjectResponse(object, api.SQIDManager)
 	if formatErr != nil {
-		api.Logger.Error("Error formatting objects", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting objects",
+			services.NewInternalErrorf("error formatting repository object: %v", formatErr),
+			params.dict,
+		)
 	}
 
 	// Return the response
@@ -150,27 +150,33 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 	// Parse the multipart form data
 	form, err := c.MultipartForm()
 	if err != nil {
-		api.Logger.Error("Error parsing form data", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "invalid_request")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error parsing form data",
+			fmt.Errorf("%w: %w", services.ErrInvalidRequest, err),
+			params.dict,
+		)
 	}
 
 	// Validate that a file was provided
 	if len(form.File) == 0 || len(form.File["file"]) == 0 {
-		api.Logger.Error("No file found in form data")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "invalid_request")},
-		})
+		return api.handleServiceError(
+			c,
+			"No file found in form data",
+			services.ErrInvalidRequest,
+			params.dict,
+		)
 	}
 
 	// Open the uploaded file
 	file, err := form.File["file"][0].Open()
 	if err != nil {
-		api.Logger.Error("Error opening file", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "invalid_request")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error opening file",
+			fmt.Errorf("%w: %w", services.ErrInvalidRequest, err),
+			params.dict,
+		)
 	}
 	defer file.Close()
 
@@ -211,19 +217,18 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 		tags,
 	)
 	if err != nil {
-		api.Logger.Error("Error uploading object to Data Engine", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error uploading object to Data Engine", err, params.dict)
 	}
 
 	// Format the object for the response.
 	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(newObject, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error formatting repository object", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting repository object",
+			services.NewInternalErrorf("error formatting repository object: %v", err),
+			params.dict,
+		)
 	}
 
 	// Invalidate objects listing for this repository (all users)
@@ -269,10 +274,8 @@ func (api *APIControllers) RepositoryUploadObjectFromURL(c fiber.Ctx) error {
 	// Parse the JSON request body
 	var req irmincore.UploadObjectFromURLRequest
 	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "invalid_request")},
-		})
+		api.Logger.Error("Error parsing JSON request", "error", bindErr)
+		return api.handleServiceError(c, "Error parsing JSON request body", services.ErrInvalidRequest, params.dict)
 	}
 
 	// Upload the object from the URL to the path in the repository at ref
@@ -289,19 +292,18 @@ func (api *APIControllers) RepositoryUploadObjectFromURL(c fiber.Ctx) error {
 		req.Tags,
 	)
 	if err != nil {
-		api.Logger.Error("Error uploading object from URL to Data Engine", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error uploading object from URL to Data Engine", err, params.dict)
 	}
 
 	// Format the object for the response.
 	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(newObject, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error formatting repository object", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting repository object",
+			services.NewInternalErrorf("error formatting repository object: %v", err),
+			params.dict,
+		)
 	}
 
 	// Invalidate objects listing for this repository (all users)
@@ -350,18 +352,14 @@ func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 	// Get the object from the state
 	object, objectOk := c.Locals("object").(*db.RepositoryObject)
 	if !objectOk || object == nil {
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "object_not_found")},
-		})
+		return api.handleServiceError(c, "Object not found", services.ErrNotFound, params.dict)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.MoveObjectRequest
 	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "invalid_request")},
-		})
+		api.Logger.Error("Error parsing JSON request", "error", bindErr)
+		return api.handleServiceError(c, "Error parsing JSON request body", services.ErrInvalidRequest, params.dict)
 	}
 
 	// Move the object to the new path in the repository at ref
@@ -375,19 +373,18 @@ func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 		req,
 	)
 	if err != nil {
-		api.Logger.Error("Error moving object in Data Engine", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error moving object in Data Engine", err, params.dict)
 	}
 
 	// Format the object for the response.
 	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(newObject, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error formatting repository object", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting repository object",
+			services.NewInternalErrorf("error formatting repository object: %v", err),
+			params.dict,
+		)
 	}
 
 	// Invalidate objects listing for this repository (all users)
@@ -435,18 +432,14 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 	// Get the object from the state
 	object, objectOk := c.Locals("object").(*db.RepositoryObject)
 	if !objectOk || object == nil {
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "object_not_found")},
-		})
+		return api.handleServiceError(c, "Object not found", services.ErrNotFound, params.dict)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.MoveObjectRequest
 	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "invalid_request")},
-		})
+		api.Logger.Error("Error parsing JSON request", "error", bindErr)
+		return api.handleServiceError(c, "Error parsing JSON request body", services.ErrInvalidRequest, params.dict)
 	}
 
 	// Copy the object to the new path in the repository at ref
@@ -460,19 +453,18 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 		req,
 	)
 	if err != nil {
-		api.Logger.Error("Error copying object in Data Engine", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error copying object in Data Engine", err, params.dict)
 	}
 
 	// Format the object for the response.
 	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(newObject, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error formatting repository object", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting repository object",
+			services.NewInternalErrorf("error formatting repository object: %v", err),
+			params.dict,
+		)
 	}
 
 	// Invalidate objects listing for this repository (all users)
@@ -517,9 +509,7 @@ func (api *APIControllers) RepositoryObjectsDestroy(c fiber.Ctx) error {
 	// Get the object from the state
 	object, objectOk := c.Locals("object").(*db.RepositoryObject)
 	if !objectOk || object == nil {
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "object_not_found")},
-		})
+		return api.handleServiceError(c, "Object not found", services.ErrNotFound, params.dict)
 	}
 
 	// Delete the object from the repository at ref
@@ -532,10 +522,7 @@ func (api *APIControllers) RepositoryObjectsDestroy(c fiber.Ctx) error {
 		object,
 	)
 	if err != nil {
-		api.Logger.Error("Error deleting object in Data Engine", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error deleting object in Data Engine", err, params.dict)
 	}
 
 	// Invalidate objects listing for this repository (all users)
@@ -579,9 +566,7 @@ func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error {
 	// Get the object from the state
 	object, objectOk := c.Locals("object").(*db.RepositoryObject)
 	if !objectOk || object == nil {
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "object_not_found")},
-		})
+		return api.handleServiceError(c, "Object not found", services.ErrNotFound, params.dict)
 	}
 
 	// Check for limit-response query parameter
@@ -608,10 +593,12 @@ func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error {
 				)},
 			})
 		}
-		api.Logger.Error("Error retrieving object content from Data Engine", "error", getObjectContentErr)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error retrieving object content from Data Engine",
+			getObjectContentErr,
+			params.dict,
+		)
 	}
 
 	// Write the file content as a download response
@@ -654,9 +641,7 @@ func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error
 	// Get the object from the state
 	object, objectOk := c.Locals("object").(*db.RepositoryObject)
 	if !objectOk || object == nil {
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "object_not_found")},
-		})
+		return api.handleServiceError(c, "Object not found", services.ErrNotFound, params.dict)
 	}
 
 	// Check for limit-response query parameter
@@ -683,14 +668,12 @@ func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error
 				)},
 			})
 		}
-		api.Logger.Error(
+		return api.handleServiceError(
+			c,
 			"Error retrieving object structured content from Data Engine",
-			"error",
 			getObjectStructuredContentErr,
+			params.dict,
 		)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
 	}
 
 	// Return the results
@@ -727,9 +710,7 @@ func (api *APIControllers) RepositoryObjectsDownload(c fiber.Ctx) error {
 	// Get the object from the state
 	object, objectOk := c.Locals("object").(*db.RepositoryObject)
 	if !objectOk || object == nil {
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "object_not_found")},
-		})
+		return api.handleServiceError(c, "Object not found", services.ErrNotFound, params.dict)
 	}
 
 	// Build the zip file of the object
@@ -742,10 +723,7 @@ func (api *APIControllers) RepositoryObjectsDownload(c fiber.Ctx) error {
 		object,
 	)
 	if err != nil {
-		api.Logger.Error("Error zipping object", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error zipping object", err, params.dict)
 	}
 
 	return utils.WriteFileDownloadResponse(c, fiber.StatusOK, zipName, "application/zip", zipContent)
@@ -779,9 +757,7 @@ func (api *APIControllers) RepositoryObjectsHistory(c fiber.Ctx) error {
 	// Get the object from the state
 	object, objectOk := c.Locals("object").(*db.RepositoryObject)
 	if !objectOk || object == nil {
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "object_not_found")},
-		})
+		return api.handleServiceError(c, "Object not found", services.ErrNotFound, params.dict)
 	}
 
 	// Get the commit history of the object in the repository at ref
@@ -794,10 +770,12 @@ func (api *APIControllers) RepositoryObjectsHistory(c fiber.Ctx) error {
 		object,
 	)
 	if getObjectChangesErr != nil {
-		api.Logger.Error("Error retrieving object history from Data Engine", "error", getObjectChangesErr)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error retrieving object history from Data Engine",
+			getObjectChangesErr,
+			params.dict,
+		)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -833,9 +811,7 @@ func (api *APIControllers) RepositoryObjectsSchema(c fiber.Ctx) error {
 	// Get the object from the state
 	object, objectOk := c.Locals("object").(*db.RepositoryObject)
 	if !objectOk || object == nil {
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "object_not_found")},
-		})
+		return api.handleServiceError(c, "Object not found", services.ErrNotFound, params.dict)
 	}
 
 	// Get the schema of the object in the repository at ref
@@ -849,10 +825,12 @@ func (api *APIControllers) RepositoryObjectsSchema(c fiber.Ctx) error {
 		params.objectRef,
 	)
 	if getObjectSchemaErr != nil {
-		api.Logger.Error("Error retrieving object schema from Data Engine", "error", getObjectSchemaErr)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error retrieving object schema from Data Engine",
+			getObjectSchemaErr,
+			params.dict,
+		)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 
 	"irmin-api/db"
@@ -23,21 +22,21 @@ func (api *APIServices) GenerateSchemaFromUploadedFile(
 	// Read the file data
 	fileData, err := io.ReadAll(fileReader)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read file data: %w", err)
+		return nil, NewInternalErrorf("failed to read file data: %w", err)
 	}
 
 	// Initialize Data Engine client
 	dataEngine, err := engine.NewClient(ctx, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(ctx, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Generate the schema
 	schema, err := dataEngine.GenerateSchemaFromFile(ctx, filename, fileData)
 	if err != nil {
 		api.Logger.ErrorContext(ctx, "error generating schema from file", "error", err)
-		return nil, fmt.Errorf("failed to generate schema: %w", err)
+		return nil, NewInternalErrorf("failed to generate schema: %w", err)
 	}
 
 	return schema, nil
@@ -63,7 +62,7 @@ func (api *APIServices) GetRepositoryObjectSchema(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(ctx, "error checking repository permissions", "error", err)
-		return nil, fmt.Errorf("failed to check permissions: %w", err)
+		return nil, NewInternalErrorf("failed to check permissions: %w", err)
 	}
 	if !allowed {
 		return nil, errors.New("unauthorized access to repository object schema")
@@ -81,7 +80,7 @@ func (api *APIServices) GetRepositoryObjectSchema(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(ctx, "error getting object schema", "error", err)
-		return nil, fmt.Errorf("failed to get object schema: %w", err)
+		return nil, NewInternalErrorf("failed to get object schema: %w", err)
 	}
 
 	// Populate SQL selector for the root object and recursively for children
@@ -114,7 +113,7 @@ func (api *APIServices) GetConnectionSchema(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(ctx, "error checking connection permissions", "error", err)
-		return nil, fmt.Errorf("failed to check permissions: %w", err)
+		return nil, NewInternalErrorf("failed to check permissions: %w", err)
 	}
 	if !allowed {
 		return nil, errors.New("unauthorized access to connection schema")
@@ -131,7 +130,7 @@ func (api *APIServices) GetConnectionSchema(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(ctx, "error getting connection schema", "error", err)
-		return nil, fmt.Errorf("failed to get connection schema: %w", err)
+		return nil, NewInternalErrorf("failed to get connection schema: %w", err)
 	}
 
 	return schema, nil
@@ -156,7 +155,7 @@ func (api *APIServices) GetWorkspaceSchema(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(ctx, "error checking workspace permissions", "error", err)
-		return nil, fmt.Errorf("failed to check permissions: %w", err)
+		return nil, NewInternalErrorf("failed to check permissions: %w", err)
 	}
 	if !allowed {
 		return nil, errors.New("unauthorized access to workspace schema")
@@ -248,7 +247,7 @@ func (api *APIServices) addConnectionSchemas(
 	connections, err := api.DB.GetConnectionsByWorkspaceID(workspace.ID)
 	if err != nil {
 		api.Logger.ErrorContext(ctx, "error getting connections for workspace", "error", err)
-		return fmt.Errorf("failed to get connections: %w", err)
+		return NewInternalErrorf("failed to get connections: %w", err)
 	}
 
 	for _, connection := range connections {
@@ -313,7 +312,7 @@ func (api *APIServices) addRepositorySchemas(
 	repositories, err := api.DB.GetRepositoriesInWorkspace(workspace.ID)
 	if err != nil {
 		api.Logger.ErrorContext(ctx, "error getting repositories for workspace", "error", err)
-		return fmt.Errorf("failed to get repositories: %w", err)
+		return NewInternalErrorf("failed to get repositories: %w", err)
 	}
 
 	for _, repository := range repositories {
@@ -369,7 +368,7 @@ func (api *APIServices) buildRepositorySchema(
 	// Get repository objects to build schema using the repository's default branch
 	objects, err := api.DB.GetFlatDBObjects(repository.ID, repository.DefaultBranch)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get repository objects: %w", err)
+		return nil, NewInternalErrorf("failed to get repository objects: %w", err)
 	}
 
 	// Create repository schema

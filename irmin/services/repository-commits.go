@@ -32,7 +32,7 @@ func (api *APIServices) ListRepositoryCommits(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, nil, err
+		return nil, nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -59,7 +59,7 @@ func (api *APIServices) ListRepositoryCommits(
 	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
-		return nil, nil, createDataEngineClientErr
+		return nil, nil, NewInternalErrorf("error creating data engine client: %w", createDataEngineClientErr)
 	}
 
 	// Get the commits from the data engine
@@ -72,7 +72,7 @@ func (api *APIServices) ListRepositoryCommits(
 	)
 	if listCommitsErr != nil {
 		api.Logger.ErrorContext(c, "Error retrieving commits from Data Engine", "error", listCommitsErr)
-		return nil, nil, listCommitsErr
+		return nil, nil, NewInternalErrorf("error retrieving commits from data engine: %w", listCommitsErr)
 	}
 
 	return commits, lakefsPagination, nil
@@ -96,7 +96,7 @@ func (api *APIServices) CreateRepositoryCommit(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -123,7 +123,7 @@ func (api *APIServices) CreateRepositoryCommit(
 	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
-		return nil, createDataEngineClientErr
+		return nil, NewInternalErrorf("error creating data engine client: %w", createDataEngineClientErr)
 	}
 
 	// Commit the changes in the data engine
@@ -137,7 +137,7 @@ func (api *APIServices) CreateRepositoryCommit(
 	)
 	if commitChangesErr != nil {
 		api.Logger.ErrorContext(c, "Error committing changes in Data Engine", "error", commitChangesErr)
-		return nil, commitChangesErr
+		return nil, NewInternalErrorf("error committing changes in data engine: %w", commitChangesErr)
 	}
 
 	// Log the event
@@ -170,7 +170,7 @@ func (api *APIServices) GetRepositoryCommit(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -192,14 +192,14 @@ func (api *APIServices) GetRepositoryCommit(
 	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
-		return nil, createDataEngineClientErr
+		return nil, NewInternalErrorf("error creating data engine client: %w", createDataEngineClientErr)
 	}
 
 	// Get the commit from the data engine
 	commit, getCommitErr := dataEngine.GetCommit(workspace.Slug, repository.Slug, hash)
 	if getCommitErr != nil {
 		api.Logger.ErrorContext(c, "Error retrieving commit from Data Engine", "error", getCommitErr)
-		return nil, getCommitErr
+		return nil, NewInternalErrorf("error retrieving commit from data engine: %w", getCommitErr)
 	}
 
 	return commit, nil
@@ -223,7 +223,7 @@ func (api *APIServices) RevertRepositoryUncommittedChanges(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return err
+		return NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -278,7 +278,7 @@ func (api *APIServices) RevertRepositoryUncommittedChanges(
 			"error",
 			revertUncommittedChangesErr,
 		)
-		return revertUncommittedChangesErr
+		return NewInternalErrorf("error reverting uncommitted changes in data engine: %w", revertUncommittedChangesErr)
 	}
 
 	// Log the event

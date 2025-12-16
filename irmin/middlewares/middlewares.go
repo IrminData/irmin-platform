@@ -11,6 +11,7 @@ import (
 
 	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	irminvalidator "github.com/IrminData/irmin-sdk-go/validator"
+	"github.com/gofiber/fiber/v3"
 )
 
 type APIMiddlewares struct {
@@ -23,6 +24,7 @@ type APIMiddlewares struct {
 	lm                *locales.LocaleManager
 	permissionService *permissions.Service
 	validator         *irminvalidator.Validator
+	errorHandler      *services.ErrorHandler
 }
 
 func NewAPIMiddlewares(
@@ -38,5 +40,17 @@ func NewAPIMiddlewares(
 		lm:                apiServices.LocaleManager,
 		permissionService: apiServices.PermissionService,
 		validator:         apiServices.Validator,
+		errorHandler:      services.NewErrorHandler(apiServices.Logger, apiServices.LocaleManager),
 	}
+}
+
+// handleServiceError handles errors from the service layer with proper translation and logging.
+// It checks if the error is internal-only and either exposes it to the client or returns a generic error.
+func (api *APIMiddlewares) handleServiceError(
+	c fiber.Ctx,
+	consoleLogPrefix string,
+	err error,
+	dict locales.Dictionary,
+) error {
+	return api.errorHandler.HandleServiceError(c, consoleLogPrefix, err, dict)
 }

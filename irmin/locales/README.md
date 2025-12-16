@@ -50,3 +50,34 @@ Organized translation keys for:
 - User interface labels and descriptions
 - System notifications and alerts
 - API response messages
+
+### Adding Error Message Translations
+
+Error messages from the service layer can be translated by adding keys to the translation files that match the exact error message string:
+
+**Example:**
+
+1. Service returns error: `services.ErrAccessDenied` with message `"access denied"`
+2. Add translation key to `en.json` and other language files:
+   ```json
+   {
+     "access denied": "Access denied",
+     ...
+   }
+   ```
+3. The `handleServiceError` helper in controllers will automatically use the translation
+
+**For internal errors:**
+
+Services can mark errors as internal-only using `services.NewInternalError()`:
+```go
+return services.NewInternalError("database connection pool exhausted")
+```
+
+These errors will be logged server-side but clients will receive a generic "error_occurred" message for security.
+
+**Translation key format:**
+
+- Keys match the exact error message string from `err.Error()`
+- If no translation exists, the raw error message is returned (automatic fallback)
+- Add translations incrementally - no code changes needed when adding new keys

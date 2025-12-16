@@ -29,7 +29,7 @@ func (api *APIServices) CreateWorkflowRun(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -51,13 +51,13 @@ func (api *APIServices) CreateWorkflowRun(
 		var createWorkflowRunErr error
 		run, createWorkflowRunErr = lib.CreateWorkflowRun(tx, workflow, user, nil)
 		if createWorkflowRunErr != nil {
-			return createWorkflowRunErr
+			return NewInternalErrorf("error creating workflow run: %w", createWorkflowRunErr)
 		}
 		return nil
 	})
 	if transactionErr != nil {
 		api.Logger.ErrorContext(c, "Error creating workflow run", "error", transactionErr, "workflow_id", workflow.ID)
-		return nil, transactionErr
+		return nil, NewInternalErrorf("error in database transaction: %w", transactionErr)
 	}
 
 	// We don't need to actually execute the workflow here, as the orchestrator will do that.
@@ -66,7 +66,7 @@ func (api *APIServices) CreateWorkflowRun(
 	runSqid, runSqidErr := api.SQIDManager.Encode("workflow-runs", uint64(run.ID))
 	if runSqidErr != nil {
 		api.Logger.ErrorContext(c, "Error encoding workflow run sqid", "error", runSqidErr)
-		return nil, runSqidErr
+		return nil, NewInternalErrorf("error encoding workflow run SQID: %w", runSqidErr)
 	}
 
 	// Log the event
@@ -99,7 +99,7 @@ func (api *APIServices) GetWorkflowRun(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -119,14 +119,14 @@ func (api *APIServices) GetWorkflowRun(
 	workflowRunID, decodeSqidErr := api.SQIDManager.Decode("workflow-runs", runSqid)
 	if decodeSqidErr != nil {
 		api.Logger.ErrorContext(c, "Error decoding workflow run sqid", "error", decodeSqidErr)
-		return nil, decodeSqidErr
+		return nil, NewInternalErrorf("error decoding workflow run SQID: %w", decodeSqidErr)
 	}
 
 	// Find the workflow run by its ID.
 	workflowRun, getWorkflowRunErr := api.DB.GetWorkflowRunByID(uint(workflowRunID))
 	if getWorkflowRunErr != nil {
 		api.Logger.ErrorContext(c, "Error retrieving workflow run", "error", getWorkflowRunErr)
-		return nil, getWorkflowRunErr
+		return nil, NewInternalErrorf("error retrieving workflow run: %w", getWorkflowRunErr)
 	}
 
 	// Make sure the workflow run belongs to the workflow.
@@ -180,7 +180,7 @@ func (api *APIServices) ListWorkflowRuns(
 	)
 	if getWorkflowRunsErr != nil {
 		api.Logger.ErrorContext(c, "error getting workflow runs", "error", getWorkflowRunsErr)
-		return nil, 0, getWorkflowRunsErr
+		return nil, 0, NewInternalErrorf("error getting workflow runs: %w", getWorkflowRunsErr)
 	}
 
 	// Return the workflow runs.
@@ -204,7 +204,7 @@ func (api *APIServices) CancelWorkflowRun(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -230,14 +230,14 @@ func (api *APIServices) CancelWorkflowRun(
 	workflowRunID, decodeSqidErr := api.SQIDManager.Decode("workflow-runs", runSqid)
 	if decodeSqidErr != nil {
 		api.Logger.ErrorContext(c, "Error decoding workflow run sqid", "error", decodeSqidErr)
-		return nil, decodeSqidErr
+		return nil, NewInternalErrorf("error decoding workflow run SQID: %w", decodeSqidErr)
 	}
 
 	// Find the workflow run by its ID.
 	workflowRun, getWorkflowRunErr := api.DB.GetWorkflowRunByID(uint(workflowRunID))
 	if getWorkflowRunErr != nil {
 		api.Logger.ErrorContext(c, "Error retrieving workflow run", "error", getWorkflowRunErr)
-		return nil, getWorkflowRunErr
+		return nil, NewInternalErrorf("error retrieving workflow run: %w", getWorkflowRunErr)
 	}
 
 	// Make sure the workflow run belongs to the workflow.
@@ -272,7 +272,7 @@ func (api *APIServices) CancelWorkflowRun(
 	workflowRun.FinishedAt = &finishedAt
 	if saveErr := api.DB.Save(&workflowRun).Error; saveErr != nil {
 		api.Logger.ErrorContext(c, "Error updating workflow run status to cancelled", "error", saveErr)
-		return nil, saveErr
+		return nil, NewInternalErrorf("error updating workflow run status: %w", saveErr)
 	}
 
 	api.Logger.InfoContext(c, "workflow run status updated to cancelled, orchestrator will handle cancellation",
@@ -305,7 +305,7 @@ func (api *APIServices) ListAllWorkflowRuns(
 	)
 	if getWorkflowRunsErr != nil {
 		api.Logger.ErrorContext(c, "error getting workflow runs", "error", getWorkflowRunsErr)
-		return nil, 0, getWorkflowRunsErr
+		return nil, 0, NewInternalErrorf("error getting workflow runs: %w", getWorkflowRunsErr)
 	}
 
 	// Filter workflow runs based on user permissions for the associated workflows

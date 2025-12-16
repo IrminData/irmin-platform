@@ -7,7 +7,6 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/lib"
 	"irmin-api/services"
-	"irmin-api/utils"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -31,26 +30,24 @@ import (
 func (api *APIControllers) WorkspaceTagsIndex(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get all tags from the workspace using the service
 	tags, err := api.Services.ListWorkspaceTags(c, user, workspace)
 	if err != nil {
-		api.Logger.Error("Error retrieving tags", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error retrieving tags", err, dict)
 	}
 
 	// Format the tags
 	formattedTags, err := formatter.FormatTagsResponse(tags, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error formatting tags", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting tags",
+			services.NewInternalErrorf("error formatting tags: %v", err),
+			dict,
+		)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -77,32 +74,32 @@ func (api *APIControllers) WorkspaceTagsIndex(c fiber.Ctx) error {
 func (api *APIControllers) WorkspaceTagsStore(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.CreateTagRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Create the tag using the service
 	tag, err := api.Services.CreateWorkspaceTag(c, user, workspace, req)
 	if err != nil {
-		api.Logger.Error("Error creating tag", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error creating tag", err, dict)
 	}
 
 	// Format the response
 	formattedTag, err := formatter.FormatTagResponse(tag, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error formatting tag", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting tag",
+			services.NewInternalErrorf("error formatting tag: %v", err),
+			dict,
+		)
 	}
 
 	// Invalidate tags endpoints for this workspace (all users)
@@ -135,15 +132,18 @@ func (api *APIControllers) WorkspaceTagsStore(c fiber.Ctx) error {
 func (api *APIControllers) WorkspaceTagsShow(c fiber.Ctx) error {
 	_, dict, _, _, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the tag from locals
 	tagWithAssets, tagOk := c.Locals("tag_id").(*db.TagWithAssets)
 	if !tagOk {
-		api.Logger.Error("Error getting locals for TagsShow")
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for TagsShow",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Format the tag with assets
@@ -153,10 +153,12 @@ func (api *APIControllers) WorkspaceTagsShow(c fiber.Ctx) error {
 		api.DB,
 	)
 	if err != nil {
-		api.Logger.Error("Error formatting tag with assets", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting tag with assets",
+			services.NewInternalErrorf("error formatting tag with assets: %v", err),
+			dict,
+		)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -184,42 +186,42 @@ func (api *APIControllers) WorkspaceTagsShow(c fiber.Ctx) error {
 func (api *APIControllers) WorkspaceTagsUpdate(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the tag from locals
 	tagWithAssets, tagOk := c.Locals("tag_id").(*db.TagWithAssets)
 	if !tagOk {
-		api.Logger.Error("Error getting locals for TagsUpdate")
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for TagsUpdate",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.UpdateTagRequest
 	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		api.Logger.Error("Error parsing JSON request", "error", bindErr)
+		return api.handleServiceError(c, "Error parsing JSON request body", services.ErrInvalidRequest, dict)
 	}
 
 	// Update the tag using the service
 	tagWithAssets, err = api.Services.UpdateWorkspaceTag(c, user, workspace, tagWithAssets, req)
 	if err != nil {
-		api.Logger.Error("Error updating tag", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error updating tag", err, dict)
 	}
 
 	// Format the response
 	formattedTag, err := formatter.FormatTagResponse(&tagWithAssets.Tag, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error formatting tag", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting tag",
+			services.NewInternalErrorf("error formatting tag: %v", err),
+			dict,
+		)
 	}
 
 	// Log the event
@@ -257,27 +259,29 @@ func (api *APIControllers) WorkspaceTagsUpdate(c fiber.Ctx) error {
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Tag not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/tags/{tag_id} [delete]
+//
+//nolint:dupl // Similar to UsersDestroy and WorkflowsDestroy but operates on different entity types
 func (api *APIControllers) WorkspaceTagsDestroy(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the tag from locals
 	tagWithAssets, tagOk := c.Locals("tag_id").(*db.TagWithAssets)
 	if !tagOk {
-		api.Logger.Error("Error getting locals for TagsDestroy")
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for TagsDestroy",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Delete the tag using the service
 	err = api.Services.DeleteWorkspaceTag(c, user, workspace, tagWithAssets)
 	if err != nil {
-		api.Logger.Error("Error deleting tag", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error deleting tag", err, dict)
 	}
 
 	// Invalidate tags endpoints for this workspace (all users)
@@ -317,15 +321,18 @@ func (api *APIControllers) WorkspaceTagsDestroy(c fiber.Ctx) error {
 func (api *APIControllers) WorkspaceAddTagToEntity(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the tag from locals
 	tagWithAssets, tagOk := c.Locals("tag_id").(*db.TagWithAssets)
 	if !tagOk {
-		api.Logger.Error("Error getting locals for AddTagToEntity")
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for AddTagToEntity",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Get the entity type and ID from the request
@@ -343,10 +350,7 @@ func (api *APIControllers) WorkspaceAddTagToEntity(c fiber.Ctx) error {
 		entityID,
 	)
 	if err != nil {
-		api.Logger.Error("Error adding tag to entity", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error adding tag to entity", err, dict)
 	}
 
 	// Invalidate tags endpoints for this workspace (all users)
@@ -386,15 +390,18 @@ func (api *APIControllers) WorkspaceAddTagToEntity(c fiber.Ctx) error {
 func (api *APIControllers) WorkspaceRemoveTagFromEntity(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the tag from locals
 	tagWithAssets, tagOk := c.Locals("tag_id").(*db.TagWithAssets)
 	if !tagOk {
-		api.Logger.Error("Error getting locals for RemoveTagFromEntity")
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for RemoveTagFromEntity",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Get the entity type and ID from the request
@@ -412,10 +419,7 @@ func (api *APIControllers) WorkspaceRemoveTagFromEntity(c fiber.Ctx) error {
 		entityID,
 	)
 	if err != nil {
-		api.Logger.Error("Error removing tag from entity", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error removing tag from entity", err, dict)
 	}
 
 	// Invalidate tags endpoints for this workspace (all users)

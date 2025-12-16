@@ -1,11 +1,11 @@
 package middlewares
 
 import (
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/locales"
-	"irmin-api/utils"
+	"irmin-api/services"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -21,88 +21,106 @@ func resourceMiddleware[T any](
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	if !dictOk || !workspaceOk {
-		api.Logger.Error("Error getting locals in resourceMiddleware",
-			"resourceType", resourceType,
-			"dictOk", dictOk,
-			"workspaceOk", workspaceOk,
+		return api.handleServiceError(
+			c,
+			fmt.Sprintf("Error getting locals in resourceMiddleware for %s", resourceType),
+			services.NewInternalError("error getting locals"),
+			dict,
 		)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Parse the resource sqid from the request URL.
 	resourceSqid := c.Params(resourceType)
 	if resourceSqid == "" {
-		api.Logger.Error("No " + resourceType + " selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			fmt.Sprintf("No %s selected", resourceType),
+			services.ErrInvalidRequest,
+			dict,
+		)
 	}
 
 	// Decode the resource ID.
 	resourceID, err := api.SQIDManager.Decode(resourceIDType, resourceSqid)
 	if err != nil {
-		api.Logger.Error("Error decoding "+resourceIDType+" sqid", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			fmt.Sprintf("Error decoding %s sqid", resourceIDType),
+			services.NewInternalErrorf("error decoding sqid: %v", err),
+			dict,
+		)
 	}
 
 	// Get the resource by its ID.
 	resource, err := getResource(uint(resourceID))
 	if err != nil {
-		api.Logger.Error("Error retrieving "+resourceType, "error", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			fmt.Sprintf("Error retrieving %s", resourceType),
+			err,
+			dict,
+		)
 	}
 
 	// Check if the resource belongs to the workspace.
 	switch r := any(resource).(type) {
 	case *db.Workflow:
 		if r.WorkspaceID != workspace.ID {
-			api.Logger.Error(resourceType + " does not belong to the workspace")
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "access_denied")},
-			})
+			return api.handleServiceError(
+				c,
+				fmt.Sprintf("%s does not belong to the workspace", resourceType),
+				services.ErrAccessDenied,
+				dict,
+			)
 		}
 		c.Locals(resourceType, r)
 	case *db.Connection:
 		if r.WorkspaceID != workspace.ID {
-			api.Logger.Error(resourceType + " does not belong to the workspace")
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "access_denied")},
-			})
+			return api.handleServiceError(
+				c,
+				fmt.Sprintf("%s does not belong to the workspace", resourceType),
+				services.ErrAccessDenied,
+				dict,
+			)
 		}
 		c.Locals(resourceType, r)
 	case *db.StoredQuery:
 		if r.WorkspaceID != workspace.ID {
-			api.Logger.Error(resourceType + " does not belong to the workspace")
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "access_denied")},
-			})
+			return api.handleServiceError(
+				c,
+				fmt.Sprintf("%s does not belong to the workspace", resourceType),
+				services.ErrAccessDenied,
+				dict,
+			)
 		}
 		c.Locals(resourceType, r)
 	case *db.StoredScript:
 		if r.WorkspaceID != workspace.ID {
-			api.Logger.Error(resourceType + " does not belong to the workspace")
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "access_denied")},
-			})
+			return api.handleServiceError(
+				c,
+				fmt.Sprintf("%s does not belong to the workspace", resourceType),
+				services.ErrAccessDenied,
+				dict,
+			)
 		}
 		c.Locals(resourceType, r)
 	case *db.TagWithAssets:
 		if r.Tag.WorkspaceID != workspace.ID {
-			api.Logger.Error(resourceType + " does not belong to the workspace")
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "access_denied")},
-			})
+			return api.handleServiceError(
+				c,
+				fmt.Sprintf("%s does not belong to the workspace", resourceType),
+				services.ErrAccessDenied,
+				dict,
+			)
 		}
 		c.Locals(resourceType, r)
 	default:
-		api.Logger.Error("Unsupported resource type")
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Unsupported resource type in resourceMiddleware",
+			services.NewInternalErrorf("unsupported resource type: %s", resourceType),
+			dict,
+		)
 	}
 
 	return c.Next()

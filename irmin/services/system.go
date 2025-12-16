@@ -26,7 +26,7 @@ func (api *APIServices) ProcessSystemWebhook(
 		var webhookEvent lakefs.WebhookEvent
 		if unmarshalErr := json.Unmarshal(payload, &webhookEvent); unmarshalErr != nil {
 			api.Logger.ErrorContext(c, "Error unmarshalling LakeFS webhook event", "error", unmarshalErr)
-			return unmarshalErr
+			return NewInternalErrorf("error unmarshalling LakeFS webhook event: %w", unmarshalErr)
 		}
 
 		// Add the event to the orchestrator
@@ -37,7 +37,7 @@ func (api *APIServices) ProcessSystemWebhook(
 		var dispatchEvent orchestrator.DispatchEvent
 		if unmarshalErr := json.Unmarshal(payload, &dispatchEvent); unmarshalErr != nil {
 			api.Logger.ErrorContext(c, "Error unmarshalling dispatch event", "error", unmarshalErr)
-			return unmarshalErr
+			return NewInternalErrorf("error unmarshalling dispatch event: %w", unmarshalErr)
 		}
 
 		// Add the event to the orchestrator

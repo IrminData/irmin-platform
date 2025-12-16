@@ -1,10 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/locales"
 	"irmin-api/services"
-	"irmin-api/utils"
 	"strconv"
 	"strings"
 
@@ -39,26 +39,24 @@ func (api *APIControllers) WorkspaceSearch(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	user, userOk := c.Locals("user").(*db.User)
 	if !dictOk || !workspaceOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{"Workspace not found"},
-		})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for WorkspaceSearch",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse query parameters
 	filters, err := api.parseSearchFilters(c)
 	if err != nil {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(c, "Error parsing search filters", err, dict)
 	}
 
 	// Perform the search
 	searchResponse, err := api.Services.SearchWorkspace(c, user, workspace, filters)
 	if err != nil {
-		api.Logger.Error("Failed to search workspace", "error", err, "workspace_id", workspace.ID)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to search workspace", err, dict)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -107,7 +105,7 @@ func (api *APIControllers) parseTypesFilter(c fiber.Ctx, filters *db.SearchFilte
 
 	for _, t := range filters.Types {
 		if !validTypes[strings.TrimSpace(t)] {
-			return fiber.NewError(fiber.StatusBadRequest, "Invalid type: "+t)
+			return fmt.Errorf("%w: invalid type: %s", services.ErrInvalidQueryParams, t)
 		}
 	}
 

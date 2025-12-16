@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"fmt"
 	"irmin-api/locales"
+	"irmin-api/services"
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -23,35 +25,48 @@ import (
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /system/webhook [post]
 func (api *APIControllers) SystemWebhook(c fiber.Ctx) error {
+	// Get the dictionary
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	if !dictOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Message: "Internal server error",
+		})
+	}
+
 	// Make sure the request is authenticated with a system token
 	isSystem, isSystemOk := c.Locals("is_system").(bool)
 	if !isSystemOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{"Access denied"},
-		})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for SystemWebhook",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 	if !isSystem {
-		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminmodels.IrminAPIResponse{
-			Errors: []string{"Access denied"},
-		})
+		return api.handleServiceError(
+			c,
+			"Access denied",
+			services.ErrAccessDenied,
+			dict,
+		)
 	}
 
 	// Get the query params
 	query, parseQueryParamsErr := utils.ParseQueryParams(c, nil, []string{"type"})
 	if parseQueryParamsErr != nil {
-		api.Logger.Error("Error parsing query params", "error", parseQueryParamsErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{"Error parsing query params"},
-		})
+		return api.handleServiceError(
+			c,
+			"Error parsing query params",
+			fmt.Errorf("%w: %w", services.ErrInvalidQueryParams, parseQueryParamsErr),
+			dict,
+		)
 	}
 
 	// Process the system webhook
 	err := api.Services.ProcessSystemWebhook(c, query["type"], c.Body(), isSystem)
 	if err != nil {
-		api.Logger.Error("Error processing system webhook", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{"Error processing system webhook"},
-		})
+		return api.handleServiceError(c, "Error processing system webhook", err, dict)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -73,64 +88,79 @@ func (api *APIControllers) SystemWebhook(c fiber.Ctx) error {
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /system/schema-from-file [post]
 func (api *APIControllers) GenerateFileSchema(c fiber.Ctx) error {
-	// Make sure the request is authenticated with a system token
-	isSystem, isSystemOk := c.Locals("is_system").(bool)
-	if !isSystemOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{"Access denied"},
-		})
-	}
-
-	if !isSystem {
-		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminmodels.IrminAPIResponse{
-			Errors: []string{"Access denied"},
-		})
-	}
-
 	// Get the dictionary and locale from the request context
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 
 	if !localeOk || !dictOk {
-		api.Logger.Error("Error validating parameters")
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Message: "Internal server error",
+		})
+	}
+
+	// Make sure the request is authenticated with a system token
+	isSystem, isSystemOk := c.Locals("is_system").(bool)
+	if !isSystemOk {
+		return api.handleServiceError(
+			c,
+			"Error getting locals for GenerateFileSchema",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
+	}
+
+	if !isSystem {
+		return api.handleServiceError(
+			c,
+			"Access denied",
+			services.ErrAccessDenied,
+			dict,
+		)
 	}
 
 	// Parse the multipart form data
 	form, err := c.MultipartForm()
 	if err != nil {
-		api.Logger.Error("Error parsing form data", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error parsing form data",
+			fmt.Errorf("%w: %w", services.ErrInvalidRequest, err),
+			dict,
+		)
 	}
 
 	// Validate that a file was provided
 	if len(form.File) == 0 || len(form.File["file"]) == 0 {
-		api.Logger.Error("No file found in form data")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(
+			c,
+			"No file found in form data",
+			services.ErrInvalidRequest,
+			dict,
+		)
 	}
 
 	// Get the uploaded file
 	fileHeader := form.File["file"][0]
 	file, err := fileHeader.Open()
 	if err != nil {
-		api.Logger.Error("Error opening file", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error opening file",
+			fmt.Errorf("%w: %w", services.ErrInvalidRequest, err),
+			dict,
+		)
 	}
 	defer file.Close()
 
 	// Generate the schema
 	schema, err := api.Services.GenerateSchemaFromUploadedFile(c, locale, fileHeader.Filename, file)
 	if err != nil {
-		api.Logger.Error("Error generating schema from file", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error generating schema from file",
+			err,
+			dict,
+		)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

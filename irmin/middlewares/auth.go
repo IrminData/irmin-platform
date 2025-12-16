@@ -2,40 +2,51 @@ package middlewares
 
 import (
 	"context"
-	"irmin-api/utils"
+	"irmin-api/locales"
+	"irmin-api/services"
 	"strings"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
 // AuthMiddleware handles the user authentication for the API, tokens and user details syncing with Clerk.
 func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error {
-	// Get the locale from the context
+	// Get the locale and dictionary from the context
 	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	if !localeOk {
 		locale = "en"
 	}
-
-	// Parse the Authorization header
-	headers, err := utils.ParseHeaders(c, []string{"Authorization"}, nil)
-	if err != nil {
-		api.Logger.Error("Error parsing headers", "error", err)
-		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminmodels.IrminAPIResponse{})
+	if !dictOk {
+		dict, locale = api.lm.GetDictionary(c)
 	}
 
-	token := strings.TrimPrefix(headers["Authorization"], "Bearer ")
-	if token == "" {
-		api.Logger.Error("No token provided")
-		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminmodels.IrminAPIResponse{})
+	// Get the Authorization header
+	authHeader := c.Get("Authorization")
+	if authHeader == "" {
+		return api.handleServiceError(
+			c,
+			"No authorization header provided",
+			services.ErrInvalidRequest,
+			dict,
+		)
+	}
+
+	token := strings.TrimPrefix(authHeader, "Bearer ")
+	if token == "" || token == authHeader {
+		return api.handleServiceError(
+			c,
+			"Invalid authorization header format",
+			services.ErrInvalidRequest,
+			dict,
+		)
 	}
 
 	// Identify the user from the token
 	// Use context.Background() instead of Fiber context to ensure timeouts work properly
 	irminUser, isSystem, err := api.Services.IdentifyUserFromToken(context.Background(), token, locale)
 	if err != nil {
-		api.Logger.Error("Authentication failed", "error", err)
-		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Authentication failed", err, dict)
 	}
 
 	// Set the user in the context for subsequent handlers

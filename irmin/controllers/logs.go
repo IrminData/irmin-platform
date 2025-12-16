@@ -7,6 +7,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
+	"irmin-api/services"
 	"irmin-api/utils"
 
 	"math"
@@ -50,7 +51,7 @@ func (api *APIControllers) parseLogsQueryParams(c fiber.Ctx) (*logsQueryParams, 
 		"stored_query_id", "policy_id", "repository_object_id",
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", services.ErrInvalidQueryParams, err)
 	}
 
 	queryParams := &logsQueryParams{
@@ -153,17 +154,14 @@ func (api *APIControllers) buildLogsResponse(
 func (api *APIControllers) LogsIndex(c fiber.Ctx) error {
 	logsLocalParams, err := api.validateLogsParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating logs parameters", "error", err)
+		api.Logger.Error("Failed to validate logs parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Parse query parameters
 	queryParams, err := api.parseLogsQueryParams(c)
 	if err != nil {
-		api.Logger.Error("Error parsing query params", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(logsLocalParams.dict, "invalid_request")},
-		})
+		return api.handleServiceError(c, "Failed to parse query params", err, logsLocalParams.dict)
 	}
 
 	// Get asset parameters if provided
@@ -198,10 +196,7 @@ func (api *APIControllers) LogsIndex(c fiber.Ctx) error {
 		var getAssetParamsErr error
 		assetParams, getAssetParamsErr = api.getAssetParams(paramMap, logsLocalParams.workspace)
 		if getAssetParamsErr != nil {
-			api.Logger.Error("Error getting asset parameters", "error", getAssetParamsErr)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(logsLocalParams.dict, "invalid_request")},
-			})
+			return api.handleServiceError(c, "Failed to get asset parameters", getAssetParamsErr, logsLocalParams.dict)
 		}
 	}
 
@@ -214,19 +209,13 @@ func (api *APIControllers) LogsIndex(c fiber.Ctx) error {
 		assetParams,
 	)
 	if err != nil {
-		api.Logger.Error("Error fetching log events", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(logsLocalParams.dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to fetch log events", err, logsLocalParams.dict)
 	}
 
 	// Format the log events
 	formattedEvents, err := api.formatLogEventsResponse(c, events)
 	if err != nil {
-		api.Logger.Error("Error formatting log events", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(logsLocalParams.dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to format log events", err, logsLocalParams.dict)
 	}
 
 	// Return the response
@@ -243,54 +232,54 @@ func (api *APIControllers) getAssetParams(params map[string]string, workspace *d
 	case params["connection_id"] != "":
 		connectionID, err := api.SQIDManager.Decode("connections", params["connection_id"])
 		if err != nil {
-			return nil, fmt.Errorf("decoding connection ID: %w", err)
+			return nil, fmt.Errorf("%w: decoding connection ID: %w", services.ErrInvalidQueryParams, err)
 		}
 		return &assetParams{assetType: "connection", assetID: uint(connectionID)}, nil
 
 	case params["repository"] != "":
 		repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(params["repository"], workspace.ID)
 		if err != nil {
-			return nil, fmt.Errorf("fetching repository: %w", err)
+			return nil, fmt.Errorf("%w: fetching repository: %w", services.ErrInvalidQueryParams, err)
 		}
 		return &assetParams{assetType: "repository", assetID: repository.ID}, nil
 
 	case params["workflow_id"] != "":
 		workflowID, err := api.SQIDManager.Decode("workflows", params["workflow_id"])
 		if err != nil {
-			return nil, fmt.Errorf("decoding workflow ID: %w", err)
+			return nil, fmt.Errorf("%w: decoding workflow ID: %w", services.ErrInvalidQueryParams, err)
 		}
 		return &assetParams{assetType: "workflow", assetID: uint(workflowID)}, nil
 
 	case params["stored_query_id"] != "":
 		storedQueryID, err := api.SQIDManager.Decode("queries", params["stored_query_id"])
 		if err != nil {
-			return nil, fmt.Errorf("decoding stored query ID: %w", err)
+			return nil, fmt.Errorf("%w: decoding stored query ID: %w", services.ErrInvalidQueryParams, err)
 		}
 		return &assetParams{assetType: "stored_query", assetID: uint(storedQueryID)}, nil
 
 	case params["policy_id"] != "":
 		policyID, err := api.SQIDManager.Decode("policies", params["policy_id"])
 		if err != nil {
-			return nil, fmt.Errorf("decoding policy ID: %w", err)
+			return nil, fmt.Errorf("%w: decoding policy ID: %w", services.ErrInvalidQueryParams, err)
 		}
 		return &assetParams{assetType: "policy", assetID: uint(policyID)}, nil
 
 	case params["repository_object_id"] != "":
 		repositoryObjectID, err := api.SQIDManager.Decode("repository_objects", params["repository_object_id"])
 		if err != nil {
-			return nil, fmt.Errorf("decoding repository object ID: %w", err)
+			return nil, fmt.Errorf("%w: decoding repository object ID: %w", services.ErrInvalidQueryParams, err)
 		}
 		return &assetParams{assetType: "repository_object", assetID: uint(repositoryObjectID)}, nil
 
 	case params["user_id"] != "":
 		userID, err := api.SQIDManager.Decode("users", params["user_id"])
 		if err != nil {
-			return nil, fmt.Errorf("decoding user ID: %w", err)
+			return nil, fmt.Errorf("%w: decoding user ID: %w", services.ErrInvalidQueryParams, err)
 		}
 		return &assetParams{assetType: "user", assetID: uint(userID)}, nil
 
 	default:
-		return nil, errors.New("no asset type found")
+		return nil, fmt.Errorf("%w: no asset type found", services.ErrInvalidQueryParams)
 	}
 }
 

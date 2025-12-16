@@ -29,7 +29,7 @@ func (api *APIServices) GetRepositoryTag(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -57,14 +57,14 @@ func (api *APIServices) GetRepositoryTag(
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
 
 	// Get the tag from the data engine.
 	dataEngineTag, err := dataEngine.GetTag(workspace.Slug, repository.Slug, tagName)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error retrieving tag from Data Engine", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error retrieving tag from data engine: %w", err)
 	}
 
 	return dataEngineTag, nil
@@ -87,7 +87,7 @@ func (api *APIServices) ListRepositoryTags(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -114,7 +114,7 @@ func (api *APIServices) ListRepositoryTags(
 	tags, listTagsErr := dataEngine.ListTags(workspace.Slug, repository.Slug)
 	if listTagsErr != nil {
 		api.Logger.ErrorContext(c, "Error retrieving tags from Data Engine", "error", listTagsErr)
-		return nil, listTagsErr
+		return nil, NewInternalErrorf("error retrieving tags from data engine: %w", listTagsErr)
 	}
 
 	return tags, nil
@@ -138,7 +138,7 @@ func (api *APIServices) CreateRepositoryTag(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -172,7 +172,7 @@ func (api *APIServices) CreateRepositoryTag(
 	)
 	if createTagErr != nil {
 		api.Logger.ErrorContext(c, "Error creating tag in Data Engine", "error", createTagErr)
-		return nil, createTagErr
+		return nil, NewInternalErrorf("error creating tag in data engine: %w", createTagErr)
 	}
 
 	// Log the event
@@ -205,7 +205,7 @@ func (api *APIServices) DeleteRepositoryTag(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return err
+		return NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -233,7 +233,7 @@ func (api *APIServices) DeleteRepositoryTag(
 	// Delete the tag from the data engine
 	if deleteTagErr := dataEngine.DeleteTag(workspace.Slug, repository.Slug, tag.Name); deleteTagErr != nil {
 		api.Logger.ErrorContext(c, "Error deleting tag in Data Engine", "error", deleteTagErr)
-		return deleteTagErr
+		return NewInternalErrorf("error deleting tag in data engine: %w", deleteTagErr)
 	}
 
 	// Log the event

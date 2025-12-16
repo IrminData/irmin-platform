@@ -40,10 +40,12 @@ func (api *APIMiddlewares) createPermissionMiddleware(
 		// Get the local variables
 		dict, workspace, user, err := api.permissionsMiddlewareGetLocalVariables(c)
 		if err != nil {
-			api.Logger.Error("Error getting local variables", "error", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "error_occurred")},
-			})
+			return api.handleServiceError(
+				c,
+				"Error getting local variables in permission middleware",
+				fmt.Errorf("internal: %w", err),
+				dict,
+			)
 		}
 
 		// Get resource ID if needed
@@ -55,10 +57,12 @@ func (api *APIMiddlewares) createPermissionMiddleware(
 		// Check if the user has the permission using the optimized version
 		allowed, err := api.permissionService.IsAllowed(user, workspace, resource, resourceID, action)
 		if err != nil {
-			api.Logger.Error("Error checking permission", "error", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "error_occurred")},
-			})
+			return api.handleServiceError(
+				c,
+				"Error checking permission",
+				fmt.Errorf("internal: %w", err),
+				dict,
+			)
 		}
 		if !allowed {
 			api.Logger.Info("User does not have permission",
@@ -67,9 +71,12 @@ func (api *APIMiddlewares) createPermissionMiddleware(
 				"user_id", user.ID,
 				"workspace_id", workspace.ID,
 				"resource_id", resourceID)
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "insufficient_permissions")},
-			})
+			return api.handleServiceError(
+				c,
+				"User does not have permission",
+				errors.New("insufficient_permissions"),
+				dict,
+			)
 		}
 
 		return c.Next()
@@ -440,17 +447,20 @@ func (api *APIMiddlewares) WorkspaceTagEntityPermissionMiddleware(action db.Poli
 				"entityType", entityType,
 				"entityIDStr", entityIDStr,
 				"error", err)
+			// Return generic error message to avoid exposing internal details
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{err.Error()},
+				Errors: []string{api.lm.T(dict, "invalid_request")},
 			})
 		}
 
 		// Check if the user has the permission using the optimized version
 		allowed, err := api.permissionService.IsAllowed(user, workspace, resource, resourceID, action)
 		if err != nil {
+			// For security reasons, always return 403 for any error during permission checking
+			// to avoid leaking information about internal failures
 			api.Logger.Error("Error checking permission", "error", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "error_occurred")},
+			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "insufficient_permissions")},
 			})
 		}
 		if !allowed {

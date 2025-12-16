@@ -5,6 +5,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
+	"irmin-api/services"
 	"irmin-api/utils"
 
 	irmincache "irmin-api/cache"
@@ -27,22 +28,21 @@ import (
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/connections [get]
-//
-//nolint:dupl // this function is not a duplicate, but follows the same pattern as the other index functions
 func (api *APIControllers) ConnectionsIndex(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error validating workspace parameters",
+			services.NewInternalError(err.Error()),
+			dict,
+		)
 	}
 
 	// Get the connections
 	connections, err := api.Services.ListConnections(c, user, workspace)
 	if err != nil {
-		api.Logger.Error("Error listing connections", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to list connections", err, dict)
 	}
 
 	// Structure the response.
@@ -52,10 +52,12 @@ func (api *APIControllers) ConnectionsIndex(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatErr != nil {
-		api.Logger.Error("Error formatting connections", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format connections",
+			services.NewInternalErrorf("error formatting connections: %v", formatErr),
+			dict,
+		)
 	}
 
 	// Return the response.
@@ -84,31 +86,37 @@ func (api *APIControllers) ConnectionsStore(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	if !dictOk || !userOk || !localeOk || !workspaceOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ConnectionsStore",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse and validate the JSON request body
 	var req irmincore.CreateConnectionRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Create the connection
 	connection, err := api.Services.CreateConnection(c.Context(), locale, user, workspace, req)
 	if err != nil {
-		api.Logger.Error("Error creating connection", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to create connection", err, dict)
 	}
 
 	// Format the connection response
 	connectionResponse, formatConnectionResponseErr := formatter.FormatConnectionResponse(connection, api.SQIDManager)
 	if formatConnectionResponseErr != nil {
-		api.Logger.Error("Error formatting connection response", "error", formatConnectionResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format connection response",
+			services.NewInternalErrorf("error formatting connection response: %v", formatConnectionResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches that may be affected by this action
@@ -117,7 +125,7 @@ func (api *APIControllers) ConnectionsStore(c fiber.Ctx) error {
 		fmt.Sprintf("/api/v1/workspaces/%s/connections", workspace.Slug),
 	)
 	if invalidateCacheErr != nil {
-		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
+		api.Logger.Error("Failed to invalidate cache", "error", invalidateCacheErr)
 	}
 
 	// Return the response.
@@ -145,7 +153,12 @@ func (api *APIControllers) ConnectionsShow(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	connection, connectionOk := c.Locals("connection").(*db.Connection)
 	if !dictOk || !connectionOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ConnectionsShow",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Mask secrets
@@ -154,10 +167,12 @@ func (api *APIControllers) ConnectionsShow(c fiber.Ctx) error {
 	// Format the connection response
 	connectionResponse, formatConnectionResponseErr := formatter.FormatConnectionResponse(connection, api.SQIDManager)
 	if formatConnectionResponseErr != nil {
-		api.Logger.Error("Error formatting connection response", "error", formatConnectionResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format connection response",
+			services.NewInternalErrorf("error formatting connection response: %v", formatConnectionResponseErr),
+			dict,
+		)
 	}
 
 	// Return the response.
@@ -190,22 +205,26 @@ func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	connection, connectionOk := c.Locals("connection").(*db.Connection)
 	if !dictOk || !userOk || !workspaceOk || !connectionOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ConnectionsUpdate",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse and validate the JSON request body
 	var req irmincore.UpdateConnectionRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Update the connection
 	connection, err := api.Services.UpdateConnection(c, user, workspace, connection, req)
 	if err != nil {
-		api.Logger.Error("Error updating connection", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to update connection", err, dict)
 	}
 
 	// Format the connection response
@@ -214,10 +233,12 @@ func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatConnectionResponseErr != nil {
-		api.Logger.Error("Error formatting connection response", "error", formatConnectionResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format connection response",
+			services.NewInternalErrorf("error formatting connection response: %v", formatConnectionResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches that may be affected by this action
@@ -258,12 +279,19 @@ func (api *APIControllers) ConnectionsUpdateConfiguration(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	connection, connectionOk := c.Locals("connection").(*db.Connection)
 	if !localeOk || !dictOk || !userOk || !workspaceOk || !connectionOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ConnectionsUpdateConfiguration",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse and validate the JSON request body
 	var req irmincore.UpdateConnectionConfigurationRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
@@ -277,10 +305,7 @@ func (api *APIControllers) ConnectionsUpdateConfiguration(c fiber.Ctx) error {
 		req,
 	)
 	if err != nil {
-		api.Logger.Error("Error updating connection configuration", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to update connection configuration", err, dict)
 	}
 
 	// Format the connection response
@@ -289,10 +314,12 @@ func (api *APIControllers) ConnectionsUpdateConfiguration(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatConnectionResponseErr != nil {
-		api.Logger.Error("Error formatting connection response", "error", formatConnectionResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format connection response",
+			services.NewInternalErrorf("error formatting connection response: %v", formatConnectionResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches that may be affected by this action
@@ -331,16 +358,18 @@ func (api *APIControllers) ConnectionsDestroy(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	connection, connectionOk := c.Locals("connection").(*db.Connection)
 	if !dictOk || !userOk || !workspaceOk || !connectionOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ConnectionsDestroy",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Delete the connection
 	err := api.Services.DeleteConnection(c, user, workspace, connection)
 	if err != nil {
-		api.Logger.Error("Error deleting connection", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to delete connection", err, dict)
 	}
 
 	// Invalidate caches that may be affected by this action
@@ -382,22 +411,26 @@ func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	connection, connectionOk := c.Locals("connection").(*db.Connection)
 	if !dictOk || !userOk || !workspaceOk || !connectionOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for TransferConnectionOwnership",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse and validate the JSON request body
 	var req irmincore.TransferConnectionOwnershipRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Transfer the connection ownership
 	connection, err := api.Services.TransferConnectionOwnership(c, user, workspace, connection, req)
 	if err != nil {
-		api.Logger.Error("Error transferring connection ownership", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to transfer connection ownership", err, dict)
 	}
 
 	// Format the connection response
@@ -406,10 +439,12 @@ func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatConnectionResponseErr != nil {
-		api.Logger.Error("Error formatting connection response", "error", formatConnectionResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format connection response",
+			services.NewInternalErrorf("error formatting connection response: %v", formatConnectionResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches that may be affected by this action
@@ -452,16 +487,23 @@ func (api *APIControllers) ConnectionSchema(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	connection, connectionOk := c.Locals("connection").(*db.Connection)
 	if !localeOk || !dictOk || !userOk || !workspaceOk || !connectionOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ConnectionSchema",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Get the operation method and path from query params
 	query, parseQueryParamsErr := utils.ParseQueryParams(c, nil, []string{"operation_method", "path"})
 	if parseQueryParamsErr != nil {
-		api.Logger.Error("Error parsing query params", "error", parseQueryParamsErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to parse query params",
+			fmt.Errorf("%w: %w", services.ErrInvalidQueryParams, parseQueryParamsErr),
+			dict,
+		)
 	}
 
 	// Get the schema of the connection
@@ -475,10 +517,7 @@ func (api *APIControllers) ConnectionSchema(c fiber.Ctx) error {
 		query["path"],
 	)
 	if getConnectionSchemaErr != nil {
-		api.Logger.Error("Error getting connection schema", "error", getConnectionSchemaErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to get connection schema", getConnectionSchemaErr, dict)
 	}
 
 	// Return the response.
@@ -508,16 +547,18 @@ func (api *APIControllers) TestConnection(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	connection, connectionOk := c.Locals("connection").(*db.Connection)
 	if !localeOk || !dictOk || !userOk || !workspaceOk || !connectionOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for TestConnection",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Test the connection
 	result, err := api.Services.TestConnection(c, locale, user, workspace, connection)
 	if err != nil {
-		api.Logger.Error("Error testing connection", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to test connection", err, dict)
 	}
 
 	// Return the response.

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"fmt"
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
@@ -28,22 +27,21 @@ import (
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/invites [get]
-//
-//nolint:dupl // this function is not a duplicate, but follows the same pattern as the other index functions
 func (api *APIControllers) WorkspaceInvitesIndex(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error validating workspace parameters",
+			services.NewInternalError(err.Error()),
+			dict,
+		)
 	}
 
 	// Get the invites.
 	invites, err := api.Services.ListInvitesToWorkspace(c, workspace, user)
 	if err != nil {
-		api.Logger.Error("Error listing invites", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to list invites", err, dict)
 	}
 
 	// Structure the response.
@@ -53,10 +51,12 @@ func (api *APIControllers) WorkspaceInvitesIndex(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatErr != nil {
-		api.Logger.Error("Error formatting invites", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format invites",
+			services.NewInternalErrorf("error formatting invites: %v", formatErr),
+			dict,
+		)
 	}
 
 	// Return the response.
@@ -86,41 +86,26 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	user, userOk := c.Locals("user").(*db.User)
 	if !dictOk || !localeOk || !workspaceOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for SendInvite",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.SendInviteRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Send the invite.
 	inviteResult, err := api.Services.SendInvite(c, locale, user, workspace, req)
 	if err != nil {
-		api.Logger.Error("Error sending invite", "error", err)
-
-		if errors.Is(err, services.ErrUserAlreadyInWorkspace) {
-			return utils.WriteResponse(c, fiber.StatusConflict, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "already_in_workspace")},
-			})
-		}
-
-		if errors.Is(err, services.ErrUserAlreadyInvitedToWorkspace) {
-			return utils.WriteResponse(c, fiber.StatusConflict, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "already_invited_to_workspace")},
-			})
-		}
-
-		if errors.Is(err, services.ErrInvalidRole) {
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "invalid_role")},
-			})
-		}
-
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to send invite", err, dict)
 	}
 
 	// Format the invite
@@ -162,16 +147,23 @@ func (api *APIControllers) InvitesShow(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
 	if !dictOk || !inviteOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for InvitesShow",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Format the invite
 	inviteResponse, err := formatter.FormatInviteResponse(invite, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error formatting invite response", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format invite response",
+			services.NewInternalErrorf("error formatting invite response: %v", err),
+			dict,
+		)
 	}
 
 	// Return the response
@@ -201,34 +193,36 @@ func (api *APIControllers) InvitesUpdate(c fiber.Ctx) error {
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
 	user, userOk := c.Locals("user").(*db.User)
 	if !dictOk || !inviteOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for InvitesUpdate",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.UpdateInviteRequest
 	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		api.Logger.Error("Error parsing JSON request", "error", err)
+		return api.handleServiceError(c, "Failed to parse JSON request", services.ErrInvalidRequest, dict)
 	}
 
 	// Update the invite
 	invite, err := api.Services.UpdateInvite(c, user, invite, req)
 	if err != nil {
-		api.Logger.Error("Error updating invite", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to update invite", err, dict)
 	}
 
 	// Format the invite
 	inviteResponse, formatInviteResponseErr := formatter.FormatInviteResponse(invite, api.SQIDManager)
 	if formatInviteResponseErr != nil {
-		api.Logger.Error("Error formatting invite response", "error", formatInviteResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format invite response",
+			services.NewInternalErrorf("error formatting invite response: %v", formatInviteResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate invites list for this workspace (all users)
@@ -268,15 +262,17 @@ func (api *APIControllers) InvitesDestroy(c fiber.Ctx) error {
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
 	user, userOk := c.Locals("user").(*db.User)
 	if !dictOk || !inviteOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for InvitesDestroy",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Delete the invite
 	if err := api.Services.DeleteInvite(c, user, invite); err != nil {
-		api.Logger.Error("Error deleting invite", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to delete invite", err, dict)
 	}
 
 	// Invalidate invites list for this workspace (all users)
@@ -316,24 +312,28 @@ func (api *APIControllers) ResendInvite(c fiber.Ctx) error {
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
 	user, userOk := c.Locals("user").(*db.User)
 	if !localeOk || !dictOk || !inviteOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ResendInvite",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Resend the invite
 	if err := api.Services.ResendInvite(c, locale, user, invite); err != nil {
-		api.Logger.Error("Error resending invite", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to resend invite", err, dict)
 	}
 
 	// Format the invite
 	inviteResponse, formatInviteResponseErr := formatter.FormatInviteResponse(invite, api.SQIDManager)
 	if formatInviteResponseErr != nil {
-		api.Logger.Error("Error formatting invite response", "error", formatInviteResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format invite response",
+			services.NewInternalErrorf("error formatting invite response: %v", formatInviteResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate invites list for this workspace (all users)
@@ -369,16 +369,18 @@ func (api *APIControllers) IndexMyInvites(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
 	if !dictOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for IndexMyInvites",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Fetch invites for the user
 	invites, err := api.Services.ListInvitesForUser(c, user)
 	if err != nil {
-		api.Logger.Error("Error fetching invites", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to fetch invites", err, dict)
 	}
 
 	// Prepare response
@@ -387,10 +389,12 @@ func (api *APIControllers) IndexMyInvites(c fiber.Ctx) error {
 		// Format the invite
 		inviteResponse, formatInviteResponseErr := formatter.FormatInviteResponse(&invite, api.SQIDManager)
 		if formatInviteResponseErr != nil {
-			api.Logger.Error("Error formatting invite response", "error", formatInviteResponseErr)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "error_occurred")},
-			})
+			return api.handleServiceError(
+				c,
+				"Failed to format invite response",
+				services.NewInternalErrorf("error formatting invite response: %v", formatInviteResponseErr),
+				dict,
+			)
 		}
 		// Append to response
 		invitesResponse = append(invitesResponse, *inviteResponse)
@@ -421,15 +425,17 @@ func (api *APIControllers) AcceptInvite(c fiber.Ctx) error {
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
 	user, userOk := c.Locals("user").(*db.User)
 	if !dictOk || !inviteOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for AcceptInvite",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Accept the invite
 	if err := api.Services.AcceptInvite(c, user, invite); err != nil {
-		api.Logger.Error("Error accepting invite", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to accept invite", err, dict)
 	}
 
 	// Invalidate workspace users list (all users), my invites (current user), and workspaces list (current user)
@@ -471,15 +477,17 @@ func (api *APIControllers) DeclineInvite(c fiber.Ctx) error {
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
 	user, userOk := c.Locals("user").(*db.User)
 	if !dictOk || !inviteOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for DeclineInvite",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Decline the invite
 	if err := api.Services.DeclineInvite(c, user, invite); err != nil {
-		api.Logger.Error("Error declining invite", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to decline invite", err, dict)
 	}
 
 	// Invalidate my invites (current user) and the invites list for the workspace (all users)

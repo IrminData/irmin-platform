@@ -27,7 +27,7 @@ func (api *APIServices) SearchWorkspace(
 	results, totalCount, err := api.DB.SearchWorkspace(workspace.ID, filters)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Failed to search workspace", "error", err, "workspace_id", workspace.ID)
-		return nil, err
+		return nil, NewInternalErrorf("error searching workspace: %w", err)
 	}
 
 	// Filter the results based on permissions

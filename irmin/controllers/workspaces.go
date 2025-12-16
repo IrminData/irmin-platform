@@ -6,10 +6,9 @@ import (
 	irmincache "irmin-api/cache"
 	"irmin-api/formatter"
 	"irmin-api/locales"
-	"irmin-api/utils"
+	"irmin-api/services"
 
 	"irmin-api/db"
-	"irmin-api/services"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -62,16 +61,18 @@ func (api *APIControllers) WorkspacesIndex(c fiber.Ctx) error {
 	user, userOk := c.Locals("user").(*db.User)
 
 	if !dictOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for WorkspacesIndex",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// List the workspaces for the user.
 	workspaces, err := api.Services.ListWorkspaces(user)
 	if err != nil {
-		api.Logger.Error("Error listing workspaces", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error listing workspaces", err, dict)
 	}
 
 	// Format the workspaces.
@@ -81,10 +82,12 @@ func (api *APIControllers) WorkspacesIndex(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatWorkspacesResponseErr != nil {
-		api.Logger.Error("Error formatting workspaces response", "error", formatWorkspacesResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting workspaces response",
+			services.NewInternalErrorf("error formatting workspaces response: %v", formatWorkspacesResponseErr),
+			dict,
+		)
 	}
 
 	// Return the workspaces.
@@ -113,39 +116,45 @@ func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 	user, userOk := c.Locals("user").(*db.User)
 
 	if !dictOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for WorkspacesStore",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse and validate the JSON request body
 	var req irmincore.CreateWorkspaceRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Create the workspace.
 	workspace, err := api.Services.CreateWorkspace(c, user, req)
 	if err != nil {
-		api.Logger.Error("Error creating workspace", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error creating workspace", err, dict)
 	}
 
 	// Format the workspace.
 	workspaceResponse, formatWorkspaceResponseErr := formatter.FormatWorkspaceResponse(workspace, api.SQIDManager)
 	if formatWorkspaceResponseErr != nil {
-		api.Logger.Error("Error formatting workspace response", "error", formatWorkspaceResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting workspace response",
+			services.NewInternalErrorf("error formatting workspace response: %v", formatWorkspaceResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate workspace lists and details
 	if invalidationErr := irmincache.InvalidatePathPrefixForCurrentUser(c, api.cacheStorage, "/api/v1/workspaces"); invalidationErr != nil {
-		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+		return api.handleServiceError(c, "Error invalidating cache", invalidationErr, dict)
 	}
 	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(api.cacheStorage, fmt.Sprintf("/api/v1/workspaces/%s", workspace.Slug)); invalidationErr != nil {
-		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+		return api.handleServiceError(c, "Error invalidating cache", invalidationErr, dict)
 	}
 
 	// Return the new workspace.
@@ -172,17 +181,18 @@ func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 func (api *APIControllers) WorkspacesShow(c fiber.Ctx) error {
 	_, dict, _, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Create the workspace response.
 	workspaceResponse, formatWorkspaceResponseErr := formatter.FormatWorkspaceResponse(workspace, api.SQIDManager)
 	if formatWorkspaceResponseErr != nil {
-		api.Logger.Error("Error formatting workspace response", "error", formatWorkspaceResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting workspace response",
+			services.NewInternalErrorf("error formatting workspace response: %v", formatWorkspaceResponseErr),
+			dict,
+		)
 	}
 
 	// Return the workspace.
@@ -210,23 +220,21 @@ func (api *APIControllers) WorkspacesShow(c fiber.Ctx) error {
 func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Parse and validate the JSON request body - all fields are optional during update
 	var req irmincore.UpdateWorkspaceRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Update the workspace.
 	updatedWorkspace, err := api.Services.UpdateWorkspace(user, workspace, req)
 	if err != nil {
-		api.Logger.Error("Error updating workspace", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error updating workspace", err, dict)
 	}
 
 	// Format the workspace.
@@ -235,10 +243,12 @@ func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatWorkspaceResponseErr != nil {
-		api.Logger.Error("Error formatting workspace response", "error", formatWorkspaceResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting workspace response",
+			services.NewInternalErrorf("error formatting workspace response: %v", formatWorkspaceResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate workspace lists and details
@@ -273,22 +283,13 @@ func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Delete the workspace.
 	deleteWorkspaceErr := api.Services.DeleteWorkspace(c, user, workspace)
 	if deleteWorkspaceErr != nil {
-		api.Logger.Error("Error deleting workspace", "error", deleteWorkspaceErr)
-		if errors.Is(deleteWorkspaceErr, services.ErrWorkspaceNotOwner) {
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "insufficient_permissions")},
-			})
-		}
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error deleting workspace", deleteWorkspaceErr, dict)
 	}
 
 	// Invalidate workspace lists and details
@@ -321,33 +322,24 @@ func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/transfer-ownership [post]
-//
-//nolint:dupl // This is similar to other transfer endpoints
 func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Parse and validate the JSON request body
 	var req irmincore.TransferOwnershipRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Transfer the workspace ownership.
 	transferredWorkspace, err := api.Services.TransferWorkspaceOwnership(c, user, workspace, req)
 	if err != nil {
-		api.Logger.Error("Error transferring workspace ownership", "error", err)
-		if errors.Is(err, services.ErrWorkspaceNotOwner) {
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "insufficient_permissions")},
-			})
-		}
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error transferring workspace ownership", err, dict)
 	}
 
 	// Format the workspace.
@@ -356,10 +348,12 @@ func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatWorkspaceResponseErr != nil {
-		api.Logger.Error("Error formatting workspace response", "error", formatWorkspaceResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting workspace response",
+			services.NewInternalErrorf("error formatting workspace response: %v", formatWorkspaceResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate workspace details
@@ -391,23 +385,13 @@ func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
 func (api *APIControllers) LeaveWorkspace(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Leave the workspace.
 	leaveWorkspaceErr := api.Services.LeaveWorkspace(user, workspace)
 	if leaveWorkspaceErr != nil {
-		api.Logger.Error("Error leaving workspace", "error", leaveWorkspaceErr)
-		if errors.Is(leaveWorkspaceErr, services.ErrWorkspaceOwnerCannotLeave) ||
-			errors.Is(leaveWorkspaceErr, services.ErrWorkspaceLastMemberCannotLeave) {
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "workspace_cannot_leave_last")},
-			})
-		}
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error leaving workspace", leaveWorkspaceErr, dict)
 	}
 
 	// Invalidate workspace lists, details, and user lists

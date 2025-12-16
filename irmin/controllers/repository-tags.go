@@ -5,7 +5,7 @@ import (
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/locales"
-	"irmin-api/utils"
+	"irmin-api/services"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -35,22 +35,18 @@ func (api *APIControllers) RepositoryTagsIndex(c fiber.Ctx) error {
 	repository, repositoryOk := c.Locals("repository").(*db.Repository)
 
 	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk {
-		api.Logger.Error("Error getting locals for RepositoryTagsIndex",
-			"localeOk", localeOk,
-			"dictOk", dictOk,
-			"workspaceOk", workspaceOk,
-			"repositoryOk", repositoryOk,
-			"userOk", userOk)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for RepositoryTagsIndex",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Get the tags from the service
 	tags, err := api.Services.ListRepositoryTags(c, locale, user, workspace, repository)
 	if err != nil {
-		api.Logger.Error("Error retrieving tags", "error", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error retrieving tags", err, dict)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -84,28 +80,26 @@ func (api *APIControllers) RepositoryTagsStore(c fiber.Ctx) error {
 	repository, repositoryOk := c.Locals("repository").(*db.Repository)
 
 	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk {
-		api.Logger.Error("Error getting locals for RepositoryTagsStore",
-			"localeOk", localeOk,
-			"dictOk", dictOk,
-			"userOk", userOk,
-			"workspaceOk", workspaceOk,
-			"repositoryOk", repositoryOk)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for RepositoryTagsStore",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.CreateRepositoryTagRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Create the tag using the service
 	tag, err := api.Services.CreateRepositoryTag(c, locale, user, workspace, repository, req)
 	if err != nil {
-		api.Logger.Error("Error creating tag", "error", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error creating tag", err, dict)
 	}
 
 	// Invalidate tags list and tag details (all users)
@@ -138,9 +132,15 @@ func (api *APIControllers) RepositoryTagsStore(c fiber.Ctx) error {
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/tags/{tag_name} [get]
 func (api *APIControllers) RepositoryTagsShow(c fiber.Ctx) error {
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	repositoryTag, repositoryTagOk := c.Locals("repository-tag").(*irminmodels.GitTag)
-	if !repositoryTagOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	if !dictOk || !repositoryTagOk {
+		return api.handleServiceError(
+			c,
+			"Error getting locals for RepositoryTagsShow",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -173,18 +173,18 @@ func (api *APIControllers) RepositoryTagsDestroy(c fiber.Ctx) error {
 	repositoryTag, repositoryTagOk := c.Locals("repository-tag").(*irminmodels.GitTag)
 
 	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk || !repositoryTagOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for RepositoryTagsDestroy",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Delete the tag using the service
 	err := api.Services.DeleteRepositoryTag(c, locale, user, workspace, repository, repositoryTag)
 	if err != nil {
-		api.Logger.Error("Error deleting tag", "error", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error deleting tag", err, dict)
 	}
 
 	// Invalidate tags list and tag details (all users)

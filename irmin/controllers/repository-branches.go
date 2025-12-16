@@ -40,10 +40,7 @@ func (api *APIControllers) RepositoryBranchesIndex(c fiber.Ctx) error {
 	// Get the branches using the service
 	filteredBranches, err := api.Services.ListRepositoryBranches(c, locale, user, workspace, repository)
 	if err != nil {
-		api.Logger.Error("Error listing repository branches", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error listing repository branches", err, dict)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -82,16 +79,15 @@ func (api *APIControllers) RepositoryBranchesStore(c fiber.Ctx) error {
 	// Parse the JSON request body
 	var req irmincore.CreateBranchRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Create the branch using the service
 	branch, err := api.Services.CreateRepositoryBranch(c, locale, user, workspace, repository, req)
 	if err != nil {
-		api.Logger.Error("Error creating repository branch", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error creating repository branch", err, dict)
 	}
 
 	// Invalidate branches list and branch details (all users)
@@ -166,16 +162,15 @@ func (api *APIControllers) RepositoryBranchesUpdate(c fiber.Ctx) error {
 	// Parse the JSON request body
 	var req irmincore.UpdateBranchRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Update the branch using the service
 	branch, err := api.Services.UpdateRepositoryBranch(c, locale, user, workspace, repository, branch, req)
 	if err != nil {
-		api.Logger.Error("Error updating repository branch", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error updating repository branch", err, dict)
 	}
 
 	// Invalidate branches list and branch details (all users)
@@ -222,10 +217,7 @@ func (api *APIControllers) RepositoryBranchesDestroy(c fiber.Ctx) error {
 	// Delete the branch using the service
 	err := api.Services.DeleteRepositoryBranch(c, locale, user, workspace, repository, branch)
 	if err != nil {
-		api.Logger.Error("Error deleting repository branch", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error deleting repository branch", err, dict)
 	}
 
 	// Invalidate branches list and branch details (all users)
@@ -271,10 +263,7 @@ func (api *APIControllers) RepositoryGetUncommittedChanges(c fiber.Ctx) error {
 	// Get uncommitted changes using the service
 	diff, err := api.Services.GetRepositoryUncommittedChanges(c, locale, user, workspace, repository, branch)
 	if err != nil {
-		api.Logger.Error("Error getting uncommitted changes", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error getting uncommitted changes", err, dict)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

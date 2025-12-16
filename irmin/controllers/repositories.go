@@ -72,22 +72,21 @@ func (api *APIControllers) validateRepositoryParams(c fiber.Ctx) (
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/repositories [get]
-//
-//nolint:dupl // This is not a duplicate of anything, it's just similar to other index endpoints
 func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace repository parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error validating workspace repository parameters",
+			services.NewInternalError(err.Error()),
+			dict,
+		)
 	}
 
 	// Get all repositories in the workspace.
 	repositories, err := api.Services.ListRepositories(c, user, workspace)
 	if err != nil {
-		api.Logger.Error("Error listing repositories", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error listing repositories", err, dict)
 	}
 
 	// Structure the response.
@@ -97,10 +96,12 @@ func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatErr != nil {
-		api.Logger.Error("Error formatting repositories", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting repositories",
+			services.NewInternalErrorf("error formatting repositories: %v", formatErr),
+			dict,
+		)
 	}
 
 	// Return the response.
@@ -126,28 +127,21 @@ func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
 func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	locale, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace repository parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace repository parameters", err, dict)
 	}
 
 	// Parse and validate the JSON request body
 	var req irmincore.CreateRepositoryRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Create the repository
 	repository, err := api.Services.CreateRepository(c, locale, user, workspace, req)
 	if err != nil {
-		api.Logger.Error("Error creating repository", "error", err)
-		if errors.Is(err, services.ErrRepositoryAlreadyExists) {
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "repository_already_exists")},
-			})
-		}
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error creating repository", err, dict)
 	}
 
 	// Format the repository response
@@ -156,10 +150,12 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatRepositoryResponseErr != nil {
-		api.Logger.Error("Error formatting repository", "error", formatRepositoryResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting repository",
+			services.NewInternalErrorf("error formatting repository: %v", formatRepositoryResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches affected by this action (all users)
@@ -204,10 +200,12 @@ func (api *APIControllers) RepositoriesShow(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatRepositoryResponseErr != nil {
-		api.Logger.Error("Error formatting repository", "error", formatRepositoryResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting repository",
+			services.NewInternalErrorf("error formatting repository: %v", formatRepositoryResponseErr),
+			repositoryLocalParams.dict,
+		)
 	}
 
 	// Return the response
@@ -246,10 +244,7 @@ func (api *APIControllers) RepositoriesDestroy(c fiber.Ctx) error {
 		repositoryLocalParams.repository,
 	)
 	if err != nil {
-		api.Logger.Error("Error deleting repository", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error deleting repository", err, repositoryLocalParams.dict)
 	}
 
 	// Invalidate caches affected by this action (all users)
@@ -293,6 +288,8 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 	// Parse and validate the JSON request body
 	var req irmincore.UpdateRepositoryRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, repositoryLocalParams.dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
@@ -306,10 +303,7 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 		req,
 	)
 	if err != nil {
-		api.Logger.Error("Error updating repository", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error updating repository", err, repositoryLocalParams.dict)
 	}
 
 	// Format the repository response
@@ -318,10 +312,12 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatRepositoryResponseErr != nil {
-		api.Logger.Error("Error formatting repository", "error", formatRepositoryResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting repository",
+			services.NewInternalErrorf("error formatting repository: %v", formatRepositoryResponseErr),
+			repositoryLocalParams.dict,
+		)
 	}
 
 	// Invalidate caches affected by this action (all users)
@@ -365,6 +361,8 @@ func (api *APIControllers) TransferRepositoryOwnership(c fiber.Ctx) error {
 	// Parse and validate the JSON request body
 	var req irmincore.TransferRepositoryOwnershipRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, repositoryLocalParams.dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
@@ -377,10 +375,7 @@ func (api *APIControllers) TransferRepositoryOwnership(c fiber.Ctx) error {
 		req,
 	)
 	if err != nil {
-		api.Logger.Error("Error transferring repository ownership", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error transferring repository ownership", err, repositoryLocalParams.dict)
 	}
 
 	// Format the repository response
@@ -389,10 +384,12 @@ func (api *APIControllers) TransferRepositoryOwnership(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatRepositoryResponseErr != nil {
-		api.Logger.Error("Error formatting repository", "error", formatRepositoryResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting repository",
+			services.NewInternalErrorf("error formatting repository: %v", formatRepositoryResponseErr),
+			repositoryLocalParams.dict,
+		)
 	}
 
 	// Invalidate caches affected by this action (all users)

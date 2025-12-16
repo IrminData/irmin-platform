@@ -47,7 +47,7 @@ func (api *APIServices) ListWorkspaceScripts(
 	scripts, getScriptsErr := api.DB.GetStoredScriptsByWorkspaceID(workspace.ID)
 	if getScriptsErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching scripts", "error", getScriptsErr)
-		return nil, getScriptsErr
+		return nil, NewInternalErrorf("error fetching scripts: %w", getScriptsErr)
 	}
 
 	// Filter scripts based on user permissions
@@ -62,7 +62,7 @@ func (api *APIServices) ListWorkspaceScripts(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error filtering scripts by permissions", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error filtering scripts by permissions: %w", err)
 	}
 
 	return filteredScripts, nil
@@ -84,7 +84,7 @@ func (api *APIServices) CreateScript(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -128,14 +128,14 @@ func (api *APIServices) CreateScript(
 		}
 		if saveErr := tx.Create(script).Error; saveErr != nil {
 			api.Logger.ErrorContext(c, "Error creating stored script", "error", saveErr)
-			return saveErr
+			return NewInternalErrorf("error creating stored script: %w", saveErr)
 		}
 
 		// Add tags if provided
 		if len(req.Tags) > 0 {
 			if addTagsErr := api.addScriptTags(tx, script, req.Tags, workspace.ID); addTagsErr != nil {
 				api.Logger.ErrorContext(c, "Error adding tags to script", "error", addTagsErr)
-				return addTagsErr
+				return NewInternalErrorf("error adding tags to script: %w", addTagsErr)
 			}
 		}
 
@@ -143,7 +143,7 @@ func (api *APIServices) CreateScript(
 	})
 
 	if transactionErr != nil {
-		return nil, transactionErr
+		return nil, NewInternalErrorf("error in database transaction: %w", transactionErr)
 	}
 
 	// Log the event
@@ -158,7 +158,7 @@ func (api *APIServices) CreateScript(
 	script, getScriptByIDErr := api.DB.GetStoredScriptByID(script.ID)
 	if getScriptByIDErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching script", "error", getScriptByIDErr)
-		return nil, getScriptByIDErr
+		return nil, NewInternalErrorf("error fetching script: %w", getScriptByIDErr)
 	}
 
 	return script, nil
@@ -174,20 +174,20 @@ func (api *APIServices) addScriptTags(
 		for _, tagSqid := range tags {
 			tagID, tagDecodeErr := api.SQIDManager.Decode("tags", tagSqid)
 			if tagDecodeErr != nil {
-				return tagDecodeErr
+				return NewInternalErrorf("error decoding tag SQID: %w", tagDecodeErr)
 			}
 
 			// Verify tag belongs to the workspace
 			var tag db.Tag
 			if err := tx.First(&tag, uint(tagID)).Error; err != nil {
-				return err
+				return NewInternalErrorf("error fetching tag from database: %w", err)
 			}
 			if tag.WorkspaceID != workspaceID {
 				return ErrInvalidRequest
 			}
 
 			if tagAppendErr := tx.Model(script).Association("Tags").Append(&db.Tag{Model: gorm.Model{ID: uint(tagID)}}); tagAppendErr != nil {
-				return tagAppendErr
+				return NewInternalErrorf("error adding tag to script: %w", tagAppendErr)
 			}
 		}
 	}
@@ -211,7 +211,7 @@ func (api *APIServices) UpdateScript(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -247,7 +247,7 @@ func (api *APIServices) UpdateScript(
 	}
 	if saveErr := api.DB.Save(&script).Error; saveErr != nil {
 		api.Logger.ErrorContext(c, "Error updating stored script", "error", saveErr)
-		return nil, saveErr
+		return nil, NewInternalErrorf("error updating stored script: %w", saveErr)
 	}
 
 	// Log the event
@@ -278,7 +278,7 @@ func (api *APIServices) DeleteScript(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return err
+		return NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -300,7 +300,7 @@ func (api *APIServices) DeleteScript(
 	})
 	if deleteStoredScriptErr != nil {
 		api.Logger.ErrorContext(c, "Error deleting stored script", "error", deleteStoredScriptErr)
-		return deleteStoredScriptErr
+		return NewInternalErrorf("error in database transaction: %w", deleteStoredScriptErr)
 	}
 
 	// Log the event
@@ -331,7 +331,7 @@ func (api *APIServices) TransferScriptOwnership(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -356,14 +356,14 @@ func (api *APIServices) TransferScriptOwnership(
 	newOwnerID, decodeSqidsErr := api.SQIDManager.Decode("users", req.NewOwnerID)
 	if decodeSqidsErr != nil {
 		api.Logger.ErrorContext(c, "Error decoding sqid", "error", decodeSqidsErr)
-		return nil, ErrNewOwnerInvalid
+		return nil, NewInternalErrorf("error decoding user SQID: %w", decodeSqidsErr)
 	}
 
 	// Make sure the new owner is valid and a member of the workspace
 	inWorkspace, isUserInWorkspaceErr := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
 	if isUserInWorkspaceErr != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is in workspace", "error", isUserInWorkspaceErr)
-		return nil, isUserInWorkspaceErr
+		return nil, NewInternalErrorf("error checking if user is in workspace: %w", isUserInWorkspaceErr)
 	}
 	if !inWorkspace {
 		return nil, ErrNewOwnerInvalid
@@ -373,14 +373,14 @@ func (api *APIServices) TransferScriptOwnership(
 	newOwner, getNewOwnerErr := api.DB.GetUser(uint(newOwnerID))
 	if getNewOwnerErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching new owner information", "error", getNewOwnerErr)
-		return nil, getNewOwnerErr
+		return nil, NewInternalErrorf("error fetching new owner information: %w", getNewOwnerErr)
 	}
 
 	// Update the stored script in the database
 	script.OwnerID = uint(newOwnerID)
 	if saveErr := api.DB.Save(&script).Error; saveErr != nil {
 		api.Logger.ErrorContext(c, "Error updating stored script", "error", saveErr)
-		return nil, saveErr
+		return nil, NewInternalErrorf("error updating stored script: %w", saveErr)
 	}
 
 	// Log the event
@@ -412,7 +412,7 @@ func (api *APIServices) ExecuteScript(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -435,7 +435,7 @@ func (api *APIServices) ExecuteScript(
 		dataEngine, createDataEngineClientErr := engine.NewClient(c, "en", api.Logger, api.Env, api.DB)
 		if createDataEngineClientErr != nil {
 			api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
-			return nil, createDataEngineClientErr
+			return nil, NewInternalErrorf("error creating data engine client: %w", createDataEngineClientErr)
 		}
 
 		// Create a slice to store all async operations
@@ -459,7 +459,7 @@ func (api *APIServices) ExecuteScript(
 			content, awaitErr := future.Await()
 			if awaitErr != nil {
 				api.Logger.ErrorContext(c, "Error getting object", "error", awaitErr)
-				return nil, awaitErr
+				return nil, NewInternalErrorf("error getting object from data engine: %w", awaitErr)
 			}
 			// Add the object to the input objects map using the original path
 			inputFiles[req.Input[i].RepositoryPath] = content
@@ -490,7 +490,7 @@ func (api *APIServices) ExecuteScript(
 			UserID:      &user.ID,
 			WorkspaceID: &workspace.ID,
 		})
-		return nil, executeScriptErr
+		return nil, NewInternalErrorf("error executing script in compute sandbox: %w", executeScriptErr)
 	}
 
 	// Check if the logs contain errors

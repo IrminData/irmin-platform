@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
+	"irmin-api/services"
 	"irmin-api/utils"
 	"strings"
 
@@ -38,10 +40,12 @@ func (api *APIControllers) ProfileShow(c fiber.Ctx) error {
 	// Format the user response
 	userResponse, formatUserResponseErr := formatter.FormatUserResponse(user, api.SQIDManager)
 	if formatUserResponseErr != nil {
-		api.Logger.Error("Error formatting user response", "error", formatUserResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting user profile response",
+			services.NewInternalErrorf("error formatting user profile response: %v", formatUserResponseErr),
+			dict,
+		)
 	}
 
 	// Send the response
@@ -115,27 +119,29 @@ func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 	// Parse the request
 	req, form, parseErr := api.parseProfileUpdateRequest(c)
 	if parseErr != nil {
-		api.Logger.Error("Error parsing request", "error", parseErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error parsing profile update request",
+			fmt.Errorf("%w: %w", services.ErrInvalidRequest, parseErr),
+			dict,
+		)
 	}
 
 	// Update user in a single atomic transaction that handles both profile picture and fields
 	updatedUser, updateErr := api.Services.UpdateProfile(c, irminUser, req, form)
 	if updateErr != nil {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error updating user profile", updateErr, dict)
 	}
 
 	// Format and return response
 	userResponse, formatUserResponseErr := formatter.FormatUserResponse(updatedUser, api.SQIDManager)
 	if formatUserResponseErr != nil {
-		api.Logger.Error("Error formatting user response", "error", formatUserResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting user profile response",
+			services.NewInternalErrorf("error formatting user profile response: %v", formatUserResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate user-specific profile caches (profile endpoint and any subpaths)

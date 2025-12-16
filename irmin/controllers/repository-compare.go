@@ -5,6 +5,7 @@ import (
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/locales"
+	"irmin-api/services"
 	"irmin-api/utils"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
@@ -41,10 +42,12 @@ func (api *APIControllers) CompareRefs(c fiber.Ctx) error {
 	// Parse the query parameters
 	params, err := utils.ParseQueryParams(c, []string{"base_ref", "compare_ref"}, nil)
 	if err != nil {
-		api.Logger.Error("Error parsing query parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error parsing query parameters",
+			fmt.Errorf("%w: %w", services.ErrInvalidQueryParams, err),
+			dict,
+		)
 	}
 
 	// Get the base and compare refs
@@ -54,10 +57,7 @@ func (api *APIControllers) CompareRefs(c fiber.Ctx) error {
 	// Get the diff between the refs
 	diff, err := api.Services.CompareRepositoryRefs(c, locale, user, workspace, repository, baseRef, compareRef)
 	if err != nil {
-		api.Logger.Error("Error comparing refs", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error comparing refs", err, dict)
 	}
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -93,16 +93,15 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
 	// Parse the JSON request body
 	var req irmincore.MergeRefsRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Merge the refs
 	mergeCommit, err := api.Services.MergeRepositoryRefs(c, locale, user, workspace, repository, req)
 	if err != nil {
-		api.Logger.Error("Error merging refs", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error merging refs", err, dict)
 	}
 
 	// Invalidate commits and objects listings for this repository (all users)

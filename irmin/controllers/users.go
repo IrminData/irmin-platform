@@ -1,13 +1,11 @@
 package controllers
 
 import (
-	"errors"
 	"fmt"
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/services"
-	"irmin-api/utils"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -27,22 +25,16 @@ import (
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/users [get]
-//
-//nolint:dupl // This is not a duplicate, it's a different endpoint, which functions in a similar way.
 func (api *APIControllers) UsersIndex(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get workspace users using the service
 	filteredUsers, err := api.Services.ListWorkspaceUsers(c, user, workspace)
 	if err != nil {
-		api.Logger.Error("Error listing workspace users", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error listing workspace users", err, dict)
 	}
 
 	// Structure the response.
@@ -52,10 +44,12 @@ func (api *APIControllers) UsersIndex(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatErr != nil {
-		api.Logger.Error("Error formatting users", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting users",
+			services.NewInternalErrorf("error formatting users: %v", formatErr),
+			dict,
+		)
 	}
 
 	// Return the response.
@@ -82,23 +76,29 @@ func (api *APIControllers) UsersIndex(c fiber.Ctx) error {
 func (api *APIControllers) UsersShow(c fiber.Ctx) error {
 	_, dict, _, _, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the workspace member from locals
 	workspaceMember, workspaceMemberOk := c.Locals("workspace_member").(*db.WorkspaceUser)
 	if !workspaceMemberOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for UsersShow",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Format the user response
 	userResponse, formatErr := formatter.FormatWorkspaceUserResponse(workspaceMember, api.SQIDManager)
 	if formatErr != nil {
-		api.Logger.Error("Error formatting user", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting user",
+			services.NewInternalErrorf("error formatting user: %v", formatErr),
+			dict,
+		)
 	}
 
 	// Return the response.
@@ -122,36 +122,29 @@ func (api *APIControllers) UsersShow(c fiber.Ctx) error {
 // @Failure 404 {object} irminmodels.IrminAPIResponse "User not found in workspace"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/users/{user_id} [delete]
+//
+//nolint:dupl // Similar to WorkflowsDestroy and WorkspaceTagsDestroy but operates on different entity types
 func (api *APIControllers) UsersDestroy(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the workspace member from locals
 	workspaceMember, workspaceMemberOk := c.Locals("workspace_member").(*db.WorkspaceUser)
 	if !workspaceMemberOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for UsersDestroy",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Remove user from workspace using the service
 	err = api.Services.RemoveUserFromWorkspace(c, user, workspace, workspaceMember)
 	if err != nil {
-		api.Logger.Error("Error removing user from workspace", "error", err)
-		if errors.Is(err, services.ErrCannotRemoveSelfFromWorkspace) {
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "cannot_remove_self_from_workspace")},
-			})
-		}
-		if errors.Is(err, services.ErrCannotRemoveOwnerFromWorkspace) {
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "cannot_remove_owner_from_workspace")},
-			})
-		}
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error removing user from workspace", err, dict)
 	}
 
 	// Invalidate workspace users list for all users
@@ -185,41 +178,48 @@ func (api *APIControllers) UsersDestroy(c fiber.Ctx) error {
 // @Failure 404 {object} irminmodels.IrminAPIResponse "User not found in workspace"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/users/{user_id} [patch]
+//
+//nolint:dupl // Similar pattern to other update functions but operates on different entity types
 func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
 	}
 
 	// Get the workspace member from locals
 	workspaceMember, workspaceMemberOk := c.Locals("workspace_member").(*db.WorkspaceUser)
 	if !workspaceMemberOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for UsersUpdate",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse and validate the JSON request body
 	var req irmincore.UpdateUserRolesRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Update workspace user roles using the service
 	workspaceMember, err = api.Services.UpdateWorkspaceUserRoles(c, user, workspace, workspaceMember, req)
 	if err != nil {
-		api.Logger.Error("Error updating workspace user roles", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error updating workspace user roles", err, dict)
 	}
 
 	// Format response
 	userResponse, err := formatter.FormatWorkspaceUserResponse(workspaceMember, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error formatting user", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting user",
+			services.NewInternalErrorf("error formatting user: %v", err),
+			dict,
+		)
 	}
 
 	// Invalidate workspace users list for all users

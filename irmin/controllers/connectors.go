@@ -1,13 +1,12 @@
 package controllers
 
 import (
-	"errors"
+	"fmt"
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
 	"irmin-api/services"
-	"irmin-api/utils"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -28,16 +27,18 @@ import (
 func (api *APIControllers) ConnectorsIndex(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	if !dictOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ConnectorsIndex",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Get all connectors
 	connectors, err := api.Services.ListConnectors(c)
 	if err != nil {
-		api.Logger.Error("Error retrieving connectors", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to list connectors", err, dict)
 	}
 
 	// Structure the response.
@@ -47,10 +48,12 @@ func (api *APIControllers) ConnectorsIndex(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatErr != nil {
-		api.Logger.Error("Error formatting connectors", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format connectors",
+			services.NewInternalErrorf("error formatting connectors: %v", formatErr),
+			dict,
+		)
 	}
 
 	// Return the connectors
@@ -76,22 +79,23 @@ func (api *APIControllers) ConnectorsShow(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	connector, connectorOk := c.Locals("connector").(*db.Connector)
 	if !dictOk || !connectorOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ConnectorsShow",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Create the response
 	connectorResponse, formatConnectorResponseErr := formatter.FormatConnectorResponse(connector, api.SQIDManager)
 	if formatConnectorResponseErr != nil {
-		api.Logger.Error(
-			"Error formatting connector response",
-			"error",
-			formatConnectorResponseErr,
-			"connector",
-			connector.ID,
+		return api.handleServiceError(
+			c,
+			fmt.Sprintf("Failed to format connector response for connector %d", connector.ID),
+			services.NewInternalErrorf("error formatting connector response: %v", formatConnectorResponseErr),
+			dict,
 		)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
 	}
 
 	// Return the connector info
@@ -119,36 +123,37 @@ func (api *APIControllers) ConnectorsStore(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	locale, localeOk := c.Locals("locale").(string)
 	if !dictOk || !localeOk || !isSystemOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ConnectorsStore",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse JSON request body
 	var req irmincore.ConnectorRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Create the connector
 	connector, err := api.Services.CreateConnector(c, locale, isSystem, req)
 	if err != nil {
-		api.Logger.Error("Error creating connector", "error", err)
-		if errors.Is(err, services.ErrSystemUserRequired) {
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "access_denied")},
-			})
-		}
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to create connector", err, dict)
 	}
 
 	// Create the response
 	connectorResponse, formatConnectorResponseErr := formatter.FormatConnectorResponse(connector, api.SQIDManager)
 	if formatConnectorResponseErr != nil {
-		api.Logger.Error("Error formatting connector response", "error", formatConnectorResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format connector response",
+			services.NewInternalErrorf("error formatting connector response: %v", formatConnectorResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches affected by this action (all users)
@@ -185,39 +190,36 @@ func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	connector, connectorOk := c.Locals("connector").(*db.Connector)
 	if !dictOk || !localeOk || !connectorOk || !isSystemOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ConnectorsUpdate",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse JSON request body
 	var req irmincore.ConnectorRequest
 	if err := c.Bind().JSON(&req); err != nil {
 		api.Logger.Error("Error parsing JSON request", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(c, "Failed to parse JSON request", services.ErrInvalidRequest, dict)
 	}
 
 	// Update the connector
 	connector, err := api.Services.UpdateConnector(c, locale, isSystem, connector, req)
 	if err != nil {
-		api.Logger.Error("Error updating connector", "error", err)
-		if errors.Is(err, services.ErrSystemUserRequired) {
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "access_denied")},
-			})
-		}
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to update connector", err, dict)
 	}
 
 	// Create the response
 	connectorResponse, formatConnectorResponseErr := formatter.FormatConnectorResponse(connector, api.SQIDManager)
 	if formatConnectorResponseErr != nil {
-		api.Logger.Error("Error formatting connector response", "error", formatConnectorResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format connector response",
+			services.NewInternalErrorf("error formatting connector response: %v", formatConnectorResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches affected by this action (all users)
@@ -251,20 +253,17 @@ func (api *APIControllers) ConnectorsDestroy(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	connector, connectorOk := c.Locals("connector").(*db.Connector)
 	if !dictOk || !connectorOk || !isSystemOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ConnectorsDestroy",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Delete the connector
 	if err := api.Services.DeleteConnector(c, connector, isSystem); err != nil {
-		api.Logger.Error("Error deleting connector", "error", err)
-		if errors.Is(err, services.ErrSystemUserRequired) {
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "access_denied")},
-			})
-		}
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to delete connector", err, dict)
 	}
 
 	// Invalidate caches affected by this action (all users)
@@ -299,25 +298,31 @@ func (api *APIControllers) ShowConnectorConfigurationFields(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	connector, connectorOk := c.Locals("connector").(*db.Connector)
 	if !localeOk || !dictOk || !connectorOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ShowConnectorConfigurationFields",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Get the type of the configuration fields to fetch
 	configurationType := c.Params("type")
 	if configurationType == "" {
-		api.Logger.Error("Error fetching connection settings fields: configuration type is required")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to get connector configuration fields",
+			services.ErrInvalidRequest,
+			dict,
+		)
 	}
 
 	// Parse JSON request body
 	var req irmincore.ConnectorConfigurationRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
+		return validationErr
 	}
 
 	// Get the configuration fields
@@ -329,10 +334,7 @@ func (api *APIControllers) ShowConnectorConfigurationFields(c fiber.Ctx) error {
 		req,
 	)
 	if err != nil {
-		api.Logger.Error("Error fetching connection configuration fields", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to get connector configuration fields", err, dict)
 	}
 
 	// Return the array of the dynamic fields required for the connection settings
@@ -361,25 +363,25 @@ func (api *APIControllers) ValidateConnectorConfiguration(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	connector, connectorOk := c.Locals("connector").(*db.Connector)
 	if !localeOk || !dictOk || !connectorOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ValidateConnectorConfiguration",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse JSON request body
 	var req irmincore.ConnectorConfigurationRequest
 	if err := c.Bind().JSON(&req); err != nil {
 		api.Logger.Error("Error parsing JSON request", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(c, "Failed to parse JSON request", services.ErrInvalidRequest, dict)
 	}
 
 	// Validate the configuration
 	testResponse, err := api.Services.ValidateConnectorConfiguration(c, locale, connector, req)
 	if err != nil {
-		api.Logger.Error("Error validating connector configuration", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to validate connector configuration", err, dict)
 	}
 
 	// Return the response.

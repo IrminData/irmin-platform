@@ -32,6 +32,7 @@ type APIControllers struct {
 	permissionService *permissions.Service
 	validator         *irminvalidator.Validator
 	cacheStorage      fiber.Storage
+	errorHandler      *services.ErrorHandler
 }
 
 func NewAPIControllers(
@@ -48,6 +49,7 @@ func NewAPIControllers(
 		permissionService: apiServices.PermissionService,
 		validator:         apiServices.Validator,
 		cacheStorage:      apiServices.CacheStorage,
+		errorHandler:      services.NewErrorHandler(apiServices.Logger, apiServices.LocaleManager),
 	}
 }
 
@@ -57,8 +59,11 @@ func (api *APIControllers) validateAndBindRequestWithResponse(c fiber.Ctx, req a
 	// Parse JSON request body
 	if err := c.Bind().JSON(req); err != nil {
 		api.Logger.Error("Error parsing JSON request", "error", err)
+		// Use translated "invalid_request" message
+		translatedMessage := api.lm.T(dict, "invalid_request")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
+			Message: translatedMessage,
+			Errors:  []string{translatedMessage},
 		})
 	}
 
@@ -67,10 +72,17 @@ func (api *APIControllers) validateAndBindRequestWithResponse(c fiber.Ctx, req a
 		api.Logger.Error("Request validation failed", "errors", validationErr.GetFieldErrors())
 		errors := []string{}
 		for field, errMessage := range validationErr.GetFieldErrors() {
-			errors = append(errors, fmt.Sprintf("%s: %s", field, errMessage))
+			// Try to translate the validation error message
+			translatedErrMessage := api.lm.T(dict, errMessage)
+			errors = append(errors, fmt.Sprintf("%s: %s", field, translatedErrMessage))
 		}
+
+		// Translate the user message
+		userMessage := validationErr.GetUserMessage()
+		translatedUserMessage := api.lm.T(dict, userMessage)
+
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Message: validationErr.GetUserMessage(),
+			Message: translatedUserMessage,
 			Errors:  errors,
 		})
 	}
@@ -118,4 +130,15 @@ func (api *APIControllers) validateAndWriteResponse(
 
 	// Write the response even if it is invalid
 	return utils.WriteResponse(c, statusCode, response)
+}
+
+// handleServiceError handles errors from the service layer with proper translation and logging.
+// It checks if the error is internal-only and either exposes it to the client or returns a generic error.
+func (api *APIControllers) handleServiceError(
+	c fiber.Ctx,
+	consoleLogPrefix string,
+	err error,
+	dict locales.Dictionary,
+) error {
+	return api.errorHandler.HandleServiceError(c, consoleLogPrefix, err, dict)
 }

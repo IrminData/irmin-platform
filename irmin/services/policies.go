@@ -47,7 +47,7 @@ func (api *APIServices) GetPolicy(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -102,7 +102,7 @@ func (api *APIServices) GetPoliciesForWorkspace(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -142,7 +142,7 @@ func (api *APIServices) GetPoliciesForWorkspace(
 		)
 		if decodeResourceIDErr != nil {
 			api.Logger.ErrorContext(c, "Error decoding resource ID", "error", decodeResourceIDErr)
-			return nil, decodeResourceIDErr
+			return nil, NewInternalErrorf("error decoding resource ID: %w", decodeResourceIDErr)
 		}
 		query = query.Where("resource_id = ?", resourceID)
 	}
@@ -152,7 +152,7 @@ func (api *APIServices) GetPoliciesForWorkspace(
 		roleID, decodeRoleIDErr := api.SQIDManager.Decode("roles", filters.RoleID)
 		if decodeRoleIDErr != nil {
 			api.Logger.ErrorContext(c, "Error decoding role ID", "error", decodeRoleIDErr)
-			return nil, decodeRoleIDErr
+			return nil, NewInternalErrorf("error decoding role ID: %w", decodeRoleIDErr)
 		}
 		query = query.Where("role_id = ?", roleID)
 	}
@@ -162,12 +162,12 @@ func (api *APIServices) GetPoliciesForWorkspace(
 		userID, decodeUserIDErr := api.SQIDManager.Decode("users", filters.UserID)
 		if decodeUserIDErr != nil {
 			api.Logger.ErrorContext(c, "Error decoding user ID", "error", decodeUserIDErr)
-			return nil, decodeUserIDErr
+			return nil, NewInternalErrorf("error decoding user ID: %w", decodeUserIDErr)
 		}
 		workspaceUser, findWorkspaceUserErr := api.DB.GetWorkspaceUser(workspace.ID, uint(userID))
 		if findWorkspaceUserErr != nil {
 			api.Logger.ErrorContext(c, "Error finding workspace user ID", "error", findWorkspaceUserErr)
-			return nil, findWorkspaceUserErr
+			return nil, NewInternalErrorf("error finding workspace user: %w", findWorkspaceUserErr)
 		}
 		query = query.Where("workspace_user_id = ?", workspaceUser.ID)
 	}
@@ -180,7 +180,7 @@ func (api *APIServices) GetPoliciesForWorkspace(
 		Preload("WorkspaceUser.User").
 		Find(&policies).Error; queryErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching policies", "error", queryErr)
-		return nil, queryErr
+		return nil, NewInternalErrorf("error fetching policies: %w", queryErr)
 	}
 
 	// Filter policies based on user permissions
@@ -195,7 +195,7 @@ func (api *APIServices) GetPoliciesForWorkspace(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error filtering policies by permissions", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error filtering policies by permissions: %w", err)
 	}
 
 	return filteredPolicies, nil
@@ -248,7 +248,7 @@ func (api *APIServices) handleOptionalPolicyFields(
 			api.SQIDManager,
 		)
 		if decodeResourceIDErr != nil {
-			return fmt.Errorf("error decoding resource ID: %w", decodeResourceIDErr)
+			return NewInternalErrorf("error decoding resource ID: %w", decodeResourceIDErr)
 		}
 		policy.ResourceID = resourceID
 	}
@@ -259,7 +259,7 @@ func (api *APIServices) handleOptionalPolicyFields(
 		}
 		roleID, err := api.SQIDManager.Decode("roles", fields["role_id"])
 		if err != nil {
-			return fmt.Errorf("error decoding role ID: %w", err)
+			return NewInternalErrorf("error decoding role ID: %w", err)
 		}
 		rid := uint(roleID)
 		policy.RoleID = &rid
@@ -271,11 +271,11 @@ func (api *APIServices) handleOptionalPolicyFields(
 		}
 		userID, err := api.SQIDManager.Decode("users", fields["user_id"])
 		if err != nil {
-			return fmt.Errorf("error decoding user ID: %w", err)
+			return NewInternalErrorf("error decoding user ID: %w", err)
 		}
 		workspaceUser, err := api.DB.GetWorkspaceUser(workspaceID, uint(userID))
 		if err != nil {
-			return fmt.Errorf("error finding workspace user ID: %w", err)
+			return NewInternalErrorf("error finding workspace user: %w", err)
 		}
 		policy.WorkspaceUserID = &workspaceUser.ID
 	}
@@ -318,7 +318,7 @@ func (api *APIServices) createPolicyInTransaction(
 		)
 		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
 			api.Logger.ErrorContext(c, "Error acquiring lock for policy creation", "error", lockErr)
-			return lockErr
+			return NewInternalErrorf("error acquiring lock for policy creation: %w", lockErr)
 		}
 
 		// Check for existing policy after acquiring lock
@@ -341,13 +341,13 @@ func (api *APIServices) createPolicyInTransaction(
 		}
 		if !errors.Is(existingPolicyErr, gorm.ErrRecordNotFound) {
 			api.Logger.ErrorContext(c, "Error checking for existing policy", "error", existingPolicyErr)
-			return existingPolicyErr
+			return NewInternalErrorf("error checking for existing policy: %w", existingPolicyErr)
 		}
 
 		// Create the policy
 		if createPolicyErr := tx.Create(newPolicy).Error; createPolicyErr != nil {
 			api.Logger.ErrorContext(c, "Error creating policy", "error", createPolicyErr)
-			return createPolicyErr
+			return NewInternalErrorf("error creating policy: %w", createPolicyErr)
 		}
 
 		return nil
@@ -370,7 +370,7 @@ func (api *APIServices) CreatePolicy(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -459,7 +459,7 @@ func (api *APIServices) UpdatePolicy(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(

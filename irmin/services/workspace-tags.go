@@ -30,7 +30,7 @@ func (api *APIServices) GetWorkspaceTag(
 	tagWithAssets, err := api.DB.GetTagWithAssets(tagID)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error getting tag with assets", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error getting tag with assets: %w", err)
 	}
 
 	// Filter the tag with assets based on permissions
@@ -314,7 +314,7 @@ func (api *APIServices) ListWorkspaceTags(
 	tags, err := api.DB.GetTagsByWorkspace(workspace.ID)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error retrieving tags", "error", err, "workspace_id", workspace.ID)
-		return nil, err
+		return nil, NewInternalErrorf("error retrieving tags: %w", err)
 	}
 
 	// Filter tags based on user permissions
@@ -329,7 +329,7 @@ func (api *APIServices) ListWorkspaceTags(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error filtering workspace tags by permissions", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error filtering workspace tags by permissions: %w", err)
 	}
 
 	return filteredTags, nil
@@ -356,7 +356,7 @@ func (api *APIServices) CreateWorkspaceTag(
 
 	if err := api.DB.Create(tag).Error; err != nil {
 		api.Logger.ErrorContext(c, "Error creating tag", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error creating tag: %w", err)
 	}
 
 	// Log the event
@@ -386,7 +386,7 @@ func (api *APIServices) GetWorkspaceTagWithAssets(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -406,7 +406,7 @@ func (api *APIServices) GetWorkspaceTagWithAssets(
 	tagWithAssets, err := api.DB.GetTagByID(tag.ID)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error getting tag with assets", "error", err, "tag_id", tag.ID)
-		return nil, err
+		return nil, NewInternalErrorf("error getting tag with assets: %w", err)
 	}
 
 	// TODO:  Filter assets based on user permissions
@@ -435,7 +435,7 @@ func (api *APIServices) UpdateWorkspaceTag(
 	// Save the updated tag
 	if err := api.DB.Save(&tagWithAssets.Tag).Error; err != nil {
 		api.Logger.ErrorContext(c, "Error updating tag", "error", err, "tag_id", tagWithAssets.Tag.ID)
-		return nil, err
+		return nil, NewInternalErrorf("error updating tag: %w", err)
 	}
 
 	// Log the event
@@ -467,7 +467,7 @@ func (api *APIServices) DeleteWorkspaceTag(
 				"tag_id",
 				tagWithAssets.Tag.ID,
 			)
-			return err
+			return NewInternalErrorf("error removing query associations: %w", err)
 		}
 
 		// Remove all repository associations
@@ -480,7 +480,7 @@ func (api *APIServices) DeleteWorkspaceTag(
 				"tag_id",
 				tagWithAssets.Tag.ID,
 			)
-			return err
+			return NewInternalErrorf("error removing repository associations: %w", err)
 		}
 
 		// Remove all workflow associations
@@ -493,7 +493,7 @@ func (api *APIServices) DeleteWorkspaceTag(
 				"tag_id",
 				tagWithAssets.Tag.ID,
 			)
-			return err
+			return NewInternalErrorf("error removing workflow associations: %w", err)
 		}
 
 		// Remove all connection associations
@@ -506,7 +506,7 @@ func (api *APIServices) DeleteWorkspaceTag(
 				"tag_id",
 				tagWithAssets.Tag.ID,
 			)
-			return err
+			return NewInternalErrorf("error removing connection associations: %w", err)
 		}
 
 		// Remove all repository object associations
@@ -519,20 +519,20 @@ func (api *APIServices) DeleteWorkspaceTag(
 				"tag_id",
 				tagWithAssets.Tag.ID,
 			)
-			return err
+			return NewInternalErrorf("error removing repository object associations: %w", err)
 		}
 
 		// Delete the tag
 		if err := tx.Delete(&tagWithAssets.Tag).Error; err != nil {
 			api.Logger.ErrorContext(c, "Error deleting tag", "error", err, "tag_id", tagWithAssets.Tag.ID)
-			return err
+			return NewInternalErrorf("error deleting tag: %w", err)
 		}
 
 		return nil
 	})
 
 	if transactionErr != nil {
-		return transactionErr
+		return NewInternalErrorf("error in database transaction: %w", transactionErr)
 	}
 
 	// Log the event

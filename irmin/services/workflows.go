@@ -26,7 +26,7 @@ func (api *APIServices) GetWorkflow(
 	workflowID, err := api.SQIDManager.Decode("workflows", workflowSqid)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error decoding workflow SQID", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error decoding workflow SQID: %w", err)
 	}
 
 	// Make sure this is allowed
@@ -40,7 +40,7 @@ func (api *APIServices) GetWorkflow(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		return nil, ErrAccessDenied
@@ -50,7 +50,7 @@ func (api *APIServices) GetWorkflow(
 	workflow, err := api.DB.GetWorkflowByID(uint(workflowID))
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error getting workflow", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error getting workflow: %w", err)
 	}
 
 	return workflow, nil
@@ -78,7 +78,7 @@ func (api *APIServices) ListWorkflows(
 
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error retrieving workflows", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error retrieving workflows: %w", err)
 	}
 
 	// Filter workflows based on user permissions
@@ -93,7 +93,7 @@ func (api *APIServices) ListWorkflows(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error filtering workflows by permissions", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error filtering workflows by permissions: %w", err)
 	}
 
 	return filteredWorkflows, nil
@@ -116,7 +116,7 @@ func (api *APIServices) UpdateWorkflow(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -146,7 +146,7 @@ func (api *APIServices) UpdateWorkflow(
 	// Save the workflow
 	if saveErr := api.DB.Save(workflow).Error; saveErr != nil {
 		api.Logger.ErrorContext(c, "Error updating workflow", "error", saveErr, "workflow_id", workflow.ID)
-		return nil, saveErr
+		return nil, NewInternalErrorf("error updating workflow: %w", saveErr)
 	}
 
 	// Log the event
@@ -178,7 +178,7 @@ func (api *APIServices) CreateWorkflow(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -196,7 +196,7 @@ func (api *APIServices) CreateWorkflow(
 	schedule, parseScheduleErr := lib.ParseScheduleFromData(&req.Schedule, api.DB, *workspace, api.SQIDManager)
 	if parseScheduleErr != nil {
 		api.Logger.ErrorContext(c, "Error parsing schedule", "error", parseScheduleErr)
-		return nil, parseScheduleErr
+		return nil, NewInternalErrorf("error parsing schedule: %w", parseScheduleErr)
 	}
 
 	// Create variables to store all possible workflowable objects.
@@ -219,12 +219,12 @@ func (api *APIServices) CreateWorkflow(
 			&req,
 		)
 		if createWorkflowableErr != nil {
-			return createWorkflowableErr
+			return NewInternalErrorf("error creating workflowable: %w", createWorkflowableErr)
 		}
 
 		// Create schedule
 		if createScheduleErr := api.createWorkflowSchedule(tx, schedule); createScheduleErr != nil {
-			return createScheduleErr
+			return NewInternalErrorf("error creating workflow schedule: %w", createScheduleErr)
 		}
 
 		// Create workflow record
@@ -239,12 +239,12 @@ func (api *APIServices) CreateWorkflow(
 			pipelineWorkflowable,
 		)
 		if createWorkflowErr := tx.Create(&workflow).Error; createWorkflowErr != nil {
-			return createWorkflowErr
+			return NewInternalErrorf("error creating workflow: %w", createWorkflowErr)
 		}
 
 		// Add tags
 		if addTagsErr := api.addWorkflowTags(tx, &workflow, req.Tags, workspace.ID); addTagsErr != nil {
-			return addTagsErr
+			return NewInternalErrorf("error adding workflow tags: %w", addTagsErr)
 		}
 
 		// Fetch the full workflow object with all relations
@@ -261,7 +261,7 @@ func (api *APIServices) CreateWorkflow(
 
 	if txErr != nil {
 		api.Logger.ErrorContext(c, "Error creating workflow", "error", txErr)
-		return nil, txErr
+		return nil, NewInternalErrorf("error in database transaction: %w", txErr)
 	}
 
 	// Log the event
@@ -294,7 +294,7 @@ func (api *APIServices) UpdateWorkflowable(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -355,12 +355,12 @@ func (api *APIServices) UpdateWorkflowable(
 			return fmt.Errorf("invalid workflowable type: %s", workflowableReq.Type)
 		}
 		if createWorkflowableErr != nil {
-			return createWorkflowableErr
+			return NewInternalErrorf("error creating workflowable: %w", createWorkflowableErr)
 		}
 
 		// Delete existing workflowable
 		if deleteWorkflowableErr := api.deleteExistingWorkflowable(tx, workflow); deleteWorkflowableErr != nil {
-			return deleteWorkflowableErr
+			return NewInternalErrorf("error deleting existing workflowable: %w", deleteWorkflowableErr)
 		}
 
 		// Update workflow with new workflowable
@@ -372,7 +372,7 @@ func (api *APIServices) UpdateWorkflowable(
 			pipelineWorkflowable,
 		)
 		if saveWorkflowErr := tx.Save(workflow).Error; saveWorkflowErr != nil {
-			return saveWorkflowErr
+			return NewInternalErrorf("error saving workflow: %w", saveWorkflowErr)
 		}
 
 		// Fetch the full workflow object with all relations
@@ -389,7 +389,7 @@ func (api *APIServices) UpdateWorkflowable(
 
 	if txErr != nil {
 		api.Logger.ErrorContext(c, "Error updating workflow", "error", txErr)
-		return nil, txErr
+		return nil, NewInternalErrorf("error in database transaction: %w", txErr)
 	}
 
 	// Log the event
@@ -422,7 +422,7 @@ func (api *APIServices) UpdateWorkflowSchedule(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -444,18 +444,18 @@ func (api *APIServices) UpdateWorkflowSchedule(
 		// Create the schedule in the database.
 		if createScheduleErr := tx.Create(&newSchedule).Error; createScheduleErr != nil {
 			api.Logger.ErrorContext(c, "Error creating schedule", "error", createScheduleErr)
-			return createScheduleErr
+			return NewInternalErrorf("error creating schedule: %w", createScheduleErr)
 		}
 
 		// Delete the current associated schedule object and its triggers.
 		if workflow.ScheduleID != nil {
 			if deleteScheduleTriggersErr := tx.Where("schedule_id = ?", *workflow.ScheduleID).Delete(&db.WorkflowTrigger{}).Error; deleteScheduleTriggersErr != nil {
 				api.Logger.ErrorContext(c, "Error deleting schedule triggers", "error", deleteScheduleTriggersErr)
-				return deleteScheduleTriggersErr
+				return NewInternalErrorf("error deleting schedule triggers: %w", deleteScheduleTriggersErr)
 			}
 			if deleteScheduleErr := tx.Delete(&db.Schedule{}, *workflow.ScheduleID).Error; deleteScheduleErr != nil {
 				api.Logger.ErrorContext(c, "Error deleting schedule", "error", deleteScheduleErr)
-				return deleteScheduleErr
+				return NewInternalErrorf("error deleting schedule: %w", deleteScheduleErr)
 			}
 		}
 
@@ -464,7 +464,7 @@ func (api *APIServices) UpdateWorkflowSchedule(
 		workflow.Schedule = newSchedule
 		if updateWorkflowErr := tx.Save(workflow).Error; updateWorkflowErr != nil {
 			api.Logger.ErrorContext(c, "Error updating workflow", "error", updateWorkflowErr)
-			return updateWorkflowErr
+			return NewInternalErrorf("error updating workflow: %w", updateWorkflowErr)
 		}
 
 		return nil
@@ -503,7 +503,7 @@ func (api *APIServices) DeleteWorkflow(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return err
+		return NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -525,7 +525,7 @@ func (api *APIServices) DeleteWorkflow(
 	})
 	if deleteWorkflowErr != nil {
 		api.Logger.ErrorContext(c, "Error deleting workflow", "error", deleteWorkflowErr)
-		return deleteWorkflowErr
+		return NewInternalErrorf("error deleting workflow: %w", deleteWorkflowErr)
 	}
 
 	// Log the event
@@ -557,7 +557,7 @@ func (api *APIServices) TransferWorkflowOwnership(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -589,7 +589,7 @@ func (api *APIServices) TransferWorkflowOwnership(
 	inWorkspace, isUserInWorkspaceErr := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
 	if isUserInWorkspaceErr != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is in workspace", "error", isUserInWorkspaceErr)
-		return nil, isUserInWorkspaceErr
+		return nil, NewInternalErrorf("error checking if user is in workspace: %w", isUserInWorkspaceErr)
 	}
 	if !inWorkspace {
 		return nil, ErrNewOwnerInvalid
@@ -631,7 +631,7 @@ func (api *APIServices) PauseWorkflow(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -688,7 +688,7 @@ func (api *APIServices) StartWorkflow(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -796,22 +796,22 @@ func (api *APIServices) createWorkflowRecord(
 func (api *APIServices) deleteExistingWorkflowable(tx *gorm.DB, workflow *db.Workflow) error {
 	if workflow.Action != nil {
 		if err := tx.Delete(&db.ActionWorkflowable{}, workflow.Action.ID).Error; err != nil {
-			return err
+			return NewInternalErrorf("error deleting action workflowable: %w", err)
 		}
 	}
 	if workflow.Import != nil {
 		if err := tx.Delete(&db.ImportWorkflowable{}, workflow.Import.ID).Error; err != nil {
-			return err
+			return NewInternalErrorf("error deleting import workflowable: %w", err)
 		}
 	}
 	if workflow.Export != nil {
 		if err := tx.Delete(&db.ExportWorkflowable{}, workflow.Export.ID).Error; err != nil {
-			return err
+			return NewInternalErrorf("error deleting export workflowable: %w", err)
 		}
 	}
 	if workflow.Pipeline != nil {
 		if err := tx.Delete(&db.PipelineWorkflowable{}, workflow.Pipeline.ID).Error; err != nil {
-			return err
+			return NewInternalErrorf("error deleting pipeline workflowable: %w", err)
 		}
 	}
 	return nil
@@ -853,10 +853,10 @@ func (api *APIServices) createWorkflowableByType(
 	var wflConfig irminmodels.Workflowable
 	jsonBytes, marshalErr := json.Marshal(req.Workflowable)
 	if marshalErr != nil {
-		return nil, nil, nil, nil, fmt.Errorf("invalid workflowable configuration: %w", marshalErr)
+		return nil, nil, nil, nil, NewInternalErrorf("error marshaling workflowable configuration: %w", marshalErr)
 	}
 	if unmarshalErr := json.Unmarshal(jsonBytes, &wflConfig); unmarshalErr != nil {
-		return nil, nil, nil, nil, fmt.Errorf("invalid workflowable configuration: %w", unmarshalErr)
+		return nil, nil, nil, nil, NewInternalErrorf("error unmarshaling workflowable configuration: %w", unmarshalErr)
 	}
 
 	switch req.Type {
@@ -899,17 +899,17 @@ func (api *APIServices) createImportExportWorkflowable(
 	// Find the repository by slug (using transaction connection)
 	repo, err := txDB.GetRepositoryBySlugAndWorkspaceID(wflConfig.Repository, workspace.ID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, NewInternalErrorf("error getting repository: %w", err)
 	}
 
 	// Find the connection by ID (using transaction connection)
 	connectionID, err := api.SQIDManager.Decode("connections", wflConfig.ConnectionID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, NewInternalErrorf("error decoding connection SQID: %w", err)
 	}
 	conn, err := txDB.GetConnectionByID(uint(connectionID))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, NewInternalErrorf("error getting connection: %w", err)
 	}
 
 	// Ensure FieldMappings is initialized as empty slice if nil to avoid PostgreSQL JSONB NULL error
@@ -1016,7 +1016,7 @@ func (api *APIServices) processActionWorkflowableInputs(
 			workspace.ID,
 		)
 		if err != nil {
-			return nil, err
+			return nil, NewInternalErrorf("error getting repository: %w", err)
 		}
 
 		path := strings.TrimPrefix(inputObject.RepositoryPath, "/")
@@ -1047,7 +1047,7 @@ func (api *APIServices) getActionWorkflowableRepository(
 		workspace.ID,
 	)
 	if err != nil {
-		return nil, err
+		return nil, NewInternalErrorf("error getting repository: %w", err)
 	}
 
 	return repository, nil
@@ -1088,11 +1088,11 @@ func (api *APIServices) processActionWorkflowableScript(
 	}
 	decodedScriptID, err := api.SQIDManager.Decode("scripts", *scriptID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, NewInternalErrorf("error decoding script SQID: %w", err)
 	}
 	script, err := txDB.GetStoredScriptByID(uint(decodedScriptID))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, NewInternalErrorf("error getting script: %w", err)
 	}
 	return &script.ID, nil, nil
 }
@@ -1107,11 +1107,11 @@ func (api *APIServices) processActionWorkflowableQuery(
 	}
 	decodedQueryID, err := api.SQIDManager.Decode("queries", *queryID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, NewInternalErrorf("error decoding query SQID: %w", err)
 	}
 	query, err := txDB.GetStoredQueryByID(uint(decodedQueryID))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, NewInternalErrorf("error getting query: %w", err)
 	}
 	return nil, &query.ID, nil
 }
@@ -1443,7 +1443,7 @@ func (api *APIServices) addWorkflowTags(tx *gorm.DB, workflow *db.Workflow, tags
 
 func (api *APIServices) createWorkflowSchedule(tx *gorm.DB, schedule *db.Schedule) error {
 	if createScheduleErr := tx.Create(schedule).Error; createScheduleErr != nil {
-		return createScheduleErr
+		return NewInternalErrorf("error creating workflow schedule: %w", createScheduleErr)
 	}
 	return nil
 }

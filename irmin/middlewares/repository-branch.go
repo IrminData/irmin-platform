@@ -4,9 +4,8 @@ import (
 	"context"
 	"irmin-api/db"
 	"irmin-api/locales"
-	"irmin-api/utils"
+	"irmin-api/services"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -18,16 +17,23 @@ func (api *APIMiddlewares) RepositoryBranchMiddleware(c fiber.Ctx) error {
 	repository, repositoryOk := c.Locals("repository").(*db.Repository)
 	user, userOk := c.Locals("user").(*db.User)
 	if !localeOk || !dictOk || !workspaceOk || !repositoryOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals in RepositoryBranchMiddleware",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the branch name from the request URL.
 	branchName := c.Params("branch")
 	if branchName == "" {
-		api.Logger.Error("No branch selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"No branch selected",
+			services.ErrInvalidRequest,
+			dict,
+		)
 	}
 
 	// Get the branch
@@ -41,10 +47,7 @@ func (api *APIMiddlewares) RepositoryBranchMiddleware(c fiber.Ctx) error {
 		branchName,
 	)
 	if err != nil {
-		api.Logger.Error("Error retrieving branch", "error", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error retrieving branch", err, dict)
 	}
 
 	// Set the branch in the context for subsequent handlers.

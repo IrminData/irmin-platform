@@ -18,7 +18,7 @@ func (api *APIServices) ListAPITokens(c context.Context, user *db.User) ([]db.AP
 	tokens, getAPITokensByUserIDErr := api.DB.GetAPITokensByUserID(user.ID)
 	if getAPITokensByUserIDErr != nil {
 		api.Logger.ErrorContext(c, "Error retrieving API tokens", "error", getAPITokensByUserIDErr)
-		return nil, getAPITokensByUserIDErr
+		return nil, NewInternalErrorf("error retrieving API tokens: %w", getAPITokensByUserIDErr)
 	}
 
 	// Filter out hidden tokens.
@@ -43,7 +43,7 @@ func (api *APIServices) CreateAPIToken(
 	token, generateRandomStringErr := utils.GenerateRandomString()
 	if generateRandomStringErr != nil {
 		api.Logger.ErrorContext(c, "Error generating random string", "error", generateRandomStringErr)
-		return nil, generateRandomStringErr
+		return nil, NewInternalErrorf("error generating random string: %w", generateRandomStringErr)
 	}
 
 	// Expiry is seconds until expiry, so add it to the current time.
@@ -59,7 +59,7 @@ func (api *APIServices) CreateAPIToken(
 	}
 	if createAPITokenErr := api.DB.Create(&apiToken).Error; createAPITokenErr != nil {
 		api.Logger.ErrorContext(c, "Error creating API token", "error", createAPITokenErr)
-		return nil, createAPITokenErr
+		return nil, NewInternalErrorf("error creating API token: %w", createAPITokenErr)
 	}
 
 	// Log the event.

@@ -42,14 +42,14 @@ func (api *APIServices) GetInviteByID(
 	inviteID, err := api.SQIDManager.Decode("invites", inviteSqid)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error decoding invite sqid", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error decoding invite SQID: %w", err)
 	}
 
 	// Get the invite by ID.
 	invite, err := api.DB.GetInviteByID(uint(inviteID))
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error fetching invite", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error fetching invite: %w", err)
 	}
 
 	// Check if the invite is valid.
@@ -118,7 +118,7 @@ func (api *APIServices) ListInvitesToWorkspace(
 	) // This query will get only active invites.
 	if getInvitesErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching invites", "error", getInvitesErr)
-		return nil, getInvitesErr
+		return nil, NewInternalErrorf("error fetching invites: %w", getInvitesErr)
 	}
 
 	// Filter invites based on user permissions
@@ -133,7 +133,7 @@ func (api *APIServices) ListInvitesToWorkspace(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error filtering invites by permissions", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error filtering invites by permissions: %w", err)
 	}
 
 	return filteredInvites, nil
@@ -150,7 +150,7 @@ func (api *APIServices) ListInvitesForUser(
 	invites, err := api.DB.GetInvitesByEmail(user.Email)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error fetching invites", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error fetching invites: %w", err)
 	}
 
 	return invites, nil
@@ -190,14 +190,14 @@ func (api *APIServices) sendInviteInTransaction(
 		}
 		if createInviteErr := tx.Create(newInvite).Error; createInviteErr != nil {
 			api.Logger.ErrorContext(ctx, "Error creating invite", "error", createInviteErr)
-			return createInviteErr
+			return NewInternalErrorf("error creating invite: %w", createInviteErr)
 		}
 
 		// Create sqid for the invite
 		inviteSqid, encodeInviteSqidErr := api.SQIDManager.Encode("invites", uint64(newInvite.ID))
 		if encodeInviteSqidErr != nil {
 			api.Logger.ErrorContext(ctx, "Error encoding invite sqid", "error", encodeInviteSqidErr)
-			return encodeInviteSqidErr
+			return NewInternalErrorf("error encoding invite SQID: %w", encodeInviteSqidErr)
 		}
 
 		// Create the invite acceptance URL
@@ -213,7 +213,7 @@ func (api *APIServices) sendInviteInTransaction(
 
 	// If database transaction failed, return error
 	if transactionErr != nil {
-		return nil, transactionErr
+		return nil, NewInternalErrorf("error in database transaction: %w", transactionErr)
 	}
 
 	// Try to create the invite in Clerk (outside of database transaction)
@@ -236,7 +236,10 @@ func (api *APIServices) sendInviteInTransaction(
 		// Update invite with Clerk ID in a separate transaction
 		updateErr := api.DB.Transaction(func(tx *gorm.DB) error {
 			newInvite.ClerkID = clerkInvite.ID
-			return tx.Save(newInvite).Error
+			if saveErr := tx.Save(newInvite).Error; saveErr != nil {
+				return NewInternalErrorf("error updating invite with Clerk ID: %w", saveErr)
+			}
+			return nil
 		})
 
 		if updateErr != nil {
@@ -321,7 +324,7 @@ func (api *APIServices) SendInvite(
 	// Check if user is already in workspace
 	alreadyInWorkspace, err := api.DB.IsUserInWorkspaceByEmail(req.Email, workspace.ID)
 	if err != nil {
-		return nil, err
+		return nil, NewInternalErrorf("error checking if user is in workspace: %w", err)
 	}
 	if alreadyInWorkspace {
 		return nil, ErrUserAlreadyInWorkspace
@@ -330,7 +333,7 @@ func (api *APIServices) SendInvite(
 	// Check if user is already invited
 	existingInvites, err := api.DB.GetInvitesByEmail(req.Email)
 	if err != nil {
-		return nil, err
+		return nil, NewInternalErrorf("error fetching existing invites: %w", err)
 	}
 	for _, invite := range existingInvites {
 		if invite.WorkspaceID == workspace.ID {
@@ -359,7 +362,7 @@ func (api *APIServices) SendInvite(
 	// Send the invite.
 	inviteResult, err := api.sendInviteInTransaction(c, req, role, user, workspace, locale)
 	if err != nil {
-		return nil, err
+		return nil, NewInternalErrorf("error sending invite: %w", err)
 	}
 
 	// Create audit log description based on notification method used
@@ -430,7 +433,7 @@ func (api *APIServices) UpdateInvite(
 	role, err := api.DB.GetRole(uint(roleID))
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error getting role", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error getting role: %w", err)
 	}
 	if role == nil {
 		api.Logger.ErrorContext(c, "Role not found", "role", req.Role)
@@ -441,7 +444,7 @@ func (api *APIServices) UpdateInvite(
 	invite.RoleID = role.ID
 	if updateInviteErr := api.DB.Save(invite).Error; updateInviteErr != nil {
 		api.Logger.ErrorContext(c, "Error updating invite", "error", updateInviteErr)
-		return nil, updateInviteErr
+		return nil, NewInternalErrorf("error updating invite: %w", updateInviteErr)
 	}
 
 	// Log the event

@@ -6,7 +6,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
-	"irmin-api/utils"
+	"irmin-api/services"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -31,16 +31,18 @@ func (api *APIControllers) ScriptsIndex(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	user, userOk := c.Locals("user").(*db.User)
 	if !dictOk || !workspaceOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ScriptsIndex",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Get all scripts in the workspace.
 	scripts, err := api.Services.ListWorkspaceScripts(c, user, workspace)
 	if err != nil {
-		api.Logger.Error("Error fetching scripts", "error", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to list scripts", err, dict)
 	}
 
 	// Structure the response.
@@ -50,10 +52,12 @@ func (api *APIControllers) ScriptsIndex(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatErr != nil {
-		api.Logger.Error("Error formatting scripts", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format scripts",
+			services.NewInternalErrorf("error formatting scripts: %v", formatErr),
+			dict,
+		)
 	}
 
 	// Return the response.
@@ -82,31 +86,37 @@ func (api *APIControllers) ScriptsStore(c fiber.Ctx) error {
 	user, userOk := c.Locals("user").(*db.User)
 
 	if !dictOk || !workspaceOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ScriptsStore",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.CreateScriptRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Create the script
 	script, err := api.Services.CreateScript(c, user, workspace, req)
 	if err != nil {
-		api.Logger.Error("Error creating script", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to create script", err, dict)
 	}
 
 	// Format the stored script
 	formattedScript, formatStoredScriptResponseErr := formatter.FormatStoredScriptResponse(script, api.SQIDManager)
 	if formatStoredScriptResponseErr != nil {
-		api.Logger.Error("Error formatting stored script", "error", formatStoredScriptResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format stored script",
+			services.NewInternalErrorf("error formatting stored script: %v", formatStoredScriptResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches for scripts listing and items (all users in workspace)
@@ -142,16 +152,23 @@ func (api *APIControllers) ScriptsShow(c fiber.Ctx) error {
 	script, scriptOk := c.Locals("script").(*db.StoredScript)
 
 	if !dictOk || !scriptOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ScriptsShow",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Format the stored script
 	formattedScript, formatStoredScriptResponseErr := formatter.FormatStoredScriptResponse(script, api.SQIDManager)
 	if formatStoredScriptResponseErr != nil {
-		api.Logger.Error("Error formatting stored script", "error", formatStoredScriptResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format stored script",
+			services.NewInternalErrorf("error formatting stored script: %v", formatStoredScriptResponseErr),
+			dict,
+		)
 	}
 
 	// Send the response
@@ -185,31 +202,37 @@ func (api *APIControllers) ScriptsUpdate(c fiber.Ctx) error {
 	script, scriptOk := c.Locals("script").(*db.StoredScript)
 
 	if !dictOk || !userOk || !scriptOk || !workspaceOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ScriptsUpdate",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.UpdateScriptRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Update the script
 	script, err := api.Services.UpdateScript(c, user, workspace, script, req)
 	if err != nil {
-		api.Logger.Error("Error updating script", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to update script", err, dict)
 	}
 
 	// Format the stored script
 	formattedScript, formatStoredScriptResponseErr := formatter.FormatStoredScriptResponse(script, api.SQIDManager)
 	if formatStoredScriptResponseErr != nil {
-		api.Logger.Error("Error formatting stored script", "error", formatStoredScriptResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format stored script",
+			services.NewInternalErrorf("error formatting stored script: %v", formatStoredScriptResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches for scripts listing and items (all users in workspace)
@@ -248,16 +271,18 @@ func (api *APIControllers) ScriptsDestroy(c fiber.Ctx) error {
 	script, scriptOk := c.Locals("script").(*db.StoredScript)
 
 	if !dictOk || !scriptOk || !workspaceOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ScriptsDestroy",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Delete the script
 	err := api.Services.DeleteScript(c, user, workspace, script)
 	if err != nil {
-		api.Logger.Error("Error deleting script", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to delete script", err, dict)
 	}
 
 	// Invalidate caches for scripts listing and items (all users in workspace)
@@ -299,31 +324,37 @@ func (api *APIControllers) TransferScriptOwnership(c fiber.Ctx) error {
 	script, scriptOk := c.Locals("script").(*db.StoredScript)
 
 	if !dictOk || !userOk || !workspaceOk || !scriptOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for TransferScriptOwnership",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.TransferScriptOwnershipRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Transfer the script ownership
 	script, err := api.Services.TransferScriptOwnership(c, user, workspace, script, req)
 	if err != nil {
-		api.Logger.Error("Error transferring script ownership", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to transfer script ownership", err, dict)
 	}
 
 	// Format the stored script
 	formattedScript, formatStoredScriptResponseErr := formatter.FormatStoredScriptResponse(script, api.SQIDManager)
 	if formatStoredScriptResponseErr != nil {
-		api.Logger.Error("Error formatting stored script", "error", formatStoredScriptResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format stored script",
+			services.NewInternalErrorf("error formatting stored script: %v", formatStoredScriptResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches for scripts in this workspace (all users)
@@ -364,12 +395,19 @@ func (api *APIControllers) ExecuteScript(c fiber.Ctx) error {
 	script, scriptOk := c.Locals("script").(*db.StoredScript)
 
 	if !dictOk || !userOk || !workspaceOk || !scriptOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ExecuteScript",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.ExecuteScriptRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
@@ -379,10 +417,7 @@ func (api *APIControllers) ExecuteScript(c fiber.Ctx) error {
 	// Execute the script
 	result, err := api.Services.ExecuteScript(c, user, workspace, script, req, limitResponse)
 	if err != nil {
-		api.Logger.Error("Error executing stored script", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to execute script", err, dict)
 	}
 
 	// Send the response

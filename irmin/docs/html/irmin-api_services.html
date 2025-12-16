@@ -35,7 +35,9 @@ VARIABLES
 var (
 	ErrNotFound                               = errors.New("not found")
 	ErrInvalidRequest                         = errors.New("invalid request")
+	ErrInvalidQueryParams                     = errors.New("invalid query parameters")
 	ErrAccessDenied                           = errors.New("access denied")
+	ErrContentTooLarge                        = errors.New("content too large to display")
 	ErrSystemUserRequired                     = errors.New("system user required")
 	ErrWorkspaceNotMember                     = errors.New("user not a member of the workspace")
 	ErrWorkspaceNotOwner                      = errors.New("user is not the owner of the workspace")
@@ -69,10 +71,38 @@ var (
 )
     Sentinel errors used for consistent HTTP mapping in controllers
 
-var (
-	// ErrContentTooLarge is returned when object content exceeds size limits
-	ErrContentTooLarge = errors.New("content too large to display")
-)
+
+FUNCTIONS
+
+func GetInternalErrorMessage(err error) string
+    GetInternalErrorMessage strips the internal prefix for logging purposes.
+    This allows server-side logs to display the actual error message without the
+    prefix.
+
+func GetTranslationKeyForError(err error) string
+    GetTranslationKeyForError maps service errors to their corresponding
+    translation keys. This ensures that sentinel errors with spaces in their
+    messages (e.g., "not found") are mapped to proper translation keys with
+    underscores (e.g., "not_found").
+
+func IsInternalError(err error) bool
+    IsInternalError checks if an error is marked as internal-only and should not
+    be exposed to clients.
+
+func MapErrorToStatusCode(err error) int
+    MapErrorToStatusCode maps service layer errors to appropriate HTTP status
+    codes
+
+func NewInternalError(msg string) error
+    NewInternalError creates an error that should not be exposed to clients.
+    The error message will be logged server-side but clients will receive a
+    generic error.
+
+func NewInternalErrorf(format string, args ...any) error
+    NewInternalErrorf creates a formatted internal error that should not be
+    exposed to clients. The error message will be logged server-side but clients
+    will receive a generic error.
+
 
 TYPES
 
@@ -1099,6 +1129,26 @@ type AuthCacheEntry struct {
 	ExpiresAt time.Time
 }
     AuthCacheEntry represents a cached authentication result.
+
+type ErrorHandler struct {
+	Logger *slog.Logger
+	// Has unexported fields.
+}
+    ErrorHandler provides common error handling functionality for controllers
+    and middlewares.
+
+func NewErrorHandler(logger *slog.Logger, lm *locales.LocaleManager) *ErrorHandler
+    NewErrorHandler creates a new error handler instance.
+
+func (eh *ErrorHandler) HandleServiceError(
+	c fiber.Ctx,
+	consoleLogPrefix string,
+	err error,
+	dict locales.Dictionary,
+) error
+    HandleServiceError handles errors from the service layer with proper
+    translation and logging. It checks if the error is internal-only and either
+    exposes it to the client or returns a generic error.
 
 type InviteTransactionResult struct {
 	Invite             *db.Invite                    `json:"invite"`

@@ -6,6 +6,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
+	"irmin-api/services"
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -34,34 +35,24 @@ func (api *APIControllers) TriggerWorkflowRun(c fiber.Ctx) error {
 	user, userOk := c.Locals("user").(*db.User)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	if !dictOk || !workflowOk || !userOk || !workspaceOk {
-		api.Logger.Error(
-			"Error getting workflow, user or workspace from context",
-			"workflowOk",
-			workflowOk,
-			"userOk",
-			userOk,
-			"workspaceOk",
-			workspaceOk,
+		return api.handleServiceError(
+			c,
+			"Error getting locals for TriggerWorkflowRun",
+			services.NewInternalError("error getting locals"),
+			dict,
 		)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Create the workflow run
 	run, err := api.Services.CreateWorkflowRun(c, user, workspace, workflow)
 	if err != nil {
-		api.Logger.Error("Error creating workflow run", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Message: api.lm.T(dict, "error_occurred"),
-		})
+		return api.handleServiceError(c, "Error creating workflow run", err, dict)
 	}
 
 	// Format the workflow run for the response.
 	formattedRun, formatErr := formatter.FormatWorkflowRunResponse(run, api.SQIDManager)
 	if formatErr != nil {
-		api.Logger.ErrorContext(c, "Error formatting workflow run", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Message: api.lm.T(dict, "error_occurred"),
-		})
+		return api.handleServiceError(c, "Error formatting workflow run", formatErr, dict)
 	}
 
 	// Invalidate workflow runs area for this workflow (all users)
@@ -104,16 +95,12 @@ func (api *APIControllers) WorkflowRunsIndex(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 
 	if !dictOk || !workflowOk || !userOk || !workspaceOk {
-		api.Logger.Error(
-			"Error getting workflow, user or workspace from context",
-			"workflowOk",
-			workflowOk,
-			"userOk",
-			userOk,
-			"workspaceOk",
-			workspaceOk,
+		return api.handleServiceError(
+			c,
+			"Error getting locals for WorkflowRunsIndex",
+			services.NewInternalError("error getting locals"),
+			dict,
 		)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Get the query parameters from the request.
@@ -122,10 +109,12 @@ func (api *APIControllers) WorkflowRunsIndex(c fiber.Ctx) error {
 		"per_page",
 	})
 	if parseQueryParamsErr != nil {
-		api.Logger.Error("Error parsing query parameters", "error", parseQueryParamsErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error parsing query parameters",
+			fmt.Errorf("%w: %w", services.ErrInvalidQueryParams, parseQueryParamsErr),
+			dict,
+		)
 	}
 
 	// Parse pagination parameters using the helper
@@ -141,10 +130,7 @@ func (api *APIControllers) WorkflowRunsIndex(c fiber.Ctx) error {
 		pagination.offset,
 	)
 	if err != nil {
-		api.Logger.Error("error getting workflow runs", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Message: api.lm.T(dict, "error_occurred"),
-		})
+		return api.handleServiceError(c, "Error getting workflow runs", err, dict)
 	}
 
 	// Format the workflow runs for the response.
@@ -154,10 +140,7 @@ func (api *APIControllers) WorkflowRunsIndex(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatErr != nil {
-		api.Logger.Error("error formatting workflow runs", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Message: api.lm.T(dict, "error_occurred"),
-		})
+		return api.handleServiceError(c, "Error formatting workflow runs", formatErr, dict)
 	}
 
 	// Build pagination response using the helper
@@ -194,43 +177,30 @@ func (api *APIControllers) WorkflowRunsShow(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 
 	if !dictOk || !workflowOk || !userOk || !workspaceOk {
-		api.Logger.Error(
-			"Error getting workflow, user or workspace from context",
-			"workflowOk",
-			workflowOk,
-			"userOk",
-			userOk,
-			"workspaceOk",
-			workspaceOk,
+		return api.handleServiceError(
+			c,
+			"Error getting locals for WorkflowRunsShow",
+			services.NewInternalError("error getting locals"),
+			dict,
 		)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Parse the run sqid from the request URL.
 	runSqid := c.Params("run")
 	if runSqid == "" {
-		api.Logger.Error("No workflow run selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "No workflow run selected", services.ErrInvalidRequest, dict)
 	}
 
 	// Get the workflow run.
 	workflowRun, err := api.Services.GetWorkflowRun(c, user, workspace, workflow, runSqid)
 	if err != nil {
-		api.Logger.Error("Error getting workflow run", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Message: api.lm.T(dict, "error_occurred"),
-		})
+		return api.handleServiceError(c, "Error getting workflow run", err, dict)
 	}
 
 	// Format the workflow run for the response.
 	formattedRun, formatErr := formatter.FormatWorkflowRunResponse(workflowRun, api.SQIDManager)
 	if formatErr != nil {
-		api.Logger.Error("Error formatting workflow run", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Message: api.lm.T(dict, "error_occurred"),
-		})
+		return api.handleServiceError(c, "Error formatting workflow run", formatErr, dict)
 	}
 
 	// Return the formatted workflow run.
@@ -263,16 +233,12 @@ func (api *APIControllers) WorkflowRunsDestroy(c fiber.Ctx) error {
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
 
 	if !dictOk || !userOk || !workspaceOk || !workflowOk {
-		api.Logger.Error(
-			"Error getting workflow, user, workspace or workflow from context",
-			"workflowOk",
-			workflowOk,
-			"userOk",
-			userOk,
-			"workspaceOk",
-			workspaceOk,
+		return api.handleServiceError(
+			c,
+			"Error getting locals for WorkflowRunsDestroy",
+			services.NewInternalError("error getting locals"),
+			dict,
 		)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Parse the run sqid from the request URL.
@@ -281,19 +247,13 @@ func (api *APIControllers) WorkflowRunsDestroy(c fiber.Ctx) error {
 	// Cancel the workflow run.
 	workflowRun, err := api.Services.CancelWorkflowRun(c, user, workspace, workflow, runSqid)
 	if err != nil {
-		api.Logger.Error("Error cancelling workflow run", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Message: api.lm.T(dict, "error_occurred"),
-		})
+		return api.handleServiceError(c, "Error cancelling workflow run", err, dict)
 	}
 
 	// Format the workflow run for the response.
 	formattedRun, formatErr := formatter.FormatWorkflowRunResponse(workflowRun, api.SQIDManager)
 	if formatErr != nil {
-		api.Logger.Error("Error formatting workflow run", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Message: api.lm.T(dict, "error_occurred"),
-		})
+		return api.handleServiceError(c, "Error formatting workflow run", formatErr, dict)
 	}
 
 	// Invalidate workflows area for this workspace (all users)
@@ -334,14 +294,12 @@ func (api *APIControllers) AllWorkflowRunsIndex(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 
 	if !dictOk || !userOk || !workspaceOk {
-		api.Logger.Error(
-			"Error getting user or workspace from context",
-			"userOk",
-			userOk,
-			"workspaceOk",
-			workspaceOk,
+		return api.handleServiceError(
+			c,
+			"Error getting locals for AllWorkflowRunsIndex",
+			services.NewInternalError("error getting locals"),
+			dict,
 		)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Get the query parameters from the request.
@@ -350,10 +308,12 @@ func (api *APIControllers) AllWorkflowRunsIndex(c fiber.Ctx) error {
 		"per_page",
 	})
 	if parseQueryParamsErr != nil {
-		api.Logger.Error("Error parsing query parameters", "error", parseQueryParamsErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error parsing query parameters",
+			fmt.Errorf("%w: %w", services.ErrInvalidQueryParams, parseQueryParamsErr),
+			dict,
+		)
 	}
 
 	// Parse pagination parameters using the helper
@@ -368,10 +328,7 @@ func (api *APIControllers) AllWorkflowRunsIndex(c fiber.Ctx) error {
 		pagination.offset,
 	)
 	if err != nil {
-		api.Logger.Error("error getting all workflow runs", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Message: api.lm.T(dict, "error_occurred"),
-		})
+		return api.handleServiceError(c, "Error getting all workflow runs", err, dict)
 	}
 
 	// Format the workflow runs for the response.
@@ -381,10 +338,7 @@ func (api *APIControllers) AllWorkflowRunsIndex(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatErr != nil {
-		api.Logger.Error("error formatting workflow runs", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Message: api.lm.T(dict, "error_occurred"),
-		})
+		return api.handleServiceError(c, "Error formatting workflow runs", formatErr, dict)
 	}
 
 	// Build pagination response using the helper

@@ -5,6 +5,7 @@ import (
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/locales"
+	"irmin-api/services"
 	"irmin-api/utils"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
@@ -43,10 +44,12 @@ func (api *APIControllers) RepositoryCommitsIndex(c fiber.Ctx) error {
 	// Parse the request query
 	params, err := utils.ParseQueryParams(c, nil, []string{"ref", "per_page", "after"})
 	if err != nil {
-		api.Logger.Error("Error parsing query params", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error parsing query params",
+			fmt.Errorf("%w: %w", services.ErrInvalidQueryParams, err),
+			dict,
+		)
 	}
 
 	// Parse pagination parameters
@@ -64,10 +67,7 @@ func (api *APIControllers) RepositoryCommitsIndex(c fiber.Ctx) error {
 		&pagination.perPage,
 	)
 	if err != nil {
-		api.Logger.Error("Error listing repository commits", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error listing repository commits", err, dict)
 	}
 
 	// Return the commits with pagination
@@ -120,16 +120,15 @@ func (api *APIControllers) RepositoryCommitsStore(c fiber.Ctx) error {
 	// Parse the JSON request body
 	var req irmincore.CreateCommitRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Create the commit using the service
 	commit, err := api.Services.CreateRepositoryCommit(c, locale, user, workspace, repository, req)
 	if err != nil {
-		api.Logger.Error("Error creating repository commit", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error creating repository commit", err, dict)
 	}
 
 	// Invalidate commits list for this repository (all users)
@@ -176,19 +175,18 @@ func (api *APIControllers) RepositoryCommitsShow(c fiber.Ctx) error {
 	// Parse the commit hash from the path
 	hash := c.Params("hash")
 	if hash == "" {
-		api.Logger.Error("Error parsing commit hash from path")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error parsing commit hash from path",
+			services.ErrInvalidRequest,
+			dict,
+		)
 	}
 
 	// Get the commit using the service
 	commit, err := api.Services.GetRepositoryCommit(c, locale, user, workspace, repository, hash)
 	if err != nil {
-		api.Logger.Error("Error getting repository commit", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error getting repository commit", err, dict)
 	}
 
 	// Return the commit
@@ -226,16 +224,15 @@ func (api *APIControllers) RepositoryRevertUncommittedChanges(c fiber.Ctx) error
 	// Parse the JSON request body
 	var req irmincore.RevertUncommittedChangesRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Revert uncommitted changes using the service
 	err := api.Services.RevertRepositoryUncommittedChanges(c, locale, user, workspace, repository, req)
 	if err != nil {
-		api.Logger.Error("Error reverting repository uncommitted changes", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error reverting repository uncommitted changes", err, dict)
 	}
 
 	// Invalidate commits and objects listings for this repository (all users)

@@ -6,7 +6,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
-	"irmin-api/utils"
+	"irmin-api/services"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -31,16 +31,18 @@ func (api *APIControllers) QueriesIndex(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	user, userOk := c.Locals("user").(*db.User)
 	if !dictOk || !workspaceOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for QueriesIndex",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Get all queries in the workspace.
 	queries, err := api.Services.ListWorkspaceQueries(c, user, workspace)
 	if err != nil {
-		api.Logger.Error("Error fetching queries", "error", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error fetching queries", err, dict)
 	}
 
 	// Structure the response.
@@ -50,10 +52,12 @@ func (api *APIControllers) QueriesIndex(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatErr != nil {
-		api.Logger.Error("Error formatting queries", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting queries",
+			services.NewInternalErrorf("error formatting queries: %v", formatErr),
+			dict,
+		)
 	}
 
 	// Return the response.
@@ -82,31 +86,37 @@ func (api *APIControllers) QueriesStore(c fiber.Ctx) error {
 	user, userOk := c.Locals("user").(*db.User)
 
 	if !dictOk || !workspaceOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for QueriesStore",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.CreateQueryRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Create the query
 	query, err := api.Services.CreateQuery(c, user, workspace, req)
 	if err != nil {
-		api.Logger.Error("Error creating query", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error creating query", err, dict)
 	}
 
 	// Format the stored query
 	formattedQuery, formatStoredQueryResponseErr := formatter.FormatStoredQueryResponse(query, api.SQIDManager)
 	if formatStoredQueryResponseErr != nil {
-		api.Logger.Error("Error formatting stored query", "error", formatStoredQueryResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting stored query",
+			services.NewInternalErrorf("error formatting stored query: %v", formatStoredQueryResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches for queries listing and items (all users in workspace)
@@ -142,16 +152,23 @@ func (api *APIControllers) QueriesShow(c fiber.Ctx) error {
 	query, queryOk := c.Locals("stored_query").(*db.StoredQuery)
 
 	if !dictOk || !queryOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for QueriesShow",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Format the stored query
 	formattedQuery, formatStoredQueryResponseErr := formatter.FormatStoredQueryResponse(query, api.SQIDManager)
 	if formatStoredQueryResponseErr != nil {
-		api.Logger.Error("Error formatting stored query", "error", formatStoredQueryResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting stored query",
+			services.NewInternalErrorf("error formatting stored query: %v", formatStoredQueryResponseErr),
+			dict,
+		)
 	}
 
 	// Send the response
@@ -185,31 +202,37 @@ func (api *APIControllers) QueriesUpdate(c fiber.Ctx) error {
 	query, queryOk := c.Locals("stored_query").(*db.StoredQuery)
 
 	if !dictOk || !userOk || !queryOk || !workspaceOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for QueriesUpdate",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.UpdateQueryRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Update the query
 	query, err := api.Services.UpdateQuery(c, user, workspace, query, req)
 	if err != nil {
-		api.Logger.Error("Error updating query", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error updating query", err, dict)
 	}
 
 	// Format the stored query
 	formattedQuery, formatStoredQueryResponseErr := formatter.FormatStoredQueryResponse(query, api.SQIDManager)
 	if formatStoredQueryResponseErr != nil {
-		api.Logger.Error("Error formatting stored query", "error", formatStoredQueryResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting stored query",
+			services.NewInternalErrorf("error formatting stored query: %v", formatStoredQueryResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches for queries listing and items (all users in workspace)
@@ -248,16 +271,18 @@ func (api *APIControllers) QueriesDestroy(c fiber.Ctx) error {
 	query, queryOk := c.Locals("stored_query").(*db.StoredQuery)
 
 	if !dictOk || !queryOk || !workspaceOk || !userOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for QueriesDestroy",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Delete the query
 	err := api.Services.DeleteQuery(c, user, workspace, query)
 	if err != nil {
-		api.Logger.Error("Error deleting query", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error deleting query", err, dict)
 	}
 
 	// Invalidate caches for queries listing and items (all users in workspace)
@@ -299,31 +324,37 @@ func (api *APIControllers) TransferQueryOwnership(c fiber.Ctx) error {
 	query, queryOk := c.Locals("stored_query").(*db.StoredQuery)
 
 	if !dictOk || !userOk || !workspaceOk || !queryOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for TransferQueryOwnership",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.TransferQueryOwnershipRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Transfer the query ownership
 	query, err := api.Services.TransferQueryOwnership(c, user, workspace, query, req)
 	if err != nil {
-		api.Logger.Error("Error transferring query ownership", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error transferring query ownership", err, dict)
 	}
 
 	// Format the stored query
 	formattedQuery, formatStoredQueryResponseErr := formatter.FormatStoredQueryResponse(query, api.SQIDManager)
 	if formatStoredQueryResponseErr != nil {
-		api.Logger.Error("Error formatting stored query", "error", formatStoredQueryResponseErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Error formatting stored query",
+			services.NewInternalErrorf("error formatting stored query: %v", formatStoredQueryResponseErr),
+			dict,
+		)
 	}
 
 	// Invalidate caches for queries in this workspace (all users)
@@ -362,12 +393,19 @@ func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 
 	if !localeOk || !dictOk || !userOk || !workspaceOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ExecuteSQL",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the JSON request body
 	var req irmincore.ExecuteSQLRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
@@ -377,10 +415,7 @@ func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error {
 	// Execute the SQL
 	result, err := api.Services.ExecuteSQL(c, locale, user, workspace, req, limitResponse)
 	if err != nil {
-		api.Logger.Error("Error executing SQL query", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error executing SQL query", err, dict)
 	}
 
 	// Send the response
@@ -412,7 +447,12 @@ func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error {
 	query, queryOk := c.Locals("stored_query").(*db.StoredQuery)
 
 	if !localeOk || !dictOk || !userOk || !workspaceOk || !queryOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ExecuteQuery",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Check for limit-response query parameter
@@ -423,10 +463,7 @@ func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error {
 		SQL: query.SQL,
 	}, limitResponse)
 	if err != nil {
-		api.Logger.Error("Error executing stored query", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error executing stored query", err, dict)
 	}
 
 	// Send the response

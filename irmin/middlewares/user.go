@@ -3,9 +3,8 @@ package middlewares
 import (
 	"irmin-api/db"
 	"irmin-api/locales"
-	"irmin-api/utils"
+	"irmin-api/services"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -15,25 +14,29 @@ func (api *APIMiddlewares) UserMiddleware(c fiber.Ctx) error {
 	user, userOk := c.Locals("user").(*db.User)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	if !dictOk || !userOk || !workspaceOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals in UserMiddleware",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the user sqid from the request URL.
 	userSqid := c.Params("user")
 	if userSqid == "" {
-		api.Logger.Error("No user selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"No user selected",
+			services.ErrInvalidRequest,
+			dict,
+		)
 	}
 
 	// Get the workspace member
 	workspaceMember, err := api.Services.GetWorkspaceUser(c, user, workspace, userSqid)
 	if err != nil {
-		api.Logger.Error("Error getting workspace member", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error getting workspace member", err, dict)
 	}
 
 	// Set the workspace member in the context for subsequent handlers.

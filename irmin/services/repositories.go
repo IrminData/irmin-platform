@@ -39,7 +39,7 @@ func (api *APIServices) GetRepositoryBySlug(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error retrieving repository", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error retrieving repository: %w", err)
 	}
 
 	// Make sure this is allowed
@@ -52,7 +52,7 @@ func (api *APIServices) GetRepositoryBySlug(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -80,7 +80,7 @@ func (api *APIServices) ListRepositories(
 	repositories, getRepositoriesErr := api.DB.GetRepositoriesInWorkspace(workspace.ID)
 	if getRepositoriesErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching repositories", "error", getRepositoriesErr)
-		return nil, getRepositoriesErr
+		return nil, NewInternalErrorf("error fetching repositories: %w", getRepositoriesErr)
 	}
 
 	// Filter repositories based on user permissions
@@ -95,7 +95,7 @@ func (api *APIServices) ListRepositories(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error filtering repositories by permissions", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error filtering repositories by permissions: %w", err)
 	}
 
 	return filteredRepositories, nil
@@ -116,7 +116,7 @@ func (api *APIServices) createRepositoryInTransaction(
 	locked, lockErr := db.TryLockKey(api.DB.DB, lockKey)
 	if lockErr != nil {
 		api.Logger.ErrorContext(ctx, "Error acquiring lock for repository creation", "error", lockErr)
-		return nil, nil, lockErr
+		return nil, nil, NewInternalErrorf("error acquiring lock for repository creation: %w", lockErr)
 	}
 	if !locked {
 		// Another instance is creating this repository
@@ -157,7 +157,7 @@ func (api *APIServices) createRepositoryInTransaction(
 		}
 		if createRepositoryErr := tx.Create(&repository).Error; createRepositoryErr != nil {
 			api.Logger.ErrorContext(ctx, "Error creating repository in database", "error", createRepositoryErr)
-			return createRepositoryErr
+			return NewInternalErrorf("error creating repository in database: %w", createRepositoryErr)
 		}
 
 		var err error
@@ -172,18 +172,21 @@ func (api *APIServices) createRepositoryInTransaction(
 			repositorySlug,
 		)
 		if err != nil {
-			return err
+			return NewInternalErrorf("error creating and syncing data engine repository: %w", err)
 		}
 
 		// Add tags
 		if addTagsErr := api.addRepositoryTags(tx, repository, req.Tags, workspace.ID); addTagsErr != nil {
-			return addTagsErr
+			return NewInternalErrorf("error adding repository tags: %w", addTagsErr)
 		}
 
 		return nil
 	})
 
-	return repository, dataEngineRepository, transactionErr
+	if transactionErr != nil {
+		return repository, dataEngineRepository, NewInternalErrorf("error in database transaction: %w", transactionErr)
+	}
+	return repository, dataEngineRepository, nil
 }
 
 func (api *APIServices) updateRepositoryInTransaction(
@@ -217,7 +220,7 @@ func (api *APIServices) updateRepositoryInTransaction(
 		// Update the repository in the database
 		if updateRepositoryErr := tx.Save(&repository).Error; updateRepositoryErr != nil {
 			api.Logger.ErrorContext(ctx, "Error updating repository in database", "error", updateRepositoryErr)
-			return updateRepositoryErr
+			return NewInternalErrorf("error updating repository in database: %w", updateRepositoryErr)
 		}
 
 		// Update the repository in the Data Engine
@@ -235,7 +238,7 @@ func (api *APIServices) updateRepositoryInTransaction(
 				"error",
 				updateRepositoryInDataEngineErr,
 			)
-			return updateRepositoryInDataEngineErr
+			return NewInternalErrorf("error updating repository in data engine: %w", updateRepositoryInDataEngineErr)
 		}
 
 		// Update the repository in the database with Data Engine information
@@ -247,13 +250,16 @@ func (api *APIServices) updateRepositoryInTransaction(
 				"error",
 				updateRepositoryErr,
 			)
-			return updateRepositoryErr
+			return NewInternalErrorf("error updating repository with data engine information: %w", updateRepositoryErr)
 		}
 
 		return nil
 	})
 
-	return dataEngineRepository, transactionErr
+	if transactionErr != nil {
+		return dataEngineRepository, NewInternalErrorf("error in database transaction: %w", transactionErr)
+	}
+	return dataEngineRepository, nil
 }
 
 func (api *APIServices) deleteRepositoryInTransaction(
@@ -266,34 +272,37 @@ func (api *APIServices) deleteRepositoryInTransaction(
 	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
 		// Remove tag associations
 		if err := tx.Where(&db.RepositoryTag{RepositoryID: repository.ID}).Delete(&db.RepositoryTag{}).Error; err != nil {
-			return err
+			return NewInternalErrorf("error deleting repository tags: %w", err)
 		}
 
 		// Soft delete associated repository objects.
 		// We do not delete RepositoryObjectTags to preserve them in case of restoration.
 		if err := tx.Where("repository_id = ?", repository.ID).Delete(&db.RepositoryObject{}).Error; err != nil {
-			return err
+			return NewInternalErrorf("error deleting repository objects: %w", err)
 		}
 
 		// Delete associated schema caches
 		if err := tx.Where(&db.RepositorySchemaCache{RepositoryID: repository.ID}).Delete(&db.RepositorySchemaCache{}).Error; err != nil {
-			return err
+			return NewInternalErrorf("error deleting repository schema caches: %w", err)
 		}
 		// Delete the repository
 		if err := tx.Delete(&db.Repository{}, repository.ID).Error; err != nil {
-			return err
+			return NewInternalErrorf("error deleting repository: %w", err)
 		}
 
 		// Delete the repository from the Data Engine after the database is deleted
 		if err := dataEngine.DeleteRepository(ctx, workspace.Slug, repository.Slug, false); err != nil {
 			api.Logger.ErrorContext(ctx, "Error deleting repository in Data Engine", "error", err)
-			return err
+			return NewInternalErrorf("error deleting repository in data engine: %w", err)
 		}
 
 		return nil
 	})
 
-	return transactionErr
+	if transactionErr != nil {
+		return NewInternalErrorf("error in database transaction: %w", transactionErr)
+	}
+	return nil
 }
 
 func (api *APIServices) CreateRepository(
@@ -313,7 +322,7 @@ func (api *APIServices) CreateRepository(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -348,7 +357,7 @@ func (api *APIServices) CreateRepository(
 
 	if gcValidateErr := utils.ValidateGarbageCollectionSettings(&gcSettings); gcValidateErr != nil {
 		api.Logger.ErrorContext(c, "Invalid garbage collection settings", "error", gcValidateErr)
-		return nil, gcValidateErr
+		return nil, NewInternalErrorf("error validating garbage collection settings: %w", gcValidateErr)
 	}
 
 	// Initialize Data Engine client
@@ -444,7 +453,7 @@ func (api *APIServices) UpdateRepository(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -552,7 +561,7 @@ func (api *APIServices) DeleteRepository(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return err
+		return NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -724,7 +733,7 @@ func (api *APIServices) createAndSyncDataEngineRepository(
 			"error",
 			err,
 		)
-		return nil, err
+		return nil, NewInternalErrorf("error creating repository in data engine: %w", err)
 	}
 
 	// Update the repository in the database with Data Engine information
@@ -763,7 +772,7 @@ func (api *APIServices) addRepositoryTags(
 			// Verify tag belongs to the workspace
 			var tag db.Tag
 			if err := tx.First(&tag, uint(tagID)).Error; err != nil {
-				return err
+				return NewInternalErrorf("error fetching tag from database: %w", err)
 			}
 			if tag.WorkspaceID != workspaceID {
 				return ErrInvalidRequest

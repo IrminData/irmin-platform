@@ -19,14 +19,14 @@ func (api *APIServices) GetWorkspace(ctx context.Context, user *db.User, workspa
 	workspace, err := api.DB.GetWorkspaceBySlug(workspaceSlug)
 	if err != nil {
 		api.Logger.ErrorContext(ctx, "Error retrieving workspace", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error retrieving workspace: %w", err)
 	}
 
 	// Check if the user is a member of the workspace.
 	isMember, err := api.DB.IsUserInWorkspace(user.ID, workspace.ID)
 	if err != nil {
 		api.Logger.ErrorContext(ctx, "Error checking user membership", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking user membership: %w", err)
 	}
 	if !isMember {
 		api.Logger.ErrorContext(ctx, "User not a member of the workspace")
@@ -48,7 +48,7 @@ func (api *APIServices) ListWorkspaces(user *db.User) ([]db.Workspace, error) {
 			"user_id",
 			user.ID,
 		)
-		return nil, err
+		return nil, NewInternalErrorf("error fetching user workspaces: %w", err)
 	}
 
 	// Get a list of workspaces.
@@ -71,7 +71,7 @@ func (api *APIServices) CreateWorkspace(
 	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket, api.DB)
 	if createBucketClientErr != nil {
 		api.Logger.ErrorContext(ctx, "failed to create bucket client", "error", createBucketClientErr)
-		return nil, createBucketClientErr
+		return nil, NewInternalErrorf("error creating bucket client: %w", createBucketClientErr)
 	}
 	defer bucket.Close()
 
@@ -94,28 +94,28 @@ func (api *APIServices) CreateWorkspace(
 		}
 		if createWorkspaceErr := tx.Create(&newWorkspace).Error; createWorkspaceErr != nil {
 			api.Logger.ErrorContext(ctx, "Error creating workspace", "error", createWorkspaceErr)
-			return createWorkspaceErr
+			return NewInternalErrorf("error creating workspace: %w", createWorkspaceErr)
 		}
 
 		// Add user to workspace with default role
 		_, addUserToWorkspaceErr := api.DB.AddUserToWorkspace(tx, user.ID, newWorkspace.ID, []uint{ownerRole.ID})
 		if addUserToWorkspaceErr != nil {
 			api.Logger.ErrorContext(ctx, "Error adding user to workspace", "error", addUserToWorkspaceErr)
-			return addUserToWorkspaceErr
+			return NewInternalErrorf("error adding user to workspace: %w", addUserToWorkspaceErr)
 		}
 
 		// Set default policies for the workspace
 		setDefaultPoliciesErr := lib.SetDefaultPolicies(tx, newWorkspace.ID, false)
 		if setDefaultPoliciesErr != nil {
 			api.Logger.ErrorContext(ctx, "Error setting default policies", "error", setDefaultPoliciesErr)
-			return setDefaultPoliciesErr
+			return NewInternalErrorf("error setting default policies: %w", setDefaultPoliciesErr)
 		}
 
 		// Seed default tags for the workspace
 		seedDefaultTagsErr := lib.SeedDefaultTags(tx, newWorkspace.ID)
 		if seedDefaultTagsErr != nil {
 			api.Logger.ErrorContext(ctx, "Error seeding default tags", "error", seedDefaultTagsErr)
-			return seedDefaultTagsErr
+			return NewInternalErrorf("error seeding default tags: %w", seedDefaultTagsErr)
 		}
 
 		// Create a bucket folder for the editor files of the workspace
@@ -128,14 +128,14 @@ func (api *APIServices) CreateWorkspace(
 		// Pass the transaction to acquire advisory lock and ensure atomicity
 		if writePathErr := bucket.WritePath(ctx, editorPathPrefix, "", tx); writePathErr != nil {
 			api.Logger.ErrorContext(ctx, "Error creating workspace editor items folder object", "error", writePathErr)
-			return writePathErr
+			return NewInternalErrorf("error creating workspace editor items folder: %w", writePathErr)
 		}
 
 		return nil
 	})
 
 	if transactionErr != nil {
-		return nil, transactionErr
+		return nil, NewInternalErrorf("error in database transaction: %w", transactionErr)
 	}
 
 	// Log the event
@@ -173,7 +173,7 @@ func (api *APIServices) UpdateWorkspace(
 			"workspace_id",
 			workspace.ID,
 		)
-		return nil, updateWorkspaceErr
+		return nil, NewInternalErrorf("error updating workspace in database: %w", updateWorkspaceErr)
 	}
 
 	// Log the event
@@ -200,7 +200,7 @@ func (api *APIServices) DeleteWorkspace(ctx context.Context, user *db.User, work
 		deleteWorkspaceErr := api.DB.DeleteWorkspace(workspace.ID, tx)
 		if deleteWorkspaceErr != nil {
 			api.Logger.ErrorContext(ctx, "Error deleting workspace", "error", deleteWorkspaceErr)
-			return deleteWorkspaceErr
+			return NewInternalErrorf("error deleting workspace: %w", deleteWorkspaceErr)
 		}
 
 		// Create bucket client
@@ -222,7 +222,7 @@ func (api *APIServices) DeleteWorkspace(ctx context.Context, user *db.User, work
 		deletePathErr := bucket.DeletePath(ctx, editorPathPrefix, tx)
 		if deletePathErr != nil {
 			api.Logger.ErrorContext(ctx, "Error deleting workspace editor items folder", "error", deletePathErr)
-			return deletePathErr
+			return NewInternalErrorf("error deleting workspace editor items folder: %w", deletePathErr)
 		}
 
 		return nil
@@ -230,7 +230,7 @@ func (api *APIServices) DeleteWorkspace(ctx context.Context, user *db.User, work
 
 	if transactionErr != nil {
 		api.Logger.ErrorContext(ctx, "Transaction failed for workspace deletion", "error", transactionErr)
-		return transactionErr
+		return NewInternalErrorf("error in database transaction: %w", transactionErr)
 	}
 
 	// TODO: Delete all related data (repositories, workflows, connections, etc.) when workspace is deleted

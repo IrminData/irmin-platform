@@ -28,7 +28,7 @@ func (api *APIServices) GetConnection(
 	connectionID, err := api.SQIDManager.Decode("connections", connectionSqid)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error decoding connection SQID", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error decoding connection SQID: %w", err)
 	}
 
 	// Make sure this is allowed
@@ -42,7 +42,7 @@ func (api *APIServices) GetConnection(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		return nil, ErrAccessDenied
@@ -52,7 +52,7 @@ func (api *APIServices) GetConnection(
 	connection, err := api.DB.GetConnectionByID(uint(connectionID))
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error getting connection", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error getting connection: %w", err)
 	}
 
 	// Mask secrets
@@ -77,7 +77,7 @@ func (api *APIServices) ListConnections(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -95,7 +95,7 @@ func (api *APIServices) ListConnections(
 	connections, getConnectionsByWorkspaceIDErr := api.DB.GetConnectionsByWorkspaceID(workspace.ID)
 	if getConnectionsByWorkspaceIDErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching connections", "error", getConnectionsByWorkspaceIDErr)
-		return nil, getConnectionsByWorkspaceIDErr
+		return nil, NewInternalErrorf("error fetching connections: %w", getConnectionsByWorkspaceIDErr)
 	}
 
 	// Filter connections based on user permissions
@@ -110,7 +110,7 @@ func (api *APIServices) ListConnections(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error filtering connections by permissions", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error filtering connections by permissions: %w", err)
 	}
 
 	// Mask secrets
@@ -141,7 +141,7 @@ func (api *APIServices) CreateConnection(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -159,7 +159,7 @@ func (api *APIServices) CreateConnection(
 	connectorID, err := api.SQIDManager.Decode("connectors", req.Connector)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error decoding SQID", "sqid", req.Connector, "type", "connectors", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error decoding connector SQID: %w", err)
 	}
 
 	// Convert any maps to string maps for compatibility with database models
@@ -170,7 +170,7 @@ func (api *APIServices) CreateConnection(
 	connector, err := api.DB.GetConnector(uint(connectorID))
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error getting connector", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error getting connector: %w", err)
 	}
 
 	// Create a connector client scoped to the user's locale for localized validation errors
@@ -180,7 +180,7 @@ func (api *APIServices) CreateConnection(
 	validationResult, err := client.ValidateConfigFields(c, detailsStr, settingsStr)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error validating connection configuration", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error validating connection configuration: %w", err)
 	}
 	if !validationResult.OK {
 		return nil, fmt.Errorf("configuration validation failed: %v", validationResult.Errors)
@@ -203,26 +203,26 @@ func (api *APIServices) CreateConnection(
 		}
 		if createConnectionErr := tx.Create(connection).Error; createConnectionErr != nil {
 			api.Logger.ErrorContext(c, "Error creating connection", "error", createConnectionErr)
-			return createConnectionErr
+			return NewInternalErrorf("error creating connection: %w", createConnectionErr)
 		}
 
 		// Add tags
 		if addTagErr := api.addConnectionTags(tx, connection, req.Tags, workspace.ID); addTagErr != nil {
-			return addTagErr
+			return NewInternalErrorf("error adding connection tags: %w", addTagErr)
 		}
 
 		return nil
 	})
 
 	if transactionErr != nil {
-		return nil, transactionErr
+		return nil, NewInternalErrorf("error in database transaction: %w", transactionErr)
 	}
 
 	// Fetch the newly created connection with preloaded associations
 	connection, getConnectionByIDErr := api.DB.GetConnectionByID(connection.ID)
 	if getConnectionByIDErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching connection", "error", getConnectionByIDErr)
-		return nil, getConnectionByIDErr
+		return nil, NewInternalErrorf("error fetching connection: %w", getConnectionByIDErr)
 	}
 
 	// Log the event
@@ -257,7 +257,7 @@ func (api *APIServices) UpdateConnection(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -290,7 +290,7 @@ func (api *APIServices) UpdateConnection(
 	// Update the connection
 	if updateConnectionErr := api.DB.Save(connection).Error; updateConnectionErr != nil {
 		api.Logger.ErrorContext(c, "Error updating connection", "error", updateConnectionErr)
-		return nil, updateConnectionErr
+		return nil, NewInternalErrorf("error updating connection: %w", updateConnectionErr)
 	}
 
 	// Log the event
@@ -307,7 +307,7 @@ func (api *APIServices) UpdateConnection(
 	refreshedConnection, refreshErr := api.DB.GetConnectionByID(connection.ID)
 	if refreshErr != nil {
 		api.Logger.ErrorContext(c, "Error refreshing connection", "error", refreshErr)
-		return nil, refreshErr
+		return nil, NewInternalErrorf("error refreshing connection: %w", refreshErr)
 	}
 	connection = refreshedConnection
 
@@ -336,7 +336,7 @@ func (api *APIServices) UpdateConnectionConfiguration(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -404,7 +404,7 @@ func (api *APIServices) UpdateConnectionConfiguration(
 	refreshedConnection, refreshErr := api.DB.GetConnectionByID(connection.ID)
 	if refreshErr != nil {
 		api.Logger.ErrorContext(c, "Error refreshing connection", "error", refreshErr)
-		return nil, refreshErr
+		return nil, NewInternalErrorf("error refreshing connection: %w", refreshErr)
 	}
 	connection = refreshedConnection
 
@@ -452,7 +452,7 @@ func (api *APIServices) DeleteConnection(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return err
+		return NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -482,7 +482,7 @@ func (api *APIServices) DeleteConnection(
 	})
 	if deleteConnectionErr != nil {
 		api.Logger.ErrorContext(c, "Error deleting connection", "error", deleteConnectionErr)
-		return deleteConnectionErr
+		return NewInternalErrorf("error deleting connection: %w", deleteConnectionErr)
 	}
 
 	// Log the event
@@ -515,7 +515,7 @@ func (api *APIServices) TransferConnectionOwnership(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -535,14 +535,14 @@ func (api *APIServices) TransferConnectionOwnership(
 	newOwnerID, err := api.SQIDManager.Decode("users", req.NewOwnerID)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error decoding SQID", "sqid", req.NewOwnerID, "type", "users", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error decoding user SQID: %w", err)
 	}
 
 	// Make sure the new owner is valid and a member of the workspace
 	inWorkspace, isUserInWorkspaceErr := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
 	if isUserInWorkspaceErr != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is in workspace", "error", isUserInWorkspaceErr)
-		return nil, isUserInWorkspaceErr
+		return nil, NewInternalErrorf("error checking if user is in workspace: %w", isUserInWorkspaceErr)
 	}
 	if !inWorkspace {
 		api.Logger.ErrorContext(c, "New owner is not a member of the workspace")
@@ -553,7 +553,7 @@ func (api *APIServices) TransferConnectionOwnership(
 	newOwner, getNewOwnerErr := api.DB.GetUser(uint(newOwnerID))
 	if getNewOwnerErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching new owner information", "error", getNewOwnerErr)
-		return nil, getNewOwnerErr
+		return nil, NewInternalErrorf("error fetching new owner information: %w", getNewOwnerErr)
 	}
 
 	// Update the connection
@@ -592,13 +592,13 @@ func (api *APIServices) addConnectionTags(
 		for _, tagSqid := range tags {
 			tagID, tagDecodeErr := api.SQIDManager.Decode("tags", tagSqid)
 			if tagDecodeErr != nil {
-				return tagDecodeErr
+				return NewInternalErrorf("error decoding tag SQID: %w", tagDecodeErr)
 			}
 
 			// Verify tag belongs to the workspace
 			var tag db.Tag
 			if tagErr := tx.First(&tag, uint(tagID)).Error; tagErr != nil {
-				return tagErr
+				return NewInternalErrorf("error fetching tag from database: %w", tagErr)
 			}
 			if tag.WorkspaceID != workspaceID {
 				return ErrInvalidRequest
@@ -606,7 +606,7 @@ func (api *APIServices) addConnectionTags(
 
 			// Add tag using the transaction
 			if tagAddErr := tx.Model(connection).Association("Tags").Append(&db.Tag{Model: gorm.Model{ID: uint(tagID)}}); tagAddErr != nil {
-				return tagAddErr
+				return NewInternalErrorf("error adding tag to connection: %w", tagAddErr)
 			}
 		}
 	}
@@ -737,7 +737,7 @@ func (api *APIServices) TestConnection(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -757,14 +757,14 @@ func (api *APIServices) TestConnection(
 	fullConnection, err := api.DB.GetConnectionByID(connection.ID)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error getting connection", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error getting connection: %w", err)
 	}
 
 	// Get the connector information
 	connector, err := api.DB.GetConnector(fullConnection.ConnectorID)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error getting connector", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error getting connector: %w", err)
 	}
 
 	// Create a connector client
@@ -774,7 +774,7 @@ func (api *APIServices) TestConnection(
 	validationResult, err := client.ValidateConfigFields(c, fullConnection.Details, fullConnection.Settings)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error validating connection", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error validating connection: %w", err)
 	}
 
 	// Log the event

@@ -45,7 +45,7 @@ func (api *APIServices) UpdateProfile(
 	// Reflect changes in Clerk (names, primary email/phone) first
 	// Only persist DB changes if Clerk succeeds to avoid inconsistent state
 	if err := api.updateClerkUserData(c, au); err != nil {
-		return nil, err
+		return nil, NewInternalErrorf("error updating clerk user data: %w", err)
 	}
 
 	// Profile picture (if present) — perform after main Clerk data updates

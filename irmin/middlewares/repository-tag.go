@@ -4,9 +4,8 @@ import (
 	"context"
 	"irmin-api/db"
 	"irmin-api/locales"
-	"irmin-api/utils"
+	"irmin-api/services"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -18,7 +17,12 @@ func (api *APIMiddlewares) RepositoryTagMiddleware(c fiber.Ctx) error {
 	repository, repositoryOk := c.Locals("repository").(*db.Repository)
 	user, userOk := c.Locals("user").(*db.User)
 	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals in RepositoryTagMiddleware",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Parse the tag name from the request URL.
@@ -28,10 +32,7 @@ func (api *APIMiddlewares) RepositoryTagMiddleware(c fiber.Ctx) error {
 	// Use context.Background() instead of Fiber context to ensure timeouts work properly for LakeFS calls
 	tag, err := api.Services.GetRepositoryTag(context.Background(), locale, user, workspace, repository, tagName)
 	if err != nil {
-		api.Logger.Error("Error retrieving tag from Data Engine", "error", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error retrieving tag from Data Engine", err, dict)
 	}
 
 	// Set the tag in the context for subsequent handlers.

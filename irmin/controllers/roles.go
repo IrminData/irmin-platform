@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"irmin-api/locales"
-	"irmin-api/utils"
+	"irmin-api/services"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
@@ -22,16 +22,18 @@ import (
 func (api *APIControllers) RolesIndex(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	if !dictOk {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Error getting locals for RolesIndex",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
 	}
 
 	// Get the roles
 	roles, err := api.Services.ListRoles(c)
 	if err != nil {
-		api.Logger.Error("Error getting roles", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Error getting roles", err, dict)
 	}
 
 	// Return the roles.

@@ -38,8 +38,12 @@ import (
 func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Failed to validate workspace parameters",
+			services.NewInternalError(err.Error()),
+			dict,
+		)
 	}
 
 	// Parse query parameters for filtering
@@ -49,9 +53,12 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 		[]string{"effect", "resource", "resource_id", "action", "principal", "role_id", "user_id"},
 	)
 	if err != nil {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to parse query parameters",
+			fmt.Errorf("%w: %w", services.ErrInvalidQueryParams, err),
+			dict,
+		)
 	}
 
 	// Construct the filters
@@ -68,10 +75,7 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 	// Get the policies
 	policies, err := api.Services.GetPoliciesForWorkspace(c, user, workspace, policyFilters)
 	if err != nil {
-		api.Logger.Error("Error getting policies", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to get policies", err, dict)
 	}
 
 	// Structure the response.
@@ -81,10 +85,12 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if formatErr != nil {
-		api.Logger.Error("Error formatting policies", "error", formatErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format policies",
+			services.NewInternalErrorf("error formatting policies: %v", formatErr),
+			dict,
+		)
 	}
 
 	// Return the response.
@@ -108,42 +114,38 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 // @Failure 409 {object} irminmodels.IrminAPIResponse "Conflict - policy already exists"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/policies [post]
-//
-//nolint:dupl // This is similar to other create endpoints
 func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Failed to validate workspace parameters", err, dict)
 	}
 
 	// Parse and validate the JSON request body
 	var req irmincore.CreatePolicyRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Create the policy
 	policy, err := api.Services.CreatePolicy(c, user, workspace, req)
 	if err != nil {
-		api.Logger.Error("Error creating policy", "error", err)
 		if errors.Is(err, services.ErrPolicyAlreadyExists) {
-			return utils.WriteResponse(c, fiber.StatusConflict, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "policy_already_exists")},
-			})
+			return api.handleServiceError(c, "Policy already exists", err, dict)
 		}
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to create policy", err, dict)
 	}
 
 	// Format the response
 	policyResponse, formatPolicyErr := formatter.FormatPolicyResponse(policy, api.SQIDManager)
 	if formatPolicyErr != nil {
-		api.Logger.Error("Error formatting policy response", "error", formatPolicyErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format policy response",
+			services.NewInternalErrorf("error formatting policy response: %v", formatPolicyErr),
+			dict,
+		)
 	}
 
 	// Invalidate policies endpoints for this workspace (all users)
@@ -177,24 +179,29 @@ func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
 func (api *APIControllers) PoliciesShow(c fiber.Ctx) error {
 	_, dict, _, _, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Failed to validate workspace parameters", err, dict)
 	}
 
 	// Get the policy from the request context.
 	policy, policyOk := c.Locals("policy").(*db.Policy)
 	if !policyOk {
-		api.Logger.Error("Error getting policy from request context", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Failed to get policy from request context",
+			services.NewInternalError("error getting policy from locals"),
+			dict,
+		)
 	}
 
 	// Format the response
 	policyResponse, formatPolicyErr := formatter.FormatPolicyResponse(policy, api.SQIDManager)
 	if formatPolicyErr != nil {
-		api.Logger.Error("Error formatting policy response", "error", formatPolicyErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format policy response",
+			services.NewInternalErrorf("error formatting policy response: %v", formatPolicyErr),
+			dict,
+		)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -218,42 +225,48 @@ func (api *APIControllers) PoliciesShow(c fiber.Ctx) error {
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Policy not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/policies/{policy_id} [patch]
+//
+//nolint:dupl // Similar pattern to other update functions but operates on different entity types
 func (api *APIControllers) PoliciesUpdate(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Failed to validate workspace parameters", err, dict)
 	}
 
 	// Get the policy from the request context.
 	policy, policyOk := c.Locals("policy").(*db.Policy)
 	if !policyOk {
-		api.Logger.Error("Error getting policy from request context", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Failed to get policy from request context",
+			services.NewInternalError("error getting policy from locals"),
+			dict,
+		)
 	}
 
 	// Parse and validate the JSON request body
 	var req irmincore.UpdatePolicyRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		// validateAndBindRequestWithResponse already wrote a response if validation failed.
+		// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
 		return validationErr
 	}
 
 	// Update the policy
 	policy, err = api.Services.UpdatePolicy(c, user, workspace, policy, req)
 	if err != nil {
-		api.Logger.Error("Error updating policy", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to update policy", err, dict)
 	}
 
 	// Format the response
 	policyResponse, err := formatter.FormatPolicyResponse(policy, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error formatting policy response", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format policy response",
+			services.NewInternalErrorf("error formatting policy response: %v", err),
+			dict,
+		)
 	}
 
 	// Invalidate policies endpoints for this workspace (all users)
@@ -284,27 +297,29 @@ func (api *APIControllers) PoliciesUpdate(c fiber.Ctx) error {
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Policy not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/policies/{policy_id} [delete]
+//
+//nolint:dupl // Similar to UsersDestroy and other Destroy methods but operates on different entity types
 func (api *APIControllers) PoliciesDestroy(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Failed to validate workspace parameters", err, dict)
 	}
 
 	// Get the policy from the request context.
 	policy, policyOk := c.Locals("policy").(*db.Policy)
 	if !policyOk {
-		api.Logger.Error("Error getting policy from request context", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(
+			c,
+			"Failed to get policy from request context",
+			services.NewInternalError("error getting policy from locals"),
+			dict,
+		)
 	}
 
 	// Delete the policy
 	err = api.Services.DeletePolicy(c, user, workspace, policy)
 	if err != nil {
-		api.Logger.Error("Error deleting policy", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to delete policy", err, dict)
 	}
 
 	// Invalidate policies endpoints for this workspace (all users)
@@ -335,8 +350,7 @@ func (api *APIControllers) PoliciesDestroy(c fiber.Ctx) error {
 func (api *APIControllers) PoliciesResourceOptions(c fiber.Ctx) error {
 	_, dict, _, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating workspace parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return api.handleServiceError(c, "Failed to validate workspace parameters", err, dict)
 	}
 
 	// Fetch the policy resource options
@@ -345,10 +359,7 @@ func (api *APIControllers) PoliciesResourceOptions(c fiber.Ctx) error {
 		workspace,
 	)
 	if err != nil {
-		api.Logger.Error("Error fetching resource data", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to fetch resource data", err, dict)
 	}
 
 	// Format the response
@@ -362,10 +373,12 @@ func (api *APIControllers) PoliciesResourceOptions(c fiber.Ctx) error {
 		api.SQIDManager,
 	)
 	if err != nil {
-		api.Logger.Error("Error formatting policy resource options", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format policy resource options",
+			services.NewInternalErrorf("error formatting policy resource options: %v", err),
+			dict,
+		)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -398,9 +411,7 @@ func (api *APIControllers) PoliciesRoleSummary(c fiber.Ctx) error {
 	rolePolicies, err := api.Services.GetPoliciesRoleSummary(c, workspace)
 	if err != nil {
 		api.Logger.Error("Error fetching role policies", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to fetch role policies", err, dict)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -433,19 +444,18 @@ func (api *APIControllers) PoliciesMySummary(c fiber.Ctx) error {
 	// Get the policies for the user
 	policies, workspaceUser, isOwner, err := api.Services.GetPoliciesForUser(c, workspace, user)
 	if err != nil {
-		api.Logger.Error("Error getting policies for user", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to get policies for user", err, dict)
 	}
 
 	// Format policies
 	formattedPolicies, err := formatter.FormatIndexResponse(policies, formatter.FormatPolicyResponse, api.SQIDManager)
 	if err != nil {
-		api.Logger.Error("Error formatting policies", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(
+			c,
+			"Failed to format policies",
+			services.NewInternalErrorf("error formatting policies: %v", err),
+			dict,
+		)
 	}
 
 	// Get user roles
@@ -453,10 +463,7 @@ func (api *APIControllers) PoliciesMySummary(c fiber.Ctx) error {
 	for _, userRole := range workspaceUser.Roles {
 		roleID, roleSQIDErr := api.SQIDManager.Encode("roles", uint64(userRole.Role.ID))
 		if roleSQIDErr != nil {
-			api.Logger.Error("Error encoding role ID", "error", roleSQIDErr)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "error_occurred")},
-			})
+			return api.handleServiceError(c, "Failed to encode role ID", roleSQIDErr, dict)
 		}
 		roles = append(roles, roleID)
 	}
@@ -464,10 +471,7 @@ func (api *APIControllers) PoliciesMySummary(c fiber.Ctx) error {
 	// Encode user ID
 	userID, err := api.SQIDManager.Encode("users", uint64(user.ID))
 	if err != nil {
-		api.Logger.Error("Error encoding user ID", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return api.handleServiceError(c, "Failed to encode user ID", err, dict)
 	}
 
 	summary := &irminmodels.UserPolicySummary{
@@ -501,7 +505,7 @@ func (api *APIControllers) PoliciesMySummary(c fiber.Ctx) error {
 // @Failure 500 "Internal server error"
 // @Router /workspaces/{workspace_slug}/policies/check-permission [get]
 func (api *APIControllers) CheckPermission(c fiber.Ctx) error {
-	_, dictOk := c.Locals("dict").(locales.Dictionary)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	user, userOk := c.Locals("user").(*db.User)
 
@@ -513,7 +517,12 @@ func (api *APIControllers) CheckPermission(c fiber.Ctx) error {
 	// Parse query parameters
 	params, err := utils.ParseQueryParams(c, []string{"resource", "action"}, []string{"resource_id"})
 	if err != nil {
-		return c.SendStatus(fiber.StatusBadRequest)
+		return api.handleServiceError(
+			c,
+			"Failed to parse query parameters",
+			fmt.Errorf("%w: %w", services.ErrInvalidQueryParams, err),
+			dict,
+		)
 	}
 
 	// Check permission
@@ -526,13 +535,21 @@ func (api *APIControllers) CheckPermission(c fiber.Ctx) error {
 		db.PolicyAction(params["action"]),
 	)
 	if err != nil {
-		api.Logger.Error("Error checking permission", "error", err)
-		return c.SendStatus(fiber.StatusForbidden)
+		// For security reasons, always return 403 for any error during permission checking
+		// to avoid leaking information about internal failures
+		api.Logger.Error("Failed to check permission", "error", err)
+		return api.validateAndWriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+			Message: api.lm.T(dict, "permission_denied"),
+		})
 	}
 
 	// Return appropriate status code
 	if allowed {
-		return c.SendStatus(fiber.StatusOK)
+		return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+			Message: api.lm.T(dict, "permission_granted"),
+		})
 	}
-	return c.SendStatus(fiber.StatusForbidden)
+	return api.validateAndWriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+		Message: api.lm.T(dict, "permission_denied"),
+	})
 }

@@ -22,7 +22,7 @@ func (api *APIServices) GetLogEventByID(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -42,7 +42,7 @@ func (api *APIServices) GetLogEventByID(
 	logEventID, err := api.SQIDManager.Decode("logs", logEventSqid)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error decoding log event sqid", "error", err)
-		return nil, err
+		return nil, NewInternalErrorf("error decoding log event sqid: %w", err)
 	}
 
 	// Get the log event by ID
@@ -58,7 +58,7 @@ func (api *APIServices) GetLogEventByID(
 		Preload("RepositoryObject.Repository").
 		First(&logEvent, uint(logEventID)).Error; dbErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching log event", "error", dbErr)
-		return nil, ErrNotFound
+		return nil, NewInternalErrorf("error fetching log event: %w", dbErr)
 	}
 
 	// Check if the log event exists and user has access to the workspace
@@ -99,7 +99,7 @@ func (api *APIServices) ListLogEventsForWorkspace(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, 0, err
+		return nil, 0, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -117,7 +117,7 @@ func (api *APIServices) ListLogEventsForWorkspace(
 	logEvents, total, err := api.DB.GetLogEventsForWorkspace(workspace.ID, searchTerm, limit, offset)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error fetching log events", "error", err)
-		return nil, 0, err
+		return nil, 0, NewInternalErrorf("error fetching log events: %w", err)
 	}
 
 	return logEvents, total, nil
@@ -143,7 +143,7 @@ func (api *APIServices) ListLogEventsForWorkspaceAndAsset(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, 0, err
+		return nil, 0, NewInternalErrorf("error checking permissions: %w", err)
 	}
 	if !isAllowed {
 		api.Logger.ErrorContext(
@@ -172,7 +172,7 @@ func (api *APIServices) ListLogEventsForWorkspaceAndAsset(
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error fetching log events for asset", "error", err)
-		return nil, 0, err
+		return nil, 0, NewInternalErrorf("error fetching log events for asset: %w", err)
 	}
 
 	return logEvents, total, nil
