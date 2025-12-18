@@ -533,12 +533,22 @@ func (c *Client) ListPolicies(
 ) ([]irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
     ListPolicies returns a list of all policies for a workspace.
 
+func (c *Client) ListQueryTemplates(
+	ctx context.Context,
+	workspace string,
+) ([]irminmodels.Template, *irminmodels.IrminAPIResponse, error)
+
 func (c *Client) ListRepositories(
 	ctx context.Context,
 	workspace string,
 ) ([]irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
 
 func (c *Client) ListRoles(ctx context.Context) ([]irminmodels.Role, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListScriptTemplates(
+	ctx context.Context,
+	workspace string,
+) ([]irminmodels.Template, *irminmodels.IrminAPIResponse, error)
 
 func (c *Client) ListStoredQueries(
 	ctx context.Context,

@@ -226,8 +226,10 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) ListInviteInbox\(ctx context.Context\) \(\[\]irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListInviteInbox>)
   - [func \(c \*Client\) ListInvitesToWorkspace\(ctx context.Context, workspace string\) \(\[\]irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListInvitesToWorkspace>)
   - [func \(c \*Client\) ListPolicies\(ctx context.Context, workspace string, params ListPoliciesParams\) \(\[\]irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListPolicies>)
+  - [func \(c \*Client\) ListQueryTemplates\(ctx context.Context, workspace string\) \(\[\]irminmodels.Template, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListQueryTemplates>)
   - [func \(c \*Client\) ListRepositories\(ctx context.Context, workspace string\) \(\[\]irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListRepositories>)
   - [func \(c \*Client\) ListRoles\(ctx context.Context\) \(\[\]irminmodels.Role, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListRoles>)
+  - [func \(c \*Client\) ListScriptTemplates\(ctx context.Context, workspace string\) \(\[\]irminmodels.Template, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListScriptTemplates>)
   - [func \(c \*Client\) ListStoredQueries\(ctx context.Context, workspace string\) \(\[\]irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListStoredQueries>)
   - [func \(c \*Client\) ListStoredScripts\(ctx context.Context, workspace string\) \(\[\]irminmodels.StoredScript, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListStoredScripts>)
   - [func \(c \*Client\) ListTags\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.GitTag, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListTags>)
@@ -1164,6 +1166,15 @@ func (c *Client) ListPolicies(ctx context.Context, workspace string, params List
 
 ListPolicies returns a list of all policies for a workspace.
 
+<a name="Client.ListQueryTemplates"></a>
+### func \(\*Client\) ListQueryTemplates
+
+```go
+func (c *Client) ListQueryTemplates(ctx context.Context, workspace string) ([]irminmodels.Template, *irminmodels.IrminAPIResponse, error)
+```
+
+
+
 <a name="Client.ListRepositories"></a>
 ### func \(\*Client\) ListRepositories
 
@@ -1178,6 +1189,15 @@ func (c *Client) ListRepositories(ctx context.Context, workspace string) ([]irmi
 
 ```go
 func (c *Client) ListRoles(ctx context.Context) ([]irminmodels.Role, *irminmodels.IrminAPIResponse, error)
+```
+
+
+
+<a name="Client.ListScriptTemplates"></a>
+### func \(\*Client\) ListScriptTemplates
+
+```go
+func (c *Client) ListScriptTemplates(ctx context.Context, workspace string) ([]irminmodels.Template, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -2591,6 +2611,9 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type TagEntityType](<#TagEntityType>)
 - [type TagWithAssets](<#TagWithAssets>)
 - [type TaggedAssets](<#TaggedAssets>)
+- [type Template](<#Template>)
+- [type TemplateLanguage](<#TemplateLanguage>)
+- [type TemplateType](<#TemplateType>)
 - [type User](<#User>)
 - [type UserPolicySummary](<#UserPolicySummary>)
 - [type Workflow](<#Workflow>)
@@ -3868,6 +3891,60 @@ type TaggedAssets struct {
     Connections       []Connection   `json:"connections"        validate:"dive"`
     RepositoryObjects []Object       `json:"repository_objects" validate:"dive"`
 }
+```
+
+<a name="Template"></a>
+## type Template
+
+Template represents a template from which a script or query can be created.
+
+```go
+type Template struct {
+    ID           string           `json:"id"           validate:"required,validsqid=templates" example:"tpl_2k8n9q1m7p3x4z"`
+    Title        string           `json:"title"        validate:"required,max=100"             example:"My Template"`
+    Description  string           `json:"description"  validate:"required,max=255"             example:"This is a template for my application"`
+    Content      string           `json:"content"      validate:"required,max=10000"           example:"This is the content of my template"`
+    Type         TemplateType     `json:"type"         validate:"required,max=50"              example:"script"`
+    Language     TemplateLanguage `json:"language"     validate:"required,max=50"              example:"go"`
+    Tags         []string         `json:"tags"         validate:"required,dive"                example:"tag1,tag2,tag3"`
+    Placeholders []string         `json:"placeholders" validate:"omitempty,dive,max=100"       example:"repository_slug,branch_name"`
+}
+```
+
+<a name="TemplateLanguage"></a>
+## type TemplateLanguage
+
+
+
+```go
+type TemplateLanguage string
+```
+
+<a name="TemplateLanguageGo"></a>
+
+```go
+const (
+    TemplateLanguageGo  TemplateLanguage = "go"
+    TemplateLanguageSQL TemplateLanguage = "sql"
+)
+```
+
+<a name="TemplateType"></a>
+## type TemplateType
+
+
+
+```go
+type TemplateType string
+```
+
+<a name="TemplateTypeScript"></a>
+
+```go
+const (
+    TemplateTypeScript TemplateType = "script"
+    TemplateTypeQuery  TemplateType = "query"
+)
 ```
 
 <a name="User"></a>

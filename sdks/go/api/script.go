@@ -50,6 +50,21 @@ func (c *Client) ListStoredScripts(
 	return storedScripts, apiResp, nil
 }
 
+func (c *Client) ListScriptTemplates(
+	ctx context.Context,
+	workspace string,
+) ([]irminmodels.Template, *irminmodels.IrminAPIResponse, error) {
+	var templates []irminmodels.Template
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/scripts/templates", workspace),
+	}, &templates)
+	if err != nil {
+		return nil, nil, fmt.Errorf("fetch script templates error: %w", err)
+	}
+	return templates, apiResp, nil
+}
+
 func (c *Client) GetStoredScript(
 	ctx context.Context,
 	workspace, scriptID string,

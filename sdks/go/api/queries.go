@@ -48,6 +48,21 @@ func (c *Client) ListStoredQueries(
 	return storedQueries, apiResp, nil
 }
 
+func (c *Client) ListQueryTemplates(
+	ctx context.Context,
+	workspace string,
+) ([]irminmodels.Template, *irminmodels.IrminAPIResponse, error) {
+	var templates []irminmodels.Template
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/queries/templates", workspace),
+	}, &templates)
+	if err != nil {
+		return nil, nil, fmt.Errorf("fetch query templates error: %w", err)
+	}
+	return templates, apiResp, nil
+}
+
 func (c *Client) GetStoredQuery(
 	ctx context.Context,
 	workspace, queryID string,
