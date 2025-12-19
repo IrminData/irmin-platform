@@ -30,7 +30,8 @@ type TransferQueryOwnershipRequest struct {
 
 // ExecuteSQLRequest represents the JSON request body for executing SQL.
 type ExecuteSQLRequest struct {
-	SQL string `json:"sql,omitempty" validate:"validsql" example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
+	SQL   string                        `json:"sql,omitempty"   validate:"validsql" example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
+	Input []irminmodels.ActionInputData `json:"input,omitempty"`
 }
 
 func (c *Client) ListStoredQueries(
