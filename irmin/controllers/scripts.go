@@ -426,3 +426,54 @@ func (api *APIControllers) ExecuteScript(c fiber.Ctx) error {
 		Data:    result,
 	})
 }
+
+// ScriptTemplatesIndex godoc
+// @Summary List script templates
+// @Description Get all available script templates
+// @Tags scripts
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.Template} "Templates retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/scripts/templates [get]
+func (api *APIControllers) ScriptTemplatesIndex(c fiber.Ctx) error {
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	if !dictOk {
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ScriptTemplatesIndex",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
+	}
+
+	// Get all script templates
+	templates, err := api.Services.ListTemplatesByType(c, irminmodels.TemplateTypeScript)
+	if err != nil {
+		return api.handleServiceError(c, "Error fetching script templates", err, dict)
+	}
+
+	// Format the response
+	templatesResponse, formatErr := formatter.FormatIndexResponse(
+		templates,
+		formatter.FormatTemplateResponse,
+		api.SQIDManager,
+	)
+	if formatErr != nil {
+		return api.handleServiceError(
+			c,
+			"Error formatting templates",
+			services.NewInternalErrorf("error formatting templates: %v", formatErr),
+			dict,
+		)
+	}
+
+	// Return the response
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: templatesResponse,
+	})
+}

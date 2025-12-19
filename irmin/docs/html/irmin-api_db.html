@@ -354,6 +354,10 @@ func (d *Database) DeleteStoredScript(tx *gorm.DB, id uint) error
 func (d *Database) DeleteTag(tx *gorm.DB, id uint) error
     DeleteTag deletes a tag and removes all its associations.
 
+func (d *Database) DeleteTemplatesNotInIDs(ids []uint) error
+    DeleteTemplatesNotInIDs deletes all templates that are not in the provided
+    list of IDs.
+
 func (d *Database) DeleteWorkflow(tx *gorm.DB, id uint) error
     DeleteWorkflow deletes a workflow and all related records.
 
@@ -545,6 +549,10 @@ func (d *Database) GetTaggedAssetsCount(tagID uint) (map[string]int, error)
 func (d *Database) GetTagsByWorkspace(workspaceID uint) ([]Tag, error)
     GetTagsByWorkspace retrieves all tags for a specific workspace.
 
+func (d *Database) GetTemplatesByType(templateType irminmodels.TemplateType) ([]Template, error)
+    GetTemplatesByType retrieves all templates of a specific type from the
+    database.
+
 func (d *Database) GetUser(id uint) (*User, error)
     GetUser retrieves a user from the database by their ID.
 
@@ -671,6 +679,9 @@ func (d *Database) UpdateWorkspaceUserRoles(
 	roleIDs []uint,
 ) (*WorkspaceUser, error)
     UpdateWorkspaceUserRoles updates the roles for a user in a workspace.
+
+func (d *Database) UpsertTemplate(template *Template) error
+    UpsertTemplate creates or updates a template based on title and type.
 
 func (d *Database) WaitForNotification(ctx context.Context, channel string) (*pgconn.Notification, error)
     WaitForNotification waits for a notification on the given channel. It uses
@@ -1249,6 +1260,18 @@ type TaggedAssets struct {
 	RepositoryObjects []RepositoryObject `json:"repository_objects"`
 }
     TaggedAssets represents all assets associated with a specific tag.
+
+type Template struct {
+	gorm.Model
+	Title        string                            `json:"title"`
+	Description  string                            `json:"description"`
+	Content      string                            `json:"content"`
+	Type         irminmodels.TemplateType          `json:"type"`
+	Language     irminmodels.TemplateLanguage      `json:"language"`
+	Tags         []string                          `json:"tags"         gorm:"type:jsonb;serializer:json"`
+	Placeholders []irminmodels.TemplatePlaceholder `json:"placeholders" gorm:"type:jsonb;serializer:json"`
+}
+    Template represents a template from which a script or query can be created.
 
 type TokenType int
     TokenType represents the type of search token.

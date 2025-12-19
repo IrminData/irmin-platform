@@ -472,3 +472,54 @@ func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error {
 		Data:    result,
 	})
 }
+
+// QueryTemplatesIndex godoc
+// @Summary List query templates
+// @Description Get all available query templates
+// @Tags queries
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.Template} "Templates retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/queries/templates [get]
+func (api *APIControllers) QueryTemplatesIndex(c fiber.Ctx) error {
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	if !dictOk {
+		return api.handleServiceError(
+			c,
+			"Error getting locals for QueryTemplatesIndex",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
+	}
+
+	// Get all query templates
+	templates, err := api.Services.ListTemplatesByType(c, irminmodels.TemplateTypeQuery)
+	if err != nil {
+		return api.handleServiceError(c, "Error fetching query templates", err, dict)
+	}
+
+	// Format the response
+	templatesResponse, formatErr := formatter.FormatIndexResponse(
+		templates,
+		formatter.FormatTemplateResponse,
+		api.SQIDManager,
+	)
+	if formatErr != nil {
+		return api.handleServiceError(
+			c,
+			"Error formatting templates",
+			services.NewInternalErrorf("error formatting templates: %v", formatErr),
+			dict,
+		)
+	}
+
+	// Return the response
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: templatesResponse,
+	})
+}

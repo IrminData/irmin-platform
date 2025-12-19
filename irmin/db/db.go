@@ -231,6 +231,7 @@ func (d *Database) Migrate() error {
 		&WorkflowTag{},
 		&ConnectionTag{},
 		&RepositoryObjectTag{},
+		&Template{},
 	}
 	if err := d.migrateModels(models...); err != nil {
 		return err
@@ -287,6 +288,7 @@ func (d *Database) Reset() error {
 		&ConnectionTag{},
 		&RepositoryObjectTag{},
 		&Tag{},
+		&Template{},
 	); err != nil {
 		return fmt.Errorf("failed to drop tables: %w", err)
 	}

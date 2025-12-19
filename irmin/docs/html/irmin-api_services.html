@@ -747,6 +747,12 @@ func (api *APIServices) ListRepositoryTags(
 
 func (api *APIServices) ListRoles(c context.Context) ([]irminmodels.Role, error)
 
+func (api *APIServices) ListTemplatesByType(
+	c context.Context,
+	templateType irminmodels.TemplateType,
+) ([]db.Template, error)
+    ListTemplatesByType retrieves all templates of a specific type.
+
 func (api *APIServices) ListWorkflowRuns(
 	c context.Context,
 	user *db.User,

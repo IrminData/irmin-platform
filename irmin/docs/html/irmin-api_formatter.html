@@ -94,6 +94,10 @@ func FormatTagsResponse(tags []db.Tag, sqidManager *irminsqids.SQIDManager) ([]i
     FormatTagsResponse creates a slice of tag response objects from database tag
     objects.
 
+func FormatTemplateResponse(
+	template *db.Template,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.Template, error)
 func FormatUserResponse(user *db.User, sqidManager *irminsqids.SQIDManager) (*irminmodels.User, error)
     FormatUserResponse creates a role response object from a workspace role
     object.

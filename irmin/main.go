@@ -35,6 +35,7 @@ import (
 	"irmin-api/permissions"
 	"irmin-api/routes"
 	"irmin-api/services"
+	"irmin-api/templatefiles"
 	"irmin-api/utils"
 	"log"
 	"log/slog"
@@ -122,6 +123,7 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
 	migrate := flag.Bool("migrate", false, "Run database migrations")
 	overridePolicies := flag.Bool("override-policies", false, "Override existing policies")
 	seedTags := flag.Bool("seed-tags", false, "Seed default tags for all workspaces")
+	seedTemplates := flag.Bool("seed-templates", false, "Seed templates from embedded files")
 	flag.Parse()
 
 	// Empty the database if the reset flag is set
@@ -148,6 +150,13 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
 	if *seedTags {
 		if setupDefaultTagsErr := setupDefaultTags(d); setupDefaultTagsErr != nil {
 			return nil, setupDefaultTagsErr
+		}
+	}
+
+	// Seed templates if the seedTemplates flag is set
+	if *seedTemplates {
+		if seedTemplatesErr := templatefiles.SeedTemplates(d, slog.Default()); seedTemplatesErr != nil {
+			return nil, seedTemplatesErr
 		}
 	}
 

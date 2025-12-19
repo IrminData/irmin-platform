@@ -877,6 +877,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) QueriesShow\(c fiber.Ctx\) error](<#APIControllers.QueriesShow>)
   - [func \(api \*APIControllers\) QueriesStore\(c fiber.Ctx\) error](<#APIControllers.QueriesStore>)
   - [func \(api \*APIControllers\) QueriesUpdate\(c fiber.Ctx\) error](<#APIControllers.QueriesUpdate>)
+  - [func \(api \*APIControllers\) QueryTemplatesIndex\(c fiber.Ctx\) error](<#APIControllers.QueryTemplatesIndex>)
   - [func \(api \*APIControllers\) RepositoriesDestroy\(c fiber.Ctx\) error](<#APIControllers.RepositoriesDestroy>)
   - [func \(api \*APIControllers\) RepositoriesIndex\(c fiber.Ctx\) error](<#APIControllers.RepositoriesIndex>)
   - [func \(api \*APIControllers\) RepositoriesShow\(c fiber.Ctx\) error](<#APIControllers.RepositoriesShow>)
@@ -910,6 +911,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) ResendInvite\(c fiber.Ctx\) error](<#APIControllers.ResendInvite>)
   - [func \(api \*APIControllers\) RolesIndex\(c fiber.Ctx\) error](<#APIControllers.RolesIndex>)
   - [func \(api \*APIControllers\) ScheduleUpdate\(c fiber.Ctx\) error](<#APIControllers.ScheduleUpdate>)
+  - [func \(api \*APIControllers\) ScriptTemplatesIndex\(c fiber.Ctx\) error](<#APIControllers.ScriptTemplatesIndex>)
   - [func \(api \*APIControllers\) ScriptsDestroy\(c fiber.Ctx\) error](<#APIControllers.ScriptsDestroy>)
   - [func \(api \*APIControllers\) ScriptsIndex\(c fiber.Ctx\) error](<#APIControllers.ScriptsIndex>)
   - [func \(api \*APIControllers\) ScriptsShow\(c fiber.Ctx\) error](<#APIControllers.ScriptsShow>)
@@ -1410,6 +1412,15 @@ func (api *APIControllers) QueriesUpdate(c fiber.Ctx) error
 
 QueriesUpdate godoc @Summary Update stored query @Description Update an existing stored query's properties @Tags queries @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param query\_id path string true "Query ID \(SQID\)" @Param request body irmincore.UpdateQueryRequest true "Query update parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.StoredQuery\} "Query updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Query not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/queries/\{query\_id\} \[patch\]
 
+<a name="APIControllers.QueryTemplatesIndex"></a>
+### func \(\*APIControllers\) QueryTemplatesIndex
+
+```go
+func (api *APIControllers) QueryTemplatesIndex(c fiber.Ctx) error
+```
+
+QueryTemplatesIndex godoc @Summary List query templates @Description Get all available query templates @Tags queries @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.Template\} "Templates retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/queries/templates \[get\]
+
 <a name="APIControllers.RepositoriesDestroy"></a>
 ### func \(\*APIControllers\) RepositoriesDestroy
 
@@ -1706,6 +1717,15 @@ func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error
 ```
 
 ScheduleUpdate godoc @Summary Update workflow schedule @Description Update the scheduling configuration and triggers for a workflow @Tags workflows @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param workflow\_slug path string true "Workflow slug" @Param body body irminmodels.Schedule true "Schedule configuration update" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Workflow\} "Workflow schedule updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid schedule configuration" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workflow not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/workflows/\{workflow\_slug\}/schedule \[patch\]
+
+<a name="APIControllers.ScriptTemplatesIndex"></a>
+### func \(\*APIControllers\) ScriptTemplatesIndex
+
+```go
+func (api *APIControllers) ScriptTemplatesIndex(c fiber.Ctx) error
+```
+
+ScriptTemplatesIndex godoc @Summary List script templates @Description Get all available script templates @Tags scripts @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.Template\} "Templates retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/scripts/templates \[get\]
 
 <a name="APIControllers.ScriptsDestroy"></a>
 ### func \(\*APIControllers\) ScriptsDestroy
@@ -2204,6 +2224,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) DeleteStoredQuery\(tx \*gorm.DB, id uint\) error](<#Database.DeleteStoredQuery>)
   - [func \(d \*Database\) DeleteStoredScript\(tx \*gorm.DB, id uint\) error](<#Database.DeleteStoredScript>)
   - [func \(d \*Database\) DeleteTag\(tx \*gorm.DB, id uint\) error](<#Database.DeleteTag>)
+  - [func \(d \*Database\) DeleteTemplatesNotInIDs\(ids \[\]uint\) error](<#Database.DeleteTemplatesNotInIDs>)
   - [func \(d \*Database\) DeleteWorkflow\(tx \*gorm.DB, id uint\) error](<#Database.DeleteWorkflow>)
   - [func \(d \*Database\) DeleteWorkspace\(id uint, tx \*gorm.DB\) error](<#Database.DeleteWorkspace>)
   - [func \(d \*Database\) DropSearchIndexes\(\) error](<#Database.DropSearchIndexes>)
@@ -2260,6 +2281,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetTagWithAssets\(tagID uint\) \(\*TagWithAssets, error\)](<#Database.GetTagWithAssets>)
   - [func \(d \*Database\) GetTaggedAssetsCount\(tagID uint\) \(map\[string\]int, error\)](<#Database.GetTaggedAssetsCount>)
   - [func \(d \*Database\) GetTagsByWorkspace\(workspaceID uint\) \(\[\]Tag, error\)](<#Database.GetTagsByWorkspace>)
+  - [func \(d \*Database\) GetTemplatesByType\(templateType irminmodels.TemplateType\) \(\[\]Template, error\)](<#Database.GetTemplatesByType>)
   - [func \(d \*Database\) GetUser\(id uint\) \(\*User, error\)](<#Database.GetUser>)
   - [func \(d \*Database\) GetUserByClerkID\(clerkID string\) \(\*User, error\)](<#Database.GetUserByClerkID>)
   - [func \(d \*Database\) GetUserByEmail\(email string\) \(\*User, error\)](<#Database.GetUserByEmail>)
@@ -2292,6 +2314,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) SearchWorkspace\(workspaceID uint, filters SearchFilters\) \(\[\]SearchResult, int, error\)](<#Database.SearchWorkspace>)
   - [func \(d \*Database\) SearchWorkspaceCount\(workspaceID uint, filters SearchFilters\) \(int, error\)](<#Database.SearchWorkspaceCount>)
   - [func \(d \*Database\) UpdateWorkspaceUserRoles\(tx \*gorm.DB, userID, workspaceID uint, roleIDs \[\]uint\) \(\*WorkspaceUser, error\)](<#Database.UpdateWorkspaceUserRoles>)
+  - [func \(d \*Database\) UpsertTemplate\(template \*Template\) error](<#Database.UpsertTemplate>)
   - [func \(d \*Database\) WaitForNotification\(ctx context.Context, channel string\) \(\*pgconn.Notification, error\)](<#Database.WaitForNotification>)
 - [type EntityLoader](<#EntityLoader>)
   - [func NewEntityLoader\(db \*Database\) \*EntityLoader](<#NewEntityLoader>)
@@ -2352,6 +2375,7 @@ import "irmin-api/db"
 - [type Tag](<#Tag>)
 - [type TagWithAssets](<#TagWithAssets>)
 - [type TaggedAssets](<#TaggedAssets>)
+- [type Template](<#Template>)
 - [type TokenType](<#TokenType>)
 - [type User](<#User>)
 - [type Workflow](<#Workflow>)
@@ -2981,6 +3005,15 @@ func (d *Database) DeleteTag(tx *gorm.DB, id uint) error
 
 DeleteTag deletes a tag and removes all its associations.
 
+<a name="Database.DeleteTemplatesNotInIDs"></a>
+### func \(\*Database\) DeleteTemplatesNotInIDs
+
+```go
+func (d *Database) DeleteTemplatesNotInIDs(ids []uint) error
+```
+
+DeleteTemplatesNotInIDs deletes all templates that are not in the provided list of IDs.
+
 <a name="Database.DeleteWorkflow"></a>
 ### func \(\*Database\) DeleteWorkflow
 
@@ -3489,6 +3522,15 @@ func (d *Database) GetTagsByWorkspace(workspaceID uint) ([]Tag, error)
 
 GetTagsByWorkspace retrieves all tags for a specific workspace.
 
+<a name="Database.GetTemplatesByType"></a>
+### func \(\*Database\) GetTemplatesByType
+
+```go
+func (d *Database) GetTemplatesByType(templateType irminmodels.TemplateType) ([]Template, error)
+```
+
+GetTemplatesByType retrieves all templates of a specific type from the database.
+
 <a name="Database.GetUser"></a>
 ### func \(\*Database\) GetUser
 
@@ -3776,6 +3818,15 @@ func (d *Database) UpdateWorkspaceUserRoles(tx *gorm.DB, userID, workspaceID uin
 ```
 
 UpdateWorkspaceUserRoles updates the roles for a user in a workspace.
+
+<a name="Database.UpsertTemplate"></a>
+### func \(\*Database\) UpsertTemplate
+
+```go
+func (d *Database) UpsertTemplate(template *Template) error
+```
+
+UpsertTemplate creates or updates a template based on title and type.
 
 <a name="Database.WaitForNotification"></a>
 ### func \(\*Database\) WaitForNotification
@@ -4741,6 +4792,24 @@ type TaggedAssets struct {
     Workflows         []Workflow         `json:"workflows"`
     Connections       []Connection       `json:"connections"`
     RepositoryObjects []RepositoryObject `json:"repository_objects"`
+}
+```
+
+<a name="Template"></a>
+## type Template
+
+Template represents a template from which a script or query can be created.
+
+```go
+type Template struct {
+    gorm.Model
+    Title        string                            `json:"title"`
+    Description  string                            `json:"description"`
+    Content      string                            `json:"content"`
+    Type         irminmodels.TemplateType          `json:"type"`
+    Language     irminmodels.TemplateLanguage      `json:"language"`
+    Tags         []string                          `json:"tags"         gorm:"type:jsonb;serializer:json"`
+    Placeholders []irminmodels.TemplatePlaceholder `json:"placeholders" gorm:"type:jsonb;serializer:json"`
 }
 ```
 
@@ -6089,6 +6158,7 @@ import "irmin-api/formatter"
 - [func FormatTagResponse\(tag \*db.Tag, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Tag, error\)](<#FormatTagResponse>)
 - [func FormatTagWithAssetsResponse\(tag \*db.TagWithAssets, sqidManager \*irminsqids.SQIDManager, d \*db.Database\) \(\*irminmodels.TagWithAssets, error\)](<#FormatTagWithAssetsResponse>)
 - [func FormatTagsResponse\(tags \[\]db.Tag, sqidManager \*irminsqids.SQIDManager\) \(\[\]irminmodels.Tag, error\)](<#FormatTagsResponse>)
+- [func FormatTemplateResponse\(template \*db.Template, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Template, error\)](<#FormatTemplateResponse>)
 - [func FormatUserResponse\(user \*db.User, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.User, error\)](<#FormatUserResponse>)
 - [func FormatWorkflowResponse\(d \*db.Database, workflow \*db.Workflow, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Workflow, error\)](<#FormatWorkflowResponse>)
 - [func FormatWorkflowRunResponse\(workflowRun \*db.WorkflowRun, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.WorkflowRun, error\)](<#FormatWorkflowRunResponse>)
@@ -6258,6 +6328,15 @@ func FormatTagsResponse(tags []db.Tag, sqidManager *irminsqids.SQIDManager) ([]i
 ```
 
 FormatTagsResponse creates a slice of tag response objects from database tag objects.
+
+<a name="FormatTemplateResponse"></a>
+## func FormatTemplateResponse
+
+```go
+func FormatTemplateResponse(template *db.Template, sqidManager *irminsqids.SQIDManager) (*irminmodels.Template, error)
+```
+
+
 
 <a name="FormatUserResponse"></a>
 ## func FormatUserResponse
@@ -10044,6 +10123,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ListRepositoryCommits\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, ref string, after \*string, perPage \*int\) \(\[\]irminmodels.Commit, \*lakefs.Pagination, error\)](<#APIServices.ListRepositoryCommits>)
   - [func \(api \*APIServices\) ListRepositoryTags\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository\) \(\[\]irminmodels.GitTag, error\)](<#APIServices.ListRepositoryTags>)
   - [func \(api \*APIServices\) ListRoles\(c context.Context\) \(\[\]irminmodels.Role, error\)](<#APIServices.ListRoles>)
+  - [func \(api \*APIServices\) ListTemplatesByType\(c context.Context, templateType irminmodels.TemplateType\) \(\[\]db.Template, error\)](<#APIServices.ListTemplatesByType>)
   - [func \(api \*APIServices\) ListWorkflowRuns\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, perPage, offset int\) \(\[\]db.WorkflowRun, int, error\)](<#APIServices.ListWorkflowRuns>)
   - [func \(api \*APIServices\) ListWorkflows\(c context.Context, user \*db.User, workspace \*db.Workspace, workflowType string\) \(\[\]db.Workflow, error\)](<#APIServices.ListWorkflows>)
   - [func \(api \*APIServices\) ListWorkspaceQueries\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.StoredQuery, error\)](<#APIServices.ListWorkspaceQueries>)
@@ -11019,6 +11099,15 @@ func (api *APIServices) ListRoles(c context.Context) ([]irminmodels.Role, error)
 
 
 
+<a name="APIServices.ListTemplatesByType"></a>
+### func \(\*APIServices\) ListTemplatesByType
+
+```go
+func (api *APIServices) ListTemplatesByType(c context.Context, templateType irminmodels.TemplateType) ([]db.Template, error)
+```
+
+ListTemplatesByType retrieves all templates of a specific type.
+
 <a name="APIServices.ListWorkflowRuns"></a>
 ### func \(\*APIServices\) ListWorkflowRuns
 
@@ -11551,6 +11640,64 @@ const (
     TagEntityOperationRemove TagEntityOperation = "remove"
 )
 ```
+
+# templatefiles
+
+```go
+import "irmin-api/templatefiles"
+```
+
+## Index
+
+- [func SeedTemplates\(database \*db.Database, logger \*slog.Logger\) error](<#SeedTemplates>)
+- [type TemplateDefinition](<#TemplateDefinition>)
+  - [func GetAllTemplates\(\) \(\[\]TemplateDefinition, error\)](<#GetAllTemplates>)
+  - [func ParseTemplateForTest\(content string, templateType irminmodels.TemplateType, language irminmodels.TemplateLanguage\) TemplateDefinition](<#ParseTemplateForTest>)
+
+
+<a name="SeedTemplates"></a>
+## func SeedTemplates
+
+```go
+func SeedTemplates(database *db.Database, logger *slog.Logger) error
+```
+
+SeedTemplates loads embedded template files and upserts them into the database.
+
+<a name="TemplateDefinition"></a>
+## type TemplateDefinition
+
+TemplateDefinition represents a parsed template with its metadata.
+
+```go
+type TemplateDefinition struct {
+    Title        string
+    Description  string
+    Content      string
+    Type         irminmodels.TemplateType
+    Language     irminmodels.TemplateLanguage
+    Tags         []string
+    Placeholders []irminmodels.TemplatePlaceholder
+}
+```
+
+<a name="GetAllTemplates"></a>
+### func GetAllTemplates
+
+```go
+func GetAllTemplates() ([]TemplateDefinition, error)
+```
+
+GetAllTemplates returns all embedded templates with parsed metadata.
+
+<a name="ParseTemplateForTest"></a>
+### func ParseTemplateForTest
+
+```go
+func ParseTemplateForTest(content string, templateType irminmodels.TemplateType, language irminmodels.TemplateLanguage) TemplateDefinition
+```
+
+ParseTemplateForTest is a test\-only export of parseTemplate.
 
 # templates
 

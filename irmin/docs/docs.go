@@ -3908,6 +3908,76 @@ const docTemplate = `{
                 }
             }
         },
+        "/workspaces/{workspace_slug}/queries/templates": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get all available query templates",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "queries"
+                ],
+                "summary": "List query templates",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Templates retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/irminmodels.Template"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/queries/{query_id}": {
             "get": {
                 "security": [
@@ -7393,6 +7463,76 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/scripts/templates": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get all available script templates",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scripts"
+                ],
+                "summary": "List script templates",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Templates retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/irminmodels.Template"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Workspace not found",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -13335,6 +13475,115 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "irminmodels.Template": {
+            "type": "object",
+            "required": [
+                "content",
+                "description",
+                "id",
+                "language",
+                "tags",
+                "title",
+                "type"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "maxLength": 10000,
+                    "example": "This is the content of my template"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "This is a template for my application"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "tpl_2k8n9q1m7p3x4z"
+                },
+                "language": {
+                    "maxLength": 50,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.TemplateLanguage"
+                        }
+                    ],
+                    "example": "go"
+                },
+                "placeholders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.TemplatePlaceholder"
+                    }
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "tag1",
+                        "tag2",
+                        "tag3"
+                    ]
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "example": "My Template"
+                },
+                "type": {
+                    "maxLength": 50,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.TemplateType"
+                        }
+                    ],
+                    "example": "script"
+                }
+            }
+        },
+        "irminmodels.TemplateLanguage": {
+            "type": "string",
+            "enum": [
+                "go",
+                "sql"
+            ],
+            "x-enum-varnames": [
+                "TemplateLanguageGo",
+                "TemplateLanguageSQL"
+            ]
+        },
+        "irminmodels.TemplatePlaceholder": {
+            "type": "object",
+            "required": [
+                "example",
+                "name"
+            ],
+            "properties": {
+                "example": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "my-repo"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "example": "repository_slug"
+                }
+            }
+        },
+        "irminmodels.TemplateType": {
+            "type": "string",
+            "enum": [
+                "script",
+                "query"
+            ],
+            "x-enum-varnames": [
+                "TemplateTypeScript",
+                "TemplateTypeQuery"
+            ]
         },
         "irminmodels.User": {
             "type": "object",

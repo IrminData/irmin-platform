@@ -208,6 +208,11 @@ func RegisterAPIRoutes(
 		apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.QueriesIndex,
 	)
+	queries.Get(
+		"/templates",
+		apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.QueryTemplatesIndex,
+	)
 	queries.Post(
 		"/",
 		apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionCreate),
@@ -238,6 +243,11 @@ func RegisterAPIRoutes(
 		"/",
 		apiMiddlewares.ScriptPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.ScriptsIndex,
+	)
+	scripts.Get(
+		"/templates",
+		apiMiddlewares.ScriptPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ScriptTemplatesIndex,
 	)
 	scripts.Post(
 		"/",

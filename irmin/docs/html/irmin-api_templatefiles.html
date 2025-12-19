@@ -1,0 +1,39 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/templatefiles</title></head><body>
+<h1>Package irmin-api/templatefiles</h1>
+<pre>
+package templatefiles // import "irmin-api/templatefiles"
+
+
+FUNCTIONS
+
+func SeedTemplates(database *db.Database, logger *slog.Logger) error
+    SeedTemplates loads embedded template files and upserts them into the
+    database.
+
+
+TYPES
+
+type TemplateDefinition struct {
+	Title        string
+	Description  string
+	Content      string
+	Type         irminmodels.TemplateType
+	Language     irminmodels.TemplateLanguage
+	Tags         []string
+	Placeholders []irminmodels.TemplatePlaceholder
+}
+    TemplateDefinition represents a parsed template with its metadata.
+
+func GetAllTemplates() ([]TemplateDefinition, error)
+    GetAllTemplates returns all embedded templates with parsed metadata.
+
+func ParseTemplateForTest(
+	content string,
+	templateType irminmodels.TemplateType,
+	language irminmodels.TemplateLanguage,
+) TemplateDefinition
+    ParseTemplateForTest is a test-only export of parseTemplate.
+
+</pre>
+</body></html>

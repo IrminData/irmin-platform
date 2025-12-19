@@ -1,6 +1,8 @@
 # Templates
 
-This directory contains templates used throughout the Irmin application. The templates are embedded directly into the Go binary using `go:embed` for better performance and deployment simplicity.
+This directory contains UI templates used throughout the Irmin application (email templates, Swagger UI, etc.). The templates are embedded directly into the Go binary using `go:embed` for better performance and deployment simplicity.
+
+**Note:** For SQL query and Go script templates, see the `templatefiles/` package which handles user-facing code templates.
 
 ## Directory Structure
 

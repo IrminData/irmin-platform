@@ -103,7 +103,7 @@ func (api *APIControllers) ConnectionsStore(c fiber.Ctx) error {
 	}
 
 	// Create the connection
-	connection, err := api.Services.CreateConnection(c.Context(), locale, user, workspace, req)
+	connection, err := api.Services.CreateConnection(c, locale, user, workspace, req)
 	if err != nil {
 		return api.handleServiceError(c, "Failed to create connection", err, dict)
 	}
@@ -162,7 +162,7 @@ func (api *APIControllers) ConnectionsShow(c fiber.Ctx) error {
 	}
 
 	// Mask secrets
-	api.Services.MaskConnectionSecrets(c.Context(), connection)
+	api.Services.MaskConnectionSecrets(c, connection)
 
 	// Format the connection response
 	connectionResponse, formatConnectionResponseErr := formatter.FormatConnectionResponse(connection, api.SQIDManager)
@@ -297,7 +297,7 @@ func (api *APIControllers) ConnectionsUpdateConfiguration(c fiber.Ctx) error {
 
 	// Update the connection configuration
 	updatedConnection, err := api.Services.UpdateConnectionConfiguration(
-		c.Context(),
+		c,
 		locale,
 		user,
 		workspace,

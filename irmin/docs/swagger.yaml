@@ -2323,6 +2323,84 @@ definitions:
           $ref: '#/definitions/irminmodels.Workflow'
         type: array
     type: object
+  irminmodels.Template:
+    properties:
+      content:
+        example: This is the content of my template
+        maxLength: 10000
+        type: string
+      description:
+        example: This is a template for my application
+        maxLength: 255
+        type: string
+      id:
+        example: tpl_2k8n9q1m7p3x4z
+        type: string
+      language:
+        allOf:
+        - $ref: '#/definitions/irminmodels.TemplateLanguage'
+        example: go
+        maxLength: 50
+      placeholders:
+        items:
+          $ref: '#/definitions/irminmodels.TemplatePlaceholder'
+        type: array
+      tags:
+        example:
+        - tag1
+        - tag2
+        - tag3
+        items:
+          type: string
+        type: array
+      title:
+        example: My Template
+        maxLength: 100
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/irminmodels.TemplateType'
+        example: script
+        maxLength: 50
+    required:
+    - content
+    - description
+    - id
+    - language
+    - tags
+    - title
+    - type
+    type: object
+  irminmodels.TemplateLanguage:
+    enum:
+    - go
+    - sql
+    type: string
+    x-enum-varnames:
+    - TemplateLanguageGo
+    - TemplateLanguageSQL
+  irminmodels.TemplatePlaceholder:
+    properties:
+      example:
+        example: my-repo
+        maxLength: 255
+        type: string
+      name:
+        example: repository_slug
+        maxLength: 100
+        type: string
+    required:
+    - example
+    - name
+    type: object
+  irminmodels.TemplateType:
+    enum:
+    - script
+    - query
+    type: string
+    x-enum-varnames:
+    - TemplateTypeScript
+    - TemplateTypeQuery
   irminmodels.User:
     properties:
       company:
@@ -5345,6 +5423,48 @@ paths:
       summary: Transfer query ownership
       tags:
       - queries
+  /workspaces/{workspace_slug}/queries/templates:
+    get:
+      consumes:
+      - application/json
+      description: Get all available query templates
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Templates retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/irminmodels.Template'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Workspace not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List query templates
+      tags:
+      - queries
   /workspaces/{workspace_slug}/repositories:
     get:
       consumes:
@@ -7558,6 +7678,48 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Transfer script ownership
+      tags:
+      - scripts
+  /workspaces/{workspace_slug}/scripts/templates:
+    get:
+      consumes:
+      - application/json
+      description: Get all available script templates
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Templates retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/irminmodels.Template'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Workspace not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List script templates
       tags:
       - scripts
   /workspaces/{workspace_slug}/search:

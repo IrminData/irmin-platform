@@ -48,13 +48,7 @@ The following command line flags are available when running the application:
 - `-migrate`: Run database migrations (creates tables, adds indexes, seeds initial roles, sets default policies)
 - `-override-policies`: When used with `-migrate`, overrides existing policies with default ones
 - `-seed-tags`: Seeds default tags for all workspaces
-
-**Run with flags**
-`go run main.go -migrate` or `air -- -migrate` (run database migrations)
-
-`go run main.go -migrate -override-policies` or `air -- -migrate -override-policies` (run database migrations and override existing policies)
-
-`go run main.go -seed-tags` or `air -- -seed-tags` (seed default tags for all workspaces)
+- `-seed-templates`: Seeds templates from embedded files
 
 Example usage:
 
@@ -67,6 +61,9 @@ go run main.go -migrate
 
 # Run migrations and override existing policies
 go run main.go -migrate -override-policies
+
+# Seed default tags for all workspaces and templates from embedded files
+go run main.go -seed-tags -seed-templates
 ```
 
 ## Linting
