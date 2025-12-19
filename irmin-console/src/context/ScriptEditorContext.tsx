@@ -56,7 +56,7 @@ interface ScriptEditorContextType {
   setActiveTab: (_index: number) => void;
   setEditorHeight: (_height: string) => void;
   // Editor Actions
-  openNewTab: () => void;
+  openNewTab: (_initialContent?: string) => void;
   openScript: (_scriptId: string) => void;
   closeTab: (_tabId: string) => void;
   updateCurrentTabContent: (_content: string) => void;
@@ -130,26 +130,31 @@ export const ScriptEditorProvider = ({
   /**
    * Opens a new tab with an untitled script.
    * Defaults to Go since scripts are executed in Go
+   *
+   * @param initialContent - Optional initial content for the script
    */
-  const openNewTab = useCallback(() => {
-    const untitledName = `untitled_${untitledCounter}.go`;
+  const openNewTab = useCallback(
+    (initialContent?: string) => {
+      const untitledName = `untitled_${untitledCounter}.go`;
 
-    const newTab: ScriptTab = {
-      id: crypto.randomUUID(),
-      name: untitledName,
-      content: '',
-      originalContent: '',
-      language: 'go',
-      isSaved: false,
-    };
+      const newTab: ScriptTab = {
+        id: crypto.randomUUID(),
+        name: untitledName,
+        content: initialContent ?? '',
+        originalContent: initialContent ?? '',
+        language: 'go',
+        isSaved: false,
+      };
 
-    setOpenTabs((prev) => {
-      const updated = [...prev, newTab];
-      setActiveTabIndex(updated.length - 1);
-      return updated;
-    });
-    setUntitledCounter((prev) => prev + 1);
-  }, [untitledCounter]);
+      setOpenTabs((prev) => {
+        const updated = [...prev, newTab];
+        setActiveTabIndex(updated.length - 1);
+        return updated;
+      });
+      setUntitledCounter((prev) => prev + 1);
+    },
+    [untitledCounter]
+  );
 
   /**
    * Opens a script in a new tab by ID.

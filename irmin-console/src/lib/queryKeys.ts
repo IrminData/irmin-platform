@@ -266,6 +266,13 @@ export const logEventsQueryKey = (
 export const storedQueriesQueryKey = (workspaceSlug: string) =>
   ['stored-queries', workspaceSlug] as const;
 
+export const queryTemplatesQueryKey = (workspaceSlug: string) =>
+  ['query-templates', workspaceSlug] as const;
+
+// Script templates related query keys
+export const scriptTemplatesQueryKey = (workspaceSlug: string) =>
+  ['script-templates', workspaceSlug] as const;
+
 // Agent related query keys
 export const aiConversationsQueryKey = (
   workspaceSlug: string,

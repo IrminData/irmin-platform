@@ -11,12 +11,14 @@ import {
   TbPencil,
   TbSearch,
   TbShield,
+  TbTemplate,
   TbTrash,
   TbX,
 } from 'react-icons/tb';
 
 import QueryResults from '@/components/query/QueryResults';
 import CodeMirrorEditor from '@/components/scripts/ide/CodeMirrorEditor';
+import { TemplateLibraryModal } from '@/components/scripts/TemplateLibraryModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { QueryError } from '@/components/ui/error/QueryError';
@@ -35,6 +37,7 @@ import {
   useWorkspaceSchema,
   useWorkspaceTags,
 } from '@/hooks/api';
+import { useQueryTemplates } from '@/hooks/api/useQueryTemplates';
 import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 import type { StoredQuery } from '@/types/core/StoredQuery';
@@ -62,6 +65,9 @@ export default function QueriesSection() {
     updateStoredQueryMutation,
     deleteStoredQueryMutation,
   } = useStoredQueries();
+
+  const { queryTemplatesQuery } = useQueryTemplates();
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
 
   const {
     executeSql,
@@ -229,7 +235,9 @@ export default function QueriesSection() {
    * and then creating the query.
    */
   const handleCreateQuery = useMemo(
-    () => async () => {
+    () => async (initialContent?: string) => {
+      const contentToUse =
+        typeof initialContent === 'string' ? initialContent : editorContent;
       irminModal.show(
         dict.query.newQuery,
         <CreateSavedQueryModal
@@ -242,19 +250,34 @@ export default function QueriesSection() {
             const res = await createStoredQueryMutation.mutateAsync({
               name: queryName,
               description: queryDescription,
-              sql: editorContent,
+              sql: contentToUse,
               tags: tags?.map((tag) => tag.id),
             });
             if (!res.data) return;
             irminModal.close();
             setSelectedQuery(res.data);
             setEdited(false);
+            if (typeof initialContent === 'string') {
+              setEditorContent(initialContent);
+            }
           }}
         />,
         () => irminModal.close()
       );
     },
     [irminModal, dict, editorContent, createStoredQueryMutation, workspaceSlug]
+  );
+
+  const handleTemplateSelect = useCallback(
+    (content: string, createNew: boolean) => {
+      if (createNew) {
+        handleCreateQuery(content);
+      } else {
+        setEditorContent(content);
+        setEdited(true);
+      }
+    },
+    [handleCreateQuery]
   );
 
   /**
@@ -368,13 +391,21 @@ export default function QueriesSection() {
               lg:order-1 lg:w-80 lg:shrink-0 lg:border-0 lg:border-r
             `}
           >
-            <div className='p-2'>
+            <div className='flex flex-col gap-2 p-2'>
               <Button
                 className='w-full'
                 variant={'default'}
-                onClick={handleCreateQuery}
+                onClick={() => handleCreateQuery()}
               >
                 {dict.query.newQuery}
+              </Button>
+              <Button
+                className='w-full'
+                variant='outline'
+                onClick={() => setTemplateModalOpen(true)}
+                icon={<TbTemplate />}
+              >
+                {dict.common.createFromTemplate}
               </Button>
             </div>
             <div className='border-b p-2'>
@@ -606,6 +637,13 @@ export default function QueriesSection() {
           )}
         </div>
       </div>
+      <TemplateLibraryModal
+        open={templateModalOpen}
+        onOpenChange={setTemplateModalOpen}
+        templates={queryTemplatesQuery.data?.data || []}
+        loading={queryTemplatesQuery.isLoading}
+        onSelectTemplate={handleTemplateSelect}
+      />
     </SafeComponent>
   );
 }

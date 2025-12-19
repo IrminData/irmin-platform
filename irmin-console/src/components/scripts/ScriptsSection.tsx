@@ -8,10 +8,12 @@ import {
   TbChevronRight,
   TbPencil,
   TbSearch,
+  TbTemplate,
   TbTrash,
   TbX,
 } from 'react-icons/tb';
 
+import { TemplateLibraryModal } from '@/components/scripts/TemplateLibraryModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { QueryError } from '@/components/ui/error/QueryError';
@@ -26,6 +28,7 @@ import { useScriptEditor } from '@/context/ScriptEditorContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useWorkspaceTags } from '@/hooks/api';
+import { useScriptTemplates } from '@/hooks/api/useScriptTemplates';
 import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
 
 import type { StoredScript } from '@/types/core/Script';
@@ -63,11 +66,28 @@ export default function ScriptsSection() {
     openScript,
     deleteScript,
     updateScriptMetadata,
+    updateCurrentTabContent,
   } = useScriptEditor();
+
+  const { scriptTemplatesQuery } = useScriptTemplates();
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
 
   const [selectedScript, setSelectedScript] = useState<StoredScript | null>(
     null
   );
+
+  const handleTemplateSelect = useCallback(
+    (content: string, createNew: boolean) => {
+      if (createNew || !currentTab) {
+        openNewTab(content);
+        return;
+      }
+
+      updateCurrentTabContent(content);
+    },
+    [currentTab, openNewTab, updateCurrentTabContent]
+  );
+
   const [searchQuery, setSearchQuery] = useState('');
 
   // Handle create param
@@ -241,14 +261,23 @@ export default function ScriptsSection() {
               lg:order-1 lg:w-80 lg:shrink-0 lg:border-0 lg:border-r
             `}
           >
-            <div className='p-2'>
+            <div className='flex flex-col gap-2 p-2'>
               <Button
                 className='w-full'
                 variant='default'
-                onClick={openNewTab}
+                onClick={() => openNewTab()}
                 disabled={!isResourceAllowed('script', 'create') || loading}
               >
                 {dict.scripts.createScript}
+              </Button>
+              <Button
+                className='w-full'
+                variant='outline'
+                onClick={() => setTemplateModalOpen(true)}
+                disabled={!isResourceAllowed('script', 'create') || loading}
+                icon={<TbTemplate />}
+              >
+                {dict.common.createFromTemplate}
               </Button>
             </div>
             <div className='border-b p-2'>
@@ -466,6 +495,13 @@ export default function ScriptsSection() {
           )}
         </div>
       </div>
+      <TemplateLibraryModal
+        open={templateModalOpen}
+        onOpenChange={setTemplateModalOpen}
+        templates={scriptTemplatesQuery.data?.data || []}
+        loading={scriptTemplatesQuery.isLoading}
+        onSelectTemplate={handleTemplateSelect}
+      />
     </SafeComponent>
   );
 }

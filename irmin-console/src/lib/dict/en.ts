@@ -98,6 +98,27 @@ const en = {
     deleted: 'Deleted successfully',
     saveChanges: 'Save Changes',
 
+    createFromTemplate: 'Create from Template',
+    templates: {
+      title: 'Template Library',
+      description: 'Choose a template to get started quickly',
+      searchTemplates: 'Search templates...',
+      noTemplatesFound: 'No templates found',
+      noPlaceholders: 'No placeholders to fill in this template',
+      selectTemplate: 'Select a template',
+      fillPlaceholders: 'Fill Template Placeholders',
+      fillPlaceholdersDescription:
+        'Provide values for the placeholders in the template',
+      placeholder: 'Placeholder',
+      value: 'Value',
+      example: 'Example',
+      preview: 'Preview',
+      createNew: 'Create New',
+      replaceCurrent: 'Replace Current',
+      useTemplate: 'Use Template',
+      templateUsed: 'Template applied successfully',
+    },
+
     // Contact and support
     contactUs: 'Contact Us',
     readMore: 'Read more',

@@ -2,6 +2,7 @@ import type IrminCore from '@/lib/core';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { QueryResult, StoredQuery } from '@/types/core/StoredQuery';
+import type { Template } from '@/types/core/Template';
 
 /**
  * Interface for creating a query
@@ -60,6 +61,31 @@ class QueryService {
     this.transferStoredQuery = this.transferStoredQuery.bind(this);
     this.executeStoredQuery = this.executeStoredQuery.bind(this);
     this.executeSQL = this.executeSQL.bind(this);
+    this.listQueryTemplates = this.listQueryTemplates.bind(this);
+  }
+
+  /**
+   * List all query templates available in a workspace.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @returns IrminAPIResponse containing an array of query templates.
+   */
+  async listQueryTemplates({
+    workspace,
+  }: {
+    workspace: string;
+  }): Promise<IrminAPIResponse<Template[]>> {
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/queries/templates`,
+        { method: 'GET' }
+      );
+      return response as IrminAPIResponse<Template[]>;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch query templates error');
+      throw error;
+    }
   }
 
   /**

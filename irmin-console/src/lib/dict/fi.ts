@@ -99,6 +99,26 @@ const fi = {
     deleted: 'Poistettu onnistuneesti',
     saveChanges: 'Tallenna muutokset',
 
+    createFromTemplate: 'Luo mallista',
+    templates: {
+      title: 'Mallikirjasto',
+      description: 'Valitse malli aloittaaksesi nopeasti',
+      searchTemplates: 'Etsi malleja...',
+      noTemplatesFound: 'Malleja ei löytynyt',
+      noPlaceholders: 'Ei täytettäviä paikkamerkkejä tässä mallissa',
+      selectTemplate: 'Valitse malli',
+      fillPlaceholders: 'Täytä mallin paikkamerkit',
+      fillPlaceholdersDescription: 'Anna arvot mallin paikkamerkeille',
+      placeholder: 'Paikkamerkki',
+      value: 'Arvo',
+      example: 'Esimerkki',
+      preview: 'Esikatselu',
+      createNew: 'Luo uusi',
+      replaceCurrent: 'Korvaa nykyinen',
+      useTemplate: 'Käytä mallia',
+      templateUsed: 'Malli otettu käyttöön onnistuneesti',
+    },
+
     // Contact and support
     contactUs: 'Ota yhteyttä',
     readMore: 'Lue lisää',

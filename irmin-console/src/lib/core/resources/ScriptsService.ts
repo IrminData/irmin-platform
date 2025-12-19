@@ -2,6 +2,7 @@ import type IrminCore from '@/lib/core';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { ScriptResult, StoredScript } from '@/types/core/Script';
+import type { Template } from '@/types/core/Template';
 import type { ActionInputData } from '@/types/core/Workflow';
 
 /**
@@ -60,6 +61,31 @@ class ScriptsService {
     this.deleteScript = this.deleteScript.bind(this);
     this.transferScript = this.transferScript.bind(this);
     this.executeScript = this.executeScript.bind(this);
+    this.listScriptTemplates = this.listScriptTemplates.bind(this);
+  }
+
+  /**
+   * List all script templates available in a workspace.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @returns IrminAPIResponse containing an array of script templates.
+   */
+  async listScriptTemplates({
+    workspace,
+  }: {
+    workspace: string;
+  }): Promise<IrminAPIResponse<Template[]>> {
+    try {
+      const endpoint = `/v1/workspaces/${workspace}/scripts/templates`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'GET',
+      });
+      return response as IrminAPIResponse<Template[]>;
+    } catch (error) {
+      console.error('List script templates error', error);
+      throw error;
+    }
   }
 
   /**

@@ -86,7 +86,7 @@ const EditorWithTabs = () => {
                 hover:bg-gray-100
                 dark:hover:bg-gray-800
               `}
-              onClick={openNewTab}
+              onClick={() => openNewTab()}
             >
               <IoAdd size={16} />
             </button>
@@ -122,7 +122,7 @@ const EditorWithTabs = () => {
       )}
 
       {openTabs.length === 0 ? (
-        <NewTabContent addNewTab={openNewTab} />
+        <NewTabContent addNewTab={() => openNewTab()} />
       ) : (
         <>
           <ResizableCodeEditor

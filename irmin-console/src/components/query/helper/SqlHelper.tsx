@@ -188,17 +188,10 @@ export default function SqlHelper({
           <SheetTitle>{dict.queryHelper.title}</SheetTitle>
         </SheetHeader>
 
-        <Tabs
-          defaultValue='generate'
-          className={`
-            flex flex-1 flex-col overflow-hidden
-            focus:outline-none
-            focus-visible:outline-none
-          `}
-        >
+        <Tabs defaultValue='generate'>
           <TabsList
             className={`
-              grid w-full grid-cols-2 gap-1 bg-transparent px-2
+              px-2
               focus:outline-none
               focus-visible:outline-none
             `}
