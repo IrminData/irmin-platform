@@ -386,6 +386,16 @@ func (api *APIServices) DeleteWorkspaceTag(
 	tagWithAssets *db.TagWithAssets,
 ) error
 
+func (api *APIServices) ExecuteQuery(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	query *db.StoredQuery,
+	req irmincore.ExecuteSQLRequest,
+	limitResponse bool,
+) (*irminmodels.QueryResult, error)
+
 func (api *APIServices) ExecuteSQL(
 	c context.Context,
 	locale string,

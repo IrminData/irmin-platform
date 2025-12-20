@@ -302,10 +302,11 @@ func (api *APIControllers) DeclineInvite(c fiber.Ctx) error
 
 func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error
     ExecuteQuery godoc @Summary Execute stored query @Description
-    Execute a specific stored query and return the results @Tags
-    queries @Security ApiKeyAuth @Accept json @Produce json @Param
-    workspace_slug path string true "Workspace slug" @Param query_id
-    path string true "Query ID (SQID)" @Success 200 {object}
+    Execute a specific stored query and return the results @Tags queries
+    @Security ApiKeyAuth @Accept json @Produce json @Param workspace_slug
+    path string true "Workspace slug" @Param query_id path string true
+    "Query ID (SQID)" @Param request body irmincore.ExecuteSQLRequest
+    false "Execution options (e.g., input files)" @Success 200 {object}
     irminmodels.IrminAPIResponse{data=irminmodels.QueryResult} "Query
     executed successfully" @Failure 401 {object} irminmodels.IrminAPIResponse
     "Unauthorized - invalid or missing authentication" @Failure 404

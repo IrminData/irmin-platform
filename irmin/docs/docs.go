@@ -4231,6 +4231,14 @@ const docTemplate = `{
                         "name": "query_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Execution options (e.g., input files)",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.ExecuteSQLRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -10747,6 +10755,12 @@ const docTemplate = `{
         "irmincore.ExecuteSQLRequest": {
             "type": "object",
             "properties": {
+                "input": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.ActionInputData"
+                    }
+                },
                 "sql": {
                     "type": "string",
                     "example": "select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"

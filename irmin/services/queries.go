@@ -478,6 +478,18 @@ func (api *APIServices) ExecuteSQL(
 		return nil, ErrAccessDenied
 	}
 
+	// Prepare input files from request
+	var inputFiles map[string][]byte
+	if len(req.Input) > 0 {
+		var processInputFilesErr error
+		inputFiles, processInputFilesErr = api.processInputFiles(c, locale, user, workspace, req.Input)
+		if processInputFilesErr != nil {
+			return nil, processInputFilesErr
+		}
+	} else {
+		inputFiles = make(map[string][]byte)
+	}
+
 	// Initialize Data Engine client
 	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
@@ -496,8 +508,13 @@ func (api *APIServices) ExecuteSQL(
 		WorkspaceID: &workspace.ID,
 	})
 
-	// Execute the SQL
-	result := dataEngine.ExecuteQuery(c, user, workspace, req.SQL)
+	// Execute the SQL with inputs
+	var result *irminmodels.QueryResult
+	if len(inputFiles) > 0 {
+		result = dataEngine.ExecuteQueryWithInputs(c, user, workspace, req.SQL, inputFiles)
+	} else {
+		result = dataEngine.ExecuteQuery(c, user, workspace, req.SQL)
+	}
 
 	// Limit response data if requested
 	if limitResponse {
@@ -523,6 +540,183 @@ func (api *APIServices) ExecuteSQL(
 	}
 
 	return result, nil
+}
+
+func (api *APIServices) ExecuteQuery(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	query *db.StoredQuery,
+	req irmincore.ExecuteSQLRequest,
+	limitResponse bool,
+) (*irminmodels.QueryResult, error) {
+	// Make sure this is allowed
+	isAllowed, err := api.PermissionService.IsAllowed(
+		user,
+		workspace,
+		db.PolicyResourceQuery,
+		&query.ID,
+		db.PolicyActionRead,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
+	}
+	if !isAllowed {
+		api.Logger.ErrorContext(
+			c,
+			"User is not allowed to execute query",
+			"user",
+			user.Email,
+			"workspace",
+			workspace.Slug,
+			"query",
+			query.ID,
+		)
+		return nil, ErrAccessDenied
+	}
+
+	// Execute the query with its SQL and any provided inputs
+	return api.ExecuteSQL(c, locale, user, workspace, irmincore.ExecuteSQLRequest{
+		SQL:   query.SQL,
+		Input: req.Input,
+	}, limitResponse)
+}
+
+// processInputFiles processes input files for SQL execution by checking permissions and fetching content.
+func (api *APIServices) processInputFiles(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	inputs []irminmodels.ActionInputData,
+) (map[string][]byte, error) {
+	// Initialize Data Engine client for fetching input data
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	if createDataEngineClientErr != nil {
+		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
+		return nil, NewInternalErrorf("error creating data engine client: %w", createDataEngineClientErr)
+	}
+
+	// First, collect all repository objects and validate they exist
+	type inputObject struct {
+		input            irminmodels.ActionInputData
+		repositoryObject *db.RepositoryObject
+	}
+	inputObjects := make([]inputObject, 0, len(inputs))
+
+	for _, input := range inputs {
+		inputRepository := input.Repository
+		inputPath := strings.TrimPrefix(input.RepositoryPath, "/")
+		inputRef := input.RepositoryRef
+
+		// Get the repository from the database
+		repository, repoErr := api.DB.GetRepositoryBySlugAndWorkspaceID(inputRepository, workspace.ID)
+		if repoErr != nil {
+			api.Logger.ErrorContext(c, "Error getting repository", "error", repoErr, "repository", inputRepository)
+			return nil, NewInternalErrorf("error getting repository: %w", repoErr)
+		}
+		if repository == nil {
+			api.Logger.ErrorContext(c, "Repository not found", "repository", inputRepository)
+			return nil, ErrNotFound
+		}
+
+		// Get the repository object from the database
+		repositoryObject, objErr := lib.GetObject(
+			c,
+			locale,
+			api.DB,
+			api.Logger,
+			api.Env,
+			workspace,
+			repository,
+			inputPath,
+			inputRef,
+			false,
+		)
+		if objErr != nil {
+			api.Logger.ErrorContext(c, "Error getting repository object", "error", objErr, "path", inputPath)
+			return nil, NewInternalErrorf("error getting repository object: %w", objErr)
+		}
+		if repositoryObject == nil {
+			api.Logger.ErrorContext(c, "Repository object not found", "path", inputPath)
+			return nil, ErrNotFound
+		}
+
+		inputObjects = append(inputObjects, inputObject{
+			input:            input,
+			repositoryObject: repositoryObject,
+		})
+	}
+
+	// Extract repository objects for batch permission check
+	repositoryObjects := make([]db.RepositoryObject, len(inputObjects))
+	for i, io := range inputObjects {
+		repositoryObjects[i] = *io.repositoryObject
+	}
+
+	// Use IsAllowedFilter to batch check permissions for all objects
+	allowedObjects, filterErr := permissions.IsAllowedFilter(
+		api.PermissionService,
+		user,
+		workspace,
+		db.PolicyResourceRepositoryObject,
+		db.PolicyActionRead,
+		repositoryObjects,
+		func(o db.RepositoryObject) uint { return o.ID },
+	)
+	if filterErr != nil {
+		api.Logger.ErrorContext(c, "Error filtering objects by permissions", "error", filterErr)
+		return nil, NewInternalErrorf("error checking permissions: %w", filterErr)
+	}
+
+	// Verify all inputs are allowed (fail if any are not)
+	if len(allowedObjects) != len(inputObjects) {
+		api.Logger.ErrorContext(
+			c,
+			"User is not allowed to read one or more repository objects",
+			"user",
+			user.Email,
+			"workspace",
+			workspace.Slug,
+			"requested",
+			len(inputObjects),
+			"allowed",
+			len(allowedObjects),
+		)
+		return nil, ErrAccessDenied
+	}
+
+	// Create a slice to store all async operations
+	var futures []utils.FutureResult[[]byte]
+
+	// Launch concurrent fetches for each allowed input object
+	for _, io := range inputObjects {
+		inputRepository := io.input.Repository
+		inputPath := strings.TrimPrefix(io.input.RepositoryPath, "/")
+		inputRef := io.input.RepositoryRef
+
+		// Create an async operation for fetching the object
+		future := utils.Async(func() ([]byte, error) {
+			return dataEngine.GetObjectContent(workspace.Slug, inputRepository, inputPath, inputRef)
+		})
+		futures = append(futures, future)
+	}
+
+	// Wait for all results and handle errors
+	inputFiles := make(map[string][]byte)
+	for i, future := range futures {
+		content, awaitErr := future.Await()
+		if awaitErr != nil {
+			api.Logger.ErrorContext(c, "Error getting object", "error", awaitErr)
+			return nil, NewInternalErrorf("error getting object from data engine: %w", awaitErr)
+		}
+		// Add the object to the input files map using the original path
+		inputFiles[inputObjects[i].input.RepositoryPath] = content
+	}
+
+	return inputFiles, nil
 }
 
 // limitQueryResultSize limits the size of query result data to prevent large responses.

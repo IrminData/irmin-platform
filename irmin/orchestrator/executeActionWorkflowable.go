@@ -110,7 +110,7 @@ func (o *Orchestrator) executeActionWorkflowableCompute(
 	var logs []string
 
 	if workflowable.ExecutableType == irminmodels.ActionExecutableTypeQuery {
-		return o.executeQueryWorkflowable(ctx, workflow, workflowable, logs)
+		return o.executeQueryWorkflowable(ctx, workflow, workflowable, inputFiles, logs)
 	}
 	return o.executeScriptWorkflowable(ctx, workflow, workflowable, inputFiles, logs)
 }
@@ -120,6 +120,7 @@ func (o *Orchestrator) executeQueryWorkflowable(
 	ctx context.Context,
 	workflow *db.Workflow,
 	workflowable *db.ActionWorkflowable,
+	inputFiles map[string][]byte,
 	logs []string,
 ) (sandbox.ExecutionResult, []string, error) {
 	if workflowable.Query == nil {
@@ -127,7 +128,13 @@ func (o *Orchestrator) executeQueryWorkflowable(
 		return sandbox.ExecutionResult{}, logs, errors.New("query is not set for query executable type")
 	}
 
-	queryResult := o.dataEngine.ExecuteQuery(ctx, &workflow.Owner, &workflow.Workspace, workflowable.Query.SQL)
+	queryResult := o.dataEngine.ExecuteQueryWithInputs(
+		ctx,
+		&workflow.Owner,
+		&workflow.Workspace,
+		workflowable.Query.SQL,
+		inputFiles,
+	)
 	computeResult := convertQueryResultToExecutionResult(queryResult)
 
 	// Always append query execution logs to workflow logs

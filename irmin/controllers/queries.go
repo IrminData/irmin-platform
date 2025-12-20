@@ -434,6 +434,7 @@ func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error {
 // @Produce json
 // @Param workspace_slug path string true "Workspace slug"
 // @Param query_id path string true "Query ID (SQID)"
+// @Param request body irmincore.ExecuteSQLRequest false "Execution options (e.g., input files)"
 // @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.QueryResult} "Query executed successfully"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Query not found"
@@ -455,13 +456,29 @@ func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error {
 		)
 	}
 
+	// Parse request body (optional - for inputs)
+	var req irmincore.ExecuteSQLRequest
+
+	// Check if request body exists
+	bodyLen := len(c.Body())
+	if bodyLen > 0 {
+		// Body exists - validate and bind it properly
+		// This will return proper errors for malformed JSON or validation failures
+		if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+			// validateAndBindRequestWithResponse already wrote a response if validation failed.
+			// If it returns an error, it's a write error (e.g., connection closed), so return it directly.
+			return validationErr
+		}
+	} else {
+		// No body provided - that's okay, proceed with empty request
+		api.Logger.InfoContext(c.Context(), "No request body provided for query execution", "query", query.ID)
+	}
+
 	// Check for limit-response query parameter
 	limitResponse := c.Query("limit-response") == queryParamValueTrue
 
-	// Execute the SQL
-	result, err := api.Services.ExecuteSQL(c, locale, user, workspace, irmincore.ExecuteSQLRequest{
-		SQL: query.SQL,
-	}, limitResponse)
+	// Execute the query
+	result, err := api.Services.ExecuteQuery(c, locale, user, workspace, query, req, limitResponse)
 	if err != nil {
 		return api.handleServiceError(c, "Error executing stored query", err, dict)
 	}

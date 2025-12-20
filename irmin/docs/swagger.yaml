@@ -291,6 +291,10 @@ definitions:
     type: object
   irmincore.ExecuteSQLRequest:
     properties:
+      input:
+        items:
+          $ref: '#/definitions/irminmodels.ActionInputData'
+        type: array
       sql:
         example: select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity'
           = 'Hour' LIMIT 2;
@@ -5339,6 +5343,11 @@ paths:
         name: query_id
         required: true
         type: string
+      - description: Execution options (e.g., input files)
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/irmincore.ExecuteSQLRequest'
       produces:
       - application/json
       responses:

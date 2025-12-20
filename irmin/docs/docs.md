@@ -1176,7 +1176,7 @@ DeclineInvite godoc @Summary Decline invite @Description Decline an invite to jo
 func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error
 ```
 
-ExecuteQuery godoc @Summary Execute stored query @Description Execute a specific stored query and return the results @Tags queries @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param query\_id path string true "Query ID \(SQID\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.QueryResult\} "Query executed successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Query not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/queries/\{query\_id\}/execute \[post\]
+ExecuteQuery godoc @Summary Execute stored query @Description Execute a specific stored query and return the results @Tags queries @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param query\_id path string true "Query ID \(SQID\)" @Param request body irmincore.ExecuteSQLRequest false "Execution options \(e.g., input files\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.QueryResult\} "Query executed successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Query not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/queries/\{query\_id\}/execute \[post\]
 
 <a name="APIControllers.ExecuteSQL"></a>
 ### func \(\*APIControllers\) ExecuteSQL
@@ -5388,6 +5388,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) DeleteRepository\(ctx context.Context, workspace, repository string, keepObjects bool\) error](<#Client.DeleteRepository>)
   - [func \(c \*Client\) DeleteTag\(workspace, repository, tag string\) error](<#Client.DeleteTag>)
   - [func \(c \*Client\) ExecuteQuery\(ctx context.Context, user \*db.User, workspace \*db.Workspace, query string\) \*irminmodels.QueryResult](<#Client.ExecuteQuery>)
+  - [func \(c \*Client\) ExecuteQueryWithInputs\(ctx context.Context, user \*db.User, workspace \*db.Workspace, query string, inputFiles map\[string\]\[\]byte\) \*irminmodels.QueryResult](<#Client.ExecuteQueryWithInputs>)
   - [func \(c \*Client\) GenerateObjectSchema\(ctx context.Context, user \*db.User, workspace \*db.Workspace, repository, path, ref string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GenerateObjectSchema>)
   - [func \(c \*Client\) GenerateSchemaFromFile\(ctx context.Context, filename string, fileData \[\]byte\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GenerateSchemaFromFile>)
   - [func \(c \*Client\) GetBranch\(ctx context.Context, workspace, repository, branch string\) \(\*irminmodels.Branch, error\)](<#Client.GetBranch>)
@@ -5802,6 +5803,15 @@ func (c *Client) ExecuteQuery(ctx context.Context, user *db.User, workspace *db.
 ```
 
 ExecuteQuery executes a query in the specified workspace and returns the results.
+
+<a name="Client.ExecuteQueryWithInputs"></a>
+### func \(\*Client\) ExecuteQueryWithInputs
+
+```go
+func (c *Client) ExecuteQueryWithInputs(ctx context.Context, user *db.User, workspace *db.Workspace, query string, inputFiles map[string][]byte) *irminmodels.QueryResult
+```
+
+ExecuteQueryWithInputs executes a query with input files loaded as virtual tables.
 
 <a name="Client.GenerateObjectSchema"></a>
 ### func \(\*Client\) GenerateObjectSchema
@@ -10075,6 +10085,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) DeleteWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow\) error](<#APIServices.DeleteWorkflow>)
   - [func \(api \*APIServices\) DeleteWorkspace\(ctx context.Context, user \*db.User, workspace \*db.Workspace\) error](<#APIServices.DeleteWorkspace>)
   - [func \(api \*APIServices\) DeleteWorkspaceTag\(c context.Context, user \*db.User, workspace \*db.Workspace, tagWithAssets \*db.TagWithAssets\) error](<#APIServices.DeleteWorkspaceTag>)
+  - [func \(api \*APIServices\) ExecuteQuery\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, query \*db.StoredQuery, req irmincore.ExecuteSQLRequest, limitResponse bool\) \(\*irminmodels.QueryResult, error\)](<#APIServices.ExecuteQuery>)
   - [func \(api \*APIServices\) ExecuteSQL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.ExecuteSQLRequest, limitResponse bool\) \(\*irminmodels.QueryResult, error\)](<#APIServices.ExecuteSQL>)
   - [func \(api \*APIServices\) ExecuteScript\(c context.Context, user \*db.User, workspace \*db.Workspace, script \*db.StoredScript, req irmincore.ExecuteScriptRequest, limitResponse bool\) \(\*irminmodels.ScriptResult, error\)](<#APIServices.ExecuteScript>)
   - [func \(api \*APIServices\) GenerateSchemaFromUploadedFile\(ctx context.Context, locale string, filename string, fileReader io.Reader\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GenerateSchemaFromUploadedFile>)
@@ -10663,6 +10674,15 @@ func (api *APIServices) DeleteWorkspace(ctx context.Context, user *db.User, work
 
 ```go
 func (api *APIServices) DeleteWorkspaceTag(c context.Context, user *db.User, workspace *db.Workspace, tagWithAssets *db.TagWithAssets) error
+```
+
+
+
+<a name="APIServices.ExecuteQuery"></a>
+### func \(\*APIServices\) ExecuteQuery
+
+```go
+func (api *APIServices) ExecuteQuery(c context.Context, locale string, user *db.User, workspace *db.Workspace, query *db.StoredQuery, req irmincore.ExecuteSQLRequest, limitResponse bool) (*irminmodels.QueryResult, error)
 ```
 
 

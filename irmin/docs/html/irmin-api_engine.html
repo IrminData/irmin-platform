@@ -264,6 +264,16 @@ func (c *Client) ExecuteQuery(
     ExecuteQuery executes a query in the specified workspace and returns the
     results.
 
+func (c *Client) ExecuteQueryWithInputs(
+	ctx context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	query string,
+	inputFiles map[string][]byte,
+) *irminmodels.QueryResult
+    ExecuteQueryWithInputs executes a query with input files loaded as virtual
+    tables.
+
 func (c *Client) GenerateObjectSchema(
 	ctx context.Context,
 	user *db.User,

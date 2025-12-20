@@ -2,13 +2,17 @@ package engine
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/duckdb"
 	"irmin-api/utils"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -1451,4 +1455,189 @@ func findPathOccurrences(query string, s3Path string) []string {
 	}
 
 	return operations
+}
+
+// ExecuteQueryWithInputs executes a query with input files loaded as virtual tables.
+//
+//nolint:funlen // Function is complex but it's ok for now.
+func (c *Client) ExecuteQueryWithInputs(
+	ctx context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	query string,
+	inputFiles map[string][]byte,
+) *irminmodels.QueryResult {
+	parsedQuery, err := parseIrminQuery(c, ctx, user, workspace, query)
+	if err != nil {
+		return &irminmodels.QueryResult{
+			HasErrors: true,
+			Logs:      []string{fmt.Sprintf("failed to parse query: %v", err)},
+		}
+	}
+
+	queryClient, err := duckdb.NewQueryClient(ctx, c.Env, c.Logger)
+	if err != nil {
+		return &irminmodels.QueryResult{
+			HasErrors: true,
+			Logs:      []string{fmt.Sprintf("failed to create query client: %v", err)},
+		}
+	}
+	defer queryClient.Close()
+
+	var logs []string
+
+	// Filter and load input files
+	filteredInputs := filterSQLInputFiles(inputFiles, &logs)
+
+	// Create a temporary directory for input files
+	tempDir, err := os.MkdirTemp("", "irmin-sql-inputs-*")
+	if err != nil {
+		return &irminmodels.QueryResult{
+			HasErrors: true,
+			Logs:      append(logs, fmt.Sprintf("failed to create temp directory: %v", err)),
+		}
+	}
+	defer os.RemoveAll(tempDir) // Clean up temp dir
+
+	// First pass: collect all paths and detect collisions
+	// Map from base sanitized name to list of paths that sanitize to it
+	nameToPaths := make(map[string][]string)
+	pathToBaseName := make(map[string]string)
+
+	for path := range filteredInputs {
+		baseTableName := sanitizePathForName(path, "input")
+		pathToBaseName[path] = baseTableName
+		nameToPaths[baseTableName] = append(nameToPaths[baseTableName], path)
+	}
+
+	// Determine unique names for each path
+	// If a base name has collisions (multiple paths), add hash suffix to all of them
+	// If no collision, use the simple base name (for template compatibility)
+	pathToTableName := make(map[string]string)
+	pathToFileName := make(map[string]string)
+
+	for path, baseTableName := range pathToBaseName {
+		ext := strings.ToLower(filepath.Ext(path))
+		pathsWithSameName := nameToPaths[baseTableName]
+
+		if len(pathsWithSameName) > 1 {
+			// Collision detected - add hash suffix to make it unique
+			// This ensures each path gets a unique name even when they sanitize to the same base name
+			hash := sha256.Sum256([]byte(path))
+			hashSuffix := hex.EncodeToString(hash[:])[:8]
+			pathToTableName[path] = fmt.Sprintf("%s_%s", baseTableName, hashSuffix)
+			pathToFileName[path] = fmt.Sprintf("%s_%s%s", baseTableName, hashSuffix, ext)
+		} else {
+			// No collision - use simple name (works with templates)
+			// Templates can reference these predictable names like "data_sales_data_csv"
+			pathToTableName[path] = baseTableName
+			pathToFileName[path] = baseTableName + ext
+		}
+	}
+
+	// Second pass: create virtual tables with the determined names
+	for path, content := range filteredInputs {
+		tableName := pathToTableName[path]
+		fileName := pathToFileName[path]
+		tempFilePath := filepath.Join(tempDir, fileName)
+
+		// Write content to temp file
+		if writeTempFileErr := os.WriteFile(tempFilePath, content, 0600); writeTempFileErr != nil {
+			logs = append(logs, fmt.Sprintf("Failed to write input file %s: %v", path, writeTempFileErr))
+			continue
+		}
+
+		// Escape the file path to prevent SQL injection
+		escapedFilePath := duckdb.EscapeSQLString(tempFilePath)
+
+		// Create virtual table based on file extension
+		ext := strings.ToLower(filepath.Ext(path))
+		var createViewSQL string
+
+		switch ext {
+		case ".csv", ".tsv":
+			createViewSQL = fmt.Sprintf(
+				"CREATE OR REPLACE TEMPORARY VIEW \"%s\" AS SELECT * FROM read_csv_auto('%s');",
+				tableName,
+				escapedFilePath,
+			)
+		case ".json":
+			createViewSQL = fmt.Sprintf(
+				"CREATE OR REPLACE TEMPORARY VIEW \"%s\" AS SELECT * FROM read_json_auto('%s');",
+				tableName,
+				escapedFilePath,
+			)
+		case ".parquet":
+			createViewSQL = fmt.Sprintf(
+				"CREATE OR REPLACE TEMPORARY VIEW \"%s\" AS SELECT * FROM read_parquet('%s');",
+				tableName,
+				escapedFilePath,
+			)
+		default:
+			// Should be filtered out already, but just in case
+			logs = append(logs, fmt.Sprintf("Skipping unsupported file extension for %s", path))
+			continue
+		}
+
+		if _, createViewErr := queryClient.ExecuteNonQuery(ctx, createViewSQL); createViewErr != nil {
+			logs = append(logs, fmt.Sprintf("Failed to create view for %s: %v", path, createViewErr))
+			continue
+		}
+
+		logs = append(logs, fmt.Sprintf("Created virtual table '%s' from input '%s'", tableName, path))
+	}
+
+	result, err := executeQueryWithClient(ctx, queryClient, parsedQuery, c.Logger)
+	if err != nil {
+		return &irminmodels.QueryResult{
+			HasErrors: true,
+			Logs:      append(logs, err.Error()),
+		}
+	}
+
+	// Prepend logs from input loading
+	result.Logs = append(logs, result.Logs...)
+
+	return result
+}
+
+// filterSQLInputFiles filters input files to only include SQL-compatible formats.
+func filterSQLInputFiles(inputFiles map[string][]byte, logs *[]string) map[string][]byte {
+	supportedExtensions := map[string]bool{
+		".csv": true, ".json": true, ".parquet": true, ".tsv": true,
+	}
+
+	filtered := make(map[string][]byte)
+	for path, content := range inputFiles {
+		ext := strings.ToLower(filepath.Ext(path))
+		if supportedExtensions[ext] {
+			filtered[path] = content
+		} else {
+			*logs = append(*logs, fmt.Sprintf("Skipping unsupported file for SQL input: %s", path))
+		}
+	}
+	return filtered
+}
+
+// sanitizePathForName creates a safe identifier from a file path.
+// Replaces non-alphanumeric characters with underscores and ensures it starts with a letter.
+func sanitizePathForName(path string, defaultPrefix string) string {
+	// Clean the path
+	cleanPath := strings.Trim(path, "/")
+
+	// Replace non-alphanumeric characters with underscores
+	reg := regexp.MustCompile(`[^a-zA-Z0-9]`)
+	sanitized := reg.ReplaceAllString(cleanPath, "_")
+
+	// Ensure it starts with a letter (prepend prefix if needed)
+	if len(sanitized) > 0 && !regexp.MustCompile(`^[a-zA-Z]`).MatchString(sanitized) {
+		sanitized = defaultPrefix + "_" + sanitized
+	}
+
+	// Add prefix if empty
+	if sanitized == "" {
+		sanitized = defaultPrefix + "_data"
+	}
+
+	return sanitized
 }

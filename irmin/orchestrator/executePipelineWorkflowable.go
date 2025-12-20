@@ -130,7 +130,13 @@ func (o *Orchestrator) handleActionStage(
 			return logs, errors.New("query is not set for query executable type")
 		}
 
-		queryResult := o.dataEngine.ExecuteQuery(ctx, &workflow.Owner, &workflow.Workspace, stage.Query.SQL)
+		queryResult := o.dataEngine.ExecuteQueryWithInputs(
+			ctx,
+			&workflow.Owner,
+			&workflow.Workspace,
+			stage.Query.SQL,
+			computeInputFiles,
+		)
 
 		// Convert QueryResult to ExecutionResult
 		computeResult = convertQueryResultToExecutionResult(queryResult)
