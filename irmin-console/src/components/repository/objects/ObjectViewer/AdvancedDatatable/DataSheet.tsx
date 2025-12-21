@@ -3,9 +3,12 @@
 import type { ForwardedRef } from 'react';
 import { forwardRef, memo, useEffect, useState } from 'react';
 
-import type { Column, DataSheetGridRef } from 'react-datasheet-grid';
-import { DataSheetGrid } from 'react-datasheet-grid';
-import 'react-datasheet-grid/dist/style.css';
+import type {
+  Column,
+  DataSheetGridRef,
+} from '@sdziadkowiec/react-datasheet-grid';
+import { DataSheetGrid } from '@sdziadkowiec/react-datasheet-grid';
+import '@sdziadkowiec/react-datasheet-grid/dist/style.css';
 
 import SafeComponent from '@/components/ui/error/SafeComponent';
 
@@ -48,9 +51,8 @@ const DataSheet = forwardRef(
       <SafeComponent
         key={`${items.length}-${columns?.length ?? 0}`}
         level='component'
-        title='Table Rendering Error'
-        description='The table view crashed while rendering these results. Try again.'
-        className='min-h-[200px]'
+        title='DataSheet Error'
+        description='The DataSheet component encountered an error. Please try refreshing the page.'
       >
         <DataSheetGrid
           ref={ref}

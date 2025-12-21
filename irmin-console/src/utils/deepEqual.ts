@@ -16,6 +16,10 @@ export default function deepEqual(a: unknown, b: unknown): boolean {
   }
 
   if (typeof a !== 'object' || a === null || b === null) {
+    // Handle NaN comparison (NaN !== NaN in JavaScript)
+    if (typeof a === 'number' && typeof b === 'number') {
+      return Number.isNaN(a) && Number.isNaN(b);
+    }
     // Handles cases where a and b are primitives or one is null
     return false;
   }

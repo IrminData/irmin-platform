@@ -1,22 +1,24 @@
 'use client';
 
-import { memo, Suspense, useEffect, useState } from 'react';
+import { memo, Suspense, useMemo } from 'react';
 
 import dynamic from 'next/dynamic';
 
-import type { Column } from 'react-datasheet-grid';
+import type { Column } from '@sdziadkowiec/react-datasheet-grid';
 import {
   checkboxColumn,
   floatColumn,
   intColumn,
   keyColumn,
   textColumn,
-} from 'react-datasheet-grid';
-import 'react-datasheet-grid/dist/style.css';
+} from '@sdziadkowiec/react-datasheet-grid';
+import '@sdziadkowiec/react-datasheet-grid/dist/style.css';
 
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
+
+import deepEqual from '@/utils/deepEqual';
 
 import type { TableRow } from '@/types/internal/Datatable';
 
@@ -28,114 +30,125 @@ const DataSheet = dynamic(() => import('./DataSheet'), {
 /**
  * Datatable component for displaying data in a table.
  *
- * Uses the `react-datasheet-grid` library using the `DataSheet` component.
+ * Uses the `@sdziadkowiec/react-datasheet-grid` library using the `DataSheet` component.
  * This component is used to display a more advanced datatable.
  */
 function AdvancedDatatable({ items }: { items: TableRow[] }) {
   const { locale } = useLocale();
-  const [mounted, setMounted] = useState(false);
-  const [renderItems, setRenderItems] = useState<TableRow[]>([]);
-  const [columns, setColumns] = useState<Partial<Column<TableRow>>[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Handle component mounting
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
+  // Detect columns and their types (independent of locale)
+  const { columns, columnsWithTypes } = useMemo(() => {
+    if (items.length === 0) {
+      return {
+        columns: [] as Partial<Column<TableRow>>[],
+        columnsWithTypes: {} as Record<
+          string,
+          'boolean' | 'date' | 'float' | 'int' | 'string'
+        >,
+      };
+    }
 
-  // Process data only after component is mounted
-  useEffect(() => {
-    if (!mounted) return;
+    try {
+      // Get all properties from the items to use as columns
+      const allProperties = items
+        .map((item) => Object.keys(item))
+        .flat()
+        .filter((value, index, self) => self.indexOf(value) === index);
 
-    const processData = async () => {
-      try {
-        setIsLoading(true);
+      // Store the matched types of the columns
+      const columnsWithTypes: {
+        [key: string]: 'boolean' | 'date' | 'float' | 'int' | 'string';
+      } = {};
 
-        // Get all properties from the items to use as columns
-        const allProperties = items
-          .map((item) => Object.keys(item))
-          .flat()
-          .filter((value, index, self) => self.indexOf(value) === index);
+      // Create columns from the properties
+      // Note: We use @ts-expect-error because react-datasheet-grid's column types
+      // are overly strict for our use case of mixed-type table rows. Each column
+      // type (intColumn, floatColumn, etc.) is strongly typed, but our TableRow
+      // has mixed types, causing type incompatibility at spread time.
+      const newColumns = allProperties.map((key) => {
+        // Get the first value of the key to determine the type
+        const exampleValue = items.find((item) => item[key])?.[key];
 
-        // Store the matched types of the columns
-        const columnsWithTypes: {
-          [key: string]: 'boolean' | 'date' | 'float' | 'int' | 'string';
-        } = {};
-
-        // Create columns from the properties
-        const newColumns = allProperties.map((key) => {
-          // Get the first value of the key to determine the type
-          const exampleValue = items.find((item) => item[key])?.[key];
-
-          // Determine the type of the column
-          if (typeof exampleValue === 'number') {
-            if (Number.isInteger(exampleValue)) {
-              columnsWithTypes[key] = 'int';
-              return { ...keyColumn(key, intColumn), title: key };
-            }
-            columnsWithTypes[key] = 'float';
-            return { ...keyColumn(key, floatColumn), title: key };
+        // Determine the type of the column
+        if (typeof exampleValue === 'number') {
+          if (Number.isInteger(exampleValue)) {
+            columnsWithTypes[key] = 'int';
+            // @ts-expect-error - intColumn type conflicts with mixed TableRow type
+            return { ...keyColumn(key, intColumn), title: key };
           }
-          if (typeof exampleValue === 'boolean') {
-            columnsWithTypes[key] = 'boolean';
-            return { ...keyColumn(key, checkboxColumn), title: key };
-          }
-          if (
-            typeof exampleValue === 'string' &&
-            new Date(exampleValue).toString() !== 'Invalid Date'
-          ) {
-            columnsWithTypes[key] = 'date';
-            return { ...keyColumn(key, textColumn), title: key };
-          }
-          // If nothing else matches, use text column
-          columnsWithTypes[key] = 'string';
+          columnsWithTypes[key] = 'float';
+          // @ts-expect-error - floatColumn type conflicts with mixed TableRow type
+          return { ...keyColumn(key, floatColumn), title: key };
+        }
+        if (typeof exampleValue === 'boolean') {
+          columnsWithTypes[key] = 'boolean';
+          // @ts-expect-error - checkboxColumn type conflicts with mixed TableRow type
+          return { ...keyColumn(key, checkboxColumn), title: key };
+        }
+        if (
+          typeof exampleValue === 'string' &&
+          new Date(exampleValue).toString() !== 'Invalid Date'
+        ) {
+          columnsWithTypes[key] = 'date';
+          // @ts-expect-error - textColumn type conflicts with mixed TableRow type
           return { ...keyColumn(key, textColumn), title: key };
-        });
+        }
+        // If nothing else matches, use text column
+        columnsWithTypes[key] = 'string';
+        // @ts-expect-error - textColumn type conflicts with mixed TableRow type
+        return { ...keyColumn(key, textColumn), title: key };
+      }) as Partial<Column<TableRow>>[];
 
-        // Make sure values in the data are matching the columns
-        const newItems = items.map((item) => {
-          const newItem: TableRow = { ...item };
-          Object.keys(columnsWithTypes).map((key) => {
-            try {
-              if (!newItem[key]) {
-                newItem[key] = '';
-              }
-              const type = columnsWithTypes[key];
-              if (type === 'int') {
-                newItem[key] = parseInt(newItem[key] as string);
-              }
-              if (type === 'float') {
-                newItem[key] = parseFloat(newItem[key] as string);
-              }
-              if (type === 'boolean' && typeof newItem[key] !== 'boolean') {
-                newItem[key] = newItem[key] === 'true';
-              }
-              if (type === 'date') {
-                newItem[key] = new Date(newItem[key] as string).toLocaleString(
-                  locale
-                );
-              }
-            } catch (e) {
-              console.error(e);
+      return { columns: newColumns, columnsWithTypes };
+    } catch (error) {
+      console.error('Error processing columns:', error);
+      return { columns: [], columnsWithTypes: {} };
+    }
+  }, [items]);
+
+  // Format data based on column types (locale-dependent)
+  const renderItems = useMemo(() => {
+    if (items.length === 0 || Object.keys(columnsWithTypes).length === 0) {
+      return [];
+    }
+
+    try {
+      // Make sure values in the data are matching the columns
+      return items.map((item) => {
+        const newItem: TableRow = { ...item };
+        Object.keys(columnsWithTypes).forEach((key) => {
+          try {
+            if (!newItem[key]) {
+              newItem[key] = '';
             }
-          });
-          return newItem;
+            const type = columnsWithTypes[key];
+            if (type === 'int') {
+              newItem[key] = parseInt(newItem[key] as string);
+            }
+            if (type === 'float') {
+              newItem[key] = parseFloat(newItem[key] as string);
+            }
+            if (type === 'boolean' && typeof newItem[key] !== 'boolean') {
+              newItem[key] = newItem[key] === 'true';
+            }
+            if (type === 'date') {
+              newItem[key] = new Date(newItem[key] as string).toLocaleString(
+                locale
+              );
+            }
+          } catch (e) {
+            console.error(e);
+          }
         });
+        return newItem;
+      });
+    } catch (error) {
+      console.error('Error formatting data:', error);
+      return [];
+    }
+  }, [items, columnsWithTypes, locale]);
 
-        setColumns(newColumns);
-        setRenderItems(newItems);
-      } catch (error) {
-        console.error('Error processing data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    processData();
-  }, [items, locale, mounted]);
-
-  if (!mounted || isLoading || !columns.length || !renderItems.length) {
+  if (!columns.length || !renderItems.length) {
     return (
       <div className='size-full'>
         <LoadingSkeleton className='h-96' />
@@ -159,4 +172,8 @@ function AdvancedDatatable({ items }: { items: TableRow[] }) {
   );
 }
 
-export default memo(AdvancedDatatable);
+export default memo(AdvancedDatatable, (prevProps, nextProps) => {
+  // Use deep equality check to prevent unnecessary re-renders
+  // when items array reference changes but contents are the same
+  return deepEqual(prevProps.items, nextProps.items);
+});

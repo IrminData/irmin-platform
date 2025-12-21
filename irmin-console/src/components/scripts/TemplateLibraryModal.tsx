@@ -139,9 +139,15 @@ export function TemplateLibraryModal({
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className='mt-0 min-h-0 flex-1'
+          className={`
+            flex flex-1 flex-col overflow-hidden
+            focus:outline-none
+            focus-visible:outline-none
+          `}
         >
-          <TabsList className='px-6'>
+          <TabsList
+            className={`grid w-full grid-cols-2 gap-1 bg-transparent px-2`}
+          >
             <TabsTrigger value='browse'>
               {dict.common.templates.selectTemplate}
             </TabsTrigger>
@@ -337,7 +343,7 @@ export function TemplateLibraryModal({
                       </h4>
                       <pre
                         className={`
-                          max-h-60 overflow-auto rounded-lg border bg-muted p-4
+                          max-h-96 overflow-auto rounded-lg border bg-muted p-4
                           font-mono text-xs
                         `}
                       >

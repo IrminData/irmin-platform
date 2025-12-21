@@ -188,10 +188,17 @@ export default function SqlHelper({
           <SheetTitle>{dict.queryHelper.title}</SheetTitle>
         </SheetHeader>
 
-        <Tabs defaultValue='generate'>
+        <Tabs
+          defaultValue='generate'
+          className={`
+            flex flex-1 flex-col overflow-hidden
+            focus:outline-none
+            focus-visible:outline-none
+          `}
+        >
           <TabsList
             className={`
-              px-2
+              grid w-full grid-cols-2 gap-1 bg-transparent px-2
               focus:outline-none
               focus-visible:outline-none
             `}
@@ -310,6 +317,98 @@ export default function SqlHelper({
                     <p className='mt-2 text-xs text-muted-foreground'>
                       {dict.queryHelper.s3FormatNote}
                     </p>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+            </section>
+
+            {/* Query Inputs & Outputs Section */}
+            <section className='mb-4 px-2'>
+              <Collapsible>
+                <div className='rounded-md border bg-card'>
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant='ghost'
+                      className='flex w-full items-center justify-between p-2'
+                    >
+                      <h3 className='text-sm font-semibold'>
+                        {dict.queryHelper.queryInputsOutputs}
+                      </h3>
+                      <TbChevronDown className='size-4' />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className='p-2'>
+                    <div className='space-y-3'>
+                      <div className='rounded-md bg-muted/30 p-3 text-xs'>
+                        <h4 className='mb-2 font-semibold'>
+                          {dict.queryHelper.workflowInputs}
+                        </h4>
+                        <p className='mb-2 text-muted-foreground'>
+                          {dict.queryHelper.explanations.workflowInputs}
+                        </p>
+                        <div
+                          className={`mt-3 rounded-md border bg-background p-2`}
+                        >
+                          <p className='mb-2 font-mono text-xs font-semibold'>
+                            Path → Table Name Examples:
+                          </p>
+                          <ul className='space-y-1 font-mono text-xs'>
+                            <li>
+                              <span className='text-muted-foreground'>
+                                /data/customers.csv
+                              </span>{' '}
+                              →{' '}
+                              <span className='font-semibold'>
+                                data_customers_csv
+                              </span>
+                            </li>
+                            <li>
+                              <span className='text-muted-foreground'>
+                                /sales/2024/orders.json
+                              </span>{' '}
+                              →{' '}
+                              <span className='font-semibold'>
+                                sales_2024_orders_json
+                              </span>
+                            </li>
+                            <li>
+                              <span className='text-muted-foreground'>
+                                reports/inventory.parquet
+                              </span>{' '}
+                              →{' '}
+                              <span className='font-semibold'>
+                                reports_inventory_parquet
+                              </span>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className='rounded-md bg-muted/30 p-3 text-xs'>
+                        <h4 className='mb-2 font-semibold'>
+                          {dict.queryHelper.queryOutputFormat}
+                        </h4>
+                        <p className='text-muted-foreground'>
+                          {dict.queryHelper.explanations.queryOutputFormat}
+                        </p>
+                      </div>
+
+                      <ExampleItem
+                        title={dict.queryHelper.inputFileProcessing}
+                        code={`-- Input file: /data/sales_data.csv → data_sales_data_csv\n\nSELECT \n  product_id,\n  product_name,\n  quantity * unit_price AS total_amount,\n  CASE \n    WHEN quantity * unit_price > 1000 THEN 'High Value'\n    WHEN quantity * unit_price > 500 THEN 'Medium Value'\n    ELSE 'Low Value'\n  END AS order_category\nFROM data_sales_data_csv\nWHERE category = 'Electronics'\n  AND sale_date >= '2024-01-01'\nORDER BY total_amount DESC;`}
+                        explanation={
+                          dict.queryHelper.explanations.inputFileProcessing
+                        }
+                      />
+
+                      <ExampleItem
+                        title={dict.queryHelper.multipleInputJoin}
+                        code={`-- Input files:\n-- /data/customers.csv → data_customers_csv\n-- /data/orders.json → data_orders_json\n\nSELECT \n  c.customer_id,\n  c.name,\n  COUNT(o.order_id) AS total_orders,\n  SUM(o.amount) AS total_spent\nFROM data_customers_csv c\nJOIN data_orders_json o\n  ON c.customer_id = o.customer_id\nGROUP BY c.customer_id, c.name\nORDER BY total_spent DESC;`}
+                        explanation={
+                          dict.queryHelper.explanations.multipleInputJoin
+                        }
+                      />
+                    </div>
                   </CollapsibleContent>
                 </div>
               </Collapsible>

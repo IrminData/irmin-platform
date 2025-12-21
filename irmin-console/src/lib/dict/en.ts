@@ -870,6 +870,11 @@ const en = {
     joinExport: 'Export JOIN Results',
     aggregationExport: 'Export Aggregations',
     multiStepTransform: 'Multi-Step Transformation',
+    queryInputsOutputs: 'Query Inputs & Outputs',
+    workflowInputs: 'Workflow Input Files',
+    inputFileProcessing: 'Process Input Files',
+    multipleInputJoin: 'Join Multiple Inputs',
+    queryOutputFormat: 'Query Output Format',
     explanations: {
       basicSelect: 'Retrieve the first 10 rows from the object.',
       filterAndSort: 'Filter rows by id and sort by creation date.',
@@ -890,6 +895,14 @@ const en = {
         'Export aggregated analytics (GROUP BY, COUNT, AVG, SUM) directly to files. Perfect for reports and dashboards.',
       multiStepTransform:
         'Use multiple temporary tables to build complex data transformations step-by-step, then export final results.',
+      workflowInputs:
+        'In workflows, input files are automatically loaded as virtual tables. Table names are derived from file paths (e.g., /data/customers.csv → data_customers_csv).',
+      inputFileProcessing:
+        'Filter and transform data from workflow input files. Input files are loaded as virtual tables based on their path.',
+      multipleInputJoin:
+        'Join multiple input files loaded as virtual tables. Perfect for combining data from different sources in workflows.',
+      queryOutputFormat:
+        'Query results are automatically converted to CSV format (query_results.csv). The output can be saved to repositories or passed to subsequent pipeline stages.',
     },
     sqlGeneration: {
       title: 'Generate SQL Query',

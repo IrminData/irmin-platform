@@ -35,8 +35,8 @@ function TabsList({
       data-slot='tabs-list'
       className={cn(
         `
-          grid h-9 w-full grid-cols-2 items-center justify-center gap-1
-          rounded-lg bg-transparent p-[3px] text-muted-foreground
+          inline-flex h-9 w-fit items-center justify-center gap-1.5 rounded-lg
+          text-muted-foreground
         `,
         className
       )}

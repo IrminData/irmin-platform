@@ -852,6 +852,11 @@ const fi = {
     joinExport: 'Vie JOIN-tulokset',
     aggregationExport: 'Vie aggregaatit',
     multiStepTransform: 'Monivaiheinen muunnos',
+    queryInputsOutputs: 'Kyselyjen syötteet ja tulosteet',
+    workflowInputs: 'Työnkulun syötetiedostot',
+    inputFileProcessing: 'Käsittele syötetiedostoja',
+    multipleInputJoin: 'Yhdistä useita syötteitä',
+    queryOutputFormat: 'Kyselyn tulosteen muoto',
     explanations: {
       basicSelect: 'Hae ensimmäiset 10 riviä objektista.',
       filterAndSort:
@@ -872,6 +877,14 @@ const fi = {
         'Vie aggregoidut analytiikkatiedot (GROUP BY, COUNT, AVG, SUM) suoraan tiedostoihin. Täydellinen raportteihin ja hallintapaneeleihin.',
       multiStepTransform:
         'Käytä useita väliaikaisia tauluja monimutkaisten tietomuunnosten rakentamiseen vaihe vaiheelta, ja vie lopulliset tulokset.',
+      workflowInputs:
+        'Työnkuluissa syötetiedostot ladataan automaattisesti virtuaalitauluiksi. Taulujen nimet johdetaan tiedostopoluista (esim. /data/customers.csv → data_customers_csv).',
+      inputFileProcessing:
+        'Suodata ja muunna dataa työnkulun syötetiedostoista. Syötetiedostot ladataan virtuaalitauluiksi polkujensa perusteella.',
+      multipleInputJoin:
+        'Yhdistä useita syötetiedostoja, jotka on ladattu virtuaalitauluiksi. Täydellinen eri lähteistä tulevan datan yhdistämiseen työnkuluissa.',
+      queryOutputFormat:
+        'Kyselytulokset muunnetaan automaattisesti CSV-muotoon (query_results.csv). Tuloste voidaan tallentaa repositoryihin tai välittää seuraaville putkilinjan vaiheille.',
     },
     sqlGeneration: {
       title: 'Luo SQL-kysely',
