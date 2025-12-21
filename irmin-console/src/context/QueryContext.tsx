@@ -7,6 +7,7 @@ import { usePopup } from '@/context/PopupContext';
 import { useIrminSQL } from '@/hooks/utils';
 
 import type { QueryResult } from '@/types/core/StoredQuery';
+import type { ActionInputData } from '@/types/core/Workflow';
 
 import { useLocale } from './LocaleContext';
 
@@ -16,7 +17,11 @@ import { useLocale } from './LocaleContext';
 interface QueryContextProps {
   loading: boolean;
   result: QueryResult | null;
-  executeSql: (_content: string, _limitResponse?: boolean) => Promise<void>;
+  executeSql: (
+    _content: string,
+    _limitResponse?: boolean,
+    _input?: ActionInputData[]
+  ) => Promise<void>;
   cleanup: () => void;
 }
 
@@ -38,17 +43,22 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
   const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
 
   /**
-   * Execute a script
+   * Execute a SQL query
    *
-   * The script can be either Irmin SQL query or a script to be executed in the Compute Sandbox.
+   * The query can be either ad-hoc SQL or a stored query with optional input files.
    */
   const handleExecuteSql = useCallback(
-    async (content: string, limitResponse?: boolean) => {
+    async (
+      content: string,
+      limitResponse?: boolean,
+      input?: ActionInputData[]
+    ) => {
       try {
         irminAlert('info', dict.query.queryExecutionStarted);
         const res = await executeSQLMutation.mutateAsync({
           sql: content,
           limitResponse,
+          input,
         });
         if (res.message) irminAlert('info', res.message);
         setQueryResult(res.data ?? null);

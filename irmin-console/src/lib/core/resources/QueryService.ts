@@ -3,6 +3,7 @@ import type IrminCore from '@/lib/core';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { QueryResult, StoredQuery } from '@/types/core/StoredQuery';
 import type { Template } from '@/types/core/Template';
+import type { ActionInputData } from '@/types/core/Workflow';
 
 /**
  * Interface for creating a query
@@ -35,6 +36,7 @@ interface TransferQueryOwnershipRequest {
  */
 interface ExecuteSQLRequest {
   sql?: string;
+  input?: ActionInputData[];
 }
 
 /**
@@ -335,20 +337,24 @@ class QueryService {
    * @param props.workspace - The workspace slug.
    * @param props.sql - The SQL statement to execute.
    * @param props.limitResponse - Whether to limit the response to 1000 rows.
+   * @param props.input - Optional input files from repositories to load as virtual tables.
    * @returns IrminAPIResponse containing an array of result rows.
    */
   async executeSQL({
     workspace,
     sql,
     limitResponse,
+    input,
   }: {
     workspace: string;
     sql?: string;
     limitResponse?: boolean;
+    input?: ActionInputData[];
   }): Promise<IrminAPIResponse<QueryResult>> {
     try {
       const requestBody: ExecuteSQLRequest = {
         sql,
+        input,
       };
 
       const queryParams = limitResponse ? '?limit-response=true' : '';

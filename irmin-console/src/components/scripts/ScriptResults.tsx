@@ -128,6 +128,15 @@ const ScriptResults = ({
 
   const logs = useMemo(() => result?.logs ?? [], [result]);
 
+  // Memoize metadata to prevent unnecessary re-renders
+  const tableMetadata = useMemo(
+    () => ({
+      rowsReturned: currentDataFileContent?.length ?? 0,
+      timeTaken: nsDurationToMs(result?.duration ?? 0),
+    }),
+    [currentDataFileContent?.length, result?.duration]
+  );
+
   return (
     <div
       className={`
@@ -146,7 +155,7 @@ const ScriptResults = ({
             dark:border-yellow-900/50 dark:bg-yellow-900/20 dark:text-yellow-200
           `}
         >
-          <TbAlertTriangle className='size-4 flex-shrink-0' />
+          <TbAlertTriangle className='size-4 shrink-0' />
           <span>
             Multiple large result files loaded ({formatByteSize(totalDataSize)}
             ). This may cause performance issues.
@@ -296,10 +305,7 @@ const ScriptResults = ({
             <TableViewer
               title={currentDataFile?.split('/').pop() ?? currentDataFile ?? ''}
               data={currentDataFileContent as Record<string, JSONValue>[]}
-              metadata={{
-                rowsReturned: currentDataFileContent.length,
-                timeTaken: nsDurationToMs(result?.duration ?? 0),
-              }}
+              metadata={tableMetadata}
               loading={showLoadingOnData}
             />
           ) : (

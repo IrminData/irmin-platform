@@ -47,9 +47,7 @@ const TableViewer = ({
   const { dict } = useLocale();
 
   const [filterText, setFilterText] = useState('');
-  const [filteredItems, setFilteredItems] = useState<
-    Record<string, TableCellValue>[]
-  >([]);
+  const [debouncedFilterText, setDebouncedFilterText] = useState('');
 
   // Reset forceRender when data changes to re-enable safety checks
   const [forceRenderState, setForceRenderState] = useState({
@@ -65,6 +63,45 @@ const TableViewer = ({
     [data]
   );
 
+  const baseItems = useMemo(
+    () =>
+      isSimpleArrayOfObjects ? (data as Record<string, TableCellValue>[]) : [],
+    [data, isSimpleArrayOfObjects]
+  );
+
+  // Debounce the filter text
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilterText(filterText);
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [filterText]);
+
+  const filteredItems = useMemo(() => {
+    // If no filter, return base items directly
+    if (!debouncedFilterText) return baseItems;
+
+    // Create new array only when filtering happens
+    return (
+      baseItems.filter((item) => {
+        return Object.keys(item).some((key) => {
+          const value =
+            key in item ? item[key as keyof typeof item] : undefined;
+          return (
+            value &&
+            value
+              .toString()
+              .toLowerCase()
+              .includes(debouncedFilterText.toLowerCase())
+          );
+        });
+      }) ?? []
+    );
+  }, [baseItems, debouncedFilterText]);
+
   const rowCount = useMemo(() => {
     if (!isSimpleArrayOfObjects || !Array.isArray(data)) return 0;
     return data.length;
@@ -76,37 +113,6 @@ const TableViewer = ({
     }
     return canSafelyRenderTable(data);
   }, [isSimpleArrayOfObjects, data]);
-
-  // Update the filtered items when the filter text changes (for simple array of objects)
-  useEffect(() => {
-    if (!isSimpleArrayOfObjects) return;
-
-    const timer = setTimeout(() => {
-      if (filterText && filterText.length > 0) {
-        const newData =
-          (data as Record<string, TableCellValue>[]).filter((item) => {
-            return Object.keys(item).some((key) => {
-              const value =
-                key in item ? item[key as keyof typeof item] : undefined;
-              return (
-                value &&
-                value
-                  .toString()
-                  .toLowerCase()
-                  .includes(filterText.toLowerCase())
-              );
-            });
-          }) ?? [];
-        setFilteredItems(newData);
-      } else {
-        setFilteredItems(data as Record<string, TableCellValue>[]);
-      }
-    }, 300);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [filterText, data, isSimpleArrayOfObjects]);
 
   // Check if table is too large to render
   if (isSimpleArrayOfObjects && !forceRender) {

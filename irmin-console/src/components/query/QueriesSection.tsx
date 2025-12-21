@@ -17,7 +17,7 @@ import {
 } from 'react-icons/tb';
 
 import QueryResults from '@/components/query/QueryResults';
-import CodeMirrorEditor from '@/components/scripts/ide/CodeMirrorEditor';
+import ResizableCodeEditor from '@/components/scripts/ide/ResizableCodeEditor';
 import { TemplateLibraryModal } from '@/components/scripts/TemplateLibraryModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,7 @@ import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 import type { StoredQuery } from '@/types/core/StoredQuery';
 import type { Tag } from '@/types/core/Tag';
+import type { ActionInputData } from '@/types/core/Workflow';
 
 import CreateSavedQueryModal from './CreateQueryModal';
 import SqlHelper from './helper/SqlHelper';
@@ -80,6 +81,8 @@ export default function QueriesSection() {
   const [editorContent, setEditorContent] = useState<string>('');
   const [edited, setEdited] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [queryInputFiles, setQueryInputFiles] = useState<ActionInputData[]>([]);
+  const [editorHeight, setEditorHeight] = useState('300px');
 
   // Filter queries based on search
   const filteredQueries = useMemo(
@@ -304,9 +307,9 @@ export default function QueriesSection() {
    */
   const handleRunQuery = useMemo(
     () => async () => {
-      await executeSql(editorContent, true);
+      await executeSql(editorContent, true, queryInputFiles);
     },
-    [executeSql, editorContent]
+    [executeSql, editorContent, queryInputFiles]
   );
 
   /**
@@ -549,22 +552,23 @@ export default function QueriesSection() {
                 </Button>
               </div>
             </div>
-            <div className='grow overflow-hidden'>
-              <CodeMirrorEditor
-                language='sql'
-                content={editorContent}
-                updateEditorContent={updateEditorContent}
+            <ResizableCodeEditor
+              language='sql'
+              content={editorContent}
+              updateTabContent={updateEditorContent}
+              editorHeight={editorHeight}
+              setEditorHeight={setEditorHeight}
+            />
+            <div className='flex min-h-0 flex-1 flex-col'>
+              <QueryResults
+                title={`${dict.query.results} ${selectedQuery ? `(${selectedQuery.name})` : ''}`}
+                result={queryResult}
+                loading={queryLoading}
+                onRun={handleRunQuery}
+                inputFiles={queryInputFiles}
+                setInputFiles={setQueryInputFiles}
               />
             </div>
-            {selectedQuery && (
-              <div className='flex min-h-0 flex-1 flex-col'>
-                <QueryResults
-                  title={`${dict.query.results} ${selectedQuery ? `(${selectedQuery.name})` : ''}`}
-                  result={queryResult}
-                  loading={queryLoading}
-                />
-              </div>
-            )}
           </div>
           {selectedQuery && (
             <div

@@ -1,11 +1,13 @@
 'use client';
 
 import type { ForwardedRef } from 'react';
-import { forwardRef, memo } from 'react';
+import { forwardRef, memo, useEffect, useState } from 'react';
 
 import type { Column, DataSheetGridRef } from 'react-datasheet-grid';
 import { DataSheetGrid } from 'react-datasheet-grid';
 import 'react-datasheet-grid/dist/style.css';
+
+import SafeComponent from '@/components/ui/error/SafeComponent';
 
 import type { TableRow } from '@/types/internal/Datatable';
 
@@ -24,18 +26,44 @@ const DataSheet = forwardRef(
     },
     ref: ForwardedRef<DataSheetGridRef>
   ) => {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+      // Use requestAnimationFrame to defer the state update and avoid synchronous setState warnings
+      // This is a common pattern to ensure the component is truly mounted before interaction
+      const raf = requestAnimationFrame(() => {
+        setMounted(true);
+      });
+      return () => {
+        cancelAnimationFrame(raf);
+        setMounted(false);
+      };
+    }, []);
+
+    if (!mounted) {
+      return null;
+    }
+
     return (
-      <DataSheetGrid
-        ref={ref}
-        className='data-sheet-grid'
-        value={items}
-        columns={columns}
-        addRowsComponent={false}
-        autoAddRow={false}
-        onChange={() => null}
-        disableContextMenu
-        disableExpandSelection
-      />
+      <SafeComponent
+        key={`${items.length}-${columns?.length ?? 0}`}
+        level='component'
+        title='Table Rendering Error'
+        description='The table view crashed while rendering these results. Try again.'
+        className='min-h-[200px]'
+      >
+        <DataSheetGrid
+          ref={ref}
+          className='data-sheet-grid'
+          value={items}
+          columns={columns}
+          addRowsComponent={false}
+          autoAddRow={false}
+          onChange={() => null}
+          disableContextMenu
+          disableExpandSelection
+        />
+      </SafeComponent>
     );
   }
 );

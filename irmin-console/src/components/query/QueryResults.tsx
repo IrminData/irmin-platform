@@ -2,10 +2,12 @@
 
 import { useMemo, useState } from 'react';
 
+import { AiOutlinePlayCircle } from 'react-icons/ai';
 import {
   TbDatabase,
   TbExclamationCircle,
   TbLogs,
+  TbStepInto,
   TbTable,
 } from 'react-icons/tb';
 
@@ -14,6 +16,7 @@ import TableViewer from '@/components/repository/objects/ObjectViewer/TableViewe
 import SchemaViewer from '@/components/repository/objects/SchemaViewer';
 import { Button } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import ActionInputEditor from '@/components/workflow/ActionInputEditor';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -22,6 +25,7 @@ import { useWorkspaceSchema } from '@/hooks/api';
 import { nsDurationToMs } from '@/utils/nsDurationToMs';
 
 import type { QueryResult } from '@/types/core/StoredQuery';
+import type { ActionInputData } from '@/types/core/Workflow';
 
 /**
  * Query Results component
@@ -32,15 +36,24 @@ import type { QueryResult } from '@/types/core/StoredQuery';
  * @param props.title - Title of the query results
  * @param props.result - The result data to display
  * @param props.loading - Whether to show a loading skeleton
+ * @param props.onRun - Optional callback to run the query
+ * @param props.inputFiles - The input files to display
+ * @param props.setInputFiles - Function to set the input files
  */
 const QueryResults = ({
   title,
   result,
   loading,
+  onRun,
+  inputFiles = [],
+  setInputFiles,
 }: {
   title: string;
   result: QueryResult | null;
   loading?: boolean;
+  onRun?: () => Promise<void>;
+  inputFiles?: ActionInputData[];
+  setInputFiles?: (_files: ActionInputData[]) => void;
 }) => {
   const { dict } = useLocale();
   const workspaceSchema = useWorkspaceSchema();
@@ -101,6 +114,24 @@ const QueryResults = ({
             {result?.has_errors ? `(${dict.query.errors})` : ''}
           </Button>
         </div>
+        {setInputFiles && (
+          <div
+            className={`
+              border-accent
+              ${activeTab === 'inputs' ? 'border-b-2' : ''}
+            `}
+          >
+            <Button
+              size='sm'
+              variant={'ghost'}
+              className={`rounded-b-none`}
+              onClick={() => setActiveTab('inputs')}
+              icon={<TbStepInto />}
+            >
+              {dict.workflow.scriptInputData}
+            </Button>
+          </div>
+        )}
         <div
           className={`
             border-accent
@@ -117,6 +148,19 @@ const QueryResults = ({
             {dict.repository.schema.schema}
           </Button>
         </div>
+        {onRun && (
+          <div className='ml-auto'>
+            <Button
+              icon={<AiOutlinePlayCircle />}
+              variant='accent'
+              size='sm'
+              loading={loading}
+              onClick={onRun}
+            >
+              {dict.query.run}
+            </Button>
+          </div>
+        )}
       </div>
       {activeTab === 'data' && result?.data && (
         <TableViewer
@@ -144,6 +188,15 @@ const QueryResults = ({
             </div>
           )}
         </>
+      )}
+      {activeTab === 'inputs' && setInputFiles && (
+        <div className='flex-1 overflow-y-auto px-4 py-12'>
+          <ActionInputEditor
+            initialData={inputFiles}
+            onChange={setInputFiles}
+            disableSaveButton={true}
+          />
+        </div>
       )}
       {activeTab === 'schema' && (
         <div className='flex-1 overflow-y-auto p-4'>
