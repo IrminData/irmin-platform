@@ -3,9 +3,6 @@ import type { JSONValue } from '@/types/internal/GenericJSON';
 export const MAX_SAFE_JSON_SIZE = 10 * 1024 * 1024; // 10 MB
 export const MAX_SAFE_BLOB_SIZE = 50 * 1024 * 1024; // 50 MB
 
-const MAX_SAFE_TABLE_ROWS = 10000; // Warning threshold
-const MAX_HARD_LIMIT_TABLE_ROWS = 100000; // Hard block threshold
-
 /**
  * Estimate the size of a JavaScript object in bytes
  *
@@ -72,26 +69,6 @@ export const estimateDataSize = (data: unknown): number => {
 export const canSafelyRenderJSON = (data: JSONValue): boolean => {
   const size = estimateDataSize(data);
   return size <= MAX_SAFE_JSON_SIZE;
-};
-
-/**
- * Check if table data can be safely rendered
- *
- * @param rows - The table rows to check
- * @returns Object with safe and hardLimit flags
- */
-export const canSafelyRenderTable = (
-  rows: unknown[]
-): { safe: boolean; hardLimit: boolean } => {
-  if (!Array.isArray(rows)) {
-    return { safe: true, hardLimit: false };
-  }
-
-  const rowCount = rows.length;
-  return {
-    safe: rowCount <= MAX_SAFE_TABLE_ROWS,
-    hardLimit: rowCount > MAX_HARD_LIMIT_TABLE_ROWS,
-  };
 };
 
 /**
