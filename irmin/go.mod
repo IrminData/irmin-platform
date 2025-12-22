@@ -3,13 +3,14 @@ module irmin-api
 go 1.25.0
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20251219203835-aec55f478984
+	github.com/IrminData/irmin-sdk-go v0.0.0-20251222111224-087c6b7d4450
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.94.0
 	github.com/clerk/clerk-sdk-go/v2 v2.5.0
-	github.com/gofiber/fiber/v3 v3.0.0-rc.3
+	github.com/gofiber/fiber/v3 v3.0.0-rc.3.0.20251222104845-680f3c3ffec9
 	github.com/gofiber/storage/memory/v2 v2.1.1
 	github.com/gofiber/storage/s3/v2 v2.4.2
 	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/joho/godotenv v1.5.1
 	github.com/marcboeker/go-duckdb v1.8.5
@@ -60,14 +61,13 @@ require (
 	github.com/go-openapi/swag/yamlutils v0.25.4 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.29.0 // indirect
+	github.com/go-playground/validator/v10 v10.30.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gofiber/schema v1.6.0 // indirect
-	github.com/gofiber/utils/v2 v2.0.0-rc.4 // indirect
+	github.com/gofiber/utils/v2 v2.0.0-rc.5 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/jsonschema-go v0.4.2 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect

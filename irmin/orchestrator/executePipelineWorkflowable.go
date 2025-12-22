@@ -82,6 +82,18 @@ func (o *Orchestrator) executePipelineWorkflowable(
 				key+1,
 				previousStageResults,
 			)
+		case db.PipelineStageTypeRepositoryAction:
+			stageLogs, errResult = o.handleRepositoryActionStage(
+				ctx,
+				workflow,
+				&stage,
+			)
+		case db.PipelineStageTypeTriggerWorkflow:
+			stageLogs, errResult = o.handleTriggerWorkflowStage(
+				ctx,
+				workflow,
+				&stage,
+			)
 		default:
 			logs = append(logs, fmt.Sprintf("Unknown stage type: %s", stage.Type))
 			continue
@@ -666,4 +678,276 @@ func convertQueryDataToCSV(data []map[string]any, columns []string) ([]byte, err
 	}
 
 	return csvBuffer.Bytes(), nil
+}
+
+// handleRepositoryActionStage handles the execution of a repository action stage.
+func (o *Orchestrator) handleRepositoryActionStage(
+	ctx context.Context,
+	workflow *db.Workflow,
+	stage *db.PipelineStage,
+) ([]string, error) {
+	var logs []string
+
+	// Check for context cancellation
+	if ctx.Err() != nil {
+		return logs, fmt.Errorf("workflow execution cancelled before repository action: %w", ctx.Err())
+	}
+
+	// Validate required fields
+	if stage.RepositoryActionType == nil {
+		logs = append(logs, "Repository action type is not set")
+		return logs, errors.New("repository action type is not set")
+	}
+
+	if stage.RepositoryActionRepository == nil {
+		logs = append(logs, "Repository action repository is not set")
+		return logs, errors.New("repository action repository is not set")
+	}
+
+	if stage.RepositoryActionBranch == nil || *stage.RepositoryActionBranch == "" {
+		logs = append(logs, "Repository action branch is not set")
+		return logs, errors.New("repository action branch is not set")
+	}
+
+	// Execute based on action type
+	switch *stage.RepositoryActionType {
+	case irminmodels.RepositoryActionTypeCommit:
+		return o.handleRepositoryCommitAction(ctx, workflow, stage)
+	case irminmodels.RepositoryActionTypeMerge:
+		return o.handleRepositoryMergeAction(ctx, workflow, stage)
+	case irminmodels.RepositoryActionTypeRevert:
+		return o.handleRepositoryRevertAction(ctx, workflow, stage)
+	default:
+		logs = append(logs, fmt.Sprintf("Unknown repository action type: %s", *stage.RepositoryActionType))
+		return logs, fmt.Errorf("unknown repository action type: %s", *stage.RepositoryActionType)
+	}
+}
+
+// handleRepositoryCommitAction handles committing uncommitted changes.
+func (o *Orchestrator) handleRepositoryCommitAction(
+	ctx context.Context,
+	workflow *db.Workflow,
+	stage *db.PipelineStage,
+) ([]string, error) {
+	var logs []string
+
+	// Determine commit message
+	commitMessage := "Automated commit from workflow"
+	if stage.RepositoryActionCommitMessage != nil && *stage.RepositoryActionCommitMessage != "" {
+		commitMessage = *stage.RepositoryActionCommitMessage
+	}
+
+	// Get author from workflow owner
+	author := workflow.Owner.Email
+	if workflow.Owner.FirstName != "" && workflow.Owner.LastName != "" {
+		author = fmt.Sprintf(
+			"%s %s <%s>",
+			workflow.Owner.FirstName,
+			workflow.Owner.LastName,
+			workflow.Owner.Email,
+		)
+	}
+
+	// Commit changes
+	commit, err := o.dataEngine.CommitChanges(
+		workflow.Workspace.Slug,
+		stage.RepositoryActionRepository.Slug,
+		*stage.RepositoryActionBranch,
+		commitMessage,
+		author,
+		true,
+	)
+	if err != nil {
+		if ctx.Err() != nil {
+			logs = append(logs, fmt.Sprintf("Workflow execution cancelled during commit: %v", ctx.Err()))
+			return logs, ctx.Err()
+		}
+		o.logger.ErrorContext(ctx, "Error committing changes", "error", err)
+		logs = append(logs, fmt.Sprintf("Error committing changes: %v", err))
+		return logs, err
+	}
+
+	logs = append(
+		logs,
+		fmt.Sprintf(
+			"Committed changes to %s@%s (commit: %s)",
+			stage.RepositoryActionRepository.Slug,
+			*stage.RepositoryActionBranch,
+			commit.Hash,
+		),
+	)
+	return logs, nil
+}
+
+// handleRepositoryMergeAction handles merging branches.
+func (o *Orchestrator) handleRepositoryMergeAction(
+	ctx context.Context,
+	workflow *db.Workflow,
+	stage *db.PipelineStage,
+) ([]string, error) {
+	var logs []string
+
+	// Validate target branch
+	if stage.RepositoryActionTargetBranch == nil || *stage.RepositoryActionTargetBranch == "" {
+		logs = append(logs, "Target branch is required for merge action")
+		return logs, errors.New("target branch is required for merge action")
+	}
+
+	// Determine commit message
+	commitMessage := fmt.Sprintf("Merge %s into %s", *stage.RepositoryActionBranch, *stage.RepositoryActionTargetBranch)
+	if stage.RepositoryActionCommitMessage != nil && *stage.RepositoryActionCommitMessage != "" {
+		commitMessage = *stage.RepositoryActionCommitMessage
+	}
+
+	// Get author from workflow owner
+	author := workflow.Owner.Email
+	if workflow.Owner.FirstName != "" && workflow.Owner.LastName != "" {
+		author = fmt.Sprintf(
+			"%s %s <%s>",
+			workflow.Owner.FirstName,
+			workflow.Owner.LastName,
+			workflow.Owner.Email,
+		)
+	}
+
+	// Determine merge options
+	strategy := ""
+	if stage.RepositoryActionMergeStrategy != nil {
+		strategy = *stage.RepositoryActionMergeStrategy
+	}
+
+	squash := false
+	if stage.RepositoryActionSquash != nil {
+		squash = *stage.RepositoryActionSquash
+	}
+
+	allowEmpty := false
+	if stage.RepositoryActionAllowEmpty != nil {
+		allowEmpty = *stage.RepositoryActionAllowEmpty
+	}
+
+	// Merge branches
+	mergeCommit, err := o.dataEngine.MergeRefs(
+		workflow.Workspace.Slug,
+		stage.RepositoryActionRepository.Slug,
+		*stage.RepositoryActionTargetBranch,
+		*stage.RepositoryActionBranch,
+		commitMessage,
+		author,
+		strategy,
+		squash,
+		allowEmpty,
+	)
+	if err != nil {
+		if ctx.Err() != nil {
+			logs = append(logs, fmt.Sprintf("Workflow execution cancelled during merge: %v", ctx.Err()))
+			return logs, ctx.Err()
+		}
+		o.logger.ErrorContext(ctx, "Error merging branches", "error", err)
+		logs = append(logs, fmt.Sprintf("Error merging branches: %v", err))
+		return logs, err
+	}
+
+	logs = append(
+		logs,
+		fmt.Sprintf(
+			"Merged %s into %s (commit: %s)",
+			*stage.RepositoryActionBranch,
+			*stage.RepositoryActionTargetBranch,
+			mergeCommit.Hash,
+		),
+	)
+	return logs, nil
+}
+
+// handleRepositoryRevertAction handles reverting uncommitted changes.
+func (o *Orchestrator) handleRepositoryRevertAction(
+	ctx context.Context,
+	workflow *db.Workflow,
+	stage *db.PipelineStage,
+) ([]string, error) {
+	var logs []string
+
+	// Determine revert path
+	revertPath := "/"
+	if stage.RepositoryActionRevertPath != nil && *stage.RepositoryActionRevertPath != "" {
+		revertPath = *stage.RepositoryActionRevertPath
+	}
+
+	// Revert uncommitted changes
+	err := o.dataEngine.RevertUncommitedChanges(
+		workflow.Workspace.Slug,
+		stage.RepositoryActionRepository.Slug,
+		*stage.RepositoryActionBranch,
+		revertPath,
+		"reset",
+	)
+	if err != nil {
+		if ctx.Err() != nil {
+			logs = append(logs, fmt.Sprintf("Workflow execution cancelled during revert: %v", ctx.Err()))
+			return logs, ctx.Err()
+		}
+		o.logger.ErrorContext(ctx, "Error reverting changes", "error", err)
+		logs = append(logs, fmt.Sprintf("Error reverting changes: %v", err))
+		return logs, err
+	}
+
+	logs = append(
+		logs,
+		fmt.Sprintf(
+			"Reverted uncommitted changes on %s@%s (path: %s)",
+			stage.RepositoryActionRepository.Slug,
+			*stage.RepositoryActionBranch,
+			revertPath,
+		),
+	)
+	return logs, nil
+}
+
+// handleTriggerWorkflowStage handles triggering another workflow.
+func (o *Orchestrator) handleTriggerWorkflowStage(
+	ctx context.Context,
+	workflow *db.Workflow,
+	stage *db.PipelineStage,
+) ([]string, error) {
+	var logs []string
+
+	// Check for context cancellation
+	if ctx.Err() != nil {
+		return logs, fmt.Errorf("workflow execution cancelled before triggering workflow: %w", ctx.Err())
+	}
+
+	// Validate required fields
+	if stage.TriggerWorkflowID == nil {
+		logs = append(logs, "Trigger workflow ID is not set")
+		return logs, errors.New("trigger workflow ID is not set")
+	}
+
+	// Get the target workflow
+	targetWorkflow, err := o.db.GetWorkflowByID(*stage.TriggerWorkflowID)
+	if err != nil {
+		o.logger.ErrorContext(ctx, "Error getting target workflow", "error", err)
+		logs = append(logs, fmt.Sprintf("Error getting target workflow: %v", err))
+		return logs, fmt.Errorf("error getting target workflow: %w", err)
+	}
+
+	// Create a workflow run (fire-and-forget)
+	tx := o.db.Begin()
+	defer tx.Rollback()
+
+	workflowRun, createRunErr := lib.CreateWorkflowRun(tx, targetWorkflow, &workflow.Owner, nil)
+	if createRunErr != nil {
+		o.logger.ErrorContext(ctx, "Error creating workflow run", "error", createRunErr)
+		logs = append(logs, fmt.Sprintf("Error triggering workflow: %v", createRunErr))
+		return logs, createRunErr
+	}
+
+	if commitErr := tx.Commit().Error; commitErr != nil {
+		o.logger.ErrorContext(ctx, "Error committing workflow run transaction", "error", commitErr)
+		logs = append(logs, fmt.Sprintf("Error committing workflow run: %v", commitErr))
+		return logs, commitErr
+	}
+
+	logs = append(logs, fmt.Sprintf("Triggered workflow '%s' (run ID: %d)", targetWorkflow.Name, workflowRun.ID))
+	return logs, nil
 }

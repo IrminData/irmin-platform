@@ -1618,6 +1618,39 @@ definitions:
         description: Repository stage specific
         example: customer-analytics
         type: string
+      repository_action_allow_empty:
+        example: false
+        type: boolean
+      repository_action_branch:
+        example: main
+        type: string
+      repository_action_commit_message:
+        example: Automated commit from workflow
+        type: string
+      repository_action_merge_strategy:
+        example: recursive
+        type: string
+      repository_action_repository:
+        example: customer-analytics
+        type: string
+      repository_action_revert_path:
+        example: /data/customers.csv
+        type: string
+      repository_action_squash:
+        example: false
+        type: boolean
+      repository_action_target_branch:
+        example: staging
+        type: string
+      repository_action_type:
+        allOf:
+        - $ref: '#/definitions/irminmodels.RepositoryActionType'
+        description: Repository Action stage specific
+        enum:
+        - commit
+        - merge
+        - revert
+        example: commit
       repository_branch:
         example: main
         type: string
@@ -1634,6 +1667,10 @@ definitions:
       script_id:
         example: scr_8x2m9k4n7p5q
         type: string
+      trigger_workflow_id:
+        description: Trigger Workflow stage specific
+        example: wf_8x2m9k4n7p5q
+        type: string
       type:
         allOf:
         - $ref: '#/definitions/irminmodels.PipelineStageType'
@@ -1641,6 +1678,8 @@ definitions:
         - action
         - connection
         - repository
+        - repository_action
+        - trigger_workflow
         example: repository
       write:
         example: true
@@ -1654,11 +1693,15 @@ definitions:
     - action
     - connection
     - repository
+    - repository_action
+    - trigger_workflow
     type: string
     x-enum-varnames:
     - PipelineStageTypeAction
     - PipelineStageTypeConnection
     - PipelineStageTypeRepository
+    - PipelineStageTypeRepositoryAction
+    - PipelineStageTypeTriggerWorkflow
   irminmodels.Policy:
     properties:
       action:
@@ -1921,6 +1964,16 @@ definitions:
     - slug
     - updated_at
     type: object
+  irminmodels.RepositoryActionType:
+    enum:
+    - commit
+    - merge
+    - revert
+    type: string
+    x-enum-varnames:
+    - RepositoryActionTypeCommit
+    - RepositoryActionTypeMerge
+    - RepositoryActionTypeRevert
   irminmodels.RepositoryEvent:
     enum:
     - pre-commit

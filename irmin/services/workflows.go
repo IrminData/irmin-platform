@@ -217,6 +217,7 @@ func (api *APIServices) CreateWorkflow(
 			txDB,
 			workspace,
 			&req,
+			0, // Pass 0 for new workflows (ID not yet assigned)
 		)
 		if createWorkflowableErr != nil {
 			return NewInternalErrorf("error creating workflowable: %w", createWorkflowableErr)
@@ -350,6 +351,7 @@ func (api *APIServices) UpdateWorkflowable(
 				txDB,
 				workspace,
 				&workflowableReq,
+				workflow.ID, // Pass existing workflow ID for updates
 			)
 		default:
 			return fmt.Errorf("invalid workflowable type: %s", workflowableReq.Type)
@@ -842,6 +844,7 @@ func (api *APIServices) createWorkflowableByType(
 	txDB *db.Database,
 	workspace *db.Workspace,
 	req *irmincore.WorkflowRequest,
+	workflowID uint,
 ) (*db.ImportWorkflowable, *db.ExportWorkflowable, *db.ActionWorkflowable, *db.PipelineWorkflowable, error) {
 	var err error
 	var importWorkflowable *db.ImportWorkflowable
@@ -877,7 +880,7 @@ func (api *APIServices) createWorkflowableByType(
 	case irminmodels.WorkflowableTypeAction:
 		actionWorkflowable, err = api.createActionWorkflowable(txDB, workspace, &wflConfig)
 	case irminmodels.WorkflowableTypePipeline:
-		pipelineWorkflowable, err = api.createPipelineWorkflowable(txDB, workspace, &wflConfig)
+		pipelineWorkflowable, err = api.createPipelineWorkflowable(txDB, workspace, &wflConfig, workflowID)
 	default:
 		return nil, nil, nil, nil, fmt.Errorf("invalid workflow type: %s", req.Type)
 	}
@@ -1165,6 +1168,7 @@ func (api *APIServices) createPipelineWorkflowable(
 	txDB *db.Database,
 	workspace *db.Workspace,
 	config *irminmodels.Workflowable,
+	workflowID uint,
 ) (*db.PipelineWorkflowable, error) {
 	if config == nil {
 		return nil, errors.New("pipeline configuration is required")
@@ -1185,7 +1189,7 @@ func (api *APIServices) createPipelineWorkflowable(
 			Read:          stage.Read,
 		}
 
-		err := api.processStageByType(txDB, &newStage, stage, workspace)
+		err := api.processStageByType(txDB, &newStage, stage, workspace, workflowID)
 		if err != nil {
 			return nil, err
 		}
@@ -1236,6 +1240,7 @@ func (api *APIServices) processStageByType(
 	newStage *db.PipelineStage,
 	stage irminmodels.PipelineStage,
 	workspace *db.Workspace,
+	workflowID uint,
 ) error {
 	switch stage.Type {
 	case irminmodels.PipelineStageTypeAction:
@@ -1244,6 +1249,10 @@ func (api *APIServices) processStageByType(
 		return api.processConnectionStage(txDB, newStage, stage)
 	case irminmodels.PipelineStageTypeRepository:
 		return api.processRepositoryStage(txDB, newStage, stage, workspace)
+	case irminmodels.PipelineStageTypeRepositoryAction:
+		return api.processRepositoryActionStage(txDB, newStage, stage, workspace)
+	case irminmodels.PipelineStageTypeTriggerWorkflow:
+		return api.processTriggerWorkflowStage(txDB, newStage, stage, workspace, workflowID)
 	default:
 		return fmt.Errorf("invalid stage type: %s", stage.Type)
 	}
@@ -1411,6 +1420,202 @@ func (api *APIServices) processRepositoryStage(
 	if stage.RepositoryWritePath != nil {
 		writePath := strings.TrimPrefix(*stage.RepositoryWritePath, "/")
 		newStage.RepositoryWritePath = &writePath
+	}
+
+	return nil
+}
+
+// processRepositoryActionStage processes a repository action stage.
+func (api *APIServices) processRepositoryActionStage(
+	txDB *db.Database,
+	newStage *db.PipelineStage,
+	stage irminmodels.PipelineStage,
+	workspace *db.Workspace,
+) error {
+	newStage.Type = db.PipelineStageTypeRepositoryAction
+
+	// Validate required fields
+	if stage.RepositoryActionType == nil {
+		return errors.New("repository action type is required")
+	}
+
+	if stage.RepositoryActionRepository == nil {
+		return errors.New("repository is required for repository action stage")
+	}
+
+	if stage.RepositoryActionBranch == nil || *stage.RepositoryActionBranch == "" {
+		return errors.New("branch is required for repository action stage")
+	}
+
+	// Validate target branch is required for merge action
+	if *stage.RepositoryActionType == irminmodels.RepositoryActionTypeMerge {
+		if stage.RepositoryActionTargetBranch == nil || *stage.RepositoryActionTargetBranch == "" {
+			return errors.New("target branch is required for merge action")
+		}
+	}
+
+	// Set action type
+	newStage.RepositoryActionType = stage.RepositoryActionType
+
+	// Get repository
+	repository, err := txDB.GetRepositoryBySlugAndWorkspaceID(
+		*stage.RepositoryActionRepository,
+		workspace.ID,
+	)
+	if err != nil {
+		return err
+	}
+	newStage.RepositoryActionRepositoryID = &repository.ID
+
+	// Set branch
+	newStage.RepositoryActionBranch = stage.RepositoryActionBranch
+
+	// Set target branch (for merge)
+	if stage.RepositoryActionTargetBranch != nil {
+		newStage.RepositoryActionTargetBranch = stage.RepositoryActionTargetBranch
+	}
+
+	// Set commit message
+	if stage.RepositoryActionCommitMessage != nil {
+		newStage.RepositoryActionCommitMessage = stage.RepositoryActionCommitMessage
+	}
+
+	// Set revert path
+	if stage.RepositoryActionRevertPath != nil {
+		newStage.RepositoryActionRevertPath = stage.RepositoryActionRevertPath
+	}
+
+	// Set merge options
+	if stage.RepositoryActionMergeStrategy != nil {
+		newStage.RepositoryActionMergeStrategy = stage.RepositoryActionMergeStrategy
+	}
+
+	if stage.RepositoryActionSquash != nil {
+		newStage.RepositoryActionSquash = stage.RepositoryActionSquash
+	}
+
+	if stage.RepositoryActionAllowEmpty != nil {
+		newStage.RepositoryActionAllowEmpty = stage.RepositoryActionAllowEmpty
+	}
+
+	return nil
+}
+
+// processTriggerWorkflowStage processes a trigger workflow stage.
+func (api *APIServices) processTriggerWorkflowStage(
+	txDB *db.Database,
+	newStage *db.PipelineStage,
+	stage irminmodels.PipelineStage,
+	workspace *db.Workspace,
+	workflowID uint,
+) error {
+	newStage.Type = db.PipelineStageTypeTriggerWorkflow
+
+	// Validate required field
+	if stage.TriggerWorkflowID == nil {
+		return errors.New("workflow ID is required for trigger workflow stage")
+	}
+
+	// Decode and validate workflow ID
+	targetWorkflowID, err := api.SQIDManager.Decode("workflows", *stage.TriggerWorkflowID)
+	if err != nil {
+		return err
+	}
+
+	// Prevent self-reference (only check if workflowID is not 0, i.e., for updates)
+	if workflowID != 0 && uint(targetWorkflowID) == workflowID {
+		return errors.New("workflow cannot trigger itself (self-reference not allowed)")
+	}
+
+	// Verify the workflow exists and belongs to the same workspace
+	targetWorkflow, err := txDB.GetWorkflowByID(uint(targetWorkflowID))
+	if err != nil {
+		return err
+	}
+
+	if targetWorkflow.WorkspaceID != workspace.ID {
+		return errors.New("workflow must belong to the same workspace")
+	}
+
+	// Check for circular dependencies (only if workflowID is not 0, i.e., for updates)
+	if workflowID != 0 {
+		if circularDependencyCheckErr := api.checkForCircularWorkflowDependency(txDB, uint(targetWorkflowID), workflowID); circularDependencyCheckErr != nil {
+			return circularDependencyCheckErr
+		}
+	}
+
+	newStage.TriggerWorkflowID = &targetWorkflow.ID
+
+	return nil
+}
+
+// checkForCircularWorkflowDependency checks if adding a trigger to targetWorkflowID
+// would create a circular dependency with sourceWorkflowID.
+func (api *APIServices) checkForCircularWorkflowDependency(
+	txDB *db.Database,
+	targetWorkflowID uint,
+	sourceWorkflowID uint,
+) error {
+	// Get the target workflow with its pipeline stages
+	var targetWorkflow db.Workflow
+	if err := txDB.Preload("Pipeline.Stages.TriggerWorkflow").
+		First(&targetWorkflow, targetWorkflowID).Error; err != nil {
+		return err
+	}
+
+	// Check if target workflow is a pipeline
+	if targetWorkflow.Pipeline == nil {
+		return nil // Not a pipeline, no circular dependency possible
+	}
+
+	// Track visited workflows to detect cycles
+	visited := make(map[uint]bool)
+	return api.checkWorkflowDependencyRecursive(txDB, targetWorkflowID, sourceWorkflowID, visited)
+}
+
+// checkWorkflowDependencyRecursive recursively checks for circular dependencies.
+func (api *APIServices) checkWorkflowDependencyRecursive(
+	txDB *db.Database,
+	currentWorkflowID uint,
+	sourceWorkflowID uint,
+	visited map[uint]bool,
+) error {
+	// If we've already visited this workflow, we have a cycle
+	if visited[currentWorkflowID] {
+		return nil // Already checked this path
+	}
+
+	// If current workflow is the source, we found a circular dependency
+	if currentWorkflowID == sourceWorkflowID {
+		return errors.New("circular workflow dependency detected")
+	}
+
+	visited[currentWorkflowID] = true
+
+	// Get the current workflow with its pipeline stages
+	var workflow db.Workflow
+	if err := txDB.Preload("Pipeline.Stages").First(&workflow, currentWorkflowID).Error; err != nil {
+		return err
+	}
+
+	// If not a pipeline, no further dependencies to check
+	if workflow.Pipeline == nil {
+		return nil
+	}
+
+	// Check all trigger workflow stages
+	for _, stage := range workflow.Pipeline.Stages {
+		if stage.Type == db.PipelineStageTypeTriggerWorkflow && stage.TriggerWorkflowID != nil {
+			// Recursively check this triggered workflow
+			if err := api.checkWorkflowDependencyRecursive(
+				txDB,
+				*stage.TriggerWorkflowID,
+				sourceWorkflowID,
+				visited,
+			); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

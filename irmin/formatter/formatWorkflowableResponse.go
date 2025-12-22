@@ -153,6 +153,8 @@ func formatActionWorkflowable(
 }
 
 // formatPipelineStage formats a single pipeline stage.
+//
+//nolint:gocognit // This is fine
 func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDManager) irminmodels.PipelineStage {
 	switch stage.Type {
 	case db.PipelineStageTypeAction:
@@ -218,6 +220,44 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			RepositoryWritePath: stage.RepositoryWritePath,
 			RepositoryReadPaths: &readPaths,
 			Repository:          &repositorySlug,
+		}
+	case db.PipelineStageTypeRepositoryAction:
+		var repositorySlug *string
+		if stage.RepositoryActionRepository != nil {
+			repositorySlug = &stage.RepositoryActionRepository.Slug
+		}
+
+		return irminmodels.PipelineStage{
+			Description:                   stage.Description,
+			Write:                         stage.Write,
+			Read:                          stage.Read,
+			Type:                          irminmodels.PipelineStageTypeRepositoryAction,
+			RepositoryActionType:          stage.RepositoryActionType,
+			RepositoryActionRepository:    repositorySlug,
+			RepositoryActionBranch:        stage.RepositoryActionBranch,
+			RepositoryActionTargetBranch:  stage.RepositoryActionTargetBranch,
+			RepositoryActionCommitMessage: stage.RepositoryActionCommitMessage,
+			RepositoryActionRevertPath:    stage.RepositoryActionRevertPath,
+			RepositoryActionMergeStrategy: stage.RepositoryActionMergeStrategy,
+			RepositoryActionSquash:        stage.RepositoryActionSquash,
+			RepositoryActionAllowEmpty:    stage.RepositoryActionAllowEmpty,
+		}
+	case db.PipelineStageTypeTriggerWorkflow:
+		var workflowSqid *string
+		if stage.TriggerWorkflowID != nil {
+			encoded, workflowSqidErr := sqidManager.Encode("workflows", uint64(*stage.TriggerWorkflowID))
+			if workflowSqidErr != nil {
+				return irminmodels.PipelineStage{}
+			}
+			workflowSqid = &encoded
+		}
+
+		return irminmodels.PipelineStage{
+			Description:       stage.Description,
+			Write:             stage.Write,
+			Read:              stage.Read,
+			Type:              irminmodels.PipelineStageTypeTriggerWorkflow,
+			TriggerWorkflowID: workflowSqid,
 		}
 	default:
 		return irminmodels.PipelineStage{}

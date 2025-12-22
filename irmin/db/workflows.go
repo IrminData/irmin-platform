@@ -91,9 +91,11 @@ type PipelineWorkflowable struct {
 type PipelineStageType string
 
 const (
-	PipelineStageTypeAction     PipelineStageType = "action"
-	PipelineStageTypeConnection PipelineStageType = "connection"
-	PipelineStageTypeRepository PipelineStageType = "repository"
+	PipelineStageTypeAction           PipelineStageType = "action"
+	PipelineStageTypeConnection       PipelineStageType = "connection"
+	PipelineStageTypeRepository       PipelineStageType = "repository"
+	PipelineStageTypeRepositoryAction PipelineStageType = "repository_action"
+	PipelineStageTypeTriggerWorkflow  PipelineStageType = "trigger_workflow"
 )
 
 type PipelineStage struct {
@@ -128,6 +130,24 @@ type PipelineStage struct {
 	RepositoryBranch    *string     `json:"repository_branch,omitempty"`
 	RepositoryWritePath *string     `json:"repository_write_path,omitempty"`
 	RepositoryReadPaths []string    `json:"repository_read_paths"           gorm:"type:jsonb;serializer:json"`
+
+	// Repository Action stage specific
+
+	RepositoryActionType          *irminmodels.RepositoryActionType `json:"repository_action_type,omitempty"`
+	RepositoryActionRepository    *Repository                       `json:"repository_action_repository,omitempty"     gorm:"foreignKey:RepositoryActionRepositoryID"`
+	RepositoryActionRepositoryID  *uint                             `json:"repository_action_repository_id,omitempty"`
+	RepositoryActionBranch        *string                           `json:"repository_action_branch,omitempty"`
+	RepositoryActionTargetBranch  *string                           `json:"repository_action_target_branch,omitempty"`
+	RepositoryActionCommitMessage *string                           `json:"repository_action_commit_message,omitempty"`
+	RepositoryActionRevertPath    *string                           `json:"repository_action_revert_path,omitempty"`
+	RepositoryActionMergeStrategy *string                           `json:"repository_action_merge_strategy,omitempty"`
+	RepositoryActionSquash        *bool                             `json:"repository_action_squash,omitempty"`
+	RepositoryActionAllowEmpty    *bool                             `json:"repository_action_allow_empty,omitempty"`
+
+	// Trigger Workflow stage specific
+
+	TriggerWorkflow   *Workflow `json:"trigger_workflow,omitempty"    gorm:"foreignKey:TriggerWorkflowID"`
+	TriggerWorkflowID *uint     `json:"trigger_workflow_id,omitempty"`
 }
 
 // GetWorkflowsByWorkspaceID retrieves all workflows for a workspace.
@@ -217,6 +237,8 @@ func (d *Database) GetPipelineWorkflowableByID(id uint) (*PipelineWorkflowable, 
 		Preload("Stages.Repository").
 		Preload("Stages.Script").
 		Preload("Stages.Query").
+		Preload("Stages.RepositoryActionRepository").
+		Preload("Stages.TriggerWorkflow").
 		First(&pipeline, id)
 	return &pipeline, result.Error
 }

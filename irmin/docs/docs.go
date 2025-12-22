@@ -12563,6 +12563,52 @@ const docTemplate = `{
                     "type": "string",
                     "example": "customer-analytics"
                 },
+                "repository_action_allow_empty": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "repository_action_branch": {
+                    "type": "string",
+                    "example": "main"
+                },
+                "repository_action_commit_message": {
+                    "type": "string",
+                    "example": "Automated commit from workflow"
+                },
+                "repository_action_merge_strategy": {
+                    "type": "string",
+                    "example": "recursive"
+                },
+                "repository_action_repository": {
+                    "type": "string",
+                    "example": "customer-analytics"
+                },
+                "repository_action_revert_path": {
+                    "type": "string",
+                    "example": "/data/customers.csv"
+                },
+                "repository_action_squash": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "repository_action_target_branch": {
+                    "type": "string",
+                    "example": "staging"
+                },
+                "repository_action_type": {
+                    "description": "Repository Action stage specific",
+                    "enum": [
+                        "commit",
+                        "merge",
+                        "revert"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.RepositoryActionType"
+                        }
+                    ],
+                    "example": "commit"
+                },
                 "repository_branch": {
                     "type": "string",
                     "example": "main"
@@ -12585,11 +12631,18 @@ const docTemplate = `{
                     "type": "string",
                     "example": "scr_8x2m9k4n7p5q"
                 },
+                "trigger_workflow_id": {
+                    "description": "Trigger Workflow stage specific",
+                    "type": "string",
+                    "example": "wf_8x2m9k4n7p5q"
+                },
                 "type": {
                     "enum": [
                         "action",
                         "connection",
-                        "repository"
+                        "repository",
+                        "repository_action",
+                        "trigger_workflow"
                     ],
                     "allOf": [
                         {
@@ -12609,12 +12662,16 @@ const docTemplate = `{
             "enum": [
                 "action",
                 "connection",
-                "repository"
+                "repository",
+                "repository_action",
+                "trigger_workflow"
             ],
             "x-enum-varnames": [
                 "PipelineStageTypeAction",
                 "PipelineStageTypeConnection",
-                "PipelineStageTypeRepository"
+                "PipelineStageTypeRepository",
+                "PipelineStageTypeRepositoryAction",
+                "PipelineStageTypeTriggerWorkflow"
             ]
         },
         "irminmodels.Policy": {
@@ -12930,6 +12987,19 @@ const docTemplate = `{
                     "example": "2025-12-01T14:22:30Z"
                 }
             }
+        },
+        "irminmodels.RepositoryActionType": {
+            "type": "string",
+            "enum": [
+                "commit",
+                "merge",
+                "revert"
+            ],
+            "x-enum-varnames": [
+                "RepositoryActionTypeCommit",
+                "RepositoryActionTypeMerge",
+                "RepositoryActionTypeRevert"
+            ]
         },
         "irminmodels.RepositoryEvent": {
             "type": "string",
