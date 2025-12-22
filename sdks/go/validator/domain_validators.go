@@ -77,6 +77,10 @@ func (v *Validator) validatePipelineStage(fl validator.FieldLevel) bool {
 		return v.validateConnectionPipelineStage(parentStruct)
 	case "repository":
 		return v.validateRepositoryPipelineStage(parentStruct)
+	case "repository_action":
+		return v.validateRepositoryActionPipelineStage(parentStruct)
+	case "trigger_workflow":
+		return v.validateTriggerWorkflowPipelineStage(parentStruct)
 	default:
 		return true // Let oneof validation handle invalid types
 	}
@@ -179,6 +183,58 @@ func (v *Validator) validateRepositoryPipelineStage(parentStruct reflect.Value) 
 	// Repository stages must have a branch
 	if !repositoryBranchField.IsValid() || repositoryBranchField.IsNil() ||
 		(repositoryBranchField.Elem().IsValid() && repositoryBranchField.Elem().String() == "") {
+		return false
+	}
+
+	return true
+}
+
+// validateRepositoryActionPipelineStage validates repository_action-type pipeline stages.
+func (v *Validator) validateRepositoryActionPipelineStage(parentStruct reflect.Value) bool {
+	repositoryActionTypeField := parentStruct.FieldByName("RepositoryActionType")
+	repositoryField := parentStruct.FieldByName("RepositoryActionRepository")
+	branchField := parentStruct.FieldByName("RepositoryActionBranch")
+	targetBranchField := parentStruct.FieldByName("RepositoryActionTargetBranch")
+
+	// Must have a repository action type
+	if !repositoryActionTypeField.IsValid() || repositoryActionTypeField.IsNil() {
+		return false
+	}
+
+	actionType := repositoryActionTypeField.Elem().String()
+	if actionType != "commit" && actionType != "merge" && actionType != "revert" {
+		return false
+	}
+
+	// Must have a repository
+	if !repositoryField.IsValid() || repositoryField.IsNil() ||
+		(repositoryField.Elem().IsValid() && repositoryField.Elem().String() == "") {
+		return false
+	}
+
+	// Must have a branch
+	if !branchField.IsValid() || branchField.IsNil() ||
+		(branchField.Elem().IsValid() && branchField.Elem().String() == "") {
+		return false
+	}
+
+	// If it's a merge action, must have a target branch
+	if actionType == "merge" {
+		if !targetBranchField.IsValid() || targetBranchField.IsNil() ||
+			(targetBranchField.Elem().IsValid() && targetBranchField.Elem().String() == "") {
+			return false
+		}
+	}
+
+	return true
+}
+
+// validateTriggerWorkflowPipelineStage validates trigger_workflow-type pipeline stages.
+func (v *Validator) validateTriggerWorkflowPipelineStage(parentStruct reflect.Value) bool {
+	triggerWorkflowIDField := parentStruct.FieldByName("TriggerWorkflowID")
+
+	// Trigger workflow stages must have a workflow ID (validated as SQID)
+	if !v.validateResourceID(triggerWorkflowIDField, "workflows") {
 		return false
 	}
 

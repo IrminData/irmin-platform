@@ -2596,6 +2596,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type PolicyResourceOptions](<#PolicyResourceOptions>)
 - [type QueryResult](<#QueryResult>)
 - [type Repository](<#Repository>)
+- [type RepositoryActionType](<#RepositoryActionType>)
 - [type RepositoryEvent](<#RepositoryEvent>)
 - [type Role](<#Role>)
 - [type RolePolicySummary](<#RolePolicySummary>)
@@ -3337,11 +3338,11 @@ type PatchOperation struct {
 
 ```go
 type PipelineStage struct {
-    Description   string            `json:"description"    validate:"required,max=200"                                               example:"Process customer data"`
-    Write         bool              `json:"write"                                                                                    example:"true"`
-    Read          bool              `json:"read"                                                                                     example:"true"`
-    OrderSequence int               `json:"order_sequence"                                                                           example:"1"`
-    Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository,validpipelinestage" example:"repository"`
+    Description   string            `json:"description"    validate:"required,max=200"                                                                                  example:"Process customer data"`
+    Write         bool              `json:"write"                                                                                                                       example:"true"`
+    Read          bool              `json:"read"                                                                                                                        example:"true"`
+    OrderSequence int               `json:"order_sequence"                                                                                                              example:"1"`
+    Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow,validpipelinestage" example:"repository"`
 
     // Action stage specific
     ExecutableType ActionExecutableType `json:"executable_type,omitempty" validate:"omitempty,oneof=script query,required_if=Type action"          example:"script"`
@@ -3358,6 +3359,20 @@ type PipelineStage struct {
     RepositoryBranch    *string   `json:"repository_branch,omitempty"                                            example:"main"`
     RepositoryWritePath *string   `json:"repository_write_path,omitempty" validate:"omitempty"                   example:"/processed/customers.json"`
     RepositoryReadPaths *[]string `json:"repository_read_paths,omitempty" validate:"omitempty,dive"              example:"/raw/customers.csv,/config/schema.json"`
+
+    // Repository Action stage specific
+    RepositoryActionType          *RepositoryActionType `json:"repository_action_type,omitempty"           validate:"omitempty,oneof=commit merge revert,required_if=Type repository_action" example:"commit"`
+    RepositoryActionRepository    *string               `json:"repository_action_repository,omitempty"     validate:"required_if=Type repository_action"                                     example:"customer-analytics"`
+    RepositoryActionBranch        *string               `json:"repository_action_branch,omitempty"         validate:"required_if=Type repository_action"                                     example:"main"`
+    RepositoryActionTargetBranch  *string               `json:"repository_action_target_branch,omitempty"                                                                                    example:"staging"`
+    RepositoryActionCommitMessage *string               `json:"repository_action_commit_message,omitempty"                                                                                   example:"Automated commit from workflow"`
+    RepositoryActionRevertPath    *string               `json:"repository_action_revert_path,omitempty"                                                                                      example:"/data/customers.csv"`
+    RepositoryActionMergeStrategy *string               `json:"repository_action_merge_strategy,omitempty"                                                                                   example:"recursive"`
+    RepositoryActionSquash        *bool                 `json:"repository_action_squash,omitempty"                                                                                           example:"false"`
+    RepositoryActionAllowEmpty    *bool                 `json:"repository_action_allow_empty,omitempty"                                                                                      example:"false"`
+
+    // Trigger Workflow stage specific
+    TriggerWorkflowID *string `json:"trigger_workflow_id,omitempty" validate:"omitempty,validsqid=workflows,required_if=Type trigger_workflow" example:"wf_8x2m9k4n7p5q"`
 }
 ```
 
@@ -3374,9 +3389,11 @@ type PipelineStageType string
 
 ```go
 const (
-    PipelineStageTypeAction     PipelineStageType = "action"
-    PipelineStageTypeConnection PipelineStageType = "connection"
-    PipelineStageTypeRepository PipelineStageType = "repository"
+    PipelineStageTypeAction           PipelineStageType = "action"
+    PipelineStageTypeConnection       PipelineStageType = "connection"
+    PipelineStageTypeRepository       PipelineStageType = "repository"
+    PipelineStageTypeRepositoryAction PipelineStageType = "repository_action"
+    PipelineStageTypeTriggerWorkflow  PipelineStageType = "trigger_workflow"
 )
 ```
 
@@ -3612,6 +3629,25 @@ type Repository struct {
     CreatedAt              time.Time               `json:"created_at"                         validate:"required"                        example:"2025-01-15T10:30:00Z"`
     UpdatedAt              time.Time               `json:"updated_at"                         validate:"required"                        example:"2025-12-01T14:22:30Z"`
 }
+```
+
+<a name="RepositoryActionType"></a>
+## type RepositoryActionType
+
+
+
+```go
+type RepositoryActionType string
+```
+
+<a name="RepositoryActionTypeCommit"></a>
+
+```go
+const (
+    RepositoryActionTypeCommit RepositoryActionType = "commit"
+    RepositoryActionTypeMerge  RepositoryActionType = "merge"
+    RepositoryActionTypeRevert RepositoryActionType = "revert"
+)
 ```
 
 <a name="RepositoryEvent"></a>
