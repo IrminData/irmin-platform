@@ -18,6 +18,7 @@ type PipelineStageEditorProps = {
   readOnly?: boolean;
   hideSaveButton?: boolean;
   defaultCollapsed?: boolean;
+  currentWorkflowID?: string;
 };
 
 /**
@@ -28,6 +29,7 @@ type PipelineStageEditorProps = {
  * @param props.onSubmit - The function to call when the form is submitted.
  * @param props.readOnly - Whether the form is read-only.
  * @param props.hideSaveButton - Whether to hide the save button.
+ * @param props.currentWorkflowID - The current workflow ID (to prevent self-reference).
  *
  * @returns The rendered component.
  */
@@ -37,6 +39,7 @@ function PipelineStageEditor({
   readOnly = false,
   hideSaveButton = false,
   defaultCollapsed = false,
+  currentWorkflowID,
 }: PipelineStageEditorProps) {
   const { dict } = useLocale();
 
@@ -306,6 +309,7 @@ function PipelineStageEditor({
                   readOnly={readOnly}
                   defaultCollapsed={defaultCollapsed}
                   isLastStage={stage.order_sequence === stages.length - 1}
+                  currentWorkflowID={currentWorkflowID}
                 />
               </div>
             </div>

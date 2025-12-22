@@ -174,6 +174,7 @@ const WorkflowWorkflowableSection = ({
             workflowable={activeWorkflowable as Pipeline}
             workflowData={mockWorkflowData}
             setWorkflowData={handleWorkflowableUpdate}
+            workflowID={workflowID}
           />
         )}
       </div>

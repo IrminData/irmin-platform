@@ -37,7 +37,7 @@ import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { useConnections, useRepositories } from '@/hooks/api';
+import { useConnections, useRepositories, useWorkflows } from '@/hooks/api';
 import { useBaseUrl } from '@/hooks/utils';
 
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
@@ -65,6 +65,7 @@ const defaultStage: PipelineStage = {
  * @param props.moveStageDown - The function to call when the stage is moved down.
  * @param props.removeStage - The function to call when the stage is removed.
  * @param props.readOnly - Whether the stage is read-only.
+ * @param props.currentWorkflowID - The current workflow ID (to prevent self-reference).
  *
  * @returns The rendered component.
  */
@@ -78,6 +79,7 @@ function Stage({
   readOnly,
   defaultCollapsed = false,
   isLastStage = false,
+  currentWorkflowID,
 }: {
   index: number;
   initialStage?: PipelineStage;
@@ -88,9 +90,11 @@ function Stage({
   readOnly: boolean;
   defaultCollapsed?: boolean;
   isLastStage?: boolean;
+  currentWorkflowID?: string;
 }) {
   const { connectionsQuery } = useConnections();
   const { repositoriesQuery } = useRepositories();
+  const { workflowsQuery } = useWorkflows();
   const { workspaceSlug } = useWorkspaceContext();
   const { getToken } = useIAM();
   const { dict, locale } = useLocale();
@@ -194,6 +198,10 @@ function Stage({
         return 'secondary';
       case 'repository':
         return 'outline';
+      case 'repository_action':
+        return 'outline';
+      case 'trigger_workflow':
+        return 'default';
       default:
         return 'default';
     }
@@ -228,6 +236,10 @@ function Stage({
               {stage.type === 'action' && dict.workflow.action}
               {stage.type === 'connection' && dict.connections.connection}
               {stage.type === 'repository' && dict.repository.repository}
+              {stage.type === 'repository_action' &&
+                dict.workflow.pipeline.repositoryAction}
+              {stage.type === 'trigger_workflow' &&
+                dict.workflow.pipeline.triggerWorkflow}
             </Badge>
 
             {stage.description && (
@@ -328,80 +340,89 @@ function Stage({
             />
           </div>
 
-          <div
-            className={`
-              grid gap-4
-              sm:grid-cols-2
-            `}
-          >
-            <div className='flex items-center space-x-2 rounded-md border p-3'>
-              <Switch
-                id={`write-${index}`}
-                checked={stage.write}
-                onCheckedChange={(checked) =>
-                  setStage((prevStage) => ({
-                    ...prevStage,
-                    write: checked,
-                  }))
-                }
-                disabled={readOnly || index === 0}
-              />
-              <div className='flex flex-col'>
-                <div className='flex items-center gap-2'>
-                  <Label
-                    htmlFor={`write-${index}`}
-                    className={index === 0 ? 'text-muted-foreground' : ''}
-                  >
-                    {dict.workflow.pipeline.write}
-                  </Label>
-                  <span className='text-xs font-normal text-muted-foreground'>
-                    {dict.workflow.pipeline.writeDescription}
-                  </span>
+          {/* Only show read/write switches for stages that pass data between stages */}
+          {(stage.type === 'action' ||
+            stage.type === 'connection' ||
+            stage.type === 'repository') && (
+            <div
+              className={`
+                grid gap-4
+                sm:grid-cols-2
+              `}
+            >
+              <div className='flex items-center space-x-2 rounded-md border p-3'>
+                <Switch
+                  id={`write-${index}`}
+                  checked={stage.write}
+                  onCheckedChange={(checked) =>
+                    setStage((prevStage) => ({
+                      ...prevStage,
+                      write: checked,
+                    }))
+                  }
+                  disabled={readOnly || index === 0}
+                />
+                <div className='flex flex-col'>
+                  <div className='flex items-center gap-2'>
+                    <Label
+                      htmlFor={`write-${index}`}
+                      className={index === 0 ? 'text-muted-foreground' : ''}
+                    >
+                      {dict.workflow.pipeline.write}
+                    </Label>
+                    <span className='text-xs font-normal text-muted-foreground'>
+                      {dict.workflow.pipeline.writeDescription}
+                    </span>
+                  </div>
+                  {index === 0 && (
+                    <span
+                      className={`
+                        pt-1 pl-1 text-xs text-muted-foreground italic
+                      `}
+                    >
+                      {dict.workflow.pipeline.firstStageCannotWrite}
+                    </span>
+                  )}
                 </div>
-                {index === 0 && (
-                  <span
-                    className={`pt-1 pl-1 text-xs text-muted-foreground italic`}
-                  >
-                    {dict.workflow.pipeline.firstStageCannotWrite}
-                  </span>
-                )}
               </div>
-            </div>
 
-            <div className='flex items-center space-x-2 rounded-md border p-3'>
-              <Switch
-                id={`read-${index}`}
-                checked={stage.read}
-                onCheckedChange={(checked) =>
-                  setStage((prevStage) => ({
-                    ...prevStage,
-                    read: checked,
-                  }))
-                }
-                disabled={readOnly || isLastStage}
-              />
-              <div className='flex flex-col'>
-                <div className='flex items-center gap-2'>
-                  <Label
-                    htmlFor={`read-${index}`}
-                    className={isLastStage ? 'text-muted-foreground' : ''}
-                  >
-                    {dict.workflow.pipeline.read}
-                  </Label>
-                  <span className='text-xs font-normal text-muted-foreground'>
-                    {dict.workflow.pipeline.readDescription}
-                  </span>
+              <div className='flex items-center space-x-2 rounded-md border p-3'>
+                <Switch
+                  id={`read-${index}`}
+                  checked={stage.read}
+                  onCheckedChange={(checked) =>
+                    setStage((prevStage) => ({
+                      ...prevStage,
+                      read: checked,
+                    }))
+                  }
+                  disabled={readOnly || isLastStage}
+                />
+                <div className='flex flex-col'>
+                  <div className='flex items-center gap-2'>
+                    <Label
+                      htmlFor={`read-${index}`}
+                      className={isLastStage ? 'text-muted-foreground' : ''}
+                    >
+                      {dict.workflow.pipeline.read}
+                    </Label>
+                    <span className='text-xs font-normal text-muted-foreground'>
+                      {dict.workflow.pipeline.readDescription}
+                    </span>
+                  </div>
+                  {isLastStage && (
+                    <span
+                      className={`
+                        pt-1 pl-1 text-xs text-muted-foreground italic
+                      `}
+                    >
+                      {dict.workflow.pipeline.lastStageCannotRead}
+                    </span>
+                  )}
                 </div>
-                {isLastStage && (
-                  <span
-                    className={`pt-1 pl-1 text-xs text-muted-foreground italic`}
-                  >
-                    {dict.workflow.pipeline.lastStageCannotRead}
-                  </span>
-                )}
               </div>
             </div>
-          </div>
+          )}
 
           <div className='flex flex-col gap-2'>
             <Label htmlFor={`type-select-${index}`}>
@@ -460,6 +481,26 @@ function Stage({
                     read: prevStage.read,
                     order_sequence: prevStage.order_sequence,
                   }));
+                } else if (value === 'repository_action') {
+                  setStage((prevStage) => ({
+                    type: 'repository_action',
+                    repository_action_type: 'commit',
+                    repository_action_repository: '',
+                    repository_action_branch: '',
+                    description: prevStage.description,
+                    write: false,
+                    read: false,
+                    order_sequence: prevStage.order_sequence,
+                  }));
+                } else if (value === 'trigger_workflow') {
+                  setStage((prevStage) => ({
+                    type: 'trigger_workflow',
+                    trigger_workflow_id: '',
+                    description: prevStage.description,
+                    write: false,
+                    read: false,
+                    order_sequence: prevStage.order_sequence,
+                  }));
                 }
               }}
               disabled={readOnly}
@@ -469,6 +510,10 @@ function Stage({
                   {stage.type === 'action' && dict.workflow.action}
                   {stage.type === 'connection' && dict.connections.connection}
                   {stage.type === 'repository' && dict.repository.repository}
+                  {stage.type === 'repository_action' &&
+                    dict.workflow.pipeline.repositoryAction}
+                  {stage.type === 'trigger_workflow' &&
+                    dict.workflow.pipeline.triggerWorkflow}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -478,6 +523,12 @@ function Stage({
                 </SelectItem>
                 <SelectItem value='repository'>
                   {dict.repository.repository}
+                </SelectItem>
+                <SelectItem value='repository_action'>
+                  {dict.workflow.pipeline.repositoryAction}
+                </SelectItem>
+                <SelectItem value='trigger_workflow'>
+                  {dict.workflow.pipeline.triggerWorkflow}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -882,6 +933,306 @@ function Stage({
                   )}
                 </div>
               )}
+            </>
+          )}
+
+          {stage.type === 'repository_action' && (
+            <>
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`action-type-${index}`}>
+                  {dict.workflow.pipeline.actionType}
+                </Label>
+                <Select
+                  value={stage.repository_action_type}
+                  onValueChange={(value) => {
+                    setStage((prevStage) => ({
+                      ...prevStage,
+                      repository_action_type: value as
+                        | 'commit'
+                        | 'merge'
+                        | 'revert',
+                    }));
+                  }}
+                  disabled={readOnly}
+                >
+                  <SelectTrigger id={`action-type-${index}`} className='w-full'>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='commit'>
+                      {dict.workflow.pipeline.commit}
+                    </SelectItem>
+                    <SelectItem value='merge'>
+                      {dict.workflow.pipeline.merge}
+                    </SelectItem>
+                    <SelectItem value='revert'>
+                      {dict.workflow.pipeline.revert}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`repo-action-repository-${index}`}>
+                  {dict.repository.repository}
+                </Label>
+                <Select
+                  value={stage.repository_action_repository}
+                  onValueChange={(value) => {
+                    if (!value) return;
+                    setStage((prevStage) => ({
+                      ...prevStage,
+                      repository_action_repository: value,
+                    }));
+                  }}
+                  disabled={readOnly || repositoriesQuery.isLoading}
+                >
+                  <SelectTrigger
+                    id={`repo-action-repository-${index}`}
+                    className='w-full'
+                  >
+                    <SelectValue>
+                      {repositoriesQuery.data?.data?.find(
+                        (r) => r.slug === stage.repository_action_repository
+                      )?.name ?? stage.repository_action_repository}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {repositoriesQuery.data?.data?.map((repo) => (
+                      <SelectItem key={repo.slug} value={repo.slug}>
+                        {repo.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`repo-action-branch-${index}`}>
+                  {dict.repository.branches.branch}
+                </Label>
+                <Input
+                  id={`repo-action-branch-${index}`}
+                  value={stage.repository_action_branch}
+                  onChange={(e) =>
+                    setStage((prevStage) => ({
+                      ...prevStage,
+                      repository_action_branch: e.target.value,
+                    }))
+                  }
+                  readOnly={readOnly}
+                  placeholder='main'
+                />
+              </div>
+
+              {stage.repository_action_type === 'merge' && (
+                <>
+                  <div className='flex flex-col gap-2'>
+                    <Label htmlFor={`repo-action-target-branch-${index}`}>
+                      {dict.workflow.pipeline.targetBranch}
+                    </Label>
+                    <Input
+                      id={`repo-action-target-branch-${index}`}
+                      value={stage.repository_action_target_branch ?? ''}
+                      onChange={(e) =>
+                        setStage((prevStage) => ({
+                          ...prevStage,
+                          repository_action_target_branch: e.target.value,
+                        }))
+                      }
+                      readOnly={readOnly}
+                      placeholder='staging'
+                    />
+                  </div>
+
+                  <div className='flex flex-col gap-2'>
+                    <Label htmlFor={`repo-action-merge-strategy-${index}`}>
+                      {dict.workflow.pipeline.mergeStrategy}
+                    </Label>
+                    <Select
+                      value={
+                        stage.repository_action_merge_strategy ?? 'default'
+                      }
+                      onValueChange={(value) => {
+                        setStage((prevStage) => ({
+                          ...prevStage,
+                          repository_action_merge_strategy:
+                            value === 'default' ? undefined : value,
+                        }));
+                      }}
+                      disabled={readOnly}
+                    >
+                      <SelectTrigger
+                        id={`repo-action-merge-strategy-${index}`}
+                        className='w-full'
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='default'>
+                          {dict.workflow.pipeline.mergeStrategyDefault}
+                        </SelectItem>
+                        <SelectItem value='ours'>
+                          {dict.workflow.pipeline.mergeStrategyOurs}
+                        </SelectItem>
+                        <SelectItem value='theirs'>
+                          {dict.workflow.pipeline.mergeStrategyTheirs}
+                        </SelectItem>
+                        <SelectItem value='recursive'>
+                          {dict.workflow.pipeline.mergeStrategyRecursive}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div
+                    className={`
+                      flex items-center space-x-2 rounded-md border p-3
+                    `}
+                  >
+                    <Switch
+                      id={`repo-action-squash-${index}`}
+                      checked={stage.repository_action_squash ?? false}
+                      onCheckedChange={(checked) =>
+                        setStage((prevStage) => ({
+                          ...prevStage,
+                          repository_action_squash: checked,
+                        }))
+                      }
+                      disabled={readOnly}
+                    />
+                    <div className='flex flex-col'>
+                      <Label htmlFor={`repo-action-squash-${index}`}>
+                        {dict.workflow.pipeline.squashCommits}
+                      </Label>
+                      <span className='text-xs text-muted-foreground'>
+                        {dict.workflow.pipeline.squashCommitsDescription}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`
+                      flex items-center space-x-2 rounded-md border p-3
+                    `}
+                  >
+                    <Switch
+                      id={`repo-action-allow-empty-${index}`}
+                      checked={stage.repository_action_allow_empty ?? false}
+                      onCheckedChange={(checked) =>
+                        setStage((prevStage) => ({
+                          ...prevStage,
+                          repository_action_allow_empty: checked,
+                        }))
+                      }
+                      disabled={readOnly}
+                    />
+                    <div className='flex flex-col'>
+                      <Label htmlFor={`repo-action-allow-empty-${index}`}>
+                        {dict.workflow.pipeline.allowEmptyCommits}
+                      </Label>
+                      <span className='text-xs text-muted-foreground'>
+                        {dict.workflow.pipeline.allowEmptyCommitsDescription}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {(stage.repository_action_type === 'commit' ||
+                stage.repository_action_type === 'merge') && (
+                <div className='flex flex-col gap-2'>
+                  <Label htmlFor={`repo-action-commit-message-${index}`}>
+                    {dict.workflow.pipeline.commitMessage}
+                  </Label>
+                  <Input
+                    id={`repo-action-commit-message-${index}`}
+                    value={stage.repository_action_commit_message ?? ''}
+                    onChange={(e) =>
+                      setStage((prevStage) => ({
+                        ...prevStage,
+                        repository_action_commit_message: e.target.value,
+                      }))
+                    }
+                    readOnly={readOnly}
+                    placeholder={
+                      dict.workflow.pipeline.commitMessagePlaceholder
+                    }
+                  />
+                </div>
+              )}
+
+              {stage.repository_action_type === 'revert' && (
+                <div className='flex flex-col gap-2'>
+                  <Label htmlFor={`repo-action-revert-path-${index}`}>
+                    {dict.workflow.pipeline.revertPath}
+                  </Label>
+                  <Input
+                    id={`repo-action-revert-path-${index}`}
+                    value={stage.repository_action_revert_path ?? ''}
+                    onChange={(e) =>
+                      setStage((prevStage) => ({
+                        ...prevStage,
+                        repository_action_revert_path: e.target.value,
+                      }))
+                    }
+                    readOnly={readOnly}
+                    placeholder='/'
+                  />
+                </div>
+              )}
+            </>
+          )}
+
+          {stage.type === 'trigger_workflow' && (
+            <>
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`trigger-workflow-${index}`}>
+                  {dict.workflow.workflow}
+                </Label>
+                <Select
+                  value={stage.trigger_workflow_id}
+                  onValueChange={(value) => {
+                    if (!value) return;
+                    setStage((prevStage) => ({
+                      ...prevStage,
+                      trigger_workflow_id: value,
+                    }));
+                  }}
+                  disabled={readOnly || workflowsQuery.isLoading}
+                >
+                  <SelectTrigger
+                    id={`trigger-workflow-${index}`}
+                    className='w-full'
+                  >
+                    <SelectValue>
+                      {workflowsQuery.data?.data?.find(
+                        (w) => w.id === stage.trigger_workflow_id
+                      )?.name ?? stage.trigger_workflow_id}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {workflowsQuery.data?.data
+                      ?.filter((workflow) => workflow.id !== currentWorkflowID)
+                      .map((workflow) => (
+                        <SelectItem key={workflow.id} value={workflow.id}>
+                          {workflow.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                {stage.trigger_workflow_id && (
+                  <Button
+                    href={`${workspaceUrl}/workflows/${stage.trigger_workflow_id}`}
+                    target='_blank'
+                    variant='secondary'
+                    className='w-full'
+                    size={'sm'}
+                  >
+                    {dict.list.view}
+                  </Button>
+                )}
+              </div>
             </>
           )}
         </div>

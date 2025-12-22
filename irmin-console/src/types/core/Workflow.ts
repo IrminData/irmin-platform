@@ -199,7 +199,13 @@ export type PipelineStage = {
   read: boolean;
   /** The order of the stage in the pipeline */
   order_sequence: number;
-} & (PipelineStageAction | PipelineStageConnection | PipelineStageRepository);
+} & (
+  | PipelineStageAction
+  | PipelineStageConnection
+  | PipelineStageRepository
+  | PipelineStageRepositoryAction
+  | PipelineStageTriggerWorkflow
+);
 
 /**
  * Pipeline Stage that executes an action
@@ -240,4 +246,38 @@ interface PipelineStageRepository {
   repository_write_path: string;
   /** Path to read within the repository */
   repository_read_paths: string[];
+}
+
+/**
+ * Pipeline Stage that performs a repository action (commit, merge, revert)
+ */
+interface PipelineStageRepositoryAction {
+  type: 'repository_action';
+  /** Type of repository action */
+  repository_action_type: 'commit' | 'merge' | 'revert';
+  /** Slug of the repository to use */
+  repository_action_repository: string;
+  /** Branch in the repository */
+  repository_action_branch: string;
+  /** Target branch (for merge) */
+  repository_action_target_branch?: string;
+  /** Commit message (for commit and merge) */
+  repository_action_commit_message?: string;
+  /** Path to revert (for revert) */
+  repository_action_revert_path?: string;
+  /** Merge strategy (for merge) */
+  repository_action_merge_strategy?: string;
+  /** Whether to squash commits (for merge) */
+  repository_action_squash?: boolean;
+  /** Whether to allow empty commits (for merge) */
+  repository_action_allow_empty?: boolean;
+}
+
+/**
+ * Pipeline Stage that triggers another workflow
+ */
+interface PipelineStageTriggerWorkflow {
+  type: 'trigger_workflow';
+  /** ID of the workflow to trigger */
+  trigger_workflow_id: string;
 }

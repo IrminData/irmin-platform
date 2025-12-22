@@ -11,12 +11,14 @@ interface PipelineWorkflowProps {
   workflowable: Pipeline;
   workflowData: WorkflowRequest;
   setWorkflowData: React.Dispatch<React.SetStateAction<WorkflowRequest>>;
+  workflowID?: string;
 }
 
 export default function PipelineWorkflow({
   workflowable,
   workflowData,
   setWorkflowData,
+  workflowID,
 }: PipelineWorkflowProps) {
   const handlePipelineStagesSubmit = useCallback(
     (stages: PipelineStage[]) => {
@@ -38,6 +40,7 @@ export default function PipelineWorkflow({
       readOnly={false}
       hideSaveButton={true}
       defaultCollapsed={false}
+      currentWorkflowID={workflowID}
     />
   );
 }
