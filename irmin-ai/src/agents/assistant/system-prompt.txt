@@ -40,6 +40,13 @@ SQL Querying in Irmin
   - CREATE TEMPORARY TABLE/VIEW: Session-scoped temporary structures
   - INSERT/UPDATE/DELETE: Modify temporary tables only
   - Mixed queries: Multiple statements separated by semicolons
+- Query Inputs (Actions & Workflows):
+  - Queries can accept input files loaded as virtual tables
+  - Input files are configured in workflow actions or passed from pipeline stages
+  - Path to table name: /data/file.csv → data_file_csv (non-alphanumeric → underscores)
+  - Supported formats: CSV, TSV, JSON, Parquet
+  - Query results exported as CSV for use in subsequent workflow stages
+  - Example: Query action reads customers.csv and orders.json, joins them, outputs customer_analysis.csv
 - Security constraints:
   - Only TEMPORARY tables/views allowed (no persistent database state)
   - Blacklisted operations: ATTACH DATABASE, CREATE SECRET, INSTALL extensions, EXPORT DATABASE

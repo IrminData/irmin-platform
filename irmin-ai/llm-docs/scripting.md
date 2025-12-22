@@ -110,6 +110,27 @@ if sendComputeResultErr != nil {
 }
 ```
 
+## Queries vs Scripts
+
+Both queries (SQL) and scripts (Go) can be used in action workflows and pipeline stages. They handle inputs and outputs similarly:
+
+### Input Handling
+- **Scripts**: Use `irminutils.ListInputFiles()` and `irminutils.GetInputFile(filename)`
+- **Queries**: Input files automatically loaded as virtual tables (e.g., `/data/sales.csv` → `data_sales_csv`)
+
+### Output Handling
+- **Scripts**: Use `irminutils.SendComputeResult(content, filename)` to create result files
+- **Queries**: Results automatically exported as `query_results.csv` (or can use `COPY TO` for custom naming)
+
+### When to Use Each
+- **Use Queries (SQL)** for: Data transformations, filtering, joins, aggregations, analytics
+- **Use Scripts (Go)** for: Complex logic, API calls, custom file processing, non-tabular operations
+
+Both can:
+- Accept input files from repositories or previous pipeline stages
+- Save results to repositories
+- Pass results to subsequent pipeline stages
+
 ## Example
 
 This example script will fetch the log events for the first workspace available to the executing user, save the log events to a file, which will be returned as a result, and the input files to the repository.

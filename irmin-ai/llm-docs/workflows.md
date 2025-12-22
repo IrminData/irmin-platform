@@ -90,32 +90,61 @@ Specific configurations based on the workflow type (Import, Export, Action, or P
 
 ### Actions
 
-Actions are workflows that execute custom action Scripts. They provide the flexibility to perform bespoke data manipulations, validations, or integrations that are specific to your organisation’s needs.
+Actions are workflows that execute custom logic on data within Irmin repositories. They provide the flexibility to perform bespoke data manipulations, validations, or integrations.
 
-Example Action workflowable configuration:
+Actions can be of two types:
+- **Script**: Executes a custom Go script.
+- **Query**: Executes a SQL query (DuckDB) with input files loaded as virtual tables.
+
+#### Example: Script Action
 ```json
 {
   "type": "action",
-  "executable": "combine_users_and_invoices.go",
+  "executable_type": "script",
+  "script_id": "script_sqid_here",
   /** Input data repositories, refs and paths (optional) */
   "input": [
     {
       "repository": "member-billing",
       "branch": "main",
       "path": "members.csv"
-    },
-    {
-      "repository": "member-billing",
-      "branch": "main",
-      "path": "invoices.csv"
     }
   ],
   /** Where to store the results of the action (optional) */
   "results_repository": "member-billing", 
   "results_branch": "main",
-  "results_path": "invoices-with-users.csv"
+  "results_path": "processed-members.csv"
 }
 ```
+
+#### Example: Query Action
+```json
+{
+  "type": "action",
+  "executable_type": "query",
+  "query_id": "query_sqid_here",
+  "input": [
+    {
+      "repository": "sales-data",
+      "branch": "main",
+      "path": "customers.csv"
+    },
+    {
+      "repository": "sales-data",
+      "branch": "main",
+      "path": "orders.json"
+    }
+  ],
+  "results_repository": "analytics",
+  "results_branch": "main",
+  "results_path": "/reports/customer_analysis.csv"
+}
+```
+
+**Note on Query Actions:**
+- Input files are loaded as virtual tables (e.g., `customers.csv` → `data_customers_csv`).
+- The query result is automatically converted to CSV format.
+- Results are saved to the specified results path (defaulting to `query_results.csv` if not renamed).
 
 ### Imports
 
@@ -196,9 +225,9 @@ Stages are the building blocks of a pipeline. Each stage can get data in and pas
 
 Stages can be of three types:
 
-- `Action`: Execute a custom script.
-   - Input: Passed to the script for processing.
-   - Output: Resulting data from the script.
+- `Action`: Execute a custom script or query.
+   - Input: Passed to the script/query for processing.
+   - Output: Resulting data from the script/query.
 - `Connection`: Interact with an external service.
    - Input: Exported to an external service using the connection.
    - Output: Fetched from an external service using the connection.
@@ -243,7 +272,8 @@ Example Pipeline workflowable configuration:
       "read": true,
       "order_sequence": 3,
       "type": "action",
-      "executable": "combine_users_and_invoices.go", // The script will take the users and invoices from the first stage and combine them in to `transactions.csv`
+      "executable_type": "script", // Can be "script" or "query"
+      "script_id": "script_sqid", // Use script_id for scripts, query_id for queries
     },
     {
       "description": "Send the transactions to the accounting system",

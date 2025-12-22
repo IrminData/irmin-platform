@@ -46,6 +46,7 @@ SQL and DuckDB in scripts
   - Permission checks: Write operations require write permissions on target repositories
 - To execute queries in scripts, use the appropriate SDK methods for query execution
 - Best practices: Use COPY TO to export processed results back to LakeFS repositories
+- Note: While queries (as action executables) can also accept input files as virtual tables, scripts must use the SDK `irminutils` package to handle inputs and outputs. Both approaches work in workflows.
 
 MCP tools available
 - You have access to the full Irmin MCP toolset, including script management tools:

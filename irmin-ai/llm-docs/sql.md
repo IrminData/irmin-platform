@@ -112,6 +112,67 @@ Irmin supports full SQL write capabilities through DuckDB, including:
 - Non-temporary `CREATE TABLE/VIEW` statements are blocked
 - All blacklisted commands return generic "access denied" error
 
+## Query Inputs and Virtual Tables
+
+Queries can accept input files that are automatically loaded as virtual tables. This is commonly used in workflow actions and pipeline stages.
+
+### Path-to-Table Conversion Rules
+
+Input files are converted to table names using the following rules:
+
+1. Leading and trailing slashes are removed from the path.
+2. Non-alphanumeric characters are replaced with underscores `_`.
+3. The file extension is removed from the table name.
+4. If the path doesn't start with a letter, `input_` is prepended.
+5. If multiple paths resolve to the same table name, a hash suffix is added to ensure uniqueness.
+
+### Examples
+
+| Input File Path | Virtual Table Name |
+| :--- | :--- |
+| `/data/customers.csv` | `data_customers_csv` |
+| `/sales/2024/orders.json` | `sales_2024_orders_json` |
+| `reports/inventory.parquet` | `reports_inventory_parquet` |
+
+### Supported Formats
+
+- **CSV/TSV**: Loaded as tables with auto-detected schema.
+- **JSON**: Loaded as tables (may require parsing if structure is complex).
+- **Parquet**: Loaded with preserved schema.
+- **Binary files** (images, PDFs) are automatically filtered out.
+
+### Example: Join Input Files
+
+This example demonstrates joining two input files (customers.csv and orders.json) loaded as virtual tables.
+
+```sql
+-- Input files:
+-- /data/customers.csv → data_customers_csv
+-- /data/orders.json → data_orders_json
+
+SELECT 
+    c.customer_id,
+    c.name,
+    COUNT(o.order_id) as total_orders,
+    SUM(o.amount) as total_spent
+FROM data_customers_csv c
+JOIN data_orders_json o ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, c.name
+ORDER BY total_spent DESC;
+```
+
+### Example: Export Processed Input
+
+You can process input files and export the result using `COPY TO`.
+
+```sql
+COPY (
+  SELECT * 
+  FROM data_sales_csv 
+  WHERE region = 'US' AND amount > 1000
+) TO 's3://workspace-repo/main/reports/us_sales_high_value.csv' (HEADER, DELIMITER ',');
+```
+
 ### Write Operation Examples
 
 #### Export Query Results
