@@ -21,6 +21,19 @@ type UploadObjectFromURLRequest struct {
 	Tags    []string          `json:"tags,omitempty" validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
 }
 
+// ValidateObjectRequest represents the JSON request body for validating repository objects.
+type ValidateObjectRequest struct {
+	ValidationSchema *irminmodels.ObjectSchema `json:"validation_schema" validate:"required"`
+	ValidationMode   string                    `json:"validation_mode"   validate:"required,oneof=strict permissive" example:"strict"`
+}
+
+// ValidateObjectResponse represents the response from validating a repository object.
+type ValidateObjectResponse struct {
+	Valid bool     `json:"valid"`
+	Logs  []string `json:"logs"`
+	Error string   `json:"error,omitempty"`
+}
+
 // GetObjectAtPath fetches the object at the given path and ref.
 func (c *Client) GetObjectAtPath(
 	ctx context.Context,
@@ -288,4 +301,28 @@ func (c *Client) DeleteObject(
 		return nil, fmt.Errorf("delete object error: %w", err)
 	}
 	return apiResp, nil
+}
+
+func (c *Client) ValidateObject(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+	req ValidateObjectRequest,
+) (*ValidateObjectResponse, *irminmodels.IrminAPIResponse, error) {
+	var response ValidateObjectResponse
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/validate?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &response)
+	if err != nil {
+		return nil, nil, fmt.Errorf("validate object error: %w", err)
+	}
+	return &response, apiResp, nil
 }
