@@ -81,6 +81,8 @@ func (v *Validator) validatePipelineStage(fl validator.FieldLevel) bool {
 		return v.validateRepositoryActionPipelineStage(parentStruct)
 	case "trigger_workflow":
 		return v.validateTriggerWorkflowPipelineStage(parentStruct)
+	case "validation":
+		return v.validateValidationPipelineStage(parentStruct)
 	default:
 		return true // Let oneof validation handle invalid types
 	}
@@ -236,6 +238,27 @@ func (v *Validator) validateTriggerWorkflowPipelineStage(parentStruct reflect.Va
 	// Trigger workflow stages must have a workflow ID (validated as SQID)
 	if !v.validateResourceID(triggerWorkflowIDField, "workflows") {
 		return false
+	}
+
+	return true
+}
+
+// validateValidationPipelineStage validates validation-type pipeline stages.
+func (v *Validator) validateValidationPipelineStage(parentStruct reflect.Value) bool {
+	validationSchemaField := parentStruct.FieldByName("ValidationSchema")
+	validationModeField := parentStruct.FieldByName("ValidationMode")
+
+	// ValidationSchema is required
+	if !validationSchemaField.IsValid() || validationSchemaField.IsNil() {
+		return false
+	}
+
+	// ValidationMode must be "single" or "all" if provided
+	if validationModeField.IsValid() && !validationModeField.IsNil() {
+		mode := validationModeField.Elem().String()
+		if mode != "single" && mode != "all" {
+			return false
+		}
 	}
 
 	return true

@@ -37,6 +37,7 @@ const (
 	PipelineStageTypeRepository       PipelineStageType = "repository"
 	PipelineStageTypeRepositoryAction PipelineStageType = "repository_action"
 	PipelineStageTypeTriggerWorkflow  PipelineStageType = "trigger_workflow"
+	PipelineStageTypeValidation       PipelineStageType = "validation"
 )
 
 type RepositoryActionType string
@@ -48,11 +49,11 @@ const (
 )
 
 type PipelineStage struct {
-	Description   string            `json:"description"    validate:"required,max=200"                                                                                  example:"Process customer data"`
-	Write         bool              `json:"write"                                                                                                                       example:"true"`
-	Read          bool              `json:"read"                                                                                                                        example:"true"`
-	OrderSequence int               `json:"order_sequence"                                                                                                              example:"1"`
-	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow,validpipelinestage" example:"repository"`
+	Description   string            `json:"description"    validate:"required,max=200"                                                                                             example:"Process customer data"`
+	Write         bool              `json:"write"                                                                                                                                  example:"true"`
+	Read          bool              `json:"read"                                                                                                                                   example:"true"`
+	OrderSequence int               `json:"order_sequence"                                                                                                                         example:"1"`
+	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation,validpipelinestage" example:"repository"`
 
 	// Action stage specific
 	ExecutableType ActionExecutableType `json:"executable_type,omitempty" validate:"omitempty,oneof=script query,required_if=Type action"          example:"script"`
@@ -83,6 +84,12 @@ type PipelineStage struct {
 
 	// Trigger Workflow stage specific
 	TriggerWorkflowID *string `json:"trigger_workflow_id,omitempty" validate:"omitempty,validsqid=workflows,required_if=Type trigger_workflow" example:"wf_8x2m9k4n7p5q"`
+
+	// Validation stage specific
+	ValidationSchema     *ObjectSchema `json:"validation_schema,omitempty"`
+	ValidationMode       *string       `json:"validation_mode,omitempty"` // "single" or "all"
+	FailOnError          *bool         `json:"fail_on_error,omitempty"`
+	ValidationTargetName *string       `json:"validation_target_name,omitempty"`
 }
 
 type ActionInputData struct {
