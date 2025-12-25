@@ -4035,6 +4035,10 @@ const docTemplate = `{
                         }
                     ]
                 },
+                "s3_path_selector": {
+                    "type": "string",
+                    "example": "s3://workspace-slug-repository-slug/main/file.json"
+                },
                 "schema": {
                     "description": "Structured schema",
                     "allOf": [
@@ -4048,9 +4052,9 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 1048576
                 },
-                "sql_selector_example": {
+                "sql_selector": {
                     "type": "string",
-                    "example": "$['workspace;repo;file.json@main']"
+                    "example": "$['workspace-slug;repository-slug;file.json@main']"
                 },
                 "type": {
                     "enum": [
