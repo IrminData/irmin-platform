@@ -259,6 +259,17 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			Type:              irminmodels.PipelineStageTypeTriggerWorkflow,
 			TriggerWorkflowID: workflowSqid,
 		}
+	case db.PipelineStageTypeValidation:
+		return irminmodels.PipelineStage{
+			Description:          stage.Description,
+			Write:                stage.Write,
+			Read:                 stage.Read,
+			Type:                 irminmodels.PipelineStageTypeValidation,
+			ValidationSchema:     stage.ValidationSchema,
+			ValidationMode:       stage.ValidationMode,
+			FailOnError:          stage.FailOnError,
+			ValidationTargetName: stage.ValidationTargetName,
+		}
 	default:
 		return irminmodels.PipelineStage{}
 	}

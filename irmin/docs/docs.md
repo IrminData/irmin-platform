@@ -901,6 +901,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) RepositoryObjectsIndex\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsIndex>)
   - [func \(api \*APIControllers\) RepositoryObjectsSchema\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsSchema>)
   - [func \(api \*APIControllers\) RepositoryObjectsStructuredContent\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsStructuredContent>)
+  - [func \(api \*APIControllers\) RepositoryObjectsValidate\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsValidate>)
   - [func \(api \*APIControllers\) RepositoryRevertUncommittedChanges\(c fiber.Ctx\) error](<#APIControllers.RepositoryRevertUncommittedChanges>)
   - [func \(api \*APIControllers\) RepositoryTagsDestroy\(c fiber.Ctx\) error](<#APIControllers.RepositoryTagsDestroy>)
   - [func \(api \*APIControllers\) RepositoryTagsIndex\(c fiber.Ctx\) error](<#APIControllers.RepositoryTagsIndex>)
@@ -1627,6 +1628,15 @@ func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error
 ```
 
 RepositoryObjectsStructuredContent godoc @Summary Get structured object content @Description Get the parsed structured content of a data file \(CSV, JSON, etc.\) from a repository @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param path query string true "Object path within the repository \(must be structured data file\)" @Param ref query string false "Reference \(branch, tag, or commit\) to get content from" default\("main"\) @Param limit\-response query string false "Limit response size for large files" default\("false"\) @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=object\} "Structured content retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- object is not structured data" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Object not found" @Failure 413 \{object\} irminmodels.IrminAPIResponse "Content too large \- file exceeds maximum size limit" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects/content/structured \[get\]
+
+<a name="APIControllers.RepositoryObjectsValidate"></a>
+### func \(\*APIControllers\) RepositoryObjectsValidate
+
+```go
+func (api *APIControllers) RepositoryObjectsValidate(c fiber.Ctx) error
+```
+
+RepositoryObjectsValidate godoc @Summary Validate repository object @Description Validate a repository object's data against a provided schema definition @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param path query string true "Object path within the repository" @Param ref query string false "Reference \(branch, tag, or commit\) to validate from" default\("main"\) @Param body body irmincore.ValidateObjectRequest true "Validation parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irmincore.ValidateObjectResponse\} "Object validated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters or validation failed" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Object not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects/validate \[post\]
 
 <a name="APIControllers.RepositoryRevertUncommittedChanges"></a>
 ### func \(\*APIControllers\) RepositoryRevertUncommittedChanges
@@ -4039,6 +4049,11 @@ type PipelineStage struct {
 
     TriggerWorkflow   *Workflow `json:"trigger_workflow,omitempty"    gorm:"foreignKey:TriggerWorkflowID"`
     TriggerWorkflowID *uint     `json:"trigger_workflow_id,omitempty"`
+
+    ValidationSchema     *irminmodels.ObjectSchema `json:"validation_schema,omitempty"      gorm:"type:jsonb;serializer:json"`
+    ValidationMode       *string                   `json:"validation_mode,omitempty"`
+    FailOnError          *bool                     `json:"fail_on_error,omitempty"`
+    ValidationTargetName *string                   `json:"validation_target_name,omitempty"`
 }
 ```
 
@@ -4060,6 +4075,7 @@ const (
     PipelineStageTypeRepository       PipelineStageType = "repository"
     PipelineStageTypeRepositoryAction PipelineStageType = "repository_action"
     PipelineStageTypeTriggerWorkflow  PipelineStageType = "trigger_workflow"
+    PipelineStageTypeValidation       PipelineStageType = "validation"
 )
 ```
 
@@ -8671,6 +8687,7 @@ import "irmin-api/lib"
 - [func SetDefaultPolicies\(dbConn \*gorm.DB, workspaceID uint, overridePolicies bool\) error](<#SetDefaultPolicies>)
 - [func SetupTestSuite\(t \*testing.T\) error](<#SetupTestSuite>)
 - [func TeardownTestSuite\(\)](<#TeardownTestSuite>)
+- [func ValidateStructuredFileSchema\(ctx context.Context, fileName string, data \[\]byte, schema \*irminmodels.JSONSchema, env \*utils.CoreAPIEnv, logger \*slog.Logger\) \(\[\]string, \[\]string\)](<#ValidateStructuredFileSchema>)
 - [type InviteNotificationParams](<#InviteNotificationParams>)
 - [type InviteNotificationResult](<#InviteNotificationResult>)
   - [func SendFallbackInviteNotification\(ctx context.Context, database \*db.Database, sqidManager \*irminsqids.SQIDManager, env \*utils.CoreAPIEnv, logger \*slog.Logger, params InviteNotificationParams\) \*InviteNotificationResult](<#SendFallbackInviteNotification>)
@@ -8680,8 +8697,13 @@ import "irmin-api/lib"
   - [func NewSchemaCacheManager\(env \*utils.CoreAPIEnv, logger \*slog.Logger, db \*db.Database\) \*SchemaCacheManager](<#NewSchemaCacheManager>)
   - [func \(scm \*SchemaCacheManager\) GetConnectionSchema\(ctx context.Context, connection \*db.Connection, operationMethod, path, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, \[\]connectorsclient.OperationLog, error\)](<#SchemaCacheManager.GetConnectionSchema>)
   - [func \(scm \*SchemaCacheManager\) GetObjectSchema\(ctx context.Context, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, ref, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, error\)](<#SchemaCacheManager.GetObjectSchema>)
+- [type SchemaField](<#SchemaField>)
 - [type TestSuite](<#TestSuite>)
   - [func GetTestSuite\(\) \*TestSuite](<#GetTestSuite>)
+- [type ValidationConfig](<#ValidationConfig>)
+- [type ValidationResult](<#ValidationResult>)
+  - [func ValidateDataAgainstSchema\(fileName string, data \[\]byte, schema \*irminmodels.ObjectSchema\) ValidationResult](<#ValidateDataAgainstSchema>)
+  - [func ValidateDataAgainstSchemaWithConfig\(fileName string, data \[\]byte, schema \*irminmodels.ObjectSchema, config \*ValidationConfig\) ValidationResult](<#ValidateDataAgainstSchemaWithConfig>)
 
 
 ## Constants
@@ -8936,6 +8958,15 @@ func TeardownTestSuite()
 
 TeardownTestSuite cleans up the global test suite. This should be called from TestMain after all tests are done.
 
+<a name="ValidateStructuredFileSchema"></a>
+## func ValidateStructuredFileSchema
+
+```go
+func ValidateStructuredFileSchema(ctx context.Context, fileName string, data []byte, schema *irminmodels.JSONSchema, env *utils.CoreAPIEnv, logger *slog.Logger) ([]string, []string)
+```
+
+ValidateStructuredFileSchema validates a non\-JSON structured file against its expected schema. It uses DuckDB to read the file, extract its actual schema, and compare it against the expected schema.
+
 <a name="InviteNotificationParams"></a>
 ## type InviteNotificationParams
 
@@ -9032,6 +9063,21 @@ func (scm *SchemaCacheManager) GetObjectSchema(ctx context.Context, workspace *d
 
 GetObjectSchema returns the schema for an object. It first checks if the schema is cached, and if so, returns the cached schema. Otherwise, it fetches the schema from the Data Engine and caches it asynchronously.
 
+<a name="SchemaField"></a>
+## type SchemaField
+
+SchemaField represents one column or nested field in the DuckDB schema. This mirrors the engine.SchemaField structure for validation purposes.
+
+```go
+type SchemaField struct {
+    Name         string        `json:"name"`
+    Type         string        `json:"type"`
+    Required     bool          `json:"required"`
+    Children     []SchemaField `json:"children,omitempty"`
+    OriginalType string        `json:"original_type,omitempty"`
+}
+```
+
 <a name="TestSuite"></a>
 ## type TestSuite
 
@@ -9054,6 +9100,50 @@ func GetTestSuite() *TestSuite
 ```
 
 GetTestSuite returns the global test suite instance. This is safe to call from any test function.
+
+<a name="ValidationConfig"></a>
+## type ValidationConfig
+
+ValidationConfig holds optional configuration for schema validation.
+
+```go
+type ValidationConfig struct {
+    Ctx    context.Context
+    Env    *utils.CoreAPIEnv
+    Logger *slog.Logger
+}
+```
+
+<a name="ValidationResult"></a>
+## type ValidationResult
+
+
+
+```go
+type ValidationResult struct {
+    Valid    bool
+    Errors   []string
+    Warnings []string
+}
+```
+
+<a name="ValidateDataAgainstSchema"></a>
+### func ValidateDataAgainstSchema
+
+```go
+func ValidateDataAgainstSchema(fileName string, data []byte, schema *irminmodels.ObjectSchema) ValidationResult
+```
+
+ValidateDataAgainstSchema validates data bytes against an ObjectSchema. This is a simplified version that skips DuckDB\-based validation for non\-JSON files. For full validation including non\-JSON structured files, use ValidateDataAgainstSchemaWithConfig.
+
+<a name="ValidateDataAgainstSchemaWithConfig"></a>
+### func ValidateDataAgainstSchemaWithConfig
+
+```go
+func ValidateDataAgainstSchemaWithConfig(fileName string, data []byte, schema *irminmodels.ObjectSchema, config *ValidationConfig) ValidationResult
+```
+
+ValidateDataAgainstSchemaWithConfig validates data bytes against an ObjectSchema with optional configuration. When config is provided with Env and Logger, it enables DuckDB\-based schema validation for non\-JSON structured files \(CSV, Parquet, Excel, etc.\).
 
 # locales
 
@@ -10198,6 +10288,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) UploadRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, objectPath string, objectRef string, file io.Reader, tags \[\]string\) \(\*db.RepositoryObject, error\)](<#APIServices.UploadRepositoryObject>)
   - [func \(api \*APIServices\) UploadRepositoryObjectFromURL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, objectPath string, objectRef string, url string, headers map\[string\]string, tags \[\]string\) \(\*db.RepositoryObject, error\)](<#APIServices.UploadRepositoryObjectFromURL>)
   - [func \(api \*APIServices\) ValidateConnectorConfiguration\(c context.Context, locale string, connector \*db.Connector, req irmincore.ConnectorConfigurationRequest\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#APIServices.ValidateConnectorConfiguration>)
+  - [func \(api \*APIServices\) ValidateRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, validationSchema \*irminmodels.ObjectSchema, validationMode string\) \(\*irmincore.ValidateObjectResponse, error\)](<#APIServices.ValidateRepositoryObject>)
   - [func \(api \*APIServices\) ZipRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(\[\]byte, string, error\)](<#APIServices.ZipRepositoryObject>)
 - [type AuthCache](<#AuthCache>)
 - [type AuthCacheEntry](<#AuthCacheEntry>)
@@ -11563,6 +11654,15 @@ func (api *APIServices) UploadRepositoryObjectFromURL(c context.Context, locale 
 
 ```go
 func (api *APIServices) ValidateConnectorConfiguration(c context.Context, locale string, connector *db.Connector, req irmincore.ConnectorConfigurationRequest) (*irminmodels.ConnectorConfigurationValidationResult, error)
+```
+
+
+
+<a name="APIServices.ValidateRepositoryObject"></a>
+### func \(\*APIServices\) ValidateRepositoryObject
+
+```go
+func (api *APIServices) ValidateRepositoryObject(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, object *db.RepositoryObject, validationSchema *irminmodels.ObjectSchema, validationMode string) (*irmincore.ValidateObjectResponse, error)
 ```
 
 

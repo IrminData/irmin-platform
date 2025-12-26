@@ -15,6 +15,13 @@ import (
 	"gorm.io/gorm"
 )
 
+//nolint:gochecknoglobals // Package-level variable needed for safe pointer storage
+var (
+	// defaultValidationMode is the default validation mode for pipeline validation stages.
+	// This must be a package-level variable so we can safely store its pointer.
+	defaultValidationMode = "all"
+)
+
 // GetWorkflow gets a workflow by its SQID.
 func (api *APIServices) GetWorkflow(
 	c context.Context,
@@ -1253,6 +1260,8 @@ func (api *APIServices) processStageByType(
 		return api.processRepositoryActionStage(txDB, newStage, stage, workspace)
 	case irminmodels.PipelineStageTypeTriggerWorkflow:
 		return api.processTriggerWorkflowStage(txDB, newStage, stage, workspace, workflowID)
+	case irminmodels.PipelineStageTypeValidation:
+		return api.processValidationStage(newStage, stage)
 	default:
 		return fmt.Errorf("invalid stage type: %s", stage.Type)
 	}
@@ -1617,6 +1626,37 @@ func (api *APIServices) checkWorkflowDependencyRecursive(
 			}
 		}
 	}
+
+	return nil
+}
+
+// processValidationStage processes a validation stage.
+func (api *APIServices) processValidationStage(
+	newStage *db.PipelineStage,
+	stage irminmodels.PipelineStage,
+) error {
+	newStage.Type = db.PipelineStageTypeValidation
+
+	// Validation schema is required
+	if stage.ValidationSchema == nil {
+		return errors.New("validation schema is required for validation stage")
+	}
+
+	// Set default validation mode if not provided
+	if stage.ValidationMode == nil {
+		newStage.ValidationMode = &defaultValidationMode
+	} else {
+		newStage.ValidationMode = stage.ValidationMode
+	}
+
+	// Validate mode is either "single" or "all"
+	if *newStage.ValidationMode != "single" && *newStage.ValidationMode != "all" {
+		return errors.New("validation mode must be either 'single' or 'all'")
+	}
+
+	newStage.ValidationSchema = stage.ValidationSchema
+	newStage.FailOnError = stage.FailOnError
+	newStage.ValidationTargetName = stage.ValidationTargetName
 
 	return nil
 }

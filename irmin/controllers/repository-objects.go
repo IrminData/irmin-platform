@@ -837,3 +837,84 @@ func (api *APIControllers) RepositoryObjectsSchema(c fiber.Ctx) error {
 		Data: schema,
 	})
 }
+
+// RepositoryObjectsValidate godoc
+// @Summary Validate repository object
+// @Description Validate a repository object's data against a provided schema definition
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param path query string true "Object path within the repository"
+// @Param ref query string false "Reference (branch, tag, or commit) to validate from" default("main")
+// @Param body body irmincore.ValidateObjectRequest true "Validation parameters"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irmincore.ValidateObjectResponse} "Object validated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters or validation failed"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Object not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/validate [post]
+func (api *APIControllers) RepositoryObjectsValidate(c fiber.Ctx) error {
+	params, validateLocalParamsErr := api.validateObjectParams(c)
+	if validateLocalParamsErr != nil {
+		api.Logger.Error("Error validating repository object localparameters", "error", validateLocalParamsErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
+
+	// Get the object from the state
+	object, objectOk := c.Locals("object").(*db.RepositoryObject)
+	if !objectOk || object == nil {
+		return api.handleServiceError(c, "Object not found", services.ErrNotFound, params.dict)
+	}
+
+	// Parse the request body
+	var req irmincore.ValidateObjectRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		return api.handleServiceError(
+			c,
+			"Error parsing request body",
+			services.NewInternalErrorf("error parsing request body: %w", err),
+			params.dict,
+		)
+	}
+
+	// Validate the object
+	validationResponse, validateErr := api.Services.ValidateRepositoryObject(
+		c,
+		params.locale,
+		params.user,
+		params.workspace,
+		params.repository,
+		object,
+		req.ValidationSchema,
+		req.ValidationMode,
+	)
+	if validateErr != nil {
+		return api.handleServiceError(
+			c,
+			"Error validating repository object",
+			validateErr,
+			params.dict,
+		)
+	}
+
+	// Return appropriate status code
+	// 200 if validation passed or was permissive
+	// 400 if validation failed in strict mode
+	statusCode := fiber.StatusOK
+	if !validationResponse.Valid {
+		// Check strict mode - if strict and failed, return 400
+		// We can infer mode from whether Error is set, as ValidateRepositoryObject sets Error only if strict mode fails
+		// Or we can check the request mode
+		if req.ValidationMode == "strict" || req.ValidationMode == "" {
+			statusCode = fiber.StatusBadRequest
+		}
+	}
+
+	return api.validateAndWriteResponse(c, statusCode, irminmodels.IrminAPIResponse{
+		Data: validationResponse,
+	})
+}

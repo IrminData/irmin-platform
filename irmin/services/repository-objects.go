@@ -17,6 +17,12 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	// Validation strictness modes for repository object validation
+	validationModeStrict     = "strict"
+	validationModePermissive = "permissive"
+)
+
 func (api *APIServices) GetRepositoryObject(
 	c context.Context,
 	locale string,
@@ -1198,4 +1204,126 @@ func (api *APIServices) saveObjectAndTags(
 		}
 	}
 	return repositoryObject, nil
+}
+
+func (api *APIServices) ValidateRepositoryObject(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+	validationSchema *irminmodels.ObjectSchema,
+	validationMode string,
+) (*irmincore.ValidateObjectResponse, error) {
+	// Make sure this is allowed
+	isAllowed, err := api.PermissionService.IsAllowed(
+		user,
+		workspace,
+		db.PolicyResourceRepositoryObject,
+		&object.ID,
+		db.PolicyActionRead,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
+	}
+	if !isAllowed {
+		api.Logger.ErrorContext(
+			c,
+			"User is not allowed to validate repository object",
+			"user",
+			user.Email,
+			"workspace",
+			workspace.Slug,
+			"repository",
+			repository.Slug,
+			"objectPath",
+			object.Path,
+		)
+		return nil, ErrAccessDenied
+	}
+
+	// Get the object content
+	content, err := api.GetRepositoryObjectContent(c, locale, user, workspace, repository, object, false)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error getting object content", "error", err)
+		return nil, NewInternalErrorf("error getting object content: %w", err)
+	}
+
+	// Validate the schema parameter
+	if validationSchema == nil {
+		return nil, ErrInvalidRequest
+	}
+
+	// Default validation mode to "strict" if not provided
+	if validationMode == "" {
+		validationMode = validationModeStrict
+	}
+
+	// Validate mode is either "strict" or "permissive"
+	if validationMode != validationModeStrict && validationMode != validationModePermissive {
+		return nil, ErrInvalidRequest
+	}
+
+	// Validate the object content against the schema with DuckDB support for non-JSON files
+	validationConfig := &lib.ValidationConfig{
+		Ctx:    c,
+		Env:    api.Env,
+		Logger: api.Logger,
+	}
+	result := lib.ValidateDataAgainstSchemaWithConfig(object.Path, content, validationSchema, validationConfig)
+
+	// Build logs from validation result
+	var logs []string
+	if result.Valid {
+		logs = append(logs, fmt.Sprintf("✓ Object '%s' passed validation", object.Path))
+	} else {
+		logs = append(logs, fmt.Sprintf("✗ Object '%s' failed validation:", object.Path))
+		for _, err := range result.Errors {
+			logs = append(logs, fmt.Sprintf("  - %s", err))
+		}
+	}
+
+	// Log warnings if any
+	for _, warning := range result.Warnings {
+		logs = append(logs, fmt.Sprintf("  ⚠ %s", warning))
+	}
+
+	// Determine if we should return an error based on validation result and mode
+	var validationErr error
+	if !result.Valid {
+		if validationMode == validationModeStrict {
+			validationErr = fmt.Errorf("validation failed for object '%s'", object.Path)
+		} else {
+			logs = append(logs, "Validation mode is 'permissive', continuing despite errors")
+		}
+	}
+
+	// Log the validation event
+	eventDescription := fmt.Sprintf("Object %s validated on branch %s", object.Path, object.RepositoryRef)
+	eventType := db.LogEventTypeInfo
+	if validationErr != nil {
+		eventDescription = fmt.Sprintf("Object %s validation failed on branch %s", object.Path, object.RepositoryRef)
+		eventType = db.LogEventTypeError
+	}
+
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
+		Type:               eventType,
+		Description:        eventDescription,
+		UserID:             &user.ID,
+		WorkspaceID:        &workspace.ID,
+		RepositoryID:       &repository.ID,
+		RepositoryObjectID: &object.ID,
+	})
+
+	response := &irmincore.ValidateObjectResponse{
+		Valid: result.Valid,
+		Logs:  logs,
+	}
+	if validationErr != nil {
+		response.Error = validationErr.Error()
+	}
+
+	return response, nil
 }

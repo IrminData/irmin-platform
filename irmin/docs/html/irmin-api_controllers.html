@@ -1058,6 +1058,27 @@ func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error
     /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/content/structured
     [get]
 
+func (api *APIControllers) RepositoryObjectsValidate(c fiber.Ctx) error
+    RepositoryObjectsValidate godoc @Summary Validate repository
+    object @Description Validate a repository object's data against
+    a provided schema definition @Tags repository-objects @Security
+    ApiKeyAuth @Accept json @Produce json @Param workspace_slug path
+    string true "Workspace slug" @Param repository_slug path string true
+    "Repository slug" @Param path query string true "Object path within
+    the repository" @Param ref query string false "Reference (branch,
+    tag, or commit) to validate from" default("main") @Param body body
+    irmincore.ValidateObjectRequest true "Validation parameters" @Success 200
+    {object} irminmodels.IrminAPIResponse{data=irmincore.ValidateObjectResponse}
+    "Object validated successfully" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - invalid parameters or
+    validation failed" @Failure 401 {object} irminmodels.IrminAPIResponse
+    "Unauthorized - invalid or missing authentication" @Failure 403 {object}
+    irminmodels.IrminAPIResponse "Forbidden - insufficient permissions" @Failure
+    404 {object} irminmodels.IrminAPIResponse "Object not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/validate
+    [post]
+
 func (api *APIControllers) RepositoryRevertUncommittedChanges(c fiber.Ctx) error
     RepositoryRevertUncommittedChanges godoc @Summary Revert uncommitted
     changes @Description Revert uncommitted changes in a specific branch

@@ -1126,6 +1126,17 @@ func (api *APIServices) ValidateConnectorConfiguration(
 	req irmincore.ConnectorConfigurationRequest,
 ) (*irminmodels.ConnectorConfigurationValidationResult, error)
 
+func (api *APIServices) ValidateRepositoryObject(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+	validationSchema *irminmodels.ObjectSchema,
+	validationMode string,
+) (*irmincore.ValidateObjectResponse, error)
+
 func (api *APIServices) ZipRepositoryObject(
 	c context.Context,
 	locale string,

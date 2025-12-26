@@ -644,6 +644,31 @@ definitions:
     required:
     - url
     type: object
+  irmincore.ValidateObjectRequest:
+    properties:
+      validation_mode:
+        enum:
+        - strict
+        - permissive
+        example: strict
+        type: string
+      validation_schema:
+        $ref: '#/definitions/irminmodels.ObjectSchema'
+    required:
+    - validation_mode
+    - validation_schema
+    type: object
+  irmincore.ValidateObjectResponse:
+    properties:
+      error:
+        type: string
+      logs:
+        items:
+          type: string
+        type: array
+      valid:
+        type: boolean
+    type: object
   irmincore.WorkflowRequest:
     properties:
       description:
@@ -1605,6 +1630,8 @@ definitions:
         - script
         - query
         example: script
+      fail_on_error:
+        type: boolean
       order_sequence:
         example: 1
         type: integer
@@ -1680,7 +1707,17 @@ definitions:
         - repository
         - repository_action
         - trigger_workflow
+        - validation
         example: repository
+      validation_mode:
+        description: '"single" or "all"'
+        type: string
+      validation_schema:
+        allOf:
+        - $ref: '#/definitions/irminmodels.ObjectSchema'
+        description: Validation stage specific
+      validation_target_name:
+        type: string
       write:
         example: true
         type: boolean
@@ -1695,6 +1732,7 @@ definitions:
     - repository
     - repository_action
     - trigger_workflow
+    - validation
     type: string
     x-enum-varnames:
     - PipelineStageTypeAction
@@ -1702,6 +1740,7 @@ definitions:
     - PipelineStageTypeRepository
     - PipelineStageTypeRepositoryAction
     - PipelineStageTypeTriggerWorkflow
+    - PipelineStageTypeValidation
   irminmodels.Policy:
     properties:
       action:
@@ -7050,6 +7089,75 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Upload object to repository from URL
+      tags:
+      - repository-objects
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/validate:
+    post:
+      consumes:
+      - application/json
+      description: Validate a repository object's data against a provided schema definition
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Repository slug
+        in: path
+        name: repository_slug
+        required: true
+        type: string
+      - description: Object path within the repository
+        in: query
+        name: path
+        required: true
+        type: string
+      - default: '"main"'
+        description: Reference (branch, tag, or commit) to validate from
+        in: query
+        name: ref
+        type: string
+      - description: Validation parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.ValidateObjectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Object validated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irmincore.ValidateObjectResponse'
+              type: object
+        "400":
+          description: Bad request - invalid parameters or validation failed
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Object not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Validate repository object
       tags:
       - repository-objects
   /workspaces/{workspace_slug}/repositories/{repository_slug}/revert-uncommitted-changes:

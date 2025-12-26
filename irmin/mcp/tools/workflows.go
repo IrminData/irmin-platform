@@ -2,6 +2,7 @@ package tools
 
 import (
 	"context"
+	"encoding/json"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/lib"
@@ -23,8 +24,8 @@ type getWorkflowArgs struct {
 }
 
 type createWorkflowArgs struct {
-	WorkspaceSlug string                    `json:"workspace_slug" jsonschema:"required,The slug of the workspace to create a workflow in"`
-	Workflow      irmincore.WorkflowRequest `json:"workflow"       jsonschema:"required,The workflow to create, with workflowable configuration and schedule"`
+	WorkspaceSlug string `json:"workspace_slug" jsonschema:"required,The slug of the workspace to create a workflow in"`
+	WorkflowJSON  string `json:"workflow"       jsonschema:"required,The workflow to create as JSON string, with workflowable configuration and schedule"`
 }
 
 type updateWorkflowArgs struct {
@@ -36,9 +37,9 @@ type updateWorkflowArgs struct {
 }
 
 type updateWorkflowWorkflowableArgs struct {
-	WorkspaceSlug string                   `json:"workspace_slug" jsonschema:"required,The slug of the workspace to update the workflow in"`
-	WorkflowID    string                   `json:"workflow_id"    jsonschema:"required,The ID of the workflow to update"`
-	Workflowable  irminmodels.Workflowable `json:"workflowable"   jsonschema:"required,The workflowable configuration to update"`
+	WorkspaceSlug    string `json:"workspace_slug" jsonschema:"required,The slug of the workspace to update the workflow in"`
+	WorkflowID       string `json:"workflow_id"    jsonschema:"required,The ID of the workflow to update"`
+	WorkflowableJSON string `json:"workflowable"   jsonschema:"required,The workflowable configuration to update as JSON string"`
 }
 
 type updateWorkflowScheduleArgs struct {
@@ -113,7 +114,7 @@ func (mcpTools *MCPTools) registerListWorkflowsTool() {
 
 // registerGetWorkflowTool registers the irmin_get_workflow tool for getting a workflow by ID
 //
-//nolint:dupl // This is not a duplicate, but the outline is similar to other tools
+
 func (mcpTools *MCPTools) registerGetWorkflowTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
@@ -164,7 +165,7 @@ func (mcpTools *MCPTools) registerGetWorkflowTool() {
 
 // registerCreateWorkflowTool registers the irmin_create_workflow tool for creating a new workflow
 //
-//nolint:dupl // This is not a duplicate, but the outline is similar to other tools
+
 func (mcpTools *MCPTools) registerCreateWorkflowTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
@@ -186,8 +187,17 @@ func (mcpTools *MCPTools) registerCreateWorkflowTool() {
 				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
+			// Parse the workflow from JSON string
+			var workflow irmincore.WorkflowRequest
+			if unmarshalErr := json.Unmarshal([]byte(args.WorkflowJSON), &workflow); unmarshalErr != nil {
+				mcpTools.apiServices.Logger.Error("Failed to parse workflow JSON", "error", unmarshalErr)
+				return helpers.MCPError(
+					"Failed to parse workflow JSON: " + unmarshalErr.Error(),
+				), struct{}{}, nil
+			}
+
 			// Create the workflow
-			workflow, err := mcpTools.apiServices.CreateWorkflow(ctx, user, workspace, args.Workflow)
+			createdWorkflow, err := mcpTools.apiServices.CreateWorkflow(ctx, user, workspace, workflow)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to create workflow", "error", err)
 				return helpers.MCPError("Failed to create workflow"), struct{}{}, nil
@@ -196,7 +206,7 @@ func (mcpTools *MCPTools) registerCreateWorkflowTool() {
 			// Format the response using FormatWorkflowResponse
 			workflowResponse, err := formatter.FormatWorkflowResponse(
 				mcpTools.apiServices.DB,
-				workflow,
+				createdWorkflow,
 				mcpTools.apiServices.SQIDManager,
 			)
 			if err != nil {
@@ -308,13 +318,22 @@ func (mcpTools *MCPTools) registerUpdateWorkflowableConfigTool() {
 				return helpers.MCPError("Failed to get workflow"), struct{}{}, nil
 			}
 
+			// Parse the workflowable from JSON string
+			var workflowable irminmodels.Workflowable
+			if unmarshalErr := json.Unmarshal([]byte(args.WorkflowableJSON), &workflowable); unmarshalErr != nil {
+				mcpTools.apiServices.Logger.Error("Failed to parse workflowable JSON", "error", unmarshalErr)
+				return helpers.MCPError(
+					"Failed to parse workflowable JSON: " + unmarshalErr.Error(),
+				), struct{}{}, nil
+			}
+
 			// Update the workflowable configuration
 			workflow, err = mcpTools.apiServices.UpdateWorkflowable(
 				ctx,
 				user,
 				workspace,
 				workflow,
-				args.Workflowable,
+				workflowable,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to update workflowable configuration", "error", err)

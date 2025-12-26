@@ -2,12 +2,14 @@ package tools
 
 import (
 	"context"
+	"encoding/json"
 	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
 	"net/http"
 	"strings"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -72,6 +74,15 @@ type deleteRepositoryObjectArgs struct {
 	Path           string  `json:"path"            jsonschema:"required,The path to delete the repository object from. For example, 'users.json' or 'users/user_123.json'"`
 }
 
+type validateRepositoryObjectArgs struct {
+	WorkspaceSlug        string  `json:"workspace_slug"    jsonschema:"required,The slug of the workspace to validate the repository object in"`
+	RepositorySlug       string  `json:"repository_slug"   jsonschema:"required,The slug of the repository to validate the repository object in"`
+	Branch               *string `json:"branch"            jsonschema:"optional,The branch to validate the repository object from. If not provided, the default branch will be used."`
+	Path                 string  `json:"path"              jsonschema:"required,The path to validate the repository object from. For example, 'users.json' or 'users/user_123.json'"`
+	ValidationSchemaJSON string  `json:"validation_schema" jsonschema:"required,The schema to validate the object against (as JSON string)"`
+	ValidationMode       string  `json:"validation_mode"   jsonschema:"required,The validation mode to use. Can be 'strict' or 'permissive'. Strict mode fails on any error, permissive mode logs errors but continues."`
+}
+
 // RegisterRepositoryObjectsTools registers all repository object-related tools.
 func (mcpTools *MCPTools) RegisterRepositoryObjectsTools() {
 	mcpTools.registerListRepositoryObjectsTool()
@@ -82,6 +93,7 @@ func (mcpTools *MCPTools) RegisterRepositoryObjectsTools() {
 	mcpTools.registerUploadRepositoryObjectFromURLTool()
 	mcpTools.registerMoveOrCopyRepositoryObjectTool()
 	mcpTools.registerDeleteRepositoryObjectTool()
+	mcpTools.registerValidateRepositoryObjectTool()
 }
 
 // registerListRepositoryObjectsTool registers the irmin_list_repository_objects tool for listing repository objects in a workspace
@@ -781,6 +793,96 @@ func (mcpTools *MCPTools) registerDeleteRepositoryObjectTool() {
 			result, err := helpers.MCPSuccess(map[string]string{
 				"message": "Object deleted successfully",
 			})
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
+		},
+	)
+}
+
+// registerValidateRepositoryObjectTool registers the irmin_validate_repository_object tool for validating a repository object against a schema
+func (mcpTools *MCPTools) registerValidateRepositoryObjectTool() {
+	sdkmcp.AddTool(
+		mcpTools.server,
+		&sdkmcp.Tool{
+			Name:        "irmin_validate_repository_object",
+			Description: "Validate a repository object's data against a provided schema definition. Checks data quality, type correctness, and schema compliance without modifying the object. Supports two validation modes: 'strict' (fails on any error) or 'permissive' (logs errors but continues). Returns validation results with detailed logs showing which checks passed or failed. Requires workspace_slug, repository_slug, path, validation_schema, and validation_mode. Optionally specify branch. Use this to ensure data integrity, verify imports, or check data quality before processing.",
+		},
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args validateRepositoryObjectArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+			// Validate user
+			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+
+			// Get the workspace first
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+			}
+
+			// Get the repository
+			repository, err := mcpTools.apiServices.GetRepositoryBySlug(
+				ctx,
+				"en",
+				user,
+				workspace,
+				args.RepositorySlug,
+			)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+			}
+
+			// Determine the branch to validate the repository object from
+			branch := args.Branch
+			if branch == nil {
+				branch = &repository.DefaultBranch
+			}
+
+			// Get the object
+			object, _, _, err := mcpTools.apiServices.GetRepositoryObject(
+				ctx,
+				"en",
+				user,
+				workspace,
+				repository,
+				args.Path,
+				*branch,
+			)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
+				return helpers.MCPError("Failed to get repository object"), struct{}{}, nil
+			}
+
+			// Parse the validation schema from JSON string
+			var validationSchema irminmodels.ObjectSchema
+			if inputSchemaUnmarshalErr := json.Unmarshal([]byte(args.ValidationSchemaJSON), &validationSchema); inputSchemaUnmarshalErr != nil {
+				mcpTools.apiServices.Logger.Error("Failed to parse validation schema", "error", inputSchemaUnmarshalErr)
+				return helpers.MCPError(
+					"Failed to parse validation schema: " + inputSchemaUnmarshalErr.Error(),
+				), struct{}{}, nil
+			}
+
+			// Validate the object
+			validationResponse, validationErr := mcpTools.apiServices.ValidateRepositoryObject(
+				ctx,
+				"en",
+				user,
+				workspace,
+				repository,
+				object,
+				&validationSchema,
+				args.ValidationMode,
+			)
+			if validationErr != nil {
+				mcpTools.apiServices.Logger.Error("Failed to validate repository object", "error", validationErr)
+				return helpers.MCPError("Failed to validate repository object"), struct{}{}, nil
+			}
+
+			result, err := helpers.MCPSuccess(validationResponse)
 			if err != nil {
 				return nil, struct{}{}, err
 			}

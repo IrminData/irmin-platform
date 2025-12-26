@@ -205,6 +205,18 @@ func TeardownTestSuite()
     TeardownTestSuite cleans up the global test suite. This should be called
     from TestMain after all tests are done.
 
+func ValidateStructuredFileSchema(
+	ctx context.Context,
+	fileName string,
+	data []byte,
+	schema *irminmodels.JSONSchema,
+	env *utils.CoreAPIEnv,
+	logger *slog.Logger,
+) ([]string, []string)
+    ValidateStructuredFileSchema validates a non-JSON structured file against
+    its expected schema. It uses DuckDB to read the file, extract its actual
+    schema, and compare it against the expected schema.
+
 
 TYPES
 
@@ -288,6 +300,16 @@ func (scm *SchemaCacheManager) GetObjectSchema(
     the schema is cached, and if so, returns the cached schema. Otherwise,
     it fetches the schema from the Data Engine and caches it asynchronously.
 
+type SchemaField struct {
+	Name         string        `json:"name"`
+	Type         string        `json:"type"`
+	Required     bool          `json:"required"`
+	Children     []SchemaField `json:"children,omitempty"`
+	OriginalType string        `json:"original_type,omitempty"`
+}
+    SchemaField represents one column or nested field in the DuckDB schema.
+    This mirrors the engine.SchemaField structure for validation purposes.
+
 type TestSuite struct {
 	DB           *db.Database
 	Env          *utils.CoreAPIEnv
@@ -299,6 +321,36 @@ type TestSuite struct {
 func GetTestSuite() *TestSuite
     GetTestSuite returns the global test suite instance. This is safe to call
     from any test function.
+
+type ValidationConfig struct {
+	Ctx    context.Context
+	Env    *utils.CoreAPIEnv
+	Logger *slog.Logger
+}
+    ValidationConfig holds optional configuration for schema validation.
+
+type ValidationResult struct {
+	Valid    bool
+	Errors   []string
+	Warnings []string
+}
+
+func ValidateDataAgainstSchema(fileName string, data []byte, schema *irminmodels.ObjectSchema) ValidationResult
+    ValidateDataAgainstSchema validates data bytes against an ObjectSchema.
+    This is a simplified version that skips DuckDB-based validation for
+    non-JSON files. For full validation including non-JSON structured files,
+    use ValidateDataAgainstSchemaWithConfig.
+
+func ValidateDataAgainstSchemaWithConfig(
+	fileName string,
+	data []byte,
+	schema *irminmodels.ObjectSchema,
+	config *ValidationConfig,
+) ValidationResult
+    ValidateDataAgainstSchemaWithConfig validates data bytes against an
+    ObjectSchema with optional configuration. When config is provided with
+    Env and Logger, it enables DuckDB-based schema validation for non-JSON
+    structured files (CSV, Parquet, Excel, etc.).
 
 </pre>
 </body></html>

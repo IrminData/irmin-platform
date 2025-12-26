@@ -552,6 +552,11 @@ func RegisterAPIRoutes(
 		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.RepositoryObjectsSchema,
 	)
+	objects.Post(
+		"/validate",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryObjectsValidate,
+	)
 
 	// Branch routes
 	branches := repository.Group("/branches")

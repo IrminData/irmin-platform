@@ -6777,6 +6777,115 @@ const docTemplate = `{
                 }
             }
         },
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/validate": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Validate a repository object's data against a provided schema definition",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repository-objects"
+                ],
+                "summary": "Validate repository object",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository slug",
+                        "name": "repository_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Object path within the repository",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"main\"",
+                        "description": "Reference (branch, tag, or commit) to validate from",
+                        "name": "ref",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Validation parameters",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.ValidateObjectRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Object validated successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irmincore.ValidateObjectResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid parameters or validation failed",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Object not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/repositories/{repository_slug}/revert-uncommitted-changes": {
             "post": {
                 "security": [
@@ -11254,6 +11363,43 @@ const docTemplate = `{
                 }
             }
         },
+        "irmincore.ValidateObjectRequest": {
+            "type": "object",
+            "required": [
+                "validation_mode",
+                "validation_schema"
+            ],
+            "properties": {
+                "validation_mode": {
+                    "type": "string",
+                    "enum": [
+                        "strict",
+                        "permissive"
+                    ],
+                    "example": "strict"
+                },
+                "validation_schema": {
+                    "$ref": "#/definitions/irminmodels.ObjectSchema"
+                }
+            }
+        },
+        "irmincore.ValidateObjectResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "logs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
         "irmincore.WorkflowRequest": {
             "type": "object",
             "required": [
@@ -12546,6 +12692,9 @@ const docTemplate = `{
                     ],
                     "example": "script"
                 },
+                "fail_on_error": {
+                    "type": "boolean"
+                },
                 "order_sequence": {
                     "type": "integer",
                     "example": 1
@@ -12642,7 +12791,8 @@ const docTemplate = `{
                         "connection",
                         "repository",
                         "repository_action",
-                        "trigger_workflow"
+                        "trigger_workflow",
+                        "validation"
                     ],
                     "allOf": [
                         {
@@ -12650,6 +12800,21 @@ const docTemplate = `{
                         }
                     ],
                     "example": "repository"
+                },
+                "validation_mode": {
+                    "description": "\"single\" or \"all\"",
+                    "type": "string"
+                },
+                "validation_schema": {
+                    "description": "Validation stage specific",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.ObjectSchema"
+                        }
+                    ]
+                },
+                "validation_target_name": {
+                    "type": "string"
                 },
                 "write": {
                     "type": "boolean",
@@ -12664,14 +12829,16 @@ const docTemplate = `{
                 "connection",
                 "repository",
                 "repository_action",
-                "trigger_workflow"
+                "trigger_workflow",
+                "validation"
             ],
             "x-enum-varnames": [
                 "PipelineStageTypeAction",
                 "PipelineStageTypeConnection",
                 "PipelineStageTypeRepository",
                 "PipelineStageTypeRepositoryAction",
-                "PipelineStageTypeTriggerWorkflow"
+                "PipelineStageTypeTriggerWorkflow",
+                "PipelineStageTypeValidation"
             ]
         },
         "irminmodels.Policy": {

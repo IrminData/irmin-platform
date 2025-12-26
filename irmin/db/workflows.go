@@ -96,6 +96,7 @@ const (
 	PipelineStageTypeRepository       PipelineStageType = "repository"
 	PipelineStageTypeRepositoryAction PipelineStageType = "repository_action"
 	PipelineStageTypeTriggerWorkflow  PipelineStageType = "trigger_workflow"
+	PipelineStageTypeValidation       PipelineStageType = "validation"
 )
 
 type PipelineStage struct {
@@ -148,6 +149,13 @@ type PipelineStage struct {
 
 	TriggerWorkflow   *Workflow `json:"trigger_workflow,omitempty"    gorm:"foreignKey:TriggerWorkflowID"`
 	TriggerWorkflowID *uint     `json:"trigger_workflow_id,omitempty"`
+
+	// Validation stage specific
+
+	ValidationSchema     *irminmodels.ObjectSchema `json:"validation_schema,omitempty"      gorm:"type:jsonb;serializer:json"`
+	ValidationMode       *string                   `json:"validation_mode,omitempty"`
+	FailOnError          *bool                     `json:"fail_on_error,omitempty"`
+	ValidationTargetName *string                   `json:"validation_target_name,omitempty"`
 }
 
 // GetWorkflowsByWorkspaceID retrieves all workflows for a workspace.

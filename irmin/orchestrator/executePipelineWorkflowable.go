@@ -10,11 +10,18 @@ import (
 	"irmin-api/lib"
 	"maps"
 	"slices"
+	"sort"
 	"strings"
 
 	sandbox "irmin-api/compute-sandbox"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+)
+
+const (
+	// Validation modes
+	validationModeSingle = "single"
+	validationModeAll    = "all"
 )
 
 // executePipelineWorkflowable executes a pipeline workflowable.
@@ -93,6 +100,12 @@ func (o *Orchestrator) executePipelineWorkflowable(
 				ctx,
 				workflow,
 				&stage,
+			)
+		case db.PipelineStageTypeValidation:
+			stageLogs, errResult = o.handleValidationStage(
+				ctx,
+				&stage,
+				previousStageResults,
 			)
 		default:
 			logs = append(logs, fmt.Sprintf("Unknown stage type: %s", stage.Type))
@@ -950,4 +963,181 @@ func (o *Orchestrator) handleTriggerWorkflowStage(
 
 	logs = append(logs, fmt.Sprintf("Triggered workflow '%s' (run ID: %d)", targetWorkflow.Name, workflowRun.ID))
 	return logs, nil
+}
+
+// handleValidationStage handles the execution of a validation stage.
+func (o *Orchestrator) handleValidationStage(
+	ctx context.Context,
+	stage *db.PipelineStage,
+	previousStageResults map[string][]byte,
+) ([]string, error) {
+	var logs []string
+
+	// Check for context cancellation
+	if ctx.Err() != nil {
+		return logs, fmt.Errorf("workflow execution cancelled before validation: %w", ctx.Err())
+	}
+
+	if stage.ValidationSchema == nil {
+		logs = append(logs, "Validation schema is not set")
+		return logs, errors.New("validation schema is not set")
+	}
+
+	// Get validation mode (default to "all")
+	mode := validationModeAll
+	if stage.ValidationMode != nil {
+		mode = *stage.ValidationMode
+	}
+
+	// Get fail on error setting (default to true)
+	failOnError := true
+	if stage.FailOnError != nil {
+		failOnError = *stage.FailOnError
+	}
+
+	logs = append(logs, fmt.Sprintf("Starting validation (mode: %s, fail_on_error: %v)", mode, failOnError))
+
+	// Verify target file exists if specified
+	if mode == validationModeSingle && stage.ValidationTargetName != nil {
+		if err := o.verifyTargetFileExists(stage.ValidationTargetName, previousStageResults, &logs); err != nil {
+			return logs, err
+		}
+	}
+
+	// Validate files
+	filesValidated, filesValid, validationErrors := o.validateFiles(
+		ctx,
+		stage,
+		previousStageResults,
+		mode,
+		&logs,
+	)
+
+	logs = append(logs, fmt.Sprintf("Validation complete: %d/%d files valid", filesValid, filesValidated))
+
+	// Check results
+	if err := o.checkValidationResults(filesValidated, validationErrors, mode, stage.ValidationTargetName, previousStageResults, failOnError, &logs); err != nil {
+		return logs, err
+	}
+
+	return logs, nil
+}
+
+// verifyTargetFileExists checks if the target file exists in the results
+func (o *Orchestrator) verifyTargetFileExists(
+	targetName *string,
+	results map[string][]byte,
+	logs *[]string,
+) error {
+	for fileName := range results {
+		if fileName == *targetName {
+			return nil
+		}
+	}
+	*logs = append(
+		*logs,
+		fmt.Sprintf("✗ Target file '%s' not found in previous stage results", *targetName),
+	)
+	return fmt.Errorf("validation target file '%s' not found in previous stage results", *targetName)
+}
+
+// validateFiles performs validation on the appropriate files based on mode
+func (o *Orchestrator) validateFiles(
+	ctx context.Context,
+	stage *db.PipelineStage,
+	previousStageResults map[string][]byte,
+	mode string,
+	logs *[]string,
+) (int, int, []string) {
+	var filesValidated, filesValid int
+	var validationErrors []string
+	// Get sorted file names for deterministic ordering
+	fileNames := make([]string, 0, len(previousStageResults))
+	for fileName := range previousStageResults {
+		fileNames = append(fileNames, fileName)
+	}
+	sort.Strings(fileNames)
+
+	// Create validation config with DuckDB support
+	validationConfig := &lib.ValidationConfig{
+		Ctx:    ctx,
+		Env:    o.env,
+		Logger: o.logger,
+	}
+
+	for _, fileName := range fileNames {
+		// Skip files that don't match target in single mode
+		if mode == validationModeSingle && stage.ValidationTargetName != nil &&
+			fileName != *stage.ValidationTargetName {
+			continue
+		}
+
+		fileData := previousStageResults[fileName]
+		result := lib.ValidateDataAgainstSchemaWithConfig(fileName, fileData, stage.ValidationSchema, validationConfig)
+		filesValidated++
+
+		// Log results
+		if result.Valid {
+			filesValid++
+			*logs = append(*logs, fmt.Sprintf("✓ File '%s' passed validation", fileName))
+		} else {
+			*logs = append(*logs, fmt.Sprintf("✗ File '%s' failed validation:", fileName))
+			for _, err := range result.Errors {
+				*logs = append(*logs, fmt.Sprintf("  - %s", err))
+				validationErrors = append(validationErrors, fmt.Sprintf("%s: %s", fileName, err))
+			}
+		}
+
+		// Log warnings
+		for _, warning := range result.Warnings {
+			*logs = append(*logs, fmt.Sprintf("⚠ Warning for '%s': %s", fileName, warning))
+		}
+
+		// In single mode, break after validating the first matching file
+		if mode == validationModeSingle {
+			if stage.ValidationTargetName == nil {
+				*logs = append(
+					*logs,
+					fmt.Sprintf("Single mode: validated first file alphabetically: '%s'", fileName),
+				)
+			}
+			break
+		}
+	}
+
+	return filesValidated, filesValid, validationErrors
+}
+
+// checkValidationResults checks if validation succeeded and returns appropriate error
+func (o *Orchestrator) checkValidationResults(
+	filesValidated int,
+	validationErrors []string,
+	mode string,
+	targetName *string,
+	previousStageResults map[string][]byte,
+	failOnError bool,
+	logs *[]string,
+) error {
+	// Check if any files were validated
+	if filesValidated == 0 {
+		*logs = append(*logs, "⚠ No files were validated")
+		if mode == validationModeSingle && targetName == nil {
+			*logs = append(*logs, "No files available from previous stage to validate")
+		}
+		// If we expected to validate something but didn't, that's an error
+		if len(previousStageResults) > 0 || (mode == validationModeSingle && targetName != nil) {
+			return errors.New("no files were validated")
+		}
+	}
+
+	// Handle validation failures
+	if len(validationErrors) > 0 {
+		if failOnError {
+			*logs = append(*logs, "Pipeline failed due to validation errors")
+			return fmt.Errorf("validation failed: %d error(s) found", len(validationErrors))
+		}
+		*logs = append(*logs, "Validation errors found but continuing (fail_on_error=false)")
+	}
+
+	return nil
 }
