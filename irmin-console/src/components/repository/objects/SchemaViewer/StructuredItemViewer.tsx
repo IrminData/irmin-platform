@@ -3,10 +3,11 @@
 import { useState } from 'react';
 
 import { MdDescription } from 'react-icons/md';
-import { TbCheck, TbCopy } from 'react-icons/tb';
+import { TbCheck, TbCode, TbCopy, TbEye } from 'react-icons/tb';
 
 import SqlHelper from '@/components/query/helper/SqlHelper';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -31,8 +32,15 @@ export function StructuredItemViewer({
   const { dict, locale } = useLocale();
   const [expanded, setExpanded] = useState(isExpanded);
   const [copied, setCopied] = useState(false);
+  const [mode, setMode] = useState<'visual' | 'json'>('visual');
 
   if (item.type !== 'structured') return <></>;
+
+  const handleCopyJson = async () => {
+    await navigator.clipboard.writeText(JSON.stringify(item.schema, null, 2));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div
@@ -184,7 +192,61 @@ export function StructuredItemViewer({
                 dark:border-gray-600 dark:bg-gray-700
               `}
             >
-              <JSONSchemaViewer schema={item.schema} isExpanded={false} />
+              <div className='mb-3 flex items-center justify-between'>
+                <span className='text-sm font-medium text-muted-foreground'>
+                  {dict.repository.schema.schema}
+                </span>
+                <div className='flex items-center gap-2'>
+                  <Tabs
+                    value={mode}
+                    onValueChange={(v) => setMode(v as 'visual' | 'json')}
+                  >
+                    <TabsList className='h-7 bg-muted/50 p-0.5'>
+                      <TabsTrigger value='visual' className='h-6 px-3 text-sm'>
+                        <TbEye className='mr-1 size-3' />
+                        {dict.common.visual}
+                      </TabsTrigger>
+                      <TabsTrigger value='json' className='h-6 px-3 text-sm'>
+                        <TbCode className='mr-1 size-3' />
+                        {dict.schemaBuilder.rawJson}
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                  {mode === 'json' && (
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      className='h-7 px-3'
+                      onClick={handleCopyJson}
+                      title={copied ? dict.common.copied : dict.common.copy}
+                    >
+                      {copied ? (
+                        <>
+                          <TbCheck className='mr-1 size-3 text-green-500' />
+                          {dict.common.copied}
+                        </>
+                      ) : (
+                        <>
+                          <TbCopy className='mr-1 size-3' />
+                          {dict.common.copy}
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </div>
+              {mode === 'visual' ? (
+                <JSONSchemaViewer schema={item.schema} isExpanded={false} />
+              ) : (
+                <pre
+                  className={`
+                    overflow-x-auto rounded-md border bg-background p-3
+                    font-mono text-xs
+                  `}
+                >
+                  {JSON.stringify(item.schema, null, 2)}
+                </pre>
+              )}
             </div>
           )}
         </div>

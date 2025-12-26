@@ -9,6 +9,7 @@ import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { ObjectSchema } from '@/types/core/ObjectSchema';
 
 import { useInvalidateObjectQueries } from './useInvalidateObjectQueries';
 
@@ -18,7 +19,7 @@ export const useRepositoryObject = (
   path?: string
 ) => {
   const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { locale, dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const { irminAlert } = usePopup();
 
@@ -181,6 +182,50 @@ export const useRepositoryObject = (
     },
   });
 
+  const validateObjectMutation = useMutation<
+    {
+      valid: boolean;
+      logs: string[];
+      error?: string;
+    },
+    Error,
+    {
+      path: string;
+      ref: string;
+      validationSchema: ObjectSchema;
+      validationMode?: 'strict' | 'permissive';
+    }
+  >({
+    mutationFn: async ({ path, ref, validationSchema, validationMode }) => {
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      return irminCore.objectService.validateObject({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        path,
+        ref,
+        validationSchema,
+        validationMode: validationMode ?? 'strict',
+      });
+    },
+    onSuccess: (res) => {
+      if (res.valid) {
+        irminAlert('success', dict.repository.objects.validationSuccessMessage);
+      } else {
+        irminAlert(
+          'error',
+          res.error ?? dict.repository.objects.validationFailedMessage
+        );
+      }
+    },
+    onError: (error) => {
+      irminAlert(
+        'error',
+        error.message ?? dict.repository.objects.validationErrorMessage
+      );
+    },
+  });
+
   return {
     // Queries
     repositoryObjectQuery,
@@ -191,5 +236,6 @@ export const useRepositoryObject = (
     copyObjectMutation,
     uploadObjectMutation,
     uploadObjectFromURLMutation,
+    validateObjectMutation,
   };
 };

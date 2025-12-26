@@ -18,6 +18,7 @@ import IrminCore from '@/lib/core';
 import ConnectionPathSelector from '@/components/connection/ConnectionPathSelector';
 import InlineQueryEditor from '@/components/query/InlineQueryEditor';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
+import { ObjectSchemaBuilder } from '@/components/schema-builder';
 import InlineScriptEditor from '@/components/scripts/InlineScriptEditor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -240,6 +241,7 @@ function Stage({
                 dict.workflow.pipeline.repositoryAction}
               {stage.type === 'trigger_workflow' &&
                 dict.workflow.pipeline.triggerWorkflow}
+              {stage.type === 'validation' && dict.workflow.pipeline.validation}
             </Badge>
 
             {stage.description && (
@@ -501,6 +503,27 @@ function Stage({
                     read: false,
                     order_sequence: prevStage.order_sequence,
                   }));
+                } else if (value === 'validation') {
+                  setStage((prevStage) => ({
+                    type: 'validation',
+                    validation_schema: {
+                      name: '',
+                      path: '',
+                      type: 'structured',
+                      content_type: 'application/json',
+                      schema: {
+                        type: 'object',
+                        properties: {},
+                        required: [],
+                      },
+                    },
+                    validation_mode: 'all',
+                    fail_on_error: true,
+                    description: prevStage.description,
+                    write: false,
+                    read: false,
+                    order_sequence: prevStage.order_sequence,
+                  }));
                 }
               }}
               disabled={readOnly}
@@ -514,6 +537,8 @@ function Stage({
                     dict.workflow.pipeline.repositoryAction}
                   {stage.type === 'trigger_workflow' &&
                     dict.workflow.pipeline.triggerWorkflow}
+                  {stage.type === 'validation' &&
+                    dict.workflow.pipeline.validation}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -529,6 +554,9 @@ function Stage({
                 </SelectItem>
                 <SelectItem value='trigger_workflow'>
                   {dict.workflow.pipeline.triggerWorkflow}
+                </SelectItem>
+                <SelectItem value='validation'>
+                  {dict.workflow.pipeline.validation}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -1232,6 +1260,106 @@ function Stage({
                     {dict.list.view}
                   </Button>
                 )}
+              </div>
+            </>
+          )}
+
+          {stage.type === 'validation' && (
+            <>
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`validation-mode-${index}`}>
+                  {dict.workflow.pipeline.validationMode}
+                </Label>
+                <Select
+                  value={stage.validation_mode ?? 'all'}
+                  onValueChange={(value: 'single' | 'all') => {
+                    setStage((prevStage) => ({
+                      ...prevStage,
+                      validation_mode: value,
+                    }));
+                  }}
+                  disabled={readOnly}
+                >
+                  <SelectTrigger
+                    id={`validation-mode-${index}`}
+                    className='w-full'
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='single'>
+                      {dict.workflow.pipeline.validationModeSingle}
+                    </SelectItem>
+                    <SelectItem value='all'>
+                      {dict.workflow.pipeline.validationModeAll}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='flex items-center gap-2'>
+                <input
+                  type='checkbox'
+                  id={`fail-on-error-${index}`}
+                  checked={stage.fail_on_error ?? true}
+                  onChange={(e) => {
+                    setStage((prevStage) => ({
+                      ...prevStage,
+                      fail_on_error: e.target.checked,
+                    }));
+                  }}
+                  disabled={readOnly}
+                  className='size-4'
+                />
+                <Label htmlFor={`fail-on-error-${index}`}>
+                  {dict.workflow.pipeline.failOnError}
+                </Label>
+              </div>
+
+              {stage.validation_mode === 'single' && (
+                <div className='flex flex-col gap-2'>
+                  <Label htmlFor={`validation-target-${index}`}>
+                    {dict.workflow.pipeline.validationTargetName}
+                  </Label>
+                  <input
+                    type='text'
+                    id={`validation-target-${index}`}
+                    placeholder={
+                      dict.workflow.pipeline.validationTargetNamePlaceholder
+                    }
+                    value={stage.validation_target_name || ''}
+                    onChange={(e) => {
+                      setStage((prevStage) => ({
+                        ...prevStage,
+                        validation_target_name: e.target.value,
+                      }));
+                    }}
+                    disabled={readOnly}
+                    className={`
+                      w-full rounded-md border border-input bg-background px-3
+                      py-2 text-sm
+                    `}
+                  />
+                </div>
+              )}
+
+              <div className='flex flex-col gap-2'>
+                <Label>{dict.workflow.pipeline.validationSchema}</Label>
+                <div
+                  className={`rounded-md border border-input bg-background p-3`}
+                >
+                  <ObjectSchemaBuilder
+                    value={stage.validation_schema}
+                    onChange={(newSchema) =>
+                      setStage((prevStage) => ({
+                        ...prevStage,
+                        validation_schema: newSchema,
+                      }))
+                    }
+                    disabled={readOnly}
+                    allowedTypes={['structured']}
+                  />
+                </div>
               </div>
             </>
           )}

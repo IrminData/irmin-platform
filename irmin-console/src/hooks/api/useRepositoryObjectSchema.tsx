@@ -7,7 +7,8 @@ import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-export const useRepositoryObjectSchema = (
+export const useRepositoryObjectSchemaQuery = (
+  workspaceSlug: string,
   repositorySlug: string,
   ref?: string,
   path?: string,
@@ -15,9 +16,8 @@ export const useRepositoryObjectSchema = (
 ) => {
   const { getToken } = useIAM();
   const { locale } = useLocale();
-  const { workspaceSlug } = useWorkspaceContext();
 
-  const repositoryObjectSchemaQuery = useQuery({
+  return useQuery({
     enabled: options?.enabled,
     queryKey: repositoryObjectSchemaQueryKey(
       workspaceSlug,
@@ -36,6 +36,23 @@ export const useRepositoryObjectSchema = (
       });
     },
   });
+};
+
+export const useRepositoryObjectSchema = (
+  repositorySlug: string,
+  ref?: string,
+  path?: string,
+  options?: { enabled?: boolean }
+) => {
+  const { workspaceSlug } = useWorkspaceContext();
+
+  const repositoryObjectSchemaQuery = useRepositoryObjectSchemaQuery(
+    workspaceSlug,
+    repositorySlug,
+    ref,
+    path,
+    options
+  );
 
   return {
     //Query

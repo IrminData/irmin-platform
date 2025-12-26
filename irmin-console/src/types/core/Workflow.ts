@@ -1,6 +1,7 @@
 import type { Tag } from '@/types/core/Tag';
 import type { User } from '@/types/core/User';
 
+import type { ObjectSchema } from './ObjectSchema';
 import type { WorkflowSchedule } from './Schedule';
 
 /**
@@ -205,6 +206,7 @@ export type PipelineStage = {
   | PipelineStageRepository
   | PipelineStageRepositoryAction
   | PipelineStageTriggerWorkflow
+  | PipelineStageValidation
 );
 
 /**
@@ -280,4 +282,19 @@ interface PipelineStageTriggerWorkflow {
   type: 'trigger_workflow';
   /** ID of the workflow to trigger */
   trigger_workflow_id: string;
+}
+
+/**
+ * Pipeline Stage that validates data against a schema
+ */
+interface PipelineStageValidation {
+  type: 'validation';
+  /** Schema to validate against */
+  validation_schema: ObjectSchema;
+  /** Validation mode: single file or all files. Defaults to 'all' if not specified. */
+  validation_mode?: 'single' | 'all';
+  /** Whether to fail pipeline on validation error. Defaults to true if not specified. */
+  fail_on_error?: boolean;
+  /** Optional: specific file name to validate (for single mode) */
+  validation_target_name?: string;
 }

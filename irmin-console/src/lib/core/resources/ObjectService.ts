@@ -53,6 +53,7 @@ class ObjectService {
     this.moveObject = this.moveObject.bind(this);
     this.copyObject = this.copyObject.bind(this);
     this.deleteObject = this.deleteObject.bind(this);
+    this.validateObject = this.validateObject.bind(this);
   }
 
   /**
@@ -517,6 +518,66 @@ class ObjectService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete object error');
+      throw error;
+    }
+  }
+
+  /**
+   * Validate an object against a schema.
+   *
+   * @param props - The object validation properties.
+   * @param props.workspace - The workspace slug.
+   * @param props.repository - The repository slug.
+   * @param props.ref - The ref to perform the validation on.
+   * @param props.path - The path of the object to validate.
+   * @param props.validationSchema - The schema to validate against.
+   * @param props.validationMode - The validation mode ('strict' or 'permissive').
+   * @returns Validation result with valid flag, logs, and optional error.
+   */
+  async validateObject({
+    workspace,
+    repository,
+    ref,
+    path,
+    validationSchema,
+    validationMode,
+  }: {
+    workspace: string;
+    repository: string;
+    ref: string;
+    path: string;
+    validationSchema: ObjectSchema;
+    validationMode: 'strict' | 'permissive';
+  }): Promise<{ valid: boolean; logs: string[]; error?: string }> {
+    try {
+      const params = new URLSearchParams();
+      params.append('ref', ref);
+      params.append('path', path);
+
+      const requestBody = {
+        validation_schema: validationSchema,
+        validation_mode: validationMode,
+      };
+
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/validate?${params.toString()}`;
+
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      })) as IrminAPIResponse<{
+        valid: boolean;
+        logs: string[];
+        error?: string;
+      }>;
+
+      if (!response.data) {
+        throw new Error('No validation data returned');
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error((error as Error).message, 'Validate object error');
       throw error;
     }
   }

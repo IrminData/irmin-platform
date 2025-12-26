@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { IoClose } from 'react-icons/io5';
 import {
   TbCheck,
+  TbCheckbox,
   TbCopy,
   TbDownload,
   TbEdit,
@@ -39,6 +40,7 @@ import type { Tag } from '@/types/core/Tag';
 
 import MoveRenameObjectModal from './MoveRenameObjectModal';
 import UploadObjectModal from './UploadObjectModal';
+import ValidateObjectModal from './ValidateObjectModal';
 
 /**
  * UI for the object details.
@@ -72,8 +74,12 @@ export default function ObjectDetails({
   const router = useRouter();
   const { workspaceSlug } = useWorkspaceContext();
   const { immutable, currentRef, repository } = useRepositoryContext();
-  const { deleteObjectMutation, moveObjectMutation, uploadObjectMutation } =
-    useRepositoryObject(repository.slug, currentRef, selectedObject?.path);
+  const {
+    deleteObjectMutation,
+    moveObjectMutation,
+    uploadObjectMutation,
+    validateObjectMutation,
+  } = useRepositoryObject(repository.slug, currentRef, selectedObject?.path);
   const { irminModal, irminConfirm } = usePopup();
   const { dict } = useLocale();
 
@@ -122,6 +128,10 @@ export default function ObjectDetails({
   );
   const canDelete = useMemo(
     () => isResourceAllowed('repository_object', 'delete', repository.id),
+    [isResourceAllowed, repository.id]
+  );
+  const canValidate = useMemo(
+    () => isResourceAllowed('repository_object', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
   const canViewTags = useMemo(
@@ -210,6 +220,35 @@ export default function ObjectDetails({
     irminConfirm,
     deleteObjectMutation,
     currentRef,
+  ]);
+
+  const handleValidate = useCallback(() => {
+    if (!selectedObject) return;
+    irminModal.show(
+      `${dict.repository.objects.validate}: ${selectedObject.name}`,
+      <ValidateObjectModal
+        objectPath={selectedObject.path}
+        repositorySlug={repository.slug}
+        currentRef={currentRef ?? undefined}
+        workspaceSlug={workspaceSlug}
+        validateObject={async (validationSchema, validationMode) => {
+          return await validateObjectMutation.mutateAsync({
+            path: selectedObject.path,
+            ref: currentRef ?? '',
+            validationSchema,
+            validationMode,
+          });
+        }}
+      />
+    );
+  }, [
+    selectedObject,
+    irminModal,
+    dict.repository.objects.validate,
+    repository.slug,
+    currentRef,
+    workspaceSlug,
+    validateObjectMutation,
   ]);
 
   const handleView = useCallback(() => {
@@ -555,6 +594,17 @@ export default function ObjectDetails({
                   icon={<TbSchema />}
                 >
                   {dict.repository.objects.viewSchema}
+                </Button>
+              )}
+              {canValidate && (
+                <Button
+                  size='sm'
+                  variant='secondary'
+                  className='w-full'
+                  icon={<TbCheckbox />}
+                  onClick={handleValidate}
+                >
+                  {dict.repository.objects.validateObject}
                 </Button>
               )}
               {canUpload && (
