@@ -178,16 +178,19 @@ class IrminCore {
       try {
         // Clone response to safely parse JSON without consuming the original stream
         const errorData = await response.clone().json();
-        const parts: string[] = [];
+        const uniqueMessages = new Set<string>();
+
         if (errorData?.errors && Array.isArray(errorData.errors)) {
-          parts.push(errorData.errors.join('\n'));
+          errorData.errors.forEach((error: string) => {
+            if (error) uniqueMessages.add(error);
+          });
         }
         if (errorData?.message) {
-          parts.push(errorData.message);
+          uniqueMessages.add(errorData.message);
         }
 
-        if (parts.length > 0) {
-          errorMessage = parts.join('\n');
+        if (uniqueMessages.size > 0) {
+          errorMessage = Array.from(uniqueMessages).join('\n');
         }
       } catch (e) {
         // Ignore errors from parsing JSON
@@ -201,17 +204,19 @@ class IrminCore {
 
     // Fallback check if no allowedStatusCodes were provided
     if (!allowedStatusCodes && !response.ok) {
-      const parts: string[] = [];
+      const uniqueMessages = new Set<string>();
 
       if (data.errors && Array.isArray(data.errors)) {
-        parts.push(data.errors.join('\n'));
+        data.errors.forEach((error: string) => {
+          if (error) uniqueMessages.add(error);
+        });
       }
       if (data.message) {
-        parts.push(data.message);
+        uniqueMessages.add(data.message);
       }
 
-      if (parts.length > 0) {
-        throw new Error(parts.join('\n'));
+      if (uniqueMessages.size > 0) {
+        throw new Error(Array.from(uniqueMessages).join('\n'));
       }
 
       throw new Error(

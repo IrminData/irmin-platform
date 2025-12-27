@@ -12,6 +12,9 @@ import type { PipelineStage } from '@/types/core/Workflow';
 
 import Stage from './Stage';
 
+// Extended type for internal use with stable React keys
+type PipelineStageWithId = PipelineStage & { _id: string };
+
 type PipelineStageEditorProps = {
   initialStages?: PipelineStage[];
   onSubmit?: (_stages: PipelineStage[]) => void;
@@ -20,6 +23,10 @@ type PipelineStageEditorProps = {
   defaultCollapsed?: boolean;
   currentWorkflowID?: string;
 };
+
+// Generate unique ID for stages
+let stageIdCounter = 0;
+const generateStageId = () => `stage_${Date.now()}_${++stageIdCounter}`;
 
 /**
  * UI component for editing pipeline stages.
@@ -44,6 +51,7 @@ function PipelineStageEditor({
   const { dict } = useLocale();
 
   // Ensure the first stage never has write: true and the last stage never has read: true
+  // Also add stable _id for React keys
   const sanitizedInitialStages = useMemo(
     () =>
       initialStages.map((stage, index) => {
@@ -51,6 +59,7 @@ function PipelineStageEditor({
         const isLast = index === initialStages.length - 1;
         return {
           ...stage,
+          _id: generateStageId(),
           write: isFirst ? false : stage.write,
           read: isLast ? false : stage.read,
         };
@@ -58,10 +67,24 @@ function PipelineStageEditor({
     [initialStages]
   );
 
-  const [stages, setStages] = useState<PipelineStage[]>(sanitizedInitialStages);
+  const [stages, setStages] = useState<PipelineStageWithId[]>(
+    sanitizedInitialStages
+  );
 
-  const prevStagesRef = useRef<PipelineStage[]>(stages);
+  const prevStagesRef = useRef<PipelineStageWithId[]>(stages);
   const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Helper function to strip internal UI properties (_id, inputHasData) from stages before submitting
+  const stripStageIds = useCallback(
+    (
+      stagesWithIds: Array<PipelineStageWithId & { inputHasData?: boolean }>
+    ): PipelineStage[] => {
+      return stagesWithIds.map(
+        ({ _id, inputHasData: _inputHasData, ...stage }) => stage
+      );
+    },
+    []
+  );
 
   // Watch for changes and trigger onSubmit if the save button is disabled
   useEffect(() => {
@@ -76,7 +99,7 @@ function PipelineStageEditor({
         JSON.stringify(prevStagesRef.current) !== JSON.stringify(stages);
       if (hasChanged) {
         prevStagesRef.current = stages;
-        onSubmit(stages);
+        onSubmit(stripStageIds(stages));
       }
     }, 300);
 
@@ -85,11 +108,12 @@ function PipelineStageEditor({
         clearTimeout(updateTimeoutRef.current);
       }
     };
-  }, [stages, onSubmit, hideSaveButton]);
+  }, [stages, onSubmit, hideSaveButton, stripStageIds]);
 
   const addStage = useCallback(() => {
     setStages((prevStages) => {
-      const newStage: PipelineStage = {
+      const newStage: PipelineStageWithId = {
+        _id: generateStageId(),
         description: '',
         write: prevStages.length > 0,
         read: false,
@@ -169,16 +193,16 @@ function PipelineStageEditor({
     (e: React.FormEvent) => {
       e.preventDefault();
       if (onSubmit) {
-        onSubmit(stages);
+        onSubmit(stripStageIds(stages));
       }
     },
-    [stages, onSubmit]
+    [stages, onSubmit, stripStageIds]
   );
 
   // Calculate flow state
   const stagesWithFlow = useMemo(() => {
     return stages.reduce<{
-      items: Array<PipelineStage & { inputHasData: boolean }>;
+      items: Array<PipelineStageWithId & { inputHasData: boolean }>;
       hasData: boolean;
     }>(
       (acc, stage) => {
@@ -210,7 +234,7 @@ function PipelineStageEditor({
 
           return (
             <div
-              key={stage.order_sequence}
+              key={stage._id}
               className={`
                 relative z-10 mb-6 flex gap-4
                 last:mb-0
@@ -278,37 +302,27 @@ function PipelineStageEditor({
               {/* The Card */}
               <div className='min-w-0 flex-1'>
                 <Stage
-                  index={stage.order_sequence}
-                  updateStage={(stage) => {
+                  index={index}
+                  updateStage={(updatedStage) => {
                     setStages((prevStages) => {
                       const newStages = [...prevStages];
-                      newStages[stage.order_sequence] = stage;
+                      newStages[index] = { ...updatedStage, _id: stage._id };
                       return newStages;
                     });
                   }}
                   moveStageUp={
-                    stage.order_sequence > 0
-                      ? () =>
-                          moveStage(
-                            stage.order_sequence,
-                            stage.order_sequence - 1
-                          )
-                      : undefined
+                    index > 0 ? () => moveStage(index, index - 1) : undefined
                   }
                   moveStageDown={
-                    stage.order_sequence < stages.length - 1
-                      ? () =>
-                          moveStage(
-                            stage.order_sequence,
-                            stage.order_sequence + 1
-                          )
+                    index < stages.length - 1
+                      ? () => moveStage(index, index + 1)
                       : undefined
                   }
-                  removeStage={() => removeStage(stage.order_sequence)}
+                  removeStage={() => removeStage(index)}
                   initialStage={stage}
                   readOnly={readOnly}
                   defaultCollapsed={defaultCollapsed}
-                  isLastStage={stage.order_sequence === stages.length - 1}
+                  isLastStage={index === stages.length - 1}
                   currentWorkflowID={currentWorkflowID}
                 />
               </div>
