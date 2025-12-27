@@ -23,6 +23,9 @@ const (
 	// Validation modes
 	validationModeSingle = "single"
 	validationModeAll    = "all"
+
+	// Maximum length for sample strings in validation logs
+	maxSampleStringLength = 200
 )
 
 // executePipelineWorkflowable executes a pipeline workflowable.
@@ -732,6 +735,8 @@ func (o *Orchestrator) handleRepositoryActionStage(
 		return o.handleRepositoryMergeAction(ctx, workflow, stage)
 	case irminmodels.RepositoryActionTypeRevert:
 		return o.handleRepositoryRevertAction(ctx, workflow, stage)
+	case irminmodels.RepositoryActionTypeDelete:
+		return o.handleRepositoryDeleteAction(ctx, workflow, stage)
 	default:
 		logs = append(logs, fmt.Sprintf("Unknown repository action type: %s", *stage.RepositoryActionType))
 		return logs, fmt.Errorf("unknown repository action type: %s", *stage.RepositoryActionType)
@@ -919,6 +924,95 @@ func (o *Orchestrator) handleRepositoryRevertAction(
 	return logs, nil
 }
 
+// handleRepositoryDeleteAction handles deleting an object from the repository.
+func (o *Orchestrator) handleRepositoryDeleteAction(
+	ctx context.Context,
+	workflow *db.Workflow,
+	stage *db.PipelineStage,
+) ([]string, error) {
+	var logs []string
+
+	// Validate delete path
+	if stage.RepositoryActionDeletePath == nil || *stage.RepositoryActionDeletePath == "" {
+		logs = append(logs, "Delete path is required for delete action")
+		return logs, errors.New("delete path is required for delete action")
+	}
+
+	deletePath := *stage.RepositoryActionDeletePath
+
+	// Delete the object from the repository
+	err := o.dataEngine.DeleteObject(
+		workflow.Workspace.Slug,
+		stage.RepositoryActionRepository.Slug,
+		deletePath,
+		*stage.RepositoryActionBranch,
+	)
+	if err != nil {
+		if ctx.Err() != nil {
+			logs = append(logs, fmt.Sprintf("Workflow execution cancelled during delete: %v", ctx.Err()))
+			return logs, ctx.Err()
+		}
+		o.logger.ErrorContext(ctx, "Error deleting object", "error", err)
+		logs = append(logs, fmt.Sprintf("Error deleting object: %v", err))
+		return logs, err
+	}
+
+	logs = append(
+		logs,
+		fmt.Sprintf(
+			"Deleted object at %s@%s (path: %s)",
+			stage.RepositoryActionRepository.Slug,
+			*stage.RepositoryActionBranch,
+			deletePath,
+		),
+	)
+
+	// Optionally commit the deletion if a commit message is provided
+	if stage.RepositoryActionCommitMessage != nil && *stage.RepositoryActionCommitMessage != "" {
+		// Get author from workflow owner
+		author := workflow.Owner.Email
+		if workflow.Owner.FirstName != "" && workflow.Owner.LastName != "" {
+			author = fmt.Sprintf(
+				"%s %s <%s>",
+				workflow.Owner.FirstName,
+				workflow.Owner.LastName,
+				workflow.Owner.Email,
+			)
+		}
+
+		// Commit the deletion
+		commit, commitErr := o.dataEngine.CommitChanges(
+			workflow.Workspace.Slug,
+			stage.RepositoryActionRepository.Slug,
+			*stage.RepositoryActionBranch,
+			*stage.RepositoryActionCommitMessage,
+			author,
+			true,
+		)
+		if commitErr != nil {
+			if ctx.Err() != nil {
+				logs = append(logs, fmt.Sprintf("Workflow execution cancelled during commit: %v", ctx.Err()))
+				return logs, ctx.Err()
+			}
+			o.logger.ErrorContext(ctx, "Error committing deletion", "error", commitErr)
+			logs = append(logs, fmt.Sprintf("Error committing deletion: %v", commitErr))
+			return logs, commitErr
+		}
+
+		logs = append(
+			logs,
+			fmt.Sprintf(
+				"Committed deletion to %s@%s (commit: %s)",
+				stage.RepositoryActionRepository.Slug,
+				*stage.RepositoryActionBranch,
+				commit.Hash,
+			),
+		)
+	}
+
+	return logs, nil
+}
+
 // handleTriggerWorkflowStage handles triggering another workflow.
 func (o *Orchestrator) handleTriggerWorkflowStage(
 	ctx context.Context,
@@ -1075,75 +1169,16 @@ func (o *Orchestrator) validateFiles(
 		}
 
 		fileData := previousStageResults[fileName]
-		
+
 		// Log file details before validation
 		*logs = append(*logs, fmt.Sprintf("Validating file '%s' (size: %d bytes)", fileName, len(fileData)))
-		
+
 		// Log schema details
-		if stage.ValidationSchema != nil {
-			schemaType := string(stage.ValidationSchema.Type)
-			*logs = append(*logs, fmt.Sprintf("  Schema type: %s", schemaType))
-			
-			if stage.ValidationSchema.Type == irminmodels.ObjectTypeStructured && stage.ValidationSchema.Schema != nil {
-				*logs = append(*logs, fmt.Sprintf("  JSON Schema type: %s", stage.ValidationSchema.Schema.Type))
-				if len(stage.ValidationSchema.Schema.Required) > 0 {
-					*logs = append(*logs, fmt.Sprintf("  Required fields: %v", stage.ValidationSchema.Schema.Required))
-				}
-				if len(stage.ValidationSchema.Schema.Properties) > 0 {
-					propertyNames := make([]string, 0, len(stage.ValidationSchema.Schema.Properties))
-					for propName := range stage.ValidationSchema.Schema.Properties {
-						propertyNames = append(propertyNames, propName)
-					}
-					*logs = append(*logs, fmt.Sprintf("  Schema properties: %v", propertyNames))
-				}
-			}
-			if stage.ValidationSchema.ContentType != nil {
-				*logs = append(*logs, fmt.Sprintf("  Expected content type: %s", *stage.ValidationSchema.ContentType))
-			}
-		}
-		
+		o.logValidationSchemaDetails(stage.ValidationSchema, logs)
+
 		// Log actual data structure (for JSON files)
-		if len(fileData) > 0 {
-			var parsedData any
-			if err := json.Unmarshal(fileData, &parsedData); err == nil {
-				dataType := fmt.Sprintf("%T", parsedData)
-				*logs = append(*logs, fmt.Sprintf("  Actual data type: %s", dataType))
-				
-				// Log sample structure for arrays and objects
-				switch v := parsedData.(type) {
-				case []any:
-					*logs = append(*logs, fmt.Sprintf("  Array length: %d", len(v)))
-					if len(v) > 0 {
-						*logs = append(*logs, fmt.Sprintf("  First item type: %T", v[0]))
-						if len(v) > 0 {
-							firstItemSample, _ := json.Marshal(v[0])
-							sampleStr := string(firstItemSample)
-							if len(sampleStr) > 200 {
-								sampleStr = sampleStr[:200] + "..."
-							}
-							*logs = append(*logs, fmt.Sprintf("  First item sample: %s", sampleStr))
-						}
-					}
-				case map[string]any:
-					keys := make([]string, 0, len(v))
-					for k := range v {
-						keys = append(keys, k)
-					}
-					*logs = append(*logs, fmt.Sprintf("  Object keys: %v", keys))
-					if len(v) > 0 {
-						objSample, _ := json.Marshal(v)
-						sampleStr := string(objSample)
-						if len(sampleStr) > 200 {
-							sampleStr = sampleStr[:200] + "..."
-						}
-						*logs = append(*logs, fmt.Sprintf("  Object sample: %s", sampleStr))
-					}
-				}
-			} else {
-				*logs = append(*logs, fmt.Sprintf("  Data is not valid JSON: %v", err))
-			}
-		}
-		
+		o.logValidationDataStructure(fileData, logs)
+
 		result := lib.ValidateDataAgainstSchemaWithConfig(fileName, fileData, stage.ValidationSchema, validationConfig)
 		filesValidated++
 
@@ -1177,6 +1212,100 @@ func (o *Orchestrator) validateFiles(
 	}
 
 	return filesValidated, filesValid, validationErrors
+}
+
+// logValidationSchemaDetails logs details about the validation schema.
+func (o *Orchestrator) logValidationSchemaDetails(schema *irminmodels.ObjectSchema, logs *[]string) {
+	if schema == nil {
+		return
+	}
+
+	schemaType := string(schema.Type)
+	*logs = append(*logs, fmt.Sprintf("  Schema type: %s", schemaType))
+
+	if schema.Type == irminmodels.ObjectTypeStructured && schema.Schema != nil {
+		*logs = append(*logs, fmt.Sprintf("  JSON Schema type: %s", schema.Schema.Type))
+		if len(schema.Schema.Required) > 0 {
+			*logs = append(*logs, fmt.Sprintf("  Required fields: %v", schema.Schema.Required))
+		}
+		if len(schema.Schema.Properties) > 0 {
+			propertyNames := make([]string, 0, len(schema.Schema.Properties))
+			for propName := range schema.Schema.Properties {
+				propertyNames = append(propertyNames, propName)
+			}
+			*logs = append(*logs, fmt.Sprintf("  Schema properties: %v", propertyNames))
+		}
+	}
+	if schema.ContentType != nil {
+		*logs = append(*logs, fmt.Sprintf("  Expected content type: %s", *schema.ContentType))
+	}
+}
+
+// logValidationDataStructure logs details about the actual data structure being validated.
+func (o *Orchestrator) logValidationDataStructure(fileData []byte, logs *[]string) {
+	if len(fileData) == 0 {
+		return
+	}
+
+	var parsedData any
+	if err := json.Unmarshal(fileData, &parsedData); err == nil {
+		dataType := fmt.Sprintf("%T", parsedData)
+		*logs = append(*logs, fmt.Sprintf("  Actual data type: %s", dataType))
+
+		// Log sample structure for arrays and objects
+		switch v := parsedData.(type) {
+		case []any:
+			o.logArraySample(v, logs)
+		case map[string]any:
+			o.logObjectSample(v, logs)
+		}
+	} else {
+		*logs = append(*logs, fmt.Sprintf("  Data is not valid JSON: %v", err))
+	}
+}
+
+// logArraySample logs sample data for array types.
+func (o *Orchestrator) logArraySample(arr []any, logs *[]string) {
+	*logs = append(*logs, fmt.Sprintf("  Array length: %d", len(arr)))
+	if len(arr) == 0 {
+		return
+	}
+
+	*logs = append(*logs, fmt.Sprintf("  First item type: %T", arr[0]))
+	firstItemSample, err := json.Marshal(arr[0])
+	if err != nil {
+		return
+	}
+
+	sampleStr := string(firstItemSample)
+	if len(sampleStr) > maxSampleStringLength {
+		sampleStr = sampleStr[:maxSampleStringLength] + "..."
+	}
+	*logs = append(*logs, fmt.Sprintf("  First item sample: %s", sampleStr))
+}
+
+// logObjectSample logs sample data for object types.
+func (o *Orchestrator) logObjectSample(obj map[string]any, logs *[]string) {
+	keys := make([]string, 0, len(obj))
+	for k := range obj {
+		keys = append(keys, k)
+	}
+	*logs = append(*logs, fmt.Sprintf("  Object keys: %v", keys))
+
+	if len(obj) == 0 {
+		return
+	}
+
+	objSample, err := json.Marshal(obj)
+	if err != nil {
+		return
+	}
+
+	sampleStr := string(objSample)
+	if len(sampleStr) > maxSampleStringLength {
+		sampleStr = sampleStr[:maxSampleStringLength] + "..."
+	}
+	*logs = append(*logs, fmt.Sprintf("  Object sample: %s", sampleStr))
 }
 
 // checkValidationResults checks if validation succeeded and returns appropriate error

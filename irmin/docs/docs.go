@@ -12724,6 +12724,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Automated commit from workflow"
                 },
+                "repository_action_delete_path": {
+                    "type": "string",
+                    "example": "/data/customers.csv"
+                },
                 "repository_action_merge_strategy": {
                     "type": "string",
                     "example": "recursive"
@@ -12749,7 +12753,8 @@ const docTemplate = `{
                     "enum": [
                         "commit",
                         "merge",
-                        "revert"
+                        "revert",
+                        "delete"
                     ],
                     "allOf": [
                         {
@@ -13160,12 +13165,14 @@ const docTemplate = `{
             "enum": [
                 "commit",
                 "merge",
-                "revert"
+                "revert",
+                "delete"
             ],
             "x-enum-varnames": [
                 "RepositoryActionTypeCommit",
                 "RepositoryActionTypeMerge",
-                "RepositoryActionTypeRevert"
+                "RepositoryActionTypeRevert",
+                "RepositoryActionTypeDelete"
             ]
         },
         "irminmodels.RepositoryEvent": {

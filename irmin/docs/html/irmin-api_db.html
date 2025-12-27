@@ -821,6 +821,7 @@ type PipelineStage struct {
 	RepositoryActionTargetBranch  *string                           `json:"repository_action_target_branch,omitempty"`
 	RepositoryActionCommitMessage *string                           `json:"repository_action_commit_message,omitempty"`
 	RepositoryActionRevertPath    *string                           `json:"repository_action_revert_path,omitempty"`
+	RepositoryActionDeletePath    *string                           `json:"repository_action_delete_path,omitempty"`
 	RepositoryActionMergeStrategy *string                           `json:"repository_action_merge_strategy,omitempty"`
 	RepositoryActionSquash        *bool                             `json:"repository_action_squash,omitempty"`
 	RepositoryActionAllowEmpty    *bool                             `json:"repository_action_allow_empty,omitempty"`

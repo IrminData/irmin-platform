@@ -1654,6 +1654,9 @@ definitions:
       repository_action_commit_message:
         example: Automated commit from workflow
         type: string
+      repository_action_delete_path:
+        example: /data/customers.csv
+        type: string
       repository_action_merge_strategy:
         example: recursive
         type: string
@@ -1677,6 +1680,7 @@ definitions:
         - commit
         - merge
         - revert
+        - delete
         example: commit
       repository_branch:
         example: main
@@ -2008,11 +2012,13 @@ definitions:
     - commit
     - merge
     - revert
+    - delete
     type: string
     x-enum-varnames:
     - RepositoryActionTypeCommit
     - RepositoryActionTypeMerge
     - RepositoryActionTypeRevert
+    - RepositoryActionTypeDelete
   irminmodels.RepositoryEvent:
     enum:
     - pre-commit
