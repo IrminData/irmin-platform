@@ -661,6 +661,7 @@ const fi = {
       commit: 'Commit',
       merge: 'Yhdistä',
       revert: 'Palauta',
+      delete: 'Poista',
       targetBranch: 'Kohdehaara',
       mergeStrategy: 'Yhdistämisstrategia',
       mergeStrategyDefault: 'Oletus',
@@ -674,6 +675,7 @@ const fi = {
       commitMessage: 'Commit-viesti',
       commitMessagePlaceholder: 'Automatisoitu commit prosessista',
       revertPath: 'Palautuksen polku',
+      deletePath: 'Poistettava polku',
       validation: 'Validointi',
       validationMode: 'Validointitila',
       validationModeSingle:

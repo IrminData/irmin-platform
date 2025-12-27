@@ -978,7 +978,8 @@ function Stage({
                       repository_action_type: value as
                         | 'commit'
                         | 'merge'
-                        | 'revert',
+                        | 'revert'
+                        | 'delete',
                     }));
                   }}
                   disabled={readOnly}
@@ -995,6 +996,9 @@ function Stage({
                     </SelectItem>
                     <SelectItem value='revert'>
                       {dict.workflow.pipeline.revert}
+                    </SelectItem>
+                    <SelectItem value='delete'>
+                      {dict.workflow.pipeline.delete}
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -1208,6 +1212,50 @@ function Stage({
                     placeholder='/'
                   />
                 </div>
+              )}
+
+              {stage.repository_action_type === 'delete' && (
+                <>
+                  <div className='flex flex-col gap-2'>
+                    <Label htmlFor={`repo-action-delete-path-${index}`}>
+                      {dict.workflow.pipeline.deletePath}
+                    </Label>
+                    <Input
+                      id={`repo-action-delete-path-${index}`}
+                      value={stage.repository_action_delete_path ?? ''}
+                      onChange={(e) =>
+                        setStage((prevStage) => ({
+                          ...prevStage,
+                          repository_action_delete_path: e.target.value,
+                        }))
+                      }
+                      readOnly={readOnly}
+                      placeholder='/data/file.csv'
+                    />
+                  </div>
+
+                  <div className='flex flex-col gap-2'>
+                    <Label
+                      htmlFor={`repo-action-delete-commit-message-${index}`}
+                    >
+                      {dict.workflow.pipeline.commitMessage}
+                    </Label>
+                    <Input
+                      id={`repo-action-delete-commit-message-${index}`}
+                      value={stage.repository_action_commit_message ?? ''}
+                      onChange={(e) =>
+                        setStage((prevStage) => ({
+                          ...prevStage,
+                          repository_action_commit_message: e.target.value,
+                        }))
+                      }
+                      readOnly={readOnly}
+                      placeholder={
+                        dict.workflow.pipeline.commitMessagePlaceholder
+                      }
+                    />
+                  </div>
+                </>
               )}
             </>
           )}

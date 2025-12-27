@@ -251,12 +251,12 @@ interface PipelineStageRepository {
 }
 
 /**
- * Pipeline Stage that performs a repository action (commit, merge, revert)
+ * Pipeline Stage that performs a repository action (commit, merge, revert, delete)
  */
 interface PipelineStageRepositoryAction {
   type: 'repository_action';
   /** Type of repository action */
-  repository_action_type: 'commit' | 'merge' | 'revert';
+  repository_action_type: 'commit' | 'merge' | 'revert' | 'delete';
   /** Slug of the repository to use */
   repository_action_repository: string;
   /** Branch in the repository */
@@ -267,6 +267,8 @@ interface PipelineStageRepositoryAction {
   repository_action_commit_message?: string;
   /** Path to revert (for revert) */
   repository_action_revert_path?: string;
+  /** Path to delete (for delete) */
+  repository_action_delete_path?: string;
   /** Merge strategy (for merge) */
   repository_action_merge_strategy?: string;
   /** Whether to squash commits (for merge) */

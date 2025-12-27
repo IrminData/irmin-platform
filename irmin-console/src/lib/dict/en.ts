@@ -685,6 +685,7 @@ const en = {
       commit: 'Commit',
       merge: 'Merge',
       revert: 'Revert',
+      delete: 'Delete',
       targetBranch: 'Target Branch',
       mergeStrategy: 'Merge Strategy',
       mergeStrategyDefault: 'Default',
@@ -698,6 +699,7 @@ const en = {
       commitMessage: 'Commit Message',
       commitMessagePlaceholder: 'Automated commit from workflow',
       revertPath: 'Revert Path',
+      deletePath: 'Delete Path',
       stageTypeDescription: {
         action:
           'Action stages execute custom scripts to process data, accepting input from previous stages and producing output for subsequent stages.',
