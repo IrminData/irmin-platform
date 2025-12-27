@@ -46,6 +46,7 @@ const (
 	RepositoryActionTypeCommit RepositoryActionType = "commit"
 	RepositoryActionTypeMerge  RepositoryActionType = "merge"
 	RepositoryActionTypeRevert RepositoryActionType = "revert"
+	RepositoryActionTypeDelete RepositoryActionType = "delete"
 )
 
 type PipelineStage struct {
@@ -72,15 +73,16 @@ type PipelineStage struct {
 	RepositoryReadPaths *[]string `json:"repository_read_paths,omitempty" validate:"omitempty,dive"              example:"/raw/customers.csv,/config/schema.json"`
 
 	// Repository Action stage specific
-	RepositoryActionType          *RepositoryActionType `json:"repository_action_type,omitempty"           validate:"omitempty,oneof=commit merge revert,required_if=Type repository_action" example:"commit"`
-	RepositoryActionRepository    *string               `json:"repository_action_repository,omitempty"     validate:"required_if=Type repository_action"                                     example:"customer-analytics"`
-	RepositoryActionBranch        *string               `json:"repository_action_branch,omitempty"         validate:"required_if=Type repository_action"                                     example:"main"`
-	RepositoryActionTargetBranch  *string               `json:"repository_action_target_branch,omitempty"                                                                                    example:"staging"`
-	RepositoryActionCommitMessage *string               `json:"repository_action_commit_message,omitempty"                                                                                   example:"Automated commit from workflow"`
-	RepositoryActionRevertPath    *string               `json:"repository_action_revert_path,omitempty"                                                                                      example:"/data/customers.csv"`
-	RepositoryActionMergeStrategy *string               `json:"repository_action_merge_strategy,omitempty"                                                                                   example:"recursive"`
-	RepositoryActionSquash        *bool                 `json:"repository_action_squash,omitempty"                                                                                           example:"false"`
-	RepositoryActionAllowEmpty    *bool                 `json:"repository_action_allow_empty,omitempty"                                                                                      example:"false"`
+	RepositoryActionType          *RepositoryActionType `json:"repository_action_type,omitempty"           validate:"omitempty,oneof=commit merge revert delete,required_if=Type repository_action" example:"commit"`
+	RepositoryActionRepository    *string               `json:"repository_action_repository,omitempty"     validate:"required_if=Type repository_action"                                            example:"customer-analytics"`
+	RepositoryActionBranch        *string               `json:"repository_action_branch,omitempty"         validate:"required_if=Type repository_action"                                            example:"main"`
+	RepositoryActionTargetBranch  *string               `json:"repository_action_target_branch,omitempty"                                                                                           example:"staging"`
+	RepositoryActionCommitMessage *string               `json:"repository_action_commit_message,omitempty"                                                                                          example:"Automated commit from workflow"`
+	RepositoryActionRevertPath    *string               `json:"repository_action_revert_path,omitempty"                                                                                             example:"/data/customers.csv"`
+	RepositoryActionDeletePath    *string               `json:"repository_action_delete_path,omitempty"                                                                                             example:"/data/customers.csv"`
+	RepositoryActionMergeStrategy *string               `json:"repository_action_merge_strategy,omitempty"                                                                                          example:"recursive"`
+	RepositoryActionSquash        *bool                 `json:"repository_action_squash,omitempty"                                                                                                  example:"false"`
+	RepositoryActionAllowEmpty    *bool                 `json:"repository_action_allow_empty,omitempty"                                                                                             example:"false"`
 
 	// Trigger Workflow stage specific
 	TriggerWorkflowID *string `json:"trigger_workflow_id,omitempty" validate:"omitempty,validsqid=workflows,required_if=Type trigger_workflow" example:"wf_8x2m9k4n7p5q"`

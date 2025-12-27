@@ -197,6 +197,7 @@ func (v *Validator) validateRepositoryActionPipelineStage(parentStruct reflect.V
 	repositoryField := parentStruct.FieldByName("RepositoryActionRepository")
 	branchField := parentStruct.FieldByName("RepositoryActionBranch")
 	targetBranchField := parentStruct.FieldByName("RepositoryActionTargetBranch")
+	deletePathField := parentStruct.FieldByName("RepositoryActionDeletePath")
 
 	// Must have a repository action type
 	if !repositoryActionTypeField.IsValid() || repositoryActionTypeField.IsNil() {
@@ -204,7 +205,7 @@ func (v *Validator) validateRepositoryActionPipelineStage(parentStruct reflect.V
 	}
 
 	actionType := repositoryActionTypeField.Elem().String()
-	if actionType != "commit" && actionType != "merge" && actionType != "revert" {
+	if actionType != "commit" && actionType != "merge" && actionType != "revert" && actionType != "delete" {
 		return false
 	}
 
@@ -224,6 +225,14 @@ func (v *Validator) validateRepositoryActionPipelineStage(parentStruct reflect.V
 	if actionType == "merge" {
 		if !targetBranchField.IsValid() || targetBranchField.IsNil() ||
 			(targetBranchField.Elem().IsValid() && targetBranchField.Elem().String() == "") {
+			return false
+		}
+	}
+
+	// If it's a delete action, must have a delete path
+	if actionType == "delete" {
+		if !deletePathField.IsValid() || deletePathField.IsNil() ||
+			(deletePathField.Elem().IsValid() && deletePathField.Elem().String() == "") {
 			return false
 		}
 	}
