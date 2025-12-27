@@ -38,7 +38,33 @@ const (
 	PipelineStageTypeRepositoryAction PipelineStageType = "repository_action"
 	PipelineStageTypeTriggerWorkflow  PipelineStageType = "trigger_workflow"
 	PipelineStageTypeValidation       PipelineStageType = "validation"
+	PipelineStageTypeTransform        PipelineStageType = "transform"
 )
+
+// TransformOperationType represents the type of transformation to apply.
+type TransformOperationType string
+
+const (
+	TransformOpFieldRename   TransformOperationType = "field_rename"
+	TransformOpFieldRemove   TransformOperationType = "field_remove"
+	TransformOpFileRename    TransformOperationType = "file_rename"
+	TransformOpFormatConvert TransformOperationType = "format_convert"
+)
+
+// OutputFormat represents the output format for format conversion.
+type OutputFormat string
+
+const (
+	OutputFormatCSV     OutputFormat = "csv"
+	OutputFormatJSON    OutputFormat = "json"
+	OutputFormatParquet OutputFormat = "parquet"
+)
+
+// FieldRename represents a field rename operation (old name to new name).
+type FieldRename struct {
+	OldName string `json:"old_name" validate:"required" example:"customer_id"`
+	NewName string `json:"new_name" validate:"required" example:"id"`
+}
 
 type RepositoryActionType string
 
@@ -50,11 +76,11 @@ const (
 )
 
 type PipelineStage struct {
-	Description   string            `json:"description"    validate:"required,max=200"                                                                                             example:"Process customer data"`
-	Write         bool              `json:"write"                                                                                                                                  example:"true"`
-	Read          bool              `json:"read"                                                                                                                                   example:"true"`
-	OrderSequence int               `json:"order_sequence"                                                                                                                         example:"1"`
-	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation,validpipelinestage" example:"repository"`
+	Description   string            `json:"description"    validate:"required,max=200"                                                                                                       example:"Process customer data"`
+	Write         bool              `json:"write"                                                                                                                                            example:"true"`
+	Read          bool              `json:"read"                                                                                                                                             example:"true"`
+	OrderSequence int               `json:"order_sequence"                                                                                                                                   example:"1"`
+	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform,validpipelinestage" example:"repository"`
 
 	// Action stage specific
 	ExecutableType ActionExecutableType `json:"executable_type,omitempty" validate:"omitempty,oneof=script query,required_if=Type action"          example:"script"`
@@ -92,6 +118,15 @@ type PipelineStage struct {
 	ValidationMode       *string       `json:"validation_mode,omitempty"` // "single" or "all"
 	FailOnError          *bool         `json:"fail_on_error,omitempty"`
 	ValidationTargetName *string       `json:"validation_target_name,omitempty"`
+
+	// Transform stage specific
+	TransformOperation      *TransformOperationType `json:"transform_operation,omitempty"        validate:"omitempty,oneof=field_rename field_remove file_rename format_convert,required_if=Type transform" example:"field_rename"`
+	TransformMode           *string                 `json:"transform_mode,omitempty"` // "single" or "all"
+	TransformTargetName     *string                 `json:"transform_target_name,omitempty"                                                                                                                 example:"customers.csv"`
+	TransformFieldRenames   []FieldRename           `json:"transform_field_renames,omitempty"    validate:"dive"`
+	TransformFieldsToRemove []string                `json:"transform_fields_to_remove,omitempty"                                                                                                            example:"internal_id,temp_flag"`
+	TransformOutputName     *string                 `json:"transform_output_name,omitempty"                                                                                                                 example:"customers_renamed.csv"`
+	TransformOutputFormat   *OutputFormat           `json:"transform_output_format,omitempty"    validate:"omitempty,oneof=csv json parquet"                                                                example:"json"`
 }
 
 type ActionInputData struct {

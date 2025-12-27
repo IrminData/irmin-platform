@@ -828,6 +828,12 @@ func (c *Client) ValidateConnectorConfiguration(
 	req ConnectorConfigurationRequest,
 ) (*irminmodels.ConnectorConfigurationValidationResult, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) ValidateObject(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+	req ValidateObjectRequest,
+) (*ValidateObjectResponse, *irminmodels.IrminAPIResponse, error)
+
 func (c *Client) ValidateRequest(req any) error
     ValidateRequest validates a request struct without sending it to the API.
     This is useful for testing or pre-validation of request data.
@@ -1173,6 +1179,21 @@ type UploadObjectFromURLRequest struct {
 }
     UploadObjectFromURLRequest represents the JSON request body for uploading
     objects from URLs.
+
+type ValidateObjectRequest struct {
+	ValidationSchema *irminmodels.ObjectSchema `json:"validation_schema" validate:"required"`
+	ValidationMode   string                    `json:"validation_mode"   validate:"required,oneof=strict permissive" example:"strict"`
+}
+    ValidateObjectRequest represents the JSON request body for validating
+    repository objects.
+
+type ValidateObjectResponse struct {
+	Valid bool     `json:"valid"`
+	Logs  []string `json:"logs"`
+	Error string   `json:"error,omitempty"`
+}
+    ValidateObjectResponse represents the response from validating a repository
+    object.
 
 type WorkflowRequest struct {
 	Type          irminmodels.WorkflowableType `json:"type"                    validate:"required,oneof=import action export pipeline" example:"import"`

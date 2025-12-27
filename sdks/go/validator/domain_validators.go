@@ -83,6 +83,8 @@ func (v *Validator) validatePipelineStage(fl validator.FieldLevel) bool {
 		return v.validateTriggerWorkflowPipelineStage(parentStruct)
 	case "validation":
 		return v.validateValidationPipelineStage(parentStruct)
+	case "transform":
+		return v.validateTransformPipelineStage(parentStruct)
 	default:
 		return true // Let oneof validation handle invalid types
 	}
@@ -266,6 +268,71 @@ func (v *Validator) validateValidationPipelineStage(parentStruct reflect.Value) 
 	if validationModeField.IsValid() && !validationModeField.IsNil() {
 		mode := validationModeField.Elem().String()
 		if mode != "single" && mode != "all" {
+			return false
+		}
+	}
+
+	return true
+}
+
+// validateTransformPipelineStage validates transform-type pipeline stages.
+//
+//nolint:gocognit // There is no need to refactor this code
+func (v *Validator) validateTransformPipelineStage(parentStruct reflect.Value) bool {
+	transformOperationField := parentStruct.FieldByName("TransformOperation")
+	transformModeField := parentStruct.FieldByName("TransformMode")
+	transformFieldRenamesField := parentStruct.FieldByName("TransformFieldRenames")
+	transformFieldsToRemoveField := parentStruct.FieldByName("TransformFieldsToRemove")
+	transformOutputFormatField := parentStruct.FieldByName("TransformOutputFormat")
+	transformOutputNameField := parentStruct.FieldByName("TransformOutputName")
+
+	// TransformOperation is required
+	if !transformOperationField.IsValid() || transformOperationField.IsNil() {
+		return false
+	}
+
+	operation := transformOperationField.Elem().String()
+	if operation != "field_rename" && operation != "field_remove" && operation != "file_rename" &&
+		operation != "format_convert" {
+		return false
+	}
+
+	// TransformMode must be "single" or "all" if provided
+	if transformModeField.IsValid() && !transformModeField.IsNil() {
+		mode := transformModeField.Elem().String()
+		if mode != "single" && mode != "all" {
+			return false
+		}
+	}
+
+	// Validate operation-specific requirements
+	switch operation {
+	case "field_rename":
+		// field_rename requires TransformFieldRenames to be non-empty
+		if !transformFieldRenamesField.IsValid() || transformFieldRenamesField.Len() == 0 {
+			return false
+		}
+	case "field_remove":
+		// field_remove requires TransformFieldsToRemove to be non-empty
+		if !transformFieldsToRemoveField.IsValid() || transformFieldsToRemoveField.Len() == 0 {
+			return false
+		}
+	case "format_convert":
+		// format_convert requires TransformOutputFormat
+		if !transformOutputFormatField.IsValid() || transformOutputFormatField.IsNil() {
+			return false
+		}
+		outputFormat := transformOutputFormatField.Elem().String()
+		if outputFormat != "csv" && outputFormat != "json" && outputFormat != "parquet" {
+			return false
+		}
+	case "file_rename":
+		// file_rename requires TransformOutputName
+		if !transformOutputNameField.IsValid() || transformOutputNameField.IsNil() {
+			return false
+		}
+		outputName := transformOutputNameField.Elem().String()
+		if outputName == "" {
 			return false
 		}
 	}

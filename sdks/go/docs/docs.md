@@ -279,6 +279,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) UploadObject\(ctx context.Context, workspace, repository, ref, path string, files map\[string\]\[\]byte\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.UploadObject>)
   - [func \(c \*Client\) UploadObjectFromURL\(ctx context.Context, workspace, repository, ref, path string, req UploadObjectFromURLRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.UploadObjectFromURL>)
   - [func \(c \*Client\) ValidateConnectorConfiguration\(ctx context.Context, connectorID string, req ConnectorConfigurationRequest\) \(\*irminmodels.ConnectorConfigurationValidationResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ValidateConnectorConfiguration>)
+  - [func \(c \*Client\) ValidateObject\(ctx context.Context, workspace, repository, path, ref string, req ValidateObjectRequest\) \(\*ValidateObjectResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.ValidateObject>)
   - [func \(c \*Client\) ValidateRequest\(req any\) error](<#Client.ValidateRequest>)
   - [func \(c \*Client\) ValidateRequestEnhanced\(req any\) \*irminvalidator.ValidationResultError](<#Client.ValidateRequestEnhanced>)
   - [func \(c \*Client\) ValidateVar\(field any, tag string\) error](<#Client.ValidateVar>)
@@ -325,6 +326,8 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type UpdateWorkflowRequest](<#UpdateWorkflowRequest>)
 - [type UpdateWorkspaceRequest](<#UpdateWorkspaceRequest>)
 - [type UploadObjectFromURLRequest](<#UploadObjectFromURLRequest>)
+- [type ValidateObjectRequest](<#ValidateObjectRequest>)
+- [type ValidateObjectResponse](<#ValidateObjectResponse>)
 - [type WorkflowRequest](<#WorkflowRequest>)
 
 
@@ -1643,6 +1646,15 @@ func (c *Client) ValidateConnectorConfiguration(ctx context.Context, connectorID
 
 
 
+<a name="Client.ValidateObject"></a>
+### func \(\*Client\) ValidateObject
+
+```go
+func (c *Client) ValidateObject(ctx context.Context, workspace, repository, path, ref string, req ValidateObjectRequest) (*ValidateObjectResponse, *irminmodels.IrminAPIResponse, error)
+```
+
+
+
 <a name="Client.ValidateRequest"></a>
 ### func \(\*Client\) ValidateRequest
 
@@ -2233,6 +2245,31 @@ type UploadObjectFromURLRequest struct {
 }
 ```
 
+<a name="ValidateObjectRequest"></a>
+## type ValidateObjectRequest
+
+ValidateObjectRequest represents the JSON request body for validating repository objects.
+
+```go
+type ValidateObjectRequest struct {
+    ValidationSchema *irminmodels.ObjectSchema `json:"validation_schema" validate:"required"`
+    ValidationMode   string                    `json:"validation_mode"   validate:"required,oneof=strict permissive" example:"strict"`
+}
+```
+
+<a name="ValidateObjectResponse"></a>
+## type ValidateObjectResponse
+
+ValidateObjectResponse represents the response from validating a repository object.
+
+```go
+type ValidateObjectResponse struct {
+    Valid bool     `json:"valid"`
+    Logs  []string `json:"logs"`
+    Error string   `json:"error,omitempty"`
+}
+```
+
 <a name="WorkflowRequest"></a>
 ## type WorkflowRequest
 
@@ -2569,6 +2606,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type DynamicField](<#DynamicField>)
 - [type DynamicFields](<#DynamicFields>)
 - [type FieldMapping](<#FieldMapping>)
+- [type FieldRename](<#FieldRename>)
 - [type FieldType](<#FieldType>)
 - [type GarbageCollectionRules](<#GarbageCollectionRules>)
 - [type GitTag](<#GitTag>)
@@ -2583,6 +2621,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type Object](<#Object>)
 - [type ObjectSchema](<#ObjectSchema>)
 - [type ObjectType](<#ObjectType>)
+- [type OutputFormat](<#OutputFormat>)
 - [type Patch](<#Patch>)
 - [type PatchOperation](<#PatchOperation>)
 - [type PipelineStage](<#PipelineStage>)
@@ -2617,6 +2656,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type TemplateLanguage](<#TemplateLanguage>)
 - [type TemplatePlaceholder](<#TemplatePlaceholder>)
 - [type TemplateType](<#TemplateType>)
+- [type TransformOperationType](<#TransformOperationType>)
 - [type User](<#User>)
 - [type UserPolicySummary](<#UserPolicySummary>)
 - [type Workflow](<#Workflow>)
@@ -2997,6 +3037,18 @@ type FieldMapping struct {
 }
 ```
 
+<a name="FieldRename"></a>
+## type FieldRename
+
+FieldRename represents a field rename operation \(old name to new name\).
+
+```go
+type FieldRename struct {
+    OldName string `json:"old_name" validate:"required" example:"customer_id"`
+    NewName string `json:"new_name" validate:"required" example:"id"`
+}
+```
+
 <a name="FieldType"></a>
 ## type FieldType
 
@@ -3304,6 +3356,25 @@ const (
 )
 ```
 
+<a name="OutputFormat"></a>
+## type OutputFormat
+
+OutputFormat represents the output format for format conversion.
+
+```go
+type OutputFormat string
+```
+
+<a name="OutputFormatCSV"></a>
+
+```go
+const (
+    OutputFormatCSV     OutputFormat = "csv"
+    OutputFormatJSON    OutputFormat = "json"
+    OutputFormatParquet OutputFormat = "parquet"
+)
+```
+
 <a name="Patch"></a>
 ## type Patch
 
@@ -3338,11 +3409,11 @@ type PatchOperation struct {
 
 ```go
 type PipelineStage struct {
-    Description   string            `json:"description"    validate:"required,max=200"                                                                                             example:"Process customer data"`
-    Write         bool              `json:"write"                                                                                                                                  example:"true"`
-    Read          bool              `json:"read"                                                                                                                                   example:"true"`
-    OrderSequence int               `json:"order_sequence"                                                                                                                         example:"1"`
-    Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation,validpipelinestage" example:"repository"`
+    Description   string            `json:"description"    validate:"required,max=200"                                                                                                       example:"Process customer data"`
+    Write         bool              `json:"write"                                                                                                                                            example:"true"`
+    Read          bool              `json:"read"                                                                                                                                             example:"true"`
+    OrderSequence int               `json:"order_sequence"                                                                                                                                   example:"1"`
+    Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform,validpipelinestage" example:"repository"`
 
     // Action stage specific
     ExecutableType ActionExecutableType `json:"executable_type,omitempty" validate:"omitempty,oneof=script query,required_if=Type action"          example:"script"`
@@ -3361,15 +3432,16 @@ type PipelineStage struct {
     RepositoryReadPaths *[]string `json:"repository_read_paths,omitempty" validate:"omitempty,dive"              example:"/raw/customers.csv,/config/schema.json"`
 
     // Repository Action stage specific
-    RepositoryActionType          *RepositoryActionType `json:"repository_action_type,omitempty"           validate:"omitempty,oneof=commit merge revert,required_if=Type repository_action" example:"commit"`
-    RepositoryActionRepository    *string               `json:"repository_action_repository,omitempty"     validate:"required_if=Type repository_action"                                     example:"customer-analytics"`
-    RepositoryActionBranch        *string               `json:"repository_action_branch,omitempty"         validate:"required_if=Type repository_action"                                     example:"main"`
-    RepositoryActionTargetBranch  *string               `json:"repository_action_target_branch,omitempty"                                                                                    example:"staging"`
-    RepositoryActionCommitMessage *string               `json:"repository_action_commit_message,omitempty"                                                                                   example:"Automated commit from workflow"`
-    RepositoryActionRevertPath    *string               `json:"repository_action_revert_path,omitempty"                                                                                      example:"/data/customers.csv"`
-    RepositoryActionMergeStrategy *string               `json:"repository_action_merge_strategy,omitempty"                                                                                   example:"recursive"`
-    RepositoryActionSquash        *bool                 `json:"repository_action_squash,omitempty"                                                                                           example:"false"`
-    RepositoryActionAllowEmpty    *bool                 `json:"repository_action_allow_empty,omitempty"                                                                                      example:"false"`
+    RepositoryActionType          *RepositoryActionType `json:"repository_action_type,omitempty"           validate:"omitempty,oneof=commit merge revert delete,required_if=Type repository_action" example:"commit"`
+    RepositoryActionRepository    *string               `json:"repository_action_repository,omitempty"     validate:"required_if=Type repository_action"                                            example:"customer-analytics"`
+    RepositoryActionBranch        *string               `json:"repository_action_branch,omitempty"         validate:"required_if=Type repository_action"                                            example:"main"`
+    RepositoryActionTargetBranch  *string               `json:"repository_action_target_branch,omitempty"                                                                                           example:"staging"`
+    RepositoryActionCommitMessage *string               `json:"repository_action_commit_message,omitempty"                                                                                          example:"Automated commit from workflow"`
+    RepositoryActionRevertPath    *string               `json:"repository_action_revert_path,omitempty"                                                                                             example:"/data/customers.csv"`
+    RepositoryActionDeletePath    *string               `json:"repository_action_delete_path,omitempty"                                                                                             example:"/data/customers.csv"`
+    RepositoryActionMergeStrategy *string               `json:"repository_action_merge_strategy,omitempty"                                                                                          example:"recursive"`
+    RepositoryActionSquash        *bool                 `json:"repository_action_squash,omitempty"                                                                                                  example:"false"`
+    RepositoryActionAllowEmpty    *bool                 `json:"repository_action_allow_empty,omitempty"                                                                                             example:"false"`
 
     // Trigger Workflow stage specific
     TriggerWorkflowID *string `json:"trigger_workflow_id,omitempty" validate:"omitempty,validsqid=workflows,required_if=Type trigger_workflow" example:"wf_8x2m9k4n7p5q"`
@@ -3379,6 +3451,15 @@ type PipelineStage struct {
     ValidationMode       *string       `json:"validation_mode,omitempty"` // "single" or "all"
     FailOnError          *bool         `json:"fail_on_error,omitempty"`
     ValidationTargetName *string       `json:"validation_target_name,omitempty"`
+
+    // Transform stage specific
+    TransformOperation      *TransformOperationType `json:"transform_operation,omitempty"        validate:"omitempty,oneof=field_rename field_remove file_rename format_convert,required_if=Type transform" example:"field_rename"`
+    TransformMode           *string                 `json:"transform_mode,omitempty"` // "single" or "all"
+    TransformTargetName     *string                 `json:"transform_target_name,omitempty"                                                                                                                 example:"customers.csv"`
+    TransformFieldRenames   []FieldRename           `json:"transform_field_renames,omitempty"    validate:"dive"`
+    TransformFieldsToRemove []string                `json:"transform_fields_to_remove,omitempty"                                                                                                            example:"internal_id,temp_flag"`
+    TransformOutputName     *string                 `json:"transform_output_name,omitempty"                                                                                                                 example:"customers_renamed.csv"`
+    TransformOutputFormat   *OutputFormat           `json:"transform_output_format,omitempty"    validate:"omitempty,oneof=csv json parquet"                                                                example:"json"`
 }
 ```
 
@@ -3401,6 +3482,7 @@ const (
     PipelineStageTypeRepositoryAction PipelineStageType = "repository_action"
     PipelineStageTypeTriggerWorkflow  PipelineStageType = "trigger_workflow"
     PipelineStageTypeValidation       PipelineStageType = "validation"
+    PipelineStageTypeTransform        PipelineStageType = "transform"
 )
 ```
 
@@ -3654,6 +3736,7 @@ const (
     RepositoryActionTypeCommit RepositoryActionType = "commit"
     RepositoryActionTypeMerge  RepositoryActionType = "merge"
     RepositoryActionTypeRevert RepositoryActionType = "revert"
+    RepositoryActionTypeDelete RepositoryActionType = "delete"
 )
 ```
 
@@ -4001,6 +4084,26 @@ type TemplateType string
 const (
     TemplateTypeScript TemplateType = "script"
     TemplateTypeQuery  TemplateType = "query"
+)
+```
+
+<a name="TransformOperationType"></a>
+## type TransformOperationType
+
+TransformOperationType represents the type of transformation to apply.
+
+```go
+type TransformOperationType string
+```
+
+<a name="TransformOpFieldRename"></a>
+
+```go
+const (
+    TransformOpFieldRename   TransformOperationType = "field_rename"
+    TransformOpFieldRemove   TransformOperationType = "field_remove"
+    TransformOpFileRename    TransformOperationType = "file_rename"
+    TransformOpFormatConvert TransformOperationType = "format_convert"
 )
 ```
 
