@@ -8746,6 +8746,12 @@ var (
 )
 ```
 
+<a name="ErrWorkflowMinIntervalNotMet"></a>ErrWorkflowMinIntervalNotMet is returned when not enough time has passed since the last workflow run
+
+```go
+var ErrWorkflowMinIntervalNotMet = errors.New("workflow min interval not met")
+```
+
 <a name="AssignDefaultRolesToUsersWithoutRoles"></a>
 ## func AssignDefaultRolesToUsersWithoutRoles
 

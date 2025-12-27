@@ -10,6 +10,9 @@ import (
 	"gorm.io/gorm"
 )
 
+// ErrWorkflowMinIntervalNotMet is returned when not enough time has passed since the last workflow run
+var ErrWorkflowMinIntervalNotMet = errors.New("workflow min interval not met")
+
 // CreateWorkflowRun will check if enough time has passed since the last run.
 // If so, it will create a new pending workflow run, update the schedule's previous run time,
 // and return the new workflow run.
@@ -42,7 +45,7 @@ func CreateWorkflowRun(
 		if lastRun != nil {
 			timeSinceLastRun := time.Since(*lastRun)
 			if timeSinceLastRun < time.Duration(workflow.Schedule.MinInterval)*time.Second {
-				return nil, errors.New("not enough time has passed since the last run")
+				return nil, ErrWorkflowMinIntervalNotMet
 			}
 		}
 	}

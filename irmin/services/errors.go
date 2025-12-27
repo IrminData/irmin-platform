@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log/slog"
@@ -250,6 +251,8 @@ func MapErrorToStatusCode(err error) int {
 	case errors.Is(err, ErrWorkflowAlreadyPaused):
 		return fiber.StatusConflict
 	case errors.Is(err, ErrWorkflowAlreadyRunning):
+		return fiber.StatusConflict
+	case errors.Is(err, lib.ErrWorkflowMinIntervalNotMet):
 		return fiber.StatusConflict
 	case errors.Is(err, ErrBranchAlreadyExists):
 		return fiber.StatusConflict

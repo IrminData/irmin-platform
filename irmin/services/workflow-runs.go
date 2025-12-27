@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lib"
@@ -51,11 +52,20 @@ func (api *APIServices) CreateWorkflowRun(
 		var createWorkflowRunErr error
 		run, createWorkflowRunErr = lib.CreateWorkflowRun(tx, workflow, user, nil)
 		if createWorkflowRunErr != nil {
+			// Don't wrap validation errors as internal errors
+			if errors.Is(createWorkflowRunErr, lib.ErrWorkflowMinIntervalNotMet) {
+				return createWorkflowRunErr
+			}
 			return NewInternalErrorf("error creating workflow run: %w", createWorkflowRunErr)
 		}
 		return nil
 	})
 	if transactionErr != nil {
+		// Don't wrap validation errors as internal errors
+		if errors.Is(transactionErr, lib.ErrWorkflowMinIntervalNotMet) {
+			api.Logger.ErrorContext(c, "Workflow min interval not met", "workflow_id", workflow.ID)
+			return nil, transactionErr
+		}
 		api.Logger.ErrorContext(c, "Error creating workflow run", "error", transactionErr, "workflow_id", workflow.ID)
 		return nil, NewInternalErrorf("error in database transaction: %w", transactionErr)
 	}

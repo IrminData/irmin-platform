@@ -119,8 +119,9 @@ func (o *Orchestrator) executePipelineWorkflowable(
 				return logs, ctx.Err()
 			}
 			o.logger.ErrorContext(ctx, "Error executing stage", "error", errResult)
+			logs = append(logs, stageLogs...)
 			logs = append(logs, fmt.Sprintf("Error executing stage: %v", errResult))
-			continue
+			return logs, errResult
 		}
 
 		logs = append(logs, stageLogs...)

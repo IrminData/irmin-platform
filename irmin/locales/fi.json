@@ -21,6 +21,7 @@
   "workflow_ownership_transferred": "Prosessin omistajuus siirretty",
   "workflow_started": "Prosessi käynnistetty",
   "workflow_stopped": "Prosessi pysäytetty",
+  "workflow_min_interval_not_met": "Edellisestä suorituksesta ei ole kulunut tarpeeksi aikaa",
   "schedule_updated": "Aikataulu päivitetty",
   "connection_created": "Yhteys luotu",
   "connection_deleted": "Yhteys poistettu",
