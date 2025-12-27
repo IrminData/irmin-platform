@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"irmin-api/db"
@@ -1074,6 +1075,75 @@ func (o *Orchestrator) validateFiles(
 		}
 
 		fileData := previousStageResults[fileName]
+		
+		// Log file details before validation
+		*logs = append(*logs, fmt.Sprintf("Validating file '%s' (size: %d bytes)", fileName, len(fileData)))
+		
+		// Log schema details
+		if stage.ValidationSchema != nil {
+			schemaType := string(stage.ValidationSchema.Type)
+			*logs = append(*logs, fmt.Sprintf("  Schema type: %s", schemaType))
+			
+			if stage.ValidationSchema.Type == irminmodels.ObjectTypeStructured && stage.ValidationSchema.Schema != nil {
+				*logs = append(*logs, fmt.Sprintf("  JSON Schema type: %s", stage.ValidationSchema.Schema.Type))
+				if len(stage.ValidationSchema.Schema.Required) > 0 {
+					*logs = append(*logs, fmt.Sprintf("  Required fields: %v", stage.ValidationSchema.Schema.Required))
+				}
+				if len(stage.ValidationSchema.Schema.Properties) > 0 {
+					propertyNames := make([]string, 0, len(stage.ValidationSchema.Schema.Properties))
+					for propName := range stage.ValidationSchema.Schema.Properties {
+						propertyNames = append(propertyNames, propName)
+					}
+					*logs = append(*logs, fmt.Sprintf("  Schema properties: %v", propertyNames))
+				}
+			}
+			if stage.ValidationSchema.ContentType != nil {
+				*logs = append(*logs, fmt.Sprintf("  Expected content type: %s", *stage.ValidationSchema.ContentType))
+			}
+		}
+		
+		// Log actual data structure (for JSON files)
+		if len(fileData) > 0 {
+			var parsedData any
+			if err := json.Unmarshal(fileData, &parsedData); err == nil {
+				dataType := fmt.Sprintf("%T", parsedData)
+				*logs = append(*logs, fmt.Sprintf("  Actual data type: %s", dataType))
+				
+				// Log sample structure for arrays and objects
+				switch v := parsedData.(type) {
+				case []any:
+					*logs = append(*logs, fmt.Sprintf("  Array length: %d", len(v)))
+					if len(v) > 0 {
+						*logs = append(*logs, fmt.Sprintf("  First item type: %T", v[0]))
+						if len(v) > 0 {
+							firstItemSample, _ := json.Marshal(v[0])
+							sampleStr := string(firstItemSample)
+							if len(sampleStr) > 200 {
+								sampleStr = sampleStr[:200] + "..."
+							}
+							*logs = append(*logs, fmt.Sprintf("  First item sample: %s", sampleStr))
+						}
+					}
+				case map[string]any:
+					keys := make([]string, 0, len(v))
+					for k := range v {
+						keys = append(keys, k)
+					}
+					*logs = append(*logs, fmt.Sprintf("  Object keys: %v", keys))
+					if len(v) > 0 {
+						objSample, _ := json.Marshal(v)
+						sampleStr := string(objSample)
+						if len(sampleStr) > 200 {
+							sampleStr = sampleStr[:200] + "..."
+						}
+						*logs = append(*logs, fmt.Sprintf("  Object sample: %s", sampleStr))
+					}
+				}
+			} else {
+				*logs = append(*logs, fmt.Sprintf("  Data is not valid JSON: %v", err))
+			}
+		}
+		
 		result := lib.ValidateDataAgainstSchemaWithConfig(fileName, fileData, stage.ValidationSchema, validationConfig)
 		filesValidated++
 
