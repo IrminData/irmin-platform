@@ -48,6 +48,7 @@ const (
 	TransformOpFieldRename   TransformOperationType = "field_rename"
 	TransformOpFieldRemove   TransformOperationType = "field_remove"
 	TransformOpFileRename    TransformOperationType = "file_rename"
+	TransformOpFileRemove    TransformOperationType = "file_remove"
 	TransformOpFormatConvert TransformOperationType = "format_convert"
 )
 
@@ -120,13 +121,13 @@ type PipelineStage struct {
 	ValidationTargetName *string       `json:"validation_target_name,omitempty"`
 
 	// Transform stage specific
-	TransformOperation      *TransformOperationType `json:"transform_operation,omitempty"        validate:"omitempty,oneof=field_rename field_remove file_rename format_convert,required_if=Type transform" example:"field_rename"`
+	TransformOperation      *TransformOperationType `json:"transform_operation,omitempty"        validate:"omitempty,oneof=field_rename field_remove file_rename file_remove format_convert,required_if=Type transform" example:"field_rename"`
 	TransformMode           *string                 `json:"transform_mode,omitempty"` // "single" or "all"
-	TransformTargetName     *string                 `json:"transform_target_name,omitempty"                                                                                                                 example:"customers.csv"`
+	TransformTargetName     *string                 `json:"transform_target_name,omitempty"                                                                                                                             example:"customers.csv"`
 	TransformFieldRenames   []FieldRename           `json:"transform_field_renames,omitempty"    validate:"dive"`
-	TransformFieldsToRemove []string                `json:"transform_fields_to_remove,omitempty"                                                                                                            example:"internal_id,temp_flag"`
-	TransformOutputName     *string                 `json:"transform_output_name,omitempty"                                                                                                                 example:"customers_renamed.csv"`
-	TransformOutputFormat   *OutputFormat           `json:"transform_output_format,omitempty"    validate:"omitempty,oneof=csv json parquet"                                                                example:"json"`
+	TransformFieldsToRemove []string                `json:"transform_fields_to_remove,omitempty"                                                                                                                        example:"internal_id,temp_flag"`
+	TransformOutputName     *string                 `json:"transform_output_name,omitempty"                                                                                                                             example:"customers_renamed.csv"`
+	TransformOutputFormat   *OutputFormat           `json:"transform_output_format,omitempty"    validate:"omitempty,oneof=csv json parquet"                                                                            example:"json"`
 }
 
 type ActionInputData struct {
