@@ -649,8 +649,8 @@ export default function JSONSchemaEditor({
     onChange(newSchema);
   };
 
-  if (value.type !== 'object' && isRoot) {
-    // If root is not object, allow changing it, or just show simple type selector
+  if (value.type !== 'object' && value.type !== 'array' && isRoot) {
+    // If root is not object or array, allow changing it, or just show simple type selector
     // But typically the root of a schema IS an object or at least starts as one.
     // If it's a primitive type at root, we just show a type selector.
     return (
@@ -688,42 +688,94 @@ export default function JSONSchemaEditor({
     );
   }
 
+  if (value.type === 'array' && isRoot) {
+    // Handle array type at root level - show type selector and items editor
+    return (
+      <div className='space-y-3 px-1 py-3'>
+        <div className='flex items-center gap-2'>
+          <Label className='text-xs'>{dict.schemaBuilder.type}</Label>
+          <Select
+            value={value.type}
+            onValueChange={handleRootTypeChange}
+            disabled={disabled}
+          >
+            <SelectTrigger className='h-7 w-[100px] text-xs'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[
+                'string',
+                'number',
+                'integer',
+                'boolean',
+                'object',
+                'array',
+                'null',
+              ].map((t) => (
+                <SelectItem key={t} value={t} className='text-xs'>
+                  {
+                    dict.schemaBuilder.types[
+                      t as keyof typeof dict.schemaBuilder.types
+                    ]
+                  }
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className='space-y-2'>
+          <div className='my-1 ml-0.5'>
+            <Label className='mb-2 block text-xs text-muted-foreground'>
+              Items schema:
+            </Label>
+            <JSONSchemaEditor
+              value={value.items || { type: 'string' }}
+              onChange={(newItems) => onChange({ ...value, items: newItems })}
+              disabled={disabled}
+              isRoot={false}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (value.type === 'object') {
     return (
       <div className='space-y-3 px-1 py-3'>
-        {isRoot && (
-          <div className='flex items-center gap-2'>
-            <Label className='text-xs'>{dict.schemaBuilder.type}</Label>
-            <Select
-              value={value.type}
-              onValueChange={handleRootTypeChange}
-              disabled={disabled}
-            >
-              <SelectTrigger className='h-7 w-[100px] text-xs'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[
-                  'string',
-                  'number',
-                  'integer',
-                  'boolean',
-                  'object',
-                  'array',
-                  'null',
-                ].map((t) => (
-                  <SelectItem key={t} value={t} className='text-xs'>
-                    {
-                      dict.schemaBuilder.types[
-                        t as keyof typeof dict.schemaBuilder.types
-                      ]
-                    }
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+        {/* Always show type selector for objects, both root and non-root */}
+        <div className='flex items-center gap-2'>
+          <Label className='text-xs'>{dict.schemaBuilder.type}</Label>
+          <Select
+            value={value.type}
+            onValueChange={handleRootTypeChange}
+            disabled={disabled}
+          >
+            <SelectTrigger className='h-7 w-[100px] text-xs'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[
+                'string',
+                'number',
+                'integer',
+                'boolean',
+                'object',
+                'array',
+                'null',
+              ].map((t) => (
+                <SelectItem key={t} value={t} className='text-xs'>
+                  {
+                    dict.schemaBuilder.types[
+                      t as keyof typeof dict.schemaBuilder.types
+                    ]
+                  }
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className='space-y-2'>
           {Object.entries(value.properties || {}).map(([name, schema]) => (
