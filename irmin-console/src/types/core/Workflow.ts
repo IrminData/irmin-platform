@@ -19,6 +19,31 @@ export interface FieldMapping {
 }
 
 /**
+ * Transform operation types
+ */
+type TransformOperationType =
+  | 'field_rename'
+  | 'field_remove'
+  | 'file_rename'
+  | 'file_remove'
+  | 'format_convert';
+
+/**
+ * Output format options for format conversion
+ */
+type OutputFormat = 'csv' | 'json' | 'parquet';
+
+/**
+ * Field rename mapping (old name to new name)
+ */
+interface FieldRename {
+  /** Original field name */
+  old_name: string;
+  /** New field name */
+  new_name: string;
+}
+
+/**
  * Types of workflows that can exist
  */
 export type WorkflowableType = 'action' | 'export' | 'import' | 'pipeline';
@@ -207,6 +232,7 @@ export type PipelineStage = {
   | PipelineStageRepositoryAction
   | PipelineStageTriggerWorkflow
   | PipelineStageValidation
+  | PipelineStageTransform
 );
 
 /**
@@ -299,4 +325,25 @@ interface PipelineStageValidation {
   fail_on_error?: boolean;
   /** Optional: specific file name to validate (for single mode) */
   validation_target_name?: string;
+}
+
+/**
+ * Pipeline Stage that transforms data
+ */
+interface PipelineStageTransform {
+  type: 'transform';
+  /** Type of transformation to apply */
+  transform_operation: TransformOperationType;
+  /** Transform mode: single file or all files. Defaults to 'all' if not specified. */
+  transform_mode?: 'single' | 'all';
+  /** Optional: specific file name to transform (for single mode) */
+  transform_target_name?: string;
+  /** Field renames (for field_rename operation) */
+  transform_field_renames?: FieldRename[];
+  /** Fields to remove (for field_remove operation) */
+  transform_fields_to_remove?: string[];
+  /** Output file name (for file_rename operation) */
+  transform_output_name?: string;
+  /** Output format (for format_convert operation) */
+  transform_output_format?: OutputFormat;
 }

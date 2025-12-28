@@ -686,6 +686,29 @@ const fi = {
       validationTargetNamePlaceholder: 'esim. asiakkaat.json',
       validationSchema: 'Validointiskeema',
       validationSchemaPlaceholder: 'Syötä JSON-skeema validointia varten',
+      transform: 'Muunnos',
+      transformOperation: 'Muunnostoiminto',
+      transformFieldRename: 'Nimeä kentät uudelleen',
+      transformFieldRemove: 'Poista kentät',
+      transformFileRename: 'Nimeä tiedosto uudelleen',
+      transformFileRemove: 'Poista tiedosto',
+      transformFormatConvert: 'Muunna formaatti',
+      transformMode: 'Muunnostila',
+      transformModeSingle: 'Yksittäinen tiedosto',
+      transformModeAll: 'Kaikki tiedostot',
+      transformTargetName: 'Kohdetiedoston nimi',
+      transformTargetNamePlaceholder: 'esim. asiakkaat.csv',
+      transformFieldRenames: 'Kenttien uudelleennimeämiset',
+      transformOldFieldName: 'Alkuperäinen nimi',
+      transformNewFieldName: 'Uusi nimi',
+      addFieldRename: 'Lisää kenttäuudelleennimeäminen',
+      transformFieldsToRemove: 'Poistettavat kentät',
+      transformFieldsToRemovePlaceholder: 'kenttä1, kenttä2, kenttä3',
+      transformFieldsToRemoveHint:
+        'Pilkulla erotettu lista poistettavien kenttien nimistä',
+      transformOutputName: 'Tiedoston nimi',
+      transformOutputNamePlaceholder: 'esim. tulos.csv',
+      transformOutputFormat: 'Tulostusformaatti',
       stageTypeDescription: {
         action:
           'Toimintovaiheet suorittavat mukautettuja skriptejä datan käsittelyyn, vastaanottaen syötettä edellisistä vaiheista ja tuottaen tulosta seuraaville vaiheille.',
@@ -695,6 +718,8 @@ const fi = {
           'Arkiston vaiheet lukevat tai kirjoittavat Irmin-arkistoihin, mahdollistaen datan versionhallinnan ja tallennuksen prosessin työnkulussa.',
         validation:
           'Validointivaiheet tarkistavat saapuvan datan määriteltyä skeemaa vasten, varmistaen datan laadun ja johdonmukaisuuden ennen seuraaviin putkilinjan vaiheisiin siirtymistä.',
+        transform:
+          'Muunnosvaiheet muokkaavat dataa nimeämällä kenttiä uudelleen, poistamalla kenttiä, nimeämällä tiedostoja uudelleen tai muuntamalla formaatteja (CSV, JSON, Parquet).',
       },
     },
     schedule: {

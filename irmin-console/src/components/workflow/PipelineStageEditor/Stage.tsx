@@ -242,6 +242,7 @@ function Stage({
               {stage.type === 'trigger_workflow' &&
                 dict.workflow.pipeline.triggerWorkflow}
               {stage.type === 'validation' && dict.workflow.pipeline.validation}
+              {stage.type === 'transform' && dict.workflow.pipeline.transform}
             </Badge>
 
             {stage.description && (
@@ -524,6 +525,19 @@ function Stage({
                     read: false,
                     order_sequence: prevStage.order_sequence,
                   }));
+                } else if (value === 'transform') {
+                  setStage((prevStage) => ({
+                    type: 'transform',
+                    transform_operation: 'field_rename',
+                    transform_mode: 'all',
+                    transform_field_renames: [],
+                    transform_fields_to_remove: [],
+                    transform_output_format: 'json',
+                    description: prevStage.description,
+                    write: false,
+                    read: true,
+                    order_sequence: prevStage.order_sequence,
+                  }));
                 }
               }}
               disabled={readOnly}
@@ -539,6 +553,8 @@ function Stage({
                     dict.workflow.pipeline.triggerWorkflow}
                   {stage.type === 'validation' &&
                     dict.workflow.pipeline.validation}
+                  {stage.type === 'transform' &&
+                    dict.workflow.pipeline.transform}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -557,6 +573,9 @@ function Stage({
                 </SelectItem>
                 <SelectItem value='validation'>
                   {dict.workflow.pipeline.validation}
+                </SelectItem>
+                <SelectItem value='transform'>
+                  {dict.workflow.pipeline.transform}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -1409,6 +1428,337 @@ function Stage({
                   />
                 </div>
               </div>
+            </>
+          )}
+
+          {stage.type === 'transform' && (
+            <>
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`transform-operation-${index}`}>
+                  {dict.workflow.pipeline.transformOperation}
+                </Label>
+                <Select
+                  value={stage.transform_operation}
+                  onValueChange={(
+                    value:
+                      | 'field_rename'
+                      | 'field_remove'
+                      | 'file_rename'
+                      | 'file_remove'
+                      | 'format_convert'
+                  ) => {
+                    setStage((prevStage) => {
+                      // Type guard to ensure we're working with a transform stage
+                      if (prevStage.type !== 'transform') return prevStage;
+
+                      return {
+                        ...prevStage,
+                        transform_operation: value,
+                        // Preserve all operation-specific fields regardless of current operation
+                        // This allows users to switch between operations without losing their work
+                      };
+                    });
+                  }}
+                  disabled={readOnly}
+                >
+                  <SelectTrigger
+                    id={`transform-operation-${index}`}
+                    className='w-full'
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='field_rename'>
+                      {dict.workflow.pipeline.transformFieldRename}
+                    </SelectItem>
+                    <SelectItem value='field_remove'>
+                      {dict.workflow.pipeline.transformFieldRemove}
+                    </SelectItem>
+                    <SelectItem value='file_rename'>
+                      {dict.workflow.pipeline.transformFileRename}
+                    </SelectItem>
+                    <SelectItem value='file_remove'>
+                      {dict.workflow.pipeline.transformFileRemove}
+                    </SelectItem>
+                    <SelectItem value='format_convert'>
+                      {dict.workflow.pipeline.transformFormatConvert}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`transform-mode-${index}`}>
+                  {dict.workflow.pipeline.transformMode}
+                </Label>
+                <Select
+                  value={stage.transform_mode ?? 'all'}
+                  onValueChange={(value: 'single' | 'all') => {
+                    setStage((prevStage) => {
+                      if (prevStage.type !== 'transform') return prevStage;
+                      return {
+                        ...prevStage,
+                        transform_mode: value,
+                      };
+                    });
+                  }}
+                  disabled={readOnly}
+                >
+                  <SelectTrigger
+                    id={`transform-mode-${index}`}
+                    className='w-full'
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='single'>
+                      {dict.workflow.pipeline.transformModeSingle}
+                    </SelectItem>
+                    <SelectItem value='all'>
+                      {dict.workflow.pipeline.transformModeAll}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {stage.transform_mode === 'single' && (
+                <div className='flex flex-col gap-2'>
+                  <Label htmlFor={`transform-target-${index}`}>
+                    {dict.workflow.pipeline.transformTargetName}
+                  </Label>
+                  <Input
+                    id={`transform-target-${index}`}
+                    placeholder={
+                      dict.workflow.pipeline.transformTargetNamePlaceholder
+                    }
+                    value={stage.transform_target_name || ''}
+                    onChange={(e) => {
+                      setStage((prevStage) => {
+                        if (prevStage.type !== 'transform') return prevStage;
+                        return {
+                          ...prevStage,
+                          transform_target_name: e.target.value,
+                        };
+                      });
+                    }}
+                    readOnly={readOnly}
+                  />
+                </div>
+              )}
+
+              {stage.transform_operation === 'field_rename' && (
+                <div className='flex flex-col gap-2'>
+                  <Label>{dict.workflow.pipeline.transformFieldRenames}</Label>
+                  <div className='flex flex-col gap-2'>
+                    {(stage.transform_field_renames || []).map(
+                      (rename, renameIndex) => {
+                        // Use only the index for a stable key to prevent input loss of focus
+                        const itemKey = `rename-${renameIndex}`;
+                        return (
+                          <div
+                            key={itemKey}
+                            className='flex items-center gap-2'
+                          >
+                            <Input
+                              placeholder={
+                                dict.workflow.pipeline.transformOldFieldName
+                              }
+                              value={rename.old_name}
+                              onChange={(e) => {
+                                if (stage.type !== 'transform') return;
+                                const newValue = e.target.value;
+                                setStage((prevStage) => {
+                                  if (prevStage.type !== 'transform')
+                                    return prevStage;
+                                  const newRenames = [
+                                    ...(prevStage.transform_field_renames ||
+                                      []),
+                                  ];
+                                  newRenames[renameIndex] = {
+                                    ...newRenames[renameIndex],
+                                    old_name: newValue,
+                                  };
+                                  return {
+                                    ...prevStage,
+                                    transform_field_renames: newRenames,
+                                  };
+                                });
+                              }}
+                              readOnly={readOnly}
+                              className='flex-1'
+                            />
+                            <span className='text-muted-foreground'>→</span>
+                            <Input
+                              placeholder={
+                                dict.workflow.pipeline.transformNewFieldName
+                              }
+                              value={rename.new_name}
+                              onChange={(e) => {
+                                if (stage.type !== 'transform') return;
+                                const newValue = e.target.value;
+                                setStage((prevStage) => {
+                                  if (prevStage.type !== 'transform')
+                                    return prevStage;
+                                  const newRenames = [
+                                    ...(prevStage.transform_field_renames ||
+                                      []),
+                                  ];
+                                  newRenames[renameIndex] = {
+                                    ...newRenames[renameIndex],
+                                    new_name: newValue,
+                                  };
+                                  return {
+                                    ...prevStage,
+                                    transform_field_renames: newRenames,
+                                  };
+                                });
+                              }}
+                              readOnly={readOnly}
+                              className='flex-1'
+                            />
+                            {!readOnly && (
+                              <Button
+                                type='button'
+                                variant='ghost'
+                                size='icon'
+                                onClick={() => {
+                                  if (stage.type !== 'transform') return;
+                                  setStage((prevStage) => {
+                                    if (prevStage.type !== 'transform')
+                                      return prevStage;
+                                    const newRenames = (
+                                      prevStage.transform_field_renames || []
+                                    ).filter((_, i) => i !== renameIndex);
+                                    return {
+                                      ...prevStage,
+                                      transform_field_renames: newRenames,
+                                    };
+                                  });
+                                }}
+                                className='size-8 shrink-0'
+                              >
+                                <TbTrash className='size-4' />
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      }
+                    )}
+                    {!readOnly && (
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        onClick={() => {
+                          setStage((prevStage) => {
+                            if (prevStage.type !== 'transform')
+                              return prevStage;
+                            return {
+                              ...prevStage,
+                              transform_field_renames: [
+                                ...(prevStage.transform_field_renames || []),
+                                { old_name: '', new_name: '' },
+                              ],
+                            };
+                          });
+                        }}
+                      >
+                        {dict.workflow.pipeline.addFieldRename}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {stage.transform_operation === 'field_remove' && (
+                <div className='flex flex-col gap-2'>
+                  <Label htmlFor={`transform-fields-remove-${index}`}>
+                    {dict.workflow.pipeline.transformFieldsToRemove}
+                  </Label>
+                  <Input
+                    id={`transform-fields-remove-${index}`}
+                    placeholder={
+                      dict.workflow.pipeline.transformFieldsToRemovePlaceholder
+                    }
+                    value={(stage.transform_fields_to_remove || []).join(', ')}
+                    onChange={(e) => {
+                      const fields = e.target.value
+                        .split(',')
+                        .map((f) => f.trim())
+                        .filter((f) => f);
+                      setStage((prevStage) => {
+                        if (prevStage.type !== 'transform') return prevStage;
+                        return {
+                          ...prevStage,
+                          transform_fields_to_remove: fields,
+                        };
+                      });
+                    }}
+                    readOnly={readOnly}
+                  />
+                  <span className='text-xs text-muted-foreground'>
+                    {dict.workflow.pipeline.transformFieldsToRemoveHint}
+                  </span>
+                </div>
+              )}
+
+              {stage.transform_operation === 'file_rename' && (
+                <div className='flex flex-col gap-2'>
+                  <Label htmlFor={`transform-output-name-${index}`}>
+                    {dict.workflow.pipeline.transformOutputName}
+                  </Label>
+                  <Input
+                    id={`transform-output-name-${index}`}
+                    placeholder={
+                      dict.workflow.pipeline.transformOutputNamePlaceholder
+                    }
+                    value={stage.transform_output_name || ''}
+                    onChange={(e) => {
+                      setStage((prevStage) => {
+                        if (prevStage.type !== 'transform') return prevStage;
+                        return {
+                          ...prevStage,
+                          transform_output_name: e.target.value,
+                        };
+                      });
+                    }}
+                    readOnly={readOnly}
+                  />
+                </div>
+              )}
+
+              {stage.transform_operation === 'format_convert' && (
+                <div className='flex flex-col gap-2'>
+                  <Label htmlFor={`transform-output-format-${index}`}>
+                    {dict.workflow.pipeline.transformOutputFormat}
+                  </Label>
+                  <Select
+                    value={stage.transform_output_format || 'json'}
+                    onValueChange={(value: 'csv' | 'json' | 'parquet') => {
+                      setStage((prevStage) => {
+                        if (prevStage.type !== 'transform') return prevStage;
+                        return {
+                          ...prevStage,
+                          transform_output_format: value,
+                        };
+                      });
+                    }}
+                    disabled={readOnly}
+                  >
+                    <SelectTrigger
+                      id={`transform-output-format-${index}`}
+                      className='w-full'
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='csv'>CSV</SelectItem>
+                      <SelectItem value='json'>JSON</SelectItem>
+                      <SelectItem value='parquet'>Parquet</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </>
           )}
         </div>
