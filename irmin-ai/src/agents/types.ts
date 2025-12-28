@@ -1,6 +1,6 @@
+import { StreamEvent } from '@langchain/core/tracers/log_stream';
+import { IterableReadableStream } from '@langchain/core/utils/stream';
 import type { BaseMessage } from 'langchain';
-import { StreamEvent } from 'node_modules/@langchain/core/dist/tracers/event_stream';
-import { IterableReadableStream } from 'node_modules/@langchain/openai/dist/langchain-core/dist/utils/stream';
 
 import type agentService from '@/services/agent';
 
