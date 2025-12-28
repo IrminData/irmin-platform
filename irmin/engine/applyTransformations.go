@@ -229,7 +229,7 @@ func (c *Client) ApplyTransformations(
 					return nil, fmt.Errorf("failed to get output format options for empty file %s: %w", fileName, err)
 				}
 				_ = outputReadOpts // Not needed for empty files, but validate the format
-				transformedName = c.changeFileExtension(fileName, outputExt)
+				transformedName = changeFileExtension(fileName, outputExt)
 			case irminmodels.TransformOpFileRename:
 				// Rename even empty files
 				if config.OutputName == "" {
@@ -545,7 +545,7 @@ func (c *Client) applyFormatConvert(
 	}
 
 	// Generate new filename with new extension
-	newFileName := c.changeFileExtension(fileName, outputExt)
+	newFileName := changeFileExtension(fileName, outputExt)
 	newObjectDetails := irminutils.ParseObjectDetailsFromPath(newFileName)
 
 	// Execute transformation (SELECT * to keep all columns)
@@ -586,13 +586,4 @@ func (c *Client) getOutputFormatOptions(format irminmodels.OutputFormat) (*duckd
 	default:
 		return nil, "", fmt.Errorf("unsupported output format: %s (must be csv, json, or parquet)", format)
 	}
-}
-
-// changeFileExtension changes the extension of a filename.
-func (c *Client) changeFileExtension(fileName string, newExt string) string {
-	ext := filepath.Ext(fileName)
-	if ext == "" {
-		return fileName + newExt
-	}
-	return fileName[:len(fileName)-len(ext)] + newExt
 }
