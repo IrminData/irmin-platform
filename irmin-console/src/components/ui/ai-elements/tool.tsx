@@ -46,15 +46,21 @@ const getStatusBadge = (status: ToolUIPart['state']) => {
   const labels = {
     'input-streaming': 'Pending',
     'input-available': 'Running',
+    'approval-requested': 'Approval Requested',
+    'approval-responded': 'Approval Responded',
     'output-available': 'Completed',
     'output-error': 'Error',
+    'output-denied': 'Denied',
   } as const;
 
   const icons = {
     'input-streaming': <TbCircle className='size-4' />,
     'input-available': <TbClock className='size-4 animate-pulse' />,
+    'approval-requested': <TbClock className='size-4 text-amber-600' />,
+    'approval-responded': <TbCheck className='size-4 text-blue-600' />,
     'output-available': <TbCheck className='size-4 text-green-600' />,
     'output-error': <TbX className='size-4 text-red-600' />,
+    'output-denied': <TbX className='size-4 text-orange-600' />,
   } as const;
 
   return (
@@ -111,7 +117,7 @@ export const ToolContent = ({ className, ...props }: ToolContentProps) => (
   />
 );
 
-export type ToolInputProps = ComponentProps<'div'> & {
+export type ToolInputProps = Omit<ComponentProps<'div'>, 'children' | 'ref'> & {
   input: ToolUIPart['input'];
 };
 
@@ -130,7 +136,10 @@ export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
   </div>
 );
 
-export type ToolOutputProps = ComponentProps<'div'> & {
+export type ToolOutputProps = Omit<
+  ComponentProps<'div'>,
+  'children' | 'ref'
+> & {
   output: ReactNode;
   errorText: ToolUIPart['errorText'];
 };
@@ -166,12 +175,12 @@ export const ToolOutput = ({
         )}
       >
         {errorText && (
-          <div className='break-words break-all whitespace-pre-wrap'>
+          <div className='wrap-break-word break-all whitespace-pre-wrap'>
             {errorText}
           </div>
         )}
         {output && (
-          <div className='break-words break-all whitespace-pre-wrap'>
+          <div className='wrap-break-word break-all whitespace-pre-wrap'>
             {output}
           </div>
         )}
