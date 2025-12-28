@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/db"
+	"irmin-api/engine"
 	"irmin-api/lib"
 	"maps"
 	"slices"
@@ -107,6 +108,12 @@ func (o *Orchestrator) executePipelineWorkflowable(
 			)
 		case db.PipelineStageTypeValidation:
 			stageLogs, errResult = o.handleValidationStage(
+				ctx,
+				&stage,
+				previousStageResults,
+			)
+		case db.PipelineStageTypeTransform:
+			stageLogs, errResult = o.handleTransformStage(
 				ctx,
 				&stage,
 				previousStageResults,
@@ -1340,4 +1347,122 @@ func (o *Orchestrator) checkValidationResults(
 	}
 
 	return nil
+}
+
+// handleTransformStage handles the execution of a transform stage.
+func (o *Orchestrator) handleTransformStage(
+	ctx context.Context,
+	stage *db.PipelineStage,
+	previousStageResults map[string][]byte,
+) ([]string, error) {
+	var logs []string
+
+	// Check for context cancellation
+	if ctx.Err() != nil {
+		return logs, fmt.Errorf("workflow execution cancelled before transform: %w", ctx.Err())
+	}
+
+	// Validate transform operation
+	if stage.TransformOperation == nil {
+		logs = append(logs, "Transform operation is not set")
+		return logs, errors.New("transform operation is not set")
+	}
+
+	// Get transform mode (default to "all")
+	mode := "all"
+	if stage.TransformMode != nil {
+		mode = *stage.TransformMode
+	}
+
+	// Get target name for single mode
+	targetName := ""
+	if stage.TransformTargetName != nil {
+		targetName = *stage.TransformTargetName
+	}
+
+	logs = append(logs, fmt.Sprintf("Starting transform (operation: %s, mode: %s)", *stage.TransformOperation, mode))
+
+	// Build transform config
+	config := o.buildTransformConfig(stage, mode, targetName)
+
+	// Log operation-specific details
+	o.logTransformDetails(&logs, stage, config)
+
+	// Execute transformation
+	transformedFiles, err := o.dataEngine.ProcessTransformations(ctx, previousStageResults, config)
+	if err != nil {
+		if ctx.Err() != nil {
+			logs = append(logs, fmt.Sprintf("Workflow execution cancelled during transform: %v", ctx.Err()))
+			return logs, ctx.Err()
+		}
+		logs = append(logs, fmt.Sprintf("Transform failed: %v", err))
+		return logs, err
+	}
+
+	// Update previous stage results with transformed files
+	// Clear the map first
+	for key := range previousStageResults {
+		delete(previousStageResults, key)
+	}
+	maps.Copy(previousStageResults, transformedFiles)
+
+	// Log success
+	logs = append(logs, fmt.Sprintf("Transform complete: %d file(s) processed", len(transformedFiles)))
+	for fileName := range transformedFiles {
+		logs = append(logs, fmt.Sprintf("  - %s", fileName))
+	}
+
+	return logs, nil
+}
+
+// buildTransformConfig builds an engine.TransformConfig from the pipeline stage.
+func (o *Orchestrator) buildTransformConfig(
+	stage *db.PipelineStage,
+	mode string,
+	targetName string,
+) engine.TransformConfig {
+	config := engine.TransformConfig{
+		Operation:  *stage.TransformOperation,
+		Mode:       mode,
+		TargetName: targetName,
+	}
+
+	// Set operation-specific fields
+	switch *stage.TransformOperation {
+	case irminmodels.TransformOpFieldRename:
+		config.FieldRenames = stage.TransformFieldRenames
+	case irminmodels.TransformOpFieldRemove:
+		config.FieldsToRemove = stage.TransformFieldsToRemove
+	case irminmodels.TransformOpFileRename:
+		if stage.TransformOutputName != nil {
+			config.OutputName = *stage.TransformOutputName
+		}
+	case irminmodels.TransformOpFileRemove:
+		// file_remove doesn't require additional config
+	case irminmodels.TransformOpFormatConvert:
+		if stage.TransformOutputFormat != nil {
+			config.OutputFormat = *stage.TransformOutputFormat
+		}
+	}
+
+	return config
+}
+
+// logTransformDetails logs operation-specific details for the transform stage.
+func (o *Orchestrator) logTransformDetails(logs *[]string, stage *db.PipelineStage, config engine.TransformConfig) {
+	switch *stage.TransformOperation {
+	case irminmodels.TransformOpFieldRename:
+		*logs = append(*logs, fmt.Sprintf("  Field renames: %d mapping(s)", len(config.FieldRenames)))
+		for _, r := range config.FieldRenames {
+			*logs = append(*logs, fmt.Sprintf("    - %s -> %s", r.OldName, r.NewName))
+		}
+	case irminmodels.TransformOpFieldRemove:
+		*logs = append(*logs, fmt.Sprintf("  Fields to remove: %v", config.FieldsToRemove))
+	case irminmodels.TransformOpFileRename:
+		*logs = append(*logs, fmt.Sprintf("  Output name: %s", config.OutputName))
+	case irminmodels.TransformOpFileRemove:
+		*logs = append(*logs, "  Operation: Remove file from pipeline")
+	case irminmodels.TransformOpFormatConvert:
+		*logs = append(*logs, fmt.Sprintf("  Output format: %s", config.OutputFormat))
+	}
 }

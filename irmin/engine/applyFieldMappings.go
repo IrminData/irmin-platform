@@ -294,6 +294,12 @@ func (c *Client) getUnmappedFields(allFields []string, mappedFields map[string]b
 	return unmappedFields
 }
 
+// quoteIdentifier safely quotes a SQL identifier by escaping embedded double quotes.
+// This prevents SQL injection when using user-provided strings as column names.
+func quoteIdentifier(s string) string {
+	return fmt.Sprintf(`"%s"`, strings.ReplaceAll(s, `"`, `""`))
+}
+
 // buildSelectClauseForDestination constructs the SELECT clause for a specific destination.
 func (c *Client) buildSelectClauseForDestination(mappings []irminmodels.FieldMapping) string {
 	var selectExpressions []string
@@ -301,12 +307,18 @@ func (c *Client) buildSelectClauseForDestination(mappings []irminmodels.FieldMap
 	for _, mapping := range mappings {
 		if mapping.SourceField != nil && mapping.DestinationField != nil &&
 			*mapping.SourceField != "" && *mapping.DestinationField != "" {
-			selectExpressions = append(selectExpressions,
-				fmt.Sprintf(`"%s" AS "%s"`, *mapping.SourceField, *mapping.DestinationField))
+			selectExpressions = append(
+				selectExpressions,
+				fmt.Sprintf(
+					`%s AS %s`,
+					quoteIdentifier(*mapping.SourceField),
+					quoteIdentifier(*mapping.DestinationField),
+				),
+			)
 		} else if mapping.SourceField != nil && *mapping.SourceField != "" {
 			// Field mapping without rename
 			selectExpressions = append(selectExpressions,
-				fmt.Sprintf(`"%s"`, *mapping.SourceField))
+				quoteIdentifier(*mapping.SourceField))
 		}
 	}
 
@@ -321,7 +333,7 @@ func (c *Client) buildSelectClauseForDestination(mappings []irminmodels.FieldMap
 func (c *Client) buildSelectClauseForUnmappedFields(unmappedFields []string) string {
 	var selectExpressions []string
 	for _, field := range unmappedFields {
-		selectExpressions = append(selectExpressions, fmt.Sprintf(`"%s"`, field))
+		selectExpressions = append(selectExpressions, quoteIdentifier(field))
 	}
 	return strings.Join(selectExpressions, ", ")
 }

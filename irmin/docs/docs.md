@@ -4055,6 +4055,14 @@ type PipelineStage struct {
     ValidationMode       *string                   `json:"validation_mode,omitempty"`
     FailOnError          *bool                     `json:"fail_on_error,omitempty"`
     ValidationTargetName *string                   `json:"validation_target_name,omitempty"`
+
+    TransformOperation      *irminmodels.TransformOperationType `json:"transform_operation,omitempty"`
+    TransformMode           *string                             `json:"transform_mode,omitempty"`
+    TransformTargetName     *string                             `json:"transform_target_name,omitempty"`
+    TransformFieldRenames   []irminmodels.FieldRename           `json:"transform_field_renames,omitempty"    gorm:"type:jsonb;serializer:json"`
+    TransformFieldsToRemove []string                            `json:"transform_fields_to_remove,omitempty" gorm:"type:jsonb;serializer:json"`
+    TransformOutputName     *string                             `json:"transform_output_name,omitempty"`
+    TransformOutputFormat   *irminmodels.OutputFormat           `json:"transform_output_format,omitempty"`
 }
 ```
 
@@ -4077,6 +4085,7 @@ const (
     PipelineStageTypeRepositoryAction PipelineStageType = "repository_action"
     PipelineStageTypeTriggerWorkflow  PipelineStageType = "trigger_workflow"
     PipelineStageTypeValidation       PipelineStageType = "validation"
+    PipelineStageTypeTransform        PipelineStageType = "transform"
 )
 ```
 
@@ -5406,6 +5415,7 @@ import "irmin-api/engine"
 - [type Client](<#Client>)
   - [func NewClient\(ctx context.Context, locale string, logger \*slog.Logger, env \*utils.CoreAPIEnv, db \*db.Database\) \(\*Client, error\)](<#NewClient>)
   - [func \(c \*Client\) ApplyFieldMappings\(ctx context.Context, duckDBClient \*duckdb.QueryClient, fileContent \[\]byte, originalFilePath string, mappings \[\]irminmodels.FieldMapping\) \(map\[string\]\[\]byte, error\)](<#Client.ApplyFieldMappings>)
+  - [func \(c \*Client\) ApplyTransformations\(ctx context.Context, duckDBClient \*duckdb.QueryClient, files map\[string\]\[\]byte, config TransformConfig\) \(map\[string\]\[\]byte, error\)](<#Client.ApplyTransformations>)
   - [func \(c \*Client\) CommitChanges\(workspace, repository, branch, message, author string, allowEmpty bool\) \(\*irminmodels.Commit, error\)](<#Client.CommitChanges>)
   - [func \(c \*Client\) CompareRefs\(ctx context.Context, workspace, repository, baseRef, compareRef string\) \(\*irminmodels.Diff, error\)](<#Client.CompareRefs>)
   - [func \(c \*Client\) ConfigureRepositoryWebhookNotifications\(lakefsRepository \*lakefs.Repository\) \(\*lakefs.ObjectMetadata, error\)](<#Client.ConfigureRepositoryWebhookNotifications>)
@@ -5439,6 +5449,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) ListTags\(workspace, repository string\) \(\[\]irminmodels.GitTag, error\)](<#Client.ListTags>)
   - [func \(c \*Client\) MergeRefs\(workspace, repository, baseRef, compareRef, message, author, strategy string, squash, allowEmpty bool\) \(\*irminmodels.Commit, error\)](<#Client.MergeRefs>)
   - [func \(c \*Client\) MoveObject\(workspace, repository, path, ref, newPath string\) \(\*irminmodels.Object, error\)](<#Client.MoveObject>)
+  - [func \(c \*Client\) ProcessTransformations\(ctx context.Context, files map\[string\]\[\]byte, config TransformConfig\) \(map\[string\]\[\]byte, error\)](<#Client.ProcessTransformations>)
   - [func \(c \*Client\) PullFilesFromConnector\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string\) \(map\[string\]\[\]byte, \[\]connectorsclient.OperationLog, error\)](<#Client.PullFilesFromConnector>)
   - [func \(c \*Client\) PushFilesToConnector\(ctx context.Context, connection \*db.Connection, connectionPath string, objects \[\]\*irminmodels.Object, files map\[string\]\[\]byte, tx ...\*gorm.DB\) \(\[\]string, \[\]connectorsclient.OperationLog, error\)](<#Client.PushFilesToConnector>)
   - [func \(c \*Client\) RevertUncommitedChanges\(workspace, repository, branch, path, pathType string\) error](<#Client.RevertUncommitedChanges>)
@@ -5454,6 +5465,7 @@ import "irmin-api/engine"
 - [type SchemaField](<#SchemaField>)
   - [func ParseFieldForElementForTesting\(name, elementType string, required bool\) SchemaField](<#ParseFieldForElementForTesting>)
   - [func ParseFieldForTesting\(name, typ string, required bool\) SchemaField](<#ParseFieldForTesting>)
+- [type TransformConfig](<#TransformConfig>)
 
 
 <a name="BuildJSONSchemaForTesting"></a>
@@ -5701,6 +5713,24 @@ Parameters:
 - mappings: Field mapping rules \(source \-\> destination paths and column names\)
 
 Returns a map of destination file paths to their transformed content, or an error.
+
+<a name="Client.ApplyTransformations"></a>
+### func \(\*Client\) ApplyTransformations
+
+```go
+func (c *Client) ApplyTransformations(ctx context.Context, duckDBClient *duckdb.QueryClient, files map[string][]byte, config TransformConfig) (map[string][]byte, error)
+```
+
+ApplyTransformations applies a transformation operation to the provided files. It returns a new map with the transformed file content.
+
+Parameters:
+
+- ctx: Context for cancellation and logging
+- duckDBClient: DuckDB client for executing queries
+- files: Map of filename to file content
+- config: Transformation configuration
+
+Returns a map of \(possibly renamed\) filenames to transformed content, or an error.
 
 <a name="Client.CommitChanges"></a>
 ### func \(\*Client\) CommitChanges
@@ -5999,6 +6029,15 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 
 
 
+<a name="Client.ProcessTransformations"></a>
+### func \(\*Client\) ProcessTransformations
+
+```go
+func (c *Client) ProcessTransformations(ctx context.Context, files map[string][]byte, config TransformConfig) (map[string][]byte, error)
+```
+
+ProcessTransformations applies transformations to the input files and returns transformed results. This is the main entry point for transform operations, creating the DuckDB client internally.
+
 <a name="Client.PullFilesFromConnector"></a>
 ### func \(\*Client\) PullFilesFromConnector
 
@@ -6174,6 +6213,36 @@ func ParseFieldForTesting(name, typ string, required bool) SchemaField
 ```
 
 ParseFieldForTesting exposes parseField for testing
+
+<a name="TransformConfig"></a>
+## type TransformConfig
+
+TransformConfig holds the configuration for a transformation operation.
+
+```go
+type TransformConfig struct {
+    // Operation type
+    Operation irminmodels.TransformOperationType
+
+    // Mode: "single" or "all"
+    Mode string
+
+    // For single mode: the specific file to target
+    TargetName string
+
+    // For field_rename operation
+    FieldRenames []irminmodels.FieldRename
+
+    // For field_remove operation
+    FieldsToRemove []string
+
+    // For file_rename operation
+    OutputName string
+
+    // For format_convert operation
+    OutputFormat irminmodels.OutputFormat
+}
+```
 
 # formatter
 

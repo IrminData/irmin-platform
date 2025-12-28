@@ -6,6 +6,12 @@ const (
 	// pathSplitLimit is the number of parts to split a path into when separating
 	// the immediate component from the rest of the path.
 	pathSplitLimit = 2
+
+	// File extension constants
+	extCSV     = ".csv"
+	extTSV     = ".tsv"
+	extJSON    = ".json"
+	extParquet = ".parquet"
 )
 
 // IsSystemPath checks if the given path is a system path that should be hidden.

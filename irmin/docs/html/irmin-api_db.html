@@ -833,6 +833,14 @@ type PipelineStage struct {
 	ValidationMode       *string                   `json:"validation_mode,omitempty"`
 	FailOnError          *bool                     `json:"fail_on_error,omitempty"`
 	ValidationTargetName *string                   `json:"validation_target_name,omitempty"`
+
+	TransformOperation      *irminmodels.TransformOperationType `json:"transform_operation,omitempty"`
+	TransformMode           *string                             `json:"transform_mode,omitempty"`
+	TransformTargetName     *string                             `json:"transform_target_name,omitempty"`
+	TransformFieldRenames   []irminmodels.FieldRename           `json:"transform_field_renames,omitempty"    gorm:"type:jsonb;serializer:json"`
+	TransformFieldsToRemove []string                            `json:"transform_fields_to_remove,omitempty" gorm:"type:jsonb;serializer:json"`
+	TransformOutputName     *string                             `json:"transform_output_name,omitempty"`
+	TransformOutputFormat   *irminmodels.OutputFormat           `json:"transform_output_format,omitempty"`
 }
 
 type PipelineStageType string
@@ -844,6 +852,7 @@ const (
 	PipelineStageTypeRepositoryAction PipelineStageType = "repository_action"
 	PipelineStageTypeTriggerWorkflow  PipelineStageType = "trigger_workflow"
 	PipelineStageTypeValidation       PipelineStageType = "validation"
+	PipelineStageTypeTransform        PipelineStageType = "transform"
 )
 type PipelineWorkflowable struct {
 	gorm.Model

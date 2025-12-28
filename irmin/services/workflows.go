@@ -8,6 +8,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/lib"
 	"irmin-api/permissions"
+	"slices"
 	"strings"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
@@ -20,6 +21,15 @@ var (
 	// defaultValidationMode is the default validation mode for pipeline validation stages.
 	// This must be a package-level variable so we can safely store its pointer.
 	defaultValidationMode = "all"
+	// defaultTransformMode is the default transform mode for pipeline transform stages.
+	// This must be a package-level variable so we can safely store its pointer.
+	defaultTransformMode = "all"
+)
+
+const (
+	// Mode constants for pipeline stages
+	modeSingle = "single"
+	modeAll    = "all"
 )
 
 // GetWorkflow gets a workflow by its SQID.
@@ -1262,6 +1272,8 @@ func (api *APIServices) processStageByType(
 		return api.processTriggerWorkflowStage(txDB, newStage, stage, workspace, workflowID)
 	case irminmodels.PipelineStageTypeValidation:
 		return api.processValidationStage(newStage, stage)
+	case irminmodels.PipelineStageTypeTransform:
+		return api.processTransformStage(newStage, stage)
 	default:
 		return fmt.Errorf("invalid stage type: %s", stage.Type)
 	}
@@ -1650,7 +1662,7 @@ func (api *APIServices) processValidationStage(
 	}
 
 	// Validate mode is either "single" or "all"
-	if *newStage.ValidationMode != "single" && *newStage.ValidationMode != "all" {
+	if *newStage.ValidationMode != modeSingle && *newStage.ValidationMode != modeAll {
 		return errors.New("validation mode must be either 'single' or 'all'")
 	}
 
@@ -1659,6 +1671,140 @@ func (api *APIServices) processValidationStage(
 	newStage.ValidationTargetName = stage.ValidationTargetName
 
 	return nil
+}
+
+// processTransformStage processes a transform stage.
+func (api *APIServices) processTransformStage(
+	newStage *db.PipelineStage,
+	stage irminmodels.PipelineStage,
+) error {
+	newStage.Type = db.PipelineStageTypeTransform
+
+	// Transform operation is required
+	if stage.TransformOperation == nil {
+		return errors.New("transform operation is required for transform stage")
+	}
+
+	// Validate operation type
+	if err := api.validateTransformOperationType(stage.TransformOperation); err != nil {
+		return err
+	}
+
+	newStage.TransformOperation = stage.TransformOperation
+
+	// Set default transform mode if not provided
+	if stage.TransformMode == nil {
+		newStage.TransformMode = &defaultTransformMode
+	} else {
+		newStage.TransformMode = stage.TransformMode
+	}
+
+	// Validate mode is either "single" or "all"
+	if *newStage.TransformMode != modeSingle && *newStage.TransformMode != modeAll {
+		return errors.New("transform mode must be either 'single' or 'all'")
+	}
+
+	// Validate that target_name is provided when mode is "single"
+	if *newStage.TransformMode == modeSingle {
+		if stage.TransformTargetName == nil || *stage.TransformTargetName == "" {
+			return errors.New("transform_target_name is required when transform_mode is 'single'")
+		}
+	}
+
+	// Validate operation-specific requirements
+	if err := api.validateTransformOperationRequirements(stage); err != nil {
+		return err
+	}
+
+	newStage.TransformTargetName = stage.TransformTargetName
+	newStage.TransformFieldRenames = stage.TransformFieldRenames
+	newStage.TransformFieldsToRemove = stage.TransformFieldsToRemove
+	newStage.TransformOutputName = stage.TransformOutputName
+	newStage.TransformOutputFormat = stage.TransformOutputFormat
+
+	return nil
+}
+
+// validateTransformOperationType validates that the transform operation is one of the supported types.
+func (api *APIServices) validateTransformOperationType(operation *irminmodels.TransformOperationType) error {
+	validOperations := []irminmodels.TransformOperationType{
+		irminmodels.TransformOpFieldRename,
+		irminmodels.TransformOpFieldRemove,
+		irminmodels.TransformOpFileRename,
+		irminmodels.TransformOpFileRemove,
+		irminmodels.TransformOpFormatConvert,
+	}
+	if slices.Contains(validOperations, *operation) {
+		return nil
+	}
+	return fmt.Errorf("invalid transform operation: %s", *operation)
+}
+
+// validateTransformOperationRequirements validates operation-specific requirements.
+//
+//nolint:gocognit // Nothing complex here
+func (api *APIServices) validateTransformOperationRequirements(stage irminmodels.PipelineStage) error {
+	switch *stage.TransformOperation {
+	case irminmodels.TransformOpFieldRename:
+		if len(stage.TransformFieldRenames) == 0 {
+			return errors.New("transform_field_renames is required and must be non-empty for field_rename operation")
+		}
+		// Track old names and new names to detect duplicates
+		oldNamesSeen := make(map[string]bool)
+		newNamesSeen := make(map[string]bool)
+		for i, rename := range stage.TransformFieldRenames {
+			if rename.OldName == "" {
+				return fmt.Errorf("transform_field_renames[%d].old_name cannot be empty", i)
+			}
+			if rename.NewName == "" {
+				return fmt.Errorf("transform_field_renames[%d].new_name cannot be empty", i)
+			}
+			// Check for duplicate OldName values
+			if oldNamesSeen[rename.OldName] {
+				return fmt.Errorf("transform_field_renames contains duplicate old_name: %s", rename.OldName)
+			}
+			oldNamesSeen[rename.OldName] = true
+			// Check for duplicate NewName values
+			if newNamesSeen[rename.NewName] {
+				return fmt.Errorf("transform_field_renames contains duplicate new_name: %s", rename.NewName)
+			}
+			newNamesSeen[rename.NewName] = true
+		}
+	case irminmodels.TransformOpFieldRemove:
+		if len(stage.TransformFieldsToRemove) == 0 {
+			return errors.New("transform_fields_to_remove is required and must be non-empty for field_remove operation")
+		}
+	case irminmodels.TransformOpFileRename:
+		if stage.TransformOutputName == nil || *stage.TransformOutputName == "" {
+			return errors.New("transform_output_name is required for file_rename operation")
+		}
+	case irminmodels.TransformOpFormatConvert:
+		if err := api.validateTransformOutputFormat(stage.TransformOutputFormat); err != nil {
+			return err
+		}
+	case irminmodels.TransformOpFileRemove:
+		// file_remove doesn't require additional fields beyond mode and target_name
+	}
+	return nil
+}
+
+// validateTransformOutputFormat validates the output format for format conversion.
+func (api *APIServices) validateTransformOutputFormat(format *irminmodels.OutputFormat) error {
+	if format == nil {
+		return errors.New("transform_output_format is required for format_convert operation")
+	}
+
+	validFormats := []irminmodels.OutputFormat{
+		irminmodels.OutputFormatCSV,
+		irminmodels.OutputFormatJSON,
+		irminmodels.OutputFormatParquet,
+	}
+	for _, validFmt := range validFormats {
+		if *format == validFmt {
+			return nil
+		}
+	}
+	return fmt.Errorf("invalid output format: %s (must be csv, json, or parquet)", *format)
 }
 
 func (api *APIServices) addWorkflowTags(tx *gorm.DB, workflow *db.Workflow, tags []string, workspaceID uint) error {

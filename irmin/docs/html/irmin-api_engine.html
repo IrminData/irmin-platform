@@ -171,6 +171,24 @@ func (c *Client) ApplyFieldMappings(
     Returns a map of destination file paths to their transformed content,
     or an error.
 
+func (c *Client) ApplyTransformations(
+	ctx context.Context,
+	duckDBClient *duckdb.QueryClient,
+	files map[string][]byte,
+	config TransformConfig,
+) (map[string][]byte, error)
+    ApplyTransformations applies a transformation operation to the provided
+    files. It returns a new map with the transformed file content.
+
+    Parameters:
+      - ctx: Context for cancellation and logging
+      - duckDBClient: DuckDB client for executing queries
+      - files: Map of filename to file content
+      - config: Transformation configuration
+
+    Returns a map of (possibly renamed) filenames to transformed content,
+    or an error.
+
 func (c *Client) CommitChanges(
 	workspace, repository, branch, message, author string,
 	allowEmpty bool,
@@ -336,6 +354,15 @@ func (c *Client) MergeRefs(
 
 func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*irminmodels.Object, error)
 
+func (c *Client) ProcessTransformations(
+	ctx context.Context,
+	files map[string][]byte,
+	config TransformConfig,
+) (map[string][]byte, error)
+    ProcessTransformations applies transformations to the input files and
+    returns transformed results. This is the main entry point for transform
+    operations, creating the DuckDB client internally.
+
 func (c *Client) PullFilesFromConnector(
 	ctx context.Context,
 	connection *db.Connection,
@@ -447,6 +474,30 @@ func ParseFieldForElementForTesting(name, elementType string, required bool) Sch
 
 func ParseFieldForTesting(name, typ string, required bool) SchemaField
     ParseFieldForTesting exposes parseField for testing
+
+type TransformConfig struct {
+	// Operation type
+	Operation irminmodels.TransformOperationType
+
+	// Mode: "single" or "all"
+	Mode string
+
+	// For single mode: the specific file to target
+	TargetName string
+
+	// For field_rename operation
+	FieldRenames []irminmodels.FieldRename
+
+	// For field_remove operation
+	FieldsToRemove []string
+
+	// For file_rename operation
+	OutputName string
+
+	// For format_convert operation
+	OutputFormat irminmodels.OutputFormat
+}
+    TransformConfig holds the configuration for a transformation operation.
 
 </pre>
 </body></html>

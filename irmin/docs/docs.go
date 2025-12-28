@@ -12016,6 +12016,23 @@ const docTemplate = `{
                 }
             }
         },
+        "irminmodels.FieldRename": {
+            "type": "object",
+            "required": [
+                "new_name",
+                "old_name"
+            ],
+            "properties": {
+                "new_name": {
+                    "type": "string",
+                    "example": "id"
+                },
+                "old_name": {
+                    "type": "string",
+                    "example": "customer_id"
+                }
+            }
+        },
         "irminmodels.GarbageCollectionRules": {
             "type": "object",
             "properties": {
@@ -12648,6 +12665,19 @@ const docTemplate = `{
                 "ObjectTypeBinary"
             ]
         },
+        "irminmodels.OutputFormat": {
+            "type": "string",
+            "enum": [
+                "csv",
+                "json",
+                "parquet"
+            ],
+            "x-enum-varnames": [
+                "OutputFormatCSV",
+                "OutputFormatJSON",
+                "OutputFormatParquet"
+            ]
+        },
         "irminmodels.PipelineStage": {
             "type": "object",
             "required": [
@@ -12785,6 +12815,63 @@ const docTemplate = `{
                     "type": "string",
                     "example": "scr_8x2m9k4n7p5q"
                 },
+                "transform_field_renames": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.FieldRename"
+                    }
+                },
+                "transform_fields_to_remove": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "internal_id",
+                        "temp_flag"
+                    ]
+                },
+                "transform_mode": {
+                    "description": "\"single\" or \"all\"",
+                    "type": "string"
+                },
+                "transform_operation": {
+                    "description": "Transform stage specific",
+                    "enum": [
+                        "field_rename",
+                        "field_remove",
+                        "file_rename",
+                        "file_remove",
+                        "format_convert"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.TransformOperationType"
+                        }
+                    ],
+                    "example": "field_rename"
+                },
+                "transform_output_format": {
+                    "enum": [
+                        "csv",
+                        "json",
+                        "parquet"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.OutputFormat"
+                        }
+                    ],
+                    "example": "json"
+                },
+                "transform_output_name": {
+                    "type": "string",
+                    "example": "customers_renamed.csv"
+                },
+                "transform_target_name": {
+                    "type": "string",
+                    "example": "customers.csv"
+                },
                 "trigger_workflow_id": {
                     "description": "Trigger Workflow stage specific",
                     "type": "string",
@@ -12797,7 +12884,8 @@ const docTemplate = `{
                         "repository",
                         "repository_action",
                         "trigger_workflow",
-                        "validation"
+                        "validation",
+                        "transform"
                     ],
                     "allOf": [
                         {
@@ -12835,7 +12923,8 @@ const docTemplate = `{
                 "repository",
                 "repository_action",
                 "trigger_workflow",
-                "validation"
+                "validation",
+                "transform"
             ],
             "x-enum-varnames": [
                 "PipelineStageTypeAction",
@@ -12843,7 +12932,8 @@ const docTemplate = `{
                 "PipelineStageTypeRepository",
                 "PipelineStageTypeRepositoryAction",
                 "PipelineStageTypeTriggerWorkflow",
-                "PipelineStageTypeValidation"
+                "PipelineStageTypeValidation",
+                "PipelineStageTypeTransform"
             ]
         },
         "irminmodels.Policy": {
@@ -13841,6 +13931,23 @@ const docTemplate = `{
             "x-enum-varnames": [
                 "TemplateTypeScript",
                 "TemplateTypeQuery"
+            ]
+        },
+        "irminmodels.TransformOperationType": {
+            "type": "string",
+            "enum": [
+                "field_rename",
+                "field_remove",
+                "file_rename",
+                "file_remove",
+                "format_convert"
+            ],
+            "x-enum-varnames": [
+                "TransformOpFieldRename",
+                "TransformOpFieldRemove",
+                "TransformOpFileRename",
+                "TransformOpFileRemove",
+                "TransformOpFormatConvert"
             ]
         },
         "irminmodels.User": {

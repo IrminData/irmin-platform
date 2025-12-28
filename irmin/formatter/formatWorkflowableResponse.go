@@ -270,6 +270,20 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			FailOnError:          stage.FailOnError,
 			ValidationTargetName: stage.ValidationTargetName,
 		}
+	case db.PipelineStageTypeTransform:
+		return irminmodels.PipelineStage{
+			Description:             stage.Description,
+			Write:                   stage.Write,
+			Read:                    stage.Read,
+			Type:                    irminmodels.PipelineStageTypeTransform,
+			TransformOperation:      stage.TransformOperation,
+			TransformMode:           stage.TransformMode,
+			TransformTargetName:     stage.TransformTargetName,
+			TransformFieldRenames:   stage.TransformFieldRenames,
+			TransformFieldsToRemove: stage.TransformFieldsToRemove,
+			TransformOutputName:     stage.TransformOutputName,
+			TransformOutputFormat:   stage.TransformOutputFormat,
+		}
 	default:
 		return irminmodels.PipelineStage{}
 	}

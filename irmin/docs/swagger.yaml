@@ -1141,6 +1141,18 @@ definitions:
     - destination_path
     - source_path
     type: object
+  irminmodels.FieldRename:
+    properties:
+      new_name:
+        example: id
+        type: string
+      old_name:
+        example: customer_id
+        type: string
+    required:
+    - new_name
+    - old_name
+    type: object
   irminmodels.GarbageCollectionRules:
     properties:
       branches:
@@ -1602,6 +1614,16 @@ definitions:
     - ObjectTypeGroup
     - ObjectTypeStructured
     - ObjectTypeBinary
+  irminmodels.OutputFormat:
+    enum:
+    - csv
+    - json
+    - parquet
+    type: string
+    x-enum-varnames:
+    - OutputFormatCSV
+    - OutputFormatJSON
+    - OutputFormatParquet
   irminmodels.PipelineStage:
     properties:
       connection_id:
@@ -1698,6 +1720,45 @@ definitions:
       script_id:
         example: scr_8x2m9k4n7p5q
         type: string
+      transform_field_renames:
+        items:
+          $ref: '#/definitions/irminmodels.FieldRename'
+        type: array
+      transform_fields_to_remove:
+        example:
+        - internal_id
+        - temp_flag
+        items:
+          type: string
+        type: array
+      transform_mode:
+        description: '"single" or "all"'
+        type: string
+      transform_operation:
+        allOf:
+        - $ref: '#/definitions/irminmodels.TransformOperationType'
+        description: Transform stage specific
+        enum:
+        - field_rename
+        - field_remove
+        - file_rename
+        - file_remove
+        - format_convert
+        example: field_rename
+      transform_output_format:
+        allOf:
+        - $ref: '#/definitions/irminmodels.OutputFormat'
+        enum:
+        - csv
+        - json
+        - parquet
+        example: json
+      transform_output_name:
+        example: customers_renamed.csv
+        type: string
+      transform_target_name:
+        example: customers.csv
+        type: string
       trigger_workflow_id:
         description: Trigger Workflow stage specific
         example: wf_8x2m9k4n7p5q
@@ -1712,6 +1773,7 @@ definitions:
         - repository_action
         - trigger_workflow
         - validation
+        - transform
         example: repository
       validation_mode:
         description: '"single" or "all"'
@@ -1737,6 +1799,7 @@ definitions:
     - repository_action
     - trigger_workflow
     - validation
+    - transform
     type: string
     x-enum-varnames:
     - PipelineStageTypeAction
@@ -1745,6 +1808,7 @@ definitions:
     - PipelineStageTypeRepositoryAction
     - PipelineStageTypeTriggerWorkflow
     - PipelineStageTypeValidation
+    - PipelineStageTypeTransform
   irminmodels.Policy:
     properties:
       action:
@@ -2503,6 +2567,20 @@ definitions:
     x-enum-varnames:
     - TemplateTypeScript
     - TemplateTypeQuery
+  irminmodels.TransformOperationType:
+    enum:
+    - field_rename
+    - field_remove
+    - file_rename
+    - file_remove
+    - format_convert
+    type: string
+    x-enum-varnames:
+    - TransformOpFieldRename
+    - TransformOpFieldRemove
+    - TransformOpFileRename
+    - TransformOpFileRemove
+    - TransformOpFormatConvert
   irminmodels.User:
     properties:
       company:

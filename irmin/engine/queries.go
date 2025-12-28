@@ -1555,19 +1555,19 @@ func (c *Client) ExecuteQueryWithInputs(
 		var createViewSQL string
 
 		switch ext {
-		case ".csv", ".tsv":
+		case extCSV, extTSV:
 			createViewSQL = fmt.Sprintf(
 				"CREATE OR REPLACE TEMPORARY VIEW \"%s\" AS SELECT * FROM read_csv_auto('%s');",
 				tableName,
 				escapedFilePath,
 			)
-		case ".json":
+		case extJSON:
 			createViewSQL = fmt.Sprintf(
 				"CREATE OR REPLACE TEMPORARY VIEW \"%s\" AS SELECT * FROM read_json_auto('%s');",
 				tableName,
 				escapedFilePath,
 			)
-		case ".parquet":
+		case extParquet:
 			createViewSQL = fmt.Sprintf(
 				"CREATE OR REPLACE TEMPORARY VIEW \"%s\" AS SELECT * FROM read_parquet('%s');",
 				tableName,
@@ -1604,7 +1604,7 @@ func (c *Client) ExecuteQueryWithInputs(
 // filterSQLInputFiles filters input files to only include SQL-compatible formats.
 func filterSQLInputFiles(inputFiles map[string][]byte, logs *[]string) map[string][]byte {
 	supportedExtensions := map[string]bool{
-		".csv": true, ".json": true, ".parquet": true, ".tsv": true,
+		extCSV: true, extJSON: true, extParquet: true, extTSV: true,
 	}
 
 	filtered := make(map[string][]byte)
