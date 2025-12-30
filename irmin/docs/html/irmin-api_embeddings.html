@@ -1,0 +1,281 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/embeddings</title></head><body>
+<h1>Package irmin-api/embeddings</h1>
+<pre>
+package embeddings // import "irmin-api/embeddings"
+
+
+CONSTANTS
+
+const (
+	DefaultModel      = "text-embedding-3-small"
+	DefaultDimensions = 1536
+	DefaultChunkSize  = 1000
+	DefaultOverlap    = 200
+)
+    Default configuration values.
+
+const (
+	MetadataKeyFileType            = "irmin-file-type"
+	MetadataKeyEmbeddingModel      = "irmin-embedding-model"
+	MetadataKeyEmbeddingDimensions = "irmin-embedding-dimensions"
+	MetadataKeySourceFile          = "irmin-source-file"
+	MetadataKeyChunkCount          = "irmin-chunk-count"
+	MetadataValueEmbeddings        = "embeddings"
+)
+    LakeFS metadata keys for embedding files.
+
+
+FUNCTIONS
+
+func ChunkText(text string, chunkSize, overlap int) []string
+    ChunkText splits text into chunks of the specified size with overlap.
+
+func ChunkTextBySentences(text string, maxChunkSize int) []string
+    ChunkTextBySentences splits text into chunks by sentence boundaries.
+    This provides more semantically meaningful chunks.
+
+func ComputeCosineSimilarity(a, b []float32) (float64, error)
+    ComputeCosineSimilarity computes the cosine similarity between two vectors.
+
+func ExtractTextFromFile(
+	ctx context.Context,
+	duckDBClient *duckdb.QueryClient,
+	fileContent []byte,
+	fileName string,
+) ([]string, error)
+    ExtractTextFromFile extracts text content from a file based on its format.
+    Returns a slice of text strings that can be chunked and embedded.
+
+func GetEmbeddingMetadata(metadata map[string]string) (string, int, string)
+    GetEmbeddingMetadata extracts embedding-specific metadata from LakeFS object
+    metadata.
+
+func GetSupportedFormats() []string
+    GetSupportedFormats returns a list of file extensions supported for
+    embedding creation.
+
+func IsEmbeddingFile(metadata map[string]string) bool
+    IsEmbeddingFile checks if the given LakeFS object metadata indicates an
+    embedding file.
+
+func IsSupportedFormat(fileName string) bool
+    IsSupportedFormat checks if the given file extension is supported for text
+    extraction.
+
+
+TYPES
+
+type Client struct {
+	// Has unexported fields.
+}
+    Client provides methods for creating and managing embeddings.
+
+func NewClient(
+	ctx context.Context,
+	env *utils.CoreAPIEnv,
+	logger *slog.Logger,
+	lakeFSClient *lakefs.Client,
+) (*Client, error)
+    NewClient creates a new embeddings client with the provided dependencies.
+
+func (c *Client) Close() error
+    Close releases resources held by the client.
+
+func (c *Client) CreateEmbeddingForQuery(
+	ctx context.Context,
+	query string,
+	config EmbeddingConfig,
+) ([]float32, error)
+    CreateEmbeddingForQuery generates a single embedding for a query text.
+
+func (c *Client) CreateEmbeddings(
+	ctx context.Context,
+	texts []string,
+	config EmbeddingConfig,
+) ([][]float32, error)
+    CreateEmbeddings generates embeddings for the provided texts using OpenAI
+    API.
+
+func (c *Client) CreateEmbeddingsFromFile(
+	ctx context.Context,
+	fileContent []byte,
+	fileName string,
+	config EmbeddingConfig,
+) (*EmbeddingResult, error)
+    CreateEmbeddingsFromFile extracts text from a file and generates embeddings.
+
+func (c *Client) CreateVectorIndex(
+	ctx context.Context,
+	parquetPath string,
+	indexName string,
+) error
+    CreateVectorIndex creates an HNSW index on the embeddings for faster search.
+    This is useful for large embedding collections.
+
+func (c *Client) DeleteEmbeddingFile(
+	ctx context.Context,
+	repositoryID string,
+	branch string,
+	path string,
+) error
+    DeleteEmbeddingFile deletes an embedding file from LakeFS.
+
+func (c *Client) DownloadFromLakeFS(
+	ctx context.Context,
+	repositoryID string,
+	ref string,
+	path string,
+) ([]byte, error)
+    DownloadFromLakeFS downloads an embedding file from LakeFS.
+
+func (c *Client) GetEmbeddingCount(ctx context.Context, parquetPath string) (int64, error)
+    GetEmbeddingCount returns the number of embeddings in a Parquet file.
+
+func (c *Client) ListEmbeddingFiles(
+	ctx context.Context,
+	repositoryID string,
+	ref string,
+	prefix string,
+) ([]lakefs.ObjectMetadata, error)
+    ListEmbeddingFiles lists all embedding files in a LakeFS repository path.
+
+func (c *Client) LoadEmbeddingsFromParquet(
+	ctx context.Context,
+	parquetPath string,
+) ([]EmbeddingRecord, error)
+    LoadEmbeddingsFromParquet loads embedding records from a Parquet file.
+
+func (c *Client) MergeParquetFiles(
+	ctx context.Context,
+	inputPaths []string,
+	outputPath string,
+) error
+    MergeParquetFiles merges multiple Parquet embedding files into one.
+
+func (c *Client) ProcessAndUploadFile(
+	ctx context.Context,
+	fileContent []byte,
+	fileName string,
+	repositoryID string,
+	branch string,
+	outputPath string,
+	config EmbeddingConfig,
+) (*EmbeddingResult, *lakefs.ObjectMetadata, error)
+    ProcessAndUploadFile is a convenience method that extracts text, creates
+    embeddings, saves to Parquet, and uploads to LakeFS in one operation.
+
+func (c *Client) SaveEmbeddingsToParquet(
+	ctx context.Context,
+	records []EmbeddingRecord,
+	outputPath string,
+) error
+    SaveEmbeddingsToParquet saves embedding records to a Parquet file. The file
+    is written with DuckDB's native array type for the embedding column.
+
+func (c *Client) SaveEmbeddingsToParquetBytes(
+	ctx context.Context,
+	records []EmbeddingRecord,
+) ([]byte, error)
+    SaveEmbeddingsToParquetBytes saves embedding records and returns the Parquet
+    data as bytes.
+
+func (c *Client) SearchByText(
+	ctx context.Context,
+	queryText string,
+	parquetPath string,
+	topK int,
+	config EmbeddingConfig,
+) ([]SearchResult, error)
+    SearchByText performs vector similarity search using a text query. It first
+    generates an embedding for the query text, then searches.
+
+func (c *Client) SearchSimilar(
+	ctx context.Context,
+	queryVector []float32,
+	parquetPath string,
+	topK int,
+) ([]SearchResult, error)
+    SearchSimilar performs vector similarity search on a parquet file containing
+    embeddings. It uses DuckDB's vss extension for efficient vector search.
+
+func (c *Client) SearchSimilarFromBytes(
+	ctx context.Context,
+	queryVector []float32,
+	parquetContent []byte,
+	topK int,
+) ([]SearchResult, error)
+    SearchSimilarFromBytes performs vector similarity search on parquet content
+    provided as bytes.
+
+func (c *Client) SearchWithFilter(
+	ctx context.Context,
+	queryVector []float32,
+	parquetPath string,
+	topK int,
+	filter map[string]string,
+) ([]SearchResult, error)
+    SearchWithFilter performs vector similarity search with metadata filtering.
+
+func (c *Client) UploadToLakeFS(
+	ctx context.Context,
+	config UploadConfig,
+	data []byte,
+) (*lakefs.ObjectMetadata, error)
+    UploadToLakeFS uploads embedding data to LakeFS with appropriate metadata.
+
+type EmbeddingConfig struct {
+	Model      string // OpenAI embedding model (e.g., "text-embedding-3-small", "text-embedding-3-large")
+	Dimensions int    // Embedding dimensions (e.g., 1536, 3072)
+	ChunkSize  int    // Text chunk size for splitting large documents
+	Overlap    int    // Overlap between consecutive chunks
+}
+    EmbeddingConfig holds the configuration for embedding generation.
+
+func DefaultConfig() EmbeddingConfig
+    DefaultConfig returns the default embedding configuration.
+
+type EmbeddingRecord struct {
+	ID         string            `json:"id"`
+	SourceFile string            `json:"source_file"`
+	ChunkIndex int               `json:"chunk_index"`
+	Content    string            `json:"content"`
+	Embedding  []float32         `json:"embedding"`
+	Metadata   map[string]string `json:"metadata"`
+	CreatedAt  time.Time         `json:"created_at"`
+}
+    EmbeddingRecord represents a single embedding with its associated metadata.
+
+type EmbeddingResult struct {
+	Records     []EmbeddingRecord `json:"records"`
+	TotalChunks int               `json:"total_chunks"`
+	Model       string            `json:"model"`
+	Dimensions  int               `json:"dimensions"`
+}
+    EmbeddingResult represents the result of an embedding operation.
+
+type SearchResult struct {
+	ID         string            `json:"id"`
+	SourceFile string            `json:"source_file"`
+	ChunkIndex int               `json:"chunk_index"`
+	Content    string            `json:"content"`
+	Score      float64           `json:"score"`
+	Distance   float64           `json:"distance"`
+	Metadata   map[string]string `json:"metadata"`
+}
+    SearchResult represents a single search result from vector similarity
+    search.
+
+type UploadConfig struct {
+	RepositoryID string
+	Branch       string
+	Path         string
+	SourceFile   string
+	Model        string
+	Dimensions   int
+	ChunkCount   int
+}
+    UploadConfig holds configuration for uploading embeddings to LakeFS.
+
+</pre>
+</body></html>

@@ -20,6 +20,7 @@ type CoreAPIEnv struct {
 	AllowedOrigins               string // Allowed origins for CORS
 	AIServiceBaseURL             string // Base URL of the AI service
 	AIServiceSystemToken         string // Key to authenticate system requests to the AI service
+	OpenAIAPIKey                 string // Key to authenticate system requests to the OpenAI API
 	MCPHTTPPath                  string // Mount path for the embedded MCP streamable HTTP endpoint
 	OrchestratorEnabled          bool   // Flag to enable the orchestrator
 	SqidAlphabet                 string // Alphabet to use for SQIDs
@@ -155,7 +156,10 @@ func LoadEnv() (*CoreAPIEnv, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	openAIAPIKey, err := getEnv("OPENAI_API_KEY", false, "")
+	if err != nil {
+		return nil, err
+	}
 	mcpHTTPPath, err := getEnv("MCP_HTTP_PATH", false, "/mcp")
 	if err != nil {
 		return nil, err
@@ -330,6 +334,7 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		AllowedOrigins:               allowedOrigins,
 		AIServiceBaseURL:             aiServiceBaseURL,
 		AIServiceSystemToken:         aiServiceSystemToken,
+		OpenAIAPIKey:                 openAIAPIKey,
 		MCPHTTPPath:                  mcpHTTPPath,
 		OrchestratorEnabled:          orchestratorEnabled,
 		SqidAlphabet:                 sqidAlphabet,

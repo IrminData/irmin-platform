@@ -46,6 +46,7 @@ func NewQueryClient(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Log
 			"delta",        // Support for Delta Lake format
 			"iceberg",      // Support for Apache Iceberg format
 			"autocomplete", // Enhanced autocomplete functionality
+			"vss",          // Vector Similarity Search for embeddings
 		}
 		client.installOptionalExtensions(ctx, optionalExtensions, logger)
 	} else {

@@ -5125,6 +5125,7 @@ import "irmin-api/duckdb"
 ## Index
 
 - [func BuildReadQuery\(filePath string, options \*ReadOptions\) string](<#BuildReadQuery>)
+- [func EscapeSQLIdentifier\(s string\) string](<#EscapeSQLIdentifier>)
 - [func EscapeSQLString\(s string\) string](<#EscapeSQLString>)
 - [func GetContentTypeFromExtension\(extension string\) string](<#GetContentTypeFromExtension>)
 - [func GetRequiredExtensions\(options \*ReadOptions\) \[\]string](<#GetRequiredExtensions>)
@@ -5156,6 +5157,15 @@ func BuildReadQuery(filePath string, options *ReadOptions) string
 
 BuildReadQuery constructs a DuckDB query string for reading a file. File paths and string parameter values are properly escaped to prevent SQL injection.
 
+<a name="EscapeSQLIdentifier"></a>
+## func EscapeSQLIdentifier
+
+```go
+func EscapeSQLIdentifier(s string) string
+```
+
+EscapeSQLIdentifier escapes and quotes an identifier \(table name, column name, index name\) for use in SQL. This prevents SQL injection when using user input as identifiers. For example: "my\_table" becomes "\\"my\_table\\"" For example: "table\\"name" becomes "\\"table\\"\\"name\\""
+
 <a name="EscapeSQLString"></a>
 ## func EscapeSQLString
 
@@ -5163,7 +5173,7 @@ BuildReadQuery constructs a DuckDB query string for reading a file. File paths a
 func EscapeSQLString(s string) string
 ```
 
-EscapeSQLString escapes single quotes in SQL string literals by doubling them. This prevents SQL injection when interpolating strings into SQL queries. For example: "file'name.json" becomes "file”name.json"
+EscapeSQLString escapes single quotes in SQL string literals by doubling them. This prevents SQL injection when interpolating strings into SQL queries. For example: "file'name.json" becomes "file"name.json"
 
 <a name="GetContentTypeFromExtension"></a>
 ## func GetContentTypeFromExtension
@@ -5381,6 +5391,429 @@ func GetDuckDBReadOptionsFromObject(object string) (*ReadOptions, error)
 ```
 
 GetDuckDBReadOptionsFromObject extracts read options from an object path This integrates with the query parsing functionality.
+
+# embeddings
+
+```go
+import "irmin-api/embeddings"
+```
+
+## Index
+
+- [Constants](<#constants>)
+- [func ChunkText\(text string, chunkSize, overlap int\) \[\]string](<#ChunkText>)
+- [func ChunkTextBySentences\(text string, maxChunkSize int\) \[\]string](<#ChunkTextBySentences>)
+- [func ComputeCosineSimilarity\(a, b \[\]float32\) \(float64, error\)](<#ComputeCosineSimilarity>)
+- [func ExtractTextFromFile\(ctx context.Context, duckDBClient \*duckdb.QueryClient, fileContent \[\]byte, fileName string\) \(\[\]string, error\)](<#ExtractTextFromFile>)
+- [func GetEmbeddingMetadata\(metadata map\[string\]string\) \(string, int, string\)](<#GetEmbeddingMetadata>)
+- [func GetSupportedFormats\(\) \[\]string](<#GetSupportedFormats>)
+- [func IsEmbeddingFile\(metadata map\[string\]string\) bool](<#IsEmbeddingFile>)
+- [func IsSupportedFormat\(fileName string\) bool](<#IsSupportedFormat>)
+- [type Client](<#Client>)
+  - [func NewClient\(ctx context.Context, env \*utils.CoreAPIEnv, logger \*slog.Logger, lakeFSClient \*lakefs.Client\) \(\*Client, error\)](<#NewClient>)
+  - [func \(c \*Client\) Close\(\) error](<#Client.Close>)
+  - [func \(c \*Client\) CreateEmbeddingForQuery\(ctx context.Context, query string, config EmbeddingConfig\) \(\[\]float32, error\)](<#Client.CreateEmbeddingForQuery>)
+  - [func \(c \*Client\) CreateEmbeddings\(ctx context.Context, texts \[\]string, config EmbeddingConfig\) \(\[\]\[\]float32, error\)](<#Client.CreateEmbeddings>)
+  - [func \(c \*Client\) CreateEmbeddingsFromFile\(ctx context.Context, fileContent \[\]byte, fileName string, config EmbeddingConfig\) \(\*EmbeddingResult, error\)](<#Client.CreateEmbeddingsFromFile>)
+  - [func \(c \*Client\) CreateVectorIndex\(ctx context.Context, parquetPath string, indexName string\) error](<#Client.CreateVectorIndex>)
+  - [func \(c \*Client\) DeleteEmbeddingFile\(ctx context.Context, repositoryID string, branch string, path string\) error](<#Client.DeleteEmbeddingFile>)
+  - [func \(c \*Client\) DownloadFromLakeFS\(ctx context.Context, repositoryID string, ref string, path string\) \(\[\]byte, error\)](<#Client.DownloadFromLakeFS>)
+  - [func \(c \*Client\) GetEmbeddingCount\(ctx context.Context, parquetPath string\) \(int64, error\)](<#Client.GetEmbeddingCount>)
+  - [func \(c \*Client\) ListEmbeddingFiles\(ctx context.Context, repositoryID string, ref string, prefix string\) \(\[\]lakefs.ObjectMetadata, error\)](<#Client.ListEmbeddingFiles>)
+  - [func \(c \*Client\) LoadEmbeddingsFromParquet\(ctx context.Context, parquetPath string\) \(\[\]EmbeddingRecord, error\)](<#Client.LoadEmbeddingsFromParquet>)
+  - [func \(c \*Client\) MergeParquetFiles\(ctx context.Context, inputPaths \[\]string, outputPath string\) error](<#Client.MergeParquetFiles>)
+  - [func \(c \*Client\) ProcessAndUploadFile\(ctx context.Context, fileContent \[\]byte, fileName string, repositoryID string, branch string, outputPath string, config EmbeddingConfig\) \(\*EmbeddingResult, \*lakefs.ObjectMetadata, error\)](<#Client.ProcessAndUploadFile>)
+  - [func \(c \*Client\) SaveEmbeddingsToParquet\(ctx context.Context, records \[\]EmbeddingRecord, outputPath string\) error](<#Client.SaveEmbeddingsToParquet>)
+  - [func \(c \*Client\) SaveEmbeddingsToParquetBytes\(ctx context.Context, records \[\]EmbeddingRecord\) \(\[\]byte, error\)](<#Client.SaveEmbeddingsToParquetBytes>)
+  - [func \(c \*Client\) SearchByText\(ctx context.Context, queryText string, parquetPath string, topK int, config EmbeddingConfig\) \(\[\]SearchResult, error\)](<#Client.SearchByText>)
+  - [func \(c \*Client\) SearchSimilar\(ctx context.Context, queryVector \[\]float32, parquetPath string, topK int\) \(\[\]SearchResult, error\)](<#Client.SearchSimilar>)
+  - [func \(c \*Client\) SearchSimilarFromBytes\(ctx context.Context, queryVector \[\]float32, parquetContent \[\]byte, topK int\) \(\[\]SearchResult, error\)](<#Client.SearchSimilarFromBytes>)
+  - [func \(c \*Client\) SearchWithFilter\(ctx context.Context, queryVector \[\]float32, parquetPath string, topK int, filter map\[string\]string\) \(\[\]SearchResult, error\)](<#Client.SearchWithFilter>)
+  - [func \(c \*Client\) UploadToLakeFS\(ctx context.Context, config UploadConfig, data \[\]byte\) \(\*lakefs.ObjectMetadata, error\)](<#Client.UploadToLakeFS>)
+- [type EmbeddingConfig](<#EmbeddingConfig>)
+  - [func DefaultConfig\(\) EmbeddingConfig](<#DefaultConfig>)
+- [type EmbeddingRecord](<#EmbeddingRecord>)
+- [type EmbeddingResult](<#EmbeddingResult>)
+- [type SearchResult](<#SearchResult>)
+- [type UploadConfig](<#UploadConfig>)
+
+
+## Constants
+
+<a name="DefaultModel"></a>Default configuration values.
+
+```go
+const (
+    DefaultModel      = "text-embedding-3-small"
+    DefaultDimensions = 1536
+    DefaultChunkSize  = 1000
+    DefaultOverlap    = 200
+)
+```
+
+<a name="MetadataKeyFileType"></a>LakeFS metadata keys for embedding files.
+
+```go
+const (
+    MetadataKeyFileType            = "irmin-file-type"
+    MetadataKeyEmbeddingModel      = "irmin-embedding-model"
+    MetadataKeyEmbeddingDimensions = "irmin-embedding-dimensions"
+    MetadataKeySourceFile          = "irmin-source-file"
+    MetadataKeyChunkCount          = "irmin-chunk-count"
+    MetadataValueEmbeddings        = "embeddings"
+)
+```
+
+<a name="ChunkText"></a>
+## func ChunkText
+
+```go
+func ChunkText(text string, chunkSize, overlap int) []string
+```
+
+ChunkText splits text into chunks of the specified size with overlap.
+
+<a name="ChunkTextBySentences"></a>
+## func ChunkTextBySentences
+
+```go
+func ChunkTextBySentences(text string, maxChunkSize int) []string
+```
+
+ChunkTextBySentences splits text into chunks by sentence boundaries. This provides more semantically meaningful chunks.
+
+<a name="ComputeCosineSimilarity"></a>
+## func ComputeCosineSimilarity
+
+```go
+func ComputeCosineSimilarity(a, b []float32) (float64, error)
+```
+
+ComputeCosineSimilarity computes the cosine similarity between two vectors.
+
+<a name="ExtractTextFromFile"></a>
+## func ExtractTextFromFile
+
+```go
+func ExtractTextFromFile(ctx context.Context, duckDBClient *duckdb.QueryClient, fileContent []byte, fileName string) ([]string, error)
+```
+
+ExtractTextFromFile extracts text content from a file based on its format. Returns a slice of text strings that can be chunked and embedded.
+
+<a name="GetEmbeddingMetadata"></a>
+## func GetEmbeddingMetadata
+
+```go
+func GetEmbeddingMetadata(metadata map[string]string) (string, int, string)
+```
+
+GetEmbeddingMetadata extracts embedding\-specific metadata from LakeFS object metadata.
+
+<a name="GetSupportedFormats"></a>
+## func GetSupportedFormats
+
+```go
+func GetSupportedFormats() []string
+```
+
+GetSupportedFormats returns a list of file extensions supported for embedding creation.
+
+<a name="IsEmbeddingFile"></a>
+## func IsEmbeddingFile
+
+```go
+func IsEmbeddingFile(metadata map[string]string) bool
+```
+
+IsEmbeddingFile checks if the given LakeFS object metadata indicates an embedding file.
+
+<a name="IsSupportedFormat"></a>
+## func IsSupportedFormat
+
+```go
+func IsSupportedFormat(fileName string) bool
+```
+
+IsSupportedFormat checks if the given file extension is supported for text extraction.
+
+<a name="Client"></a>
+## type Client
+
+Client provides methods for creating and managing embeddings.
+
+```go
+type Client struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewClient"></a>
+### func NewClient
+
+```go
+func NewClient(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Logger, lakeFSClient *lakefs.Client) (*Client, error)
+```
+
+NewClient creates a new embeddings client with the provided dependencies.
+
+<a name="Client.Close"></a>
+### func \(\*Client\) Close
+
+```go
+func (c *Client) Close() error
+```
+
+Close releases resources held by the client.
+
+<a name="Client.CreateEmbeddingForQuery"></a>
+### func \(\*Client\) CreateEmbeddingForQuery
+
+```go
+func (c *Client) CreateEmbeddingForQuery(ctx context.Context, query string, config EmbeddingConfig) ([]float32, error)
+```
+
+CreateEmbeddingForQuery generates a single embedding for a query text.
+
+<a name="Client.CreateEmbeddings"></a>
+### func \(\*Client\) CreateEmbeddings
+
+```go
+func (c *Client) CreateEmbeddings(ctx context.Context, texts []string, config EmbeddingConfig) ([][]float32, error)
+```
+
+CreateEmbeddings generates embeddings for the provided texts using OpenAI API.
+
+<a name="Client.CreateEmbeddingsFromFile"></a>
+### func \(\*Client\) CreateEmbeddingsFromFile
+
+```go
+func (c *Client) CreateEmbeddingsFromFile(ctx context.Context, fileContent []byte, fileName string, config EmbeddingConfig) (*EmbeddingResult, error)
+```
+
+CreateEmbeddingsFromFile extracts text from a file and generates embeddings.
+
+<a name="Client.CreateVectorIndex"></a>
+### func \(\*Client\) CreateVectorIndex
+
+```go
+func (c *Client) CreateVectorIndex(ctx context.Context, parquetPath string, indexName string) error
+```
+
+CreateVectorIndex creates an HNSW index on the embeddings for faster search. This is useful for large embedding collections.
+
+<a name="Client.DeleteEmbeddingFile"></a>
+### func \(\*Client\) DeleteEmbeddingFile
+
+```go
+func (c *Client) DeleteEmbeddingFile(ctx context.Context, repositoryID string, branch string, path string) error
+```
+
+DeleteEmbeddingFile deletes an embedding file from LakeFS.
+
+<a name="Client.DownloadFromLakeFS"></a>
+### func \(\*Client\) DownloadFromLakeFS
+
+```go
+func (c *Client) DownloadFromLakeFS(ctx context.Context, repositoryID string, ref string, path string) ([]byte, error)
+```
+
+DownloadFromLakeFS downloads an embedding file from LakeFS.
+
+<a name="Client.GetEmbeddingCount"></a>
+### func \(\*Client\) GetEmbeddingCount
+
+```go
+func (c *Client) GetEmbeddingCount(ctx context.Context, parquetPath string) (int64, error)
+```
+
+GetEmbeddingCount returns the number of embeddings in a Parquet file.
+
+<a name="Client.ListEmbeddingFiles"></a>
+### func \(\*Client\) ListEmbeddingFiles
+
+```go
+func (c *Client) ListEmbeddingFiles(ctx context.Context, repositoryID string, ref string, prefix string) ([]lakefs.ObjectMetadata, error)
+```
+
+ListEmbeddingFiles lists all embedding files in a LakeFS repository path.
+
+<a name="Client.LoadEmbeddingsFromParquet"></a>
+### func \(\*Client\) LoadEmbeddingsFromParquet
+
+```go
+func (c *Client) LoadEmbeddingsFromParquet(ctx context.Context, parquetPath string) ([]EmbeddingRecord, error)
+```
+
+LoadEmbeddingsFromParquet loads embedding records from a Parquet file.
+
+<a name="Client.MergeParquetFiles"></a>
+### func \(\*Client\) MergeParquetFiles
+
+```go
+func (c *Client) MergeParquetFiles(ctx context.Context, inputPaths []string, outputPath string) error
+```
+
+MergeParquetFiles merges multiple Parquet embedding files into one.
+
+<a name="Client.ProcessAndUploadFile"></a>
+### func \(\*Client\) ProcessAndUploadFile
+
+```go
+func (c *Client) ProcessAndUploadFile(ctx context.Context, fileContent []byte, fileName string, repositoryID string, branch string, outputPath string, config EmbeddingConfig) (*EmbeddingResult, *lakefs.ObjectMetadata, error)
+```
+
+ProcessAndUploadFile is a convenience method that extracts text, creates embeddings, saves to Parquet, and uploads to LakeFS in one operation.
+
+<a name="Client.SaveEmbeddingsToParquet"></a>
+### func \(\*Client\) SaveEmbeddingsToParquet
+
+```go
+func (c *Client) SaveEmbeddingsToParquet(ctx context.Context, records []EmbeddingRecord, outputPath string) error
+```
+
+SaveEmbeddingsToParquet saves embedding records to a Parquet file. The file is written with DuckDB's native array type for the embedding column.
+
+<a name="Client.SaveEmbeddingsToParquetBytes"></a>
+### func \(\*Client\) SaveEmbeddingsToParquetBytes
+
+```go
+func (c *Client) SaveEmbeddingsToParquetBytes(ctx context.Context, records []EmbeddingRecord) ([]byte, error)
+```
+
+SaveEmbeddingsToParquetBytes saves embedding records and returns the Parquet data as bytes.
+
+<a name="Client.SearchByText"></a>
+### func \(\*Client\) SearchByText
+
+```go
+func (c *Client) SearchByText(ctx context.Context, queryText string, parquetPath string, topK int, config EmbeddingConfig) ([]SearchResult, error)
+```
+
+SearchByText performs vector similarity search using a text query. It first generates an embedding for the query text, then searches.
+
+<a name="Client.SearchSimilar"></a>
+### func \(\*Client\) SearchSimilar
+
+```go
+func (c *Client) SearchSimilar(ctx context.Context, queryVector []float32, parquetPath string, topK int) ([]SearchResult, error)
+```
+
+SearchSimilar performs vector similarity search on a parquet file containing embeddings. It uses DuckDB's vss extension for efficient vector search.
+
+<a name="Client.SearchSimilarFromBytes"></a>
+### func \(\*Client\) SearchSimilarFromBytes
+
+```go
+func (c *Client) SearchSimilarFromBytes(ctx context.Context, queryVector []float32, parquetContent []byte, topK int) ([]SearchResult, error)
+```
+
+SearchSimilarFromBytes performs vector similarity search on parquet content provided as bytes.
+
+<a name="Client.SearchWithFilter"></a>
+### func \(\*Client\) SearchWithFilter
+
+```go
+func (c *Client) SearchWithFilter(ctx context.Context, queryVector []float32, parquetPath string, topK int, filter map[string]string) ([]SearchResult, error)
+```
+
+SearchWithFilter performs vector similarity search with metadata filtering.
+
+<a name="Client.UploadToLakeFS"></a>
+### func \(\*Client\) UploadToLakeFS
+
+```go
+func (c *Client) UploadToLakeFS(ctx context.Context, config UploadConfig, data []byte) (*lakefs.ObjectMetadata, error)
+```
+
+UploadToLakeFS uploads embedding data to LakeFS with appropriate metadata.
+
+<a name="EmbeddingConfig"></a>
+## type EmbeddingConfig
+
+EmbeddingConfig holds the configuration for embedding generation.
+
+```go
+type EmbeddingConfig struct {
+    Model      string // OpenAI embedding model (e.g., "text-embedding-3-small", "text-embedding-3-large")
+    Dimensions int    // Embedding dimensions (e.g., 1536, 3072)
+    ChunkSize  int    // Text chunk size for splitting large documents
+    Overlap    int    // Overlap between consecutive chunks
+}
+```
+
+<a name="DefaultConfig"></a>
+### func DefaultConfig
+
+```go
+func DefaultConfig() EmbeddingConfig
+```
+
+DefaultConfig returns the default embedding configuration.
+
+<a name="EmbeddingRecord"></a>
+## type EmbeddingRecord
+
+EmbeddingRecord represents a single embedding with its associated metadata.
+
+```go
+type EmbeddingRecord struct {
+    ID         string            `json:"id"`
+    SourceFile string            `json:"source_file"`
+    ChunkIndex int               `json:"chunk_index"`
+    Content    string            `json:"content"`
+    Embedding  []float32         `json:"embedding"`
+    Metadata   map[string]string `json:"metadata"`
+    CreatedAt  time.Time         `json:"created_at"`
+}
+```
+
+<a name="EmbeddingResult"></a>
+## type EmbeddingResult
+
+EmbeddingResult represents the result of an embedding operation.
+
+```go
+type EmbeddingResult struct {
+    Records     []EmbeddingRecord `json:"records"`
+    TotalChunks int               `json:"total_chunks"`
+    Model       string            `json:"model"`
+    Dimensions  int               `json:"dimensions"`
+}
+```
+
+<a name="SearchResult"></a>
+## type SearchResult
+
+SearchResult represents a single search result from vector similarity search.
+
+```go
+type SearchResult struct {
+    ID         string            `json:"id"`
+    SourceFile string            `json:"source_file"`
+    ChunkIndex int               `json:"chunk_index"`
+    Content    string            `json:"content"`
+    Score      float64           `json:"score"`
+    Distance   float64           `json:"distance"`
+    Metadata   map[string]string `json:"metadata"`
+}
+```
+
+<a name="UploadConfig"></a>
+## type UploadConfig
+
+UploadConfig holds configuration for uploading embeddings to LakeFS.
+
+```go
+type UploadConfig struct {
+    RepositoryID string
+    Branch       string
+    Path         string
+    SourceFile   string
+    Model        string
+    Dimensions   int
+    ChunkCount   int
+}
+```
 
 # engine
 
@@ -12391,6 +12824,7 @@ type CoreAPIEnv struct {
     AllowedOrigins               string // Allowed origins for CORS
     AIServiceBaseURL             string // Base URL of the AI service
     AIServiceSystemToken         string // Key to authenticate system requests to the AI service
+    OpenAIAPIKey                 string // Key to authenticate system requests to the OpenAI API
     MCPHTTPPath                  string // Mount path for the embedded MCP streamable HTTP endpoint
     OrchestratorEnabled          bool   // Flag to enable the orchestrator
     SqidAlphabet                 string // Alphabet to use for SQIDs

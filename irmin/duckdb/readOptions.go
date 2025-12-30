@@ -342,9 +342,20 @@ func BuildReadQuery(filePath string, options *ReadOptions) string {
 
 // EscapeSQLString escapes single quotes in SQL string literals by doubling them.
 // This prevents SQL injection when interpolating strings into SQL queries.
-// For example: "file'name.json" becomes "file”name.json"
+// For example: "file'name.json" becomes "file"name.json"
 func EscapeSQLString(s string) string {
 	return strings.ReplaceAll(s, "'", "''")
+}
+
+// EscapeSQLIdentifier escapes and quotes an identifier (table name, column name, index name) for use in SQL.
+// This prevents SQL injection when using user input as identifiers.
+// For example: "my_table" becomes "\"my_table\""
+// For example: "table\"name" becomes "\"table\"\"name\""
+func EscapeSQLIdentifier(s string) string {
+	// Escape internal double quotes by doubling them
+	escaped := strings.ReplaceAll(s, "\"", "\"\"")
+	// Wrap in double quotes
+	return "\"" + escaped + "\""
 }
 
 // escapeSQLString is an internal alias for EscapeSQLString for backward compatibility.

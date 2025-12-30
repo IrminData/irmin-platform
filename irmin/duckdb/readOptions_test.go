@@ -609,3 +609,70 @@ func TestEscapeSQLString(t *testing.T) {
 		})
 	}
 }
+
+// TestEscapeSQLIdentifier tests SQL identifier escaping for preventing injection in table/column names.
+func TestEscapeSQLIdentifier(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "simple identifier",
+			input:    "my_table",
+			expected: `"my_table"`,
+		},
+		{
+			name:     "identifier with spaces",
+			input:    "my table",
+			expected: `"my table"`,
+		},
+		{
+			name:     "identifier with double quote",
+			input:    `table"name`,
+			expected: `"table""name"`,
+		},
+		{
+			name:     "identifier with multiple double quotes",
+			input:    `table"with"quotes`,
+			expected: `"table""with""quotes"`,
+		},
+		{
+			name:     "SQL injection attempt - semicolon",
+			input:    "users; DROP TABLE users--",
+			expected: `"users; DROP TABLE users--"`,
+		},
+		{
+			name:     "SQL injection attempt - double quote escape",
+			input:    `users" OR "1"="1`,
+			expected: `"users"" OR ""1""=""1"`,
+		},
+		{
+			name:     "identifier with backtick",
+			input:    "table`name",
+			expected: `"table` + "`" + `name"`,
+		},
+		{
+			name:     "empty string",
+			input:    "",
+			expected: `""`,
+		},
+		{
+			name:     "identifier with newline",
+			input:    "table\nname",
+			expected: "\"table\nname\"",
+		},
+		{
+			name:     "identifier with special SQL chars",
+			input:    "table-name_123",
+			expected: `"table-name_123"`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := duckdb.EscapeSQLIdentifier(tc.input)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
