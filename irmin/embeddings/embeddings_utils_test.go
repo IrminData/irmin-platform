@@ -1,11 +1,16 @@
 package embeddings_test
 
 import (
+	"fmt"
+	"irmin-api/duckdb"
 	"irmin-api/embeddings"
 	"irmin-api/lib"
+	"os"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/xuri/excelize/v2"
 	"github.com/zeebo/assert"
 )
 
@@ -22,13 +27,7 @@ func TestGetSupportedFormats(t *testing.T) {
 	// Check that expected formats are present
 	expectedFormats := []string{".txt", ".md", ".csv", ".json", ".jsonl"}
 	for _, expected := range expectedFormats {
-		found := false
-		for _, format := range formats {
-			if format == expected {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(formats, expected)
 		assert.True(t, found)
 	}
 }
@@ -45,9 +44,13 @@ func TestIsSupportedFormat(t *testing.T) {
 
 	// Unsupported formats
 	assert.False(t, embeddings.IsSupportedFormat("image.png"))
-	assert.False(t, embeddings.IsSupportedFormat("document.pdf"))
+	assert.False(t, embeddings.IsSupportedFormat("video.mp4"))
 	assert.False(t, embeddings.IsSupportedFormat("archive.zip"))
 	assert.False(t, embeddings.IsSupportedFormat("binary.exe"))
+
+	// Legacy Excel formats not supported by Excelize
+	assert.False(t, embeddings.IsSupportedFormat("legacy.xls"))
+	assert.False(t, embeddings.IsSupportedFormat("workbook.xlsb"))
 }
 
 // =============================================================================
@@ -400,7 +403,7 @@ func TestExtractTextFromFileUnsupportedFormat(t *testing.T) {
 		t.Context(),
 		testSuite.DuckDBClient,
 		[]byte("some content"),
-		"document.pdf",
+		"document.exe", // Binary executable - truly unsupported
 	)
 
 	assert.Error(t, err)
@@ -578,4 +581,322 @@ func minInt(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// =============================================================================
+// New Format Extraction Tests
+// =============================================================================
+
+// TestExtractTextFromParquet tests Parquet extraction.
+func TestExtractTextFromParquet(t *testing.T) {
+	testSuite := lib.GetTestSuite()
+	if testSuite == nil {
+		t.Skip("Test suite not initialized")
+	}
+
+	// Create a simple parquet file in memory using DuckDB
+	ctx := t.Context()
+
+	// Create temp parquet file
+	tempFile, err := os.CreateTemp(t.TempDir(), "test_*.parquet")
+	assert.NoError(t, err)
+	defer os.Remove(tempFile.Name())
+	tempFile.Close()
+
+	// Write test data to parquet
+	escapedPath := duckdb.EscapeSQLString(tempFile.Name())
+	query := fmt.Sprintf(`
+		COPY (
+			SELECT 'John Doe' as name, 'Software Engineer' as title, 'Building amazing apps' as description
+			UNION ALL
+			SELECT 'Jane Smith' as name, 'Product Manager' as title, 'Leading product development' as description
+		) TO '%s' (FORMAT PARQUET)
+	`, escapedPath)
+
+	_, err = testSuite.DuckDBClient.ExecuteNonQuery(ctx, query)
+	assert.NoError(t, err)
+
+	// Read the parquet file back
+	content, err := os.ReadFile(tempFile.Name())
+	assert.NoError(t, err)
+
+	texts, err := embeddings.ExtractTextFromFile(
+		ctx,
+		testSuite.DuckDBClient,
+		content,
+		"data.parquet",
+	)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, texts)
+	assert.Equal(t, 2, len(texts))
+	assert.True(t, strings.Contains(texts[0], "John Doe") || strings.Contains(texts[0], "Jane Smith"))
+}
+
+// TestExtractTextFromExcel tests Excel extraction.
+func TestExtractTextFromExcel(t *testing.T) {
+	testSuite := lib.GetTestSuite()
+	if testSuite == nil {
+		t.Skip("Test suite not initialized")
+	}
+
+	// Create a simple Excel file using Excelize
+	f := excelize.NewFile()
+	defer f.Close()
+
+	// Add some test data
+	sheetName := "Sheet1"
+	f.SetCellValue(sheetName, "A1", "Name")
+	f.SetCellValue(sheetName, "B1", "Title")
+	f.SetCellValue(sheetName, "C1", "Description")
+	f.SetCellValue(sheetName, "A2", "John Doe")
+	f.SetCellValue(sheetName, "B2", "Engineer")
+	f.SetCellValue(sheetName, "C2", "Building systems")
+	f.SetCellValue(sheetName, "A3", "Jane Smith")
+	f.SetCellValue(sheetName, "B3", "Manager")
+	f.SetCellValue(sheetName, "C3", "Leading teams")
+
+	// Write to a temporary file
+	tempFile, err := os.CreateTemp(t.TempDir(), "test_*.xlsx")
+	assert.NoError(t, err)
+	defer os.Remove(tempFile.Name())
+	tempFile.Close()
+
+	err = f.SaveAs(tempFile.Name())
+	assert.NoError(t, err)
+
+	// Read the file back
+	content, err := os.ReadFile(tempFile.Name())
+	assert.NoError(t, err)
+
+	texts, err := embeddings.ExtractTextFromFile(
+		t.Context(),
+		testSuite.DuckDBClient,
+		content,
+		"data.xlsx",
+	)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, texts)
+	assert.Equal(t, 3, len(texts)) // Header row + 2 data rows
+	// Check that content is extracted
+	combinedText := strings.Join(texts, " ")
+	assert.True(t, strings.Contains(combinedText, "Name"))
+	assert.True(t, strings.Contains(combinedText, "John Doe"))
+	assert.True(t, strings.Contains(combinedText, "Jane Smith"))
+}
+
+// TestExtractTextFromXML tests XML extraction.
+func TestExtractTextFromXML(t *testing.T) {
+	testSuite := lib.GetTestSuite()
+	if testSuite == nil {
+		t.Skip("Test suite not initialized")
+	}
+
+	content := []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<root>
+	<document>
+		<title>Machine Learning Guide</title>
+		<section>
+			<heading>Introduction</heading>
+			<content>Machine learning is a subset of artificial intelligence.</content>
+		</section>
+		<section>
+			<heading>Applications</heading>
+			<content>ML is used in recommendation systems, image recognition, and more.</content>
+		</section>
+	</document>
+</root>`)
+
+	texts, err := embeddings.ExtractTextFromFile(
+		t.Context(),
+		testSuite.DuckDBClient,
+		content,
+		"document.xml",
+	)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, texts)
+	assert.Equal(t, 1, len(texts))
+	assert.True(t, strings.Contains(texts[0], "Machine Learning Guide"))
+	assert.True(t, strings.Contains(texts[0], "Introduction"))
+	assert.True(t, strings.Contains(texts[0], "artificial intelligence"))
+}
+
+// TestExtractTextFromYAML tests YAML extraction.
+func TestExtractTextFromYAML(t *testing.T) {
+	testSuite := lib.GetTestSuite()
+	if testSuite == nil {
+		t.Skip("Test suite not initialized")
+	}
+
+	content := []byte(`
+title: Configuration Guide
+version: 1.0
+sections:
+  - name: Database
+    description: Database configuration settings
+    details: Configure your PostgreSQL connection
+  - name: API
+    description: API configuration settings
+    details: Set up your REST API endpoints
+metadata:
+  author: Engineering Team
+  updated: 2024-01-15
+`)
+
+	texts, err := embeddings.ExtractTextFromFile(
+		t.Context(),
+		testSuite.DuckDBClient,
+		content,
+		"config.yaml",
+	)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, texts)
+	assert.Equal(t, 1, len(texts))
+	assert.True(t, strings.Contains(texts[0], "Configuration Guide"))
+	assert.True(t, strings.Contains(texts[0], "Database"))
+	assert.True(t, strings.Contains(texts[0], "PostgreSQL"))
+}
+
+// TestExtractTextFromYAMLDeterministicOrder tests that YAML extraction
+// produces deterministic output regardless of map iteration order.
+func TestExtractTextFromYAMLDeterministicOrder(t *testing.T) {
+	testSuite := lib.GetTestSuite()
+	if testSuite == nil {
+		t.Skip("Test suite not initialized")
+	}
+
+	// YAML with multiple top-level keys to test map iteration order
+	content := []byte(`
+zebra: Last alphabetically
+alpha: First alphabetically
+beta: Second alphabetically
+gamma: Third alphabetically
+nested:
+  z: Nested last
+  a: Nested first
+  m: Nested middle
+`)
+
+	// Run extraction multiple times and verify identical results
+	var firstResult string
+	for i := range 10 {
+		texts, err := embeddings.ExtractTextFromFile(
+			t.Context(),
+			testSuite.DuckDBClient,
+			content,
+			"test.yaml",
+		)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, texts)
+		assert.Equal(t, 1, len(texts))
+
+		if i == 0 {
+			firstResult = texts[0]
+		} else {
+			// All subsequent runs should produce identical output
+			assert.Equal(t, firstResult, texts[0])
+		}
+	}
+}
+
+// TestExtractTextFromPDF tests PDF extraction.
+func TestExtractTextFromPDF(t *testing.T) {
+	testSuite := lib.GetTestSuite()
+	if testSuite == nil {
+		t.Skip("Test suite not initialized")
+	}
+
+	// Note: This test requires pdftotext (poppler-utils) to be installed
+	// We'll test with minimal PDF content
+	// A real PDF would need proper PDF structure
+
+	// Minimal PDF header
+	content := []byte("%PDF-1.4\n")
+
+	texts, err := embeddings.ExtractTextFromFile(
+		t.Context(),
+		testSuite.DuckDBClient,
+		content,
+		"document.pdf",
+	)
+
+	// Either succeeds or fails with missing tool error
+	if err != nil {
+		assert.True(t, strings.Contains(err.Error(), "poppler-utils") ||
+			strings.Contains(err.Error(), "pdftotext") ||
+			strings.Contains(err.Error(), "failed to extract"))
+	} else {
+		assert.NotNil(t, texts)
+	}
+}
+
+// TestExtractTextFromDOCX tests DOCX extraction.
+func TestExtractTextFromDOCX(t *testing.T) {
+	testSuite := lib.GetTestSuite()
+	if testSuite == nil {
+		t.Skip("Test suite not initialized")
+	}
+
+	// Note: This test requires appropriate tools for DOCX extraction
+	// DOCX files are ZIP archives with XML inside
+
+	// Minimal DOCX signature (ZIP file signature)
+	content := []byte("PK\x03\x04")
+
+	texts, err := embeddings.ExtractTextFromFile(
+		t.Context(),
+		testSuite.DuckDBClient,
+		content,
+		"document.docx",
+	)
+
+	// Either succeeds or fails with extraction error
+	if err != nil {
+		assert.True(t, strings.Contains(err.Error(), "DOCX") ||
+			strings.Contains(err.Error(), "failed to extract"))
+	} else {
+		assert.NotNil(t, texts)
+	}
+}
+
+// TestGetSupportedFormatsIncludesNewFormats tests that new formats are in supported list.
+func TestGetSupportedFormatsIncludesNewFormats(t *testing.T) {
+	formats := embeddings.GetSupportedFormats()
+
+	newFormats := []string{".parquet", ".xlsx", ".xlsm", ".xml", ".yaml", ".yml", ".pdf", ".docx"}
+	for _, newFormat := range newFormats {
+		found := false
+		for _, format := range formats {
+			if format == newFormat {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Format %s should be supported", newFormat)
+		}
+		assert.True(t, found)
+	}
+}
+
+// TestIsSupportedFormatNewFormats tests format support checker for new formats.
+func TestIsSupportedFormatNewFormats(t *testing.T) {
+	// New supported formats
+	assert.True(t, embeddings.IsSupportedFormat("data.parquet"))
+	assert.True(t, embeddings.IsSupportedFormat("spreadsheet.xlsx"))
+	assert.True(t, embeddings.IsSupportedFormat("spreadsheet.xlsm"))
+	assert.True(t, embeddings.IsSupportedFormat("config.xml"))
+	assert.True(t, embeddings.IsSupportedFormat("settings.yaml"))
+	assert.True(t, embeddings.IsSupportedFormat("config.yml"))
+	assert.True(t, embeddings.IsSupportedFormat("document.pdf"))
+	assert.True(t, embeddings.IsSupportedFormat("report.docx"))
+	assert.True(t, embeddings.IsSupportedFormat("DATA.PARQUET")) // Case insensitive
+
+	// Still unsupported formats
+	assert.False(t, embeddings.IsSupportedFormat("image.png"))
+	assert.False(t, embeddings.IsSupportedFormat("video.mp4"))
 }

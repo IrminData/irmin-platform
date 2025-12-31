@@ -290,6 +290,84 @@ chunks := embeddings.ChunkTextBySentences(text, 1000)
 // This respects sentence boundaries and provides better context
 ```
 
+### Format-Specific Text Extraction
+
+The embeddings package supports a wide variety of document formats with intelligent text extraction:
+
+#### Structured Data Formats
+
+For structured formats (CSV, JSON, Parquet, Excel), the package extracts and concatenates all text fields:
+
+```go
+// Parquet files - efficient columnar format
+fileContent, _ := os.ReadFile("analytics.parquet")
+result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "analytics.parquet", config)
+// Extracts and embeds all text columns from the Parquet file
+
+// Excel spreadsheets - pure Go implementation
+fileContent, _ := os.ReadFile("report.xlsx")
+result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "report.xlsx", config)
+// Extracts text from all cells across all sheets using Excelize
+
+// CSV files with multiple text columns
+fileContent, _ := os.ReadFile("products.csv")
+result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "products.csv", config)
+// Concatenates all columns: "ProductName Category Description Features"
+```
+
+#### Markup and Configuration Formats
+
+XML and YAML files are parsed and text content is extracted recursively:
+
+```go
+// XML documents
+fileContent, _ := os.ReadFile("documentation.xml")
+result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "documentation.xml", config)
+// Recursively extracts all text nodes while preserving structure
+
+// YAML configuration files
+fileContent, _ := os.ReadFile("config.yaml")
+result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "config.yaml", config)
+// Extracts all string values from the YAML hierarchy
+```
+
+#### Document Formats
+
+PDF and Word documents require external dependencies:
+
+```go
+// PDF documents - requires poppler-utils
+fileContent, _ := os.ReadFile("whitepaper.pdf")
+result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "whitepaper.pdf", config)
+if err != nil {
+    // May fail with "PDF extraction requires poppler-utils (pdftotext) to be installed"
+    log.Fatal(err)
+}
+
+// Word DOCX documents
+fileContent, _ := os.ReadFile("proposal.docx")
+result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "proposal.docx", config)
+// Extracts all text content from the Word document
+```
+
+#### Error Handling for Format-Specific Issues
+
+```go
+result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, fileName, config)
+if err != nil {
+    switch {
+    case strings.Contains(err.Error(), "poppler-utils"):
+        // PDF files need pdftotext
+        fmt.Println("Please install poppler-utils: apt-get install poppler-utils")
+    case strings.Contains(err.Error(), "unsupported file format"):
+        // File format not supported
+        fmt.Println("File format not supported for embeddings")
+    default:
+        log.Fatal(err)
+    }
+}
+```
+
 ### Utility Functions
 
 ```go
@@ -301,7 +379,7 @@ if embeddings.IsSupportedFormat("document.pdf") {
 // Get list of all supported formats
 formats := embeddings.GetSupportedFormats()
 fmt.Printf("Supported: %v\n", formats)
-// Output: [.txt .md .csv .json .jsonl .ndjson .tsv .tab]
+// Output: [.txt .md .csv .json .jsonl .ndjson .tsv .tab .parquet .xlsx .xlsm .xml .yaml .yml .pdf .docx]
 
 // Manually compute cosine similarity between vectors
 similarity, err := embeddings.ComputeCosineSimilarity(vector1, vector2)
@@ -348,6 +426,25 @@ config := embeddings.EmbeddingConfig{
 | JSON | `.json` | DuckDB query |
 | JSONL | `.jsonl`, `.ndjson` | DuckDB query |
 | TSV | `.tsv`, `.tab` | DuckDB query |
+| Parquet | `.parquet` | DuckDB query |
+| Excel | `.xlsx`, `.xlsm` | Excelize library (pure Go, XLSX and macro-enabled formats only) |
+| XML | `.xml` | Go encoding/xml parser |
+| YAML | `.yaml`, `.yml` | gopkg.in/yaml.v3 parser |
+| PDF | `.pdf` | docconv library (requires poppler-utils) |
+| Word | `.docx` | docconv library |
+
+### External Dependencies
+
+Some formats require external tools to be installed on the system:
+
+- **PDF files**: Requires `poppler-utils` (specifically `pdftotext`)
+  - Ubuntu/Debian: `sudo apt-get install poppler-utils`
+  - macOS: `brew install poppler`
+  - Windows: Download from [Poppler for Windows](https://github.com/oschwartz10612/poppler-windows)
+
+- **Excel files**: No external dependencies - uses pure Go Excelize library
+
+- **Word DOCX files**: Handled by docconv library (pure Go implementation for DOCX)
 
 ## Parquet Schema
 

@@ -113,8 +113,6 @@ func (mcpTools *MCPTools) registerListWorkflowsTool() {
 }
 
 // registerGetWorkflowTool registers the irmin_get_workflow tool for getting a workflow by ID
-//
-
 func (mcpTools *MCPTools) registerGetWorkflowTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
@@ -164,8 +162,6 @@ func (mcpTools *MCPTools) registerGetWorkflowTool() {
 }
 
 // registerCreateWorkflowTool registers the irmin_create_workflow tool for creating a new workflow
-//
-
 func (mcpTools *MCPTools) registerCreateWorkflowTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,

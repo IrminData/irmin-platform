@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     npm \
     wget \
     ca-certificates \
+    poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Go 1.25 manually (Debian only has 1.21)

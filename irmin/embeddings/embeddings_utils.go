@@ -3,12 +3,20 @@ package embeddings
 import (
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"irmin-api/duckdb"
+	"irmin-api/utils"
 	"os"
 	"path/filepath"
+	"slices"
+	"sort"
 	"strings"
+
+	"code.sajari.com/docconv"
+	"github.com/xuri/excelize/v2"
+	"gopkg.in/yaml.v3"
 )
 
 // GetSupportedFormats returns a list of file extensions supported for embedding creation.
@@ -19,6 +27,12 @@ func GetSupportedFormats() []string {
 		".json",             // JSON
 		".jsonl", ".ndjson", // JSONL
 		".tsv", ".tab", // TSV
+		".parquet",       // Parquet
+		".xlsx", ".xlsm", // Excel (XLSX and macro-enabled XLSX only)
+		".xml",          // XML
+		".yaml", ".yml", // YAML
+		".pdf",  // PDF
+		".docx", // Word
 	}
 }
 
@@ -26,12 +40,7 @@ func GetSupportedFormats() []string {
 func IsSupportedFormat(fileName string) bool {
 	ext := strings.ToLower(filepath.Ext(fileName))
 	supportedFormats := GetSupportedFormats()
-	for _, format := range supportedFormats {
-		if ext == format {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(supportedFormats, ext)
 }
 
 // ExtractTextFromFile extracts text content from a file based on its format.
@@ -59,6 +68,18 @@ func ExtractTextFromFile(
 		return extractFromJSONL(ctx, duckDBClient, fileContent, fileName)
 	case ".tsv", ".tab":
 		return extractFromTSV(ctx, duckDBClient, fileContent, fileName)
+	case ".parquet":
+		return extractFromParquet(ctx, duckDBClient, fileContent, fileName)
+	case ".xlsx", ".xlsm":
+		return extractFromExcel(fileContent, fileName)
+	case ".xml":
+		return extractFromXML(fileContent)
+	case ".yaml", ".yml":
+		return extractFromYAML(fileContent)
+	case ".pdf":
+		return extractFromPDF(fileContent)
+	case ".docx":
+		return extractFromDOCX(fileContent)
 	default:
 		return nil, fmt.Errorf("unsupported file format: %s", ext)
 	}
@@ -368,4 +389,210 @@ func ChunkTextBySentences(text string, maxChunkSize int) []string {
 	}
 
 	return chunks
+}
+
+// extractFromParquet extracts text from Parquet files by querying all columns.
+func extractFromParquet(
+	ctx context.Context,
+	duckDBClient *duckdb.QueryClient,
+	content []byte,
+	fileName string,
+) ([]string, error) {
+	return extractFromStructuredFile(ctx, duckDBClient, content, fileName, "read_parquet")
+}
+
+// extractFromExcel extracts text from Excel files using the Excelize library.
+// This provides consistent handling without requiring DuckDB's spatial extension.
+func extractFromExcel(
+	content []byte,
+	fileName string,
+) ([]string, error) {
+	// Create a temporary file for the Excel content
+	tempFile, err := os.CreateTemp("", "embed_*"+filepath.Ext(fileName))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(tempFile.Name())
+
+	if _, writeErr := tempFile.Write(content); writeErr != nil {
+		_ = tempFile.Close()
+		return nil, fmt.Errorf("failed to write temp file: %w", writeErr)
+	}
+	if closeErr := tempFile.Close(); closeErr != nil {
+		return nil, fmt.Errorf("failed to close temp file: %w", closeErr)
+	}
+
+	// Open the Excel file using Excelize
+	f, err := excelize.OpenFile(tempFile.Name())
+	if err != nil {
+		return nil, fmt.Errorf("failed to open Excel file: %w", err)
+	}
+	defer func() {
+		_ = f.Close() // Ignore close error in defer
+	}()
+
+	var texts []string
+
+	// Iterate over all sheets and extract text from cells
+	for _, sheetName := range f.GetSheetList() {
+		rows, getSheetListRowsErr := f.GetRows(sheetName)
+		if getSheetListRowsErr != nil {
+			return nil, fmt.Errorf("failed to get rows from sheet %s: %w", sheetName, getSheetListRowsErr)
+		}
+
+		// Process each row
+		for _, row := range rows {
+			joinedText := strings.Join(utils.ConvertToStringSlice(row), " ")
+			// Only append rows with meaningful content (non-empty after trimming whitespace)
+			if strings.TrimSpace(joinedText) != "" {
+				texts = append(texts, joinedText)
+			}
+		}
+	}
+
+	return texts, nil
+}
+
+// xmlNode represents a simple XML node for text extraction.
+type xmlNode struct {
+	XMLName xml.Name  `xml:""`
+	Content string    `xml:",chardata"`
+	Nodes   []xmlNode `xml:",any"`
+}
+
+// extractFromXML extracts text content from XML files.
+func extractFromXML(content []byte) ([]string, error) {
+	var node xmlNode
+	if err := xml.Unmarshal(content, &node); err != nil {
+		return nil, fmt.Errorf("failed to parse XML: %w", err)
+	}
+
+	// Extract all text content from the XML tree
+	text := extractXMLText(&node)
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return nil, nil
+	}
+
+	return []string{text}, nil
+}
+
+// extractXMLText recursively extracts text from XML nodes.
+func extractXMLText(node *xmlNode) string {
+	var parts []string
+
+	// Add content from this node
+	if trimmed := strings.TrimSpace(node.Content); trimmed != "" {
+		parts = append(parts, trimmed)
+	}
+
+	// Recursively extract from child nodes
+	for i := range node.Nodes {
+		if childText := extractXMLText(&node.Nodes[i]); childText != "" {
+			parts = append(parts, childText)
+		}
+	}
+
+	return strings.Join(parts, " ")
+}
+
+// extractFromYAML extracts text content from YAML files.
+func extractFromYAML(content []byte) ([]string, error) {
+	var data any
+	if err := yaml.Unmarshal(content, &data); err != nil {
+		return nil, fmt.Errorf("failed to parse YAML: %w", err)
+	}
+
+	// Extract all string values from the YAML structure
+	text := extractYAMLText(data)
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return nil, nil
+	}
+
+	return []string{text}, nil
+}
+
+// extractYAMLText recursively extracts text from YAML data structures.
+func extractYAMLText(data any) string {
+	var parts []string
+
+	switch v := data.(type) {
+	case string:
+		if trimmed := strings.TrimSpace(v); trimmed != "" {
+			parts = append(parts, trimmed)
+		}
+	case map[string]any:
+		// Sort keys to ensure deterministic iteration order
+		keys := make([]string, 0, len(v))
+		for k := range v {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			if text := extractYAMLText(v[k]); text != "" {
+				parts = append(parts, text)
+			}
+		}
+	case []any:
+		for _, item := range v {
+			if text := extractYAMLText(item); text != "" {
+				parts = append(parts, text)
+			}
+		}
+	// For numbers, booleans, etc., we convert to string
+	case int, int64, float64, bool:
+		parts = append(parts, fmt.Sprintf("%v", v))
+	}
+
+	return strings.Join(parts, " ")
+}
+
+// extractFromDocConv is a helper function that extracts text using docconv.
+// It handles both PDF and DOCX files with appropriate error messages.
+func extractFromDocConv(content []byte, extension, formatName string) ([]string, error) {
+	// Create a temporary file
+	tempFile, err := os.CreateTemp("", "embed_*"+extension)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(tempFile.Name())
+
+	if _, writeErr := tempFile.Write(content); writeErr != nil {
+		_ = tempFile.Close()
+		return nil, fmt.Errorf("failed to write temp file: %w", writeErr)
+	}
+	if closeErr := tempFile.Close(); closeErr != nil {
+		return nil, fmt.Errorf("failed to close temp file: %w", closeErr)
+	}
+
+	// Convert to text using docconv
+	res, err := docconv.ConvertPath(tempFile.Name())
+	if err != nil {
+		// Provide helpful error message if external tools are missing
+		if strings.Contains(err.Error(), "exec") || strings.Contains(err.Error(), "not found") {
+			if formatName == "PDF" {
+				return nil, fmt.Errorf("PDF extraction requires poppler-utils (pdftotext) to be installed: %w", err)
+			}
+			return nil, fmt.Errorf("%s extraction may require additional tools: %w", formatName, err)
+		}
+		return nil, fmt.Errorf("failed to extract text from %s: %w", formatName, err)
+	}
+
+	text := strings.TrimSpace(res.Body)
+	if text == "" {
+		return nil, nil
+	}
+
+	return []string{text}, nil
+}
+
+// extractFromPDF extracts text content from PDF files using docconv.
+func extractFromPDF(content []byte) ([]string, error) {
+	return extractFromDocConv(content, ".pdf", "PDF")
+}
+
+// extractFromDOCX extracts text content from Word DOCX files using docconv.
+func extractFromDOCX(content []byte) ([]string, error) {
+	return extractFromDocConv(content, ".docx", "DOCX")
 }
