@@ -3,6 +3,7 @@ package permissions
 import (
 	"fmt"
 	"irmin-api/db"
+	"strings"
 )
 
 // IsAllowedFilter filters a list of resources based on user permissions.
@@ -83,9 +84,11 @@ func IsAllowedFilter[T any](
 
 	// Combine all conditions with OR
 	whereClause := fmt.Sprintf("(%s)", conditions[0])
+	var whereClauseSb86 strings.Builder
 	for i := 1; i < len(conditions); i++ {
-		whereClause += fmt.Sprintf(" OR (%s)", conditions[i])
+		whereClauseSb86.WriteString(fmt.Sprintf(" OR (%s)", conditions[i]))
 	}
+	whereClause += whereClauseSb86.String()
 
 	query = query.Where(whereClause, values...)
 

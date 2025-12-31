@@ -7,6 +7,7 @@ import (
 	"irmin-api/db"
 	"log/slog"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -157,9 +158,11 @@ func checkPoliciesOptimized(
 
 	// Combine all conditions with OR
 	whereClause := fmt.Sprintf("(%s)", conditions[0])
+	var whereClauseSb160 strings.Builder
 	for i := 1; i < len(conditions); i++ {
-		whereClause += fmt.Sprintf(" OR (%s)", conditions[i])
+		whereClauseSb160.WriteString(fmt.Sprintf(" OR (%s)", conditions[i]))
 	}
+	whereClause += whereClauseSb160.String()
 
 	query = query.Where(whereClause, values...)
 

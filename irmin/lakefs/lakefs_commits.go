@@ -3,6 +3,7 @@ package lakefs
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 // Commit represents a commit in a lakeFS repository.
@@ -70,14 +71,18 @@ func (c *Client) ListCommits(
 		amount,
 	)
 	if len(objects) > 0 {
+		var endpointSb73 strings.Builder
 		for _, obj := range objects {
-			endpoint += "&objects=" + obj
+			endpointSb73.WriteString("&objects=" + obj)
 		}
+		endpoint += endpointSb73.String()
 	}
 	if len(prefixes) > 0 {
+		var endpointSb78 strings.Builder
 		for _, prefix := range prefixes {
-			endpoint += "&prefixes=" + prefix
+			endpointSb78.WriteString("&prefixes=" + prefix)
 		}
+		endpoint += endpointSb78.String()
 	}
 	if err := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &commits); err != nil {
 		return nil, err
