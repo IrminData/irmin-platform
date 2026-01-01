@@ -132,7 +132,7 @@ func (v *Validator) validateConnectionPipelineStage(parentStruct reflect.Value) 
 	readPathsField := parentStruct.FieldByName("ConnectionReadPaths")
 
 	// Connection stages must have a valid connection ID (validated as SQID)
-	if !v.validateConnectionID(connectionIDField) {
+	if !v.validateResourceID(connectionIDField, "connections") {
 		return false
 	}
 
@@ -388,7 +388,7 @@ func (v *Validator) validateImportWorkflowable(parentStruct reflect.Value) bool 
 	fromConnectionPathsField := parentStruct.FieldByName("ImportFromConnectionPaths")
 
 	// Import workflowables must have a connection ID
-	if !v.validateConnectionID(connectionIDField) {
+	if !v.validateResourceID(connectionIDField, "connections") {
 		return false
 	}
 
@@ -411,7 +411,7 @@ func (v *Validator) validateExportWorkflowable(parentStruct reflect.Value) bool 
 	toConnectionPathField := parentStruct.FieldByName("ExportToConnectionPath")
 
 	// Export workflowables must have a connection ID
-	if !v.validateConnectionID(connectionIDField) {
+	if !v.validateResourceID(connectionIDField, "connections") {
 		return false
 	}
 
@@ -541,10 +541,4 @@ func (v *Validator) validateResourceID(resourceIDField reflect.Value, resourceTy
 	}
 
 	return true
-}
-
-// validateConnectionID validates that a connection ID field is a valid SQID.
-// Deprecated: Use validateResourceID instead.
-func (v *Validator) validateConnectionID(connectionIDField reflect.Value) bool {
-	return v.validateResourceID(connectionIDField, "connections")
 }

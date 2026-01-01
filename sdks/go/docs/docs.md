@@ -195,6 +195,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) GetConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnection>)
   - [func \(c \*Client\) GetConnectionSchema\(ctx context.Context, workspace, connectionID, operationMethod, path string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnectionSchema>)
   - [func \(c \*Client\) GetConnector\(ctx context.Context, connectorID string\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnector>)
+  - [func \(c \*Client\) GetEmbeddingInfo\(ctx context.Context, workspace, repository string, req GetEmbeddingInfoRequest\) \(\*irminmodels.EmbeddingFile, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetEmbeddingInfo>)
   - [func \(c \*Client\) GetInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetInvite>)
   - [func \(c \*Client\) GetObjectAtPath\(ctx context.Context, workspace, repository, path, ref string\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectAtPath>)
   - [func \(c \*Client\) GetObjectContent\(ctx context.Context, workspace, repository, path, ref string, limitResponse bool\) \(\[\]byte, error\)](<#Client.GetObjectContent>)
@@ -223,6 +224,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) ListCommits\(ctx context.Context, workspace, repository, ref, after string, perPage int\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListCommits>)
   - [func \(c \*Client\) ListConnections\(ctx context.Context, workspace string\) \(\[\]irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnections>)
   - [func \(c \*Client\) ListConnectors\(ctx context.Context\) \(\[\]irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnectors>)
+  - [func \(c \*Client\) ListEmbeddings\(ctx context.Context, workspace, repository string, req ListEmbeddingsRequest\) \(\[\]irminmodels.EmbeddingFile, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListEmbeddings>)
   - [func \(c \*Client\) ListInviteInbox\(ctx context.Context\) \(\[\]irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListInviteInbox>)
   - [func \(c \*Client\) ListInvitesToWorkspace\(ctx context.Context, workspace string\) \(\[\]irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListInvitesToWorkspace>)
   - [func \(c \*Client\) ListPolicies\(ctx context.Context, workspace string, params ListPoliciesParams\) \(\[\]irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListPolicies>)
@@ -250,6 +252,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) ResendInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ResendInvite>)
   - [func \(c \*Client\) RevertChanges\(ctx context.Context, workspace, repository string, req RevertUncommittedChangesRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RevertChanges>)
   - [func \(c \*Client\) Search\(ctx context.Context, workspace string, params irminmodels.SearchFilters\) \(\*irminmodels.SearchResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.Search>)
+  - [func \(c \*Client\) SearchEmbeddings\(ctx context.Context, workspace, repository string, req SearchEmbeddingsRequest\) \(\*irminmodels.EmbeddingSearchResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.SearchEmbeddings>)
   - [func \(c \*Client\) SendInvite\(ctx context.Context, workspace string, req SendInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.SendInvite>)
   - [func \(c \*Client\) StartWorkflow\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.StartWorkflow>)
   - [func \(c \*Client\) TestConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.ConnectorConfigurationValidationResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.TestConnection>)
@@ -284,6 +287,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) ValidateRequestEnhanced\(req any\) \*irminvalidator.ValidationResultError](<#Client.ValidateRequestEnhanced>)
   - [func \(c \*Client\) ValidateVar\(field any, tag string\) error](<#Client.ValidateVar>)
   - [func \(c \*Client\) ValidateVarEnhanced\(field any, tag string\) \*irminvalidator.ValidationResultError](<#Client.ValidateVarEnhanced>)
+  - [func \(c \*Client\) VectorizeObjects\(ctx context.Context, workspace, repository string, req VectorizeObjectsRequest\) \(\*irminmodels.EmbeddingFile, \*irminmodels.IrminAPIResponse, error\)](<#Client.VectorizeObjects>)
 - [type ConnectorConfigurationRequest](<#ConnectorConfigurationRequest>)
 - [type ConnectorRequest](<#ConnectorRequest>)
 - [type CreateBranchRequest](<#CreateBranchRequest>)
@@ -300,11 +304,14 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type ExecuteSQLRequest](<#ExecuteSQLRequest>)
 - [type ExecuteScriptRequest](<#ExecuteScriptRequest>)
 - [type FormFile](<#FormFile>)
+- [type GetEmbeddingInfoRequest](<#GetEmbeddingInfoRequest>)
+- [type ListEmbeddingsRequest](<#ListEmbeddingsRequest>)
 - [type ListPoliciesParams](<#ListPoliciesParams>)
 - [type MergeRefsRequest](<#MergeRefsRequest>)
 - [type MoveObjectRequest](<#MoveObjectRequest>)
 - [type RequestOptions](<#RequestOptions>)
 - [type RevertUncommittedChangesRequest](<#RevertUncommittedChangesRequest>)
+- [type SearchEmbeddingsRequest](<#SearchEmbeddingsRequest>)
 - [type SendInviteRequest](<#SendInviteRequest>)
 - [type TransferConnectionOwnershipRequest](<#TransferConnectionOwnershipRequest>)
 - [type TransferOwnershipRequest](<#TransferOwnershipRequest>)
@@ -328,6 +335,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type UploadObjectFromURLRequest](<#UploadObjectFromURLRequest>)
 - [type ValidateObjectRequest](<#ValidateObjectRequest>)
 - [type ValidateObjectResponse](<#ValidateObjectResponse>)
+- [type VectorizeObjectsRequest](<#VectorizeObjectsRequest>)
 - [type WorkflowRequest](<#WorkflowRequest>)
 
 
@@ -890,6 +898,15 @@ func (c *Client) GetConnector(ctx context.Context, connectorID string) (*irminmo
 
 
 
+<a name="Client.GetEmbeddingInfo"></a>
+### func \(\*Client\) GetEmbeddingInfo
+
+```go
+func (c *Client) GetEmbeddingInfo(ctx context.Context, workspace, repository string, req GetEmbeddingInfoRequest) (*irminmodels.EmbeddingFile, *irminmodels.IrminAPIResponse, error)
+```
+
+GetEmbeddingInfo gets metadata about an embedding file.
+
 <a name="Client.GetInvite"></a>
 ### func \(\*Client\) GetInvite
 
@@ -1142,6 +1159,15 @@ func (c *Client) ListConnectors(ctx context.Context) ([]irminmodels.Connector, *
 
 
 
+<a name="Client.ListEmbeddings"></a>
+### func \(\*Client\) ListEmbeddings
+
+```go
+func (c *Client) ListEmbeddings(ctx context.Context, workspace, repository string, req ListEmbeddingsRequest) ([]irminmodels.EmbeddingFile, *irminmodels.IrminAPIResponse, error)
+```
+
+ListEmbeddings lists embedding files in a repository path.
+
 <a name="Client.ListInviteInbox"></a>
 ### func \(\*Client\) ListInviteInbox
 
@@ -1384,6 +1410,15 @@ func (c *Client) Search(ctx context.Context, workspace string, params irminmodel
 ```
 
 Search performs a workspace\-wide search using the provided filters.
+
+<a name="Client.SearchEmbeddings"></a>
+### func \(\*Client\) SearchEmbeddings
+
+```go
+func (c *Client) SearchEmbeddings(ctx context.Context, workspace, repository string, req SearchEmbeddingsRequest) (*irminmodels.EmbeddingSearchResponse, *irminmodels.IrminAPIResponse, error)
+```
+
+SearchEmbeddings performs vector similarity search on an embedding file.
 
 <a name="Client.SendInvite"></a>
 ### func \(\*Client\) SendInvite
@@ -1691,6 +1726,15 @@ func (c *Client) ValidateVarEnhanced(field any, tag string) *irminvalidator.Vali
 
 ValidateVarEnhanced validates a single variable and returns detailed validation results. Example: client.ValidateVarEnhanced\("test@example.com", "email"\).
 
+<a name="Client.VectorizeObjects"></a>
+### func \(\*Client\) VectorizeObjects
+
+```go
+func (c *Client) VectorizeObjects(ctx context.Context, workspace, repository string, req VectorizeObjectsRequest) (*irminmodels.EmbeddingFile, *irminmodels.IrminAPIResponse, error)
+```
+
+VectorizeObjects creates embeddings from one or more repository objects.
+
 <a name="ConnectorConfigurationRequest"></a>
 ## type ConnectorConfigurationRequest
 
@@ -1907,6 +1951,30 @@ type FormFile struct {
 }
 ```
 
+<a name="GetEmbeddingInfoRequest"></a>
+## type GetEmbeddingInfoRequest
+
+GetEmbeddingInfoRequest represents query parameters for getting embedding file info.
+
+```go
+type GetEmbeddingInfoRequest struct {
+    EmbeddingPath string `json:"embedding_path" validate:"required"          example:"embeddings/documents.parquet"` // Path to the embedding file
+    Ref           string `json:"ref"            validate:"omitempty,max=100" example:"main"`                         // Repository reference (branch/tag/commit)
+}
+```
+
+<a name="ListEmbeddingsRequest"></a>
+## type ListEmbeddingsRequest
+
+ListEmbeddingsRequest represents query parameters for listing embedding files.
+
+```go
+type ListEmbeddingsRequest struct {
+    Prefix string `json:"prefix" validate:"omitempty"         example:"embeddings/"` // Optional prefix to filter embedding files
+    Ref    string `json:"ref"    validate:"omitempty,max=100" example:"main"`        // Repository reference (branch/tag/commit)
+}
+```
+
 <a name="ListPoliciesParams"></a>
 ## type ListPoliciesParams
 
@@ -1979,6 +2047,21 @@ type RevertUncommittedChangesRequest struct {
     Branch   string `json:"branch"              validate:"required" example:"main"`
     Path     string `json:"path,omitempty"                          example:"path/to/file.txt"`
     PathType string `json:"path_type,omitempty"                     example:"file"`
+}
+```
+
+<a name="SearchEmbeddingsRequest"></a>
+## type SearchEmbeddingsRequest
+
+SearchEmbeddingsRequest represents the JSON request body for searching embeddings.
+
+```go
+type SearchEmbeddingsRequest struct {
+    Query         string            `json:"query"          validate:"required"          example:"What is machine learning?"`    // Query text to search for
+    EmbeddingPath string            `json:"embedding_path" validate:"required"          example:"embeddings/documents.parquet"` // Path to the embedding file
+    Ref           string            `json:"ref"            validate:"omitempty,max=100" example:"main"`                         // Repository reference (branch/tag/commit)
+    TopK          int               `json:"top_k"          validate:"omitempty,min=1"   example:"10"`                           // Number of results to return (default: 10)
+    Filter        map[string]string `json:"filter"         validate:"omitempty"`                                                // Optional metadata filters
 }
 ```
 
@@ -2267,6 +2350,20 @@ type ValidateObjectResponse struct {
     Valid bool     `json:"valid"`
     Logs  []string `json:"logs"`
     Error string   `json:"error,omitempty"`
+}
+```
+
+<a name="VectorizeObjectsRequest"></a>
+## type VectorizeObjectsRequest
+
+VectorizeObjectsRequest represents the JSON request body for vectorizing repository objects.
+
+```go
+type VectorizeObjectsRequest struct {
+    SourcePaths []string                     `json:"source_paths" validate:"required,min=1,dive,required" example:"data/documents/doc1.pdf"`      // List of source file paths to vectorize
+    OutputPath  string                       `json:"output_path"  validate:"required"                     example:"embeddings/documents.parquet"` // Output path for the embedding file
+    Ref         string                       `json:"ref"          validate:"omitempty,max=100"            example:"main"`                         // Repository reference (branch/tag/commit)
+    Config      *irminmodels.EmbeddingConfig `json:"config"       validate:"omitempty"`                                                           // Optional embedding configuration
 }
 ```
 
@@ -2605,6 +2702,10 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type Diff](<#Diff>)
 - [type DynamicField](<#DynamicField>)
 - [type DynamicFields](<#DynamicFields>)
+- [type EmbeddingConfig](<#EmbeddingConfig>)
+- [type EmbeddingFile](<#EmbeddingFile>)
+- [type EmbeddingSearchResponse](<#EmbeddingSearchResponse>)
+- [type EmbeddingSearchResult](<#EmbeddingSearchResult>)
 - [type FieldMapping](<#FieldMapping>)
 - [type FieldRename](<#FieldRename>)
 - [type FieldType](<#FieldType>)
@@ -3021,6 +3122,69 @@ DynamicFields represents a list of dynamic fields for a form.
 
 ```go
 type DynamicFields map[string]DynamicField
+```
+
+<a name="EmbeddingConfig"></a>
+## type EmbeddingConfig
+
+EmbeddingConfig holds the configuration for embedding generation.
+
+```go
+type EmbeddingConfig struct {
+    Model      string `json:"model"                validate:"omitempty,max=100" example:"text-embedding-3-small"` // OpenAI embedding model (e.g., "text-embedding-3-small", "text-embedding-3-large")
+    Dimensions int    `json:"dimensions,omitempty" validate:"omitempty,min=0"   example:"1536"`                   // Embedding dimensions (e.g., 1536, 3072)
+    ChunkSize  int    `json:"chunk_size,omitempty" validate:"omitempty,min=0"   example:"1000"`                   // Text chunk size for splitting large documents
+    Overlap    int    `json:"overlap,omitempty"    validate:"omitempty,min=0"   example:"200"`                    // Overlap between consecutive chunks
+}
+```
+
+<a name="EmbeddingFile"></a>
+## type EmbeddingFile
+
+EmbeddingFile represents metadata about an embedding file stored in a repository.
+
+```go
+type EmbeddingFile struct {
+    Path        string   `json:"path"                 validate:"required"            example:"embeddings/documents.parquet"` // Path to the embedding file in the repository
+    SourceFiles []string `json:"source_files"         validate:"required,min=1,dive" example:"data/documents/doc1.pdf"`      // List of source files that were vectorized
+    Model       string   `json:"model"                validate:"required,max=100"    example:"text-embedding-3-small"`       // OpenAI model used to generate embeddings
+    Dimensions  int      `json:"dimensions"           validate:"required,min=0"      example:"1536"`                         // Vector dimensions
+    ChunkCount  int      `json:"chunk_count"          validate:"required,min=0"      example:"42"`                           // Total number of embedding chunks
+    SizeBytes   int64    `json:"size_bytes"           validate:"required,min=0"      example:"524288"`                       // File size in bytes
+    CreatedAt   string   `json:"created_at,omitempty" validate:"omitempty"           example:"2025-12-01T14:22:30Z"`         // Creation timestamp
+    Ref         string   `json:"ref,omitempty"        validate:"omitempty,max=100"   example:"main"`                         // Repository reference (branch/tag/commit)
+}
+```
+
+<a name="EmbeddingSearchResponse"></a>
+## type EmbeddingSearchResponse
+
+EmbeddingSearchResponse represents the response from a vector similarity search.
+
+```go
+type EmbeddingSearchResponse struct {
+    Results []EmbeddingSearchResult `json:"results" validate:"required,dive"    example:"[{...}]"`                   // List of search results
+    Query   string                  `json:"query"   validate:"required"         example:"What is machine learning?"` // The original query text
+    Model   string                  `json:"model"   validate:"required,max=100" example:"text-embedding-3-small"`    // Model used for the query embedding
+    TopK    int                     `json:"top_k"   validate:"required,min=1"   example:"10"`                        // Number of results requested
+}
+```
+
+<a name="EmbeddingSearchResult"></a>
+## type EmbeddingSearchResult
+
+EmbeddingSearchResult represents a single search result from vector similarity search.
+
+```go
+type EmbeddingSearchResult struct {
+    ID         string            `json:"id"          validate:"required"    example:"550e8400-e29b-41d4-a716-446655440000"`  // Unique ID for the embedding chunk
+    Content    string            `json:"content"     validate:"required"    example:"Machine learning is a subset of AI..."` // The actual text content of the chunk
+    SourceFile string            `json:"source_file" validate:"required"    example:"data/documents/doc1.pdf"`               // Original source file name
+    ChunkIndex int               `json:"chunk_index" validate:"min=0"       example:"5"`                                     // Sequential chunk number within the source file
+    Score      float64           `json:"score"       validate:"min=0,max=1" example:"0.92"`                                  // Cosine similarity score (0-1, higher is better)
+    Distance   float64           `json:"distance"    validate:"min=0"       example:"0.08"`                                  // Cosine distance (0-2, lower is better)
+    Metadata   map[string]string `json:"metadata"    validate:"omitempty"`                                                   // Custom metadata associated with the chunk
+}
 ```
 
 <a name="FieldMapping"></a>

@@ -371,6 +371,13 @@ func (c *Client) GetConnector(
 	connectorID string,
 ) (*irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) GetEmbeddingInfo(
+	ctx context.Context,
+	workspace, repository string,
+	req GetEmbeddingInfoRequest,
+) (*irminmodels.EmbeddingFile, *irminmodels.IrminAPIResponse, error)
+    GetEmbeddingInfo gets metadata about an embedding file.
+
 func (c *Client) GetInvite(
 	ctx context.Context,
 	inviteID string,
@@ -519,6 +526,13 @@ func (c *Client) ListConnections(
 
 func (c *Client) ListConnectors(ctx context.Context) ([]irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) ListEmbeddings(
+	ctx context.Context,
+	workspace, repository string,
+	req ListEmbeddingsRequest,
+) ([]irminmodels.EmbeddingFile, *irminmodels.IrminAPIResponse, error)
+    ListEmbeddings lists embedding files in a repository path.
+
 func (c *Client) ListInviteInbox(ctx context.Context) ([]irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
 
 func (c *Client) ListInvitesToWorkspace(
@@ -651,6 +665,13 @@ func (c *Client) Search(
 	params irminmodels.SearchFilters,
 ) (*irminmodels.SearchResponse, *irminmodels.IrminAPIResponse, error)
     Search performs a workspace-wide search using the provided filters.
+
+func (c *Client) SearchEmbeddings(
+	ctx context.Context,
+	workspace, repository string,
+	req SearchEmbeddingsRequest,
+) (*irminmodels.EmbeddingSearchResponse, *irminmodels.IrminAPIResponse, error)
+    SearchEmbeddings performs vector similarity search on an embedding file.
 
 func (c *Client) SendInvite(
 	ctx context.Context,
@@ -853,6 +874,13 @@ func (c *Client) ValidateVarEnhanced(field any, tag string) *irminvalidator.Vali
     validation results. Example: client.ValidateVarEnhanced("test@example.com",
     "email").
 
+func (c *Client) VectorizeObjects(
+	ctx context.Context,
+	workspace, repository string,
+	req VectorizeObjectsRequest,
+) (*irminmodels.EmbeddingFile, *irminmodels.IrminAPIResponse, error)
+    VectorizeObjects creates embeddings from one or more repository objects.
+
 type ConnectorConfigurationRequest struct {
 	Details  map[string]any `json:"details"`  // Values for the required connector configuration as JSON object, like {"host":"db.example.com"}
 	Settings map[string]any `json:"settings"` // Values for the optional connector configuration as JSON object, like {"ssl_enabled":"true"}
@@ -982,6 +1010,20 @@ type FormFile struct {
     FormFile holds information about a file you want to upload with
     multipart/form-data.
 
+type GetEmbeddingInfoRequest struct {
+	EmbeddingPath string `json:"embedding_path" validate:"required"          example:"embeddings/documents.parquet"` // Path to the embedding file
+	Ref           string `json:"ref"            validate:"omitempty,max=100" example:"main"`                         // Repository reference (branch/tag/commit)
+}
+    GetEmbeddingInfoRequest represents query parameters for getting embedding
+    file info.
+
+type ListEmbeddingsRequest struct {
+	Prefix string `json:"prefix" validate:"omitempty"         example:"embeddings/"` // Optional prefix to filter embedding files
+	Ref    string `json:"ref"    validate:"omitempty,max=100" example:"main"`        // Repository reference (branch/tag/commit)
+}
+    ListEmbeddingsRequest represents query parameters for listing embedding
+    files.
+
 type ListPoliciesParams struct {
 	Effect     *irminmodels.PolicyEffect    `form:"effect,omitempty"`      // The effect of the policy (allow/deny)
 	Action     *irminmodels.PolicyAction    `form:"action,omitempty"`      // The action being controlled (read/write/etc)
@@ -1029,6 +1071,16 @@ type RevertUncommittedChangesRequest struct {
 }
     RevertUncommittedChangesRequest represents the JSON request body for
     reverting uncommitted changes.
+
+type SearchEmbeddingsRequest struct {
+	Query         string            `json:"query"          validate:"required"          example:"What is machine learning?"`    // Query text to search for
+	EmbeddingPath string            `json:"embedding_path" validate:"required"          example:"embeddings/documents.parquet"` // Path to the embedding file
+	Ref           string            `json:"ref"            validate:"omitempty,max=100" example:"main"`                         // Repository reference (branch/tag/commit)
+	TopK          int               `json:"top_k"          validate:"omitempty,min=1"   example:"10"`                           // Number of results to return (default: 10)
+	Filter        map[string]string `json:"filter"         validate:"omitempty"`                                                // Optional metadata filters
+}
+    SearchEmbeddingsRequest represents the JSON request body for searching
+    embeddings.
 
 type SendInviteRequest struct {
 	Email string `json:"email" validate:"required,email"  example:"john.doe@example.com"`
@@ -1194,6 +1246,15 @@ type ValidateObjectResponse struct {
 }
     ValidateObjectResponse represents the response from validating a repository
     object.
+
+type VectorizeObjectsRequest struct {
+	SourcePaths []string                     `json:"source_paths" validate:"required,min=1,dive,required" example:"data/documents/doc1.pdf"`      // List of source file paths to vectorize
+	OutputPath  string                       `json:"output_path"  validate:"required"                     example:"embeddings/documents.parquet"` // Output path for the embedding file
+	Ref         string                       `json:"ref"          validate:"omitempty,max=100"            example:"main"`                         // Repository reference (branch/tag/commit)
+	Config      *irminmodels.EmbeddingConfig `json:"config"       validate:"omitempty"`                                                           // Optional embedding configuration
+}
+    VectorizeObjectsRequest represents the JSON request body for vectorizing
+    repository objects.
 
 type WorkflowRequest struct {
 	Type          irminmodels.WorkflowableType `json:"type"                    validate:"required,oneof=import action export pipeline" example:"import"`
