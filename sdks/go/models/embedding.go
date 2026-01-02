@@ -33,7 +33,7 @@ type EmbeddingSearchResult struct {
 
 // EmbeddingSearchResponse represents the response from a vector similarity search.
 type EmbeddingSearchResponse struct {
-	Results []EmbeddingSearchResult `json:"results" validate:"required,dive"    example:"[{...}]"`                   // List of search results
+	Results []EmbeddingSearchResult `json:"results" validate:"required,dive"`                                        // List of search results
 	Query   string                  `json:"query"   validate:"required"         example:"What is machine learning?"` // The original query text
 	Model   string                  `json:"model"   validate:"required,max=100" example:"text-embedding-3-small"`    // Model used for the query embedding
 	TopK    int                     `json:"top_k"   validate:"required,min=1"   example:"10"`                        // Number of results requested
