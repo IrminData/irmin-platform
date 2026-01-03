@@ -10,14 +10,14 @@ type EmbeddingConfig struct {
 
 // EmbeddingFile represents metadata about an embedding file stored in a repository.
 type EmbeddingFile struct {
-	Path        string   `json:"path"                 validate:"required"            example:"embeddings/documents.parquet"` // Path to the embedding file in the repository
-	SourceFiles []string `json:"source_files"         validate:"required,min=1,dive" example:"data/documents/doc1.pdf"`      // List of source files that were vectorized
-	Model       string   `json:"model"                validate:"required,max=100"    example:"text-embedding-3-small"`       // OpenAI model used to generate embeddings
-	Dimensions  int      `json:"dimensions"           validate:"required,min=0"      example:"1536"`                         // Vector dimensions
-	ChunkCount  int      `json:"chunk_count"          validate:"required,min=0"      example:"42"`                           // Total number of embedding chunks
-	SizeBytes   int64    `json:"size_bytes"           validate:"required,min=0"      example:"524288"`                       // File size in bytes
-	CreatedAt   string   `json:"created_at,omitempty" validate:"omitempty"           example:"2025-12-01T14:22:30Z"`         // Creation timestamp
-	Ref         string   `json:"ref,omitempty"        validate:"omitempty,max=100"   example:"main"`                         // Repository reference (branch/tag/commit)
+	Path        string   `json:"path"                 validate:"required"              example:"embeddings/documents.parquet"` // Path to the embedding file in the repository
+	SourceFiles []string `json:"source_files"         validate:"omitempty,min=1,dive"  example:"data/documents/doc1.pdf"`      // List of source files that were vectorized
+	Model       string   `json:"model"                validate:"omitempty,max=100"     example:"text-embedding-3-small"`       // OpenAI model used to generate embeddings
+	Dimensions  int      `json:"dimensions"           validate:"omitempty,min=0"       example:"1536"`                         // Vector dimensions
+	ChunkCount  int      `json:"chunk_count"          validate:"omitempty,min=0"       example:"42"`                           // Total number of embedding chunks
+	SizeBytes   int64    `json:"size_bytes"           validate:"required,min=0"        example:"524288"`                       // File size in bytes
+	CreatedAt   string   `json:"created_at,omitempty" validate:"omitempty"             example:"2025-12-01T14:22:30Z"`         // Creation timestamp
+	Ref         string   `json:"ref,omitempty"        validate:"omitempty,max=100"     example:"main"`                         // Repository reference (branch/tag/commit)
 }
 
 // EmbeddingSearchResult represents a single search result from vector similarity search.
