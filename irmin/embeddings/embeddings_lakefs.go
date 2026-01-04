@@ -3,6 +3,7 @@ package embeddings
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"irmin-api/lakefs"
@@ -26,7 +27,7 @@ type UploadConfig struct {
 	RepositoryID string
 	Branch       string
 	Path         string
-	SourceFile   string
+	SourceFiles  []string // Changed from SourceFile (singular) to SourceFiles (plural)
 	Model        string
 	Dimensions   int
 	ChunkCount   int
@@ -80,7 +81,10 @@ func (c *Client) UploadToLakeFS(
 	}
 
 	// Set embedding metadata
-	embeddingMetadata := buildEmbeddingMetadata(config)
+	embeddingMetadata, buildMetaErr := buildEmbeddingMetadata(config)
+	if buildMetaErr != nil {
+		return nil, fmt.Errorf("failed to build embedding metadata: %w", buildMetaErr)
+	}
 	metaErr := c.lakeFSClient.RewriteObjectMetadata(
 		config.RepositoryID,
 		config.Branch,
@@ -140,7 +144,7 @@ func (c *Client) UploadToLakeFS(
 }
 
 // buildEmbeddingMetadata creates the metadata map for an embedding file.
-func buildEmbeddingMetadata(config UploadConfig) map[string]string {
+func buildEmbeddingMetadata(config UploadConfig) (map[string]string, error) {
 	metadata := map[string]string{
 		MetadataKeyFileType: MetadataValueEmbeddings,
 	}
@@ -151,14 +155,19 @@ func buildEmbeddingMetadata(config UploadConfig) map[string]string {
 	if config.Dimensions > 0 {
 		metadata[MetadataKeyEmbeddingDimensions] = strconv.Itoa(config.Dimensions)
 	}
-	if config.SourceFile != "" {
-		metadata[MetadataKeySourceFile] = config.SourceFile
+	if len(config.SourceFiles) > 0 {
+		// Store source files as JSON array
+		sourceFilesJSON, err := json.Marshal(config.SourceFiles)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal source files: %w", err)
+		}
+		metadata[MetadataKeySourceFile] = string(sourceFilesJSON)
 	}
 	if config.ChunkCount > 0 {
 		metadata[MetadataKeyChunkCount] = strconv.Itoa(config.ChunkCount)
 	}
 
-	return metadata
+	return metadata, nil
 }
 
 // IsEmbeddingFile checks if the given LakeFS object metadata indicates an embedding file.
@@ -170,13 +179,13 @@ func IsEmbeddingFile(metadata map[string]string) bool {
 }
 
 // GetEmbeddingMetadata extracts embedding-specific metadata from LakeFS object metadata.
-func GetEmbeddingMetadata(metadata map[string]string) (string, int, string) {
+func GetEmbeddingMetadata(metadata map[string]string) (string, int, []string) {
 	if metadata == nil {
-		return "", 0, ""
+		return "", 0, nil
 	}
 
 	model := metadata[MetadataKeyEmbeddingModel]
-	sourceFile := metadata[MetadataKeySourceFile]
+	sourceFileStr := metadata[MetadataKeySourceFile]
 	dimensions := 0
 
 	if dimStr, ok := metadata[MetadataKeyEmbeddingDimensions]; ok {
@@ -185,7 +194,17 @@ func GetEmbeddingMetadata(metadata map[string]string) (string, int, string) {
 		// This is acceptable since 0 is a valid signal for "unknown dimensions"
 	}
 
-	return model, dimensions, sourceFile
+	// Parse source files - try JSON first (new format), fallback to single string (old format)
+	var sourceFiles []string
+	if sourceFileStr != "" {
+		// Try to parse as JSON array
+		if err := json.Unmarshal([]byte(sourceFileStr), &sourceFiles); err != nil {
+			// Fallback to old format - single file or comma-separated
+			sourceFiles = []string{sourceFileStr}
+		}
+	}
+
+	return model, dimensions, sourceFiles
 }
 
 // DownloadFromLakeFS downloads an embedding file from LakeFS.
@@ -305,7 +324,7 @@ func (c *Client) ProcessAndUploadFile(
 		RepositoryID: repositoryID,
 		Branch:       branch,
 		Path:         outputPath,
-		SourceFile:   fileName,
+		SourceFiles:  []string{fileName},
 		Model:        result.Model,
 		Dimensions:   result.Dimensions,
 		ChunkCount:   result.TotalChunks,

@@ -1,6 +1,7 @@
 package embeddings
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"encoding/xml"
@@ -14,7 +15,8 @@ import (
 	"sort"
 	"strings"
 
-	"code.sajari.com/docconv"
+	"github.com/ledongthuc/pdf"
+	"github.com/nguyenthenguyen/docx"
 	"github.com/xuri/excelize/v2"
 	"gopkg.in/yaml.v3"
 )
@@ -548,11 +550,11 @@ func extractYAMLText(data any) string {
 	return strings.Join(parts, " ")
 }
 
-// extractFromDocConv is a helper function that extracts text using docconv.
-// It handles both PDF and DOCX files with appropriate error messages.
-func extractFromDocConv(content []byte, extension, formatName string) ([]string, error) {
-	// Create a temporary file
-	tempFile, err := os.CreateTemp("", "embed_*"+extension)
+// extractFromPDF extracts text content from PDF files using ledongthuc/pdf.
+// This is a pure Go implementation with no external dependencies.
+func extractFromPDF(content []byte) ([]string, error) {
+	// Create a temporary file for the PDF content
+	tempFile, err := os.CreateTemp("", "embed_*.pdf")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
@@ -566,20 +568,24 @@ func extractFromDocConv(content []byte, extension, formatName string) ([]string,
 		return nil, fmt.Errorf("failed to close temp file: %w", closeErr)
 	}
 
-	// Convert to text using docconv
-	res, err := docconv.ConvertPath(tempFile.Name())
+	// Open the PDF file
+	f, r, err := pdf.Open(tempFile.Name())
 	if err != nil {
-		// Provide helpful error message if external tools are missing
-		if strings.Contains(err.Error(), "exec") || strings.Contains(err.Error(), "not found") {
-			if formatName == "PDF" {
-				return nil, fmt.Errorf("PDF extraction requires poppler-utils (pdftotext) to be installed: %w", err)
-			}
-			return nil, fmt.Errorf("%s extraction may require additional tools: %w", formatName, err)
-		}
-		return nil, fmt.Errorf("failed to extract text from %s: %w", formatName, err)
+		return nil, fmt.Errorf("failed to open PDF: %w", err)
+	}
+	defer f.Close()
+
+	// Extract plain text from the PDF
+	var buf bytes.Buffer
+	b, err := r.GetPlainText()
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract text from PDF: %w", err)
+	}
+	if _, copyErr := buf.ReadFrom(b); copyErr != nil {
+		return nil, fmt.Errorf("failed to read PDF text: %w", copyErr)
 	}
 
-	text := strings.TrimSpace(res.Body)
+	text := strings.TrimSpace(buf.String())
 	if text == "" {
 		return nil, nil
 	}
@@ -587,12 +593,171 @@ func extractFromDocConv(content []byte, extension, formatName string) ([]string,
 	return []string{text}, nil
 }
 
-// extractFromPDF extracts text content from PDF files using docconv.
-func extractFromPDF(content []byte) ([]string, error) {
-	return extractFromDocConv(content, ".pdf", "PDF")
+// XML structures for parsing Word documents.
+// Word documents use the 'w:' namespace prefix. Go's xml package
+// matches element local names, so "p" matches both <p> and <w:p>.
+type docxText struct {
+	XMLName xml.Name `xml:"t"`
+	Text    string   `xml:",chardata"`
 }
 
-// extractFromDOCX extracts text content from Word DOCX files using docconv.
+type docxRun struct {
+	XMLName xml.Name   `xml:"r"`
+	Texts   []docxText `xml:"t"`
+}
+
+type docxParagraph struct {
+	XMLName xml.Name  `xml:"p"`
+	Runs    []docxRun `xml:"r"`
+}
+
+type docxBody struct {
+	XMLName    xml.Name        `xml:"body"`
+	Paragraphs []docxParagraph `xml:"p"`
+}
+
+type docxDocument struct {
+	XMLName xml.Name `xml:"document"`
+	Body    docxBody `xml:"body"`
+}
+
+// docxHasContent checks if the parsed document contains any text.
+func docxHasContent(doc *docxDocument) bool {
+	for _, para := range doc.Body.Paragraphs {
+		for _, run := range para.Runs {
+			for _, t := range run.Texts {
+				if strings.TrimSpace(t.Text) != "" {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// docxExtractText extracts text from a parsed DOCX document.
+func docxExtractText(doc *docxDocument) string {
+	var textParts []string
+	for _, para := range doc.Body.Paragraphs {
+		paraText := docxExtractParagraphText(&para)
+		if paraText != "" {
+			textParts = append(textParts, paraText)
+		}
+	}
+	return strings.Join(textParts, "\n")
+}
+
+// docxExtractParagraphText extracts text from a single paragraph.
+func docxExtractParagraphText(para *docxParagraph) string {
+	var paraText strings.Builder
+	for _, run := range para.Runs {
+		for _, t := range run.Texts {
+			if trimmed := strings.TrimSpace(t.Text); trimmed != "" {
+				if paraText.Len() > 0 {
+					paraText.WriteString(" ")
+				}
+				paraText.WriteString(trimmed)
+			}
+		}
+	}
+	return paraText.String()
+}
+
+// extractFromDOCX extracts text content from Word DOCX files.
+// DOCX files are ZIP archives containing XML. We extract text from document.xml.
 func extractFromDOCX(content []byte) ([]string, error) {
-	return extractFromDocConv(content, ".docx", "DOCX")
+	xmlContent, err := readDOCXContent(content)
+	if err != nil {
+		return nil, err
+	}
+
+	// Try to parse the XML structure
+	var wdoc docxDocument
+	xmlUnmarshalErr := xml.Unmarshal([]byte(xmlContent), &wdoc)
+
+	// If XML parsing failed or extracted no content, use fallback
+	if xmlUnmarshalErr != nil || !docxHasContent(&wdoc) {
+		text := stripXMLTags(xmlContent)
+		if text == "" {
+			return nil, nil
+		}
+		return []string{text}, nil
+	}
+
+	// Extract text from parsed document
+	text := docxExtractText(&wdoc)
+	if text == "" {
+		// Fallback if structured extraction yielded nothing
+		text = stripXMLTags(xmlContent)
+		if text == "" {
+			return nil, nil
+		}
+	}
+
+	return []string{text}, nil
+}
+
+// readDOCXContent reads the XML content from a DOCX file.
+func readDOCXContent(content []byte) (string, error) {
+	// Create a temporary file for the DOCX content
+	tempFile, err := os.CreateTemp("", "embed_*.docx")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(tempFile.Name())
+
+	if _, writeErr := tempFile.Write(content); writeErr != nil {
+		_ = tempFile.Close()
+		return "", fmt.Errorf("failed to write temp file: %w", writeErr)
+	}
+	if closeErr := tempFile.Close(); closeErr != nil {
+		return "", fmt.Errorf("failed to close temp file: %w", closeErr)
+	}
+
+	// Open the DOCX file
+	r, err := docx.ReadDocxFile(tempFile.Name())
+	if err != nil {
+		return "", fmt.Errorf("failed to open DOCX: %w", err)
+	}
+	defer r.Close()
+
+	// Get the editable document and return XML content
+	doc := r.Editable()
+	return doc.GetContent(), nil
+}
+
+// stripXMLTags removes XML tags from a string as a fallback method.
+func stripXMLTags(xmlContent string) string {
+	var result strings.Builder
+	inTag := false
+
+	for _, char := range xmlContent {
+		if char == '<' {
+			inTag = true
+			continue
+		}
+		if char == '>' {
+			inTag = false
+			continue
+		}
+		if !inTag {
+			result.WriteRune(char)
+		}
+	}
+
+	// Clean up whitespace
+	text := result.String()
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	text = strings.ReplaceAll(text, "\r", "\n")
+
+	// Remove excessive whitespace
+	lines := strings.Split(text, "\n")
+	var cleanLines []string
+	for _, line := range lines {
+		if trimmed := strings.TrimSpace(line); trimmed != "" {
+			cleanLines = append(cleanLines, trimmed)
+		}
+	}
+
+	return strings.Join(cleanLines, "\n")
 }

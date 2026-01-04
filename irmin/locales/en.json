@@ -57,6 +57,7 @@
   "object_deleted": "Object deleted",
   "object_moved": "Object moved",
   "object_copied": "Object copied",
+  "embeddings_created": "Embeddings created",
   "editor_item_saved": "Editor item saved",
   "editor_item_deleted": "Editor item deleted",
   "editor_item_moved": "Editor item moved",

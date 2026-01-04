@@ -285,6 +285,36 @@ func (c *Client) SearchWithFilter(
 	return results, nil
 }
 
+// SearchWithFilterFromBytes performs vector similarity search with metadata filtering on parquet content provided as bytes.
+func (c *Client) SearchWithFilterFromBytes(
+	ctx context.Context,
+	queryVector []float32,
+	parquetContent []byte,
+	topK int,
+	filter map[string]string,
+) ([]SearchResult, error) {
+	if len(parquetContent) == 0 {
+		return nil, errors.New("parquet content cannot be empty")
+	}
+
+	// Write to a temporary file
+	tempFile, err := os.CreateTemp("", "embed_search_filter_*.parquet")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(tempFile.Name())
+
+	if _, writeErr := tempFile.Write(parquetContent); writeErr != nil {
+		_ = tempFile.Close()
+		return nil, fmt.Errorf("failed to write temp file: %w", writeErr)
+	}
+	if closeErr := tempFile.Close(); closeErr != nil {
+		return nil, fmt.Errorf("failed to close temp file: %w", closeErr)
+	}
+
+	return c.SearchWithFilter(ctx, queryVector, tempFile.Name(), topK, filter)
+}
+
 // vectorToArrayString converts a float32 slice to DuckDB array literal format.
 // Uses %.9g format to preserve full float32 precision (approximately 7 significant digits).
 func vectorToArrayString(vector []float32) string {

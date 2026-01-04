@@ -451,6 +451,17 @@ func (api *APIServices) GetConnectorConfigurationFields(
 	req irmincore.ConnectorConfigurationRequest,
 ) (map[string]irminmodels.DynamicField, error)
 
+func (api *APIServices) GetEmbeddingFileInfo(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	embeddingPath string,
+	ref string,
+) (*irminmodels.EmbeddingFile, error)
+    GetEmbeddingFileInfo gets metadata about an embedding file.
+
 func (api *APIServices) GetInviteByID(
 	c context.Context,
 	user *db.User,
@@ -687,6 +698,17 @@ func (api *APIServices) ListConnections(
 
 func (api *APIServices) ListConnectors(c context.Context) ([]db.Connector, error)
 
+func (api *APIServices) ListEmbeddingFiles(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	prefix string,
+	ref string,
+) ([]irminmodels.EmbeddingFile, error)
+    ListEmbeddingFiles lists embedding files in a repository path.
+
 func (api *APIServices) ListInvitesForUser(
 	c context.Context,
 	user *db.User,
@@ -871,6 +893,16 @@ func (api *APIServices) RevertRepositoryUncommittedChanges(
 	repository *db.Repository,
 	req irmincore.RevertUncommittedChangesRequest,
 ) error
+
+func (api *APIServices) SearchEmbeddings(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	req irmincore.SearchEmbeddingsRequest,
+) (*irminmodels.EmbeddingSearchResponse, error)
+    SearchEmbeddings performs vector similarity search on an embedding file.
 
 func (api *APIServices) SearchWorkspace(
 	c context.Context,
@@ -1136,6 +1168,17 @@ func (api *APIServices) ValidateRepositoryObject(
 	validationSchema *irminmodels.ObjectSchema,
 	validationMode string,
 ) (*irmincore.ValidateObjectResponse, error)
+
+func (api *APIServices) VectorizeObjects(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	req irmincore.VectorizeObjectsRequest,
+) (*irminmodels.EmbeddingFile, error)
+    VectorizeObjects creates embeddings from one or more repository objects and
+    stores them at the specified path.
 
 func (api *APIServices) ZipRepositoryObject(
 	c context.Context,

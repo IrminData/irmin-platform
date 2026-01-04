@@ -854,11 +854,13 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) ExecuteSQL\(c fiber.Ctx\) error](<#APIControllers.ExecuteSQL>)
   - [func \(api \*APIControllers\) ExecuteScript\(c fiber.Ctx\) error](<#APIControllers.ExecuteScript>)
   - [func \(api \*APIControllers\) GenerateFileSchema\(c fiber.Ctx\) error](<#APIControllers.GenerateFileSchema>)
+  - [func \(api \*APIControllers\) GetEmbeddingInfo\(c fiber.Ctx\) error](<#APIControllers.GetEmbeddingInfo>)
   - [func \(api \*APIControllers\) IndexMyInvites\(c fiber.Ctx\) error](<#APIControllers.IndexMyInvites>)
   - [func \(api \*APIControllers\) InvitesDestroy\(c fiber.Ctx\) error](<#APIControllers.InvitesDestroy>)
   - [func \(api \*APIControllers\) InvitesShow\(c fiber.Ctx\) error](<#APIControllers.InvitesShow>)
   - [func \(api \*APIControllers\) InvitesUpdate\(c fiber.Ctx\) error](<#APIControllers.InvitesUpdate>)
   - [func \(api \*APIControllers\) LeaveWorkspace\(c fiber.Ctx\) error](<#APIControllers.LeaveWorkspace>)
+  - [func \(api \*APIControllers\) ListEmbeddings\(c fiber.Ctx\) error](<#APIControllers.ListEmbeddings>)
   - [func \(api \*APIControllers\) LogsIndex\(c fiber.Ctx\) error](<#APIControllers.LogsIndex>)
   - [func \(api \*APIControllers\) MergeRefs\(c fiber.Ctx\) error](<#APIControllers.MergeRefs>)
   - [func \(api \*APIControllers\) PauseWorkflow\(c fiber.Ctx\) error](<#APIControllers.PauseWorkflow>)
@@ -918,6 +920,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) ScriptsShow\(c fiber.Ctx\) error](<#APIControllers.ScriptsShow>)
   - [func \(api \*APIControllers\) ScriptsStore\(c fiber.Ctx\) error](<#APIControllers.ScriptsStore>)
   - [func \(api \*APIControllers\) ScriptsUpdate\(c fiber.Ctx\) error](<#APIControllers.ScriptsUpdate>)
+  - [func \(api \*APIControllers\) SearchEmbeddings\(c fiber.Ctx\) error](<#APIControllers.SearchEmbeddings>)
   - [func \(api \*APIControllers\) SendInvite\(c fiber.Ctx\) error](<#APIControllers.SendInvite>)
   - [func \(api \*APIControllers\) ShowConnectorConfigurationFields\(c fiber.Ctx\) error](<#APIControllers.ShowConnectorConfigurationFields>)
   - [func \(api \*APIControllers\) StartWorkflow\(c fiber.Ctx\) error](<#APIControllers.StartWorkflow>)
@@ -938,6 +941,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) UsersShow\(c fiber.Ctx\) error](<#APIControllers.UsersShow>)
   - [func \(api \*APIControllers\) UsersUpdate\(c fiber.Ctx\) error](<#APIControllers.UsersUpdate>)
   - [func \(api \*APIControllers\) ValidateConnectorConfiguration\(c fiber.Ctx\) error](<#APIControllers.ValidateConnectorConfiguration>)
+  - [func \(api \*APIControllers\) VectorizeObjects\(c fiber.Ctx\) error](<#APIControllers.VectorizeObjects>)
   - [func \(api \*APIControllers\) WorkflowRunsDestroy\(c fiber.Ctx\) error](<#APIControllers.WorkflowRunsDestroy>)
   - [func \(api \*APIControllers\) WorkflowRunsIndex\(c fiber.Ctx\) error](<#APIControllers.WorkflowRunsIndex>)
   - [func \(api \*APIControllers\) WorkflowRunsShow\(c fiber.Ctx\) error](<#APIControllers.WorkflowRunsShow>)
@@ -1206,6 +1210,15 @@ func (api *APIControllers) GenerateFileSchema(c fiber.Ctx) error
 
 GenerateFileSchema godoc @Summary Generate schema from uploaded file @Description Upload a file \(CSV, JSON, Parquet, etc.\) and get its schema structure @Tags schema @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param file formData file true "File to analyze \(CSV, JSON, Parquet, Excel, Avro, ORC, etc.\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ObjectSchema\} "File schema generated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid file or missing file" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid system authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /system/schema\-from\-file \[post\]
 
+<a name="APIControllers.GetEmbeddingInfo"></a>
+### func \(\*APIControllers\) GetEmbeddingInfo
+
+```go
+func (api *APIControllers) GetEmbeddingInfo(c fiber.Ctx) error
+```
+
+GetEmbeddingInfo godoc @Summary Get embedding file info @Description Get metadata about an embedding file @Tags embeddings @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param embedding\_path query string true "Path to the embedding file" @Param ref query string false "Repository reference \(branch/tag/commit\)" default\("main"\) @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.EmbeddingFile\} "Embedding file info retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Embedding file not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/embeddings/info \[get\]
+
 <a name="APIControllers.IndexMyInvites"></a>
 ### func \(\*APIControllers\) IndexMyInvites
 
@@ -1250,6 +1263,15 @@ func (api *APIControllers) LeaveWorkspace(c fiber.Ctx) error
 ```
 
 LeaveWorkspace godoc @Summary Leave workspace @Description Remove yourself from a workspace \(cannot leave if you're the owner or last member\) @Tags workspaces @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse "Successfully left workspace" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- cannot leave as owner or last member" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/leave \[post\]
+
+<a name="APIControllers.ListEmbeddings"></a>
+### func \(\*APIControllers\) ListEmbeddings
+
+```go
+func (api *APIControllers) ListEmbeddings(c fiber.Ctx) error
+```
+
+ListEmbeddings godoc @Summary List embedding files @Description List embedding files in a repository path @Tags embeddings @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param prefix query string false "Optional prefix to filter embedding files" @Param ref query string false "Repository reference \(branch/tag/commit\)" default\("main"\) @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.EmbeddingFile\} "Embedding files listed successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/embeddings \[get\]
 
 <a name="APIControllers.LogsIndex"></a>
 ### func \(\*APIControllers\) LogsIndex
@@ -1782,6 +1804,15 @@ func (api *APIControllers) ScriptsUpdate(c fiber.Ctx) error
 
 ScriptsUpdate godoc @Summary Update stored script @Description Update an existing stored script's properties @Tags scripts @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param script\_id path string true "Script ID \(SQID\)" @Param request body irmincore.UpdateScriptRequest true "Script update parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.StoredScript\} "Script updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Script not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/scripts/\{script\_id\} \[patch\]
 
+<a name="APIControllers.SearchEmbeddings"></a>
+### func \(\*APIControllers\) SearchEmbeddings
+
+```go
+func (api *APIControllers) SearchEmbeddings(c fiber.Ctx) error
+```
+
+SearchEmbeddings godoc @Summary Search embeddings @Description Perform vector similarity search on an embedding file @Tags embeddings @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param body body irmincore.SearchEmbeddingsRequest true "Search request" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.EmbeddingSearchResponse\} "Search completed successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Embedding file not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/embeddings/search \[post\]
+
 <a name="APIControllers.SendInvite"></a>
 ### func \(\*APIControllers\) SendInvite
 
@@ -1961,6 +1992,15 @@ func (api *APIControllers) ValidateConnectorConfiguration(c fiber.Ctx) error
 ```
 
 ValidateConnectorConfiguration godoc @Summary Validate connector configuration @Description Validate the configuration parameters for a specific connector @Tags connectors @Security ApiKeyAuth @Accept json @Produce json @Param connector\_slug path string true "Connector slug" @Param request body irmincore.ConnectorConfigurationRequest true "Configuration data to validate" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=object\} "Configuration validation result" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connector not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /connectors/\{connector\_slug\}/validate\-config \[post\]
+
+<a name="APIControllers.VectorizeObjects"></a>
+### func \(\*APIControllers\) VectorizeObjects
+
+```go
+func (api *APIControllers) VectorizeObjects(c fiber.Ctx) error
+```
+
+VectorizeObjects godoc @Summary Vectorize repository objects @Description Create embeddings from one or more repository objects and store them at the specified path @Tags embeddings @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param body body irmincore.VectorizeObjectsRequest true "Vectorization request" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.EmbeddingFile\} "Embeddings created successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/embeddings/vectorize \[post\]
 
 <a name="APIControllers.WorkflowRunsDestroy"></a>
 ### func \(\*APIControllers\) WorkflowRunsDestroy
@@ -5405,7 +5445,7 @@ import "irmin-api/embeddings"
 - [func ChunkTextBySentences\(text string, maxChunkSize int\) \[\]string](<#ChunkTextBySentences>)
 - [func ComputeCosineSimilarity\(a, b \[\]float32\) \(float64, error\)](<#ComputeCosineSimilarity>)
 - [func ExtractTextFromFile\(ctx context.Context, duckDBClient \*duckdb.QueryClient, fileContent \[\]byte, fileName string\) \(\[\]string, error\)](<#ExtractTextFromFile>)
-- [func GetEmbeddingMetadata\(metadata map\[string\]string\) \(string, int, string\)](<#GetEmbeddingMetadata>)
+- [func GetEmbeddingMetadata\(metadata map\[string\]string\) \(string, int, \[\]string\)](<#GetEmbeddingMetadata>)
 - [func GetSupportedFormats\(\) \[\]string](<#GetSupportedFormats>)
 - [func IsEmbeddingFile\(metadata map\[string\]string\) bool](<#IsEmbeddingFile>)
 - [func IsSupportedFormat\(fileName string\) bool](<#IsSupportedFormat>)
@@ -5429,6 +5469,7 @@ import "irmin-api/embeddings"
   - [func \(c \*Client\) SearchSimilar\(ctx context.Context, queryVector \[\]float32, parquetPath string, topK int\) \(\[\]SearchResult, error\)](<#Client.SearchSimilar>)
   - [func \(c \*Client\) SearchSimilarFromBytes\(ctx context.Context, queryVector \[\]float32, parquetContent \[\]byte, topK int\) \(\[\]SearchResult, error\)](<#Client.SearchSimilarFromBytes>)
   - [func \(c \*Client\) SearchWithFilter\(ctx context.Context, queryVector \[\]float32, parquetPath string, topK int, filter map\[string\]string\) \(\[\]SearchResult, error\)](<#Client.SearchWithFilter>)
+  - [func \(c \*Client\) SearchWithFilterFromBytes\(ctx context.Context, queryVector \[\]float32, parquetContent \[\]byte, topK int, filter map\[string\]string\) \(\[\]SearchResult, error\)](<#Client.SearchWithFilterFromBytes>)
   - [func \(c \*Client\) UploadToLakeFS\(ctx context.Context, config UploadConfig, data \[\]byte\) \(\*lakefs.ObjectMetadata, error\)](<#Client.UploadToLakeFS>)
 - [type EmbeddingConfig](<#EmbeddingConfig>)
   - [func DefaultConfig\(\) EmbeddingConfig](<#DefaultConfig>)
@@ -5448,6 +5489,10 @@ const (
     DefaultDimensions = 1536
     DefaultChunkSize  = 1000
     DefaultOverlap    = 200
+    // MaxBatchSize limits texts per OpenAI API request.
+    // With default chunk size of 1000 chars (~250 tokens), 500 texts ≈ 125,000 tokens,
+    // safely under OpenAI's 300,000 token limit with room for variance.
+    MaxBatchSize = 500
 )
 ```
 
@@ -5504,7 +5549,7 @@ ExtractTextFromFile extracts text content from a file based on its format. Retur
 ## func GetEmbeddingMetadata
 
 ```go
-func GetEmbeddingMetadata(metadata map[string]string) (string, int, string)
+func GetEmbeddingMetadata(metadata map[string]string) (string, int, []string)
 ```
 
 GetEmbeddingMetadata extracts embedding\-specific metadata from LakeFS object metadata.
@@ -5581,7 +5626,7 @@ CreateEmbeddingForQuery generates a single embedding for a query text.
 func (c *Client) CreateEmbeddings(ctx context.Context, texts []string, config EmbeddingConfig) ([][]float32, error)
 ```
 
-CreateEmbeddings generates embeddings for the provided texts using OpenAI API.
+CreateEmbeddings generates embeddings for the provided texts using OpenAI API. For large batches \(\>MaxBatchSize texts\), it automatically splits into smaller batches.
 
 <a name="Client.CreateEmbeddingsFromFile"></a>
 ### func \(\*Client\) CreateEmbeddingsFromFile
@@ -5718,6 +5763,15 @@ func (c *Client) SearchWithFilter(ctx context.Context, queryVector []float32, pa
 
 SearchWithFilter performs vector similarity search with metadata filtering.
 
+<a name="Client.SearchWithFilterFromBytes"></a>
+### func \(\*Client\) SearchWithFilterFromBytes
+
+```go
+func (c *Client) SearchWithFilterFromBytes(ctx context.Context, queryVector []float32, parquetContent []byte, topK int, filter map[string]string) ([]SearchResult, error)
+```
+
+SearchWithFilterFromBytes performs vector similarity search with metadata filtering on parquet content provided as bytes.
+
 <a name="Client.UploadToLakeFS"></a>
 ### func \(\*Client\) UploadToLakeFS
 
@@ -5808,7 +5862,7 @@ type UploadConfig struct {
     RepositoryID string
     Branch       string
     Path         string
-    SourceFile   string
+    SourceFiles  []string // Changed from SourceFile (singular) to SourceFiles (plural)
     Model        string
     Dimensions   int
     ChunkCount   int
@@ -10708,6 +10762,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) GetConnectionSchema\(ctx context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, operationMethod string, path string\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetConnectionSchema>)
   - [func \(api \*APIServices\) GetConnector\(c context.Context, connectorID uint\) \(\*db.Connector, error\)](<#APIServices.GetConnector>)
   - [func \(api \*APIServices\) GetConnectorConfigurationFields\(c context.Context, locale string, connector \*db.Connector, configurationType string, req irmincore.ConnectorConfigurationRequest\) \(map\[string\]irminmodels.DynamicField, error\)](<#APIServices.GetConnectorConfigurationFields>)
+  - [func \(api \*APIServices\) GetEmbeddingFileInfo\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, embeddingPath string, ref string\) \(\*irminmodels.EmbeddingFile, error\)](<#APIServices.GetEmbeddingFileInfo>)
   - [func \(api \*APIServices\) GetInviteByID\(c context.Context, user \*db.User, workspace \*db.Workspace, inviteSqid string\) \(\*db.Invite, error\)](<#APIServices.GetInviteByID>)
   - [func \(api \*APIServices\) GetLogEventByID\(c context.Context, user \*db.User, workspace \*db.Workspace, logEventSqid string\) \(\*db.LogEvent, error\)](<#APIServices.GetLogEventByID>)
   - [func \(api \*APIServices\) GetPoliciesForUser\(c context.Context, workspace \*db.Workspace, user \*db.User\) \(\[\]db.Policy, \*db.WorkspaceUser, bool, error\)](<#APIServices.GetPoliciesForUser>)
@@ -10740,6 +10795,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ListAllWorkflowRuns\(c context.Context, user \*db.User, workspace \*db.Workspace, perPage, offset int\) \(\[\]db.WorkflowRun, int, error\)](<#APIServices.ListAllWorkflowRuns>)
   - [func \(api \*APIServices\) ListConnections\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.Connection, error\)](<#APIServices.ListConnections>)
   - [func \(api \*APIServices\) ListConnectors\(c context.Context\) \(\[\]db.Connector, error\)](<#APIServices.ListConnectors>)
+  - [func \(api \*APIServices\) ListEmbeddingFiles\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, prefix string, ref string\) \(\[\]irminmodels.EmbeddingFile, error\)](<#APIServices.ListEmbeddingFiles>)
   - [func \(api \*APIServices\) ListInvitesForUser\(c context.Context, user \*db.User\) \(\[\]db.Invite, error\)](<#APIServices.ListInvitesForUser>)
   - [func \(api \*APIServices\) ListInvitesToWorkspace\(c context.Context, workspace \*db.Workspace, user \*db.User\) \(\[\]db.Invite, error\)](<#APIServices.ListInvitesToWorkspace>)
   - [func \(api \*APIServices\) ListLogEventsForWorkspace\(c context.Context, workspace \*db.Workspace, user \*db.User, searchTerm string, limit, offset int\) \(\[\]db.LogEvent, int64, error\)](<#APIServices.ListLogEventsForWorkspace>)
@@ -10767,6 +10823,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) RemoveUserFromWorkspace\(c context.Context, currentUser \*db.User, workspace \*db.Workspace, workspaceMember \*db.WorkspaceUser\) error](<#APIServices.RemoveUserFromWorkspace>)
   - [func \(api \*APIServices\) ResendInvite\(c context.Context, locale string, user \*db.User, invite \*db.Invite\) error](<#APIServices.ResendInvite>)
   - [func \(api \*APIServices\) RevertRepositoryUncommittedChanges\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.RevertUncommittedChangesRequest\) error](<#APIServices.RevertRepositoryUncommittedChanges>)
+  - [func \(api \*APIServices\) SearchEmbeddings\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.SearchEmbeddingsRequest\) \(\*irminmodels.EmbeddingSearchResponse, error\)](<#APIServices.SearchEmbeddings>)
   - [func \(api \*APIServices\) SearchWorkspace\(c context.Context, user \*db.User, workspace \*db.Workspace, filters db.SearchFilters\) \(\*irminmodels.SearchResponse, error\)](<#APIServices.SearchWorkspace>)
   - [func \(api \*APIServices\) SendInvite\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.SendInviteRequest\) \(\*InviteTransactionResult, error\)](<#APIServices.SendInvite>)
   - [func \(api \*APIServices\) StartWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow\) \(\*db.Workflow, error\)](<#APIServices.StartWorkflow>)
@@ -10798,6 +10855,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) UploadRepositoryObjectFromURL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, objectPath string, objectRef string, url string, headers map\[string\]string, tags \[\]string\) \(\*db.RepositoryObject, error\)](<#APIServices.UploadRepositoryObjectFromURL>)
   - [func \(api \*APIServices\) ValidateConnectorConfiguration\(c context.Context, locale string, connector \*db.Connector, req irmincore.ConnectorConfigurationRequest\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#APIServices.ValidateConnectorConfiguration>)
   - [func \(api \*APIServices\) ValidateRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, validationSchema \*irminmodels.ObjectSchema, validationMode string\) \(\*irmincore.ValidateObjectResponse, error\)](<#APIServices.ValidateRepositoryObject>)
+  - [func \(api \*APIServices\) VectorizeObjects\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.VectorizeObjectsRequest\) \(\*irminmodels.EmbeddingFile, error\)](<#APIServices.VectorizeObjects>)
   - [func \(api \*APIServices\) ZipRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(\[\]byte, string, error\)](<#APIServices.ZipRepositoryObject>)
 - [type AuthCache](<#AuthCache>)
 - [type AuthCacheEntry](<#AuthCacheEntry>)
@@ -11366,6 +11424,15 @@ func (api *APIServices) GetConnectorConfigurationFields(c context.Context, local
 
 
 
+<a name="APIServices.GetEmbeddingFileInfo"></a>
+### func \(\*APIServices\) GetEmbeddingFileInfo
+
+```go
+func (api *APIServices) GetEmbeddingFileInfo(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, embeddingPath string, ref string) (*irminmodels.EmbeddingFile, error)
+```
+
+GetEmbeddingFileInfo gets metadata about an embedding file.
+
 <a name="APIServices.GetInviteByID"></a>
 ### func \(\*APIServices\) GetInviteByID
 
@@ -11654,6 +11721,15 @@ func (api *APIServices) ListConnectors(c context.Context) ([]db.Connector, error
 
 
 
+<a name="APIServices.ListEmbeddingFiles"></a>
+### func \(\*APIServices\) ListEmbeddingFiles
+
+```go
+func (api *APIServices) ListEmbeddingFiles(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, prefix string, ref string) ([]irminmodels.EmbeddingFile, error)
+```
+
+ListEmbeddingFiles lists embedding files in a repository path.
+
 <a name="APIServices.ListInvitesForUser"></a>
 ### func \(\*APIServices\) ListInvitesForUser
 
@@ -11896,6 +11972,15 @@ func (api *APIServices) RevertRepositoryUncommittedChanges(c context.Context, lo
 ```
 
 
+
+<a name="APIServices.SearchEmbeddings"></a>
+### func \(\*APIServices\) SearchEmbeddings
+
+```go
+func (api *APIServices) SearchEmbeddings(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, req irmincore.SearchEmbeddingsRequest) (*irminmodels.EmbeddingSearchResponse, error)
+```
+
+SearchEmbeddings performs vector similarity search on an embedding file.
 
 <a name="APIServices.SearchWorkspace"></a>
 ### func \(\*APIServices\) SearchWorkspace
@@ -12175,6 +12260,15 @@ func (api *APIServices) ValidateRepositoryObject(c context.Context, locale strin
 ```
 
 
+
+<a name="APIServices.VectorizeObjects"></a>
+### func \(\*APIServices\) VectorizeObjects
+
+```go
+func (api *APIServices) VectorizeObjects(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, req irmincore.VectorizeObjectsRequest) (*irminmodels.EmbeddingFile, error)
+```
+
+VectorizeObjects creates embeddings from one or more repository objects and stores them at the specified path.
 
 <a name="APIServices.ZipRepositoryObject"></a>
 ### func \(\*APIServices\) ZipRepositoryObject

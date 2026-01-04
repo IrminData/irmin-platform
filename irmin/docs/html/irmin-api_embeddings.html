@@ -12,6 +12,10 @@ const (
 	DefaultDimensions = 1536
 	DefaultChunkSize  = 1000
 	DefaultOverlap    = 200
+	// MaxBatchSize limits texts per OpenAI API request.
+	// With default chunk size of 1000 chars (~250 tokens), 500 texts ≈ 125,000 tokens,
+	// safely under OpenAI's 300,000 token limit with room for variance.
+	MaxBatchSize = 500
 )
     Default configuration values.
 
@@ -47,7 +51,7 @@ func ExtractTextFromFile(
     ExtractTextFromFile extracts text content from a file based on its format.
     Returns a slice of text strings that can be chunked and embedded.
 
-func GetEmbeddingMetadata(metadata map[string]string) (string, int, string)
+func GetEmbeddingMetadata(metadata map[string]string) (string, int, []string)
     GetEmbeddingMetadata extracts embedding-specific metadata from LakeFS object
     metadata.
 
@@ -95,7 +99,8 @@ func (c *Client) CreateEmbeddings(
 	config EmbeddingConfig,
 ) ([][]float32, error)
     CreateEmbeddings generates embeddings for the provided texts using OpenAI
-    API.
+    API. For large batches (&gt;MaxBatchSize texts), it automatically splits into
+    smaller batches.
 
 func (c *Client) CreateEmbeddingsFromFile(
 	ctx context.Context,
@@ -217,6 +222,16 @@ func (c *Client) SearchWithFilter(
 ) ([]SearchResult, error)
     SearchWithFilter performs vector similarity search with metadata filtering.
 
+func (c *Client) SearchWithFilterFromBytes(
+	ctx context.Context,
+	queryVector []float32,
+	parquetContent []byte,
+	topK int,
+	filter map[string]string,
+) ([]SearchResult, error)
+    SearchWithFilterFromBytes performs vector similarity search with metadata
+    filtering on parquet content provided as bytes.
+
 func (c *Client) UploadToLakeFS(
 	ctx context.Context,
 	config UploadConfig,
@@ -270,7 +285,7 @@ type UploadConfig struct {
 	RepositoryID string
 	Branch       string
 	Path         string
-	SourceFile   string
+	SourceFiles  []string // Changed from SourceFile (singular) to SourceFiles (plural)
 	Model        string
 	Dimensions   int
 	ChunkCount   int

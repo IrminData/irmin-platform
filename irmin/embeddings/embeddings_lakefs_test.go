@@ -1,6 +1,7 @@
 package embeddings_test
 
 import (
+	"encoding/json"
 	"irmin-api/embeddings"
 	"testing"
 
@@ -44,18 +45,22 @@ func TestIsEmbeddingFileFalse(t *testing.T) {
 
 // TestGetEmbeddingMetadataComplete tests extracting complete metadata.
 func TestGetEmbeddingMetadataComplete(t *testing.T) {
+	// Store source files as JSON array (new format)
+	sourceFiles := []string{"document.pdf"}
+	sourceFilesJSON, _ := json.Marshal(sourceFiles)
+
 	metadata := map[string]string{
 		embeddings.MetadataKeyFileType:            embeddings.MetadataValueEmbeddings,
 		embeddings.MetadataKeyEmbeddingModel:      "text-embedding-3-small",
 		embeddings.MetadataKeyEmbeddingDimensions: "1536",
-		embeddings.MetadataKeySourceFile:          "document.pdf",
+		embeddings.MetadataKeySourceFile:          string(sourceFilesJSON),
 	}
 
-	model, dimensions, sourceFile := embeddings.GetEmbeddingMetadata(metadata)
+	model, dimensions, actualSourceFiles := embeddings.GetEmbeddingMetadata(metadata)
 
 	assert.Equal(t, "text-embedding-3-small", model)
 	assert.Equal(t, 1536, dimensions)
-	assert.Equal(t, "document.pdf", sourceFile)
+	assert.Equal(t, sourceFiles, actualSourceFiles)
 }
 
 // TestGetEmbeddingMetadataPartial tests extracting partial metadata.
@@ -64,20 +69,20 @@ func TestGetEmbeddingMetadataPartial(t *testing.T) {
 		embeddings.MetadataKeyEmbeddingModel: "text-embedding-3-large",
 	}
 
-	model, dimensions, sourceFile := embeddings.GetEmbeddingMetadata(metadata)
+	model, dimensions, sourceFiles := embeddings.GetEmbeddingMetadata(metadata)
 
 	assert.Equal(t, "text-embedding-3-large", model)
-	assert.Equal(t, 0, dimensions)  // Not specified
-	assert.Equal(t, "", sourceFile) // Not specified
+	assert.Equal(t, 0, dimensions) // Not specified
+	assert.Nil(t, sourceFiles)     // Not specified
 }
 
 // TestGetEmbeddingMetadataNil tests nil metadata handling.
 func TestGetEmbeddingMetadataNil(t *testing.T) {
-	model, dimensions, sourceFile := embeddings.GetEmbeddingMetadata(nil)
+	model, dimensions, sourceFiles := embeddings.GetEmbeddingMetadata(nil)
 
 	assert.Equal(t, "", model)
 	assert.Equal(t, 0, dimensions)
-	assert.Equal(t, "", sourceFile)
+	assert.Nil(t, sourceFiles)
 }
 
 // TestGetEmbeddingMetadataInvalidDimensions tests invalid dimensions handling.
@@ -89,6 +94,24 @@ func TestGetEmbeddingMetadataInvalidDimensions(t *testing.T) {
 	_, dimensions, _ := embeddings.GetEmbeddingMetadata(metadata)
 
 	assert.Equal(t, 0, dimensions) // Should default to 0 on parse error
+}
+
+// TestGetEmbeddingMetadataBackwardCompatibility tests that old plain string format still works.
+func TestGetEmbeddingMetadataBackwardCompatibility(t *testing.T) {
+	// Old format: plain string (not JSON)
+	metadata := map[string]string{
+		embeddings.MetadataKeyFileType:            embeddings.MetadataValueEmbeddings,
+		embeddings.MetadataKeyEmbeddingModel:      "text-embedding-3-small",
+		embeddings.MetadataKeyEmbeddingDimensions: "1536",
+		embeddings.MetadataKeySourceFile:          "legacy-document.pdf",
+	}
+
+	model, dimensions, sourceFiles := embeddings.GetEmbeddingMetadata(metadata)
+
+	assert.Equal(t, "text-embedding-3-small", model)
+	assert.Equal(t, 1536, dimensions)
+	// Old format should be parsed as a single-element array
+	assert.Equal(t, []string{"legacy-document.pdf"}, sourceFiles)
 }
 
 // =============================================================================
@@ -155,7 +178,7 @@ func TestBuildEmbeddingMetadata(t *testing.T) {
 		RepositoryID: "test-repo",
 		Branch:       "main",
 		Path:         "test.parquet",
-		SourceFile:   "source.csv",
+		SourceFiles:  []string{"source.csv"},
 		Model:        "text-embedding-3-small",
 		Dimensions:   1536,
 		ChunkCount:   10,
@@ -216,7 +239,7 @@ func TestUploadToLakeFSSuccess(t *testing.T) {
 		RepositoryID: suite.Env.TestRepository,
 		Branch:       suite.Env.TestBranch,
 		Path:         "test-embeddings/upload-test.parquet",
-		SourceFile:   "test.txt",
+		SourceFiles:  []string{"test.txt"},
 		Model:        "text-embedding-3-small",
 		Dimensions:   1536,
 		ChunkCount:   5,
@@ -234,7 +257,11 @@ func TestUploadToLakeFSSuccess(t *testing.T) {
 	assert.Equal(t, embeddings.MetadataValueEmbeddings, metadata.Metadata[embeddings.MetadataKeyFileType])
 	assert.Equal(t, config.Model, metadata.Metadata[embeddings.MetadataKeyEmbeddingModel])
 	assert.Equal(t, "1536", metadata.Metadata[embeddings.MetadataKeyEmbeddingDimensions])
-	assert.Equal(t, config.SourceFile, metadata.Metadata[embeddings.MetadataKeySourceFile])
+
+	// Verify source files are stored as JSON array
+	expectedSourceFilesJSON, _ := json.Marshal(config.SourceFiles)
+	assert.Equal(t, string(expectedSourceFilesJSON), metadata.Metadata[embeddings.MetadataKeySourceFile])
+
 	assert.Equal(t, "5", metadata.Metadata[embeddings.MetadataKeyChunkCount])
 
 	// Verify the path has .parquet extension
@@ -261,7 +288,7 @@ func TestUploadToLakeFSWithoutExtension(t *testing.T) {
 		RepositoryID: suite.Env.TestRepository,
 		Branch:       suite.Env.TestBranch,
 		Path:         "test-embeddings/no-extension-test",
-		SourceFile:   "test.txt",
+		SourceFiles:  []string{"test.txt"},
 		Model:        "text-embedding-3-small",
 		Dimensions:   1536,
 		ChunkCount:   1,
@@ -325,7 +352,7 @@ func TestDownloadFromLakeFSSuccess(t *testing.T) {
 		RepositoryID: suite.Env.TestRepository,
 		Branch:       suite.Env.TestBranch,
 		Path:         "test-embeddings/download-test.parquet",
-		SourceFile:   "test.txt",
+		SourceFiles:  []string{"test.txt"},
 		Model:        "text-embedding-3-small",
 		Dimensions:   1536,
 		ChunkCount:   3,
@@ -409,7 +436,7 @@ func TestListEmbeddingFilesSuccess(t *testing.T) {
 			RepositoryID: suite.Env.TestRepository,
 			Branch:       suite.Env.TestBranch,
 			Path:         prefix + "file1.parquet",
-			SourceFile:   "test1.txt",
+			SourceFiles:  []string{"test1.txt"},
 			Model:        "text-embedding-3-small",
 			Dimensions:   1536,
 			ChunkCount:   2,
@@ -418,7 +445,7 @@ func TestListEmbeddingFilesSuccess(t *testing.T) {
 			RepositoryID: suite.Env.TestRepository,
 			Branch:       suite.Env.TestBranch,
 			Path:         prefix + "file2.parquet",
-			SourceFile:   "test2.txt",
+			SourceFiles:  []string{"test2.txt"},
 			Model:        "text-embedding-3-large",
 			Dimensions:   3072,
 			ChunkCount:   4,
@@ -535,7 +562,7 @@ func TestDeleteEmbeddingFileSuccess(t *testing.T) {
 		RepositoryID: suite.Env.TestRepository,
 		Branch:       suite.Env.TestBranch,
 		Path:         "test-embeddings/delete-test.parquet",
-		SourceFile:   "test.txt",
+		SourceFiles:  []string{"test.txt"},
 		Model:        "text-embedding-3-small",
 		Dimensions:   1536,
 		ChunkCount:   1,
@@ -776,19 +803,23 @@ func TestUploadConfigWithMinimalMetadata(t *testing.T) {
 
 // TestGetEmbeddingMetadataWithChunkCount tests extracting chunk count from metadata.
 func TestGetEmbeddingMetadataWithChunkCount(t *testing.T) {
+	// Store source files as JSON array (new format)
+	sourceFiles := []string{"document.pdf"}
+	sourceFilesJSON, _ := json.Marshal(sourceFiles)
+
 	metadata := map[string]string{
 		embeddings.MetadataKeyFileType:            embeddings.MetadataValueEmbeddings,
 		embeddings.MetadataKeyEmbeddingModel:      "text-embedding-3-small",
 		embeddings.MetadataKeyEmbeddingDimensions: "1536",
-		embeddings.MetadataKeySourceFile:          "document.pdf",
+		embeddings.MetadataKeySourceFile:          string(sourceFilesJSON),
 		embeddings.MetadataKeyChunkCount:          "25",
 	}
 
-	model, dimensions, sourceFile := embeddings.GetEmbeddingMetadata(metadata)
+	model, dimensions, actualSourceFiles := embeddings.GetEmbeddingMetadata(metadata)
 
 	assert.Equal(t, "text-embedding-3-small", model)
 	assert.Equal(t, 1536, dimensions)
-	assert.Equal(t, "document.pdf", sourceFile)
+	assert.Equal(t, sourceFiles, actualSourceFiles)
 
 	// Note: GetEmbeddingMetadata currently doesn't return chunk count
 	// This test documents the current behavior

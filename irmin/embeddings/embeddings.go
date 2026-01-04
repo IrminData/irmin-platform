@@ -21,6 +21,10 @@ const (
 	DefaultDimensions = 1536
 	DefaultChunkSize  = 1000
 	DefaultOverlap    = 200
+	// MaxBatchSize limits texts per OpenAI API request.
+	// With default chunk size of 1000 chars (~250 tokens), 500 texts ≈ 125,000 tokens,
+	// safely under OpenAI's 300,000 token limit with room for variance.
+	MaxBatchSize = 500
 )
 
 // EmbeddingConfig holds the configuration for embedding generation.
@@ -115,6 +119,7 @@ func (c *Client) Close() error {
 }
 
 // CreateEmbeddings generates embeddings for the provided texts using OpenAI API.
+// For large batches (>MaxBatchSize texts), it automatically splits into smaller batches.
 func (c *Client) CreateEmbeddings(
 	ctx context.Context,
 	texts []string,
@@ -138,6 +143,65 @@ func (c *Client) CreateEmbeddings(
 		"dimensions", config.Dimensions,
 	)
 
+	// If batch is small enough, process in one request
+	if len(texts) <= MaxBatchSize {
+		embeddings, tokens, err := c.createEmbeddingsBatch(ctx, texts, config)
+		if err != nil {
+			return nil, err
+		}
+		c.logger.InfoContext(ctx, "embeddings created successfully",
+			"embedding_count", len(embeddings),
+			"usage_tokens", tokens,
+		)
+		return embeddings, nil
+	}
+
+	// For large batches, split into smaller chunks
+	c.logger.InfoContext(ctx, "splitting large batch into smaller requests",
+		"total_texts", len(texts),
+		"batch_size", MaxBatchSize,
+	)
+
+	var allEmbeddings [][]float32
+	totalTokens := int64(0)
+
+	for i := 0; i < len(texts); i += MaxBatchSize {
+		end := i + MaxBatchSize
+		if end > len(texts) {
+			end = len(texts)
+		}
+
+		batch := texts[i:end]
+		c.logger.InfoContext(ctx, "processing batch",
+			"batch_number", (i/MaxBatchSize)+1,
+			"batch_size", len(batch),
+			"progress", fmt.Sprintf("%d/%d", end, len(texts)),
+		)
+
+		batchEmbeddings, batchTokens, err := c.createEmbeddingsBatch(ctx, batch, config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create embeddings for batch %d: %w", (i/MaxBatchSize)+1, err)
+		}
+
+		allEmbeddings = append(allEmbeddings, batchEmbeddings...)
+		totalTokens += batchTokens
+	}
+
+	c.logger.InfoContext(ctx, "all embeddings created successfully",
+		"total_embedding_count", len(allEmbeddings),
+		"total_usage_tokens", totalTokens,
+	)
+
+	return allEmbeddings, nil
+}
+
+// createEmbeddingsBatch creates embeddings for a single batch (internal helper).
+// Returns embeddings and token usage.
+func (c *Client) createEmbeddingsBatch(
+	ctx context.Context,
+	texts []string,
+	config EmbeddingConfig,
+) ([][]float32, int64, error) {
 	// Create embedding request
 	response, err := c.openaiClient.Embeddings.New(ctx, openai.EmbeddingNewParams{
 		Input:          openai.EmbeddingNewParamsInputUnion{OfArrayOfStrings: texts},
@@ -146,12 +210,27 @@ func (c *Client) CreateEmbeddings(
 		EncodingFormat: openai.EmbeddingNewParamsEncodingFormatFloat,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create embeddings: %w", err)
+		return nil, 0, fmt.Errorf("failed to create embeddings: %w", err)
 	}
 
 	// Extract embeddings from response
-	embeddings := make([][]float32, len(response.Data))
+	// Size the slice based on input text count, not response data count
+	// This ensures data.Index is always valid (API guarantees indices 0 to len(texts)-1)
+	embeddings := make([][]float32, len(texts))
+	seenIndices := make(map[int64]bool, len(texts))
+
 	for _, data := range response.Data {
+		// Bounds check to prevent panic if API returns unexpected index
+		if data.Index < 0 || data.Index >= int64(len(texts)) {
+			return nil, 0, fmt.Errorf("API returned invalid embedding index %d for %d texts", data.Index, len(texts))
+		}
+
+		// Check for duplicate indices
+		if seenIndices[data.Index] {
+			return nil, 0, fmt.Errorf("API returned duplicate embedding index %d", data.Index)
+		}
+		seenIndices[data.Index] = true
+
 		// Convert float64 to float32
 		embedding := make([]float32, len(data.Embedding))
 		for j, v := range data.Embedding {
@@ -162,12 +241,14 @@ func (c *Client) CreateEmbeddings(
 		embeddings[data.Index] = embedding
 	}
 
-	c.logger.InfoContext(ctx, "embeddings created successfully",
-		"embedding_count", len(embeddings),
-		"usage_tokens", response.Usage.TotalTokens,
-	)
+	// Verify we received embeddings for all texts (no missing indices)
+	for i := range texts {
+		if embeddings[i] == nil {
+			return nil, 0, fmt.Errorf("missing embedding for text at index %d", i)
+		}
+	}
 
-	return embeddings, nil
+	return embeddings, response.Usage.TotalTokens, nil
 }
 
 // CreateEmbeddingsFromFile extracts text from a file and generates embeddings.

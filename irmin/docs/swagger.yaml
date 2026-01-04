@@ -358,6 +358,35 @@ definitions:
     required:
     - branch
     type: object
+  irmincore.SearchEmbeddingsRequest:
+    properties:
+      embedding_path:
+        description: Path to the embedding file
+        example: embeddings/documents.parquet
+        type: string
+      filter:
+        additionalProperties:
+          type: string
+        description: Optional metadata filters
+        type: object
+      query:
+        description: Query text to search for
+        example: What is machine learning?
+        type: string
+      ref:
+        description: Repository reference (branch/tag/commit)
+        example: main
+        maxLength: 100
+        type: string
+      top_k:
+        description: 'Number of results to return (default: 10)'
+        example: 10
+        minimum: 1
+        type: integer
+    required:
+    - embedding_path
+    - query
+    type: object
   irmincore.SendInviteRequest:
     properties:
       email:
@@ -668,6 +697,33 @@ definitions:
         type: array
       valid:
         type: boolean
+    type: object
+  irmincore.VectorizeObjectsRequest:
+    properties:
+      config:
+        allOf:
+        - $ref: '#/definitions/irminmodels.EmbeddingConfig'
+        description: Optional embedding configuration
+      output_path:
+        description: Output path for the embedding file
+        example: embeddings/documents.parquet
+        type: string
+      ref:
+        description: Repository reference (branch/tag/commit)
+        example: main
+        maxLength: 100
+        type: string
+      source_paths:
+        description: List of source file paths to vectorize
+        example:
+        - data/documents/doc1.pdf
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - output_path
+    - source_paths
     type: object
   irmincore.WorkflowRequest:
     properties:
@@ -1122,6 +1178,143 @@ definitions:
     - compare_ref
     - items
     - repository
+    type: object
+  irminmodels.EmbeddingConfig:
+    properties:
+      chunk_size:
+        description: Text chunk size for splitting large documents
+        example: 1000
+        minimum: 0
+        type: integer
+      dimensions:
+        description: Embedding dimensions (e.g., 1536, 3072)
+        example: 1536
+        minimum: 0
+        type: integer
+      model:
+        description: OpenAI embedding model (e.g., "text-embedding-3-small", "text-embedding-3-large")
+        example: text-embedding-3-small
+        maxLength: 100
+        type: string
+      overlap:
+        description: Overlap between consecutive chunks
+        example: 200
+        minimum: 0
+        type: integer
+    type: object
+  irminmodels.EmbeddingFile:
+    properties:
+      chunk_count:
+        description: Total number of embedding chunks
+        example: 42
+        minimum: 0
+        type: integer
+      created_at:
+        description: Creation timestamp
+        example: "2025-12-01T14:22:30Z"
+        type: string
+      dimensions:
+        description: Vector dimensions
+        example: 1536
+        minimum: 0
+        type: integer
+      model:
+        description: OpenAI model used to generate embeddings
+        example: text-embedding-3-small
+        maxLength: 100
+        type: string
+      path:
+        description: Path to the embedding file in the repository
+        example: embeddings/documents.parquet
+        type: string
+      ref:
+        description: Repository reference (branch/tag/commit)
+        example: main
+        maxLength: 100
+        type: string
+      size_bytes:
+        description: File size in bytes
+        example: 524288
+        minimum: 0
+        type: integer
+      source_files:
+        description: List of source files that were vectorized
+        example:
+        - data/documents/doc1.pdf
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - path
+    - size_bytes
+    type: object
+  irminmodels.EmbeddingSearchResponse:
+    properties:
+      model:
+        description: Model used for the query embedding
+        example: text-embedding-3-small
+        maxLength: 100
+        type: string
+      query:
+        description: The original query text
+        example: What is machine learning?
+        type: string
+      results:
+        description: List of search results
+        items:
+          $ref: '#/definitions/irminmodels.EmbeddingSearchResult'
+        type: array
+      top_k:
+        description: Number of results requested
+        example: 10
+        minimum: 1
+        type: integer
+    required:
+    - model
+    - query
+    - results
+    - top_k
+    type: object
+  irminmodels.EmbeddingSearchResult:
+    properties:
+      chunk_index:
+        description: Sequential chunk number within the source file
+        example: 5
+        minimum: 0
+        type: integer
+      content:
+        description: The actual text content of the chunk
+        example: Machine learning is a subset of AI...
+        type: string
+      distance:
+        description: Cosine distance (0-2, lower is better)
+        example: 0.08
+        minimum: 0
+        type: number
+      id:
+        description: Unique ID for the embedding chunk
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      metadata:
+        additionalProperties:
+          type: string
+        description: Custom metadata associated with the chunk
+        type: object
+      score:
+        description: Cosine similarity score (0-1, higher is better)
+        example: 0.92
+        maximum: 1
+        minimum: 0
+        type: number
+      source_file:
+        description: Original source file name
+        example: data/documents/doc1.pdf
+        type: string
+    required:
+    - content
+    - id
+    - source_file
     type: object
   irminmodels.FieldMapping:
     properties:
@@ -6409,6 +6602,240 @@ paths:
       summary: Compare two repository references
       tags:
       - compare
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings:
+    get:
+      consumes:
+      - application/json
+      description: List embedding files in a repository path
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Repository slug
+        in: path
+        name: repository_slug
+        required: true
+        type: string
+      - description: Optional prefix to filter embedding files
+        in: query
+        name: prefix
+        type: string
+      - default: '"main"'
+        description: Repository reference (branch/tag/commit)
+        in: query
+        name: ref
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Embedding files listed successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/irminmodels.EmbeddingFile'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List embedding files
+      tags:
+      - embeddings
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/info:
+    get:
+      consumes:
+      - application/json
+      description: Get metadata about an embedding file
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Repository slug
+        in: path
+        name: repository_slug
+        required: true
+        type: string
+      - description: Path to the embedding file
+        in: query
+        name: embedding_path
+        required: true
+        type: string
+      - default: '"main"'
+        description: Repository reference (branch/tag/commit)
+        in: query
+        name: ref
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Embedding file info retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.EmbeddingFile'
+              type: object
+        "400":
+          description: Bad request - invalid parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Embedding file not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get embedding file info
+      tags:
+      - embeddings
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/search:
+    post:
+      consumes:
+      - application/json
+      description: Perform vector similarity search on an embedding file
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Repository slug
+        in: path
+        name: repository_slug
+        required: true
+        type: string
+      - description: Search request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.SearchEmbeddingsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Search completed successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.EmbeddingSearchResponse'
+              type: object
+        "400":
+          description: Bad request - invalid parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Embedding file not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Search embeddings
+      tags:
+      - embeddings
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/vectorize:
+    post:
+      consumes:
+      - application/json
+      description: Create embeddings from one or more repository objects and store
+        them at the specified path
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Repository slug
+        in: path
+        name: repository_slug
+        required: true
+        type: string
+      - description: Vectorization request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.VectorizeObjectsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Embeddings created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.EmbeddingFile'
+              type: object
+        "400":
+          description: Bad request - invalid parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Vectorize repository objects
+      tags:
+      - embeddings
   /workspaces/{workspace_slug}/repositories/{repository_slug}/merge:
     post:
       consumes:

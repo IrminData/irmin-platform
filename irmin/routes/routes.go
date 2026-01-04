@@ -638,4 +638,27 @@ func RegisterAPIRoutes(
 		apiMiddlewares.RepositoryCommitPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.RepositoryCommitsShow,
 	)
+
+	// Embedding routes
+	embeddings := repository.Group("/embeddings")
+	embeddings.Post(
+		"/vectorize",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.VectorizeObjects,
+	)
+	embeddings.Post(
+		"/search",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.SearchEmbeddings,
+	)
+	embeddings.Get(
+		"/",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ListEmbeddings,
+	)
+	embeddings.Get(
+		"/info",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.GetEmbeddingInfo,
+	)
 }

@@ -333,18 +333,17 @@ result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "config.yaml", 
 
 #### Document Formats
 
-PDF and Word documents require external dependencies:
+PDF and Word documents are handled by pure Go libraries with no external dependencies:
 
 ```go
-// PDF documents - requires poppler-utils
+// PDF documents - pure Go implementation
 fileContent, _ := os.ReadFile("whitepaper.pdf")
 result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "whitepaper.pdf", config)
 if err != nil {
-    // May fail with "PDF extraction requires poppler-utils (pdftotext) to be installed"
     log.Fatal(err)
 }
 
-// Word DOCX documents
+// Word DOCX documents - pure Go implementation
 fileContent, _ := os.ReadFile("proposal.docx")
 result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "proposal.docx", config)
 // Extracts all text content from the Word document
@@ -356,12 +355,15 @@ result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "proposal.docx"
 result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, fileName, config)
 if err != nil {
     switch {
-    case strings.Contains(err.Error(), "poppler-utils"):
-        // PDF files need pdftotext
-        fmt.Println("Please install poppler-utils: apt-get install poppler-utils")
     case strings.Contains(err.Error(), "unsupported file format"):
         // File format not supported
         fmt.Println("File format not supported for embeddings")
+    case strings.Contains(err.Error(), "failed to open PDF"):
+        // Invalid or corrupted PDF file
+        fmt.Println("Could not read PDF file")
+    case strings.Contains(err.Error(), "failed to open DOCX"):
+        // Invalid or corrupted DOCX file
+        fmt.Println("Could not read DOCX file")
     default:
         log.Fatal(err)
     }
@@ -427,24 +429,19 @@ config := embeddings.EmbeddingConfig{
 | JSONL | `.jsonl`, `.ndjson` | DuckDB query |
 | TSV | `.tsv`, `.tab` | DuckDB query |
 | Parquet | `.parquet` | DuckDB query |
-| Excel | `.xlsx`, `.xlsm` | Excelize library (pure Go, XLSX and macro-enabled formats only) |
+| Excel | `.xlsx`, `.xlsm` | Excelize library (pure Go) |
 | XML | `.xml` | Go encoding/xml parser |
 | YAML | `.yaml`, `.yml` | gopkg.in/yaml.v3 parser |
-| PDF | `.pdf` | docconv library (requires poppler-utils) |
-| Word | `.docx` | docconv library |
+| PDF | `.pdf` | ledongthuc/pdf library (pure Go) |
+| Word | `.docx` | nguyenthenguyen/docx library (pure Go) |
 
 ### External Dependencies
 
-Some formats require external tools to be installed on the system:
+All file formats are handled by pure Go libraries with **no external dependencies required**.
 
-- **PDF files**: Requires `poppler-utils` (specifically `pdftotext`)
-  - Ubuntu/Debian: `sudo apt-get install poppler-utils`
-  - macOS: `brew install poppler`
-  - Windows: Download from [Poppler for Windows](https://github.com/oschwartz10612/poppler-windows)
-
-- **Excel files**: No external dependencies - uses pure Go Excelize library
-
-- **Word DOCX files**: Handled by docconv library (pure Go implementation for DOCX)
+- **PDF files**: Uses `github.com/ledongthuc/pdf` - pure Go PDF text extraction
+- **Word DOCX files**: Uses `github.com/nguyenthenguyen/docx` - pure Go DOCX reader
+- **Excel files**: Uses `github.com/xuri/excelize/v2` - pure Go Excel library
 
 ## Parquet Schema
 
@@ -538,6 +535,9 @@ go test ./embeddings/... -cover
 
 - `github.com/openai/openai-go/v3` - OpenAI API client (v3)
 - `github.com/google/uuid` - UUID generation
+- `github.com/ledongthuc/pdf` - Pure Go PDF text extraction
+- `github.com/nguyenthenguyen/docx` - Pure Go DOCX reader
+- `github.com/xuri/excelize/v2` - Pure Go Excel library
 - `irmin-api/duckdb` - DuckDB query client
 - `irmin-api/lakefs` - LakeFS client
 - DuckDB `vss` extension - Vector similarity search (auto-installed)

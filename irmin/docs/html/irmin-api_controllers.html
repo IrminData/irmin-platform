@@ -356,6 +356,25 @@ func (api *APIControllers) GenerateFileSchema(c fiber.Ctx) error
     @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
     @Router /system/schema-from-file [post]
 
+func (api *APIControllers) GetEmbeddingInfo(c fiber.Ctx) error
+    GetEmbeddingInfo godoc @Summary Get embedding file info @Description
+    Get metadata about an embedding file @Tags embeddings @Security
+    ApiKeyAuth @Accept json @Produce json @Param workspace_slug path
+    string true "Workspace slug" @Param repository_slug path string true
+    "Repository slug" @Param embedding_path query string true "Path
+    to the embedding file" @Param ref query string false "Repository
+    reference (branch/tag/commit)" default("main") @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.EmbeddingFile}
+    "Embedding file info retrieved successfully" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - invalid parameters" @Failure
+    401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or
+    missing authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - insufficient permissions" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "Embedding file not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/info
+    [get]
+
 func (api *APIControllers) IndexMyInvites(c fiber.Ctx) error
     IndexMyInvites godoc @Summary List my invites @Description Get all invites
     sent to the current authenticated user's email address @Tags invites
@@ -417,6 +436,22 @@ func (api *APIControllers) LeaveWorkspace(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "Workspace not found" @Failure 500
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/leave [post]
+
+func (api *APIControllers) ListEmbeddings(c fiber.Ctx) error
+    ListEmbeddings godoc @Summary List embedding files @Description List
+    embedding files in a repository path @Tags embeddings @Security
+    ApiKeyAuth @Accept json @Produce json @Param workspace_slug path
+    string true "Workspace slug" @Param repository_slug path string true
+    "Repository slug" @Param prefix query string false "Optional prefix
+    to filter embedding files" @Param ref query string false "Repository
+    reference (branch/tag/commit)" default("main") @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=[]irminmodels.EmbeddingFile}
+    "Embedding files listed successfully" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - insufficient permissions" @Failure 500 {object}
+    irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings [get]
 
 func (api *APIControllers) LogsIndex(c fiber.Ctx) error
     LogsIndex godoc @Summary List audit logs @Description Get audit log events
@@ -1310,6 +1345,24 @@ func (api *APIControllers) ScriptsUpdate(c fiber.Ctx) error
     server error" @Router /workspaces/{workspace_slug}/scripts/{script_id}
     [patch]
 
+func (api *APIControllers) SearchEmbeddings(c fiber.Ctx) error
+    SearchEmbeddings godoc @Summary Search embeddings @Description Perform
+    vector similarity search on an embedding file @Tags embeddings @Security
+    ApiKeyAuth @Accept json @Produce json @Param workspace_slug path
+    string true "Workspace slug" @Param repository_slug path string true
+    "Repository slug" @Param body body irmincore.SearchEmbeddingsRequest
+    true "Search request" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.EmbeddingSearchResponse}
+    "Search completed successfully" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - invalid parameters" @Failure
+    401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or
+    missing authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - insufficient permissions" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "Embedding file not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/search
+    [post]
+
 func (api *APIControllers) SendInvite(c fiber.Ctx) error
     SendInvite godoc @Summary Send workspace invite @Description Send
     an invitation to join the workspace to the specified email address
@@ -1600,6 +1653,23 @@ func (api *APIControllers) ValidateConnectorConfiguration(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "Connector not found" @Failure 500
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /connectors/{connector_slug}/validate-config [post]
+
+func (api *APIControllers) VectorizeObjects(c fiber.Ctx) error
+    VectorizeObjects godoc @Summary Vectorize repository objects @Description
+    Create embeddings from one or more repository objects and store them at
+    the specified path @Tags embeddings @Security ApiKeyAuth @Accept json
+    @Produce json @Param workspace_slug path string true "Workspace slug"
+    @Param repository_slug path string true "Repository slug" @Param body body
+    irmincore.VectorizeObjectsRequest true "Vectorization request" @Success
+    200 {object} irminmodels.IrminAPIResponse{data=irminmodels.EmbeddingFile}
+    "Embeddings created successfully" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - invalid parameters" @Failure
+    401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or
+    missing authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - insufficient permissions" @Failure 500 {object}
+    irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/vectorize
+    [post]
 
 func (api *APIControllers) WorkflowRunsDestroy(c fiber.Ctx) error
     WorkflowRunsDestroy godoc @Summary Cancel workflow run @Description Cancel
