@@ -2706,6 +2706,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type EmbeddingFile](<#EmbeddingFile>)
 - [type EmbeddingSearchResponse](<#EmbeddingSearchResponse>)
 - [type EmbeddingSearchResult](<#EmbeddingSearchResult>)
+- [type EmbeddingsOperationType](<#EmbeddingsOperationType>)
 - [type FieldMapping](<#FieldMapping>)
 - [type FieldRename](<#FieldRename>)
 - [type FieldType](<#FieldType>)
@@ -3145,14 +3146,14 @@ EmbeddingFile represents metadata about an embedding file stored in a repository
 
 ```go
 type EmbeddingFile struct {
-    Path        string   `json:"path"                 validate:"required"            example:"embeddings/documents.parquet"` // Path to the embedding file in the repository
-    SourceFiles []string `json:"source_files"         validate:"required,min=1,dive" example:"data/documents/doc1.pdf"`      // List of source files that were vectorized
-    Model       string   `json:"model"                validate:"required,max=100"    example:"text-embedding-3-small"`       // OpenAI model used to generate embeddings
-    Dimensions  int      `json:"dimensions"           validate:"required,min=0"      example:"1536"`                         // Vector dimensions
-    ChunkCount  int      `json:"chunk_count"          validate:"required,min=0"      example:"42"`                           // Total number of embedding chunks
-    SizeBytes   int64    `json:"size_bytes"           validate:"required,min=0"      example:"524288"`                       // File size in bytes
-    CreatedAt   string   `json:"created_at,omitempty" validate:"omitempty"           example:"2025-12-01T14:22:30Z"`         // Creation timestamp
-    Ref         string   `json:"ref,omitempty"        validate:"omitempty,max=100"   example:"main"`                         // Repository reference (branch/tag/commit)
+    Path        string   `json:"path"                 validate:"required"             example:"embeddings/documents.parquet"` // Path to the embedding file in the repository
+    SourceFiles []string `json:"source_files"         validate:"omitempty,min=1,dive" example:"data/documents/doc1.pdf"`      // List of source files that were vectorized
+    Model       string   `json:"model"                validate:"omitempty,max=100"    example:"text-embedding-3-small"`       // OpenAI model used to generate embeddings
+    Dimensions  int      `json:"dimensions"           validate:"omitempty,min=0"      example:"1536"`                         // Vector dimensions
+    ChunkCount  int      `json:"chunk_count"          validate:"omitempty,min=0"      example:"42"`                           // Total number of embedding chunks
+    SizeBytes   int64    `json:"size_bytes"           validate:"required,min=0"       example:"524288"`                       // File size in bytes
+    CreatedAt   string   `json:"created_at,omitempty" validate:"omitempty"            example:"2025-12-01T14:22:30Z"`         // Creation timestamp
+    Ref         string   `json:"ref,omitempty"        validate:"omitempty,max=100"    example:"main"`                         // Repository reference (branch/tag/commit)
 }
 ```
 
@@ -3163,7 +3164,7 @@ EmbeddingSearchResponse represents the response from a vector similarity search.
 
 ```go
 type EmbeddingSearchResponse struct {
-    Results []EmbeddingSearchResult `json:"results" validate:"required,dive"    example:"[{...}]"`                   // List of search results
+    Results []EmbeddingSearchResult `json:"results" validate:"required,dive"`                                        // List of search results
     Query   string                  `json:"query"   validate:"required"         example:"What is machine learning?"` // The original query text
     Model   string                  `json:"model"   validate:"required,max=100" example:"text-embedding-3-small"`    // Model used for the query embedding
     TopK    int                     `json:"top_k"   validate:"required,min=1"   example:"10"`                        // Number of results requested
@@ -3185,6 +3186,24 @@ type EmbeddingSearchResult struct {
     Distance   float64           `json:"distance"    validate:"min=0"       example:"0.08"`                                  // Cosine distance (0-2, lower is better)
     Metadata   map[string]string `json:"metadata"    validate:"omitempty"`                                                   // Custom metadata associated with the chunk
 }
+```
+
+<a name="EmbeddingsOperationType"></a>
+## type EmbeddingsOperationType
+
+EmbeddingsOperationType represents the type of embeddings operation to perform.
+
+```go
+type EmbeddingsOperationType string
+```
+
+<a name="EmbeddingsOpVectorize"></a>
+
+```go
+const (
+    EmbeddingsOpVectorize EmbeddingsOperationType = "vectorize"
+    EmbeddingsOpSearch    EmbeddingsOperationType = "search"
+)
 ```
 
 <a name="FieldMapping"></a>
@@ -3573,11 +3592,11 @@ type PatchOperation struct {
 
 ```go
 type PipelineStage struct {
-    Description   string            `json:"description"    validate:"required,max=200"                                                                                                       example:"Process customer data"`
-    Write         bool              `json:"write"                                                                                                                                            example:"true"`
-    Read          bool              `json:"read"                                                                                                                                             example:"true"`
-    OrderSequence int               `json:"order_sequence"                                                                                                                                   example:"1"`
-    Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform,validpipelinestage" example:"repository"`
+    Description   string            `json:"description"    validate:"required,max=200"                                                                                                                  example:"Process customer data"`
+    Write         bool              `json:"write"                                                                                                                                                       example:"true"`
+    Read          bool              `json:"read"                                                                                                                                                        example:"true"`
+    OrderSequence int               `json:"order_sequence"                                                                                                                                              example:"1"`
+    Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform embeddings,validpipelinestage" example:"repository"`
 
     // Action stage specific
     ExecutableType ActionExecutableType `json:"executable_type,omitempty" validate:"omitempty,oneof=script query,required_if=Type action"          example:"script"`
@@ -3624,6 +3643,20 @@ type PipelineStage struct {
     TransformFieldsToRemove []string                `json:"transform_fields_to_remove,omitempty"                                                                                                                        example:"internal_id,temp_flag"`
     TransformOutputName     *string                 `json:"transform_output_name,omitempty"                                                                                                                             example:"customers_renamed.csv"`
     TransformOutputFormat   *OutputFormat           `json:"transform_output_format,omitempty"    validate:"omitempty,oneof=csv json parquet"                                                                            example:"json"`
+
+    // Embeddings stage specific
+    EmbeddingsOperation  *EmbeddingsOperationType `json:"embeddings_operation,omitempty"   validate:"omitempty,oneof=vectorize search,required_if=Type embeddings" example:"vectorize"`
+    EmbeddingsModel      *string                  `json:"embeddings_model,omitempty"       validate:"omitempty,max=100"                                            example:"text-embedding-3-small"`
+    EmbeddingsDimensions *int                     `json:"embeddings_dimensions,omitempty"  validate:"omitempty,min=0"                                              example:"1536"`
+    EmbeddingsChunkSize  *int                     `json:"embeddings_chunk_size,omitempty"  validate:"omitempty,min=0"                                              example:"1000"`
+    EmbeddingsOverlap    *int                     `json:"embeddings_overlap,omitempty"     validate:"omitempty,min=0"                                              example:"200"`
+    EmbeddingsOutputPath *string                  `json:"embeddings_output_path,omitempty" validate:"omitempty"                                                    example:"embeddings/documents.parquet"`
+    EmbeddingsRepository *string                  `json:"embeddings_repository,omitempty"  validate:"required_if=Type embeddings"                                  example:"customer-analytics"`
+    EmbeddingsBranch     *string                  `json:"embeddings_branch,omitempty"                                                                              example:"main"`
+    EmbeddingsPath       *string                  `json:"embeddings_path,omitempty"        validate:"omitempty"                                                    example:"embeddings/documents.parquet"`
+    EmbeddingsQuery      *string                  `json:"embeddings_query,omitempty"       validate:"omitempty"                                                    example:"What is machine learning?"`
+    EmbeddingsTopK       *int                     `json:"embeddings_top_k,omitempty"       validate:"omitempty,min=1"                                              example:"10"`
+    EmbeddingsFilter     map[string]string        `json:"embeddings_filter,omitempty"      validate:"omitempty"`
 }
 ```
 
@@ -3647,6 +3680,7 @@ const (
     PipelineStageTypeTriggerWorkflow  PipelineStageType = "trigger_workflow"
     PipelineStageTypeValidation       PipelineStageType = "validation"
     PipelineStageTypeTransform        PipelineStageType = "transform"
+    PipelineStageTypeEmbeddings       PipelineStageType = "embeddings"
 )
 ```
 

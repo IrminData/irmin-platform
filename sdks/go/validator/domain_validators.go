@@ -85,6 +85,8 @@ func (v *Validator) validatePipelineStage(fl validator.FieldLevel) bool {
 		return v.validateValidationPipelineStage(parentStruct)
 	case "transform":
 		return v.validateTransformPipelineStage(parentStruct)
+	case "embeddings":
+		return v.validateEmbeddingsPipelineStage(parentStruct)
 	default:
 		return true // Let oneof validation handle invalid types
 	}
@@ -538,6 +540,65 @@ func (v *Validator) validateResourceID(resourceIDField reflect.Value, resourceTy
 	// Check if the decoded value is a valid uint64
 	if decoded == 0 {
 		return false
+	}
+
+	return true
+}
+
+// validateEmbeddingsPipelineStage validates embeddings-type pipeline stages.
+//
+//nolint:gocognit // There is no need to refactor this code
+func (v *Validator) validateEmbeddingsPipelineStage(parentStruct reflect.Value) bool {
+	embeddingsOperationField := parentStruct.FieldByName("EmbeddingsOperation")
+	embeddingsRepositoryField := parentStruct.FieldByName("EmbeddingsRepository")
+	embeddingsOutputPathField := parentStruct.FieldByName("EmbeddingsOutputPath")
+	embeddingsPathField := parentStruct.FieldByName("EmbeddingsPath")
+	embeddingsQueryField := parentStruct.FieldByName("EmbeddingsQuery")
+
+	// EmbeddingsOperation is required
+	if !embeddingsOperationField.IsValid() || embeddingsOperationField.IsNil() {
+		return false
+	}
+
+	operation := embeddingsOperationField.Elem().String()
+	if operation != "vectorize" && operation != "search" {
+		return false
+	}
+
+	// EmbeddingsRepository is required for all operations
+	if !embeddingsRepositoryField.IsValid() || embeddingsRepositoryField.IsNil() ||
+		(embeddingsRepositoryField.Elem().IsValid() && embeddingsRepositoryField.Elem().String() == "") {
+		return false
+	}
+
+	// Validate operation-specific requirements
+	switch operation {
+	case "vectorize":
+		// vectorize requires EmbeddingsOutputPath
+		if !embeddingsOutputPathField.IsValid() || embeddingsOutputPathField.IsNil() {
+			return false
+		}
+		outputPath := embeddingsOutputPathField.Elem().String()
+		if outputPath == "" {
+			return false
+		}
+	case "search":
+		// search requires EmbeddingsPath
+		if !embeddingsPathField.IsValid() || embeddingsPathField.IsNil() {
+			return false
+		}
+		path := embeddingsPathField.Elem().String()
+		if path == "" {
+			return false
+		}
+		// search requires EmbeddingsQuery
+		if !embeddingsQueryField.IsValid() || embeddingsQueryField.IsNil() {
+			return false
+		}
+		query := embeddingsQueryField.Elem().String()
+		if query == "" {
+			return false
+		}
 	}
 
 	return true

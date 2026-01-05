@@ -39,6 +39,7 @@ const (
 	PipelineStageTypeTriggerWorkflow  PipelineStageType = "trigger_workflow"
 	PipelineStageTypeValidation       PipelineStageType = "validation"
 	PipelineStageTypeTransform        PipelineStageType = "transform"
+	PipelineStageTypeEmbeddings       PipelineStageType = "embeddings"
 )
 
 // TransformOperationType represents the type of transformation to apply.
@@ -67,6 +68,14 @@ type FieldRename struct {
 	NewName string `json:"new_name" validate:"required" example:"id"`
 }
 
+// EmbeddingsOperationType represents the type of embeddings operation to perform.
+type EmbeddingsOperationType string
+
+const (
+	EmbeddingsOpVectorize EmbeddingsOperationType = "vectorize"
+	EmbeddingsOpSearch    EmbeddingsOperationType = "search"
+)
+
 type RepositoryActionType string
 
 const (
@@ -77,11 +86,11 @@ const (
 )
 
 type PipelineStage struct {
-	Description   string            `json:"description"    validate:"required,max=200"                                                                                                       example:"Process customer data"`
-	Write         bool              `json:"write"                                                                                                                                            example:"true"`
-	Read          bool              `json:"read"                                                                                                                                             example:"true"`
-	OrderSequence int               `json:"order_sequence"                                                                                                                                   example:"1"`
-	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform,validpipelinestage" example:"repository"`
+	Description   string            `json:"description"    validate:"required,max=200"                                                                                                                  example:"Process customer data"`
+	Write         bool              `json:"write"                                                                                                                                                       example:"true"`
+	Read          bool              `json:"read"                                                                                                                                                        example:"true"`
+	OrderSequence int               `json:"order_sequence"                                                                                                                                              example:"1"`
+	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform embeddings,validpipelinestage" example:"repository"`
 
 	// Action stage specific
 	ExecutableType ActionExecutableType `json:"executable_type,omitempty" validate:"omitempty,oneof=script query,required_if=Type action"          example:"script"`
@@ -128,6 +137,20 @@ type PipelineStage struct {
 	TransformFieldsToRemove []string                `json:"transform_fields_to_remove,omitempty"                                                                                                                        example:"internal_id,temp_flag"`
 	TransformOutputName     *string                 `json:"transform_output_name,omitempty"                                                                                                                             example:"customers_renamed.csv"`
 	TransformOutputFormat   *OutputFormat           `json:"transform_output_format,omitempty"    validate:"omitempty,oneof=csv json parquet"                                                                            example:"json"`
+
+	// Embeddings stage specific
+	EmbeddingsOperation  *EmbeddingsOperationType `json:"embeddings_operation,omitempty"   validate:"omitempty,oneof=vectorize search,required_if=Type embeddings" example:"vectorize"`
+	EmbeddingsModel      *string                  `json:"embeddings_model,omitempty"       validate:"omitempty,max=100"                                            example:"text-embedding-3-small"`
+	EmbeddingsDimensions *int                     `json:"embeddings_dimensions,omitempty"  validate:"omitempty,min=0"                                              example:"1536"`
+	EmbeddingsChunkSize  *int                     `json:"embeddings_chunk_size,omitempty"  validate:"omitempty,min=0"                                              example:"1000"`
+	EmbeddingsOverlap    *int                     `json:"embeddings_overlap,omitempty"     validate:"omitempty,min=0"                                              example:"200"`
+	EmbeddingsOutputPath *string                  `json:"embeddings_output_path,omitempty" validate:"omitempty"                                                    example:"embeddings/documents.parquet"`
+	EmbeddingsRepository *string                  `json:"embeddings_repository,omitempty"  validate:"required_if=Type embeddings"                                  example:"customer-analytics"`
+	EmbeddingsBranch     *string                  `json:"embeddings_branch,omitempty"                                                                              example:"main"`
+	EmbeddingsPath       *string                  `json:"embeddings_path,omitempty"        validate:"omitempty"                                                    example:"embeddings/documents.parquet"`
+	EmbeddingsQuery      *string                  `json:"embeddings_query,omitempty"       validate:"omitempty"                                                    example:"What is machine learning?"`
+	EmbeddingsTopK       *int                     `json:"embeddings_top_k,omitempty"       validate:"omitempty,min=1"                                              example:"10"`
+	EmbeddingsFilter     map[string]string        `json:"embeddings_filter,omitempty"      validate:"omitempty"`
 }
 
 type ActionInputData struct {
