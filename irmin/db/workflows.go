@@ -98,6 +98,7 @@ const (
 	PipelineStageTypeTriggerWorkflow  PipelineStageType = "trigger_workflow"
 	PipelineStageTypeValidation       PipelineStageType = "validation"
 	PipelineStageTypeTransform        PipelineStageType = "transform"
+	PipelineStageTypeEmbeddings       PipelineStageType = "embeddings"
 )
 
 type PipelineStage struct {
@@ -168,6 +169,22 @@ type PipelineStage struct {
 	TransformFieldsToRemove []string                            `json:"transform_fields_to_remove,omitempty" gorm:"type:jsonb;serializer:json"`
 	TransformOutputName     *string                             `json:"transform_output_name,omitempty"`
 	TransformOutputFormat   *irminmodels.OutputFormat           `json:"transform_output_format,omitempty"`
+
+	// Embeddings stage specific
+
+	EmbeddingsOperation    *irminmodels.EmbeddingsOperationType `json:"embeddings_operation,omitempty"`
+	EmbeddingsModel        *string                              `json:"embeddings_model,omitempty"`
+	EmbeddingsDimensions   *int                                 `json:"embeddings_dimensions,omitempty"`
+	EmbeddingsChunkSize    *int                                 `json:"embeddings_chunk_size,omitempty"`
+	EmbeddingsOverlap      *int                                 `json:"embeddings_overlap,omitempty"`
+	EmbeddingsOutputPath   *string                              `json:"embeddings_output_path,omitempty"`
+	EmbeddingsRepository   *Repository                          `json:"embeddings_repository,omitempty"    gorm:"foreignKey:EmbeddingsRepositoryID"`
+	EmbeddingsRepositoryID *uint                                `json:"embeddings_repository_id,omitempty"`
+	EmbeddingsBranch       *string                              `json:"embeddings_branch,omitempty"`
+	EmbeddingsPath         *string                              `json:"embeddings_path,omitempty"`
+	EmbeddingsQuery        *string                              `json:"embeddings_query,omitempty"`
+	EmbeddingsTopK         *int                                 `json:"embeddings_top_k,omitempty"`
+	EmbeddingsFilter       map[string]string                    `json:"embeddings_filter,omitempty"        gorm:"type:jsonb;serializer:json"`
 }
 
 // GetWorkflowsByWorkspaceID retrieves all workflows for a workspace.
@@ -259,6 +276,7 @@ func (d *Database) GetPipelineWorkflowableByID(id uint) (*PipelineWorkflowable, 
 		Preload("Stages.Query").
 		Preload("Stages.RepositoryActionRepository").
 		Preload("Stages.TriggerWorkflow").
+		Preload("Stages.EmbeddingsRepository").
 		First(&pipeline, id)
 	return &pipeline, result.Error
 }

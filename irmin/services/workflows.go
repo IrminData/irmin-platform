@@ -1274,6 +1274,8 @@ func (api *APIServices) processStageByType(
 		return api.processValidationStage(newStage, stage)
 	case irminmodels.PipelineStageTypeTransform:
 		return api.processTransformStage(newStage, stage)
+	case irminmodels.PipelineStageTypeEmbeddings:
+		return api.processEmbeddingsStage(txDB, newStage, stage, workspace)
 	default:
 		return fmt.Errorf("invalid stage type: %s", stage.Type)
 	}
@@ -1721,6 +1723,69 @@ func (api *APIServices) processTransformStage(
 	newStage.TransformFieldsToRemove = stage.TransformFieldsToRemove
 	newStage.TransformOutputName = stage.TransformOutputName
 	newStage.TransformOutputFormat = stage.TransformOutputFormat
+
+	return nil
+}
+
+// processEmbeddingsStage processes an embeddings stage.
+func (api *APIServices) processEmbeddingsStage(
+	txDB *db.Database,
+	newStage *db.PipelineStage,
+	stage irminmodels.PipelineStage,
+	workspace *db.Workspace,
+) error {
+	newStage.Type = db.PipelineStageTypeEmbeddings
+
+	// Embeddings operation is required
+	if stage.EmbeddingsOperation == nil {
+		return errors.New("embeddings operation is required for embeddings stage")
+	}
+
+	// Validate operation type
+	operation := *stage.EmbeddingsOperation
+	if operation != irminmodels.EmbeddingsOpVectorize && operation != irminmodels.EmbeddingsOpSearch {
+		return fmt.Errorf("invalid embeddings operation: %s", operation)
+	}
+
+	newStage.EmbeddingsOperation = stage.EmbeddingsOperation
+
+	// Embeddings repository is required
+	if stage.EmbeddingsRepository == nil || *stage.EmbeddingsRepository == "" {
+		return errors.New("embeddings repository is required for embeddings stage")
+	}
+
+	// Get repository by slug
+	repository, err := txDB.GetRepositoryBySlugAndWorkspaceID(*stage.EmbeddingsRepository, workspace.ID)
+	if err != nil {
+		return fmt.Errorf("error getting repository: %w", err)
+	}
+
+	newStage.EmbeddingsRepositoryID = &repository.ID
+	newStage.EmbeddingsBranch = stage.EmbeddingsBranch
+	newStage.EmbeddingsModel = stage.EmbeddingsModel
+	newStage.EmbeddingsDimensions = stage.EmbeddingsDimensions
+	newStage.EmbeddingsChunkSize = stage.EmbeddingsChunkSize
+	newStage.EmbeddingsOverlap = stage.EmbeddingsOverlap
+	newStage.EmbeddingsTopK = stage.EmbeddingsTopK
+	newStage.EmbeddingsFilter = stage.EmbeddingsFilter
+
+	// Validate operation-specific requirements
+	switch operation {
+	case irminmodels.EmbeddingsOpVectorize:
+		if stage.EmbeddingsOutputPath == nil || *stage.EmbeddingsOutputPath == "" {
+			return errors.New("embeddings_output_path is required for vectorize operation")
+		}
+		newStage.EmbeddingsOutputPath = stage.EmbeddingsOutputPath
+	case irminmodels.EmbeddingsOpSearch:
+		if stage.EmbeddingsPath == nil || *stage.EmbeddingsPath == "" {
+			return errors.New("embeddings_path is required for search operation")
+		}
+		if stage.EmbeddingsQuery == nil || *stage.EmbeddingsQuery == "" {
+			return errors.New("embeddings_query is required for search operation")
+		}
+		newStage.EmbeddingsPath = stage.EmbeddingsPath
+		newStage.EmbeddingsQuery = stage.EmbeddingsQuery
+	}
 
 	return nil
 }

@@ -1316,6 +1316,14 @@ definitions:
     - id
     - source_file
     type: object
+  irminmodels.EmbeddingsOperationType:
+    enum:
+    - vectorize
+    - search
+    type: string
+    x-enum-varnames:
+    - EmbeddingsOpVectorize
+    - EmbeddingsOpSearch
   irminmodels.FieldMapping:
     properties:
       destination_field:
@@ -1837,6 +1845,53 @@ definitions:
         example: Process customer data
         maxLength: 200
         type: string
+      embeddings_branch:
+        example: main
+        type: string
+      embeddings_chunk_size:
+        example: 1000
+        minimum: 0
+        type: integer
+      embeddings_dimensions:
+        example: 1536
+        minimum: 0
+        type: integer
+      embeddings_filter:
+        additionalProperties:
+          type: string
+        type: object
+      embeddings_model:
+        example: text-embedding-3-small
+        maxLength: 100
+        type: string
+      embeddings_operation:
+        allOf:
+        - $ref: '#/definitions/irminmodels.EmbeddingsOperationType'
+        description: Embeddings stage specific
+        enum:
+        - vectorize
+        - search
+        example: vectorize
+      embeddings_output_path:
+        example: embeddings/documents.parquet
+        type: string
+      embeddings_overlap:
+        example: 200
+        minimum: 0
+        type: integer
+      embeddings_path:
+        example: embeddings/documents.parquet
+        type: string
+      embeddings_query:
+        example: What is machine learning?
+        type: string
+      embeddings_repository:
+        example: customer-analytics
+        type: string
+      embeddings_top_k:
+        example: 10
+        minimum: 1
+        type: integer
       executable_type:
         allOf:
         - $ref: '#/definitions/irminmodels.ActionExecutableType'
@@ -1967,6 +2022,7 @@ definitions:
         - trigger_workflow
         - validation
         - transform
+        - embeddings
         example: repository
       validation_mode:
         description: '"single" or "all"'
@@ -1993,6 +2049,7 @@ definitions:
     - trigger_workflow
     - validation
     - transform
+    - embeddings
     type: string
     x-enum-varnames:
     - PipelineStageTypeAction
@@ -2002,6 +2059,7 @@ definitions:
     - PipelineStageTypeTriggerWorkflow
     - PipelineStageTypeValidation
     - PipelineStageTypeTransform
+    - PipelineStageTypeEmbeddings
   irminmodels.Policy:
     properties:
       action:

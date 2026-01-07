@@ -12617,6 +12617,17 @@ const docTemplate = `{
                 }
             }
         },
+        "irminmodels.EmbeddingsOperationType": {
+            "type": "string",
+            "enum": [
+                "vectorize",
+                "search"
+            ],
+            "x-enum-varnames": [
+                "EmbeddingsOpVectorize",
+                "EmbeddingsOpSearch"
+            ]
+        },
         "irminmodels.FieldMapping": {
             "type": "object",
             "required": [
@@ -13335,6 +13346,70 @@ const docTemplate = `{
                     "maxLength": 200,
                     "example": "Process customer data"
                 },
+                "embeddings_branch": {
+                    "type": "string",
+                    "example": "main"
+                },
+                "embeddings_chunk_size": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "example": 1000
+                },
+                "embeddings_dimensions": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "example": 1536
+                },
+                "embeddings_filter": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "embeddings_model": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "example": "text-embedding-3-small"
+                },
+                "embeddings_operation": {
+                    "description": "Embeddings stage specific",
+                    "enum": [
+                        "vectorize",
+                        "search"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.EmbeddingsOperationType"
+                        }
+                    ],
+                    "example": "vectorize"
+                },
+                "embeddings_output_path": {
+                    "type": "string",
+                    "example": "embeddings/documents.parquet"
+                },
+                "embeddings_overlap": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "example": 200
+                },
+                "embeddings_path": {
+                    "type": "string",
+                    "example": "embeddings/documents.parquet"
+                },
+                "embeddings_query": {
+                    "type": "string",
+                    "example": "What is machine learning?"
+                },
+                "embeddings_repository": {
+                    "type": "string",
+                    "example": "customer-analytics"
+                },
+                "embeddings_top_k": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 10
+                },
                 "executable_type": {
                     "description": "Action stage specific",
                     "enum": [
@@ -13511,7 +13586,8 @@ const docTemplate = `{
                         "repository_action",
                         "trigger_workflow",
                         "validation",
-                        "transform"
+                        "transform",
+                        "embeddings"
                     ],
                     "allOf": [
                         {
@@ -13550,7 +13626,8 @@ const docTemplate = `{
                 "repository_action",
                 "trigger_workflow",
                 "validation",
-                "transform"
+                "transform",
+                "embeddings"
             ],
             "x-enum-varnames": [
                 "PipelineStageTypeAction",
@@ -13559,7 +13636,8 @@ const docTemplate = `{
                 "PipelineStageTypeRepositoryAction",
                 "PipelineStageTypeTriggerWorkflow",
                 "PipelineStageTypeValidation",
-                "PipelineStageTypeTransform"
+                "PipelineStageTypeTransform",
+                "PipelineStageTypeEmbeddings"
             ]
         },
         "irminmodels.Policy": {

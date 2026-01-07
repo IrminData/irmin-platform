@@ -154,7 +154,7 @@ func formatActionWorkflowable(
 
 // formatPipelineStage formats a single pipeline stage.
 //
-//nolint:gocognit // This is fine
+//nolint:gocognit,funlen // This is fine
 func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDManager) irminmodels.PipelineStage {
 	switch stage.Type {
 	case db.PipelineStageTypeAction:
@@ -183,6 +183,7 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			Description:    stage.Description,
 			Write:          stage.Write,
 			Read:           stage.Read,
+			OrderSequence:  stage.OrderSequence,
 			Type:           irminmodels.PipelineStageTypeAction,
 			ExecutableType: stage.ExecutableType,
 			ScriptID:       scriptSqid,
@@ -199,6 +200,7 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			Description:         stage.Description,
 			Write:               stage.Write,
 			Read:                stage.Read,
+			OrderSequence:       stage.OrderSequence,
 			Type:                irminmodels.PipelineStageTypeConnection,
 			ConnectionWritePath: stage.ConnectionWritePath,
 			ConnectionReadPaths: &readPaths,
@@ -215,6 +217,7 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			Description:         stage.Description,
 			Write:               stage.Write,
 			Read:                stage.Read,
+			OrderSequence:       stage.OrderSequence,
 			Type:                irminmodels.PipelineStageTypeRepository,
 			RepositoryBranch:    stage.RepositoryBranch,
 			RepositoryWritePath: stage.RepositoryWritePath,
@@ -231,6 +234,7 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			Description:                   stage.Description,
 			Write:                         stage.Write,
 			Read:                          stage.Read,
+			OrderSequence:                 stage.OrderSequence,
 			Type:                          irminmodels.PipelineStageTypeRepositoryAction,
 			RepositoryActionType:          stage.RepositoryActionType,
 			RepositoryActionRepository:    repositorySlug,
@@ -256,6 +260,7 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			Description:       stage.Description,
 			Write:             stage.Write,
 			Read:              stage.Read,
+			OrderSequence:     stage.OrderSequence,
 			Type:              irminmodels.PipelineStageTypeTriggerWorkflow,
 			TriggerWorkflowID: workflowSqid,
 		}
@@ -264,6 +269,7 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			Description:          stage.Description,
 			Write:                stage.Write,
 			Read:                 stage.Read,
+			OrderSequence:        stage.OrderSequence,
 			Type:                 irminmodels.PipelineStageTypeValidation,
 			ValidationSchema:     stage.ValidationSchema,
 			ValidationMode:       stage.ValidationMode,
@@ -275,6 +281,7 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			Description:             stage.Description,
 			Write:                   stage.Write,
 			Read:                    stage.Read,
+			OrderSequence:           stage.OrderSequence,
 			Type:                    irminmodels.PipelineStageTypeTransform,
 			TransformOperation:      stage.TransformOperation,
 			TransformMode:           stage.TransformMode,
@@ -283,6 +290,31 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			TransformFieldsToRemove: stage.TransformFieldsToRemove,
 			TransformOutputName:     stage.TransformOutputName,
 			TransformOutputFormat:   stage.TransformOutputFormat,
+		}
+	case db.PipelineStageTypeEmbeddings:
+		var embeddingsRepositorySlug *string
+		if stage.EmbeddingsRepository != nil {
+			embeddingsRepositorySlug = &stage.EmbeddingsRepository.Slug
+		}
+
+		return irminmodels.PipelineStage{
+			Description:          stage.Description,
+			Write:                stage.Write,
+			Read:                 stage.Read,
+			OrderSequence:        stage.OrderSequence,
+			Type:                 irminmodels.PipelineStageTypeEmbeddings,
+			EmbeddingsOperation:  stage.EmbeddingsOperation,
+			EmbeddingsModel:      stage.EmbeddingsModel,
+			EmbeddingsDimensions: stage.EmbeddingsDimensions,
+			EmbeddingsChunkSize:  stage.EmbeddingsChunkSize,
+			EmbeddingsOverlap:    stage.EmbeddingsOverlap,
+			EmbeddingsOutputPath: stage.EmbeddingsOutputPath,
+			EmbeddingsRepository: embeddingsRepositorySlug,
+			EmbeddingsBranch:     stage.EmbeddingsBranch,
+			EmbeddingsPath:       stage.EmbeddingsPath,
+			EmbeddingsQuery:      stage.EmbeddingsQuery,
+			EmbeddingsTopK:       stage.EmbeddingsTopK,
+			EmbeddingsFilter:     stage.EmbeddingsFilter,
 		}
 	default:
 		return irminmodels.PipelineStage{}

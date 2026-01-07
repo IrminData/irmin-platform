@@ -8,8 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/db"
+	"irmin-api/embeddings"
 	"irmin-api/engine"
 	"irmin-api/lib"
+	"irmin-api/utils"
 	"maps"
 	"slices"
 	"sort"
@@ -115,6 +117,13 @@ func (o *Orchestrator) executePipelineWorkflowable(
 		case db.PipelineStageTypeTransform:
 			stageLogs, errResult = o.handleTransformStage(
 				ctx,
+				&stage,
+				previousStageResults,
+			)
+		case db.PipelineStageTypeEmbeddings:
+			stageLogs, errResult = o.handleEmbeddingsStage(
+				ctx,
+				workflow,
 				&stage,
 				previousStageResults,
 			)
@@ -1465,4 +1474,398 @@ func (o *Orchestrator) logTransformDetails(logs *[]string, stage *db.PipelineSta
 	case irminmodels.TransformOpFormatConvert:
 		*logs = append(*logs, fmt.Sprintf("  Output format: %s", config.OutputFormat))
 	}
+}
+
+// handleEmbeddingsStage handles the execution of an embeddings stage.
+func (o *Orchestrator) handleEmbeddingsStage(
+	ctx context.Context,
+	workflow *db.Workflow,
+	stage *db.PipelineStage,
+	previousStageResults map[string][]byte,
+) ([]string, error) {
+	var logs []string
+
+	// Check for context cancellation
+	if ctx.Err() != nil {
+		return logs, fmt.Errorf("workflow execution cancelled before embeddings stage: %w", ctx.Err())
+	}
+
+	// Validate required fields
+	if stage.EmbeddingsOperation == nil {
+		logs = append(logs, "Embeddings operation is not set")
+		return logs, errors.New("embeddings operation is not set")
+	}
+
+	if stage.EmbeddingsRepository == nil {
+		logs = append(logs, "Embeddings repository is not set")
+		return logs, errors.New("embeddings repository is not set")
+	}
+
+	logs = append(logs, fmt.Sprintf("Starting embeddings stage (operation: %s)", *stage.EmbeddingsOperation))
+
+	// Route to appropriate handler based on operation type
+	switch *stage.EmbeddingsOperation {
+	case irminmodels.EmbeddingsOpVectorize:
+		return o.handleEmbeddingsVectorize(ctx, workflow, stage, previousStageResults, logs)
+	case irminmodels.EmbeddingsOpSearch:
+		return o.handleEmbeddingsSearch(ctx, workflow, stage, previousStageResults, logs)
+	default:
+		logs = append(logs, fmt.Sprintf("Unknown embeddings operation: %s", *stage.EmbeddingsOperation))
+		return logs, fmt.Errorf("unknown embeddings operation: %s", *stage.EmbeddingsOperation)
+	}
+}
+
+// handleEmbeddingsVectorize creates embeddings from previous stage files.
+//
+//nolint:funlen // Complex but well-structured function for embeddings vectorize workflow
+func (o *Orchestrator) handleEmbeddingsVectorize(
+	ctx context.Context,
+	workflow *db.Workflow,
+	stage *db.PipelineStage,
+	previousStageResults map[string][]byte,
+	logs []string,
+) ([]string, error) {
+	// Validate vectorize-specific fields
+	if stage.EmbeddingsOutputPath == nil || *stage.EmbeddingsOutputPath == "" {
+		logs = append(logs, "Embeddings output path is required for vectorize operation")
+		return logs, errors.New("embeddings output path is required for vectorize operation")
+	}
+
+	if len(previousStageResults) == 0 {
+		logs = append(logs, "No files from previous stage to vectorize")
+		return logs, errors.New("no files from previous stage to vectorize")
+	}
+
+	// Determine branch
+	var branch string
+	switch {
+	case stage.EmbeddingsBranch != nil && *stage.EmbeddingsBranch != "":
+		branch = *stage.EmbeddingsBranch
+	case stage.EmbeddingsRepository.DefaultBranch != "":
+		branch = stage.EmbeddingsRepository.DefaultBranch
+		logs = append(logs, fmt.Sprintf("Using default branch '%s' for embeddings", branch))
+	default:
+		logs = append(logs, "No branch specified and repository has no default branch")
+		return logs, errors.New("no branch specified and repository has no default branch")
+	}
+
+	logs = append(logs, fmt.Sprintf("Vectorizing %d file(s) to %s@%s/%s",
+		len(previousStageResults),
+		stage.EmbeddingsRepository.Slug,
+		branch,
+		*stage.EmbeddingsOutputPath,
+	))
+
+	// Initialize embeddings client
+	embeddingsClient, err := o.createEmbeddingsClient(ctx)
+	if err != nil {
+		logs = append(logs, fmt.Sprintf("Error creating embeddings client: %v", err))
+		return logs, err
+	}
+	defer embeddingsClient.Close()
+
+	// Build embedding config
+	config := o.buildEmbeddingConfig(stage)
+	logs = append(logs, fmt.Sprintf("Using model: %s, dimensions: %d, chunk_size: %d, overlap: %d",
+		config.Model, config.Dimensions, config.ChunkSize, config.Overlap))
+
+	// Process all files and collect embeddings
+	var allRecords []embeddings.EmbeddingRecord
+	for fileName, fileContent := range previousStageResults {
+		// Check for context cancellation during each file
+		if ctx.Err() != nil {
+			logs = append(logs, fmt.Sprintf("Workflow execution cancelled during vectorization: %v", ctx.Err()))
+			return logs, ctx.Err()
+		}
+
+		logs = append(logs, fmt.Sprintf("Creating embeddings from file: %s", fileName))
+
+		result, embedErr := embeddingsClient.CreateEmbeddingsFromFile(ctx, fileContent, fileName, config)
+		if embedErr != nil {
+			logs = append(logs, fmt.Sprintf("Error creating embeddings from file %s: %v", fileName, embedErr))
+			return logs, fmt.Errorf("error creating embeddings from file %s: %w", fileName, embedErr)
+		}
+
+		logs = append(logs, fmt.Sprintf("Created %d embedding chunks from %s", result.TotalChunks, fileName))
+		allRecords = append(allRecords, result.Records...)
+	}
+
+	logs = append(logs, fmt.Sprintf("Total embeddings created: %d chunks", len(allRecords)))
+
+	// Save embeddings to Parquet bytes
+	parquetData, err := embeddingsClient.SaveEmbeddingsToParquetBytes(ctx, allRecords)
+	if err != nil {
+		logs = append(logs, fmt.Sprintf("Error saving embeddings to parquet: %v", err))
+		return logs, fmt.Errorf("error saving embeddings to parquet: %w", err)
+	}
+
+	// Get source file names
+	sourceFiles := make([]string, 0, len(previousStageResults))
+	for fileName := range previousStageResults {
+		sourceFiles = append(sourceFiles, fileName)
+	}
+
+	// Upload to LakeFS
+	uploadConfig := embeddings.UploadConfig{
+		RepositoryID: utils.ConstructLakeFSRepositoryName(workflow.Workspace.Slug, stage.EmbeddingsRepository.Slug),
+		Branch:       branch,
+		Path:         *stage.EmbeddingsOutputPath,
+		SourceFiles:  sourceFiles,
+		Model:        config.Model,
+		Dimensions:   config.Dimensions,
+		ChunkCount:   len(allRecords),
+	}
+
+	// Create embeddings client with LakeFS
+	embeddingsWithLakeFS, err := o.createEmbeddingsClientWithLakeFS(ctx)
+	if err != nil {
+		logs = append(logs, fmt.Sprintf("Error creating embeddings client with LakeFS: %v", err))
+		return logs, fmt.Errorf("error creating embeddings client with LakeFS: %w", err)
+	}
+	defer embeddingsWithLakeFS.Close()
+
+	metadata, err := embeddingsWithLakeFS.UploadToLakeFS(ctx, uploadConfig, parquetData)
+	if err != nil {
+		logs = append(logs, fmt.Sprintf("Error uploading embeddings to LakeFS: %v", err))
+		return logs, fmt.Errorf("error uploading embeddings to LakeFS: %w", err)
+	}
+
+	logs = append(logs, fmt.Sprintf("Successfully uploaded embeddings file (%d bytes) to %s",
+		metadata.SizeBytes, *stage.EmbeddingsOutputPath))
+
+	// Get the object from LakeFS after upload to save it to the database
+	// This ensures it shows up in the repository object list even without committing
+	irminObject, err := o.dataEngine.GetPath(
+		workflow.Workspace.Slug,
+		stage.EmbeddingsRepository.Slug,
+		*stage.EmbeddingsOutputPath,
+		branch,
+	)
+	if err != nil {
+		logs = append(logs, fmt.Sprintf("Warning: Error getting uploaded object from data engine: %v", err))
+		// Don't fail the stage if we can't get the object, it's already uploaded
+	} else {
+		// Save the object to the database in a goroutine to update the cache
+		go func() {
+			_, saveObjectErr := lib.SaveObject(
+				o.db,
+				o.logger,
+				o.env,
+				irminObject,
+				branch,
+				*stage.EmbeddingsRepositoryID,
+			)
+			if saveObjectErr != nil {
+				o.logger.ErrorContext(ctx, "Error saving embeddings object to database", "error", saveObjectErr)
+			}
+		}()
+		logs = append(logs, fmt.Sprintf("Saving embeddings object ('%s') to repository cache in background.", irminObject.Name))
+	}
+
+	return logs, nil
+}
+
+// handleEmbeddingsSearch searches an embedding file with a static query.
+//
+//nolint:gocognit,funlen // Complex but well-structured function for embeddings search workflow
+func (o *Orchestrator) handleEmbeddingsSearch(
+	ctx context.Context,
+	workflow *db.Workflow,
+	stage *db.PipelineStage,
+	previousStageResults map[string][]byte,
+	logs []string,
+) ([]string, error) {
+	// Validate search-specific fields
+	if stage.EmbeddingsPath == nil || *stage.EmbeddingsPath == "" {
+		logs = append(logs, "Embeddings path is required for search operation")
+		return logs, errors.New("embeddings path is required for search operation")
+	}
+
+	if stage.EmbeddingsQuery == nil || *stage.EmbeddingsQuery == "" {
+		logs = append(logs, "Embeddings query is required for search operation")
+		return logs, errors.New("embeddings query is required for search operation")
+	}
+
+	// Determine branch
+	var branch string
+	switch {
+	case stage.EmbeddingsBranch != nil && *stage.EmbeddingsBranch != "":
+		branch = *stage.EmbeddingsBranch
+	case stage.EmbeddingsRepository.DefaultBranch != "":
+		branch = stage.EmbeddingsRepository.DefaultBranch
+		logs = append(logs, fmt.Sprintf("Using default branch '%s' for embeddings", branch))
+	default:
+		logs = append(logs, "No branch specified and repository has no default branch")
+		return logs, errors.New("no branch specified and repository has no default branch")
+	}
+
+	// Determine top_k
+	topK := 10
+	if stage.EmbeddingsTopK != nil && *stage.EmbeddingsTopK > 0 {
+		topK = *stage.EmbeddingsTopK
+	}
+
+	logs = append(logs, fmt.Sprintf("Searching embeddings in %s@%s/%s with query: '%s' (top_k: %d)",
+		stage.EmbeddingsRepository.Slug,
+		branch,
+		*stage.EmbeddingsPath,
+		*stage.EmbeddingsQuery,
+		topK,
+	))
+
+	// Initialize embeddings client with LakeFS
+	embeddingsClient, err := o.createEmbeddingsClientWithLakeFS(ctx)
+	if err != nil {
+		logs = append(logs, fmt.Sprintf("Error creating embeddings client: %v", err))
+		return logs, err
+	}
+	defer embeddingsClient.Close()
+
+	// Download embedding file
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(
+		workflow.Workspace.Slug,
+		stage.EmbeddingsRepository.Slug,
+	)
+	parquetData, err := embeddingsClient.DownloadFromLakeFS(ctx, lakeFSRepositoryName, branch, *stage.EmbeddingsPath)
+	if err != nil {
+		logs = append(logs, fmt.Sprintf("Error downloading embedding file: %v", err))
+		return logs, fmt.Errorf("error downloading embedding file: %w", err)
+	}
+
+	// Get metadata to determine model and dimensions
+	objectMetadata, err := o.dataEngine.LakeFSClient.GetObjectMetadata(
+		lakeFSRepositoryName,
+		branch,
+		*stage.EmbeddingsPath,
+		true,
+		false,
+	)
+	if err != nil {
+		o.logger.WarnContext(ctx, "Error getting object metadata", "error", err)
+	}
+
+	// Extract model and dimensions from metadata
+	model := embeddings.DefaultModel
+	dimensions := embeddings.DefaultDimensions
+	if stage.EmbeddingsModel != nil && *stage.EmbeddingsModel != "" {
+		model = *stage.EmbeddingsModel
+	}
+	if stage.EmbeddingsDimensions != nil && *stage.EmbeddingsDimensions > 0 {
+		dimensions = *stage.EmbeddingsDimensions
+	}
+
+	// Override with metadata if available
+	if objectMetadata != nil && objectMetadata.Metadata != nil {
+		extractedModel, extractedDimensions, _ := embeddings.GetEmbeddingMetadata(objectMetadata.Metadata)
+		if extractedModel != "" {
+			model = extractedModel
+		}
+		if extractedDimensions > 0 {
+			dimensions = extractedDimensions
+		}
+	}
+
+	logs = append(logs, fmt.Sprintf("Using model: %s, dimensions: %d", model, dimensions))
+
+	// Create embedding config for query
+	config := embeddings.EmbeddingConfig{
+		Model:      model,
+		Dimensions: dimensions,
+	}
+
+	// Create query embedding
+	queryVector, err := embeddingsClient.CreateEmbeddingForQuery(ctx, *stage.EmbeddingsQuery, config)
+	if err != nil {
+		logs = append(logs, fmt.Sprintf("Error creating query embedding: %v", err))
+		return logs, fmt.Errorf("error creating query embedding: %w", err)
+	}
+
+	// Perform search
+	var results []embeddings.SearchResult
+	if len(stage.EmbeddingsFilter) > 0 {
+		logs = append(logs, fmt.Sprintf("Applying filter: %v", stage.EmbeddingsFilter))
+		results, err = embeddingsClient.SearchWithFilterFromBytes(
+			ctx,
+			queryVector,
+			parquetData,
+			topK,
+			stage.EmbeddingsFilter,
+		)
+		if err != nil {
+			logs = append(logs, fmt.Sprintf("Error searching embeddings with filter: %v", err))
+			return logs, fmt.Errorf("error searching embeddings with filter: %w", err)
+		}
+	} else {
+		results, err = embeddingsClient.SearchSimilarFromBytes(ctx, queryVector, parquetData, topK)
+		if err != nil {
+			logs = append(logs, fmt.Sprintf("Error searching embeddings: %v", err))
+			return logs, fmt.Errorf("error searching embeddings: %w", err)
+		}
+	}
+
+	logs = append(logs, fmt.Sprintf("Found %d results", len(results)))
+
+	// Convert results to JSON format matching EmbeddingSearchResponse
+	searchResults := make([]irminmodels.EmbeddingSearchResult, len(results))
+	for i, result := range results {
+		searchResults[i] = irminmodels.EmbeddingSearchResult{
+			ID:         result.ID,
+			Content:    result.Content,
+			SourceFile: result.SourceFile,
+			ChunkIndex: result.ChunkIndex,
+			Score:      result.Score,
+			Distance:   result.Distance,
+			Metadata:   result.Metadata,
+		}
+	}
+
+	response := irminmodels.EmbeddingSearchResponse{
+		Results: searchResults,
+		Query:   *stage.EmbeddingsQuery,
+		Model:   model,
+		TopK:    topK,
+	}
+
+	// Convert to JSON
+	jsonData, err := json.Marshal(response)
+	if err != nil {
+		logs = append(logs, fmt.Sprintf("Error converting results to JSON: %v", err))
+		return logs, fmt.Errorf("error converting results to JSON: %w", err)
+	}
+
+	// Store in previousStageResults
+	previousStageResults["search_results.json"] = jsonData
+	logs = append(logs, "Search results stored as search_results.json")
+
+	return logs, nil
+}
+
+// createEmbeddingsClient creates an embeddings client without LakeFS.
+func (o *Orchestrator) createEmbeddingsClient(ctx context.Context) (*embeddings.Client, error) {
+	return embeddings.NewClient(ctx, o.env, o.logger, nil)
+}
+
+// createEmbeddingsClientWithLakeFS creates an embeddings client with LakeFS access.
+func (o *Orchestrator) createEmbeddingsClientWithLakeFS(ctx context.Context) (*embeddings.Client, error) {
+	return embeddings.NewClient(ctx, o.env, o.logger, o.dataEngine.LakeFSClient)
+}
+
+// buildEmbeddingConfig builds an embeddings config from the pipeline stage.
+func (o *Orchestrator) buildEmbeddingConfig(stage *db.PipelineStage) embeddings.EmbeddingConfig {
+	config := embeddings.DefaultConfig()
+
+	if stage.EmbeddingsModel != nil && *stage.EmbeddingsModel != "" {
+		config.Model = *stage.EmbeddingsModel
+	}
+	if stage.EmbeddingsDimensions != nil && *stage.EmbeddingsDimensions > 0 {
+		config.Dimensions = *stage.EmbeddingsDimensions
+	}
+	if stage.EmbeddingsChunkSize != nil && *stage.EmbeddingsChunkSize > 0 {
+		config.ChunkSize = *stage.EmbeddingsChunkSize
+	}
+	if stage.EmbeddingsOverlap != nil {
+		config.Overlap = *stage.EmbeddingsOverlap
+	}
+
+	return config
 }
