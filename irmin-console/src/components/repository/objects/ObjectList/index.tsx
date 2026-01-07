@@ -11,8 +11,10 @@ import {
   TbFile,
   TbFolder,
   TbTable,
+  TbVectorTriangle,
 } from 'react-icons/tb';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { QueryError } from '@/components/ui/error/QueryError';
 import {
@@ -52,6 +54,17 @@ const flattenObjects = (obj: RepositoryObject): RepositoryObject[] => {
   const flattenedChildren = children.flatMap(flattenObjects);
   return [obj, ...flattenedChildren];
 };
+
+/**
+ * Checks if a repository object is an embedding file.
+ * Embedding files are .parquet files with the 'irmin-file-type' metadata set to 'embeddings'.
+ *
+ * @param obj - The repository object to check
+ * @returns Whether the object is an embedding file
+ */
+const isEmbeddingFile = (obj: RepositoryObject): boolean =>
+  obj.path.endsWith('.parquet') &&
+  obj.metadata?.['irmin-file-type'] === 'embeddings';
 
 /**
  * Table of objects in the repository
@@ -154,8 +167,20 @@ export default function ObjectList({
     []
   );
 
-  const getIcon = useCallback((type: RepositoryObject['type']) => {
-    switch (type) {
+  const getIcon = useCallback((obj: RepositoryObject) => {
+    // Check for embedding files first
+    if (isEmbeddingFile(obj)) {
+      return (
+        <TbVectorTriangle
+          className={`
+            size-5 text-purple-500
+            dark:text-purple-400
+          `}
+        />
+      );
+    }
+
+    switch (obj.type) {
       case 'group':
         return (
           <TbFolder
@@ -244,7 +269,7 @@ export default function ObjectList({
                     <TableCell>
                       <div className='flex flex-col gap-1'>
                         <div className='flex items-center space-x-2'>
-                          {getIcon(obj.type)}
+                          {getIcon(obj)}
                           <Button
                             variant='link'
                             onClick={() => {
@@ -257,6 +282,18 @@ export default function ObjectList({
                           >
                             {obj.name}
                           </Button>
+                          {/* Display Vectors badge for embedding files */}
+                          {isEmbeddingFile(obj) && (
+                            <Badge
+                              variant='secondary'
+                              className={`
+                                bg-purple-100 text-purple-700
+                                dark:bg-purple-900/30 dark:text-purple-300
+                              `}
+                            >
+                              {dict.repository.objects.vectors ?? 'Vectors'}
+                            </Badge>
+                          )}
                           {/* Display tags if they exist */}
                           {obj.tags && obj.tags.length > 0 && (
                             <WorkspaceTagDisplay

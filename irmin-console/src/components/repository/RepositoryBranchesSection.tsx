@@ -67,12 +67,24 @@ function RepositoryBranchesSectionContent() {
    */
   const showCreateBranchModal = useCallback(() => {
     if (!repositoryBranchesQuery.data?.data) return;
+
+    // Get the list of branch names
+    const branchNames = repositoryBranchesQuery.data.data.map(
+      (branch) => branch.name
+    );
+
+    // Determine the default branch to create from
+    // If currentRef is a branch, use it; otherwise use the repository's default branch
+    const defaultFromBranch =
+      currentRef && branchNames.includes(currentRef)
+        ? currentRef
+        : repository.default_branch;
+
     irminModal.show(
       dict.repository.branches.createBranch,
       <CreateBranchModalContent
-        branches={
-          repositoryBranchesQuery.data.data.map((branch) => branch.name) ?? []
-        }
+        defaultFromBranch={defaultFromBranch}
+        branches={branchNames}
         createBranch={async (branchName: string, fromBranch: string) => {
           await createBranchMutation.mutateAsync({
             name: branchName,
@@ -82,7 +94,14 @@ function RepositoryBranchesSectionContent() {
         }}
       />
     );
-  }, [repositoryBranchesQuery.data, irminModal, dict, createBranchMutation]);
+  }, [
+    repositoryBranchesQuery.data,
+    irminModal,
+    dict,
+    createBranchMutation,
+    currentRef,
+    repository.default_branch,
+  ]);
 
   /**
    * Confirm the deletion of a branch and delete it.

@@ -26,13 +26,16 @@ interface FormValues {
  * Modal content to create a new branch.
  *
  * @param props - The props
+ * @param props.defaultFromBranch - The default branch to create the new branch from
  * @param props.branches - The list of existing branches to create the new branch from
  * @param props.createBranch - Callback to create a new branch
  */
 export default function CreateBranchModalContent({
+  defaultFromBranch,
   branches,
   createBranch,
 }: {
+  defaultFromBranch: string;
   branches: string[];
   createBranch: (branchName: string, fromBranch: string) => Promise<void>;
 }) {
@@ -45,7 +48,7 @@ export default function CreateBranchModalContent({
   } = useForm<FormValues>({
     defaultValues: {
       branchName: '',
-      fromBranch: 'main',
+      fromBranch: defaultFromBranch,
     },
   });
 

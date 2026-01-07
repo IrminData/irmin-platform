@@ -58,7 +58,7 @@ export default function RepositoryObjectSection({
   const { currentRef, repository } = useRepositoryContext();
   const { isResourceAllowed } = useResourceAllowed();
 
-  const effectiveRef = refProp ?? currentRef ?? 'main';
+  const effectiveRef = refProp ?? currentRef ?? repository.default_branch;
 
   const { executeSql, loading: queryLoading, result: queryResult } = useQuery();
   const [queryResultsOpen, setQueryResultsOpen] = useState(false);

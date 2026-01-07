@@ -233,6 +233,7 @@ export type PipelineStage = {
   | PipelineStageTriggerWorkflow
   | PipelineStageValidation
   | PipelineStageTransform
+  | PipelineStageEmbeddings
 );
 
 /**
@@ -346,4 +347,40 @@ interface PipelineStageTransform {
   transform_output_name?: string;
   /** Output format (for format_convert operation) */
   transform_output_format?: OutputFormat;
+}
+
+/**
+ * Embeddings operation types
+ */
+type EmbeddingsOperationType = 'vectorize' | 'search';
+
+/**
+ * Pipeline Stage that performs embeddings operations (vectorize or search)
+ */
+interface PipelineStageEmbeddings {
+  type: 'embeddings';
+  /** Type of embeddings operation to perform */
+  embeddings_operation: EmbeddingsOperationType;
+  /** Slug of the repository for embeddings */
+  embeddings_repository: string;
+  /** Branch in the repository */
+  embeddings_branch?: string;
+  /** OpenAI embedding model */
+  embeddings_model?: string;
+  /** Embedding dimensions */
+  embeddings_dimensions?: number;
+  /** Text chunk size for splitting documents */
+  embeddings_chunk_size?: number;
+  /** Overlap between consecutive chunks */
+  embeddings_overlap?: number;
+  /** Output path for the embedding file (for vectorize) */
+  embeddings_output_path?: string;
+  /** Path to the embedding file (for search) */
+  embeddings_path?: string;
+  /** Search query text (for search) */
+  embeddings_query?: string;
+  /** Number of results to return (for search) */
+  embeddings_top_k?: number;
+  /** Optional metadata filters (for search) */
+  embeddings_filter?: Record<string, string>;
 }

@@ -1,6 +1,13 @@
 'use client';
 
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ComponentProps,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { IoInformationCircle } from 'react-icons/io5';
 import {
@@ -55,6 +62,38 @@ const defaultStage: PipelineStage = {
   order_sequence: 0,
 };
 
+const DebouncedInput = ({
+  value,
+  onChange,
+  ...props
+}: Omit<ComponentProps<typeof Input>, 'onChange' | 'value'> & {
+  value: string;
+  onChange: (_value: string) => void;
+}) => {
+  const [localValue, setLocalValue] = useState(value);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localValue !== value) {
+        onChange(localValue);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [localValue, onChange, value]);
+
+  return (
+    <Input
+      {...props}
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+    />
+  );
+};
+
 /**
  * UI component for editing a pipeline stage.
  *
@@ -67,6 +106,7 @@ const defaultStage: PipelineStage = {
  * @param props.removeStage - The function to call when the stage is removed.
  * @param props.readOnly - Whether the stage is read-only.
  * @param props.currentWorkflowID - The current workflow ID (to prevent self-reference).
+ * @param props.onToggleCollapse - The function to call when the stage is collapsed or expanded.
  *
  * @returns The rendered component.
  */
@@ -81,6 +121,7 @@ function Stage({
   defaultCollapsed = false,
   isLastStage = false,
   currentWorkflowID,
+  onToggleCollapse,
 }: {
   index: number;
   initialStage?: PipelineStage;
@@ -92,6 +133,7 @@ function Stage({
   defaultCollapsed?: boolean;
   isLastStage?: boolean;
   currentWorkflowID?: string;
+  onToggleCollapse?: (_isCollapsed: boolean) => void;
 }) {
   const { connectionsQuery } = useConnections();
   const { repositoriesQuery } = useRepositories();
@@ -107,6 +149,11 @@ function Stage({
   const prevStageRef = useRef<PipelineStage>(stage);
   const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Sync collapsed state when defaultCollapsed changes
+  useEffect(() => {
+    setIsCollapsed(defaultCollapsed);
+  }, [defaultCollapsed]);
+
   // Debounced update function
   const debouncedUpdate = useCallback(
     (newStage: PipelineStage) => {
@@ -115,11 +162,21 @@ function Stage({
       }
 
       updateTimeoutRef.current = setTimeout(() => {
+        // Normalize embeddings stage to ensure model is always set
+        let normalizedStage = newStage;
+        if (newStage.type === 'embeddings' && !newStage.embeddings_model) {
+          normalizedStage = {
+            ...newStage,
+            embeddings_model: 'text-embedding-3-small',
+          };
+        }
+
         const hasChanged =
-          JSON.stringify(prevStageRef.current) !== JSON.stringify(newStage);
+          JSON.stringify(prevStageRef.current) !==
+          JSON.stringify(normalizedStage);
         if (hasChanged) {
-          prevStageRef.current = newStage;
-          updateStage(newStage);
+          prevStageRef.current = normalizedStage;
+          updateStage(normalizedStage);
         }
       }, 300);
     },
@@ -142,11 +199,22 @@ function Stage({
 
   // Handle initial stage changes
   useEffect(() => {
-    const newStage = initialStage ?? defaultStage;
-    queueMicrotask(() => {
-      setStage(newStage);
-      prevStageRef.current = newStage;
-    });
+    let newStage = initialStage ?? defaultStage;
+
+    // Ensure embeddings stages always have a valid model
+    if (newStage.type === 'embeddings' && !newStage.embeddings_model) {
+      newStage = {
+        ...newStage,
+        embeddings_model: 'text-embedding-3-small',
+      };
+    }
+
+    setStage(newStage);
+    // Update prevStageRef immediately for external prop changes to:
+    // 1. Prevent echoing changes back to parent via updateStage callback
+    // 2. Establish correct baseline for detecting future user edits
+    // 3. Avoid stale ref values that could break change detection
+    prevStageRef.current = newStage;
   }, [initialStage]);
 
   const [connectionPushSchema, setConnectionPushSchema] =
@@ -183,6 +251,41 @@ function Stage({
     [workspaceSlug, locale, getToken]
   );
 
+  // Debounce repository branch to prevent excessive API calls/re-renders in path selectors
+  const repositoryBranch =
+    stage.type === 'repository'
+      ? (stage as Extract<PipelineStage, { type: 'repository' }>)
+          .repository_branch
+      : '';
+
+  const [debouncedRepositoryBranch, setDebouncedRepositoryBranch] =
+    useState(repositoryBranch);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedRepositoryBranch(repositoryBranch);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [repositoryBranch]);
+
+  const embeddingsBranch =
+    stage.type === 'embeddings'
+      ? (stage as Extract<PipelineStage, { type: 'embeddings' }>)
+          .embeddings_branch
+      : '';
+
+  const [debouncedEmbeddingsBranch, setDebouncedEmbeddingsBranch] =
+    useState(embeddingsBranch);
+
+  const [showAdvancedEmbeddings, setShowAdvancedEmbeddings] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedEmbeddingsBranch(embeddingsBranch);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [embeddingsBranch]);
+
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
     pathname: '',
@@ -203,6 +306,8 @@ function Stage({
         return 'outline';
       case 'trigger_workflow':
         return 'default';
+      case 'embeddings':
+        return 'secondary';
       default:
         return 'default';
     }
@@ -222,7 +327,11 @@ function Stage({
             type='button'
             variant='ghost'
             size='icon'
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={() => {
+              const newCollapsed = !isCollapsed;
+              setIsCollapsed(newCollapsed);
+              onToggleCollapse?.(newCollapsed);
+            }}
             className='size-8 shrink-0'
           >
             {isCollapsed ? (
@@ -243,6 +352,7 @@ function Stage({
                 dict.workflow.pipeline.triggerWorkflow}
               {stage.type === 'validation' && dict.workflow.pipeline.validation}
               {stage.type === 'transform' && dict.workflow.pipeline.transform}
+              {stage.type === 'embeddings' && dict.workflow.pipeline.embeddings}
             </Badge>
 
             {stage.description && (
@@ -325,108 +435,6 @@ function Stage({
 
       {!isCollapsed && (
         <div className='space-y-4 border-t bg-background p-4'>
-          <div className='flex flex-col gap-2'>
-            <Label htmlFor={`description-${index}`}>
-              {dict.common.description}
-            </Label>
-            <Input
-              id={`description-${index}`}
-              placeholder={dict.workflow.pipeline.descriptionPlaceholder}
-              value={stage.description}
-              onChange={(e) =>
-                setStage((prevStage) => ({
-                  ...prevStage,
-                  description: e.target.value,
-                }))
-              }
-              readOnly={readOnly}
-            />
-          </div>
-
-          {/* Only show read/write switches for stages that pass data between stages */}
-          {(stage.type === 'action' ||
-            stage.type === 'connection' ||
-            stage.type === 'repository') && (
-            <div
-              className={`
-                grid gap-4
-                sm:grid-cols-2
-              `}
-            >
-              <div className='flex items-center space-x-2 rounded-md border p-3'>
-                <Switch
-                  id={`write-${index}`}
-                  checked={stage.write}
-                  onCheckedChange={(checked) =>
-                    setStage((prevStage) => ({
-                      ...prevStage,
-                      write: checked,
-                    }))
-                  }
-                  disabled={readOnly || index === 0}
-                />
-                <div className='flex flex-col'>
-                  <div className='flex items-center gap-2'>
-                    <Label
-                      htmlFor={`write-${index}`}
-                      className={index === 0 ? 'text-muted-foreground' : ''}
-                    >
-                      {dict.workflow.pipeline.write}
-                    </Label>
-                    <span className='text-xs font-normal text-muted-foreground'>
-                      {dict.workflow.pipeline.writeDescription}
-                    </span>
-                  </div>
-                  {index === 0 && (
-                    <span
-                      className={`
-                        pt-1 pl-1 text-xs text-muted-foreground italic
-                      `}
-                    >
-                      {dict.workflow.pipeline.firstStageCannotWrite}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className='flex items-center space-x-2 rounded-md border p-3'>
-                <Switch
-                  id={`read-${index}`}
-                  checked={stage.read}
-                  onCheckedChange={(checked) =>
-                    setStage((prevStage) => ({
-                      ...prevStage,
-                      read: checked,
-                    }))
-                  }
-                  disabled={readOnly || isLastStage}
-                />
-                <div className='flex flex-col'>
-                  <div className='flex items-center gap-2'>
-                    <Label
-                      htmlFor={`read-${index}`}
-                      className={isLastStage ? 'text-muted-foreground' : ''}
-                    >
-                      {dict.workflow.pipeline.read}
-                    </Label>
-                    <span className='text-xs font-normal text-muted-foreground'>
-                      {dict.workflow.pipeline.readDescription}
-                    </span>
-                  </div>
-                  {isLastStage && (
-                    <span
-                      className={`
-                        pt-1 pl-1 text-xs text-muted-foreground italic
-                      `}
-                    >
-                      {dict.workflow.pipeline.lastStageCannotRead}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className='flex flex-col gap-2'>
             <Label htmlFor={`type-select-${index}`}>
               {dict.repository.objects.type}
@@ -538,6 +546,26 @@ function Stage({
                     read: true,
                     order_sequence: prevStage.order_sequence,
                   }));
+                } else if (value === 'embeddings') {
+                  setStage((prevStage) => ({
+                    type: 'embeddings',
+                    embeddings_operation: 'vectorize',
+                    embeddings_repository: '',
+                    embeddings_branch: '',
+                    embeddings_model: 'text-embedding-3-small',
+                    embeddings_dimensions: undefined,
+                    embeddings_chunk_size: undefined,
+                    embeddings_overlap: undefined,
+                    embeddings_output_path: '',
+                    embeddings_path: '',
+                    embeddings_query: '',
+                    embeddings_top_k: 10,
+                    embeddings_filter: {},
+                    description: prevStage.description,
+                    write: true,
+                    read: true,
+                    order_sequence: prevStage.order_sequence,
+                  }));
                 }
               }}
               disabled={readOnly}
@@ -555,6 +583,8 @@ function Stage({
                     dict.workflow.pipeline.validation}
                   {stage.type === 'transform' &&
                     dict.workflow.pipeline.transform}
+                  {stage.type === 'embeddings' &&
+                    dict.workflow.pipeline.embeddings}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -576,6 +606,9 @@ function Stage({
                 </SelectItem>
                 <SelectItem value='transform'>
                   {dict.workflow.pipeline.transform}
+                </SelectItem>
+                <SelectItem value='embeddings'>
+                  {dict.workflow.pipeline.embeddings}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -604,6 +637,109 @@ function Stage({
                 </p>
               </div>
             )}
+
+          <div className='flex flex-col gap-2'>
+            <Label htmlFor={`description-${index}`}>
+              {dict.common.description}
+            </Label>
+            <DebouncedInput
+              id={`description-${index}`}
+              placeholder={dict.workflow.pipeline.descriptionPlaceholder}
+              value={stage.description}
+              onChange={(value) =>
+                setStage((prevStage) => ({
+                  ...prevStage,
+                  description: value,
+                }))
+              }
+              readOnly={readOnly}
+            />
+          </div>
+
+          {/* Only show read/write switches for stages that pass data between stages */}
+          {(stage.type === 'action' ||
+            stage.type === 'connection' ||
+            stage.type === 'repository' ||
+            stage.type === 'embeddings') && (
+            <div
+              className={`
+                grid gap-4
+                sm:grid-cols-2
+              `}
+            >
+              <div className='flex items-center space-x-2 rounded-md border p-3'>
+                <Switch
+                  id={`write-${index}`}
+                  checked={stage.write}
+                  onCheckedChange={(checked) =>
+                    setStage((prevStage) => ({
+                      ...prevStage,
+                      write: checked,
+                    }))
+                  }
+                  disabled={readOnly || index === 0}
+                />
+                <div className='flex flex-col'>
+                  <div className='flex items-center gap-2'>
+                    <Label
+                      htmlFor={`write-${index}`}
+                      className={index === 0 ? 'text-muted-foreground' : ''}
+                    >
+                      {dict.workflow.pipeline.write}
+                    </Label>
+                    <span className='text-xs font-normal text-muted-foreground'>
+                      {dict.workflow.pipeline.writeDescription}
+                    </span>
+                  </div>
+                  {index === 0 && (
+                    <span
+                      className={`
+                        pt-1 pl-1 text-xs text-muted-foreground italic
+                      `}
+                    >
+                      {dict.workflow.pipeline.firstStageCannotWrite}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className='flex items-center space-x-2 rounded-md border p-3'>
+                <Switch
+                  id={`read-${index}`}
+                  checked={stage.read}
+                  onCheckedChange={(checked) =>
+                    setStage((prevStage) => ({
+                      ...prevStage,
+                      read: checked,
+                    }))
+                  }
+                  disabled={readOnly || isLastStage}
+                />
+                <div className='flex flex-col'>
+                  <div className='flex items-center gap-2'>
+                    <Label
+                      htmlFor={`read-${index}`}
+                      className={isLastStage ? 'text-muted-foreground' : ''}
+                    >
+                      {dict.workflow.pipeline.read}
+                    </Label>
+                    <span className='text-xs font-normal text-muted-foreground'>
+                      {dict.workflow.pipeline.readDescription}
+                    </span>
+                  </div>
+                  {isLastStage && (
+                    <span
+                      className={`
+                        pt-1 pl-1 text-xs text-muted-foreground italic
+                      `}
+                    >
+                      {dict.workflow.pipeline.lastStageCannotRead}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {stage.type === 'action' && (
             <>
@@ -910,10 +1046,12 @@ function Stage({
                   <Label htmlFor={`write_path-${index}`}>
                     {dict.workflow.pipeline.connectionWritePath}
                   </Label>
-                  {!readOnly && stage.repository && stage.repository_branch ? (
+                  {!readOnly &&
+                  stage.repository &&
+                  debouncedRepositoryBranch ? (
                     <RepositoryPathSelector
                       repositorySlug={stage.repository}
-                      repositoryRef={stage.repository_branch}
+                      repositoryRef={debouncedRepositoryBranch}
                       defaultPath={stage.repository_write_path ?? ''}
                       onPathChange={(path) =>
                         setStage((prevStage) => ({
@@ -939,7 +1077,9 @@ function Stage({
               )}
               {stage.read && (
                 <div className='flex flex-col gap-2'>
-                  {!readOnly && stage.repository && stage.repository_branch ? (
+                  {!readOnly &&
+                  stage.repository &&
+                  debouncedRepositoryBranch ? (
                     <MultiplePathsSelector
                       label={dict.repository.objects.path}
                       paths={stage.repository_read_paths}
@@ -952,7 +1092,7 @@ function Stage({
                       renderPathSelector={(path, onPathChange) => (
                         <RepositoryPathSelector
                           repositorySlug={stage.repository}
-                          repositoryRef={stage.repository_branch}
+                          repositoryRef={debouncedRepositoryBranch}
                           defaultPath={path}
                           onPathChange={onPathChange}
                         />
@@ -1758,6 +1898,401 @@ function Stage({
                     </SelectContent>
                   </Select>
                 </div>
+              )}
+            </>
+          )}
+
+          {stage.type === 'embeddings' && (
+            <>
+              {/* Embeddings Operation */}
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`embeddings-operation-${index}`}>
+                  {dict.workflow.pipeline.embeddingsOperation}
+                </Label>
+                <Select
+                  value={stage.embeddings_operation}
+                  onValueChange={(value: 'vectorize' | 'search') => {
+                    setStage((prevStage) => {
+                      if (prevStage.type !== 'embeddings') return prevStage;
+                      return {
+                        ...prevStage,
+                        embeddings_operation: value,
+                      };
+                    });
+                  }}
+                  disabled={readOnly}
+                >
+                  <SelectTrigger
+                    id={`embeddings-operation-${index}`}
+                    className='w-full'
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='vectorize'>
+                      {dict.workflow.pipeline.embeddingsVectorize}
+                    </SelectItem>
+                    <SelectItem value='search'>
+                      {dict.workflow.pipeline.embeddingsSearch}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Embeddings Repository */}
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`embeddings-repository-${index}`}>
+                  {dict.workflow.pipeline.embeddingsRepository}
+                </Label>
+                <Select
+                  value={stage.embeddings_repository}
+                  onValueChange={(value) => {
+                    setStage((prevStage) => {
+                      if (prevStage.type !== 'embeddings') return prevStage;
+
+                      // Auto-populate branch with repository's default branch
+                      const repo = repositoriesQuery.data?.data?.find(
+                        (r) => r.slug === value
+                      );
+
+                      return {
+                        ...prevStage,
+                        embeddings_repository: value,
+                        embeddings_branch: repo?.default_branch ?? '',
+                      };
+                    });
+                  }}
+                  disabled={readOnly}
+                >
+                  <SelectTrigger
+                    id={`embeddings-repository-${index}`}
+                    className='w-full'
+                  >
+                    <SelectValue
+                      placeholder={
+                        dict.workflow.pipeline.embeddingsRepositoryPlaceholder
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {repositoriesQuery.data?.data?.map((repo) => (
+                      <SelectItem key={repo.id} value={repo.slug}>
+                        {repo.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Embeddings Branch */}
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`embeddings-branch-${index}`}>
+                  {dict.workflow.pipeline.embeddingsBranch}
+                </Label>
+                <Input
+                  id={`embeddings-branch-${index}`}
+                  placeholder='main'
+                  value={stage.embeddings_branch || ''}
+                  onChange={(e) => {
+                    setStage((prevStage) => {
+                      if (prevStage.type !== 'embeddings') return prevStage;
+                      return {
+                        ...prevStage,
+                        embeddings_branch: e.target.value,
+                      };
+                    });
+                  }}
+                  readOnly={readOnly}
+                />
+              </div>
+
+              {/* Vectorize-specific fields */}
+              {stage.embeddings_operation === 'vectorize' && (
+                <>
+                  {/* Model */}
+                  <div className='flex flex-col gap-2'>
+                    <Label htmlFor={`embeddings-model-${index}`}>
+                      {dict.workflow.pipeline.embeddingsModel}
+                    </Label>
+                    <Select
+                      value={stage.embeddings_model || 'text-embedding-3-small'}
+                      onValueChange={(value) => {
+                        setStage((prevStage) => {
+                          if (prevStage.type !== 'embeddings') return prevStage;
+                          return {
+                            ...prevStage,
+                            embeddings_model: value,
+                          };
+                        });
+                      }}
+                      disabled={readOnly}
+                    >
+                      <SelectTrigger
+                        id={`embeddings-model-${index}`}
+                        className='w-full'
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='text-embedding-3-small'>
+                          text-embedding-3-small
+                        </SelectItem>
+                        <SelectItem value='text-embedding-3-large'>
+                          text-embedding-3-large
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Output Path */}
+                  <div className='flex flex-col gap-2'>
+                    <Label htmlFor={`embeddings-output-path-${index}`}>
+                      {dict.workflow.pipeline.embeddingsOutputPath}
+                    </Label>
+                    {!readOnly &&
+                    stage.embeddings_repository &&
+                    debouncedEmbeddingsBranch ? (
+                      <RepositoryPathSelector
+                        repositorySlug={stage.embeddings_repository}
+                        repositoryRef={debouncedEmbeddingsBranch}
+                        defaultPath={stage.embeddings_output_path ?? ''}
+                        onPathChange={(path) =>
+                          setStage((prevStage) => {
+                            if (prevStage.type !== 'embeddings')
+                              return prevStage;
+                            return {
+                              ...prevStage,
+                              embeddings_output_path: path,
+                            };
+                          })
+                        }
+                      />
+                    ) : (
+                      <Input
+                        id={`embeddings-output-path-${index}`}
+                        placeholder={
+                          dict.workflow.pipeline.embeddingsOutputPathPlaceholder
+                        }
+                        value={stage.embeddings_output_path || ''}
+                        onChange={(e) => {
+                          setStage((prevStage) => {
+                            if (prevStage.type !== 'embeddings')
+                              return prevStage;
+                            return {
+                              ...prevStage,
+                              embeddings_output_path: e.target.value,
+                            };
+                          });
+                        }}
+                        readOnly={readOnly}
+                      />
+                    )}
+                  </div>
+
+                  {/* Advanced Settings */}
+                  <div className='flex flex-col gap-2'>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() =>
+                        setShowAdvancedEmbeddings(!showAdvancedEmbeddings)
+                      }
+                      className='self-start'
+                    >
+                      {showAdvancedEmbeddings
+                        ? dict.common.hideAdvancedOption
+                        : dict.common.showAdvancedOptions}
+                    </Button>
+
+                    {showAdvancedEmbeddings && (
+                      <div
+                        className={`
+                          grid gap-4 rounded-lg border bg-muted/30 p-4
+                        `}
+                      >
+                        {/* Dimensions */}
+                        <div className='flex flex-col gap-2'>
+                          <Label htmlFor={`embeddings-dimensions-${index}`}>
+                            {dict.workflow.pipeline.embeddingsDimensions}
+                          </Label>
+                          <Input
+                            id={`embeddings-dimensions-${index}`}
+                            type='number'
+                            placeholder='1536'
+                            value={stage.embeddings_dimensions ?? ''}
+                            onChange={(e) => {
+                              setStage((prevStage) => {
+                                if (prevStage.type !== 'embeddings')
+                                  return prevStage;
+                                return {
+                                  ...prevStage,
+                                  embeddings_dimensions: e.target.value
+                                    ? parseInt(e.target.value)
+                                    : undefined,
+                                };
+                              });
+                            }}
+                            readOnly={readOnly}
+                          />
+                        </div>
+
+                        {/* Chunk Size */}
+                        <div className='flex flex-col gap-2'>
+                          <Label htmlFor={`embeddings-chunk-size-${index}`}>
+                            {dict.workflow.pipeline.embeddingsChunkSize}
+                          </Label>
+                          <Input
+                            id={`embeddings-chunk-size-${index}`}
+                            type='number'
+                            placeholder='1000'
+                            value={stage.embeddings_chunk_size ?? ''}
+                            onChange={(e) => {
+                              setStage((prevStage) => {
+                                if (prevStage.type !== 'embeddings')
+                                  return prevStage;
+                                return {
+                                  ...prevStage,
+                                  embeddings_chunk_size: e.target.value
+                                    ? parseInt(e.target.value)
+                                    : undefined,
+                                };
+                              });
+                            }}
+                            readOnly={readOnly}
+                          />
+                        </div>
+
+                        {/* Overlap */}
+                        <div className='flex flex-col gap-2'>
+                          <Label htmlFor={`embeddings-overlap-${index}`}>
+                            {dict.workflow.pipeline.embeddingsOverlap}
+                          </Label>
+                          <Input
+                            id={`embeddings-overlap-${index}`}
+                            type='number'
+                            placeholder='200'
+                            value={stage.embeddings_overlap ?? ''}
+                            onChange={(e) => {
+                              setStage((prevStage) => {
+                                if (prevStage.type !== 'embeddings')
+                                  return prevStage;
+                                return {
+                                  ...prevStage,
+                                  embeddings_overlap: e.target.value
+                                    ? parseInt(e.target.value)
+                                    : undefined,
+                                };
+                              });
+                            }}
+                            readOnly={readOnly}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Search-specific fields */}
+              {stage.embeddings_operation === 'search' && (
+                <>
+                  {/* Embedding File Path */}
+                  <div className='flex flex-col gap-2'>
+                    <Label htmlFor={`embeddings-path-${index}`}>
+                      {dict.workflow.pipeline.embeddingsPath}
+                    </Label>
+                    {!readOnly &&
+                    stage.embeddings_repository &&
+                    debouncedEmbeddingsBranch ? (
+                      <RepositoryPathSelector
+                        repositorySlug={stage.embeddings_repository}
+                        repositoryRef={debouncedEmbeddingsBranch}
+                        defaultPath={stage.embeddings_path || ''}
+                        onPathChange={(path) =>
+                          setStage((prevStage) => {
+                            if (prevStage.type !== 'embeddings')
+                              return prevStage;
+                            return {
+                              ...prevStage,
+                              embeddings_path: path,
+                            };
+                          })
+                        }
+                      />
+                    ) : (
+                      <Input
+                        id={`embeddings-path-${index}`}
+                        placeholder={
+                          dict.workflow.pipeline.embeddingsPathPlaceholder
+                        }
+                        value={stage.embeddings_path || ''}
+                        onChange={(e) => {
+                          setStage((prevStage) => {
+                            if (prevStage.type !== 'embeddings')
+                              return prevStage;
+                            return {
+                              ...prevStage,
+                              embeddings_path: e.target.value,
+                            };
+                          });
+                        }}
+                        readOnly={readOnly}
+                      />
+                    )}
+                  </div>
+
+                  {/* Search Query */}
+                  <div className='flex flex-col gap-2'>
+                    <Label htmlFor={`embeddings-query-${index}`}>
+                      {dict.workflow.pipeline.embeddingsQuery}
+                    </Label>
+                    <Input
+                      id={`embeddings-query-${index}`}
+                      placeholder={
+                        dict.workflow.pipeline.embeddingsQueryPlaceholder
+                      }
+                      value={stage.embeddings_query || ''}
+                      onChange={(e) => {
+                        setStage((prevStage) => {
+                          if (prevStage.type !== 'embeddings') return prevStage;
+                          return {
+                            ...prevStage,
+                            embeddings_query: e.target.value,
+                          };
+                        });
+                      }}
+                      readOnly={readOnly}
+                    />
+                  </div>
+
+                  {/* Top K */}
+                  <div className='flex flex-col gap-2'>
+                    <Label htmlFor={`embeddings-top-k-${index}`}>
+                      {dict.workflow.pipeline.embeddingsTopK}
+                    </Label>
+                    <Input
+                      id={`embeddings-top-k-${index}`}
+                      type='number'
+                      min={1}
+                      max={100}
+                      placeholder='10'
+                      value={stage.embeddings_top_k ?? ''}
+                      onChange={(e) => {
+                        setStage((prevStage) => {
+                          if (prevStage.type !== 'embeddings') return prevStage;
+                          return {
+                            ...prevStage,
+                            embeddings_top_k: e.target.value
+                              ? parseInt(e.target.value)
+                              : undefined,
+                          };
+                        });
+                      }}
+                      readOnly={readOnly}
+                    />
+                  </div>
+                </>
               )}
             </>
           )}

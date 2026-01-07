@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { TbArrowDown } from 'react-icons/tb';
+import { TbArrowDown, TbChevronDown, TbChevronRight } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 
@@ -71,8 +71,46 @@ function PipelineStageEditor({
     sanitizedInitialStages
   );
 
+  // Track collapsed state of each stage by _id
+  // Initialize based on defaultCollapsed prop
+  const [collapsedStages, setCollapsedStages] = useState<Set<string>>(
+    () =>
+      new Set(defaultCollapsed ? sanitizedInitialStages.map((s) => s._id) : [])
+  );
+
   const prevStagesRef = useRef<PipelineStageWithId[]>(stages);
   const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync stages when initialStages changes
+  // We use a state tracking variable to update during render instead of useEffect
+  // to avoid cascading renders and satisfy linter rules.
+  const [prevSanitizedInitialStages, setPrevSanitizedInitialStages] = useState(
+    sanitizedInitialStages
+  );
+
+  if (sanitizedInitialStages !== prevSanitizedInitialStages) {
+    setPrevSanitizedInitialStages(sanitizedInitialStages);
+    setStages((prevStages) => {
+      // If we have the same number of stages, preserve the IDs to prevent
+      // unmounting components and losing focus/scroll position.
+      if (prevStages.length === sanitizedInitialStages.length) {
+        return sanitizedInitialStages.map((stage, index) => ({
+          ...stage,
+          _id: prevStages[index]._id,
+        }));
+      }
+      return sanitizedInitialStages;
+    });
+  }
+
+  // Fold/unfold all handlers
+  const foldAll = useCallback(() => {
+    setCollapsedStages(new Set(stages.map((s) => s._id)));
+  }, [stages]);
+
+  const unfoldAll = useCallback(() => {
+    setCollapsedStages(new Set());
+  }, []);
 
   // Helper function to strip internal UI properties (_id, inputHasData) from stages before submitting
   const stripStageIds = useCallback(
@@ -131,12 +169,19 @@ function PipelineStageEditor({
           read: true,
         };
       }
+      // Don't collapse the newly added stage
+      setCollapsedStages((prev) => {
+        const next = new Set(prev);
+        next.delete(newStage._id);
+        return next;
+      });
       return newStages;
     });
   }, []);
 
   const removeStage = useCallback((index: number) => {
     setStages((prevStages) => {
+      const removedStageId = prevStages[index]._id;
       const newStages = prevStages
         .filter((_, i) => i !== index)
         .map((stage, i) => ({
@@ -157,6 +202,12 @@ function PipelineStageEditor({
           read: false,
         };
       }
+      // Clean up the removed stage's ID from collapsedStages
+      setCollapsedStages((prev) => {
+        const next = new Set(prev);
+        next.delete(removedStageId);
+        return next;
+      });
       return newStages;
     });
   }, []);
@@ -215,8 +266,37 @@ function PipelineStageEditor({
     ).items;
   }, [stages]);
 
+  // Check if all stages are collapsed
+  const allCollapsed = stages.every((stage) => collapsedStages.has(stage._id));
+
   return (
     <form onSubmit={handleSubmit} className='relative'>
+      {/* Fold/Unfold All Controls */}
+      {stages.length > 0 && (
+        <div className='mb-2 flex items-center justify-end gap-2'>
+          {allCollapsed ? (
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              onClick={unfoldAll}
+              icon={<TbChevronRight className='size-4' />}
+            >
+              {dict.workflow.pipeline.unfoldAll}
+            </Button>
+          ) : (
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              onClick={foldAll}
+              icon={<TbChevronDown className='size-4' />}
+            >
+              {dict.workflow.pipeline.foldAll}
+            </Button>
+          )}
+        </div>
+      )}
       <div className='relative'>
         {stagesWithFlow.length === 0 && (
           <p
@@ -321,9 +401,20 @@ function PipelineStageEditor({
                   removeStage={() => removeStage(index)}
                   initialStage={stage}
                   readOnly={readOnly}
-                  defaultCollapsed={defaultCollapsed}
+                  defaultCollapsed={collapsedStages.has(stage._id)}
                   isLastStage={index === stages.length - 1}
                   currentWorkflowID={currentWorkflowID}
+                  onToggleCollapse={(isCollapsed) => {
+                    setCollapsedStages((prev) => {
+                      const next = new Set(prev);
+                      if (isCollapsed) {
+                        next.add(stage._id);
+                      } else {
+                        next.delete(stage._id);
+                      }
+                      return next;
+                    });
+                  }}
                 />
               </div>
             </div>

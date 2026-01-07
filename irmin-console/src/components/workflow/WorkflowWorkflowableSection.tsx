@@ -145,12 +145,12 @@ const WorkflowWorkflowableSection = ({
   return (
     <div
       className={`
-        relative container mx-auto my-8 flex w-full max-w-4xl flex-col
+        relative container mx-auto my-2 flex w-full max-w-4xl flex-col
         bg-background px-4 pb-6
       `}
       id='workflow-workflowable-section'
     >
-      <div className='flex flex-col gap-4 py-4'>
+      <div className='flex flex-col gap-4 py-2'>
         {activeWorkflowable.type === 'action' && (
           <ActionWorkflow
             workflowable={activeWorkflowable as Action}

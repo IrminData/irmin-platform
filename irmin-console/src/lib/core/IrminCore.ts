@@ -12,6 +12,7 @@ import ConnectionService from './resources/ConnectionService';
 import ConnectorService from './resources/ConnectorService';
 import CredentialService from './resources/CredentialService';
 import DiffService from './resources/DiffService';
+import EmbeddingsService from './resources/EmbeddingsService';
 import InviteService from './resources/InviteService';
 import LogService from './resources/LogService';
 import ObjectService from './resources/ObjectService';
@@ -71,6 +72,7 @@ class IrminCore {
   public credentialService: CredentialService;
   public policyService: PolicyService;
   public tagService: TagService;
+  public embeddingsService: EmbeddingsService;
 
   /**
    * Creates an instance of IrminCore.
@@ -107,6 +109,7 @@ class IrminCore {
     this.credentialService = new CredentialService(this);
     this.policyService = new PolicyService(this);
     this.tagService = new TagService(this);
+    this.embeddingsService = new EmbeddingsService(this);
   }
 
   /**

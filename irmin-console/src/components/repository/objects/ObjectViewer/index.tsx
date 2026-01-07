@@ -9,8 +9,17 @@ import type { RepositoryObject } from '@/types/core/RepositoryObject';
 import type { JSONValue } from '@/types/internal/GenericJSON';
 
 import BlobViewer from './BlobViewer';
+import EmbeddingViewer from './EmbeddingViewer';
 import JSONViewer from './JSONViewer';
 import TableViewer from './TableViewer';
+
+/**
+ * Checks if a repository object is an embedding file.
+ * Embedding files are .parquet files with the 'irmin-file-type' metadata set to 'embeddings'.
+ */
+const isEmbeddingFile = (obj: RepositoryObject): boolean =>
+  obj.path.endsWith('.parquet') &&
+  obj.metadata?.['irmin-file-type'] === 'embeddings';
 
 /**
  * Component to display the content of an object
@@ -27,6 +36,12 @@ const ObjectViewer = ({
   objectContent: IrminAPIBinaryResponse | null;
 }) => {
   const { dict } = useLocale();
+
+  // Handle embedding files with special viewer
+  if (isEmbeddingFile(object)) {
+    return <EmbeddingViewer object={object} />;
+  }
+
   if (!objectContent) {
     // If the content is not available, show a message
     return (

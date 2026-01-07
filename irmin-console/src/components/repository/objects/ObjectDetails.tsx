@@ -17,6 +17,7 @@ import {
   TbSchema,
   TbTrash,
   TbUpload,
+  TbVectorTriangle,
 } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,46 @@ import type { Tag } from '@/types/core/Tag';
 import MoveRenameObjectModal from './MoveRenameObjectModal';
 import UploadObjectModal from './UploadObjectModal';
 import ValidateObjectModal from './ValidateObjectModal';
+import VectorizeObjectModal from './VectorizeObjectModal';
+
+/**
+ * List of file extensions supported for vectorization.
+ * Must be kept in sync with backend: irmin/embeddings/embeddings_utils.go GetSupportedFormats()
+ */
+const VECTORIZABLE_FORMATS = [
+  '.txt',
+  '.md',
+  '.csv',
+  '.json',
+  '.jsonl',
+  '.ndjson',
+  '.tsv',
+  '.tab',
+  '.parquet',
+  '.xlsx',
+  '.xlsm',
+  '.xml',
+  '.yaml',
+  '.yml',
+  '.pdf',
+  '.docx',
+];
+
+/**
+ * Check if a file can be vectorized based on its extension.
+ */
+const isVectorizableFormat = (fileName: string): boolean => {
+  const ext = fileName.slice(fileName.lastIndexOf('.')).toLowerCase();
+  return VECTORIZABLE_FORMATS.includes(ext);
+};
+
+/**
+ * Checks if a repository object is an embedding file.
+ * Embedding files are .parquet files with the 'irmin-file-type' metadata set to 'embeddings'.
+ */
+const isEmbeddingFile = (obj: RepositoryObject): boolean =>
+  obj.path.endsWith('.parquet') &&
+  obj.metadata?.['irmin-file-type'] === 'embeddings';
 
 /**
  * UI for the object details.
@@ -146,6 +187,15 @@ export default function ObjectDetails({
       isResourceAllowed('repository_object', 'update', repository.id),
     [isResourceAllowed, repository.id]
   );
+  const canVectorize = useMemo(
+    () =>
+      selectedObject &&
+      isResourceAllowed('repository_object', 'read', repository.id) &&
+      isResourceAllowed('repository_object', 'create', repository.id) &&
+      isVectorizableFormat(selectedObject.name) &&
+      !isEmbeddingFile(selectedObject),
+    [isResourceAllowed, repository.id, selectedObject]
+  );
 
   const handleUploadAndReplace = useCallback(() => {
     if (!selectedObject || immutable) return;
@@ -153,7 +203,7 @@ export default function ObjectDetails({
       dict.repository.objects.uploadObject,
       <UploadObjectModal
         currentRepository={repository.slug}
-        currentRef={currentRef ?? 'main'}
+        currentRef={currentRef ?? repository.default_branch}
         uploadObject={async (path: string, ref: string, files: FileList) => {
           uploadObjectMutation.mutate({
             path,
@@ -172,6 +222,7 @@ export default function ObjectDetails({
     currentRef,
     uploadObjectMutation,
     repository.slug,
+    repository.default_branch,
   ]);
 
   const handleMoveOrRename = useCallback(() => {
@@ -251,15 +302,42 @@ export default function ObjectDetails({
     validateObjectMutation,
   ]);
 
+  const handleVectorize = useCallback(() => {
+    if (!selectedObject || immutable) return;
+    irminModal.show(
+      `${dict.repository.objects.vectorize}: ${selectedObject.name}`,
+      <VectorizeObjectModal
+        repositorySlug={repository.slug}
+        currentRef={currentRef ?? repository.default_branch}
+        initialSourcePath={selectedObject.path}
+      />
+    );
+  }, [
+    selectedObject,
+    immutable,
+    irminModal,
+    dict,
+    repository.slug,
+    repository.default_branch,
+    currentRef,
+  ]);
+
   const handleView = useCallback(() => {
     if (!selectedObject) return;
     if (viewObject) viewObject();
     else {
       router.push(
-        `${baseUrl}/object?path=${encodeURIComponent(selectedObject.path)}&ref=${encodeURIComponent(currentRef ?? 'main')}`
+        `${baseUrl}/object?path=${encodeURIComponent(selectedObject.path)}&ref=${encodeURIComponent(currentRef ?? repository.default_branch)}`
       );
     }
-  }, [selectedObject, baseUrl, currentRef, viewObject, router]);
+  }, [
+    selectedObject,
+    baseUrl,
+    currentRef,
+    viewObject,
+    router,
+    repository.default_branch,
+  ]);
 
   const handleViewChangeHistory = useCallback(() => {
     if (!selectedObject) return;
@@ -479,7 +557,7 @@ export default function ObjectDetails({
                     {selectedObject.s3_path_selector ||
                       selectedObjectSchema?.s3_path_selector ||
                       (workspaceSlug && selectedObject.repository_slug
-                        ? `s3://${workspaceSlug}-${selectedObject.repository_slug}/${selectedObject.ref || 'main'}/${selectedObject.path}`
+                        ? `s3://${workspaceSlug}-${selectedObject.repository_slug}/${selectedObject.ref || repository.default_branch}/${selectedObject.path}`
                         : '')}
                   </code>
                   <Button
@@ -491,7 +569,7 @@ export default function ObjectDetails({
                         selectedObject.s3_path_selector ||
                         selectedObjectSchema?.s3_path_selector ||
                         (workspaceSlug && selectedObject.repository_slug
-                          ? `s3://${workspaceSlug}-${selectedObject.repository_slug}/${selectedObject.ref || 'main'}/${selectedObject.path}`
+                          ? `s3://${workspaceSlug}-${selectedObject.repository_slug}/${selectedObject.ref || repository.default_branch}/${selectedObject.path}`
                           : '');
                       await navigator.clipboard.writeText(s3Path);
                     }}
@@ -605,6 +683,18 @@ export default function ObjectDetails({
                   onClick={handleValidate}
                 >
                   {dict.repository.objects.validateObject}
+                </Button>
+              )}
+              {canVectorize && (
+                <Button
+                  size='sm'
+                  variant='secondary'
+                  className='w-full'
+                  icon={<TbVectorTriangle />}
+                  onClick={handleVectorize}
+                  disabled={immutable}
+                >
+                  {dict.repository.objects.vectorize}
                 </Button>
               )}
               {canUpload && (

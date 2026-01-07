@@ -61,3 +61,6 @@ export * from './useCredentials';
 export * from './useLogEvents';
 export * from './useStoredQueries';
 export * from './useScripts';
+
+// Embeddings hooks
+export * from './useEmbeddings';

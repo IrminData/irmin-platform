@@ -207,7 +207,7 @@ function RepositorySectionContent({
       dict.repository.objects.uploadObject,
       <UploadObjectModal
         currentRepository={repository.slug}
-        currentRef={currentRef ?? 'main'}
+        currentRef={currentRef ?? repository.default_branch}
         uploadObject={async (path: string, ref: string, files: FileList) => {
           uploadObjectMutation.mutate({
             path,
