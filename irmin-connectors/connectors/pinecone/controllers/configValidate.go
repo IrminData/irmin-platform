@@ -30,8 +30,18 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
 }
 
 // GetRequiredFormFields implements the ConfigValidationProvider interface.
+// For validation, only details fields (api_key) are strictly required.
+// Settings fields are optional for validation - TestConnection will determine their validity.
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string) {
-	return pineconeconfig.GetRequiredFields(), pineconeconfig.GetOptionalFields()
+	// Only require details fields for the validation endpoint
+	// This allows validating the API key even if settings are incomplete
+	requiredDetails := pineconeconfig.GetDetailsFields()
+
+	// All settings fields are optional for validation
+	// The TestConnection method will validate them if provided
+	optionalSettings := pineconeconfig.GetSettingsFields()
+
+	return requiredDetails, optionalSettings
 }
 
 // ValidateFields implements the ConfigValidationProvider interface.
@@ -65,26 +75,38 @@ func (cs *Controllers) TestConnection(
 		return canConnect, connectionDetailsValid, connectionSettingsValid, errors
 	}
 
-	// Parse connection settings using model
+	// Step 1: Validate API key alone by listing indexes
+	// This establishes that we CAN connect to Pinecone with these credentials
+	err = pineconeclient.ValidateAPIKey(connectionDetails.APIKey)
+	if err != nil {
+		errors = append(errors, fmt.Sprintf("Invalid API key: %v", err))
+		return canConnect, connectionDetailsValid, connectionSettingsValid, errors
+	}
+
+	// API key is valid - we can connect to Pinecone
+	canConnect = true
+	connectionDetailsValid = true
+
+	// Step 2: Parse and validate connection settings (if provided)
 	connectionSettings, err := pineconemodels.NewConnectionSettingsFromMap(settings)
 	if err != nil {
+		// Settings are invalid/incomplete, but details are still valid
 		errors = append(errors, fmt.Sprintf("Invalid connection settings: %v", err))
 		return canConnect, connectionDetailsValid, connectionSettingsValid, errors
 	}
 
-	// Test connection to Pinecone
+	// Step 3: Test full connection to specific index
 	err = pineconeclient.ValidateConnection(
 		connectionDetails.APIKey,
 		connectionSettings.Host,
 		connectionSettings.Namespace,
 	)
 	if err != nil {
-		errors = append(errors, fmt.Sprintf("Failed to connect to Pinecone: %v", err))
+		errors = append(errors, fmt.Sprintf("Failed to connect to index: %v", err))
 		return canConnect, connectionDetailsValid, connectionSettingsValid, errors
 	}
 
-	canConnect = true
-	connectionDetailsValid = true
+	// Full connection successful
 	connectionSettingsValid = true
 
 	return canConnect, connectionDetailsValid, connectionSettingsValid, errors

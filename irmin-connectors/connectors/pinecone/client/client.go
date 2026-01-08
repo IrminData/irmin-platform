@@ -435,7 +435,28 @@ func (c *PineconeClient) extractMetadataStrings(metadata *pinecone.Metadata) map
 	return result
 }
 
-// ValidateConnection tests the connection to Pinecone.
+// ValidateAPIKey tests the API key by listing available indexes.
+// This validates that the API key is valid without requiring a specific index host.
+func ValidateAPIKey(apiKey string) error {
+	ctx := context.Background()
+
+	pc, err := pinecone.NewClient(pinecone.NewClientParams{
+		ApiKey: apiKey,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create Pinecone client: %w", err)
+	}
+
+	// Test API key by listing indexes - this only requires a valid API key
+	_, err = pc.ListIndexes(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to list indexes (invalid API key?): %w", err)
+	}
+
+	return nil
+}
+
+// ValidateConnection tests the connection to a specific Pinecone index.
 func ValidateConnection(apiKey, host, namespace string) error {
 	ctx := context.Background()
 
