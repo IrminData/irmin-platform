@@ -856,6 +856,12 @@ import "irmin-connectors/templates"
 
 ## Variables
 
+<a name="FirecrawlDetailsHTML"></a>
+
+```go
+var FirecrawlDetailsHTML []byte
+```
+
 <a name="HTTPDetailsHTML"></a>
 
 ```go
@@ -2020,6 +2026,26 @@ type Subscription struct {
 }
 ```
 
+# firecrawlconnector
+
+```go
+import "irmin-connectors/connectors/firecrawl"
+```
+
+## Index
+
+- [func SetupRoutes\(app \*models.ConnectorsApp\)](<#SetupRoutes>)
+
+
+<a name="SetupRoutes"></a>
+## func SetupRoutes
+
+```go
+func SetupRoutes(app *models.ConnectorsApp)
+```
+
+SetupRoutes sets up the routes for the Firecrawl connector.
+
 # httpconnector
 
 ```go
@@ -3150,6 +3176,580 @@ func TestSubscribe(ctx context.Context, client *helpers.ConnectorClient, webhook
 ```
 
 TestSubscribe tests the subscription capability of a connector.
+
+# client
+
+```go
+import "irmin-connectors/connectors/firecrawl/client"
+```
+
+## Index
+
+- [Constants](<#constants>)
+- [func DeduplicateFilename\(filename string, filenameCounts map\[string\]int, existingFiles map\[string\]\[\]byte\) string](<#DeduplicateFilename>)
+- [func SanitizeFilename\(filename string\) string](<#SanitizeFilename>)
+- [func URLToFilename\(urlStr string\) string](<#URLToFilename>)
+- [func ValidateConfiguration\(config map\[string\]any\) error](<#ValidateConfiguration>)
+- [type Config](<#Config>)
+- [type FirecrawlClient](<#FirecrawlClient>)
+  - [func InitFirecrawlClient\(\_ any, logger \*slog.Logger, operation \*db.Operation\) \(\*FirecrawlClient, error\)](<#InitFirecrawlClient>)
+  - [func \(c \*FirecrawlClient\) Crawl\(\) \(map\[string\]\[\]byte, error\)](<#FirecrawlClient.Crawl>)
+  - [func \(c \*FirecrawlClient\) Execute\(\) \(map\[string\]\[\]byte, error\)](<#FirecrawlClient.Execute>)
+  - [func \(c \*FirecrawlClient\) Map\(\) \(map\[string\]\[\]byte, error\)](<#FirecrawlClient.Map>)
+  - [func \(c \*FirecrawlClient\) Scrape\(\) \(map\[string\]\[\]byte, error\)](<#FirecrawlClient.Scrape>)
+  - [func \(c \*FirecrawlClient\) Search\(\) \(map\[string\]\[\]byte, error\)](<#FirecrawlClient.Search>)
+
+
+## Constants
+
+<a name="OperationTypeScrape"></a>
+
+```go
+const (
+    // Operation types
+    OperationTypeScrape = "scrape"
+    OperationTypeCrawl  = "crawl"
+    OperationTypeMap    = "map"
+    OperationTypeSearch = "search"
+
+    // Output formats
+    OutputFormatMarkdown = "markdown"
+    OutputFormatHTML     = "html"
+    OutputFormatJSON     = "json"
+
+    // Default API URL
+    DefaultAPIURL = "https://api.firecrawl.dev"
+)
+```
+
+<a name="DeduplicateFilename"></a>
+## func DeduplicateFilename
+
+```go
+func DeduplicateFilename(filename string, filenameCounts map[string]int, existingFiles map[string][]byte) string
+```
+
+DeduplicateFilename ensures filename uniqueness by adding a counter suffix when collisions occur.
+
+<a name="SanitizeFilename"></a>
+## func SanitizeFilename
+
+```go
+func SanitizeFilename(filename string) string
+```
+
+SanitizeFilename removes or replaces invalid characters from a filename.
+
+<a name="URLToFilename"></a>
+## func URLToFilename
+
+```go
+func URLToFilename(urlStr string) string
+```
+
+URLToFilename converts a URL to a valid filename.
+
+<a name="ValidateConfiguration"></a>
+## func ValidateConfiguration
+
+```go
+func ValidateConfiguration(config map[string]any) error
+```
+
+ValidateConfiguration validates the Firecrawl client configuration.
+
+<a name="Config"></a>
+## type Config
+
+Config holds the configuration for the Firecrawl client.
+
+```go
+type Config struct {
+    APIKey        string `json:"api_key"`
+    OperationType string `json:"operation_type"`
+    OutputFormat  string `json:"output_format"`
+    URL           string `json:"url"`
+    Query         string `json:"query"`
+    Limit         *int   `json:"limit,omitempty"`
+}
+```
+
+<a name="FirecrawlClient"></a>
+## type FirecrawlClient
+
+FirecrawlClient represents a client for interacting with the Firecrawl API.
+
+```go
+type FirecrawlClient struct {
+    App           *firecrawl.FirecrawlApp
+    OperationType string
+    OutputFormat  string
+    URL           string
+    Query         string
+    Limit         *int
+}
+```
+
+<a name="InitFirecrawlClient"></a>
+### func InitFirecrawlClient
+
+```go
+func InitFirecrawlClient(_ any, logger *slog.Logger, operation *db.Operation) (*FirecrawlClient, error)
+```
+
+InitFirecrawlClient initializes a Firecrawl client from operation configuration.
+
+<a name="FirecrawlClient.Crawl"></a>
+### func \(\*FirecrawlClient\) Crawl
+
+```go
+func (c *FirecrawlClient) Crawl() (map[string][]byte, error)
+```
+
+Crawl performs a crawl operation on a URL and all its subpages.
+
+<a name="FirecrawlClient.Execute"></a>
+### func \(\*FirecrawlClient\) Execute
+
+```go
+func (c *FirecrawlClient) Execute() (map[string][]byte, error)
+```
+
+Execute runs the configured operation and returns the resulting files.
+
+<a name="FirecrawlClient.Map"></a>
+### func \(\*FirecrawlClient\) Map
+
+```go
+func (c *FirecrawlClient) Map() (map[string][]byte, error)
+```
+
+Map performs a map operation to discover all URLs from a website.
+
+<a name="FirecrawlClient.Scrape"></a>
+### func \(\*FirecrawlClient\) Scrape
+
+```go
+func (c *FirecrawlClient) Scrape() (map[string][]byte, error)
+```
+
+Scrape performs a scrape operation on a single URL.
+
+<a name="FirecrawlClient.Search"></a>
+### func \(\*FirecrawlClient\) Search
+
+```go
+func (c *FirecrawlClient) Search() (map[string][]byte, error)
+```
+
+Search performs a search operation \(note: may not be available in all API versions\).
+
+# config
+
+```go
+import "irmin-connectors/connectors/firecrawl/config"
+```
+
+## Index
+
+- [func GetConnectorInfo\(\) models.ConnectorDetails](<#GetConnectorInfo>)
+- [func GetDetailsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetDetailsFieldDefinitions>)
+- [func GetDetailsFields\(\) \[\]string](<#GetDetailsFields>)
+- [func GetOptionalFields\(\) \[\]string](<#GetOptionalFields>)
+- [func GetRequiredFields\(\) \[\]string](<#GetRequiredFields>)
+- [func GetSettingsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetSettingsFieldDefinitions>)
+- [func GetSettingsFields\(\) \[\]string](<#GetSettingsFields>)
+
+
+<a name="GetConnectorInfo"></a>
+## func GetConnectorInfo
+
+```go
+func GetConnectorInfo() models.ConnectorDetails
+```
+
+GetConnectorInfo returns the default connector information for Firecrawl.
+
+<a name="GetDetailsFieldDefinitions"></a>
+## func GetDetailsFieldDefinitions
+
+```go
+func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
+```
+
+GetDetailsFieldDefinitions returns all detail fields with their metadata.
+
+<a name="GetDetailsFields"></a>
+## func GetDetailsFields
+
+```go
+func GetDetailsFields() []string
+```
+
+GetDetailsFields returns the detail\-specific fields.
+
+<a name="GetOptionalFields"></a>
+## func GetOptionalFields
+
+```go
+func GetOptionalFields() []string
+```
+
+GetOptionalFields returns the optional form fields for Firecrawl.
+
+<a name="GetRequiredFields"></a>
+## func GetRequiredFields
+
+```go
+func GetRequiredFields() []string
+```
+
+GetRequiredFields returns the mandatory form fields for Firecrawl.
+
+<a name="GetSettingsFieldDefinitions"></a>
+## func GetSettingsFieldDefinitions
+
+```go
+func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
+```
+
+GetSettingsFieldDefinitions returns static settings fields.
+
+<a name="GetSettingsFields"></a>
+## func GetSettingsFields
+
+```go
+func GetSettingsFields() []string
+```
+
+GetSettingsFields returns the settings\-specific fields.
+
+# firecrawlcontrollers
+
+```go
+import "irmin-connectors/connectors/firecrawl/controllers"
+```
+
+## Index
+
+- [type Controllers](<#Controllers>)
+  - [func NewControllers\(app \*models.ConnectorsApp\) \*Controllers](<#NewControllers>)
+  - [func \(cs \*Controllers\) BuildDetails\(fields map\[string\]string\) \(map\[string\]string, error\)](<#Controllers.BuildDetails>)
+  - [func \(cs \*Controllers\) BuildSettings\(fields map\[string\]string\) \(map\[string\]string, error\)](<#Controllers.BuildSettings>)
+  - [func \(cs \*Controllers\) ConfigFields\(c fiber.Ctx\) error](<#Controllers.ConfigFields>)
+  - [func \(cs \*Controllers\) ConfigValidate\(c fiber.Ctx\) error](<#Controllers.ConfigValidate>)
+  - [func \(cs \*Controllers\) DetailsPage\(c fiber.Ctx\) error](<#Controllers.DetailsPage>)
+  - [func \(cs \*Controllers\) GetDynamicFields\(\_ fiber.Ctx, key string, \_ map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Controllers.GetDynamicFields>)
+  - [func \(cs \*Controllers\) GetOperationFormFields\(\) \(\[\]string, \[\]string\)](<#Controllers.GetOperationFormFields>)
+  - [func \(cs \*Controllers\) GetRequiredFormFields\(\) \(\[\]string, \[\]string\)](<#Controllers.GetRequiredFormFields>)
+  - [func \(cs \*Controllers\) Info\(c fiber.Ctx\) error](<#Controllers.Info>)
+  - [func \(cs \*Controllers\) OperationCancel\(c fiber.Ctx\) error](<#Controllers.OperationCancel>)
+  - [func \(cs \*Controllers\) OperationInit\(c fiber.Ctx\) error](<#Controllers.OperationInit>)
+  - [func \(cs \*Controllers\) OperationPatch\(c fiber.Ctx\) error](<#Controllers.OperationPatch>)
+  - [func \(cs \*Controllers\) OperationPull\(c fiber.Ctx\) error](<#Controllers.OperationPull>)
+  - [func \(cs \*Controllers\) OperationPush\(c fiber.Ctx\) error](<#Controllers.OperationPush>)
+  - [func \(cs \*Controllers\) OperationSchemaGet\(c fiber.Ctx\) error](<#Controllers.OperationSchemaGet>)
+  - [func \(cs \*Controllers\) OperationStatus\(c fiber.Ctx\) error](<#Controllers.OperationStatus>)
+  - [func \(cs \*Controllers\) SubscribeToChanges\(c fiber.Ctx\) error](<#Controllers.SubscribeToChanges>)
+  - [func \(cs \*Controllers\) TestConnection\(\_ fiber.Ctx, details map\[string\]any, \_ map\[string\]any\) \(bool, bool, bool, \[\]string\)](<#Controllers.TestConnection>)
+  - [func \(cs \*Controllers\) ValidateFields\(\_ fiber.Ctx, details map\[string\]any, \_ map\[string\]any\) \[\]string](<#Controllers.ValidateFields>)
+  - [func \(cs \*Controllers\) ValidateOperationTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateOperationTokenMiddleware>)
+  - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
+- [type FirecrawlPullProvider](<#FirecrawlPullProvider>)
+  - [func \(p \*FirecrawlPullProvider\) GetAllFiles\(c fiber.Ctx, clientAny any\) \(\[\]string, \[\]\[\]byte, error\)](<#FirecrawlPullProvider.GetAllFiles>)
+  - [func \(p \*FirecrawlPullProvider\) GetFileByPath\(c fiber.Ctx, clientAny any, path string\) \(string, \[\]byte, error\)](<#FirecrawlPullProvider.GetFileByPath>)
+  - [func \(p \*FirecrawlPullProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#FirecrawlPullProvider.InitializeClient>)
+- [type FirecrawlSchemaProvider](<#FirecrawlSchemaProvider>)
+  - [func \(p \*FirecrawlSchemaProvider\) GetSchema\(\_ fiber.Ctx, clientAny any, operationType string, \_ \*string\) \(\*irminmodels.ObjectSchema, error\)](<#FirecrawlSchemaProvider.GetSchema>)
+  - [func \(p \*FirecrawlSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#FirecrawlSchemaProvider.GetSupportedOperationTypes>)
+  - [func \(p \*FirecrawlSchemaProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#FirecrawlSchemaProvider.InitializeClient>)
+
+
+<a name="Controllers"></a>
+## type Controllers
+
+Controllers holds the dependencies for the Firecrawl connector controllers.
+
+```go
+type Controllers struct {
+    *common.Controllers
+}
+```
+
+<a name="NewControllers"></a>
+### func NewControllers
+
+```go
+func NewControllers(app *models.ConnectorsApp) *Controllers
+```
+
+NewControllers creates a new instance of controllers with the required dependencies.
+
+<a name="Controllers.BuildDetails"></a>
+### func \(\*Controllers\) BuildDetails
+
+```go
+func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
+```
+
+BuildDetails implements the OperationInitProvider interface.
+
+<a name="Controllers.BuildSettings"></a>
+### func \(\*Controllers\) BuildSettings
+
+```go
+func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
+```
+
+BuildSettings implements the OperationInitProvider interface.
+
+<a name="Controllers.ConfigFields"></a>
+### func \(\*Controllers\) ConfigFields
+
+```go
+func (cs *Controllers) ConfigFields(c fiber.Ctx) error
+```
+
+ConfigFields godoc @Summary Get Firecrawl connector configuration fields @Description Get dynamic configuration fields for the Firecrawl connector based on the configuration key \(details or settings\) @Tags firecrawl @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration key" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /firecrawl/configuration/\{key\}/fields \[post\]
+
+<a name="Controllers.ConfigValidate"></a>
+### func \(\*Controllers\) ConfigValidate
+
+```go
+func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
+```
+
+ConfigValidate godoc @Summary Validate Firecrawl connector configuration @Description Validate Firecrawl configuration by checking the API key and operation parameters @Tags firecrawl @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[api\_key\] formData string true "Firecrawl API key" @Param details\[operation\_type\] formData string true "Operation type \(scrape, crawl, map, search\)" @Param details\[url\] formData string false "Target URL \(required for scrape, crawl, map\)" @Param details\[query\] formData string false "Search query \(required for search\)" @Param details\[output\_format\] formData string false "Output format \(markdown, html, json\)" @Param details\[limit\] formData integer false "Maximum pages/results limit" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /firecrawl/configuration/validate \[post\]
+
+<a name="Controllers.DetailsPage"></a>
+### func \(\*Controllers\) DetailsPage
+
+```go
+func (cs *Controllers) DetailsPage(c fiber.Ctx) error
+```
+
+DetailsPage godoc @Summary Get Firecrawl connector details page @Description Returns an HTML page with information about the Firecrawl connector @Tags firecrawl @Produce html @Success 200 \{string\} string "HTML page with connector details" @Failure 500 \{string\} string "Internal server error" @Router /firecrawl/details \[get\]
+
+<a name="Controllers.GetDynamicFields"></a>
+### func \(\*Controllers\) GetDynamicFields
+
+```go
+func (cs *Controllers) GetDynamicFields(_ fiber.Ctx, key string, _ map[string]string) (map[string]irminmodels.DynamicField, error)
+```
+
+GetDynamicFields implements the ConfigFieldProvider interface.
+
+<a name="Controllers.GetOperationFormFields"></a>
+### func \(\*Controllers\) GetOperationFormFields
+
+```go
+func (cs *Controllers) GetOperationFormFields() ([]string, []string)
+```
+
+GetOperationFormFields implements the OperationInitProvider interface.
+
+<a name="Controllers.GetRequiredFormFields"></a>
+### func \(\*Controllers\) GetRequiredFormFields
+
+```go
+func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
+```
+
+GetRequiredFormFields implements the ConfigValidationProvider interface.
+
+<a name="Controllers.Info"></a>
+### func \(\*Controllers\) Info
+
+```go
+func (cs *Controllers) Info(c fiber.Ctx) error
+```
+
+Info godoc @Summary Get Firecrawl connector information @Description Get detailed information about the Firecrawl connector including capabilities, configuration fields, and API endpoints @Tags firecrawl @Security SystemTokenAuth @Accept json @Produce json @Success 200 \{object\} models.ConnectorDetails "Firecrawl connector information retrieved successfully" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /firecrawl/info \[get\]
+
+<a name="Controllers.OperationCancel"></a>
+### func \(\*Controllers\) OperationCancel
+
+```go
+func (cs *Controllers) OperationCancel(c fiber.Ctx) error
+```
+
+OperationCancel godoc @Summary Cancel Firecrawl operation @Description Cancel an ongoing Firecrawl operation using the operation token @Tags firecrawl @Security SystemTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} fiber.Map "Operation cancelled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /firecrawl/operation/cancel \[post\]
+
+<a name="Controllers.OperationInit"></a>
+### func \(\*Controllers\) OperationInit
+
+```go
+func (cs *Controllers) OperationInit(c fiber.Ctx) error
+```
+
+OperationInit godoc @Summary Initialize Firecrawl operation @Description Initialize a new Firecrawl operation with connection details and settings, returning an operation token for subsequent requests @Tags firecrawl @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[api\_key\] formData string true "Firecrawl API key" @Param details\[operation\_type\] formData string true "Operation type \(scrape, crawl, map, search\)" @Param details\[url\] formData string false "Target URL \(required for scrape, crawl, map\)" @Param details\[query\] formData string false "Search query \(required for search\)" @Param details\[output\_format\] formData string false "Output format \(markdown, html, json\)" @Param details\[limit\] formData integer false "Maximum pages/results limit" @Success 200 \{object\} fiber.Map "Operation initialized successfully with operation token" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /firecrawl/operation/init \[post\]
+
+<a name="Controllers.OperationPatch"></a>
+### func \(\*Controllers\) OperationPatch
+
+```go
+func (cs *Controllers) OperationPatch(c fiber.Ctx) error
+```
+
+OperationPatch godoc @Summary Firecrawl connector does not support patch operations @Description Firecrawl connector does not support patch operations \- it is read\-only @Tags firecrawl @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 501 \{object\} fiber.Map "Not implemented \- Firecrawl connector does not support patch operations" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /firecrawl/operation/patch \[post\]
+
+<a name="Controllers.OperationPull"></a>
+### func \(\*Controllers\) OperationPull
+
+```go
+func (cs *Controllers) OperationPull(c fiber.Ctx) error
+```
+
+OperationPull godoc @Summary Pull data from Firecrawl @Description Execute the configured Firecrawl operation \(scrape, crawl, map, or search\) and return the results as files. @Tags firecrawl @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param path formData string false "Optional URL to scrape \(overrides configured URL for single\-page scraping\)" @Success 200 \{object\} fiber.Map "Data pulled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /firecrawl/operation/pull \[post\]
+
+<a name="Controllers.OperationPush"></a>
+### func \(\*Controllers\) OperationPush
+
+```go
+func (cs *Controllers) OperationPush(c fiber.Ctx) error
+```
+
+OperationPush godoc @Summary Firecrawl connector does not support push operations @Description Firecrawl connector does not support push operations \- it is read\-only @Tags firecrawl @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 501 \{object\} fiber.Map "Not implemented \- Firecrawl connector does not support push operations" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /firecrawl/operation/push \[post\]
+
+<a name="Controllers.OperationSchemaGet"></a>
+### func \(\*Controllers\) OperationSchemaGet
+
+```go
+func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
+```
+
+OperationSchemaGet godoc @Summary Get Firecrawl operation schema @Description Get the response schema for Firecrawl operations, returning an Irmin\-compatible ObjectSchema based on the configured operation type and output format @Tags firecrawl @Security OperationTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull\) @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /firecrawl/operation/schema/\{operation\} \[post\]
+
+<a name="Controllers.OperationStatus"></a>
+### func \(\*Controllers\) OperationStatus
+
+```go
+func (cs *Controllers) OperationStatus(c fiber.Ctx) error
+```
+
+OperationStatus godoc @Summary Get Firecrawl operation status @Description Get the current status of a Firecrawl operation using the operation token @Tags firecrawl @Security SystemTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} common.OperationStatus "Operation status retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /firecrawl/operation/status \[post\]
+
+<a name="Controllers.SubscribeToChanges"></a>
+### func \(\*Controllers\) SubscribeToChanges
+
+```go
+func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
+```
+
+SubscribeToChanges godoc @Summary Firecrawl connector does not support webhook subscriptions @Description Firecrawl connector does not support webhook subscriptions @Tags firecrawl @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 501 \{object\} fiber.Map "Not implemented \- Firecrawl connector does not support webhook subscriptions" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /firecrawl/operation/subscribe \[post\]
+
+<a name="Controllers.TestConnection"></a>
+### func \(\*Controllers\) TestConnection
+
+```go
+func (cs *Controllers) TestConnection(_ fiber.Ctx, details map[string]any, _ map[string]any) (bool, bool, bool, []string)
+```
+
+TestConnection implements the ConfigValidationProvider interface. For Firecrawl, we validate the configuration but don't make an actual API call since that would consume credits.
+
+<a name="Controllers.ValidateFields"></a>
+### func \(\*Controllers\) ValidateFields
+
+```go
+func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
+```
+
+ValidateFields implements the ConfigValidationProvider interface.
+
+<a name="Controllers.ValidateOperationTokenMiddleware"></a>
+### func \(\*Controllers\) ValidateOperationTokenMiddleware
+
+```go
+func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error
+```
+
+ValidateOperationTokenMiddleware validates the operation token.
+
+<a name="Controllers.ValidateSystemTokenMiddleware"></a>
+### func \(\*Controllers\) ValidateSystemTokenMiddleware
+
+```go
+func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
+```
+
+ValidateSystemTokenMiddleware validates the system token.
+
+<a name="FirecrawlPullProvider"></a>
+## type FirecrawlPullProvider
+
+FirecrawlPullProvider implements the PullOperationProvider interface for Firecrawl.
+
+```go
+type FirecrawlPullProvider struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="FirecrawlPullProvider.GetAllFiles"></a>
+### func \(\*FirecrawlPullProvider\) GetAllFiles
+
+```go
+func (p *FirecrawlPullProvider) GetAllFiles(c fiber.Ctx, clientAny any) ([]string, [][]byte, error)
+```
+
+GetAllFiles executes the configured Firecrawl operation and returns the results as files.
+
+<a name="FirecrawlPullProvider.GetFileByPath"></a>
+### func \(\*FirecrawlPullProvider\) GetFileByPath
+
+```go
+func (p *FirecrawlPullProvider) GetFileByPath(c fiber.Ctx, clientAny any, path string) (string, []byte, error)
+```
+
+GetFileByPath retrieves a specific file by path. For Firecrawl, this is treated as a new URL to scrape.
+
+<a name="FirecrawlPullProvider.InitializeClient"></a>
+### func \(\*FirecrawlPullProvider\) InitializeClient
+
+```go
+func (p *FirecrawlPullProvider) InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
+```
+
+InitializeClient initializes the Firecrawl client for pull operations.
+
+<a name="FirecrawlSchemaProvider"></a>
+## type FirecrawlSchemaProvider
+
+FirecrawlSchemaProvider implements the SchemaOperationProvider interface for Firecrawl.
+
+```go
+type FirecrawlSchemaProvider struct {
+    APIBaseURL string
+    APIToken   string
+}
+```
+
+<a name="FirecrawlSchemaProvider.GetSchema"></a>
+### func \(\*FirecrawlSchemaProvider\) GetSchema
+
+```go
+func (p *FirecrawlSchemaProvider) GetSchema(_ fiber.Ctx, clientAny any, operationType string, _ *string) (*irminmodels.ObjectSchema, error)
+```
+
+GetSchema retrieves a schema based on the Firecrawl operation type. For Firecrawl, the schema is relatively simple since output is always markdown, HTML, or JSON.
+
+<a name="FirecrawlSchemaProvider.GetSupportedOperationTypes"></a>
+### func \(\*FirecrawlSchemaProvider\) GetSupportedOperationTypes
+
+```go
+func (p *FirecrawlSchemaProvider) GetSupportedOperationTypes() []string
+```
+
+GetSupportedOperationTypes returns the list of supported operation types for Firecrawl.
+
+<a name="FirecrawlSchemaProvider.InitializeClient"></a>
+### func \(\*FirecrawlSchemaProvider\) InitializeClient
+
+```go
+func (p *FirecrawlSchemaProvider) InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
+```
+
+InitializeClient initializes the Firecrawl client for schema operations.
 
 # client
 

@@ -6,6 +6,7 @@ import (
 	"irmin-connectors/db"
 	"log/slog"
 	"slices"
+	"strings"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
@@ -185,8 +186,10 @@ func joinStrings(strs []string, sep string) string {
 	}
 
 	result := strs[0]
+	var sb strings.Builder
 	for i := 1; i < len(strs); i++ {
-		result += sep + strs[i]
+		sb.WriteString(sep + strs[i])
 	}
+	result += sb.String()
 	return result
 }

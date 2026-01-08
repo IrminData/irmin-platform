@@ -716,6 +716,457 @@ info:
   title: Irmin Connectors
   version: 1.0.0
 paths:
+  /firecrawl/configuration/{key}/fields:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Get dynamic configuration fields for the Firecrawl connector based
+        on the configuration key (details or settings)
+      parameters:
+      - description: Configuration key
+        enum:
+        - details
+        - settings
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration fields retrieved successfully
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/irminmodels.DynamicField'
+            type: object
+        "400":
+          description: Bad request - invalid configuration key
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get Firecrawl connector configuration fields
+      tags:
+      - firecrawl
+  /firecrawl/configuration/validate:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Validate Firecrawl configuration by checking the API key and operation
+        parameters
+      parameters:
+      - description: Firecrawl API key
+        in: formData
+        name: details[api_key]
+        required: true
+        type: string
+      - description: Operation type (scrape, crawl, map, search)
+        in: formData
+        name: details[operation_type]
+        required: true
+        type: string
+      - description: Target URL (required for scrape, crawl, map)
+        in: formData
+        name: details[url]
+        type: string
+      - description: Search query (required for search)
+        in: formData
+        name: details[query]
+        type: string
+      - description: Output format (markdown, html, json)
+        in: formData
+        name: details[output_format]
+        type: string
+      - description: Maximum pages/results limit
+        in: formData
+        name: details[limit]
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration validation result
+          schema:
+            $ref: '#/definitions/irminmodels.ConnectorConfigurationValidationResult'
+        "400":
+          description: Bad request - invalid configuration data
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Validate Firecrawl connector configuration
+      tags:
+      - firecrawl
+  /firecrawl/details:
+    get:
+      description: Returns an HTML page with information about the Firecrawl connector
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML page with connector details
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get Firecrawl connector details page
+      tags:
+      - firecrawl
+  /firecrawl/info:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about the Firecrawl connector including
+        capabilities, configuration fields, and API endpoints
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Firecrawl connector information retrieved successfully
+          schema:
+            $ref: '#/definitions/models.ConnectorDetails'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get Firecrawl connector information
+      tags:
+      - firecrawl
+  /firecrawl/operation/cancel:
+    post:
+      consumes:
+      - application/json
+      description: Cancel an ongoing Firecrawl operation using the operation token
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation cancelled successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Cancel Firecrawl operation
+      tags:
+      - firecrawl
+  /firecrawl/operation/init:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Initialize a new Firecrawl operation with connection details and
+        settings, returning an operation token for subsequent requests
+      parameters:
+      - description: Firecrawl API key
+        in: formData
+        name: details[api_key]
+        required: true
+        type: string
+      - description: Operation type (scrape, crawl, map, search)
+        in: formData
+        name: details[operation_type]
+        required: true
+        type: string
+      - description: Target URL (required for scrape, crawl, map)
+        in: formData
+        name: details[url]
+        type: string
+      - description: Search query (required for search)
+        in: formData
+        name: details[query]
+        type: string
+      - description: Output format (markdown, html, json)
+        in: formData
+        name: details[output_format]
+        type: string
+      - description: Maximum pages/results limit
+        in: formData
+        name: details[limit]
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation initialized successfully with operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation data
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Initialize Firecrawl operation
+      tags:
+      - firecrawl
+  /firecrawl/operation/patch:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Firecrawl connector does not support patch operations - it is read-only
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "501":
+          description: Not implemented - Firecrawl connector does not support patch
+            operations
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Firecrawl connector does not support patch operations
+      tags:
+      - firecrawl
+  /firecrawl/operation/pull:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Execute the configured Firecrawl operation (scrape, crawl, map,
+        or search) and return the results as files.
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: Optional URL to scrape (overrides configured URL for single-page
+          scraping)
+        in: formData
+        name: path
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data pulled successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Pull data from Firecrawl
+      tags:
+      - firecrawl
+  /firecrawl/operation/push:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Firecrawl connector does not support push operations - it is read-only
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "501":
+          description: Not implemented - Firecrawl connector does not support push
+            operations
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Firecrawl connector does not support push operations
+      tags:
+      - firecrawl
+  /firecrawl/operation/schema/{operation}:
+    post:
+      consumes:
+      - application/json
+      description: Get the response schema for Firecrawl operations, returning an
+        Irmin-compatible ObjectSchema based on the configured operation type and output
+        format
+      parameters:
+      - description: Operation type
+        enum:
+        - pull
+        in: path
+        name: operation
+        required: true
+        type: string
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation schema retrieved successfully
+          schema:
+            $ref: '#/definitions/irminmodels.ObjectSchema'
+        "400":
+          description: Bad request - invalid operation type or token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Get Firecrawl operation schema
+      tags:
+      - firecrawl
+  /firecrawl/operation/status:
+    post:
+      consumes:
+      - application/json
+      description: Get the current status of a Firecrawl operation using the operation
+        token
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation status retrieved successfully
+          schema:
+            $ref: '#/definitions/common.OperationStatus'
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get Firecrawl operation status
+      tags:
+      - firecrawl
+  /firecrawl/operation/subscribe:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Firecrawl connector does not support webhook subscriptions
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "501":
+          description: Not implemented - Firecrawl connector does not support webhook
+            subscriptions
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Firecrawl connector does not support webhook subscriptions
+      tags:
+      - firecrawl
   /http/configuration/{key}/fields:
     post:
       consumes:

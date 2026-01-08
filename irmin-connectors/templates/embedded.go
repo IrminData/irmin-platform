@@ -16,5 +16,8 @@ var PostgresDetailsHTML []byte
 //go:embed connector-details/sftp.html
 var SFTPDetailsHTML []byte
 
+//go:embed connector-details/firecrawl.html
+var FirecrawlDetailsHTML []byte
+
 //go:embed swagger/swagger-ui.html
 var SwaggerUIHTML []byte

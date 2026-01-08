@@ -3,6 +3,7 @@ package connectors
 import (
 	"context"
 	"encoding/json"
+	firecrawlconnector "irmin-connectors/connectors/firecrawl"
 	httpconnector "irmin-connectors/connectors/http"
 	mysqlconnector "irmin-connectors/connectors/mysql"
 	postgresconnector "irmin-connectors/connectors/postgres"
@@ -19,6 +20,7 @@ func SetupConnectorRoutes(app *models.ConnectorsApp) {
 	mysqlconnector.SetupRoutes(app)
 	sftpconnector.SetupRoutes(app)
 	httpconnector.SetupRoutes(app)
+	firecrawlconnector.SetupRoutes(app)
 	// ... Add new connectors here ...
 }
 
@@ -63,6 +65,7 @@ func RegisterAllConnectors(
 		{"MySQL", "mysql"},
 		{"SFTP", "sftp"},
 		{"HTTP", "http"},
+		{"Firecrawl", "firecrawl"},
 		// ... Add new connectors here ...
 	}
 
