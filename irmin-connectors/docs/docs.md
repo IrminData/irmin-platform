@@ -874,6 +874,12 @@ var HTTPDetailsHTML []byte
 var MySQLDetailsHTML []byte
 ```
 
+<a name="PineconeDetailsHTML"></a>
+
+```go
+var PineconeDetailsHTML []byte
+```
+
 <a name="PostgresDetailsHTML"></a>
 
 ```go
@@ -2095,6 +2101,26 @@ func StartListener(ctx context.Context, logger *slog.Logger, subscription db.Sub
 ```
 
 StartListener starts the MySQL change listener for a subscription.
+
+# pineconeconnector
+
+```go
+import "irmin-connectors/connectors/pinecone"
+```
+
+## Index
+
+- [func SetupRoutes\(app \*models.ConnectorsApp\)](<#SetupRoutes>)
+
+
+<a name="SetupRoutes"></a>
+## func SetupRoutes
+
+```go
+func SetupRoutes(app *models.ConnectorsApp)
+```
+
+SetupRoutes sets up the routes for the Pinecone connector.
 
 # postgresconnector
 
@@ -5109,6 +5135,660 @@ NewConnectionDetailsFromMap creates a ConnectionDetails from a map\[string\]any.
 ```go
 type ConnectionSettings struct {
     Database string `json:"database"`
+}
+```
+
+<a name="NewConnectionSettingsFromMap"></a>
+### func NewConnectionSettingsFromMap
+
+```go
+func NewConnectionSettingsFromMap(settings map[string]any) (*ConnectionSettings, error)
+```
+
+NewConnectionSettingsFromMap creates a ConnectionSettings from a map\[string\]any.
+
+# client
+
+```go
+import "irmin-connectors/connectors/pinecone/client"
+```
+
+## Index
+
+- [Constants](<#constants>)
+- [func ValidateConnection\(apiKey, host, namespace string\) error](<#ValidateConnection>)
+- [type EmbeddingRecord](<#EmbeddingRecord>)
+- [type PineconeClient](<#PineconeClient>)
+  - [func InitPineconeClient\(\_ any, logger \*slog.Logger, operation \*db.Operation\) \(\*PineconeClient, \*string, error\)](<#InitPineconeClient>)
+  - [func \(c \*PineconeClient\) Close\(\) error](<#PineconeClient.Close>)
+  - [func \(c \*PineconeClient\) FetchAll\(ctx context.Context\) \(\[\]EmbeddingRecord, error\)](<#PineconeClient.FetchAll>)
+  - [func \(c \*PineconeClient\) Search\(ctx context.Context, queryVector \[\]float32, topK int\) \(\*SearchResponse, error\)](<#PineconeClient.Search>)
+  - [func \(c \*PineconeClient\) Upsert\(ctx context.Context, records \[\]EmbeddingRecord\) error](<#PineconeClient.Upsert>)
+- [type SearchResponse](<#SearchResponse>)
+- [type SearchResult](<#SearchResult>)
+
+
+## Constants
+
+<a name="UpsertBatchSize"></a>
+
+```go
+const (
+    // UpsertBatchSize is the maximum number of vectors to upsert in a single batch.
+    UpsertBatchSize = 100
+    // FetchBatchSize is the maximum number of vectors to fetch in a single batch.
+    FetchBatchSize = 1000
+    // DefaultTopK is the default number of results for search queries.
+    DefaultTopK = 10
+    // MaxTopK is the maximum allowed value for topK parameter (Pinecone API limit).
+    MaxTopK = 10000
+)
+```
+
+<a name="ValidateConnection"></a>
+## func ValidateConnection
+
+```go
+func ValidateConnection(apiKey, host, namespace string) error
+```
+
+ValidateConnection tests the connection to Pinecone.
+
+<a name="EmbeddingRecord"></a>
+## type EmbeddingRecord
+
+EmbeddingRecord represents the Irmin embedding format.
+
+```go
+type EmbeddingRecord struct {
+    ID         string            `json:"id"`
+    SourceFile string            `json:"source_file"`
+    ChunkIndex int               `json:"chunk_index"`
+    Content    string            `json:"content"`
+    Embedding  []float32         `json:"embedding"`
+    Metadata   map[string]string `json:"metadata"`
+    CreatedAt  time.Time         `json:"created_at"`
+}
+```
+
+<a name="PineconeClient"></a>
+## type PineconeClient
+
+PineconeClient wraps the Pinecone SDK client for connector operations.
+
+```go
+type PineconeClient struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="InitPineconeClient"></a>
+### func InitPineconeClient
+
+```go
+func InitPineconeClient(_ any, logger *slog.Logger, operation *db.Operation) (*PineconeClient, *string, error)
+```
+
+InitPineconeClient initializes a Pinecone client from operation configuration.
+
+<a name="PineconeClient.Close"></a>
+### func \(\*PineconeClient\) Close
+
+```go
+func (c *PineconeClient) Close() error
+```
+
+Close releases resources held by the client.
+
+<a name="PineconeClient.FetchAll"></a>
+### func \(\*PineconeClient\) FetchAll
+
+```go
+func (c *PineconeClient) FetchAll(ctx context.Context) ([]EmbeddingRecord, error)
+```
+
+FetchAll fetches all vectors from the index/namespace.
+
+<a name="PineconeClient.Search"></a>
+### func \(\*PineconeClient\) Search
+
+```go
+func (c *PineconeClient) Search(ctx context.Context, queryVector []float32, topK int) (*SearchResponse, error)
+```
+
+Search performs a similarity search using a query vector.
+
+<a name="PineconeClient.Upsert"></a>
+### func \(\*PineconeClient\) Upsert
+
+```go
+func (c *PineconeClient) Upsert(ctx context.Context, records []EmbeddingRecord) error
+```
+
+Upsert inserts or updates vectors in the Pinecone index.
+
+<a name="SearchResponse"></a>
+## type SearchResponse
+
+SearchResponse represents the response from a search query.
+
+```go
+type SearchResponse struct {
+    Query   string         `json:"query"`
+    Matches []SearchResult `json:"matches"`
+}
+```
+
+<a name="SearchResult"></a>
+## type SearchResult
+
+SearchResult represents a single search match from Pinecone.
+
+```go
+type SearchResult struct {
+    ID       string            `json:"id"`
+    Score    float32           `json:"score"`
+    Metadata map[string]string `json:"metadata,omitempty"`
+}
+```
+
+# config
+
+```go
+import "irmin-connectors/connectors/pinecone/config"
+```
+
+## Index
+
+- [func GetConnectorInfo\(\) models.ConnectorDetails](<#GetConnectorInfo>)
+- [func GetDetailsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetDetailsFieldDefinitions>)
+- [func GetDetailsFields\(\) \[\]string](<#GetDetailsFields>)
+- [func GetOptionalFields\(\) \[\]string](<#GetOptionalFields>)
+- [func GetRequiredFields\(\) \[\]string](<#GetRequiredFields>)
+- [func GetSettingsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetSettingsFieldDefinitions>)
+- [func GetSettingsFields\(\) \[\]string](<#GetSettingsFields>)
+
+
+<a name="GetConnectorInfo"></a>
+## func GetConnectorInfo
+
+```go
+func GetConnectorInfo() models.ConnectorDetails
+```
+
+GetConnectorInfo returns the default connector information for Pinecone.
+
+<a name="GetDetailsFieldDefinitions"></a>
+## func GetDetailsFieldDefinitions
+
+```go
+func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
+```
+
+GetDetailsFieldDefinitions returns all detail fields with their metadata.
+
+<a name="GetDetailsFields"></a>
+## func GetDetailsFields
+
+```go
+func GetDetailsFields() []string
+```
+
+GetDetailsFields returns the detail\-specific fields.
+
+<a name="GetOptionalFields"></a>
+## func GetOptionalFields
+
+```go
+func GetOptionalFields() []string
+```
+
+GetOptionalFields returns the optional form fields for Pinecone.
+
+<a name="GetRequiredFields"></a>
+## func GetRequiredFields
+
+```go
+func GetRequiredFields() []string
+```
+
+GetRequiredFields returns the mandatory form fields for Pinecone.
+
+<a name="GetSettingsFieldDefinitions"></a>
+## func GetSettingsFieldDefinitions
+
+```go
+func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
+```
+
+GetSettingsFieldDefinitions returns settings fields.
+
+<a name="GetSettingsFields"></a>
+## func GetSettingsFields
+
+```go
+func GetSettingsFields() []string
+```
+
+GetSettingsFields returns the settings\-specific fields.
+
+# pineconecontrollers
+
+```go
+import "irmin-connectors/connectors/pinecone/controllers"
+```
+
+## Index
+
+- [type Controllers](<#Controllers>)
+  - [func NewControllers\(app \*models.ConnectorsApp\) \*Controllers](<#NewControllers>)
+  - [func \(cs \*Controllers\) BuildDetails\(fields map\[string\]string\) \(map\[string\]string, error\)](<#Controllers.BuildDetails>)
+  - [func \(cs \*Controllers\) BuildSettings\(fields map\[string\]string\) \(map\[string\]string, error\)](<#Controllers.BuildSettings>)
+  - [func \(cs \*Controllers\) ConfigFields\(c fiber.Ctx\) error](<#Controllers.ConfigFields>)
+  - [func \(cs \*Controllers\) ConfigValidate\(c fiber.Ctx\) error](<#Controllers.ConfigValidate>)
+  - [func \(cs \*Controllers\) DetailsPage\(c fiber.Ctx\) error](<#Controllers.DetailsPage>)
+  - [func \(cs \*Controllers\) GetDynamicFields\(\_ fiber.Ctx, key string, \_ map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Controllers.GetDynamicFields>)
+  - [func \(cs \*Controllers\) GetOperationFormFields\(\) \(\[\]string, \[\]string\)](<#Controllers.GetOperationFormFields>)
+  - [func \(cs \*Controllers\) GetRequiredFormFields\(\) \(\[\]string, \[\]string\)](<#Controllers.GetRequiredFormFields>)
+  - [func \(cs \*Controllers\) Info\(c fiber.Ctx\) error](<#Controllers.Info>)
+  - [func \(cs \*Controllers\) OperationCancel\(c fiber.Ctx\) error](<#Controllers.OperationCancel>)
+  - [func \(cs \*Controllers\) OperationInit\(c fiber.Ctx\) error](<#Controllers.OperationInit>)
+  - [func \(cs \*Controllers\) OperationPatch\(c fiber.Ctx\) error](<#Controllers.OperationPatch>)
+  - [func \(cs \*Controllers\) OperationPull\(c fiber.Ctx\) error](<#Controllers.OperationPull>)
+  - [func \(cs \*Controllers\) OperationPush\(c fiber.Ctx\) error](<#Controllers.OperationPush>)
+  - [func \(cs \*Controllers\) OperationSchemaGet\(c fiber.Ctx\) error](<#Controllers.OperationSchemaGet>)
+  - [func \(cs \*Controllers\) OperationStatus\(c fiber.Ctx\) error](<#Controllers.OperationStatus>)
+  - [func \(cs \*Controllers\) SubscribeToChanges\(c fiber.Ctx\) error](<#Controllers.SubscribeToChanges>)
+  - [func \(cs \*Controllers\) TestConnection\(\_ fiber.Ctx, details map\[string\]any, settings map\[string\]any\) \(bool, bool, bool, \[\]string\)](<#Controllers.TestConnection>)
+  - [func \(cs \*Controllers\) ValidateFields\(\_ fiber.Ctx, details map\[string\]any, \_ map\[string\]any\) \[\]string](<#Controllers.ValidateFields>)
+  - [func \(cs \*Controllers\) ValidateOperationTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateOperationTokenMiddleware>)
+  - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
+- [type ParquetEmbedding](<#ParquetEmbedding>)
+- [type PineconePullProvider](<#PineconePullProvider>)
+  - [func \(p \*PineconePullProvider\) GetAllFiles\(c fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#PineconePullProvider.GetAllFiles>)
+  - [func \(p \*PineconePullProvider\) GetFileByPath\(c fiber.Ctx, client any, rawPath string\) \(string, \[\]byte, error\)](<#PineconePullProvider.GetFileByPath>)
+  - [func \(p \*PineconePullProvider\) InitializeClient\(\_ fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#PineconePullProvider.InitializeClient>)
+- [type PineconePushProvider](<#PineconePushProvider>)
+  - [func \(p \*PineconePushProvider\) InitializeClient\(\_ fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#PineconePushProvider.InitializeClient>)
+  - [func \(p \*PineconePushProvider\) ProcessFiles\(c fiber.Ctx, client any, files map\[string\]\[\]byte, \_ string\) error](<#PineconePushProvider.ProcessFiles>)
+- [type PineconeSchemaProvider](<#PineconeSchemaProvider>)
+  - [func \(p \*PineconeSchemaProvider\) GetSchema\(\_ fiber.Ctx, \_ any, operationType string, namespace \*string\) \(\*irminmodels.ObjectSchema, error\)](<#PineconeSchemaProvider.GetSchema>)
+  - [func \(p \*PineconeSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#PineconeSchemaProvider.GetSupportedOperationTypes>)
+  - [func \(p \*PineconeSchemaProvider\) InitializeClient\(\_ fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#PineconeSchemaProvider.InitializeClient>)
+
+
+<a name="Controllers"></a>
+## type Controllers
+
+Controllers holds the dependencies for the Pinecone connector controllers.
+
+```go
+type Controllers struct {
+    *common.Controllers
+}
+```
+
+<a name="NewControllers"></a>
+### func NewControllers
+
+```go
+func NewControllers(app *models.ConnectorsApp) *Controllers
+```
+
+NewControllers creates a new instance of controllers with the required dependencies.
+
+<a name="Controllers.BuildDetails"></a>
+### func \(\*Controllers\) BuildDetails
+
+```go
+func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
+```
+
+BuildDetails implements the OperationInitProvider interface.
+
+<a name="Controllers.BuildSettings"></a>
+### func \(\*Controllers\) BuildSettings
+
+```go
+func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
+```
+
+BuildSettings implements the OperationInitProvider interface.
+
+<a name="Controllers.ConfigFields"></a>
+### func \(\*Controllers\) ConfigFields
+
+```go
+func (cs *Controllers) ConfigFields(c fiber.Ctx) error
+```
+
+ConfigFields godoc @Summary Get Pinecone connector configuration fields @Description Get dynamic configuration fields for the Pinecone connector based on the configuration key \(details or settings\) @Tags pinecone @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration key" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/configuration/\{key\}/fields \[post\]
+
+<a name="Controllers.ConfigValidate"></a>
+### func \(\*Controllers\) ConfigValidate
+
+```go
+func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
+```
+
+ConfigValidate godoc @Summary Validate Pinecone connector configuration @Description Validate Pinecone connection details and settings by testing the actual connection to the Pinecone index @Tags pinecone @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[api\_key\] formData string true "Pinecone API key" @Param settings\[host\] formData string true "Pinecone index host URL" @Param settings\[namespace\] formData string false "Target namespace within the index" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/configuration/validate \[post\]
+
+<a name="Controllers.DetailsPage"></a>
+### func \(\*Controllers\) DetailsPage
+
+```go
+func (cs *Controllers) DetailsPage(c fiber.Ctx) error
+```
+
+DetailsPage godoc @Summary Get Pinecone connector details page @Description Get an HTML page with detailed information about the Pinecone connector including capabilities, authentication methods, and usage examples @Tags pinecone @Accept json @Produce text/html @Success 200 \{string\} string "Pinecone connector details page" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/details \[get\]
+
+<a name="Controllers.GetDynamicFields"></a>
+### func \(\*Controllers\) GetDynamicFields
+
+```go
+func (cs *Controllers) GetDynamicFields(_ fiber.Ctx, key string, _ map[string]string) (map[string]irminmodels.DynamicField, error)
+```
+
+GetDynamicFields implements the ConfigFieldProvider interface.
+
+<a name="Controllers.GetOperationFormFields"></a>
+### func \(\*Controllers\) GetOperationFormFields
+
+```go
+func (cs *Controllers) GetOperationFormFields() ([]string, []string)
+```
+
+GetOperationFormFields implements the OperationInitProvider interface.
+
+<a name="Controllers.GetRequiredFormFields"></a>
+### func \(\*Controllers\) GetRequiredFormFields
+
+```go
+func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
+```
+
+GetRequiredFormFields implements the ConfigValidationProvider interface.
+
+<a name="Controllers.Info"></a>
+### func \(\*Controllers\) Info
+
+```go
+func (cs *Controllers) Info(c fiber.Ctx) error
+```
+
+Info godoc @Summary Get Pinecone connector information @Description Get detailed information about the Pinecone connector including capabilities, configuration fields, and API endpoints @Tags pinecone @Security SystemTokenAuth @Accept json @Produce json @Success 200 \{object\} models.ConnectorDetails "Pinecone connector information retrieved successfully" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/info \[get\]
+
+<a name="Controllers.OperationCancel"></a>
+### func \(\*Controllers\) OperationCancel
+
+```go
+func (cs *Controllers) OperationCancel(c fiber.Ctx) error
+```
+
+OperationCancel godoc @Summary Cancel Pinecone operation @Description Cancel an ongoing Pinecone operation using the operation token @Tags pinecone @Security SystemTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} fiber.Map "Operation cancelled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/operation/cancel \[post\]
+
+<a name="Controllers.OperationInit"></a>
+### func \(\*Controllers\) OperationInit
+
+```go
+func (cs *Controllers) OperationInit(c fiber.Ctx) error
+```
+
+OperationInit godoc @Summary Initialize Pinecone operation @Description Initialize a new Pinecone operation with connection details and settings, returning an operation token for subsequent requests @Tags pinecone @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[api\_key\] formData string true "Pinecone API key" @Param settings\[host\] formData string true "Pinecone index host URL" @Param settings\[namespace\] formData string false "Target namespace within the index" @Success 200 \{object\} fiber.Map "Operation initialized successfully with operation token" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/operation/init \[post\]
+
+<a name="Controllers.OperationPatch"></a>
+### func \(\*Controllers\) OperationPatch
+
+```go
+func (cs *Controllers) OperationPatch(c fiber.Ctx) error
+```
+
+OperationPatch is not supported by Pinecone connector.
+
+<a name="Controllers.OperationPull"></a>
+### func \(\*Controllers\) OperationPull
+
+```go
+func (cs *Controllers) OperationPull(c fiber.Ctx) error
+```
+
+OperationPull godoc @Summary Pull data from Pinecone @Description Pull vectors from Pinecone. If path is provided, performs a semantic search and returns JSON results. If path is empty, exports all vectors as a parquet file. @Tags pinecone @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param path formData string false "Query vector as JSON array for search, or empty for full export" @Success 200 \{object\} fiber.Map "Data pulled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/operation/pull \[post\]
+
+<a name="Controllers.OperationPush"></a>
+### func \(\*Controllers\) OperationPush
+
+```go
+func (cs *Controllers) OperationPush(c fiber.Ctx) error
+```
+
+OperationPush godoc @Summary Push data to Pinecone @Description Push embedding vectors from parquet files to Pinecone index @Tags pinecone @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param file formData file true "ZIP file containing parquet embedding files" @Param path formData string false "Target path \(not used for Pinecone\)" @Success 200 \{object\} fiber.Map "Data pushed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/operation/push \[post\]
+
+<a name="Controllers.OperationSchemaGet"></a>
+### func \(\*Controllers\) OperationSchemaGet
+
+```go
+func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
+```
+
+OperationSchemaGet godoc @Summary Get Pinecone operation schema @Description Get the schema for Pinecone operations, returning an Irmin\-compatible ObjectSchema @Tags pinecone @Security OperationTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/operation/schema/\{operation\} \[post\]
+
+<a name="Controllers.OperationStatus"></a>
+### func \(\*Controllers\) OperationStatus
+
+```go
+func (cs *Controllers) OperationStatus(c fiber.Ctx) error
+```
+
+OperationStatus godoc @Summary Get Pinecone operation status @Description Get the current status of a Pinecone operation using the operation token @Tags pinecone @Security SystemTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} common.OperationStatus "Operation status retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/operation/status \[post\]
+
+<a name="Controllers.SubscribeToChanges"></a>
+### func \(\*Controllers\) SubscribeToChanges
+
+```go
+func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
+```
+
+SubscribeToChanges is not supported by Pinecone connector.
+
+<a name="Controllers.TestConnection"></a>
+### func \(\*Controllers\) TestConnection
+
+```go
+func (cs *Controllers) TestConnection(_ fiber.Ctx, details map[string]any, settings map[string]any) (bool, bool, bool, []string)
+```
+
+TestConnection implements the ConfigValidationProvider interface.
+
+<a name="Controllers.ValidateFields"></a>
+### func \(\*Controllers\) ValidateFields
+
+```go
+func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
+```
+
+ValidateFields implements the ConfigValidationProvider interface.
+
+<a name="Controllers.ValidateOperationTokenMiddleware"></a>
+### func \(\*Controllers\) ValidateOperationTokenMiddleware
+
+```go
+func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error
+```
+
+ValidateOperationTokenMiddleware validates the operation token.
+
+<a name="Controllers.ValidateSystemTokenMiddleware"></a>
+### func \(\*Controllers\) ValidateSystemTokenMiddleware
+
+```go
+func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
+```
+
+ValidateSystemTokenMiddleware validates the system token.
+
+<a name="ParquetEmbedding"></a>
+## type ParquetEmbedding
+
+ParquetEmbedding represents an embedding record for parquet serialization.
+
+```go
+type ParquetEmbedding struct {
+    ID         string `parquet:"name=id, type=BYTE_ARRAY, convertedtype=UTF8"`
+    SourceFile string `parquet:"name=source_file, type=BYTE_ARRAY, convertedtype=UTF8"`
+    ChunkIndex int32  `parquet:"name=chunk_index, type=INT32"`
+    Content    string `parquet:"name=content, type=BYTE_ARRAY, convertedtype=UTF8"`
+    Embedding  string `parquet:"name=embedding, type=BYTE_ARRAY, convertedtype=UTF8"`
+    Metadata   string `parquet:"name=metadata, type=BYTE_ARRAY, convertedtype=UTF8"`
+    CreatedAt  string `parquet:"name=created_at, type=BYTE_ARRAY, convertedtype=UTF8"`
+}
+```
+
+<a name="PineconePullProvider"></a>
+## type PineconePullProvider
+
+PineconePullProvider implements the PullOperationProvider interface for Pinecone.
+
+```go
+type PineconePullProvider struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="PineconePullProvider.GetAllFiles"></a>
+### func \(\*PineconePullProvider\) GetAllFiles
+
+```go
+func (p *PineconePullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error)
+```
+
+GetAllFiles retrieves all vectors from Pinecone as a parquet file.
+
+<a name="PineconePullProvider.GetFileByPath"></a>
+### func \(\*PineconePullProvider\) GetFileByPath
+
+```go
+func (p *PineconePullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath string) (string, []byte, error)
+```
+
+GetFileByPath handles both search \(path = query\) and fetch operations.
+
+<a name="PineconePullProvider.InitializeClient"></a>
+### func \(\*PineconePullProvider\) InitializeClient
+
+```go
+func (p *PineconePullProvider) InitializeClient(_ fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
+```
+
+InitializeClient initializes the Pinecone client for pull operations.
+
+<a name="PineconePushProvider"></a>
+## type PineconePushProvider
+
+PineconePushProvider implements the PushOperationProvider interface for Pinecone.
+
+```go
+type PineconePushProvider struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="PineconePushProvider.InitializeClient"></a>
+### func \(\*PineconePushProvider\) InitializeClient
+
+```go
+func (p *PineconePushProvider) InitializeClient(_ fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
+```
+
+InitializeClient initializes the Pinecone client for push operations.
+
+<a name="PineconePushProvider.ProcessFiles"></a>
+### func \(\*PineconePushProvider\) ProcessFiles
+
+```go
+func (p *PineconePushProvider) ProcessFiles(c fiber.Ctx, client any, files map[string][]byte, _ string) error
+```
+
+ProcessFiles processes the extracted files and upserts them to Pinecone.
+
+<a name="PineconeSchemaProvider"></a>
+## type PineconeSchemaProvider
+
+PineconeSchemaProvider implements the SchemaOperationProvider interface for Pinecone.
+
+```go
+type PineconeSchemaProvider struct{}
+```
+
+<a name="PineconeSchemaProvider.GetSchema"></a>
+### func \(\*PineconeSchemaProvider\) GetSchema
+
+```go
+func (p *PineconeSchemaProvider) GetSchema(_ fiber.Ctx, _ any, operationType string, namespace *string) (*irminmodels.ObjectSchema, error)
+```
+
+GetSchema retrieves the Pinecone schema and returns an Irmin\-compatible ObjectSchema.
+
+<a name="PineconeSchemaProvider.GetSupportedOperationTypes"></a>
+### func \(\*PineconeSchemaProvider\) GetSupportedOperationTypes
+
+```go
+func (p *PineconeSchemaProvider) GetSupportedOperationTypes() []string
+```
+
+GetSupportedOperationTypes returns the list of supported operation types for Pinecone.
+
+<a name="PineconeSchemaProvider.InitializeClient"></a>
+### func \(\*PineconeSchemaProvider\) InitializeClient
+
+```go
+func (p *PineconeSchemaProvider) InitializeClient(_ fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
+```
+
+InitializeClient initializes the Pinecone client for schema operations.
+
+# pineconemodels
+
+```go
+import "irmin-connectors/connectors/pinecone/models"
+```
+
+## Index
+
+- [type ConnectionDetails](<#ConnectionDetails>)
+  - [func NewConnectionDetailsFromMap\(details map\[string\]any\) \(\*ConnectionDetails, error\)](<#NewConnectionDetailsFromMap>)
+- [type ConnectionSettings](<#ConnectionSettings>)
+  - [func NewConnectionSettingsFromMap\(settings map\[string\]any\) \(\*ConnectionSettings, error\)](<#NewConnectionSettingsFromMap>)
+
+
+<a name="ConnectionDetails"></a>
+## type ConnectionDetails
+
+ConnectionDetails holds the sensitive authentication information for Pinecone.
+
+```go
+type ConnectionDetails struct {
+    APIKey string `json:"api_key"`
+}
+```
+
+<a name="NewConnectionDetailsFromMap"></a>
+### func NewConnectionDetailsFromMap
+
+```go
+func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, error)
+```
+
+NewConnectionDetailsFromMap creates a ConnectionDetails from a map\[string\]any.
+
+<a name="ConnectionSettings"></a>
+## type ConnectionSettings
+
+ConnectionSettings holds the configuration for a Pinecone connection.
+
+```go
+type ConnectionSettings struct {
+    Host      string `json:"host"`
+    Namespace string `json:"namespace"`
 }
 ```
 

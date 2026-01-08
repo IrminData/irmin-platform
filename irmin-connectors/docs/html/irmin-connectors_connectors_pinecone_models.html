@@ -1,0 +1,31 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/pinecone/models</title></head><body>
+<h1>Package irmin-connectors/connectors/pinecone/models</h1>
+<pre>
+package pineconemodels // import "irmin-connectors/connectors/pinecone/models"
+
+
+TYPES
+
+type ConnectionDetails struct {
+	APIKey string `json:"api_key"`
+}
+    ConnectionDetails holds the sensitive authentication information for
+    Pinecone.
+
+func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, error)
+    NewConnectionDetailsFromMap creates a ConnectionDetails from a
+    map[string]any.
+
+type ConnectionSettings struct {
+	Host      string `json:"host"`
+	Namespace string `json:"namespace"`
+}
+    ConnectionSettings holds the configuration for a Pinecone connection.
+
+func NewConnectionSettingsFromMap(settings map[string]any) (*ConnectionSettings, error)
+    NewConnectionSettingsFromMap creates a ConnectionSettings from a
+    map[string]any.
+
+</pre>
+</body></html>

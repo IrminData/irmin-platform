@@ -6,6 +6,7 @@ import (
 	firecrawlconnector "irmin-connectors/connectors/firecrawl"
 	httpconnector "irmin-connectors/connectors/http"
 	mysqlconnector "irmin-connectors/connectors/mysql"
+	pineconeconnector "irmin-connectors/connectors/pinecone"
 	postgresconnector "irmin-connectors/connectors/postgres"
 	sftpconnector "irmin-connectors/connectors/sftp"
 	"irmin-connectors/db"
@@ -21,6 +22,7 @@ func SetupConnectorRoutes(app *models.ConnectorsApp) {
 	sftpconnector.SetupRoutes(app)
 	httpconnector.SetupRoutes(app)
 	firecrawlconnector.SetupRoutes(app)
+	pineconeconnector.SetupRoutes(app)
 	// ... Add new connectors here ...
 }
 
@@ -66,6 +68,7 @@ func RegisterAllConnectors(
 		{"SFTP", "sftp"},
 		{"HTTP", "http"},
 		{"Firecrawl", "firecrawl"},
+		{"Pinecone", "pinecone"},
 		// ... Add new connectors here ...
 	}
 

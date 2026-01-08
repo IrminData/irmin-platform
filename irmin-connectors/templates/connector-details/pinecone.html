@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo img {
+            max-width: 200px;
+            height: auto;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            color: #34495e;
+            border-bottom: 2px solid #1a1a2e;
+            padding-bottom: 10px;
+        }
+        ul {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .highlight {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #1a1a2e;
+            margin: 20px 0;
+        }
+        .docs-link {
+            display: inline-block;
+            background-color: #1a1a2e;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .docs-link:hover {
+            background-color: #0d0d1a;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="{{.LogoPath}}" alt="{{.LogoAlt}}">
+        </div>
+        
+        <h1>{{.Title}}</h1>
+        
+        <div class="section">
+            <p>{{.Description}}</p>
+        </div>
+        
+        <div class="section">
+            <h2>Connection Setup</h2>
+            <p>Steps for establishing the connection:</p>
+            <ul>
+                <li><strong>API Key:</strong> Your Pinecone API key for authentication. Found in the Pinecone console.</li>
+                <li><strong>Index Host:</strong> The host URL for your Pinecone index (e.g., <code>index-name-abc123.svc.us-east-1.pinecone.io</code>).</li>
+                <li><strong>Namespace:</strong> Optional namespace to target within the index. Leave empty for the default namespace.</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Data Operations</h2>
+            <p>Data movement operations are implemented as follows:</p>
+            <ul>
+                <li><strong>Push:</strong> Upload embedding vectors from Irmin's parquet format to Pinecone. Vectors are upserted in batches of 100 for optimal performance.</li>
+                <li><strong>Pull (Search):</strong> When a query vector is provided, performs semantic search and returns JSON results with similarity scores.</li>
+                <li><strong>Pull (Export):</strong> When no query is provided, exports all vectors from the index/namespace as a parquet file compatible with Irmin's embedding format.</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Data Format</h2>
+            <p>The connector maps between Irmin's embedding format and Pinecone vectors:</p>
+            <ul>
+                <li><code>id</code> → Vector ID</li>
+                <li><code>embedding</code> → Vector values (float32 array)</li>
+                <li><code>content</code> → Stored as metadata</li>
+                <li><code>source_file</code> → Stored as metadata</li>
+                <li><code>chunk_index</code> → Stored as metadata</li>
+                <li><code>metadata</code> → Flattened into Pinecone metadata</li>
+            </ul>
+        </div>
+        
+        <div class="highlight">
+            <strong>Note:</strong> {{.EventListeningDescription}}
+        </div>
+        
+        <a href="{{.DocsPath}}" class="docs-link">Read connector documentation</a>
+    </div>
+</body>
+</html>

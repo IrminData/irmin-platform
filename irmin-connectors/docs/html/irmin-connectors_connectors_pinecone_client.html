@@ -1,0 +1,75 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/pinecone/client</title></head><body>
+<h1>Package irmin-connectors/connectors/pinecone/client</h1>
+<pre>
+package client // import "irmin-connectors/connectors/pinecone/client"
+
+
+CONSTANTS
+
+const (
+	// UpsertBatchSize is the maximum number of vectors to upsert in a single batch.
+	UpsertBatchSize = 100
+	// FetchBatchSize is the maximum number of vectors to fetch in a single batch.
+	FetchBatchSize = 1000
+	// DefaultTopK is the default number of results for search queries.
+	DefaultTopK = 10
+	// MaxTopK is the maximum allowed value for topK parameter (Pinecone API limit).
+	MaxTopK = 10000
+)
+
+FUNCTIONS
+
+func ValidateConnection(apiKey, host, namespace string) error
+    ValidateConnection tests the connection to Pinecone.
+
+
+TYPES
+
+type EmbeddingRecord struct {
+	ID         string            `json:"id"`
+	SourceFile string            `json:"source_file"`
+	ChunkIndex int               `json:"chunk_index"`
+	Content    string            `json:"content"`
+	Embedding  []float32         `json:"embedding"`
+	Metadata   map[string]string `json:"metadata"`
+	CreatedAt  time.Time         `json:"created_at"`
+}
+    EmbeddingRecord represents the Irmin embedding format.
+
+type PineconeClient struct {
+	// Has unexported fields.
+}
+    PineconeClient wraps the Pinecone SDK client for connector operations.
+
+func InitPineconeClient(_ any, logger *slog.Logger, operation *db.Operation) (*PineconeClient, *string, error)
+    InitPineconeClient initializes a Pinecone client from operation
+    configuration.
+
+func (c *PineconeClient) Close() error
+    Close releases resources held by the client.
+
+func (c *PineconeClient) FetchAll(ctx context.Context) ([]EmbeddingRecord, error)
+    FetchAll fetches all vectors from the index/namespace.
+
+func (c *PineconeClient) Search(ctx context.Context, queryVector []float32, topK int) (*SearchResponse, error)
+    Search performs a similarity search using a query vector.
+
+func (c *PineconeClient) Upsert(ctx context.Context, records []EmbeddingRecord) error
+    Upsert inserts or updates vectors in the Pinecone index.
+
+type SearchResponse struct {
+	Query   string         `json:"query"`
+	Matches []SearchResult `json:"matches"`
+}
+    SearchResponse represents the response from a search query.
+
+type SearchResult struct {
+	ID       string            `json:"id"`
+	Score    float32           `json:"score"`
+	Metadata map[string]string `json:"metadata,omitempty"`
+}
+    SearchResult represents a single search match from Pinecone.
+
+</pre>
+</body></html>

@@ -55,6 +55,8 @@ func (ctm *ConnectorTemplateManager) LoadTemplate(templateName string) (*Connect
 		htmlContent = SFTPDetailsHTML
 	case "firecrawl":
 		htmlContent = FirecrawlDetailsHTML
+	case "pinecone":
+		htmlContent = PineconeDetailsHTML
 	default:
 		return nil, fmt.Errorf("template %s not found", templateName)
 	}
@@ -87,7 +89,7 @@ func (ct *ConnectorTemplate) RenderHTML(data ConnectorDetailsData) (string, erro
 
 // GetAvailableTemplates returns a list of available connector templates.
 func (ctm *ConnectorTemplateManager) GetAvailableTemplates() []string {
-	return []string{"http", "mysql", "postgres", "sftp", "firecrawl"}
+	return []string{"http", "mysql", "postgres", "sftp", "firecrawl", "pinecone"}
 }
 
 // ClearCache clears the template cache.

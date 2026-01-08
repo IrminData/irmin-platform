@@ -19,5 +19,8 @@ var SFTPDetailsHTML []byte
 //go:embed connector-details/firecrawl.html
 var FirecrawlDetailsHTML []byte
 
+//go:embed connector-details/pinecone.html
+var PineconeDetailsHTML []byte
+
 //go:embed swagger/swagger-ui.html
 var SwaggerUIHTML []byte
