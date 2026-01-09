@@ -13,6 +13,7 @@ type AIApplication struct {
 	Description    string                    `json:"description"       validate:"max=500"                            example:"AI application for customer data analysis"`
 	Documentation  string                    `json:"documentation"     validate:"validdocumentation"                 example:"# Customer Analytics"`
 	AllowedOrigins []string                  `json:"allowed_origins"   validate:"dive,max=255"                       example:"https://app.example.com,http://localhost:3000"`
+	Tools          *AIApplicationToolConfig  `json:"tools,omitempty"`
 	DataSources    []AIApplicationDataSource `json:"data_sources"      validate:"dive"`
 	APIKey         *string                   `json:"api_key,omitempty"`
 	Owner          User                      `json:"owner"             validate:"required"`
@@ -28,6 +29,17 @@ type AIApplicationDataSource struct {
 	Path       string `json:"path"       validate:"required" example:"/data/customers"`
 }
     AIApplicationDataSource represents a data source for an AI application.
+
+type AIApplicationToolConfig struct {
+	QueryEnabled        bool `json:"query_enabled"         example:"true"`
+	SchemaEnabled       bool `json:"schema_enabled"        example:"true"`
+	ListObjectsEnabled  bool `json:"list_objects_enabled"  example:"true"`
+	GetContentEnabled   bool `json:"get_content_enabled"   example:"true"`
+	VectorSearchEnabled bool `json:"vector_search_enabled" example:"true"`
+	DocsEnabled         bool `json:"docs_enabled"          example:"true"`
+}
+    AIApplicationToolConfig defines which tools are enabled for an AI
+    Application.
 
 type APIToken struct {
 	ID        string    `json:"id"              validate:"required,validsqid=api_tokens" example:"token_1a2b3c"`

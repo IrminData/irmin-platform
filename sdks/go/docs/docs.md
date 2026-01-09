@@ -1833,6 +1833,7 @@ type CreateAIApplicationRequest struct {
     Description    string                                `json:"description"     validate:"max=500"                       example:"AI application for customer data analysis"`
     Documentation  string                                `json:"documentation"   validate:"validdocumentation"            example:"# Customer Analytics"`
     AllowedOrigins []string                              `json:"allowed_origins" validate:"dive,max=255"                  example:"https://app.example.com,http://localhost:3000"`
+    Tools          *irminmodels.AIApplicationToolConfig  `json:"tools,omitempty"`
     DataSources    []irminmodels.AIApplicationDataSource `json:"data_sources"    validate:"dive"`
     Tags           []string                              `json:"tags,omitempty"  validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
 }
@@ -2244,6 +2245,7 @@ type UpdateAIApplicationRequest struct {
     Description    *string                               `json:"description,omitempty"     validate:"omitempty,max=500"             example:"AI application for customer data analysis"`
     Documentation  *string                               `json:"documentation,omitempty"   validate:"omitempty,validdocumentation"  example:"# Customer Analytics"`
     AllowedOrigins []string                              `json:"allowed_origins,omitempty" validate:"omitempty,dive,max=255"`
+    Tools          *irminmodels.AIApplicationToolConfig  `json:"tools,omitempty"`
     DataSources    []irminmodels.AIApplicationDataSource `json:"data_sources,omitempty"    validate:"omitempty,dive"`
     Tags           []string                              `json:"tags,omitempty"            validate:"omitempty,dive,validsqid=tags"`
 }
@@ -2791,6 +2793,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 
 - [type AIApplication](<#AIApplication>)
 - [type AIApplicationDataSource](<#AIApplicationDataSource>)
+- [type AIApplicationToolConfig](<#AIApplicationToolConfig>)
 - [type APIToken](<#APIToken>)
 - [type ActionExecutableType](<#ActionExecutableType>)
 - [type ActionInputData](<#ActionInputData>)
@@ -2892,6 +2895,7 @@ type AIApplication struct {
     Description    string                    `json:"description"       validate:"max=500"                            example:"AI application for customer data analysis"`
     Documentation  string                    `json:"documentation"     validate:"validdocumentation"                 example:"# Customer Analytics"`
     AllowedOrigins []string                  `json:"allowed_origins"   validate:"dive,max=255"                       example:"https://app.example.com,http://localhost:3000"`
+    Tools          *AIApplicationToolConfig  `json:"tools,omitempty"`
     DataSources    []AIApplicationDataSource `json:"data_sources"      validate:"dive"`
     APIKey         *string                   `json:"api_key,omitempty"`
     Owner          User                      `json:"owner"             validate:"required"`
@@ -2911,6 +2915,22 @@ type AIApplicationDataSource struct {
     Repository string `json:"repository" validate:"required" example:"customer-analytics"`
     Branch     string `json:"branch"     validate:"required" example:"main"`
     Path       string `json:"path"       validate:"required" example:"/data/customers"`
+}
+```
+
+<a name="AIApplicationToolConfig"></a>
+## type AIApplicationToolConfig
+
+AIApplicationToolConfig defines which tools are enabled for an AI Application.
+
+```go
+type AIApplicationToolConfig struct {
+    QueryEnabled        bool `json:"query_enabled"         example:"true"`
+    SchemaEnabled       bool `json:"schema_enabled"        example:"true"`
+    ListObjectsEnabled  bool `json:"list_objects_enabled"  example:"true"`
+    GetContentEnabled   bool `json:"get_content_enabled"   example:"true"`
+    VectorSearchEnabled bool `json:"vector_search_enabled" example:"true"`
+    DocsEnabled         bool `json:"docs_enabled"          example:"true"`
 }
 ```
 
