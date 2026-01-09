@@ -22,7 +22,7 @@ type CreateAIApplicationRequest struct {
 type UpdateAIApplicationRequest struct {
 	Name           *string                               `json:"name,omitempty"            validate:"omitempty,max=100"             example:"Customer Analytics App"`
 	Description    *string                               `json:"description,omitempty"     validate:"omitempty,max=500"             example:"AI application for customer data analysis"`
-	Documentation  *string                               `json:"documentation,omitempty"   validate:"validdocumentation"            example:"# Customer Analytics"`
+	Documentation  *string                               `json:"documentation,omitempty"   validate:"omitempty,validdocumentation"  example:"# Customer Analytics"`
 	AllowedOrigins []string                              `json:"allowed_origins,omitempty" validate:"omitempty,dive,max=255"`
 	DataSources    []irminmodels.AIApplicationDataSource `json:"data_sources,omitempty"    validate:"omitempty,dive"`
 	Tags           []string                              `json:"tags,omitempty"            validate:"omitempty,dive,validsqid=tags"`
