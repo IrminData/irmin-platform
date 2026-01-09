@@ -449,6 +449,40 @@ func RegisterAPIRoutes(
 		apiControllers.WorkflowRunsDestroy,
 	)
 
+	// AI Application routes
+	aiApplications := workspace.Group("/ai-applications")
+	aiApplications.Get(
+		"/",
+		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.AIApplicationsIndex,
+	)
+	aiApplications.Post(
+		"/",
+		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.AIApplicationsStore,
+	)
+	aiApplication := aiApplications.Group("/:ai_application", apiMiddlewares.AIApplicationMiddleware)
+	aiApplication.Get(
+		"/",
+		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.AIApplicationsShow,
+	)
+	aiApplication.Patch(
+		"/",
+		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.AIApplicationsUpdate,
+	)
+	aiApplication.Delete(
+		"/",
+		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.AIApplicationsDestroy,
+	)
+	aiApplication.Post(
+		"/transfer-ownership",
+		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.TransferAIApplicationOwnership,
+	)
+
 	// Repositories routes
 	repositories := workspace.Group("/repositories")
 	repositories.Get(

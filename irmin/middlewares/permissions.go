@@ -333,6 +333,22 @@ func (api *APIMiddlewares) WorkspaceTagPermissionMiddleware(action db.PolicyActi
 	)
 }
 
+// AIApplicationPermissionMiddleware creates a middleware for AI application-level permissions.
+func (api *APIMiddlewares) AIApplicationPermissionMiddleware(action db.PolicyAction) fiber.Handler {
+	return api.createPermissionMiddleware(
+		db.PolicyResourceAIApplication,
+		action,
+		func(c fiber.Ctx) *uint {
+			aiApplication, aiApplicationOk := c.Locals("ai_application").(*db.AIApplication)
+			if aiApplicationOk {
+				return &aiApplication.ID
+			}
+			// Don't log warning for index routes where no specific AI application is expected
+			return nil
+		},
+	)
+}
+
 // decodeEntityID decodes an entity ID from a SQID string.
 func (api *APIMiddlewares) decodeEntityID(
 	sqidType, entityIDStr, entityName string,

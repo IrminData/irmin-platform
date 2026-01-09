@@ -190,6 +190,14 @@ func (api *APIServices) CopyRepositoryObject(
 	req irmincore.MoveObjectRequest,
 ) (*db.RepositoryObject, error)
 
+func (api *APIServices) CreateAIApplication(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	req irmincore.CreateAIApplicationRequest,
+) (*db.AIApplication, error)
+    CreateAIApplication creates a new AI application.
+
 func (api *APIServices) CreateAPIToken(
 	c context.Context,
 	user *db.User,
@@ -297,6 +305,14 @@ func (api *APIServices) CreateWorkspaceTag(
 
 func (api *APIServices) DeclineInvite(c context.Context, user *db.User, invite *db.Invite) error
 
+func (api *APIServices) DeleteAIApplication(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	aiApplication *db.AIApplication,
+) error
+    DeleteAIApplication deletes an AI application.
+
 func (api *APIServices) DeleteAPIToken(c context.Context, user *db.User, tokenID uint) error
 
 func (api *APIServices) DeleteConnection(
@@ -376,6 +392,7 @@ func (api *APIServices) DeleteWorkflow(
 	workspace *db.Workspace,
 	workflow *db.Workflow,
 ) error
+    DeleteWorkflow deletes a workflow.
 
 func (api *APIServices) DeleteWorkspace(ctx context.Context, user *db.User, workspace *db.Workspace) error
 
@@ -421,6 +438,14 @@ func (api *APIServices) GenerateSchemaFromUploadedFile(
 	fileReader io.Reader,
 ) (*irminmodels.ObjectSchema, error)
     GenerateSchemaFromUploadedFile generates a schema for an uploaded file.
+
+func (api *APIServices) GetAIApplication(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	aiApplicationSqid string,
+) (*db.AIApplication, error)
+    GetAIApplication gets an AI application by its SQID.
 
 func (api *APIServices) GetConnection(
 	c context.Context,
@@ -679,6 +704,13 @@ func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale s
     isSystem, error
 
 func (api *APIServices) LeaveWorkspace(user *db.User, workspace *db.Workspace) error
+
+func (api *APIServices) ListAIApplications(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+) ([]db.AIApplication, error)
+    ListAIApplications lists AI applications in a workspace.
 
 func (api *APIServices) ListAPITokens(c context.Context, user *db.User) ([]db.APIToken, error)
 
@@ -945,6 +977,15 @@ func (api *APIServices) TestConnection(
 ) (*irminmodels.ConnectorConfigurationValidationResult, error)
     TestConnection tests an existing connection using its stored credentials.
 
+func (api *APIServices) TransferAIApplicationOwnership(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	aiApplication *db.AIApplication,
+	req irmincore.TransferAIApplicationOwnershipRequest,
+) (*db.AIApplication, error)
+    TransferAIApplicationOwnership transfers ownership of an AI application.
+
 func (api *APIServices) TransferConnectionOwnership(
 	c context.Context,
 	user *db.User,
@@ -993,6 +1034,15 @@ func (api *APIServices) TransferWorkspaceOwnership(
 	workspace *db.Workspace,
 	req irmincore.TransferOwnershipRequest,
 ) (*db.Workspace, error)
+
+func (api *APIServices) UpdateAIApplication(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	aiApplication *db.AIApplication,
+	req irmincore.UpdateAIApplicationRequest,
+) (*db.AIApplication, error)
+    UpdateAIApplication updates an AI application.
 
 func (api *APIServices) UpdateConnection(
 	c context.Context,

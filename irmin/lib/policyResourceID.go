@@ -44,6 +44,8 @@ func DecodePolicyResourceID(
 		id, err = sqidManager.Decode("users", sqid)
 	case db.PolicyResourceScript:
 		id, err = sqidManager.Decode("scripts", sqid)
+	case db.PolicyResourceAIApplication:
+		id, err = sqidManager.Decode("ai_applications", sqid)
 	case db.PolicyResourcePolicy:
 		return nil, errors.New("policies don't need ID specific policies")
 	case db.PolicyResourceInvite:
@@ -97,6 +99,8 @@ func EncodePolicyResourceID(
 		return sqidManager.Encode("repositories", uint64(id)) // Commit policies point to a repository
 	case db.PolicyResourceScript:
 		return sqidManager.Encode("scripts", uint64(id))
+	case db.PolicyResourceAIApplication:
+		return sqidManager.Encode("ai_applications", uint64(id))
 	case db.PolicyResourceUser:
 		return sqidManager.Encode("users", uint64(id))
 	case db.PolicyResourcePolicy:

@@ -231,6 +231,9 @@ func (d *Database) Migrate() error {
 		&WorkflowTag{},
 		&ConnectionTag{},
 		&RepositoryObjectTag{},
+		&AIApplication{},
+		&AIApplicationDataSource{},
+		&AIApplicationTag{},
 		&Template{},
 	}
 	if err := d.migrateModels(models...); err != nil {
@@ -254,6 +257,9 @@ func (d *Database) Migrate() error {
 func (d *Database) Reset() error {
 	// Drop tables in an order that avoids foreign key conflicts.
 	if err := d.Migrator().DropTable(
+		&AIApplicationTag{},
+		&AIApplicationDataSource{},
+		&AIApplication{},
 		&Role{},
 		&Connector{},
 		&Workspace{},

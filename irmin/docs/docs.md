@@ -830,6 +830,11 @@ import "irmin-api/controllers"
 
 - [type APIControllers](<#APIControllers>)
   - [func NewAPIControllers\(apiServices \*services.APIServices\) \*APIControllers](<#NewAPIControllers>)
+  - [func \(api \*APIControllers\) AIApplicationsDestroy\(c fiber.Ctx\) error](<#APIControllers.AIApplicationsDestroy>)
+  - [func \(api \*APIControllers\) AIApplicationsIndex\(c fiber.Ctx\) error](<#APIControllers.AIApplicationsIndex>)
+  - [func \(api \*APIControllers\) AIApplicationsShow\(c fiber.Ctx\) error](<#APIControllers.AIApplicationsShow>)
+  - [func \(api \*APIControllers\) AIApplicationsStore\(c fiber.Ctx\) error](<#APIControllers.AIApplicationsStore>)
+  - [func \(api \*APIControllers\) AIApplicationsUpdate\(c fiber.Ctx\) error](<#APIControllers.AIApplicationsUpdate>)
   - [func \(api \*APIControllers\) AcceptInvite\(c fiber.Ctx\) error](<#APIControllers.AcceptInvite>)
   - [func \(api \*APIControllers\) AllWorkflowRunsIndex\(c fiber.Ctx\) error](<#APIControllers.AllWorkflowRunsIndex>)
   - [func \(api \*APIControllers\) CheckPermission\(c fiber.Ctx\) error](<#APIControllers.CheckPermission>)
@@ -929,6 +934,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) SystemSandboxHealth\(c fiber.Ctx\) error](<#APIControllers.SystemSandboxHealth>)
   - [func \(api \*APIControllers\) SystemWebhook\(c fiber.Ctx\) error](<#APIControllers.SystemWebhook>)
   - [func \(api \*APIControllers\) TestConnection\(c fiber.Ctx\) error](<#APIControllers.TestConnection>)
+  - [func \(api \*APIControllers\) TransferAIApplicationOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferAIApplicationOwnership>)
   - [func \(api \*APIControllers\) TransferConnectionOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferConnectionOwnership>)
   - [func \(api \*APIControllers\) TransferQueryOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferQueryOwnership>)
   - [func \(api \*APIControllers\) TransferRepositoryOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferRepositoryOwnership>)
@@ -993,6 +999,51 @@ func NewAPIControllers(apiServices *services.APIServices) *APIControllers
 ```
 
 
+
+<a name="APIControllers.AIApplicationsDestroy"></a>
+### func \(\*APIControllers\) AIApplicationsDestroy
+
+```go
+func (api *APIControllers) AIApplicationsDestroy(c fiber.Ctx) error
+```
+
+AIApplicationsDestroy godoc @Summary Delete AI application @Description Delete an AI application and all its related data @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Success 200 \{object\} irminmodels.IrminAPIResponse "AI application deleted successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "AI application not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\} \[delete\]
+
+<a name="APIControllers.AIApplicationsIndex"></a>
+### func \(\*APIControllers\) AIApplicationsIndex
+
+```go
+func (api *APIControllers) AIApplicationsIndex(c fiber.Ctx) error
+```
+
+AIApplicationsIndex godoc @Summary List AI applications @Description Get all AI applications in the workspace with permission\-based access @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.AIApplication\} "AI applications retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications \[get\]
+
+<a name="APIControllers.AIApplicationsShow"></a>
+### func \(\*APIControllers\) AIApplicationsShow
+
+```go
+func (api *APIControllers) AIApplicationsShow(c fiber.Ctx) error
+```
+
+AIApplicationsShow godoc @Summary Get AI application details @Description Get details of a specific AI application including its configuration and data sources @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.AIApplication\} "AI application details retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "AI application not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\} \[get\]
+
+<a name="APIControllers.AIApplicationsStore"></a>
+### func \(\*APIControllers\) AIApplicationsStore
+
+```go
+func (api *APIControllers) AIApplicationsStore(c fiber.Ctx) error
+```
+
+AIApplicationsStore godoc @Summary Create AI application @Description Create a new AI application with specified configuration and data sources @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param body body irmincore.CreateAIApplicationRequest true "AI application creation request" @Success 201 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.AIApplication\} "AI application created successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid AI application configuration" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications \[post\]
+
+<a name="APIControllers.AIApplicationsUpdate"></a>
+### func \(\*APIControllers\) AIApplicationsUpdate
+
+```go
+func (api *APIControllers) AIApplicationsUpdate(c fiber.Ctx) error
+```
+
+AIApplicationsUpdate godoc @Summary Update AI application @Description Update AI application properties \(name, description, documentation, origins, data sources\) @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param body body irmincore.UpdateAIApplicationRequest true "AI application update request" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.AIApplication\} "AI application updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid AI application data" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "AI application not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\} \[patch\]
 
 <a name="APIControllers.AcceptInvite"></a>
 ### func \(\*APIControllers\) AcceptInvite
@@ -1885,6 +1936,15 @@ func (api *APIControllers) TestConnection(c fiber.Ctx) error
 
 TestConnection godoc @Summary Test connection @Description Test an existing connection using its stored credentials @Tags connections @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection\_slug path string true "Connection ID" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ConnectorConfigurationValidationResult\} "Connection tested successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\_slug\}/test \[post\]
 
+<a name="APIControllers.TransferAIApplicationOwnership"></a>
+### func \(\*APIControllers\) TransferAIApplicationOwnership
+
+```go
+func (api *APIControllers) TransferAIApplicationOwnership(c fiber.Ctx) error
+```
+
+TransferAIApplicationOwnership godoc @Summary Transfer AI application ownership @Description Transfer ownership of an AI application to another user in the workspace @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param body body irmincore.TransferAIApplicationOwnershipRequest true "Ownership transfer request" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.AIApplication\} "Ownership transferred successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid new owner or not a workspace member" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "AI application not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/transfer\-ownership \[post\]
+
 <a name="APIControllers.TransferConnectionOwnership"></a>
 ### func \(\*APIControllers\) TransferConnectionOwnership
 
@@ -2244,6 +2304,9 @@ import "irmin-api/db"
 - [func UnlockKeyConn\(ctx context.Context, conn \*pgxpool.Conn, key string\) error](<#UnlockKeyConn>)
 - [func ValidateFieldMappings\(fieldMappings map\[string\]string\) map\[string\]string](<#ValidateFieldMappings>)
 - [func ValidateSearchToken\(token SearchToken\) bool](<#ValidateSearchToken>)
+- [type AIApplication](<#AIApplication>)
+- [type AIApplicationDataSource](<#AIApplicationDataSource>)
+- [type AIApplicationTag](<#AIApplicationTag>)
 - [type APIToken](<#APIToken>)
 - [type ActionWorkflowable](<#ActionWorkflowable>)
 - [type ActionWorkflowableInput](<#ActionWorkflowableInput>)
@@ -2256,6 +2319,7 @@ import "irmin-api/db"
 - [type CustomFieldValues](<#CustomFieldValues>)
 - [type Database](<#Database>)
   - [func InitialiseDB\(env \*utils.CoreAPIEnv\) \(\*Database, error\)](<#InitialiseDB>)
+  - [func \(d \*Database\) AddTagToAIApplication\(aiApplicationID, tagID uint\) error](<#Database.AddTagToAIApplication>)
   - [func \(d \*Database\) AddTagToConnection\(connectionID, tagID uint\) error](<#Database.AddTagToConnection>)
   - [func \(d \*Database\) AddTagToQuery\(queryID, tagID uint\) error](<#Database.AddTagToQuery>)
   - [func \(d \*Database\) AddTagToRepository\(repositoryID, tagID uint\) error](<#Database.AddTagToRepository>)
@@ -2266,6 +2330,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) CheckIfRepositoryExists\(slug string, workspaceID uint\) bool](<#Database.CheckIfRepositoryExists>)
   - [func \(d \*Database\) Close\(\)](<#Database.Close>)
   - [func \(d \*Database\) CreateSearchIndexes\(\) error](<#Database.CreateSearchIndexes>)
+  - [func \(d \*Database\) DeleteAIApplication\(tx \*gorm.DB, id uint\) error](<#Database.DeleteAIApplication>)
   - [func \(d \*Database\) DeleteAPIToken\(id uint\) error](<#Database.DeleteAPIToken>)
   - [func \(d \*Database\) DeleteConnection\(tx \*gorm.DB, id uint\) error](<#Database.DeleteConnection>)
   - [func \(d \*Database\) DeleteConnector\(tx \*gorm.DB, id uint\) error](<#Database.DeleteConnector>)
@@ -2283,6 +2348,10 @@ import "irmin-api/db"
   - [func \(d \*Database\) FindObject\(path \*string, repositoryID \*uint, ref \*string\) \(\*RepositoryObject, error\)](<#Database.FindObject>)
   - [func \(d \*Database\) FindRepositorySchemaCache\(repositoryID uint, path, ref string\) \(\*RepositorySchemaCache, error\)](<#Database.FindRepositorySchemaCache>)
   - [func \(d \*Database\) GenerateAllPossiblePolicies\(workspaceID uint, principal PolicyPrincipal, principalID \*uint, opts ...PolicyGenerationOptions\) \[\]Policy](<#Database.GenerateAllPossiblePolicies>)
+  - [func \(d \*Database\) GetAIApplicationByID\(id uint\) \(\*AIApplication, error\)](<#Database.GetAIApplicationByID>)
+  - [func \(d \*Database\) GetAIApplicationTags\(aiApplicationID uint\) \(\[\]Tag, error\)](<#Database.GetAIApplicationTags>)
+  - [func \(d \*Database\) GetAIApplicationsByTag\(tagID uint\) \(\[\]AIApplication, error\)](<#Database.GetAIApplicationsByTag>)
+  - [func \(d \*Database\) GetAIApplicationsByWorkspaceID\(workspaceID uint\) \(\[\]AIApplication, error\)](<#Database.GetAIApplicationsByWorkspaceID>)
   - [func \(d \*Database\) GetAPIToken\(id uint\) \(\*APIToken, error\)](<#Database.GetAPIToken>)
   - [func \(d \*Database\) GetAPITokenByToken\(token string\) \(\*APIToken, error\)](<#Database.GetAPITokenByToken>)
   - [func \(d \*Database\) GetAPITokensByUserID\(userID uint\) \(\[\]APIToken, error\)](<#Database.GetAPITokensByUserID>)
@@ -2351,6 +2420,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) IsUserInWorkspaceByEmail\(email string, workspaceID uint\) \(bool, error\)](<#Database.IsUserInWorkspaceByEmail>)
   - [func \(d \*Database\) ListenForNotifications\(ctx context.Context, channel string\) \(func\(\) error, error\)](<#Database.ListenForNotifications>)
   - [func \(d \*Database\) Migrate\(\) error](<#Database.Migrate>)
+  - [func \(d \*Database\) RemoveTagFromAIApplication\(aiApplicationID, tagID uint\) error](<#Database.RemoveTagFromAIApplication>)
   - [func \(d \*Database\) RemoveTagFromConnection\(connectionID, tagID uint\) error](<#Database.RemoveTagFromConnection>)
   - [func \(d \*Database\) RemoveTagFromQuery\(queryID, tagID uint\) error](<#Database.RemoveTagFromQuery>)
   - [func \(d \*Database\) RemoveTagFromRepository\(repositoryID, tagID uint\) error](<#Database.RemoveTagFromRepository>)
@@ -2686,6 +2756,60 @@ func ValidateSearchToken(token SearchToken) bool
 
 ValidateSearchToken performs comprehensive security validation on search tokens.
 
+<a name="AIApplication"></a>
+## type AIApplication
+
+AIApplication represents an AI application in the system.
+
+```go
+type AIApplication struct {
+    gorm.Model
+
+    Name           string                    `json:"name"`
+    Description    string                    `json:"description"`
+    Documentation  string                    `json:"documentation"`
+    AllowedOrigins []string                  `json:"allowed_origins" gorm:"type:jsonb;serializer:json"`
+    WorkspaceID    uint                      `json:"workspace_id"    gorm:"index"`
+    Workspace      Workspace                 `json:"workspace"       gorm:"foreignKey:WorkspaceID"`
+    OwnerID        uint                      `json:"owner_id"`
+    Owner          User                      `json:"owner"           gorm:"foreignKey:OwnerID"`
+    DataSources    []AIApplicationDataSource `json:"data_sources"    gorm:"foreignKey:AIApplicationID"`
+    Tags           []Tag                     `json:"tags,omitempty"  gorm:"many2many:ai_application_tags;"`
+}
+```
+
+<a name="AIApplicationDataSource"></a>
+## type AIApplicationDataSource
+
+AIApplicationDataSource represents a data source for an AI application.
+
+```go
+type AIApplicationDataSource struct {
+    gorm.Model
+
+    AIApplicationID uint          `json:"ai_application_id" gorm:"index"`
+    AIApplication   AIApplication `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
+    RepositoryID    uint          `json:"repository_id"     gorm:"index"`
+    Repository      Repository    `json:"repository"        gorm:"foreignKey:RepositoryID"`
+    Branch          string        `json:"branch"`
+    Path            string        `json:"path"`
+}
+```
+
+<a name="AIApplicationTag"></a>
+## type AIApplicationTag
+
+
+
+```go
+type AIApplicationTag struct {
+    AIApplicationID uint          `json:"ai_application_id" gorm:"primaryKey"`
+    AIApplication   AIApplication `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
+    TagID           uint          `json:"tag_id"            gorm:"primaryKey"`
+    Tag             Tag           `json:"tag"               gorm:"foreignKey:TagID"`
+}
+```
+
 <a name="APIToken"></a>
 ## type APIToken
 
@@ -2893,6 +3017,15 @@ func InitialiseDB(env *utils.CoreAPIEnv) (*Database, error)
 
 InitialiseDB establishes a Postgres database connection, performs any necessary migrations, and returns an error if something goes wrong.
 
+<a name="Database.AddTagToAIApplication"></a>
+### func \(\*Database\) AddTagToAIApplication
+
+```go
+func (d *Database) AddTagToAIApplication(aiApplicationID, tagID uint) error
+```
+
+AddTagToAIApplication adds a tag to an AI application.
+
 <a name="Database.AddTagToConnection"></a>
 ### func \(\*Database\) AddTagToConnection
 
@@ -2982,6 +3115,15 @@ func (d *Database) CreateSearchIndexes() error
 ```
 
 CreateSearchIndexes creates indexes to optimize search performance.
+
+<a name="Database.DeleteAIApplication"></a>
+### func \(\*Database\) DeleteAIApplication
+
+```go
+func (d *Database) DeleteAIApplication(tx *gorm.DB, id uint) error
+```
+
+DeleteAIApplication deletes an AI application and all related records.
 
 <a name="Database.DeleteAPIToken"></a>
 ### func \(\*Database\) DeleteAPIToken
@@ -3135,6 +3277,42 @@ func (d *Database) GenerateAllPossiblePolicies(workspaceID uint, principal Polic
 ```
 
 GenerateAllPossiblePolicies generates all possible policy combinations for a given workspace and principal.
+
+<a name="Database.GetAIApplicationByID"></a>
+### func \(\*Database\) GetAIApplicationByID
+
+```go
+func (d *Database) GetAIApplicationByID(id uint) (*AIApplication, error)
+```
+
+GetAIApplicationByID retrieves an AI application by its ID.
+
+<a name="Database.GetAIApplicationTags"></a>
+### func \(\*Database\) GetAIApplicationTags
+
+```go
+func (d *Database) GetAIApplicationTags(aiApplicationID uint) ([]Tag, error)
+```
+
+GetAIApplicationTags retrieves all tags for an AI application.
+
+<a name="Database.GetAIApplicationsByTag"></a>
+### func \(\*Database\) GetAIApplicationsByTag
+
+```go
+func (d *Database) GetAIApplicationsByTag(tagID uint) ([]AIApplication, error)
+```
+
+GetAIApplicationsByTag retrieves all AI applications that have a specific tag.
+
+<a name="Database.GetAIApplicationsByWorkspaceID"></a>
+### func \(\*Database\) GetAIApplicationsByWorkspaceID
+
+```go
+func (d *Database) GetAIApplicationsByWorkspaceID(workspaceID uint) ([]AIApplication, error)
+```
+
+GetAIApplicationsByWorkspaceID retrieves all AI applications for a workspace.
 
 <a name="Database.GetAPIToken"></a>
 ### func \(\*Database\) GetAPIToken
@@ -3752,6 +3930,15 @@ func (d *Database) Migrate() error
 
 Migrate runs the auto migration calls in the correct order. It separates the migrations into groups based on model dependencies.
 
+<a name="Database.RemoveTagFromAIApplication"></a>
+### func \(\*Database\) RemoveTagFromAIApplication
+
+```go
+func (d *Database) RemoveTagFromAIApplication(aiApplicationID, tagID uint) error
+```
+
+RemoveTagFromAIApplication removes a tag from an AI application.
+
 <a name="Database.RemoveTagFromConnection"></a>
 ### func \(\*Database\) RemoveTagFromConnection
 
@@ -4016,6 +4203,8 @@ type LogEvent struct {
     PolicyID           *uint             `json:"policy_id"            gorm:"index"`
     StoredQuery        *StoredQuery      `json:"stored_query"         gorm:"foreignKey:StoredQueryID"`
     StoredQueryID      *uint             `json:"stored_query_id"      gorm:"index"`
+    AIApplication      *AIApplication    `json:"ai_application"       gorm:"foreignKey:AIApplicationID"`
+    AIApplicationID    *uint             `json:"ai_application_id"    gorm:"index"`
 }
 ```
 
@@ -4341,6 +4530,8 @@ const (
     PolicyResourceBilling PolicyResource = "billing" // Billing is not stored in the database, so policies are not billing specific.
     // PolicyResourceWorkspaceTag represents a workspace tag resource.
     PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
+    // PolicyResourceAIApplication represents an AI application resource.
+    PolicyResourceAIApplication PolicyResource = "ai_application"
 )
 ```
 
@@ -4889,6 +5080,7 @@ type TaggedAssets struct {
     Workflows         []Workflow         `json:"workflows"`
     Connections       []Connection       `json:"connections"`
     RepositoryObjects []RepositoryObject `json:"repository_objects"`
+    AIApplications    []AIApplication    `json:"ai_applications"`
 }
 ```
 
@@ -6754,6 +6946,7 @@ import "irmin-api/formatter"
 
 ## Index
 
+- [func FormatAIApplicationResponse\(database \*db.Database, aiApplication \*db.AIApplication, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.AIApplication, error\)](<#FormatAIApplicationResponse>)
 - [func FormatAPITokenResponse\(token \*db.APIToken, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.APIToken, error\)](<#FormatAPITokenResponse>)
 - [func FormatConnectionResponse\(connection \*db.Connection, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Connection, error\)](<#FormatConnectionResponse>)
 - [func FormatConnectorResponse\(connector \*db.Connector, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Connector, error\)](<#FormatConnectorResponse>)
@@ -6780,6 +6973,15 @@ import "irmin-api/formatter"
 - [func FormatWorkspaceResponse\(workspace \*db.Workspace, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Workspace, error\)](<#FormatWorkspaceResponse>)
 - [func FormatWorkspaceUserResponse\(workspaceUser \*db.WorkspaceUser, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.User, error\)](<#FormatWorkspaceUserResponse>)
 
+
+<a name="FormatAIApplicationResponse"></a>
+## func FormatAIApplicationResponse
+
+```go
+func FormatAIApplicationResponse(database *db.Database, aiApplication *db.AIApplication, sqidManager *irminsqids.SQIDManager) (*irminmodels.AIApplication, error)
+```
+
+FormatAIApplicationResponse formats an AI application response.
 
 <a name="FormatAPITokenResponse"></a>
 ## func FormatAPITokenResponse
@@ -9877,6 +10079,8 @@ import "irmin-api/middlewares"
 
 - [type APIMiddlewares](<#APIMiddlewares>)
   - [func NewAPIMiddlewares\(apiServices \*services.APIServices\) \*APIMiddlewares](<#NewAPIMiddlewares>)
+  - [func \(m \*APIMiddlewares\) AIApplicationMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.AIApplicationMiddleware>)
+  - [func \(api \*APIMiddlewares\) AIApplicationPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.AIApplicationPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) AuditLogPermissionMiddleware\(\) fiber.Handler](<#APIMiddlewares.AuditLogPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) AuthMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.AuthMiddleware>)
   - [func \(api \*APIMiddlewares\) ConnectionMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.ConnectionMiddleware>)
@@ -9939,6 +10143,24 @@ func NewAPIMiddlewares(apiServices *services.APIServices) *APIMiddlewares
 ```
 
 
+
+<a name="APIMiddlewares.AIApplicationMiddleware"></a>
+### func \(\*APIMiddlewares\) AIApplicationMiddleware
+
+```go
+func (m *APIMiddlewares) AIApplicationMiddleware(c fiber.Ctx) error
+```
+
+AIApplicationMiddleware retrieves AI application by ID and stores it in fiber.Locals.
+
+<a name="APIMiddlewares.AIApplicationPermissionMiddleware"></a>
+### func \(\*APIMiddlewares\) AIApplicationPermissionMiddleware
+
+```go
+func (api *APIMiddlewares) AIApplicationPermissionMiddleware(action db.PolicyAction) fiber.Handler
+```
+
+AIApplicationPermissionMiddleware creates a middleware for AI application\-level permissions.
 
 <a name="APIMiddlewares.AuditLogPermissionMiddleware"></a>
 ### func \(\*APIMiddlewares\) AuditLogPermissionMiddleware
@@ -10740,6 +10962,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) CheckPolicyPermission\(c context.Context, user \*db.User, workspace \*db.Workspace, resource db.PolicyResource, resourceID string, action db.PolicyAction\) \(bool, error\)](<#APIServices.CheckPolicyPermission>)
   - [func \(api \*APIServices\) CompareRepositoryRefs\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, baseRef, compareRef string\) \(\*irminmodels.Diff, error\)](<#APIServices.CompareRepositoryRefs>)
   - [func \(api \*APIServices\) CopyRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, req irmincore.MoveObjectRequest\) \(\*db.RepositoryObject, error\)](<#APIServices.CopyRepositoryObject>)
+  - [func \(api \*APIServices\) CreateAIApplication\(c context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.CreateAIApplicationRequest\) \(\*db.AIApplication, error\)](<#APIServices.CreateAIApplication>)
   - [func \(api \*APIServices\) CreateAPIToken\(c context.Context, user \*db.User, req irmincore.CreateCredentialRequest\) \(\*db.APIToken, error\)](<#APIServices.CreateAPIToken>)
   - [func \(api \*APIServices\) CreateConnection\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.CreateConnectionRequest\) \(\*db.Connection, error\)](<#APIServices.CreateConnection>)
   - [func \(api \*APIServices\) CreateConnector\(c context.Context, locale string, isSystem bool, req irmincore.ConnectorRequest\) \(\*db.Connector, error\)](<#APIServices.CreateConnector>)
@@ -10755,6 +10978,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) CreateWorkspace\(ctx context.Context, user \*db.User, req irmincore.CreateWorkspaceRequest\) \(\*db.Workspace, error\)](<#APIServices.CreateWorkspace>)
   - [func \(api \*APIServices\) CreateWorkspaceTag\(c context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.CreateTagRequest\) \(\*db.Tag, error\)](<#APIServices.CreateWorkspaceTag>)
   - [func \(api \*APIServices\) DeclineInvite\(c context.Context, user \*db.User, invite \*db.Invite\) error](<#APIServices.DeclineInvite>)
+  - [func \(api \*APIServices\) DeleteAIApplication\(c context.Context, user \*db.User, workspace \*db.Workspace, aiApplication \*db.AIApplication\) error](<#APIServices.DeleteAIApplication>)
   - [func \(api \*APIServices\) DeleteAPIToken\(c context.Context, user \*db.User, tokenID uint\) error](<#APIServices.DeleteAPIToken>)
   - [func \(api \*APIServices\) DeleteConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connection \*db.Connection\) error](<#APIServices.DeleteConnection>)
   - [func \(api \*APIServices\) DeleteConnector\(c context.Context, connector \*db.Connector, isSystem bool\) error](<#APIServices.DeleteConnector>)
@@ -10773,6 +10997,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ExecuteSQL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.ExecuteSQLRequest, limitResponse bool\) \(\*irminmodels.QueryResult, error\)](<#APIServices.ExecuteSQL>)
   - [func \(api \*APIServices\) ExecuteScript\(c context.Context, user \*db.User, workspace \*db.Workspace, script \*db.StoredScript, req irmincore.ExecuteScriptRequest, limitResponse bool\) \(\*irminmodels.ScriptResult, error\)](<#APIServices.ExecuteScript>)
   - [func \(api \*APIServices\) GenerateSchemaFromUploadedFile\(ctx context.Context, locale string, filename string, fileReader io.Reader\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GenerateSchemaFromUploadedFile>)
+  - [func \(api \*APIServices\) GetAIApplication\(c context.Context, user \*db.User, workspace \*db.Workspace, aiApplicationSqid string\) \(\*db.AIApplication, error\)](<#APIServices.GetAIApplication>)
   - [func \(api \*APIServices\) GetConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connectionSqid string\) \(\*db.Connection, error\)](<#APIServices.GetConnection>)
   - [func \(api \*APIServices\) GetConnectionSchema\(ctx context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, operationMethod string, path string\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetConnectionSchema>)
   - [func \(api \*APIServices\) GetConnector\(c context.Context, connectorID uint\) \(\*db.Connector, error\)](<#APIServices.GetConnector>)
@@ -10806,6 +11031,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) GetWorkspaceUser\(c context.Context, user \*db.User, workspace \*db.Workspace, workspaceUserSqid string\) \(\*db.WorkspaceUser, error\)](<#APIServices.GetWorkspaceUser>)
   - [func \(api \*APIServices\) IdentifyUserFromToken\(c context.Context, token, locale string\) \(\*db.User, bool, error\)](<#APIServices.IdentifyUserFromToken>)
   - [func \(api \*APIServices\) LeaveWorkspace\(user \*db.User, workspace \*db.Workspace\) error](<#APIServices.LeaveWorkspace>)
+  - [func \(api \*APIServices\) ListAIApplications\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.AIApplication, error\)](<#APIServices.ListAIApplications>)
   - [func \(api \*APIServices\) ListAPITokens\(c context.Context, user \*db.User\) \(\[\]db.APIToken, error\)](<#APIServices.ListAPITokens>)
   - [func \(api \*APIServices\) ListAllWorkflowRuns\(c context.Context, user \*db.User, workspace \*db.Workspace, perPage, offset int\) \(\[\]db.WorkflowRun, int, error\)](<#APIServices.ListAllWorkflowRuns>)
   - [func \(api \*APIServices\) ListConnections\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.Connection, error\)](<#APIServices.ListConnections>)
@@ -10844,12 +11070,14 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) StartWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow\) \(\*db.Workflow, error\)](<#APIServices.StartWorkflow>)
   - [func \(api \*APIServices\) SyncUserWithClerkAndNovu\(c context.Context, irminUser \*db.User, clerkID, locale string\) \(\*db.User, error\)](<#APIServices.SyncUserWithClerkAndNovu>)
   - [func \(api \*APIServices\) TestConnection\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#APIServices.TestConnection>)
+  - [func \(api \*APIServices\) TransferAIApplicationOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, aiApplication \*db.AIApplication, req irmincore.TransferAIApplicationOwnershipRequest\) \(\*db.AIApplication, error\)](<#APIServices.TransferAIApplicationOwnership>)
   - [func \(api \*APIServices\) TransferConnectionOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, req irmincore.TransferConnectionOwnershipRequest\) \(\*db.Connection, error\)](<#APIServices.TransferConnectionOwnership>)
   - [func \(api \*APIServices\) TransferQueryOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, query \*db.StoredQuery, req irmincore.TransferQueryOwnershipRequest\) \(\*db.StoredQuery, error\)](<#APIServices.TransferQueryOwnership>)
   - [func \(api \*APIServices\) TransferRepositoryOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.TransferRepositoryOwnershipRequest\) \(\*db.Repository, error\)](<#APIServices.TransferRepositoryOwnership>)
   - [func \(api \*APIServices\) TransferScriptOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, script \*db.StoredScript, req irmincore.TransferScriptOwnershipRequest\) \(\*db.StoredScript, error\)](<#APIServices.TransferScriptOwnership>)
   - [func \(api \*APIServices\) TransferWorkflowOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, req irmincore.TransferWorkflowOwnershipRequest\) \(\*db.Workflow, error\)](<#APIServices.TransferWorkflowOwnership>)
   - [func \(api \*APIServices\) TransferWorkspaceOwnership\(ctx context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.TransferOwnershipRequest\) \(\*db.Workspace, error\)](<#APIServices.TransferWorkspaceOwnership>)
+  - [func \(api \*APIServices\) UpdateAIApplication\(c context.Context, user \*db.User, workspace \*db.Workspace, aiApplication \*db.AIApplication, req irmincore.UpdateAIApplicationRequest\) \(\*db.AIApplication, error\)](<#APIServices.UpdateAIApplication>)
   - [func \(api \*APIServices\) UpdateConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, req irmincore.UpdateConnectionRequest\) \(\*db.Connection, error\)](<#APIServices.UpdateConnection>)
   - [func \(api \*APIServices\) UpdateConnectionConfiguration\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, req irmincore.UpdateConnectionConfigurationRequest\) \(\*db.Connection, error\)](<#APIServices.UpdateConnectionConfiguration>)
   - [func \(api \*APIServices\) UpdateConnector\(c context.Context, locale string, isSystem bool, connector \*db.Connector, req irmincore.ConnectorRequest\) \(\*db.Connector, error\)](<#APIServices.UpdateConnector>)
@@ -11106,6 +11334,15 @@ func (api *APIServices) CopyRepositoryObject(c context.Context, locale string, u
 
 
 
+<a name="APIServices.CreateAIApplication"></a>
+### func \(\*APIServices\) CreateAIApplication
+
+```go
+func (api *APIServices) CreateAIApplication(c context.Context, user *db.User, workspace *db.Workspace, req irmincore.CreateAIApplicationRequest) (*db.AIApplication, error)
+```
+
+CreateAIApplication creates a new AI application.
+
 <a name="APIServices.CreateAPIToken"></a>
 ### func \(\*APIServices\) CreateAPIToken
 
@@ -11241,6 +11478,15 @@ func (api *APIServices) DeclineInvite(c context.Context, user *db.User, invite *
 
 
 
+<a name="APIServices.DeleteAIApplication"></a>
+### func \(\*APIServices\) DeleteAIApplication
+
+```go
+func (api *APIServices) DeleteAIApplication(c context.Context, user *db.User, workspace *db.Workspace, aiApplication *db.AIApplication) error
+```
+
+DeleteAIApplication deletes an AI application.
+
 <a name="APIServices.DeleteAPIToken"></a>
 ### func \(\*APIServices\) DeleteAPIToken
 
@@ -11347,7 +11593,7 @@ DeleteScript deletes a script from a workspace.
 func (api *APIServices) DeleteWorkflow(c context.Context, user *db.User, workspace *db.Workspace, workflow *db.Workflow) error
 ```
 
-
+DeleteWorkflow deletes a workflow.
 
 <a name="APIServices.DeleteWorkspace"></a>
 ### func \(\*APIServices\) DeleteWorkspace
@@ -11402,6 +11648,15 @@ func (api *APIServices) GenerateSchemaFromUploadedFile(ctx context.Context, loca
 ```
 
 GenerateSchemaFromUploadedFile generates a schema for an uploaded file.
+
+<a name="APIServices.GetAIApplication"></a>
+### func \(\*APIServices\) GetAIApplication
+
+```go
+func (api *APIServices) GetAIApplication(c context.Context, user *db.User, workspace *db.Workspace, aiApplicationSqid string) (*db.AIApplication, error)
+```
+
+GetAIApplication gets an AI application by its SQID.
 
 <a name="APIServices.GetConnection"></a>
 ### func \(\*APIServices\) GetConnection
@@ -11699,6 +11954,15 @@ func (api *APIServices) LeaveWorkspace(user *db.User, workspace *db.Workspace) e
 ```
 
 
+
+<a name="APIServices.ListAIApplications"></a>
+### func \(\*APIServices\) ListAIApplications
+
+```go
+func (api *APIServices) ListAIApplications(c context.Context, user *db.User, workspace *db.Workspace) ([]db.AIApplication, error)
+```
+
+ListAIApplications lists AI applications in a workspace.
 
 <a name="APIServices.ListAPITokens"></a>
 ### func \(\*APIServices\) ListAPITokens
@@ -12042,6 +12306,15 @@ func (api *APIServices) TestConnection(c context.Context, locale string, user *d
 
 TestConnection tests an existing connection using its stored credentials.
 
+<a name="APIServices.TransferAIApplicationOwnership"></a>
+### func \(\*APIServices\) TransferAIApplicationOwnership
+
+```go
+func (api *APIServices) TransferAIApplicationOwnership(c context.Context, user *db.User, workspace *db.Workspace, aiApplication *db.AIApplication, req irmincore.TransferAIApplicationOwnershipRequest) (*db.AIApplication, error)
+```
+
+TransferAIApplicationOwnership transfers ownership of an AI application.
+
 <a name="APIServices.TransferConnectionOwnership"></a>
 ### func \(\*APIServices\) TransferConnectionOwnership
 
@@ -12095,6 +12368,15 @@ func (api *APIServices) TransferWorkspaceOwnership(ctx context.Context, user *db
 ```
 
 
+
+<a name="APIServices.UpdateAIApplication"></a>
+### func \(\*APIServices\) UpdateAIApplication
+
+```go
+func (api *APIServices) UpdateAIApplication(c context.Context, user *db.User, workspace *db.Workspace, aiApplication *db.AIApplication, req irmincore.UpdateAIApplicationRequest) (*db.AIApplication, error)
+```
+
+UpdateAIApplication updates an AI application.
 
 <a name="APIServices.UpdateConnection"></a>
 ### func \(\*APIServices\) UpdateConnection

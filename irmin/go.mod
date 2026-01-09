@@ -3,7 +3,7 @@ module irmin-api
 go 1.25.0
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20260105111615-243715811893
+	github.com/IrminData/irmin-sdk-go v0.0.0-20260109093950-bc99616bc3c6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.95.0
 	github.com/clerk/clerk-sdk-go/v2 v2.5.1
 	github.com/gofiber/fiber/v3 v3.0.0-rc.3.0.20251222104845-680f3c3ffec9
@@ -70,7 +70,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gofiber/schema v1.6.0 // indirect
-	github.com/gofiber/utils/v2 v2.0.0-rc.5 // indirect
+	github.com/gofiber/utils/v2 v2.0.0-rc.6 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/jsonschema-go v0.4.2 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -108,7 +108,7 @@ require (
 	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/telemetry v0.0.0-20251222180846-3f2a21fb04ff // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/tools v0.40.0 // indirect

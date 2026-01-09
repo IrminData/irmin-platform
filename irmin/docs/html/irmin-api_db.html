@@ -171,6 +171,41 @@ func ValidateSearchToken(token SearchToken) bool
 
 TYPES
 
+type AIApplication struct {
+	gorm.Model
+
+	Name           string                    `json:"name"`
+	Description    string                    `json:"description"`
+	Documentation  string                    `json:"documentation"`
+	AllowedOrigins []string                  `json:"allowed_origins" gorm:"type:jsonb;serializer:json"`
+	WorkspaceID    uint                      `json:"workspace_id"    gorm:"index"`
+	Workspace      Workspace                 `json:"workspace"       gorm:"foreignKey:WorkspaceID"`
+	OwnerID        uint                      `json:"owner_id"`
+	Owner          User                      `json:"owner"           gorm:"foreignKey:OwnerID"`
+	DataSources    []AIApplicationDataSource `json:"data_sources"    gorm:"foreignKey:AIApplicationID"`
+	Tags           []Tag                     `json:"tags,omitempty"  gorm:"many2many:ai_application_tags;"`
+}
+    AIApplication represents an AI application in the system.
+
+type AIApplicationDataSource struct {
+	gorm.Model
+
+	AIApplicationID uint          `json:"ai_application_id" gorm:"index"`
+	AIApplication   AIApplication `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
+	RepositoryID    uint          `json:"repository_id"     gorm:"index"`
+	Repository      Repository    `json:"repository"        gorm:"foreignKey:RepositoryID"`
+	Branch          string        `json:"branch"`
+	Path            string        `json:"path"`
+}
+    AIApplicationDataSource represents a data source for an AI application.
+
+type AIApplicationTag struct {
+	AIApplicationID uint          `json:"ai_application_id" gorm:"primaryKey"`
+	AIApplication   AIApplication `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
+	TagID           uint          `json:"tag_id"            gorm:"primaryKey"`
+	Tag             Tag           `json:"tag"               gorm:"foreignKey:TagID"`
+}
+
 type APIToken struct {
 	gorm.Model
 
@@ -301,6 +336,9 @@ func InitialiseDB(env *utils.CoreAPIEnv) (*Database, error)
     InitialiseDB establishes a Postgres database connection, performs any
     necessary migrations, and returns an error if something goes wrong.
 
+func (d *Database) AddTagToAIApplication(aiApplicationID, tagID uint) error
+    AddTagToAIApplication adds a tag to an AI application.
+
 func (d *Database) AddTagToConnection(connectionID, tagID uint) error
     AddTagToConnection adds a tag to a connection.
 
@@ -331,6 +369,9 @@ func (d *Database) Close()
 
 func (d *Database) CreateSearchIndexes() error
     CreateSearchIndexes creates indexes to optimize search performance.
+
+func (d *Database) DeleteAIApplication(tx *gorm.DB, id uint) error
+    DeleteAIApplication deletes an AI application and all related records.
 
 func (d *Database) DeleteAPIToken(id uint) error
     DeleteAPIToken deletes an API token by its ID.
@@ -389,6 +430,20 @@ func (d *Database) GenerateAllPossiblePolicies(
 ) []Policy
     GenerateAllPossiblePolicies generates all possible policy combinations for a
     given workspace and principal.
+
+func (d *Database) GetAIApplicationByID(id uint) (*AIApplication, error)
+    GetAIApplicationByID retrieves an AI application by its ID.
+
+func (d *Database) GetAIApplicationTags(aiApplicationID uint) ([]Tag, error)
+    GetAIApplicationTags retrieves all tags for an AI application.
+
+func (d *Database) GetAIApplicationsByTag(tagID uint) ([]AIApplication, error)
+    GetAIApplicationsByTag retrieves all AI applications that have a specific
+    tag.
+
+func (d *Database) GetAIApplicationsByWorkspaceID(workspaceID uint) ([]AIApplication, error)
+    GetAIApplicationsByWorkspaceID retrieves all AI applications for a
+    workspace.
 
 func (d *Database) GetAPIToken(id uint) (*APIToken, error)
     GetAPIToken retrieves an API token by its ID.
@@ -623,6 +678,9 @@ func (d *Database) Migrate() error
     Migrate runs the auto migration calls in the correct order. It separates the
     migrations into groups based on model dependencies.
 
+func (d *Database) RemoveTagFromAIApplication(aiApplicationID, tagID uint) error
+    RemoveTagFromAIApplication removes a tag from an AI application.
+
 func (d *Database) RemoveTagFromConnection(connectionID, tagID uint) error
     RemoveTagFromConnection removes a tag from a connection.
 
@@ -773,6 +831,8 @@ type LogEvent struct {
 	PolicyID           *uint             `json:"policy_id"            gorm:"index"`
 	StoredQuery        *StoredQuery      `json:"stored_query"         gorm:"foreignKey:StoredQueryID"`
 	StoredQueryID      *uint             `json:"stored_query_id"      gorm:"index"`
+	AIApplication      *AIApplication    `json:"ai_application"       gorm:"foreignKey:AIApplicationID"`
+	AIApplicationID    *uint             `json:"ai_application_id"    gorm:"index"`
 }
 
 type LogEventType string
@@ -1001,6 +1061,8 @@ const (
 	PolicyResourceBilling PolicyResource = "billing" // Billing is not stored in the database, so policies are not billing specific.
 	// PolicyResourceWorkspaceTag represents a workspace tag resource.
 	PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
+	// PolicyResourceAIApplication represents an AI application resource.
+	PolicyResourceAIApplication PolicyResource = "ai_application"
 )
 type QueryNormalizationOptions struct {
 	RemoveStopWords bool
@@ -1305,6 +1367,7 @@ type TaggedAssets struct {
 	Workflows         []Workflow         `json:"workflows"`
 	Connections       []Connection       `json:"connections"`
 	RepositoryObjects []RepositoryObject `json:"repository_objects"`
+	AIApplications    []AIApplication    `json:"ai_applications"`
 }
     TaggedAssets represents all assets associated with a specific tag.
 

@@ -114,6 +114,16 @@ func resourceMiddleware[T any](
 			)
 		}
 		c.Locals(resourceType, r)
+	case *db.AIApplication:
+		if r.WorkspaceID != workspace.ID {
+			return api.handleServiceError(
+				c,
+				fmt.Sprintf("%s does not belong to the workspace", resourceType),
+				services.ErrAccessDenied,
+				dict,
+			)
+		}
+		c.Locals(resourceType, r)
 	default:
 		return api.handleServiceError(
 			c,

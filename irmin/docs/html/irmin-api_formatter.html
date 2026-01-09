@@ -7,6 +7,13 @@ package formatter // import "irmin-api/formatter"
 
 FUNCTIONS
 
+func FormatAIApplicationResponse(
+	database *db.Database,
+	aiApplication *db.AIApplication,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.AIApplication, error)
+    FormatAIApplicationResponse formats an AI application response.
+
 func FormatAPITokenResponse(token *db.APIToken, sqidManager *irminsqids.SQIDManager) (*irminmodels.APIToken, error)
     FormatAPITokenResponse formats an API token for the response.
 

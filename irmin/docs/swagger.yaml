@@ -26,6 +26,39 @@ definitions:
     - system_token
     - url
     type: object
+  irmincore.CreateAIApplicationRequest:
+    properties:
+      allowed_origins:
+        example:
+        - https://app.example.com
+        - http://localhost:3000
+        items:
+          type: string
+        type: array
+      data_sources:
+        items:
+          $ref: '#/definitions/irminmodels.AIApplicationDataSource'
+        type: array
+      description:
+        example: AI application for customer data analysis
+        maxLength: 500
+        type: string
+      documentation:
+        example: '# Customer Analytics'
+        type: string
+      name:
+        example: Customer Analytics App
+        maxLength: 100
+        type: string
+      tags:
+        example:
+        - tag_7k3m9x2n5q8p
+        items:
+          type: string
+        type: array
+    required:
+    - name
+    type: object
   irmincore.CreateBranchRequest:
     properties:
       from:
@@ -400,6 +433,14 @@ definitions:
     - email
     - role
     type: object
+  irmincore.TransferAIApplicationOwnershipRequest:
+    properties:
+      new_owner_id:
+        example: usr_2k8n9q1m7p3x4z
+        type: string
+    required:
+    - new_owner_id
+    type: object
   irmincore.TransferConnectionOwnershipRequest:
     properties:
       new_owner_id:
@@ -447,6 +488,32 @@ definitions:
         type: string
     required:
     - new_owner_id
+    type: object
+  irmincore.UpdateAIApplicationRequest:
+    properties:
+      allowed_origins:
+        items:
+          type: string
+        type: array
+      data_sources:
+        items:
+          $ref: '#/definitions/irminmodels.AIApplicationDataSource'
+        type: array
+      description:
+        example: AI application for customer data analysis
+        maxLength: 500
+        type: string
+      documentation:
+        example: '# Customer Analytics'
+        type: string
+      name:
+        example: Customer Analytics App
+        maxLength: 100
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
     type: object
   irmincore.UpdateBranchRequest:
     properties:
@@ -765,6 +832,68 @@ definitions:
     required:
     - name
     - type
+    type: object
+  irminmodels.AIApplication:
+    properties:
+      allowed_origins:
+        example:
+        - https://app.example.com
+        - http://localhost:3000
+        items:
+          type: string
+        type: array
+      created_at:
+        example: "2025-01-15T10:30:00Z"
+        type: string
+      data_sources:
+        items:
+          $ref: '#/definitions/irminmodels.AIApplicationDataSource'
+        type: array
+      description:
+        example: AI application for customer data analysis
+        maxLength: 500
+        type: string
+      documentation:
+        example: '# Customer Analytics'
+        type: string
+      id:
+        example: ai_8x2m9k4n7p5q
+        type: string
+      name:
+        example: Customer Analytics App
+        maxLength: 100
+        type: string
+      owner:
+        $ref: '#/definitions/irminmodels.User'
+      tags:
+        items:
+          $ref: '#/definitions/irminmodels.Tag'
+        type: array
+      updated_at:
+        example: "2025-12-01T14:22:30Z"
+        type: string
+    required:
+    - created_at
+    - id
+    - name
+    - owner
+    - updated_at
+    type: object
+  irminmodels.AIApplicationDataSource:
+    properties:
+      branch:
+        example: main
+        type: string
+      path:
+        example: /data/customers
+        type: string
+      repository:
+        example: customer-analytics
+        type: string
+    required:
+    - branch
+    - path
+    - repository
     type: object
   irminmodels.APIToken:
     properties:
@@ -4225,6 +4354,311 @@ paths:
       summary: Update workspace
       tags:
       - workspaces
+  /workspaces/{workspace_slug}/ai-applications:
+    get:
+      consumes:
+      - application/json
+      description: Get all AI applications in the workspace with permission-based
+        access
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: AI applications retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/irminmodels.AIApplication'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Workspace not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List AI applications
+      tags:
+      - ai-applications
+    post:
+      consumes:
+      - application/json
+      description: Create a new AI application with specified configuration and data
+        sources
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: AI application creation request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.CreateAIApplicationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: AI application created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.AIApplication'
+              type: object
+        "400":
+          description: Bad request - invalid AI application configuration
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create AI application
+      tags:
+      - ai-applications
+  /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an AI application and all its related data
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: AI application slug
+        in: path
+        name: ai_application_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: AI application deleted successfully
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: AI application not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete AI application
+      tags:
+      - ai-applications
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific AI application including its configuration
+        and data sources
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: AI application slug
+        in: path
+        name: ai_application_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: AI application details retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.AIApplication'
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: AI application not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get AI application details
+      tags:
+      - ai-applications
+    patch:
+      consumes:
+      - application/json
+      description: Update AI application properties (name, description, documentation,
+        origins, data sources)
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: AI application slug
+        in: path
+        name: ai_application_slug
+        required: true
+        type: string
+      - description: AI application update request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.UpdateAIApplicationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: AI application updated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.AIApplication'
+              type: object
+        "400":
+          description: Bad request - invalid AI application data
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: AI application not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update AI application
+      tags:
+      - ai-applications
+  /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/transfer-ownership:
+    post:
+      consumes:
+      - application/json
+      description: Transfer ownership of an AI application to another user in the
+        workspace
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: AI application slug
+        in: path
+        name: ai_application_slug
+        required: true
+        type: string
+      - description: Ownership transfer request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.TransferAIApplicationOwnershipRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ownership transferred successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.AIApplication'
+              type: object
+        "400":
+          description: Bad request - invalid new owner or not a workspace member
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: AI application not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Transfer AI application ownership
+      tags:
+      - ai-applications
   /workspaces/{workspace_slug}/connections:
     get:
       consumes:

@@ -287,6 +287,13 @@ func (api *APIServices) TransferWorkspaceOwnership(
 		return nil, errors.New("new owner is not a member of the workspace")
 	}
 
+	// Get the new owner's information for the audit log
+	newOwner, getNewOwnerErr := api.DB.GetUser(uint(newOwnerID))
+	if getNewOwnerErr != nil {
+		api.Logger.ErrorContext(ctx, "Error fetching new owner information", "error", getNewOwnerErr)
+		return nil, getNewOwnerErr
+	}
+
 	// Get the owner role
 	ownerRole, err := api.DB.GetOwnerRole()
 	if err != nil {
@@ -310,6 +317,7 @@ func (api *APIServices) TransferWorkspaceOwnership(
 
 		// Update the workspace owner ID.
 		workspace.OwnerID = uint(newOwnerID)
+		workspace.Owner = *newOwner
 		if updateWorkspaceErr := tx.Save(&workspace).Error; updateWorkspaceErr != nil {
 			api.Logger.ErrorContext(ctx, "Error updating workspace", "error", updateWorkspaceErr)
 			return updateWorkspaceErr
@@ -329,7 +337,7 @@ func (api *APIServices) TransferWorkspaceOwnership(
 		Description: fmt.Sprintf(
 			"Workspace %s ownership transferred to %s",
 			workspace.Slug,
-			workspace.Owner.Email,
+			newOwner.Email,
 		),
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,

@@ -33,6 +33,8 @@ const (
 )
 
 // GetWorkflow gets a workflow by its SQID.
+//
+//nolint:dupl // Each resource type needs its own service method following similar patterns.
 func (api *APIServices) GetWorkflow(
 	c context.Context,
 	user *db.User,
@@ -506,6 +508,9 @@ func (api *APIServices) UpdateWorkflowSchedule(
 	return workflow, nil
 }
 
+// DeleteWorkflow deletes a workflow.
+//
+//nolint:dupl // Each resource type needs its own service method following similar patterns.
 func (api *APIServices) DeleteWorkflow(
 	c context.Context,
 	user *db.User,
@@ -600,7 +605,7 @@ func (api *APIServices) TransferWorkflowOwnership(
 	}
 
 	// Make sure the new owner is not the current owner
-	if uint(newOwnerID) == user.ID {
+	if uint(newOwnerID) == workflow.OwnerID {
 		return nil, ErrNewOwnerInvalid
 	}
 
@@ -614,8 +619,16 @@ func (api *APIServices) TransferWorkflowOwnership(
 		return nil, ErrNewOwnerInvalid
 	}
 
+	// Get the new owner's information for the audit log
+	newOwner, getNewOwnerErr := api.DB.GetUser(uint(newOwnerID))
+	if getNewOwnerErr != nil {
+		api.Logger.ErrorContext(c, "Error fetching new owner information", "error", getNewOwnerErr)
+		return nil, NewInternalErrorf("error fetching new owner information: %w", getNewOwnerErr)
+	}
+
 	// Update the workflow record.
 	workflow.OwnerID = uint(newOwnerID)
+	workflow.Owner = *newOwner
 	if updateWorkflowErr := api.DB.Save(&workflow).Error; updateWorkflowErr != nil {
 		api.Logger.ErrorContext(c, "Error updating workflow", "error", updateWorkflowErr)
 		return nil, updateWorkflowErr
@@ -624,7 +637,7 @@ func (api *APIServices) TransferWorkflowOwnership(
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
-		Description: fmt.Sprintf("Workflow ownership transferred to %s", workflow.Owner.Email),
+		Description: fmt.Sprintf("Workflow ownership transferred to %s", newOwner.Email),
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 		WorkflowID:  &workflow.ID,

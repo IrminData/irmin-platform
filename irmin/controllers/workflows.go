@@ -224,6 +224,8 @@ func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
 // @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/workflows [post]
+//
+//nolint:dupl // Each resource type needs its own handler following similar patterns.
 func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {

@@ -80,6 +80,8 @@ const (
 	PolicyResourceBilling PolicyResource = "billing" // Billing is not stored in the database, so policies are not billing specific.
 	// PolicyResourceWorkspaceTag represents a workspace tag resource.
 	PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
+	// PolicyResourceAIApplication represents an AI application resource.
+	PolicyResourceAIApplication PolicyResource = "ai_application"
 )
 
 // Policy is a policy that is applied to a resource.
@@ -173,6 +175,7 @@ func (d *Database) GenerateAllPossiblePolicies(
 			PolicyResourceAuditLog,
 			PolicyResourceDocumentation,
 			PolicyResourceBilling,
+			PolicyResourceAIApplication,
 		}
 	}
 

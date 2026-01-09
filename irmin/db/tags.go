@@ -58,6 +58,13 @@ type RepositoryObjectTag struct {
 	Tag                Tag              `json:"tag"                  gorm:"foreignKey:TagID"`
 }
 
+type AIApplicationTag struct {
+	AIApplicationID uint          `json:"ai_application_id" gorm:"primaryKey"`
+	AIApplication   AIApplication `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
+	TagID           uint          `json:"tag_id"            gorm:"primaryKey"`
+	Tag             Tag           `json:"tag"               gorm:"foreignKey:TagID"`
+}
+
 // TaggedAssets represents all assets associated with a specific tag.
 type TaggedAssets struct {
 	Queries           []StoredQuery      `json:"queries"`
@@ -66,6 +73,7 @@ type TaggedAssets struct {
 	Workflows         []Workflow         `json:"workflows"`
 	Connections       []Connection       `json:"connections"`
 	RepositoryObjects []RepositoryObject `json:"repository_objects"`
+	AIApplications    []AIApplication    `json:"ai_applications"`
 }
 
 // TagWithAssets represents a tag along with all its associated assets.
@@ -93,6 +101,9 @@ func (d *Database) DeleteTag(tx *gorm.DB, id uint) error {
 		return err
 	}
 	if err := tx.Where(&RepositoryObjectTag{TagID: id}).Delete(&RepositoryObjectTag{}).Error; err != nil {
+		return err
+	}
+	if err := tx.Where(&AIApplicationTag{TagID: id}).Delete(&AIApplicationTag{}).Error; err != nil {
 		return err
 	}
 	// Then delete the tag itself
@@ -416,6 +427,13 @@ func (d *Database) GetAllAssetsByTag(tagID uint) (*TaggedAssets, error) {
 	}
 	assets.RepositoryObjects = repositoryObjects
 
+	// Get AI applications with this tag
+	aiApplications, err := d.GetAIApplicationsByTag(tagID)
+	if err != nil {
+		return nil, err
+	}
+	assets.AIApplications = aiApplications
+
 	return assets, nil
 }
 
@@ -465,6 +483,13 @@ func (d *Database) GetTaggedAssetsCount(tagID uint) (map[string]int, error) {
 	}
 	counts["repository_objects"] = int(repositoryObjectCount)
 
+	// Count AI applications
+	var aiApplicationCount int64
+	if err := d.Model(&AIApplicationTag{}).Where(&AIApplicationTag{TagID: tagID}).Count(&aiApplicationCount).Error; err != nil {
+		return nil, err
+	}
+	counts["ai_applications"] = int(aiApplicationCount)
+
 	return counts, nil
 }
 
@@ -502,4 +527,49 @@ func (d *Database) GetTagsByWorkspace(workspaceID uint) ([]Tag, error) {
 		return nil, err
 	}
 	return tags, nil
+}
+
+// AI Application tag methods
+
+// AddTagToAIApplication adds a tag to an AI application.
+func (d *Database) AddTagToAIApplication(aiApplicationID, tagID uint) error {
+	aiApplicationTag := AIApplicationTag{
+		AIApplicationID: aiApplicationID,
+		TagID:           tagID,
+	}
+	return d.Create(&aiApplicationTag).Error
+}
+
+// RemoveTagFromAIApplication removes a tag from an AI application.
+func (d *Database) RemoveTagFromAIApplication(aiApplicationID, tagID uint) error {
+	return d.Where(&AIApplicationTag{AIApplicationID: aiApplicationID, TagID: tagID}).Delete(&AIApplicationTag{}).Error
+}
+
+// GetAIApplicationTags retrieves all tags for an AI application.
+func (d *Database) GetAIApplicationTags(aiApplicationID uint) ([]Tag, error) {
+	var tags []Tag
+	if err := d.Joins("JOIN ai_application_tags ON ai_application_tags.tag_id = tags.id").
+		Where("ai_application_tags.ai_application_id = ?", aiApplicationID).
+		Order("tags.name asc").
+		Find(&tags).Error; err != nil {
+		return nil, err
+	}
+	return tags, nil
+}
+
+// GetAIApplicationsByTag retrieves all AI applications that have a specific tag.
+func (d *Database) GetAIApplicationsByTag(tagID uint) ([]AIApplication, error) {
+	var aiApplications []AIApplication
+	if err := d.Joins("JOIN ai_application_tags ON ai_application_tags.ai_application_id = ai_applications.id").
+		Where("ai_application_tags.tag_id = ?", tagID).
+		Preload("Owner").
+		Preload("Workspace").
+		Preload("DataSources").
+		Preload("DataSources.Repository").
+		Preload("Tags").
+		Order("ai_applications.created_at desc").
+		Find(&aiApplications).Error; err != nil {
+		return nil, err
+	}
+	return aiApplications, nil
 }

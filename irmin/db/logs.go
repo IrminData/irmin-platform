@@ -44,6 +44,8 @@ type LogEvent struct {
 	PolicyID           *uint             `json:"policy_id"            gorm:"index"`
 	StoredQuery        *StoredQuery      `json:"stored_query"         gorm:"foreignKey:StoredQueryID"`
 	StoredQueryID      *uint             `json:"stored_query_id"      gorm:"index"`
+	AIApplication      *AIApplication    `json:"ai_application"       gorm:"foreignKey:AIApplicationID"`
+	AIApplicationID    *uint             `json:"ai_application_id"    gorm:"index"`
 }
 
 // GetLogEventsForWorkspace returns log events for the given workspace, optionally
@@ -88,6 +90,7 @@ func (d *Database) GetLogEventsForWorkspace(
 		Preload("Policy").
 		Preload("StoredQuery").
 		Preload("RepositoryObject.Repository").
+		Preload("AIApplication").
 		Where(&LogEvent{WorkspaceID: &workspaceID})
 
 	// apply description filter if present
@@ -149,6 +152,8 @@ func (d *Database) GetLogEventsByWorkspaceAndAsset(
 		countQuery = countQuery.Where(&LogEvent{PolicyID: &assetID})
 	case "repository_object":
 		countQuery = countQuery.Where(&LogEvent{RepositoryObjectID: &assetID})
+	case "ai_application":
+		countQuery = countQuery.Where(&LogEvent{AIApplicationID: &assetID})
 	}
 
 	// apply description filter if present
@@ -172,6 +177,7 @@ func (d *Database) GetLogEventsByWorkspaceAndAsset(
 		Preload("Policy").
 		Preload("StoredQuery").
 		Preload("RepositoryObject.Repository").
+		Preload("AIApplication").
 		Where(&LogEvent{WorkspaceID: &workspaceID})
 
 	// asset-specific filter for fetching
@@ -190,6 +196,8 @@ func (d *Database) GetLogEventsByWorkspaceAndAsset(
 		query = query.Where(&LogEvent{PolicyID: &assetID})
 	case "repository_object":
 		query = query.Where(&LogEvent{RepositoryObjectID: &assetID})
+	case "ai_application":
+		query = query.Where(&LogEvent{AIApplicationID: &assetID})
 	}
 
 	// apply description filter if present

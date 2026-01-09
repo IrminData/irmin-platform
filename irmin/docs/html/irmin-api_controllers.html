@@ -22,6 +22,82 @@ func NewAPIControllers(
 	apiServices *services.APIServices,
 ) *APIControllers
 
+func (api *APIControllers) AIApplicationsDestroy(c fiber.Ctx) error
+    AIApplicationsDestroy godoc @Summary Delete AI application @Description
+    Delete an AI application and all its related data @Tags ai-applications
+    @Security ApiKeyAuth @Accept json @Produce json @Param workspace_slug path
+    string true "Workspace slug" @Param ai_application_slug path string true
+    "AI application slug" @Success 200 {object} irminmodels.IrminAPIResponse
+    "AI application deleted successfully" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - insufficient permissions" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "AI application not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/ai-applications/{ai_application_slug} [delete]
+
+func (api *APIControllers) AIApplicationsIndex(c fiber.Ctx) error
+    AIApplicationsIndex godoc @Summary List AI applications @Description
+    Get all AI applications in the workspace with permission-based access
+    @Tags ai-applications @Security ApiKeyAuth @Accept json @Produce json
+    @Param workspace_slug path string true "Workspace slug" @Success 200
+    {object} irminmodels.IrminAPIResponse{data=[]irminmodels.AIApplication}
+    "AI applications retrieved successfully" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 404 {object} irminmodels.IrminAPIResponse
+    "Workspace not found" @Failure 500 {object} irminmodels.IrminAPIResponse
+    "Internal server error" @Router /workspaces/{workspace_slug}/ai-applications
+    [get]
+
+func (api *APIControllers) AIApplicationsShow(c fiber.Ctx) error
+    AIApplicationsShow godoc @Summary Get AI application details @Description
+    Get details of a specific AI application including its configuration
+    and data sources @Tags ai-applications @Security ApiKeyAuth @Accept json
+    @Produce json @Param workspace_slug path string true "Workspace slug"
+    @Param ai_application_slug path string true "AI application slug" @Success
+    200 {object} irminmodels.IrminAPIResponse{data=irminmodels.AIApplication}
+    "AI application details retrieved successfully" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - insufficient permissions" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "AI application not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/ai-applications/{ai_application_slug} [get]
+
+func (api *APIControllers) AIApplicationsStore(c fiber.Ctx) error
+    AIApplicationsStore godoc @Summary Create AI application @Description
+    Create a new AI application with specified configuration and data
+    sources @Tags ai-applications @Security ApiKeyAuth @Accept json
+    @Produce json @Param workspace_slug path string true "Workspace
+    slug" @Param body body irmincore.CreateAIApplicationRequest
+    true "AI application creation request" @Success 201 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.AIApplication} "AI application
+    created successfully" @Failure 400 {object} irminmodels.IrminAPIResponse
+    "Bad request - invalid AI application configuration" @Failure 401
+    {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - insufficient permissions" @Failure 500 {object}
+    irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/ai-applications [post]
+
+func (api *APIControllers) AIApplicationsUpdate(c fiber.Ctx) error
+    AIApplicationsUpdate godoc @Summary Update AI application @Description
+    Update AI application properties (name, description, documentation,
+    origins, data sources) @Tags ai-applications @Security ApiKeyAuth
+    @Accept json @Produce json @Param workspace_slug path string true
+    "Workspace slug" @Param ai_application_slug path string true "AI
+    application slug" @Param body body irmincore.UpdateAIApplicationRequest
+    true "AI application update request" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.AIApplication} "AI application
+    updated successfully" @Failure 400 {object} irminmodels.IrminAPIResponse
+    "Bad request - invalid AI application data" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - insufficient permissions" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "AI application not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/ai-applications/{ai_application_slug} [patch]
+
 func (api *APIControllers) AcceptInvite(c fiber.Ctx) error
     AcceptInvite godoc @Summary Accept invite @Description Accept
     an invite and join the workspace with the specified role @Tags
@@ -1460,6 +1536,25 @@ func (api *APIControllers) TestConnection(c fiber.Ctx) error
     "Connection not found" @Failure 500 {object}
     irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/connections/{connection_slug}/test [post]
+
+func (api *APIControllers) TransferAIApplicationOwnership(c fiber.Ctx) error
+    TransferAIApplicationOwnership godoc @Summary Transfer AI application
+    ownership @Description Transfer ownership of an AI application to another
+    user in the workspace @Tags ai-applications @Security ApiKeyAuth @Accept
+    json @Produce json @Param workspace_slug path string true "Workspace
+    slug" @Param ai_application_slug path string true "AI application
+    slug" @Param body body irmincore.TransferAIApplicationOwnershipRequest
+    true "Ownership transfer request" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.AIApplication} "Ownership
+    transferred successfully" @Failure 400 {object} irminmodels.IrminAPIResponse
+    "Bad request - invalid new owner or not a workspace member" @Failure 401
+    {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - insufficient permissions" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "AI application not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/transfer-ownership
+    [post]
 
 func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error
     TransferConnectionOwnership godoc @Summary Transfer connection

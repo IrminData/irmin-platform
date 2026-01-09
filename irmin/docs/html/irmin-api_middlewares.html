@@ -22,6 +22,14 @@ func NewAPIMiddlewares(
 	apiServices *services.APIServices,
 ) *APIMiddlewares
 
+func (m *APIMiddlewares) AIApplicationMiddleware(c fiber.Ctx) error
+    AIApplicationMiddleware retrieves AI application by ID and stores it in
+    fiber.Locals.
+
+func (api *APIMiddlewares) AIApplicationPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    AIApplicationPermissionMiddleware creates a middleware for AI
+    application-level permissions.
+
 func (api *APIMiddlewares) AuditLogPermissionMiddleware() fiber.Handler
     AuditLogPermissionMiddleware creates a middleware for audit log permissions.
 
