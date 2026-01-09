@@ -146,6 +146,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) CheckPermission\(ctx context.Context, workspace string, resource irminmodels.PolicyResource, action irminmodels.PolicyAction, resourceID \*string\) \(bool, error\)](<#Client.CheckPermission>)
   - [func \(c \*Client\) CompareRefs\(ctx context.Context, workspace, repository, baseRef, compareRef string\) \(\*irminmodels.Diff, \*irminmodels.IrminAPIResponse, error\)](<#Client.CompareRefs>)
   - [func \(c \*Client\) CopyObject\(ctx context.Context, workspace, repository, path, ref string, req MoveObjectRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.CopyObject>)
+  - [func \(c \*Client\) CreateAIApplication\(ctx context.Context, workspace string, req CreateAIApplicationRequest\) \(\*irminmodels.AIApplication, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateAIApplication>)
   - [func \(c \*Client\) CreateBranch\(ctx context.Context, workspace, repository string, req CreateBranchRequest\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateBranch>)
   - [func \(c \*Client\) CreateCommit\(ctx context.Context, workspace, repository string, req CreateCommitRequest\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateCommit>)
   - [func \(c \*Client\) CreateConnection\(ctx context.Context, workspace string, req CreateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateConnection>)
@@ -159,6 +160,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) CreateWorkspace\(ctx context.Context, req CreateWorkspaceRequest\) \(\*irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateWorkspace>)
   - [func \(c \*Client\) CreateWorkspaceTag\(ctx context.Context, workspace string, req CreateTagRequest\) \(\*irminmodels.Tag, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateWorkspaceTag>)
   - [func \(c \*Client\) DeclineInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.DeclineInvite>)
+  - [func \(c \*Client\) DeleteAIApplication\(ctx context.Context, workspace, aiApplicationID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteAIApplication>)
   - [func \(c \*Client\) DeleteBranch\(ctx context.Context, workspace, repository, branch string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteBranch>)
   - [func \(c \*Client\) DeleteConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteConnection>)
   - [func \(c \*Client\) DeleteConnector\(ctx context.Context, connectorID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteConnector>)
@@ -190,6 +192,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) FetchLogEventsForUser\(ctx context.Context, workspace, userID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForUser>)
   - [func \(c \*Client\) FetchLogEventsForWorkflow\(ctx context.Context, workspace, workflowID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForWorkflow>)
   - [func \(c \*Client\) GenerateFileSchema\(ctx context.Context, fileName string, fileReader io.Reader\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GenerateFileSchema>)
+  - [func \(c \*Client\) GetAIApplication\(ctx context.Context, workspace, aiApplicationID string\) \(\*irminmodels.AIApplication, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplication>)
   - [func \(c \*Client\) GetBranch\(ctx context.Context, workspace, repository, branchName string\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetBranch>)
   - [func \(c \*Client\) GetCommit\(ctx context.Context, workspace, repository, hash string\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetCommit>)
   - [func \(c \*Client\) GetConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnection>)
@@ -219,6 +222,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) GetWorkspaceSchema\(ctx context.Context, slug string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkspaceSchema>)
   - [func \(c \*Client\) GetWorkspaceTag\(ctx context.Context, workspace, tagID string\) \(\*irminmodels.TagWithAssets, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkspaceTag>)
   - [func \(c \*Client\) LeaveWorkspace\(ctx context.Context, slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.LeaveWorkspace>)
+  - [func \(c \*Client\) ListAIApplications\(ctx context.Context, workspace string\) \(\[\]irminmodels.AIApplication, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAIApplications>)
   - [func \(c \*Client\) ListAllWorkflowRuns\(ctx context.Context, workspace string, page, perPage int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAllWorkflowRuns>)
   - [func \(c \*Client\) ListBranches\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListBranches>)
   - [func \(c \*Client\) ListCommits\(ctx context.Context, workspace, repository, ref, after string, perPage int\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListCommits>)
@@ -256,6 +260,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) SendInvite\(ctx context.Context, workspace string, req SendInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.SendInvite>)
   - [func \(c \*Client\) StartWorkflow\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.StartWorkflow>)
   - [func \(c \*Client\) TestConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.ConnectorConfigurationValidationResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.TestConnection>)
+  - [func \(c \*Client\) TransferAIApplication\(ctx context.Context, workspace, aiApplicationID, newOwnerID string\) \(\*irminmodels.AIApplication, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferAIApplication>)
   - [func \(c \*Client\) TransferConnection\(ctx context.Context, workspace, connectionID string, req TransferConnectionOwnershipRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferConnection>)
   - [func \(c \*Client\) TransferRepository\(ctx context.Context, workspace, slug string, req TransferRepositoryOwnershipRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferRepository>)
   - [func \(c \*Client\) TransferStoredQuery\(ctx context.Context, workspace, queryID string, req TransferQueryOwnershipRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferStoredQuery>)
@@ -263,6 +268,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) TransferWorkflow\(ctx context.Context, workspace, workflowID, newOwnerID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferWorkflow>)
   - [func \(c \*Client\) TransferWorkspace\(ctx context.Context, workspaceSlug string, req TransferOwnershipRequest\) \(\*irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferWorkspace>)
   - [func \(c \*Client\) TriggerWorkflowRun\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.TriggerWorkflowRun>)
+  - [func \(c \*Client\) UpdateAIApplication\(ctx context.Context, workspace, aiApplicationID string, req UpdateAIApplicationRequest\) \(\*irminmodels.AIApplication, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateAIApplication>)
   - [func \(c \*Client\) UpdateBranch\(ctx context.Context, workspace, repository, oldName string, req UpdateBranchRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateBranch>)
   - [func \(c \*Client\) UpdateConnection\(ctx context.Context, workspace, connectionID string, req UpdateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateConnection>)
   - [func \(c \*Client\) UpdateConnectionConfiguration\(ctx context.Context, workspace, connectionID string, req UpdateConnectionConfigurationRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateConnectionConfiguration>)
@@ -290,6 +296,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) VectorizeObjects\(ctx context.Context, workspace, repository string, req VectorizeObjectsRequest\) \(\*irminmodels.EmbeddingFile, \*irminmodels.IrminAPIResponse, error\)](<#Client.VectorizeObjects>)
 - [type ConnectorConfigurationRequest](<#ConnectorConfigurationRequest>)
 - [type ConnectorRequest](<#ConnectorRequest>)
+- [type CreateAIApplicationRequest](<#CreateAIApplicationRequest>)
 - [type CreateBranchRequest](<#CreateBranchRequest>)
 - [type CreateCommitRequest](<#CreateCommitRequest>)
 - [type CreateConnectionRequest](<#CreateConnectionRequest>)
@@ -313,12 +320,14 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type RevertUncommittedChangesRequest](<#RevertUncommittedChangesRequest>)
 - [type SearchEmbeddingsRequest](<#SearchEmbeddingsRequest>)
 - [type SendInviteRequest](<#SendInviteRequest>)
+- [type TransferAIApplicationOwnershipRequest](<#TransferAIApplicationOwnershipRequest>)
 - [type TransferConnectionOwnershipRequest](<#TransferConnectionOwnershipRequest>)
 - [type TransferOwnershipRequest](<#TransferOwnershipRequest>)
 - [type TransferQueryOwnershipRequest](<#TransferQueryOwnershipRequest>)
 - [type TransferRepositoryOwnershipRequest](<#TransferRepositoryOwnershipRequest>)
 - [type TransferScriptOwnershipRequest](<#TransferScriptOwnershipRequest>)
 - [type TransferWorkflowOwnershipRequest](<#TransferWorkflowOwnershipRequest>)
+- [type UpdateAIApplicationRequest](<#UpdateAIApplicationRequest>)
 - [type UpdateBranchRequest](<#UpdateBranchRequest>)
 - [type UpdateConnectionConfigurationRequest](<#UpdateConnectionConfigurationRequest>)
 - [type UpdateConnectionRequest](<#UpdateConnectionRequest>)
@@ -455,6 +464,15 @@ func (c *Client) CopyObject(ctx context.Context, workspace, repository, path, re
 
 
 
+<a name="Client.CreateAIApplication"></a>
+### func \(\*Client\) CreateAIApplication
+
+```go
+func (c *Client) CreateAIApplication(ctx context.Context, workspace string, req CreateAIApplicationRequest) (*irminmodels.AIApplication, *irminmodels.IrminAPIResponse, error)
+```
+
+CreateAIApplication creates a new AI application.
+
 <a name="Client.CreateBranch"></a>
 ### func \(\*Client\) CreateBranch
 
@@ -571,6 +589,15 @@ func (c *Client) DeclineInvite(ctx context.Context, inviteID string) (*irminmode
 ```
 
 
+
+<a name="Client.DeleteAIApplication"></a>
+### func \(\*Client\) DeleteAIApplication
+
+```go
+func (c *Client) DeleteAIApplication(ctx context.Context, workspace, aiApplicationID string) (*irminmodels.IrminAPIResponse, error)
+```
+
+DeleteAIApplication deletes an AI application.
 
 <a name="Client.DeleteBranch"></a>
 ### func \(\*Client\) DeleteBranch
@@ -853,6 +880,15 @@ GenerateFileSchema generates a schema from a file. The body is expected to be a 
 
 Usable only with a system token.
 
+<a name="Client.GetAIApplication"></a>
+### func \(\*Client\) GetAIApplication
+
+```go
+func (c *Client) GetAIApplication(ctx context.Context, workspace, aiApplicationID string) (*irminmodels.AIApplication, *irminmodels.IrminAPIResponse, error)
+```
+
+GetAIApplication retrieves a specific AI application by ID.
+
 <a name="Client.GetBranch"></a>
 ### func \(\*Client\) GetBranch
 
@@ -1113,6 +1149,15 @@ func (c *Client) LeaveWorkspace(ctx context.Context, slug string) (*irminmodels.
 ```
 
 
+
+<a name="Client.ListAIApplications"></a>
+### func \(\*Client\) ListAIApplications
+
+```go
+func (c *Client) ListAIApplications(ctx context.Context, workspace string) ([]irminmodels.AIApplication, *irminmodels.IrminAPIResponse, error)
+```
+
+ListAIApplications retrieves all AI applications in a workspace.
 
 <a name="Client.ListAllWorkflowRuns"></a>
 ### func \(\*Client\) ListAllWorkflowRuns
@@ -1447,6 +1492,15 @@ func (c *Client) TestConnection(ctx context.Context, workspace, connectionID str
 
 TestConnection tests the connection with the provided configuration.
 
+<a name="Client.TransferAIApplication"></a>
+### func \(\*Client\) TransferAIApplication
+
+```go
+func (c *Client) TransferAIApplication(ctx context.Context, workspace, aiApplicationID, newOwnerID string) (*irminmodels.AIApplication, *irminmodels.IrminAPIResponse, error)
+```
+
+TransferAIApplication transfers ownership of an AI application to another user.
+
 <a name="Client.TransferConnection"></a>
 ### func \(\*Client\) TransferConnection
 
@@ -1509,6 +1563,15 @@ func (c *Client) TriggerWorkflowRun(ctx context.Context, workspace, workflowID s
 ```
 
 
+
+<a name="Client.UpdateAIApplication"></a>
+### func \(\*Client\) UpdateAIApplication
+
+```go
+func (c *Client) UpdateAIApplication(ctx context.Context, workspace, aiApplicationID string, req UpdateAIApplicationRequest) (*irminmodels.AIApplication, *irminmodels.IrminAPIResponse, error)
+```
+
+UpdateAIApplication updates an existing AI application.
 
 <a name="Client.UpdateBranch"></a>
 ### func \(\*Client\) UpdateBranch
@@ -1756,6 +1819,22 @@ ConnectorRequest represents the JSON request body for creating/updating connecto
 type ConnectorRequest struct {
     URL         string `json:"url"          validate:"required,validurl" example:"https://example.com/connector"`
     SystemToken string `json:"system_token" validate:"required,max=100"  example:"system_token_123"`
+}
+```
+
+<a name="CreateAIApplicationRequest"></a>
+## type CreateAIApplicationRequest
+
+CreateAIApplicationRequest represents the JSON request body for creating an AI application.
+
+```go
+type CreateAIApplicationRequest struct {
+    Name           string                                `json:"name"            validate:"required,max=100"              example:"Customer Analytics App"`
+    Description    string                                `json:"description"     validate:"max=500"                       example:"AI application for customer data analysis"`
+    Documentation  string                                `json:"documentation"   validate:"validdocumentation"            example:"# Customer Analytics"`
+    AllowedOrigins []string                              `json:"allowed_origins" validate:"dive,max=255"                  example:"https://app.example.com,http://localhost:3000"`
+    DataSources    []irminmodels.AIApplicationDataSource `json:"data_sources"    validate:"dive"`
+    Tags           []string                              `json:"tags,omitempty"  validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
 }
 ```
 
@@ -2077,6 +2156,17 @@ type SendInviteRequest struct {
 }
 ```
 
+<a name="TransferAIApplicationOwnershipRequest"></a>
+## type TransferAIApplicationOwnershipRequest
+
+TransferAIApplicationOwnershipRequest represents the JSON request body for transferring AI application ownership.
+
+```go
+type TransferAIApplicationOwnershipRequest struct {
+    NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
+}
+```
+
 <a name="TransferConnectionOwnershipRequest"></a>
 ## type TransferConnectionOwnershipRequest
 
@@ -2140,6 +2230,22 @@ TransferWorkflowOwnershipRequest represents the JSON request body for transferri
 ```go
 type TransferWorkflowOwnershipRequest struct {
     NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
+}
+```
+
+<a name="UpdateAIApplicationRequest"></a>
+## type UpdateAIApplicationRequest
+
+UpdateAIApplicationRequest represents the JSON request body for updating an AI application.
+
+```go
+type UpdateAIApplicationRequest struct {
+    Name           *string                               `json:"name,omitempty"            validate:"omitempty,max=100"             example:"Customer Analytics App"`
+    Description    *string                               `json:"description,omitempty"     validate:"omitempty,max=500"             example:"AI application for customer data analysis"`
+    Documentation  *string                               `json:"documentation,omitempty"   validate:"validdocumentation"            example:"# Customer Analytics"`
+    AllowedOrigins []string                              `json:"allowed_origins,omitempty" validate:"omitempty,dive,max=255"`
+    DataSources    []irminmodels.AIApplicationDataSource `json:"data_sources,omitempty"    validate:"omitempty,dive"`
+    Tags           []string                              `json:"tags,omitempty"            validate:"omitempty,dive,validsqid=tags"`
 }
 ```
 
@@ -2683,6 +2789,8 @@ import "github.com/IrminData/irmin-sdk-go/models"
 
 ## Index
 
+- [type AIApplication](<#AIApplication>)
+- [type AIApplicationDataSource](<#AIApplicationDataSource>)
 - [type APIToken](<#APIToken>)
 - [type ActionExecutableType](<#ActionExecutableType>)
 - [type ActionInputData](<#ActionInputData>)
@@ -2771,6 +2879,39 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type Workspace](<#Workspace>)
 - [type WorkspaceSearchResultType](<#WorkspaceSearchResultType>)
 
+
+<a name="AIApplication"></a>
+## type AIApplication
+
+AIApplication represents an AI application in the system.
+
+```go
+type AIApplication struct {
+    ID             string                    `json:"id"              validate:"required,validsqid=ai_applications" example:"ai_8x2m9k4n7p5q"`
+    Name           string                    `json:"name"            validate:"required,max=100"                   example:"Customer Analytics App"`
+    Description    string                    `json:"description"     validate:"max=500"                            example:"AI application for customer data analysis"`
+    Documentation  string                    `json:"documentation"   validate:"validdocumentation"                 example:"# Customer Analytics"`
+    AllowedOrigins []string                  `json:"allowed_origins" validate:"dive,max=255"                       example:"https://app.example.com,http://localhost:3000"`
+    DataSources    []AIApplicationDataSource `json:"data_sources"    validate:"dive"`
+    Owner          User                      `json:"owner"           validate:"required"`
+    Tags           []Tag                     `json:"tags,omitempty"  validate:"dive"`
+    CreatedAt      time.Time                 `json:"created_at"      validate:"required"                           example:"2025-01-15T10:30:00Z"`
+    UpdatedAt      time.Time                 `json:"updated_at"      validate:"required"                           example:"2025-12-01T14:22:30Z"`
+}
+```
+
+<a name="AIApplicationDataSource"></a>
+## type AIApplicationDataSource
+
+AIApplicationDataSource represents a data source for an AI application.
+
+```go
+type AIApplicationDataSource struct {
+    Repository string `json:"repository" validate:"required" example:"customer-analytics"`
+    Branch     string `json:"branch"     validate:"required" example:"main"`
+    Path       string `json:"path"       validate:"required" example:"/data/customers"`
+}
+```
 
 <a name="APIToken"></a>
 ## type APIToken

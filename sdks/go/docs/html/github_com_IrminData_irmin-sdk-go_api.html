@@ -92,6 +92,13 @@ func (c *Client) CopyObject(
 	req MoveObjectRequest,
 ) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) CreateAIApplication(
+	ctx context.Context,
+	workspace string,
+	req CreateAIApplicationRequest,
+) (*irminmodels.AIApplication, *irminmodels.IrminAPIResponse, error)
+    CreateAIApplication creates a new AI application.
+
 func (c *Client) CreateBranch(
 	ctx context.Context,
 	workspace, repository string,
@@ -168,6 +175,12 @@ func (c *Client) DeclineInvite(
 	ctx context.Context,
 	inviteID string,
 ) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) DeleteAIApplication(
+	ctx context.Context,
+	workspace, aiApplicationID string,
+) (*irminmodels.IrminAPIResponse, error)
+    DeleteAIApplication deletes an AI application.
 
 func (c *Client) DeleteBranch(
 	ctx context.Context,
@@ -344,6 +357,12 @@ func (c *Client) GenerateFileSchema(
 
     Usable only with a system token.
 
+func (c *Client) GetAIApplication(
+	ctx context.Context,
+	workspace, aiApplicationID string,
+) (*irminmodels.AIApplication, *irminmodels.IrminAPIResponse, error)
+    GetAIApplication retrieves a specific AI application by ID.
+
 func (c *Client) GetBranch(
 	ctx context.Context,
 	workspace, repository, branchName string,
@@ -501,6 +520,12 @@ func (c *Client) GetWorkspaceTag(ctx context.Context,
     assets.
 
 func (c *Client) LeaveWorkspace(ctx context.Context, slug string) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListAIApplications(
+	ctx context.Context,
+	workspace string,
+) ([]irminmodels.AIApplication, *irminmodels.IrminAPIResponse, error)
+    ListAIApplications retrieves all AI applications in a workspace.
 
 func (c *Client) ListAllWorkflowRuns(
 	ctx context.Context,
@@ -690,6 +715,13 @@ func (c *Client) TestConnection(
 ) (*irminmodels.ConnectorConfigurationValidationResult, *irminmodels.IrminAPIResponse, error)
     TestConnection tests the connection with the provided configuration.
 
+func (c *Client) TransferAIApplication(
+	ctx context.Context,
+	workspace, aiApplicationID, newOwnerID string,
+) (*irminmodels.AIApplication, *irminmodels.IrminAPIResponse, error)
+    TransferAIApplication transfers ownership of an AI application to another
+    user.
+
 func (c *Client) TransferConnection(
 	ctx context.Context,
 	workspace, connectionID string,
@@ -729,6 +761,13 @@ func (c *Client) TriggerWorkflowRun(
 	ctx context.Context,
 	workspace, workflowID string,
 ) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) UpdateAIApplication(
+	ctx context.Context,
+	workspace, aiApplicationID string,
+	req UpdateAIApplicationRequest,
+) (*irminmodels.AIApplication, *irminmodels.IrminAPIResponse, error)
+    UpdateAIApplication updates an existing AI application.
 
 func (c *Client) UpdateBranch(
 	ctx context.Context,
@@ -894,6 +933,17 @@ type ConnectorRequest struct {
 }
     ConnectorRequest represents the JSON request body for creating/updating
     connectors.
+
+type CreateAIApplicationRequest struct {
+	Name           string                                `json:"name"            validate:"required,max=100"              example:"Customer Analytics App"`
+	Description    string                                `json:"description"     validate:"max=500"                       example:"AI application for customer data analysis"`
+	Documentation  string                                `json:"documentation"   validate:"validdocumentation"            example:"# Customer Analytics"`
+	AllowedOrigins []string                              `json:"allowed_origins" validate:"dive,max=255"                  example:"https://app.example.com,http://localhost:3000"`
+	DataSources    []irminmodels.AIApplicationDataSource `json:"data_sources"    validate:"dive"`
+	Tags           []string                              `json:"tags,omitempty"  validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
+}
+    CreateAIApplicationRequest represents the JSON request body for creating an
+    AI application.
 
 type CreateBranchRequest struct {
 	Name        string `json:"name"                   validate:"required" example:"feature/add-customer-data"`
@@ -1088,6 +1138,12 @@ type SendInviteRequest struct {
 }
     SendInviteRequest represents the JSON request body for sending an invite.
 
+type TransferAIApplicationOwnershipRequest struct {
+	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
+}
+    TransferAIApplicationOwnershipRequest represents the JSON request body for
+    transferring AI application ownership.
+
 type TransferConnectionOwnershipRequest struct {
 	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
 }
@@ -1123,6 +1179,17 @@ type TransferWorkflowOwnershipRequest struct {
 }
     TransferWorkflowOwnershipRequest represents the JSON request body for
     transferring workflow ownership.
+
+type UpdateAIApplicationRequest struct {
+	Name           *string                               `json:"name,omitempty"            validate:"omitempty,max=100"             example:"Customer Analytics App"`
+	Description    *string                               `json:"description,omitempty"     validate:"omitempty,max=500"             example:"AI application for customer data analysis"`
+	Documentation  *string                               `json:"documentation,omitempty"   validate:"validdocumentation"            example:"# Customer Analytics"`
+	AllowedOrigins []string                              `json:"allowed_origins,omitempty" validate:"omitempty,dive,max=255"`
+	DataSources    []irminmodels.AIApplicationDataSource `json:"data_sources,omitempty"    validate:"omitempty,dive"`
+	Tags           []string                              `json:"tags,omitempty"            validate:"omitempty,dive,validsqid=tags"`
+}
+    UpdateAIApplicationRequest represents the JSON request body for updating an
+    AI application.
 
 type UpdateBranchRequest struct {
 	Name        *string `json:"name,omitempty"         example:"feature/add-customer-data"`
