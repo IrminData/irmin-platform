@@ -178,6 +178,8 @@ type AIApplication struct {
 	Description    string                    `json:"description"`
 	Documentation  string                    `json:"documentation"`
 	AllowedOrigins []string                  `json:"allowed_origins" gorm:"type:jsonb;serializer:json"`
+	Tools          *AIApplicationToolConfig  `json:"tools"           gorm:"type:jsonb;serializer:json"`
+	APIKey         string                    `json:"api_key"         gorm:"uniqueIndex"`
 	WorkspaceID    uint                      `json:"workspace_id"    gorm:"index"`
 	Workspace      Workspace                 `json:"workspace"       gorm:"foreignKey:WorkspaceID"`
 	OwnerID        uint                      `json:"owner_id"`
@@ -186,6 +188,10 @@ type AIApplication struct {
 	Tags           []Tag                     `json:"tags,omitempty"  gorm:"many2many:ai_application_tags;"`
 }
     AIApplication represents an AI application in the system.
+
+func (a *AIApplication) ParseToolConfig() AIApplicationToolConfig
+    ParseToolConfig returns the tool configuration, defaulting to all tools
+    disabled if not set.
 
 type AIApplicationDataSource struct {
 	gorm.Model
@@ -205,6 +211,17 @@ type AIApplicationTag struct {
 	TagID           uint          `json:"tag_id"            gorm:"primaryKey"`
 	Tag             Tag           `json:"tag"               gorm:"foreignKey:TagID"`
 }
+
+type AIApplicationToolConfig struct {
+	QueryEnabled        bool `json:"query_enabled"`         // Execute SQL queries
+	SchemaEnabled       bool `json:"schema_enabled"`        // Get object schemas
+	ListObjectsEnabled  bool `json:"list_objects_enabled"`  // List repository objects
+	GetContentEnabled   bool `json:"get_content_enabled"`   // Get object content
+	VectorSearchEnabled bool `json:"vector_search_enabled"` // Search embeddings in repos
+	DocsEnabled         bool `json:"docs_enabled"`          // Retrieve documentation
+}
+    AIApplicationToolConfig defines which tools are enabled for an AI
+    Application.
 
 type APIToken struct {
 	gorm.Model
@@ -430,6 +447,10 @@ func (d *Database) GenerateAllPossiblePolicies(
 ) []Policy
     GenerateAllPossiblePolicies generates all possible policy combinations for a
     given workspace and principal.
+
+func (d *Database) GetAIApplicationByAPIKey(apiKey string) (*AIApplication, error)
+    GetAIApplicationByAPIKey retrieves an AI application by its API key. This is
+    used for authenticating AI Application API requests.
 
 func (d *Database) GetAIApplicationByID(id uint) (*AIApplication, error)
     GetAIApplicationByID retrieves an AI application by its ID.

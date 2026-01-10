@@ -44,6 +44,16 @@ func RegisterAPIRoutes(
 	app.Get("/swagger/swagger.json", apiControllers.SwaggerJSON)
 	app.Get("/swagger", apiControllers.SwaggerUI)
 
+	// AI Application API routes (authenticated by AI Application API key)
+	aiAppAPI := app.Group("/api/v1/ai-app", apiMiddlewares.AIApplicationAPIKeyAuth)
+	aiAppAPI.Get("/info", apiControllers.AIAppAPIInfo)
+	aiAppAPI.Get("/system-prompt", apiControllers.AIAppAPISystemPrompt)
+	aiAppAPI.Post("/query", apiControllers.AIAppAPIQuery)
+	aiAppAPI.Get("/objects", apiControllers.AIAppAPIListObjects)
+	aiAppAPI.Get("/content", apiControllers.AIAppAPIGetObject)
+	aiAppAPI.Get("/schema", apiControllers.AIAppAPIGetSchema)
+	aiAppAPI.Post("/embeddings/search", apiControllers.AIAppAPISearchEmbeddings)
+
 	// Secure API routes
 	v1 := app.Group("/api/v1", apiMiddlewares.LocaleMiddleware, apiMiddlewares.AuthMiddleware)
 

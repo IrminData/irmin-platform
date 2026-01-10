@@ -50,6 +50,25 @@ func FormatAIApplicationResponse(
 		})
 	}
 
+	// Format API key as pointer (only include if non-empty for security)
+	var apiKeyPtr *string
+	if aiApplication.APIKey != "" {
+		apiKeyPtr = &aiApplication.APIKey
+	}
+
+	// Format tools configuration
+	var toolsResponse *irminmodels.AIApplicationToolConfig
+	if aiApplication.Tools != nil {
+		toolsResponse = &irminmodels.AIApplicationToolConfig{
+			QueryEnabled:        aiApplication.Tools.QueryEnabled,
+			SchemaEnabled:       aiApplication.Tools.SchemaEnabled,
+			ListObjectsEnabled:  aiApplication.Tools.ListObjectsEnabled,
+			GetContentEnabled:   aiApplication.Tools.GetContentEnabled,
+			VectorSearchEnabled: aiApplication.Tools.VectorSearchEnabled,
+			DocsEnabled:         aiApplication.Tools.DocsEnabled,
+		}
+	}
+
 	// Build the response
 	response := &irminmodels.AIApplication{
 		ID:             aiApplicationSqid,
@@ -57,7 +76,9 @@ func FormatAIApplicationResponse(
 		Description:    aiApplication.Description,
 		Documentation:  aiApplication.Documentation,
 		AllowedOrigins: aiApplication.AllowedOrigins,
+		Tools:          toolsResponse,
 		DataSources:    dataSources,
+		APIKey:         apiKeyPtr,
 		Owner:          *ownerResponse,
 		Tags:           tagsResponse,
 		CreatedAt:      aiApplication.CreatedAt,

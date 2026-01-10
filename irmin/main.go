@@ -357,6 +357,9 @@ func main() {
 	// Mount MCP streamable HTTP handler inside the main app
 	mcpserver.RegisterFiber(app, apiServices)
 
+	// Mount AI Application MCP handler
+	mcpserver.RegisterAIAppMCP(app, apiServices)
+
 	// Start servers
 	startServer(app, env)
 

@@ -56,6 +56,8 @@ definitions:
         items:
           type: string
         type: array
+      tools:
+        $ref: '#/definitions/irminmodels.AIApplicationToolConfig'
     required:
     - name
     type: object
@@ -514,6 +516,8 @@ definitions:
         items:
           type: string
         type: array
+      tools:
+        $ref: '#/definitions/irminmodels.AIApplicationToolConfig'
     type: object
   irmincore.UpdateBranchRequest:
     properties:
@@ -842,6 +846,8 @@ definitions:
         items:
           type: string
         type: array
+      api_key:
+        type: string
       created_at:
         example: "2025-01-15T10:30:00Z"
         type: string
@@ -869,6 +875,8 @@ definitions:
         items:
           $ref: '#/definitions/irminmodels.Tag'
         type: array
+      tools:
+        $ref: '#/definitions/irminmodels.AIApplicationToolConfig'
       updated_at:
         example: "2025-12-01T14:22:30Z"
         type: string
@@ -894,6 +902,27 @@ definitions:
     - branch
     - path
     - repository
+    type: object
+  irminmodels.AIApplicationToolConfig:
+    properties:
+      docs_enabled:
+        example: true
+        type: boolean
+      get_content_enabled:
+        example: true
+        type: boolean
+      list_objects_enabled:
+        example: true
+        type: boolean
+      query_enabled:
+        example: true
+        type: boolean
+      schema_enabled:
+        example: true
+        type: boolean
+      vector_search_enabled:
+        example: true
+        type: boolean
     type: object
   irminmodels.APIToken:
     properties:
@@ -3335,6 +3364,289 @@ info:
   title: Irmin API
   version: 1.0.0
 paths:
+  /ai-app/content:
+    get:
+      consumes:
+      - application/json
+      description: Get the content of a repository object within the AI Application's
+        data scope
+      parameters:
+      - description: Repository slug
+        in: query
+        name: repository
+        required: true
+        type: string
+      - description: Path to object
+        in: query
+        name: path
+        required: true
+        type: string
+      - description: Git reference (branch/tag/commit)
+        in: query
+        name: ref
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Object content
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "400":
+          description: Bad request - missing parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid API key
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - tool not enabled or path not allowed
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - AIAppAPIKey: []
+      summary: Get object content
+      tags:
+      - ai-app-api
+  /ai-app/embeddings/search:
+    post:
+      consumes:
+      - application/json
+      description: Perform vector similarity search on repository-based embeddings
+      parameters:
+      - description: Search request with repository, embedding_path, query
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Search results
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.EmbeddingSearchResponse'
+              type: object
+        "400":
+          description: Bad request - missing parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid API key
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - tool not enabled or path not allowed
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - AIAppAPIKey: []
+      summary: Search embeddings
+      tags:
+      - ai-app-api
+  /ai-app/info:
+    get:
+      consumes:
+      - application/json
+      description: Get information about the AI Application and its capabilities
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: AI Application info
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid API key
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - AIAppAPIKey: []
+      summary: Get AI Application API info
+      tags:
+      - ai-app-api
+  /ai-app/objects:
+    get:
+      consumes:
+      - application/json
+      description: List objects in a repository within the AI Application's data scope
+      parameters:
+      - description: Repository slug
+        in: query
+        name: repository
+        required: true
+        type: string
+      - description: Path within repository
+        in: query
+        name: path
+        type: string
+      - description: Git reference (branch/tag/commit)
+        in: query
+        name: ref
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Repository objects
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.Object'
+              type: object
+        "400":
+          description: Bad request - missing repository
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid API key
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - tool not enabled or path not allowed
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - AIAppAPIKey: []
+      summary: List repository objects
+      tags:
+      - ai-app-api
+  /ai-app/query:
+    post:
+      consumes:
+      - application/json
+      description: Execute a SQL query within the AI Application's data scope
+      parameters:
+      - description: SQL query request with 'sql' field
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Query results
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "400":
+          description: Bad request - invalid SQL
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid API key
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - query tool not enabled, path not in data sources,
+            or path traversal detected
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - AIAppAPIKey: []
+      summary: Execute SQL query
+      tags:
+      - ai-app-api
+  /ai-app/schema:
+    get:
+      consumes:
+      - application/json
+      description: Get the schema of a repository object within the AI Application's
+        data scope
+      parameters:
+      - description: Repository slug
+        in: query
+        name: repository
+        required: true
+        type: string
+      - description: Path to object
+        in: query
+        name: path
+        required: true
+        type: string
+      - description: Git reference (branch/tag/commit)
+        in: query
+        name: ref
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Object schema
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.ObjectSchema'
+              type: object
+        "400":
+          description: Bad request - missing parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid API key
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - tool not enabled or path not allowed
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - AIAppAPIKey: []
+      summary: Get object schema
+      tags:
+      - ai-app-api
+  /ai-app/system-prompt:
+    get:
+      consumes:
+      - application/json
+      description: Get the recommended system prompt for this AI Application
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: System prompt
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid API key
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - AIAppAPIKey: []
+      summary: Get system prompt
+      tags:
+      - ai-app-api
   /connectors:
     get:
       consumes:

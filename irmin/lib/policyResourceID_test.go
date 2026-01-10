@@ -39,6 +39,7 @@ func TestDecodePolicyResourceID(t *testing.T) {
 		{"invalid sqid", db.PolicyResourceWorkspace, 0, true, true, ""},
 		{"documentation", db.PolicyResourceDocumentation, 0, true, false, ""},
 		{"billing", db.PolicyResourceBilling, 0, true, false, ""},
+		{"ai application", db.PolicyResourceAIApplication, 0, true, false, ""},
 	}
 
 	for _, tc := range testCases {
@@ -96,6 +97,7 @@ func TestEncodePolicyResourceID(t *testing.T) {
 		{"script", db.PolicyResourceScript, 1, true, ""},
 		{"documentation", db.PolicyResourceDocumentation, 1, true, ""},
 		{"billing", db.PolicyResourceBilling, 1, true, ""},
+		{"ai application", db.PolicyResourceAIApplication, 1, true, ""},
 	}
 
 	for _, tc := range testCases {
@@ -140,6 +142,7 @@ func TestEncodeDecodeRoundTrip(t *testing.T) {
 		db.PolicyResourceRepositoryTag,
 		db.PolicyResourceRepositoryCommit,
 		db.PolicyResourceUser,
+		db.PolicyResourceAIApplication,
 	}
 
 	for _, resource := range validResources {

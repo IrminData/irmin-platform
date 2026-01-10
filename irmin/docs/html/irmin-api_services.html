@@ -33,6 +33,14 @@ const (
 VARIABLES
 
 var (
+	// ErrToolNotEnabled is returned when a tool is not enabled for the AI Application.
+	ErrToolNotEnabled = errors.New("tool not enabled for this AI Application")
+	// ErrPathNotInDataSources is returned when the requested path is not in the configured data sources.
+	ErrPathNotInDataSources = errors.New("path not in configured data sources")
+	// ErrPathTraversalDetected is returned when a path contains traversal sequences.
+	ErrPathTraversalDetected = errors.New("path traversal detected")
+)
+var (
 	ErrNotFound                               = errors.New("not found")
 	ErrInvalidRequest                         = errors.New("invalid request")
 	ErrInvalidQueryParams                     = errors.New("invalid query parameters")
@@ -105,6 +113,69 @@ func NewInternalErrorf(format string, args ...any) error
 
 
 TYPES
+
+type AIAppToolExecutor struct {
+	// Has unexported fields.
+}
+    AIAppToolExecutor executes tools within the scope of an AI Application's
+    configured data sources.
+
+func NewAIAppToolExecutor(aiApp *db.AIApplication, apiServices *APIServices) *AIAppToolExecutor
+    NewAIAppToolExecutor creates a new AIAppToolExecutor.
+
+func (e *AIAppToolExecutor) ExecuteSQL(
+	ctx context.Context,
+	sql string,
+	limitResponse bool,
+) (any, error)
+    ExecuteSQL executes a SQL query within the scope of the AI Application's
+    data sources.
+
+func (e *AIAppToolExecutor) GetAIApplication() *db.AIApplication
+    GetAIApplication returns the AI Application.
+
+func (e *AIAppToolExecutor) GetDocumentation() (string, error)
+    GetDocumentation retrieves documentation for the AI Application. Returns
+    the system prompt (SQL syntax guide, tool descriptions, etc.) and any custom
+    documentation.
+
+func (e *AIAppToolExecutor) GetRepositoryObjectContent(
+	ctx context.Context,
+	repoSlug, path, branch string,
+	limitResponse bool,
+) ([]byte, error)
+    GetRepositoryObjectContent retrieves the content of a repository object.
+
+func (e *AIAppToolExecutor) GetRepositoryObjectSchema(
+	ctx context.Context,
+	repoSlug, path, branch string,
+) (*irminmodels.ObjectSchema, error)
+    GetRepositoryObjectSchema retrieves the schema for a repository object.
+
+func (e *AIAppToolExecutor) GetToolConfig() db.AIApplicationToolConfig
+    GetToolConfig returns the tool configuration for the AI Application.
+
+func (e *AIAppToolExecutor) GetWorkspace() *db.Workspace
+    GetWorkspace returns the workspace associated with the AI Application.
+
+func (e *AIAppToolExecutor) ListDataSources() []irminmodels.AIApplicationDataSource
+    ListDataSources returns the list of configured data sources.
+
+func (e *AIAppToolExecutor) ListRepositoryObjects(
+	ctx context.Context,
+	repoSlug, path, ref string,
+) (*db.RepositoryObject, error)
+    ListRepositoryObjects lists objects in a repository path. Returns the raw
+    db.RepositoryObject which can be formatted by the caller.
+
+func (e *AIAppToolExecutor) SearchEmbeddings(
+	ctx context.Context,
+	repoSlug, embeddingPath, query, ref string,
+	topK int,
+	filter map[string]string,
+) (*irminmodels.EmbeddingSearchResponse, error)
+    SearchEmbeddings performs vector similarity search on repository-based
+    embeddings.
 
 type APIServices struct {
 	DB                *db.Database
@@ -430,6 +501,11 @@ func (api *APIServices) ExecuteScript(
 	req irmincore.ExecuteScriptRequest,
 	limitResponse bool,
 ) (*irminmodels.ScriptResult, error)
+
+func (api *APIServices) GenerateAIApplicationSystemPrompt(aiApp *db.AIApplication) string
+    GenerateAIApplicationSystemPrompt generates a recommended system prompt
+    for an AI Application. This prompt includes information about the available
+    tools, data sources, and SQL syntax.
 
 func (api *APIServices) GenerateSchemaFromUploadedFile(
 	ctx context.Context,

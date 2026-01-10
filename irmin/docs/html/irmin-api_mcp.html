@@ -8,6 +8,14 @@ package mcp // import "irmin-api/mcp"
 CONSTANTS
 
 const (
+	// AIAppMCPServerName is the name of the AI Application MCP server
+	AIAppMCPServerName = "irmin-ai-app-mcp"
+	// AIAppMCPServerTitle is the title of the AI Application MCP server
+	AIAppMCPServerTitle = "Irmin AI Application MCP"
+	// AIAppMCPServerVersion is the version of the AI Application MCP server
+	AIAppMCPServerVersion = "1.0.0"
+)
+const (
 	// MCPProtocolVersion is the Model Context Protocol version used by this server
 	MCPProtocolVersion = "2025-06-18"
 
@@ -51,6 +59,10 @@ FUNCTIONS
 
 func CreateMCPClientSession(ctx context.Context, apiServices *services.APIServices) (*mcp.ClientSession, error)
     CreateMCPClientSession creates a new MCP client session
+
+func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices)
+    RegisterAIAppMCP mounts the AI Application MCP endpoint. This endpoint is
+    authenticated by AI Application API keys instead of user tokens.
 
 func RegisterFiber(app *fiber.App, apiServices *services.APIServices)
     RegisterFiber mounts the existing MCP HTTP endpoint and the new HTTP-only

@@ -6,6 +6,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/lib"
 	"irmin-api/permissions"
+	"irmin-api/utils"
 	"strings"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
@@ -122,52 +123,7 @@ func (api *APIServices) CreateAIApplication(
 
 	// Start a transaction for all database operations
 	txErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		// Wrap tx in a Database struct so all DB operations use the transaction
-		txDB := &db.Database{DB: tx}
-
-		// Process data sources
-		dataSources, dsErr := api.processAIApplicationDataSources(txDB, workspace, req.DataSources)
-		if dsErr != nil {
-			return dsErr
-		}
-
-		// Create AI application record
-		aiApplication = db.AIApplication{
-			Name:           req.Name,
-			Description:    req.Description,
-			Documentation:  req.Documentation,
-			AllowedOrigins: req.AllowedOrigins,
-			WorkspaceID:    workspace.ID,
-			OwnerID:        user.ID,
-		}
-
-		if createErr := tx.Create(&aiApplication).Error; createErr != nil {
-			return NewInternalErrorf("error creating AI application: %w", createErr)
-		}
-
-		// Explicitly create data sources (to match Update pattern and ensure persistence)
-		if len(dataSources) > 0 {
-			for i := range dataSources {
-				dataSources[i].AIApplicationID = aiApplication.ID
-				if createErr := tx.Create(&dataSources[i]).Error; createErr != nil {
-					return NewInternalErrorf("error creating data source: %w", createErr)
-				}
-			}
-			aiApplication.DataSources = dataSources
-		}
-
-		// Add tags
-		if addTagsErr := api.addAIApplicationTags(tx, &aiApplication, req.Tags, workspace.ID); addTagsErr != nil {
-			return NewInternalErrorf("error adding AI application tags: %w", addTagsErr)
-		}
-
-		// Fetch the full AI application object with all relations
-		return tx.Preload("Owner").
-			Preload("DataSources").
-			Preload("DataSources.Repository").
-			Preload("Tags").
-			First(&aiApplication, aiApplication.ID).
-			Error
+		return api.createAIApplicationInTx(c, tx, user, workspace, req, &aiApplication)
 	})
 
 	if txErr != nil {
@@ -240,6 +196,16 @@ func (api *APIServices) UpdateAIApplication(
 		}
 		if req.AllowedOrigins != nil {
 			aiApplication.AllowedOrigins = req.AllowedOrigins
+		}
+		if req.Tools != nil {
+			aiApplication.Tools = &db.AIApplicationToolConfig{
+				QueryEnabled:        req.Tools.QueryEnabled,
+				SchemaEnabled:       req.Tools.SchemaEnabled,
+				ListObjectsEnabled:  req.Tools.ListObjectsEnabled,
+				GetContentEnabled:   req.Tools.GetContentEnabled,
+				VectorSearchEnabled: req.Tools.VectorSearchEnabled,
+				DocsEnabled:         req.Tools.DocsEnabled,
+			}
 		}
 
 		// Save the AI application
@@ -416,7 +382,7 @@ func (api *APIServices) TransferAIApplicationOwnership(
 	// Update the AI application record
 	aiApplication.OwnerID = uint(newOwnerID)
 	aiApplication.Owner = *newOwner
-	if updateErr := api.DB.Save(&aiApplication).Error; updateErr != nil {
+	if updateErr := api.DB.Save(aiApplication).Error; updateErr != nil {
 		api.Logger.ErrorContext(c, "Error updating AI application", "error", updateErr)
 		return nil, updateErr
 	}
@@ -434,6 +400,99 @@ func (api *APIServices) TransferAIApplicationOwnership(
 }
 
 // Helper functions
+
+// createAIApplicationInTx creates an AI application within a transaction.
+func (api *APIServices) createAIApplicationInTx(
+	c context.Context,
+	tx *gorm.DB,
+	user *db.User,
+	workspace *db.Workspace,
+	req irmincore.CreateAIApplicationRequest,
+	aiApplication *db.AIApplication,
+) error {
+	// Wrap tx in a Database struct so all DB operations use the transaction
+	txDB := &db.Database{DB: tx}
+
+	// Process data sources
+	dataSources, dsErr := api.processAIApplicationDataSources(txDB, workspace, req.DataSources)
+	if dsErr != nil {
+		return dsErr
+	}
+
+	// Generate API key
+	apiKey, err := api.generateAIApplicationAPIKey(c)
+	if err != nil {
+		return err
+	}
+
+	// Convert tools config
+	toolsConfig := api.convertToolsConfig(req.Tools)
+
+	// Create AI application record
+	*aiApplication = db.AIApplication{
+		Name:           req.Name,
+		Description:    req.Description,
+		Documentation:  req.Documentation,
+		AllowedOrigins: req.AllowedOrigins,
+		Tools:          toolsConfig,
+		APIKey:         apiKey,
+		WorkspaceID:    workspace.ID,
+		OwnerID:        user.ID,
+	}
+
+	if createErr := tx.Create(aiApplication).Error; createErr != nil {
+		return NewInternalErrorf("error creating AI application: %w", createErr)
+	}
+
+	// Explicitly create data sources (to match Update pattern and ensure persistence)
+	if len(dataSources) > 0 {
+		for i := range dataSources {
+			dataSources[i].AIApplicationID = aiApplication.ID
+			if createErr := tx.Create(&dataSources[i]).Error; createErr != nil {
+				return NewInternalErrorf("error creating data source: %w", createErr)
+			}
+		}
+		aiApplication.DataSources = dataSources
+	}
+
+	// Add tags
+	if addTagsErr := api.addAIApplicationTags(tx, aiApplication, req.Tags, workspace.ID); addTagsErr != nil {
+		return NewInternalErrorf("error adding AI application tags: %w", addTagsErr)
+	}
+
+	// Fetch the full AI application object with all relations
+	return tx.Preload("Owner").
+		Preload("DataSources").
+		Preload("DataSources.Repository").
+		Preload("Tags").
+		First(aiApplication, aiApplication.ID).
+		Error
+}
+
+// generateAIApplicationAPIKey generates a new API key for an AI application.
+func (api *APIServices) generateAIApplicationAPIKey(c context.Context) (string, error) {
+	randomString, generateErr := utils.GenerateRandomString()
+	if generateErr != nil {
+		api.Logger.ErrorContext(c, "Error generating random string for API key", "error", generateErr)
+		return "", NewInternalErrorf("error generating API key: %w", generateErr)
+	}
+	return fmt.Sprintf("ai_%s", randomString), nil
+}
+
+// convertToolsConfig converts the request tools config to the database model.
+func (api *APIServices) convertToolsConfig(tools *irminmodels.AIApplicationToolConfig) *db.AIApplicationToolConfig {
+	if tools == nil {
+		return nil
+	}
+	return &db.AIApplicationToolConfig{
+		QueryEnabled:        tools.QueryEnabled,
+		SchemaEnabled:       tools.SchemaEnabled,
+		ListObjectsEnabled:  tools.ListObjectsEnabled,
+		GetContentEnabled:   tools.GetContentEnabled,
+		VectorSearchEnabled: tools.VectorSearchEnabled,
+		DocsEnabled:         tools.DocsEnabled,
+	}
+}
 
 // processAIApplicationDataSources processes data sources for an AI application.
 func (api *APIServices) processAIApplicationDataSources(

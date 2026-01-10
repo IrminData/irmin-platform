@@ -20,6 +20,457 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/ai-app/content": {
+            "get": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "Get the content of a repository object within the AI Application's data scope",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "Get object content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repository slug",
+                        "name": "repository",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Path to object",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Git reference (branch/tag/commit)",
+                        "name": "ref",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Object content",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - missing parameters",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - tool not enabled or path not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ai-app/embeddings/search": {
+            "post": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "Perform vector similarity search on repository-based embeddings",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "Search embeddings",
+                "parameters": [
+                    {
+                        "description": "Search request with repository, embedding_path, query",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Search results",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.EmbeddingSearchResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - missing parameters",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - tool not enabled or path not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ai-app/info": {
+            "get": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "Get information about the AI Application and its capabilities",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "Get AI Application API info",
+                "responses": {
+                    "200": {
+                        "description": "AI Application info",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ai-app/objects": {
+            "get": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "List objects in a repository within the AI Application's data scope",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "List repository objects",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repository slug",
+                        "name": "repository",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Path within repository",
+                        "name": "path",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Git reference (branch/tag/commit)",
+                        "name": "ref",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Repository objects",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.Object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - missing repository",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - tool not enabled or path not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ai-app/query": {
+            "post": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "Execute a SQL query within the AI Application's data scope",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "Execute SQL query",
+                "parameters": [
+                    {
+                        "description": "SQL query request with 'sql' field",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Query results",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid SQL",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - query tool not enabled, path not in data sources, or path traversal detected",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ai-app/schema": {
+            "get": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "Get the schema of a repository object within the AI Application's data scope",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "Get object schema",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repository slug",
+                        "name": "repository",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Path to object",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Git reference (branch/tag/commit)",
+                        "name": "ref",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Object schema",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.ObjectSchema"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - missing parameters",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - tool not enabled or path not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ai-app/system-prompt": {
+            "get": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "Get the recommended system prompt for this AI Application",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "Get system prompt",
+                "responses": {
+                    "200": {
+                        "description": "System prompt",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/connectors": {
             "get": {
                 "security": [
@@ -11401,6 +11852,9 @@ const docTemplate = `{
                     "example": [
                         "tag_7k3m9x2n5q8p"
                     ]
+                },
+                "tools": {
+                    "$ref": "#/definitions/irminmodels.AIApplicationToolConfig"
                 }
             }
         },
@@ -12037,6 +12491,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "tools": {
+                    "$ref": "#/definitions/irminmodels.AIApplicationToolConfig"
                 }
             }
         },
@@ -12514,6 +12971,9 @@ const docTemplate = `{
                         "http://localhost:3000"
                     ]
                 },
+                "api_key": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string",
                     "example": "2025-01-15T10:30:00Z"
@@ -12551,6 +13011,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/irminmodels.Tag"
                     }
                 },
+                "tools": {
+                    "$ref": "#/definitions/irminmodels.AIApplicationToolConfig"
+                },
                 "updated_at": {
                     "type": "string",
                     "example": "2025-12-01T14:22:30Z"
@@ -12576,6 +13039,35 @@ const docTemplate = `{
                 "repository": {
                     "type": "string",
                     "example": "customer-analytics"
+                }
+            }
+        },
+        "irminmodels.AIApplicationToolConfig": {
+            "type": "object",
+            "properties": {
+                "docs_enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "get_content_enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "list_objects_enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "query_enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "schema_enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "vector_search_enabled": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },

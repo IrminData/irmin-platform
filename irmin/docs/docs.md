@@ -830,6 +830,13 @@ import "irmin-api/controllers"
 
 - [type APIControllers](<#APIControllers>)
   - [func NewAPIControllers\(apiServices \*services.APIServices\) \*APIControllers](<#NewAPIControllers>)
+  - [func \(api \*APIControllers\) AIAppAPIGetObject\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIGetObject>)
+  - [func \(api \*APIControllers\) AIAppAPIGetSchema\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIGetSchema>)
+  - [func \(api \*APIControllers\) AIAppAPIInfo\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIInfo>)
+  - [func \(api \*APIControllers\) AIAppAPIListObjects\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIListObjects>)
+  - [func \(api \*APIControllers\) AIAppAPIQuery\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIQuery>)
+  - [func \(api \*APIControllers\) AIAppAPISearchEmbeddings\(c fiber.Ctx\) error](<#APIControllers.AIAppAPISearchEmbeddings>)
+  - [func \(api \*APIControllers\) AIAppAPISystemPrompt\(c fiber.Ctx\) error](<#APIControllers.AIAppAPISystemPrompt>)
   - [func \(api \*APIControllers\) AIApplicationsDestroy\(c fiber.Ctx\) error](<#APIControllers.AIApplicationsDestroy>)
   - [func \(api \*APIControllers\) AIApplicationsIndex\(c fiber.Ctx\) error](<#APIControllers.AIApplicationsIndex>)
   - [func \(api \*APIControllers\) AIApplicationsShow\(c fiber.Ctx\) error](<#APIControllers.AIApplicationsShow>)
@@ -999,6 +1006,69 @@ func NewAPIControllers(apiServices *services.APIServices) *APIControllers
 ```
 
 
+
+<a name="APIControllers.AIAppAPIGetObject"></a>
+### func \(\*APIControllers\) AIAppAPIGetObject
+
+```go
+func (api *APIControllers) AIAppAPIGetObject(c fiber.Ctx) error
+```
+
+AIAppAPIGetObject godoc @Summary Get object content @Description Get the content of a repository object within the AI Application's data scope @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param repository query string true "Repository slug" @Param path query string true "Path to object" @Param ref query string false "Git reference \(branch/tag/commit\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Object content" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/content \[get\]
+
+<a name="APIControllers.AIAppAPIGetSchema"></a>
+### func \(\*APIControllers\) AIAppAPIGetSchema
+
+```go
+func (api *APIControllers) AIAppAPIGetSchema(c fiber.Ctx) error
+```
+
+AIAppAPIGetSchema godoc @Summary Get object schema @Description Get the schema of a repository object within the AI Application's data scope @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param repository query string true "Repository slug" @Param path query string true "Path to object" @Param ref query string false "Git reference \(branch/tag/commit\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ObjectSchema\} "Object schema" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/schema \[get\]
+
+<a name="APIControllers.AIAppAPIInfo"></a>
+### func \(\*APIControllers\) AIAppAPIInfo
+
+```go
+func (api *APIControllers) AIAppAPIInfo(c fiber.Ctx) error
+```
+
+AIAppAPIInfo godoc @Summary Get AI Application API info @Description Get information about the AI Application and its capabilities @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Success 200 \{object\} irminmodels.IrminAPIResponse "AI Application info" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Router /ai\-app/info \[get\]
+
+<a name="APIControllers.AIAppAPIListObjects"></a>
+### func \(\*APIControllers\) AIAppAPIListObjects
+
+```go
+func (api *APIControllers) AIAppAPIListObjects(c fiber.Ctx) error
+```
+
+AIAppAPIListObjects godoc @Summary List repository objects @Description List objects in a repository within the AI Application's data scope @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param repository query string true "Repository slug" @Param path query string false "Path within repository" @Param ref query string false "Git reference \(branch/tag/commit\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Object\} "Repository objects" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing repository" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/objects \[get\]
+
+<a name="APIControllers.AIAppAPIQuery"></a>
+### func \(\*APIControllers\) AIAppAPIQuery
+
+```go
+func (api *APIControllers) AIAppAPIQuery(c fiber.Ctx) error
+```
+
+AIAppAPIQuery godoc @Summary Execute SQL query @Description Execute a SQL query within the AI Application's data scope @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param body body object true "SQL query request with 'sql' field" @Success 200 \{object\} irminmodels.IrminAPIResponse "Query results" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid SQL" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- query tool not enabled, path not in data sources, or path traversal detected" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/query \[post\]
+
+<a name="APIControllers.AIAppAPISearchEmbeddings"></a>
+### func \(\*APIControllers\) AIAppAPISearchEmbeddings
+
+```go
+func (api *APIControllers) AIAppAPISearchEmbeddings(c fiber.Ctx) error
+```
+
+AIAppAPISearchEmbeddings godoc @Summary Search embeddings @Description Perform vector similarity search on repository\-based embeddings @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param body body object true "Search request with repository, embedding\_path, query" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.EmbeddingSearchResponse\} "Search results" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/embeddings/search \[post\]
+
+<a name="APIControllers.AIAppAPISystemPrompt"></a>
+### func \(\*APIControllers\) AIAppAPISystemPrompt
+
+```go
+func (api *APIControllers) AIAppAPISystemPrompt(c fiber.Ctx) error
+```
+
+AIAppAPISystemPrompt godoc @Summary Get system prompt @Description Get the recommended system prompt for this AI Application @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Success 200 \{object\} irminmodels.IrminAPIResponse "System prompt" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Router /ai\-app/system\-prompt \[get\]
 
 <a name="APIControllers.AIApplicationsDestroy"></a>
 ### func \(\*APIControllers\) AIApplicationsDestroy
@@ -2305,8 +2375,10 @@ import "irmin-api/db"
 - [func ValidateFieldMappings\(fieldMappings map\[string\]string\) map\[string\]string](<#ValidateFieldMappings>)
 - [func ValidateSearchToken\(token SearchToken\) bool](<#ValidateSearchToken>)
 - [type AIApplication](<#AIApplication>)
+  - [func \(a \*AIApplication\) ParseToolConfig\(\) AIApplicationToolConfig](<#AIApplication.ParseToolConfig>)
 - [type AIApplicationDataSource](<#AIApplicationDataSource>)
 - [type AIApplicationTag](<#AIApplicationTag>)
+- [type AIApplicationToolConfig](<#AIApplicationToolConfig>)
 - [type APIToken](<#APIToken>)
 - [type ActionWorkflowable](<#ActionWorkflowable>)
 - [type ActionWorkflowableInput](<#ActionWorkflowableInput>)
@@ -2348,6 +2420,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) FindObject\(path \*string, repositoryID \*uint, ref \*string\) \(\*RepositoryObject, error\)](<#Database.FindObject>)
   - [func \(d \*Database\) FindRepositorySchemaCache\(repositoryID uint, path, ref string\) \(\*RepositorySchemaCache, error\)](<#Database.FindRepositorySchemaCache>)
   - [func \(d \*Database\) GenerateAllPossiblePolicies\(workspaceID uint, principal PolicyPrincipal, principalID \*uint, opts ...PolicyGenerationOptions\) \[\]Policy](<#Database.GenerateAllPossiblePolicies>)
+  - [func \(d \*Database\) GetAIApplicationByAPIKey\(apiKey string\) \(\*AIApplication, error\)](<#Database.GetAIApplicationByAPIKey>)
   - [func \(d \*Database\) GetAIApplicationByID\(id uint\) \(\*AIApplication, error\)](<#Database.GetAIApplicationByID>)
   - [func \(d \*Database\) GetAIApplicationTags\(aiApplicationID uint\) \(\[\]Tag, error\)](<#Database.GetAIApplicationTags>)
   - [func \(d \*Database\) GetAIApplicationsByTag\(tagID uint\) \(\[\]AIApplication, error\)](<#Database.GetAIApplicationsByTag>)
@@ -2769,6 +2842,8 @@ type AIApplication struct {
     Description    string                    `json:"description"`
     Documentation  string                    `json:"documentation"`
     AllowedOrigins []string                  `json:"allowed_origins" gorm:"type:jsonb;serializer:json"`
+    Tools          *AIApplicationToolConfig  `json:"tools"           gorm:"type:jsonb;serializer:json"`
+    APIKey         string                    `json:"api_key"         gorm:"uniqueIndex"`
     WorkspaceID    uint                      `json:"workspace_id"    gorm:"index"`
     Workspace      Workspace                 `json:"workspace"       gorm:"foreignKey:WorkspaceID"`
     OwnerID        uint                      `json:"owner_id"`
@@ -2777,6 +2852,15 @@ type AIApplication struct {
     Tags           []Tag                     `json:"tags,omitempty"  gorm:"many2many:ai_application_tags;"`
 }
 ```
+
+<a name="AIApplication.ParseToolConfig"></a>
+### func \(\*AIApplication\) ParseToolConfig
+
+```go
+func (a *AIApplication) ParseToolConfig() AIApplicationToolConfig
+```
+
+ParseToolConfig returns the tool configuration, defaulting to all tools disabled if not set.
 
 <a name="AIApplicationDataSource"></a>
 ## type AIApplicationDataSource
@@ -2807,6 +2891,22 @@ type AIApplicationTag struct {
     AIApplication   AIApplication `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
     TagID           uint          `json:"tag_id"            gorm:"primaryKey"`
     Tag             Tag           `json:"tag"               gorm:"foreignKey:TagID"`
+}
+```
+
+<a name="AIApplicationToolConfig"></a>
+## type AIApplicationToolConfig
+
+AIApplicationToolConfig defines which tools are enabled for an AI Application.
+
+```go
+type AIApplicationToolConfig struct {
+    QueryEnabled        bool `json:"query_enabled"`         // Execute SQL queries
+    SchemaEnabled       bool `json:"schema_enabled"`        // Get object schemas
+    ListObjectsEnabled  bool `json:"list_objects_enabled"`  // List repository objects
+    GetContentEnabled   bool `json:"get_content_enabled"`   // Get object content
+    VectorSearchEnabled bool `json:"vector_search_enabled"` // Search embeddings in repos
+    DocsEnabled         bool `json:"docs_enabled"`          // Retrieve documentation
 }
 ```
 
@@ -3277,6 +3377,15 @@ func (d *Database) GenerateAllPossiblePolicies(workspaceID uint, principal Polic
 ```
 
 GenerateAllPossiblePolicies generates all possible policy combinations for a given workspace and principal.
+
+<a name="Database.GetAIApplicationByAPIKey"></a>
+### func \(\*Database\) GetAIApplicationByAPIKey
+
+```go
+func (d *Database) GetAIApplicationByAPIKey(apiKey string) (*AIApplication, error)
+```
+
+GetAIApplicationByAPIKey retrieves an AI application by its API key. This is used for authenticating AI Application API requests.
 
 <a name="Database.GetAIApplicationByID"></a>
 ### func \(\*Database\) GetAIApplicationByID
@@ -9997,10 +10106,24 @@ import "irmin-api/mcp"
 
 - [Constants](<#constants>)
 - [func CreateMCPClientSession\(ctx context.Context, apiServices \*services.APIServices\) \(\*mcp.ClientSession, error\)](<#CreateMCPClientSession>)
+- [func RegisterAIAppMCP\(app \*fiber.App, apiServices \*services.APIServices\)](<#RegisterAIAppMCP>)
 - [func RegisterFiber\(app \*fiber.App, apiServices \*services.APIServices\)](<#RegisterFiber>)
 
 
 ## Constants
+
+<a name="AIAppMCPServerName"></a>
+
+```go
+const (
+    // AIAppMCPServerName is the name of the AI Application MCP server
+    AIAppMCPServerName = "irmin-ai-app-mcp"
+    // AIAppMCPServerTitle is the title of the AI Application MCP server
+    AIAppMCPServerTitle = "Irmin AI Application MCP"
+    // AIAppMCPServerVersion is the version of the AI Application MCP server
+    AIAppMCPServerVersion = "1.0.0"
+)
+```
 
 <a name="MCPProtocolVersion"></a>
 
@@ -10060,6 +10183,15 @@ func CreateMCPClientSession(ctx context.Context, apiServices *services.APIServic
 
 CreateMCPClientSession creates a new MCP client session
 
+<a name="RegisterAIAppMCP"></a>
+## func RegisterAIAppMCP
+
+```go
+func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices)
+```
+
+RegisterAIAppMCP mounts the AI Application MCP endpoint. This endpoint is authenticated by AI Application API keys instead of user tokens.
+
 <a name="RegisterFiber"></a>
 ## func RegisterFiber
 
@@ -10079,6 +10211,7 @@ import "irmin-api/middlewares"
 
 - [type APIMiddlewares](<#APIMiddlewares>)
   - [func NewAPIMiddlewares\(apiServices \*services.APIServices\) \*APIMiddlewares](<#NewAPIMiddlewares>)
+  - [func \(m \*APIMiddlewares\) AIApplicationAPIKeyAuth\(c fiber.Ctx\) error](<#APIMiddlewares.AIApplicationAPIKeyAuth>)
   - [func \(m \*APIMiddlewares\) AIApplicationMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.AIApplicationMiddleware>)
   - [func \(api \*APIMiddlewares\) AIApplicationPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.AIApplicationPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) AuditLogPermissionMiddleware\(\) fiber.Handler](<#APIMiddlewares.AuditLogPermissionMiddleware>)
@@ -10143,6 +10276,15 @@ func NewAPIMiddlewares(apiServices *services.APIServices) *APIMiddlewares
 ```
 
 
+
+<a name="APIMiddlewares.AIApplicationAPIKeyAuth"></a>
+### func \(\*APIMiddlewares\) AIApplicationAPIKeyAuth
+
+```go
+func (m *APIMiddlewares) AIApplicationAPIKeyAuth(c fiber.Ctx) error
+```
+
+AIApplicationAPIKeyAuth authenticates requests using AI Application API keys. It expects the API key in the Authorization header as "Bearer ai\_xxx". On success, it stores the AI Application and its Workspace in fiber.Locals.
 
 <a name="APIMiddlewares.AIApplicationMiddleware"></a>
 ### func \(\*APIMiddlewares\) AIApplicationMiddleware
@@ -10953,6 +11095,18 @@ import "irmin-api/services"
 - [func MapErrorToStatusCode\(err error\) int](<#MapErrorToStatusCode>)
 - [func NewInternalError\(msg string\) error](<#NewInternalError>)
 - [func NewInternalErrorf\(format string, args ...any\) error](<#NewInternalErrorf>)
+- [type AIAppToolExecutor](<#AIAppToolExecutor>)
+  - [func NewAIAppToolExecutor\(aiApp \*db.AIApplication, apiServices \*APIServices\) \*AIAppToolExecutor](<#NewAIAppToolExecutor>)
+  - [func \(e \*AIAppToolExecutor\) ExecuteSQL\(ctx context.Context, sql string, limitResponse bool\) \(any, error\)](<#AIAppToolExecutor.ExecuteSQL>)
+  - [func \(e \*AIAppToolExecutor\) GetAIApplication\(\) \*db.AIApplication](<#AIAppToolExecutor.GetAIApplication>)
+  - [func \(e \*AIAppToolExecutor\) GetDocumentation\(\) \(string, error\)](<#AIAppToolExecutor.GetDocumentation>)
+  - [func \(e \*AIAppToolExecutor\) GetRepositoryObjectContent\(ctx context.Context, repoSlug, path, branch string, limitResponse bool\) \(\[\]byte, error\)](<#AIAppToolExecutor.GetRepositoryObjectContent>)
+  - [func \(e \*AIAppToolExecutor\) GetRepositoryObjectSchema\(ctx context.Context, repoSlug, path, branch string\) \(\*irminmodels.ObjectSchema, error\)](<#AIAppToolExecutor.GetRepositoryObjectSchema>)
+  - [func \(e \*AIAppToolExecutor\) GetToolConfig\(\) db.AIApplicationToolConfig](<#AIAppToolExecutor.GetToolConfig>)
+  - [func \(e \*AIAppToolExecutor\) GetWorkspace\(\) \*db.Workspace](<#AIAppToolExecutor.GetWorkspace>)
+  - [func \(e \*AIAppToolExecutor\) ListDataSources\(\) \[\]irminmodels.AIApplicationDataSource](<#AIAppToolExecutor.ListDataSources>)
+  - [func \(e \*AIAppToolExecutor\) ListRepositoryObjects\(ctx context.Context, repoSlug, path, ref string\) \(\*db.RepositoryObject, error\)](<#AIAppToolExecutor.ListRepositoryObjects>)
+  - [func \(e \*AIAppToolExecutor\) SearchEmbeddings\(ctx context.Context, repoSlug, embeddingPath, query, ref string, topK int, filter map\[string\]string\) \(\*irminmodels.EmbeddingSearchResponse, error\)](<#AIAppToolExecutor.SearchEmbeddings>)
 - [type APIServices](<#APIServices>)
   - [func NewAPIServices\(db \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, orchestrator \*orchestrator.Orchestrator, sqidManager \*irminsqids.SQIDManager, localeManager \*locales.LocaleManager, permissionService \*permissions.Service, cacheStorage fiber.Storage\) \*APIServices](<#NewAPIServices>)
   - [func \(api \*APIServices\) AcceptInvite\(c context.Context, user \*db.User, invite \*db.Invite\) error](<#APIServices.AcceptInvite>)
@@ -10996,6 +11150,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ExecuteQuery\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, query \*db.StoredQuery, req irmincore.ExecuteSQLRequest, limitResponse bool\) \(\*irminmodels.QueryResult, error\)](<#APIServices.ExecuteQuery>)
   - [func \(api \*APIServices\) ExecuteSQL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.ExecuteSQLRequest, limitResponse bool\) \(\*irminmodels.QueryResult, error\)](<#APIServices.ExecuteSQL>)
   - [func \(api \*APIServices\) ExecuteScript\(c context.Context, user \*db.User, workspace \*db.Workspace, script \*db.StoredScript, req irmincore.ExecuteScriptRequest, limitResponse bool\) \(\*irminmodels.ScriptResult, error\)](<#APIServices.ExecuteScript>)
+  - [func \(api \*APIServices\) GenerateAIApplicationSystemPrompt\(aiApp \*db.AIApplication\) string](<#APIServices.GenerateAIApplicationSystemPrompt>)
   - [func \(api \*APIServices\) GenerateSchemaFromUploadedFile\(ctx context.Context, locale string, filename string, fileReader io.Reader\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GenerateSchemaFromUploadedFile>)
   - [func \(api \*APIServices\) GetAIApplication\(c context.Context, user \*db.User, workspace \*db.Workspace, aiApplicationSqid string\) \(\*db.AIApplication, error\)](<#APIServices.GetAIApplication>)
   - [func \(api \*APIServices\) GetConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connectionSqid string\) \(\*db.Connection, error\)](<#APIServices.GetConnection>)
@@ -11146,6 +11301,19 @@ const (
 
 ## Variables
 
+<a name="ErrToolNotEnabled"></a>
+
+```go
+var (
+    // ErrToolNotEnabled is returned when a tool is not enabled for the AI Application.
+    ErrToolNotEnabled = errors.New("tool not enabled for this AI Application")
+    // ErrPathNotInDataSources is returned when the requested path is not in the configured data sources.
+    ErrPathNotInDataSources = errors.New("path not in configured data sources")
+    // ErrPathTraversalDetected is returned when a path contains traversal sequences.
+    ErrPathTraversalDetected = errors.New("path traversal detected")
+)
+```
+
 <a name="ErrNotFound"></a>Sentinel errors used for consistent HTTP mapping in controllers
 
 ```go
@@ -11241,6 +11409,116 @@ func NewInternalErrorf(format string, args ...any) error
 ```
 
 NewInternalErrorf creates a formatted internal error that should not be exposed to clients. The error message will be logged server\-side but clients will receive a generic error.
+
+<a name="AIAppToolExecutor"></a>
+## type AIAppToolExecutor
+
+AIAppToolExecutor executes tools within the scope of an AI Application's configured data sources.
+
+```go
+type AIAppToolExecutor struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewAIAppToolExecutor"></a>
+### func NewAIAppToolExecutor
+
+```go
+func NewAIAppToolExecutor(aiApp *db.AIApplication, apiServices *APIServices) *AIAppToolExecutor
+```
+
+NewAIAppToolExecutor creates a new AIAppToolExecutor.
+
+<a name="AIAppToolExecutor.ExecuteSQL"></a>
+### func \(\*AIAppToolExecutor\) ExecuteSQL
+
+```go
+func (e *AIAppToolExecutor) ExecuteSQL(ctx context.Context, sql string, limitResponse bool) (any, error)
+```
+
+ExecuteSQL executes a SQL query within the scope of the AI Application's data sources.
+
+<a name="AIAppToolExecutor.GetAIApplication"></a>
+### func \(\*AIAppToolExecutor\) GetAIApplication
+
+```go
+func (e *AIAppToolExecutor) GetAIApplication() *db.AIApplication
+```
+
+GetAIApplication returns the AI Application.
+
+<a name="AIAppToolExecutor.GetDocumentation"></a>
+### func \(\*AIAppToolExecutor\) GetDocumentation
+
+```go
+func (e *AIAppToolExecutor) GetDocumentation() (string, error)
+```
+
+GetDocumentation retrieves documentation for the AI Application. Returns the system prompt \(SQL syntax guide, tool descriptions, etc.\) and any custom documentation.
+
+<a name="AIAppToolExecutor.GetRepositoryObjectContent"></a>
+### func \(\*AIAppToolExecutor\) GetRepositoryObjectContent
+
+```go
+func (e *AIAppToolExecutor) GetRepositoryObjectContent(ctx context.Context, repoSlug, path, branch string, limitResponse bool) ([]byte, error)
+```
+
+GetRepositoryObjectContent retrieves the content of a repository object.
+
+<a name="AIAppToolExecutor.GetRepositoryObjectSchema"></a>
+### func \(\*AIAppToolExecutor\) GetRepositoryObjectSchema
+
+```go
+func (e *AIAppToolExecutor) GetRepositoryObjectSchema(ctx context.Context, repoSlug, path, branch string) (*irminmodels.ObjectSchema, error)
+```
+
+GetRepositoryObjectSchema retrieves the schema for a repository object.
+
+<a name="AIAppToolExecutor.GetToolConfig"></a>
+### func \(\*AIAppToolExecutor\) GetToolConfig
+
+```go
+func (e *AIAppToolExecutor) GetToolConfig() db.AIApplicationToolConfig
+```
+
+GetToolConfig returns the tool configuration for the AI Application.
+
+<a name="AIAppToolExecutor.GetWorkspace"></a>
+### func \(\*AIAppToolExecutor\) GetWorkspace
+
+```go
+func (e *AIAppToolExecutor) GetWorkspace() *db.Workspace
+```
+
+GetWorkspace returns the workspace associated with the AI Application.
+
+<a name="AIAppToolExecutor.ListDataSources"></a>
+### func \(\*AIAppToolExecutor\) ListDataSources
+
+```go
+func (e *AIAppToolExecutor) ListDataSources() []irminmodels.AIApplicationDataSource
+```
+
+ListDataSources returns the list of configured data sources.
+
+<a name="AIAppToolExecutor.ListRepositoryObjects"></a>
+### func \(\*AIAppToolExecutor\) ListRepositoryObjects
+
+```go
+func (e *AIAppToolExecutor) ListRepositoryObjects(ctx context.Context, repoSlug, path, ref string) (*db.RepositoryObject, error)
+```
+
+ListRepositoryObjects lists objects in a repository path. Returns the raw db.RepositoryObject which can be formatted by the caller.
+
+<a name="AIAppToolExecutor.SearchEmbeddings"></a>
+### func \(\*AIAppToolExecutor\) SearchEmbeddings
+
+```go
+func (e *AIAppToolExecutor) SearchEmbeddings(ctx context.Context, repoSlug, embeddingPath, query, ref string, topK int, filter map[string]string) (*irminmodels.EmbeddingSearchResponse, error)
+```
+
+SearchEmbeddings performs vector similarity search on repository\-based embeddings.
 
 <a name="APIServices"></a>
 ## type APIServices
@@ -11639,6 +11917,15 @@ func (api *APIServices) ExecuteScript(c context.Context, user *db.User, workspac
 ```
 
 
+
+<a name="APIServices.GenerateAIApplicationSystemPrompt"></a>
+### func \(\*APIServices\) GenerateAIApplicationSystemPrompt
+
+```go
+func (api *APIServices) GenerateAIApplicationSystemPrompt(aiApp *db.AIApplication) string
+```
+
+GenerateAIApplicationSystemPrompt generates a recommended system prompt for an AI Application. This prompt includes information about the available tools, data sources, and SQL syntax.
 
 <a name="APIServices.GenerateSchemaFromUploadedFile"></a>
 ### func \(\*APIServices\) GenerateSchemaFromUploadedFile

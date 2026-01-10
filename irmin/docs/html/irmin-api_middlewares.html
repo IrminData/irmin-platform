@@ -22,6 +22,11 @@ func NewAPIMiddlewares(
 	apiServices *services.APIServices,
 ) *APIMiddlewares
 
+func (m *APIMiddlewares) AIApplicationAPIKeyAuth(c fiber.Ctx) error
+    AIApplicationAPIKeyAuth authenticates requests using AI Application API
+    keys. It expects the API key in the Authorization header as "Bearer ai_xxx".
+    On success, it stores the AI Application and its Workspace in fiber.Locals.
+
 func (m *APIMiddlewares) AIApplicationMiddleware(c fiber.Ctx) error
     AIApplicationMiddleware retrieves AI application by ID and stores it in
     fiber.Locals.

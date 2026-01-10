@@ -27,6 +27,7 @@ func getAllResources() []db.PolicyResource {
 		db.PolicyResourceAuditLog,
 		db.PolicyResourceDocumentation,
 		db.PolicyResourceBilling,
+		db.PolicyResourceAIApplication,
 	}
 }
 
