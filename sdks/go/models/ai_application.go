@@ -9,6 +9,12 @@ type AIApplicationDataSource struct {
 	Path       string `json:"path"       validate:"required" example:"/data/customers"`
 }
 
+// AIAppDataSourceUnified represents a data source with a unified path format.
+// The unified path includes the repository slug as a prefix: /{repository-slug}/{path}
+type AIAppDataSourceUnified struct {
+	Path string `json:"path" example:"/customer-analytics/data/customers"`
+}
+
 // AIApplicationToolConfig defines which tools are enabled for an AI Application.
 type AIApplicationToolConfig struct {
 	QueryEnabled        bool `json:"query_enabled"         example:"true"`

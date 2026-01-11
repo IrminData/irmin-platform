@@ -16,6 +16,123 @@ func AddLimitResponseParam(endpoint string) string
 
 TYPES
 
+type AIAppClient struct {
+	// BaseURL is your Irmin Core API base: e.g. "https://api.irmin.co/api"
+	BaseURL string
+
+	// APIKey is the AI Application API key (format: ai_xxx)
+	APIKey string
+
+	// HTTPClient is a customisable HTTP client. You can set timeouts, proxies, etc.
+	HTTPClient *http.Client
+}
+    AIAppClient is a client for the AI Application API. This client
+    authenticates using an AI Application API key instead of a user token.
+
+func NewAIAppClient(baseURL, apiKey string) *AIAppClient
+    NewAIAppClient creates a new AI Application API client.
+
+func NewAIAppClientWithHTTPClient(baseURL, apiKey string, httpClient *http.Client) *AIAppClient
+    NewAIAppClientWithHTTPClient creates a new AI Application API client
+    with a custom HTTP client. If httpClient is nil, a default client with
+    DefaultAPITimeout is used.
+
+func (c *AIAppClient) FetchAPI(
+	ctx context.Context,
+	opts AIAppRequestOptions,
+	out any,
+) (*irminmodels.IrminAPIResponse, error)
+    FetchAPI sends a request and attempts to parse the response into
+    IrminAPIResponse.
+
+func (c *AIAppClient) GetContent(
+	ctx context.Context,
+	path string,
+) (*AIAppContent, *irminmodels.IrminAPIResponse, error)
+    GetContent retrieves the content of an object at the specified path.
+
+func (c *AIAppClient) GetInfo(ctx context.Context) (*AIAppInfo, *irminmodels.IrminAPIResponse, error)
+    GetInfo retrieves information about the AI Application.
+
+func (c *AIAppClient) GetSchema(
+	ctx context.Context,
+	path string,
+) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
+    GetSchema retrieves the schema of an object at the specified path.
+
+func (c *AIAppClient) GetSystemPrompt(ctx context.Context) (string, *irminmodels.IrminAPIResponse, error)
+    GetSystemPrompt retrieves the recommended system prompt for the AI
+    Application.
+
+func (c *AIAppClient) ListObjects(
+	ctx context.Context,
+	path string,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+    ListObjects lists objects at the specified path. If path is empty, lists all
+    data source roots.
+
+func (c *AIAppClient) Query(
+	ctx context.Context,
+	req AIAppQueryRequest,
+) (any, *irminmodels.IrminAPIResponse, error)
+    Query executes a SQL query within the AI Application's data scope.
+
+func (c *AIAppClient) Request(ctx context.Context, opts AIAppRequestOptions) ([]byte, error)
+    Request sends a request to the AI Application API and returns raw response
+    data.
+
+func (c *AIAppClient) SearchEmbeddings(
+	ctx context.Context,
+	req AIAppSearchEmbeddingsRequest,
+) (*irminmodels.EmbeddingSearchResponse, *irminmodels.IrminAPIResponse, error)
+    SearchEmbeddings performs vector similarity search. If path is empty,
+    searches across all embedding files in data sources.
+
+type AIAppContent struct {
+	Content       string `json:"content,omitempty"`        // Text content (for text/json files)
+	ContentBase64 string `json:"content_base64,omitempty"` // Base64 encoded content (for binary files)
+	MimeType      string `json:"mime_type"`
+}
+    AIAppContent represents the content of a data object.
+
+type AIAppInfo struct {
+	Name        string                               `json:"name"`
+	Description string                               `json:"description"`
+	Workspace   string                               `json:"workspace"`
+	Tools       irminmodels.AIApplicationToolConfig  `json:"tools"`
+	DataSources []irminmodels.AIAppDataSourceUnified `json:"data_sources"`
+}
+    AIAppInfo represents information about an AI Application.
+
+type AIAppQueryRequest struct {
+	SQL string `json:"sql" validate:"required" example:"SELECT * FROM $['data-source;file.json'] LIMIT 10"`
+}
+    AIAppQueryRequest represents the request body for executing SQL queries.
+
+type AIAppRequestOptions struct {
+	Method      string
+	Endpoint    string
+	Body        any               // For JSON, this can be a struct or map to JSON-encode
+	Headers     map[string]string // Extra headers, if needed
+	ContentType string            // e.g. "application/json"
+}
+    AIAppRequestOptions allows you to specify how you'd like to send data in the
+    request.
+
+type AIAppSearchEmbeddingsRequest struct {
+	Query  string            `json:"query"  validate:"required" example:"What is machine learning?"`
+	Path   string            `json:"path"                       example:"/data-source/embeddings/docs.parquet"` // Optional: filter to specific embedding file
+	TopK   int               `json:"top_k"                      example:"10"`                                   // Optional: defaults to 10
+	Filter map[string]string `json:"filter"`                                                                    // Optional: metadata filter
+}
+    AIAppSearchEmbeddingsRequest represents the request body for searching
+    embeddings.
+
+type AIAppSystemPrompt struct {
+	SystemPrompt string `json:"system_prompt"`
+}
+    AIAppSystemPrompt represents the system prompt response.
+
 type Client struct {
 	// BaseURL is your Irmin Core API base: e.g. "https://api.irmin.co/api"
 	BaseURL string

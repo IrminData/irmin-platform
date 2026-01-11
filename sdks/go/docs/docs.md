@@ -136,6 +136,24 @@ import "github.com/IrminData/irmin-sdk-go/api"
 ## Index
 
 - [func AddLimitResponseParam\(endpoint string\) string](<#AddLimitResponseParam>)
+- [type AIAppClient](<#AIAppClient>)
+  - [func NewAIAppClient\(baseURL, apiKey string\) \*AIAppClient](<#NewAIAppClient>)
+  - [func NewAIAppClientWithHTTPClient\(baseURL, apiKey string, httpClient \*http.Client\) \*AIAppClient](<#NewAIAppClientWithHTTPClient>)
+  - [func \(c \*AIAppClient\) FetchAPI\(ctx context.Context, opts AIAppRequestOptions, out any\) \(\*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.FetchAPI>)
+  - [func \(c \*AIAppClient\) GetContent\(ctx context.Context, path string\) \(\*AIAppContent, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.GetContent>)
+  - [func \(c \*AIAppClient\) GetInfo\(ctx context.Context\) \(\*AIAppInfo, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.GetInfo>)
+  - [func \(c \*AIAppClient\) GetSchema\(ctx context.Context, path string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.GetSchema>)
+  - [func \(c \*AIAppClient\) GetSystemPrompt\(ctx context.Context\) \(string, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.GetSystemPrompt>)
+  - [func \(c \*AIAppClient\) ListObjects\(ctx context.Context, path string\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.ListObjects>)
+  - [func \(c \*AIAppClient\) Query\(ctx context.Context, req AIAppQueryRequest\) \(any, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.Query>)
+  - [func \(c \*AIAppClient\) Request\(ctx context.Context, opts AIAppRequestOptions\) \(\[\]byte, error\)](<#AIAppClient.Request>)
+  - [func \(c \*AIAppClient\) SearchEmbeddings\(ctx context.Context, req AIAppSearchEmbeddingsRequest\) \(\*irminmodels.EmbeddingSearchResponse, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.SearchEmbeddings>)
+- [type AIAppContent](<#AIAppContent>)
+- [type AIAppInfo](<#AIAppInfo>)
+- [type AIAppQueryRequest](<#AIAppQueryRequest>)
+- [type AIAppRequestOptions](<#AIAppRequestOptions>)
+- [type AIAppSearchEmbeddingsRequest](<#AIAppSearchEmbeddingsRequest>)
+- [type AIAppSystemPrompt](<#AIAppSystemPrompt>)
 - [type Client](<#Client>)
   - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
   - [func NewClientWithSQIDManager\(baseURL, token, locale string, sqidManager \*irminsqids.SQIDManager\) \*Client](<#NewClientWithSQIDManager>)
@@ -356,6 +374,202 @@ func AddLimitResponseParam(endpoint string) string
 ```
 
 AddLimitResponseParam appends the limit\-response query parameter to an endpoint URL. It preserves the original query string format by using simple string concatenation to avoid re\-encoding or reordering existing parameters. Handles fragments correctly.
+
+<a name="AIAppClient"></a>
+## type AIAppClient
+
+AIAppClient is a client for the AI Application API. This client authenticates using an AI Application API key instead of a user token.
+
+```go
+type AIAppClient struct {
+    // BaseURL is your Irmin Core API base: e.g. "https://api.irmin.co/api"
+    BaseURL string
+
+    // APIKey is the AI Application API key (format: ai_xxx)
+    APIKey string
+
+    // HTTPClient is a customisable HTTP client. You can set timeouts, proxies, etc.
+    HTTPClient *http.Client
+}
+```
+
+<a name="NewAIAppClient"></a>
+### func NewAIAppClient
+
+```go
+func NewAIAppClient(baseURL, apiKey string) *AIAppClient
+```
+
+NewAIAppClient creates a new AI Application API client.
+
+<a name="NewAIAppClientWithHTTPClient"></a>
+### func NewAIAppClientWithHTTPClient
+
+```go
+func NewAIAppClientWithHTTPClient(baseURL, apiKey string, httpClient *http.Client) *AIAppClient
+```
+
+NewAIAppClientWithHTTPClient creates a new AI Application API client with a custom HTTP client. If httpClient is nil, a default client with DefaultAPITimeout is used.
+
+<a name="AIAppClient.FetchAPI"></a>
+### func \(\*AIAppClient\) FetchAPI
+
+```go
+func (c *AIAppClient) FetchAPI(ctx context.Context, opts AIAppRequestOptions, out any) (*irminmodels.IrminAPIResponse, error)
+```
+
+FetchAPI sends a request and attempts to parse the response into IrminAPIResponse.
+
+<a name="AIAppClient.GetContent"></a>
+### func \(\*AIAppClient\) GetContent
+
+```go
+func (c *AIAppClient) GetContent(ctx context.Context, path string) (*AIAppContent, *irminmodels.IrminAPIResponse, error)
+```
+
+GetContent retrieves the content of an object at the specified path.
+
+<a name="AIAppClient.GetInfo"></a>
+### func \(\*AIAppClient\) GetInfo
+
+```go
+func (c *AIAppClient) GetInfo(ctx context.Context) (*AIAppInfo, *irminmodels.IrminAPIResponse, error)
+```
+
+GetInfo retrieves information about the AI Application.
+
+<a name="AIAppClient.GetSchema"></a>
+### func \(\*AIAppClient\) GetSchema
+
+```go
+func (c *AIAppClient) GetSchema(ctx context.Context, path string) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
+```
+
+GetSchema retrieves the schema of an object at the specified path.
+
+<a name="AIAppClient.GetSystemPrompt"></a>
+### func \(\*AIAppClient\) GetSystemPrompt
+
+```go
+func (c *AIAppClient) GetSystemPrompt(ctx context.Context) (string, *irminmodels.IrminAPIResponse, error)
+```
+
+GetSystemPrompt retrieves the recommended system prompt for the AI Application.
+
+<a name="AIAppClient.ListObjects"></a>
+### func \(\*AIAppClient\) ListObjects
+
+```go
+func (c *AIAppClient) ListObjects(ctx context.Context, path string) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+```
+
+ListObjects lists objects at the specified path. If path is empty, lists all data source roots.
+
+<a name="AIAppClient.Query"></a>
+### func \(\*AIAppClient\) Query
+
+```go
+func (c *AIAppClient) Query(ctx context.Context, req AIAppQueryRequest) (any, *irminmodels.IrminAPIResponse, error)
+```
+
+Query executes a SQL query within the AI Application's data scope.
+
+<a name="AIAppClient.Request"></a>
+### func \(\*AIAppClient\) Request
+
+```go
+func (c *AIAppClient) Request(ctx context.Context, opts AIAppRequestOptions) ([]byte, error)
+```
+
+Request sends a request to the AI Application API and returns raw response data.
+
+<a name="AIAppClient.SearchEmbeddings"></a>
+### func \(\*AIAppClient\) SearchEmbeddings
+
+```go
+func (c *AIAppClient) SearchEmbeddings(ctx context.Context, req AIAppSearchEmbeddingsRequest) (*irminmodels.EmbeddingSearchResponse, *irminmodels.IrminAPIResponse, error)
+```
+
+SearchEmbeddings performs vector similarity search. If path is empty, searches across all embedding files in data sources.
+
+<a name="AIAppContent"></a>
+## type AIAppContent
+
+AIAppContent represents the content of a data object.
+
+```go
+type AIAppContent struct {
+    Content       string `json:"content,omitempty"`        // Text content (for text/json files)
+    ContentBase64 string `json:"content_base64,omitempty"` // Base64 encoded content (for binary files)
+    MimeType      string `json:"mime_type"`
+}
+```
+
+<a name="AIAppInfo"></a>
+## type AIAppInfo
+
+AIAppInfo represents information about an AI Application.
+
+```go
+type AIAppInfo struct {
+    Name        string                               `json:"name"`
+    Description string                               `json:"description"`
+    Workspace   string                               `json:"workspace"`
+    Tools       irminmodels.AIApplicationToolConfig  `json:"tools"`
+    DataSources []irminmodels.AIAppDataSourceUnified `json:"data_sources"`
+}
+```
+
+<a name="AIAppQueryRequest"></a>
+## type AIAppQueryRequest
+
+AIAppQueryRequest represents the request body for executing SQL queries.
+
+```go
+type AIAppQueryRequest struct {
+    SQL string `json:"sql" validate:"required" example:"SELECT * FROM $['data-source;file.json'] LIMIT 10"`
+}
+```
+
+<a name="AIAppRequestOptions"></a>
+## type AIAppRequestOptions
+
+AIAppRequestOptions allows you to specify how you'd like to send data in the request.
+
+```go
+type AIAppRequestOptions struct {
+    Method      string
+    Endpoint    string
+    Body        any               // For JSON, this can be a struct or map to JSON-encode
+    Headers     map[string]string // Extra headers, if needed
+    ContentType string            // e.g. "application/json"
+}
+```
+
+<a name="AIAppSearchEmbeddingsRequest"></a>
+## type AIAppSearchEmbeddingsRequest
+
+AIAppSearchEmbeddingsRequest represents the request body for searching embeddings.
+
+```go
+type AIAppSearchEmbeddingsRequest struct {
+    Query  string            `json:"query"  validate:"required" example:"What is machine learning?"`
+    Path   string            `json:"path"                       example:"/data-source/embeddings/docs.parquet"` // Optional: filter to specific embedding file
+    TopK   int               `json:"top_k"                      example:"10"`                                   // Optional: defaults to 10
+    Filter map[string]string `json:"filter"`                                                                    // Optional: metadata filter
+}
+```
+
+<a name="AIAppSystemPrompt"></a>
+## type AIAppSystemPrompt
+
+AIAppSystemPrompt represents the system prompt response.
+
+```go
+type AIAppSystemPrompt struct {
+    SystemPrompt string `json:"system_prompt"`
+}
+```
 
 <a name="Client"></a>
 ## type Client
@@ -2791,6 +3005,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 
 ## Index
 
+- [type AIAppDataSourceUnified](<#AIAppDataSourceUnified>)
 - [type AIApplication](<#AIApplication>)
 - [type AIApplicationDataSource](<#AIApplicationDataSource>)
 - [type AIApplicationToolConfig](<#AIApplicationToolConfig>)
@@ -2882,6 +3097,17 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type Workspace](<#Workspace>)
 - [type WorkspaceSearchResultType](<#WorkspaceSearchResultType>)
 
+
+<a name="AIAppDataSourceUnified"></a>
+## type AIAppDataSourceUnified
+
+AIAppDataSourceUnified represents a data source with a unified path format. The unified path includes the repository slug as a prefix: /\{repository\-slug\}/\{path\}
+
+```go
+type AIAppDataSourceUnified struct {
+    Path string `json:"path" example:"/customer-analytics/data/customers"`
+}
+```
 
 <a name="AIApplication"></a>
 ## type AIApplication

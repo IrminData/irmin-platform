@@ -7,6 +7,13 @@ package irminmodels // import "github.com/IrminData/irmin-sdk-go/models"
 
 TYPES
 
+type AIAppDataSourceUnified struct {
+	Path string `json:"path" example:"/customer-analytics/data/customers"`
+}
+    AIAppDataSourceUnified represents a data source with a unified path
+    format. The unified path includes the repository slug as a prefix:
+    /{repository-slug}/{path}
+
 type AIApplication struct {
 	ID             string                    `json:"id"                validate:"required,validsqid=ai_applications" example:"ai_8x2m9k4n7p5q"`
 	Name           string                    `json:"name"              validate:"required,max=100"                   example:"Customer Analytics App"`
