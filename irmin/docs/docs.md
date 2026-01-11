@@ -1014,7 +1014,7 @@ func NewAPIControllers(apiServices *services.APIServices) *APIControllers
 func (api *APIControllers) AIAppAPIGetObject(c fiber.Ctx) error
 ```
 
-AIAppAPIGetObject godoc @Summary Get object content @Description Get the content of an object using unified path format: /\{repository\-slug\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param path query string true "Unified path to object \(e.g., /repo\-slug/data/file.json\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Object content" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing path" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/content \[get\]
+AIAppAPIGetObject godoc @Summary Get object content @Description Get the content of an object using unified path format: /\{repository\-slug\}/\{ref\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param path query string true "Unified path to object \(e.g., /repo\-slug/main/data/file.json\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Object content" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing path" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/content \[get\]
 
 <a name="APIControllers.AIAppAPIGetSchema"></a>
 ### func \(\*APIControllers\) AIAppAPIGetSchema
@@ -1023,7 +1023,7 @@ AIAppAPIGetObject godoc @Summary Get object content @Description Get the content
 func (api *APIControllers) AIAppAPIGetSchema(c fiber.Ctx) error
 ```
 
-AIAppAPIGetSchema godoc @Summary Get object schema @Description Get the schema of an object using unified path format: /\{repository\-slug\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param path query string true "Unified path to object \(e.g., /repo\-slug/data/file.json\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ObjectSchema\} "Object schema" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing path" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/schema \[get\]
+AIAppAPIGetSchema godoc @Summary Get object schema @Description Get the schema of an object using unified path format: /\{repository\-slug\}/\{ref\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param path query string true "Unified path to object \(e.g., /repo\-slug/main/data/file.json\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ObjectSchema\} "Object schema" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing path" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/schema \[get\]
 
 <a name="APIControllers.AIAppAPIInfo"></a>
 ### func \(\*APIControllers\) AIAppAPIInfo
@@ -1041,7 +1041,7 @@ AIAppAPIInfo godoc @Summary Get AI Application API info @Description Get informa
 func (api *APIControllers) AIAppAPIListObjects(c fiber.Ctx) error
 ```
 
-AIAppAPIListObjects godoc @Summary List objects @Description List objects within the AI Application's data sources. Use unified path format: /\{repository\-slug\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param path query string false "Unified path \(e.g., /repo\-slug/folder\). If empty, lists all data source roots." @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Object\} "Objects" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/objects \[get\]
+AIAppAPIListObjects godoc @Summary List objects @Description List objects within the AI Application's data sources. Use unified path format: /\{repository\-slug\}/\{ref\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param path query string false "Unified path \(e.g., /repo\-slug/main/folder\). If empty, lists all data source roots." @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Object\} "Objects" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/objects \[get\]
 
 <a name="APIControllers.AIAppAPIQuery"></a>
 ### func \(\*APIControllers\) AIAppAPIQuery
@@ -11089,7 +11089,7 @@ import "irmin-api/services"
 
 - [Constants](<#constants>)
 - [Variables](<#variables>)
-- [func BuildUnifiedPath\(repoSlug, pathWithinRepo string\) string](<#BuildUnifiedPath>)
+- [func BuildUnifiedPath\(repoSlug, ref, pathWithinRepo string\) string](<#BuildUnifiedPath>)
 - [func GetInternalErrorMessage\(err error\) string](<#GetInternalErrorMessage>)
 - [func GetTranslationKeyForError\(err error\) string](<#GetTranslationKeyForError>)
 - [func IsInternalError\(err error\) bool](<#IsInternalError>)
@@ -11373,10 +11373,10 @@ var (
 ## func BuildUnifiedPath
 
 ```go
-func BuildUnifiedPath(repoSlug, pathWithinRepo string) string
+func BuildUnifiedPath(repoSlug, ref, pathWithinRepo string) string
 ```
 
-BuildUnifiedPath constructs a unified path from a repository slug and path within the repository.
+BuildUnifiedPath constructs a unified path from a repository slug, ref, and path within the repository. The unified path format is: /\{repository\-slug\}/\{ref\}/\{path\-within\-repo\}
 
 <a name="GetInternalErrorMessage"></a>
 ## func GetInternalErrorMessage
@@ -11477,7 +11477,7 @@ GetAIApplication returns the AI Application.
 func (e *AIAppToolExecutor) GetContentByPath(ctx context.Context, unifiedPath string, limitResponse bool) ([]byte, error)
 ```
 
-GetContentByPath retrieves the content of an object using a unified path. The path format is: /\{repository\-slug\}/\{path\-within\-repo\}
+GetContentByPath retrieves the content of an object using a unified path. The path format is: /\{repository\-slug\}/\{ref\}/\{path\-within\-repo\}
 
 <a name="AIAppToolExecutor.GetDocumentation"></a>
 ### func \(\*AIAppToolExecutor\) GetDocumentation
@@ -11513,7 +11513,7 @@ GetRepositoryObjectSchema retrieves the schema for a repository object.
 func (e *AIAppToolExecutor) GetSchemaByPath(ctx context.Context, unifiedPath string) (*irminmodels.ObjectSchema, error)
 ```
 
-GetSchemaByPath retrieves the schema for an object using a unified path. The path format is: /\{repository\-slug\}/\{path\-within\-repo\}
+GetSchemaByPath retrieves the schema for an object using a unified path. The path format is: /\{repository\-slug\}/\{ref\}/\{path\-within\-repo\}
 
 <a name="AIAppToolExecutor.GetToolConfig"></a>
 ### func \(\*AIAppToolExecutor\) GetToolConfig
@@ -11549,7 +11549,7 @@ ListDataSources returns the list of configured data sources.
 func (e *AIAppToolExecutor) ListDataSourcesUnified() []irminmodels.AIAppDataSourceUnified
 ```
 
-ListDataSourcesUnified returns the list of configured data sources with unified paths. Unified paths have the format: /\{repository\-slug\}/\{path\}
+ListDataSourcesUnified returns the list of configured data sources with unified paths. Unified paths have the format: /\{repository\-slug\}/\{ref\}/\{path\}
 
 <a name="AIAppToolExecutor.ListObjectsByPath"></a>
 ### func \(\*AIAppToolExecutor\) ListObjectsByPath
@@ -11558,7 +11558,7 @@ ListDataSourcesUnified returns the list of configured data sources with unified 
 func (e *AIAppToolExecutor) ListObjectsByPath(ctx context.Context, unifiedPath string) (*db.RepositoryObject, error)
 ```
 
-ListObjectsByPath lists objects using a unified path. If path is empty, lists objects from all data sources. The path format is: /\{repository\-slug\}/\{path\-within\-repo\}
+ListObjectsByPath lists objects using a unified path. If path is empty, lists objects from all data sources. The path format is: /\{repository\-slug\}/\{ref\}/\{path\-within\-repo\} All returned object paths are in unified format for direct use with other API endpoints.
 
 <a name="AIAppToolExecutor.ListRepositoryObjects"></a>
 ### func \(\*AIAppToolExecutor\) ListRepositoryObjects
@@ -11576,7 +11576,7 @@ ListRepositoryObjects lists objects in a repository path. Returns the raw db.Rep
 func (e *AIAppToolExecutor) ResolvePath(unifiedPath string) (*ResolvedPath, error)
 ```
 
-ResolvePath parses a unified path \(/\{repo\-slug\}/\{path\}\) and resolves it to a repository, path, and ref. The unified path format is: /\{repository\-slug\}/\{path\-within\-repo\} Returns the resolved repository, the path within the repository, and the ref \(branch\) from the data source. When multiple data sources match, selects the most specific one \(longest matching path\).
+ResolvePath parses a unified path \(/\{repo\-slug\}/\{ref\}/\{path\}\) and resolves it to a repository, path, and ref. The unified path format is: /\{repository\-slug\}/\{ref\}/\{path\-within\-repo\} Returns the resolved repository, the path within the repository, and the ref \(branch\) from the path. When multiple data sources match, selects the most specific one \(longest matching path\).
 
 <a name="AIAppToolExecutor.ResolvePathOrFindInDataSources"></a>
 ### func \(\*AIAppToolExecutor\) ResolvePathOrFindInDataSources

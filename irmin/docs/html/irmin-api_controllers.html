@@ -25,23 +25,23 @@ func NewAPIControllers(
 func (api *APIControllers) AIAppAPIGetObject(c fiber.Ctx) error
     AIAppAPIGetObject godoc @Summary Get object content @Description
     Get the content of an object using unified path format:
-    /{repository-slug}/{path} @Tags ai-app-api @Security AIAppAPIKey
-    @Accept json @Produce json @Param path query string true "Unified path
-    to object (e.g., /repo-slug/data/file.json)" @Success 200 {object}
-    irminmodels.IrminAPIResponse "Object content" @Failure 400 {object}
-    irminmodels.IrminAPIResponse "Bad request - missing path" @Failure
-    401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid API
-    key" @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden
-    - tool not enabled or path not allowed" @Failure 500 {object}
+    /{repository-slug}/{ref}/{path} @Tags ai-app-api @Security AIAppAPIKey
+    @Accept json @Produce json @Param path query string true "Unified
+    path to object (e.g., /repo-slug/main/data/file.json)" @Success 200
+    {object} irminmodels.IrminAPIResponse "Object content" @Failure 400
+    {object} irminmodels.IrminAPIResponse "Bad request - missing path"
+    @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized -
+    invalid API key" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - tool not enabled or path not allowed" @Failure 500 {object}
     irminmodels.IrminAPIResponse "Internal server error" @Router /ai-app/content
     [get]
 
 func (api *APIControllers) AIAppAPIGetSchema(c fiber.Ctx) error
     AIAppAPIGetSchema godoc @Summary Get object schema @Description
     Get the schema of an object using unified path format:
-    /{repository-slug}/{path} @Tags ai-app-api @Security AIAppAPIKey
+    /{repository-slug}/{ref}/{path} @Tags ai-app-api @Security AIAppAPIKey
     @Accept json @Produce json @Param path query string true "Unified path
-    to object (e.g., /repo-slug/data/file.json)" @Success 200 {object}
+    to object (e.g., /repo-slug/main/data/file.json)" @Success 200 {object}
     irminmodels.IrminAPIResponse{data=irminmodels.ObjectSchema} "Object schema"
     @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - missing
     path" @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized
@@ -61,12 +61,12 @@ func (api *APIControllers) AIAppAPIInfo(c fiber.Ctx) error
 func (api *APIControllers) AIAppAPIListObjects(c fiber.Ctx) error
     AIAppAPIListObjects godoc @Summary List objects @Description List objects
     within the AI Application's data sources. Use unified path format:
-    /{repository-slug}/{path} @Tags ai-app-api @Security AIAppAPIKey @Accept
-    json @Produce json @Param path query string false "Unified path (e.g.,
-    /repo-slug/folder). If empty, lists all data source roots." @Success 200
-    {object} irminmodels.IrminAPIResponse{data=irminmodels.Object} "Objects"
-    @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized -
-    invalid API key" @Failure 403 {object} irminmodels.IrminAPIResponse
+    /{repository-slug}/{ref}/{path} @Tags ai-app-api @Security AIAppAPIKey
+    @Accept json @Produce json @Param path query string false "Unified path
+    (e.g., /repo-slug/main/folder). If empty, lists all data source roots."
+    @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Object}
+    "Objects" @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized
+    - invalid API key" @Failure 403 {object} irminmodels.IrminAPIResponse
     "Forbidden - tool not enabled or path not allowed" @Failure 500 {object}
     irminmodels.IrminAPIResponse "Internal server error" @Router /ai-app/objects
     [get]

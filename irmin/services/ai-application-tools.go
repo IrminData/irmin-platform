@@ -19,8 +19,12 @@ const (
 	s3PathMinParts = 2
 	// s3PathSplitLimit is the limit for splitting S3 paths into components.
 	s3PathSplitLimit = 2
-	// unifiedPathSplitLimit is the limit for splitting unified paths into repo slug and path.
-	unifiedPathSplitLimit = 2
+	// unifiedPathSplitLimit is the limit for splitting unified paths into repo slug, ref, and path.
+	unifiedPathSplitLimit = 3
+	// unifiedPathMinParts is the minimum number of parts required in a unified path (repo-slug/ref).
+	unifiedPathMinParts = 2
+	// defaultRefFallback is used when both data source branch and repository default branch are empty.
+	defaultRefFallback = "main"
 )
 
 var (
@@ -71,6 +75,19 @@ func (e *AIAppToolExecutor) GetWorkspace() *db.Workspace {
 // GetToolConfig returns the tool configuration for the AI Application.
 func (e *AIAppToolExecutor) GetToolConfig() db.AIApplicationToolConfig {
 	return e.aiApp.ParseToolConfig()
+}
+
+// getEffectiveRef returns the effective ref (branch) for a data source.
+// It uses the data source's configured branch, falls back to the repository's default branch,
+// and uses "main" as a final fallback if both are empty.
+func getEffectiveRef(ds *db.AIApplicationDataSource) string {
+	if ds.Branch != "" {
+		return ds.Branch
+	}
+	if ds.Repository.DefaultBranch != "" {
+		return ds.Repository.DefaultBranch
+	}
+	return defaultRefFallback
 }
 
 // containsPathTraversal checks if a path contains ".." as a path component (directory traversal).
@@ -178,21 +195,23 @@ func (e *AIAppToolExecutor) ListDataSources() []irminmodels.AIApplicationDataSou
 }
 
 // ListDataSourcesUnified returns the list of configured data sources with unified paths.
-// Unified paths have the format: /{repository-slug}/{path}
+// Unified paths have the format: /{repository-slug}/{ref}/{path}
 func (e *AIAppToolExecutor) ListDataSourcesUnified() []irminmodels.AIAppDataSourceUnified {
 	var sources []irminmodels.AIAppDataSourceUnified
-	for _, ds := range e.aiApp.DataSources {
+	for i := range e.aiApp.DataSources {
+		ds := &e.aiApp.DataSources[i]
+		ref := getEffectiveRef(ds)
 		// Build the unified path using the helper to ensure proper normalization
 		sources = append(sources, irminmodels.AIAppDataSourceUnified{
-			Path: BuildUnifiedPath(ds.Repository.Slug, ds.Path),
+			Path: BuildUnifiedPath(ds.Repository.Slug, ref, ds.Path),
 		})
 	}
 	return sources
 }
 
-// ResolvePath parses a unified path (/{repo-slug}/{path}) and resolves it to a repository, path, and ref.
-// The unified path format is: /{repository-slug}/{path-within-repo}
-// Returns the resolved repository, the path within the repository, and the ref (branch) from the data source.
+// ResolvePath parses a unified path (/{repo-slug}/{ref}/{path}) and resolves it to a repository, path, and ref.
+// The unified path format is: /{repository-slug}/{ref}/{path-within-repo}
+// Returns the resolved repository, the path within the repository, and the ref (branch) from the path.
 // When multiple data sources match, selects the most specific one (longest matching path).
 func (e *AIAppToolExecutor) ResolvePath(unifiedPath string) (*ResolvedPath, error) {
 	// Clean and validate the path
@@ -206,19 +225,21 @@ func (e *AIAppToolExecutor) ResolvePath(unifiedPath string) (*ResolvedPath, erro
 		return nil, ErrInvalidUnifiedPath
 	}
 
-	// Split the path into repository slug and the rest
+	// Split the path into repository slug, ref, and the rest
+	// Format: {repo-slug}/{ref}/{path-within-repo}
 	parts := strings.SplitN(cleanedPath, "/", unifiedPathSplitLimit)
-	if len(parts) == 0 || parts[0] == "" {
+	if len(parts) < unifiedPathMinParts || parts[0] == "" || parts[1] == "" {
 		return nil, ErrInvalidUnifiedPath
 	}
 
 	repoSlug := parts[0]
+	ref := parts[1]
 	pathWithinRepo := ""
-	if len(parts) > 1 {
-		pathWithinRepo = parts[1]
+	if len(parts) > unifiedPathMinParts {
+		pathWithinRepo = parts[unifiedPathMinParts]
 	}
 
-	// Find the most specific data source that matches this repository and path
+	// Find the most specific data source that matches this repository, ref, and path
 	var matchedDataSource *db.AIApplicationDataSource
 	var matchedRepo *db.Repository
 	matchedPathLen := -1
@@ -226,6 +247,14 @@ func (e *AIAppToolExecutor) ResolvePath(unifiedPath string) (*ResolvedPath, erro
 	for i := range e.aiApp.DataSources {
 		ds := &e.aiApp.DataSources[i]
 		if ds.Repository.Slug != repoSlug {
+			continue
+		}
+
+		// Determine the effective ref for this data source (with fallback to "main")
+		dsRef := getEffectiveRef(ds)
+
+		// Check ref matches
+		if dsRef != ref {
 			continue
 		}
 
@@ -248,12 +277,6 @@ func (e *AIAppToolExecutor) ResolvePath(unifiedPath string) (*ResolvedPath, erro
 
 	if matchedDataSource == nil {
 		return nil, ErrPathNotInDataSources
-	}
-
-	// Determine the ref (branch) to use
-	ref := matchedDataSource.Branch
-	if ref == "" {
-		ref = matchedRepo.DefaultBranch
 	}
 
 	return &ResolvedPath{
@@ -280,9 +303,9 @@ func (e *AIAppToolExecutor) ResolvePathOrFindInDataSources(inputPath string) (*R
 		return nil, ErrInvalidUnifiedPath
 	}
 
-	// First, try to resolve as a unified path (starts with repo slug)
+	// First, try to resolve as a unified path (starts with repo slug/ref)
 	parts := strings.SplitN(cleanedPath, "/", unifiedPathSplitLimit)
-	if len(parts) > 0 && parts[0] != "" {
+	if len(parts) >= unifiedPathMinParts && parts[0] != "" && parts[1] != "" {
 		// Check if the first part is a known repository slug
 		for i := range e.aiApp.DataSources {
 			ds := &e.aiApp.DataSources[i]
@@ -320,11 +343,8 @@ func (e *AIAppToolExecutor) ResolvePathOrFindInDataSources(inputPath string) (*R
 		return nil, ErrPathNotInDataSources
 	}
 
-	// Determine ref
-	ref := matchedDataSource.Branch
-	if ref == "" {
-		ref = matchedDataSource.Repository.DefaultBranch
-	}
+	// Determine ref (with fallback to "main")
+	ref := getEffectiveRef(matchedDataSource)
 
 	return &ResolvedPath{
 		Repository: &matchedDataSource.Repository,
@@ -334,14 +354,24 @@ func (e *AIAppToolExecutor) ResolvePathOrFindInDataSources(inputPath string) (*R
 	}, nil
 }
 
-// BuildUnifiedPath constructs a unified path from a repository slug and path within the repository.
-func BuildUnifiedPath(repoSlug, pathWithinRepo string) string {
+// BuildUnifiedPath constructs a unified path from a repository slug, ref, and path within the repository.
+// The unified path format is: /{repository-slug}/{ref}/{path-within-repo}
+func BuildUnifiedPath(repoSlug, ref, pathWithinRepo string) string {
 	if pathWithinRepo == "" {
-		return "/" + repoSlug
+		return "/" + repoSlug + "/" + ref
 	}
 	// Remove leading slash from path if present
 	pathWithinRepo = strings.TrimPrefix(pathWithinRepo, "/")
-	return "/" + repoSlug + "/" + pathWithinRepo
+	return "/" + repoSlug + "/" + ref + "/" + pathWithinRepo
+}
+
+// prefixObjectPaths recursively transforms all paths in a RepositoryObject to unified format.
+// This ensures that all returned paths can be used directly with other API endpoints.
+func prefixObjectPaths(object *db.RepositoryObject, repoSlug, ref string) {
+	object.Path = BuildUnifiedPath(repoSlug, ref, object.Path)
+	for i := range object.Children {
+		prefixObjectPaths(&object.Children[i], repoSlug, ref)
+	}
 }
 
 // validateSQLDataSourceAccess validates that a SQL query only accesses data within
@@ -724,7 +754,7 @@ func (e *AIAppToolExecutor) GetDocumentation() (string, error) {
 // === Simplified API Methods using Unified Paths ===
 
 // GetSchemaByPath retrieves the schema for an object using a unified path.
-// The path format is: /{repository-slug}/{path-within-repo}
+// The path format is: /{repository-slug}/{ref}/{path-within-repo}
 func (e *AIAppToolExecutor) GetSchemaByPath(
 	ctx context.Context,
 	unifiedPath string,
@@ -739,7 +769,8 @@ func (e *AIAppToolExecutor) GetSchemaByPath(
 
 // ListObjectsByPath lists objects using a unified path.
 // If path is empty, lists objects from all data sources.
-// The path format is: /{repository-slug}/{path-within-repo}
+// The path format is: /{repository-slug}/{ref}/{path-within-repo}
+// All returned object paths are in unified format for direct use with other API endpoints.
 func (e *AIAppToolExecutor) ListObjectsByPath(
 	ctx context.Context,
 	unifiedPath string,
@@ -754,7 +785,17 @@ func (e *AIAppToolExecutor) ListObjectsByPath(
 		return nil, err
 	}
 
-	return e.ListRepositoryObjects(ctx, resolved.Repository.Slug, resolved.Path, resolved.Ref)
+	object, err := e.ListRepositoryObjects(ctx, resolved.Repository.Slug, resolved.Path, resolved.Ref)
+	if err != nil {
+		return nil, err
+	}
+
+	// Transform all paths to unified format
+	if object != nil {
+		prefixObjectPaths(object, resolved.Repository.Slug, resolved.Ref)
+	}
+
+	return object, nil
 }
 
 // listAllDataSourceRoots creates a virtual root object with all data source roots as children.
@@ -773,12 +814,9 @@ func (e *AIAppToolExecutor) listAllDataSourceRoots(ctx context.Context) (*db.Rep
 	}
 
 	// Add each data source as a child
-	for _, ds := range e.aiApp.DataSources {
-		// Determine ref
-		ref := ds.Branch
-		if ref == "" {
-			ref = ds.Repository.DefaultBranch
-		}
+	for i := range e.aiApp.DataSources {
+		ds := &e.aiApp.DataSources[i]
+		ref := getEffectiveRef(ds)
 
 		// Get the object for this data source
 		object, _, _, err := e.apiServices.GetRepositoryObject(
@@ -796,7 +834,7 @@ func (e *AIAppToolExecutor) listAllDataSourceRoots(ctx context.Context) (*db.Rep
 		}
 
 		// Build the unified base path for this data source (matches ListDataSourcesUnified)
-		basePath := BuildUnifiedPath(ds.Repository.Slug, ds.Path)
+		basePath := BuildUnifiedPath(ds.Repository.Slug, ref, ds.Path)
 
 		// Determine the display name for this data source
 		displayName := ds.Repository.Slug
@@ -814,16 +852,16 @@ func (e *AIAppToolExecutor) listAllDataSourceRoots(ctx context.Context) (*db.Rep
 		// If the data source has a specific path, include its children
 		if object != nil {
 			if object.Type == "folder" && len(object.Children) > 0 {
-				// Convert children paths to unified format (children already have full repo paths)
-				for _, c := range object.Children {
-					prefixedChild := c
-					prefixedChild.Path = BuildUnifiedPath(ds.Repository.Slug, c.Path)
+				// Convert children paths to unified format recursively
+				for i := range object.Children {
+					prefixedChild := object.Children[i]
+					prefixObjectPaths(&prefixedChild, ds.Repository.Slug, ref)
 					child.Children = append(child.Children, prefixedChild)
 				}
 			} else if object.Type != "folder" {
 				// Single file as data source
 				child = *object
-				child.Path = basePath
+				prefixObjectPaths(&child, ds.Repository.Slug, ref)
 			}
 		}
 
@@ -834,7 +872,7 @@ func (e *AIAppToolExecutor) listAllDataSourceRoots(ctx context.Context) (*db.Rep
 }
 
 // GetContentByPath retrieves the content of an object using a unified path.
-// The path format is: /{repository-slug}/{path-within-repo}
+// The path format is: /{repository-slug}/{ref}/{path-within-repo}
 func (e *AIAppToolExecutor) GetContentByPath(
 	ctx context.Context,
 	unifiedPath string,
@@ -931,11 +969,7 @@ func (e *AIAppToolExecutor) searchDataSourceEmbeddings(
 	topK int,
 	metadataFilter map[string]string,
 ) ([]irminmodels.EmbeddingSearchResult, string) {
-	// Determine ref
-	ref := ds.Branch
-	if ref == "" {
-		ref = ds.Repository.DefaultBranch
-	}
+	ref := getEffectiveRef(ds)
 
 	// List embedding files in this data source
 	embeddingFiles, err := e.apiServices.ListEmbeddingFiles(
@@ -992,12 +1026,12 @@ func (e *AIAppToolExecutor) searchSingleEmbeddingFile(
 		return nil, ""
 	}
 
-	// Prefix source files with repository slug for unified path
+	// Prefix source files with repository slug and ref for unified path
 	results := make([]irminmodels.EmbeddingSearchResult, len(result.Results))
 	for i, r := range result.Results {
 		results[i] = r
 		if r.SourceFile != "" {
-			results[i].SourceFile = BuildUnifiedPath(ds.Repository.Slug, r.SourceFile)
+			results[i].SourceFile = BuildUnifiedPath(ds.Repository.Slug, ref, r.SourceFile)
 		}
 	}
 

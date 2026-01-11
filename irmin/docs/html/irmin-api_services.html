@@ -86,9 +86,10 @@ var (
 
 FUNCTIONS
 
-func BuildUnifiedPath(repoSlug, pathWithinRepo string) string
-    BuildUnifiedPath constructs a unified path from a repository slug and path
-    within the repository.
+func BuildUnifiedPath(repoSlug, ref, pathWithinRepo string) string
+    BuildUnifiedPath constructs a unified path from a repository slug,
+    ref, and path within the repository. The unified path format is:
+    /{repository-slug}/{ref}/{path-within-repo}
 
 func GetInternalErrorMessage(err error) string
     GetInternalErrorMessage strips the internal prefix for logging purposes.
@@ -148,7 +149,7 @@ func (e *AIAppToolExecutor) GetContentByPath(
 	limitResponse bool,
 ) ([]byte, error)
     GetContentByPath retrieves the content of an object using a unified path.
-    The path format is: /{repository-slug}/{path-within-repo}
+    The path format is: /{repository-slug}/{ref}/{path-within-repo}
 
 func (e *AIAppToolExecutor) GetDocumentation() (string, error)
     GetDocumentation retrieves documentation for the AI Application. Returns
@@ -173,7 +174,7 @@ func (e *AIAppToolExecutor) GetSchemaByPath(
 	unifiedPath string,
 ) (*irminmodels.ObjectSchema, error)
     GetSchemaByPath retrieves the schema for an object using a unified path.
-    The path format is: /{repository-slug}/{path-within-repo}
+    The path format is: /{repository-slug}/{ref}/{path-within-repo}
 
 func (e *AIAppToolExecutor) GetToolConfig() db.AIApplicationToolConfig
     GetToolConfig returns the tool configuration for the AI Application.
@@ -185,8 +186,9 @@ func (e *AIAppToolExecutor) ListDataSources() []irminmodels.AIApplicationDataSou
     ListDataSources returns the list of configured data sources.
 
 func (e *AIAppToolExecutor) ListDataSourcesUnified() []irminmodels.AIAppDataSourceUnified
-    ListDataSourcesUnified returns the list of configured data sources with
-    unified paths. Unified paths have the format: /{repository-slug}/{path}
+    ListDataSourcesUnified returns the list of configured data
+    sources with unified paths. Unified paths have the format:
+    /{repository-slug}/{ref}/{path}
 
 func (e *AIAppToolExecutor) ListObjectsByPath(
 	ctx context.Context,
@@ -194,7 +196,8 @@ func (e *AIAppToolExecutor) ListObjectsByPath(
 ) (*db.RepositoryObject, error)
     ListObjectsByPath lists objects using a unified path. If path is
     empty, lists objects from all data sources. The path format is:
-    /{repository-slug}/{path-within-repo}
+    /{repository-slug}/{ref}/{path-within-repo} All returned object paths are in
+    unified format for direct use with other API endpoints.
 
 func (e *AIAppToolExecutor) ListRepositoryObjects(
 	ctx context.Context,
@@ -204,12 +207,12 @@ func (e *AIAppToolExecutor) ListRepositoryObjects(
     db.RepositoryObject which can be formatted by the caller.
 
 func (e *AIAppToolExecutor) ResolvePath(unifiedPath string) (*ResolvedPath, error)
-    ResolvePath parses a unified path (/{repo-slug}/{path}) and resolves
-    it to a repository, path, and ref. The unified path format is:
-    /{repository-slug}/{path-within-repo} Returns the resolved repository,
-    the path within the repository, and the ref (branch) from the data source.
-    When multiple data sources match, selects the most specific one (longest
-    matching path).
+    ResolvePath parses a unified path (/{repo-slug}/{ref}/{path}) and
+    resolves it to a repository, path, and ref. The unified path format is:
+    /{repository-slug}/{ref}/{path-within-repo} Returns the resolved repository,
+    the path within the repository, and the ref (branch) from the path. When
+    multiple data sources match, selects the most specific one (longest matching
+    path).
 
 func (e *AIAppToolExecutor) ResolvePathOrFindInDataSources(inputPath string) (*ResolvedPath, error)
     ResolvePathOrFindInDataSources attempts to resolve a unified path or find

@@ -3368,9 +3368,9 @@ paths:
     get:
       consumes:
       - application/json
-      description: 'Get the content of an object using unified path format: /{repository-slug}/{path}'
+      description: 'Get the content of an object using unified path format: /{repository-slug}/{ref}/{path}'
       parameters:
-      - description: Unified path to object (e.g., /repo-slug/data/file.json)
+      - description: Unified path to object (e.g., /repo-slug/main/data/file.json)
         in: query
         name: path
         required: true
@@ -3476,10 +3476,10 @@ paths:
       consumes:
       - application/json
       description: 'List objects within the AI Application''s data sources. Use unified
-        path format: /{repository-slug}/{path}'
+        path format: /{repository-slug}/{ref}/{path}'
       parameters:
-      - description: Unified path (e.g., /repo-slug/folder). If empty, lists all data
-          source roots.
+      - description: Unified path (e.g., /repo-slug/main/folder). If empty, lists
+          all data source roots.
         in: query
         name: path
         type: string
@@ -3557,9 +3557,9 @@ paths:
     get:
       consumes:
       - application/json
-      description: 'Get the schema of an object using unified path format: /{repository-slug}/{path}'
+      description: 'Get the schema of an object using unified path format: /{repository-slug}/{ref}/{path}'
       parameters:
-      - description: Unified path to object (e.g., /repo-slug/data/file.json)
+      - description: Unified path to object (e.g., /repo-slug/main/data/file.json)
         in: query
         name: path
         required: true

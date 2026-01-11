@@ -27,7 +27,7 @@ const docTemplate = `{
                         "AIAppAPIKey": []
                     }
                 ],
-                "description": "Get the content of an object using unified path format: /{repository-slug}/{path}",
+                "description": "Get the content of an object using unified path format: /{repository-slug}/{ref}/{path}",
                 "consumes": [
                     "application/json"
                 ],
@@ -41,7 +41,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unified path to object (e.g., /repo-slug/data/file.json)",
+                        "description": "Unified path to object (e.g., /repo-slug/main/data/file.json)",
                         "name": "path",
                         "in": "query",
                         "required": true
@@ -197,7 +197,7 @@ const docTemplate = `{
                         "AIAppAPIKey": []
                     }
                 ],
-                "description": "List objects within the AI Application's data sources. Use unified path format: /{repository-slug}/{path}",
+                "description": "List objects within the AI Application's data sources. Use unified path format: /{repository-slug}/{ref}/{path}",
                 "consumes": [
                     "application/json"
                 ],
@@ -211,7 +211,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unified path (e.g., /repo-slug/folder). If empty, lists all data source roots.",
+                        "description": "Unified path (e.g., /repo-slug/main/folder). If empty, lists all data source roots.",
                         "name": "path",
                         "in": "query"
                     }
@@ -326,7 +326,7 @@ const docTemplate = `{
                         "AIAppAPIKey": []
                     }
                 ],
-                "description": "Get the schema of an object using unified path format: /{repository-slug}/{path}",
+                "description": "Get the schema of an object using unified path format: /{repository-slug}/{ref}/{path}",
                 "consumes": [
                     "application/json"
                 ],
@@ -340,7 +340,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unified path to object (e.g., /repo-slug/data/file.json)",
+                        "description": "Unified path to object (e.g., /repo-slug/main/data/file.json)",
                         "name": "path",
                         "in": "query",
                         "required": true

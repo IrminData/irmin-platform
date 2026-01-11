@@ -112,27 +112,27 @@ func registerAIAppTools(server *sdkmcp.Server, aiApp *db.AIApplication, apiServi
 	registerAIAppInfoTool(server, aiApp, apiServices)
 }
 
-// Tool argument structs - Simplified with unified paths
+// Tool argument structs - Simplified with unified paths (format: /repo-slug/ref/path)
 
 type aiAppQueryArgs struct {
 	SQL string `json:"sql" jsonschema:"required,The SQL query to execute"`
 }
 
 type aiAppSchemaArgs struct {
-	Path string `json:"path" jsonschema:"required,Unified path to the object (e.g. /repo-slug/data/file.json)"`
+	Path string `json:"path" jsonschema:"required,Unified path to the object (e.g. /repo-slug/main/data/file.json)"`
 }
 
 type aiAppListObjectsArgs struct {
-	Path string `json:"path" jsonschema:"optional,Unified path (e.g. /repo-slug/folder). If empty lists all data sources."`
+	Path string `json:"path" jsonschema:"optional,Unified path (e.g. /repo-slug/main/folder). If empty lists all data sources."`
 }
 
 type aiAppGetContentArgs struct {
-	Path string `json:"path" jsonschema:"required,Unified path to the object (e.g. /repo-slug/data/file.json)"`
+	Path string `json:"path" jsonschema:"required,Unified path to the object (e.g. /repo-slug/main/data/file.json)"`
 }
 
 type aiAppEmbeddingSearchArgs struct {
 	Query  string            `json:"query"  jsonschema:"required,The search query"`
-	Path   string            `json:"path"   jsonschema:"optional,Unified path to specific embedding file. If empty searches all embeddings."`
+	Path   string            `json:"path"   jsonschema:"optional,Unified path to specific embedding file (e.g. /repo-slug/main/embeddings/file.parquet). If empty searches all embeddings."`
 	TopK   int               `json:"top_k"  jsonschema:"optional,Number of results to return (default 10)"`
 	Filter map[string]string `json:"filter" jsonschema:"optional,Metadata filter for search results"`
 }
@@ -201,7 +201,7 @@ func registerAIAppSchemaTool(server *sdkmcp.Server, aiApp *db.AIApplication, api
 		server,
 		&sdkmcp.Tool{
 			Name:        "irmin_get_object_schema",
-			Description: "Get the data schema for a data object, showing column names, data types, and descriptions. Essential for writing SQL queries. Use unified path format: /repo-slug/path/to/file.json",
+			Description: "Get the data schema for a data object, showing column names, data types, and descriptions. Essential for writing SQL queries. Use unified path format: /repo-slug/ref/path/to/file.json",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppSchemaArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
@@ -226,7 +226,7 @@ func registerAIAppListObjectsTool(server *sdkmcp.Server, aiApp *db.AIApplication
 		server,
 		&sdkmcp.Tool{
 			Name:        "irmin_list_objects",
-			Description: "List data objects (files and folders) at a path. Use unified path format: /repo-slug/folder. If path is empty, lists all available data sources.",
+			Description: "List data objects (files and folders) at a path. Use unified path format: /repo-slug/ref/folder. If path is empty, lists all available data sources.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppListObjectsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
@@ -258,7 +258,7 @@ func registerAIAppGetContentTool(server *sdkmcp.Server, aiApp *db.AIApplication,
 		server,
 		&sdkmcp.Tool{
 			Name:        "irmin_get_object_content",
-			Description: "Get the content of a data object. Use unified path format: /repo-slug/path/to/file.json. Supports JSON, CSV, YAML, XML, and text files.",
+			Description: "Get the content of a data object. Use unified path format: /repo-slug/ref/path/to/file.json. Supports JSON, CSV, YAML, XML, and text files.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppGetContentArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
@@ -300,7 +300,7 @@ func registerAIAppEmbeddingSearchTool(
 		server,
 		&sdkmcp.Tool{
 			Name:        "irmin_search_embeddings",
-			Description: "Search for semantically similar content using natural language queries. If path is empty, searches all available embedding files. Use unified path format to filter: /repo-slug/embeddings/file.parquet",
+			Description: "Search for semantically similar content using natural language queries. If path is empty, searches all available embedding files. Use unified path format to filter: /repo-slug/ref/embeddings/file.parquet",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppEmbeddingSearchArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)

@@ -119,12 +119,12 @@ func (api *APIControllers) AIAppAPIQuery(c fiber.Ctx) error {
 
 // AIAppAPIListObjects godoc
 // @Summary List objects
-// @Description List objects within the AI Application's data sources. Use unified path format: /{repository-slug}/{path}
+// @Description List objects within the AI Application's data sources. Use unified path format: /{repository-slug}/{ref}/{path}
 // @Tags ai-app-api
 // @Security AIAppAPIKey
 // @Accept json
 // @Produce json
-// @Param path query string false "Unified path (e.g., /repo-slug/folder). If empty, lists all data source roots."
+// @Param path query string false "Unified path (e.g., /repo-slug/main/folder). If empty, lists all data source roots."
 // @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Object} "Objects"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid API key"
 // @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - tool not enabled or path not allowed"
@@ -158,7 +158,7 @@ func (api *APIControllers) AIAppAPIListObjects(c fiber.Ctx) error {
 		}
 		if errors.Is(err, services.ErrInvalidUnifiedPath) {
 			return c.Status(fiber.StatusBadRequest).JSON(irminmodels.IrminAPIResponse{
-				Message: "Invalid path format. Use /{repository-slug}/{path}",
+				Message: "Invalid path format. Use /{repository-slug}/{ref}/{path}",
 			})
 		}
 		api.Logger.Error("AI App API list objects error", "error", err)
@@ -183,12 +183,12 @@ func (api *APIControllers) AIAppAPIListObjects(c fiber.Ctx) error {
 
 // AIAppAPIGetObject godoc
 // @Summary Get object content
-// @Description Get the content of an object using unified path format: /{repository-slug}/{path}
+// @Description Get the content of an object using unified path format: /{repository-slug}/{ref}/{path}
 // @Tags ai-app-api
 // @Security AIAppAPIKey
 // @Accept json
 // @Produce json
-// @Param path query string true "Unified path to object (e.g., /repo-slug/data/file.json)"
+// @Param path query string true "Unified path to object (e.g., /repo-slug/main/data/file.json)"
 // @Success 200 {object} irminmodels.IrminAPIResponse "Object content"
 // @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - missing path"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid API key"
@@ -209,7 +209,7 @@ func (api *APIControllers) AIAppAPIGetObject(c fiber.Ctx) error {
 
 	if unifiedPath == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(irminmodels.IrminAPIResponse{
-			Message: "Path is required. Use unified format: /{repository-slug}/{path}",
+			Message: "Path is required. Use unified format: /{repository-slug}/{ref}/{path}",
 		})
 	}
 
@@ -229,7 +229,7 @@ func (api *APIControllers) AIAppAPIGetObject(c fiber.Ctx) error {
 		}
 		if errors.Is(err, services.ErrInvalidUnifiedPath) {
 			return c.Status(fiber.StatusBadRequest).JSON(irminmodels.IrminAPIResponse{
-				Message: "Invalid path format. Use /{repository-slug}/{path}",
+				Message: "Invalid path format. Use /{repository-slug}/{ref}/{path}",
 			})
 		}
 		api.Logger.Error("AI App API get content error", "error", err)
@@ -260,12 +260,12 @@ func (api *APIControllers) AIAppAPIGetObject(c fiber.Ctx) error {
 
 // AIAppAPIGetSchema godoc
 // @Summary Get object schema
-// @Description Get the schema of an object using unified path format: /{repository-slug}/{path}
+// @Description Get the schema of an object using unified path format: /{repository-slug}/{ref}/{path}
 // @Tags ai-app-api
 // @Security AIAppAPIKey
 // @Accept json
 // @Produce json
-// @Param path query string true "Unified path to object (e.g., /repo-slug/data/file.json)"
+// @Param path query string true "Unified path to object (e.g., /repo-slug/main/data/file.json)"
 // @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.ObjectSchema} "Object schema"
 // @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - missing path"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid API key"
@@ -286,7 +286,7 @@ func (api *APIControllers) AIAppAPIGetSchema(c fiber.Ctx) error {
 
 	if unifiedPath == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(irminmodels.IrminAPIResponse{
-			Message: "Path is required. Use unified format: /{repository-slug}/{path}",
+			Message: "Path is required. Use unified format: /{repository-slug}/{ref}/{path}",
 		})
 	}
 
@@ -306,7 +306,7 @@ func (api *APIControllers) AIAppAPIGetSchema(c fiber.Ctx) error {
 		}
 		if errors.Is(err, services.ErrInvalidUnifiedPath) {
 			return c.Status(fiber.StatusBadRequest).JSON(irminmodels.IrminAPIResponse{
-				Message: "Invalid path format. Use /{repository-slug}/{path}",
+				Message: "Invalid path format. Use /{repository-slug}/{ref}/{path}",
 			})
 		}
 		api.Logger.Error("AI App API get schema error", "error", err)
@@ -418,7 +418,7 @@ func (api *APIControllers) AIAppAPISearchEmbeddings(c fiber.Ctx) error {
 		}
 		if errors.Is(err, services.ErrInvalidUnifiedPath) {
 			return c.Status(fiber.StatusBadRequest).JSON(irminmodels.IrminAPIResponse{
-				Message: "Invalid path format. Use /{repository-slug}/{path}",
+				Message: "Invalid path format. Use /{repository-slug}/{ref}/{path}",
 			})
 		}
 		api.Logger.Error("AI App API search embeddings error", "error", err)

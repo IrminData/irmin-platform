@@ -54,9 +54,11 @@ func generateDataSourcesSection(aiApp *db.AIApplication) string {
 	section := "## Available Data Sources\n\nYou have access to the following data paths. Use these paths with the available tools:\n"
 
 	var dataSourcesBuilder strings.Builder
-	for _, ds := range aiApp.DataSources {
+	for i := range aiApp.DataSources {
+		ds := &aiApp.DataSources[i]
+		ref := getEffectiveRef(ds)
 		// Build unified path using helper to handle leading slashes correctly
-		unifiedPath := BuildUnifiedPath(ds.Repository.Slug, ds.Path)
+		unifiedPath := BuildUnifiedPath(ds.Repository.Slug, ref, ds.Path)
 		dataSourcesBuilder.WriteString(fmt.Sprintf("\n- `%s`", unifiedPath))
 	}
 	section += dataSourcesBuilder.String()
@@ -65,7 +67,7 @@ func generateDataSourcesSection(aiApp *db.AIApplication) string {
 }
 
 func generateToolsSection(config db.AIApplicationToolConfig) string {
-	section := "## Available Tools\n\nThe following tools are available for data access. All tools use unified paths (e.g., `/data-source/folder/file.json`):\n"
+	section := "## Available Tools\n\nThe following tools are available for data access. All tools use unified paths (e.g., `/repo-slug/main/folder/file.json`):\n"
 
 	if config.QueryEnabled {
 		section += "\n- **irmin_execute_sql** - Execute SQL queries on data using DuckDB"
