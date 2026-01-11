@@ -64,6 +64,8 @@ const (
 	PolicyResourceBilling PolicyResource = "billing"
 	// PolicyResourceWorkspaceTag represents a workspace tag resource.
 	PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
+	// PolicyResourceAIApplication represents an AI application resource.
+	PolicyResourceAIApplication PolicyResource = "ai_application"
 )
 
 // PolicyPrincipal specifies which group of users the policy is applied to.
@@ -87,7 +89,7 @@ type Policy struct {
 	// Action specifies the action that the policy is applied to
 	Action PolicyAction `json:"action"                validate:"required,oneof=create read update delete"                                                                                                                                                                                example:"read"`
 	// Resource specifies the resource type that the policy is applied to
-	Resource PolicyResource `json:"resource"              validate:"required,oneof=workspace script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag" example:"repository"`
+	Resource PolicyResource `json:"resource"              validate:"required,oneof=workspace script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag ai_application" example:"repository"`
 	// ResourceID is used to specify which resource the policy is applied to.
 	// When undefined, the policy is applied to all resources of the given type.
 	//
@@ -98,6 +100,7 @@ type Policy struct {
 	// - repositories
 	// - workspace tags
 	// - users
+	// - ai_applications
 	//
 	// It is not applicable for:
 	// - workspaces (policies are workspace scoped)
