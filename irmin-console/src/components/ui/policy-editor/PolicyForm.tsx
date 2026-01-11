@@ -212,6 +212,9 @@ export default function PolicyForm({
               <SelectItem value={'billing'}>
                 {String(formatResourceName('billing'))}
               </SelectItem>
+              <SelectItem value={'ai_application'}>
+                {formatResourceName('ai_application')}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>

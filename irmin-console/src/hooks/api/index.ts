@@ -53,6 +53,7 @@ export * from './useInvites';
 
 // AI hooks
 export * from './useAIAgent';
+export * from './useAIApplications';
 export * from './useAIConversations';
 export * from './useAIConversation';
 

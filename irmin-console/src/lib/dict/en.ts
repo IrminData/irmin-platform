@@ -169,6 +169,7 @@ const en = {
     usefulLinks: 'Useful links',
     scripts: 'Scripts',
     queries: 'Queries',
+    aiApplications: 'AI Applications',
     workspaceSettings: 'Workspace',
     goToWebsite: 'Go to website',
     myProfile: 'My Profile',
@@ -191,6 +192,8 @@ const en = {
       createWorkflow: 'Create new workflow',
       createConnection: 'Create new connection',
       createRepository: 'Create new repository',
+      createAIApplication: 'Create new AI application',
+      aiApplications: 'AI Applications',
 
       description: {
         irminWebsite: 'Go to the Irmin website',
@@ -215,8 +218,72 @@ const en = {
         createConnection: 'Create a new connection to use in your workflows',
         repositories: 'View and manage repositories',
         createRepository: 'Create a new repository to store your data',
+        aiApplications: 'Create and manage AI applications',
+        createAIApplication:
+          'Create a new AI application to expose your data to AI tools',
       },
     },
+  },
+
+  // === AI APPLICATIONS ===
+  aiApplication: {
+    aiApplications: 'AI Applications',
+    aiApplication: 'AI Application',
+    createAIApplication: 'Create AI Application',
+    noAIApplications: 'No AI applications',
+    dataSources: 'data sources',
+    dataSource: 'data source',
+    toolsEnabled: 'tools enabled',
+    toolEnabled: 'tool enabled',
+    dataSourcesDescription:
+      'Configure which repositories and paths this AI Application can access. Data sources define the scope of data available to connected LLM agents.',
+    noDataSourcesConfigured:
+      'No data sources configured. Add a data source to allow the AI Application to access your workspace data.',
+    dataSourcePathHint:
+      'Leave empty or use "/" to include the entire repository',
+    deleteAIApplication: 'Delete AI Application',
+    deleteWarning:
+      'Deleting this AI Application will revoke all API keys and remove access for any connected LLM agents. This action cannot be undone.',
+    // Overview section
+    apiKey: 'API Key',
+    apiKeyDescription:
+      'Use this API key to authenticate requests to the AI Application API and MCP server.',
+    apiKeyOnlyShownOnce:
+      'API key is only shown once when the AI Application is created. Contact the owner if you need access.',
+    mcpConnection: 'MCP Connection',
+    mcpEndpoint: 'MCP Endpoint',
+    restApiEndpoint: 'REST API Endpoint',
+    mcpConnectionDescription:
+      'Connect your LLM agent using the Model Context Protocol (MCP). Include the API key as a Bearer token in the Authorization header.',
+    enabledTools: 'Enabled Tools',
+    // Tools
+    toolQueryName: 'SQL Query',
+    toolQueryDescription: 'Execute SQL queries on workspace data',
+    toolSchemaName: 'Schema',
+    toolSchemaDescription: 'Get data schema for repository objects',
+    toolListObjectsName: 'List Objects',
+    toolListObjectsDescription: 'List files and folders in repositories',
+    toolGetContentName: 'Get Content',
+    toolGetContentDescription: 'Read content of text-based files',
+    toolVectorSearchName: 'Vector Search',
+    toolVectorSearchDescription: 'Semantic search on embeddings',
+    toolDocsName: 'Documentation',
+    toolDocsDescription: 'Access AI Application documentation',
+    howToConnect: 'How to Connect',
+    howToConnectMcp:
+      'Use the <strong>MCP Endpoint</strong> to connect with Cursor, Claude Desktop, or other MCP clients.',
+    howToConnectApiKey:
+      'Include your <strong>API Key</strong> as a Bearer token in the Authorization header.',
+    howToConnectTools:
+      'Enable specific tools below to expose capabilities to your AI agent.',
+    mcpDocumentation: 'MCP Documentation',
+    apiReference: 'API Reference',
+    repositoriesLinked: 'Repositories linked to this AI application.',
+    toolsControlDescription:
+      'Control which capabilities are exposed via the MCP server.',
+    hideApiKey: 'Hide API Key',
+    showApiKey: 'Show API Key',
+    copyApiKey: 'Copy API Key',
   },
 
   // === WORKSPACE ===
@@ -310,6 +377,7 @@ const en = {
       branches: 'Branches',
       currentBranch: 'Current',
       branch: 'Branch',
+      selectBranch: 'Select branch',
       ref: 'Ref',
       createBranch: 'Create branch',
       primary: 'Primary',
@@ -1570,6 +1638,11 @@ const en = {
       scripts: {
         title: 'No scripts yet',
         description: 'Create your first script to get started',
+      },
+      aiApplications: {
+        title: 'No AI applications yet',
+        description:
+          'AI Applications let you expose your data to AI-powered tools and assistants. Create your first AI application to get started.',
       },
       generic: {
         title: 'No items found',

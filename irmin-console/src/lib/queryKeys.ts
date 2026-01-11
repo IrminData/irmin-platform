@@ -294,3 +294,12 @@ export const aiConversationMessagesQueryKey = (
   workspaceSlug: string,
   conversationID: string
 ) => ['ai-conversation-messages', workspaceSlug, conversationID] as const;
+
+// AI Application related query keys
+export const aiApplicationsQueryKey = (workspaceSlug: string) =>
+  ['ai_applications', workspaceSlug] as const;
+
+export const aiApplicationQueryKey = (
+  workspaceSlug: string,
+  aiApplicationID: string
+) => ['ai_application', workspaceSlug, aiApplicationID] as const;

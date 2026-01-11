@@ -21,6 +21,7 @@ import WizardSelector from '@/components/wizards/WizardSelector';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { useAIApplications } from '@/hooks/api';
 import { useConnections } from '@/hooks/api/useConnections';
 import { useRepositories } from '@/hooks/api/useRepositories';
 import { useWorkflows } from '@/hooks/api/useWorkflows';
@@ -42,6 +43,7 @@ const DashboardSection = () => {
   const { repositoriesQuery } = useRepositories();
   const { workflowsQuery } = useWorkflows();
   const { connectionsQuery } = useConnections();
+  const { aiApplicationsQuery } = useAIApplications();
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -199,7 +201,8 @@ const DashboardSection = () => {
           <div
             className={`
               grid grid-cols-1 gap-4
-              lg:grid-cols-3
+              md:grid-cols-2
+              xl:grid-cols-4
             `}
           >
             {isResourceAllowed('repository', 'read') && (
@@ -263,6 +266,29 @@ const DashboardSection = () => {
                   variant: 'gradient',
                 }}
                 hideCreateNewButton={!isResourceAllowed('workflow', 'create')}
+              />
+            )}
+            {isResourceAllowed('ai_application', 'read') && (
+              <DashboardListCard
+                title={dict.aiApplication.aiApplications}
+                type='ai-applications'
+                loading={aiApplicationsQuery.isLoading}
+                items={aiApplicationsQuery.data?.data?.slice(0, 5) || []}
+                viewAllHref={`${workspaceUrl}/ai-applications`}
+                createNewHref={`${workspaceUrl}/ai-applications?create`}
+                workspaceUrl={workspaceUrl}
+                emptyStateTitle={dict.list.emptyState.aiApplications.title}
+                emptyStateDescription={
+                  dict.list.emptyState.aiApplications.description
+                }
+                emptyStateAction={{
+                  label: dict.aiApplication.createAIApplication,
+                  href: `${workspaceUrl}/ai-applications?create`,
+                  variant: 'gradient',
+                }}
+                hideCreateNewButton={
+                  !isResourceAllowed('ai_application', 'create')
+                }
               />
             )}
           </div>

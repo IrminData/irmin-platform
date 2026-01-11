@@ -8,6 +8,7 @@ import { GoWorkflow } from 'react-icons/go';
 import { MdCode } from 'react-icons/md';
 import {
   TbBook,
+  TbBrain,
   TbChevronLeft,
   TbDatabase,
   TbFile,
@@ -102,6 +103,12 @@ const useConsoleNavigationLinks = (): {
           href: `${workspaceUrl}/queries`,
           icon: <TbSql />,
           hide: !isResourceAllowed('query', 'read'),
+        },
+        {
+          title: dict.consoleNavigation.aiApplications,
+          href: `${workspaceUrl}/ai-applications`,
+          icon: <TbBrain />,
+          hide: !isResourceAllowed('ai_application', 'read'),
         },
       ].map((link) => ({
         ...link,

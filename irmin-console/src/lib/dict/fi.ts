@@ -169,6 +169,7 @@ const fi = {
     usefulLinks: 'Hyödylliset linkit',
     scripts: 'Skriptit',
     queries: 'Kyselyt',
+    aiApplications: 'AI-sovellukset',
     workspaceSettings: 'Työtila',
     goToWebsite: 'Siirry verkkosivustolle',
     myProfile: 'Profiilini',
@@ -191,6 +192,8 @@ const fi = {
       createWorkflow: 'Luo uusi prosessi',
       createConnection: 'Luo uusi yhteys',
       createRepository: 'Luo uusi data-arkisto',
+      createAIApplication: 'Luo uusi AI-sovellus',
+      aiApplications: 'AI-sovellukset',
 
       description: {
         irminWebsite: 'Siirry Irmin verkkosivustolle',
@@ -215,9 +218,74 @@ const fi = {
         createConnection: 'Luo uusi yhteys käytettäväksi prosesseissa',
         repositories: 'Näytä ja hallitse data-arkistoja',
         createRepository: 'Luo uusi data-arkisto tietojen tallentamista varten',
+        aiApplications: 'Luo ja hallinnoi AI-sovelluksia',
+        createAIApplication:
+          'Luo uusi AI-sovellus jakaaksesi dataa tekoälytyökalujen kanssa',
       },
     },
   },
+
+  // === AI APPLICATIONS ===
+  aiApplication: {
+    aiApplications: 'AI-sovellukset',
+    aiApplication: 'AI-sovellus',
+    createAIApplication: 'Luo AI-sovellus',
+    noAIApplications: 'Ei AI-sovelluksia',
+    dataSources: 'tietolähdettä',
+    dataSource: 'tietolähde',
+    toolsEnabled: 'työkalua käytössä',
+    toolEnabled: 'työkalu käytössä',
+    dataSourcesDescription:
+      'Määritä mihin tietovarastoihin ja polkuihin tällä AI-sovelluksella on pääsy. Tietolähteet määrittävät mitä dataa yhdistetyt LLM-agentit voivat käyttää.',
+    noDataSourcesConfigured:
+      'Ei määritettyjä tietolähteitä. Lisää tietolähde, jotta AI-sovellus voi käyttää työtilan dataa.',
+    dataSourcePathHint:
+      'Jätä tyhjäksi tai käytä "/" sisällyttääksesi koko tietovaraston',
+    deleteAIApplication: 'Poista AI-sovellus',
+    deleteWarning:
+      'AI-sovelluksen poistaminen mitätöi kaikki API-avaimet ja poistaa pääsyn kaikilta yhdistettyjiltä LLM-agenteilta. Tätä toimintoa ei voi kumota.',
+    // Overview section
+    apiKey: 'API-avain',
+    apiKeyDescription:
+      'Käytä tätä API-avainta todentaaksesi pyynnöt AI-sovelluksen API:in ja MCP-palvelimeen.',
+    apiKeyOnlyShownOnce:
+      'API-avain näytetään vain kerran kun AI-sovellus luodaan. Ota yhteyttä omistajaan, jos tarvitset pääsyn.',
+    mcpConnection: 'MCP-yhteys',
+    mcpEndpoint: 'MCP-päätepiste',
+    restApiEndpoint: 'REST API -päätepiste',
+    mcpConnectionDescription:
+      'Yhdistä LLM-agenttisi Model Context Protocol (MCP) -protokollalla. Sisällytä API-avain Bearer-tokenina Authorization-otsikossa.',
+    enabledTools: 'Käytössä olevat työkalut',
+    // Tools
+    toolQueryName: 'SQL-kysely',
+    toolQueryDescription: 'Suorita SQL-kyselyjä työtilan dataan',
+    toolSchemaName: 'Skeema',
+    toolSchemaDescription: 'Hae dataskeema tietovaraston objekteille',
+    toolListObjectsName: 'Listaa objektit',
+    toolListObjectsDescription: 'Listaa tiedostot ja kansiot tietovarastoissa',
+    toolGetContentName: 'Hae sisältö',
+    toolGetContentDescription: 'Lue tekstitiedostojen sisältö',
+    toolVectorSearchName: 'Vektorihaku',
+    toolVectorSearchDescription: 'Semanttinen haku upotuksissa',
+    toolDocsName: 'Dokumentaatio',
+    toolDocsDescription: 'Käytä AI-sovelluksen dokumentaatiota',
+    howToConnect: 'Kuinka yhdistää',
+    howToConnectMcp:
+      'Käytä <strong>MCP-päätepistettä</strong> yhdistääksesi Cursorin, Claude Desktopin tai muiden MCP-asiakkaiden kanssa.',
+    howToConnectApiKey:
+      'Sisällytä <strong>API-avain</strong> Bearer-tunnisteena Authorization-otsikkoon.',
+    howToConnectTools:
+      'Ota käyttöön tiettyjä työkaluja alta paljastaaksesi ominaisuuksia AI-agentillesi.',
+    mcpDocumentation: 'MCP-dokumentaatio',
+    apiReference: 'API-viite',
+    repositoriesLinked: 'Tähän AI-sovellukseen linkitetyt tietovarastot.',
+    toolsControlDescription:
+      'Hallitse, mitkä ominaisuudet paljastetaan MCP-palvelimen kautta.',
+    hideApiKey: 'Piilota API-avain',
+    showApiKey: 'Näytä API-avain',
+    copyApiKey: 'Kopioi API-avain',
+  },
+
   // === WORKSPACE ===
   workspace: {
     general: 'Yleiset',
@@ -309,6 +377,7 @@ const fi = {
       branches: 'Haarat',
       currentBranch: 'Nykyinen',
       branch: 'Haara',
+      selectBranch: 'Valitse haara',
       ref: 'Ref',
       createBranch: 'Luo haara',
       primary: 'Päähaara',
@@ -1554,6 +1623,11 @@ const fi = {
       scripts: {
         title: 'Ei vielä skriptejä',
         description: 'Luo ensimmäinen skripti aloittaaksesi.',
+      },
+      aiApplications: {
+        title: 'Ei vielä AI-sovelluksia',
+        description:
+          'AI-sovellukset mahdollistavat datasi jakamisen tekoälytyökalujen ja -avustajien kanssa. Luo ensimmäinen AI-sovellus aloittaaksesi.',
       },
       generic: {
         title: 'Kohteita ei löytynyt',

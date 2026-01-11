@@ -8,6 +8,7 @@ import type {
   IrminAPIResponse,
 } from '@/types/core/IrminAPIResponse';
 
+import AIApplicationService from './resources/AIApplicationService';
 import ConnectionService from './resources/ConnectionService';
 import ConnectorService from './resources/ConnectorService';
 import CredentialService from './resources/CredentialService';
@@ -50,6 +51,7 @@ class IrminCore {
     process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev/api';
   public appBase = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
+  public aiApplicationService: AIApplicationService;
   public scriptsService: ScriptsService;
   public connectionService: ConnectionService;
   public connectorService: ConnectorService;
@@ -87,6 +89,7 @@ class IrminCore {
 
     // Create a new instance of each service class
     // Pass the current IrminCore instance to each service class
+    this.aiApplicationService = new AIApplicationService(this);
     this.scriptsService = new ScriptsService(this);
     this.connectionService = new ConnectionService(this);
     this.connectorService = new ConnectorService(this);

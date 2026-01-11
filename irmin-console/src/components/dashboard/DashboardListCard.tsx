@@ -3,7 +3,7 @@
 import Link from 'next/link';
 
 import { GoWorkflow } from 'react-icons/go';
-import { TbDatabase, TbDots, TbPlus, TbRun } from 'react-icons/tb';
+import { TbBrain, TbDatabase, TbDots, TbPlus, TbRun } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import type { AIApplication } from '@/types/core/AIApplication';
 import type { Connection } from '@/types/core/Connection';
 import type { Repository } from '@/types/core/Repository';
 import type { Workflow as WorkflowType } from '@/types/core/Workflow';
@@ -20,9 +21,9 @@ import type { EmptyStateAction } from '@/types/internal/ListProps';
 
 interface DashboardListCardProps {
   title: string;
-  type: 'repositories' | 'connections' | 'workflows';
+  type: 'repositories' | 'connections' | 'workflows' | 'ai-applications';
   loading?: boolean;
-  items: (Repository | WorkflowType | Connection)[];
+  items: (Repository | WorkflowType | Connection | AIApplication)[];
   viewAllHref: string;
   createNewHref: string;
   workspaceUrl: string;
@@ -37,11 +38,12 @@ const iconMap = {
   repositories: TbDatabase,
   connections: GoWorkflow,
   workflows: TbRun,
+  'ai-applications': TbBrain,
 };
 
 // Helper function to get item details based on type
 const getItemDetails = (
-  item: Repository | WorkflowType | Connection,
+  item: Repository | WorkflowType | Connection | AIApplication,
   type: string
 ) => {
   switch (type) {
@@ -74,6 +76,16 @@ const getItemDetails = (
         description: connection.description,
         lastUpdated: new Date().toISOString(), // Fallback since connection doesn't have updated_at
         href: connection.id,
+      };
+    }
+    case 'ai-applications': {
+      const aiApp = item as AIApplication;
+      return {
+        id: aiApp.id,
+        name: aiApp.name,
+        description: aiApp.description,
+        lastUpdated: aiApp.updated_at,
+        href: aiApp.id,
       };
     }
     default:
@@ -122,12 +134,12 @@ export function DashboardListCard({
     >
       <CardHeader
         className={`
-          p-4
-          lg:p-4
+          p-2
+          lg:p-3
         `}
       >
         <div className='flex items-center justify-between'>
-          <CardTitle className='flex items-center gap-2 text-base'>
+          <CardTitle className='flex items-center gap-2 text-sm'>
             <Icon className='size-4 text-primary' />
             {title}
           </CardTitle>
@@ -157,7 +169,7 @@ export function DashboardListCard({
       <CardContent
         className={`
           flex flex-1 flex-col px-2 pt-0 pb-2
-          lg:px-4
+          lg:px-3
         `}
       >
         {loading ? (
@@ -196,7 +208,9 @@ export function DashboardListCard({
                         `}
                       >
                         <div className='min-w-0 flex-1'>
-                          <div className='mb-0.5 flex items-center gap-2'>
+                          <div
+                            className={`mb-0.5 flex items-center gap-2 text-sm`}
+                          >
                             <Link
                               href={`${workspaceUrl}/${type}/${itemDetails.href}`}
                             >

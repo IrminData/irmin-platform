@@ -58,4 +58,5 @@ export type TagEntityType =
   | 'scripts'
   | 'workflows'
   | 'connections'
-  | 'repository_objects';
+  | 'repository_objects'
+  | 'ai_applications';
