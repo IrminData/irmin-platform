@@ -19,6 +19,8 @@ const (
 	s3PathMinParts = 2
 	// s3PathSplitLimit is the limit for splitting S3 paths into components.
 	s3PathSplitLimit = 2
+	// unifiedPathSplitLimit is the limit for splitting unified paths into repo slug and path.
+	unifiedPathSplitLimit = 2
 )
 
 var (
@@ -28,7 +30,19 @@ var (
 	ErrPathNotInDataSources = errors.New("path not in configured data sources")
 	// ErrPathTraversalDetected is returned when a path contains traversal sequences.
 	ErrPathTraversalDetected = errors.New("path traversal detected")
+	// ErrInvalidUnifiedPath is returned when a unified path cannot be parsed.
+	ErrInvalidUnifiedPath = errors.New("invalid unified path format")
+	// ErrNoEmbeddingFilesFound is returned when no embedding files are found in data sources.
+	ErrNoEmbeddingFilesFound = errors.New("no embedding files found in data sources")
 )
+
+// ResolvedPath contains the resolved repository, path, and ref from a unified path.
+type ResolvedPath struct {
+	Repository *db.Repository
+	Path       string
+	Ref        string
+	DataSource *db.AIApplicationDataSource
+}
 
 // AIAppToolExecutor executes tools within the scope of an AI Application's configured data sources.
 type AIAppToolExecutor struct {
@@ -161,6 +175,173 @@ func (e *AIAppToolExecutor) ListDataSources() []irminmodels.AIApplicationDataSou
 		})
 	}
 	return sources
+}
+
+// ListDataSourcesUnified returns the list of configured data sources with unified paths.
+// Unified paths have the format: /{repository-slug}/{path}
+func (e *AIAppToolExecutor) ListDataSourcesUnified() []irminmodels.AIAppDataSourceUnified {
+	var sources []irminmodels.AIAppDataSourceUnified
+	for _, ds := range e.aiApp.DataSources {
+		// Build the unified path using the helper to ensure proper normalization
+		sources = append(sources, irminmodels.AIAppDataSourceUnified{
+			Path: BuildUnifiedPath(ds.Repository.Slug, ds.Path),
+		})
+	}
+	return sources
+}
+
+// ResolvePath parses a unified path (/{repo-slug}/{path}) and resolves it to a repository, path, and ref.
+// The unified path format is: /{repository-slug}/{path-within-repo}
+// Returns the resolved repository, the path within the repository, and the ref (branch) from the data source.
+// When multiple data sources match, selects the most specific one (longest matching path).
+func (e *AIAppToolExecutor) ResolvePath(unifiedPath string) (*ResolvedPath, error) {
+	// Clean and validate the path
+	cleanedPath, err := cleanPath(unifiedPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Empty path means root - cannot resolve to a specific repository
+	if cleanedPath == "" {
+		return nil, ErrInvalidUnifiedPath
+	}
+
+	// Split the path into repository slug and the rest
+	parts := strings.SplitN(cleanedPath, "/", unifiedPathSplitLimit)
+	if len(parts) == 0 || parts[0] == "" {
+		return nil, ErrInvalidUnifiedPath
+	}
+
+	repoSlug := parts[0]
+	pathWithinRepo := ""
+	if len(parts) > 1 {
+		pathWithinRepo = parts[1]
+	}
+
+	// Find the most specific data source that matches this repository and path
+	var matchedDataSource *db.AIApplicationDataSource
+	var matchedRepo *db.Repository
+	matchedPathLen := -1
+
+	for i := range e.aiApp.DataSources {
+		ds := &e.aiApp.DataSources[i]
+		if ds.Repository.Slug != repoSlug {
+			continue
+		}
+
+		// Clean the data source path for comparison
+		dsPath, dsErr := cleanPath(ds.Path)
+		if dsErr != nil {
+			continue
+		}
+
+		// Check if the path is within this data source's scope
+		if dsPath == "" || pathWithinRepo == dsPath || strings.HasPrefix(pathWithinRepo, dsPath+"/") {
+			// Select the most specific match (longest path)
+			if len(dsPath) > matchedPathLen {
+				matchedDataSource = ds
+				matchedRepo = &ds.Repository
+				matchedPathLen = len(dsPath)
+			}
+		}
+	}
+
+	if matchedDataSource == nil {
+		return nil, ErrPathNotInDataSources
+	}
+
+	// Determine the ref (branch) to use
+	ref := matchedDataSource.Branch
+	if ref == "" {
+		ref = matchedRepo.DefaultBranch
+	}
+
+	return &ResolvedPath{
+		Repository: matchedRepo,
+		Path:       pathWithinRepo,
+		Ref:        ref,
+		DataSource: matchedDataSource,
+	}, nil
+}
+
+// ResolvePathOrFindInDataSources attempts to resolve a unified path or find a matching path across all data sources.
+// If the path starts with a known repository slug, it resolves it directly.
+// Otherwise, it searches all data sources for a matching path.
+// When multiple data sources match, selects the most specific one (longest matching path).
+func (e *AIAppToolExecutor) ResolvePathOrFindInDataSources(inputPath string) (*ResolvedPath, error) {
+	// Clean and validate the path
+	cleanedPath, err := cleanPath(inputPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Empty path - cannot resolve
+	if cleanedPath == "" {
+		return nil, ErrInvalidUnifiedPath
+	}
+
+	// First, try to resolve as a unified path (starts with repo slug)
+	parts := strings.SplitN(cleanedPath, "/", unifiedPathSplitLimit)
+	if len(parts) > 0 && parts[0] != "" {
+		// Check if the first part is a known repository slug
+		for i := range e.aiApp.DataSources {
+			ds := &e.aiApp.DataSources[i]
+			if ds.Repository.Slug == parts[0] {
+				// Found a matching repository - resolve as unified path (which handles most-specific matching)
+				return e.ResolvePath(inputPath)
+			}
+		}
+	}
+
+	// Path doesn't start with a repository slug - search all data sources
+	// This is for backwards compatibility or when user provides just a path
+	// Find the most specific match across all data sources
+	var matchedDataSource *db.AIApplicationDataSource
+	matchedPathLen := -1
+
+	for i := range e.aiApp.DataSources {
+		ds := &e.aiApp.DataSources[i]
+		dsPath, dsErr := cleanPath(ds.Path)
+		if dsErr != nil {
+			continue
+		}
+
+		// Check if the path is within this data source's scope
+		if dsPath == "" || cleanedPath == dsPath || strings.HasPrefix(cleanedPath, dsPath+"/") {
+			// Select the most specific match (longest path)
+			if len(dsPath) > matchedPathLen {
+				matchedDataSource = ds
+				matchedPathLen = len(dsPath)
+			}
+		}
+	}
+
+	if matchedDataSource == nil {
+		return nil, ErrPathNotInDataSources
+	}
+
+	// Determine ref
+	ref := matchedDataSource.Branch
+	if ref == "" {
+		ref = matchedDataSource.Repository.DefaultBranch
+	}
+
+	return &ResolvedPath{
+		Repository: &matchedDataSource.Repository,
+		Path:       cleanedPath,
+		Ref:        ref,
+		DataSource: matchedDataSource,
+	}, nil
+}
+
+// BuildUnifiedPath constructs a unified path from a repository slug and path within the repository.
+func BuildUnifiedPath(repoSlug, pathWithinRepo string) string {
+	if pathWithinRepo == "" {
+		return "/" + repoSlug
+	}
+	// Remove leading slash from path if present
+	pathWithinRepo = strings.TrimPrefix(pathWithinRepo, "/")
+	return "/" + repoSlug + "/" + pathWithinRepo
 }
 
 // validateSQLDataSourceAccess validates that a SQL query only accesses data within
@@ -538,4 +719,299 @@ func (e *AIAppToolExecutor) GetDocumentation() (string, error) {
 	}
 
 	return systemPrompt, nil
+}
+
+// === Simplified API Methods using Unified Paths ===
+
+// GetSchemaByPath retrieves the schema for an object using a unified path.
+// The path format is: /{repository-slug}/{path-within-repo}
+func (e *AIAppToolExecutor) GetSchemaByPath(
+	ctx context.Context,
+	unifiedPath string,
+) (*irminmodels.ObjectSchema, error) {
+	resolved, err := e.ResolvePath(unifiedPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return e.GetRepositoryObjectSchema(ctx, resolved.Repository.Slug, resolved.Path, resolved.Ref)
+}
+
+// ListObjectsByPath lists objects using a unified path.
+// If path is empty, lists objects from all data sources.
+// The path format is: /{repository-slug}/{path-within-repo}
+func (e *AIAppToolExecutor) ListObjectsByPath(
+	ctx context.Context,
+	unifiedPath string,
+) (*db.RepositoryObject, error) {
+	if unifiedPath == "" || unifiedPath == "/" {
+		// List from all data sources - return a virtual root with all data sources as children
+		return e.listAllDataSourceRoots(ctx)
+	}
+
+	resolved, err := e.ResolvePath(unifiedPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return e.ListRepositoryObjects(ctx, resolved.Repository.Slug, resolved.Path, resolved.Ref)
+}
+
+// listAllDataSourceRoots creates a virtual root object with all data source roots as children.
+func (e *AIAppToolExecutor) listAllDataSourceRoots(ctx context.Context) (*db.RepositoryObject, error) {
+	config := e.GetToolConfig()
+	if !config.ListObjectsEnabled {
+		return nil, ErrToolNotEnabled
+	}
+
+	// Create a virtual root object
+	root := &db.RepositoryObject{
+		Name:     "",
+		Path:     "/",
+		Type:     "folder",
+		Children: []db.RepositoryObject{},
+	}
+
+	// Add each data source as a child
+	for _, ds := range e.aiApp.DataSources {
+		// Determine ref
+		ref := ds.Branch
+		if ref == "" {
+			ref = ds.Repository.DefaultBranch
+		}
+
+		// Get the object for this data source
+		object, _, _, err := e.apiServices.GetRepositoryObject(
+			ctx,
+			"en",
+			&e.aiApp.Owner,
+			&e.aiApp.Workspace,
+			&ds.Repository,
+			ds.Path,
+			ref,
+		)
+		if err != nil {
+			// Skip this data source if we can't access it
+			continue
+		}
+
+		// Build the unified base path for this data source (matches ListDataSourcesUnified)
+		basePath := BuildUnifiedPath(ds.Repository.Slug, ds.Path)
+
+		// Determine the display name for this data source
+		displayName := ds.Repository.Slug
+		if ds.Path != "" && object != nil {
+			displayName = object.Name
+		}
+
+		// Create a child representing this data source
+		child := db.RepositoryObject{
+			Name: displayName,
+			Path: basePath,
+			Type: "folder",
+		}
+
+		// If the data source has a specific path, include its children
+		if object != nil {
+			if object.Type == "folder" && len(object.Children) > 0 {
+				// Convert children paths to unified format (children already have full repo paths)
+				for _, c := range object.Children {
+					prefixedChild := c
+					prefixedChild.Path = BuildUnifiedPath(ds.Repository.Slug, c.Path)
+					child.Children = append(child.Children, prefixedChild)
+				}
+			} else if object.Type != "folder" {
+				// Single file as data source
+				child = *object
+				child.Path = basePath
+			}
+		}
+
+		root.Children = append(root.Children, child)
+	}
+
+	return root, nil
+}
+
+// GetContentByPath retrieves the content of an object using a unified path.
+// The path format is: /{repository-slug}/{path-within-repo}
+func (e *AIAppToolExecutor) GetContentByPath(
+	ctx context.Context,
+	unifiedPath string,
+	limitResponse bool,
+) ([]byte, error) {
+	resolved, err := e.ResolvePath(unifiedPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return e.GetRepositoryObjectContent(ctx, resolved.Repository.Slug, resolved.Path, resolved.Ref, limitResponse)
+}
+
+// SearchEmbeddingsByPath performs vector similarity search, optionally filtered by a unified path.
+// If pathFilter is empty, searches across all embedding files in all data sources.
+// If pathFilter is provided, searches only in the specified embedding file.
+func (e *AIAppToolExecutor) SearchEmbeddingsByPath(
+	ctx context.Context,
+	query string,
+	topK int,
+	pathFilter string,
+	metadataFilter map[string]string,
+) (*irminmodels.EmbeddingSearchResponse, error) {
+	config := e.GetToolConfig()
+	if !config.VectorSearchEnabled {
+		return nil, ErrToolNotEnabled
+	}
+
+	if topK <= 0 {
+		topK = 10
+	}
+
+	// If a path filter is provided, search only that specific embedding file
+	if pathFilter != "" {
+		resolved, err := e.ResolvePath(pathFilter)
+		if err != nil {
+			return nil, err
+		}
+		return e.SearchEmbeddings(
+			ctx,
+			resolved.Repository.Slug,
+			resolved.Path,
+			query,
+			resolved.Ref,
+			topK,
+			metadataFilter,
+		)
+	}
+
+	// No path filter - search across all embedding files in all data sources
+	return e.searchAllEmbeddings(ctx, query, topK, metadataFilter)
+}
+
+// searchAllEmbeddings searches across all embedding files in all data sources and merges results.
+func (e *AIAppToolExecutor) searchAllEmbeddings(
+	ctx context.Context,
+	query string,
+	topK int,
+	metadataFilter map[string]string,
+) (*irminmodels.EmbeddingSearchResponse, error) {
+	var allResults []irminmodels.EmbeddingSearchResult
+	var model string
+
+	// Search each data source for embedding files
+	for i := range e.aiApp.DataSources {
+		ds := &e.aiApp.DataSources[i]
+		results, dsModel := e.searchDataSourceEmbeddings(ctx, ds, query, topK, metadataFilter)
+		allResults = append(allResults, results...)
+		if model == "" && dsModel != "" {
+			model = dsModel
+		}
+	}
+
+	// Sort results by score (descending) and take top K
+	sortEmbeddingResultsByScore(allResults)
+	if len(allResults) > topK {
+		allResults = allResults[:topK]
+	}
+
+	return &irminmodels.EmbeddingSearchResponse{
+		Results: allResults,
+		Query:   query,
+		Model:   model,
+		TopK:    topK,
+	}, nil
+}
+
+// searchDataSourceEmbeddings searches all embedding files in a single data source.
+// Returns the results with unified paths and the model name.
+func (e *AIAppToolExecutor) searchDataSourceEmbeddings(
+	ctx context.Context,
+	ds *db.AIApplicationDataSource,
+	query string,
+	topK int,
+	metadataFilter map[string]string,
+) ([]irminmodels.EmbeddingSearchResult, string) {
+	// Determine ref
+	ref := ds.Branch
+	if ref == "" {
+		ref = ds.Repository.DefaultBranch
+	}
+
+	// List embedding files in this data source
+	embeddingFiles, err := e.apiServices.ListEmbeddingFiles(
+		ctx,
+		"en",
+		&e.aiApp.Owner,
+		&e.aiApp.Workspace,
+		&ds.Repository,
+		ds.Path,
+		ref,
+	)
+	if err != nil {
+		return nil, ""
+	}
+
+	var results []irminmodels.EmbeddingSearchResult
+	var model string
+
+	// Search each embedding file
+	for _, ef := range embeddingFiles {
+		fileResults, fileModel := e.searchSingleEmbeddingFile(ctx, ds, ef.Path, ref, query, topK, metadataFilter)
+		results = append(results, fileResults...)
+		if model == "" && fileModel != "" {
+			model = fileModel
+		}
+	}
+
+	return results, model
+}
+
+// searchSingleEmbeddingFile searches a single embedding file and returns results with unified paths.
+func (e *AIAppToolExecutor) searchSingleEmbeddingFile(
+	ctx context.Context,
+	ds *db.AIApplicationDataSource,
+	embeddingPath, ref, query string,
+	topK int,
+	metadataFilter map[string]string,
+) ([]irminmodels.EmbeddingSearchResult, string) {
+	result, err := e.apiServices.SearchEmbeddings(
+		ctx,
+		"en",
+		&e.aiApp.Owner,
+		&e.aiApp.Workspace,
+		&ds.Repository,
+		irmincore.SearchEmbeddingsRequest{
+			EmbeddingPath: embeddingPath,
+			Query:         query,
+			Ref:           ref,
+			TopK:          topK,
+			Filter:        metadataFilter,
+		},
+	)
+	if err != nil {
+		return nil, ""
+	}
+
+	// Prefix source files with repository slug for unified path
+	results := make([]irminmodels.EmbeddingSearchResult, len(result.Results))
+	for i, r := range result.Results {
+		results[i] = r
+		if r.SourceFile != "" {
+			results[i].SourceFile = BuildUnifiedPath(ds.Repository.Slug, r.SourceFile)
+		}
+	}
+
+	return results, result.Model
+}
+
+// sortEmbeddingResultsByScore sorts embedding results by score in descending order.
+func sortEmbeddingResultsByScore(results []irminmodels.EmbeddingSearchResult) {
+	// Simple bubble sort - results are typically small
+	for i := range results {
+		for j := i + 1; j < len(results); j++ {
+			if results[j].Score > results[i].Score {
+				results[i], results[j] = results[j], results[i]
+			}
+		}
+	}
 }

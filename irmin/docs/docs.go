@@ -27,7 +27,7 @@ const docTemplate = `{
                         "AIAppAPIKey": []
                     }
                 ],
-                "description": "Get the content of a repository object within the AI Application's data scope",
+                "description": "Get the content of an object using unified path format: /{repository-slug}/{path}",
                 "consumes": [
                     "application/json"
                 ],
@@ -41,23 +41,10 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Repository slug",
-                        "name": "repository",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Path to object",
+                        "description": "Unified path to object (e.g., /repo-slug/data/file.json)",
                         "name": "path",
                         "in": "query",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Git reference (branch/tag/commit)",
-                        "name": "ref",
-                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -68,7 +55,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad request - missing parameters",
+                        "description": "Bad request - missing path",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -101,7 +88,7 @@ const docTemplate = `{
                         "AIAppAPIKey": []
                     }
                 ],
-                "description": "Perform vector similarity search on repository-based embeddings",
+                "description": "Perform vector similarity search. If path is empty, searches all embedding files in data sources.",
                 "consumes": [
                     "application/json"
                 ],
@@ -114,7 +101,7 @@ const docTemplate = `{
                 "summary": "Search embeddings",
                 "parameters": [
                     {
-                        "description": "Search request with repository, embedding_path, query",
+                        "description": "Search request with query (required), path (optional), top_k (optional), filter (optional)",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -143,7 +130,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad request - missing parameters",
+                        "description": "Bad request - missing query",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -210,7 +197,7 @@ const docTemplate = `{
                         "AIAppAPIKey": []
                     }
                 ],
-                "description": "List objects in a repository within the AI Application's data scope",
+                "description": "List objects within the AI Application's data sources. Use unified path format: /{repository-slug}/{path}",
                 "consumes": [
                     "application/json"
                 ],
@@ -220,31 +207,18 @@ const docTemplate = `{
                 "tags": [
                     "ai-app-api"
                 ],
-                "summary": "List repository objects",
+                "summary": "List objects",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Repository slug",
-                        "name": "repository",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Path within repository",
+                        "description": "Unified path (e.g., /repo-slug/folder). If empty, lists all data source roots.",
                         "name": "path",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Git reference (branch/tag/commit)",
-                        "name": "ref",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Repository objects",
+                        "description": "Objects",
                         "schema": {
                             "allOf": [
                                 {
@@ -259,12 +233,6 @@ const docTemplate = `{
                                     }
                                 }
                             ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - missing repository",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
                     },
                     "401": {
@@ -358,7 +326,7 @@ const docTemplate = `{
                         "AIAppAPIKey": []
                     }
                 ],
-                "description": "Get the schema of a repository object within the AI Application's data scope",
+                "description": "Get the schema of an object using unified path format: /{repository-slug}/{path}",
                 "consumes": [
                     "application/json"
                 ],
@@ -372,23 +340,10 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Repository slug",
-                        "name": "repository",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Path to object",
+                        "description": "Unified path to object (e.g., /repo-slug/data/file.json)",
                         "name": "path",
                         "in": "query",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Git reference (branch/tag/commit)",
-                        "name": "ref",
-                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -411,7 +366,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad request - missing parameters",
+                        "description": "Bad request - missing path",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }

@@ -1014,7 +1014,7 @@ func NewAPIControllers(apiServices *services.APIServices) *APIControllers
 func (api *APIControllers) AIAppAPIGetObject(c fiber.Ctx) error
 ```
 
-AIAppAPIGetObject godoc @Summary Get object content @Description Get the content of a repository object within the AI Application's data scope @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param repository query string true "Repository slug" @Param path query string true "Path to object" @Param ref query string false "Git reference \(branch/tag/commit\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Object content" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/content \[get\]
+AIAppAPIGetObject godoc @Summary Get object content @Description Get the content of an object using unified path format: /\{repository\-slug\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param path query string true "Unified path to object \(e.g., /repo\-slug/data/file.json\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Object content" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing path" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/content \[get\]
 
 <a name="APIControllers.AIAppAPIGetSchema"></a>
 ### func \(\*APIControllers\) AIAppAPIGetSchema
@@ -1023,7 +1023,7 @@ AIAppAPIGetObject godoc @Summary Get object content @Description Get the content
 func (api *APIControllers) AIAppAPIGetSchema(c fiber.Ctx) error
 ```
 
-AIAppAPIGetSchema godoc @Summary Get object schema @Description Get the schema of a repository object within the AI Application's data scope @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param repository query string true "Repository slug" @Param path query string true "Path to object" @Param ref query string false "Git reference \(branch/tag/commit\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ObjectSchema\} "Object schema" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/schema \[get\]
+AIAppAPIGetSchema godoc @Summary Get object schema @Description Get the schema of an object using unified path format: /\{repository\-slug\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param path query string true "Unified path to object \(e.g., /repo\-slug/data/file.json\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ObjectSchema\} "Object schema" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing path" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/schema \[get\]
 
 <a name="APIControllers.AIAppAPIInfo"></a>
 ### func \(\*APIControllers\) AIAppAPIInfo
@@ -1041,7 +1041,7 @@ AIAppAPIInfo godoc @Summary Get AI Application API info @Description Get informa
 func (api *APIControllers) AIAppAPIListObjects(c fiber.Ctx) error
 ```
 
-AIAppAPIListObjects godoc @Summary List repository objects @Description List objects in a repository within the AI Application's data scope @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param repository query string true "Repository slug" @Param path query string false "Path within repository" @Param ref query string false "Git reference \(branch/tag/commit\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Object\} "Repository objects" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing repository" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/objects \[get\]
+AIAppAPIListObjects godoc @Summary List objects @Description List objects within the AI Application's data sources. Use unified path format: /\{repository\-slug\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param path query string false "Unified path \(e.g., /repo\-slug/folder\). If empty, lists all data source roots." @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Object\} "Objects" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/objects \[get\]
 
 <a name="APIControllers.AIAppAPIQuery"></a>
 ### func \(\*APIControllers\) AIAppAPIQuery
@@ -1059,7 +1059,7 @@ AIAppAPIQuery godoc @Summary Execute SQL query @Description Execute a SQL query 
 func (api *APIControllers) AIAppAPISearchEmbeddings(c fiber.Ctx) error
 ```
 
-AIAppAPISearchEmbeddings godoc @Summary Search embeddings @Description Perform vector similarity search on repository\-based embeddings @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param body body object true "Search request with repository, embedding\_path, query" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.EmbeddingSearchResponse\} "Search results" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/embeddings/search \[post\]
+AIAppAPISearchEmbeddings godoc @Summary Search embeddings @Description Perform vector similarity search. If path is empty, searches all embedding files in data sources. @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param body body object true "Search request with query \(required\), path \(optional\), top\_k \(optional\), filter \(optional\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.EmbeddingSearchResponse\} "Search results" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing query" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/embeddings/search \[post\]
 
 <a name="APIControllers.AIAppAPISystemPrompt"></a>
 ### func \(\*APIControllers\) AIAppAPISystemPrompt
@@ -11089,6 +11089,7 @@ import "irmin-api/services"
 
 - [Constants](<#constants>)
 - [Variables](<#variables>)
+- [func BuildUnifiedPath\(repoSlug, pathWithinRepo string\) string](<#BuildUnifiedPath>)
 - [func GetInternalErrorMessage\(err error\) string](<#GetInternalErrorMessage>)
 - [func GetTranslationKeyForError\(err error\) string](<#GetTranslationKeyForError>)
 - [func IsInternalError\(err error\) bool](<#IsInternalError>)
@@ -11099,14 +11100,21 @@ import "irmin-api/services"
   - [func NewAIAppToolExecutor\(aiApp \*db.AIApplication, apiServices \*APIServices\) \*AIAppToolExecutor](<#NewAIAppToolExecutor>)
   - [func \(e \*AIAppToolExecutor\) ExecuteSQL\(ctx context.Context, sql string, limitResponse bool\) \(any, error\)](<#AIAppToolExecutor.ExecuteSQL>)
   - [func \(e \*AIAppToolExecutor\) GetAIApplication\(\) \*db.AIApplication](<#AIAppToolExecutor.GetAIApplication>)
+  - [func \(e \*AIAppToolExecutor\) GetContentByPath\(ctx context.Context, unifiedPath string, limitResponse bool\) \(\[\]byte, error\)](<#AIAppToolExecutor.GetContentByPath>)
   - [func \(e \*AIAppToolExecutor\) GetDocumentation\(\) \(string, error\)](<#AIAppToolExecutor.GetDocumentation>)
   - [func \(e \*AIAppToolExecutor\) GetRepositoryObjectContent\(ctx context.Context, repoSlug, path, branch string, limitResponse bool\) \(\[\]byte, error\)](<#AIAppToolExecutor.GetRepositoryObjectContent>)
   - [func \(e \*AIAppToolExecutor\) GetRepositoryObjectSchema\(ctx context.Context, repoSlug, path, branch string\) \(\*irminmodels.ObjectSchema, error\)](<#AIAppToolExecutor.GetRepositoryObjectSchema>)
+  - [func \(e \*AIAppToolExecutor\) GetSchemaByPath\(ctx context.Context, unifiedPath string\) \(\*irminmodels.ObjectSchema, error\)](<#AIAppToolExecutor.GetSchemaByPath>)
   - [func \(e \*AIAppToolExecutor\) GetToolConfig\(\) db.AIApplicationToolConfig](<#AIAppToolExecutor.GetToolConfig>)
   - [func \(e \*AIAppToolExecutor\) GetWorkspace\(\) \*db.Workspace](<#AIAppToolExecutor.GetWorkspace>)
   - [func \(e \*AIAppToolExecutor\) ListDataSources\(\) \[\]irminmodels.AIApplicationDataSource](<#AIAppToolExecutor.ListDataSources>)
+  - [func \(e \*AIAppToolExecutor\) ListDataSourcesUnified\(\) \[\]irminmodels.AIAppDataSourceUnified](<#AIAppToolExecutor.ListDataSourcesUnified>)
+  - [func \(e \*AIAppToolExecutor\) ListObjectsByPath\(ctx context.Context, unifiedPath string\) \(\*db.RepositoryObject, error\)](<#AIAppToolExecutor.ListObjectsByPath>)
   - [func \(e \*AIAppToolExecutor\) ListRepositoryObjects\(ctx context.Context, repoSlug, path, ref string\) \(\*db.RepositoryObject, error\)](<#AIAppToolExecutor.ListRepositoryObjects>)
+  - [func \(e \*AIAppToolExecutor\) ResolvePath\(unifiedPath string\) \(\*ResolvedPath, error\)](<#AIAppToolExecutor.ResolvePath>)
+  - [func \(e \*AIAppToolExecutor\) ResolvePathOrFindInDataSources\(inputPath string\) \(\*ResolvedPath, error\)](<#AIAppToolExecutor.ResolvePathOrFindInDataSources>)
   - [func \(e \*AIAppToolExecutor\) SearchEmbeddings\(ctx context.Context, repoSlug, embeddingPath, query, ref string, topK int, filter map\[string\]string\) \(\*irminmodels.EmbeddingSearchResponse, error\)](<#AIAppToolExecutor.SearchEmbeddings>)
+  - [func \(e \*AIAppToolExecutor\) SearchEmbeddingsByPath\(ctx context.Context, query string, topK int, pathFilter string, metadataFilter map\[string\]string\) \(\*irminmodels.EmbeddingSearchResponse, error\)](<#AIAppToolExecutor.SearchEmbeddingsByPath>)
 - [type APIServices](<#APIServices>)
   - [func NewAPIServices\(db \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, orchestrator \*orchestrator.Orchestrator, sqidManager \*irminsqids.SQIDManager, localeManager \*locales.LocaleManager, permissionService \*permissions.Service, cacheStorage fiber.Storage\) \*APIServices](<#NewAPIServices>)
   - [func \(api \*APIServices\) AcceptInvite\(c context.Context, user \*db.User, invite \*db.Invite\) error](<#APIServices.AcceptInvite>)
@@ -11262,6 +11270,7 @@ import "irmin-api/services"
   - [func \(eh \*ErrorHandler\) HandleServiceError\(c fiber.Ctx, consoleLogPrefix string, err error, dict locales.Dictionary\) error](<#ErrorHandler.HandleServiceError>)
 - [type InviteTransactionResult](<#InviteTransactionResult>)
 - [type PolicyFilters](<#PolicyFilters>)
+- [type ResolvedPath](<#ResolvedPath>)
 - [type TagEntityOperation](<#TagEntityOperation>)
 
 
@@ -11311,6 +11320,10 @@ var (
     ErrPathNotInDataSources = errors.New("path not in configured data sources")
     // ErrPathTraversalDetected is returned when a path contains traversal sequences.
     ErrPathTraversalDetected = errors.New("path traversal detected")
+    // ErrInvalidUnifiedPath is returned when a unified path cannot be parsed.
+    ErrInvalidUnifiedPath = errors.New("invalid unified path format")
+    // ErrNoEmbeddingFilesFound is returned when no embedding files are found in data sources.
+    ErrNoEmbeddingFilesFound = errors.New("no embedding files found in data sources")
 )
 ```
 
@@ -11355,6 +11368,15 @@ var (
     ErrNoContentExtracted                     = errors.New("no content could be extracted from AI response")
 )
 ```
+
+<a name="BuildUnifiedPath"></a>
+## func BuildUnifiedPath
+
+```go
+func BuildUnifiedPath(repoSlug, pathWithinRepo string) string
+```
+
+BuildUnifiedPath constructs a unified path from a repository slug and path within the repository.
 
 <a name="GetInternalErrorMessage"></a>
 ## func GetInternalErrorMessage
@@ -11448,6 +11470,15 @@ func (e *AIAppToolExecutor) GetAIApplication() *db.AIApplication
 
 GetAIApplication returns the AI Application.
 
+<a name="AIAppToolExecutor.GetContentByPath"></a>
+### func \(\*AIAppToolExecutor\) GetContentByPath
+
+```go
+func (e *AIAppToolExecutor) GetContentByPath(ctx context.Context, unifiedPath string, limitResponse bool) ([]byte, error)
+```
+
+GetContentByPath retrieves the content of an object using a unified path. The path format is: /\{repository\-slug\}/\{path\-within\-repo\}
+
 <a name="AIAppToolExecutor.GetDocumentation"></a>
 ### func \(\*AIAppToolExecutor\) GetDocumentation
 
@@ -11474,6 +11505,15 @@ func (e *AIAppToolExecutor) GetRepositoryObjectSchema(ctx context.Context, repoS
 ```
 
 GetRepositoryObjectSchema retrieves the schema for a repository object.
+
+<a name="AIAppToolExecutor.GetSchemaByPath"></a>
+### func \(\*AIAppToolExecutor\) GetSchemaByPath
+
+```go
+func (e *AIAppToolExecutor) GetSchemaByPath(ctx context.Context, unifiedPath string) (*irminmodels.ObjectSchema, error)
+```
+
+GetSchemaByPath retrieves the schema for an object using a unified path. The path format is: /\{repository\-slug\}/\{path\-within\-repo\}
 
 <a name="AIAppToolExecutor.GetToolConfig"></a>
 ### func \(\*AIAppToolExecutor\) GetToolConfig
@@ -11502,6 +11542,24 @@ func (e *AIAppToolExecutor) ListDataSources() []irminmodels.AIApplicationDataSou
 
 ListDataSources returns the list of configured data sources.
 
+<a name="AIAppToolExecutor.ListDataSourcesUnified"></a>
+### func \(\*AIAppToolExecutor\) ListDataSourcesUnified
+
+```go
+func (e *AIAppToolExecutor) ListDataSourcesUnified() []irminmodels.AIAppDataSourceUnified
+```
+
+ListDataSourcesUnified returns the list of configured data sources with unified paths. Unified paths have the format: /\{repository\-slug\}/\{path\}
+
+<a name="AIAppToolExecutor.ListObjectsByPath"></a>
+### func \(\*AIAppToolExecutor\) ListObjectsByPath
+
+```go
+func (e *AIAppToolExecutor) ListObjectsByPath(ctx context.Context, unifiedPath string) (*db.RepositoryObject, error)
+```
+
+ListObjectsByPath lists objects using a unified path. If path is empty, lists objects from all data sources. The path format is: /\{repository\-slug\}/\{path\-within\-repo\}
+
 <a name="AIAppToolExecutor.ListRepositoryObjects"></a>
 ### func \(\*AIAppToolExecutor\) ListRepositoryObjects
 
@@ -11511,6 +11569,24 @@ func (e *AIAppToolExecutor) ListRepositoryObjects(ctx context.Context, repoSlug,
 
 ListRepositoryObjects lists objects in a repository path. Returns the raw db.RepositoryObject which can be formatted by the caller.
 
+<a name="AIAppToolExecutor.ResolvePath"></a>
+### func \(\*AIAppToolExecutor\) ResolvePath
+
+```go
+func (e *AIAppToolExecutor) ResolvePath(unifiedPath string) (*ResolvedPath, error)
+```
+
+ResolvePath parses a unified path \(/\{repo\-slug\}/\{path\}\) and resolves it to a repository, path, and ref. The unified path format is: /\{repository\-slug\}/\{path\-within\-repo\} Returns the resolved repository, the path within the repository, and the ref \(branch\) from the data source. When multiple data sources match, selects the most specific one \(longest matching path\).
+
+<a name="AIAppToolExecutor.ResolvePathOrFindInDataSources"></a>
+### func \(\*AIAppToolExecutor\) ResolvePathOrFindInDataSources
+
+```go
+func (e *AIAppToolExecutor) ResolvePathOrFindInDataSources(inputPath string) (*ResolvedPath, error)
+```
+
+ResolvePathOrFindInDataSources attempts to resolve a unified path or find a matching path across all data sources. If the path starts with a known repository slug, it resolves it directly. Otherwise, it searches all data sources for a matching path. When multiple data sources match, selects the most specific one \(longest matching path\).
+
 <a name="AIAppToolExecutor.SearchEmbeddings"></a>
 ### func \(\*AIAppToolExecutor\) SearchEmbeddings
 
@@ -11519,6 +11595,15 @@ func (e *AIAppToolExecutor) SearchEmbeddings(ctx context.Context, repoSlug, embe
 ```
 
 SearchEmbeddings performs vector similarity search on repository\-based embeddings.
+
+<a name="AIAppToolExecutor.SearchEmbeddingsByPath"></a>
+### func \(\*AIAppToolExecutor\) SearchEmbeddingsByPath
+
+```go
+func (e *AIAppToolExecutor) SearchEmbeddingsByPath(ctx context.Context, query string, topK int, pathFilter string, metadataFilter map[string]string) (*irminmodels.EmbeddingSearchResponse, error)
+```
+
+SearchEmbeddingsByPath performs vector similarity search, optionally filtered by a unified path. If pathFilter is empty, searches across all embedding files in all data sources. If pathFilter is provided, searches only in the specified embedding file.
 
 <a name="APIServices"></a>
 ## type APIServices
@@ -12943,6 +13028,20 @@ type PolicyFilters struct {
     Principal  string
     RoleID     string
     UserID     string
+}
+```
+
+<a name="ResolvedPath"></a>
+## type ResolvedPath
+
+ResolvedPath contains the resolved repository, path, and ref from a unified path.
+
+```go
+type ResolvedPath struct {
+    Repository *db.Repository
+    Path       string
+    Ref        string
+    DataSource *db.AIApplicationDataSource
 }
 ```
 

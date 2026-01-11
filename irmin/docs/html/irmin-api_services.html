@@ -39,6 +39,10 @@ var (
 	ErrPathNotInDataSources = errors.New("path not in configured data sources")
 	// ErrPathTraversalDetected is returned when a path contains traversal sequences.
 	ErrPathTraversalDetected = errors.New("path traversal detected")
+	// ErrInvalidUnifiedPath is returned when a unified path cannot be parsed.
+	ErrInvalidUnifiedPath = errors.New("invalid unified path format")
+	// ErrNoEmbeddingFilesFound is returned when no embedding files are found in data sources.
+	ErrNoEmbeddingFilesFound = errors.New("no embedding files found in data sources")
 )
 var (
 	ErrNotFound                               = errors.New("not found")
@@ -81,6 +85,10 @@ var (
 
 
 FUNCTIONS
+
+func BuildUnifiedPath(repoSlug, pathWithinRepo string) string
+    BuildUnifiedPath constructs a unified path from a repository slug and path
+    within the repository.
 
 func GetInternalErrorMessage(err error) string
     GetInternalErrorMessage strips the internal prefix for logging purposes.
@@ -134,6 +142,14 @@ func (e *AIAppToolExecutor) ExecuteSQL(
 func (e *AIAppToolExecutor) GetAIApplication() *db.AIApplication
     GetAIApplication returns the AI Application.
 
+func (e *AIAppToolExecutor) GetContentByPath(
+	ctx context.Context,
+	unifiedPath string,
+	limitResponse bool,
+) ([]byte, error)
+    GetContentByPath retrieves the content of an object using a unified path.
+    The path format is: /{repository-slug}/{path-within-repo}
+
 func (e *AIAppToolExecutor) GetDocumentation() (string, error)
     GetDocumentation retrieves documentation for the AI Application. Returns
     the system prompt (SQL syntax guide, tool descriptions, etc.) and any custom
@@ -152,6 +168,13 @@ func (e *AIAppToolExecutor) GetRepositoryObjectSchema(
 ) (*irminmodels.ObjectSchema, error)
     GetRepositoryObjectSchema retrieves the schema for a repository object.
 
+func (e *AIAppToolExecutor) GetSchemaByPath(
+	ctx context.Context,
+	unifiedPath string,
+) (*irminmodels.ObjectSchema, error)
+    GetSchemaByPath retrieves the schema for an object using a unified path.
+    The path format is: /{repository-slug}/{path-within-repo}
+
 func (e *AIAppToolExecutor) GetToolConfig() db.AIApplicationToolConfig
     GetToolConfig returns the tool configuration for the AI Application.
 
@@ -161,12 +184,39 @@ func (e *AIAppToolExecutor) GetWorkspace() *db.Workspace
 func (e *AIAppToolExecutor) ListDataSources() []irminmodels.AIApplicationDataSource
     ListDataSources returns the list of configured data sources.
 
+func (e *AIAppToolExecutor) ListDataSourcesUnified() []irminmodels.AIAppDataSourceUnified
+    ListDataSourcesUnified returns the list of configured data sources with
+    unified paths. Unified paths have the format: /{repository-slug}/{path}
+
+func (e *AIAppToolExecutor) ListObjectsByPath(
+	ctx context.Context,
+	unifiedPath string,
+) (*db.RepositoryObject, error)
+    ListObjectsByPath lists objects using a unified path. If path is
+    empty, lists objects from all data sources. The path format is:
+    /{repository-slug}/{path-within-repo}
+
 func (e *AIAppToolExecutor) ListRepositoryObjects(
 	ctx context.Context,
 	repoSlug, path, ref string,
 ) (*db.RepositoryObject, error)
     ListRepositoryObjects lists objects in a repository path. Returns the raw
     db.RepositoryObject which can be formatted by the caller.
+
+func (e *AIAppToolExecutor) ResolvePath(unifiedPath string) (*ResolvedPath, error)
+    ResolvePath parses a unified path (/{repo-slug}/{path}) and resolves
+    it to a repository, path, and ref. The unified path format is:
+    /{repository-slug}/{path-within-repo} Returns the resolved repository,
+    the path within the repository, and the ref (branch) from the data source.
+    When multiple data sources match, selects the most specific one (longest
+    matching path).
+
+func (e *AIAppToolExecutor) ResolvePathOrFindInDataSources(inputPath string) (*ResolvedPath, error)
+    ResolvePathOrFindInDataSources attempts to resolve a unified path or find
+    a matching path across all data sources. If the path starts with a known
+    repository slug, it resolves it directly. Otherwise, it searches all data
+    sources for a matching path. When multiple data sources match, selects the
+    most specific one (longest matching path).
 
 func (e *AIAppToolExecutor) SearchEmbeddings(
 	ctx context.Context,
@@ -176,6 +226,18 @@ func (e *AIAppToolExecutor) SearchEmbeddings(
 ) (*irminmodels.EmbeddingSearchResponse, error)
     SearchEmbeddings performs vector similarity search on repository-based
     embeddings.
+
+func (e *AIAppToolExecutor) SearchEmbeddingsByPath(
+	ctx context.Context,
+	query string,
+	topK int,
+	pathFilter string,
+	metadataFilter map[string]string,
+) (*irminmodels.EmbeddingSearchResponse, error)
+    SearchEmbeddingsByPath performs vector similarity search, optionally
+    filtered by a unified path. If pathFilter is empty, searches across all
+    embedding files in all data sources. If pathFilter is provided, searches
+    only in the specified embedding file.
 
 type APIServices struct {
 	DB                *db.Database
@@ -1363,6 +1425,15 @@ type PolicyFilters struct {
 	RoleID     string
 	UserID     string
 }
+
+type ResolvedPath struct {
+	Repository *db.Repository
+	Path       string
+	Ref        string
+	DataSource *db.AIApplicationDataSource
+}
+    ResolvedPath contains the resolved repository, path, and ref from a unified
+    path.
 
 type TagEntityOperation string
 

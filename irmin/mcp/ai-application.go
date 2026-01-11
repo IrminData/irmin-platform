@@ -109,60 +109,48 @@ func registerAIAppTools(server *sdkmcp.Server, aiApp *db.AIApplication, apiServi
 	}
 
 	// Always register the info tool
-	registerAIAppInfoTool(server, aiApp)
+	registerAIAppInfoTool(server, aiApp, apiServices)
 }
 
-// Tool argument structs
+// Tool argument structs - Simplified with unified paths
 
 type aiAppQueryArgs struct {
 	SQL string `json:"sql" jsonschema:"required,The SQL query to execute"`
 }
 
 type aiAppSchemaArgs struct {
-	Repository string `json:"repository" jsonschema:"required,The repository slug"`
-	Path       string `json:"path"       jsonschema:"required,The path to the object"`
-	Ref        string `json:"ref"        jsonschema:"optional,The git reference (branch/tag/commit)"`
+	Path string `json:"path" jsonschema:"required,Unified path to the object (e.g. /repo-slug/data/file.json)"`
 }
 
 type aiAppListObjectsArgs struct {
-	Repository string `json:"repository" jsonschema:"required,The repository slug"`
-	Path       string `json:"path"       jsonschema:"optional,The path within the repository"`
-	Ref        string `json:"ref"        jsonschema:"optional,The git reference (branch/tag/commit)"`
+	Path string `json:"path" jsonschema:"optional,Unified path (e.g. /repo-slug/folder). If empty lists all data sources."`
 }
 
 type aiAppGetContentArgs struct {
-	Repository string `json:"repository" jsonschema:"required,The repository slug"`
-	Path       string `json:"path"       jsonschema:"required,The path to the object"`
-	Ref        string `json:"ref"        jsonschema:"optional,The git reference (branch/tag/commit)"`
+	Path string `json:"path" jsonschema:"required,Unified path to the object (e.g. /repo-slug/data/file.json)"`
 }
 
 type aiAppEmbeddingSearchArgs struct {
-	Repository    string            `json:"repository"     jsonschema:"required,The repository slug"`
-	EmbeddingPath string            `json:"embedding_path" jsonschema:"required,The path to the embedding file (.parquet)"`
-	Query         string            `json:"query"          jsonschema:"required,The search query"`
-	Ref           string            `json:"ref"            jsonschema:"optional,The git reference (branch/tag/commit)"`
-	TopK          int               `json:"top_k"          jsonschema:"optional,Number of results to return (default 10)"`
-	Filter        map[string]string `json:"filter"         jsonschema:"optional,Metadata filter for search results"`
+	Query  string            `json:"query"  jsonschema:"required,The search query"`
+	Path   string            `json:"path"   jsonschema:"optional,Unified path to specific embedding file. If empty searches all embeddings."`
+	TopK   int               `json:"top_k"  jsonschema:"optional,Number of results to return (default 10)"`
+	Filter map[string]string `json:"filter" jsonschema:"optional,Metadata filter for search results"`
 }
 
 // registerAIAppInfoTool registers a tool to get info about the AI Application.
-func registerAIAppInfoTool(server *sdkmcp.Server, aiApp *db.AIApplication) {
+func registerAIAppInfoTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
 	sdkmcp.AddTool(
 		server,
 		&sdkmcp.Tool{
 			Name:        "irmin_ai_app_info",
-			Description: "Get information about this AI Application, including enabled tools and configured data sources.",
+			Description: "Get information about this AI Application, including enabled tools and available data sources.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args struct{}) (*sdkmcp.CallToolResult, struct{}, error) {
-			config := aiApp.ParseToolConfig()
-			dataSources := make([]map[string]string, 0, len(aiApp.DataSources))
-			for _, ds := range aiApp.DataSources {
-				dataSources = append(dataSources, map[string]string{
-					"repository": ds.Repository.Slug,
-					"branch":     ds.Branch,
-					"path":       "/" + ds.Path,
-				})
-			}
+			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
+			config := executor.GetToolConfig()
+
+			// Use unified data sources format
+			dataSources := executor.ListDataSourcesUnified()
 
 			info := map[string]any{
 				"name":         aiApp.Name,
@@ -213,11 +201,11 @@ func registerAIAppSchemaTool(server *sdkmcp.Server, aiApp *db.AIApplication, api
 		server,
 		&sdkmcp.Tool{
 			Name:        "irmin_get_object_schema",
-			Description: "Get the data schema for a structured repository object, showing column names, data types, and descriptions. Essential for writing SQL queries.",
+			Description: "Get the data schema for a data object, showing column names, data types, and descriptions. Essential for writing SQL queries. Use unified path format: /repo-slug/path/to/file.json",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppSchemaArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
-			schema, err := executor.GetRepositoryObjectSchema(ctx, args.Repository, args.Path, args.Ref)
+			schema, err := executor.GetSchemaByPath(ctx, args.Path)
 			if err != nil {
 				return mcpError(err.Error()), struct{}{}, nil
 			}
@@ -238,11 +226,11 @@ func registerAIAppListObjectsTool(server *sdkmcp.Server, aiApp *db.AIApplication
 		server,
 		&sdkmcp.Tool{
 			Name:        "irmin_list_objects",
-			Description: "List all data objects (files and folders) in a repository at a specific path. Returns a hierarchical tree structure with object metadata.",
+			Description: "List data objects (files and folders) at a path. Use unified path format: /repo-slug/folder. If path is empty, lists all available data sources.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppListObjectsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
-			object, err := executor.ListRepositoryObjects(ctx, args.Repository, args.Path, args.Ref)
+			object, err := executor.ListObjectsByPath(ctx, args.Path)
 			if err != nil {
 				return mcpError(err.Error()), struct{}{}, nil
 			}
@@ -270,11 +258,11 @@ func registerAIAppGetContentTool(server *sdkmcp.Server, aiApp *db.AIApplication,
 		server,
 		&sdkmcp.Tool{
 			Name:        "irmin_get_object_content",
-			Description: "Get the full content of a text-based repository object. Supports structured formats (JSON, CSV, YAML, XML) and text files.",
+			Description: "Get the content of a data object. Use unified path format: /repo-slug/path/to/file.json. Supports JSON, CSV, YAML, XML, and text files.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppGetContentArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
-			content, err := executor.GetRepositoryObjectContent(ctx, args.Repository, args.Path, args.Ref, true)
+			content, err := executor.GetContentByPath(ctx, args.Path, true)
 			if err != nil {
 				return mcpError(err.Error()), struct{}{}, nil
 			}
@@ -312,7 +300,7 @@ func registerAIAppEmbeddingSearchTool(
 		server,
 		&sdkmcp.Tool{
 			Name:        "irmin_search_embeddings",
-			Description: "Perform vector similarity search on repository-based embeddings. Search for semantically similar content using natural language queries.",
+			Description: "Search for semantically similar content using natural language queries. If path is empty, searches all available embedding files. Use unified path format to filter: /repo-slug/embeddings/file.parquet",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppEmbeddingSearchArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
@@ -322,13 +310,11 @@ func registerAIAppEmbeddingSearchTool(
 				topK = 10
 			}
 
-			results, err := executor.SearchEmbeddings(
+			results, err := executor.SearchEmbeddingsByPath(
 				ctx,
-				args.Repository,
-				args.EmbeddingPath,
 				args.Query,
-				args.Ref,
 				topK,
+				args.Path,
 				args.Filter,
 			)
 			if err != nil {

@@ -3368,22 +3368,12 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get the content of a repository object within the AI Application's
-        data scope
+      description: 'Get the content of an object using unified path format: /{repository-slug}/{path}'
       parameters:
-      - description: Repository slug
-        in: query
-        name: repository
-        required: true
-        type: string
-      - description: Path to object
+      - description: Unified path to object (e.g., /repo-slug/data/file.json)
         in: query
         name: path
         required: true
-        type: string
-      - description: Git reference (branch/tag/commit)
-        in: query
-        name: ref
         type: string
       produces:
       - application/json
@@ -3393,7 +3383,7 @@ paths:
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "400":
-          description: Bad request - missing parameters
+          description: Bad request - missing path
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "401":
@@ -3417,9 +3407,11 @@ paths:
     post:
       consumes:
       - application/json
-      description: Perform vector similarity search on repository-based embeddings
+      description: Perform vector similarity search. If path is empty, searches all
+        embedding files in data sources.
       parameters:
-      - description: Search request with repository, embedding_path, query
+      - description: Search request with query (required), path (optional), top_k
+          (optional), filter (optional)
         in: body
         name: body
         required: true
@@ -3438,7 +3430,7 @@ paths:
                   $ref: '#/definitions/irminmodels.EmbeddingSearchResponse'
               type: object
         "400":
-          description: Bad request - missing parameters
+          description: Bad request - missing query
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "401":
@@ -3483,26 +3475,19 @@ paths:
     get:
       consumes:
       - application/json
-      description: List objects in a repository within the AI Application's data scope
+      description: 'List objects within the AI Application''s data sources. Use unified
+        path format: /{repository-slug}/{path}'
       parameters:
-      - description: Repository slug
-        in: query
-        name: repository
-        required: true
-        type: string
-      - description: Path within repository
+      - description: Unified path (e.g., /repo-slug/folder). If empty, lists all data
+          source roots.
         in: query
         name: path
-        type: string
-      - description: Git reference (branch/tag/commit)
-        in: query
-        name: ref
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Repository objects
+          description: Objects
           schema:
             allOf:
             - $ref: '#/definitions/irminmodels.IrminAPIResponse'
@@ -3510,10 +3495,6 @@ paths:
                 data:
                   $ref: '#/definitions/irminmodels.Object'
               type: object
-        "400":
-          description: Bad request - missing repository
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "401":
           description: Unauthorized - invalid API key
           schema:
@@ -3528,7 +3509,7 @@ paths:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
       - AIAppAPIKey: []
-      summary: List repository objects
+      summary: List objects
       tags:
       - ai-app-api
   /ai-app/query:
@@ -3576,22 +3557,12 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get the schema of a repository object within the AI Application's
-        data scope
+      description: 'Get the schema of an object using unified path format: /{repository-slug}/{path}'
       parameters:
-      - description: Repository slug
-        in: query
-        name: repository
-        required: true
-        type: string
-      - description: Path to object
+      - description: Unified path to object (e.g., /repo-slug/data/file.json)
         in: query
         name: path
         required: true
-        type: string
-      - description: Git reference (branch/tag/commit)
-        in: query
-        name: ref
         type: string
       produces:
       - application/json
@@ -3606,7 +3577,7 @@ paths:
                   $ref: '#/definitions/irminmodels.ObjectSchema'
               type: object
         "400":
-          description: Bad request - missing parameters
+          description: Bad request - missing path
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "401":
