@@ -147,8 +147,15 @@ func setupFiberApp(env *utils.ConnectorsEnv) *fiber.App {
 
 	// 5. Helmet: Adds security-related HTTP headers. It's a good general
 	// security measure to have in place before processing the request further.
+	// Skip helmet for public routes to allow cross-origin resource loading (images, etc.)
 	if env.HelmetEnabled {
-		app.Use(helmet.New())
+		app.Use(helmet.New(helmet.Config{
+			CrossOriginResourcePolicy: "cross-origin", // Allow images to be loaded from other origins
+			Next: func(c fiber.Ctx) bool {
+				// Skip helmet for public static files to ensure they can be loaded cross-origin
+				return strings.HasPrefix(c.Path(), "/public/")
+			},
+		}))
 	}
 
 	// 6. Cache: This is a "gatekeeper". If a valid cached response exists
