@@ -463,14 +463,18 @@ func (v *Validator) validateCommonWorkflowableFields(parentStruct reflect.Value)
 
 // validatePipelineWorkflowable validates pipeline-type workflowables.
 func (v *Validator) validatePipelineWorkflowable(parentStruct reflect.Value) bool {
+	// Pipeline workflowables must have a Stages field
+	// The field can be nil or empty, but it must exist in the struct
 	stagesField := parentStruct.FieldByName("Stages")
 
-	// Pipeline workflowables must have stages array, but it can be empty
+	// Check if the field exists and is accessible
 	if !stagesField.IsValid() {
 		return false
 	}
 
-	return true
+	// Verify it's a slice type (the field type in the struct definition)
+	// This ensures the field exists in the struct, even if it's nil
+	return stagesField.Kind() == reflect.Slice || stagesField.Kind() == reflect.Array
 }
 
 // validateActionWorkflowable validates action-type workflowables.
