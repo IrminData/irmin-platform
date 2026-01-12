@@ -170,6 +170,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) CreateBranch\(ctx context.Context, workspace, repository string, req CreateBranchRequest\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateBranch>)
   - [func \(c \*Client\) CreateCommit\(ctx context.Context, workspace, repository string, req CreateCommitRequest\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateCommit>)
   - [func \(c \*Client\) CreateConnection\(ctx context.Context, workspace string, req CreateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateConnection>)
+  - [func \(c \*Client\) CreatePointer\(ctx context.Context, workspace, repository, path, ref string, req CreatePointerRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreatePointer>)
   - [func \(c \*Client\) CreatePolicy\(ctx context.Context, workspace string, req CreatePolicyRequest\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreatePolicy>)
   - [func \(c \*Client\) CreateRepository\(ctx context.Context, workspace string, req CreateRepositoryRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateRepository>)
   - [func \(c \*Client\) CreateStoredQuery\(ctx context.Context, workspace string, req CreateQueryRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateStoredQuery>)
@@ -322,6 +323,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type CreateConnectionRequest](<#CreateConnectionRequest>)
 - [type CreateCredentialRequest](<#CreateCredentialRequest>)
 - [type CreateCustomToolRequest](<#CreateCustomToolRequest>)
+- [type CreatePointerRequest](<#CreatePointerRequest>)
 - [type CreatePolicyRequest](<#CreatePolicyRequest>)
 - [type CreateQueryRequest](<#CreateQueryRequest>)
 - [type CreateRepositoryRequest](<#CreateRepositoryRequest>)
@@ -739,6 +741,15 @@ func (c *Client) CreateConnection(ctx context.Context, workspace string, req Cre
 ```
 
 
+
+<a name="Client.CreatePointer"></a>
+### func \(\*Client\) CreatePointer
+
+```go
+func (c *Client) CreatePointer(ctx context.Context, workspace, repository, path, ref string, req CreatePointerRequest) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+```
+
+CreatePointer creates a pointer file that references an object in another repository. The pointer path will be automatically prefixed with "\_ptr." if not already.
 
 <a name="Client.CreatePolicy"></a>
 ### func \(\*Client\) CreatePolicy
@@ -2159,6 +2170,25 @@ type CreateCustomToolRequest struct {
 }
 ```
 
+<a name="CreatePointerRequest"></a>
+## type CreatePointerRequest
+
+CreatePointerRequest represents the JSON request body for creating pointer objects.
+
+```go
+type CreatePointerRequest struct {
+    // TargetWorkspace is the workspace containing the target object.
+    // Empty string means same workspace (reserved for future cross-workspace support).
+    TargetWorkspace string `json:"target_workspace,omitempty" validate:"omitempty,max=100" example:""`
+    // TargetRepository is the slug of the repository containing the target object.
+    TargetRepository string `json:"target_repository"          validate:"required,max=100"  example:"other-repo"`
+    // TargetPath is the path to the target object.
+    TargetPath string `json:"target_path"                validate:"required"          example:"data/customers.json"`
+    // TargetRef is the branch name or commit hash of the target object.
+    TargetRef string `json:"target_ref"                 validate:"required,max=100"  example:"main"`
+}
+```
+
 <a name="CreatePolicyRequest"></a>
 ## type CreatePolicyRequest
 
@@ -3185,6 +3215,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type PatchOperation](<#PatchOperation>)
 - [type PipelineStage](<#PipelineStage>)
 - [type PipelineStageType](<#PipelineStageType>)
+- [type PointerTarget](<#PointerTarget>)
 - [type Policy](<#Policy>)
 - [type PolicyAction](<#PolicyAction>)
 - [type PolicyEffect](<#PolicyEffect>)
@@ -4060,6 +4091,10 @@ type Object struct {
     SQLSelector           string            `json:"sql_selector,omitempty"            validate:"omitempty"                              example:"$['workspace-slug;repository-slug;file.json@main']"`
     Tags                  []Tag             `json:"tags,omitempty"                    validate:"dive,omitempty"`
     Children              []Object          `json:"children,omitempty"                validate:"dive,omitempty"`
+    // IsPointer indicates if this object is a pointer to another object.
+    IsPointer bool `json:"is_pointer,omitempty"                                                                example:"false"`
+    // PointerTarget contains the target information if this object is a pointer.
+    PointerTarget *PointerTarget `json:"pointer_target,omitempty"          validate:"omitempty"`
 }
 ```
 
@@ -4253,6 +4288,24 @@ const (
     PipelineStageTypeTransform        PipelineStageType = "transform"
     PipelineStageTypeEmbeddings       PipelineStageType = "embeddings"
 )
+```
+
+<a name="PointerTarget"></a>
+## type PointerTarget
+
+PointerTarget represents the target of a pointer object.
+
+```go
+type PointerTarget struct {
+    // Workspace is the target workspace slug. Empty string means same workspace.
+    Workspace string `json:"target_workspace,omitempty" validate:"omitempty,max=100" example:""`
+    // Repository is the target repository slug.
+    Repository string `json:"target_repository"          validate:"required,max=100"  example:"other-repo"`
+    // Path is the path to the target object.
+    Path string `json:"target_path"                validate:"required"          example:"data/customers.json"`
+    // Ref is the target branch name or commit hash.
+    Ref string `json:"target_ref"                 validate:"required,max=100"  example:"main"`
+}
 ```
 
 <a name="Policy"></a>

@@ -12,6 +12,18 @@ const (
 	ObjectTypeBinary ObjectType = "binary"
 )
 
+// PointerTarget represents the target of a pointer object.
+type PointerTarget struct {
+	// Workspace is the target workspace slug. Empty string means same workspace.
+	Workspace string `json:"target_workspace,omitempty" validate:"omitempty,max=100" example:""`
+	// Repository is the target repository slug.
+	Repository string `json:"target_repository"          validate:"required,max=100"  example:"other-repo"`
+	// Path is the path to the target object.
+	Path string `json:"target_path"                validate:"required"          example:"data/customers.json"`
+	// Ref is the target branch name or commit hash.
+	Ref string `json:"target_ref"                 validate:"required,max=100"  example:"main"`
+}
+
 type Object struct {
 	ID                    string            `json:"id"                                validate:"required,validsqid=repository_objects"  example:"obj_3x7k9m2n5q8p"`
 	Name                  string            `json:"name"                              validate:"omitempty,max=255"                      example:"customers.json"`                 // Empty name signifies root directory object
@@ -29,4 +41,8 @@ type Object struct {
 	SQLSelector           string            `json:"sql_selector,omitempty"            validate:"omitempty"                              example:"$['workspace-slug;repository-slug;file.json@main']"`
 	Tags                  []Tag             `json:"tags,omitempty"                    validate:"dive,omitempty"`
 	Children              []Object          `json:"children,omitempty"                validate:"dive,omitempty"`
+	// IsPointer indicates if this object is a pointer to another object.
+	IsPointer bool `json:"is_pointer,omitempty"                                                                example:"false"`
+	// PointerTarget contains the target information if this object is a pointer.
+	PointerTarget *PointerTarget `json:"pointer_target,omitempty"          validate:"omitempty"`
 }

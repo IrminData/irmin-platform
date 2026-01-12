@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -32,6 +33,19 @@ type ValidateObjectResponse struct {
 	Valid bool     `json:"valid"`
 	Logs  []string `json:"logs"`
 	Error string   `json:"error,omitempty"`
+}
+
+// CreatePointerRequest represents the JSON request body for creating pointer objects.
+type CreatePointerRequest struct {
+	// TargetWorkspace is the workspace containing the target object.
+	// Empty string means same workspace (reserved for future cross-workspace support).
+	TargetWorkspace string `json:"target_workspace,omitempty" validate:"omitempty,max=100" example:""`
+	// TargetRepository is the slug of the repository containing the target object.
+	TargetRepository string `json:"target_repository"          validate:"required,max=100"  example:"other-repo"`
+	// TargetPath is the path to the target object.
+	TargetPath string `json:"target_path"                validate:"required"          example:"data/customers.json"`
+	// TargetRef is the branch name or commit hash of the target object.
+	TargetRef string `json:"target_ref"                 validate:"required,max=100"  example:"main"`
 }
 
 // GetObjectAtPath fetches the object at the given path and ref.
@@ -325,4 +339,30 @@ func (c *Client) ValidateObject(
 		return nil, nil, fmt.Errorf("validate object error: %w", err)
 	}
 	return &response, apiResp, nil
+}
+
+// CreatePointer creates a pointer file that references an object in another repository.
+// The pointer path will be automatically prefixed with "_ptr." if not already.
+func (c *Client) CreatePointer(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+	req CreatePointerRequest,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
+	var object irminmodels.Object
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/pointer?ref=%s&path=%s",
+			workspace,
+			repository,
+			url.QueryEscape(ref),
+			url.QueryEscape(path),
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &object)
+	if err != nil {
+		return nil, nil, fmt.Errorf("create pointer error: %w", err)
+	}
+	return &object, apiResp, nil
 }

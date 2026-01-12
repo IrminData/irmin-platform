@@ -248,6 +248,15 @@ func (c *Client) CreateConnection(
 	req CreateConnectionRequest,
 ) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) CreatePointer(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+	req CreatePointerRequest,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+    CreatePointer creates a pointer file that references an object in another
+    repository. The pointer path will be automatically prefixed with "_ptr." if
+    not already.
+
 func (c *Client) CreatePolicy(
 	ctx context.Context,
 	workspace string,
@@ -1128,6 +1137,20 @@ type CreateCustomToolRequest struct {
 }
     CreateCustomToolRequest represents the request body for creating a custom
     tool.
+
+type CreatePointerRequest struct {
+	// TargetWorkspace is the workspace containing the target object.
+	// Empty string means same workspace (reserved for future cross-workspace support).
+	TargetWorkspace string `json:"target_workspace,omitempty" validate:"omitempty,max=100" example:""`
+	// TargetRepository is the slug of the repository containing the target object.
+	TargetRepository string `json:"target_repository"          validate:"required,max=100"  example:"other-repo"`
+	// TargetPath is the path to the target object.
+	TargetPath string `json:"target_path"                validate:"required"          example:"data/customers.json"`
+	// TargetRef is the branch name or commit hash of the target object.
+	TargetRef string `json:"target_ref"                 validate:"required,max=100"  example:"main"`
+}
+    CreatePointerRequest represents the JSON request body for creating pointer
+    objects.
 
 type CreatePolicyRequest struct {
 	Effect     irminmodels.PolicyEffect    `json:"effect"                validate:"required,oneof=allow deny"                                                                                                                                                                                                      example:"allow"`

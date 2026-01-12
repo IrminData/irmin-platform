@@ -530,6 +530,10 @@ type Object struct {
 	SQLSelector           string            `json:"sql_selector,omitempty"            validate:"omitempty"                              example:"$['workspace-slug;repository-slug;file.json@main']"`
 	Tags                  []Tag             `json:"tags,omitempty"                    validate:"dive,omitempty"`
 	Children              []Object          `json:"children,omitempty"                validate:"dive,omitempty"`
+	// IsPointer indicates if this object is a pointer to another object.
+	IsPointer bool `json:"is_pointer,omitempty"                                                                example:"false"`
+	// PointerTarget contains the target information if this object is a pointer.
+	PointerTarget *PointerTarget `json:"pointer_target,omitempty"          validate:"omitempty"`
 }
 
 type ObjectSchema struct {
@@ -665,6 +669,18 @@ const (
 	PipelineStageTypeTransform        PipelineStageType = "transform"
 	PipelineStageTypeEmbeddings       PipelineStageType = "embeddings"
 )
+type PointerTarget struct {
+	// Workspace is the target workspace slug. Empty string means same workspace.
+	Workspace string `json:"target_workspace,omitempty" validate:"omitempty,max=100" example:""`
+	// Repository is the target repository slug.
+	Repository string `json:"target_repository"          validate:"required,max=100"  example:"other-repo"`
+	// Path is the path to the target object.
+	Path string `json:"target_path"                validate:"required"          example:"data/customers.json"`
+	// Ref is the target branch name or commit hash.
+	Ref string `json:"target_ref"                 validate:"required,max=100"  example:"main"`
+}
+    PointerTarget represents the target of a pointer object.
+
 type Policy struct {
 	// ID is the unique identifier for the policy
 	ID string `json:"id"                    validate:"required,validsqid=policies"                                                                                                                                                                                                            example:"pol_8x2m9k4n7p5q"`
