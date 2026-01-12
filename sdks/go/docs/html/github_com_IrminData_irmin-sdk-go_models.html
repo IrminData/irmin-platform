@@ -15,20 +15,45 @@ type AIAppDataSourceUnified struct {
     /{repository-slug}/{path}
 
 type AIApplication struct {
-	ID             string                    `json:"id"                validate:"required,validsqid=ai_applications" example:"ai_8x2m9k4n7p5q"`
-	Name           string                    `json:"name"              validate:"required,max=100"                   example:"Customer Analytics App"`
-	Description    string                    `json:"description"       validate:"max=500"                            example:"AI application for customer data analysis"`
-	Documentation  string                    `json:"documentation"     validate:"validdocumentation"                 example:"# Customer Analytics"`
-	AllowedOrigins []string                  `json:"allowed_origins"   validate:"dive,max=255"                       example:"https://app.example.com,http://localhost:3000"`
+	ID             string                    `json:"id"                     validate:"required,validsqid=ai_applications" example:"ai_8x2m9k4n7p5q"`
+	Name           string                    `json:"name"                   validate:"required,max=100"                   example:"Customer Analytics App"`
+	Description    string                    `json:"description"            validate:"max=500"                            example:"AI application for customer data analysis"`
+	Documentation  string                    `json:"documentation"          validate:"validdocumentation"                 example:"# Customer Analytics"`
+	AllowedOrigins []string                  `json:"allowed_origins"        validate:"dive,max=255"                       example:"https://app.example.com,http://localhost:3000"`
 	Tools          *AIApplicationToolConfig  `json:"tools,omitempty"`
-	DataSources    []AIApplicationDataSource `json:"data_sources"      validate:"dive"`
+	CustomTools    []AIApplicationCustomTool `json:"custom_tools,omitempty" validate:"dive"`
+	DataSources    []AIApplicationDataSource `json:"data_sources"           validate:"dive"`
 	APIKey         *string                   `json:"api_key,omitempty"`
-	Owner          User                      `json:"owner"             validate:"required"`
-	Tags           []Tag                     `json:"tags,omitempty"    validate:"dive"`
-	CreatedAt      time.Time                 `json:"created_at"        validate:"required"                           example:"2025-01-15T10:30:00Z"`
-	UpdatedAt      time.Time                 `json:"updated_at"        validate:"required"                           example:"2025-12-01T14:22:30Z"`
+	Owner          User                      `json:"owner"                  validate:"required"`
+	Tags           []Tag                     `json:"tags,omitempty"         validate:"dive"`
+	CreatedAt      time.Time                 `json:"created_at"             validate:"required"                           example:"2025-01-15T10:30:00Z"`
+	UpdatedAt      time.Time                 `json:"updated_at"             validate:"required"                           example:"2025-12-01T14:22:30Z"`
 }
     AIApplication represents an AI application in the system.
+
+type AIApplicationCustomTool struct {
+	ID          string         `json:"id"          validate:"required,validsqid=ai_application_custom_tools"        example:"ct_8x2m9k4n7p5q"`
+	Name        string         `json:"name"        validate:"required,max=100"                                      example:"list_users"`
+	Description string         `json:"description" validate:"max=500"                                               example:"List all users in the system"`
+	Type        CustomToolType `json:"type"        validate:"required,oneof=stored_query workflow embedding_search" example:"stored_query"`
+	Enabled     bool           `json:"enabled"                                                                      example:"true"`
+
+	// For stored_query type
+	StoredQueryID *string `json:"stored_query_id,omitempty" validate:"omitempty,validsqid=queries" example:"qry_1a2b3c4d"`
+
+	// For workflow type
+	WorkflowID *string `json:"workflow_id,omitempty" validate:"omitempty,validsqid=workflows" example:"wf_1a2b3c4d"`
+
+	// For embedding_search type
+	EmbeddingPath   string            `json:"embedding_path,omitempty"   example:"/repo-slug/main/embeddings/docs.parquet"`
+	EmbeddingTopK   int               `json:"embedding_top_k,omitempty"  example:"10"`
+	EmbeddingFilter map[string]string `json:"embedding_filter,omitempty"`
+
+	CreatedAt time.Time `json:"created_at" validate:"required" example:"2025-01-15T10:30:00Z"`
+	UpdatedAt time.Time `json:"updated_at" validate:"required" example:"2025-12-01T14:22:30Z"`
+}
+    AIApplicationCustomTool represents a custom tool defined for an AI
+    Application.
 
 type AIApplicationDataSource struct {
 	Repository string `json:"repository" validate:"required" example:"customer-analytics"`
@@ -227,6 +252,17 @@ const (
 )
 type CustomFieldValues map[string]string
 
+type CustomToolType string
+    CustomToolType defines the type of custom tool.
+
+const (
+	// CustomToolTypeStoredQuery executes a stored SQL query.
+	CustomToolTypeStoredQuery CustomToolType = "stored_query"
+	// CustomToolTypeWorkflow triggers a workflow run.
+	CustomToolTypeWorkflow CustomToolType = "workflow"
+	// CustomToolTypeEmbeddingSearch searches a specific embedding file.
+	CustomToolTypeEmbeddingSearch CustomToolType = "embedding_search"
+)
 type Diff struct {
 	// Slug of the repository
 	Repository string `json:"repository"        validate:"required,validslug" example:"customer-analytics"`
@@ -631,13 +667,13 @@ const (
 )
 type Policy struct {
 	// ID is the unique identifier for the policy
-	ID string `json:"id"                    validate:"required,validsqid=policies"                                                                                                                                                                                             example:"pol_8x2m9k4n7p5q"`
+	ID string `json:"id"                    validate:"required,validsqid=policies"                                                                                                                                                                                                            example:"pol_8x2m9k4n7p5q"`
 	// Effect specifies whether the policy is an allow or deny policy
-	Effect PolicyEffect `json:"effect"                validate:"required,oneof=allow deny"                                                                                                                                                                                               example:"allow"`
+	Effect PolicyEffect `json:"effect"                validate:"required,oneof=allow deny"                                                                                                                                                                                                              example:"allow"`
 	// Action specifies the action that the policy is applied to
-	Action PolicyAction `json:"action"                validate:"required,oneof=create read update delete"                                                                                                                                                                                example:"read"`
+	Action PolicyAction `json:"action"                validate:"required,oneof=create read update delete"                                                                                                                                                                                               example:"read"`
 	// Resource specifies the resource type that the policy is applied to
-	Resource PolicyResource `json:"resource"              validate:"required,oneof=workspace script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag" example:"repository"`
+	Resource PolicyResource `json:"resource"              validate:"required,oneof=workspace script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag ai_application" example:"repository"`
 	// ResourceID is used to specify which resource the policy is applied to.
 	// When undefined, the policy is applied to all resources of the given type.
 	//
@@ -648,6 +684,7 @@ type Policy struct {
 	// - repositories
 	// - workspace tags
 	// - users
+	// - ai_applications
 	//
 	// It is not applicable for:
 	// - workspaces (policies are workspace scoped)
@@ -661,9 +698,9 @@ type Policy struct {
 	// Note that some resources point to their parent resource's ID:
 	// - repository objects, branches, tags, and commits point to their repository's ID
 	// - workflow runs point to their workflow's ID
-	ResourceID *string `json:"resource_id,omitempty"                                                                                                                                                                                                                                    example:"repo_8x2m9k4n7p5q"`
+	ResourceID *string `json:"resource_id,omitempty"                                                                                                                                                                                                                                                   example:"repo_8x2m9k4n7p5q"`
 	// Principal specifies which group of users the policy is applied to
-	Principal PolicyPrincipal `json:"principal"             validate:"required,oneof=workspace_user role everyone"                                                                                                                                                                             example:"role"`
+	Principal PolicyPrincipal `json:"principal"             validate:"required,oneof=workspace_user role everyone"                                                                                                                                                                                            example:"role"`
 	// Role is used to give a policy to a specific role
 	Role *Role `json:"role,omitempty"`
 	// User is used to give a policy to a specific workspace user
@@ -744,6 +781,8 @@ const (
 	PolicyResourceBilling PolicyResource = "billing"
 	// PolicyResourceWorkspaceTag represents a workspace tag resource.
 	PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
+	// PolicyResourceAIApplication represents an AI application resource.
+	PolicyResourceAIApplication PolicyResource = "ai_application"
 )
 type PolicyResourceOption struct {
 	ID    string `json:"id"    validate:"required"         example:"repo_8x2m9k4n7p5q"`

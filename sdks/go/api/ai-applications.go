@@ -10,13 +10,14 @@ import (
 
 // CreateAIApplicationRequest represents the JSON request body for creating an AI application.
 type CreateAIApplicationRequest struct {
-	Name           string                                `json:"name"            validate:"required,max=100"              example:"Customer Analytics App"`
-	Description    string                                `json:"description"     validate:"max=500"                       example:"AI application for customer data analysis"`
-	Documentation  string                                `json:"documentation"   validate:"validdocumentation"            example:"# Customer Analytics"`
-	AllowedOrigins []string                              `json:"allowed_origins" validate:"dive,max=255"                  example:"https://app.example.com,http://localhost:3000"`
+	Name           string                                `json:"name"                   validate:"required,max=100"              example:"Customer Analytics App"`
+	Description    string                                `json:"description"            validate:"max=500"                       example:"AI application for customer data analysis"`
+	Documentation  string                                `json:"documentation"          validate:"validdocumentation"            example:"# Customer Analytics"`
+	AllowedOrigins []string                              `json:"allowed_origins"        validate:"dive,max=255"                  example:"https://app.example.com,http://localhost:3000"`
 	Tools          *irminmodels.AIApplicationToolConfig  `json:"tools,omitempty"`
-	DataSources    []irminmodels.AIApplicationDataSource `json:"data_sources"    validate:"dive"`
-	Tags           []string                              `json:"tags,omitempty"  validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
+	CustomTools    []CreateCustomToolRequest             `json:"custom_tools,omitempty" validate:"omitempty,dive"`
+	DataSources    []irminmodels.AIApplicationDataSource `json:"data_sources"           validate:"dive"`
+	Tags           []string                              `json:"tags,omitempty"         validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
 }
 
 // UpdateAIApplicationRequest represents the JSON request body for updating an AI application.
@@ -26,8 +27,49 @@ type UpdateAIApplicationRequest struct {
 	Documentation  *string                               `json:"documentation,omitempty"   validate:"omitempty,validdocumentation"  example:"# Customer Analytics"`
 	AllowedOrigins []string                              `json:"allowed_origins,omitempty" validate:"omitempty,dive,max=255"`
 	Tools          *irminmodels.AIApplicationToolConfig  `json:"tools,omitempty"`
+	CustomTools    []UpdateCustomToolRequest             `json:"custom_tools,omitempty"    validate:"omitempty,dive"`
 	DataSources    []irminmodels.AIApplicationDataSource `json:"data_sources,omitempty"    validate:"omitempty,dive"`
 	Tags           []string                              `json:"tags,omitempty"            validate:"omitempty,dive,validsqid=tags"`
+}
+
+// CreateCustomToolRequest represents the request body for creating a custom tool.
+type CreateCustomToolRequest struct {
+	Name        string                     `json:"name"        validate:"required,max=100,validtoolname"                        example:"list_users"`
+	Description string                     `json:"description" validate:"max=500"                                               example:"List all users in the system"`
+	Type        irminmodels.CustomToolType `json:"type"        validate:"required,oneof=stored_query workflow embedding_search" example:"stored_query"`
+	Enabled     bool                       `json:"enabled"                                                                      example:"true"`
+
+	// For stored_query type
+	StoredQueryID *string `json:"stored_query_id,omitempty" validate:"omitempty,validsqid=queries" example:"qry_1a2b3c4d"`
+
+	// For workflow type
+	WorkflowID *string `json:"workflow_id,omitempty" validate:"omitempty,validsqid=workflows" example:"wf_1a2b3c4d"`
+
+	// For embedding_search type
+	EmbeddingPath   string            `json:"embedding_path,omitempty"   example:"/repo-slug/main/embeddings/docs.parquet"`
+	EmbeddingTopK   int               `json:"embedding_top_k,omitempty"  example:"10"`
+	EmbeddingFilter map[string]string `json:"embedding_filter,omitempty"`
+}
+
+// UpdateCustomToolRequest represents the request body for updating a custom tool.
+// If ID is provided, the tool is updated; otherwise, a new tool is created.
+type UpdateCustomToolRequest struct {
+	ID          *string                    `json:"id,omitempty" validate:"omitempty,validsqid=ai_application_custom_tools"`
+	Name        string                     `json:"name"         validate:"required,max=100,validtoolname"                        example:"list_users"`
+	Description string                     `json:"description"  validate:"max=500"                                               example:"List all users in the system"`
+	Type        irminmodels.CustomToolType `json:"type"         validate:"required,oneof=stored_query workflow embedding_search" example:"stored_query"`
+	Enabled     bool                       `json:"enabled"                                                                       example:"true"`
+
+	// For stored_query type
+	StoredQueryID *string `json:"stored_query_id,omitempty" validate:"omitempty,validsqid=queries" example:"qry_1a2b3c4d"`
+
+	// For workflow type
+	WorkflowID *string `json:"workflow_id,omitempty" validate:"omitempty,validsqid=workflows" example:"wf_1a2b3c4d"`
+
+	// For embedding_search type
+	EmbeddingPath   string            `json:"embedding_path,omitempty"   example:"/repo-slug/main/embeddings/docs.parquet"`
+	EmbeddingTopK   int               `json:"embedding_top_k,omitempty"  example:"10"`
+	EmbeddingFilter map[string]string `json:"embedding_filter,omitempty"`
 }
 
 // TransferAIApplicationOwnershipRequest represents the JSON request body for transferring AI application ownership.

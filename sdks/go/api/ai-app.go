@@ -173,3 +173,72 @@ func (c *AIAppClient) SearchEmbeddings(
 	}
 	return &result, apiResp, nil
 }
+
+// === Custom Tool Types ===
+
+// CustomToolInfo represents information about a custom tool.
+type CustomToolInfo struct {
+	ID            string `json:"id"`
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	Type          string `json:"type"`
+	RequiresQuery bool   `json:"requires_query,omitempty"`
+}
+
+// CustomToolsListResponse represents the response from listing custom tools.
+type CustomToolsListResponse struct {
+	Tools []CustomToolInfo `json:"tools"`
+}
+
+// CustomToolResult represents the result of executing a custom tool.
+type CustomToolResult struct {
+	ToolName string `json:"tool_name"`
+	ToolType string `json:"tool_type"`
+	Data     any    `json:"data"`
+}
+
+// ExecuteCustomToolRequest represents the request body for executing a custom tool.
+type ExecuteCustomToolRequest struct {
+	Query string `json:"query,omitempty"` // Required for embedding_search tools
+}
+
+// === Custom Tool API Methods ===
+
+// ListCustomTools retrieves all enabled custom tools for the AI Application.
+func (c *AIAppClient) ListCustomTools(
+	ctx context.Context,
+) ([]CustomToolInfo, *irminmodels.IrminAPIResponse, error) {
+	var result CustomToolsListResponse
+
+	apiResp, err := c.FetchAPI(ctx, AIAppRequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: "/v1/ai-app/tools",
+	}, &result)
+	if err != nil {
+		return nil, apiResp, fmt.Errorf("list custom tools error: %w", err)
+	}
+	return result.Tools, apiResp, nil
+}
+
+// ExecuteCustomTool executes a custom tool by name.
+// For embedding_search tools, provide the query in the request.
+func (c *AIAppClient) ExecuteCustomTool(
+	ctx context.Context,
+	toolName string,
+	req ExecuteCustomToolRequest,
+) (*CustomToolResult, *irminmodels.IrminAPIResponse, error) {
+	var result CustomToolResult
+
+	endpoint := fmt.Sprintf("/v1/ai-app/tools/%s/execute", url.PathEscape(toolName))
+
+	apiResp, err := c.FetchAPI(ctx, AIAppRequestOptions{
+		Method:      http.MethodPost,
+		Endpoint:    endpoint,
+		ContentType: "application/json",
+		Body:        req,
+	}, &result)
+	if err != nil {
+		return nil, apiResp, fmt.Errorf("execute custom tool error: %w", err)
+	}
+	return &result, apiResp, nil
+}

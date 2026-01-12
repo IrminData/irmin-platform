@@ -139,11 +139,13 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type AIAppClient](<#AIAppClient>)
   - [func NewAIAppClient\(baseURL, apiKey string\) \*AIAppClient](<#NewAIAppClient>)
   - [func NewAIAppClientWithHTTPClient\(baseURL, apiKey string, httpClient \*http.Client\) \*AIAppClient](<#NewAIAppClientWithHTTPClient>)
+  - [func \(c \*AIAppClient\) ExecuteCustomTool\(ctx context.Context, toolName string, req ExecuteCustomToolRequest\) \(\*CustomToolResult, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.ExecuteCustomTool>)
   - [func \(c \*AIAppClient\) FetchAPI\(ctx context.Context, opts AIAppRequestOptions, out any\) \(\*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.FetchAPI>)
   - [func \(c \*AIAppClient\) GetContent\(ctx context.Context, path string\) \(\*AIAppContent, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.GetContent>)
   - [func \(c \*AIAppClient\) GetInfo\(ctx context.Context\) \(\*AIAppInfo, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.GetInfo>)
   - [func \(c \*AIAppClient\) GetSchema\(ctx context.Context, path string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.GetSchema>)
   - [func \(c \*AIAppClient\) GetSystemPrompt\(ctx context.Context\) \(string, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.GetSystemPrompt>)
+  - [func \(c \*AIAppClient\) ListCustomTools\(ctx context.Context\) \(\[\]CustomToolInfo, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.ListCustomTools>)
   - [func \(c \*AIAppClient\) ListObjects\(ctx context.Context, path string\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.ListObjects>)
   - [func \(c \*AIAppClient\) Query\(ctx context.Context, req AIAppQueryRequest\) \(any, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.Query>)
   - [func \(c \*AIAppClient\) Request\(ctx context.Context, opts AIAppRequestOptions\) \(\[\]byte, error\)](<#AIAppClient.Request>)
@@ -319,6 +321,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type CreateCommitRequest](<#CreateCommitRequest>)
 - [type CreateConnectionRequest](<#CreateConnectionRequest>)
 - [type CreateCredentialRequest](<#CreateCredentialRequest>)
+- [type CreateCustomToolRequest](<#CreateCustomToolRequest>)
 - [type CreatePolicyRequest](<#CreatePolicyRequest>)
 - [type CreateQueryRequest](<#CreateQueryRequest>)
 - [type CreateRepositoryRequest](<#CreateRepositoryRequest>)
@@ -326,6 +329,10 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type CreateScriptRequest](<#CreateScriptRequest>)
 - [type CreateTagRequest](<#CreateTagRequest>)
 - [type CreateWorkspaceRequest](<#CreateWorkspaceRequest>)
+- [type CustomToolInfo](<#CustomToolInfo>)
+- [type CustomToolResult](<#CustomToolResult>)
+- [type CustomToolsListResponse](<#CustomToolsListResponse>)
+- [type ExecuteCustomToolRequest](<#ExecuteCustomToolRequest>)
 - [type ExecuteSQLRequest](<#ExecuteSQLRequest>)
 - [type ExecuteScriptRequest](<#ExecuteScriptRequest>)
 - [type FormFile](<#FormFile>)
@@ -349,6 +356,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type UpdateBranchRequest](<#UpdateBranchRequest>)
 - [type UpdateConnectionConfigurationRequest](<#UpdateConnectionConfigurationRequest>)
 - [type UpdateConnectionRequest](<#UpdateConnectionRequest>)
+- [type UpdateCustomToolRequest](<#UpdateCustomToolRequest>)
 - [type UpdateInviteRequest](<#UpdateInviteRequest>)
 - [type UpdatePolicyRequest](<#UpdatePolicyRequest>)
 - [type UpdateProfileRequest](<#UpdateProfileRequest>)
@@ -411,6 +419,15 @@ func NewAIAppClientWithHTTPClient(baseURL, apiKey string, httpClient *http.Clien
 
 NewAIAppClientWithHTTPClient creates a new AI Application API client with a custom HTTP client. If httpClient is nil, a default client with DefaultAPITimeout is used.
 
+<a name="AIAppClient.ExecuteCustomTool"></a>
+### func \(\*AIAppClient\) ExecuteCustomTool
+
+```go
+func (c *AIAppClient) ExecuteCustomTool(ctx context.Context, toolName string, req ExecuteCustomToolRequest) (*CustomToolResult, *irminmodels.IrminAPIResponse, error)
+```
+
+ExecuteCustomTool executes a custom tool by name. For embedding\_search tools, provide the query in the request.
+
 <a name="AIAppClient.FetchAPI"></a>
 ### func \(\*AIAppClient\) FetchAPI
 
@@ -455,6 +472,15 @@ func (c *AIAppClient) GetSystemPrompt(ctx context.Context) (string, *irminmodels
 ```
 
 GetSystemPrompt retrieves the recommended system prompt for the AI Application.
+
+<a name="AIAppClient.ListCustomTools"></a>
+### func \(\*AIAppClient\) ListCustomTools
+
+```go
+func (c *AIAppClient) ListCustomTools(ctx context.Context) ([]CustomToolInfo, *irminmodels.IrminAPIResponse, error)
+```
+
+ListCustomTools retrieves all enabled custom tools for the AI Application.
 
 <a name="AIAppClient.ListObjects"></a>
 ### func \(\*AIAppClient\) ListObjects
@@ -2043,13 +2069,14 @@ CreateAIApplicationRequest represents the JSON request body for creating an AI a
 
 ```go
 type CreateAIApplicationRequest struct {
-    Name           string                                `json:"name"            validate:"required,max=100"              example:"Customer Analytics App"`
-    Description    string                                `json:"description"     validate:"max=500"                       example:"AI application for customer data analysis"`
-    Documentation  string                                `json:"documentation"   validate:"validdocumentation"            example:"# Customer Analytics"`
-    AllowedOrigins []string                              `json:"allowed_origins" validate:"dive,max=255"                  example:"https://app.example.com,http://localhost:3000"`
+    Name           string                                `json:"name"                   validate:"required,max=100"              example:"Customer Analytics App"`
+    Description    string                                `json:"description"            validate:"max=500"                       example:"AI application for customer data analysis"`
+    Documentation  string                                `json:"documentation"          validate:"validdocumentation"            example:"# Customer Analytics"`
+    AllowedOrigins []string                              `json:"allowed_origins"        validate:"dive,max=255"                  example:"https://app.example.com,http://localhost:3000"`
     Tools          *irminmodels.AIApplicationToolConfig  `json:"tools,omitempty"`
-    DataSources    []irminmodels.AIApplicationDataSource `json:"data_sources"    validate:"dive"`
-    Tags           []string                              `json:"tags,omitempty"  validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
+    CustomTools    []CreateCustomToolRequest             `json:"custom_tools,omitempty" validate:"omitempty,dive"`
+    DataSources    []irminmodels.AIApplicationDataSource `json:"data_sources"           validate:"dive"`
+    Tags           []string                              `json:"tags,omitempty"         validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
 }
 ```
 
@@ -2104,6 +2131,31 @@ CreateCredentialRequest represents the JSON request body for creating API creden
 type CreateCredentialRequest struct {
     Name   string `json:"name"   validate:"required,max=100" example:"API Token"`
     Expiry int    `json:"expiry" validate:"required"         example:"3600"` // Seconds until expiry
+}
+```
+
+<a name="CreateCustomToolRequest"></a>
+## type CreateCustomToolRequest
+
+CreateCustomToolRequest represents the request body for creating a custom tool.
+
+```go
+type CreateCustomToolRequest struct {
+    Name        string                     `json:"name"        validate:"required,max=100,validtoolname"                        example:"list_users"`
+    Description string                     `json:"description" validate:"max=500"                                               example:"List all users in the system"`
+    Type        irminmodels.CustomToolType `json:"type"        validate:"required,oneof=stored_query workflow embedding_search" example:"stored_query"`
+    Enabled     bool                       `json:"enabled"                                                                      example:"true"`
+
+    // For stored_query type
+    StoredQueryID *string `json:"stored_query_id,omitempty" validate:"omitempty,validsqid=queries" example:"qry_1a2b3c4d"`
+
+    // For workflow type
+    WorkflowID *string `json:"workflow_id,omitempty" validate:"omitempty,validsqid=workflows" example:"wf_1a2b3c4d"`
+
+    // For embedding_search type
+    EmbeddingPath   string            `json:"embedding_path,omitempty"   example:"/repo-slug/main/embeddings/docs.parquet"`
+    EmbeddingTopK   int               `json:"embedding_top_k,omitempty"  example:"10"`
+    EmbeddingFilter map[string]string `json:"embedding_filter,omitempty"`
 }
 ```
 
@@ -2205,6 +2257,56 @@ CreateWorkspaceRequest represents the JSON request body for creating a workspace
 type CreateWorkspaceRequest struct {
     Name        string `json:"name"                  validate:"required,max=100" example:"Customer Analytics"`
     Description string `json:"description,omitempty" validate:"max=500"          example:"Customer data analysis and reporting"`
+}
+```
+
+<a name="CustomToolInfo"></a>
+## type CustomToolInfo
+
+CustomToolInfo represents information about a custom tool.
+
+```go
+type CustomToolInfo struct {
+    ID            string `json:"id"`
+    Name          string `json:"name"`
+    Description   string `json:"description"`
+    Type          string `json:"type"`
+    RequiresQuery bool   `json:"requires_query,omitempty"`
+}
+```
+
+<a name="CustomToolResult"></a>
+## type CustomToolResult
+
+CustomToolResult represents the result of executing a custom tool.
+
+```go
+type CustomToolResult struct {
+    ToolName string `json:"tool_name"`
+    ToolType string `json:"tool_type"`
+    Data     any    `json:"data"`
+}
+```
+
+<a name="CustomToolsListResponse"></a>
+## type CustomToolsListResponse
+
+CustomToolsListResponse represents the response from listing custom tools.
+
+```go
+type CustomToolsListResponse struct {
+    Tools []CustomToolInfo `json:"tools"`
+}
+```
+
+<a name="ExecuteCustomToolRequest"></a>
+## type ExecuteCustomToolRequest
+
+ExecuteCustomToolRequest represents the request body for executing a custom tool.
+
+```go
+type ExecuteCustomToolRequest struct {
+    Query string `json:"query,omitempty"` // Required for embedding_search tools
 }
 ```
 
@@ -2460,6 +2562,7 @@ type UpdateAIApplicationRequest struct {
     Documentation  *string                               `json:"documentation,omitempty"   validate:"omitempty,validdocumentation"  example:"# Customer Analytics"`
     AllowedOrigins []string                              `json:"allowed_origins,omitempty" validate:"omitempty,dive,max=255"`
     Tools          *irminmodels.AIApplicationToolConfig  `json:"tools,omitempty"`
+    CustomTools    []UpdateCustomToolRequest             `json:"custom_tools,omitempty"    validate:"omitempty,dive"`
     DataSources    []irminmodels.AIApplicationDataSource `json:"data_sources,omitempty"    validate:"omitempty,dive"`
     Tags           []string                              `json:"tags,omitempty"            validate:"omitempty,dive,validsqid=tags"`
 }
@@ -2499,6 +2602,32 @@ type UpdateConnectionRequest struct {
     Name          *string `json:"name,omitempty"          validate:"max=100"            example:"Production MySQL Database"`
     Description   *string `json:"description,omitempty"   validate:"max=500"            example:"Primary MySQL database for production customer data"`
     Documentation *string `json:"documentation,omitempty" validate:"validdocumentation" example:"# Production Database"`
+}
+```
+
+<a name="UpdateCustomToolRequest"></a>
+## type UpdateCustomToolRequest
+
+UpdateCustomToolRequest represents the request body for updating a custom tool. If ID is provided, the tool is updated; otherwise, a new tool is created.
+
+```go
+type UpdateCustomToolRequest struct {
+    ID          *string                    `json:"id,omitempty" validate:"omitempty,validsqid=ai_application_custom_tools"`
+    Name        string                     `json:"name"         validate:"required,max=100,validtoolname"                        example:"list_users"`
+    Description string                     `json:"description"  validate:"max=500"                                               example:"List all users in the system"`
+    Type        irminmodels.CustomToolType `json:"type"         validate:"required,oneof=stored_query workflow embedding_search" example:"stored_query"`
+    Enabled     bool                       `json:"enabled"                                                                       example:"true"`
+
+    // For stored_query type
+    StoredQueryID *string `json:"stored_query_id,omitempty" validate:"omitempty,validsqid=queries" example:"qry_1a2b3c4d"`
+
+    // For workflow type
+    WorkflowID *string `json:"workflow_id,omitempty" validate:"omitempty,validsqid=workflows" example:"wf_1a2b3c4d"`
+
+    // For embedding_search type
+    EmbeddingPath   string            `json:"embedding_path,omitempty"   example:"/repo-slug/main/embeddings/docs.parquet"`
+    EmbeddingTopK   int               `json:"embedding_top_k,omitempty"  example:"10"`
+    EmbeddingFilter map[string]string `json:"embedding_filter,omitempty"`
 }
 ```
 
@@ -3007,6 +3136,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 
 - [type AIAppDataSourceUnified](<#AIAppDataSourceUnified>)
 - [type AIApplication](<#AIApplication>)
+- [type AIApplicationCustomTool](<#AIApplicationCustomTool>)
 - [type AIApplicationDataSource](<#AIApplicationDataSource>)
 - [type AIApplicationToolConfig](<#AIApplicationToolConfig>)
 - [type APIToken](<#APIToken>)
@@ -3025,6 +3155,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type ConnectorEvent](<#ConnectorEvent>)
 - [type ConnectorEventType](<#ConnectorEventType>)
 - [type CustomFieldValues](<#CustomFieldValues>)
+- [type CustomToolType](<#CustomToolType>)
 - [type Diff](<#Diff>)
 - [type DynamicField](<#DynamicField>)
 - [type DynamicFields](<#DynamicFields>)
@@ -3116,18 +3247,48 @@ AIApplication represents an AI application in the system.
 
 ```go
 type AIApplication struct {
-    ID             string                    `json:"id"                validate:"required,validsqid=ai_applications" example:"ai_8x2m9k4n7p5q"`
-    Name           string                    `json:"name"              validate:"required,max=100"                   example:"Customer Analytics App"`
-    Description    string                    `json:"description"       validate:"max=500"                            example:"AI application for customer data analysis"`
-    Documentation  string                    `json:"documentation"     validate:"validdocumentation"                 example:"# Customer Analytics"`
-    AllowedOrigins []string                  `json:"allowed_origins"   validate:"dive,max=255"                       example:"https://app.example.com,http://localhost:3000"`
+    ID             string                    `json:"id"                     validate:"required,validsqid=ai_applications" example:"ai_8x2m9k4n7p5q"`
+    Name           string                    `json:"name"                   validate:"required,max=100"                   example:"Customer Analytics App"`
+    Description    string                    `json:"description"            validate:"max=500"                            example:"AI application for customer data analysis"`
+    Documentation  string                    `json:"documentation"          validate:"validdocumentation"                 example:"# Customer Analytics"`
+    AllowedOrigins []string                  `json:"allowed_origins"        validate:"dive,max=255"                       example:"https://app.example.com,http://localhost:3000"`
     Tools          *AIApplicationToolConfig  `json:"tools,omitempty"`
-    DataSources    []AIApplicationDataSource `json:"data_sources"      validate:"dive"`
+    CustomTools    []AIApplicationCustomTool `json:"custom_tools,omitempty" validate:"dive"`
+    DataSources    []AIApplicationDataSource `json:"data_sources"           validate:"dive"`
     APIKey         *string                   `json:"api_key,omitempty"`
-    Owner          User                      `json:"owner"             validate:"required"`
-    Tags           []Tag                     `json:"tags,omitempty"    validate:"dive"`
-    CreatedAt      time.Time                 `json:"created_at"        validate:"required"                           example:"2025-01-15T10:30:00Z"`
-    UpdatedAt      time.Time                 `json:"updated_at"        validate:"required"                           example:"2025-12-01T14:22:30Z"`
+    Owner          User                      `json:"owner"                  validate:"required"`
+    Tags           []Tag                     `json:"tags,omitempty"         validate:"dive"`
+    CreatedAt      time.Time                 `json:"created_at"             validate:"required"                           example:"2025-01-15T10:30:00Z"`
+    UpdatedAt      time.Time                 `json:"updated_at"             validate:"required"                           example:"2025-12-01T14:22:30Z"`
+}
+```
+
+<a name="AIApplicationCustomTool"></a>
+## type AIApplicationCustomTool
+
+AIApplicationCustomTool represents a custom tool defined for an AI Application.
+
+```go
+type AIApplicationCustomTool struct {
+    ID          string         `json:"id"          validate:"required,validsqid=ai_application_custom_tools"        example:"ct_8x2m9k4n7p5q"`
+    Name        string         `json:"name"        validate:"required,max=100"                                      example:"list_users"`
+    Description string         `json:"description" validate:"max=500"                                               example:"List all users in the system"`
+    Type        CustomToolType `json:"type"        validate:"required,oneof=stored_query workflow embedding_search" example:"stored_query"`
+    Enabled     bool           `json:"enabled"                                                                      example:"true"`
+
+    // For stored_query type
+    StoredQueryID *string `json:"stored_query_id,omitempty" validate:"omitempty,validsqid=queries" example:"qry_1a2b3c4d"`
+
+    // For workflow type
+    WorkflowID *string `json:"workflow_id,omitempty" validate:"omitempty,validsqid=workflows" example:"wf_1a2b3c4d"`
+
+    // For embedding_search type
+    EmbeddingPath   string            `json:"embedding_path,omitempty"   example:"/repo-slug/main/embeddings/docs.parquet"`
+    EmbeddingTopK   int               `json:"embedding_top_k,omitempty"  example:"10"`
+    EmbeddingFilter map[string]string `json:"embedding_filter,omitempty"`
+
+    CreatedAt time.Time `json:"created_at" validate:"required" example:"2025-01-15T10:30:00Z"`
+    UpdatedAt time.Time `json:"updated_at" validate:"required" example:"2025-12-01T14:22:30Z"`
 }
 ```
 
@@ -3460,6 +3621,28 @@ const (
 
 ```go
 type CustomFieldValues map[string]string
+```
+
+<a name="CustomToolType"></a>
+## type CustomToolType
+
+CustomToolType defines the type of custom tool.
+
+```go
+type CustomToolType string
+```
+
+<a name="CustomToolTypeStoredQuery"></a>
+
+```go
+const (
+    // CustomToolTypeStoredQuery executes a stored SQL query.
+    CustomToolTypeStoredQuery CustomToolType = "stored_query"
+    // CustomToolTypeWorkflow triggers a workflow run.
+    CustomToolTypeWorkflow CustomToolType = "workflow"
+    // CustomToolTypeEmbeddingSearch searches a specific embedding file.
+    CustomToolTypeEmbeddingSearch CustomToolType = "embedding_search"
+)
 ```
 
 <a name="Diff"></a>
@@ -4080,13 +4263,13 @@ Policy represents a policy in the API response.
 ```go
 type Policy struct {
     // ID is the unique identifier for the policy
-    ID  string `json:"id"                    validate:"required,validsqid=policies"                                                                                                                                                                                             example:"pol_8x2m9k4n7p5q"`
+    ID  string `json:"id"                    validate:"required,validsqid=policies"                                                                                                                                                                                                            example:"pol_8x2m9k4n7p5q"`
     // Effect specifies whether the policy is an allow or deny policy
-    Effect PolicyEffect `json:"effect"                validate:"required,oneof=allow deny"                                                                                                                                                                                               example:"allow"`
+    Effect PolicyEffect `json:"effect"                validate:"required,oneof=allow deny"                                                                                                                                                                                                              example:"allow"`
     // Action specifies the action that the policy is applied to
-    Action PolicyAction `json:"action"                validate:"required,oneof=create read update delete"                                                                                                                                                                                example:"read"`
+    Action PolicyAction `json:"action"                validate:"required,oneof=create read update delete"                                                                                                                                                                                               example:"read"`
     // Resource specifies the resource type that the policy is applied to
-    Resource PolicyResource `json:"resource"              validate:"required,oneof=workspace script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag" example:"repository"`
+    Resource PolicyResource `json:"resource"              validate:"required,oneof=workspace script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag ai_application" example:"repository"`
     // ResourceID is used to specify which resource the policy is applied to.
     // When undefined, the policy is applied to all resources of the given type.
     //
@@ -4097,6 +4280,7 @@ type Policy struct {
     // - repositories
     // - workspace tags
     // - users
+    // - ai_applications
     //
     // It is not applicable for:
     // - workspaces (policies are workspace scoped)
@@ -4110,9 +4294,9 @@ type Policy struct {
     // Note that some resources point to their parent resource's ID:
     // - repository objects, branches, tags, and commits point to their repository's ID
     // - workflow runs point to their workflow's ID
-    ResourceID *string `json:"resource_id,omitempty"                                                                                                                                                                                                                                    example:"repo_8x2m9k4n7p5q"`
+    ResourceID *string `json:"resource_id,omitempty"                                                                                                                                                                                                                                                   example:"repo_8x2m9k4n7p5q"`
     // Principal specifies which group of users the policy is applied to
-    Principal PolicyPrincipal `json:"principal"             validate:"required,oneof=workspace_user role everyone"                                                                                                                                                                             example:"role"`
+    Principal PolicyPrincipal `json:"principal"             validate:"required,oneof=workspace_user role everyone"                                                                                                                                                                                            example:"role"`
     // Role is used to give a policy to a specific role
     Role *Role `json:"role,omitempty"`
     // User is used to give a policy to a specific workspace user
@@ -4235,6 +4419,8 @@ const (
     PolicyResourceBilling PolicyResource = "billing"
     // PolicyResourceWorkspaceTag represents a workspace tag resource.
     PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
+    // PolicyResourceAIApplication represents an AI application resource.
+    PolicyResourceAIApplication PolicyResource = "ai_application"
 )
 ```
 
