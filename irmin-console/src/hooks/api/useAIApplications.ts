@@ -174,13 +174,14 @@ export function useAIApplication(aiApplicationId: string) {
 
       // Optimistically update to the new value
       if (previousData?.data) {
+        const { tags: _tags, ...newDataWithoutTags } = newData;
         queryClient.setQueryData<IrminAPIResponse<AIApplication>>(
           aiApplicationQueryKey(workspaceSlug, aiApplicationId),
           {
             ...previousData,
             data: {
               ...previousData.data,
-              ...newData,
+              ...newDataWithoutTags,
               // For custom_tools, generate temporary IDs for new tools
               custom_tools: newData.custom_tools
                 ? newData.custom_tools.map((tool, index) => ({
@@ -188,6 +189,8 @@ export function useAIApplication(aiApplicationId: string) {
                     id: tool.id ?? `temp-${Date.now()}-${index}`,
                   }))
                 : previousData.data.custom_tools,
+              // Keep existing tags for optimistic update (server will update with full Tag objects)
+              tags: previousData.data.tags,
             },
           }
         );
