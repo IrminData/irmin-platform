@@ -234,6 +234,7 @@ func (d *Database) Migrate() error {
 		&AIApplication{},
 		&AIApplicationDataSource{},
 		&AIApplicationTag{},
+		&AIApplicationCustomTool{},
 		&Template{},
 	}
 	if err := d.migrateModels(models...); err != nil {
@@ -259,6 +260,7 @@ func (d *Database) Reset() error {
 	if err := d.Migrator().DropTable(
 		&AIApplicationTag{},
 		&AIApplicationDataSource{},
+		&AIApplicationCustomTool{},
 		&AIApplication{},
 		&Role{},
 		&Connector{},

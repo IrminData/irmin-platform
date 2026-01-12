@@ -351,6 +351,11 @@ func (d *Database) DeleteWorkflow(tx *gorm.DB, id uint) error {
 		return err
 	}
 
+	// Delete AI Application custom tools that reference this workflow
+	if err := tx.Where(&AIApplicationCustomTool{WorkflowID: &id}).Delete(&AIApplicationCustomTool{}).Error; err != nil {
+		return err
+	}
+
 	// Delete schedule and its triggers if exists
 	if err := d.deleteWorkflowSchedule(tx, workflow.ScheduleID); err != nil {
 		return err

@@ -29,6 +29,7 @@ type AIApplication struct {
 	OwnerID        uint                      `json:"owner_id"`
 	Owner          User                      `json:"owner"           gorm:"foreignKey:OwnerID"`
 	DataSources    []AIApplicationDataSource `json:"data_sources"    gorm:"foreignKey:AIApplicationID"`
+	CustomTools    []AIApplicationCustomTool `json:"custom_tools"    gorm:"foreignKey:AIApplicationID"`
 	Tags           []Tag                     `json:"tags,omitempty"  gorm:"many2many:ai_application_tags;"`
 }
 
@@ -52,12 +53,52 @@ type AIApplicationDataSource struct {
 	Path            string        `json:"path"`
 }
 
+// CustomToolType defines the type of custom tool.
+type CustomToolType string
+
+const (
+	// CustomToolTypeStoredQuery executes a stored SQL query.
+	CustomToolTypeStoredQuery CustomToolType = "stored_query"
+	// CustomToolTypeWorkflow triggers a workflow run.
+	CustomToolTypeWorkflow CustomToolType = "workflow"
+	// CustomToolTypeEmbeddingSearch searches a specific embedding file.
+	CustomToolTypeEmbeddingSearch CustomToolType = "embedding_search"
+)
+
+// AIApplicationCustomTool represents a custom tool defined for an AI Application.
+type AIApplicationCustomTool struct {
+	gorm.Model
+
+	AIApplicationID uint           `json:"ai_application_id" gorm:"index;not null"`
+	AIApplication   AIApplication  `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
+	Name            string         `json:"name"              gorm:"not null"`
+	Description     string         `json:"description"`
+	Type            CustomToolType `json:"type"              gorm:"not null"`
+	Enabled         bool           `json:"enabled"           gorm:"default:true"`
+
+	// For stored_query type
+	StoredQueryID *uint        `json:"stored_query_id,omitempty"`
+	StoredQuery   *StoredQuery `json:"stored_query,omitempty"    gorm:"foreignKey:StoredQueryID"`
+
+	// For workflow type
+	WorkflowID *uint     `json:"workflow_id,omitempty"`
+	Workflow   *Workflow `json:"workflow,omitempty"    gorm:"foreignKey:WorkflowID"`
+
+	// For embedding_search type
+	EmbeddingPath   string            `json:"embedding_path,omitempty"`
+	EmbeddingTopK   int               `json:"embedding_top_k,omitempty"`
+	EmbeddingFilter map[string]string `json:"embedding_filter,omitempty" gorm:"type:jsonb;serializer:json"`
+}
+
 // GetAIApplicationByID retrieves an AI application by its ID.
 func (d *Database) GetAIApplicationByID(id uint) (*AIApplication, error) {
 	var aiApplication AIApplication
 	if err := d.Preload("Owner").
 		Preload("DataSources").
 		Preload("DataSources.Repository").
+		Preload("CustomTools").
+		Preload("CustomTools.StoredQuery").
+		Preload("CustomTools.Workflow").
 		Preload("Tags").
 		First(&aiApplication, id).Error; err != nil {
 		return nil, err
@@ -71,6 +112,9 @@ func (d *Database) GetAIApplicationsByWorkspaceID(workspaceID uint) ([]AIApplica
 	if err := d.Preload("Owner").
 		Preload("DataSources").
 		Preload("DataSources.Repository").
+		Preload("CustomTools").
+		Preload("CustomTools.StoredQuery").
+		Preload("CustomTools.Workflow").
 		Preload("Tags").
 		Where(&AIApplication{WorkspaceID: workspaceID}).
 		Order("created_at desc").
@@ -92,6 +136,11 @@ func (d *Database) DeleteAIApplication(tx *gorm.DB, id uint) error {
 		return err
 	}
 
+	// Delete custom tools
+	if err := tx.Where(&AIApplicationCustomTool{AIApplicationID: id}).Delete(&AIApplicationCustomTool{}).Error; err != nil {
+		return err
+	}
+
 	// Finally delete the AI application itself
 	return tx.Delete(&AIApplication{}, id).Error
 }
@@ -104,10 +153,81 @@ func (d *Database) GetAIApplicationByAPIKey(apiKey string) (*AIApplication, erro
 		Preload("Owner").
 		Preload("DataSources").
 		Preload("DataSources.Repository").
+		Preload("CustomTools").
+		Preload("CustomTools.StoredQuery").
+		Preload("CustomTools.Workflow").
 		Preload("Tags").
 		Where("api_key = ?", apiKey).
 		First(&aiApplication).Error; err != nil {
 		return nil, err
 	}
 	return &aiApplication, nil
+}
+
+// GetCustomToolByID retrieves a custom tool by its ID.
+func (d *Database) GetCustomToolByID(id uint) (*AIApplicationCustomTool, error) {
+	var tool AIApplicationCustomTool
+	if err := d.Preload("StoredQuery").
+		Preload("Workflow").
+		First(&tool, id).Error; err != nil {
+		return nil, err
+	}
+	return &tool, nil
+}
+
+// GetCustomToolByNameAndAIApplicationID retrieves a custom tool by name and AI Application ID.
+func (d *Database) GetCustomToolByNameAndAIApplicationID(
+	name string,
+	aiApplicationID uint,
+) (*AIApplicationCustomTool, error) {
+	var tool AIApplicationCustomTool
+	if err := d.Preload("StoredQuery").
+		Preload("Workflow").
+		Where("name = ? AND ai_application_id = ?", name, aiApplicationID).
+		First(&tool).Error; err != nil {
+		return nil, err
+	}
+	return &tool, nil
+}
+
+// GetCustomToolsByAIApplicationID retrieves all custom tools for an AI Application.
+func (d *Database) GetCustomToolsByAIApplicationID(aiApplicationID uint) ([]AIApplicationCustomTool, error) {
+	var tools []AIApplicationCustomTool
+	if err := d.Preload("StoredQuery").
+		Preload("Workflow").
+		Where("ai_application_id = ?", aiApplicationID).
+		Order("created_at asc").
+		Find(&tools).Error; err != nil {
+		return nil, err
+	}
+	return tools, nil
+}
+
+// GetEnabledCustomToolsByAIApplicationID retrieves all enabled custom tools for an AI Application.
+func (d *Database) GetEnabledCustomToolsByAIApplicationID(aiApplicationID uint) ([]AIApplicationCustomTool, error) {
+	var tools []AIApplicationCustomTool
+	if err := d.Preload("StoredQuery").
+		Preload("Workflow").
+		Where("ai_application_id = ? AND enabled = ?", aiApplicationID, true).
+		Order("created_at asc").
+		Find(&tools).Error; err != nil {
+		return nil, err
+	}
+	return tools, nil
+}
+
+// CustomToolNameExists checks if a custom tool with the given name exists for an AI Application.
+func (d *Database) CustomToolNameExists(name string, aiApplicationID uint, excludeID *uint) (bool, error) {
+	query := d.Model(&AIApplicationCustomTool{}).
+		Where("name = ? AND ai_application_id = ?", name, aiApplicationID)
+
+	if excludeID != nil {
+		query = query.Where("id != ?", *excludeID)
+	}
+
+	var count int64
+	if err := query.Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }

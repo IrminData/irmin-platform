@@ -35,6 +35,10 @@ definitions:
         items:
           type: string
         type: array
+      custom_tools:
+        items:
+          $ref: '#/definitions/irmincore.CreateCustomToolRequest'
+        type: array
       data_sources:
         items:
           $ref: '#/definitions/irminmodels.AIApplicationDataSource'
@@ -137,6 +141,50 @@ definitions:
     required:
     - expiry
     - name
+    type: object
+  irmincore.CreateCustomToolRequest:
+    properties:
+      description:
+        example: List all users in the system
+        maxLength: 500
+        type: string
+      embedding_filter:
+        additionalProperties:
+          type: string
+        type: object
+      embedding_path:
+        description: For embedding_search type
+        example: /repo-slug/main/embeddings/docs.parquet
+        type: string
+      embedding_top_k:
+        example: 10
+        type: integer
+      enabled:
+        example: true
+        type: boolean
+      name:
+        example: list_users
+        maxLength: 100
+        type: string
+      stored_query_id:
+        description: For stored_query type
+        example: qry_1a2b3c4d
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/irminmodels.CustomToolType'
+        enum:
+        - stored_query
+        - workflow
+        - embedding_search
+        example: stored_query
+      workflow_id:
+        description: For workflow type
+        example: wf_1a2b3c4d
+        type: string
+    required:
+    - name
+    - type
     type: object
   irmincore.CreatePolicyRequest:
     properties:
@@ -497,6 +545,10 @@ definitions:
         items:
           type: string
         type: array
+      custom_tools:
+        items:
+          $ref: '#/definitions/irmincore.UpdateCustomToolRequest'
+        type: array
       data_sources:
         items:
           $ref: '#/definitions/irminmodels.AIApplicationDataSource'
@@ -550,6 +602,52 @@ definitions:
         example: Production MySQL Database
         maxLength: 100
         type: string
+    type: object
+  irmincore.UpdateCustomToolRequest:
+    properties:
+      description:
+        example: List all users in the system
+        maxLength: 500
+        type: string
+      embedding_filter:
+        additionalProperties:
+          type: string
+        type: object
+      embedding_path:
+        description: For embedding_search type
+        example: /repo-slug/main/embeddings/docs.parquet
+        type: string
+      embedding_top_k:
+        example: 10
+        type: integer
+      enabled:
+        example: true
+        type: boolean
+      id:
+        type: string
+      name:
+        example: list_users
+        maxLength: 100
+        type: string
+      stored_query_id:
+        description: For stored_query type
+        example: qry_1a2b3c4d
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/irminmodels.CustomToolType'
+        enum:
+        - stored_query
+        - workflow
+        - embedding_search
+        example: stored_query
+      workflow_id:
+        description: For workflow type
+        example: wf_1a2b3c4d
+        type: string
+    required:
+    - name
+    - type
     type: object
   irmincore.UpdateInviteRequest:
     properties:
@@ -851,6 +949,10 @@ definitions:
       created_at:
         example: "2025-01-15T10:30:00Z"
         type: string
+      custom_tools:
+        items:
+          $ref: '#/definitions/irminmodels.AIApplicationCustomTool'
+        type: array
       data_sources:
         items:
           $ref: '#/definitions/irminmodels.AIApplicationDataSource'
@@ -885,6 +987,62 @@ definitions:
     - id
     - name
     - owner
+    - updated_at
+    type: object
+  irminmodels.AIApplicationCustomTool:
+    properties:
+      created_at:
+        example: "2025-01-15T10:30:00Z"
+        type: string
+      description:
+        example: List all users in the system
+        maxLength: 500
+        type: string
+      embedding_filter:
+        additionalProperties:
+          type: string
+        type: object
+      embedding_path:
+        description: For embedding_search type
+        example: /repo-slug/main/embeddings/docs.parquet
+        type: string
+      embedding_top_k:
+        example: 10
+        type: integer
+      enabled:
+        example: true
+        type: boolean
+      id:
+        example: ct_8x2m9k4n7p5q
+        type: string
+      name:
+        example: list_users
+        maxLength: 100
+        type: string
+      stored_query_id:
+        description: For stored_query type
+        example: qry_1a2b3c4d
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/irminmodels.CustomToolType'
+        enum:
+        - stored_query
+        - workflow
+        - embedding_search
+        example: stored_query
+      updated_at:
+        example: "2025-12-01T14:22:30Z"
+        type: string
+      workflow_id:
+        description: For workflow type
+        example: wf_1a2b3c4d
+        type: string
+    required:
+    - created_at
+    - id
+    - name
+    - type
     - updated_at
     type: object
   irminmodels.AIApplicationDataSource:
@@ -1307,6 +1465,16 @@ definitions:
     additionalProperties:
       type: string
     type: object
+  irminmodels.CustomToolType:
+    enum:
+    - stored_query
+    - workflow
+    - embedding_search
+    type: string
+    x-enum-varnames:
+    - CustomToolTypeStoredQuery
+    - CustomToolTypeWorkflow
+    - CustomToolTypeEmbeddingSearch
   irminmodels.Diff:
     properties:
       base_ref:
@@ -2276,6 +2444,7 @@ definitions:
         - documentation
         - billing
         - workspace_tag
+        - ai_application
         example: repository
       resource_id:
         description: |-
@@ -2289,6 +2458,7 @@ definitions:
           - repositories
           - workspace tags
           - users
+          - ai_applications
 
           It is not applicable for:
           - workspaces (policies are workspace scoped)
@@ -2369,6 +2539,7 @@ definitions:
     - documentation
     - billing
     - workspace_tag
+    - ai_application
     type: string
     x-enum-varnames:
     - PolicyResourceWorkspace
@@ -2389,6 +2560,7 @@ definitions:
     - PolicyResourceDocumentation
     - PolicyResourceBilling
     - PolicyResourceWorkspaceTag
+    - PolicyResourceAIApplication
   irminmodels.QueryResult:
     properties:
       columns:
@@ -3616,6 +3788,72 @@ paths:
       security:
       - AIAppAPIKey: []
       summary: Get system prompt
+      tags:
+      - ai-app-api
+  /ai-app/tools:
+    get:
+      consumes:
+      - application/json
+      description: List all enabled custom tools for this AI Application
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of custom tools
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid API key
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - AIAppAPIKey: []
+      summary: List custom tools
+      tags:
+      - ai-app-api
+  /ai-app/tools/{tool_name}/execute:
+    post:
+      consumes:
+      - application/json
+      description: Execute a custom tool defined for this AI Application
+      parameters:
+      - description: Name of the custom tool to execute
+        in: path
+        name: tool_name
+        required: true
+        type: string
+      - description: Request body with optional 'query' field for embedding_search
+          tools
+        in: body
+        name: body
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tool execution result
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "400":
+          description: Bad request - missing query for embedding search
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid API key
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - tool not found or disabled
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - AIAppAPIKey: []
+      summary: Execute custom tool
       tags:
       - ai-app-api
   /connectors:

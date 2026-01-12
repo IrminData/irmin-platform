@@ -21,6 +21,11 @@ func (api *APIServices) GenerateAIApplicationSystemPrompt(aiApp *db.AIApplicatio
 	config := aiApp.ParseToolConfig()
 	sections = append(sections, generateToolsSection(config))
 
+	// Custom tools section (only if at least one tool is enabled)
+	if hasEnabledCustomTools(aiApp.CustomTools) {
+		sections = append(sections, generateCustomToolsSection(aiApp.CustomTools))
+	}
+
 	// SQL syntax guide (only if query tool is enabled)
 	if config.QueryEnabled {
 		sections = append(sections, generateSQLSyntaxSection())
@@ -170,4 +175,49 @@ Search for semantically similar content using natural language queries.
 2. Phrase your query as a natural language question or description
 3. Use irmin_list_objects to find specific embedding files if needed
 4. Use filters to narrow down results by source file or other metadata`
+}
+
+func hasEnabledCustomTools(customTools []db.AIApplicationCustomTool) bool {
+	for _, tool := range customTools {
+		if tool.Enabled {
+			return true
+		}
+	}
+	return false
+}
+
+func generateCustomToolsSection(customTools []db.AIApplicationCustomTool) string {
+	section := "## Custom Tools\n\nThe following custom tools are available for specialized operations:\n"
+
+	var toolsBuilder strings.Builder
+	for _, tool := range customTools {
+		if !tool.Enabled {
+			continue
+		}
+
+		toolEntry := fmt.Sprintf("\n### %s\n", tool.Name)
+		if tool.Description != "" {
+			toolEntry += fmt.Sprintf("\n%s\n", tool.Description)
+		}
+
+		switch tool.Type {
+		case db.CustomToolTypeStoredQuery:
+			toolEntry += "\n**Type:** Execute stored SQL query\n"
+			toolEntry += "**Usage:** Call this tool to execute a predefined SQL query and get the results.\n"
+		case db.CustomToolTypeWorkflow:
+			toolEntry += "\n**Type:** Trigger workflow\n"
+			toolEntry += "**Usage:** Call this tool to trigger a workflow execution. Returns the workflow run ID and status.\n"
+		case db.CustomToolTypeEmbeddingSearch:
+			toolEntry += "\n**Type:** Embedding search\n"
+			toolEntry += "**Usage:** Call this tool with a `query` parameter to search for semantically similar content.\n"
+			if tool.EmbeddingTopK > 0 {
+				toolEntry += fmt.Sprintf("**Returns:** Top %d most similar results.\n", tool.EmbeddingTopK)
+			}
+		}
+
+		toolsBuilder.WriteString(toolEntry)
+	}
+	section += toolsBuilder.String()
+
+	return section
 }

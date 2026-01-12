@@ -426,6 +426,109 @@ const docTemplate = `{
                 }
             }
         },
+        "/ai-app/tools": {
+            "get": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "List all enabled custom tools for this AI Application",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "List custom tools",
+                "responses": {
+                    "200": {
+                        "description": "List of custom tools",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ai-app/tools/{tool_name}/execute": {
+            "post": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "Execute a custom tool defined for this AI Application",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "Execute custom tool",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Name of the custom tool to execute",
+                        "name": "tool_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request body with optional 'query' field for embedding_search tools",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tool execution result",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - missing query for embedding search",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - tool not found or disabled",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/connectors": {
             "get": {
                 "security": [
@@ -11779,6 +11882,12 @@ const docTemplate = `{
                         "http://localhost:3000"
                     ]
                 },
+                "custom_tools": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irmincore.CreateCustomToolRequest"
+                    }
+                },
                 "data_sources": {
                     "type": "array",
                     "items": {
@@ -11913,6 +12022,67 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 100,
                     "example": "API Token"
+                }
+            }
+        },
+        "irmincore.CreateCustomToolRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "type"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "List all users in the system"
+                },
+                "embedding_filter": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "embedding_path": {
+                    "description": "For embedding_search type",
+                    "type": "string",
+                    "example": "/repo-slug/main/embeddings/docs.parquet"
+                },
+                "embedding_top_k": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "example": "list_users"
+                },
+                "stored_query_id": {
+                    "description": "For stored_query type",
+                    "type": "string",
+                    "example": "qry_1a2b3c4d"
+                },
+                "type": {
+                    "enum": [
+                        "stored_query",
+                        "workflow",
+                        "embedding_search"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.CustomToolType"
+                        }
+                    ],
+                    "example": "stored_query"
+                },
+                "workflow_id": {
+                    "description": "For workflow type",
+                    "type": "string",
+                    "example": "wf_1a2b3c4d"
                 }
             }
         },
@@ -12421,6 +12591,12 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "custom_tools": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irmincore.UpdateCustomToolRequest"
+                    }
+                },
                 "data_sources": {
                     "type": "array",
                     "items": {
@@ -12494,6 +12670,70 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 100,
                     "example": "Production MySQL Database"
+                }
+            }
+        },
+        "irmincore.UpdateCustomToolRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "type"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "List all users in the system"
+                },
+                "embedding_filter": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "embedding_path": {
+                    "description": "For embedding_search type",
+                    "type": "string",
+                    "example": "/repo-slug/main/embeddings/docs.parquet"
+                },
+                "embedding_top_k": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "example": "list_users"
+                },
+                "stored_query_id": {
+                    "description": "For stored_query type",
+                    "type": "string",
+                    "example": "qry_1a2b3c4d"
+                },
+                "type": {
+                    "enum": [
+                        "stored_query",
+                        "workflow",
+                        "embedding_search"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.CustomToolType"
+                        }
+                    ],
+                    "example": "stored_query"
+                },
+                "workflow_id": {
+                    "description": "For workflow type",
+                    "type": "string",
+                    "example": "wf_1a2b3c4d"
                 }
             }
         },
@@ -12933,6 +13173,12 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2025-01-15T10:30:00Z"
                 },
+                "custom_tools": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.AIApplicationCustomTool"
+                    }
+                },
                 "data_sources": {
                     "type": "array",
                     "items": {
@@ -12972,6 +13218,82 @@ const docTemplate = `{
                 "updated_at": {
                     "type": "string",
                     "example": "2025-12-01T14:22:30Z"
+                }
+            }
+        },
+        "irminmodels.AIApplicationCustomTool": {
+            "type": "object",
+            "required": [
+                "created_at",
+                "id",
+                "name",
+                "type",
+                "updated_at"
+            ],
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2025-01-15T10:30:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "List all users in the system"
+                },
+                "embedding_filter": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "embedding_path": {
+                    "description": "For embedding_search type",
+                    "type": "string",
+                    "example": "/repo-slug/main/embeddings/docs.parquet"
+                },
+                "embedding_top_k": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "id": {
+                    "type": "string",
+                    "example": "ct_8x2m9k4n7p5q"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "example": "list_users"
+                },
+                "stored_query_id": {
+                    "description": "For stored_query type",
+                    "type": "string",
+                    "example": "qry_1a2b3c4d"
+                },
+                "type": {
+                    "enum": [
+                        "stored_query",
+                        "workflow",
+                        "embedding_search"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.CustomToolType"
+                        }
+                    ],
+                    "example": "stored_query"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2025-12-01T14:22:30Z"
+                },
+                "workflow_id": {
+                    "description": "For workflow type",
+                    "type": "string",
+                    "example": "wf_1a2b3c4d"
                 }
             }
         },
@@ -13513,6 +13835,19 @@ const docTemplate = `{
             "additionalProperties": {
                 "type": "string"
             }
+        },
+        "irminmodels.CustomToolType": {
+            "type": "string",
+            "enum": [
+                "stored_query",
+                "workflow",
+                "embedding_search"
+            ],
+            "x-enum-varnames": [
+                "CustomToolTypeStoredQuery",
+                "CustomToolTypeWorkflow",
+                "CustomToolTypeEmbeddingSearch"
+            ]
         },
         "irminmodels.Diff": {
             "type": "object",
@@ -14829,7 +15164,8 @@ const docTemplate = `{
                         "audit_log",
                         "documentation",
                         "billing",
-                        "workspace_tag"
+                        "workspace_tag",
+                        "ai_application"
                     ],
                     "allOf": [
                         {
@@ -14839,7 +15175,7 @@ const docTemplate = `{
                     "example": "repository"
                 },
                 "resource_id": {
-                    "description": "ResourceID is used to specify which resource the policy is applied to.\nWhen undefined, the policy is applied to all resources of the given type.\n\nIt is applicable for:\n- queries\n- workflows\n- connections\n- repositories\n- workspace tags\n- users\n\nIt is not applicable for:\n- workspaces (policies are workspace scoped)\n- policies\n- invites\n- audit logs\n- editor scripts\n- documentation\n- billing\n\nNote that some resources point to their parent resource's ID:\n- repository objects, branches, tags, and commits point to their repository's ID\n- workflow runs point to their workflow's ID",
+                    "description": "ResourceID is used to specify which resource the policy is applied to.\nWhen undefined, the policy is applied to all resources of the given type.\n\nIt is applicable for:\n- queries\n- workflows\n- connections\n- repositories\n- workspace tags\n- users\n- ai_applications\n\nIt is not applicable for:\n- workspaces (policies are workspace scoped)\n- policies\n- invites\n- audit logs\n- editor scripts\n- documentation\n- billing\n\nNote that some resources point to their parent resource's ID:\n- repository objects, branches, tags, and commits point to their repository's ID\n- workflow runs point to their workflow's ID",
                     "type": "string",
                     "example": "repo_8x2m9k4n7p5q"
                 },
@@ -14920,7 +15256,8 @@ const docTemplate = `{
                 "audit_log",
                 "documentation",
                 "billing",
-                "workspace_tag"
+                "workspace_tag",
+                "ai_application"
             ],
             "x-enum-varnames": [
                 "PolicyResourceWorkspace",
@@ -14940,7 +15277,8 @@ const docTemplate = `{
                 "PolicyResourceAuditLog",
                 "PolicyResourceDocumentation",
                 "PolicyResourceBilling",
-                "PolicyResourceWorkspaceTag"
+                "PolicyResourceWorkspaceTag",
+                "PolicyResourceAIApplication"
             ]
         },
         "irminmodels.QueryResult": {

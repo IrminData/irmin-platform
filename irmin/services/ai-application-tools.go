@@ -9,6 +9,7 @@ import (
 	"irmin-api/utils"
 	"path"
 	"strings"
+	"time"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -25,6 +26,13 @@ const (
 	unifiedPathMinParts = 2
 	// defaultRefFallback is used when both data source branch and repository default branch are empty.
 	defaultRefFallback = "main"
+	// workflowExecutionTimeout is the maximum time to wait for a workflow to complete before returning.
+	// Set to 5 minutes to accommodate workflows that process data but still provide timely responses.
+	workflowExecutionTimeout = 5 * 60 * 1000 // 5 minutes in milliseconds
+	// workflowPollInterval is the interval between status checks when waiting for workflow completion.
+	workflowPollInterval = 1000 // 1 second in milliseconds
+	// millisecondsPerSecond is the conversion factor from milliseconds to seconds.
+	millisecondsPerSecond = 1000
 )
 
 var (
@@ -1048,4 +1056,295 @@ func sortEmbeddingResultsByScore(results []irminmodels.EmbeddingSearchResult) {
 			}
 		}
 	}
+}
+
+// === Custom Tool Execution Methods ===
+
+var (
+	// ErrCustomToolNotFound is returned when a custom tool is not found.
+	ErrCustomToolNotFound = errors.New("custom tool not found")
+	// ErrCustomToolDisabled is returned when a custom tool is disabled.
+	ErrCustomToolDisabled = errors.New("custom tool is disabled")
+	// ErrQueryRequired is returned when a query parameter is required but not provided.
+	ErrQueryRequired = errors.New("query is required")
+)
+
+// CustomToolResult represents the result of executing a custom tool.
+type CustomToolResult struct {
+	ToolName string `json:"tool_name"`
+	ToolType string `json:"tool_type"`
+	Data     any    `json:"data"`
+}
+
+// GetCustomTool retrieves a custom tool by name.
+func (e *AIAppToolExecutor) GetCustomTool(name string) (*db.AIApplicationCustomTool, error) {
+	for i := range e.aiApp.CustomTools {
+		if e.aiApp.CustomTools[i].Name == name {
+			return &e.aiApp.CustomTools[i], nil
+		}
+	}
+	return nil, ErrCustomToolNotFound
+}
+
+// GetEnabledCustomTools returns all enabled custom tools.
+func (e *AIAppToolExecutor) GetEnabledCustomTools() []db.AIApplicationCustomTool {
+	var tools []db.AIApplicationCustomTool
+	for _, tool := range e.aiApp.CustomTools {
+		if tool.Enabled {
+			tools = append(tools, tool)
+		}
+	}
+	return tools
+}
+
+// ExecuteCustomTool executes a custom tool by name.
+func (e *AIAppToolExecutor) ExecuteCustomTool(
+	ctx context.Context,
+	toolName string,
+	query string, // Used for embedding_search type
+) (*CustomToolResult, error) {
+	tool, err := e.GetCustomTool(toolName)
+	if err != nil {
+		return nil, err
+	}
+
+	if !tool.Enabled {
+		return nil, ErrCustomToolDisabled
+	}
+
+	var data any
+	switch tool.Type {
+	case db.CustomToolTypeStoredQuery:
+		data, err = e.executeStoredQueryTool(ctx, tool)
+	case db.CustomToolTypeWorkflow:
+		data, err = e.executeWorkflowTool(ctx, tool)
+	case db.CustomToolTypeEmbeddingSearch:
+		data, err = e.executeEmbeddingSearchTool(ctx, tool, query)
+	default:
+		return nil, fmt.Errorf("unknown custom tool type: %s", tool.Type)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &CustomToolResult{
+		ToolName: tool.Name,
+		ToolType: string(tool.Type),
+		Data:     data,
+	}, nil
+}
+
+// executeStoredQueryTool executes a stored query custom tool.
+func (e *AIAppToolExecutor) executeStoredQueryTool(
+	ctx context.Context,
+	tool *db.AIApplicationCustomTool,
+) (any, error) {
+	if tool.StoredQueryID == nil {
+		return nil, fmt.Errorf("stored query ID not configured for tool %s", tool.Name)
+	}
+
+	// Get the stored query
+	query, err := e.apiServices.DB.GetStoredQueryByID(*tool.StoredQueryID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stored query: %w", err)
+	}
+
+	// Verify the stored query belongs to the same workspace
+	if query.WorkspaceID != e.aiApp.WorkspaceID {
+		return nil, errors.New("stored query does not belong to this workspace")
+	}
+
+	// Validate that the query only accesses data within configured data sources
+	if validateErr := e.validateSQLDataSourceAccess(query.SQL); validateErr != nil {
+		return nil, fmt.Errorf("stored query access validation failed: %w", validateErr)
+	}
+
+	// Execute the SQL query
+	result, err := e.apiServices.ExecuteSQL(
+		ctx,
+		"en",
+		&e.aiApp.Owner,
+		&e.aiApp.Workspace,
+		irmincore.ExecuteSQLRequest{SQL: query.SQL},
+		true, // limit response
+	)
+	if err != nil {
+		return nil, fmt.Errorf("stored query execution failed: %w", err)
+	}
+
+	return result, nil
+}
+
+// executeWorkflowTool executes a workflow custom tool.
+// It creates a workflow run and waits for completion with a timeout.
+// If the workflow completes within the timeout, returns logs and status.
+// If timeout is reached, returns the workflow run ID for manual polling.
+func (e *AIAppToolExecutor) executeWorkflowTool(
+	ctx context.Context,
+	tool *db.AIApplicationCustomTool,
+) (any, error) {
+	if tool.WorkflowID == nil {
+		return nil, fmt.Errorf("workflow ID not configured for tool %s", tool.Name)
+	}
+
+	// Get the workflow by ID
+	workflow, err := e.apiServices.DB.GetWorkflowByID(*tool.WorkflowID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get workflow: %w", err)
+	}
+
+	// Verify the workflow belongs to the same workspace
+	if workflow.WorkspaceID != e.aiApp.WorkspaceID {
+		return nil, errors.New("workflow does not belong to this workspace")
+	}
+
+	// Create a workflow run (no inputs as per plan)
+	workflowRun, err := e.apiServices.CreateWorkflowRun(
+		ctx,
+		&e.aiApp.Owner,
+		&e.aiApp.Workspace,
+		workflow,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create workflow run: %w", err)
+	}
+
+	// Encode workflow run ID
+	workflowRunSqid, encodeErr := e.apiServices.SQIDManager.Encode("workflow_runs", uint64(workflowRun.ID))
+	if encodeErr != nil {
+		return nil, fmt.Errorf("failed to encode workflow run ID: %w", encodeErr)
+	}
+
+	// Wait for workflow completion with timeout
+	return e.waitForWorkflowCompletion(ctx, workflowRun.ID, workflowRunSqid)
+}
+
+// waitForWorkflowCompletion polls the workflow run status and waits for completion.
+// Returns the workflow run details including logs if completed within the timeout,
+// otherwise returns the workflow run ID for manual status checking.
+func (e *AIAppToolExecutor) waitForWorkflowCompletion(
+	ctx context.Context,
+	workflowRunID uint,
+	workflowRunSqid string,
+) (map[string]any, error) {
+	timeout := time.Duration(workflowExecutionTimeout) * time.Millisecond
+	pollInterval := time.Duration(workflowPollInterval) * time.Millisecond
+	deadline := time.Now().Add(timeout)
+
+	ticker := time.NewTicker(pollInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-ticker.C:
+			// Check if we've exceeded the timeout
+			if time.Now().After(deadline) {
+				return map[string]any{
+					"workflow_run_id": workflowRunSqid,
+					"status":          "timeout",
+					"message": fmt.Sprintf(
+						"Workflow execution exceeded timeout of %d seconds. Use the workflow run ID to check status later.",
+						workflowExecutionTimeout/millisecondsPerSecond,
+					),
+				}, nil
+			}
+
+			// Fetch the latest workflow run status
+			workflowRun, err := e.apiServices.DB.GetWorkflowRunByID(workflowRunID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get workflow run status: %w", err)
+			}
+
+			// Check if workflow is in a terminal state
+			switch workflowRun.Status {
+			case irminmodels.WorkflowStatusComplete:
+				return map[string]any{
+					"workflow_run_id": workflowRunSqid,
+					"status":          string(workflowRun.Status),
+					"logs":            workflowRun.Logs,
+					"message":         "Workflow completed successfully",
+					"started_at":      workflowRun.StartedAt,
+					"finished_at":     workflowRun.FinishedAt,
+				}, nil
+			case irminmodels.WorkflowStatusError:
+				return map[string]any{
+					"workflow_run_id": workflowRunSqid,
+					"status":          string(workflowRun.Status),
+					"logs":            workflowRun.Logs,
+					"message":         "Workflow execution failed",
+					"started_at":      workflowRun.StartedAt,
+					"finished_at":     workflowRun.FinishedAt,
+				}, nil
+			case irminmodels.WorkflowStatusCancelled:
+				return map[string]any{
+					"workflow_run_id": workflowRunSqid,
+					"status":          string(workflowRun.Status),
+					"logs":            workflowRun.Logs,
+					"message":         "Workflow was cancelled",
+					"started_at":      workflowRun.StartedAt,
+					"finished_at":     workflowRun.FinishedAt,
+				}, nil
+			case irminmodels.WorkflowStatusPending,
+				irminmodels.WorkflowStatusInitiating,
+				irminmodels.WorkflowStatusRunning:
+				// Continue polling for non-terminal states
+				continue
+			case irminmodels.WorkflowStatusEmpty,
+				irminmodels.WorkflowStatusPaused:
+				// These states should never occur for workflow runs:
+				// - Empty is not a valid run state
+				// - Paused is only for workflow definitions, not runs
+				// If we encounter them, treat as an error
+				return nil, fmt.Errorf("unexpected workflow run status: %s", workflowRun.Status)
+			default:
+				// Handle any future unknown statuses
+				return nil, fmt.Errorf("unknown workflow run status: %s", workflowRun.Status)
+			}
+		}
+	}
+}
+
+// executeEmbeddingSearchTool executes an embedding search custom tool.
+func (e *AIAppToolExecutor) executeEmbeddingSearchTool(
+	ctx context.Context,
+	tool *db.AIApplicationCustomTool,
+	query string,
+) (any, error) {
+	if tool.EmbeddingPath == "" {
+		return nil, fmt.Errorf("embedding path not configured for tool %s", tool.Name)
+	}
+
+	if query == "" {
+		return nil, ErrQueryRequired
+	}
+
+	// Resolve the embedding path
+	resolved, err := e.ResolvePath(tool.EmbeddingPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve embedding path: %w", err)
+	}
+
+	topK := tool.EmbeddingTopK
+	if topK <= 0 {
+		topK = 10
+	}
+
+	// Execute the embedding search
+	result, err := e.SearchEmbeddings(
+		ctx,
+		resolved.Repository.Slug,
+		resolved.Path,
+		query,
+		resolved.Ref,
+		topK,
+		tool.EmbeddingFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("embedding search failed: %w", err)
+	}
+
+	return result, nil
 }

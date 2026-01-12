@@ -44,6 +44,7 @@ var (
 	ErrCannotRemoveOwnerFromWorkspace         = errors.New("cannot remove owner from workspace")
 	ErrInvalidWebhookType                     = errors.New("invalid webhook type")
 	ErrTagNameRequired                        = errors.New("tag name is required")
+	ErrCustomToolNameRequired                 = errors.New("custom tool name is required")
 	ErrInvalidWorkflowType                    = errors.New("invalid workflow type")
 	ErrWorkflowRunNotFound                    = errors.New("workflow run not found")
 	ErrInvalidPath                            = errors.New("invalid path")
@@ -241,6 +242,8 @@ func MapErrorToStatusCode(err error) int {
 	case errors.Is(err, ErrInvalidWebhookType):
 		return fiber.StatusBadRequest
 	case errors.Is(err, ErrTagNameRequired):
+		return fiber.StatusBadRequest
+	case errors.Is(err, ErrCustomToolNameRequired):
 		return fiber.StatusBadRequest
 	case errors.Is(err, ErrInvalidWorkflowType):
 		return fiber.StatusBadRequest

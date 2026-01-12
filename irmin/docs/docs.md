@@ -830,9 +830,11 @@ import "irmin-api/controllers"
 
 - [type APIControllers](<#APIControllers>)
   - [func NewAPIControllers\(apiServices \*services.APIServices\) \*APIControllers](<#NewAPIControllers>)
+  - [func \(api \*APIControllers\) AIAppAPIExecuteCustomTool\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIExecuteCustomTool>)
   - [func \(api \*APIControllers\) AIAppAPIGetObject\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIGetObject>)
   - [func \(api \*APIControllers\) AIAppAPIGetSchema\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIGetSchema>)
   - [func \(api \*APIControllers\) AIAppAPIInfo\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIInfo>)
+  - [func \(api \*APIControllers\) AIAppAPIListCustomTools\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIListCustomTools>)
   - [func \(api \*APIControllers\) AIAppAPIListObjects\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIListObjects>)
   - [func \(api \*APIControllers\) AIAppAPIQuery\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIQuery>)
   - [func \(api \*APIControllers\) AIAppAPISearchEmbeddings\(c fiber.Ctx\) error](<#APIControllers.AIAppAPISearchEmbeddings>)
@@ -1007,6 +1009,15 @@ func NewAPIControllers(apiServices *services.APIServices) *APIControllers
 
 
 
+<a name="APIControllers.AIAppAPIExecuteCustomTool"></a>
+### func \(\*APIControllers\) AIAppAPIExecuteCustomTool
+
+```go
+func (api *APIControllers) AIAppAPIExecuteCustomTool(c fiber.Ctx) error
+```
+
+AIAppAPIExecuteCustomTool godoc @Summary Execute custom tool @Description Execute a custom tool defined for this AI Application @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param tool\_name path string true "Name of the custom tool to execute" @Param body body object false "Request body with optional 'query' field for embedding\_search tools" @Success 200 \{object\} irminmodels.IrminAPIResponse "Tool execution result" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing query for embedding search" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not found or disabled" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/tools/\{tool\_name\}/execute \[post\]
+
 <a name="APIControllers.AIAppAPIGetObject"></a>
 ### func \(\*APIControllers\) AIAppAPIGetObject
 
@@ -1033,6 +1044,15 @@ func (api *APIControllers) AIAppAPIInfo(c fiber.Ctx) error
 ```
 
 AIAppAPIInfo godoc @Summary Get AI Application API info @Description Get information about the AI Application and its capabilities @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Success 200 \{object\} irminmodels.IrminAPIResponse "AI Application info" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Router /ai\-app/info \[get\]
+
+<a name="APIControllers.AIAppAPIListCustomTools"></a>
+### func \(\*APIControllers\) AIAppAPIListCustomTools
+
+```go
+func (api *APIControllers) AIAppAPIListCustomTools(c fiber.Ctx) error
+```
+
+AIAppAPIListCustomTools godoc @Summary List custom tools @Description List all enabled custom tools for this AI Application @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Success 200 \{object\} irminmodels.IrminAPIResponse "List of custom tools" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Router /ai\-app/tools \[get\]
 
 <a name="APIControllers.AIAppAPIListObjects"></a>
 ### func \(\*APIControllers\) AIAppAPIListObjects
@@ -2376,6 +2396,7 @@ import "irmin-api/db"
 - [func ValidateSearchToken\(token SearchToken\) bool](<#ValidateSearchToken>)
 - [type AIApplication](<#AIApplication>)
   - [func \(a \*AIApplication\) ParseToolConfig\(\) AIApplicationToolConfig](<#AIApplication.ParseToolConfig>)
+- [type AIApplicationCustomTool](<#AIApplicationCustomTool>)
 - [type AIApplicationDataSource](<#AIApplicationDataSource>)
 - [type AIApplicationTag](<#AIApplicationTag>)
 - [type AIApplicationToolConfig](<#AIApplicationToolConfig>)
@@ -2389,6 +2410,7 @@ import "irmin-api/db"
 - [type Connector](<#Connector>)
 - [type CursorPagination](<#CursorPagination>)
 - [type CustomFieldValues](<#CustomFieldValues>)
+- [type CustomToolType](<#CustomToolType>)
 - [type Database](<#Database>)
   - [func InitialiseDB\(env \*utils.CoreAPIEnv\) \(\*Database, error\)](<#InitialiseDB>)
   - [func \(d \*Database\) AddTagToAIApplication\(aiApplicationID, tagID uint\) error](<#Database.AddTagToAIApplication>)
@@ -2402,6 +2424,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) CheckIfRepositoryExists\(slug string, workspaceID uint\) bool](<#Database.CheckIfRepositoryExists>)
   - [func \(d \*Database\) Close\(\)](<#Database.Close>)
   - [func \(d \*Database\) CreateSearchIndexes\(\) error](<#Database.CreateSearchIndexes>)
+  - [func \(d \*Database\) CustomToolNameExists\(name string, aiApplicationID uint, excludeID \*uint\) \(bool, error\)](<#Database.CustomToolNameExists>)
   - [func \(d \*Database\) DeleteAIApplication\(tx \*gorm.DB, id uint\) error](<#Database.DeleteAIApplication>)
   - [func \(d \*Database\) DeleteAPIToken\(id uint\) error](<#Database.DeleteAPIToken>)
   - [func \(d \*Database\) DeleteConnection\(tx \*gorm.DB, id uint\) error](<#Database.DeleteConnection>)
@@ -2439,7 +2462,11 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetConnectionsByWorkspaceID\(workspaceID uint\) \(\[\]Connection, error\)](<#Database.GetConnectionsByWorkspaceID>)
   - [func \(d \*Database\) GetConnector\(id uint\) \(\*Connector, error\)](<#Database.GetConnector>)
   - [func \(d \*Database\) GetConnectorByAPIBaseURL\(apiBaseURL string\) \(\*Connector, error\)](<#Database.GetConnectorByAPIBaseURL>)
+  - [func \(d \*Database\) GetCustomToolByID\(id uint\) \(\*AIApplicationCustomTool, error\)](<#Database.GetCustomToolByID>)
+  - [func \(d \*Database\) GetCustomToolByNameAndAIApplicationID\(name string, aiApplicationID uint\) \(\*AIApplicationCustomTool, error\)](<#Database.GetCustomToolByNameAndAIApplicationID>)
+  - [func \(d \*Database\) GetCustomToolsByAIApplicationID\(aiApplicationID uint\) \(\[\]AIApplicationCustomTool, error\)](<#Database.GetCustomToolsByAIApplicationID>)
   - [func \(d \*Database\) GetDefaultRole\(\) \(\*Role, error\)](<#Database.GetDefaultRole>)
+  - [func \(d \*Database\) GetEnabledCustomToolsByAIApplicationID\(aiApplicationID uint\) \(\[\]AIApplicationCustomTool, error\)](<#Database.GetEnabledCustomToolsByAIApplicationID>)
   - [func \(d \*Database\) GetExportWorkflowableByID\(id uint\) \(\*ExportWorkflowable, error\)](<#Database.GetExportWorkflowableByID>)
   - [func \(d \*Database\) GetFlatDBObjects\(repositoryID uint, ref string\) \(\[\]RepositoryObject, error\)](<#Database.GetFlatDBObjects>)
   - [func \(d \*Database\) GetImportWorkflowableByID\(id uint\) \(\*ImportWorkflowable, error\)](<#Database.GetImportWorkflowableByID>)
@@ -2849,6 +2876,7 @@ type AIApplication struct {
     OwnerID        uint                      `json:"owner_id"`
     Owner          User                      `json:"owner"           gorm:"foreignKey:OwnerID"`
     DataSources    []AIApplicationDataSource `json:"data_sources"    gorm:"foreignKey:AIApplicationID"`
+    CustomTools    []AIApplicationCustomTool `json:"custom_tools"    gorm:"foreignKey:AIApplicationID"`
     Tags           []Tag                     `json:"tags,omitempty"  gorm:"many2many:ai_application_tags;"`
 }
 ```
@@ -2861,6 +2889,37 @@ func (a *AIApplication) ParseToolConfig() AIApplicationToolConfig
 ```
 
 ParseToolConfig returns the tool configuration, defaulting to all tools disabled if not set.
+
+<a name="AIApplicationCustomTool"></a>
+## type AIApplicationCustomTool
+
+AIApplicationCustomTool represents a custom tool defined for an AI Application.
+
+```go
+type AIApplicationCustomTool struct {
+    gorm.Model
+
+    AIApplicationID uint           `json:"ai_application_id" gorm:"index;not null"`
+    AIApplication   AIApplication  `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
+    Name            string         `json:"name"              gorm:"not null"`
+    Description     string         `json:"description"`
+    Type            CustomToolType `json:"type"              gorm:"not null"`
+    Enabled         bool           `json:"enabled"           gorm:"default:true"`
+
+    // For stored_query type
+    StoredQueryID *uint        `json:"stored_query_id,omitempty"`
+    StoredQuery   *StoredQuery `json:"stored_query,omitempty"    gorm:"foreignKey:StoredQueryID"`
+
+    // For workflow type
+    WorkflowID *uint     `json:"workflow_id,omitempty"`
+    Workflow   *Workflow `json:"workflow,omitempty"    gorm:"foreignKey:WorkflowID"`
+
+    // For embedding_search type
+    EmbeddingPath   string            `json:"embedding_path,omitempty"`
+    EmbeddingTopK   int               `json:"embedding_top_k,omitempty"`
+    EmbeddingFilter map[string]string `json:"embedding_filter,omitempty" gorm:"type:jsonb;serializer:json"`
+}
+```
 
 <a name="AIApplicationDataSource"></a>
 ## type AIApplicationDataSource
@@ -3096,6 +3155,28 @@ type CursorPagination struct {
 type CustomFieldValues map[string]string
 ```
 
+<a name="CustomToolType"></a>
+## type CustomToolType
+
+CustomToolType defines the type of custom tool.
+
+```go
+type CustomToolType string
+```
+
+<a name="CustomToolTypeStoredQuery"></a>
+
+```go
+const (
+    // CustomToolTypeStoredQuery executes a stored SQL query.
+    CustomToolTypeStoredQuery CustomToolType = "stored_query"
+    // CustomToolTypeWorkflow triggers a workflow run.
+    CustomToolTypeWorkflow CustomToolType = "workflow"
+    // CustomToolTypeEmbeddingSearch searches a specific embedding file.
+    CustomToolTypeEmbeddingSearch CustomToolType = "embedding_search"
+)
+```
+
 <a name="Database"></a>
 ## type Database
 
@@ -3215,6 +3296,15 @@ func (d *Database) CreateSearchIndexes() error
 ```
 
 CreateSearchIndexes creates indexes to optimize search performance.
+
+<a name="Database.CustomToolNameExists"></a>
+### func \(\*Database\) CustomToolNameExists
+
+```go
+func (d *Database) CustomToolNameExists(name string, aiApplicationID uint, excludeID *uint) (bool, error)
+```
+
+CustomToolNameExists checks if a custom tool with the given name exists for an AI Application.
 
 <a name="Database.DeleteAIApplication"></a>
 ### func \(\*Database\) DeleteAIApplication
@@ -3549,6 +3639,33 @@ func (d *Database) GetConnectorByAPIBaseURL(apiBaseURL string) (*Connector, erro
 
 GetConnectorByAPIBaseURL retrieves a connector from the database by its API base URL.
 
+<a name="Database.GetCustomToolByID"></a>
+### func \(\*Database\) GetCustomToolByID
+
+```go
+func (d *Database) GetCustomToolByID(id uint) (*AIApplicationCustomTool, error)
+```
+
+GetCustomToolByID retrieves a custom tool by its ID.
+
+<a name="Database.GetCustomToolByNameAndAIApplicationID"></a>
+### func \(\*Database\) GetCustomToolByNameAndAIApplicationID
+
+```go
+func (d *Database) GetCustomToolByNameAndAIApplicationID(name string, aiApplicationID uint) (*AIApplicationCustomTool, error)
+```
+
+GetCustomToolByNameAndAIApplicationID retrieves a custom tool by name and AI Application ID.
+
+<a name="Database.GetCustomToolsByAIApplicationID"></a>
+### func \(\*Database\) GetCustomToolsByAIApplicationID
+
+```go
+func (d *Database) GetCustomToolsByAIApplicationID(aiApplicationID uint) ([]AIApplicationCustomTool, error)
+```
+
+GetCustomToolsByAIApplicationID retrieves all custom tools for an AI Application.
+
 <a name="Database.GetDefaultRole"></a>
 ### func \(\*Database\) GetDefaultRole
 
@@ -3557,6 +3674,15 @@ func (d *Database) GetDefaultRole() (*Role, error)
 ```
 
 
+
+<a name="Database.GetEnabledCustomToolsByAIApplicationID"></a>
+### func \(\*Database\) GetEnabledCustomToolsByAIApplicationID
+
+```go
+func (d *Database) GetEnabledCustomToolsByAIApplicationID(aiApplicationID uint) ([]AIApplicationCustomTool, error)
+```
+
+GetEnabledCustomToolsByAIApplicationID retrieves all enabled custom tools for an AI Application.
 
 <a name="Database.GetExportWorkflowableByID"></a>
 ### func \(\*Database\) GetExportWorkflowableByID
@@ -11098,10 +11224,13 @@ import "irmin-api/services"
 - [func NewInternalErrorf\(format string, args ...any\) error](<#NewInternalErrorf>)
 - [type AIAppToolExecutor](<#AIAppToolExecutor>)
   - [func NewAIAppToolExecutor\(aiApp \*db.AIApplication, apiServices \*APIServices\) \*AIAppToolExecutor](<#NewAIAppToolExecutor>)
+  - [func \(e \*AIAppToolExecutor\) ExecuteCustomTool\(ctx context.Context, toolName string, query string\) \(\*CustomToolResult, error\)](<#AIAppToolExecutor.ExecuteCustomTool>)
   - [func \(e \*AIAppToolExecutor\) ExecuteSQL\(ctx context.Context, sql string, limitResponse bool\) \(any, error\)](<#AIAppToolExecutor.ExecuteSQL>)
   - [func \(e \*AIAppToolExecutor\) GetAIApplication\(\) \*db.AIApplication](<#AIAppToolExecutor.GetAIApplication>)
   - [func \(e \*AIAppToolExecutor\) GetContentByPath\(ctx context.Context, unifiedPath string, limitResponse bool\) \(\[\]byte, error\)](<#AIAppToolExecutor.GetContentByPath>)
+  - [func \(e \*AIAppToolExecutor\) GetCustomTool\(name string\) \(\*db.AIApplicationCustomTool, error\)](<#AIAppToolExecutor.GetCustomTool>)
   - [func \(e \*AIAppToolExecutor\) GetDocumentation\(\) \(string, error\)](<#AIAppToolExecutor.GetDocumentation>)
+  - [func \(e \*AIAppToolExecutor\) GetEnabledCustomTools\(\) \[\]db.AIApplicationCustomTool](<#AIAppToolExecutor.GetEnabledCustomTools>)
   - [func \(e \*AIAppToolExecutor\) GetRepositoryObjectContent\(ctx context.Context, repoSlug, path, branch string, limitResponse bool\) \(\[\]byte, error\)](<#AIAppToolExecutor.GetRepositoryObjectContent>)
   - [func \(e \*AIAppToolExecutor\) GetRepositoryObjectSchema\(ctx context.Context, repoSlug, path, branch string\) \(\*irminmodels.ObjectSchema, error\)](<#AIAppToolExecutor.GetRepositoryObjectSchema>)
   - [func \(e \*AIAppToolExecutor\) GetSchemaByPath\(ctx context.Context, unifiedPath string\) \(\*irminmodels.ObjectSchema, error\)](<#AIAppToolExecutor.GetSchemaByPath>)
@@ -11265,6 +11394,8 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ZipRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(\[\]byte, string, error\)](<#APIServices.ZipRepositoryObject>)
 - [type AuthCache](<#AuthCache>)
 - [type AuthCacheEntry](<#AuthCacheEntry>)
+- [type CreateCustomToolRequest](<#CreateCustomToolRequest>)
+- [type CustomToolResult](<#CustomToolResult>)
 - [type ErrorHandler](<#ErrorHandler>)
   - [func NewErrorHandler\(logger \*slog.Logger, lm \*locales.LocaleManager\) \*ErrorHandler](<#NewErrorHandler>)
   - [func \(eh \*ErrorHandler\) HandleServiceError\(c fiber.Ctx, consoleLogPrefix string, err error, dict locales.Dictionary\) error](<#ErrorHandler.HandleServiceError>)
@@ -11272,6 +11403,7 @@ import "irmin-api/services"
 - [type PolicyFilters](<#PolicyFilters>)
 - [type ResolvedPath](<#ResolvedPath>)
 - [type TagEntityOperation](<#TagEntityOperation>)
+- [type UpdateCustomToolRequest](<#UpdateCustomToolRequest>)
 
 
 ## Constants
@@ -11327,6 +11459,19 @@ var (
 )
 ```
 
+<a name="ErrCustomToolNotFound"></a>
+
+```go
+var (
+    // ErrCustomToolNotFound is returned when a custom tool is not found.
+    ErrCustomToolNotFound = errors.New("custom tool not found")
+    // ErrCustomToolDisabled is returned when a custom tool is disabled.
+    ErrCustomToolDisabled = errors.New("custom tool is disabled")
+    // ErrQueryRequired is returned when a query parameter is required but not provided.
+    ErrQueryRequired = errors.New("query is required")
+)
+```
+
 <a name="ErrNotFound"></a>Sentinel errors used for consistent HTTP mapping in controllers
 
 ```go
@@ -11359,6 +11504,7 @@ var (
     ErrCannotRemoveOwnerFromWorkspace         = errors.New("cannot remove owner from workspace")
     ErrInvalidWebhookType                     = errors.New("invalid webhook type")
     ErrTagNameRequired                        = errors.New("tag name is required")
+    ErrCustomToolNameRequired                 = errors.New("custom tool name is required")
     ErrInvalidWorkflowType                    = errors.New("invalid workflow type")
     ErrWorkflowRunNotFound                    = errors.New("workflow run not found")
     ErrInvalidPath                            = errors.New("invalid path")
@@ -11452,6 +11598,15 @@ func NewAIAppToolExecutor(aiApp *db.AIApplication, apiServices *APIServices) *AI
 
 NewAIAppToolExecutor creates a new AIAppToolExecutor.
 
+<a name="AIAppToolExecutor.ExecuteCustomTool"></a>
+### func \(\*AIAppToolExecutor\) ExecuteCustomTool
+
+```go
+func (e *AIAppToolExecutor) ExecuteCustomTool(ctx context.Context, toolName string, query string) (*CustomToolResult, error)
+```
+
+ExecuteCustomTool executes a custom tool by name.
+
 <a name="AIAppToolExecutor.ExecuteSQL"></a>
 ### func \(\*AIAppToolExecutor\) ExecuteSQL
 
@@ -11479,6 +11634,15 @@ func (e *AIAppToolExecutor) GetContentByPath(ctx context.Context, unifiedPath st
 
 GetContentByPath retrieves the content of an object using a unified path. The path format is: /\{repository\-slug\}/\{ref\}/\{path\-within\-repo\}
 
+<a name="AIAppToolExecutor.GetCustomTool"></a>
+### func \(\*AIAppToolExecutor\) GetCustomTool
+
+```go
+func (e *AIAppToolExecutor) GetCustomTool(name string) (*db.AIApplicationCustomTool, error)
+```
+
+GetCustomTool retrieves a custom tool by name.
+
 <a name="AIAppToolExecutor.GetDocumentation"></a>
 ### func \(\*AIAppToolExecutor\) GetDocumentation
 
@@ -11487,6 +11651,15 @@ func (e *AIAppToolExecutor) GetDocumentation() (string, error)
 ```
 
 GetDocumentation retrieves documentation for the AI Application. Returns the system prompt \(SQL syntax guide, tool descriptions, etc.\) and any custom documentation.
+
+<a name="AIAppToolExecutor.GetEnabledCustomTools"></a>
+### func \(\*AIAppToolExecutor\) GetEnabledCustomTools
+
+```go
+func (e *AIAppToolExecutor) GetEnabledCustomTools() []db.AIApplicationCustomTool
+```
+
+GetEnabledCustomTools returns all enabled custom tools.
 
 <a name="AIAppToolExecutor.GetRepositoryObjectContent"></a>
 ### func \(\*AIAppToolExecutor\) GetRepositoryObjectContent
@@ -12971,6 +13144,38 @@ type AuthCacheEntry struct {
 }
 ```
 
+<a name="CreateCustomToolRequest"></a>
+## type CreateCustomToolRequest
+
+CreateCustomToolRequest represents the request body for creating a custom tool. This is defined here to avoid circular imports with the SDK.
+
+```go
+type CreateCustomToolRequest struct {
+    Name            string            `json:"name"`
+    Description     string            `json:"description"`
+    Type            db.CustomToolType `json:"type"`
+    Enabled         bool              `json:"enabled"`
+    StoredQueryID   *string           `json:"stored_query_id,omitempty"`
+    WorkflowID      *string           `json:"workflow_id,omitempty"`
+    EmbeddingPath   string            `json:"embedding_path,omitempty"`
+    EmbeddingTopK   int               `json:"embedding_top_k,omitempty"`
+    EmbeddingFilter map[string]string `json:"embedding_filter,omitempty"`
+}
+```
+
+<a name="CustomToolResult"></a>
+## type CustomToolResult
+
+CustomToolResult represents the result of executing a custom tool.
+
+```go
+type CustomToolResult struct {
+    ToolName string `json:"tool_name"`
+    ToolType string `json:"tool_type"`
+    Data     any    `json:"data"`
+}
+```
+
 <a name="ErrorHandler"></a>
 ## type ErrorHandler
 
@@ -13061,6 +13266,26 @@ const (
     TagEntityOperationAdd    TagEntityOperation = "add"
     TagEntityOperationRemove TagEntityOperation = "remove"
 )
+```
+
+<a name="UpdateCustomToolRequest"></a>
+## type UpdateCustomToolRequest
+
+UpdateCustomToolRequest represents the request body for updating a custom tool.
+
+```go
+type UpdateCustomToolRequest struct {
+    ID              *string           `json:"id,omitempty"`
+    Name            string            `json:"name"`
+    Description     string            `json:"description"`
+    Type            db.CustomToolType `json:"type"`
+    Enabled         bool              `json:"enabled"`
+    StoredQueryID   *string           `json:"stored_query_id,omitempty"`
+    WorkflowID      *string           `json:"workflow_id,omitempty"`
+    EmbeddingPath   string            `json:"embedding_path,omitempty"`
+    EmbeddingTopK   int               `json:"embedding_top_k,omitempty"`
+    EmbeddingFilter map[string]string `json:"embedding_filter,omitempty"`
+}
 ```
 
 # templatefiles

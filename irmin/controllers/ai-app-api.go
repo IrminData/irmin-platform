@@ -431,3 +431,135 @@ func (api *APIControllers) AIAppAPISearchEmbeddings(c fiber.Ctx) error {
 		Data: results,
 	})
 }
+
+// AIAppAPIExecuteCustomTool godoc
+// @Summary Execute custom tool
+// @Description Execute a custom tool defined for this AI Application
+// @Tags ai-app-api
+// @Security AIAppAPIKey
+// @Accept json
+// @Produce json
+// @Param tool_name path string true "Name of the custom tool to execute"
+// @Param body body object false "Request body with optional 'query' field for embedding_search tools"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Tool execution result"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - missing query for embedding search"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid API key"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - tool not found or disabled"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /ai-app/tools/{tool_name}/execute [post]
+func (api *APIControllers) AIAppAPIExecuteCustomTool(c fiber.Ctx) error {
+	// Get the AI Application from locals
+	aiApp, ok := c.Locals("ai_application").(*db.AIApplication)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(irminmodels.IrminAPIResponse{
+			Message: "Unauthorized",
+		})
+	}
+
+	// Get tool name from path params
+	toolName := c.Params("tool_name")
+	if toolName == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(irminmodels.IrminAPIResponse{
+			Message: "Tool name is required",
+		})
+	}
+
+	// Parse optional request body (for embedding_search tools)
+	var req struct {
+		Query string `json:"query"`
+	}
+	// Ignore parse errors - body is optional
+	_ = c.Bind().JSON(&req)
+
+	// Create tool executor and execute custom tool
+	executor := services.NewAIAppToolExecutor(aiApp, api.Services)
+	result, err := executor.ExecuteCustomTool(c.Context(), toolName, req.Query)
+	if err != nil {
+		if errors.Is(err, services.ErrCustomToolNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(irminmodels.IrminAPIResponse{
+				Message: "Custom tool not found",
+			})
+		}
+		if errors.Is(err, services.ErrCustomToolDisabled) {
+			return c.Status(fiber.StatusForbidden).JSON(irminmodels.IrminAPIResponse{
+				Message: "Custom tool is disabled",
+			})
+		}
+		if errors.Is(err, services.ErrPathNotInDataSources) {
+			return c.Status(fiber.StatusForbidden).JSON(irminmodels.IrminAPIResponse{
+				Message: "Tool references paths outside configured data sources",
+			})
+		}
+		if errors.Is(err, services.ErrQueryRequired) {
+			return c.Status(fiber.StatusBadRequest).JSON(irminmodels.IrminAPIResponse{
+				Message: "Query is required for this tool",
+			})
+		}
+		api.Logger.Error("AI App API execute custom tool error", "error", err, "tool", toolName)
+		return c.Status(fiber.StatusInternalServerError).JSON(irminmodels.IrminAPIResponse{
+			Message: "Custom tool execution failed",
+		})
+	}
+
+	return c.JSON(irminmodels.IrminAPIResponse{
+		Data: result,
+	})
+}
+
+// AIAppAPIListCustomTools godoc
+// @Summary List custom tools
+// @Description List all enabled custom tools for this AI Application
+// @Tags ai-app-api
+// @Security AIAppAPIKey
+// @Accept json
+// @Produce json
+// @Success 200 {object} irminmodels.IrminAPIResponse "List of custom tools"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid API key"
+// @Router /ai-app/tools [get]
+func (api *APIControllers) AIAppAPIListCustomTools(c fiber.Ctx) error {
+	// Get the AI Application from locals
+	aiApp, ok := c.Locals("ai_application").(*db.AIApplication)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(irminmodels.IrminAPIResponse{
+			Message: "Unauthorized",
+		})
+	}
+
+	// Create tool executor and get enabled custom tools
+	executor := services.NewAIAppToolExecutor(aiApp, api.Services)
+	tools := executor.GetEnabledCustomTools()
+
+	// Format tools for response
+	toolsResponse := []fiber.Map{}
+	for _, tool := range tools {
+		toolSqid, encodeErr := api.SQIDManager.Encode("ai_application_custom_tools", uint64(tool.ID))
+		if encodeErr != nil {
+			api.Logger.Error("Failed to encode custom tool ID", "error", encodeErr, "tool_id", tool.ID)
+			return c.Status(fiber.StatusInternalServerError).JSON(irminmodels.IrminAPIResponse{
+				Message: "Failed to format custom tools",
+			})
+		}
+		toolResponse := fiber.Map{
+			"id":          toolSqid,
+			"name":        tool.Name,
+			"description": tool.Description,
+			"type":        tool.Type,
+		}
+
+		// Add type-specific fields
+		switch tool.Type {
+		case db.CustomToolTypeEmbeddingSearch:
+			toolResponse["requires_query"] = true
+		case db.CustomToolTypeStoredQuery, db.CustomToolTypeWorkflow:
+			// No additional fields required for these types
+		}
+
+		toolsResponse = append(toolsResponse, toolResponse)
+	}
+
+	return c.JSON(irminmodels.IrminAPIResponse{
+		Data: fiber.Map{
+			"tools": toolsResponse,
+		},
+	})
+}

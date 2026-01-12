@@ -45,6 +45,14 @@ var (
 	ErrNoEmbeddingFilesFound = errors.New("no embedding files found in data sources")
 )
 var (
+	// ErrCustomToolNotFound is returned when a custom tool is not found.
+	ErrCustomToolNotFound = errors.New("custom tool not found")
+	// ErrCustomToolDisabled is returned when a custom tool is disabled.
+	ErrCustomToolDisabled = errors.New("custom tool is disabled")
+	// ErrQueryRequired is returned when a query parameter is required but not provided.
+	ErrQueryRequired = errors.New("query is required")
+)
+var (
 	ErrNotFound                               = errors.New("not found")
 	ErrInvalidRequest                         = errors.New("invalid request")
 	ErrInvalidQueryParams                     = errors.New("invalid query parameters")
@@ -73,6 +81,7 @@ var (
 	ErrCannotRemoveOwnerFromWorkspace         = errors.New("cannot remove owner from workspace")
 	ErrInvalidWebhookType                     = errors.New("invalid webhook type")
 	ErrTagNameRequired                        = errors.New("tag name is required")
+	ErrCustomToolNameRequired                 = errors.New("custom tool name is required")
 	ErrInvalidWorkflowType                    = errors.New("invalid workflow type")
 	ErrWorkflowRunNotFound                    = errors.New("workflow run not found")
 	ErrInvalidPath                            = errors.New("invalid path")
@@ -132,6 +141,13 @@ type AIAppToolExecutor struct {
 func NewAIAppToolExecutor(aiApp *db.AIApplication, apiServices *APIServices) *AIAppToolExecutor
     NewAIAppToolExecutor creates a new AIAppToolExecutor.
 
+func (e *AIAppToolExecutor) ExecuteCustomTool(
+	ctx context.Context,
+	toolName string,
+	query string,
+) (*CustomToolResult, error)
+    ExecuteCustomTool executes a custom tool by name.
+
 func (e *AIAppToolExecutor) ExecuteSQL(
 	ctx context.Context,
 	sql string,
@@ -151,10 +167,16 @@ func (e *AIAppToolExecutor) GetContentByPath(
     GetContentByPath retrieves the content of an object using a unified path.
     The path format is: /{repository-slug}/{ref}/{path-within-repo}
 
+func (e *AIAppToolExecutor) GetCustomTool(name string) (*db.AIApplicationCustomTool, error)
+    GetCustomTool retrieves a custom tool by name.
+
 func (e *AIAppToolExecutor) GetDocumentation() (string, error)
     GetDocumentation retrieves documentation for the AI Application. Returns
     the system prompt (SQL syntax guide, tool descriptions, etc.) and any custom
     documentation.
+
+func (e *AIAppToolExecutor) GetEnabledCustomTools() []db.AIApplicationCustomTool
+    GetEnabledCustomTools returns all enabled custom tools.
 
 func (e *AIAppToolExecutor) GetRepositoryObjectContent(
 	ctx context.Context,
@@ -1391,6 +1413,27 @@ type AuthCacheEntry struct {
 }
     AuthCacheEntry represents a cached authentication result.
 
+type CreateCustomToolRequest struct {
+	Name            string            `json:"name"`
+	Description     string            `json:"description"`
+	Type            db.CustomToolType `json:"type"`
+	Enabled         bool              `json:"enabled"`
+	StoredQueryID   *string           `json:"stored_query_id,omitempty"`
+	WorkflowID      *string           `json:"workflow_id,omitempty"`
+	EmbeddingPath   string            `json:"embedding_path,omitempty"`
+	EmbeddingTopK   int               `json:"embedding_top_k,omitempty"`
+	EmbeddingFilter map[string]string `json:"embedding_filter,omitempty"`
+}
+    CreateCustomToolRequest represents the request body for creating a custom
+    tool. This is defined here to avoid circular imports with the SDK.
+
+type CustomToolResult struct {
+	ToolName string `json:"tool_name"`
+	ToolType string `json:"tool_type"`
+	Data     any    `json:"data"`
+}
+    CustomToolResult represents the result of executing a custom tool.
+
 type ErrorHandler struct {
 	Logger *slog.Logger
 	// Has unexported fields.
@@ -1444,5 +1487,20 @@ const (
 	TagEntityOperationAdd    TagEntityOperation = "add"
 	TagEntityOperationRemove TagEntityOperation = "remove"
 )
+type UpdateCustomToolRequest struct {
+	ID              *string           `json:"id,omitempty"`
+	Name            string            `json:"name"`
+	Description     string            `json:"description"`
+	Type            db.CustomToolType `json:"type"`
+	Enabled         bool              `json:"enabled"`
+	StoredQueryID   *string           `json:"stored_query_id,omitempty"`
+	WorkflowID      *string           `json:"workflow_id,omitempty"`
+	EmbeddingPath   string            `json:"embedding_path,omitempty"`
+	EmbeddingTopK   int               `json:"embedding_top_k,omitempty"`
+	EmbeddingFilter map[string]string `json:"embedding_filter,omitempty"`
+}
+    UpdateCustomToolRequest represents the request body for updating a custom
+    tool.
+
 </pre>
 </body></html>

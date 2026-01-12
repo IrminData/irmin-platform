@@ -53,6 +53,8 @@ func RegisterAPIRoutes(
 	aiAppAPI.Get("/content", apiControllers.AIAppAPIGetObject)
 	aiAppAPI.Get("/schema", apiControllers.AIAppAPIGetSchema)
 	aiAppAPI.Post("/embeddings/search", apiControllers.AIAppAPISearchEmbeddings)
+	aiAppAPI.Get("/tools", apiControllers.AIAppAPIListCustomTools)
+	aiAppAPI.Post("/tools/:tool_name/execute", apiControllers.AIAppAPIExecuteCustomTool)
 
 	// Secure API routes
 	v1 := app.Group("/api/v1", apiMiddlewares.LocaleMiddleware, apiMiddlewares.AuthMiddleware)

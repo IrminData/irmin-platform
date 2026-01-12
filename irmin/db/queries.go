@@ -37,6 +37,12 @@ func (d *Database) DeleteStoredQuery(tx *gorm.DB, id uint) error {
 	if err := tx.Where(&QueryTag{StoredQueryID: id}).Delete(&QueryTag{}).Error; err != nil {
 		return err
 	}
+
+	// Delete AI Application custom tools that reference this query
+	if err := tx.Where(&AIApplicationCustomTool{StoredQueryID: &id}).Delete(&AIApplicationCustomTool{}).Error; err != nil {
+		return err
+	}
+
 	// Then delete the query
 	if err := tx.Delete(&StoredQuery{}, id).Error; err != nil {
 		return err

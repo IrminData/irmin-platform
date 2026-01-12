@@ -108,6 +108,9 @@ func registerAIAppTools(server *sdkmcp.Server, aiApp *db.AIApplication, apiServi
 		registerAIAppDocsTool(server, aiApp, apiServices)
 	}
 
+	// Register custom tools
+	registerAIAppCustomTools(server, aiApp, apiServices)
+
 	// Always register the info tool
 	registerAIAppInfoTool(server, aiApp, apiServices)
 }
@@ -368,4 +371,130 @@ func mcpError(message string) *sdkmcp.CallToolResult {
 		},
 		IsError: true,
 	}
+}
+
+// registerAIAppCustomTools registers all enabled custom tools for the AI Application.
+func registerAIAppCustomTools(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+	executor := services.NewAIAppToolExecutor(aiApp, apiServices)
+	customTools := executor.GetEnabledCustomTools()
+
+	for _, tool := range customTools {
+		registerSingleCustomTool(server, aiApp, apiServices, tool)
+	}
+}
+
+// registerSingleCustomTool registers a single custom tool with the MCP server.
+func registerSingleCustomTool(
+	server *sdkmcp.Server,
+	aiApp *db.AIApplication,
+	apiServices *services.APIServices,
+	tool db.AIApplicationCustomTool,
+) {
+	// Create tool name with prefix to avoid conflicts
+	toolName := "irmin_custom_" + tool.Name
+
+	switch tool.Type {
+	case db.CustomToolTypeStoredQuery:
+		registerCustomNoArgsTool(server, aiApp, apiServices, tool, toolName,
+			"Execute a predefined SQL query and return the results.")
+	case db.CustomToolTypeWorkflow:
+		registerCustomNoArgsTool(
+			server,
+			aiApp,
+			apiServices,
+			tool,
+			toolName,
+			"Trigger a workflow execution and wait for completion. Returns workflow run logs, status, and execution details. May timeout for long-running workflows.",
+		)
+	case db.CustomToolTypeEmbeddingSearch:
+		registerCustomEmbeddingSearchTool(server, aiApp, apiServices, tool, toolName)
+	}
+}
+
+// registerCustomNoArgsTool registers a custom tool that takes no arguments (stored query or workflow).
+func registerCustomNoArgsTool(
+	server *sdkmcp.Server,
+	aiApp *db.AIApplication,
+	apiServices *services.APIServices,
+	tool db.AIApplicationCustomTool,
+	toolName string,
+	defaultDescription string,
+) {
+	description := tool.Description
+	if description == "" {
+		description = defaultDescription
+	}
+
+	// Capture tool name for closure
+	capturedToolName := tool.Name
+
+	sdkmcp.AddTool(
+		server,
+		&sdkmcp.Tool{
+			Name:        toolName,
+			Description: description,
+		},
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args struct{}) (*sdkmcp.CallToolResult, struct{}, error) {
+			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
+			result, err := executor.ExecuteCustomTool(ctx, capturedToolName, "")
+			if err != nil {
+				return mcpError(err.Error()), struct{}{}, nil
+			}
+
+			jsonData, _ := json.MarshalIndent(result.Data, "", "  ")
+			return &sdkmcp.CallToolResult{
+				Content: []sdkmcp.Content{
+					&sdkmcp.TextContent{Text: string(jsonData)},
+				},
+			}, struct{}{}, nil
+		},
+	)
+}
+
+// customEmbeddingSearchArgs defines arguments for custom embedding search tools.
+type customEmbeddingSearchArgs struct {
+	Query string `json:"query" jsonschema:"required,The search query"`
+}
+
+// registerCustomEmbeddingSearchTool registers an embedding search custom tool.
+func registerCustomEmbeddingSearchTool(
+	server *sdkmcp.Server,
+	aiApp *db.AIApplication,
+	apiServices *services.APIServices,
+	tool db.AIApplicationCustomTool,
+	toolName string,
+) {
+	description := tool.Description
+	if description == "" {
+		description = "Search for semantically similar content using natural language queries."
+	}
+
+	// Capture tool name for closure
+	capturedToolName := tool.Name
+
+	sdkmcp.AddTool(
+		server,
+		&sdkmcp.Tool{
+			Name:        toolName,
+			Description: description,
+		},
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args customEmbeddingSearchArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+			if args.Query == "" {
+				return mcpError("Query is required"), struct{}{}, nil
+			}
+
+			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
+			result, err := executor.ExecuteCustomTool(ctx, capturedToolName, args.Query)
+			if err != nil {
+				return mcpError(err.Error()), struct{}{}, nil
+			}
+
+			jsonData, _ := json.MarshalIndent(result.Data, "", "  ")
+			return &sdkmcp.CallToolResult{
+				Content: []sdkmcp.Content{
+					&sdkmcp.TextContent{Text: string(jsonData)},
+				},
+			}, struct{}{}, nil
+		},
+	)
 }

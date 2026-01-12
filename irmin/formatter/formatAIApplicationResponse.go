@@ -26,19 +26,17 @@ func FormatAIApplicationResponse(
 	}
 
 	// Format tags using existing formatter
-	var tagsResponse []irminmodels.Tag
-	if len(aiApplication.Tags) > 0 {
-		for _, tag := range aiApplication.Tags {
-			tagResponse, tagErr := FormatTagResponse(&tag, sqidManager)
-			if tagErr != nil {
-				return nil, tagErr
-			}
-			tagsResponse = append(tagsResponse, *tagResponse)
+	tagsResponse := []irminmodels.Tag{}
+	for _, tag := range aiApplication.Tags {
+		tagResponse, tagErr := FormatTagResponse(&tag, sqidManager)
+		if tagErr != nil {
+			return nil, tagErr
 		}
+		tagsResponse = append(tagsResponse, *tagResponse)
 	}
 
 	// Format data sources
-	var dataSources []irminmodels.AIApplicationDataSource
+	dataSources := []irminmodels.AIApplicationDataSource{}
 	for _, ds := range aiApplication.DataSources {
 		// Get repository slug
 		repositorySlug := ds.Repository.Slug
@@ -69,6 +67,16 @@ func FormatAIApplicationResponse(
 		}
 	}
 
+	// Format custom tools
+	customToolsResponse := []irminmodels.AIApplicationCustomTool{}
+	for _, ct := range aiApplication.CustomTools {
+		customToolResponse, ctErr := formatCustomToolResponse(&ct, sqidManager)
+		if ctErr != nil {
+			return nil, ctErr
+		}
+		customToolsResponse = append(customToolsResponse, *customToolResponse)
+	}
+
 	// Build the response
 	response := &irminmodels.AIApplication{
 		ID:             aiApplicationSqid,
@@ -77,6 +85,7 @@ func FormatAIApplicationResponse(
 		Documentation:  aiApplication.Documentation,
 		AllowedOrigins: aiApplication.AllowedOrigins,
 		Tools:          toolsResponse,
+		CustomTools:    customToolsResponse,
 		DataSources:    dataSources,
 		APIKey:         apiKeyPtr,
 		Owner:          *ownerResponse,
@@ -86,4 +95,55 @@ func FormatAIApplicationResponse(
 	}
 
 	return response, nil
+}
+
+// formatCustomToolResponse formats a custom tool response.
+func formatCustomToolResponse(
+	tool *db.AIApplicationCustomTool,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.AIApplicationCustomTool, error) {
+	// Encode the custom tool ID
+	toolSqid, err := sqidManager.Encode("ai_application_custom_tools", uint64(tool.ID))
+	if err != nil {
+		return nil, err
+	}
+
+	// Encode stored query ID if present
+	var storedQueryIDPtr *string
+	var storedQuerySqid string
+	if tool.StoredQueryID != nil {
+		var sqErr error
+		storedQuerySqid, sqErr = sqidManager.Encode("queries", uint64(*tool.StoredQueryID))
+		if sqErr != nil {
+			return nil, sqErr
+		}
+		storedQueryIDPtr = &storedQuerySqid
+	}
+
+	// Encode workflow ID if present
+	var workflowIDPtr *string
+	var workflowSqid string
+	if tool.WorkflowID != nil {
+		var wfErr error
+		workflowSqid, wfErr = sqidManager.Encode("workflows", uint64(*tool.WorkflowID))
+		if wfErr != nil {
+			return nil, wfErr
+		}
+		workflowIDPtr = &workflowSqid
+	}
+
+	return &irminmodels.AIApplicationCustomTool{
+		ID:              toolSqid,
+		Name:            tool.Name,
+		Description:     tool.Description,
+		Type:            irminmodels.CustomToolType(tool.Type),
+		Enabled:         tool.Enabled,
+		StoredQueryID:   storedQueryIDPtr,
+		WorkflowID:      workflowIDPtr,
+		EmbeddingPath:   tool.EmbeddingPath,
+		EmbeddingTopK:   tool.EmbeddingTopK,
+		EmbeddingFilter: tool.EmbeddingFilter,
+		CreatedAt:       tool.CreatedAt,
+		UpdatedAt:       tool.UpdatedAt,
+	}, nil
 }

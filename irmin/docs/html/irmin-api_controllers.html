@@ -22,6 +22,20 @@ func NewAPIControllers(
 	apiServices *services.APIServices,
 ) *APIControllers
 
+func (api *APIControllers) AIAppAPIExecuteCustomTool(c fiber.Ctx) error
+    AIAppAPIExecuteCustomTool godoc @Summary Execute custom tool @Description
+    Execute a custom tool defined for this AI Application @Tags ai-app-api
+    @Security AIAppAPIKey @Accept json @Produce json @Param tool_name path
+    string true "Name of the custom tool to execute" @Param body body object
+    false "Request body with optional 'query' field for embedding_search
+    tools" @Success 200 {object} irminmodels.IrminAPIResponse "Tool
+    execution result" @Failure 400 {object} irminmodels.IrminAPIResponse
+    "Bad request - missing query for embedding search" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid API key" @Failure
+    403 {object} irminmodels.IrminAPIResponse "Forbidden - tool not found or
+    disabled" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
+    server error" @Router /ai-app/tools/{tool_name}/execute [post]
+
 func (api *APIControllers) AIAppAPIGetObject(c fiber.Ctx) error
     AIAppAPIGetObject godoc @Summary Get object content @Description
     Get the content of an object using unified path format:
@@ -57,6 +71,14 @@ func (api *APIControllers) AIAppAPIInfo(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "AI Application info" @Failure 401 {object}
     irminmodels.IrminAPIResponse "Unauthorized - invalid API key" @Router
     /ai-app/info [get]
+
+func (api *APIControllers) AIAppAPIListCustomTools(c fiber.Ctx) error
+    AIAppAPIListCustomTools godoc @Summary List custom tools @Description
+    List all enabled custom tools for this AI Application @Tags ai-app-api
+    @Security AIAppAPIKey @Accept json @Produce json @Success 200 {object}
+    irminmodels.IrminAPIResponse "List of custom tools" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid API key" @Router
+    /ai-app/tools [get]
 
 func (api *APIControllers) AIAppAPIListObjects(c fiber.Ctx) error
     AIAppAPIListObjects godoc @Summary List objects @Description List objects

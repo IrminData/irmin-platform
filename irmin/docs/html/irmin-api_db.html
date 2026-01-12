@@ -185,6 +185,7 @@ type AIApplication struct {
 	OwnerID        uint                      `json:"owner_id"`
 	Owner          User                      `json:"owner"           gorm:"foreignKey:OwnerID"`
 	DataSources    []AIApplicationDataSource `json:"data_sources"    gorm:"foreignKey:AIApplicationID"`
+	CustomTools    []AIApplicationCustomTool `json:"custom_tools"    gorm:"foreignKey:AIApplicationID"`
 	Tags           []Tag                     `json:"tags,omitempty"  gorm:"many2many:ai_application_tags;"`
 }
     AIApplication represents an AI application in the system.
@@ -192,6 +193,32 @@ type AIApplication struct {
 func (a *AIApplication) ParseToolConfig() AIApplicationToolConfig
     ParseToolConfig returns the tool configuration, defaulting to all tools
     disabled if not set.
+
+type AIApplicationCustomTool struct {
+	gorm.Model
+
+	AIApplicationID uint           `json:"ai_application_id" gorm:"index;not null"`
+	AIApplication   AIApplication  `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
+	Name            string         `json:"name"              gorm:"not null"`
+	Description     string         `json:"description"`
+	Type            CustomToolType `json:"type"              gorm:"not null"`
+	Enabled         bool           `json:"enabled"           gorm:"default:true"`
+
+	// For stored_query type
+	StoredQueryID *uint        `json:"stored_query_id,omitempty"`
+	StoredQuery   *StoredQuery `json:"stored_query,omitempty"    gorm:"foreignKey:StoredQueryID"`
+
+	// For workflow type
+	WorkflowID *uint     `json:"workflow_id,omitempty"`
+	Workflow   *Workflow `json:"workflow,omitempty"    gorm:"foreignKey:WorkflowID"`
+
+	// For embedding_search type
+	EmbeddingPath   string            `json:"embedding_path,omitempty"`
+	EmbeddingTopK   int               `json:"embedding_top_k,omitempty"`
+	EmbeddingFilter map[string]string `json:"embedding_filter,omitempty" gorm:"type:jsonb;serializer:json"`
+}
+    AIApplicationCustomTool represents a custom tool defined for an AI
+    Application.
 
 type AIApplicationDataSource struct {
 	gorm.Model
@@ -342,6 +369,17 @@ type CursorPagination struct {
 
 type CustomFieldValues map[string]string
 
+type CustomToolType string
+    CustomToolType defines the type of custom tool.
+
+const (
+	// CustomToolTypeStoredQuery executes a stored SQL query.
+	CustomToolTypeStoredQuery CustomToolType = "stored_query"
+	// CustomToolTypeWorkflow triggers a workflow run.
+	CustomToolTypeWorkflow CustomToolType = "workflow"
+	// CustomToolTypeEmbeddingSearch searches a specific embedding file.
+	CustomToolTypeEmbeddingSearch CustomToolType = "embedding_search"
+)
 type Database struct {
 	*gorm.DB
 	// Has unexported fields.
@@ -386,6 +424,10 @@ func (d *Database) Close()
 
 func (d *Database) CreateSearchIndexes() error
     CreateSearchIndexes creates indexes to optimize search performance.
+
+func (d *Database) CustomToolNameExists(name string, aiApplicationID uint, excludeID *uint) (bool, error)
+    CustomToolNameExists checks if a custom tool with the given name exists for
+    an AI Application.
 
 func (d *Database) DeleteAIApplication(tx *gorm.DB, id uint) error
     DeleteAIApplication deletes an AI application and all related records.
@@ -508,7 +550,25 @@ func (d *Database) GetConnectorByAPIBaseURL(apiBaseURL string) (*Connector, erro
     GetConnectorByAPIBaseURL retrieves a connector from the database by its API
     base URL.
 
+func (d *Database) GetCustomToolByID(id uint) (*AIApplicationCustomTool, error)
+    GetCustomToolByID retrieves a custom tool by its ID.
+
+func (d *Database) GetCustomToolByNameAndAIApplicationID(
+	name string,
+	aiApplicationID uint,
+) (*AIApplicationCustomTool, error)
+    GetCustomToolByNameAndAIApplicationID retrieves a custom tool by name and AI
+    Application ID.
+
+func (d *Database) GetCustomToolsByAIApplicationID(aiApplicationID uint) ([]AIApplicationCustomTool, error)
+    GetCustomToolsByAIApplicationID retrieves all custom tools for an AI
+    Application.
+
 func (d *Database) GetDefaultRole() (*Role, error)
+
+func (d *Database) GetEnabledCustomToolsByAIApplicationID(aiApplicationID uint) ([]AIApplicationCustomTool, error)
+    GetEnabledCustomToolsByAIApplicationID retrieves all enabled custom tools
+    for an AI Application.
 
 func (d *Database) GetExportWorkflowableByID(id uint) (*ExportWorkflowable, error)
     GetExportWorkflowableByID retrieves an export workflowable by its ID.
