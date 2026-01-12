@@ -14,6 +14,7 @@ import {
   TbTool,
 } from 'react-icons/tb';
 
+import AIApplicationCustomToolsEditor from '@/components/ai-application/AIApplicationCustomToolsEditor';
 import AIApplicationDataSourcesEditor from '@/components/ai-application/AIApplicationDataSourcesEditor';
 import { Button } from '@/components/ui/button';
 import {
@@ -494,6 +495,9 @@ const AIApplicationOverviewContent = () => {
             <AIApplicationDataSourcesEditor />
           </div>
         </div>
+
+        {/* Custom Tools Editor - Full Width */}
+        <AIApplicationCustomToolsEditor />
       </div>
     </ContentWrapper>
   );

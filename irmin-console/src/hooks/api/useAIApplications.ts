@@ -142,7 +142,8 @@ export function useAIApplication(aiApplicationId: string) {
   const updateAIApplicationMutation = useMutation<
     IrminAPIResponse<AIApplication>,
     Error,
-    UpdateAIApplicationInput
+    UpdateAIApplicationInput,
+    { previousData: IrminAPIResponse<AIApplication> | undefined }
   >({
     mutationFn: async (data) => {
       const token = await getToken();
@@ -157,22 +158,66 @@ export function useAIApplication(aiApplicationId: string) {
         tools: data.tools,
         dataSources: data.data_sources,
         tags: data.tags,
+        customTools: data.custom_tools,
       });
+    },
+    onMutate: async (newData) => {
+      // Cancel any outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({
+        queryKey: aiApplicationQueryKey(workspaceSlug, aiApplicationId),
+      });
+
+      // Snapshot the previous value
+      const previousData = queryClient.getQueryData<
+        IrminAPIResponse<AIApplication>
+      >(aiApplicationQueryKey(workspaceSlug, aiApplicationId));
+
+      // Optimistically update to the new value
+      if (previousData?.data) {
+        queryClient.setQueryData<IrminAPIResponse<AIApplication>>(
+          aiApplicationQueryKey(workspaceSlug, aiApplicationId),
+          {
+            ...previousData,
+            data: {
+              ...previousData.data,
+              ...newData,
+              // For custom_tools, generate temporary IDs for new tools
+              custom_tools: newData.custom_tools
+                ? newData.custom_tools.map((tool, index) => ({
+                    ...tool,
+                    id: tool.id ?? `temp-${Date.now()}-${index}`,
+                  }))
+                : previousData.data.custom_tools,
+            },
+          }
+        );
+      }
+
+      return { previousData };
     },
     onSuccess: (res) => {
       irminAlert(
         'success',
         res.message ?? 'AI Application updated successfully'
       );
-      queryClient.invalidateQueries({
-        queryKey: aiApplicationQueryKey(workspaceSlug, aiApplicationId),
-      });
+      // Update the cache with the actual server response
+      queryClient.setQueryData<IrminAPIResponse<AIApplication>>(
+        aiApplicationQueryKey(workspaceSlug, aiApplicationId),
+        res
+      );
       queryClient.invalidateQueries({
         queryKey: aiApplicationsQueryKey(workspaceSlug),
       });
     },
-    onError: (error) => {
+    onError: (error, _newData, context) => {
       irminAlert('error', error.message ?? 'Error updating AI Application');
+      // Rollback to the previous value
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          aiApplicationQueryKey(workspaceSlug, aiApplicationId),
+          context.previousData
+        );
+      }
       // Invalidate queries to ensure UI reflects the actual server state
       queryClient.invalidateQueries({
         queryKey: aiApplicationQueryKey(workspaceSlug, aiApplicationId),

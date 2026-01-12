@@ -1,6 +1,7 @@
 import type {
   AIApplicationDataSource,
   AIApplicationToolConfig,
+  UpdateCustomToolRequest,
 } from '@/types/core/AIApplication';
 
 /**
@@ -17,6 +18,8 @@ export interface CreateAIApplicationInput {
   allowed_origins?: string[];
   /** Tool configuration */
   tools?: AIApplicationToolConfig;
+  /** Custom tools */
+  custom_tools?: UpdateCustomToolRequest[];
   /** Data sources */
   data_sources?: AIApplicationDataSource[];
   /** Tag IDs */
@@ -37,6 +40,8 @@ export interface UpdateAIApplicationInput {
   allowed_origins?: string[];
   /** Tool configuration */
   tools?: AIApplicationToolConfig;
+  /** Custom tools */
+  custom_tools?: UpdateCustomToolRequest[];
   /** Data sources */
   data_sources?: AIApplicationDataSource[];
   /** Tag IDs */

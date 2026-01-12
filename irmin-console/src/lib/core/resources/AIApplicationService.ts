@@ -7,6 +7,7 @@ import type {
   CreateAIApplicationRequest,
   TransferAIApplicationOwnershipRequest,
   UpdateAIApplicationRequest,
+  UpdateCustomToolRequest,
 } from '@/types/core/AIApplication';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
@@ -152,6 +153,7 @@ class AIApplicationService {
    * @param props.documentation - The updated documentation.
    * @param props.allowedOrigins - The updated allowed origins.
    * @param props.tools - The updated tool configuration.
+   * @param props.customTools - The updated custom tools.
    * @param props.dataSources - The updated data sources.
    * @param props.tags - The updated tag IDs.
    * @returns IrminAPIResponse containing the updated AIApplication.
@@ -164,6 +166,7 @@ class AIApplicationService {
     documentation,
     allowedOrigins,
     tools,
+    customTools,
     dataSources,
     tags,
   }: {
@@ -174,6 +177,7 @@ class AIApplicationService {
     documentation?: string;
     allowedOrigins?: string[];
     tools?: AIApplicationToolConfig;
+    customTools?: UpdateCustomToolRequest[];
     dataSources?: AIApplicationDataSource[];
     tags?: string[];
   }): Promise<IrminAPIResponse<AIApplication>> {
@@ -185,6 +189,7 @@ class AIApplicationService {
         documentation,
         allowed_origins: allowedOrigins,
         tools,
+        custom_tools: customTools,
         data_sources: dataSources,
         tags,
       };

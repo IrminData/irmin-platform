@@ -32,6 +32,41 @@ export interface AIApplicationToolConfig {
 }
 
 /**
+ * Custom tool types
+ */
+export type CustomToolType = 'stored_query' | 'workflow' | 'embedding_search';
+
+/**
+ * Custom tool for an AI Application
+ */
+export interface AIApplicationCustomTool {
+  /** Custom tool ID */
+  id?: string;
+  /** Tool name (must be unique within the AI Application) */
+  name: string;
+  /** Tool description shown to consuming LLMs */
+  description: string;
+  /** Type of custom tool */
+  type: CustomToolType;
+  /** Whether the tool is enabled */
+  enabled: boolean;
+  /** Stored query ID (for stored_query type) */
+  stored_query_id?: string;
+  /** Workflow ID (for workflow type) */
+  workflow_id?: string;
+  /** Embedding path (for embedding_search type) */
+  embedding_path?: string;
+  /** Top K results (for embedding_search type) */
+  embedding_top_k?: number;
+  /** Metadata filter (for embedding_search type) */
+  embedding_filter?: Record<string, string>;
+  /** Creation timestamp */
+  created_at?: string;
+  /** Last update timestamp */
+  updated_at?: string;
+}
+
+/**
  * AI Application object
  */
 export interface AIApplication {
@@ -47,6 +82,8 @@ export interface AIApplication {
   allowed_origins: string[];
   /** Tool configuration */
   tools?: AIApplicationToolConfig;
+  /** Custom tools */
+  custom_tools?: AIApplicationCustomTool[];
   /** Data sources (repositories and paths) */
   data_sources: AIApplicationDataSource[];
   /** API key (only returned on creation) */
@@ -59,6 +96,38 @@ export interface AIApplication {
   created_at: string;
   /** Last update timestamp */
   updated_at: string;
+}
+
+/**
+ * Request body for creating a custom tool
+ */
+interface CreateCustomToolRequest {
+  /** Tool name */
+  name: string;
+  /** Tool description */
+  description: string;
+  /** Type of custom tool */
+  type: CustomToolType;
+  /** Whether the tool is enabled */
+  enabled: boolean;
+  /** Stored query ID (for stored_query type) */
+  stored_query_id?: string;
+  /** Workflow ID (for workflow type) */
+  workflow_id?: string;
+  /** Embedding path (for embedding_search type) */
+  embedding_path?: string;
+  /** Top K results (for embedding_search type) */
+  embedding_top_k?: number;
+  /** Metadata filter (for embedding_search type) */
+  embedding_filter?: Record<string, string>;
+}
+
+/**
+ * Request body for updating a custom tool
+ */
+export interface UpdateCustomToolRequest extends CreateCustomToolRequest {
+  /** Custom tool ID (if updating existing tool) */
+  id?: string;
 }
 
 /**
@@ -75,6 +144,8 @@ export interface CreateAIApplicationRequest {
   allowed_origins?: string[];
   /** Tool configuration */
   tools?: AIApplicationToolConfig;
+  /** Custom tools */
+  custom_tools?: CreateCustomToolRequest[];
   /** Data sources */
   data_sources?: AIApplicationDataSource[];
   /** Tag IDs */
@@ -95,6 +166,8 @@ export interface UpdateAIApplicationRequest {
   allowed_origins?: string[];
   /** Tool configuration */
   tools?: AIApplicationToolConfig;
+  /** Custom tools */
+  custom_tools?: UpdateCustomToolRequest[];
   /** Data sources */
   data_sources?: AIApplicationDataSource[];
   /** Tag IDs */

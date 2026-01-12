@@ -122,6 +122,7 @@ export function useWorkflows(type?: WorkflowableType) {
   return {
     // Queries
     workflowsQuery,
+    workflows: workflowsQuery.data?.data,
 
     // Mutations
     createWorkflowMutation,

@@ -77,7 +77,10 @@ export default function CreateAIApplicationModal({
         <DialogHeader>
           <DialogTitle>{dict.aiApplication.createAIApplication}</DialogTitle>
           <DialogDescription>
-            {dict.consoleNavigation.staticSearchItems.description.createAIApplication}
+            {
+              dict.consoleNavigation.staticSearchItems.description
+                .createAIApplication
+            }
           </DialogDescription>
         </DialogHeader>
 

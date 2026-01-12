@@ -284,6 +284,32 @@ const en = {
     hideApiKey: 'Hide API Key',
     showApiKey: 'Show API Key',
     copyApiKey: 'Copy API Key',
+    // Custom Tools
+    customTools: 'Custom Tools',
+    customToolsDescription:
+      'Define custom tools that AI can use to execute specific queries, workflows, or searches.',
+    noCustomTools:
+      'No custom tools defined yet. Add a custom tool to extend AI capabilities.',
+    addCustomTool: 'Add Custom Tool',
+    editCustomTool: 'Edit Custom Tool',
+    customToolDialogDescription: 'Configure a custom tool that AI can use.',
+    toolName: 'Tool Name',
+    toolNameHint:
+      'Lowercase letters, numbers, and underscores only. Must start with a letter.',
+    toolDescription: 'Description',
+    toolDescriptionHint:
+      'This description helps AI understand when to use this tool.',
+    toolType: 'Type',
+    storedQuery: 'Stored Query',
+    selectQuery: 'Select a query',
+    workflow: 'Workflow',
+    selectWorkflow: 'Select a workflow',
+    embeddingPath: 'Embedding Path',
+    embeddingPathHint: 'Unified path to the embedding file.',
+    topK: 'Top K Results',
+    embeddingFilter: 'Metadata Filter',
+    embeddingFilterHint:
+      'Filter results by metadata. One key=value pair per line.',
   },
 
   // === WORKSPACE ===

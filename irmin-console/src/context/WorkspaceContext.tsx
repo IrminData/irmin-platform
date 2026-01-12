@@ -4,11 +4,14 @@ import { createContext, useContext } from 'react';
 
 import { useWorkspace } from '@/hooks/api/useWorkspace';
 
+import type { Workspace } from '@/types/core/Workspace';
+
 /**
  * Workspace context properties
  */
 interface WorkspaceContextProps extends ReturnType<typeof useWorkspace> {
   workspaceSlug: string;
+  workspace: Workspace | undefined;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextProps | undefined>(
@@ -25,13 +28,15 @@ export const WorkspaceProvider = ({
   children: React.ReactNode;
   workspaceSlug: string;
 }) => {
-  const workspace = useWorkspace(workspaceSlug);
+  const workspaceHook = useWorkspace(workspaceSlug);
+  const workspace = workspaceHook.workspaceQuery.data?.data;
 
   return (
     <WorkspaceContext.Provider
       value={{
         workspaceSlug,
-        ...workspace,
+        workspace: workspace ?? undefined,
+        ...workspaceHook,
       }}
     >
       {children}

@@ -205,6 +205,7 @@ export function useStoredQueries() {
   return {
     // Queries
     storedQueriesQuery,
+    queries: storedQueriesQuery.data?.data,
 
     // Mutations
     createStoredQueryMutation,

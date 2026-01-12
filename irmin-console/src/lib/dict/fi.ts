@@ -284,6 +284,33 @@ const fi = {
     hideApiKey: 'Piilota API-avain',
     showApiKey: 'Näytä API-avain',
     copyApiKey: 'Kopioi API-avain',
+    // Custom Tools
+    customTools: 'Mukautetut työkalut',
+    customToolsDescription:
+      'Määritä mukautettuja työkaluja, joita tekoäly voi käyttää tiettyjen kyselyiden, prosessien tai hakujen suorittamiseen.',
+    noCustomTools:
+      'Mukautettuja työkaluja ei ole vielä määritelty. Lisää mukautettu työkalu laajentaaksesi tekoälyn ominaisuuksia.',
+    addCustomTool: 'Lisää mukautettu työkalu',
+    editCustomTool: 'Muokkaa mukautettua työkalua',
+    customToolDialogDescription:
+      'Määritä mukautettu työkalu, jota tekoäly voi käyttää.',
+    toolName: 'Työkalun nimi',
+    toolNameHint:
+      'Vain pieniä kirjaimia, numeroita ja alaviivoja. Täytyy alkaa kirjaimella.',
+    toolDescription: 'Kuvaus',
+    toolDescriptionHint:
+      'Tämä kuvaus auttaa tekoälyä ymmärtämään, milloin tätä työkalua kannattaa käyttää.',
+    toolType: 'Tyyppi',
+    storedQuery: 'Tallennettu kysely',
+    selectQuery: 'Valitse kysely',
+    workflow: 'Prosessi',
+    selectWorkflow: 'Valitse prosessi',
+    embeddingPath: 'Upotuksen polku',
+    embeddingPathHint: 'Yhtenäinen polku upotetiedostoon.',
+    topK: 'Top K tulosta',
+    embeddingFilter: 'Metadatan suodatin',
+    embeddingFilterHint:
+      'Suodata tuloksia metadatan perusteella. Yksi avain=arvo -pari per rivi.',
   },
 
   // === WORKSPACE ===
