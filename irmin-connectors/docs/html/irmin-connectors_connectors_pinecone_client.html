@@ -20,8 +20,12 @@ const (
 
 FUNCTIONS
 
+func ValidateAPIKey(apiKey string) error
+    ValidateAPIKey tests the API key by listing available indexes. This
+    validates that the API key is valid without requiring a specific index host.
+
 func ValidateConnection(apiKey, host, namespace string) error
-    ValidateConnection tests the connection to Pinecone.
+    ValidateConnection tests the connection to a specific Pinecone index.
 
 
 TYPES

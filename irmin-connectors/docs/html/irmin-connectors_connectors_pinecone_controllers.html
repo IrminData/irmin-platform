@@ -70,6 +70,9 @@ func (cs *Controllers) GetOperationFormFields() ([]string, []string)
 
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
     GetRequiredFormFields implements the ConfigValidationProvider interface.
+    For validation, only details fields (api_key) are strictly required.
+    Settings fields are optional for validation - TestConnection will determine
+    their validity.
 
 func (cs *Controllers) Info(c fiber.Ctx) error
     Info godoc @Summary Get Pinecone connector information @Description Get

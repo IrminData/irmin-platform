@@ -37,6 +37,15 @@ const (
 
     // ReadBufferSize is the size of the read buffer in bytes (10 MB).
     ReadBufferSize = 10 * 1024 * 1024
+
+    // URLHealthCheckTimeout is the timeout for URL health check requests.
+    URLHealthCheckTimeout = 5 * time.Second
+
+    // MaxURLHealthCheckAttempts is the maximum number of attempts to check if the service URL is accessible.
+    MaxURLHealthCheckAttempts = 60
+
+    // URLHealthCheckInterval is the interval between URL health check attempts.
+    URLHealthCheckInterval = 1 * time.Second
 )
 ```
 
@@ -5156,6 +5165,7 @@ import "irmin-connectors/connectors/pinecone/client"
 ## Index
 
 - [Constants](<#constants>)
+- [func ValidateAPIKey\(apiKey string\) error](<#ValidateAPIKey>)
 - [func ValidateConnection\(apiKey, host, namespace string\) error](<#ValidateConnection>)
 - [type EmbeddingRecord](<#EmbeddingRecord>)
 - [type PineconeClient](<#PineconeClient>)
@@ -5185,6 +5195,15 @@ const (
 )
 ```
 
+<a name="ValidateAPIKey"></a>
+## func ValidateAPIKey
+
+```go
+func ValidateAPIKey(apiKey string) error
+```
+
+ValidateAPIKey tests the API key by listing available indexes. This validates that the API key is valid without requiring a specific index host.
+
 <a name="ValidateConnection"></a>
 ## func ValidateConnection
 
@@ -5192,7 +5211,7 @@ const (
 func ValidateConnection(apiKey, host, namespace string) error
 ```
 
-ValidateConnection tests the connection to Pinecone.
+ValidateConnection tests the connection to a specific Pinecone index.
 
 <a name="EmbeddingRecord"></a>
 ## type EmbeddingRecord
@@ -5507,7 +5526,7 @@ GetOperationFormFields implements the OperationInitProvider interface.
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
 ```
 
-GetRequiredFormFields implements the ConfigValidationProvider interface.
+GetRequiredFormFields implements the ConfigValidationProvider interface. For validation, only details fields \(api\_key\) are strictly required. Settings fields are optional for validation \- TestConnection will determine their validity.
 
 <a name="Controllers.Info"></a>
 ### func \(\*Controllers\) Info

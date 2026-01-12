@@ -25,6 +25,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"irmin-connectors/connectors"
@@ -79,6 +80,15 @@ const (
 
 	// ReadBufferSize is the size of the read buffer in bytes (10 MB).
 	ReadBufferSize = 10 * 1024 * 1024
+
+	// URLHealthCheckTimeout is the timeout for URL health check requests.
+	URLHealthCheckTimeout = 5 * time.Second
+
+	// MaxURLHealthCheckAttempts is the maximum number of attempts to check if the service URL is accessible.
+	MaxURLHealthCheckAttempts = 60
+
+	// URLHealthCheckInterval is the interval between URL health check attempts.
+	URLHealthCheckInterval = 1 * time.Second
 )
 
 // setupDatabase initializes and configures the database based on command line flags.
@@ -349,6 +359,71 @@ func waitForServerReady(ctx context.Context, port string, maxAttempts int) bool 
 	return false
 }
 
+// waitForServiceURLAccessible waits for the service to be accessible via its external URL.
+// This is necessary because in containerized environments (like Railway), the internal DNS/routing
+// may take time to propagate after the local port starts accepting connections.
+// Returns true if service URL is accessible, false if context is cancelled or max attempts reached.
+func waitForServiceURLAccessible(ctx context.Context, serviceURL string, maxAttempts int) bool {
+	// Use a custom HTTP client with shorter timeouts and TLS config for internal URLs
+	client := &http.Client{
+		Timeout: URLHealthCheckTimeout,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			},
+			DisableKeepAlives: true,
+		},
+	}
+
+	// Use the liveness endpoint for health checking
+	healthURL := serviceURL + healthcheck.LivenessEndpoint
+
+	var lastErr error
+	for attempt := range maxAttempts {
+		select {
+		case <-ctx.Done():
+			return false
+		default:
+		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, healthURL, nil)
+		if err != nil {
+			log.Printf("Error creating health check request: %v", err)
+			time.Sleep(URLHealthCheckInterval)
+			continue
+		}
+
+		resp, err := client.Do(req)
+		if err == nil {
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				log.Printf("Warning: failed to close response body: %v", closeErr)
+			}
+			if resp.StatusCode == http.StatusOK {
+				log.Printf("Service URL %s is accessible after %d attempts", serviceURL, attempt+1)
+				return true
+			}
+			lastErr = fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		} else {
+			lastErr = err
+		}
+
+		if attempt%10 == 0 && attempt > 0 {
+			log.Printf(
+				"Waiting for service URL %s to become accessible (attempt %d/%d), last error: %v",
+				serviceURL,
+				attempt+1,
+				maxAttempts,
+				lastErr,
+			)
+		}
+
+		time.Sleep(URLHealthCheckInterval)
+	}
+
+	log.Printf("Service URL health check failed after %d attempts. Last error: %v", maxAttempts, lastErr)
+	return false
+}
+
 // startServer starts the Fiber server in a goroutine.
 func startServer(app *fiber.App, env *utils.ConnectorsEnv) chan error {
 	serverErr := make(chan error, 1)
@@ -373,6 +448,7 @@ func setupGracefulShutdown() chan os.Signal {
 	return quit
 }
 
+//nolint:gocognit // This function simply orchestrates the startup of the server and the connectors
 func main() {
 	// Define flags
 	skipRegistrations := flag.Bool("skip-registrations", false, "Skip connector registrations")
@@ -449,7 +525,31 @@ func main() {
 		startupCancel()
 		log.Printf("Server successfully started and ready on port %s", env.Port)
 
-		// Initialize connectors after server is ready
+		// Wait for the service to be accessible via its external URL before registering connectors
+		// This is necessary because the Irmin API will call back to this service during registration
+		if env.URL != "" && !*skipRegistrations {
+			log.Printf("Verifying service is accessible via URL: %s (service running on port %s)", env.URL, env.Port)
+
+			// Check for common Railway internal URL misconfiguration
+			if strings.Contains(env.URL, ".railway.internal") && strings.HasPrefix(env.URL, "https://") {
+				log.Printf(
+					"WARNING: Railway internal URLs should use HTTP, not HTTPS. "+
+						"Consider using http://<service>.railway.internal:%s instead of %s",
+					env.Port,
+					env.URL,
+				)
+			}
+
+			urlCheckCtx, urlCheckCancel := context.WithTimeout(context.Background(), StartupTimeoutSeconds*time.Second)
+			if !waitForServiceURLAccessible(urlCheckCtx, env.URL, MaxURLHealthCheckAttempts) {
+				urlCheckCancel()
+				log.Printf("Warning: Service URL %s is not accessible, connector registration may fail", env.URL)
+			} else {
+				urlCheckCancel()
+			}
+		}
+
+		// Initialize connectors after server is ready and URL is accessible
 		if initConnErr := initializeConnectors(connectorsApp, *skipRegistrations); initConnErr != nil {
 			log.Printf("Error initializing connectors: %v", initConnErr)
 			// Don't exit here, just log the error and continue
