@@ -71,3 +71,88 @@ func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
 }
+
+// TestPushWithContent tests pushing specific content to a path.
+func TestPushWithContent(
+	ctx context.Context,
+	client *helpers.ConnectorClient,
+	pushPath string,
+	content []byte,
+	filename string,
+) error {
+	// Create a ZIP file with the provided content
+	zipPath, createErr := helpers.CreateZipFileWithContent(filename, content)
+	if createErr != nil {
+		return createErr
+	}
+	defer func() {
+		_ = helpers.CleanupTestFile(zipPath)
+	}()
+
+	// Create form file and push
+	formFile := helpers.CreateFormFile(zipPath, "file")
+	response, err := client.OperationPush(ctx, pushPath, formFile)
+	if err != nil {
+		return err
+	}
+
+	if response == "" {
+		return &helpers.TestError{Message: "Expected non-empty response from push operation"}
+	}
+
+	return nil
+}
+
+// TestPushEmptyPath tests pushing to an empty/root path.
+func TestPushEmptyPath(ctx context.Context, client *helpers.ConnectorClient) error {
+	// Create sample data
+	zipPath, createErr := helpers.CreateSampleZipFile("test-empty-path.zip")
+	if createErr != nil {
+		return createErr
+	}
+	defer func() {
+		_ = helpers.CleanupTestFile(zipPath)
+	}()
+
+	// Push to empty path (root)
+	formFile := helpers.CreateFormFile(zipPath, "file")
+	response, err := client.OperationPush(ctx, "", formFile)
+	if err != nil {
+		return err
+	}
+
+	if response == "" {
+		return &helpers.TestError{Message: "Expected non-empty response from push to empty path"}
+	}
+
+	return nil
+}
+
+// TestPushSpecificPath tests pushing to a specific path.
+func TestPushSpecificPath(ctx context.Context, client *helpers.ConnectorClient, specificPath string) error {
+	if specificPath == "" {
+		return &helpers.TestError{Message: "Specific path cannot be empty for this test"}
+	}
+
+	// Create sample data
+	zipPath, createErr := helpers.CreateSampleZipFile("test-specific-path.zip")
+	if createErr != nil {
+		return createErr
+	}
+	defer func() {
+		_ = helpers.CleanupTestFile(zipPath)
+	}()
+
+	// Push to specific path
+	formFile := helpers.CreateFormFile(zipPath, "file")
+	response, err := client.OperationPush(ctx, specificPath, formFile)
+	if err != nil {
+		return err
+	}
+
+	if response == "" {
+		return &helpers.TestError{Message: "Expected non-empty response from push to specific path"}
+	}
+
+	return nil
+}

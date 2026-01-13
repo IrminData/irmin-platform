@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,17 +17,9 @@ import (
 	"irmin-connectors/db"
 	"irmin-connectors/utils"
 
+	"github.com/IrminData/irmin-sdk-go/duckdb"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
-	"github.com/xitongsys/parquet-go-source/local"
-	"github.com/xitongsys/parquet-go/reader"
-)
-
-const (
-	// parquetReaderParallelNumber is the number of parallel goroutines for parquet reading.
-	parquetReaderParallelNumber = 4
-	// parquetReadBatchSize is the batch size for reading parquet records.
-	parquetReadBatchSize = 1000
 )
 
 // PineconePushProvider implements the PushOperationProvider interface for Pinecone.
@@ -235,100 +228,133 @@ func (p *PineconePushProvider) writeTempFile(data []byte) (string, error) {
 	return tempPath, nil
 }
 
-// readParquetRecords reads embedding records from a parquet file.
+// readParquetRecords reads embedding records from a parquet file using DuckDB.
+// This supports both native array types and string (JSON) embeddings.
 func (p *PineconePushProvider) readParquetRecords(tempPath string) ([]pineconeclient.EmbeddingRecord, error) {
-	fr, err := local.NewLocalFileReader(tempPath)
+	ctx := context.Background()
+
+	// Create DuckDB client for reading parquet
+	duckDBClient, err := duckdb.NewInMemoryClient(ctx, p.logger)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open parquet file: %w", err)
+		return nil, fmt.Errorf("failed to create DuckDB client: %w", err)
 	}
-	defer fr.Close()
+	defer duckDBClient.Close()
 
-	pr, err := reader.NewParquetReader(fr, new(ParquetEmbedding), parquetReaderParallelNumber)
+	// Validate parquet schema before reading
+	escapedPath := strings.ReplaceAll(tempPath, "'", "''")
+	if schemaErr := p.validateParquetSchema(ctx, duckDBClient, escapedPath); schemaErr != nil {
+		return nil, schemaErr
+	}
+
+	// Query parquet file with DuckDB, casting embedding to string for consistent handling
+	// This handles both native array types and string embeddings
+	query := fmt.Sprintf(`
+		SELECT 
+			COALESCE(id, '') as id,
+			COALESCE(source_file, '') as source_file,
+			COALESCE(chunk_index, 0) as chunk_index,
+			COALESCE(content, '') as content,
+			COALESCE(CAST(embedding AS VARCHAR), '') as embedding,
+			COALESCE(CAST(metadata AS VARCHAR), '{}') as metadata,
+			COALESCE(CAST(created_at AS VARCHAR), '') as created_at
+		FROM read_parquet('%s')
+	`, escapedPath)
+
+	rows, err := duckDBClient.ExecuteQuery(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create parquet reader: %w", err)
+		return nil, fmt.Errorf("failed to query parquet file: %w", err)
 	}
-	defer pr.ReadStop()
+	defer rows.Close()
 
-	return p.readAllRecords(pr)
-}
+	var records []pineconeclient.EmbeddingRecord
+	for rows.Next() {
+		var id, sourceFile, content, embeddingStr, metadataStr, createdAtStr string
+		var chunkIndex int
 
-// readAllRecords reads all records from a parquet reader in batches.
-func (p *PineconePushProvider) readAllRecords(
-	pr *reader.ParquetReader,
-) ([]pineconeclient.EmbeddingRecord, error) {
-	numRows := int(pr.GetNumRows())
-	records := make([]pineconeclient.EmbeddingRecord, 0, numRows)
-
-	for i := 0; i < numRows; i += parquetReadBatchSize {
-		readCount := parquetReadBatchSize
-		if i+readCount > numRows {
-			readCount = numRows - i
+		if scanErr := rows.Scan(&id, &sourceFile, &chunkIndex, &content, &embeddingStr, &metadataStr, &createdAtStr); scanErr != nil {
+			return nil, fmt.Errorf("failed to scan record: %w", scanErr)
 		}
 
-		batchRecords, err := p.readBatch(pr, readCount)
-		if err != nil {
-			return nil, err
-		}
-		records = append(records, batchRecords...)
-	}
-
-	return records, nil
-}
-
-// readBatch reads a batch of records from the parquet reader.
-func (p *PineconePushProvider) readBatch(
-	pr *reader.ParquetReader,
-	readCount int,
-) ([]pineconeclient.EmbeddingRecord, error) {
-	parquetRecords := make([]ParquetEmbedding, readCount)
-	if readErr := pr.Read(&parquetRecords); readErr != nil {
-		return nil, fmt.Errorf("failed to read parquet records: %w", readErr)
-	}
-
-	records := make([]pineconeclient.EmbeddingRecord, 0, len(parquetRecords))
-	for _, pRecord := range parquetRecords {
-		record := p.convertParquetRecord(pRecord)
-		if len(record.Embedding) == 0 {
+		embedding, parseErr := p.parseEmbedding(embeddingStr)
+		if parseErr != nil {
 			if p.logger != nil {
-				p.logger.Warn("skipping record without embedding", "id", record.ID)
+				p.logger.Warn("skipping record with invalid embedding",
+					"id", id,
+					"error", parseErr.Error(),
+				)
 			}
 			continue
 		}
+		if len(embedding) == 0 {
+			if p.logger != nil {
+				p.logger.Warn("skipping record with zero-dimensional embedding",
+					"id", id,
+					"embedding_value", embeddingStr,
+				)
+			}
+			continue
+		}
+
+		record := pineconeclient.EmbeddingRecord{
+			ID:         id,
+			SourceFile: sourceFile,
+			ChunkIndex: chunkIndex,
+			Content:    content,
+			Embedding:  embedding,
+			Metadata:   p.parseMetadata(metadataStr),
+			CreatedAt:  p.parseCreatedAt(createdAtStr),
+		}
+
 		records = append(records, record)
+	}
+
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("error iterating records: %w", rowsErr)
 	}
 
 	return records, nil
 }
 
-// convertParquetRecord converts a ParquetEmbedding to an EmbeddingRecord.
-func (p *PineconePushProvider) convertParquetRecord(pRecord ParquetEmbedding) pineconeclient.EmbeddingRecord {
-	record := pineconeclient.EmbeddingRecord{
-		ID:         pRecord.ID,
-		SourceFile: pRecord.SourceFile,
-		ChunkIndex: int(pRecord.ChunkIndex),
-		Content:    pRecord.Content,
-		Metadata:   make(map[string]string),
-	}
-
-	record.Embedding = p.parseEmbedding(pRecord.Embedding)
-	record.Metadata = p.parseMetadata(pRecord.Metadata)
-	record.CreatedAt = p.parseCreatedAt(pRecord.CreatedAt)
-
-	return record
-}
-
-// parseEmbedding parses an embedding from a JSON string.
-func (p *PineconePushProvider) parseEmbedding(embeddingStr string) []float32 {
+// parseEmbedding parses an embedding from various string formats.
+// Supports JSON arrays, DuckDB array format [val1, val2, ...], and comma-separated values.
+// Returns an error if parsing fails, or an empty slice for valid but empty embeddings.
+func (p *PineconePushProvider) parseEmbedding(embeddingStr string) ([]float32, error) {
 	if embeddingStr == "" {
-		return nil
+		return nil, nil // Empty string is valid, just no data
 	}
 
+	// Try JSON array first
 	var embedding []float32
 	if err := json.Unmarshal([]byte(embeddingStr), &embedding); err == nil {
-		return embedding
+		return embedding, nil // Valid JSON (could be empty array)
 	}
 
-	return parseEmbeddingString(embeddingStr)
+	// Handle DuckDB array format: [val1, val2, ...]
+	str := strings.TrimPrefix(embeddingStr, "[")
+	str = strings.TrimSuffix(str, "]")
+
+	if str == "" {
+		return []float32{}, nil // Empty brackets [] is valid empty embedding
+	}
+
+	parts := strings.Split(str, ",")
+	embedding = make([]float32, 0, len(parts))
+
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			// Skip empty parts (e.g., trailing comma)
+			continue
+		}
+		val, err := strconv.ParseFloat(part, 32)
+		if err != nil {
+			// Return error instead of nil to distinguish parse failure from empty embedding
+			return nil, fmt.Errorf("invalid embedding value %q: %w", part, err)
+		}
+		embedding = append(embedding, float32(val))
+	}
+
+	return embedding, nil
 }
 
 // parseMetadata parses metadata from a JSON string.
@@ -345,14 +371,82 @@ func (p *PineconePushProvider) parseMetadata(metadataStr string) map[string]stri
 	return make(map[string]string)
 }
 
-// parseCreatedAt parses a timestamp from an RFC3339 string.
+// parseCreatedAt parses a timestamp from various formats.
+// Supports RFC3339, SQL datetime, and other common formats.
+// DuckDB may output timestamps with fractional seconds of varying precision,
+// so we try multiple formats from most to least specific.
 func (p *PineconePushProvider) parseCreatedAt(createdAtStr string) time.Time {
-	if createdAtStr != "" {
-		if t, err := time.Parse(time.RFC3339, createdAtStr); err == nil {
+	if createdAtStr == "" {
+		return time.Now()
+	}
+
+	// Try multiple timestamp formats for compatibility
+	// Go's time.Parse requires exact format matching, so we need explicit formats
+	// for each fractional second precision level (ordered most specific first)
+	formats := []string{
+		time.RFC3339Nano,                // "2006-01-02T15:04:05.999999999Z07:00"
+		time.RFC3339,                    // "2006-01-02T15:04:05Z07:00"
+		"2006-01-02 15:04:05.999999999", // SQL datetime with nanoseconds
+		"2006-01-02 15:04:05.999999",    // SQL datetime with microseconds
+		"2006-01-02 15:04:05.999",       // SQL datetime with milliseconds
+		"2006-01-02 15:04:05",           // SQL datetime (DuckDB export)
+		"2006-01-02T15:04:05.999999999", // ISO 8601 with nanoseconds
+		"2006-01-02T15:04:05.999999",    // ISO 8601 with microseconds
+		"2006-01-02T15:04:05.999",       // ISO 8601 with milliseconds
+		"2006-01-02T15:04:05",           // ISO 8601 without timezone
+	}
+
+	for _, format := range formats {
+		if t, err := time.Parse(format, createdAtStr); err == nil {
 			return t
 		}
 	}
+
+	// Log warning if we couldn't parse the timestamp
+	if p.logger != nil {
+		p.logger.Warn("failed to parse timestamp, using current time", "timestamp", createdAtStr)
+	}
+
 	return time.Now()
+}
+
+// validateParquetSchema checks if the parquet file has the required embedding column.
+// Returns a user-friendly error if the schema is invalid.
+func (p *PineconePushProvider) validateParquetSchema(
+	ctx context.Context,
+	client *duckdb.InMemoryClient,
+	escapedPath string,
+) error {
+	// Get column names from the parquet file using parquet_schema function
+	// The 'name' column contains the field names in the parquet schema
+	schemaQuery := fmt.Sprintf(`
+		SELECT name 
+		FROM parquet_schema('%s')
+		WHERE name = 'embedding'
+	`, escapedPath)
+
+	rows, err := client.ExecuteQuery(ctx, schemaQuery)
+	if err != nil {
+		return fmt.Errorf("failed to read parquet schema: %w", err)
+	}
+	defer rows.Close()
+
+	// Check if embedding column exists
+	hasEmbedding := rows.Next()
+
+	// Check for iteration errors before interpreting results
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return fmt.Errorf("failed to read parquet schema: %w", rowsErr)
+	}
+
+	if !hasEmbedding {
+		return errors.New(
+			"invalid parquet schema: missing required 'embedding' column. " +
+				"Expected columns: id, source_file, chunk_index, content, embedding, metadata, created_at",
+		)
+	}
+
+	return nil
 }
 
 // OperationPush godoc

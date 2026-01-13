@@ -18,12 +18,13 @@ This test suite validates connector functionality by:
 
 1. **Info Retrieval** - Verifying connector metadata and capabilities
 2. **Configuration** - Testing config field retrieval and validation
-3. **Operations** - Testing operation lifecycle (init, status, cancel)
-4. **Pull** - Testing data retrieval from connectors
+3. **Operations** - Testing operation lifecycle (init, status, cancel) with logs verification
+4. **Pull** - Testing data retrieval from connectors with ZIP format verification
 5. **Push** - Testing data upload to connectors
 6. **Patch** - Testing JSON patch operations
-7. **Schema** - Testing schema discovery for operations
+7. **Schema** - Testing schema discovery for operations with path support
 8. **Subscribe** - Testing webhook subscriptions for change events
+9. **Round-Trip** - Testing data integrity by pushing then pulling data back
 
 The tests use **real data only** (no mocks) and restore the system to its original state after completion.
 
@@ -89,6 +90,14 @@ Edit `e2e-tests/test-config.json` and:
         "patchFile": "test-patches.json",
         "webhookURL": "https://example.com/webhook",
         "webhookToken": "webhook-token"
+      },
+      "operations": {
+        "pull": {
+          "settings": { "schema": "source_schema" }
+        },
+        "push": {
+          "settings": { "schema": "target_schema" }
+        }
       }
     }
   }
@@ -115,6 +124,17 @@ Connection settings specific to the connector type (database, schema, paths, etc
 - `patchFile` - Custom patch file to use for patch tests (optional)
 - `webhookURL` - Webhook URL for subscription tests
 - `webhookToken` - Webhook authentication token
+
+**Operations (optional):**
+Per-operation configuration overrides. Useful for testing different sources/targets:
+- `pull.details` - Override details for pull operations
+- `pull.settings` - Override settings for pull operations
+- `push.details` - Override details for push operations
+- `push.settings` - Override settings for push operations
+- `patch.details` - Override details for patch operations
+- `patch.settings` - Override settings for patch operations
+
+Example use case: Pull from production database, push to staging database.
 
 ## Running Tests
 
@@ -147,12 +167,13 @@ go run main.go -test config
 Available test types:
 - `info` - Connector information
 - `config` - Configuration fields and validation
-- `operation` - Operation lifecycle
-- `pull` - Pull capability
+- `operation` - Operation lifecycle (init, status with logs, cancel)
+- `pull` - Pull capability with ZIP verification
 - `push` - Push capability
 - `patch` - Patch capability
-- `schema` - Schema retrieval
+- `schema` - Schema retrieval with path support
 - `subscribe` - Subscription capability
+- `roundtrip` - Push then pull verification (requires both push and pull)
 
 ### Run with Verbose Output
 
@@ -191,6 +212,7 @@ go run main.go -locale fi
 ### Operation Tests
 - Initializes operation with valid config
 - Retrieves operation status
+- Verifies operation logs structure
 - Verifies operation token generation
 - Cancels operation (cleanup)
 
@@ -198,11 +220,18 @@ go run main.go -locale fi
 - Pulls all files (empty path)
 - Pulls specific path
 - Verifies file contents and format
+- Validates ZIP archive format
+- Extracts and verifies ZIP contents
 
 ### Push Tests
 - Pushes single file to path
 - Verifies push success
-- Can verify data was pushed via pull
+- Supports custom test files or auto-generated data
+
+### Round-Trip Tests
+- Pushes known data to connector
+- Pulls data back from the same path
+- Verifies content integrity (allows for format normalization)
 
 ### Patch Tests
 - Applies JSON patch operations
@@ -261,14 +290,15 @@ e2e-tests/
 │   ├── runner.go            # Test execution
 │   └── results.go           # Result formatting
 ├── tests/                   # Test implementations
-│   ├── info_test.go
-│   ├── config_test.go
-│   ├── operation_test.go
-│   ├── pull_test.go
-│   ├── push_test.go
-│   ├── patch_test.go
-│   ├── schema_test.go
-│   ├── subscribe_test.go
+│   ├── info.go
+│   ├── config.go
+│   ├── operation.go
+│   ├── pull.go
+│   ├── push.go
+│   ├── patch.go
+│   ├── schema.go
+│   ├── subscribe.go
+│   ├── roundtrip.go
 │   └── helpers.go
 └── helpers/                 # Utilities
     ├── client.go           # Client wrapper

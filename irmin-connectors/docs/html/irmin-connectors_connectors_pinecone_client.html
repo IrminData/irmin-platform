@@ -11,7 +11,8 @@ const (
 	// UpsertBatchSize is the maximum number of vectors to upsert in a single batch.
 	UpsertBatchSize = 100
 	// FetchBatchSize is the maximum number of vectors to fetch in a single batch.
-	FetchBatchSize = 1000
+	// Pinecone ListVectors API limit is 100.
+	FetchBatchSize = 100
 	// DefaultTopK is the default number of results for search queries.
 	DefaultTopK = 10
 	// MaxTopK is the maximum allowed value for topK parameter (Pinecone API limit).

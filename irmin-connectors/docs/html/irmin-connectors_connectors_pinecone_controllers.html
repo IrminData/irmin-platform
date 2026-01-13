@@ -185,17 +185,6 @@ func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
     ValidateSystemTokenMiddleware validates the system token.
 
-type ParquetEmbedding struct {
-	ID         string `parquet:"name=id, type=BYTE_ARRAY, convertedtype=UTF8"`
-	SourceFile string `parquet:"name=source_file, type=BYTE_ARRAY, convertedtype=UTF8"`
-	ChunkIndex int32  `parquet:"name=chunk_index, type=INT32"`
-	Content    string `parquet:"name=content, type=BYTE_ARRAY, convertedtype=UTF8"`
-	Embedding  string `parquet:"name=embedding, type=BYTE_ARRAY, convertedtype=UTF8"`
-	Metadata   string `parquet:"name=metadata, type=BYTE_ARRAY, convertedtype=UTF8"`
-	CreatedAt  string `parquet:"name=created_at, type=BYTE_ARRAY, convertedtype=UTF8"`
-}
-    ParquetEmbedding represents an embedding record for parquet serialization.
-
 type PineconePullProvider struct {
 	// Has unexported fields.
 }

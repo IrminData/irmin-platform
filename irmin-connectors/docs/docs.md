@@ -2530,6 +2530,7 @@ import "irmin-connectors/e2e-tests/helpers"
 - [func AssertValidOperation\(op \*connectorsclient.Operation\) error](<#AssertValidOperation>)
 - [func AssertValidationResult\(result \*irminmodels.ConnectorConfigurationValidationResult, shouldBeValid bool\) error](<#AssertValidationResult>)
 - [func CleanupTestFile\(filePath string\) error](<#CleanupTestFile>)
+- [func ContentSimilar\(expected, actual \[\]byte\) bool](<#ContentSimilar>)
 - [func CreateFormFile\(filePath, fieldName string\) connectorsclient.FormFile](<#CreateFormFile>)
 - [func CreateFormFileFromBytes\(filename, fieldName string, content \[\]byte\) connectorsclient.FormFile](<#CreateFormFileFromBytes>)
 - [func CreatePatchFile\(patches \[\]irminmodels.PatchOperation\) \(string, error\)](<#CreatePatchFile>)
@@ -2538,6 +2539,10 @@ import "irmin-connectors/e2e-tests/helpers"
 - [func CreateSampleParquetData\(\) \[\]byte](<#CreateSampleParquetData>)
 - [func CreateSampleZipFile\(filename string\) \(string, error\)](<#CreateSampleZipFile>)
 - [func CreateTestFile\(filename string, content \[\]byte\) \(string, error\)](<#CreateTestFile>)
+- [func CreateZipFileWithContent\(filename string, content \[\]byte\) \(string, error\)](<#CreateZipFileWithContent>)
+- [func ExtractZipContent\(zipData \[\]byte\) \(map\[string\]\[\]byte, error\)](<#ExtractZipContent>)
+- [func FileNameMatches\(actual, expected string\) bool](<#FileNameMatches>)
+- [func IsValidZip\(data \[\]byte\) bool](<#IsValidZip>)
 - [func WrapFileInZip\(filePath string\) \(string, error\)](<#WrapFileInZip>)
 - [type ConnectorClient](<#ConnectorClient>)
   - [func NewConnectorClient\(connectorName, url, systemToken, locale string\) \*ConnectorClient](<#NewConnectorClient>)
@@ -2683,6 +2688,15 @@ func CleanupTestFile(filePath string) error
 
 CleanupTestFile removes a temporary test file.
 
+<a name="ContentSimilar"></a>
+## func ContentSimilar
+
+```go
+func ContentSimilar(expected, actual []byte) bool
+```
+
+ContentSimilar checks if two byte slices are similar enough to be considered equivalent. This accounts for minor differences like line ending normalization or whitespace.
+
 <a name="CreateFormFile"></a>
 ## func CreateFormFile
 
@@ -2754,6 +2768,42 @@ func CreateTestFile(filename string, content []byte) (string, error)
 ```
 
 CreateTestFile creates a temporary test file with the given content.
+
+<a name="CreateZipFileWithContent"></a>
+## func CreateZipFileWithContent
+
+```go
+func CreateZipFileWithContent(filename string, content []byte) (string, error)
+```
+
+CreateZipFileWithContent creates a ZIP file with the given content and filename.
+
+<a name="ExtractZipContent"></a>
+## func ExtractZipContent
+
+```go
+func ExtractZipContent(zipData []byte) (map[string][]byte, error)
+```
+
+ExtractZipContent extracts all files from a ZIP archive in memory. Returns a map of filename to content.
+
+<a name="FileNameMatches"></a>
+## func FileNameMatches
+
+```go
+func FileNameMatches(actual, expected string) bool
+```
+
+FileNameMatches checks if a filename matches the expected name, accounting for path prefixes.
+
+<a name="IsValidZip"></a>
+## func IsValidZip
+
+```go
+func IsValidZip(data []byte) bool
+```
+
+IsValidZip checks if the given data is a valid ZIP archive.
 
 <a name="WrapFileInZip"></a>
 ## func WrapFileInZip
@@ -2843,6 +2893,8 @@ import "irmin-connectors/e2e-tests/runner"
 ## Index
 
 - [type ConnectorConfig](<#ConnectorConfig>)
+  - [func \(c \*ConnectorConfig\) GetOperationConfig\(operation string\) \(map\[string\]string, map\[string\]string\)](<#ConnectorConfig.GetOperationConfig>)
+- [type OperationConfig](<#OperationConfig>)
 - [type TestConfig](<#TestConfig>)
   - [func LoadConfig\(configPath string\) \(\*TestConfig, error\)](<#LoadConfig>)
   - [func \(c \*TestConfig\) GetConnector\(name string\) \(ConnectorConfig, bool\)](<#TestConfig.GetConnector>)
@@ -2870,12 +2922,42 @@ ConnectorConfig represents configuration for a single connector.
 
 ```go
 type ConnectorConfig struct {
-    Enabled     bool              `json:"enabled"`
-    URL         string            `json:"url"`
-    SystemToken string            `json:"systemToken"`
-    Details     map[string]string `json:"details"`
-    Settings    map[string]string `json:"settings"`
-    TestData    TestDataConfig    `json:"testData"`
+    Enabled     bool                       `json:"enabled"`
+    URL         string                     `json:"url"`
+    SystemToken string                     `json:"systemToken"`
+    Details     map[string]string          `json:"details"`
+    Settings    map[string]string          `json:"settings"`
+    TestData    TestDataConfig             `json:"testData"`
+    Operations  map[string]OperationConfig `json:"operations,omitempty"`
+}
+```
+
+<a name="ConnectorConfig.GetOperationConfig"></a>
+### func \(\*ConnectorConfig\) GetOperationConfig
+
+```go
+func (c *ConnectorConfig) GetOperationConfig(operation string) (map[string]string, map[string]string)
+```
+
+GetOperationConfig returns the merged details and settings for a specific operation. It merges the base connector config with any operation\-specific overrides.
+
+The operation parameter can be any string. Common values include:
+
+- "pull", "push", "patch", "schema", "subscribe" \- standard connector operations
+- "roundtrip" \- combined push/pull test
+- Any other value \(e.g., "default"\) \- returns base config without overrides
+
+If no override exists for the given operation, the base config is returned unchanged.
+
+<a name="OperationConfig"></a>
+## type OperationConfig
+
+OperationConfig represents per\-operation configuration overrides. Fields specified here will override the base connector config for that operation.
+
+```go
+type OperationConfig struct {
+    Details  map[string]string `json:"details,omitempty"`
+    Settings map[string]string `json:"settings,omitempty"`
 }
 ```
 
@@ -3085,13 +3167,28 @@ import "irmin-connectors/e2e-tests/tests"
 - [func TestConfigValidation\(ctx context.Context, client \*helpers.ConnectorClient, details, settings map\[string\]string, shouldBeValid bool\) error](<#TestConfigValidation>)
 - [func TestConfigValidationInvalid\(ctx context.Context, client \*helpers.ConnectorClient\) error](<#TestConfigValidationInvalid>)
 - [func TestInfo\(ctx context.Context, client \*helpers.ConnectorClient\) error](<#TestInfo>)
-- [func TestOperationCancel\(ctx context.Context, client \*helpers.ConnectorClient, operationToken string\) error](<#TestOperationCancel>)
+- [func TestOperationCancel\(ctx context.Context, client \*helpers.ConnectorClient, operationID uint\) error](<#TestOperationCancel>)
 - [func TestOperationInit\(ctx context.Context, client \*helpers.ConnectorClient, details, settings map\[string\]string\) \(string, error\)](<#TestOperationInit>)
-- [func TestOperationStatus\(ctx context.Context, client \*helpers.ConnectorClient, operationToken string\) error](<#TestOperationStatus>)
+- [func TestOperationInitWithID\(ctx context.Context, client \*helpers.ConnectorClient, details, settings map\[string\]string\) \(string, uint, error\)](<#TestOperationInitWithID>)
+- [func TestOperationStatus\(ctx context.Context, client \*helpers.ConnectorClient, operationID uint\) error](<#TestOperationStatus>)
+- [func TestOperationStatusWithLogs\(ctx context.Context, client \*helpers.ConnectorClient, operationID uint\) error](<#TestOperationStatusWithLogs>)
 - [func TestPatch\(ctx context.Context, client \*helpers.ConnectorClient, patchFile string\) error](<#TestPatch>)
 - [func TestPull\(ctx context.Context, client \*helpers.ConnectorClient, pullPath string\) error](<#TestPull>)
+- [func TestPullEmptyPath\(ctx context.Context, client \*helpers.ConnectorClient\) error](<#TestPullEmptyPath>)
+- [func TestPullSpecificPath\(ctx context.Context, client \*helpers.ConnectorClient, specificPath string\) error](<#TestPullSpecificPath>)
+- [func TestPullWithZipVerification\(ctx context.Context, client \*helpers.ConnectorClient, pullPath string\) error](<#TestPullWithZipVerification>)
 - [func TestPush\(ctx context.Context, client \*helpers.ConnectorClient, pushPath, pushFile string\) error](<#TestPush>)
+- [func TestPushEmptyPath\(ctx context.Context, client \*helpers.ConnectorClient\) error](<#TestPushEmptyPath>)
+- [func TestPushSpecificPath\(ctx context.Context, client \*helpers.ConnectorClient, specificPath string\) error](<#TestPushSpecificPath>)
+- [func TestPushWithContent\(ctx context.Context, client \*helpers.ConnectorClient, pushPath string, content \[\]byte, filename string\) error](<#TestPushWithContent>)
+- [func TestRoundTrip\(ctx context.Context, client \*helpers.ConnectorClient, pushPath string, pushFile string\) error](<#TestRoundTrip>)
+- [func TestRoundTripWithVerification\(ctx context.Context, client \*helpers.ConnectorClient, pushPath string, expectedContent \[\]byte\) error](<#TestRoundTripWithVerification>)
 - [func TestSchema\(ctx context.Context, client \*helpers.ConnectorClient, capabilities \[\]irminmodels.ConnectorCapability\) error](<#TestSchema>)
+- [func TestSchemaEmptyPath\(ctx context.Context, client \*helpers.ConnectorClient, capabilities \[\]irminmodels.ConnectorCapability\) error](<#TestSchemaEmptyPath>)
+- [func TestSchemaForPull\(ctx context.Context, client \*helpers.ConnectorClient, path string\) error](<#TestSchemaForPull>)
+- [func TestSchemaForPush\(ctx context.Context, client \*helpers.ConnectorClient, path string\) error](<#TestSchemaForPush>)
+- [func TestSchemaSpecificPath\(ctx context.Context, client \*helpers.ConnectorClient, capabilities \[\]irminmodels.ConnectorCapability, specificPath string\) error](<#TestSchemaSpecificPath>)
+- [func TestSchemaWithPath\(ctx context.Context, client \*helpers.ConnectorClient, method string, path string\) error](<#TestSchemaWithPath>)
 - [func TestSubscribe\(ctx context.Context, client \*helpers.ConnectorClient, webhookURL, webhookToken string\) error](<#TestSubscribe>)
 
 
@@ -3144,7 +3241,7 @@ TestInfo tests the /info endpoint of a connector.
 ## func TestOperationCancel
 
 ```go
-func TestOperationCancel(ctx context.Context, client *helpers.ConnectorClient, operationToken string) error
+func TestOperationCancel(ctx context.Context, client *helpers.ConnectorClient, operationID uint) error
 ```
 
 TestOperationCancel tests the operation cancellation endpoint.
@@ -3158,14 +3255,34 @@ func TestOperationInit(ctx context.Context, client *helpers.ConnectorClient, det
 
 TestOperationInit tests the operation initialization endpoint. Returns the operation token for use in subsequent tests.
 
+Deprecated: Use TestOperationInitWithID instead to also get the operation ID.
+
+<a name="TestOperationInitWithID"></a>
+## func TestOperationInitWithID
+
+```go
+func TestOperationInitWithID(ctx context.Context, client *helpers.ConnectorClient, details, settings map[string]string) (string, uint, error)
+```
+
+TestOperationInitWithID tests the operation initialization endpoint. Returns the operation token and ID for use in subsequent tests.
+
 <a name="TestOperationStatus"></a>
 ## func TestOperationStatus
 
 ```go
-func TestOperationStatus(ctx context.Context, client *helpers.ConnectorClient, operationToken string) error
+func TestOperationStatus(ctx context.Context, client *helpers.ConnectorClient, operationID uint) error
 ```
 
 TestOperationStatus tests the operation status endpoint.
+
+<a name="TestOperationStatusWithLogs"></a>
+## func TestOperationStatusWithLogs
+
+```go
+func TestOperationStatusWithLogs(ctx context.Context, client *helpers.ConnectorClient, operationID uint) error
+```
+
+TestOperationStatusWithLogs tests the operation status endpoint and verifies logs are present.
 
 <a name="TestPatch"></a>
 ## func TestPatch
@@ -3185,6 +3302,33 @@ func TestPull(ctx context.Context, client *helpers.ConnectorClient, pullPath str
 
 TestPull tests the pull capability of a connector.
 
+<a name="TestPullEmptyPath"></a>
+## func TestPullEmptyPath
+
+```go
+func TestPullEmptyPath(ctx context.Context, client *helpers.ConnectorClient) error
+```
+
+TestPullEmptyPath tests pulling with an empty path \(should return all available data\).
+
+<a name="TestPullSpecificPath"></a>
+## func TestPullSpecificPath
+
+```go
+func TestPullSpecificPath(ctx context.Context, client *helpers.ConnectorClient, specificPath string) error
+```
+
+TestPullSpecificPath tests pulling with a specific path.
+
+<a name="TestPullWithZipVerification"></a>
+## func TestPullWithZipVerification
+
+```go
+func TestPullWithZipVerification(ctx context.Context, client *helpers.ConnectorClient, pullPath string) error
+```
+
+TestPullWithZipVerification tests pull and verifies the content is a valid ZIP archive.
+
 <a name="TestPush"></a>
 ## func TestPush
 
@@ -3194,6 +3338,51 @@ func TestPush(ctx context.Context, client *helpers.ConnectorClient, pushPath, pu
 
 TestPush tests the push capability of a connector.
 
+<a name="TestPushEmptyPath"></a>
+## func TestPushEmptyPath
+
+```go
+func TestPushEmptyPath(ctx context.Context, client *helpers.ConnectorClient) error
+```
+
+TestPushEmptyPath tests pushing to an empty/root path.
+
+<a name="TestPushSpecificPath"></a>
+## func TestPushSpecificPath
+
+```go
+func TestPushSpecificPath(ctx context.Context, client *helpers.ConnectorClient, specificPath string) error
+```
+
+TestPushSpecificPath tests pushing to a specific path.
+
+<a name="TestPushWithContent"></a>
+## func TestPushWithContent
+
+```go
+func TestPushWithContent(ctx context.Context, client *helpers.ConnectorClient, pushPath string, content []byte, filename string) error
+```
+
+TestPushWithContent tests pushing specific content to a path.
+
+<a name="TestRoundTrip"></a>
+## func TestRoundTrip
+
+```go
+func TestRoundTrip(ctx context.Context, client *helpers.ConnectorClient, pushPath string, pushFile string) error
+```
+
+TestRoundTrip tests pushing data and then pulling it back to verify integrity. This is a comprehensive test that validates the full data lifecycle. If pushFile is provided and exists, it will be used instead of generating sample data.
+
+<a name="TestRoundTripWithVerification"></a>
+## func TestRoundTripWithVerification
+
+```go
+func TestRoundTripWithVerification(ctx context.Context, client *helpers.ConnectorClient, pushPath string, expectedContent []byte) error
+```
+
+TestRoundTripWithVerification performs a detailed round\-trip test with content verification.
+
 <a name="TestSchema"></a>
 ## func TestSchema
 
@@ -3202,6 +3391,51 @@ func TestSchema(ctx context.Context, client *helpers.ConnectorClient, capabiliti
 ```
 
 TestSchema tests the schema retrieval for all supported operation types.
+
+<a name="TestSchemaEmptyPath"></a>
+## func TestSchemaEmptyPath
+
+```go
+func TestSchemaEmptyPath(ctx context.Context, client *helpers.ConnectorClient, capabilities []irminmodels.ConnectorCapability) error
+```
+
+TestSchemaEmptyPath tests schema retrieval with an empty path \(root\).
+
+<a name="TestSchemaForPull"></a>
+## func TestSchemaForPull
+
+```go
+func TestSchemaForPull(ctx context.Context, client *helpers.ConnectorClient, path string) error
+```
+
+TestSchemaForPull tests pull schema retrieval with optional path.
+
+<a name="TestSchemaForPush"></a>
+## func TestSchemaForPush
+
+```go
+func TestSchemaForPush(ctx context.Context, client *helpers.ConnectorClient, path string) error
+```
+
+TestSchemaForPush tests push schema retrieval with optional path.
+
+<a name="TestSchemaSpecificPath"></a>
+## func TestSchemaSpecificPath
+
+```go
+func TestSchemaSpecificPath(ctx context.Context, client *helpers.ConnectorClient, capabilities []irminmodels.ConnectorCapability, specificPath string) error
+```
+
+TestSchemaSpecificPath tests schema retrieval with a specific path.
+
+<a name="TestSchemaWithPath"></a>
+## func TestSchemaWithPath
+
+```go
+func TestSchemaWithPath(ctx context.Context, client *helpers.ConnectorClient, method string, path string) error
+```
+
+TestSchemaWithPath tests schema retrieval for a specific path.
 
 <a name="TestSubscribe"></a>
 ## func TestSubscribe
@@ -5187,7 +5421,8 @@ const (
     // UpsertBatchSize is the maximum number of vectors to upsert in a single batch.
     UpsertBatchSize = 100
     // FetchBatchSize is the maximum number of vectors to fetch in a single batch.
-    FetchBatchSize = 1000
+    // Pinecone ListVectors API limit is 100.
+    FetchBatchSize = 100
     // DefaultTopK is the default number of results for search queries.
     DefaultTopK = 10
     // MaxTopK is the maximum allowed value for topK parameter (Pinecone API limit).
@@ -5422,7 +5657,6 @@ import "irmin-connectors/connectors/pinecone/controllers"
   - [func \(cs \*Controllers\) ValidateFields\(\_ fiber.Ctx, details map\[string\]any, \_ map\[string\]any\) \[\]string](<#Controllers.ValidateFields>)
   - [func \(cs \*Controllers\) ValidateOperationTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateOperationTokenMiddleware>)
   - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
-- [type ParquetEmbedding](<#ParquetEmbedding>)
 - [type PineconePullProvider](<#PineconePullProvider>)
   - [func \(p \*PineconePullProvider\) GetAllFiles\(c fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#PineconePullProvider.GetAllFiles>)
   - [func \(p \*PineconePullProvider\) GetFileByPath\(c fiber.Ctx, client any, rawPath string\) \(string, \[\]byte, error\)](<#PineconePullProvider.GetFileByPath>)
@@ -5644,23 +5878,6 @@ func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
 ```
 
 ValidateSystemTokenMiddleware validates the system token.
-
-<a name="ParquetEmbedding"></a>
-## type ParquetEmbedding
-
-ParquetEmbedding represents an embedding record for parquet serialization.
-
-```go
-type ParquetEmbedding struct {
-    ID         string `parquet:"name=id, type=BYTE_ARRAY, convertedtype=UTF8"`
-    SourceFile string `parquet:"name=source_file, type=BYTE_ARRAY, convertedtype=UTF8"`
-    ChunkIndex int32  `parquet:"name=chunk_index, type=INT32"`
-    Content    string `parquet:"name=content, type=BYTE_ARRAY, convertedtype=UTF8"`
-    Embedding  string `parquet:"name=embedding, type=BYTE_ARRAY, convertedtype=UTF8"`
-    Metadata   string `parquet:"name=metadata, type=BYTE_ARRAY, convertedtype=UTF8"`
-    CreatedAt  string `parquet:"name=created_at, type=BYTE_ARRAY, convertedtype=UTF8"`
-}
-```
 
 <a name="PineconePullProvider"></a>
 ## type PineconePullProvider

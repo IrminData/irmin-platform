@@ -7,13 +7,13 @@
       "details": {
         "host": "localhost",
         "port": "5432",
-        "user": "testuser",
-        "password": "testpassword",
-        "ssl_mode": "disable"
+        "username": "postgres",
+        "password": "your-password",
+        "default_db": "postgres",
+        "ssl_mode": "false"
       },
       "settings": {
-        "database": "testdb",
-        "schema": "public"
+        "database": "testdb"
       },
       "testData": {
         "pullPath": "",
@@ -22,6 +22,20 @@
         "patchFile": "test-data/test-patches.json",
         "webhookURL": "https://example.com/webhook",
         "webhookToken": "webhook-access-token"
+      },
+      "operations": {
+        "pull": {
+          "details": {},
+          "settings": {
+            "database": "source_db"
+          }
+        },
+        "push": {
+          "details": {},
+          "settings": {
+            "database": "target_db"
+          }
+        }
       }
     },
     "mysql": {
@@ -31,8 +45,9 @@
       "details": {
         "host": "localhost",
         "port": "3306",
-        "user": "testuser",
-        "password": "testpassword"
+        "username": "root",
+        "password": "your-password",
+        "default_db": "mysql"
       },
       "settings": {
         "database": "testdb"
@@ -51,13 +66,21 @@
       "url": "http://localhost:8080/sftp",
       "systemToken": "your-system-token-here",
       "details": {
-        "host": "localhost",
+        "host": "sftp.example.com",
         "port": "22",
-        "user": "testuser",
-        "password": "testpassword"
+        "username": "user",
+        "password": "your-password",
+        "private_key": "",
+        "private_key_passphrase": "",
+        "host_key_fingerprint": ""
       },
       "settings": {
-        "base_path": "/upload"
+        "remote_path": "/home/user/data",
+        "file_patterns": "[*]",
+        "preserve_timestamps": "true",
+        "overwrite_existing": "false",
+        "create_directories": "true",
+        "transfer_mode": "binary"
       },
       "testData": {
         "pullPath": "/test/file.csv",
@@ -73,13 +96,15 @@
       "url": "http://localhost:8080/http",
       "systemToken": "your-system-token-here",
       "details": {
-        "base_url": "https://api.example.com",
-        "auth_type": "bearer",
-        "auth_token": "your-api-token"
+        "url": "https://api.example.com/v1/data",
+        "method": "GET",
+        "headers": "{\"Authorization\": \"Bearer your-token\", \"Content-Type\": \"application/json\"}",
+        "body": "",
+        "timeout": "30",
+        "verify_ssl": "true",
+        "accepted_status_codes": "200,201,202,203,204"
       },
-      "settings": {
-        "endpoint": "/data"
-      },
+      "settings": {},
       "testData": {
         "pullPath": "/users",
         "pushPath": "/users",
@@ -88,7 +113,48 @@
         "webhookURL": "",
         "webhookToken": ""
       }
+    },
+    "firecrawl": {
+      "enabled": false,
+      "url": "http://localhost:8080/firecrawl",
+      "systemToken": "your-system-token-here",
+      "details": {
+        "api_key": "fc-your-api-key",
+        "operation_type": "scrape",
+        "url": "https://example.com",
+        "query": "",
+        "output_format": "markdown",
+        "limit": "10"
+      },
+      "settings": {},
+      "testData": {
+        "pullPath": "https://example.com/page",
+        "pushPath": "",
+        "pushFile": "",
+        "patchFile": "",
+        "webhookURL": "",
+        "webhookToken": ""
+      }
+    },
+    "pinecone": {
+      "enabled": false,
+      "url": "http://localhost:8080/pinecone",
+      "systemToken": "your-system-token-here",
+      "details": {
+        "api_key": "your-pinecone-api-key"
+      },
+      "settings": {
+        "host": "index-name-abc123.svc.us-east-1.pinecone.io",
+        "namespace": ""
+      },
+      "testData": {
+        "pullPath": "",
+        "pushPath": "",
+        "pushFile": "test-data/test-data.json",
+        "patchFile": "",
+        "webhookURL": "",
+        "webhookToken": ""
+      }
     }
   }
 }
-

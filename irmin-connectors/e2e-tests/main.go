@@ -26,7 +26,7 @@ func main() {
 		test       = flag.String(
 			"test",
 			"",
-			"Run a specific test type (info, config, operation, pull, push, patch, schema, subscribe)",
+			"Run a specific test type (info, config, operation, pull, push, patch, schema, subscribe, roundtrip)",
 		)
 		verbose    = flag.Bool("v", false, "Enable verbose output")
 		locale     = flag.String("locale", defaultLocale, "Locale for connector API requests")
@@ -94,7 +94,7 @@ Flags:
   -connector string
         Run tests for a specific connector only (e.g., "postgres", "mysql")
   -test string
-        Run a specific test type: info, config, operation, pull, push, patch, schema, subscribe
+        Run a specific test type: info, config, operation, pull, push, patch, schema, subscribe, roundtrip
   -v
         Enable verbose output
   -locale string
@@ -103,6 +103,17 @@ Flags:
         Generate a test-config.json from the example template
   -help
         Show this help message
+
+Test Types:
+  info       - Connector metadata and capabilities
+  config     - Configuration fields and validation
+  operation  - Operation lifecycle (init, status, cancel)
+  pull       - Data retrieval with ZIP verification
+  push       - Data upload
+  patch      - JSON patch operations
+  schema     - Schema discovery
+  subscribe  - Webhook subscriptions
+  roundtrip  - Push data then pull to verify integrity
 
 Examples:
   # Run all tests for all enabled connectors
@@ -113,6 +124,9 @@ Examples:
 
   # Run a specific test type across all connectors
   go run main.go -test pull
+
+  # Run round-trip test to verify data integrity
+  go run main.go -test roundtrip
 
   # Run with verbose output
   go run main.go -v

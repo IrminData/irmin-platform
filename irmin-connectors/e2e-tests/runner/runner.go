@@ -112,6 +112,18 @@ func (r *TestRunner) RunAll(ctx context.Context, specificConnector, specificTest
 	return nil
 }
 
+// initOperationForType initializes an operation for a specific operation type using per-operation config.
+// Returns the operation token, operation ID, and any error.
+func (r *TestRunner) initOperationForType(
+	ctx context.Context,
+	client *helpers.ConnectorClient,
+	cfg *ConnectorConfig,
+	operationType string,
+) (string, uint, error) {
+	details, settings := cfg.GetOperationConfig(operationType)
+	return tests.TestOperationInitWithID(ctx, client, details, settings)
+}
+
 // runConnectorTests runs all applicable tests for a single connector.
 func (r *TestRunner) runConnectorTests(ctx context.Context, name string, cfg ConnectorConfig, specificTest string) {
 	const testTypeOperation = "operation"
@@ -161,33 +173,40 @@ func (r *TestRunner) runConnectorTests(ctx context.Context, name string, cfg Con
 		specificTest == "pull" ||
 		specificTest == "push" ||
 		specificTest == "patch" ||
-		specificTest == "subscribe"
+		specificTest == "subscribe" ||
+		specificTest == "roundtrip"
 
 	if !needsOperation {
 		return
 	}
 
 	var operationToken string
+	var operationID uint
 	var operationInitialized bool
 
 	// Initialize operation (only test it if running all tests or operation-specific tests)
 	if specificTest == "" || specificTest == testTypeOperation {
 		r.RunTest("Operation Init", name, func() error {
-			token, tokenErr := tests.TestOperationInit(ctx, client, cfg.Details, cfg.Settings)
+			// Use empty string to get base config without operation-specific overrides
+			// when running general operation tests (not tied to a specific operation type)
+			token, opID, tokenErr := r.initOperationForType(ctx, client, &cfg, "")
 			if tokenErr == nil {
 				operationToken = token
+				operationID = opID
 				operationInitialized = true
 			}
 			return tokenErr
 		})
 	} else {
-		// Initialize silently for other tests that need it
-		token, tokenErr := tests.TestOperationInit(ctx, client, cfg.Details, cfg.Settings)
+		// Initialize with operation-specific config if available (e.g., "pull", "push", "roundtrip")
+		// Unknown operation types gracefully fall back to base config
+		token, opID, tokenErr := r.initOperationForType(ctx, client, &cfg, specificTest)
 		if tokenErr != nil {
 			r.SkipTest(specificTest, name, fmt.Sprintf("operation initialization failed: %v", tokenErr))
 			return
 		}
 		operationToken = token
+		operationID = opID
 		operationInitialized = true
 	}
 
@@ -195,13 +214,23 @@ func (r *TestRunner) runConnectorTests(ctx context.Context, name string, cfg Con
 	if operationInitialized {
 		defer func() {
 			// Silent cleanup - errors are not critical here
-			_ = tests.TestOperationCancel(ctx, client, operationToken)
+			_ = client.CancelOperation(ctx, operationID)
 		}()
 	}
 
 	// Only proceed with operation-dependent tests if we have a valid token
 	if operationInitialized {
-		r.runOperationDependentTests(ctx, name, cfg, specificTest, testTypeOperation, client, operationToken, info)
+		r.runOperationDependentTests(
+			ctx,
+			name,
+			&cfg,
+			specificTest,
+			testTypeOperation,
+			client,
+			operationToken,
+			operationID,
+			info,
+		)
 	}
 }
 
@@ -209,11 +238,12 @@ func (r *TestRunner) runConnectorTests(ctx context.Context, name string, cfg Con
 func (r *TestRunner) runOperationDependentTests(
 	ctx context.Context,
 	name string,
-	cfg ConnectorConfig,
+	cfg *ConnectorConfig,
 	specificTest string,
 	testTypeOperation string,
 	client *helpers.ConnectorClient,
 	operationToken string,
+	operationID uint,
 	info *connectorsclient.ConnectorInfo,
 ) {
 	// Create operation client for subsequent tests
@@ -247,9 +277,14 @@ func (r *TestRunner) runOperationDependentTests(
 		r.runSubscribeTest(ctx, name, opClient, cfg, info)
 	}
 
-	// Test 9-10: Operation lifecycle tests
+	// Test 9: Round-trip test (push and pull verification)
+	if runAll || specificTest == "roundtrip" {
+		r.runRoundTripTest(ctx, name, opClient, cfg, info)
+	}
+
+	// Test 10-11: Operation lifecycle tests
 	if runAll || specificTest == testTypeOperation {
-		r.runOperationLifecycleTests(ctx, name, client, operationToken)
+		r.runOperationLifecycleTests(ctx, name, client, operationID)
 	}
 }
 
@@ -270,15 +305,22 @@ func (r *TestRunner) runPullTest(
 	ctx context.Context,
 	name string,
 	opClient *helpers.ConnectorClient,
-	cfg ConnectorConfig,
+	cfg *ConnectorConfig,
 	info *connectorsclient.ConnectorInfo,
 ) {
 	if tests.HasCapability(info.Capabilities, "pull") {
+		// Basic pull test
 		r.RunTest("Pull", name, func() error {
 			return tests.TestPull(ctx, opClient, cfg.TestData.PullPath)
 		})
+
+		// ZIP verification test
+		r.RunTest("Pull (ZIP Verification)", name, func() error {
+			return tests.TestPullWithZipVerification(ctx, opClient, cfg.TestData.PullPath)
+		})
 	} else {
 		r.SkipTest("Pull", name, "capability not supported")
+		r.SkipTest("Pull (ZIP Verification)", name, "capability not supported")
 	}
 }
 
@@ -287,7 +329,7 @@ func (r *TestRunner) runPushTest(
 	ctx context.Context,
 	name string,
 	opClient *helpers.ConnectorClient,
-	cfg ConnectorConfig,
+	cfg *ConnectorConfig,
 	info *connectorsclient.ConnectorInfo,
 ) {
 	if tests.HasCapability(info.Capabilities, "push") {
@@ -304,7 +346,7 @@ func (r *TestRunner) runPatchTest(
 	ctx context.Context,
 	name string,
 	opClient *helpers.ConnectorClient,
-	cfg ConnectorConfig,
+	cfg *ConnectorConfig,
 	info *connectorsclient.ConnectorInfo,
 ) {
 	if tests.HasCapability(info.Capabilities, "push_patch") {
@@ -321,7 +363,7 @@ func (r *TestRunner) runSubscribeTest(
 	ctx context.Context,
 	name string,
 	opClient *helpers.ConnectorClient,
-	cfg ConnectorConfig,
+	cfg *ConnectorConfig,
 	info *connectorsclient.ConnectorInfo,
 ) {
 	if tests.HasCapability(info.Capabilities, "event_webhook") {
@@ -333,24 +375,58 @@ func (r *TestRunner) runSubscribeTest(
 	}
 }
 
+// runRoundTripTest runs the round-trip test (push then pull) if both capabilities are supported.
+func (r *TestRunner) runRoundTripTest(
+	ctx context.Context,
+	name string,
+	opClient *helpers.ConnectorClient,
+	cfg *ConnectorConfig,
+	info *connectorsclient.ConnectorInfo,
+) {
+	hasPush := tests.HasCapability(info.Capabilities, "push")
+	hasPull := tests.HasCapability(info.Capabilities, "pull")
+
+	if hasPush && hasPull {
+		r.RunTest("Round-Trip (Push/Pull)", name, func() error {
+			return tests.TestRoundTrip(ctx, opClient, cfg.TestData.PushPath, cfg.TestData.PushFile)
+		})
+	} else {
+		var reason string
+		switch {
+		case !hasPush && !hasPull:
+			reason = "push and pull capabilities not supported"
+		case !hasPush:
+			reason = "push capability not supported"
+		default:
+			reason = "pull capability not supported"
+		}
+		r.SkipTest("Round-Trip (Push/Pull)", name, reason)
+	}
+}
+
 // runOperationLifecycleTests runs operation status and cancel tests.
 func (r *TestRunner) runOperationLifecycleTests(
 	ctx context.Context,
 	name string,
 	client *helpers.ConnectorClient,
-	operationToken string,
+	operationID uint,
 ) {
-	// Test 9: Operation status
+	// Test: Operation status
 	r.RunTest("Operation Status", name, func() error {
-		return tests.TestOperationStatus(ctx, client, operationToken)
+		return tests.TestOperationStatus(ctx, client, operationID)
 	})
 
-	// Test 10: Operation cancel
+	// Test: Operation status with logs verification
+	r.RunTest("Operation Status (Logs)", name, func() error {
+		return tests.TestOperationStatusWithLogs(ctx, client, operationID)
+	})
+
+	// Test: Operation cancel
 	// Note: This test explicitly validates the cancel operation works
 	// Actual cleanup is handled by defer in runConnectorTests
 	// Cancel will be called twice: once here as a test, once in defer
 	// This is acceptable as cancel operations should be idempotent
 	r.RunTest("Operation Cancel", name, func() error {
-		return tests.TestOperationCancel(ctx, client, operationToken)
+		return tests.TestOperationCancel(ctx, client, operationID)
 	})
 }

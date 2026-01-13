@@ -488,7 +488,7 @@ func TestEmbeddingRecordIDValidation(t *testing.T) {
 func TestBatchSizeConstants(t *testing.T) {
 	// Verify batch size constants are within Pinecone limits
 	assert.Equal(t, client.UpsertBatchSize <= 100, true)
-	assert.Equal(t, client.FetchBatchSize <= 1000, true)
+	assert.Equal(t, client.FetchBatchSize <= 100, true) // Pinecone ListVectors API limit is 100
 	assert.Equal(t, client.DefaultTopK > 0, true)
 	assert.Equal(t, client.DefaultTopK <= 10000, true)
 }

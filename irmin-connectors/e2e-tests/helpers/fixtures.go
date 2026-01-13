@@ -73,6 +73,8 @@ func CreateSampleParquetData() []byte {
 const (
 	sampleUserID1 = 1
 	sampleUserID2 = 2
+	// minZipFileSize is the minimum size for a valid ZIP file header.
+	minZipFileSize = 4
 )
 
 // CreateSampleCSVData creates sample CSV data for testing.
@@ -157,4 +159,118 @@ func WrapFileInZip(filePath string) (string, error) {
 	}
 
 	return zipPath, nil
+}
+
+// CreateZipFileWithContent creates a ZIP file with the given content and filename.
+func CreateZipFileWithContent(filename string, content []byte) (string, error) {
+	tempDir := os.TempDir()
+	zipPath := filepath.Join(tempDir, "test-"+filename+".zip")
+
+	// Create a zip archive
+	zipFile, err := os.Create(zipPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to create zip file: %w", err)
+	}
+	defer zipFile.Close()
+
+	// Create a new zip writer
+	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+
+	// Add the file to the zip
+	writer, err := zipWriter.Create(filename)
+	if err != nil {
+		return "", fmt.Errorf("failed to create file in zip: %w", err)
+	}
+
+	_, err = writer.Write(content)
+	if err != nil {
+		return "", fmt.Errorf("failed to write data to zip: %w", err)
+	}
+
+	return zipPath, nil
+}
+
+// ExtractZipContent extracts all files from a ZIP archive in memory.
+// Returns a map of filename to content.
+func ExtractZipContent(zipData []byte) (map[string][]byte, error) {
+	reader, err := zip.NewReader(bytes.NewReader(zipData), int64(len(zipData)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create zip reader: %w", err)
+	}
+
+	files := make(map[string][]byte)
+	for _, file := range reader.File {
+		rc, openErr := file.Open()
+		if openErr != nil {
+			return nil, fmt.Errorf("failed to open file %s in zip: %w", file.Name, openErr)
+		}
+
+		var buf bytes.Buffer
+		_, copyErr := buf.ReadFrom(rc)
+		closeErr := rc.Close()
+
+		if copyErr != nil {
+			return nil, fmt.Errorf("failed to read file %s from zip: %w", file.Name, copyErr)
+		}
+		if closeErr != nil {
+			return nil, fmt.Errorf("failed to close file %s in zip: %w", file.Name, closeErr)
+		}
+
+		files[file.Name] = buf.Bytes()
+	}
+
+	return files, nil
+}
+
+// IsValidZip checks if the given data is a valid ZIP archive.
+func IsValidZip(data []byte) bool {
+	if len(data) < minZipFileSize {
+		return false
+	}
+	// ZIP files start with PK (0x50, 0x4B)
+	return data[0] == 0x50 && data[1] == 0x4B
+}
+
+// FileNameMatches checks if a filename matches the expected name, accounting for path prefixes.
+func FileNameMatches(actual, expected string) bool {
+	// Direct match
+	if actual == expected {
+		return true
+	}
+	// Match base name only (in case of path prefix)
+	return filepath.Base(actual) == expected || filepath.Base(actual) == filepath.Base(expected)
+}
+
+// ContentSimilar checks if two byte slices are similar enough to be considered equivalent.
+// This accounts for minor differences like line ending normalization or whitespace.
+func ContentSimilar(expected, actual []byte) bool {
+	// Exact match
+	if bytes.Equal(expected, actual) {
+		return true
+	}
+
+	// Normalize line endings and compare
+	normalizedExpected := normalizeLineEndings(expected)
+	normalizedActual := normalizeLineEndings(actual)
+
+	if bytes.Equal(normalizedExpected, normalizedActual) {
+		return true
+	}
+
+	// Trim whitespace and compare
+	if bytes.Equal(bytes.TrimSpace(normalizedExpected), bytes.TrimSpace(normalizedActual)) {
+		return true
+	}
+
+	return false
+}
+
+// normalizeLineEndings converts all line endings to Unix style (\n).
+func normalizeLineEndings(data []byte) []byte {
+	// Replace Windows line endings with Unix
+	result := bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
+	// Replace old Mac line endings with Unix
+	result = bytes.ReplaceAll(result, []byte("\r"), []byte("\n"))
+	return result
 }

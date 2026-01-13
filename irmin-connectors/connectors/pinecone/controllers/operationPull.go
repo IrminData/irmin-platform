@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"math"
 	"os"
+	"strings"
 	"time"
 
 	"irmin-connectors/connectors/common"
@@ -16,18 +16,9 @@ import (
 	"irmin-connectors/db"
 	"irmin-connectors/utils"
 
+	"github.com/IrminData/irmin-sdk-go/duckdb"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
-	"github.com/xitongsys/parquet-go-source/local"
-	"github.com/xitongsys/parquet-go/parquet"
-	"github.com/xitongsys/parquet-go/writer"
-)
-
-const (
-	// parquetParallelNumber is the number of parallel goroutines for parquet operations.
-	parquetParallelNumber = 4
-	// parquetRowGroupSize is the row group size in bytes for parquet files (128MB).
-	parquetRowGroupSize = 128 * 1024 * 1024
 )
 
 // PineconePullProvider implements the PullOperationProvider interface for Pinecone.
@@ -45,16 +36,8 @@ func (p *PineconePullProvider) getNamespaceValue() string {
 	return *p.namespace
 }
 
-// ParquetEmbedding represents an embedding record for parquet serialization.
-type ParquetEmbedding struct {
-	ID         string `parquet:"name=id, type=BYTE_ARRAY, convertedtype=UTF8"`
-	SourceFile string `parquet:"name=source_file, type=BYTE_ARRAY, convertedtype=UTF8"`
-	ChunkIndex int32  `parquet:"name=chunk_index, type=INT32"`
-	Content    string `parquet:"name=content, type=BYTE_ARRAY, convertedtype=UTF8"`
-	Embedding  string `parquet:"name=embedding, type=BYTE_ARRAY, convertedtype=UTF8"`
-	Metadata   string `parquet:"name=metadata, type=BYTE_ARRAY, convertedtype=UTF8"`
-	CreatedAt  string `parquet:"name=created_at, type=BYTE_ARRAY, convertedtype=UTF8"`
-}
+// parquetInsertBatchSize is the batch size for inserting records into DuckDB.
+const parquetInsertBatchSize = 100
 
 // InitializeClient initializes the Pinecone client for pull operations.
 func (p *PineconePullProvider) InitializeClient(
@@ -244,36 +227,56 @@ func (p *PineconePullProvider) fetchAllAsParquet(
 	return "embeddings.parquet", parquetBytes, nil
 }
 
-// convertChunkIndexSafely converts a chunk index to int32 with bounds checking and logging.
-func (p *PineconePullProvider) convertChunkIndexSafely(chunkIndex int, recordID string) int32 {
-	result := int32(chunkIndex) //nolint:gosec // checked for overflow below
-	if chunkIndex > math.MaxInt32 {
-		result = math.MaxInt32
-		if p.logger != nil {
-			p.logger.Warn("chunk index exceeds int32 max, clamping to max value",
-				"record_id", recordID,
-				"original_value", chunkIndex,
-			)
-		}
-	} else if chunkIndex < math.MinInt32 {
-		result = math.MinInt32
-		if p.logger != nil {
-			p.logger.Warn("chunk index below int32 min, clamping to min value",
-				"record_id", recordID,
-				"original_value", chunkIndex,
-			)
-		}
-	}
-	return result
-}
-
-// recordsToParquet converts EmbeddingRecords to parquet bytes.
+// recordsToParquet converts EmbeddingRecords to parquet bytes using DuckDB.
+// This creates parquet files with native FLOAT[] arrays for embeddings,
+// matching the format used by Irmin core's embeddings service.
 func (p *PineconePullProvider) recordsToParquet(records []pineconeclient.EmbeddingRecord) ([]byte, error) {
 	if len(records) == 0 {
 		return nil, errors.New("no records to convert")
 	}
 
-	// Create a temporary file for parquet writing
+	ctx := context.Background()
+
+	// Create DuckDB client
+	duckDBClient, err := duckdb.NewInMemoryClient(ctx, p.logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create DuckDB client: %w", err)
+	}
+	defer duckDBClient.Close()
+
+	// Create temp table with flexible FLOAT[] array type for embeddings
+	// Using FLOAT[] instead of FLOAT[N] avoids dimension mismatch errors
+	// if any records have different embedding sizes
+	createTableSQL := `
+		CREATE TEMP TABLE embeddings_export (
+			id VARCHAR,
+			source_file VARCHAR,
+			chunk_index INTEGER,
+			content TEXT,
+			embedding FLOAT[],
+			metadata JSON,
+			created_at TIMESTAMP
+		)
+	`
+
+	if _, execErr := duckDBClient.ExecuteNonQuery(ctx, createTableSQL); execErr != nil {
+		return nil, fmt.Errorf("failed to create temp table: %w", execErr)
+	}
+
+	// Insert records in batches
+	for i := 0; i < len(records); i += parquetInsertBatchSize {
+		end := i + parquetInsertBatchSize
+		if end > len(records) {
+			end = len(records)
+		}
+		batch := records[i:end]
+
+		if insertErr := p.insertEmbeddingBatch(ctx, duckDBClient, batch); insertErr != nil {
+			return nil, fmt.Errorf("failed to insert batch %d: %w", i/parquetInsertBatchSize, insertErr)
+		}
+	}
+
+	// Create temporary file for parquet output
 	tempFile, err := os.CreateTemp("", "pinecone_embeddings_*.parquet")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
@@ -284,65 +287,14 @@ func (p *PineconePullProvider) recordsToParquet(records []pineconeclient.Embeddi
 		return nil, fmt.Errorf("failed to close temp file: %w", closeErr)
 	}
 
-	// Create parquet writer
-	fw, err := local.NewLocalFileWriter(tempPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create file writer: %w", err)
-	}
+	// Export to parquet with ZSTD compression
+	escapedPath := strings.ReplaceAll(tempPath, "'", "''")
+	exportSQL := fmt.Sprintf(`
+		COPY embeddings_export TO '%s' (FORMAT PARQUET, COMPRESSION ZSTD)
+	`, escapedPath)
 
-	pw, err := writer.NewParquetWriter(fw, new(ParquetEmbedding), parquetParallelNumber)
-	if err != nil {
-		_ = fw.Close()
-		return nil, fmt.Errorf("failed to create parquet writer: %w", err)
-	}
-
-	pw.RowGroupSize = parquetRowGroupSize
-	pw.CompressionType = parquet.CompressionCodec_ZSTD
-
-	// Write records
-	for _, record := range records {
-		// Convert embedding to string representation
-		embeddingBytes, marshalErr := json.Marshal(record.Embedding)
-		if marshalErr != nil {
-			_ = pw.WriteStop()
-			_ = fw.Close()
-			return nil, fmt.Errorf("failed to marshal embedding for record %s: %w", record.ID, marshalErr)
-		}
-
-		// Convert metadata to JSON string
-		metadataBytes, marshalErr := json.Marshal(record.Metadata)
-		if marshalErr != nil {
-			_ = pw.WriteStop()
-			_ = fw.Close()
-			return nil, fmt.Errorf("failed to marshal metadata for record %s: %w", record.ID, marshalErr)
-		}
-
-		// Safe conversion of chunk index - clamp to int32 range with warning
-		chunkIndex := p.convertChunkIndexSafely(record.ChunkIndex, record.ID)
-
-		parquetRecord := ParquetEmbedding{
-			ID:         record.ID,
-			SourceFile: record.SourceFile,
-			ChunkIndex: chunkIndex,
-			Content:    record.Content,
-			Embedding:  string(embeddingBytes),
-			Metadata:   string(metadataBytes),
-			CreatedAt:  record.CreatedAt.Format(time.RFC3339),
-		}
-
-		if writeErr := pw.Write(parquetRecord); writeErr != nil {
-			_ = pw.WriteStop()
-			_ = fw.Close()
-			return nil, fmt.Errorf("failed to write record: %w", writeErr)
-		}
-	}
-
-	if err = pw.WriteStop(); err != nil {
-		_ = fw.Close()
-		return nil, fmt.Errorf("failed to finish writing: %w", err)
-	}
-	if closeErr := fw.Close(); closeErr != nil {
-		return nil, fmt.Errorf("failed to close file writer: %w", closeErr)
+	if _, execErr := duckDBClient.ExecuteNonQuery(ctx, exportSQL); execErr != nil {
+		return nil, fmt.Errorf("failed to export to parquet: %w", execErr)
 	}
 
 	// Read the parquet file
@@ -352,6 +304,79 @@ func (p *PineconePullProvider) recordsToParquet(records []pineconeclient.Embeddi
 	}
 
 	return data, nil
+}
+
+// insertEmbeddingBatch inserts a batch of embedding records into the DuckDB temp table.
+func (p *PineconePullProvider) insertEmbeddingBatch(
+	ctx context.Context,
+	client *duckdb.InMemoryClient,
+	records []pineconeclient.EmbeddingRecord,
+) error {
+	if len(records) == 0 {
+		return nil
+	}
+
+	var values []string
+	for _, record := range records {
+		// Convert embedding to DuckDB array literal
+		embeddingStr := vectorToArrayString(record.Embedding)
+
+		// Convert metadata to JSON
+		metadataBytes, err := json.Marshal(record.Metadata)
+		if err != nil {
+			metadataBytes = []byte("{}")
+		}
+		metadataStr := escapeSQLString(string(metadataBytes))
+
+		// Format the row value
+		// Use RFC3339 format for timestamps to ensure compatibility with push operations
+		// Use FLOAT[] (flexible array) instead of FLOAT[N] to handle any embedding dimension
+		value := fmt.Sprintf(`('%s', '%s', %d, '%s', %s::FLOAT[], '%s'::JSON, '%s')`,
+			escapeSQLString(record.ID),
+			escapeSQLString(record.SourceFile),
+			record.ChunkIndex,
+			escapeSQLString(record.Content),
+			embeddingStr,
+			metadataStr,
+			record.CreatedAt.Format(time.RFC3339),
+		)
+		values = append(values, value)
+	}
+
+	insertSQL := fmt.Sprintf(`
+		INSERT INTO embeddings_export (id, source_file, chunk_index, content, embedding, metadata, created_at)
+		VALUES %s
+	`, strings.Join(values, ", "))
+
+	if _, err := client.ExecuteNonQuery(ctx, insertSQL); err != nil {
+		return fmt.Errorf("failed to insert batch: %w", err)
+	}
+
+	return nil
+}
+
+// vectorToArrayString converts a float32 slice to a DuckDB array literal string.
+func vectorToArrayString(embedding []float32) string {
+	if len(embedding) == 0 {
+		return "[]"
+	}
+
+	var sb strings.Builder
+	sb.WriteString("[")
+	for i, v := range embedding {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		// Use %.9g format to handle both fixed-point and exponential notation
+		sb.WriteString(fmt.Sprintf("%.9g", v))
+	}
+	sb.WriteString("]")
+	return sb.String()
+}
+
+// escapeSQLString escapes a string for safe use in SQL queries.
+func escapeSQLString(s string) string {
+	return strings.ReplaceAll(s, "'", "''")
 }
 
 // OperationPull godoc
