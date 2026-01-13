@@ -558,6 +558,21 @@ const fi = {
       embeddingsContent: 'Sisältö',
       embeddingsSourceFile: 'Lähde',
       embeddingsChunk: 'Pala',
+      pointer: 'Osoitin',
+      pointsTo: 'Osoittaa kohteeseen',
+      createPointer: 'Luo osoitin',
+      createPointerDescription:
+        'Luo osoitin viittaamaan toisessa data-arkistossa olevaan objektiin',
+      targetBranchRef: 'Kohdehaara/viite',
+      targetObject: 'Kohdeobjekti',
+      pointerName: 'Osoittimen nimi',
+      pointerWillBeSavedAs: 'Tallennetaan nimellä',
+      pleaseSelectTargetRepository: 'Valitse kohde data-arkisto',
+      pleaseSelectTargetObject: 'Valitse kohdeobjekti',
+      pleaseEnterPointerName: 'Anna osoittimelle nimi',
+      pleaseEnterTargetRef: 'Anna kohdeviite',
+      couldNotCreatePointer: 'Osoitinta ei voitu luoda',
+      selectRepository: 'Valitse data-arkisto',
     },
     settings: {
       deletionNote:

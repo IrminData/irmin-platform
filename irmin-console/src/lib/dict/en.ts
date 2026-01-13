@@ -560,6 +560,21 @@ const en = {
       embeddingsContent: 'Content',
       embeddingsSourceFile: 'Source',
       embeddingsChunk: 'Chunk',
+      pointer: 'Pointer',
+      pointsTo: 'Points to',
+      createPointer: 'Create Pointer',
+      createPointerDescription:
+        'Create a pointer to reference an object from another repository',
+      targetBranchRef: 'Target Branch/Ref',
+      targetObject: 'Target Object',
+      pointerName: 'Pointer Name',
+      pointerWillBeSavedAs: 'Will be saved as',
+      pleaseSelectTargetRepository: 'Please select a target repository',
+      pleaseSelectTargetObject: 'Please select a target object',
+      pleaseEnterPointerName: 'Please enter a name for the pointer',
+      pleaseEnterTargetRef: 'Please enter a target ref',
+      couldNotCreatePointer: 'Could not create pointer',
+      selectRepository: 'Select a repository',
     },
 
     settings: {

@@ -10,6 +10,7 @@ import {
   TbDotsVertical,
   TbFile,
   TbFolder,
+  TbLink,
   TbTable,
   TbVectorTriangle,
 } from 'react-icons/tb';
@@ -167,7 +168,7 @@ export default function ObjectList({
     []
   );
 
-  const getIcon = useCallback((obj: RepositoryObject) => {
+  const getTypeIcon = useCallback((obj: RepositoryObject) => {
     // Check for embedding files first
     if (isEmbeddingFile(obj)) {
       return (
@@ -200,6 +201,7 @@ export default function ObjectList({
           />
         );
       case 'binary':
+      default:
         return (
           <TbFile
             className={`
@@ -210,6 +212,31 @@ export default function ObjectList({
         );
     }
   }, []);
+
+  const getIcon = useCallback(
+    (obj: RepositoryObject) => {
+      const typeIcon = getTypeIcon(obj);
+
+      // If it's a pointer, show both the type icon and a small pointer indicator
+      if (obj.is_pointer) {
+        return (
+          <div className='relative'>
+            {typeIcon}
+            <TbLink
+              className={`
+                absolute -right-1 -bottom-1 size-3 rounded-full bg-background
+                text-cyan-500
+                dark:text-cyan-400
+              `}
+            />
+          </div>
+        );
+      }
+
+      return typeIcon;
+    },
+    [getTypeIcon]
+  );
 
   return (
     <div className='mb-4 w-full overflow-hidden rounded-lg border border-card'>
@@ -291,7 +318,24 @@ export default function ObjectList({
                                 dark:bg-purple-900/30 dark:text-purple-300
                               `}
                             >
-                              {dict.repository.objects.vectors ?? 'Vectors'}
+                              {dict.repository.objects.vectors}
+                            </Badge>
+                          )}
+                          {/* Display Pointer badge for pointer files */}
+                          {obj.is_pointer && (
+                            <Badge
+                              variant='secondary'
+                              className={`
+                                bg-cyan-100 text-cyan-700
+                                dark:bg-cyan-900/30 dark:text-cyan-300
+                              `}
+                              title={
+                                obj.pointer_target
+                                  ? `${dict.repository.objects.pointsTo}: ${obj.pointer_target.target_repository}/${obj.pointer_target.target_path}@${obj.pointer_target.target_ref}`
+                                  : dict.repository.objects.pointer
+                              }
+                            >
+                              {dict.repository.objects.pointer}
                             </Badge>
                           )}
                           {/* Display tags if they exist */}

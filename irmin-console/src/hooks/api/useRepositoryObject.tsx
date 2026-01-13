@@ -43,6 +43,7 @@ export const useRepositoryObject = (
         ref: ref,
       });
     },
+    enabled: !!workspaceSlug && !!repositorySlug && !!ref,
   });
 
   const deleteObjectMutation = useMutation<
@@ -182,6 +183,45 @@ export const useRepositoryObject = (
     },
   });
 
+  const createPointerMutation = useMutation<
+    IrminAPIResponse,
+    Error,
+    {
+      pointerPath: string;
+      ref: string;
+      targetRepository: string;
+      targetPath: string;
+      targetRef: string;
+    }
+  >({
+    mutationFn: async ({
+      pointerPath,
+      ref,
+      targetRepository,
+      targetPath,
+      targetRef,
+    }) => {
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      return irminCore.objectService.createPointer({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        path: pointerPath,
+        ref,
+        targetRepository,
+        targetPath,
+        targetRef,
+      });
+    },
+    onSuccess: (res, { pointerPath, ref }) => {
+      invalidateObjectQueries(pointerPath, ref);
+      irminAlert('success', res.message ?? 'Pointer created successfully');
+    },
+    onError: (error) => {
+      irminAlert('error', error.message ?? 'Failed to create pointer');
+    },
+  });
+
   const validateObjectMutation = useMutation<
     {
       valid: boolean;
@@ -236,6 +276,7 @@ export const useRepositoryObject = (
     copyObjectMutation,
     uploadObjectMutation,
     uploadObjectFromURLMutation,
+    createPointerMutation,
     validateObjectMutation,
   };
 };

@@ -26,6 +26,16 @@ interface UploadObjectFromURLRequest {
 }
 
 /**
+ * Interface for creating a pointer object
+ */
+interface CreatePointerRequest {
+  target_workspace?: string;
+  target_repository: string;
+  target_path: string;
+  target_ref: string;
+}
+
+/**
  * Object API service
  *
  * Responsible for all repository object-related API calls.
@@ -54,6 +64,7 @@ class ObjectService {
     this.copyObject = this.copyObject.bind(this);
     this.deleteObject = this.deleteObject.bind(this);
     this.validateObject = this.validateObject.bind(this);
+    this.createPointer = this.createPointer.bind(this);
   }
 
   /**
@@ -578,6 +589,66 @@ class ObjectService {
       return response.data;
     } catch (error) {
       console.error((error as Error).message, 'Validate object error');
+      throw error;
+    }
+  }
+
+  /**
+   * Create a pointer to an object in another repository.
+   *
+   * @param props - The pointer creation properties.
+   * @param props.workspace - The workspace slug.
+   * @param props.repository - The repository slug where the pointer will be created.
+   * @param props.ref - The ref (branch) to create the pointer on.
+   * @param props.path - The path for the pointer file.
+   * @param props.targetRepository - The slug of the target repository.
+   * @param props.targetPath - The path to the target object.
+   * @param props.targetRef - The branch/commit of the target object.
+   * @param props.targetWorkspace - (optional) The target workspace slug. Empty for same workspace.
+   * @returns IrminAPIResponse containing the created pointer object.
+   */
+  async createPointer({
+    workspace,
+    repository,
+    ref,
+    path,
+    targetRepository,
+    targetPath,
+    targetRef,
+    targetWorkspace = '',
+  }: {
+    workspace: string;
+    repository: string;
+    ref: string;
+    path: string;
+    targetRepository: string;
+    targetPath: string;
+    targetRef: string;
+    targetWorkspace?: string;
+  }): Promise<IrminAPIResponse<RepositoryObject>> {
+    try {
+      const params = new URLSearchParams();
+      params.append('ref', ref);
+      params.append('path', path);
+
+      const requestBody: CreatePointerRequest = {
+        target_workspace: targetWorkspace,
+        target_repository: targetRepository,
+        target_path: targetPath,
+        target_ref: targetRef,
+      };
+
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/pointer?${params.toString()}`;
+
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      })) as IrminAPIResponse<RepositoryObject>;
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Create pointer error');
       throw error;
     }
   }

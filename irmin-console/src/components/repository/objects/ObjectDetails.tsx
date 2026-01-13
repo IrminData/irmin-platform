@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { IoClose } from 'react-icons/io5';
@@ -14,6 +15,7 @@ import {
   TbFile,
   TbFolderOpen,
   TbHistory,
+  TbLink,
   TbSchema,
   TbTrash,
   TbUpload,
@@ -613,6 +615,76 @@ export default function ObjectDetails({
             <span className='text-right'>
               {new Date(selectedObject.last_modified).toLocaleString()}
             </span>
+          </div>
+        )}
+        {/** Pointer target information */}
+        {selectedObject.is_pointer && selectedObject.pointer_target && (
+          <div
+            className={`
+              mt-2 flex w-full flex-col gap-2 rounded-md border border-accent/30
+              bg-accent/5 p-2
+            `}
+          >
+            <div className='flex items-center gap-1.5 text-accent'>
+              <TbLink size={14} />
+              <span className='font-semibold'>
+                {dict.repository.objects.pointsTo}
+              </span>
+            </div>
+            <div className='flex flex-col gap-1 text-xs'>
+              <div className='flex justify-between gap-1'>
+                <span className='text-muted-foreground'>
+                  {dict.repository.objects.targetRepository}:
+                </span>
+                <span className='text-right font-medium'>
+                  {selectedObject.pointer_target.target_repository}
+                </span>
+              </div>
+              <div className='flex justify-between gap-1'>
+                <span className='text-muted-foreground'>
+                  {dict.repository.objects.path}:
+                </span>
+                <span className='text-right font-medium'>
+                  {selectedObject.pointer_target.target_path}
+                </span>
+              </div>
+              <div className='flex justify-between gap-1'>
+                <span className='text-muted-foreground'>
+                  {dict.repository.objects.targetBranchRef}:
+                </span>
+                <span className='text-right font-medium'>
+                  {selectedObject.pointer_target.target_ref}
+                </span>
+              </div>
+              {selectedObject.pointer_target.target_workspace && (
+                <div className='flex justify-between gap-1'>
+                  <span className='text-muted-foreground'>
+                    {dict.workspaceSwitcher.workspace}:
+                  </span>
+                  <span className='text-right font-medium'>
+                    {selectedObject.pointer_target.target_workspace}
+                  </span>
+                </div>
+              )}
+              {/** Show link to target if in the same workspace */}
+              {(!selectedObject.pointer_target.target_workspace ||
+                selectedObject.pointer_target.target_workspace ===
+                  workspaceSlug) && (
+                <Link
+                  href={`${baseUrl.replace(repository.slug, selectedObject.pointer_target.target_repository)}/object?path=${encodeURIComponent(selectedObject.pointer_target.target_path)}&ref=${encodeURIComponent(selectedObject.pointer_target.target_ref)}`}
+                  className={`
+                    mt-1 flex items-center justify-center gap-1 rounded-md
+                    bg-accent/10 px-2 py-1.5 text-center text-xs font-medium
+                    text-accent transition-colors
+                    hover:bg-accent/20
+                  `}
+                >
+                  <TbFile size={14} />
+                  {dict.repository.objects.view}{' '}
+                  {dict.repository.objects.targetObject}
+                </Link>
+              )}
+            </div>
           </div>
         )}
         {/** Properties from the schema */}

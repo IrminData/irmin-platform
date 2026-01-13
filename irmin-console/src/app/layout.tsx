@@ -77,8 +77,8 @@ export default async function RootLayout(props: {
           <ClerkProvider dynamic>
             <ReactQueryProvider>
               <LocaleProvider>
-                <PopupProvider>
-                  <IAMProvider>
+                <IAMProvider>
+                  <PopupProvider>
                     <ThemeProvider
                       attribute='class'
                       defaultTheme='system'
@@ -87,8 +87,8 @@ export default async function RootLayout(props: {
                     >
                       {children}
                     </ThemeProvider>
-                  </IAMProvider>
-                </PopupProvider>
+                  </PopupProvider>
+                </IAMProvider>
               </LocaleProvider>
             </ReactQueryProvider>
           </ClerkProvider>

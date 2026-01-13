@@ -11,6 +11,7 @@ import {
   TbChevronUp,
   TbDownload,
   TbFileDiff,
+  TbLink,
   TbRefresh,
   TbUpload,
 } from 'react-icons/tb';
@@ -34,6 +35,7 @@ import { useRepositoryContext } from '@/context/RepositoryContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import {
+  useRepositories,
   useRepositoryObject,
   useRepositoryObjectContent,
   useStoredQueries,
@@ -44,6 +46,7 @@ import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { RepositoryObject } from '@/types/core/RepositoryObject';
 import type { Tag } from '@/types/core/Tag';
 
+import CreatePointerModal from './objects/CreatePointerModal';
 import ObjectDetails from './objects/ObjectDetails';
 import ObjectList from './objects/ObjectList';
 import UploadObjectModal from './objects/UploadObjectModal';
@@ -92,15 +95,17 @@ function RepositorySectionContent({
   const [queryResultsOpen, setQueryResultsOpen] = useState(false);
 
   const { createStoredQueryMutation } = useStoredQueries();
+  const { repositoriesQuery } = useRepositories();
 
   // Initialize selected object from search params if present
   const currentObjectPath = searchParams.get('object');
 
-  const { repositoryObjectQuery, uploadObjectMutation } = useRepositoryObject(
-    repository.slug,
-    currentRef,
-    '' // Always fetch root object of the repository
-  );
+  const { repositoryObjectQuery, uploadObjectMutation, createPointerMutation } =
+    useRepositoryObject(
+      repository.slug,
+      currentRef,
+      '' // Always fetch root object of the repository
+    );
 
   // Effect to sync selected object from URL params (for initial load or back/forward navigation)
   // We need to find the object in the fetched data that matches the path
@@ -218,6 +223,41 @@ function RepositorySectionContent({
       />
     );
   }, [dict, irminModal, repository, currentRef, uploadObjectMutation]);
+
+  const handleCreatePointer = useCallback(() => {
+    irminModal.show(
+      dict.repository.objects.createPointer,
+      <CreatePointerModal
+        currentRepository={repository.slug}
+        currentPath={currentDirectoryPath}
+        repositories={repositoriesQuery.data?.data ?? []}
+        workspaceSlug={workspaceSlug}
+        createPointer={async (
+          pointerPath: string,
+          targetRepository: string,
+          targetPath: string,
+          targetRef: string
+        ) => {
+          await createPointerMutation.mutateAsync({
+            pointerPath,
+            ref: currentRef ?? repository.default_branch,
+            targetRepository,
+            targetPath,
+            targetRef,
+          });
+        }}
+      />
+    );
+  }, [
+    dict,
+    irminModal,
+    repository,
+    currentRef,
+    currentDirectoryPath,
+    createPointerMutation,
+    repositoriesQuery.data?.data,
+    workspaceSlug,
+  ]);
 
   const handleSaveQuery = useCallback(() => {
     if (!queryField || queryField.length < 3) return;
@@ -464,14 +504,24 @@ function RepositorySectionContent({
                   </Button>
                 )}
                 {!immutable && canUpload && (
-                  <Button
-                    variant='default'
-                    size='sm'
-                    onClick={handleUpload}
-                    icon={<TbUpload />}
-                  >
-                    {dict.repository.objects.uploadObject}
-                  </Button>
+                  <>
+                    <Button
+                      variant='secondary'
+                      size='sm'
+                      onClick={handleCreatePointer}
+                      icon={<TbLink />}
+                    >
+                      {dict.repository.objects.createPointer}
+                    </Button>
+                    <Button
+                      variant='default'
+                      size='sm'
+                      onClick={handleUpload}
+                      icon={<TbUpload />}
+                    >
+                      {dict.repository.objects.uploadObject}
+                    </Button>
+                  </>
                 )}
               </div>
             </div>

@@ -1,6 +1,21 @@
 import type { Tag } from '@/types/core/Tag';
 
 /**
+ * Represents the target of a pointer object.
+ * Used as part of the RepositoryObject type definition.
+ */
+interface PointerTarget {
+  /** Target workspace slug. Empty string means same workspace. */
+  target_workspace?: string;
+  /** Target repository slug */
+  target_repository: string;
+  /** Path to the target object */
+  target_path: string;
+  /** Target branch name or commit hash */
+  target_ref: string;
+}
+
+/**
  * Represents an object stored in the repository.
  */
 export interface RepositoryObject {
@@ -10,7 +25,7 @@ export interface RepositoryObject {
   name: string;
   /** Path of the object */
   path: string;
-  /** Type of the object, where "group" is a folder, "structured" is a tabular file we can parse or query (e.g. CSV, JSON, Parquet, etc.) and "binary" is a file that we can't parse or query (e.g. image, video, audio, etc.) */
+  /** Type of the object, where "group" is a folder, "structured" is a tabular file we can parse or query (e.g. CSV, JSON, Parquet, etc.), "binary" is a file that we can't parse or query (e.g. image, video, audio, etc.) */
   type: 'binary' | 'group' | 'structured';
   /** Slug of the repository that contains the object */
   repository_slug: string;
@@ -36,4 +51,8 @@ export interface RepositoryObject {
   sql_selector?: string;
   /** (optional) An example S3 path selector for this object, like "s3://workspace-slug-repository-slug/main/file.json" */
   s3_path_selector?: string;
+  /** (optional) Whether this object is a pointer to another object */
+  is_pointer?: boolean;
+  /** (optional) If this is a pointer, contains the target information */
+  pointer_target?: PointerTarget;
 }
