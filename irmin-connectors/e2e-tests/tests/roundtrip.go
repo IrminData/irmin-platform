@@ -39,7 +39,12 @@ func prepareFromFile(pushFile string) (*roundTripTestData, error) {
 		return nil, fmt.Errorf("failed to wrap push file in zip: %w", err)
 	}
 
-	testData, _ := os.ReadFile(pushFile)
+	testData, err := os.ReadFile(pushFile)
+	if err != nil {
+		// Clean up the zip file we created before returning error
+		_ = helpers.CleanupTestFile(zipPath)
+		return nil, fmt.Errorf("failed to read push file: %w", err)
+	}
 
 	return &roundTripTestData{
 		zipPath:      zipPath,
