@@ -908,6 +908,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) RepositoryCommitsShow\(c fiber.Ctx\) error](<#APIControllers.RepositoryCommitsShow>)
   - [func \(api \*APIControllers\) RepositoryCommitsStore\(c fiber.Ctx\) error](<#APIControllers.RepositoryCommitsStore>)
   - [func \(api \*APIControllers\) RepositoryCopyObject\(c fiber.Ctx\) error](<#APIControllers.RepositoryCopyObject>)
+  - [func \(api \*APIControllers\) RepositoryCreatePointer\(c fiber.Ctx\) error](<#APIControllers.RepositoryCreatePointer>)
   - [func \(api \*APIControllers\) RepositoryGetUncommittedChanges\(c fiber.Ctx\) error](<#APIControllers.RepositoryGetUncommittedChanges>)
   - [func \(api \*APIControllers\) RepositoryMoveObject\(c fiber.Ctx\) error](<#APIControllers.RepositoryMoveObject>)
   - [func \(api \*APIControllers\) RepositoryObjectsContent\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsContent>)
@@ -1710,6 +1711,15 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error
 ```
 
 RepositoryCopyObject godoc @Summary Copy repository object @Description Copy an object to a new path within the same repository at a given reference @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param path query string true "Source object path within the repository" @Param ref query string false "Reference \(branch, tag, or commit\) to copy in" default\("main"\) @Param body body irmincore.MoveObjectRequest true "Copy object request with new path" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Object\} "Object copied successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid new path or parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Object not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects/copy \[post\]
+
+<a name="APIControllers.RepositoryCreatePointer"></a>
+### func \(\*APIControllers\) RepositoryCreatePointer
+
+```go
+func (api *APIControllers) RepositoryCreatePointer(c fiber.Ctx) error
+```
+
+RepositoryCreatePointer godoc @Summary Create pointer to object in another repository @Description Create a pointer file that references an object in another repository within the same workspace @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param ref query string false "Reference \(branch\) to create pointer in" default\("main"\) @Param path query string true "Path for the pointer file \(will be prefixed with \_ptr. if not already\)" @Param body body irmincore.CreatePointerRequest true "Pointer target information" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Object\} "Pointer created successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Target repository or object not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects/pointer \[post\]
 
 <a name="APIControllers.RepositoryGetUncommittedChanges"></a>
 ### func \(\*APIControllers\) RepositoryGetUncommittedChanges
@@ -4862,6 +4872,13 @@ type RepositoryObject struct {
     Repository    *Repository `json:"repository,omitempty"     gorm:"foreignKey:RepositoryID;references:ID"`
     RepositoryID  uint        `json:"repository_id,omitempty"  gorm:"index"`
     Tags          []Tag       `json:"tags,omitempty"           gorm:"many2many:repository_object_tags;"`
+
+    // Pointer fields - cached from pointer file content for fast lookups
+    IsPointer               bool   `json:"is_pointer,omitempty"`
+    PointerTargetWorkspace  string `json:"pointer_target_workspace,omitempty"`  // Empty = same workspace (future cross-workspace support)
+    PointerTargetRepository string `json:"pointer_target_repository,omitempty"` // Target repository slug
+    PointerTargetPath       string `json:"pointer_target_path,omitempty"`       // Target object path
+    PointerTargetRef        string `json:"pointer_target_ref,omitempty"`        // Target branch or commit
 }
 ```
 
@@ -6319,12 +6336,14 @@ import "irmin-api/engine"
 
 ## Index
 
+- [Constants](<#constants>)
 - [func BuildJSONSchemaForTesting\(fields \[\]SchemaField, context \*SchemaContext\) irminmodels.JSONSchema](<#BuildJSONSchemaForTesting>)
 - [func CheckObjectPermissions\(c \*Client, user \*db.User, workspace \*db.Workspace, objectID uint, operation string\) error](<#CheckObjectPermissions>)
 - [func CheckRepositoryPermissions\(c \*Client, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, operation string\) error](<#CheckRepositoryPermissions>)
 - [func DetectOperationType\(stmt string\) string](<#DetectOperationType>)
 - [func ExtractArrayElementTypeForTesting\(arrayType string\) string](<#ExtractArrayElementTypeForTesting>)
 - [func ExtractS3Paths\(query string\) \(\[\]string, error\)](<#ExtractS3Paths>)
+- [func IsPointerPath\(path string\) bool](<#IsPointerPath>)
 - [func IsRowReturningStatement\(stmt string\) bool](<#IsRowReturningStatement>)
 - [func IsSystemPath\(path string\) bool](<#IsSystemPath>)
 - [func MaskStringLiterals\(sql string\) string](<#MaskStringLiterals>)
@@ -6397,6 +6416,18 @@ import "irmin-api/engine"
 - [type TransformConfig](<#TransformConfig>)
 
 
+## Constants
+
+<a name="PointerFilePrefix"></a>
+
+```go
+const (
+
+    // PointerFilePrefix is the prefix used to identify pointer files.
+    PointerFilePrefix = "_ptr."
+)
+```
+
 <a name="BuildJSONSchemaForTesting"></a>
 ## func BuildJSONSchemaForTesting
 
@@ -6450,6 +6481,15 @@ func ExtractS3Paths(query string) ([]string, error)
 ```
 
 ExtractS3Paths extracts all S3 URLs from a SQL query Returns unique S3 paths found in the query, with quotes unescaped
+
+<a name="IsPointerPath"></a>
+## func IsPointerPath
+
+```go
+func IsPointerPath(path string) bool
+```
+
+IsPointerPath checks if the given path or filename represents a pointer file. Pointer files are identified by the "\_ptr." prefix in their filename. Note: Pointer files are NOT system paths \- they are user\-visible but have special behavior.
 
 <a name="IsRowReturningStatement"></a>
 ## func IsRowReturningStatement
@@ -9676,16 +9716,22 @@ import "irmin-api/lib"
 - [Constants](<#constants>)
 - [Variables](<#variables>)
 - [func AssignDefaultRolesToUsersWithoutRoles\(d \*db.Database\) error](<#AssignDefaultRolesToUsersWithoutRoles>)
+- [func BuildPointerPath\(directory, targetName string\) string](<#BuildPointerPath>)
 - [func ConstructSQLSelector\(workspaceSlug, repositorySlug, objectPath, ref, defaultBranch string\) \(string, string, error\)](<#ConstructSQLSelector>)
 - [func CreateAuditLogEventAsync\(d \*db.Database, logger \*slog.Logger, event \*db.LogEvent\)](<#CreateAuditLogEventAsync>)
+- [func CreatePointerContent\(target \*irminmodels.PointerTarget\) \(\[\]byte, error\)](<#CreatePointerContent>)
 - [func CreateWorkflowRun\(tx \*gorm.DB, workflow \*db.Workflow, user \*db.User, trigger \*db.WorkflowTrigger\) \(\*db.WorkflowRun, error\)](<#CreateWorkflowRun>)
 - [func DecodePolicyResourceID\(sqid string, resource db.PolicyResource, sqidManager \*irminsqids.SQIDManager\) \(\*uint, error\)](<#DecodePolicyResourceID>)
 - [func DownloadFileFromURL\(ctx context.Context, targetURL string, headers map\[string\]string\) \(io.ReadCloser, error\)](<#DownloadFileFromURL>)
 - [func EncodePolicyResourceID\(id uint, resource db.PolicyResource, sqidManager \*irminsqids.SQIDManager\) \(string, error\)](<#EncodePolicyResourceID>)
 - [func EnsureNovuSubscriber\(ctx context.Context, sqidManager \*irminsqids.SQIDManager, env \*utils.CoreAPIEnv, locale string, user \*db.User\) \(\*components.SubscriberResponseDto, error\)](<#EnsureNovuSubscriber>)
+- [func ExtractPointerTargetExtension\(path string\) string](<#ExtractPointerTargetExtension>)
 - [func GetObject\(ctx context.Context, locale string, d \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, workspace \*db.Workspace, repository \*db.Repository, path, ref string, ignoreCache bool\) \(\*db.RepositoryObject, error\)](<#GetObject>)
+- [func GetPointerDisplayName\(path string\) string](<#GetPointerDisplayName>)
 - [func GetRepository\(ctx context.Context, locale string, d \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, workspace \*db.Workspace, repositorySlug string, ignoreCache bool\) \(\*db.Repository, error\)](<#GetRepository>)
+- [func IsPointerPath\(path string\) bool](<#IsPointerPath>)
 - [func NewSafeHTTPClient\(ctx context.Context\) \*http.Client](<#NewSafeHTTPClient>)
+- [func ParsePointerFile\(content \[\]byte\) \(\*irminmodels.PointerTarget, error\)](<#ParsePointerFile>)
 - [func ParseScheduleFromData\(scheduleReq \*irminmodels.Schedule, d \*db.Database, workspace db.Workspace, sqidManager \*irminsqids.SQIDManager\) \(\*db.Schedule, error\)](<#ParseScheduleFromData>)
 - [func ParseScheduleFromRequest\(c fiber.Ctx, d \*db.Database, workspace db.Workspace, sqidManager \*irminsqids.SQIDManager\) \(\*db.Schedule, error\)](<#ParseScheduleFromRequest>)
 - [func ParseStructuredFiles\(ctx context.Context, files map\[string\]\[\]byte, env \*utils.CoreAPIEnv, logger \*slog.Logger\) \(map\[string\]\[\]map\[string\]any, error\)](<#ParseStructuredFiles>)
@@ -9735,7 +9781,33 @@ const (
 )
 ```
 
+<a name="PointerFilePrefix"></a>
+
+```go
+const (
+    // PointerFilePrefix is the prefix used to identify pointer files.
+    PointerFilePrefix = "_ptr."
+)
+```
+
 ## Variables
+
+<a name="ErrInvalidPointerContent"></a>
+
+```go
+var (
+    // ErrInvalidPointerContent is returned when the pointer file content is invalid.
+    ErrInvalidPointerContent = errors.New("invalid pointer file content")
+    // ErrMissingTargetRepository is returned when the target repository is not specified.
+    ErrMissingTargetRepository = errors.New("pointer target repository is required")
+    // ErrMissingTargetPath is returned when the target path is not specified.
+    ErrMissingTargetPath = errors.New("pointer target path is required")
+    // ErrMissingTargetRef is returned when the target ref is not specified.
+    ErrMissingTargetRef = errors.New("pointer target ref is required")
+    // ErrCrossWorkspaceNotSupported is returned when cross-workspace pointers are attempted.
+    ErrCrossWorkspaceNotSupported = errors.New("cross-workspace pointers are not yet supported")
+)
+```
 
 <a name="ErrConnectionSchemaCacheNotFound"></a>
 
@@ -9770,6 +9842,15 @@ func AssignDefaultRolesToUsersWithoutRoles(d *db.Database) error
 
 AssignDefaultRolesToUsersWithoutRoles assigns the default role to any users in workspaces who don't have any roles. For workspace owners, it assigns the owner role instead of the default role.
 
+<a name="BuildPointerPath"></a>
+## func BuildPointerPath
+
+```go
+func BuildPointerPath(directory, targetName string) string
+```
+
+BuildPointerPath constructs a pointer file path from a directory and target filename. For example: directory="data", targetName="customers.json" \-\> "data/\_ptr.customers.json"
+
 <a name="ConstructSQLSelector"></a>
 ## func ConstructSQLSelector
 
@@ -9787,6 +9868,15 @@ func CreateAuditLogEventAsync(d *db.Database, logger *slog.Logger, event *db.Log
 ```
 
 CreateAuditLogEventAsync creates an audit log event asynchronously.
+
+<a name="CreatePointerContent"></a>
+## func CreatePointerContent
+
+```go
+func CreatePointerContent(target *irminmodels.PointerTarget) ([]byte, error)
+```
+
+CreatePointerContent creates the JSON content for a pointer file.
 
 <a name="CreateWorkflowRun"></a>
 ## func CreateWorkflowRun
@@ -9833,6 +9923,15 @@ func EnsureNovuSubscriber(ctx context.Context, sqidManager *irminsqids.SQIDManag
 
 EnsureNovuSubscriber ensures that the user is a subscriber in Novu It creates the subscriber if it doesn't exist, or updates it if it does.
 
+<a name="ExtractPointerTargetExtension"></a>
+## func ExtractPointerTargetExtension
+
+```go
+func ExtractPointerTargetExtension(path string) string
+```
+
+ExtractPointerTargetExtension extracts the file extension from a pointer path. For a pointer like "\_ptr.customers.json", returns ".json".
+
 <a name="GetObject"></a>
 ## func GetObject
 
@@ -9841,6 +9940,15 @@ func GetObject(ctx context.Context, locale string, d *db.Database, logger *slog.
 ```
 
 GetObject gets an object from the data engine and caches it in the database. It returns the object from the database if it is found, otherwise it gets it from the data engine and caches it in the database.
+
+<a name="GetPointerDisplayName"></a>
+## func GetPointerDisplayName
+
+```go
+func GetPointerDisplayName(path string) string
+```
+
+GetPointerDisplayName extracts the display name from a pointer path. For a pointer like "\_ptr.customers.json", returns "customers.json".
 
 <a name="GetRepository"></a>
 ## func GetRepository
@@ -9851,6 +9959,15 @@ func GetRepository(ctx context.Context, locale string, d *db.Database, logger *s
 
 
 
+<a name="IsPointerPath"></a>
+## func IsPointerPath
+
+```go
+func IsPointerPath(path string) bool
+```
+
+IsPointerPath checks if the given path represents a pointer file. Pointer files are identified by the "\_ptr." prefix in their filename.
+
 <a name="NewSafeHTTPClient"></a>
 ## func NewSafeHTTPClient
 
@@ -9859,6 +9976,15 @@ func NewSafeHTTPClient(ctx context.Context) *http.Client
 ```
 
 NewSafeHTTPClient creates an HTTP client with timeouts, redirect checks, and IP blocking via Dialer.Control.
+
+<a name="ParsePointerFile"></a>
+## func ParsePointerFile
+
+```go
+func ParsePointerFile(content []byte) (*irminmodels.PointerTarget, error)
+```
+
+ParsePointerFile parses the JSON content of a pointer file and returns the pointer target.
 
 <a name="ParseScheduleFromData"></a>
 ## func ParseScheduleFromData
@@ -11257,6 +11383,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) CreateAPIToken\(c context.Context, user \*db.User, req irmincore.CreateCredentialRequest\) \(\*db.APIToken, error\)](<#APIServices.CreateAPIToken>)
   - [func \(api \*APIServices\) CreateConnection\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.CreateConnectionRequest\) \(\*db.Connection, error\)](<#APIServices.CreateConnection>)
   - [func \(api \*APIServices\) CreateConnector\(c context.Context, locale string, isSystem bool, req irmincore.ConnectorRequest\) \(\*db.Connector, error\)](<#APIServices.CreateConnector>)
+  - [func \(api \*APIServices\) CreatePointer\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, pointerPath string, ref string, targetWorkspace string, targetRepository string, targetPath string, targetRef string\) \(\*db.RepositoryObject, error\)](<#APIServices.CreatePointer>)
   - [func \(api \*APIServices\) CreatePolicy\(c context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.CreatePolicyRequest\) \(\*db.Policy, error\)](<#APIServices.CreatePolicy>)
   - [func \(api \*APIServices\) CreateQuery\(c context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.CreateQueryRequest\) \(\*db.StoredQuery, error\)](<#APIServices.CreateQuery>)
   - [func \(api \*APIServices\) CreateRepository\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.CreateRepositoryRequest\) \(\*db.Repository, error\)](<#APIServices.CreateRepository>)
@@ -11512,6 +11639,8 @@ var (
     ErrWorkflowAlreadyRunning                 = errors.New("workflow already running")
     ErrBranchAlreadyExists                    = errors.New("branch already exists")
     ErrNoContentExtracted                     = errors.New("no content could be extracted from AI response")
+    ErrReservedPathPrefix                     = errors.New("path uses reserved prefix")
+    ErrCannotMovePointerToRegularPath         = errors.New("cannot move or copy pointer to a non-pointer path")
 )
 ```
 
@@ -11905,6 +12034,15 @@ func (api *APIServices) CreateConnector(c context.Context, locale string, isSyst
 ```
 
 
+
+<a name="APIServices.CreatePointer"></a>
+### func \(\*APIServices\) CreatePointer
+
+```go
+func (api *APIServices) CreatePointer(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, pointerPath string, ref string, targetWorkspace string, targetRepository string, targetPath string, targetRef string) (*db.RepositoryObject, error)
+```
+
+CreatePointer creates a pointer file that references an object in another repository.
 
 <a name="APIServices.CreatePolicy"></a>
 ### func \(\*APIServices\) CreatePolicy

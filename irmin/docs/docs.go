@@ -7834,6 +7834,115 @@ const docTemplate = `{
                 }
             }
         },
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/pointer": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create a pointer file that references an object in another repository within the same workspace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repository-objects"
+                ],
+                "summary": "Create pointer to object in another repository",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository slug",
+                        "name": "repository_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"main\"",
+                        "description": "Reference (branch) to create pointer in",
+                        "name": "ref",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Path for the pointer file (will be prefixed with _ptr. if not already)",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Pointer target information",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.CreatePointerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pointer created successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.Object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid parameters",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Target repository or object not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/schema": {
             "get": {
                 "security": [
@@ -12086,6 +12195,39 @@ const docTemplate = `{
                 }
             }
         },
+        "irmincore.CreatePointerRequest": {
+            "type": "object",
+            "required": [
+                "target_path",
+                "target_ref",
+                "target_repository"
+            ],
+            "properties": {
+                "target_path": {
+                    "description": "TargetPath is the path to the target object.",
+                    "type": "string",
+                    "example": "data/customers.json"
+                },
+                "target_ref": {
+                    "description": "TargetRef is the branch name or commit hash of the target object.",
+                    "type": "string",
+                    "maxLength": 100,
+                    "example": "main"
+                },
+                "target_repository": {
+                    "description": "TargetRepository is the slug of the repository containing the target object.",
+                    "type": "string",
+                    "maxLength": 100,
+                    "example": "other-repo"
+                },
+                "target_workspace": {
+                    "description": "TargetWorkspace is the workspace containing the target object.\nEmpty string means same workspace (reserved for future cross-workspace support).",
+                    "type": "string",
+                    "maxLength": 100,
+                    "example": ""
+                }
+            }
+        },
         "irmincore.CreatePolicyRequest": {
             "type": "object",
             "required": [
@@ -14584,6 +14726,11 @@ const docTemplate = `{
                     "type": "string",
                     "example": "obj_3x7k9m2n5q8p"
                 },
+                "is_pointer": {
+                    "description": "IsPointer indicates if this object is a pointer to another object.",
+                    "type": "boolean",
+                    "example": false
+                },
                 "last_modified": {
                     "type": "string",
                     "example": "2025-12-01T14:22:30Z"
@@ -14613,6 +14760,14 @@ const docTemplate = `{
                     "type": "integer",
                     "minimum": 0,
                     "example": 1672531200
+                },
+                "pointer_target": {
+                    "description": "PointerTarget contains the target information if this object is a pointer.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.PointerTarget"
+                        }
+                    ]
                 },
                 "ref": {
                     "type": "string",
@@ -15086,6 +15241,39 @@ const docTemplate = `{
                 "PipelineStageTypeTransform",
                 "PipelineStageTypeEmbeddings"
             ]
+        },
+        "irminmodels.PointerTarget": {
+            "type": "object",
+            "required": [
+                "target_path",
+                "target_ref",
+                "target_repository"
+            ],
+            "properties": {
+                "target_path": {
+                    "description": "Path is the path to the target object.",
+                    "type": "string",
+                    "example": "data/customers.json"
+                },
+                "target_ref": {
+                    "description": "Ref is the target branch name or commit hash.",
+                    "type": "string",
+                    "maxLength": 100,
+                    "example": "main"
+                },
+                "target_repository": {
+                    "description": "Repository is the target repository slug.",
+                    "type": "string",
+                    "maxLength": 100,
+                    "example": "other-repo"
+                },
+                "target_workspace": {
+                    "description": "Workspace is the target workspace slug. Empty string means same workspace.",
+                    "type": "string",
+                    "maxLength": 100,
+                    "example": ""
+                }
+            }
         },
         "irminmodels.Policy": {
             "type": "object",

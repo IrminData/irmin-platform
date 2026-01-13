@@ -186,6 +186,35 @@ definitions:
     - name
     - type
     type: object
+  irmincore.CreatePointerRequest:
+    properties:
+      target_path:
+        description: TargetPath is the path to the target object.
+        example: data/customers.json
+        type: string
+      target_ref:
+        description: TargetRef is the branch name or commit hash of the target object.
+        example: main
+        maxLength: 100
+        type: string
+      target_repository:
+        description: TargetRepository is the slug of the repository containing the
+          target object.
+        example: other-repo
+        maxLength: 100
+        type: string
+      target_workspace:
+        description: |-
+          TargetWorkspace is the workspace containing the target object.
+          Empty string means same workspace (reserved for future cross-workspace support).
+        example: ""
+        maxLength: 100
+        type: string
+    required:
+    - target_path
+    - target_ref
+    - target_repository
+    type: object
   irmincore.CreatePolicyRequest:
     properties:
       action:
@@ -2020,6 +2049,10 @@ definitions:
       id:
         example: obj_3x7k9m2n5q8p
         type: string
+      is_pointer:
+        description: IsPointer indicates if this object is a pointer to another object.
+        example: false
+        type: boolean
       last_modified:
         example: "2025-12-01T14:22:30Z"
         type: string
@@ -2043,6 +2076,11 @@ definitions:
         example: 1672531200
         minimum: 0
         type: integer
+      pointer_target:
+        allOf:
+        - $ref: '#/definitions/irminmodels.PointerTarget'
+        description: PointerTarget contains the target information if this object
+          is a pointer.
       ref:
         example: main
         maxLength: 100
@@ -2386,6 +2424,33 @@ definitions:
     - PipelineStageTypeValidation
     - PipelineStageTypeTransform
     - PipelineStageTypeEmbeddings
+  irminmodels.PointerTarget:
+    properties:
+      target_path:
+        description: Path is the path to the target object.
+        example: data/customers.json
+        type: string
+      target_ref:
+        description: Ref is the target branch name or commit hash.
+        example: main
+        maxLength: 100
+        type: string
+      target_repository:
+        description: Repository is the target repository slug.
+        example: other-repo
+        maxLength: 100
+        type: string
+      target_workspace:
+        description: Workspace is the target workspace slug. Empty string means same
+          workspace.
+        example: ""
+        maxLength: 100
+        type: string
+    required:
+    - target_path
+    - target_ref
+    - target_repository
+    type: object
   irminmodels.Policy:
     properties:
       action:
@@ -8416,6 +8481,77 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Move repository object
+      tags:
+      - repository-objects
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/pointer:
+    post:
+      consumes:
+      - application/json
+      description: Create a pointer file that references an object in another repository
+        within the same workspace
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Repository slug
+        in: path
+        name: repository_slug
+        required: true
+        type: string
+      - default: '"main"'
+        description: Reference (branch) to create pointer in
+        in: query
+        name: ref
+        type: string
+      - description: Path for the pointer file (will be prefixed with _ptr. if not
+          already)
+        in: query
+        name: path
+        required: true
+        type: string
+      - description: Pointer target information
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.CreatePointerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pointer created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.Object'
+              type: object
+        "400":
+          description: Bad request - invalid parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Target repository or object not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create pointer to object in another repository
       tags:
       - repository-objects
   /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/schema:

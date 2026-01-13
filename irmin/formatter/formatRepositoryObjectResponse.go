@@ -41,6 +41,17 @@ func FormatRepositoryObjectResponse(
 		repositorySlug = object.Repository.Slug
 	}
 
+	// Build pointer target if this is a pointer object
+	var pointerTarget *irminmodels.PointerTarget
+	if object.IsPointer {
+		pointerTarget = &irminmodels.PointerTarget{
+			Workspace:  object.PointerTargetWorkspace,
+			Repository: object.PointerTargetRepository,
+			Path:       object.PointerTargetPath,
+			Ref:        object.PointerTargetRef,
+		}
+	}
+
 	// Format the object.
 	objectResponse := irminmodels.Object{
 		ID:                    objectSqid,
@@ -59,6 +70,8 @@ func FormatRepositoryObjectResponse(
 		S3PathSelector:        object.S3PathSelector,
 		Tags:                  tags,
 		Children:              children,
+		IsPointer:             object.IsPointer,
+		PointerTarget:         pointerTarget,
 	}
 
 	return &objectResponse, nil

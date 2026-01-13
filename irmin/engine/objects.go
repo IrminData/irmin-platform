@@ -96,6 +96,10 @@ func processFiles(files map[string]lakefs.ObjectMetadata) []irminmodels.Object {
 	for name, meta := range files {
 		objectDetails := irminutils.ParseObjectDetailsFromPath(meta.Path)
 		lastModified := time.Unix(meta.Mtime, 0).Format(time.RFC3339)
+
+		// Check if this is a pointer file
+		isPointer := IsPointerPath(meta.Path)
+
 		children = append(children, irminmodels.Object{
 			Name:                  name,
 			Path:                  objectDetails.FullPath,
@@ -106,6 +110,7 @@ func processFiles(files map[string]lakefs.ObjectMetadata) []irminmodels.Object {
 			SizeBytes:             meta.SizeBytes,
 			LastModified:          lastModified,
 			Metadata:              meta.Metadata,
+			IsPointer:             isPointer,
 		})
 	}
 	return children
@@ -178,6 +183,9 @@ func getObject(
 		lastModified = time.Unix(objectMetadata.Mtime, 0).Format(time.RFC3339)
 	}
 
+	// Check if this is a pointer file
+	isPointer := IsPointerPath(path)
+
 	// Construct and return the Irmin object
 	return &irminmodels.Object{
 		Name:                  objectPathDetails.Name,
@@ -190,6 +198,7 @@ func getObject(
 		LastModified:          lastModified,
 		Metadata:              objectMetadata.Metadata,
 		Children:              children,
+		IsPointer:             isPointer,
 	}, nil
 }
 

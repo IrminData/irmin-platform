@@ -52,6 +52,8 @@ var (
 	ErrWorkflowAlreadyRunning                 = errors.New("workflow already running")
 	ErrBranchAlreadyExists                    = errors.New("branch already exists")
 	ErrNoContentExtracted                     = errors.New("no content could be extracted from AI response")
+	ErrReservedPathPrefix                     = errors.New("path uses reserved prefix")
+	ErrCannotMovePointerToRegularPath         = errors.New("cannot move or copy pointer to a non-pointer path")
 )
 
 // internalErrorPrefix is used to mark errors that should not be exposed to clients
@@ -261,6 +263,10 @@ func MapErrorToStatusCode(err error) int {
 		return fiber.StatusConflict
 	case errors.Is(err, ErrNoContentExtracted):
 		return fiber.StatusUnprocessableEntity
+	case errors.Is(err, ErrReservedPathPrefix):
+		return fiber.StatusBadRequest
+	case errors.Is(err, ErrCannotMovePointerToRegularPath):
+		return fiber.StatusBadRequest
 	case errors.Is(err, gorm.ErrRecordNotFound):
 		return fiber.StatusNotFound
 	}

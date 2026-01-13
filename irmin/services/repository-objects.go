@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"irmin-api/lib"
 	"irmin-api/permissions"
 	"irmin-api/utils"
+	"strings"
 	"time"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
@@ -87,7 +89,8 @@ func (api *APIServices) GetRepositoryObject(
 }
 
 // populateSelectorsForObject recursively populates SQL and S3 path selectors for an object and its children.
-// Only structured/binary objects get selectors; groups are traversed but don't get selectors themselves.
+// Only structured/binary/pointer objects get selectors; groups are traversed but don't get selectors themselves.
+// For pointer objects, the selector points to the target object's location, not the pointer file itself.
 func (api *APIServices) populateSelectorsForObject(
 	c context.Context,
 	object *db.RepositoryObject,
@@ -101,32 +104,99 @@ func (api *APIServices) populateSelectorsForObject(
 	}
 
 	// Populate selector for non-group objects (structured/binary)
-	if object.Type != irminmodels.ObjectTypeGroup && object.Path != "" {
-		sqlSelector, s3PathSelector, constructErr := lib.ConstructSQLSelector(
-			workspaceSlug,
-			repositorySlug,
-			object.Path,
-			ref,
-			defaultBranch,
-		)
-		if constructErr != nil {
-			api.Logger.ErrorContext(
-				c,
-				"Error constructing SQL selector and S3 path selector",
-				"error",
-				constructErr,
-				"path",
-				object.Path,
-			)
-		} else {
-			object.SQLSelector = sqlSelector
-			object.S3PathSelector = s3PathSelector
-		}
+	switch {
+	case object.Type == irminmodels.ObjectTypeGroup || object.Path == "":
+		// Skip selector population for groups or empty paths
+	case object.IsPointer:
+		// For pointers, construct selector pointing to the target object
+		api.populatePointerSelectors(c, object, workspaceSlug, defaultBranch)
+	default:
+		api.populateNonPointerSelectors(c, object, workspaceSlug, repositorySlug, ref, defaultBranch)
 	}
 
 	// Recursively populate selectors for children
 	for i := range object.Children {
 		api.populateSelectorsForObject(c, &object.Children[i], workspaceSlug, repositorySlug, ref, defaultBranch)
+	}
+}
+
+// populateNonPointerSelectors constructs SQL and S3 path selectors for non-pointer objects.
+func (api *APIServices) populateNonPointerSelectors(
+	c context.Context,
+	object *db.RepositoryObject,
+	workspaceSlug string,
+	repositorySlug string,
+	ref string,
+	defaultBranch string,
+) {
+	sqlSelector, s3PathSelector, constructErr := lib.ConstructSQLSelector(
+		workspaceSlug,
+		repositorySlug,
+		object.Path,
+		ref,
+		defaultBranch,
+	)
+	if constructErr != nil {
+		api.Logger.ErrorContext(
+			c,
+			"Error constructing SQL selector and S3 path selector",
+			"error",
+			constructErr,
+			"path",
+			object.Path,
+		)
+	} else {
+		object.SQLSelector = sqlSelector
+		object.S3PathSelector = s3PathSelector
+	}
+}
+
+// populatePointerSelectors constructs SQL and S3 path selectors for a pointer object,
+// pointing to the target object's location.
+func (api *APIServices) populatePointerSelectors(
+	c context.Context,
+	object *db.RepositoryObject,
+	workspaceSlug string,
+	defaultBranch string,
+) {
+	// Get the target information from the pointer object's cached fields
+	targetRepo := object.PointerTargetRepository
+	targetPath := object.PointerTargetPath
+	targetRef := object.PointerTargetRef
+
+	// If pointer target fields are not populated, we can't construct the selector
+	if targetRepo == "" || targetPath == "" || targetRef == "" {
+		api.Logger.WarnContext(c, "Pointer object missing target information",
+			"path", object.Path,
+			"target_repository", targetRepo,
+			"target_path", targetPath,
+			"target_ref", targetRef,
+		)
+		return
+	}
+
+	// Construct the selector pointing to the target object
+	sqlSelector, s3PathSelector, constructErr := lib.ConstructSQLSelector(
+		workspaceSlug,
+		targetRepo,
+		targetPath,
+		targetRef,
+		defaultBranch,
+	)
+	if constructErr != nil {
+		api.Logger.ErrorContext(
+			c,
+			"Error constructing SQL selector for pointer target",
+			"error",
+			constructErr,
+			"pointer_path",
+			object.Path,
+			"target_path",
+			targetPath,
+		)
+	} else {
+		object.SQLSelector = sqlSelector
+		object.S3PathSelector = s3PathSelector
 	}
 }
 
@@ -208,6 +278,12 @@ func (api *APIServices) UploadRepositoryObject(
 		return nil, err
 	}
 
+	// Reject paths that use the reserved pointer prefix (_ptr.)
+	// Users should use the CreatePointer endpoint to create pointer files
+	if lib.IsPointerPath(objectPath) {
+		return nil, ErrReservedPathPrefix
+	}
+
 	// Initialize Data Engine client
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
@@ -285,6 +361,12 @@ func (api *APIServices) UploadRepositoryObjectFromURL(
 	// Validate required fields
 	if url == "" {
 		return nil, ErrInvalidPath
+	}
+
+	// Reject paths that use the reserved pointer prefix (_ptr.)
+	// Users should use the CreatePointer endpoint to create pointer files
+	if lib.IsPointerPath(objectPath) {
+		return nil, ErrReservedPathPrefix
 	}
 
 	// Download with SSRF protections
@@ -473,6 +555,19 @@ func (api *APIServices) MoveRepositoryObject(
 		return nil, ErrInvalidPath
 	}
 
+	// Reject paths that use the reserved pointer prefix (_ptr.)
+	// Users should use the CreatePointer endpoint to create pointer files
+	if lib.IsPointerPath(req.NewPath) {
+		return nil, ErrReservedPathPrefix
+	}
+
+	// Prevent moving pointer objects to non-pointer paths, which would silently break the pointer
+	// The IsPointer flag is determined by the path, so moving a pointer to a regular path
+	// would cause the pointer target fields to be lost and the file content to become orphaned
+	if object.IsPointer && !lib.IsPointerPath(req.NewPath) {
+		return nil, ErrCannotMovePointerToRegularPath
+	}
+
 	// Initialize Data Engine client
 	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
@@ -619,6 +714,19 @@ func (api *APIServices) CopyRepositoryObject(
 	// Validate required fields
 	if req.NewPath == "" {
 		return nil, ErrInvalidPath
+	}
+
+	// Reject paths that use the reserved pointer prefix (_ptr.)
+	// Users should use the CreatePointer endpoint to create pointer files
+	if lib.IsPointerPath(req.NewPath) {
+		return nil, ErrReservedPathPrefix
+	}
+
+	// Prevent copying pointer objects to non-pointer paths, which would silently break the pointer
+	// The IsPointer flag is determined by the path, so copying a pointer to a regular path
+	// would cause the pointer target fields to be lost and the file content to become orphaned
+	if object.IsPointer && !lib.IsPointerPath(req.NewPath) {
+		return nil, ErrCannotMovePointerToRegularPath
 	}
 
 	// Initialize Data Engine client
@@ -829,6 +937,11 @@ func (api *APIServices) GetRepositoryObjectContent(
 		return nil, ErrAccessDenied
 	}
 
+	// If this is a pointer, resolve the target and get its content
+	if object.IsPointer || lib.IsPointerPath(object.Path) {
+		return api.getPointerTargetContent(c, locale, user, workspace, repository, object, limitResponse)
+	}
+
 	// Check size limit before fetching content to avoid loading large objects into memory
 	if limitResponse && object.SizeBytes > utils.DefaultMaxBinaryResponseSizeBytes {
 		api.Logger.WarnContext(c, "Object content exceeds size limit, refusing to fetch",
@@ -867,6 +980,138 @@ func (api *APIServices) GetRepositoryObjectContent(
 	}
 
 	return content, nil
+}
+
+// getPointerTargetContent resolves a pointer and returns the content of the target object.
+func (api *APIServices) getPointerTargetContent(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	pointerObject *db.RepositoryObject,
+	limitResponse bool,
+) ([]byte, error) {
+	// Initialize Data Engine client to fetch pointer content
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	if err != nil {
+		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
+	}
+
+	// Fetch the pointer file content
+	pointerContent, err := dataEngine.GetObjectContent(
+		workspace.Slug,
+		repository.Slug,
+		pointerObject.Path,
+		pointerObject.RepositoryRef,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error retrieving pointer content from Data Engine", "error", err)
+		return nil, NewInternalErrorf("error retrieving pointer content: %w", err)
+	}
+
+	// Parse the pointer content
+	pointerTarget, parseErr := lib.ParsePointerFile(pointerContent)
+	if parseErr != nil {
+		api.Logger.ErrorContext(c, "Error parsing pointer file content", "error", parseErr, "path", pointerObject.Path)
+		return nil, NewInternalErrorf("error parsing pointer file: %w", parseErr)
+	}
+
+	// Resolve the target repository (must be in the same workspace for now)
+	targetRepository, repoErr := api.DB.GetRepositoryBySlugAndWorkspaceID(pointerTarget.Repository, workspace.ID)
+	if repoErr != nil || targetRepository == nil {
+		api.Logger.ErrorContext(c, "Pointer target repository not found",
+			"target_repository", pointerTarget.Repository,
+			"pointer_path", pointerObject.Path,
+		)
+		return nil, ErrNotFound
+	}
+
+	// Check permissions on the target repository
+	isAllowed, permErr := api.PermissionService.IsAllowed(
+		user,
+		workspace,
+		db.PolicyResourceRepository,
+		&targetRepository.ID,
+		db.PolicyActionRead,
+	)
+	if permErr != nil {
+		api.Logger.ErrorContext(c, "Error checking target repository permissions", "error", permErr)
+		return nil, NewInternalErrorf("error checking permissions: %w", permErr)
+	}
+	if !isAllowed {
+		api.Logger.ErrorContext(c, "User not allowed to access pointer target repository",
+			"user", user.Email,
+			"target_repository", pointerTarget.Repository,
+		)
+		return nil, ErrAccessDenied
+	}
+
+	// Check object-level permissions on the target object
+	// This ensures deny policies on specific objects are enforced when accessing through pointers
+	targetObjectPath := strings.TrimPrefix(pointerTarget.Path, "/")
+	targetObject, targetObjErr := api.DB.FindObject(&targetObjectPath, &targetRepository.ID, &pointerTarget.Ref)
+	if targetObjErr == nil && targetObject != nil {
+		isObjectAllowed, objPermErr := api.PermissionService.IsAllowed(
+			user,
+			workspace,
+			db.PolicyResourceRepositoryObject,
+			&targetObject.ID,
+			db.PolicyActionRead,
+		)
+		if objPermErr != nil {
+			api.Logger.ErrorContext(c, "Error checking target object permissions", "error", objPermErr)
+			return nil, NewInternalErrorf("error checking object permissions: %w", objPermErr)
+		}
+		if !isObjectAllowed {
+			api.Logger.ErrorContext(c, "User not allowed to access pointer target object",
+				"user", user.Email,
+				"target_repository", pointerTarget.Repository,
+				"target_path", pointerTarget.Path,
+			)
+			return nil, ErrAccessDenied
+		}
+
+		// Check size limit before fetching content to avoid loading large objects into memory
+		if limitResponse && targetObject.SizeBytes > utils.DefaultMaxBinaryResponseSizeBytes {
+			api.Logger.WarnContext(c, "Pointer target object exceeds size limit, refusing to fetch",
+				"size_mb", float64(targetObject.SizeBytes)/utils.BytesPerMB,
+				"limit_mb", float64(utils.DefaultMaxBinaryResponseSizeBytes)/utils.BytesPerMB,
+				"target_path", pointerTarget.Path,
+			)
+			return nil, ErrContentTooLarge
+		}
+	}
+
+	// Get the target object content
+	targetContent, contentErr := dataEngine.GetObjectContent(
+		workspace.Slug,
+		targetRepository.Slug,
+		targetObjectPath,
+		pointerTarget.Ref,
+	)
+	if contentErr != nil {
+		api.Logger.ErrorContext(c, "Error retrieving pointer target content from Data Engine",
+			"error", contentErr,
+			"target_repository", pointerTarget.Repository,
+			"target_path", pointerTarget.Path,
+		)
+		return nil, NewInternalErrorf("error retrieving pointer target content: %w", contentErr)
+	}
+
+	// Safety check for response size limit
+	if limitResponse {
+		if errorMsg := utils.CheckByteSizeLimit(targetContent, utils.DefaultMaxBinaryResponseSizeBytes); errorMsg != nil {
+			api.Logger.WarnContext(c, "Pointer target content exceeds size limit",
+				"actual_size", len(targetContent),
+				"target_path", pointerTarget.Path,
+			)
+			return nil, ErrContentTooLarge
+		}
+	}
+
+	return targetContent, nil
 }
 
 func (api *APIServices) GetRepositoryObjectStructuredContent(
@@ -1326,4 +1571,346 @@ func (api *APIServices) ValidateRepositoryObject(
 	}
 
 	return response, nil
+}
+
+// CreatePointer creates a pointer file that references an object in another repository.
+func (api *APIServices) CreatePointer(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	pointerPath string,
+	ref string,
+	targetWorkspace string,
+	targetRepository string,
+	targetPath string,
+	targetRef string,
+) (*db.RepositoryObject, error) {
+	// Make sure the user can create objects in this repository
+	if err := api.ensureCreateAndModifyPermissions(c, user, workspace, repository); err != nil {
+		return nil, err
+	}
+
+	// Normalize the pointer path
+	normalizedPath := api.normalizePointerPath(pointerPath)
+
+	// Validate and get the target repository
+	targetRepo, repoErr := api.validateTargetRepository(c, user, workspace, targetRepository)
+	if repoErr != nil {
+		return nil, repoErr
+	}
+
+	// Validate the target object exists, is not a pointer, and user has access
+	if validateErr := api.validateTargetObject(c, locale, user, workspace, targetRepo, targetPath, targetRef); validateErr != nil {
+		return nil, validateErr
+	}
+
+	// Create and upload the pointer file
+	newObject, err := api.createAndUploadPointer(
+		c,
+		locale,
+		workspace,
+		repository,
+		normalizedPath,
+		ref,
+		targetWorkspace,
+		targetRepository,
+		targetPath,
+		targetRef,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Save the pointer object to the database
+	repositoryObject, err := api.savePointerObject(
+		repository,
+		newObject,
+		ref,
+		targetRepository,
+		targetPath,
+		targetRef,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
+		Type: db.LogEventTypeCreate,
+		Description: fmt.Sprintf(
+			"Pointer %s created pointing to %s/%s@%s",
+			normalizedPath,
+			targetRepository,
+			targetPath,
+			targetRef,
+		),
+		UserID:             &user.ID,
+		WorkspaceID:        &workspace.ID,
+		RepositoryID:       &repository.ID,
+		RepositoryObjectID: &repositoryObject.ID,
+	})
+
+	return repositoryObject, nil
+}
+
+// normalizePointerPath ensures the pointer path has the correct prefix.
+func (api *APIServices) normalizePointerPath(pointerPath string) string {
+	if !lib.IsPointerPath(pointerPath) {
+		// Automatically add the pointer prefix if not present
+		parts := strings.Split(pointerPath, "/")
+		filename := parts[len(parts)-1]
+		if len(parts) > 1 {
+			return strings.Join(parts[:len(parts)-1], "/") + "/" + lib.PointerFilePrefix + filename
+		}
+		return lib.PointerFilePrefix + filename
+	}
+	return pointerPath
+}
+
+// validateTargetRepository validates that the target repository exists and user has read access.
+func (api *APIServices) validateTargetRepository(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	targetRepository string,
+) (*db.Repository, error) {
+	targetRepo, repoErr := api.DB.GetRepositoryBySlugAndWorkspaceID(targetRepository, workspace.ID)
+	if repoErr != nil || targetRepo == nil {
+		api.Logger.ErrorContext(c, "Target repository not found",
+			"target_repository", targetRepository,
+			"workspace", workspace.Slug,
+		)
+		return nil, ErrNotFound
+	}
+
+	// Check read permissions on the target repository
+	isAllowed, permErr := api.PermissionService.IsAllowed(
+		user,
+		workspace,
+		db.PolicyResourceRepository,
+		&targetRepo.ID,
+		db.PolicyActionRead,
+	)
+	if permErr != nil {
+		api.Logger.ErrorContext(c, "Error checking target repository permissions", "error", permErr)
+		return nil, NewInternalErrorf("error checking permissions: %w", permErr)
+	}
+	if !isAllowed {
+		api.Logger.ErrorContext(c, "User not allowed to access target repository",
+			"user", user.Email,
+			"target_repository", targetRepository,
+		)
+		return nil, ErrAccessDenied
+	}
+
+	return targetRepo, nil
+}
+
+// validateTargetObject validates that the target object exists, is not a pointer, and user has read access.
+func (api *APIServices) validateTargetObject(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	targetRepo *db.Repository,
+	targetPath string,
+	targetRef string,
+) error {
+	// Validate that target ref is not empty - required for pointer creation
+	if targetRef == "" {
+		api.Logger.ErrorContext(c, "Target ref is required for pointer creation",
+			"target_repository", targetRepo.Slug,
+			"target_path", targetPath,
+		)
+		return fmt.Errorf("%w: target ref is required", ErrInvalidRequest)
+	}
+
+	// Validate that target path is not empty - required for pointer creation
+	if targetPath == "" {
+		api.Logger.ErrorContext(c, "Target path is required for pointer creation",
+			"target_repository", targetRepo.Slug,
+			"target_ref", targetRef,
+		)
+		return fmt.Errorf("%w: target path is required", ErrInvalidRequest)
+	}
+
+	// Validate that the target is not itself a pointer (no pointer chains allowed)
+	if lib.IsPointerPath(targetPath) {
+		api.Logger.ErrorContext(c, "Cannot create pointer to another pointer",
+			"target_repository", targetRepo.Slug,
+			"target_path", targetPath,
+		)
+		return fmt.Errorf("%w: cannot create pointer to another pointer file", ErrInvalidRequest)
+	}
+
+	// Validate that the target object exists
+	dataEngineForValidation, dataEngineErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	if dataEngineErr != nil {
+		api.Logger.ErrorContext(c, "error creating data engine client for validation", "error", dataEngineErr)
+		return NewInternalErrorf("error creating data engine client: %w", dataEngineErr)
+	}
+
+	targetObject, targetObjectErr := dataEngineForValidation.GetPath(
+		workspace.Slug,
+		targetRepo.Slug,
+		targetPath,
+		targetRef,
+	)
+	if targetObjectErr != nil {
+		api.Logger.ErrorContext(c, "Target object not found",
+			"target_repository", targetRepo.Slug,
+			"target_path", targetPath,
+			"target_ref", targetRef,
+			"error", targetObjectErr,
+		)
+		return fmt.Errorf(
+			"%w: target object %s@%s in repository %s",
+			ErrNotFound,
+			targetPath,
+			targetRef,
+			targetRepo.Slug,
+		)
+	}
+
+	// Also check if the resolved object is a pointer (cannot point to pointers)
+	if targetObject.IsPointer {
+		api.Logger.ErrorContext(c, "Cannot create pointer to another pointer",
+			"target_repository", targetRepo.Slug,
+			"target_path", targetPath,
+		)
+		return fmt.Errorf("%w: cannot create pointer to another pointer file", ErrInvalidRequest)
+	}
+
+	// Check object-level permissions on the target object
+	// This ensures deny policies on specific objects are enforced when creating pointers
+	normalizedPath := strings.TrimPrefix(targetPath, "/")
+	dbTargetObject, dbErr := api.DB.FindObject(&normalizedPath, &targetRepo.ID, &targetRef)
+	if dbErr == nil && dbTargetObject != nil {
+		isObjectAllowed, objPermErr := api.PermissionService.IsAllowed(
+			user,
+			workspace,
+			db.PolicyResourceRepositoryObject,
+			&dbTargetObject.ID,
+			db.PolicyActionRead,
+		)
+		if objPermErr != nil {
+			api.Logger.ErrorContext(c, "Error checking target object permissions", "error", objPermErr)
+			return NewInternalErrorf("error checking object permissions: %w", objPermErr)
+		}
+		if !isObjectAllowed {
+			api.Logger.ErrorContext(c, "User not allowed to access target object",
+				"user", user.Email,
+				"target_repository", targetRepo.Slug,
+				"target_path", targetPath,
+			)
+			return ErrAccessDenied
+		}
+	}
+
+	return nil
+}
+
+// createAndUploadPointer creates the pointer file content and uploads it to the repository.
+func (api *APIServices) createAndUploadPointer(
+	c context.Context,
+	locale string,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	pointerPath string,
+	ref string,
+	targetWorkspace string,
+	targetRepository string,
+	targetPath string,
+	targetRef string,
+) (*irminmodels.Object, error) {
+	// Create the pointer target struct
+	pointerTarget := &irminmodels.PointerTarget{
+		Workspace:  targetWorkspace,
+		Repository: targetRepository,
+		Path:       targetPath,
+		Ref:        targetRef,
+	}
+
+	// Generate the pointer file content
+	pointerContent, contentErr := lib.CreatePointerContent(pointerTarget)
+	if contentErr != nil {
+		api.Logger.ErrorContext(c, "Error creating pointer content", "error", contentErr)
+		return nil, NewInternalErrorf("error creating pointer content: %w", contentErr)
+	}
+
+	// Initialize Data Engine client
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	if err != nil {
+		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
+	}
+
+	// Upload the pointer file to the repository
+	newObject, err := dataEngine.UploadObject(
+		workspace.Slug,
+		repository.Slug,
+		pointerPath,
+		ref,
+		bytes.NewReader(pointerContent),
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error uploading pointer file to Data Engine", "error", err)
+		return nil, NewInternalErrorf("error uploading pointer file: %w", err)
+	}
+
+	// Mark the object as a pointer (keeping the underlying type from the target)
+	newObject.IsPointer = true
+	newObject.PointerTarget = pointerTarget
+
+	return newObject, nil
+}
+
+// savePointerObject saves the pointer object to the database with all metadata.
+func (api *APIServices) savePointerObject(
+	repository *db.Repository,
+	newObject *irminmodels.Object,
+	ref string,
+	targetRepository string,
+	targetPath string,
+	targetRef string,
+) (*db.RepositoryObject, error) {
+	var repositoryObject *db.RepositoryObject
+
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		txDB := &db.Database{DB: tx}
+		var saveErr error
+		repositoryObject, saveErr = lib.SaveObject(
+			txDB,
+			api.Logger,
+			api.Env,
+			newObject,
+			ref,
+			repository.ID,
+		)
+		if saveErr != nil {
+			return NewInternalErrorf("error saving pointer object: %w", saveErr)
+		}
+
+		// Update the pointer fields in the database
+		repositoryObject.IsPointer = true
+		repositoryObject.PointerTargetWorkspace = newObject.PointerTarget.Workspace
+		repositoryObject.PointerTargetRepository = targetRepository
+		repositoryObject.PointerTargetPath = targetPath
+		repositoryObject.PointerTargetRef = targetRef
+
+		if updateErr := tx.Save(repositoryObject).Error; updateErr != nil {
+			return NewInternalErrorf("error updating pointer metadata: %w", updateErr)
+		}
+
+		return nil
+	})
+
+	if transactionErr != nil {
+		return nil, NewInternalErrorf("error in database transaction: %w", transactionErr)
+	}
+
+	return repositoryObject, nil
 }

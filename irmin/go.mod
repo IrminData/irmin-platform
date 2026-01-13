@@ -3,7 +3,7 @@ module irmin-api
 go 1.25.0
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20260112191844-5e80530ac740
+	github.com/IrminData/irmin-sdk-go v0.0.0-20260112223752-149d937232ca
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.95.1
 	github.com/clerk/clerk-sdk-go/v2 v2.5.1
 	github.com/gofiber/fiber/v3 v3.0.0-rc.3.0.20251222104845-680f3c3ffec9
@@ -103,7 +103,7 @@ require (
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.47.0 // indirect
-	golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93 // indirect
+	golang.org/x/exp v0.0.0-20260112195511-716be5621a96 // indirect
 	golang.org/x/mod v0.32.0 // indirect
 	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect

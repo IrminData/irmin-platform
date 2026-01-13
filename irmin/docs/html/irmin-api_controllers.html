@@ -1105,6 +1105,28 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error
     /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/copy
     [post]
 
+func (api *APIControllers) RepositoryCreatePointer(c fiber.Ctx) error
+    RepositoryCreatePointer godoc @Summary Create pointer to object in another
+    repository @Description Create a pointer file that references an object
+    in another repository within the same workspace @Tags repository-objects
+    @Security ApiKeyAuth @Accept json @Produce json @Param workspace_slug
+    path string true "Workspace slug" @Param repository_slug path string true
+    "Repository slug" @Param ref query string false "Reference (branch) to
+    create pointer in" default("main") @Param path query string true "Path
+    for the pointer file (will be prefixed with _ptr. if not already)" @Param
+    body body irmincore.CreatePointerRequest true "Pointer target information"
+    @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Object}
+    "Pointer created successfully" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - invalid parameters"
+    @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized
+    - invalid or missing authentication" @Failure 403 {object}
+    irminmodels.IrminAPIResponse "Forbidden - insufficient
+    permissions" @Failure 404 {object} irminmodels.IrminAPIResponse
+    "Target repository or object not found" @Failure 500 {object}
+    irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/pointer
+    [post]
+
 func (api *APIControllers) RepositoryGetUncommittedChanges(c fiber.Ctx) error
     RepositoryGetUncommittedChanges godoc @Summary Get uncommitted
     changes @Description Get all uncommitted changes in a specific

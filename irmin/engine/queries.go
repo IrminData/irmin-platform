@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"irmin-api/db"
@@ -393,17 +394,174 @@ func processPlaceholder(
 	}
 
 	// Step 9: Check object-level permissions (only if object exists in DB)
+	// This check must happen before pointer resolution to enforce DENY policies on pointer files
 	if objectID != nil {
 		if permErr := CheckObjectPermissions(c, user, targetWorkspace, *objectID, pl.Operation); permErr != nil {
 			return "", permErr
 		}
 	}
 
-	// Step 10: Build the object storage path and selector
+	// Step 10: Check if object is a pointer and resolve it
+	// This must come after permission checks (steps 8-9) to ensure DENY policies on pointer files are enforced
+	if IsPointerPath(object) {
+		return resolvePointerPlaceholder(c, ctx, user, targetWorkspace, repository, object, ref, pl.Operation)
+	}
+
+	// Step 11: Build the object storage path and selector
 	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(targetWorkspace.Slug, repository.Slug)
 	objectAddress := fmt.Sprintf("s3://%s/%s/%s", lakeFSRepositoryName, ref, objectPathDetails.FullPath)
 
 	return buildObjectSelector(objectAddress, objectPathDetails, object, pl.Operation)
+}
+
+// resolvePointerPlaceholder resolves a pointer object to its target and returns the target's object selector.
+// This function is called when a placeholder references a pointer file (_ptr.*).
+func resolvePointerPlaceholder(
+	c *Client,
+	ctx context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	pointerPath string,
+	ref string,
+	operation string,
+) (string, error) {
+	// Fetch the pointer file content from LakeFS
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace.Slug, repository.Slug)
+	pointerContent, err := c.LakeFSClient.GetFullObjectContent(lakeFSRepositoryName, ref, pointerPath)
+	if err != nil {
+		c.Logger.WarnContext(ctx, "Failed to fetch pointer content",
+			"user_id", user.ID,
+			"workspace_id", workspace.ID,
+			"repository_id", repository.ID,
+			"pointer_path", pointerPath,
+			"error", err,
+		)
+		return "", errors.New(genericQueryError)
+	}
+
+	// Parse the pointer content
+	var pointerTarget irminmodels.PointerTarget
+	if parseErr := json.Unmarshal(pointerContent, &pointerTarget); parseErr != nil {
+		c.Logger.WarnContext(ctx, "Failed to parse pointer content",
+			"user_id", user.ID,
+			"workspace_id", workspace.ID,
+			"repository_id", repository.ID,
+			"pointer_path", pointerPath,
+			"error", parseErr,
+		)
+		return "", errors.New(genericQueryError)
+	}
+
+	// Validate required fields
+	if pointerTarget.Repository == "" || pointerTarget.Path == "" || pointerTarget.Ref == "" {
+		c.Logger.WarnContext(ctx, "Pointer missing required target fields",
+			"user_id", user.ID,
+			"workspace_id", workspace.ID,
+			"pointer_path", pointerPath,
+		)
+		return "", errors.New(genericQueryError)
+	}
+
+	// Cross-workspace pointers are not yet supported
+	if pointerTarget.Workspace != "" {
+		c.Logger.WarnContext(ctx, "Cross-workspace pointers are not yet supported",
+			"user_id", user.ID,
+			"workspace_id", workspace.ID,
+			"pointer_path", pointerPath,
+			"target_workspace", pointerTarget.Workspace,
+		)
+		return "", errors.New("cross-workspace pointers are not yet supported")
+	}
+
+	// Validate pointer target path for glob patterns to prevent bypassing object-level permissions
+	// A malicious pointer file could contain glob patterns like "data/*.json" to access multiple files
+	if containsGlobPattern(pointerTarget.Path) {
+		c.Logger.WarnContext(ctx, "Unauthorized pointer access attempt: glob patterns not allowed in target path",
+			"user_id", user.ID,
+			"workspace_id", workspace.ID,
+			"pointer_path", pointerPath,
+			"target_path", pointerTarget.Path,
+		)
+		return "", errors.New(genericQueryError)
+	}
+
+	// Validate pointer target ref for glob patterns to prevent bypassing permission checks
+	if containsGlobPattern(pointerTarget.Ref) {
+		c.Logger.WarnContext(ctx, "Unauthorized pointer access attempt: glob patterns not allowed in target ref",
+			"user_id", user.ID,
+			"workspace_id", workspace.ID,
+			"pointer_path", pointerPath,
+			"target_ref", pointerTarget.Ref,
+		)
+		return "", errors.New(genericQueryError)
+	}
+
+	// Resolve the target repository (must be in the same workspace for now)
+	targetRepository, repoErr := c.DB.GetRepositoryBySlugAndWorkspaceID(pointerTarget.Repository, workspace.ID)
+	if repoErr != nil || targetRepository == nil || targetRepository.ID == 0 {
+		c.Logger.WarnContext(ctx, "Pointer target repository not found",
+			"user_id", user.ID,
+			"workspace_id", workspace.ID,
+			"target_repository", pointerTarget.Repository,
+			"pointer_path", pointerPath,
+		)
+		return "", errors.New(genericQueryError)
+	}
+
+	// Check permissions on the target repository
+	if permErr := CheckRepositoryPermissions(c, user, workspace, targetRepository, operation); permErr != nil {
+		c.Logger.WarnContext(ctx, "No permission to access pointer target repository",
+			"user_id", user.ID,
+			"workspace_id", workspace.ID,
+			"target_repository", pointerTarget.Repository,
+		)
+		return "", permErr
+	}
+
+	// Parse target object details
+	targetObjectPath := strings.TrimPrefix(pointerTarget.Path, "/")
+	targetObjectDetails := irminutils.ParseObjectDetailsFromPath(targetObjectPath)
+
+	// Validate target object type (must be queryable)
+	if targetObjectDetails.Type == irminmodels.ObjectTypeBinary {
+		c.Logger.WarnContext(ctx, "Pointer target is a binary object which can't be queried",
+			"user_id", user.ID,
+			"workspace_id", workspace.ID,
+			"target_path", pointerTarget.Path,
+		)
+		return "", errors.New(genericQueryError)
+	}
+	if targetObjectDetails.Type == irminmodels.ObjectTypeGroup {
+		c.Logger.WarnContext(ctx, "Pointer target is a group object which can't be queried",
+			"user_id", user.ID,
+			"workspace_id", workspace.ID,
+			"target_path", pointerTarget.Path,
+		)
+		return "", errors.New(genericQueryError)
+	}
+
+	// Check object-level permissions on target
+	targetObjectID, objectIDErr := resolveObjectID(c, targetObjectPath, targetRepository.ID, pointerTarget.Ref)
+	if objectIDErr != nil {
+		return "", errors.New(genericQueryError)
+	}
+	if targetObjectID != nil {
+		if permErr := CheckObjectPermissions(c, user, workspace, *targetObjectID, operation); permErr != nil {
+			return "", permErr
+		}
+	}
+
+	// Build the target object's S3 path and selector
+	targetLakeFSRepoName := utils.ConstructLakeFSRepositoryName(workspace.Slug, targetRepository.Slug)
+	targetObjectAddress := fmt.Sprintf(
+		"s3://%s/%s/%s",
+		targetLakeFSRepoName,
+		pointerTarget.Ref,
+		targetObjectDetails.FullPath,
+	)
+
+	return buildObjectSelector(targetObjectAddress, targetObjectDetails, targetObjectPath, operation)
 }
 
 // CheckRepositoryPermissions checks if the user has permission to access the repository.

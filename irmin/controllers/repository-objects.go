@@ -246,6 +246,39 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 	})
 }
 
+// formatAndCacheInvalidateObject is a helper function that formats an object response and invalidates the cache.
+func (api *APIControllers) formatAndCacheInvalidateObject(
+	c fiber.Ctx,
+	params *objectLocalParams,
+	newObject *db.RepositoryObject,
+	successMessageKey string,
+) error {
+	// Format the object for the response.
+	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(newObject, api.SQIDManager)
+	if err != nil {
+		return api.handleServiceError(
+			c,
+			"Error formatting repository object",
+			services.NewInternalErrorf("error formatting repository object: %v", err),
+			params.dict,
+		)
+	}
+
+	// Invalidate objects listing for this repository (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", params.workspace.Slug, params.repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
+	// Return the object from the database.
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Message: api.lm.T(params.dict, successMessageKey),
+		Data:    repositoryObjectResponse,
+	})
+}
+
 // RepositoryUploadObjectFromURL godoc
 // @Summary Upload object to repository from URL
 // @Description Upload a file from a URL to a specific path in a repository at a given reference
@@ -295,30 +328,61 @@ func (api *APIControllers) RepositoryUploadObjectFromURL(c fiber.Ctx) error {
 		return api.handleServiceError(c, "Error uploading object from URL to Data Engine", err, params.dict)
 	}
 
-	// Format the object for the response.
-	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(newObject, api.SQIDManager)
+	return api.formatAndCacheInvalidateObject(c, params, newObject, "object_uploaded")
+}
+
+// RepositoryCreatePointer godoc
+// @Summary Create pointer to object in another repository
+// @Description Create a pointer file that references an object in another repository within the same workspace
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param ref query string false "Reference (branch) to create pointer in" default("main")
+// @Param path query string true "Path for the pointer file (will be prefixed with _ptr. if not already)"
+// @Param body body irmincore.CreatePointerRequest true "Pointer target information"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Object} "Pointer created successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Target repository or object not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/pointer [post]
+func (api *APIControllers) RepositoryCreatePointer(c fiber.Ctx) error {
+	params, validateLocalParamsErr := api.validateObjectParams(c)
+	if validateLocalParamsErr != nil {
+		api.Logger.Error("Error validating repository object localparameters", "error", validateLocalParamsErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
+
+	// Parse the JSON request body
+	var req irmincore.CreatePointerRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request", "error", bindErr)
+		return api.handleServiceError(c, "Error parsing JSON request body", services.ErrInvalidRequest, params.dict)
+	}
+
+	// Create the pointer
+	newObject, err := api.Services.CreatePointer(
+		c,
+		params.locale,
+		params.user,
+		params.workspace,
+		params.repository,
+		params.objectPath,
+		params.objectRef,
+		req.TargetWorkspace,
+		req.TargetRepository,
+		req.TargetPath,
+		req.TargetRef,
+	)
 	if err != nil {
-		return api.handleServiceError(
-			c,
-			"Error formatting repository object",
-			services.NewInternalErrorf("error formatting repository object: %v", err),
-			params.dict,
-		)
+		return api.handleServiceError(c, "Error creating pointer", err, params.dict)
 	}
 
-	// Invalidate objects listing for this repository (all users)
-	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
-		api.cacheStorage,
-		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", params.workspace.Slug, params.repository.Slug),
-	); invalidationErr != nil {
-		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
-	}
-
-	// Return the object from the database.
-	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: api.lm.T(params.dict, "object_uploaded"),
-		Data:    repositoryObjectResponse,
-	})
+	return api.formatAndCacheInvalidateObject(c, params, newObject, "pointer_created")
 }
 
 // RepositoryMoveObject godoc

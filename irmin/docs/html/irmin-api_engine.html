@@ -5,6 +5,14 @@
 package engine // import "irmin-api/engine"
 
 
+CONSTANTS
+
+const (
+
+	// PointerFilePrefix is the prefix used to identify pointer files.
+	PointerFilePrefix = "_ptr."
+)
+
 FUNCTIONS
 
 func BuildJSONSchemaForTesting(fields []SchemaField, context *SchemaContext) irminmodels.JSONSchema
@@ -41,6 +49,12 @@ func ExtractArrayElementTypeForTesting(arrayType string) string
 func ExtractS3Paths(query string) ([]string, error)
     ExtractS3Paths extracts all S3 URLs from a SQL query Returns unique S3 paths
     found in the query, with quotes unescaped
+
+func IsPointerPath(path string) bool
+    IsPointerPath checks if the given path or filename represents a pointer
+    file. Pointer files are identified by the "_ptr." prefix in their filename.
+    Note: Pointer files are NOT system paths - they are user-visible but have
+    special behavior.
 
 func IsRowReturningStatement(stmt string) bool
     IsRowReturningStatement checks if a SQL statement returns rows.

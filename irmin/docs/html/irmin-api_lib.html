@@ -15,9 +15,25 @@ const (
 	// ObjectSchemaCacheMaxAge is the maximum age of an object schema cache entry.
 	ObjectSchemaCacheMaxAge = 30 * time.Minute
 )
+const (
+	// PointerFilePrefix is the prefix used to identify pointer files.
+	PointerFilePrefix = "_ptr."
+)
 
 VARIABLES
 
+var (
+	// ErrInvalidPointerContent is returned when the pointer file content is invalid.
+	ErrInvalidPointerContent = errors.New("invalid pointer file content")
+	// ErrMissingTargetRepository is returned when the target repository is not specified.
+	ErrMissingTargetRepository = errors.New("pointer target repository is required")
+	// ErrMissingTargetPath is returned when the target path is not specified.
+	ErrMissingTargetPath = errors.New("pointer target path is required")
+	// ErrMissingTargetRef is returned when the target ref is not specified.
+	ErrMissingTargetRef = errors.New("pointer target ref is required")
+	// ErrCrossWorkspaceNotSupported is returned when cross-workspace pointers are attempted.
+	ErrCrossWorkspaceNotSupported = errors.New("cross-workspace pointers are not yet supported")
+)
 var (
 	// ErrConnectionSchemaCacheNotFound is returned when a connection schema cache entry is not found.
 	ErrConnectionSchemaCacheNotFound = errors.New("connection schema cache not found")
@@ -38,6 +54,11 @@ func AssignDefaultRolesToUsersWithoutRoles(d *db.Database) error
     in workspaces who don't have any roles. For workspace owners, it assigns the
     owner role instead of the default role.
 
+func BuildPointerPath(directory, targetName string) string
+    BuildPointerPath constructs a pointer file path from a directory and target
+    filename. For example: directory="data", targetName="customers.json" -&gt;
+    "data/_ptr.customers.json"
+
 func ConstructSQLSelector(
 	workspaceSlug, repositorySlug, objectPath, ref, defaultBranch string,
 ) (string, string, error)
@@ -47,6 +68,9 @@ func ConstructSQLSelector(
 
 func CreateAuditLogEventAsync(d *db.Database, logger *slog.Logger, event *db.LogEvent)
     CreateAuditLogEventAsync creates an audit log event asynchronously.
+
+func CreatePointerContent(target *irminmodels.PointerTarget) ([]byte, error)
+    CreatePointerContent creates the JSON content for a pointer file.
 
 func CreateWorkflowRun(
 	tx *gorm.DB,
@@ -89,6 +113,10 @@ func EnsureNovuSubscriber(
     EnsureNovuSubscriber ensures that the user is a subscriber in Novu It
     creates the subscriber if it doesn't exist, or updates it if it does.
 
+func ExtractPointerTargetExtension(path string) string
+    ExtractPointerTargetExtension extracts the file extension from a pointer
+    path. For a pointer like "_ptr.customers.json", returns ".json".
+
 func GetObject(
 	ctx context.Context,
 	locale string,
@@ -104,6 +132,10 @@ func GetObject(
     It returns the object from the database if it is found, otherwise it gets it
     from the data engine and caches it in the database.
 
+func GetPointerDisplayName(path string) string
+    GetPointerDisplayName extracts the display name from a pointer path.
+    For a pointer like "_ptr.customers.json", returns "customers.json".
+
 func GetRepository(
 	ctx context.Context,
 	locale string,
@@ -114,9 +146,17 @@ func GetRepository(
 	repositorySlug string,
 	ignoreCache bool,
 ) (*db.Repository, error)
+func IsPointerPath(path string) bool
+    IsPointerPath checks if the given path represents a pointer file. Pointer
+    files are identified by the "_ptr." prefix in their filename.
+
 func NewSafeHTTPClient(ctx context.Context) *http.Client
     NewSafeHTTPClient creates an HTTP client with timeouts, redirect checks,
     and IP blocking via Dialer.Control.
+
+func ParsePointerFile(content []byte) (*irminmodels.PointerTarget, error)
+    ParsePointerFile parses the JSON content of a pointer file and returns the
+    pointer target.
 
 func ParseScheduleFromData(
 	scheduleReq *irminmodels.Schedule,

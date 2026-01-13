@@ -558,6 +558,11 @@ func RegisterAPIRoutes(
 		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionCreate),
 		apiControllers.RepositoryUploadObjectFromURL,
 	)
+	objects.Post(
+		"/pointer",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.RepositoryCreatePointer,
+	)
 	objects.Delete(
 		"/",
 		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionDelete),

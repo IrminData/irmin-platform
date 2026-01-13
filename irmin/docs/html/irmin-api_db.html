@@ -1205,6 +1205,13 @@ type RepositoryObject struct {
 	Repository    *Repository `json:"repository,omitempty"     gorm:"foreignKey:RepositoryID;references:ID"`
 	RepositoryID  uint        `json:"repository_id,omitempty"  gorm:"index"`
 	Tags          []Tag       `json:"tags,omitempty"           gorm:"many2many:repository_object_tags;"`
+
+	// Pointer fields - cached from pointer file content for fast lookups
+	IsPointer               bool   `json:"is_pointer,omitempty"`
+	PointerTargetWorkspace  string `json:"pointer_target_workspace,omitempty"`  // Empty = same workspace (future cross-workspace support)
+	PointerTargetRepository string `json:"pointer_target_repository,omitempty"` // Target repository slug
+	PointerTargetPath       string `json:"pointer_target_path,omitempty"`       // Target object path
+	PointerTargetRef        string `json:"pointer_target_ref,omitempty"`        // Target branch or commit
 }
 
 type RepositoryObjectTag struct {
