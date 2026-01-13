@@ -245,6 +245,23 @@ func SetDefaultPolicies(dbConn *gorm.DB, workspaceID uint, overridePolicies bool
 func SetupTestSuite(t *testing.T) error
     SetupTestSuite initializes the global test suite.
 
+func SkipIfNoTestData(
+	t *testing.T,
+	database *db.Database,
+	testUserEmail, testWorkspace string,
+) (*db.User, *db.Workspace)
+    SkipIfNoTestData skips the test if required test data is not available.
+    This allows tests to run in CI/CD without requiring a fully seeded database.
+
+func SkipIfNoTestRepository(
+	t *testing.T,
+	database *db.Database,
+	workspaceID uint,
+	testRepository string,
+) *db.Repository
+    SkipIfNoTestRepository skips the test if the test repository is not
+    available.
+
 func TeardownTestSuite()
     TeardownTestSuite cleans up the global test suite. This should be called
     from TestMain after all tests are done.

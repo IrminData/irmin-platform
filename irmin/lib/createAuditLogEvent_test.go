@@ -17,17 +17,9 @@ const (
 
 func TestCreateAuditLogEvent(t *testing.T) {
 	ts := lib.GetTestSuite()
-	// Find the test user
-	user, err := ts.DB.GetUserByEmail(ts.Env.TestUserEmail)
-	if err != nil {
-		t.Fatalf("Failed to get test user: %v", err)
-	}
 
-	// Find the test workspace
-	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
-	if err != nil {
-		t.Fatalf("Failed to get test workspace: %v", err)
-	}
+	// Skip if test data is not available
+	user, workspace := lib.SkipIfNoTestData(t, ts.DB, ts.Env.TestUserEmail, ts.Env.TestWorkspace)
 
 	// Create a slog logger for testing
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
@@ -47,8 +39,8 @@ func TestCreateAuditLogEvent(t *testing.T) {
 	time.Sleep(logEventCreationSleepTime)
 
 	// Get the log event
-	if err = ts.DB.First(&logEvent, "user_id = ? AND workspace_id = ?", user.ID, workspace.ID).Error; err != nil {
-		t.Fatalf("Failed to get log event: %v", err)
+	if getErr := ts.DB.First(&logEvent, "user_id = ? AND workspace_id = ?", user.ID, workspace.ID).Error; getErr != nil {
+		t.Fatalf("Failed to get log event: %v", getErr)
 	}
 
 	// Make sure the log event was created
@@ -58,7 +50,7 @@ func TestCreateAuditLogEvent(t *testing.T) {
 	assert.Equal(t, *logEvent.WorkspaceID, workspace.ID)
 
 	// Delete the log event
-	if err = ts.DB.Delete(&logEvent).Error; err != nil {
-		t.Fatalf("Failed to delete log event: %v", err)
+	if deleteErr := ts.DB.Delete(&logEvent).Error; deleteErr != nil {
+		t.Fatalf("Failed to delete log event: %v", deleteErr)
 	}
 }

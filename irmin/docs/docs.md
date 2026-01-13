@@ -9741,6 +9741,8 @@ import "irmin-api/lib"
 - [func SeedRoles\(d \*db.Database\) error](<#SeedRoles>)
 - [func SetDefaultPolicies\(dbConn \*gorm.DB, workspaceID uint, overridePolicies bool\) error](<#SetDefaultPolicies>)
 - [func SetupTestSuite\(t \*testing.T\) error](<#SetupTestSuite>)
+- [func SkipIfNoTestData\(t \*testing.T, database \*db.Database, testUserEmail, testWorkspace string\) \(\*db.User, \*db.Workspace\)](<#SkipIfNoTestData>)
+- [func SkipIfNoTestRepository\(t \*testing.T, database \*db.Database, workspaceID uint, testRepository string\) \*db.Repository](<#SkipIfNoTestRepository>)
 - [func TeardownTestSuite\(\)](<#TeardownTestSuite>)
 - [func ValidateStructuredFileSchema\(ctx context.Context, fileName string, data \[\]byte, schema \*irminmodels.JSONSchema, env \*utils.CoreAPIEnv, logger \*slog.Logger\) \(\[\]string, \[\]string\)](<#ValidateStructuredFileSchema>)
 - [type InviteNotificationParams](<#InviteNotificationParams>)
@@ -10089,6 +10091,24 @@ func SetupTestSuite(t *testing.T) error
 ```
 
 SetupTestSuite initializes the global test suite.
+
+<a name="SkipIfNoTestData"></a>
+## func SkipIfNoTestData
+
+```go
+func SkipIfNoTestData(t *testing.T, database *db.Database, testUserEmail, testWorkspace string) (*db.User, *db.Workspace)
+```
+
+SkipIfNoTestData skips the test if required test data is not available. This allows tests to run in CI/CD without requiring a fully seeded database.
+
+<a name="SkipIfNoTestRepository"></a>
+## func SkipIfNoTestRepository
+
+```go
+func SkipIfNoTestRepository(t *testing.T, database *db.Database, workspaceID uint, testRepository string) *db.Repository
+```
+
+SkipIfNoTestRepository skips the test if the test repository is not available.
 
 <a name="TeardownTestSuite"></a>
 ## func TeardownTestSuite

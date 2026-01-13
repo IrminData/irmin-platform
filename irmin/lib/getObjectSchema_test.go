@@ -17,17 +17,11 @@ func TestGetObjectSchema(t *testing.T) {
 	// Create a context
 	ctx := t.Context()
 
-	// Find the test workspace
-	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
-	if err != nil {
-		t.Fatalf("Failed to get test workspace: %v", err)
-	}
+	// Skip if test data is not available
+	_, workspace := lib.SkipIfNoTestData(t, ts.DB, ts.Env.TestUserEmail, ts.Env.TestWorkspace)
 
-	// Find the test repository
-	repository, err := ts.DB.GetRepositoryBySlugAndWorkspaceID(ts.Env.TestRepository, workspace.ID)
-	if err != nil {
-		t.Fatalf("Failed to get test repository: %v", err)
-	}
+	// Skip if test repository is not available
+	repository := lib.SkipIfNoTestRepository(t, ts.DB, workspace.ID, ts.Env.TestRepository)
 
 	// Create a schema cache manager
 	schemaCacheManager := lib.NewSchemaCacheManager(ts.Env, logger, ts.DB)

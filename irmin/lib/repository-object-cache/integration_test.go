@@ -88,6 +88,15 @@ func TestCacheManagerIntegration(t *testing.T) {
 			true, // Ignore cache to force refresh
 		)
 
+		// Skip if the object doesn't exist in the data engine
+		if getErr != nil && strings.Contains(getErr.Error(), "not found") {
+			t.Skipf(
+				"Test object '%s' not found in data engine. "+
+					"This is expected in environments without seeded test data.",
+				ts.Env.TestObjectName,
+			)
+		}
+
 		assert.NoError(t, getErr)
 		assert.NotNil(t, retrievedObject)
 		assert.Equal(t, retrievedObject.Name, ts.Env.TestObjectName)

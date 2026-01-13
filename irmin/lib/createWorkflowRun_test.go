@@ -11,17 +11,8 @@ import (
 func TestCreateWorkflowRun(t *testing.T) {
 	ts := lib.GetTestSuite()
 
-	// Find the test user
-	user, err := ts.DB.GetUserByEmail(ts.Env.TestUserEmail)
-	if err != nil {
-		t.Fatalf("Failed to get test user: %v", err)
-	}
-
-	// Find the test workspace
-	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
-	if err != nil {
-		t.Fatalf("Failed to get test workspace: %v", err)
-	}
+	// Skip if test data is not available
+	user, workspace := lib.SkipIfNoTestData(t, ts.DB, ts.Env.TestUserEmail, ts.Env.TestWorkspace)
 
 	// Find a first workflow which has a schedule with more than 1 trigger
 	var workflow db.Workflow

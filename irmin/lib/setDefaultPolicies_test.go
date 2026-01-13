@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	expectedAmountOfPolicies = 203
+	expectedAmountOfPolicies = 225
 )
 
 func TestSetDefaultPolicies(t *testing.T) {

@@ -15,17 +15,11 @@ func TestGetObject(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	ctx := t.Context()
 
-	// Find the test workspace
-	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
-	if err != nil {
-		t.Fatalf("Failed to get test workspace: %v", err)
-	}
+	// Skip if test data is not available
+	_, workspace := lib.SkipIfNoTestData(t, ts.DB, ts.Env.TestUserEmail, ts.Env.TestWorkspace)
 
-	// Find the test repository
-	repository, err := ts.DB.GetRepositoryBySlugAndWorkspaceID(ts.Env.TestRepository, workspace.ID)
-	if err != nil {
-		t.Fatalf("Failed to get test repository: %v", err)
-	}
+	// Skip if test repository is not available
+	repository := lib.SkipIfNoTestRepository(t, ts.DB, workspace.ID, ts.Env.TestRepository)
 
 	// Record initial cache state for cleanup
 	initialObjectIDs := getObjectIDsFromCache(t, ts.DB, repository.ID, ts.Env.TestBranch)

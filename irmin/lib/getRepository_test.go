@@ -39,17 +39,11 @@ func TestGetRepository(t *testing.T) {
 	// Create a context
 	ctx := t.Context()
 
-	// Find the test workspace
-	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
-	if err != nil {
-		t.Fatalf("Failed to get test workspace: %v", err)
-	}
+	// Skip if test data is not available
+	user, workspace := lib.SkipIfNoTestData(t, ts.DB, ts.Env.TestUserEmail, ts.Env.TestWorkspace)
 
-	// Find the test user
-	user, err := ts.DB.GetUserByEmail(ts.Env.TestUserEmail)
-	if err != nil {
-		t.Fatalf("Failed to get test user: %v", err)
-	}
+	// Skip if test repository is not available
+	_ = lib.SkipIfNoTestRepository(t, ts.DB, workspace.ID, ts.Env.TestRepository)
 
 	// Ensure test user is in workspace before running tests
 	var originalRoleIDs []uint

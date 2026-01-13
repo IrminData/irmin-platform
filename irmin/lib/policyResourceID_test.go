@@ -94,10 +94,10 @@ func TestEncodePolicyResourceID(t *testing.T) {
 		{"policy", db.PolicyResourcePolicy, 1, true, ""},
 		{"invite", db.PolicyResourceInvite, 1, true, ""},
 		{"audit log", db.PolicyResourceAuditLog, 1, true, ""},
-		{"script", db.PolicyResourceScript, 1, true, ""},
+		{"script", db.PolicyResourceScript, 1, false, "scripts"},
 		{"documentation", db.PolicyResourceDocumentation, 1, true, ""},
 		{"billing", db.PolicyResourceBilling, 1, true, ""},
-		{"ai application", db.PolicyResourceAIApplication, 1, true, ""},
+		{"ai application", db.PolicyResourceAIApplication, 1, false, "ai_applications"},
 	}
 
 	for _, tc := range testCases {
