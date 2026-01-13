@@ -8,6 +8,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/lakefs"
 	"irmin-api/lib"
+	"path/filepath"
 	"strings"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -106,47 +107,201 @@ func (o *Orchestrator) performExportOperation(
 	}
 }
 
+// operationContext holds context information for logging import/export operations.
+type operationContext struct {
+	connection       *db.Connection
+	connectionPaths  []string
+	repositorySlug   string
+	repositoryPath   string
+	repositoryBranch string
+}
+
 // processOperationResults handles logging and error processing for operation results.
 func (o *Orchestrator) processOperationResults(
 	ctx context.Context,
 	result operationResult,
 	operation workflowOperation,
+	opCtx *operationContext,
 ) []string {
 	var logs []string
+	lb := NewWorkflowLogBuilder()
+
+	// Get connector name for logging
+	connectorName := ""
+	connectorType := ""
+	if opCtx.connection != nil {
+		connectorName = opCtx.connection.Name
+		if opCtx.connection.ConnectorID > 0 && opCtx.connection.Connector.ID > 0 {
+			connectorType = opCtx.connection.Connector.Name
+		}
+	}
 
 	if len(result.errors) > 0 {
 		for _, err := range result.errors {
 			o.logger.ErrorContext(ctx, fmt.Sprintf("Error during data %s", operation), "error", err)
-			logs = append(logs, fmt.Sprintf("Error during data %s: %v", operation, err))
+			logs = append(logs, lb.Text(fmt.Sprintf("Error during data %s: %v", operation, err)))
 		}
-	} else {
-		logs = append(logs, fmt.Sprintf("Data %sed successfully from the connector", operation))
 	}
 
-	// Log connector operation logs
+	// Log connector operation logs with structured format
 	for _, operationLog := range result.operationLogs {
-		logs = append(
-			logs,
-			fmt.Sprintf(
-				"Connector operation log: %s: %s, %s %v",
-				operationLog.Type,
-				operationLog.Message,
-				operationLog.CreatedAt,
-				operationLog.Metadata,
-			),
-		)
+		logs = append(logs, lb.ConnectorOp(ConnectorOperationLog{
+			BaseLogEntry: BaseLogEntry{
+				Message: operationLog.Message,
+			},
+			ConnectorName: connectorName,
+			OperationType: operationLog.Type,
+			Metadata:      operationLog.Metadata,
+		}))
 	}
 
-	// Log imported objects
-	for _, object := range result.importedObjects {
-		o.logger.InfoContext(ctx, fmt.Sprintf("Imported object: %s", object.Path), "path", object.Path)
-		logs = append(logs, fmt.Sprintf("Imported object: %s", object.Path))
+	// Log import summary and individual objects
+	if operation == operationImport && len(result.importedObjects) > 0 {
+		// Calculate total bytes
+		var totalBytes int64
+		for _, obj := range result.importedObjects {
+			totalBytes += obj.SizeBytes
+		}
+
+		// Add import summary
+		logs = append(logs, lb.ImportSummary(ImportSummaryLog{
+			BaseLogEntry: BaseLogEntry{
+				Message: fmt.Sprintf(
+					"Imported %d file(s) from %s to %s@%s",
+					len(result.importedObjects),
+					connectorName,
+					opCtx.repositorySlug,
+					opCtx.repositoryBranch,
+				),
+			},
+			ConnectorName:   connectorName,
+			ConnectorType:   connectorType,
+			ConnectionPaths: strings.Join(opCtx.connectionPaths, ", "),
+			RepositorySlug:  opCtx.repositorySlug,
+			RepositoryPath:  opCtx.repositoryPath,
+			Branch:          opCtx.repositoryBranch,
+			TotalFiles:      len(result.importedObjects),
+			TotalBytes:      totalBytes,
+		}))
+
+		// Log each imported object with details
+		for _, object := range result.importedObjects {
+			o.logger.InfoContext(ctx, fmt.Sprintf("Imported object: %s", object.Path), "path", object.Path)
+			logs = append(logs, lb.ImportObject(ImportObjectLog{
+				BaseLogEntry: BaseLogEntry{
+					Message: fmt.Sprintf("Imported: %s", filepath.Base(object.Path)),
+				},
+				ConnectorName:  connectorName,
+				ConnectionPath: strings.Join(opCtx.connectionPaths, ", "),
+				RepositorySlug: opCtx.repositorySlug,
+				RepositoryPath: object.Path,
+				Branch:         opCtx.repositoryBranch,
+				FileName:       filepath.Base(object.Path),
+				SizeBytes:      object.SizeBytes,
+				Checksum:       object.Checksum,
+				ContentType:    object.ContentType,
+			}))
+		}
 	}
 
-	// Log exported paths
-	for _, path := range result.exportedPaths {
-		o.logger.InfoContext(ctx, fmt.Sprintf("Exported data path: %s", path), "path", path)
-		logs = append(logs, fmt.Sprintf("Exported data path: %s", path))
+	// Log export summary and individual objects
+	if operation == operationExport && len(result.exportedPaths) > 0 {
+		connectionPath := ""
+		if len(opCtx.connectionPaths) > 0 {
+			connectionPath = opCtx.connectionPaths[0]
+		}
+
+		// Add export summary
+		logs = append(logs, lb.ExportSummary(ExportSummaryLog{
+			BaseLogEntry: BaseLogEntry{
+				Message: fmt.Sprintf(
+					"Exported %d file(s) from %s@%s to %s",
+					len(result.exportedPaths),
+					opCtx.repositorySlug,
+					opCtx.repositoryBranch,
+					connectorName,
+				),
+			},
+			RepositorySlug:  opCtx.repositorySlug,
+			RepositoryPaths: opCtx.repositoryPath,
+			Branch:          opCtx.repositoryBranch,
+			ConnectorName:   connectorName,
+			ConnectorType:   connectorType,
+			ConnectionPath:  connectionPath,
+			TotalFiles:      len(result.exportedPaths),
+		}))
+
+		// Log each exported path with details
+		for _, path := range result.exportedPaths {
+			o.logger.InfoContext(ctx, fmt.Sprintf("Exported data path: %s", path), "path", path)
+			logs = append(logs, lb.ExportObject(ExportObjectLog{
+				BaseLogEntry: BaseLogEntry{
+					Message: fmt.Sprintf("Exported: %s", filepath.Base(path)),
+				},
+				RepositorySlug: opCtx.repositorySlug,
+				RepositoryPath: path,
+				Branch:         opCtx.repositoryBranch,
+				ConnectorName:  connectorName,
+				ConnectionPath: connectionPath,
+				FileName:       filepath.Base(path),
+			}))
+		}
+	}
+
+	return logs
+}
+
+// logFieldMappings creates structured logs for field mappings that were applied.
+func (o *Orchestrator) logFieldMappings(mappings []irminmodels.FieldMapping) []string {
+	if len(mappings) == 0 {
+		return nil
+	}
+
+	var logs []string
+	lb := NewWorkflowLogBuilder()
+
+	for _, mapping := range mappings {
+		// Determine transform type
+		transformType := "route"
+		sourceField := ""
+		destField := ""
+
+		if mapping.SourceField != nil {
+			sourceField = *mapping.SourceField
+		}
+		if mapping.DestinationField != nil {
+			destField = *mapping.DestinationField
+		}
+
+		if sourceField != "" && destField != "" {
+			if sourceField != destField {
+				transformType = "rename"
+			} else {
+				transformType = "copy"
+			}
+		}
+
+		message := fmt.Sprintf("Field mapping: %s -> %s", mapping.SourcePath, mapping.DestinationPath)
+		if sourceField != "" {
+			message = fmt.Sprintf(
+				"Field mapping: %s.%s -> %s.%s",
+				mapping.SourcePath,
+				sourceField,
+				mapping.DestinationPath,
+				destField,
+			)
+		}
+
+		logs = append(logs, lb.FieldMapping(FieldMappingLog{
+			BaseLogEntry: BaseLogEntry{
+				Message: message,
+			},
+			SourcePath:       mapping.SourcePath,
+			SourceField:      sourceField,
+			DestinationPath:  mapping.DestinationPath,
+			DestinationField: destField,
+			TransformType:    transformType,
+		}))
 	}
 
 	return logs
@@ -251,15 +406,31 @@ func (o *Orchestrator) executeWorkflowableCommon(
 		)
 	}
 
+	// Build operation context for logging
+	repositoryPath := ""
+	if len(trimmedRepositoryPaths) > 0 {
+		repositoryPath = trimmedRepositoryPaths[0]
+	}
+	opCtx := &operationContext{
+		connection:       connection,
+		connectionPaths:  trimmedConnectionPaths,
+		repositorySlug:   repository.Slug,
+		repositoryPath:   repositoryPath,
+		repositoryBranch: repositoryBranch,
+	}
+
 	// Check for context cancellation after data operation
 	if ctx.Err() != nil {
-		logs := o.processOperationResults(ctx, result, operation)
+		logs := o.processOperationResults(ctx, result, operation, opCtx)
 		logs = append(logs, fmt.Sprintf("Workflow execution cancelled after data %s: %v", operation, ctx.Err()))
 		return logs, ctx.Err()
 	}
 
+	// Log field mappings if any were applied
+	logs := o.logFieldMappings(fieldMappings)
+
 	// Process operation results
-	logs := o.processOperationResults(ctx, result, operation)
+	logs = append(logs, o.processOperationResults(ctx, result, operation, opCtx)...)
 
 	// Save directory object for import operations
 	if operation == operationImport && len(trimmedRepositoryPaths) > 0 {
@@ -377,7 +548,7 @@ func (o *Orchestrator) commitWorkflowChanges(
 		return logs
 	}
 
-	// Success
+	// Success - add structured commit log
 	o.logger.InfoContext(
 		ctx,
 		"Successfully committed workflow changes",
@@ -386,7 +557,16 @@ func (o *Orchestrator) commitWorkflowChanges(
 		"branch", branch,
 		"commit_hash", commit.Hash,
 	)
-	logs = append(logs, fmt.Sprintf("Changes committed to branch '%s' (commit: %s)", branch, commit.Hash))
+	lb := NewWorkflowLogBuilder()
+	logs = append(logs, lb.Commit(CommitLog{
+		BaseLogEntry: BaseLogEntry{
+			Message: fmt.Sprintf("Committed changes to %s@%s", repository, branch),
+		},
+		RepositorySlug: repository,
+		Branch:         branch,
+		CommitHash:     commit.Hash,
+		Author:         author,
+	}))
 
 	// Invalidate commits and objects cache for this repository
 	if o.cacheStorage != nil {

@@ -1,8 +1,10 @@
-package services //nolint:testpackage // Accessing unexported method processSecretUpdates
+package services_test
 
 import (
-	"irmin-api/db"
 	"testing"
+
+	"irmin-api/db"
+	"irmin-api/services"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/zeebo/assert"
@@ -10,7 +12,7 @@ import (
 
 func TestApplySecretMasking(t *testing.T) {
 	// Arrange
-	api := &APIServices{}
+	api := &services.APIServices{}
 
 	connectorID := uint(1)
 
@@ -38,7 +40,7 @@ func TestApplySecretMasking(t *testing.T) {
 	connections := []*db.Connection{connection}
 
 	// Act
-	api.applySecretMasking(connections, schemas)
+	services.ExportApplySecretMasking(api, connections, schemas)
 
 	// Assert
 
@@ -56,7 +58,7 @@ func TestApplySecretMasking(t *testing.T) {
 
 func TestProcessSecretUpdates_PartialUpdate(t *testing.T) {
 	// Arrange
-	api := &APIServices{}
+	api := &services.APIServices{}
 	current := map[string]string{
 		"host":     "localhost",
 		"port":     "5432",
@@ -70,7 +72,7 @@ func TestProcessSecretUpdates_PartialUpdate(t *testing.T) {
 	}
 
 	// Act
-	result := api.processSecretUpdates(current, updates)
+	result := services.ExportProcessSecretUpdates(api, current, updates)
 
 	// Assert
 	// We expect "host" and "password" to be preserved
@@ -81,7 +83,7 @@ func TestProcessSecretUpdates_PartialUpdate(t *testing.T) {
 
 func TestProcessSecretUpdates_SecretHandling(t *testing.T) {
 	// Arrange
-	api := &APIServices{}
+	api := &services.APIServices{}
 	current := map[string]string{
 		"password": "actual_secret_value",
 		"host":     "localhost",
@@ -94,7 +96,7 @@ func TestProcessSecretUpdates_SecretHandling(t *testing.T) {
 	}
 
 	// Act
-	result := api.processSecretUpdates(current, updates)
+	result := services.ExportProcessSecretUpdates(api, current, updates)
 
 	// Assert
 	assert.Equal(t, "actual_secret_value", result["password"])
@@ -103,7 +105,7 @@ func TestProcessSecretUpdates_SecretHandling(t *testing.T) {
 
 func TestProcessSecretUpdates_SecretHandling_NewField(t *testing.T) {
 	// Arrange
-	api := &APIServices{}
+	api := &services.APIServices{}
 	current := map[string]string{
 		"host": "localhost",
 	}
@@ -115,7 +117,7 @@ func TestProcessSecretUpdates_SecretHandling_NewField(t *testing.T) {
 	}
 
 	// Act
-	result := api.processSecretUpdates(current, updates)
+	result := services.ExportProcessSecretUpdates(api, current, updates)
 
 	// Assert
 	assert.Equal(t, "new_host", result["host"])

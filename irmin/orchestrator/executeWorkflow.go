@@ -10,6 +10,75 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
+// buildWorkflowStartLog creates a WorkflowStartLog with trigger information from the workflow run.
+func buildWorkflowStartLog(workflow *db.Workflow, run *db.WorkflowRun) WorkflowStartLog {
+	log := WorkflowStartLog{
+		BaseLogEntry: BaseLogEntry{
+			Message: fmt.Sprintf("Starting workflow: %s", workflow.Name),
+		},
+		WorkflowID:   workflow.ID,
+		WorkflowName: workflow.Name,
+		WorkflowType: string(workflow.Type),
+		RunID:        run.ID,
+		TriggerType:  "unknown",
+	}
+
+	// Determine trigger type and details
+	switch {
+	case run.TriggeredByUser != nil:
+		log.TriggerType = "manual"
+		log.TriggeredBy = run.TriggeredByUser.Email
+	case run.TriggeredBy != nil:
+		populateTriggerDetails(&log, run.TriggeredBy)
+	}
+
+	return log
+}
+
+// populateTriggerDetails fills in trigger-specific fields in the WorkflowStartLog.
+func populateTriggerDetails(log *WorkflowStartLog, trigger *db.WorkflowTrigger) {
+	log.TriggerType = string(trigger.Type)
+	log.TriggerID = &trigger.ID
+
+	switch trigger.Type {
+	case db.TimeTriggerType:
+		if trigger.Cron != nil {
+			log.Cron = *trigger.Cron
+		}
+		if trigger.RRule != nil {
+			log.RRule = *trigger.RRule
+		}
+	case db.RepositoryTriggerType:
+		populateRepositoryTrigger(log, trigger)
+	case db.WorkflowRunTriggerType:
+		populateWorkflowRunTrigger(log, trigger)
+	}
+}
+
+// populateRepositoryTrigger fills repository event trigger details.
+func populateRepositoryTrigger(log *WorkflowStartLog, trigger *db.WorkflowTrigger) {
+	if trigger.RepositoryEvent != nil {
+		log.RepositoryEvent = string(*trigger.RepositoryEvent)
+	}
+	if trigger.Repository != nil {
+		log.RepositorySlug = trigger.Repository.Slug
+	}
+	if trigger.RepositoryRef != nil {
+		log.RepositoryRef = *trigger.RepositoryRef
+	}
+}
+
+// populateWorkflowRunTrigger fills workflow run event trigger details.
+func populateWorkflowRunTrigger(log *WorkflowStartLog, trigger *db.WorkflowTrigger) {
+	if trigger.WorkflowRunEvent != nil {
+		log.WorkflowRunEvent = string(*trigger.WorkflowRunEvent)
+	}
+	if trigger.Workflow != nil {
+		log.LinkedWorkflowID = &trigger.Workflow.ID
+		log.LinkedWorkflowName = trigger.Workflow.Name
+	}
+}
+
 // ExecuteWorkflow executes a workflow and listens for status changes in the database.
 func (o *Orchestrator) ExecuteWorkflow(
 	ctx context.Context,
@@ -209,8 +278,12 @@ func (o *Orchestrator) executeWorkflowWithContext(
 		"workflow_id", workflow.ID,
 		"workflow_run_id", run.ID)
 
+	// Add workflow start log with trigger information
+	lb := NewWorkflowLogBuilder()
+	startLog := buildWorkflowStartLog(workflow, run)
+
 	maxAttempts := o.getMaxAttempts(workflow)
-	allAttemptsLogs := []string{}
+	allAttemptsLogs := []string{lb.WorkflowStart(startLog)}
 	allAttemptsFailed := true
 
 	o.logger.InfoContext(ctx, "starting workflow execution loop",
@@ -294,6 +367,26 @@ func (o *Orchestrator) updateWorkflowRunStatus(
 		run.Status = irminmodels.WorkflowStatusError
 	}
 	run.FinishedAt = &finishedAt
+
+	// Calculate duration if StartedAt is available
+	var durationMs int64
+	if run.StartedAt != nil {
+		durationMs = finishedAt.Sub(*run.StartedAt).Milliseconds()
+	}
+
+	// Add workflow end log
+	lb := NewWorkflowLogBuilder()
+	endLog := lb.WorkflowEnd(WorkflowEndLog{
+		BaseLogEntry: BaseLogEntry{
+			Message: fmt.Sprintf("Workflow completed with status: %s", run.Status),
+		},
+		WorkflowID: run.WorkflowID,
+		RunID:      run.ID,
+		Status:     string(run.Status),
+		DurationMs: durationMs,
+	})
+	logs = append(logs, endLog)
+
 	run.Logs = logs
 	if err := o.db.Save(&run).Error; err != nil {
 		return nil, fmt.Errorf("failed to update workflow run: %w", err)

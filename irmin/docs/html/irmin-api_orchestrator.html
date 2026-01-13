@@ -23,6 +23,30 @@ const (
 
 TYPES
 
+type BaseLogEntry struct {
+	Type      WorkflowLogType `json:"type"`
+	Timestamp time.Time       `json:"timestamp"`
+	Message   string          `json:"message"`
+}
+    BaseLogEntry contains common fields for all structured log entries.
+
+type CommitLog struct {
+	BaseLogEntry
+	RepositorySlug string `json:"repository_slug"`
+	Branch         string `json:"branch"`
+	CommitHash     string `json:"commit_hash"`
+	Author         string `json:"author"`
+}
+    CommitLog logs a repository commit.
+
+type ConnectorOperationLog struct {
+	BaseLogEntry
+	ConnectorName string         `json:"connector_name,omitempty"`
+	OperationType string         `json:"operation_type"`
+	Metadata      map[string]any `json:"metadata,omitempty"`
+}
+    ConnectorOperationLog logs a connector operation.
+
 type DispatchEvent struct {
 	Timestamp     time.Time         `json:"timestamp"`
 	EventType     DispatchEventType `json:"event_type"`
@@ -37,6 +61,88 @@ type DispatchEventType string
 const (
 	DispatchEventTypeWorkflowRun DispatchEventType = "workflow_run"
 )
+type ExportObjectLog struct {
+	BaseLogEntry
+	RepositorySlug string `json:"repository_slug"`
+	RepositoryPath string `json:"repository_path"`
+	Branch         string `json:"branch"`
+	ConnectorName  string `json:"connector_name"`
+	ConnectionPath string `json:"connection_path"`
+	FileName       string `json:"file_name"`
+	SizeBytes      int64  `json:"size_bytes,omitempty"`
+	Checksum       string `json:"checksum,omitempty"`
+}
+    ExportObjectLog logs details of an exported object.
+
+type ExportSummaryLog struct {
+	BaseLogEntry
+	RepositorySlug  string `json:"repository_slug"`
+	RepositoryPaths string `json:"repository_paths"` // Comma-separated source paths
+	Branch          string `json:"branch"`
+	ConnectorName   string `json:"connector_name"`
+	ConnectorType   string `json:"connector_type,omitempty"`
+	ConnectionPath  string `json:"connection_path"`
+	TotalFiles      int    `json:"total_files"`
+}
+    ExportSummaryLog summarizes an export operation.
+
+type FieldMappingLog struct {
+	BaseLogEntry
+	SourcePath       string `json:"source_path"`
+	SourceField      string `json:"source_field,omitempty"`
+	DestinationPath  string `json:"destination_path"`
+	DestinationField string `json:"destination_field,omitempty"`
+	TransformType    string `json:"transform_type"` // "rename", "copy", "route"
+}
+    FieldMappingLog logs a field mapping transformation.
+
+type ImportObjectLog struct {
+	BaseLogEntry
+	ConnectorName  string `json:"connector_name"`
+	ConnectionPath string `json:"connection_path"`
+	RepositorySlug string `json:"repository_slug"`
+	RepositoryPath string `json:"repository_path"`
+	Branch         string `json:"branch"`
+	FileName       string `json:"file_name"`
+	SizeBytes      int64  `json:"size_bytes"`
+	Checksum       string `json:"checksum,omitempty"`
+	ContentType    string `json:"content_type,omitempty"`
+}
+    ImportObjectLog logs details of an imported object.
+
+type ImportSummaryLog struct {
+	BaseLogEntry
+	ConnectorName   string `json:"connector_name"`
+	ConnectorType   string `json:"connector_type,omitempty"`
+	ConnectionPaths string `json:"connection_paths"` // Comma-separated source paths
+	RepositorySlug  string `json:"repository_slug"`
+	RepositoryPath  string `json:"repository_path"`
+	Branch          string `json:"branch"`
+	TotalFiles      int    `json:"total_files"`
+	TotalBytes      int64  `json:"total_bytes"`
+}
+    ImportSummaryLog summarizes an import operation.
+
+type InputFileLog struct {
+	BaseLogEntry
+	RepositorySlug string `json:"repository_slug"`
+	Path           string `json:"path"`
+	Ref            string `json:"ref"`
+	SizeBytes      int64  `json:"size_bytes"`
+}
+    InputFileLog logs an input file being processed.
+
+type ObjectModifiedLog struct {
+	BaseLogEntry
+	Operation      string `json:"operation"` // "created", "updated", "deleted"
+	RepositorySlug string `json:"repository_slug"`
+	Path           string `json:"path"`
+	Branch         string `json:"branch"`
+	SizeBytes      int64  `json:"size_bytes,omitempty"`
+	ContentType    string `json:"content_type,omitempty"`
+}
+    ObjectModifiedLog logs an object modification.
+
 type Orchestrator struct {
 	// Has unexported fields.
 }
@@ -94,6 +200,55 @@ func (o *Orchestrator) UnregisterActiveRun(runID uint)
     UnregisterActiveRun removes a workflow run's cancel function after
     completion.
 
+type OutputFileLog struct {
+	BaseLogEntry
+	RepositorySlug string `json:"repository_slug"`
+	Path           string `json:"path"`
+	Branch         string `json:"branch"`
+	SizeBytes      int64  `json:"size_bytes"`
+	ContentType    string `json:"content_type,omitempty"`
+}
+    OutputFileLog logs an output file being saved.
+
+type QueryExecutionLog struct {
+	BaseLogEntry
+	QueryID      uint      `json:"query_id,omitempty"`
+	QueryPreview string    `json:"query_preview"` // Truncated SQL
+	StartTime    time.Time `json:"start_time"`
+	EndTime      time.Time `json:"end_time"`
+	DurationMs   int64     `json:"duration_ms"`
+	RowsReturned int       `json:"rows_returned"`
+	Columns      []string  `json:"columns,omitempty"`
+	Success      bool      `json:"success"`
+	ErrorMessage string    `json:"error_message,omitempty"`
+}
+    QueryExecutionLog logs query execution details.
+
+type ScriptExecutionLog struct {
+	BaseLogEntry
+	ScriptID      uint      `json:"script_id,omitempty"`
+	ScriptName    string    `json:"script_name,omitempty"`
+	RuntimeType   string    `json:"runtime_type"` // python, node, go, typescript
+	StartTime     time.Time `json:"start_time"`
+	EndTime       time.Time `json:"end_time"`
+	DurationMs    int64     `json:"duration_ms"`
+	Success       bool      `json:"success"`
+	InputFiles    []string  `json:"input_files,omitempty"`
+	OutputFiles   []string  `json:"output_files,omitempty"`
+	OutputPreview string    `json:"output_preview,omitempty"` // First N chars of output
+}
+    ScriptExecutionLog logs script execution details.
+
+type StageLog struct {
+	BaseLogEntry
+	StageNumber int    `json:"stage_number"`
+	StageType   string `json:"stage_type"`
+	Description string `json:"description,omitempty"`
+	DurationMs  int64  `json:"duration_ms,omitempty"`
+	Success     bool   `json:"success,omitempty"`
+}
+    StageLog logs pipeline stage execution.
+
 type WorkerEvent struct {
 	Topic WorkerEventTopic
 
@@ -108,5 +263,139 @@ type WorkerEventTopic string
 const (
 	WorkerEventTopicWorkflowRun WorkerEventTopic = "workflow_run"
 )
+type WorkflowEndLog struct {
+	BaseLogEntry
+	WorkflowID uint   `json:"workflow_id"`
+	RunID      uint   `json:"run_id"`
+	Status     string `json:"status"` // "complete", "error", "cancelled"
+	DurationMs int64  `json:"duration_ms"`
+}
+    WorkflowEndLog logs the end of a workflow run.
+
+type WorkflowLogBuilder struct{}
+    WorkflowLogBuilder provides helpers for creating structured log entries.
+
+func NewWorkflowLogBuilder() *WorkflowLogBuilder
+    NewWorkflowLogBuilder creates a new WorkflowLogBuilder.
+
+func (b *WorkflowLogBuilder) Commit(log CommitLog) string
+    Commit creates a commit log entry.
+
+func (b *WorkflowLogBuilder) ConnectorOp(log ConnectorOperationLog) string
+    ConnectorOp creates a connector operation log entry.
+
+func (b *WorkflowLogBuilder) ExportObject(log ExportObjectLog) string
+    ExportObject creates an export object log entry.
+
+func (b *WorkflowLogBuilder) ExportSummary(log ExportSummaryLog) string
+    ExportSummary creates an export summary log entry.
+
+func (b *WorkflowLogBuilder) FieldMapping(log FieldMappingLog) string
+    FieldMapping creates a field mapping log entry.
+
+func (b *WorkflowLogBuilder) ImportObject(log ImportObjectLog) string
+    ImportObject creates an import object log entry.
+
+func (b *WorkflowLogBuilder) ImportSummary(log ImportSummaryLog) string
+    ImportSummary creates an import summary log entry.
+
+func (b *WorkflowLogBuilder) InputFile(log InputFileLog) string
+    InputFile creates an input file log entry.
+
+func (b *WorkflowLogBuilder) ObjectModified(log ObjectModifiedLog) string
+    ObjectModified creates an object modified log entry.
+
+func (b *WorkflowLogBuilder) OutputFile(log OutputFileLog) string
+    OutputFile creates an output file log entry.
+
+func (b *WorkflowLogBuilder) QueryExec(log QueryExecutionLog) string
+    QueryExec creates a query execution log entry.
+
+func (b *WorkflowLogBuilder) ScriptExec(log ScriptExecutionLog) string
+    ScriptExec creates a script execution log entry.
+
+func (b *WorkflowLogBuilder) StageEnd(log StageLog) string
+    StageEnd creates a stage end log entry.
+
+func (b *WorkflowLogBuilder) StageStart(log StageLog) string
+    StageStart creates a stage start log entry.
+
+func (b *WorkflowLogBuilder) Text(message string) string
+    Text creates a plain text log entry (backward compatible).
+
+func (b *WorkflowLogBuilder) WorkflowEnd(log WorkflowEndLog) string
+    WorkflowEnd creates a workflow end log entry.
+
+func (b *WorkflowLogBuilder) WorkflowStart(log WorkflowStartLog) string
+    WorkflowStart creates a workflow start log entry.
+
+type WorkflowLogType string
+    WorkflowLogType identifies the type of structured log entry.
+
+const (
+	// LogTypeText is a plain text log entry (backward compatible).
+	LogTypeText WorkflowLogType = "text"
+	// LogTypeWorkflowStart indicates the start of a workflow run with trigger info.
+	LogTypeWorkflowStart WorkflowLogType = "workflow_start"
+	// LogTypeWorkflowEnd indicates the end of a workflow run.
+	LogTypeWorkflowEnd WorkflowLogType = "workflow_end"
+	// LogTypeImportSummary summarizes an import operation.
+	LogTypeImportSummary WorkflowLogType = "import_summary"
+	// LogTypeImportObject logs details of an imported object.
+	LogTypeImportObject WorkflowLogType = "import_object"
+	// LogTypeExportSummary summarizes an export operation.
+	LogTypeExportSummary WorkflowLogType = "export_summary"
+	// LogTypeExportObject logs details of an exported object.
+	LogTypeExportObject WorkflowLogType = "export_object"
+	// LogTypeFieldMapping logs a field mapping transformation.
+	LogTypeFieldMapping WorkflowLogType = "field_mapping"
+	// LogTypeConnectorOp logs a connector operation.
+	LogTypeConnectorOp WorkflowLogType = "connector_operation"
+	// LogTypeScriptExec logs script execution details.
+	LogTypeScriptExec WorkflowLogType = "script_execution"
+	// LogTypeQueryExec logs query execution details.
+	LogTypeQueryExec WorkflowLogType = "query_execution"
+	// LogTypeObjectModified logs an object modification (create/update/delete).
+	LogTypeObjectModified WorkflowLogType = "object_modified"
+	// LogTypeCommit logs a repository commit.
+	LogTypeCommit WorkflowLogType = "commit"
+	// LogTypeStageStart indicates the start of a pipeline stage.
+	LogTypeStageStart WorkflowLogType = "stage_start"
+	// LogTypeStageEnd indicates the end of a pipeline stage.
+	LogTypeStageEnd WorkflowLogType = "stage_end"
+	// LogTypeInputFile logs an input file being processed.
+	LogTypeInputFile WorkflowLogType = "input_file"
+	// LogTypeOutputFile logs an output file being saved.
+	LogTypeOutputFile WorkflowLogType = "output_file"
+)
+func ParseLogEntry(logStr string) (any, WorkflowLogType, error)
+    ParseLogEntry attempts to parse a log string as a structured entry. Returns
+    the parsed entry, its type, and any error. Plain text strings return as-is
+    with LogTypeText.
+
+type WorkflowStartLog struct {
+	BaseLogEntry
+	WorkflowID   uint   `json:"workflow_id"`
+	WorkflowName string `json:"workflow_name"`
+	WorkflowType string `json:"workflow_type"`
+	RunID        uint   `json:"run_id"`
+	// Trigger information
+	TriggerType string `json:"trigger_type"`           // "time", "repository-event", "workflow-run-event", "manual"
+	TriggerID   *uint  `json:"trigger_id,omitempty"`   // ID of the trigger if applicable
+	TriggeredBy string `json:"triggered_by,omitempty"` // User email if manually triggered
+	// Time trigger details
+	Cron  string `json:"cron,omitempty"`
+	RRule string `json:"rrule,omitempty"`
+	// Repository event trigger details
+	RepositoryEvent string `json:"repository_event,omitempty"` // e.g., "pre-commit", "post-commit"
+	RepositorySlug  string `json:"repository_slug,omitempty"`
+	RepositoryRef   string `json:"repository_ref,omitempty"`
+	// Workflow run event trigger details
+	WorkflowRunEvent   string `json:"workflow_run_event,omitempty"` // "pre-workflow-run", "post-workflow-run"
+	LinkedWorkflowID   *uint  `json:"linked_workflow_id,omitempty"`
+	LinkedWorkflowName string `json:"linked_workflow_name,omitempty"`
+}
+    WorkflowStartLog logs the start of a workflow run with trigger information.
+
 </pre>
 </body></html>

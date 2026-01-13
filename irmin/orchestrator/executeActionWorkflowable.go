@@ -8,10 +8,18 @@ import (
 	"irmin-api/db"
 	"irmin-api/lib"
 	"strings"
+	"time"
 
 	sandbox "irmin-api/compute-sandbox"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+)
+
+const (
+	// maxQueryPreviewLength is the maximum length for SQL query preview in logs.
+	maxQueryPreviewLength = 200
+	// maxOutputPreviewLength is the maximum length for script output preview in logs.
+	maxOutputPreviewLength = 500
 )
 
 // executeActionWorkflowable executes an action workflowable in the compute sandbox.
@@ -71,6 +79,7 @@ func (o *Orchestrator) processActionInputs(
 	workflowable *db.ActionWorkflowable,
 ) (map[string][]byte, []string, error) {
 	var logs []string
+	lb := NewWorkflowLogBuilder()
 	inputFiles := make(map[string][]byte)
 
 	for _, input := range workflowable.Inputs {
@@ -95,6 +104,22 @@ func (o *Orchestrator) processActionInputs(
 			continue
 		}
 		inputFiles[inputPath] = content
+
+		// Add structured input file log
+		logs = append(logs, lb.InputFile(InputFileLog{
+			BaseLogEntry: BaseLogEntry{
+				Message: fmt.Sprintf(
+					"Loaded input: %s from %s@%s",
+					inputPath,
+					input.Repository.Slug,
+					input.RepositoryRef,
+				),
+			},
+			RepositorySlug: input.Repository.Slug,
+			Path:           inputPath,
+			Ref:            input.RepositoryRef,
+			SizeBytes:      int64(len(content)),
+		}))
 	}
 
 	return inputFiles, logs, nil
@@ -123,11 +148,14 @@ func (o *Orchestrator) executeQueryWorkflowable(
 	inputFiles map[string][]byte,
 	logs []string,
 ) (sandbox.ExecutionResult, []string, error) {
+	lb := NewWorkflowLogBuilder()
+
 	if workflowable.Query == nil {
 		logs = append(logs, "Query is not set for query executable type")
 		return sandbox.ExecutionResult{}, logs, errors.New("query is not set for query executable type")
 	}
 
+	startTime := time.Now()
 	queryResult := o.dataEngine.ExecuteQueryWithInputs(
 		ctx,
 		&workflow.Owner,
@@ -135,10 +163,40 @@ func (o *Orchestrator) executeQueryWorkflowable(
 		workflowable.Query.SQL,
 		inputFiles,
 	)
+	endTime := time.Now()
 	computeResult := convertQueryResultToExecutionResult(queryResult)
 
 	// Always append query execution logs to workflow logs
 	logs = append(logs, computeResult.Logs)
+
+	// Add structured query execution log
+	queryPreview := workflowable.Query.SQL
+	if len(queryPreview) > maxQueryPreviewLength {
+		queryPreview = queryPreview[:maxQueryPreviewLength-3] + "..."
+	}
+
+	errorMsg := ""
+	if queryResult.HasErrors {
+		errorMsg = strings.Join(queryResult.Logs, "; ")
+	}
+
+	logs = append(logs, lb.QueryExec(QueryExecutionLog{
+		BaseLogEntry: BaseLogEntry{
+			Message: fmt.Sprintf(
+				"Query execution %s",
+				map[bool]string{true: "failed", false: "completed"}[queryResult.HasErrors],
+			),
+		},
+		QueryID:      workflowable.Query.ID,
+		QueryPreview: queryPreview,
+		StartTime:    startTime,
+		EndTime:      endTime,
+		DurationMs:   endTime.Sub(startTime).Milliseconds(),
+		RowsReturned: len(queryResult.Data),
+		Columns:      queryResult.Columns,
+		Success:      !queryResult.HasErrors,
+		ErrorMessage: errorMsg,
+	}))
 
 	if queryResult.HasErrors {
 		err := fmt.Errorf("query execution failed: %v", queryResult.Logs)
@@ -162,6 +220,8 @@ func (o *Orchestrator) executeScriptWorkflowable(
 	inputFiles map[string][]byte,
 	logs []string,
 ) (sandbox.ExecutionResult, []string, error) {
+	lb := NewWorkflowLogBuilder()
+
 	if workflowable.Script == nil {
 		logs = append(logs, "Script is not set for script executable type")
 		return sandbox.ExecutionResult{}, logs, errors.New("script is not set for script executable type")
@@ -176,6 +236,45 @@ func (o *Orchestrator) executeScriptWorkflowable(
 
 	// Always append script execution logs to workflow logs
 	logs = append(logs, computeResult.Logs)
+
+	// Build input file names list
+	inputFileNames := make([]string, 0, len(inputFiles))
+	for name := range inputFiles {
+		inputFileNames = append(inputFileNames, name)
+	}
+
+	// Build output file names list
+	outputFileNames := make([]string, 0, len(computeResult.ResultFiles))
+	for name := range computeResult.ResultFiles {
+		outputFileNames = append(outputFileNames, name)
+	}
+
+	// Truncate output preview
+	outputPreview := computeResult.Logs
+	if len(outputPreview) > maxOutputPreviewLength {
+		outputPreview = outputPreview[:maxOutputPreviewLength-3] + "..."
+	}
+
+	// Add structured script execution log
+	logs = append(logs, lb.ScriptExec(ScriptExecutionLog{
+		BaseLogEntry: BaseLogEntry{
+			Message: fmt.Sprintf(
+				"Script execution %s: %s",
+				map[bool]string{true: "failed", false: "completed"}[err != nil],
+				workflowable.Script.Name,
+			),
+		},
+		ScriptID:      workflowable.Script.ID,
+		ScriptName:    workflowable.Script.Name,
+		RuntimeType:   workflowable.Script.Language,
+		StartTime:     computeResult.StartTime,
+		EndTime:       computeResult.EndTime,
+		DurationMs:    computeResult.EndTime.Sub(computeResult.StartTime).Milliseconds(),
+		Success:       err == nil,
+		InputFiles:    inputFileNames,
+		OutputFiles:   outputFileNames,
+		OutputPreview: outputPreview,
+	}))
 
 	if err != nil {
 		if ctx.Err() != nil {
@@ -259,6 +358,7 @@ func (o *Orchestrator) saveSingleResultFile(
 	fileContent []byte,
 ) ([]string, string, error) {
 	var logs []string
+	lb := NewWorkflowLogBuilder()
 
 	// Determine the branch to use: specified branch or default branch
 	branch := workflowable.ResultsRepositoryBranch
@@ -319,6 +419,18 @@ func (o *Orchestrator) saveSingleResultFile(
 		}
 	}()
 
-	logs = append(logs, fmt.Sprintf("Result object ('%s') saved to repository.", fileName))
+	// Add structured output file / object modified log
+	logs = append(logs, lb.ObjectModified(ObjectModifiedLog{
+		BaseLogEntry: BaseLogEntry{
+			Message: fmt.Sprintf("Created: %s", uploadObjectToPath),
+		},
+		Operation:      "created",
+		RepositorySlug: workflowable.ResultsRepository.Slug,
+		Path:           uploadObjectToPath,
+		Branch:         *branch,
+		SizeBytes:      int64(len(fileContent)),
+		ContentType:    newObject.ContentType,
+	}))
+
 	return logs, *branch, nil
 }

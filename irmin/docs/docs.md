@@ -10900,8 +10900,18 @@ import "irmin-api/orchestrator"
 ## Index
 
 - [Constants](<#constants>)
+- [type BaseLogEntry](<#BaseLogEntry>)
+- [type CommitLog](<#CommitLog>)
+- [type ConnectorOperationLog](<#ConnectorOperationLog>)
 - [type DispatchEvent](<#DispatchEvent>)
 - [type DispatchEventType](<#DispatchEventType>)
+- [type ExportObjectLog](<#ExportObjectLog>)
+- [type ExportSummaryLog](<#ExportSummaryLog>)
+- [type FieldMappingLog](<#FieldMappingLog>)
+- [type ImportObjectLog](<#ImportObjectLog>)
+- [type ImportSummaryLog](<#ImportSummaryLog>)
+- [type InputFileLog](<#InputFileLog>)
+- [type ObjectModifiedLog](<#ObjectModifiedLog>)
 - [type Orchestrator](<#Orchestrator>)
   - [func NewOrchestrator\(d \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, dataEngine \*engine.Client, cacheStorage fiber.Storage\) \*Orchestrator](<#NewOrchestrator>)
   - [func \(o \*Orchestrator\) AddDispatchedEvent\(event \*DispatchEvent\)](<#Orchestrator.AddDispatchedEvent>)
@@ -10915,8 +10925,35 @@ import "irmin-api/orchestrator"
   - [func \(o \*Orchestrator\) StartDispatcher\(ctx context.Context\) error](<#Orchestrator.StartDispatcher>)
   - [func \(o \*Orchestrator\) StartOrchestrator\(ctx context.Context\) error](<#Orchestrator.StartOrchestrator>)
   - [func \(o \*Orchestrator\) UnregisterActiveRun\(runID uint\)](<#Orchestrator.UnregisterActiveRun>)
+- [type OutputFileLog](<#OutputFileLog>)
+- [type QueryExecutionLog](<#QueryExecutionLog>)
+- [type ScriptExecutionLog](<#ScriptExecutionLog>)
+- [type StageLog](<#StageLog>)
 - [type WorkerEvent](<#WorkerEvent>)
 - [type WorkerEventTopic](<#WorkerEventTopic>)
+- [type WorkflowEndLog](<#WorkflowEndLog>)
+- [type WorkflowLogBuilder](<#WorkflowLogBuilder>)
+  - [func NewWorkflowLogBuilder\(\) \*WorkflowLogBuilder](<#NewWorkflowLogBuilder>)
+  - [func \(b \*WorkflowLogBuilder\) Commit\(log CommitLog\) string](<#WorkflowLogBuilder.Commit>)
+  - [func \(b \*WorkflowLogBuilder\) ConnectorOp\(log ConnectorOperationLog\) string](<#WorkflowLogBuilder.ConnectorOp>)
+  - [func \(b \*WorkflowLogBuilder\) ExportObject\(log ExportObjectLog\) string](<#WorkflowLogBuilder.ExportObject>)
+  - [func \(b \*WorkflowLogBuilder\) ExportSummary\(log ExportSummaryLog\) string](<#WorkflowLogBuilder.ExportSummary>)
+  - [func \(b \*WorkflowLogBuilder\) FieldMapping\(log FieldMappingLog\) string](<#WorkflowLogBuilder.FieldMapping>)
+  - [func \(b \*WorkflowLogBuilder\) ImportObject\(log ImportObjectLog\) string](<#WorkflowLogBuilder.ImportObject>)
+  - [func \(b \*WorkflowLogBuilder\) ImportSummary\(log ImportSummaryLog\) string](<#WorkflowLogBuilder.ImportSummary>)
+  - [func \(b \*WorkflowLogBuilder\) InputFile\(log InputFileLog\) string](<#WorkflowLogBuilder.InputFile>)
+  - [func \(b \*WorkflowLogBuilder\) ObjectModified\(log ObjectModifiedLog\) string](<#WorkflowLogBuilder.ObjectModified>)
+  - [func \(b \*WorkflowLogBuilder\) OutputFile\(log OutputFileLog\) string](<#WorkflowLogBuilder.OutputFile>)
+  - [func \(b \*WorkflowLogBuilder\) QueryExec\(log QueryExecutionLog\) string](<#WorkflowLogBuilder.QueryExec>)
+  - [func \(b \*WorkflowLogBuilder\) ScriptExec\(log ScriptExecutionLog\) string](<#WorkflowLogBuilder.ScriptExec>)
+  - [func \(b \*WorkflowLogBuilder\) StageEnd\(log StageLog\) string](<#WorkflowLogBuilder.StageEnd>)
+  - [func \(b \*WorkflowLogBuilder\) StageStart\(log StageLog\) string](<#WorkflowLogBuilder.StageStart>)
+  - [func \(b \*WorkflowLogBuilder\) Text\(message string\) string](<#WorkflowLogBuilder.Text>)
+  - [func \(b \*WorkflowLogBuilder\) WorkflowEnd\(log WorkflowEndLog\) string](<#WorkflowLogBuilder.WorkflowEnd>)
+  - [func \(b \*WorkflowLogBuilder\) WorkflowStart\(log WorkflowStartLog\) string](<#WorkflowLogBuilder.WorkflowStart>)
+- [type WorkflowLogType](<#WorkflowLogType>)
+  - [func ParseLogEntry\(logStr string\) \(any, WorkflowLogType, error\)](<#ParseLogEntry>)
+- [type WorkflowStartLog](<#WorkflowStartLog>)
 
 
 ## Constants
@@ -10937,6 +10974,48 @@ const (
     // DefaultMaxWorkflowRuntime is the default maximum runtime for a workflow in seconds.
     DefaultMaxWorkflowRuntime = 120
 )
+```
+
+<a name="BaseLogEntry"></a>
+## type BaseLogEntry
+
+BaseLogEntry contains common fields for all structured log entries.
+
+```go
+type BaseLogEntry struct {
+    Type      WorkflowLogType `json:"type"`
+    Timestamp time.Time       `json:"timestamp"`
+    Message   string          `json:"message"`
+}
+```
+
+<a name="CommitLog"></a>
+## type CommitLog
+
+CommitLog logs a repository commit.
+
+```go
+type CommitLog struct {
+    BaseLogEntry
+    RepositorySlug string `json:"repository_slug"`
+    Branch         string `json:"branch"`
+    CommitHash     string `json:"commit_hash"`
+    Author         string `json:"author"`
+}
+```
+
+<a name="ConnectorOperationLog"></a>
+## type ConnectorOperationLog
+
+ConnectorOperationLog logs a connector operation.
+
+```go
+type ConnectorOperationLog struct {
+    BaseLogEntry
+    ConnectorName string         `json:"connector_name,omitempty"`
+    OperationType string         `json:"operation_type"`
+    Metadata      map[string]any `json:"metadata,omitempty"`
+}
 ```
 
 <a name="DispatchEvent"></a>
@@ -10968,6 +11047,130 @@ type DispatchEventType string
 const (
     DispatchEventTypeWorkflowRun DispatchEventType = "workflow_run"
 )
+```
+
+<a name="ExportObjectLog"></a>
+## type ExportObjectLog
+
+ExportObjectLog logs details of an exported object.
+
+```go
+type ExportObjectLog struct {
+    BaseLogEntry
+    RepositorySlug string `json:"repository_slug"`
+    RepositoryPath string `json:"repository_path"`
+    Branch         string `json:"branch"`
+    ConnectorName  string `json:"connector_name"`
+    ConnectionPath string `json:"connection_path"`
+    FileName       string `json:"file_name"`
+    SizeBytes      int64  `json:"size_bytes,omitempty"`
+    Checksum       string `json:"checksum,omitempty"`
+}
+```
+
+<a name="ExportSummaryLog"></a>
+## type ExportSummaryLog
+
+ExportSummaryLog summarizes an export operation.
+
+```go
+type ExportSummaryLog struct {
+    BaseLogEntry
+    RepositorySlug  string `json:"repository_slug"`
+    RepositoryPaths string `json:"repository_paths"` // Comma-separated source paths
+    Branch          string `json:"branch"`
+    ConnectorName   string `json:"connector_name"`
+    ConnectorType   string `json:"connector_type,omitempty"`
+    ConnectionPath  string `json:"connection_path"`
+    TotalFiles      int    `json:"total_files"`
+}
+```
+
+<a name="FieldMappingLog"></a>
+## type FieldMappingLog
+
+FieldMappingLog logs a field mapping transformation.
+
+```go
+type FieldMappingLog struct {
+    BaseLogEntry
+    SourcePath       string `json:"source_path"`
+    SourceField      string `json:"source_field,omitempty"`
+    DestinationPath  string `json:"destination_path"`
+    DestinationField string `json:"destination_field,omitempty"`
+    TransformType    string `json:"transform_type"` // "rename", "copy", "route"
+}
+```
+
+<a name="ImportObjectLog"></a>
+## type ImportObjectLog
+
+ImportObjectLog logs details of an imported object.
+
+```go
+type ImportObjectLog struct {
+    BaseLogEntry
+    ConnectorName  string `json:"connector_name"`
+    ConnectionPath string `json:"connection_path"`
+    RepositorySlug string `json:"repository_slug"`
+    RepositoryPath string `json:"repository_path"`
+    Branch         string `json:"branch"`
+    FileName       string `json:"file_name"`
+    SizeBytes      int64  `json:"size_bytes"`
+    Checksum       string `json:"checksum,omitempty"`
+    ContentType    string `json:"content_type,omitempty"`
+}
+```
+
+<a name="ImportSummaryLog"></a>
+## type ImportSummaryLog
+
+ImportSummaryLog summarizes an import operation.
+
+```go
+type ImportSummaryLog struct {
+    BaseLogEntry
+    ConnectorName   string `json:"connector_name"`
+    ConnectorType   string `json:"connector_type,omitempty"`
+    ConnectionPaths string `json:"connection_paths"` // Comma-separated source paths
+    RepositorySlug  string `json:"repository_slug"`
+    RepositoryPath  string `json:"repository_path"`
+    Branch          string `json:"branch"`
+    TotalFiles      int    `json:"total_files"`
+    TotalBytes      int64  `json:"total_bytes"`
+}
+```
+
+<a name="InputFileLog"></a>
+## type InputFileLog
+
+InputFileLog logs an input file being processed.
+
+```go
+type InputFileLog struct {
+    BaseLogEntry
+    RepositorySlug string `json:"repository_slug"`
+    Path           string `json:"path"`
+    Ref            string `json:"ref"`
+    SizeBytes      int64  `json:"size_bytes"`
+}
+```
+
+<a name="ObjectModifiedLog"></a>
+## type ObjectModifiedLog
+
+ObjectModifiedLog logs an object modification.
+
+```go
+type ObjectModifiedLog struct {
+    BaseLogEntry
+    Operation      string `json:"operation"` // "created", "updated", "deleted"
+    RepositorySlug string `json:"repository_slug"`
+    Path           string `json:"path"`
+    Branch         string `json:"branch"`
+    SizeBytes      int64  `json:"size_bytes,omitempty"`
+    ContentType    string `json:"content_type,omitempty"`
+}
 ```
 
 <a name="Orchestrator"></a>
@@ -11089,6 +11292,79 @@ func (o *Orchestrator) UnregisterActiveRun(runID uint)
 
 UnregisterActiveRun removes a workflow run's cancel function after completion.
 
+<a name="OutputFileLog"></a>
+## type OutputFileLog
+
+OutputFileLog logs an output file being saved.
+
+```go
+type OutputFileLog struct {
+    BaseLogEntry
+    RepositorySlug string `json:"repository_slug"`
+    Path           string `json:"path"`
+    Branch         string `json:"branch"`
+    SizeBytes      int64  `json:"size_bytes"`
+    ContentType    string `json:"content_type,omitempty"`
+}
+```
+
+<a name="QueryExecutionLog"></a>
+## type QueryExecutionLog
+
+QueryExecutionLog logs query execution details.
+
+```go
+type QueryExecutionLog struct {
+    BaseLogEntry
+    QueryID      uint      `json:"query_id,omitempty"`
+    QueryPreview string    `json:"query_preview"` // Truncated SQL
+    StartTime    time.Time `json:"start_time"`
+    EndTime      time.Time `json:"end_time"`
+    DurationMs   int64     `json:"duration_ms"`
+    RowsReturned int       `json:"rows_returned"`
+    Columns      []string  `json:"columns,omitempty"`
+    Success      bool      `json:"success"`
+    ErrorMessage string    `json:"error_message,omitempty"`
+}
+```
+
+<a name="ScriptExecutionLog"></a>
+## type ScriptExecutionLog
+
+ScriptExecutionLog logs script execution details.
+
+```go
+type ScriptExecutionLog struct {
+    BaseLogEntry
+    ScriptID      uint      `json:"script_id,omitempty"`
+    ScriptName    string    `json:"script_name,omitempty"`
+    RuntimeType   string    `json:"runtime_type"` // python, node, go, typescript
+    StartTime     time.Time `json:"start_time"`
+    EndTime       time.Time `json:"end_time"`
+    DurationMs    int64     `json:"duration_ms"`
+    Success       bool      `json:"success"`
+    InputFiles    []string  `json:"input_files,omitempty"`
+    OutputFiles   []string  `json:"output_files,omitempty"`
+    OutputPreview string    `json:"output_preview,omitempty"` // First N chars of output
+}
+```
+
+<a name="StageLog"></a>
+## type StageLog
+
+StageLog logs pipeline stage execution.
+
+```go
+type StageLog struct {
+    BaseLogEntry
+    StageNumber int    `json:"stage_number"`
+    StageType   string `json:"stage_type"`
+    Description string `json:"description,omitempty"`
+    DurationMs  int64  `json:"duration_ms,omitempty"`
+    Success     bool   `json:"success,omitempty"`
+}
+```
+
 <a name="WorkerEvent"></a>
 ## type WorkerEvent
 
@@ -11120,6 +11396,281 @@ type WorkerEventTopic string
 const (
     WorkerEventTopicWorkflowRun WorkerEventTopic = "workflow_run"
 )
+```
+
+<a name="WorkflowEndLog"></a>
+## type WorkflowEndLog
+
+WorkflowEndLog logs the end of a workflow run.
+
+```go
+type WorkflowEndLog struct {
+    BaseLogEntry
+    WorkflowID uint   `json:"workflow_id"`
+    RunID      uint   `json:"run_id"`
+    Status     string `json:"status"` // "complete", "error", "cancelled"
+    DurationMs int64  `json:"duration_ms"`
+}
+```
+
+<a name="WorkflowLogBuilder"></a>
+## type WorkflowLogBuilder
+
+WorkflowLogBuilder provides helpers for creating structured log entries.
+
+```go
+type WorkflowLogBuilder struct{}
+```
+
+<a name="NewWorkflowLogBuilder"></a>
+### func NewWorkflowLogBuilder
+
+```go
+func NewWorkflowLogBuilder() *WorkflowLogBuilder
+```
+
+NewWorkflowLogBuilder creates a new WorkflowLogBuilder.
+
+<a name="WorkflowLogBuilder.Commit"></a>
+### func \(\*WorkflowLogBuilder\) Commit
+
+```go
+func (b *WorkflowLogBuilder) Commit(log CommitLog) string
+```
+
+Commit creates a commit log entry.
+
+<a name="WorkflowLogBuilder.ConnectorOp"></a>
+### func \(\*WorkflowLogBuilder\) ConnectorOp
+
+```go
+func (b *WorkflowLogBuilder) ConnectorOp(log ConnectorOperationLog) string
+```
+
+ConnectorOp creates a connector operation log entry.
+
+<a name="WorkflowLogBuilder.ExportObject"></a>
+### func \(\*WorkflowLogBuilder\) ExportObject
+
+```go
+func (b *WorkflowLogBuilder) ExportObject(log ExportObjectLog) string
+```
+
+ExportObject creates an export object log entry.
+
+<a name="WorkflowLogBuilder.ExportSummary"></a>
+### func \(\*WorkflowLogBuilder\) ExportSummary
+
+```go
+func (b *WorkflowLogBuilder) ExportSummary(log ExportSummaryLog) string
+```
+
+ExportSummary creates an export summary log entry.
+
+<a name="WorkflowLogBuilder.FieldMapping"></a>
+### func \(\*WorkflowLogBuilder\) FieldMapping
+
+```go
+func (b *WorkflowLogBuilder) FieldMapping(log FieldMappingLog) string
+```
+
+FieldMapping creates a field mapping log entry.
+
+<a name="WorkflowLogBuilder.ImportObject"></a>
+### func \(\*WorkflowLogBuilder\) ImportObject
+
+```go
+func (b *WorkflowLogBuilder) ImportObject(log ImportObjectLog) string
+```
+
+ImportObject creates an import object log entry.
+
+<a name="WorkflowLogBuilder.ImportSummary"></a>
+### func \(\*WorkflowLogBuilder\) ImportSummary
+
+```go
+func (b *WorkflowLogBuilder) ImportSummary(log ImportSummaryLog) string
+```
+
+ImportSummary creates an import summary log entry.
+
+<a name="WorkflowLogBuilder.InputFile"></a>
+### func \(\*WorkflowLogBuilder\) InputFile
+
+```go
+func (b *WorkflowLogBuilder) InputFile(log InputFileLog) string
+```
+
+InputFile creates an input file log entry.
+
+<a name="WorkflowLogBuilder.ObjectModified"></a>
+### func \(\*WorkflowLogBuilder\) ObjectModified
+
+```go
+func (b *WorkflowLogBuilder) ObjectModified(log ObjectModifiedLog) string
+```
+
+ObjectModified creates an object modified log entry.
+
+<a name="WorkflowLogBuilder.OutputFile"></a>
+### func \(\*WorkflowLogBuilder\) OutputFile
+
+```go
+func (b *WorkflowLogBuilder) OutputFile(log OutputFileLog) string
+```
+
+OutputFile creates an output file log entry.
+
+<a name="WorkflowLogBuilder.QueryExec"></a>
+### func \(\*WorkflowLogBuilder\) QueryExec
+
+```go
+func (b *WorkflowLogBuilder) QueryExec(log QueryExecutionLog) string
+```
+
+QueryExec creates a query execution log entry.
+
+<a name="WorkflowLogBuilder.ScriptExec"></a>
+### func \(\*WorkflowLogBuilder\) ScriptExec
+
+```go
+func (b *WorkflowLogBuilder) ScriptExec(log ScriptExecutionLog) string
+```
+
+ScriptExec creates a script execution log entry.
+
+<a name="WorkflowLogBuilder.StageEnd"></a>
+### func \(\*WorkflowLogBuilder\) StageEnd
+
+```go
+func (b *WorkflowLogBuilder) StageEnd(log StageLog) string
+```
+
+StageEnd creates a stage end log entry.
+
+<a name="WorkflowLogBuilder.StageStart"></a>
+### func \(\*WorkflowLogBuilder\) StageStart
+
+```go
+func (b *WorkflowLogBuilder) StageStart(log StageLog) string
+```
+
+StageStart creates a stage start log entry.
+
+<a name="WorkflowLogBuilder.Text"></a>
+### func \(\*WorkflowLogBuilder\) Text
+
+```go
+func (b *WorkflowLogBuilder) Text(message string) string
+```
+
+Text creates a plain text log entry \(backward compatible\).
+
+<a name="WorkflowLogBuilder.WorkflowEnd"></a>
+### func \(\*WorkflowLogBuilder\) WorkflowEnd
+
+```go
+func (b *WorkflowLogBuilder) WorkflowEnd(log WorkflowEndLog) string
+```
+
+WorkflowEnd creates a workflow end log entry.
+
+<a name="WorkflowLogBuilder.WorkflowStart"></a>
+### func \(\*WorkflowLogBuilder\) WorkflowStart
+
+```go
+func (b *WorkflowLogBuilder) WorkflowStart(log WorkflowStartLog) string
+```
+
+WorkflowStart creates a workflow start log entry.
+
+<a name="WorkflowLogType"></a>
+## type WorkflowLogType
+
+WorkflowLogType identifies the type of structured log entry.
+
+```go
+type WorkflowLogType string
+```
+
+<a name="LogTypeText"></a>
+
+```go
+const (
+    // LogTypeText is a plain text log entry (backward compatible).
+    LogTypeText WorkflowLogType = "text"
+    // LogTypeWorkflowStart indicates the start of a workflow run with trigger info.
+    LogTypeWorkflowStart WorkflowLogType = "workflow_start"
+    // LogTypeWorkflowEnd indicates the end of a workflow run.
+    LogTypeWorkflowEnd WorkflowLogType = "workflow_end"
+    // LogTypeImportSummary summarizes an import operation.
+    LogTypeImportSummary WorkflowLogType = "import_summary"
+    // LogTypeImportObject logs details of an imported object.
+    LogTypeImportObject WorkflowLogType = "import_object"
+    // LogTypeExportSummary summarizes an export operation.
+    LogTypeExportSummary WorkflowLogType = "export_summary"
+    // LogTypeExportObject logs details of an exported object.
+    LogTypeExportObject WorkflowLogType = "export_object"
+    // LogTypeFieldMapping logs a field mapping transformation.
+    LogTypeFieldMapping WorkflowLogType = "field_mapping"
+    // LogTypeConnectorOp logs a connector operation.
+    LogTypeConnectorOp WorkflowLogType = "connector_operation"
+    // LogTypeScriptExec logs script execution details.
+    LogTypeScriptExec WorkflowLogType = "script_execution"
+    // LogTypeQueryExec logs query execution details.
+    LogTypeQueryExec WorkflowLogType = "query_execution"
+    // LogTypeObjectModified logs an object modification (create/update/delete).
+    LogTypeObjectModified WorkflowLogType = "object_modified"
+    // LogTypeCommit logs a repository commit.
+    LogTypeCommit WorkflowLogType = "commit"
+    // LogTypeStageStart indicates the start of a pipeline stage.
+    LogTypeStageStart WorkflowLogType = "stage_start"
+    // LogTypeStageEnd indicates the end of a pipeline stage.
+    LogTypeStageEnd WorkflowLogType = "stage_end"
+    // LogTypeInputFile logs an input file being processed.
+    LogTypeInputFile WorkflowLogType = "input_file"
+    // LogTypeOutputFile logs an output file being saved.
+    LogTypeOutputFile WorkflowLogType = "output_file"
+)
+```
+
+<a name="ParseLogEntry"></a>
+### func ParseLogEntry
+
+```go
+func ParseLogEntry(logStr string) (any, WorkflowLogType, error)
+```
+
+ParseLogEntry attempts to parse a log string as a structured entry. Returns the parsed entry, its type, and any error. Plain text strings return as\-is with LogTypeText.
+
+<a name="WorkflowStartLog"></a>
+## type WorkflowStartLog
+
+WorkflowStartLog logs the start of a workflow run with trigger information.
+
+```go
+type WorkflowStartLog struct {
+    BaseLogEntry
+    WorkflowID   uint   `json:"workflow_id"`
+    WorkflowName string `json:"workflow_name"`
+    WorkflowType string `json:"workflow_type"`
+    RunID        uint   `json:"run_id"`
+    // Trigger information
+    TriggerType string `json:"trigger_type"`           // "time", "repository-event", "workflow-run-event", "manual"
+    TriggerID   *uint  `json:"trigger_id,omitempty"`   // ID of the trigger if applicable
+    TriggeredBy string `json:"triggered_by,omitempty"` // User email if manually triggered
+    // Time trigger details
+    Cron  string `json:"cron,omitempty"`
+    RRule string `json:"rrule,omitempty"`
+    // Repository event trigger details
+    RepositoryEvent string `json:"repository_event,omitempty"` // e.g., "pre-commit", "post-commit"
+    RepositorySlug  string `json:"repository_slug,omitempty"`
+    RepositoryRef   string `json:"repository_ref,omitempty"`
+    // Workflow run event trigger details
+    WorkflowRunEvent   string `json:"workflow_run_event,omitempty"` // "pre-workflow-run", "post-workflow-run"
+    LinkedWorkflowID   *uint  `json:"linked_workflow_id,omitempty"`
+    LinkedWorkflowName string `json:"linked_workflow_name,omitempty"`
+}
 ```
 
 # permissions

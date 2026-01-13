@@ -16,6 +16,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	sandbox "irmin-api/compute-sandbox"
 
@@ -61,6 +62,8 @@ func (o *Orchestrator) executePipelineWorkflowable(
 	})
 
 	// Execute each stage in the pipeline
+	lb := NewWorkflowLogBuilder()
+
 	for key, stage := range workflowable.Stages {
 		// Check for context cancellation before each stage
 		if ctx.Err() != nil {
@@ -68,7 +71,18 @@ func (o *Orchestrator) executePipelineWorkflowable(
 			return logs, ctx.Err()
 		}
 
-		logs = append(logs, fmt.Sprintf("Executing stage %d", key+1))
+		stageStart := time.Now()
+		stageNum := key + 1
+
+		// Log stage start
+		logs = append(logs, lb.StageStart(StageLog{
+			BaseLogEntry: BaseLogEntry{
+				Message: fmt.Sprintf("Starting stage %d: %s", stageNum, stage.Type),
+			},
+			StageNumber: stageNum,
+			StageType:   string(stage.Type),
+			Description: stage.Description,
+		}))
 
 		var stageLogs []string
 		var errResult error
@@ -132,19 +146,45 @@ func (o *Orchestrator) executePipelineWorkflowable(
 			continue
 		}
 
+		stageDuration := time.Since(stageStart)
+
 		if errResult != nil {
+			// Append stage logs first to maintain chronological order
+			logs = append(logs, stageLogs...)
+
+			// Log stage end with failure
+			logs = append(logs, lb.StageEnd(StageLog{
+				BaseLogEntry: BaseLogEntry{
+					Message: fmt.Sprintf("Stage %d failed: %s", stageNum, stage.Type),
+				},
+				StageNumber: stageNum,
+				StageType:   string(stage.Type),
+				DurationMs:  stageDuration.Milliseconds(),
+				Success:     false,
+			}))
+
 			if ctx.Err() != nil {
-				logs = append(logs, stageLogs...)
 				logs = append(logs, errResult.Error())
 				return logs, ctx.Err()
 			}
 			o.logger.ErrorContext(ctx, "Error executing stage", "error", errResult)
-			logs = append(logs, stageLogs...)
 			logs = append(logs, fmt.Sprintf("Error executing stage: %v", errResult))
 			return logs, errResult
 		}
 
+		// Append stage logs first to maintain chronological order
 		logs = append(logs, stageLogs...)
+
+		// Log stage end with success
+		logs = append(logs, lb.StageEnd(StageLog{
+			BaseLogEntry: BaseLogEntry{
+				Message: fmt.Sprintf("Stage %d completed: %s", stageNum, stage.Type),
+			},
+			StageNumber: stageNum,
+			StageType:   string(stage.Type),
+			DurationMs:  stageDuration.Milliseconds(),
+			Success:     true,
+		}))
 	}
 
 	return logs, nil
