@@ -37,6 +37,8 @@ func (d *Database) GetWorkflowRunsByWorkflowID(workflowID uint, limit, offset in
 	// Find log events based on the provided parameters
 	var workflowRuns []WorkflowRun
 	result := d.Preload("TriggeredBy").
+		Preload("TriggeredBy.Repository").
+		Preload("TriggeredBy.Workflow").
 		Preload("TriggeredByUser").
 		Preload("Workflow").
 		Where(&WorkflowRun{WorkflowID: workflowID}).
@@ -51,6 +53,8 @@ func (d *Database) GetWorkflowRunsByWorkflowID(workflowID uint, limit, offset in
 func (d *Database) GetLatestWorkflowRunByWorkflowID(workflowID uint) (*WorkflowRun, error) {
 	var workflowRun WorkflowRun
 	result := d.Preload("TriggeredBy").
+		Preload("TriggeredBy.Repository").
+		Preload("TriggeredBy.Workflow").
 		Preload("TriggeredByUser").
 		Preload("Workflow").
 		Where(&WorkflowRun{WorkflowID: workflowID}).
@@ -62,7 +66,12 @@ func (d *Database) GetLatestWorkflowRunByWorkflowID(workflowID uint) (*WorkflowR
 
 func (d *Database) GetWorkflowRunByID(id uint) (*WorkflowRun, error) {
 	var workflowRun WorkflowRun
-	result := d.Preload("TriggeredBy").Preload("TriggeredByUser").Preload("Workflow").First(&workflowRun, id)
+	result := d.Preload("TriggeredBy").
+		Preload("TriggeredBy.Repository").
+		Preload("TriggeredBy.Workflow").
+		Preload("TriggeredByUser").
+		Preload("Workflow").
+		First(&workflowRun, id)
 	return &workflowRun, result.Error
 }
 
@@ -81,6 +90,8 @@ func (d *Database) GetWorkflowRunsByWorkspaceID(workspaceID uint, limit, offset 
 	// Find workflow runs based on the provided parameters
 	var workflowRuns []WorkflowRun
 	result := d.Preload("TriggeredBy").
+		Preload("TriggeredBy.Repository").
+		Preload("TriggeredBy.Workflow").
 		Preload("TriggeredByUser").
 		Preload("Workflow").
 		Joins("JOIN workflows ON workflow_runs.workflow_id = workflows.id").

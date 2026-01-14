@@ -506,52 +506,116 @@ func (o *Orchestrator) createWorkflowRunForTimeTrigger(ctx context.Context, tx *
 }
 
 // processRepositoryTrigger handles a single repository trigger, creating a workflow run if conditions match.
+// Returns true if a workflow run was created, false otherwise.
 func (o *Orchestrator) processRepositoryTrigger(
 	ctx context.Context,
 	tx *gorm.DB,
 	t *db.WorkflowTrigger,
 	event *lakefs.WebhookEvent,
-) error {
-	o.logger.InfoContext(ctx, "processing event", "event", event, "trigger", t)
+) (bool, error) {
+	o.logger.InfoContext(ctx, "processing repository trigger",
+		"trigger_id", t.ID,
+		"trigger_event_type", t.RepositoryEvent,
+		"trigger_ref", t.RepositoryRef,
+		"event_type", event.EventType,
+		"event_repository", event.RepositoryID,
+		"event_branch", event.BranchID,
+		"event_tag", event.TagID,
+		"event_commit", event.CommitID,
+	)
 
 	// If the trigger specifies an event type, check if it matches the event
 	if t.RepositoryEvent != nil && *t.RepositoryEvent != event.EventType {
-		o.logger.InfoContext(ctx, "event type does not match trigger", "event", event, "trigger", t)
-		return nil
+		o.logger.InfoContext(ctx, "event type does not match trigger - skipping",
+			"trigger_id", t.ID,
+			"trigger_event_type", *t.RepositoryEvent,
+			"actual_event_type", event.EventType,
+		)
+		return false, nil
 	}
 
 	// If the trigger specifies a ref, check if it matches the event
 	if t.RepositoryRef != nil && *t.RepositoryRef != "" {
-		if t.RepositoryRef != event.BranchID &&
-			t.RepositoryRef != event.TagID &&
-			t.RepositoryRef != event.CommitID {
-			o.logger.InfoContext(ctx, "ref does not match trigger", "event", event, "trigger", t)
-			return nil
+		refMatched := false
+		if event.BranchID != nil && *t.RepositoryRef == *event.BranchID {
+			refMatched = true
+		}
+		if event.TagID != nil && *t.RepositoryRef == *event.TagID {
+			refMatched = true
+		}
+		if event.CommitID != nil && *t.RepositoryRef == *event.CommitID {
+			refMatched = true
+		}
+
+		if !refMatched {
+			o.logger.InfoContext(ctx, "ref does not match trigger - skipping",
+				"trigger_id", t.ID,
+				"trigger_ref", *t.RepositoryRef,
+				"event_branch", event.BranchID,
+				"event_tag", event.TagID,
+				"event_commit", event.CommitID,
+			)
+			return false, nil
 		}
 	}
 
 	// Get the workflow associated with this trigger
 	var workflow db.Workflow
 	if err := tx.Where("schedule_id = ?", t.ScheduleID).First(&workflow).Error; err != nil {
-		o.logger.ErrorContext(ctx, "failed to get workflow for trigger", "error", err, "trigger_id", t.ID)
+		o.logger.ErrorContext(ctx, "failed to get workflow for repository trigger",
+			"error", err,
+			"trigger_id", t.ID,
+			"schedule_id", t.ScheduleID,
+		)
 		// Delete the trigger if we can't find the workflow
 		if deleteErr := tx.Delete(t).Error; deleteErr != nil {
-			o.logger.ErrorContext(ctx, "failed to delete trigger", "error", deleteErr, "trigger_id", t.ID)
+			o.logger.ErrorContext(ctx, "failed to delete orphaned trigger", "error", deleteErr, "trigger_id", t.ID)
 		}
-		return err
+		return false, err
 	}
+
+	o.logger.InfoContext(ctx, "repository event matched trigger - creating workflow run",
+		"trigger_id", t.ID,
+		"workflow_id", workflow.ID,
+		"workflow_name", workflow.Name,
+		"event_type", event.EventType,
+		"repository", event.RepositoryID,
+	)
 
 	// Create a new workflow run
 	run, err := lib.CreateWorkflowRun(tx, &workflow, nil, t)
 	if err != nil {
-		o.logger.ErrorContext(ctx, "failed to create workflow run", "error", err, "trigger_id", t.ID)
-		return err
+		o.logger.ErrorContext(ctx, "failed to create workflow run from repository event",
+			"error", err,
+			"trigger_id", t.ID,
+			"workflow_id", workflow.ID,
+			"event_type", event.EventType,
+		)
+		return false, err
 	}
-	o.logger.InfoContext(ctx, "created workflow run", "run_id", run.ID)
-	return nil
+
+	o.logger.InfoContext(ctx, "successfully created workflow run from repository event",
+		"run_id", run.ID,
+		"workflow_id", workflow.ID,
+		"workflow_name", workflow.Name,
+		"trigger_id", t.ID,
+		"event_type", event.EventType,
+		"repository", event.RepositoryID,
+	)
+	return true, nil
 }
 
 func (o *Orchestrator) processRepositoryEvent(ctx context.Context, event *lakefs.WebhookEvent) error {
+	o.logger.InfoContext(ctx, "processing repository event",
+		"event_type", event.EventType,
+		"repository_id", event.RepositoryID,
+		"branch", event.BranchID,
+		"tag", event.TagID,
+		"commit", event.CommitID,
+		"commit_message", event.CommitMessage,
+		"committer", event.Committer,
+	)
+
 	return o.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Get the repository from the event
 		var repository db.Repository
@@ -560,94 +624,208 @@ func (o *Orchestrator) processRepositoryEvent(ctx context.Context, event *lakefs
 			Preload("Workspace").
 			Preload("Tags").
 			First(&repository).Error; err != nil {
-			o.logger.ErrorContext(ctx, "failed to get repository", "error", err, "repository_id", event.RepositoryID)
+			o.logger.ErrorContext(ctx, "failed to get repository for event - repository may not exist in Irmin",
+				"error", err,
+				"lakefs_repository_id", event.RepositoryID,
+				"event_type", event.EventType,
+			)
 			return err
 		}
 
-		o.logger.InfoContext(ctx, "found repository", "repository", repository)
+		o.logger.InfoContext(ctx, "found repository for event",
+			"repository_id", repository.ID,
+			"repository_slug", repository.Slug,
+			"workspace_id", repository.WorkspaceID,
+		)
 
 		var triggers []db.WorkflowTrigger
 		if findErr := tx.Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
 			Where("type = ? AND repository_id = ? AND deleted_at IS NULL", db.RepositoryTriggerType, repository.ID).
 			Find(&triggers).Error; findErr != nil {
+			o.logger.ErrorContext(ctx, "failed to find triggers for repository",
+				"error", findErr,
+				"repository_id", repository.ID,
+			)
 			return findErr
 		}
 
-		o.logger.InfoContext(ctx, "found triggers", "triggers", triggers)
+		if len(triggers) == 0 {
+			o.logger.InfoContext(ctx, "no repository triggers found for this repository",
+				"repository_id", repository.ID,
+				"repository_slug", repository.Slug,
+				"event_type", event.EventType,
+			)
+			return nil
+		}
+
+		o.logger.InfoContext(ctx, "found repository triggers to evaluate",
+			"trigger_count", len(triggers),
+			"repository_id", repository.ID,
+			"event_type", event.EventType,
+		)
 
 		// Process each trigger
+		runsCreated := 0
 		for _, t := range triggers {
-			if triggerErr := o.processRepositoryTrigger(ctx, tx, &t, event); triggerErr != nil {
+			created, triggerErr := o.processRepositoryTrigger(ctx, tx, &t, event)
+			if triggerErr != nil {
 				// Log error but continue processing other triggers
-				o.logger.ErrorContext(
-					ctx,
-					"error processing repository trigger",
-					"error",
-					triggerErr,
-					"trigger_id",
-					t.ID,
+				o.logger.ErrorContext(ctx, "error processing repository trigger",
+					"error", triggerErr,
+					"trigger_id", t.ID,
+					"repository_id", repository.ID,
 				)
 				continue
 			}
+			if created {
+				runsCreated++
+			}
 		}
+
+		o.logger.InfoContext(ctx, "finished processing repository event",
+			"triggers_evaluated", len(triggers),
+			"runs_created", runsCreated,
+			"repository_id", repository.ID,
+			"event_type", event.EventType,
+		)
 
 		return nil
 	})
 }
 
 // processWorkflowRunTrigger handles a single workflow run trigger.
+// Returns true if a workflow run was created, false otherwise.
 func (o *Orchestrator) processWorkflowRunTrigger(
 	ctx context.Context,
 	tx *gorm.DB,
 	t *db.WorkflowTrigger,
 	event *WorkerEvent,
-) error {
-	o.logger.InfoContext(ctx, "processing event", "event", event, "trigger", t)
+) (bool, error) {
+	o.logger.InfoContext(ctx, "processing workflow run trigger",
+		"trigger_id", t.ID,
+		"trigger_event_type", t.WorkflowRunEvent,
+		"trigger_workflow_id", t.WorkflowID,
+		"source_workflow_id", event.WorkflowID,
+		"source_workflow_run_id", event.WorkflowRunID,
+		"event_type", event.WorkflowRunEventType,
+	)
 
 	// Get the workflow associated with this trigger
 	var workflow db.Workflow
 	if err := tx.Where("schedule_id = ?", t.ScheduleID).First(&workflow).Error; err != nil {
-		o.logger.ErrorContext(ctx, "failed to get workflow for trigger", "error", err, "trigger_id", t.ID)
+		o.logger.ErrorContext(ctx, "failed to get workflow for workflow run trigger",
+			"error", err,
+			"trigger_id", t.ID,
+			"schedule_id", t.ScheduleID,
+		)
 		// Delete the trigger if we can't find the workflow
 		if deleteErr := tx.Delete(t).Error; deleteErr != nil {
-			o.logger.ErrorContext(ctx, "failed to delete trigger", "error", deleteErr, "trigger_id", t.ID)
+			o.logger.ErrorContext(ctx, "failed to delete orphaned trigger", "error", deleteErr, "trigger_id", t.ID)
 		}
-		return err
+		return false, err
 	}
+
+	o.logger.InfoContext(ctx, "workflow run event matched trigger - creating workflow run",
+		"trigger_id", t.ID,
+		"target_workflow_id", workflow.ID,
+		"target_workflow_name", workflow.Name,
+		"source_workflow_id", event.WorkflowID,
+		"source_workflow_run_id", event.WorkflowRunID,
+		"event_type", event.WorkflowRunEventType,
+	)
 
 	// Create a new workflow run
 	run, err := lib.CreateWorkflowRun(tx, &workflow, nil, t)
 	if err != nil {
-		o.logger.ErrorContext(ctx, "failed to create workflow run", "error", err, "trigger_id", t.ID)
-		return err
+		o.logger.ErrorContext(ctx, "failed to create workflow run from workflow run event",
+			"error", err,
+			"trigger_id", t.ID,
+			"target_workflow_id", workflow.ID,
+			"source_workflow_id", event.WorkflowID,
+		)
+		return false, err
 	}
-	o.logger.InfoContext(ctx, "created workflow run", "run_id", run.ID)
-	return nil
+
+	o.logger.InfoContext(ctx, "successfully created workflow run from workflow run event",
+		"run_id", run.ID,
+		"target_workflow_id", workflow.ID,
+		"target_workflow_name", workflow.Name,
+		"trigger_id", t.ID,
+		"source_workflow_id", event.WorkflowID,
+		"source_workflow_run_id", event.WorkflowRunID,
+		"event_type", event.WorkflowRunEventType,
+	)
+	return true, nil
 }
 
 func (o *Orchestrator) processWorkerEvent(ctx context.Context, event *WorkerEvent) error {
 	if event.Topic != WorkerEventTopicWorkflowRun {
+		o.logger.DebugContext(ctx, "ignoring worker event - not a workflow run event",
+			"topic", event.Topic,
+		)
 		return nil
 	}
+
+	o.logger.InfoContext(ctx, "processing workflow run event",
+		"event_type", event.WorkflowRunEventType,
+		"source_workflow_id", event.WorkflowID,
+		"source_workflow_run_id", event.WorkflowRunID,
+	)
 
 	return o.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Find the matching triggers
 		var triggers []db.WorkflowTrigger
 		if err := tx.Where("workflow_run_event = ? AND workflow_id = ? AND deleted_at IS NULL",
 			event.WorkflowRunEventType, event.WorkflowID).Find(&triggers).Error; err != nil {
-			o.logger.ErrorContext(ctx, "failed to get triggers", "error", err,
-				"workflow_id", event.WorkflowID, "workflow_run_id", event.WorkflowRunID)
+			o.logger.ErrorContext(ctx, "failed to find triggers for workflow run event",
+				"error", err,
+				"source_workflow_id", event.WorkflowID,
+				"source_workflow_run_id", event.WorkflowRunID,
+				"event_type", event.WorkflowRunEventType,
+			)
 			return err
 		}
 
+		if len(triggers) == 0 {
+			o.logger.InfoContext(ctx, "no workflow run triggers found for this event",
+				"source_workflow_id", event.WorkflowID,
+				"source_workflow_run_id", event.WorkflowRunID,
+				"event_type", event.WorkflowRunEventType,
+			)
+			return nil
+		}
+
+		o.logger.InfoContext(ctx, "found workflow run triggers to evaluate",
+			"trigger_count", len(triggers),
+			"source_workflow_id", event.WorkflowID,
+			"event_type", event.WorkflowRunEventType,
+		)
+
 		// Process each trigger
+		runsCreated := 0
 		for _, t := range triggers {
-			if err := o.processWorkflowRunTrigger(ctx, tx, &t, event); err != nil {
+			created, err := o.processWorkflowRunTrigger(ctx, tx, &t, event)
+			if err != nil {
 				// Log error but continue processing other triggers
-				o.logger.ErrorContext(ctx, "error processing workflow run trigger", "error", err, "trigger_id", t.ID)
+				o.logger.ErrorContext(ctx, "error processing workflow run trigger",
+					"error", err,
+					"trigger_id", t.ID,
+					"source_workflow_id", event.WorkflowID,
+				)
 				continue
 			}
+			if created {
+				runsCreated++
+			}
 		}
+
+		o.logger.InfoContext(ctx, "finished processing workflow run event",
+			"triggers_evaluated", len(triggers),
+			"runs_created", runsCreated,
+			"source_workflow_id", event.WorkflowID,
+			"source_workflow_run_id", event.WorkflowRunID,
+			"event_type", event.WorkflowRunEventType,
+		)
 
 		return nil
 	})

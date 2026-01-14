@@ -66,7 +66,13 @@ func CreateWorkflowRun(
 	if err := tx.Create(&run).Error; err != nil {
 		return nil, err
 	}
-	if err := tx.Preload("TriggeredBy").Preload("TriggeredByUser").Preload("Workflow").First(&run, run.ID).Error; err != nil {
+	// Preload all relations including nested trigger relations for proper logging
+	if err := tx.Preload("TriggeredBy").
+		Preload("TriggeredBy.Repository").
+		Preload("TriggeredBy.Workflow").
+		Preload("TriggeredByUser").
+		Preload("Workflow").
+		First(&run, run.ID).Error; err != nil {
 		return nil, err
 	}
 
