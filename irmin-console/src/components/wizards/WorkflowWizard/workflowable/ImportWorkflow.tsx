@@ -35,7 +35,7 @@ export default function ImportWorkflow({
 }: ImportWorkflowProps) {
   const { dict } = useLocale();
 
-  const { connectionsQuery } = useConnections();
+  const { connectionsQuery, getConnectionsWithCapability } = useConnections();
   const { repositoriesQuery } = useRepositories();
 
   const workspaceUrl = useBaseUrl({
@@ -94,7 +94,7 @@ export default function ImportWorkflow({
             <SelectValue placeholder={dict.workflow.selectConnection} />
           </SelectTrigger>
           <SelectContent>
-            {connectionsQuery.data?.data?.map((conn) => (
+            {getConnectionsWithCapability('pull').map((conn) => (
               <SelectItem key={conn.id} value={conn.id}>
                 {conn.name}
               </SelectItem>

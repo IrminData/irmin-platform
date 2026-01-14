@@ -656,6 +656,12 @@ const en = {
     authorEmail: 'Author email',
     categories: 'Categories',
     capabilities: 'Capabilities',
+    capabilitiesDescription: {
+      pull: 'Can import data from external source',
+      push: 'Can export data to external source',
+      push_patch: 'Can update data in external source',
+      event_webhook: 'Supports webhook events',
+    },
     locales: 'Locales',
   },
 

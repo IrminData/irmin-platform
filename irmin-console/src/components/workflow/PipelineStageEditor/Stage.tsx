@@ -5,6 +5,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -216,6 +217,24 @@ function Stage({
     // 3. Avoid stale ref values that could break change detection
     prevStageRef.current = newStage;
   }, [initialStage]);
+
+  // Filter connections based on stage read/write settings
+  const filteredConnections = useMemo(() => {
+    let connections = connectionsQuery.data?.data || [];
+    if (stage.type === 'connection') {
+      if (stage.read) {
+        connections = connections.filter((c) =>
+          c.connector.capabilities.includes('pull')
+        );
+      }
+      if (stage.write) {
+        connections = connections.filter((c) =>
+          c.connector.capabilities.includes('push')
+        );
+      }
+    }
+    return connections;
+  }, [connectionsQuery.data, stage.type, stage.read, stage.write]);
 
   const [connectionPushSchema, setConnectionPushSchema] =
     useState<ObjectSchema | null>(null);
@@ -851,7 +870,7 @@ function Stage({
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {connectionsQuery.data?.data?.map((conn) => (
+                    {filteredConnections.map((conn) => (
                       <SelectItem key={conn.id} value={conn.id}>
                         {conn.name}
                       </SelectItem>

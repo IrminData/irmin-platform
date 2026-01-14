@@ -118,9 +118,21 @@ export function useConnections() {
     ),
   });
 
+  // Filter connections by capability
+  const getConnectionsWithCapability = (
+    capability: 'event_webhook' | 'pull' | 'push' | 'push_patch'
+  ) => {
+    return (
+      connectionsQuery.data?.data?.filter((connection) =>
+        connection.connector.capabilities.includes(capability)
+      ) ?? []
+    );
+  };
+
   return {
     // Queries
     connectionsQuery,
+    getConnectionsWithCapability,
 
     // Mutations
     createConnectionMutation,

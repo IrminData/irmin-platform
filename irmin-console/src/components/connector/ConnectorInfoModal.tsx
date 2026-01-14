@@ -1,13 +1,25 @@
 'use client';
 
 import { IoClose } from 'react-icons/io5';
-import { TbMail } from 'react-icons/tb';
+import {
+  TbDownload,
+  TbEdit,
+  TbMail,
+  TbUpload,
+  TbWebhook,
+} from 'react-icons/tb';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import { Separator } from '@/components/ui/separator';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -78,7 +90,7 @@ function ConnectorInfoModal({
         <div className='flex flex-col space-y-4 p-6'>
           {/* Connector Header */}
           <div className='mb-4 flex items-center space-x-4'>
-            <Avatar className='size-16 rounded-none'>
+            <Avatar className='size-16'>
               <AvatarImage src={connector.logo_url} alt={connector.name} />
               <AvatarFallback>
                 {connector.name.slice(0, 2).toUpperCase()}
@@ -157,11 +169,45 @@ function ConnectorInfoModal({
               {dict.connectors.capabilities}:
             </h4>
             <div className='flex flex-wrap gap-2'>
-              {connector.capabilities.map((capability) => (
-                <Badge key={capability} variant='primary'>
-                  {capability}
-                </Badge>
-              ))}
+              {connector.capabilities.map((capability) => {
+                let icon = null;
+                switch (capability) {
+                  case 'pull':
+                    icon = <TbDownload className='mr-1' />;
+                    break;
+                  case 'push':
+                    icon = <TbUpload className='mr-1' />;
+                    break;
+                  case 'push_patch':
+                    icon = <TbEdit className='mr-1' />;
+                    break;
+                  case 'event_webhook':
+                    icon = <TbWebhook className='mr-1' />;
+                    break;
+                }
+
+                return (
+                  <TooltipProvider key={capability}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant='secondary'>
+                          {icon}
+                          {capability}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          {
+                            dict.connectors.capabilitiesDescription[
+                              capability as keyof typeof dict.connectors.capabilitiesDescription
+                            ]
+                          }
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              })}
             </div>
           </div>
 

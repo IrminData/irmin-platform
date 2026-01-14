@@ -648,6 +648,12 @@ const fi = {
     authorEmail: 'Tekijän sähköposti',
     categories: 'Kategoriat',
     capabilities: 'Toiminallisuudet',
+    capabilitiesDescription: {
+      pull: 'Voi tuoda dataa ulkoisesta lähteestä',
+      push: 'Voi viedä dataa ulkoiseen lähteeseen',
+      push_patch: 'Voi päivittää dataa ulkoisessa lähteessä',
+      event_webhook: 'Tukee webhook-tapahtumia',
+    },
     locales: 'Kielet',
   },
 
