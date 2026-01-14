@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"irmin-api/engine"
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
@@ -54,6 +55,10 @@ var (
 	ErrNoContentExtracted                     = errors.New("no content could be extracted from AI response")
 	ErrReservedPathPrefix                     = errors.New("path uses reserved prefix")
 	ErrCannotMovePointerToRegularPath         = errors.New("cannot move or copy pointer to a non-pointer path")
+	ErrConnectorMissingPullCapability         = engine.ErrConnectorMissingPullCapability
+	ErrConnectorMissingPushCapability         = engine.ErrConnectorMissingPushCapability
+	ErrConnectorMissingPatchCapability        = engine.ErrConnectorMissingPatchCapability
+	ErrConnectorMissingWebhookCapability      = engine.ErrConnectorMissingWebhookCapability
 )
 
 // internalErrorPrefix is used to mark errors that should not be exposed to clients
@@ -266,6 +271,14 @@ func MapErrorToStatusCode(err error) int {
 	case errors.Is(err, ErrReservedPathPrefix):
 		return fiber.StatusBadRequest
 	case errors.Is(err, ErrCannotMovePointerToRegularPath):
+		return fiber.StatusBadRequest
+	case errors.Is(err, ErrConnectorMissingPullCapability):
+		return fiber.StatusBadRequest
+	case errors.Is(err, ErrConnectorMissingPushCapability):
+		return fiber.StatusBadRequest
+	case errors.Is(err, ErrConnectorMissingPatchCapability):
+		return fiber.StatusBadRequest
+	case errors.Is(err, ErrConnectorMissingWebhookCapability):
 		return fiber.StatusBadRequest
 	case errors.Is(err, gorm.ErrRecordNotFound):
 		return fiber.StatusNotFound

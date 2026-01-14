@@ -13,6 +13,17 @@ const (
 	PointerFilePrefix = "_ptr."
 )
 
+VARIABLES
+
+var (
+	ErrConnectorMissingPullCapability    = errors.New("connector does not support pull operations")
+	ErrConnectorMissingPushCapability    = errors.New("connector does not support push operations")
+	ErrConnectorMissingPatchCapability   = errors.New("connector does not support patch operations")
+	ErrConnectorMissingWebhookCapability = errors.New("connector does not support webhook operations")
+)
+    Sentinel errors for connector capabilities
+
+
 FUNCTIONS
 
 func BuildJSONSchemaForTesting(fields []SchemaField, context *SchemaContext) irminmodels.JSONSchema

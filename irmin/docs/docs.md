@@ -6337,6 +6337,7 @@ import "irmin-api/engine"
 ## Index
 
 - [Constants](<#constants>)
+- [Variables](<#variables>)
 - [func BuildJSONSchemaForTesting\(fields \[\]SchemaField, context \*SchemaContext\) irminmodels.JSONSchema](<#BuildJSONSchemaForTesting>)
 - [func CheckObjectPermissions\(c \*Client, user \*db.User, workspace \*db.Workspace, objectID uint, operation string\) error](<#CheckObjectPermissions>)
 - [func CheckRepositoryPermissions\(c \*Client, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, operation string\) error](<#CheckRepositoryPermissions>)
@@ -6425,6 +6426,19 @@ const (
 
     // PointerFilePrefix is the prefix used to identify pointer files.
     PointerFilePrefix = "_ptr."
+)
+```
+
+## Variables
+
+<a name="ErrConnectorMissingPullCapability"></a>Sentinel errors for connector capabilities
+
+```go
+var (
+    ErrConnectorMissingPullCapability    = errors.New("connector does not support pull operations")
+    ErrConnectorMissingPushCapability    = errors.New("connector does not support push operations")
+    ErrConnectorMissingPatchCapability   = errors.New("connector does not support patch operations")
+    ErrConnectorMissingWebhookCapability = errors.New("connector does not support webhook operations")
 )
 ```
 
@@ -12212,6 +12226,10 @@ var (
     ErrNoContentExtracted                     = errors.New("no content could be extracted from AI response")
     ErrReservedPathPrefix                     = errors.New("path uses reserved prefix")
     ErrCannotMovePointerToRegularPath         = errors.New("cannot move or copy pointer to a non-pointer path")
+    ErrConnectorMissingPullCapability         = engine.ErrConnectorMissingPullCapability
+    ErrConnectorMissingPushCapability         = engine.ErrConnectorMissingPushCapability
+    ErrConnectorMissingPatchCapability        = engine.ErrConnectorMissingPatchCapability
+    ErrConnectorMissingWebhookCapability      = engine.ErrConnectorMissingWebhookCapability
 )
 ```
 

@@ -91,6 +91,10 @@ var (
 	ErrNoContentExtracted                     = errors.New("no content could be extracted from AI response")
 	ErrReservedPathPrefix                     = errors.New("path uses reserved prefix")
 	ErrCannotMovePointerToRegularPath         = errors.New("cannot move or copy pointer to a non-pointer path")
+	ErrConnectorMissingPullCapability         = engine.ErrConnectorMissingPullCapability
+	ErrConnectorMissingPushCapability         = engine.ErrConnectorMissingPushCapability
+	ErrConnectorMissingPatchCapability        = engine.ErrConnectorMissingPatchCapability
+	ErrConnectorMissingWebhookCapability      = engine.ErrConnectorMissingWebhookCapability
 )
     Sentinel errors used for consistent HTTP mapping in controllers
 

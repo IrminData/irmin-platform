@@ -115,5 +115,9 @@
   "branch already exists": "Branch already exists",
   "no content could be extracted from AI response": "No content could be extracted from AI response",
   "permission_granted": "Permission granted",
-  "permission_denied": "Permission denied"
+  "permission_denied": "Permission denied",
+  "connector does not support pull operations": "Connector does not support pull operations",
+  "connector does not support push operations": "Connector does not support push operations",
+  "connector does not support patch operations": "Connector does not support patch operations",
+  "connector does not support webhook operations": "Connector does not support webhook operations"
 }

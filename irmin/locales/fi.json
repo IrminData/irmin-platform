@@ -115,5 +115,9 @@
   "branch already exists": "Haara on jo olemassa",
   "no content could be extracted from AI response": "AI-vastauksesta ei voitu poimia sisältöä",
   "permission_granted": "Oikeus myönnetty",
-  "permission_denied": "Oikeus kielletty"
+  "permission_denied": "Oikeus kielletty",
+  "connector does not support pull operations": "Liitin ei tue noutotoimintoja",
+  "connector does not support push operations": "Liitin ei tue lähetystoimintoja",
+  "connector does not support patch operations": "Liitin ei tue patch-toimintoja",
+  "connector does not support webhook operations": "Liitin ei tue webhook-toimintoja"
 }

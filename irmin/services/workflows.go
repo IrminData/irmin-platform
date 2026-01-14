@@ -945,26 +945,49 @@ func (api *APIServices) createImportExportWorkflowable(
 		return nil, nil, NewInternalErrorf("error getting connection: %w", err)
 	}
 
-	// Ensure FieldMappings is initialized as empty slice if nil to avoid PostgreSQL JSONB NULL error
-	fieldMappings := wflConfig.FieldMappings
-	if fieldMappings == nil {
-		fieldMappings = []irminmodels.FieldMapping{}
-	}
-
-	// Trim only leading slash from the paths
-	trimmedImportToRepositoryPath := strings.TrimLeft(wflConfig.ImportToRepositoryPath, "/")
-	trimmedExportToConnectionPath := strings.TrimLeft(wflConfig.ExportToConnectionPath, "/")
+	// Process import/export paths (remove leading slashes)
 	trimmedImportFromConnectionPaths := make([]string, len(wflConfig.ImportFromConnectionPaths))
 	for i, path := range wflConfig.ImportFromConnectionPaths {
-		trimmedImportFromConnectionPaths[i] = strings.TrimLeft(path, "/")
+		trimmedImportFromConnectionPaths[i] = strings.TrimPrefix(path, "/")
 	}
+
+	trimmedImportToRepositoryPath := strings.TrimPrefix(wflConfig.ImportToRepositoryPath, "/")
+
+	trimmedExportToConnectionPath := strings.TrimPrefix(wflConfig.ExportToConnectionPath, "/")
+
 	trimmedExportFromRepositoryPaths := make([]string, len(wflConfig.ExportFromRepositoryPaths))
 	for i, path := range wflConfig.ExportFromRepositoryPaths {
-		trimmedExportFromRepositoryPaths[i] = strings.TrimLeft(path, "/")
+		trimmedExportFromRepositoryPaths[i] = strings.TrimPrefix(path, "/")
+	}
+
+	// Process field mappings
+	fieldMappings := make([]irminmodels.FieldMapping, len(wflConfig.FieldMappings))
+	for i, mapping := range wflConfig.FieldMappings {
+		var sourceField *string
+		if mapping.SourceField != nil {
+			sourceField = mapping.SourceField
+		}
+
+		var destinationField *string
+		if mapping.DestinationField != nil {
+			destinationField = mapping.DestinationField
+		}
+
+		fieldMappings[i] = irminmodels.FieldMapping{
+			SourcePath:       strings.TrimPrefix(mapping.SourcePath, "/"),
+			SourceField:      sourceField,
+			DestinationPath:  strings.TrimPrefix(mapping.DestinationPath, "/"),
+			DestinationField: destinationField,
+		}
 	}
 
 	// Handle import workflowable case
 	if workflowableType == irminmodels.WorkflowableTypeImport {
+		// Validate connector capability
+		if validateCapabilityErr := api.validateConnectionCapability(conn, irminmodels.ConnectorCapabilityPull); validateCapabilityErr != nil {
+			return nil, nil, validateCapabilityErr
+		}
+
 		// Create import workflowable
 		importWorkflowable := &db.ImportWorkflowable{
 			ConnectionID:              conn.ID,
@@ -978,6 +1001,11 @@ func (api *APIServices) createImportExportWorkflowable(
 			return nil, nil, createImportWorkflowableErr
 		}
 		return importWorkflowable, nil, nil
+	}
+
+	// Validate connector capability for export
+	if validateCapabilityErr := api.validateConnectionCapability(conn, irminmodels.ConnectorCapabilityPush); validateCapabilityErr != nil {
+		return nil, nil, validateCapabilityErr
 	}
 
 	// Handle export workflowable case
@@ -1393,6 +1421,18 @@ func (api *APIServices) processConnectionStage(
 	connection, getConnectionByIDErr := txDB.GetConnectionByID(uint(parsedConnID))
 	if getConnectionByIDErr != nil {
 		return getConnectionByIDErr
+	}
+
+	if stage.Read {
+		if err := api.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPull); err != nil {
+			return err
+		}
+	}
+
+	if stage.Write {
+		if err := api.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPush); err != nil {
+			return err
+		}
 	}
 
 	newStage.ConnectionID = &connection.ID
@@ -1908,6 +1948,31 @@ func (api *APIServices) addWorkflowTags(tx *gorm.DB, workflow *db.Workflow, tags
 		}
 	}
 	return nil
+}
+
+// validateConnectionCapability validates that the connection has the required capability.
+func (api *APIServices) validateConnectionCapability(
+	conn *db.Connection,
+	requiredCapability irminmodels.ConnectorCapability,
+) error {
+	for _, capability := range conn.Connector.Capabilities {
+		if capability == string(requiredCapability) {
+			return nil
+		}
+	}
+
+	switch requiredCapability {
+	case irminmodels.ConnectorCapabilityPull:
+		return ErrConnectorMissingPullCapability
+	case irminmodels.ConnectorCapabilityPush:
+		return ErrConnectorMissingPushCapability
+	case irminmodels.ConnectorCapabilityPushPatch:
+		return ErrConnectorMissingPatchCapability
+	case irminmodels.ConnectorCapabilityEventWebhook:
+		return ErrConnectorMissingWebhookCapability
+	default:
+		return fmt.Errorf("connector does not support %s operations", requiredCapability)
+	}
 }
 
 func (api *APIServices) createWorkflowSchedule(tx *gorm.DB, schedule *db.Schedule) error {

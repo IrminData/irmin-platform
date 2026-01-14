@@ -19,6 +19,31 @@ import (
 	"gorm.io/gorm"
 )
 
+// validateConnectionCapability validates that the connection has the required capability.
+func (c *Client) validateConnectionCapability(
+	conn *db.Connection,
+	requiredCapability irminmodels.ConnectorCapability,
+) error {
+	for _, capability := range conn.Connector.Capabilities {
+		if capability == string(requiredCapability) {
+			return nil
+		}
+	}
+
+	switch requiredCapability {
+	case irminmodels.ConnectorCapabilityPull:
+		return ErrConnectorMissingPullCapability
+	case irminmodels.ConnectorCapabilityPush:
+		return ErrConnectorMissingPushCapability
+	case irminmodels.ConnectorCapabilityPushPatch:
+		return ErrConnectorMissingPatchCapability
+	case irminmodels.ConnectorCapabilityEventWebhook:
+		return ErrConnectorMissingWebhookCapability
+	default:
+		return fmt.Errorf("connector does not support %s operations", requiredCapability)
+	}
+}
+
 // InitializeConnectorOperation sets up a connector operation and returns a system connector client,
 // an operation client, along with a cancel function to clean up when done.
 // It returns an error if initialization fails.
@@ -111,6 +136,24 @@ func (c *Client) DataMovementSchema(
 	}
 	if method == "write" {
 		method = string(irminmodels.ConnectorCapabilityPush)
+	}
+
+	// Validate capability if the method corresponds to a known capability
+	switch method {
+	case string(irminmodels.ConnectorCapabilityPull):
+		if validateCapabilityErr := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPull); validateCapabilityErr != nil {
+			return nil, nil, validateCapabilityErr
+		}
+	case string(irminmodels.ConnectorCapabilityPush):
+		if validateCapabilityErr := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPush); validateCapabilityErr != nil {
+			return nil, nil, validateCapabilityErr
+		}
+	case string(irminmodels.ConnectorCapabilityPushPatch):
+		if validateCapabilityErr := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPushPatch); validateCapabilityErr != nil {
+			return nil, nil, validateCapabilityErr
+		}
+	default:
+		return nil, nil, fmt.Errorf("invalid method: %s", method)
 	}
 
 	// Retrieve method schema.
@@ -408,6 +451,11 @@ func (c *Client) PullFilesFromConnector(
 	connection *db.Connection,
 	connectionPaths []string,
 ) (map[string][]byte, []connectorsclient.OperationLog, error) {
+	// Validate connector capability
+	if err := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPull); err != nil {
+		return nil, nil, err
+	}
+
 	// Initialize connector operation.
 	systemClient, opClient, operationID, cancel, err := c.InitializeConnectorOperation(ctx, connection)
 	if err != nil {
@@ -687,6 +735,11 @@ func (c *Client) PushFilesToConnector(
 	files map[string][]byte,
 	tx ...*gorm.DB,
 ) ([]string, []connectorsclient.OperationLog, error) {
+	// Validate connector capability
+	if err := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPush); err != nil {
+		return nil, nil, err
+	}
+
 	// Zip the files.
 	zip, zipFilesErr := irminutils.ZipFiles(files)
 	if zipFilesErr != nil {
