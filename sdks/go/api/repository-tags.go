@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -36,7 +37,7 @@ func (c *Client) GetTag(
 	var tagObj irminmodels.GitTag
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags/%s", workspace, repository, tag),
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags/%s", workspace, repository, url.PathEscape(tag)),
 	}, &tagObj)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch tag error: %w", err)
@@ -68,7 +69,7 @@ func (c *Client) DeleteTag(
 ) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodDelete,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags/%s", workspace, repository, tag),
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags/%s", workspace, repository, url.PathEscape(tag)),
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete tag error: %w", err)

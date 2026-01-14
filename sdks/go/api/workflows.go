@@ -10,9 +10,9 @@ import (
 
 // UpdateWorkflowRequest represents the JSON request body for updating basic workflow info.
 type UpdateWorkflowRequest struct {
-	Name          *string `json:"name,omitempty"          validate:"omitempty,max=100"  example:"Customer Analytics"`
-	Description   *string `json:"description,omitempty"   validate:"omitempty,max=500"  example:"Customer data analysis and reporting"`
-	Documentation *string `json:"documentation,omitempty" validate:"validdocumentation" example:"# Customer Analytics Workflow"`
+	Name          *string `json:"name,omitempty"          validate:"omitnil,max=100"          example:"Customer Analytics"`
+	Description   *string `json:"description,omitempty"   validate:"omitnil,max=500"          example:"Customer data analysis and reporting"`
+	Documentation *string `json:"documentation,omitempty" validate:"omitnil,validdocumentation" example:"# Customer Analytics Workflow"`
 }
 
 // TransferWorkflowOwnershipRequest represents the JSON request body for transferring workflow ownership.

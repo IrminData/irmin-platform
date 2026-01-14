@@ -204,11 +204,12 @@ func (c *Client) GetObjectContent(
 }
 
 // GetObjectStructuredContent fetches the parsed structured content of an object at the given path and ref.
+// The returned data is an array of maps, where each map represents a row of data from the file.
 func (c *Client) GetObjectStructuredContent(
 	ctx context.Context,
 	workspace, repository, path, ref string,
 	limitResponse bool,
-) (map[string]any, *irminmodels.IrminAPIResponse, error) {
+) ([]map[string]any, *irminmodels.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf(
 		"/v1/workspaces/%s/repositories/%s/objects/content/structured?ref=%s&path=%s",
 		workspace,
@@ -220,7 +221,7 @@ func (c *Client) GetObjectStructuredContent(
 		endpoint = AddLimitResponseParam(endpoint)
 	}
 
-	var structuredContent map[string]any
+	var structuredContent []map[string]any
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: endpoint,

@@ -101,6 +101,9 @@ func registerValidations(v *validator.Validate, validator *Validator) {
 	if err := v.RegisterValidation("validslug", validateSlug); err != nil {
 		panic(err)
 	}
+	if err := v.RegisterValidation("validgittag", validateGitTag); err != nil {
+		panic(err)
+	}
 	if err := v.RegisterValidation("validsqid", validator.validateSQID); err != nil {
 		panic(err)
 	}
@@ -455,6 +458,8 @@ func (v *Validator) getCustomValidationMessage(field, tag string) (string, bool)
 		return fmt.Sprintf("%s must be a valid API token starting with 'cred_'", field), true
 	case "validslug":
 		return fmt.Sprintf("%s must contain only letters, numbers, underscores, and hyphens", field), true
+	case "validgittag":
+		return fmt.Sprintf("%s must contain only letters, numbers, underscores, hyphens, and periods", field), true
 	case "validsqid":
 		return fmt.Sprintf("%s must be a valid identifier", field), true
 	case "validrrule":

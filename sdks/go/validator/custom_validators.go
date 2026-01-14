@@ -107,6 +107,56 @@ func validateSlug(fl validator.FieldLevel) bool {
 	return true
 }
 
+// validateGitTag validates that the given string is a valid git tag name.
+// Git tag names can contain:
+// - Alphanumeric characters (a-z, A-Z, 0-9)
+// - Underscores (_)
+// - Hyphens (-)
+// - Periods (.) - for semantic versioning like v1.0.0
+// Must be between 1 and 100 characters.
+func validateGitTag(fl validator.FieldLevel) bool {
+	field := fl.Field()
+
+	// Handle nil pointers
+	if field.Kind() == reflect.Ptr && field.IsNil() {
+		return true
+	}
+
+	// Get the actual string value
+	var tagName string
+	if field.Kind() == reflect.Ptr {
+		tagName = field.Elem().String()
+	} else {
+		tagName = field.String()
+	}
+
+	// Must be at least 1 character
+	if len(tagName) < SlugMinLength {
+		return false
+	}
+
+	// Must be at most 100 characters
+	if len(tagName) > SlugMaxLength {
+		return false
+	}
+
+	// Check that the tag contains only allowed characters
+	for _, char := range tagName {
+		isAlphaNumeric := (char >= 'a' && char <= 'z') ||
+			(char >= 'A' && char <= 'Z') ||
+			(char >= '0' && char <= '9')
+		isUnderscore := char == '_'
+		isHyphen := char == '-'
+		isPeriod := char == '.'
+
+		if !isAlphaNumeric && !isUnderscore && !isHyphen && !isPeriod {
+			return false
+		}
+	}
+
+	return true
+}
+
 // validateRRule validates RRule recurrence rule format.
 func validateRRule(fl validator.FieldLevel) bool {
 	field := fl.Field()

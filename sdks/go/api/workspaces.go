@@ -16,8 +16,8 @@ type CreateWorkspaceRequest struct {
 
 // UpdateWorkspaceRequest represents the JSON request body for updating a workspace.
 type UpdateWorkspaceRequest struct {
-	Name        *string `json:"name,omitempty"        validate:"max=100" example:"Customer Analytics"`
-	Description *string `json:"description,omitempty" validate:"max=500" example:"Customer data analysis and reporting"`
+	Name        *string `json:"name,omitempty"        validate:"omitnil,max=100" example:"Customer Analytics"`
+	Description *string `json:"description,omitempty" validate:"omitnil,max=500" example:"Customer data analysis and reporting"`
 }
 
 // TransferOwnershipRequest represents the JSON request body for transferring workspace ownership.
@@ -74,7 +74,7 @@ func (c *Client) UpdateWorkspace(ctx context.Context,
 ) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error) {
 	var workspace irminmodels.Workspace
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
-		Method:      http.MethodPut,
+		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s", workspaceSlug),
 		ContentType: "application/json",
 		Body:        req,

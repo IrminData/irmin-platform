@@ -52,21 +52,25 @@ func (c *Client) FetchConnectorConfigurationFields(
 	connectorID, configType string,
 	currentDetails map[string]string,
 	currentSettings map[string]string,
-) ([]irminmodels.DynamicField, *irminmodels.IrminAPIResponse, error) {
-	form := map[string]string{}
+) (irminmodels.DynamicFields, *irminmodels.IrminAPIResponse, error) {
+	// Build request body with details and settings
+	reqBody := ConnectorConfigurationRequest{
+		Details:  make(map[string]any),
+		Settings: make(map[string]any),
+	}
 	for key, value := range currentDetails {
-		form[fmt.Sprintf("details[%s]", key)] = value
+		reqBody.Details[key] = value
 	}
 	for key, value := range currentSettings {
-		form[fmt.Sprintf("settings[%s]", key)] = value
+		reqBody.Settings[key] = value
 	}
 
-	var fields []irminmodels.DynamicField
+	var fields irminmodels.DynamicFields
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/connectors/%s/fields/%s", connectorID, configType),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
+		ContentType: "application/json",
+		Body:        reqBody,
 	}, &fields)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch connector configuration fields error: %w", err)
