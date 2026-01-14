@@ -109,15 +109,22 @@ func CancelOperation(
 		}
 	}
 
-	// Log successful cancellation
-	LogOperationEvent(
-		app.DB,
-		app.Logger,
-		operation.ID,
-		db.LogEventTypeInfo,
-		"Operation cancelled successfully",
-		nil,
-	)
+	// Check if operation still exists before logging success
+	// If the operation was hard-deleted by the cancellation function, we cannot log to it due to foreign key constraints.
+	if _, getOpErr := app.DB.GetOperationByID(operation.ID); getOpErr == nil {
+		// Log successful cancellation
+		LogOperationEvent(
+			app.DB,
+			app.Logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Operation cancelled successfully",
+			nil,
+		)
+	} else {
+		// Log to application logger only, since DB record is gone
+		app.Logger.Info("Operation cancelled successfully (operation record deleted)", "operation_id", operation.ID)
+	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Operation cancelled successfully",
