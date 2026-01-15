@@ -22,9 +22,9 @@ type CreateAIApplicationRequest struct {
 
 // UpdateAIApplicationRequest represents the JSON request body for updating an AI application.
 type UpdateAIApplicationRequest struct {
-	Name           *string                               `json:"name,omitempty"            validate:"omitnil,max=100"             example:"Customer Analytics App"`
-	Description    *string                               `json:"description,omitempty"     validate:"omitnil,max=500"             example:"AI application for customer data analysis"`
-	Documentation  *string                               `json:"documentation,omitempty"   validate:"omitnil,validdocumentation"  example:"# Customer Analytics"`
+	Name           *string                               `json:"name,omitempty"            validate:"omitnil,max=100"               example:"Customer Analytics App"`
+	Description    *string                               `json:"description,omitempty"     validate:"omitnil,max=500"               example:"AI application for customer data analysis"`
+	Documentation  *string                               `json:"documentation,omitempty"   validate:"omitnil,validdocumentation"    example:"# Customer Analytics"`
 	AllowedOrigins []string                              `json:"allowed_origins,omitempty" validate:"omitempty,dive,max=255"`
 	Tools          *irminmodels.AIApplicationToolConfig  `json:"tools,omitempty"`
 	CustomTools    []UpdateCustomToolRequest             `json:"custom_tools,omitempty"    validate:"omitempty,dive"`

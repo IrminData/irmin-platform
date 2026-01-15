@@ -10,8 +10,8 @@ import (
 
 // UpdateWorkflowRequest represents the JSON request body for updating basic workflow info.
 type UpdateWorkflowRequest struct {
-	Name          *string `json:"name,omitempty"          validate:"omitnil,max=100"          example:"Customer Analytics"`
-	Description   *string `json:"description,omitempty"   validate:"omitnil,max=500"          example:"Customer data analysis and reporting"`
+	Name          *string `json:"name,omitempty"          validate:"omitnil,max=100"            example:"Customer Analytics"`
+	Description   *string `json:"description,omitempty"   validate:"omitnil,max=500"            example:"Customer data analysis and reporting"`
 	Documentation *string `json:"documentation,omitempty" validate:"omitnil,validdocumentation" example:"# Customer Analytics Workflow"`
 }
 
