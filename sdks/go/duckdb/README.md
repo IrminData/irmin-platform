@@ -124,8 +124,11 @@ Check supported formats and get read options:
 // Check if format is supported
 supported := duckdb.IsFormatSupported("data.csv")
 
-// Get read options for a file
+// Get read options for a file (auto-detects from extension or MIME type)
 options, err := duckdb.GetDuckDBReadOptions("data.json")
+
+// Get read options specifically by MIME type
+options, err := duckdb.GetDuckDBReadOptionsByMIMEType("application/json")
 
 // Get all supported formats
 formats := duckdb.GetSupportedFormats()
@@ -133,11 +136,46 @@ formats := duckdb.GetSupportedFormats()
 
 ## Supported File Formats
 
+For a complete list of supported formats and details, see [SUPPORTED_FILE_FORMATS.md](SUPPORTED_FILE_FORMATS.md).
+
+Common formats include:
 - **JSON**: `.json`, `.jsonl`, `.ndjson`
 - **CSV**: `.csv`, `.tsv`, `.tab`
 - **Columnar**: `.parquet`, `.orc`
 - **Apache**: `.avro`
-- **Lakehouse**: `.delta`, `.iceberg` (with appropriate extensions)
+- **Lakehouse**: `.delta`, `.iceberg`
+- **Excel**: `.xlsx`, `.xls`, `.xlsm`, `.xlsb`
+- **Experimental**: `.xml`, `.yaml`, `.yml`
+
+## Vector Similarity Search (VSS)
+
+The SDK supports the DuckDB VSS extension for vector similarity search operations. The extension is automatically loaded if available.
+
+```go
+// Example usage of VSS functions in queries
+query := `
+    SELECT array_cosine_distance(embedding, [0.1, 0.2, 0.3]::FLOAT[3]) as distance
+    FROM embeddings
+    ORDER BY distance
+    LIMIT 5
+`
+results, err := client.QueryToMap(ctx, query)
+```
+
+## Utility Functions
+
+The package provides several utility functions for SQL generation and data processing:
+
+```go
+// Escape single quotes in SQL strings to prevent injection
+safeString := duckdb.EscapeSQLString("O'Reilly") // Returns "O''Reilly"
+
+// Validate and quote SQL identifiers (tables, columns)
+safeIdentifier, err := duckdb.ValidateSQLIdentifier("user_table") // Returns "\"user_table\""
+
+// Check if a file extension represents structured data
+isStructured := duckdb.IsStructuredFormat(".parquet") // Returns true
+```
 
 ## Usage Examples
 

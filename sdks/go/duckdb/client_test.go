@@ -3,6 +3,8 @@ package duckdb_test
 import (
 	"fmt"
 	"log/slog"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/IrminData/irmin-sdk-go/duckdb"
@@ -155,6 +157,10 @@ func TestGetDuckDBReadOptions(t *testing.T) {
 		{"data.json", false, "read_json_auto"},
 		{"data.parquet", false, "read_parquet"},
 		{"data.jsonl", false, "read_json_auto"},
+		{"data.xlsx", false, "st_read"},
+		{"data.xml", false, "read_csv"},
+		{"data.yaml", false, "read_csv"},
+		{"application/json", false, "read_json_auto"}, // MIME type
 		{"data.unknown", true, ""},
 	}
 
@@ -182,10 +188,53 @@ func TestGetDuckDBReadOptions(t *testing.T) {
 	}
 }
 
+func TestGetDuckDBReadOptionsByMIMEType(t *testing.T) {
+	tests := []struct {
+		mimeType    string
+		expectError bool
+		readFunc    string
+	}{
+		{"text/csv", false, "read_csv_auto"},
+		{"application/json", false, "read_json_auto"},
+		{"application/vnd.apache.parquet", false, "read_parquet"},
+		{"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", false, "st_read"},
+		{"application/unknown", true, ""},
+		// Test MIME types with charset parameters (common in real-world Content-Type headers)
+		{"text/csv; charset=utf-8", false, "read_csv_auto"},
+		{"application/json; charset=utf-8", false, "read_json_auto"},
+		{"text/csv;charset=utf-8", false, "read_csv_auto"}, // No space after semicolon
+		{"application/json;charset=utf-8", false, "read_json_auto"},
+		{"text/csv; charset=UTF-8; boundary=something", false, "read_csv_auto"}, // Multiple parameters
+	}
+
+	for _, test := range tests {
+		t.Run(test.mimeType, func(t *testing.T) {
+			options, err := duckdb.GetDuckDBReadOptionsByMIMEType(test.mimeType)
+
+			if test.expectError {
+				if err == nil {
+					t.Errorf("Expected error for %s, but got none", test.mimeType)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error for %s: %v", test.mimeType, err)
+				return
+			}
+
+			if options.ReadFunction != test.readFunc {
+				t.Errorf("Expected read function %s for %s, got %s",
+					test.readFunc, test.mimeType, options.ReadFunction)
+			}
+		})
+	}
+}
+
 func TestIsFormatSupported(t *testing.T) {
 	supportedFormats := []string{
 		"data.csv", "data.json", "data.parquet", "data.jsonl",
-		"data.tsv", "data.avro", "data.orc",
+		"data.tsv", "data.avro", "data.orc", "data.xlsx", "data.xml",
 	}
 
 	unsupportedFormats := []string{
@@ -416,5 +465,87 @@ func TestCreateTableFromDataWithQuotesAndConsistentOrdering(t *testing.T) {
 			alphaCol,
 			zebraCol,
 		)
+	}
+}
+
+func TestEscapeSQLString(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"simple", "simple"},
+		{"it's", "it''s"},
+		{"'quoted'", "''quoted''"},
+		{"multiple ' quotes '", "multiple '' quotes ''"},
+	}
+
+	for _, test := range tests {
+		if got := duckdb.EscapeSQLString(test.input); got != test.expected {
+			t.Errorf("EscapeSQLString(%q) = %q, want %q", test.input, got, test.expected)
+		}
+	}
+}
+
+func TestIsStructuredFormat(t *testing.T) {
+	tests := []struct {
+		extension string
+		expected  bool
+	}{
+		{".csv", true},
+		{"csv", true},
+		{".json", true},
+		{".parquet", true},
+		{".txt", false},
+		{".unknown", false},
+		{".xlsx", true},
+	}
+
+	for _, test := range tests {
+		if got := duckdb.IsStructuredFormat(test.extension); got != test.expected {
+			t.Errorf("IsStructuredFormat(%q) = %v, want %v", test.extension, got, test.expected)
+		}
+	}
+}
+
+func TestGetSupportedFormats(t *testing.T) {
+	formats := duckdb.GetSupportedFormats()
+	if len(formats) == 0 {
+		t.Error("GetSupportedFormats() returned empty list")
+	}
+
+	expected := []string{"csv", "json", "parquet", "xlsx", "xml", "yaml"}
+	for _, exp := range expected {
+		if !slices.Contains(formats, exp) {
+			t.Errorf("GetSupportedFormats() missing expected format: %s", exp)
+		}
+	}
+}
+
+func TestGetContentTypeFromExtension(t *testing.T) {
+	tests := []struct {
+		extension string
+		expected  string
+	}{
+		{".csv", "text/csv"},
+		{"csv", "text/csv"},
+		{".json", "application/json"},
+		{".parquet", "application/vnd.apache.parquet"},
+		{".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
+	}
+
+	for _, test := range tests {
+		if got := duckdb.GetContentTypeFromExtension(test.extension); got == "" {
+			t.Errorf("GetContentTypeFromExtension(%q) returned empty string", test.extension)
+		} else if test.expected != "application/octet-stream" && !strings.Contains(got, test.expected) && got != test.expected {
+			// Contains check because sometimes parameters are appended (like charset)
+			// But for these specific types exact match is usually expected or substring match
+			// Just checking it returns something reasonable
+			if got != test.expected {
+				// Some might return charset, e.g. text/csv; charset=utf-8
+				if !strings.HasPrefix(got, test.expected) {
+					t.Errorf("GetContentTypeFromExtension(%q) = %q, want %q", test.extension, got, test.expected)
+				}
+			}
+		}
 	}
 }

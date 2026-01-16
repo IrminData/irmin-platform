@@ -203,7 +203,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) FetchAPI\(ctx context.Context, opts RequestOptions, out any\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.FetchAPI>)
   - [func \(c \*Client\) FetchAPIEnhanced\(ctx context.Context, opts RequestOptions, out any\) \(\*irminmodels.IrminAPIResponse, \*irminvalidator.ValidationResultError, error\)](<#Client.FetchAPIEnhanced>)
   - [func \(c \*Client\) FetchBinary\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.FetchBinary>)
-  - [func \(c \*Client\) FetchConnectorConfigurationFields\(ctx context.Context, connectorID, configType string, currentDetails map\[string\]string, currentSettings map\[string\]string\) \(\[\]irminmodels.DynamicField, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchConnectorConfigurationFields>)
+  - [func \(c \*Client\) FetchConnectorConfigurationFields\(ctx context.Context, connectorID, configType string, currentDetails map\[string\]string, currentSettings map\[string\]string\) \(irminmodels.DynamicFields, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchConnectorConfigurationFields>)
   - [func \(c \*Client\) FetchLogEvents\(ctx context.Context, workspace, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEvents>)
   - [func \(c \*Client\) FetchLogEventsForConnection\(ctx context.Context, workspace, connectionID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForConnection>)
   - [func \(c \*Client\) FetchLogEventsForObject\(ctx context.Context, workspace, objectID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForObject>)
@@ -225,7 +225,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) GetObjectContent\(ctx context.Context, workspace, repository, path, ref string, limitResponse bool\) \(\[\]byte, error\)](<#Client.GetObjectContent>)
   - [func \(c \*Client\) GetObjectHistory\(ctx context.Context, workspace, repository, path, ref string\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectHistory>)
   - [func \(c \*Client\) GetObjectSchema\(ctx context.Context, workspace, repository, path, ref string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectSchema>)
-  - [func \(c \*Client\) GetObjectStructuredContent\(ctx context.Context, workspace, repository, path, ref string, limitResponse bool\) \(map\[string\]any, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectStructuredContent>)
+  - [func \(c \*Client\) GetObjectStructuredContent\(ctx context.Context, workspace, repository, path, ref string, limitResponse bool\) \(\[\]map\[string\]any, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectStructuredContent>)
   - [func \(c \*Client\) GetPolicy\(ctx context.Context, workspace, policyID string\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicy>)
   - [func \(c \*Client\) GetPolicyResourceOptions\(ctx context.Context, workspace string\) \(\*irminmodels.PolicyResourceOptions, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicyResourceOptions>)
   - [func \(c \*Client\) GetPolicyRoleSummary\(ctx context.Context, workspace string\) \(\[\]irminmodels.RolePolicySummary, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicyRoleSummary>)
@@ -1043,7 +1043,7 @@ FetchBinary sends a request and returns the raw bytes \(which you can treat as a
 ### func \(\*Client\) FetchConnectorConfigurationFields
 
 ```go
-func (c *Client) FetchConnectorConfigurationFields(ctx context.Context, connectorID, configType string, currentDetails map[string]string, currentSettings map[string]string) ([]irminmodels.DynamicField, *irminmodels.IrminAPIResponse, error)
+func (c *Client) FetchConnectorConfigurationFields(ctx context.Context, connectorID, configType string, currentDetails map[string]string, currentSettings map[string]string) (irminmodels.DynamicFields, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1243,10 +1243,10 @@ GetObjectSchema fetches the schema of an object at the given path and ref.
 ### func \(\*Client\) GetObjectStructuredContent
 
 ```go
-func (c *Client) GetObjectStructuredContent(ctx context.Context, workspace, repository, path, ref string, limitResponse bool) (map[string]any, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetObjectStructuredContent(ctx context.Context, workspace, repository, path, ref string, limitResponse bool) ([]map[string]any, *irminmodels.IrminAPIResponse, error)
 ```
 
-GetObjectStructuredContent fetches the parsed structured content of an object at the given path and ref.
+GetObjectStructuredContent fetches the parsed structured content of an object at the given path and ref. The returned data is an array of maps, where each map represents a row of data from the file.
 
 <a name="Client.GetPolicy"></a>
 ### func \(\*Client\) GetPolicy
@@ -2587,9 +2587,9 @@ UpdateAIApplicationRequest represents the JSON request body for updating an AI a
 
 ```go
 type UpdateAIApplicationRequest struct {
-    Name           *string                               `json:"name,omitempty"            validate:"omitempty,max=100"             example:"Customer Analytics App"`
-    Description    *string                               `json:"description,omitempty"     validate:"omitempty,max=500"             example:"AI application for customer data analysis"`
-    Documentation  *string                               `json:"documentation,omitempty"   validate:"omitempty,validdocumentation"  example:"# Customer Analytics"`
+    Name           *string                               `json:"name,omitempty"            validate:"omitnil,max=100"               example:"Customer Analytics App"`
+    Description    *string                               `json:"description,omitempty"     validate:"omitnil,max=500"               example:"AI application for customer data analysis"`
+    Documentation  *string                               `json:"documentation,omitempty"   validate:"omitnil,validdocumentation"    example:"# Customer Analytics"`
     AllowedOrigins []string                              `json:"allowed_origins,omitempty" validate:"omitempty,dive,max=255"`
     Tools          *irminmodels.AIApplicationToolConfig  `json:"tools,omitempty"`
     CustomTools    []UpdateCustomToolRequest             `json:"custom_tools,omitempty"    validate:"omitempty,dive"`
@@ -2629,9 +2629,9 @@ UpdateConnectionRequest represents the JSON request body for updating connection
 
 ```go
 type UpdateConnectionRequest struct {
-    Name          *string `json:"name,omitempty"          validate:"max=100"            example:"Production MySQL Database"`
-    Description   *string `json:"description,omitempty"   validate:"max=500"            example:"Primary MySQL database for production customer data"`
-    Documentation *string `json:"documentation,omitempty" validate:"validdocumentation" example:"# Production Database"`
+    Name          *string `json:"name,omitempty"          validate:"omitnil,max=100"            example:"Production MySQL Database"`
+    Description   *string `json:"description,omitempty"   validate:"omitnil,max=500"            example:"Primary MySQL database for production customer data"`
+    Documentation *string `json:"documentation,omitempty" validate:"omitnil,validdocumentation" example:"# Production Database"`
 }
 ```
 
@@ -2679,13 +2679,13 @@ UpdatePolicyRequest represents the JSON request body for updating a policy.
 
 ```go
 type UpdatePolicyRequest struct {
-    Effect     irminmodels.PolicyEffect    `json:"effect,omitempty"      validate:"oneof=allow deny"                                                                                                                                                                                                      example:"allow"`
-    Action     irminmodels.PolicyAction    `json:"action,omitempty"      validate:"oneof=create read update delete"                                                                                                                                                                                       example:"read"`
-    Resource   irminmodels.PolicyResource  `json:"resource,omitempty"    validate:"oneof=workspace editor_script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag" example:"repository"`
-    Principal  irminmodels.PolicyPrincipal `json:"principal,omitempty"   validate:"oneof=workspace_user role everyone"                                                                                                                                                                                    example:"role"`
-    ResourceID *string                     `json:"resource_id,omitempty"                                                                                                                                                                                                                                  example:"repo_8x2m9k4n7p5q"`
-    RoleID     *string                     `json:"role_id,omitempty"     validate:"required_if=Principal role,validsqid=roles"                                                                                                                                                                            example:"role_2a8m5x9n4p7s"`
-    UserID     *string                     `json:"user_id,omitempty"     validate:"required_if=Principal workspace_user,validsqid=users"                                                                                                                                                                  example:"usr_2k8n9q1m7p3x4z"`
+    Effect     irminmodels.PolicyEffect    `json:"effect,omitempty"      validate:"omitempty,oneof=allow deny"                                                                                                                                                                                                      example:"allow"`
+    Action     irminmodels.PolicyAction    `json:"action,omitempty"      validate:"omitempty,oneof=create read update delete"                                                                                                                                                                                       example:"read"`
+    Resource   irminmodels.PolicyResource  `json:"resource,omitempty"    validate:"omitempty,oneof=workspace editor_script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag" example:"repository"`
+    Principal  irminmodels.PolicyPrincipal `json:"principal,omitempty"   validate:"omitempty,oneof=workspace_user role everyone"                                                                                                                                                                                    example:"role"`
+    ResourceID *string                     `json:"resource_id,omitempty"                                                                                                                                                                                                                                            example:"repo_8x2m9k4n7p5q"`
+    RoleID     *string                     `json:"role_id,omitempty"     validate:"omitnil,required_if=Principal role,validsqid=roles"                                                                                                                                                                              example:"role_2a8m5x9n4p7s"`
+    UserID     *string                     `json:"user_id,omitempty"     validate:"omitnil,required_if=Principal workspace_user,validsqid=users"                                                                                                                                                                    example:"usr_2k8n9q1m7p3x4z"`
 }
 ```
 
@@ -2696,11 +2696,11 @@ UpdateProfileRequest represents the JSON request body for updating profile.
 
 ```go
 type UpdateProfileRequest struct {
-    FirstName *string `json:"first_name,omitempty" validate:"max=50"     example:"John"`
-    LastName  *string `json:"last_name,omitempty"  validate:"max=50"     example:"Doe"`
-    Email     *string `json:"email,omitempty"      validate:"email"      example:"john.doe@example.com"`
-    Phone     *string `json:"phone,omitempty"      validate:"validphone" example:"+1234567890"`
-    Company   *string `json:"company,omitempty"    validate:"max=100"    example:"Irmin"`
+    FirstName *string `json:"first_name,omitempty" validate:"omitnil,max=50"     example:"John"`
+    LastName  *string `json:"last_name,omitempty"  validate:"omitnil,max=50"     example:"Doe"`
+    Email     *string `json:"email,omitempty"      validate:"omitnil,email"      example:"john.doe@example.com"`
+    Phone     *string `json:"phone,omitempty"      validate:"omitnil,validphone" example:"+1234567890"`
+    Company   *string `json:"company,omitempty"    validate:"omitnil,max=100"    example:"Irmin"`
 }
 ```
 
@@ -2711,9 +2711,9 @@ UpdateQueryRequest represents the JSON request body for updating a query.
 
 ```go
 type UpdateQueryRequest struct {
-    Name        *string `json:"name,omitempty"        validate:"max=100"  example:"Customer Analytics"`
-    Description *string `json:"description,omitempty" validate:"max=500"  example:"Customer data analysis and reporting"`
-    SQL         *string `json:"sql,omitempty"         validate:"validsql" example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
+    Name        *string `json:"name,omitempty"        validate:"omitnil,max=100"  example:"Customer Analytics"`
+    Description *string `json:"description,omitempty" validate:"omitnil,max=500"  example:"Customer data analysis and reporting"`
+    SQL         *string `json:"sql,omitempty"         validate:"omitnil,validsql" example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
 }
 ```
 
@@ -2724,12 +2724,12 @@ UpdateRepositoryRequest represents the JSON request body for updating a reposito
 
 ```go
 type UpdateRepositoryRequest struct {
-    Name                              *string `json:"name,omitempty"                                  validate:"max=100"            example:"Customer Analytics"`
-    Description                       *string `json:"description,omitempty"                           validate:"max=500"            example:"Customer data analysis and reporting"`
-    Documentation                     *string `json:"documentation,omitempty"                         validate:"validdocumentation" example:"# Customer Analytics Repository"`
-    IsImmutable                       *bool   `json:"is_immutable,omitempty"                                                        example:"false"`
-    GarbageDefaultRetentionDays       *int    `json:"garbage_default_retention_days,omitempty"                                      example:"30"`
-    GarbageDefaultBranchRetentionDays *int    `json:"garbage_default_branch_retention_days,omitempty"                               example:"30"`
+    Name                              *string `json:"name,omitempty"                                  validate:"omitnil,max=100"            example:"Customer Analytics"`
+    Description                       *string `json:"description,omitempty"                           validate:"omitnil,max=500"            example:"Customer data analysis and reporting"`
+    Documentation                     *string `json:"documentation,omitempty"                         validate:"omitnil,validdocumentation" example:"# Customer Analytics Repository"`
+    IsImmutable                       *bool   `json:"is_immutable,omitempty"                                                                example:"false"`
+    GarbageDefaultRetentionDays       *int    `json:"garbage_default_retention_days,omitempty"                                              example:"30"`
+    GarbageDefaultBranchRetentionDays *int    `json:"garbage_default_branch_retention_days,omitempty"                                       example:"30"`
 }
 ```
 
@@ -2740,10 +2740,10 @@ UpdateScriptRequest represents the JSON request body for updating a script.
 
 ```go
 type UpdateScriptRequest struct {
-    Name        *string `json:"name,omitempty"        validate:"max=255" example:"data-processor.py"`
-    Description *string `json:"description,omitempty" validate:"max=500" example:"Data processor for the project"`
-    Content     *string `json:"content,omitempty"                        example:"print('Hello, World!')"`
-    Language    *string `json:"language,omitempty"                       example:"py"`
+    Name        *string `json:"name,omitempty"        validate:"omitnil,max=255" example:"data-processor.py"`
+    Description *string `json:"description,omitempty" validate:"omitnil,max=500" example:"Data processor for the project"`
+    Content     *string `json:"content,omitempty"                                example:"print('Hello, World!')"`
+    Language    *string `json:"language,omitempty"                               example:"py"`
 }
 ```
 
@@ -2754,9 +2754,9 @@ UpdateTagRequest represents the JSON request body for updating a tag.
 
 ```go
 type UpdateTagRequest struct {
-    Name        *string `json:"name,omitempty"        validate:"validslug" example:"v1.0.0"`
-    Color       *string `json:"color,omitempty"       validate:"iscolor"   example:"#000000"`
-    Description *string `json:"description,omitempty" validate:"max=200"   example:"Customer analytics tag"`
+    Name        *string `json:"name,omitempty"        validate:"omitnil,validslug" example:"v1.0.0"`
+    Color       *string `json:"color,omitempty"       validate:"omitnil,iscolor"   example:"#000000"`
+    Description *string `json:"description,omitempty" validate:"omitnil,max=200"   example:"Customer analytics tag"`
 }
 ```
 
@@ -2778,9 +2778,9 @@ UpdateWorkflowRequest represents the JSON request body for updating basic workfl
 
 ```go
 type UpdateWorkflowRequest struct {
-    Name          *string `json:"name,omitempty"          validate:"omitempty,max=100"  example:"Customer Analytics"`
-    Description   *string `json:"description,omitempty"   validate:"omitempty,max=500"  example:"Customer data analysis and reporting"`
-    Documentation *string `json:"documentation,omitempty" validate:"validdocumentation" example:"# Customer Analytics Workflow"`
+    Name          *string `json:"name,omitempty"          validate:"omitnil,max=100"            example:"Customer Analytics"`
+    Description   *string `json:"description,omitempty"   validate:"omitnil,max=500"            example:"Customer data analysis and reporting"`
+    Documentation *string `json:"documentation,omitempty" validate:"omitnil,validdocumentation" example:"# Customer Analytics Workflow"`
 }
 ```
 
@@ -2791,8 +2791,8 @@ UpdateWorkspaceRequest represents the JSON request body for updating a workspace
 
 ```go
 type UpdateWorkspaceRequest struct {
-    Name        *string `json:"name,omitempty"        validate:"max=100" example:"Customer Analytics"`
-    Description *string `json:"description,omitempty" validate:"max=500" example:"Customer data analysis and reporting"`
+    Name        *string `json:"name,omitempty"        validate:"omitnil,max=100" example:"Customer Analytics"`
+    Description *string `json:"description,omitempty" validate:"omitnil,max=500" example:"Customer data analysis and reporting"`
 }
 ```
 
@@ -2882,9 +2882,12 @@ import "github.com/IrminData/irmin-sdk-go/duckdb"
 - [func BuildReadQuery\(filePath string, options \*ReadOptions\) \(string, error\)](<#BuildReadQuery>)
 - [func CleanTableName\(name string\) string](<#CleanTableName>)
 - [func EscapeSQLIdentifier\(identifier string\) string](<#EscapeSQLIdentifier>)
+- [func EscapeSQLString\(s string\) string](<#EscapeSQLString>)
+- [func GetContentTypeFromExtension\(extension string\) string](<#GetContentTypeFromExtension>)
 - [func GetRequiredExtensions\(options \*ReadOptions\) \[\]string](<#GetRequiredExtensions>)
 - [func GetSupportedFormats\(\) \[\]string](<#GetSupportedFormats>)
 - [func IsFormatSupported\(filename string\) bool](<#IsFormatSupported>)
+- [func IsStructuredFormat\(extension string\) bool](<#IsStructuredFormat>)
 - [func ValidateSQLIdentifier\(identifier string\) \(string, error\)](<#ValidateSQLIdentifier>)
 - [type InMemoryClient](<#InMemoryClient>)
   - [func NewInMemoryClient\(ctx context.Context, logger \*slog.Logger\) \(\*InMemoryClient, error\)](<#NewInMemoryClient>)
@@ -2899,8 +2902,9 @@ import "github.com/IrminData/irmin-sdk-go/duckdb"
 - [type MergeResult](<#MergeResult>)
 - [type MergeStrategy](<#MergeStrategy>)
 - [type ReadOptions](<#ReadOptions>)
-  - [func GetDuckDBReadOptions\(filename string\) \(\*ReadOptions, error\)](<#GetDuckDBReadOptions>)
+  - [func GetDuckDBReadOptions\(filePathOrMIMEType string\) \(\*ReadOptions, error\)](<#GetDuckDBReadOptions>)
   - [func GetDuckDBReadOptionsByExtension\(extension string\) \(\*ReadOptions, error\)](<#GetDuckDBReadOptionsByExtension>)
+  - [func GetDuckDBReadOptionsByMIMEType\(contentType string\) \(\*ReadOptions, error\)](<#GetDuckDBReadOptionsByMIMEType>)
 
 
 <a name="BuildReadQuery"></a>
@@ -2930,6 +2934,24 @@ func EscapeSQLIdentifier(identifier string) string
 
 EscapeSQLIdentifier properly escapes a SQL identifier by doubling any internal quotes and wrapping the result in double quotes.
 
+<a name="EscapeSQLString"></a>
+## func EscapeSQLString
+
+```go
+func EscapeSQLString(s string) string
+```
+
+EscapeSQLString escapes single quotes in SQL string literals by doubling them. This prevents SQL injection when interpolating strings into SQL queries. For example: "file'name.json" becomes "file"name.json"
+
+<a name="GetContentTypeFromExtension"></a>
+## func GetContentTypeFromExtension
+
+```go
+func GetContentTypeFromExtension(extension string) string
+```
+
+GetContentTypeFromExtension returns the MIME type for a given file extension. It delegates to the SDK's GetContentTypeHybrid which handles both specialized data analytics formats and standard MIME type detection.
+
 <a name="GetRequiredExtensions"></a>
 ## func GetRequiredExtensions
 
@@ -2956,6 +2978,15 @@ func IsFormatSupported(filename string) bool
 ```
 
 IsFormatSupported checks if a file format is supported.
+
+<a name="IsStructuredFormat"></a>
+## func IsStructuredFormat
+
+```go
+func IsStructuredFormat(extension string) bool
+```
+
+IsStructuredFormat checks if a file extension represents a structured data format.
 
 <a name="ValidateSQLIdentifier"></a>
 ## func ValidateSQLIdentifier
@@ -3142,7 +3173,7 @@ type ReadOptions struct {
 ### func GetDuckDBReadOptions
 
 ```go
-func GetDuckDBReadOptions(filename string) (*ReadOptions, error)
+func GetDuckDBReadOptions(filePathOrMIMEType string) (*ReadOptions, error)
 ```
 
 GetDuckDBReadOptions automatically detects the format from filename and returns read options.
@@ -3155,6 +3186,15 @@ func GetDuckDBReadOptionsByExtension(extension string) (*ReadOptions, error)
 ```
 
 GetDuckDBReadOptionsByExtension maps a file extension to the appropriate DuckDB read options.
+
+<a name="GetDuckDBReadOptionsByMIMEType"></a>
+### func GetDuckDBReadOptionsByMIMEType
+
+```go
+func GetDuckDBReadOptionsByMIMEType(contentType string) (*ReadOptions, error)
+```
+
+GetDuckDBReadOptionsByMIMEType maps a MIME type to the appropriate DuckDB read options. It handles MIME types with parameters \(e.g., "text/csv; charset=utf\-8"\) by extracting the base type before matching.
 
 # irminmodels
 
@@ -3882,8 +3922,8 @@ GitTag represents a repository tag object \(Git\-style tag with ref\).
 
 ```go
 type GitTag struct {
-    Name string `json:"name" validate:"required,validslug" example:"v1.0.0"`   // Tag name
-    Ref  string `json:"ref"  validate:"required"           example:"1a2b3c4d"` // Commit hash referenced in a tag
+    Name string `json:"name" validate:"required,validgittag" example:"v1.0.0"`   // Tag name
+    Ref  string `json:"ref"  validate:"required"             example:"1a2b3c4d"` // Commit hash referenced in a tag
 }
 ```
 

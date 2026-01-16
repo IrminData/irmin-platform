@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+
 	// Import DuckDB driver to register it with database/sql package.
 	// The blank import is necessary as the driver needs to register itself
 	// but we don't directly use any of its exported symbols.
@@ -41,6 +43,7 @@ func NewInMemoryClient(ctx context.Context, logger *slog.Logger) (*InMemoryClien
 		"iceberg",      // Support for Apache Iceberg format
 		"autocomplete", // Enhanced autocomplete functionality
 		"json",         // Enhanced JSON processing
+		"vss",          // Vector Similarity Search for embeddings
 	}
 	client.installOptionalExtensions(ctx, optionalExtensions, logger)
 
@@ -257,4 +260,41 @@ func buildCreateTableWithColumnsQuery(tableName string, columnDefinitions []stri
 	// Construct query safely using string concatenation with validated components
 	query := "CREATE TABLE " + safeTableName + " (" + strings.Join(columnDefinitions, ", ") + ")"
 	return query, nil
+}
+
+// EscapeSQLString escapes single quotes in SQL string literals by doubling them.
+// This prevents SQL injection when interpolating strings into SQL queries.
+// For example: "file'name.json" becomes "file"name.json"
+func EscapeSQLString(s string) string {
+	return strings.ReplaceAll(s, "'", "''")
+}
+
+// IsStructuredFormat checks if a file extension represents a structured data format.
+func IsStructuredFormat(extension string) bool {
+	// Normalize extension
+	ext := strings.ToLower(strings.TrimPrefix(extension, "."))
+
+	supportedFormats := GetSupportedFormats()
+	for _, format := range supportedFormats {
+		if ext == format {
+			return true
+		}
+	}
+	return false
+}
+
+// GetContentTypeFromExtension returns the MIME type for a given file extension.
+// It delegates to the SDK's GetContentTypeHybrid which handles both specialized
+// data analytics formats and standard MIME type detection.
+func GetContentTypeFromExtension(extension string) string {
+	// Normalize extension to include the dot prefix
+	ext := strings.ToLower(extension)
+	if !strings.HasPrefix(ext, ".") {
+		ext = "." + ext
+	}
+
+	// Use the SDK's hybrid MIME type detection
+	// This handles specialized data analytics formats (parquet, avro, delta, etc.)
+	// and falls back to Go's standard mime.TypeByExtension for common formats
+	return irminutils.GetContentTypeHybrid(ext)
 }

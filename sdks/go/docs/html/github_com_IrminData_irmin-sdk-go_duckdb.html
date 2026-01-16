@@ -21,6 +21,16 @@ func EscapeSQLIdentifier(identifier string) string
     EscapeSQLIdentifier properly escapes a SQL identifier by doubling any
     internal quotes and wrapping the result in double quotes.
 
+func EscapeSQLString(s string) string
+    EscapeSQLString escapes single quotes in SQL string literals by doubling
+    them. This prevents SQL injection when interpolating strings into SQL
+    queries. For example: "file'name.json" becomes "file"name.json"
+
+func GetContentTypeFromExtension(extension string) string
+    GetContentTypeFromExtension returns the MIME type for a given file
+    extension. It delegates to the SDK's GetContentTypeHybrid which handles both
+    specialized data analytics formats and standard MIME type detection.
+
 func GetRequiredExtensions(options *ReadOptions) []string
     GetRequiredExtensions returns a list of required DuckDB extensions for the
     given read options.
@@ -30,6 +40,10 @@ func GetSupportedFormats() []string
 
 func IsFormatSupported(filename string) bool
     IsFormatSupported checks if a file format is supported.
+
+func IsStructuredFormat(extension string) bool
+    IsStructuredFormat checks if a file extension represents a structured data
+    format.
 
 func ValidateSQLIdentifier(identifier string) (string, error)
     ValidateSQLIdentifier helps prevent SQL injection by ensuring only valid
@@ -145,13 +159,18 @@ type ReadOptions struct {
 }
     ReadOptions represents the configuration for reading a file with DuckDB.
 
-func GetDuckDBReadOptions(filename string) (*ReadOptions, error)
+func GetDuckDBReadOptions(filePathOrMIMEType string) (*ReadOptions, error)
     GetDuckDBReadOptions automatically detects the format from filename and
     returns read options.
 
 func GetDuckDBReadOptionsByExtension(extension string) (*ReadOptions, error)
     GetDuckDBReadOptionsByExtension maps a file extension to the appropriate
     DuckDB read options.
+
+func GetDuckDBReadOptionsByMIMEType(contentType string) (*ReadOptions, error)
+    GetDuckDBReadOptionsByMIMEType maps a MIME type to the appropriate DuckDB
+    read options. It handles MIME types with parameters (e.g., "text/csv;
+    charset=utf-8") by extracting the base type before matching.
 
 </pre>
 </body></html>

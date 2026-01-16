@@ -33,4 +33,5 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sqids/sqids-go v0.4.1
 	github.com/teambition/rrule-go v1.8.2
+	github.com/zeebo/assert v1.3.0
 )
