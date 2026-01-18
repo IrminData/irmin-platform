@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AiOutlineSave } from 'react-icons/ai';
 import { MdPlayArrow } from 'react-icons/md';
@@ -76,6 +76,24 @@ const ScriptResults = ({
 
   const [processingSave, setProcessingSave] = useState(false);
   const [processingRun, setProcessingRun] = useState(false);
+
+  const isLoading = loading || processingRun;
+  const prevLoadingRef = useRef(isLoading);
+
+  useEffect(() => {
+    // Detect when loading finishes (transitions from true to false)
+    if (prevLoadingRef.current && !isLoading) {
+      const hasErrors = result?.has_errors;
+      const hasNoData =
+        !result?.structured_results ||
+        Object.keys(result.structured_results).length === 0;
+
+      if (hasErrors || hasNoData) {
+        setActiveTab('logs');
+      }
+    }
+    prevLoadingRef.current = isLoading;
+  }, [isLoading, result]);
 
   const canSave = useMemo(
     () => isResourceAllowed('script', 'update'),

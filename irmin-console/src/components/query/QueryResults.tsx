@@ -59,6 +59,21 @@ const QueryResults = ({
   const workspaceSchema = useWorkspaceSchema();
 
   const [activeTab, setActiveTab] = useState('data');
+  const [prevLoading, setPrevLoading] = useState(loading);
+
+  // Adjust tab when loading transitions from true to false
+  // This follows React's recommended pattern for deriving state from props:
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  if (prevLoading === true && loading === false) {
+    setPrevLoading(loading);
+    const hasErrors = result?.has_errors;
+    const hasNoData = !result?.data || result.data.length === 0;
+    if (hasErrors || hasNoData) {
+      setActiveTab('logs');
+    }
+  } else if (loading !== prevLoading) {
+    setPrevLoading(loading);
+  }
 
   const showLoadingOnData = useMemo(() => loading, [loading]);
   const logs = useMemo(() => result?.logs ?? [], [result?.logs]);
