@@ -3249,6 +3249,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type MergeStrategy](<#MergeStrategy>)
 - [type Object](<#Object>)
 - [type ObjectSchema](<#ObjectSchema>)
+- [type ObjectSchemaDiff](<#ObjectSchemaDiff>)
 - [type ObjectType](<#ObjectType>)
 - [type OutputFormat](<#OutputFormat>)
 - [type Patch](<#Patch>)
@@ -3271,6 +3272,25 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type RolePolicySummary](<#RolePolicySummary>)
 - [type Schedule](<#Schedule>)
 - [type ScheduleTrigger](<#ScheduleTrigger>)
+- [type SchemaChangeType](<#SchemaChangeType>)
+- [type SchemaDiff](<#SchemaDiff>)
+  - [func \(d \*SchemaDiff\) HasBreakingChanges\(\) bool](<#SchemaDiff.HasBreakingChanges>)
+  - [func \(d \*SchemaDiff\) HasChanges\(\) bool](<#SchemaDiff.HasChanges>)
+  - [func \(d \*SchemaDiff\) TotalChanges\(\) int](<#SchemaDiff.TotalChanges>)
+- [type SchemaFieldDiff](<#SchemaFieldDiff>)
+- [type SchemaValidationError](<#SchemaValidationError>)
+- [type SchemaValidationErrorType](<#SchemaValidationErrorType>)
+- [type SchemaValidationResult](<#SchemaValidationResult>)
+  - [func NewInvalidResult\(errors ...SchemaValidationError\) \*SchemaValidationResult](<#NewInvalidResult>)
+  - [func NewValidResult\(\) \*SchemaValidationResult](<#NewValidResult>)
+  - [func \(r \*SchemaValidationResult\) AddError\(err SchemaValidationError\)](<#SchemaValidationResult.AddError>)
+  - [func \(r \*SchemaValidationResult\) AddWarning\(warning string\)](<#SchemaValidationResult.AddWarning>)
+  - [func \(r \*SchemaValidationResult\) ErrorCount\(\) int](<#SchemaValidationResult.ErrorCount>)
+  - [func \(r \*SchemaValidationResult\) ErrorsByFile\(\) map\[string\]\[\]SchemaValidationError](<#SchemaValidationResult.ErrorsByFile>)
+  - [func \(r \*SchemaValidationResult\) ErrorsByType\(\) map\[SchemaValidationErrorType\]\[\]SchemaValidationError](<#SchemaValidationResult.ErrorsByType>)
+  - [func \(r \*SchemaValidationResult\) FirstNErrors\(n int\) \[\]SchemaValidationError](<#SchemaValidationResult.FirstNErrors>)
+  - [func \(r \*SchemaValidationResult\) HasErrors\(\) bool](<#SchemaValidationResult.HasErrors>)
+  - [func \(r \*SchemaValidationResult\) HasWarnings\(\) bool](<#SchemaValidationResult.HasWarnings>)
 - [type ScriptResult](<#ScriptResult>)
 - [type SearchFilters](<#SearchFilters>)
 - [type SearchResponse](<#SearchResponse>)
@@ -3724,15 +3744,17 @@ Diff represents the difference between two refs.
 ```go
 type Diff struct {
     // Slug of the repository
-    Repository string `json:"repository"        validate:"required,validslug" example:"customer-analytics"`
+    Repository string `json:"repository"             validate:"required,validslug" example:"customer-analytics"`
     // Base reference
-    BaseRef string `json:"base_ref"          validate:"required"           example:"main"`
+    BaseRef string `json:"base_ref"               validate:"required"           example:"main"`
     // Compare reference
-    CompareRef string `json:"compare_ref"       validate:"required"           example:"development"`
+    CompareRef string `json:"compare_ref"            validate:"required"           example:"development"`
     // List of changes in the diff
-    Items []ChangeItem `json:"items"             validate:"required,dive"`
+    Items []ChangeItem `json:"items"                  validate:"required,dive"`
     // List of commits between the refs
-    Commits []Commit `json:"commits,omitempty" validate:"dive"`
+    Commits []Commit `json:"commits,omitempty"      validate:"dive"`
+    // Schema diffs for objects that have schema changes
+    SchemaDiffs []ObjectSchemaDiff `json:"schema_diffs,omitempty" validate:"dive"`
 }
 ```
 
@@ -4160,6 +4182,20 @@ type ObjectSchema struct {
     // Group schema
     Children     []ObjectSchema           `json:"children,omitempty"         validate:"dive,required_if=Type group"`
     Restrictions *GroupSchemaRestrictions `json:"restrictions,omitempty"` // Restrictions are not required, but are available for group schemas
+}
+```
+
+<a name="ObjectSchemaDiff"></a>
+## type ObjectSchemaDiff
+
+ObjectSchemaDiff represents schema changes for a specific object path.
+
+```go
+type ObjectSchemaDiff struct {
+    // Path of the object whose schema changed
+    Path string `json:"path" validate:"required" example:"customers.json"`
+    // Schema diff details
+    Diff *SchemaDiff `json:"diff" validate:"required"`
 }
 ```
 
@@ -4698,6 +4734,322 @@ type ScheduleTrigger struct {
     WorkflowID       *string           `json:"workflow_id,omitempty"        validate:"required_with=WorkflowRunEvent,validsqid=workflows" example:"wf_8x2m9k4n7p5q"` // Sqid of the workflow
 }
 ```
+
+<a name="SchemaChangeType"></a>
+## type SchemaChangeType
+
+SchemaChangeType represents the type of change detected between two schema versions.
+
+```go
+type SchemaChangeType string
+```
+
+<a name="SchemaChangeAdded"></a>
+
+```go
+const (
+    // SchemaChangeAdded indicates a new field was added to the schema.
+    SchemaChangeAdded SchemaChangeType = "added"
+    // SchemaChangeRemoved indicates a field was removed from the schema.
+    SchemaChangeRemoved SchemaChangeType = "removed"
+    // SchemaChangeModified indicates a field's constraints or properties changed.
+    SchemaChangeModified SchemaChangeType = "modified"
+    // SchemaChangeTypeChanged indicates a field's data type changed.
+    SchemaChangeTypeChanged SchemaChangeType = "type_changed"
+    // SchemaChangeNullabilityChanged indicates a field's nullable status changed.
+    SchemaChangeNullabilityChanged SchemaChangeType = "nullability_changed"
+    // SchemaChangeRequiredChanged indicates a field's required status changed.
+    SchemaChangeRequiredChanged SchemaChangeType = "required_changed"
+)
+```
+
+<a name="SchemaDiff"></a>
+## type SchemaDiff
+
+SchemaDiff represents the complete comparison result between two schemas.
+
+```go
+type SchemaDiff struct {
+    // Compatible indicates whether the target schema is backward-compatible with source.
+    // True means data valid against the source schema will also be valid against target.
+    Compatible bool `json:"compatible" example:"false"`
+
+    // BreakingChanges lists changes that would cause existing data to fail validation.
+    // Examples: required field added, type changed to incompatible type, field removed.
+    BreakingChanges []SchemaFieldDiff `json:"breaking_changes,omitempty"`
+
+    // NonBreakingChanges lists changes that won't affect existing data validity.
+    // Examples: optional field added, constraint relaxed, field made nullable.
+    NonBreakingChanges []SchemaFieldDiff `json:"non_breaking_changes,omitempty"`
+
+    // Summary provides a human-readable overview of all changes.
+    Summary string `json:"summary" example:"2 breaking changes, 3 non-breaking changes"`
+
+    // SourceSchemaPath identifies the source schema (e.g., file path or connection path).
+    SourceSchemaPath *string `json:"source_schema_path,omitempty" example:"customers.json"`
+
+    // TargetSchemaPath identifies the target schema.
+    TargetSchemaPath *string `json:"target_schema_path,omitempty" example:"postgres/customers"`
+}
+```
+
+<a name="SchemaDiff.HasBreakingChanges"></a>
+### func \(\*SchemaDiff\) HasBreakingChanges
+
+```go
+func (d *SchemaDiff) HasBreakingChanges() bool
+```
+
+HasBreakingChanges returns true if there are any breaking changes.
+
+<a name="SchemaDiff.HasChanges"></a>
+### func \(\*SchemaDiff\) HasChanges
+
+```go
+func (d *SchemaDiff) HasChanges() bool
+```
+
+HasChanges returns true if there are any changes \(breaking or non\-breaking\).
+
+<a name="SchemaDiff.TotalChanges"></a>
+### func \(\*SchemaDiff\) TotalChanges
+
+```go
+func (d *SchemaDiff) TotalChanges() int
+```
+
+TotalChanges returns the total number of field differences.
+
+<a name="SchemaFieldDiff"></a>
+## type SchemaFieldDiff
+
+SchemaFieldDiff represents a single difference between two schema field definitions.
+
+```go
+type SchemaFieldDiff struct {
+    // FieldPath is the dot-notation path to the field (e.g., "customers[].email").
+    FieldPath string `json:"field_path" example:"customers[].email"`
+
+    // ChangeType categorizes the kind of change detected.
+    ChangeType SchemaChangeType `json:"change_type" example:"type_changed"`
+
+    // SourceType is the data type in the source schema (nil if field was added).
+    SourceType *string `json:"source_type,omitempty" example:"string"`
+
+    // TargetType is the data type in the target schema (nil if field was removed).
+    TargetType *string `json:"target_type,omitempty" example:"integer"`
+
+    // SourceValue holds constraint values from source (e.g., minLength, maxLength).
+    SourceValue any `json:"source_value,omitempty"`
+
+    // TargetValue holds constraint values from target.
+    TargetValue any `json:"target_value,omitempty"`
+
+    // WasRequired indicates if the field was required in the source schema.
+    WasRequired *bool `json:"was_required,omitempty" example:"true"`
+
+    // IsRequired indicates if the field is required in the target schema.
+    IsRequired *bool `json:"is_required,omitempty" example:"false"`
+
+    // WasNullable indicates if the field was nullable in the source schema.
+    WasNullable *bool `json:"was_nullable,omitempty" example:"false"`
+
+    // IsNullable indicates if the field is nullable in the target schema.
+    IsNullable *bool `json:"is_nullable,omitempty" example:"true"`
+
+    // Description provides a human-readable explanation of the change.
+    Description *string `json:"description,omitempty" example:"Field type changed from string to integer"`
+}
+```
+
+<a name="SchemaValidationError"></a>
+## type SchemaValidationError
+
+SchemaValidationError represents a single validation failure with detailed context.
+
+```go
+type SchemaValidationError struct {
+    // Type categorizes the validation failure.
+    Type SchemaValidationErrorType `json:"type" example:"type_mismatch"`
+
+    // FieldPath is the JSON path to the field that failed validation.
+    // Uses bracket notation for arrays: "customers[0].email", "orders[2].items[0].price"
+    FieldPath string `json:"field_path" example:"customers[0].email"`
+
+    // Message is a human-readable description of the validation failure.
+    Message string `json:"message" example:"expected string, got integer"`
+
+    // ExpectedType is the type expected according to the schema.
+    ExpectedType *string `json:"expected_type,omitempty" example:"string"`
+
+    // ActualType is the actual type found in the data.
+    ActualType *string `json:"actual_type,omitempty" example:"integer"`
+
+    // ActualValue is the actual value that failed validation (truncated for large values).
+    ActualValue any `json:"actual_value,omitempty"`
+
+    // ExpectedValue describes what was expected (for enum, format, constraint errors).
+    ExpectedValue any `json:"expected_value,omitempty"`
+
+    // Suggestion provides actionable advice on how to fix the error.
+    Suggestion *string `json:"suggestion,omitempty" example:"Convert 'age' values to integers"`
+
+    // FileName identifies which file in a multi-file validation contains the error.
+    FileName *string `json:"file_name,omitempty" example:"customers.json"`
+
+    // RowIndex identifies the array index for errors in array items.
+    RowIndex *int `json:"row_index,omitempty" example:"5"`
+}
+```
+
+<a name="SchemaValidationErrorType"></a>
+## type SchemaValidationErrorType
+
+SchemaValidationErrorType categorizes the kind of validation failure.
+
+```go
+type SchemaValidationErrorType string
+```
+
+<a name="ValidationErrorMissingField"></a>
+
+```go
+const (
+    // ValidationErrorMissingField indicates a required field is not present in the data.
+    ValidationErrorMissingField SchemaValidationErrorType = "missing_required_field"
+    // ValidationErrorTypeMismatch indicates the data type doesn't match the schema.
+    ValidationErrorTypeMismatch SchemaValidationErrorType = "type_mismatch"
+    // ValidationErrorConstraint indicates a constraint violation (e.g., min/max length).
+    ValidationErrorConstraint SchemaValidationErrorType = "constraint_violation"
+    // ValidationErrorFormat indicates the value doesn't match the expected format.
+    ValidationErrorFormat SchemaValidationErrorType = "format_invalid"
+    // ValidationErrorExtraField indicates an unexpected field in strict mode.
+    ValidationErrorExtraField SchemaValidationErrorType = "unexpected_field"
+    // ValidationErrorNullValue indicates a null value where not allowed.
+    ValidationErrorNullValue SchemaValidationErrorType = "null_not_allowed"
+    // ValidationErrorEnumValue indicates the value is not in the allowed enum list.
+    ValidationErrorEnumValue SchemaValidationErrorType = "invalid_enum_value"
+    // ValidationErrorArrayItems indicates array items don't match the schema.
+    ValidationErrorArrayItems SchemaValidationErrorType = "invalid_array_items"
+)
+```
+
+<a name="SchemaValidationResult"></a>
+## type SchemaValidationResult
+
+SchemaValidationResult represents the complete outcome of schema validation.
+
+```go
+type SchemaValidationResult struct {
+    // Valid is true if all data passed validation against the schema.
+    Valid bool `json:"valid" example:"false"`
+
+    // Errors contains detailed information about each validation failure.
+    Errors []SchemaValidationError `json:"errors,omitempty"`
+
+    // Warnings contains non-fatal issues (e.g., deprecated fields, recommendations).
+    Warnings []string `json:"warnings,omitempty"`
+
+    // FilesSummary maps file names to their error counts for multi-file validation.
+    FilesSummary map[string]int `json:"files_summary,omitempty"`
+
+    // TotalRecordsValidated is the count of records/rows that were validated.
+    TotalRecordsValidated *int `json:"total_records_validated,omitempty" example:"1000"`
+
+    // FailedRecords is the count of records that had at least one error.
+    FailedRecords *int `json:"failed_records,omitempty" example:"15"`
+}
+```
+
+<a name="NewInvalidResult"></a>
+### func NewInvalidResult
+
+```go
+func NewInvalidResult(errors ...SchemaValidationError) *SchemaValidationResult
+```
+
+NewInvalidResult creates a new invalid SchemaValidationResult with initial errors.
+
+<a name="NewValidResult"></a>
+### func NewValidResult
+
+```go
+func NewValidResult() *SchemaValidationResult
+```
+
+NewValidResult creates a new valid SchemaValidationResult.
+
+<a name="SchemaValidationResult.AddError"></a>
+### func \(\*SchemaValidationResult\) AddError
+
+```go
+func (r *SchemaValidationResult) AddError(err SchemaValidationError)
+```
+
+AddError appends a validation error to the result and marks it as invalid.
+
+<a name="SchemaValidationResult.AddWarning"></a>
+### func \(\*SchemaValidationResult\) AddWarning
+
+```go
+func (r *SchemaValidationResult) AddWarning(warning string)
+```
+
+AddWarning appends a warning message to the result.
+
+<a name="SchemaValidationResult.ErrorCount"></a>
+### func \(\*SchemaValidationResult\) ErrorCount
+
+```go
+func (r *SchemaValidationResult) ErrorCount() int
+```
+
+ErrorCount returns the total number of validation errors.
+
+<a name="SchemaValidationResult.ErrorsByFile"></a>
+### func \(\*SchemaValidationResult\) ErrorsByFile
+
+```go
+func (r *SchemaValidationResult) ErrorsByFile() map[string][]SchemaValidationError
+```
+
+ErrorsByFile groups errors by file name for multi\-file validation results.
+
+<a name="SchemaValidationResult.ErrorsByType"></a>
+### func \(\*SchemaValidationResult\) ErrorsByType
+
+```go
+func (r *SchemaValidationResult) ErrorsByType() map[SchemaValidationErrorType][]SchemaValidationError
+```
+
+ErrorsByType groups errors by their type for easier analysis.
+
+<a name="SchemaValidationResult.FirstNErrors"></a>
+### func \(\*SchemaValidationResult\) FirstNErrors
+
+```go
+func (r *SchemaValidationResult) FirstNErrors(n int) []SchemaValidationError
+```
+
+FirstNErrors returns at most n errors \(useful for summarizing large error sets\).
+
+<a name="SchemaValidationResult.HasErrors"></a>
+### func \(\*SchemaValidationResult\) HasErrors
+
+```go
+func (r *SchemaValidationResult) HasErrors() bool
+```
+
+HasErrors returns true if validation found any errors.
+
+<a name="SchemaValidationResult.HasWarnings"></a>
+### func \(\*SchemaValidationResult\) HasWarnings
+
+```go
+func (r *SchemaValidationResult) HasWarnings() bool
+```
+
+HasWarnings returns true if validation produced any warnings.
 
 <a name="ScriptResult"></a>
 ## type ScriptResult
