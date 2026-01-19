@@ -60,7 +60,8 @@ func (api *APIMiddlewares) DocumentationPermissionMiddleware(action db.PolicyAct
 
 func (api *APIMiddlewares) InviteMiddleware(c fiber.Ctx) error
     InviteMiddleware parses the invite SQID from the request URL and sets the
-    invite in the context.
+    invite in the context. This middleware works both for routes under workspace
+    context and standalone invite routes.
 
 func (api *APIMiddlewares) InvitePermissionMiddleware(action db.PolicyAction) fiber.Handler
     InvitePermissionMiddleware creates a middleware for invite-level

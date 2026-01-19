@@ -1,0 +1,6 @@
+id,name,email,age,city,created_at
+1,Alice Johnson,alice@example.com,28,New York,2024-01-15
+2,Bob Smith,bob@example.com,34,Los Angeles,2024-01-16
+3,Charlie Brown,charlie@example.com,45,Chicago,2024-01-17
+4,Diana Prince,diana@example.com,31,Seattle,2024-01-18
+5,Edward Norton,edward@example.com,52,Boston,2024-01-19

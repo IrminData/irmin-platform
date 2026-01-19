@@ -660,6 +660,8 @@ func (api *APIServices) NormalizeEntityType(entityType string) irminmodels.TagEn
 		return irminmodels.TagEntityTypeRepository
 	case "query", "queries":
 		return irminmodels.TagEntityTypeQuery
+	case "script", "scripts":
+		return irminmodels.TagEntityTypeScript
 	case "workflow", "workflows":
 		return irminmodels.TagEntityTypeWorkflow
 	case "connection", "connections":

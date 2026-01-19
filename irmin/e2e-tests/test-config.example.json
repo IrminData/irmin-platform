@@ -1,0 +1,13 @@
+{
+  "api_base_url": "http://localhost:8082/api",
+  "auth_token": "cred_your-user-api-token-here",
+  "cleanup_after_tests": true,
+  "verbose": true,
+  "connection": {
+    "connector_name": "HTTP",
+    "details": {
+      "url": "https://jsonplaceholder.typicode.com/todos"
+    },
+    "settings": {}
+  }
+}

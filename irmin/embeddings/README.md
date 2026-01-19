@@ -1,31 +1,388 @@
-# Embeddings Package
+# Native Embeddings in Irmin
 
-The `embeddings` package provides comprehensive embedding management for Irmin, including embedding creation via OpenAI, storage in Parquet format with DuckDB's vector extension, and efficient vector similarity search capabilities.
+Irmin provides native embedding capabilities that allow you to create, store, search, and manage vector embeddings directly within your data repositories. Embeddings are stored in a versioned, columnar format alongside your other data objects, enabling powerful semantic search and AI-powered applications.
 
-## Features
+## Overview
 
-- **Embedding Creation**: Generate embeddings using OpenAI's embedding models (text-embedding-3-small, text-embedding-3-large)
-- **Text Extraction**: Extract text from various file formats (TXT, MD, CSV, JSON, JSONL, TSV)
-- **Text Chunking**: Split large documents into optimal chunks with configurable overlap (character-based or sentence-based)
-- **Parquet Storage**: Store embeddings in columnar Parquet format with DuckDB native array types
-- **Vector Search**: Perform similarity search using DuckDB's vss extension with cosine distance
-- **Filtered Search**: Search with metadata filtering for targeted results
-- **HNSW Indexing**: Create vector indexes for faster search on large datasets
-- **LakeFS Integration**: Upload and manage embedding files in LakeFS with proper metadata tracking
-- **File Merging**: Merge multiple embedding Parquet files into a single file
+Native embeddings in Irmin enable:
 
-## Installation
+- **Generate embeddings** from repository objects using OpenAI's embedding models
+- **Store embeddings** in a versioned, columnar Parquet format within repositories
+- **Search embeddings** using vector similarity (cosine distance) powered by DuckDB's VSS extension
+- **Sync embeddings** with external vector databases via connectors (e.g., Pinecone)
 
-The package is part of the Irmin core API. Ensure you have the required dependencies:
+### Architecture Flow
 
-```bash
-go get github.com/openai/openai-go/v3
-go get github.com/google/uuid
+```
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────┐     ┌──────────────┐
+│  Source Files   │────▶│  Text Extraction │────▶│  Chunking   │────▶│  OpenAI API  │
+│  (.txt, .pdf,   │     │  (DuckDB, pure   │     │  (char or   │     │  (embedding  │
+│   .csv, etc.)   │     │   Go parsers)    │     │  sentence)  │     │   creation)  │
+└─────────────────┘     └──────────────────┘     └─────────────┘     └──────┬───────┘
+                                                                            │
+                        ┌──────────────────────────────────────────────────┘
+                        ▼
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────────────────────┐
+│  Parquet File   │────▶│  LakeFS Storage  │────▶│  Vector Search (DuckDB VSS)     │
+│  (ZSTD compress)│     │  (versioned)     │     │  or External DB (via Connector) │
+└─────────────────┘     └──────────────────┘     └─────────────────────────────────┘
 ```
 
-## Core Types
+## Storage Format
 
-### EmbeddingConfig
+### Parquet Schema
+
+Embeddings are stored as **Parquet files** with ZSTD compression. The schema is:
+
+```sql
+CREATE TABLE embeddings (
+    id VARCHAR,              -- Unique UUID for each embedding chunk
+    source_file VARCHAR,     -- Original source file path
+    chunk_index INTEGER,     -- Sequential chunk number within the source
+    content TEXT,            -- The actual text content that was embedded
+    embedding FLOAT[N],      -- Native DuckDB array (N = dimensions, e.g., 1536)
+    metadata JSON,           -- Custom metadata key-value pairs
+    created_at TIMESTAMP     -- When the embedding was created
+);
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | VARCHAR | Unique UUID for each embedding chunk |
+| `source_file` | VARCHAR | Original source file path |
+| `chunk_index` | INTEGER | Sequential chunk number within the source |
+| `content` | TEXT | The actual text content that was embedded |
+| `embedding` | FLOAT[N] | Native DuckDB array (N = dimensions) |
+| `metadata` | JSON | Custom metadata key-value pairs |
+| `created_at` | TIMESTAMP | When the embedding was created |
+
+### LakeFS Metadata
+
+Embedding files uploaded to LakeFS are tagged with metadata for identification and tracking:
+
+| Metadata Key | Example Value | Description |
+|--------------|---------------|-------------|
+| `irmin-file-type` | `embeddings` | Identifies file as an embeddings file |
+| `irmin-embedding-model` | `text-embedding-3-small` | The OpenAI model used |
+| `irmin-embedding-dimensions` | `1536` | Vector dimensions |
+| `irmin-source-file` | `["doc.pdf", "notes.txt"]` | JSON array of source files |
+| `irmin-chunk-count` | `42` | Number of embedding chunks |
+
+## Supported File Formats
+
+Irmin can extract text and create embeddings from a wide variety of file formats:
+
+| Category | Extensions | Extraction Method |
+|----------|------------|-------------------|
+| Plain Text | `.txt`, `.md` | Direct read |
+| Structured Data | `.csv`, `.json`, `.jsonl`, `.ndjson`, `.tsv`, `.tab` | DuckDB query |
+| Columnar | `.parquet` | DuckDB query |
+| Spreadsheets | `.xlsx`, `.xlsm` | Excelize library (pure Go) |
+| Documents | `.pdf` | ledongthuc/pdf (pure Go) |
+| Documents | `.docx` | nguyenthenguyen/docx (pure Go) |
+| Markup | `.xml` | Go encoding/xml parser |
+| Configuration | `.yaml`, `.yml` | gopkg.in/yaml.v3 parser |
+
+All file formats are handled by **pure Go libraries** with no external dependencies required.
+
+## Configuration
+
+### Default Settings
+
+| Setting | Default Value | Description |
+|---------|---------------|-------------|
+| Model | `text-embedding-3-small` | OpenAI embedding model |
+| Dimensions | `1536` | Vector dimensions |
+| Chunk Size | `1000` characters | Characters per chunk (rune-based) |
+| Overlap | `200` characters | Overlap between consecutive chunks |
+
+### Available Models
+
+| Model | Max Dimensions | Default Dimensions | Best For |
+|-------|----------------|-------------------|----------|
+| `text-embedding-3-small` | 1536 | 1536 | Cost-effective, general use |
+| `text-embedding-3-large` | 3072 | 3072 | Higher accuracy, specialized tasks |
+
+### Custom Configuration
+
+When creating embeddings via the API, you can override defaults:
+
+```json
+{
+  "source_paths": ["documents/report.pdf", "data/analysis.csv"],
+  "output_path": "embeddings/combined.parquet",
+  "config": {
+    "model": "text-embedding-3-large",
+    "dimensions": 3072,
+    "chunk_size": 1500,
+    "overlap": 300
+  }
+}
+```
+
+## API Endpoints
+
+### Vectorize Objects
+
+Create embeddings from one or more repository objects.
+
+```
+POST /api/v1/workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/vectorize
+```
+
+**Request Body:**
+```json
+{
+  "source_paths": ["documents/file1.pdf", "documents/file2.txt"],
+  "output_path": "embeddings/documents.parquet",
+  "ref": "main",
+  "config": {
+    "model": "text-embedding-3-small",
+    "dimensions": 1536,
+    "chunk_size": 1000,
+    "overlap": 200
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Embeddings created successfully",
+  "data": {
+    "path": "embeddings/documents.parquet",
+    "source_files": ["documents/file1.pdf", "documents/file2.txt"],
+    "model": "text-embedding-3-small",
+    "dimensions": 1536,
+    "chunk_count": 42,
+    "size_bytes": 156789,
+    "ref": "main"
+  }
+}
+```
+
+### Search Embeddings
+
+Perform vector similarity search on an embedding file.
+
+```
+POST /api/v1/workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/search
+```
+
+**Request Body:**
+```json
+{
+  "query": "What are the key findings about climate change?",
+  "embedding_path": "embeddings/documents.parquet",
+  "ref": "main",
+  "top_k": 10,
+  "filter": {
+    "category": "research",
+    "language": "en"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "results": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "content": "The study found significant temperature increases...",
+        "source_file": "documents/climate-report.pdf",
+        "chunk_index": 15,
+        "score": 0.89,
+        "distance": 0.11,
+        "metadata": {"category": "research"}
+      }
+    ],
+    "query": "What are the key findings about climate change?",
+    "model": "text-embedding-3-small",
+    "top_k": 10
+  }
+}
+```
+
+### List Embedding Files
+
+List all embedding files in a repository path.
+
+```
+GET /api/v1/workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings?prefix=embeddings/&ref=main
+```
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "path": "embeddings/documents.parquet",
+      "source_files": ["documents/file1.pdf"],
+      "model": "text-embedding-3-small",
+      "dimensions": 1536,
+      "chunk_count": 42,
+      "size_bytes": 156789,
+      "ref": "main"
+    }
+  ]
+}
+```
+
+### Get Embedding Info
+
+Get metadata about a specific embedding file.
+
+```
+GET /api/v1/workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/info?embedding_path=embeddings/documents.parquet&ref=main
+```
+
+## Text Chunking Strategies
+
+### Character-Based Chunking (Default)
+
+Splits text into chunks of a specified character size with overlap:
+
+- **Chunk Size**: Number of characters per chunk (default: 1000)
+- **Overlap**: Characters shared between consecutive chunks (default: 200)
+- Uses rune-based counting for proper Unicode handling
+
+```
+Document: "The quick brown fox jumps over the lazy dog..."
+
+Chunk 1: "The quick brown fox jumps..." (chars 0-1000)
+Chunk 2: "...fox jumps over the lazy..." (chars 800-1800, 200 char overlap)
+Chunk 3: "...the lazy dog..." (chars 1600-2600, 200 char overlap)
+```
+
+### Sentence-Based Chunking
+
+Splits text at sentence boundaries for more semantically coherent chunks:
+
+- Respects sentence endings (`.`, `!`, `?`)
+- Combines sentences until reaching max chunk size
+- Provides better context for semantic search
+
+## Vector Search
+
+### How Search Works
+
+1. **Query Embedding**: Your search query is converted to a vector using the same model that created the embeddings
+2. **Distance Calculation**: DuckDB's VSS extension calculates cosine distance between the query vector and all stored embeddings
+3. **Ranking**: Results are ranked by similarity (lower distance = more similar)
+4. **Filtering**: Optional metadata filters are applied to narrow results
+
+### Similarity Metrics
+
+| Metric | Range | Interpretation |
+|--------|-------|----------------|
+| **Score** | 0 to 1 | Higher is better (1 - distance) |
+| **Distance** | 0 to 2 | Lower is better (cosine distance) |
+
+### Filtered Search
+
+You can filter results by metadata fields stored in the embedding records:
+
+```json
+{
+  "query": "revenue projections",
+  "embedding_path": "embeddings/financials.parquet",
+  "top_k": 5,
+  "filter": {
+    "department": "finance",
+    "year": "2024"
+  }
+}
+```
+
+## Vector Database Integration
+
+### Overview
+
+Irmin embeddings can be synchronized with external vector databases through connectors. This enables:
+
+- **Hybrid architectures**: Use Irmin for versioned storage and external DBs for production serving
+- **Migration**: Move embeddings between systems
+- **Backup**: Version-controlled backups of vector data
+
+### Supported Connectors
+
+| Connector | Pull (Import) | Push (Export) | Description |
+|-----------|---------------|---------------|-------------|
+| **Pinecone** | ✅ | ✅ | High-performance vector database |
+
+### Pinecone Integration
+
+#### Push (Export to Pinecone)
+
+Upload Irmin embedding files to a Pinecone index:
+
+1. Parquet files are parsed to extract embedding records
+2. Records are upserted to Pinecone in batches of 100
+3. Metadata is preserved during transfer
+
+#### Pull (Import from Pinecone)
+
+Import vectors from Pinecone to Irmin:
+
+- **Full Export**: Fetches all vectors and saves as `embeddings.parquet`
+- **Search**: Provide a query vector to get search results as JSON
+
+#### Data Mapping
+
+| Irmin Field | Pinecone Field |
+|-------------|----------------|
+| `id` | Vector ID |
+| `embedding` | Vector values |
+| `content` | `metadata.content` |
+| `source_file` | `metadata.source_file` |
+| `chunk_index` | `metadata.chunk_index` |
+| `created_at` | `metadata.created_at` |
+| `metadata.*` | `metadata.*` |
+
+## AI Application Integration
+
+### Embedding Search in AI Apps
+
+AI Applications can use embeddings for RAG (Retrieval-Augmented Generation):
+
+```
+POST /api/v1/ai-app/embeddings/search
+```
+
+**Request:**
+```json
+{
+  "query": "How do I reset my password?",
+  "path": "/support-docs/main/embeddings/faq.parquet",
+  "top_k": 5
+}
+```
+
+This endpoint:
+- Validates the path is within configured data sources
+- Performs vector search
+- Returns relevant context for LLM prompting
+
+### Custom Embedding Search Tools
+
+AI Applications can define custom tools that wrap embedding searches:
+
+```json
+{
+  "name": "search_knowledge_base",
+  "type": "embedding_search",
+  "description": "Search the company knowledge base",
+  "config": {
+    "embedding_path": "/docs/main/embeddings/knowledge.parquet"
+  }
+}
+```
+
+## Developer Usage
+
+### Core Types
 
 ```go
 type EmbeddingConfig struct {
@@ -34,11 +391,7 @@ type EmbeddingConfig struct {
     ChunkSize  int    // Characters per chunk
     Overlap    int    // Overlap between chunks
 }
-```
 
-### EmbeddingRecord
-
-```go
 type EmbeddingRecord struct {
     ID         string
     SourceFile string
@@ -48,22 +401,7 @@ type EmbeddingRecord struct {
     Metadata   map[string]string
     CreatedAt  time.Time
 }
-```
 
-### EmbeddingResult
-
-```go
-type EmbeddingResult struct {
-    Records     []EmbeddingRecord
-    TotalChunks int
-    Model       string
-    Dimensions  int
-}
-```
-
-### SearchResult
-
-```go
 type SearchResult struct {
     ID         string
     SourceFile string
@@ -75,23 +413,9 @@ type SearchResult struct {
 }
 ```
 
-### UploadConfig
+### Go Client Usage Examples
 
-```go
-type UploadConfig struct {
-    RepositoryID string
-    Branch       string
-    Path         string
-    SourceFile   string
-    Model        string
-    Dimensions   int
-    ChunkCount   int
-}
-```
-
-## Usage
-
-### Creating a Client
+#### Creating a Client
 
 ```go
 import (
@@ -112,30 +436,7 @@ if err != nil {
 defer client.Close()
 ```
 
-### Generating Embeddings
-
-```go
-// Generate embeddings for multiple texts
-texts := []string{
-    "The quick brown fox jumps over the lazy dog.",
-    "Machine learning is transforming technology.",
-}
-
-config := embeddings.EmbeddingConfig{
-    Model:      "text-embedding-3-small",
-    Dimensions: 1536,
-}
-
-vectors, err := client.CreateEmbeddings(ctx, texts, config)
-if err != nil {
-    log.Fatal(err)
-}
-
-// Generate embedding for a single query
-queryVector, err := client.CreateEmbeddingForQuery(ctx, "What is AI?", config)
-```
-
-### Processing Files
+#### Processing Files
 
 ```go
 // Extract text, chunk, and create embeddings from a file
@@ -156,17 +457,7 @@ if err != nil {
 fmt.Printf("Created %d embedding chunks\n", result.TotalChunks)
 ```
 
-### Saving to Parquet
-
-```go
-// Save embeddings to a Parquet file
-err := client.SaveEmbeddingsToParquet(ctx, result.Records, "/path/to/embeddings.parquet")
-
-// Or get Parquet data as bytes
-parquetData, err := client.SaveEmbeddingsToParquetBytes(ctx, result.Records)
-```
-
-### Vector Similarity Search
+#### Vector Similarity Search
 
 ```go
 // Search for similar embeddings using a query vector
@@ -180,356 +471,71 @@ if err != nil {
 for _, result := range results {
     fmt.Printf("Score: %.4f Distance: %.4f - %s\n", result.Score, result.Distance, result.Content)
 }
-
-// Or search directly with text (generates embedding automatically)
-results, err := client.SearchByText(ctx, "machine learning", "/path/to/embeddings.parquet", 10, config)
-
-// Search from in-memory Parquet bytes
-parquetData, _ := os.ReadFile("embeddings.parquet")
-results, err = client.SearchSimilarFromBytes(ctx, queryVector, parquetData, 10)
-
-// Search with metadata filtering
-filter := map[string]string{
-    "category": "technical",
-    "language": "en",
-}
-results, err = client.SearchWithFilter(ctx, queryVector, "/path/to/embeddings.parquet", 10, filter)
 ```
 
-### Loading and Counting Embeddings
+## Best Practices
 
-```go
-// Load all embeddings from a Parquet file
-records, err := client.LoadEmbeddingsFromParquet(ctx, "/path/to/embeddings.parquet")
-if err != nil {
-    log.Fatal(err)
-}
-fmt.Printf("Loaded %d embedding records\n", len(records))
+### Choosing Chunk Size
 
-// Get count without loading all records
-count, err := client.GetEmbeddingCount(ctx, "/path/to/embeddings.parquet")
-fmt.Printf("Total embeddings: %d\n", count)
+| Use Case | Recommended Chunk Size | Overlap |
+|----------|----------------------|---------|
+| Q&A / FAQ | 500-800 chars | 100-150 |
+| Long documents | 1000-1500 chars | 200-300 |
+| Code documentation | 800-1200 chars | 150-200 |
+| Research papers | 1500-2000 chars | 300-400 |
+
+### Organizing Embedding Files
+
+```
+repository/
+├── documents/           # Source documents
+│   ├── reports/
+│   └── manuals/
+├── embeddings/          # Embedding files
+│   ├── reports.parquet  # Embeddings for reports/
+│   ├── manuals.parquet  # Embeddings for manuals/
+│   └── all.parquet      # Combined embeddings
+└── ...
 ```
 
-### Merging Embedding Files
+### Performance Tips
 
-```go
-// Merge multiple Parquet embedding files into one
-inputFiles := []string{
-    "/path/to/embeddings1.parquet",
-    "/path/to/embeddings2.parquet",
-    "/path/to/embeddings3.parquet",
-}
+1. **Batch source files**: Combine related files into single embedding files to reduce search overhead
+2. **Use appropriate chunk sizes**: Smaller chunks = more precise matches, larger chunks = more context
+3. **Add metadata**: Tag chunks with categories, dates, or other fields for filtered search
+4. **Version your embeddings**: Use branches to maintain different embedding versions
 
-err := client.MergeParquetFiles(ctx, inputFiles, "/path/to/merged_embeddings.parquet")
-```
+### When to Re-embed
 
-### Creating Vector Indexes
+Re-create embeddings when:
+- Source documents are updated
+- Chunk size/overlap settings need adjustment
+- Switching to a different embedding model
+- Adding new metadata fields
 
-```go
-// Create an HNSW index for faster search on large datasets
-err := client.CreateVectorIndex(ctx, "/path/to/embeddings.parquet", "my_index")
-if err != nil {
-    log.Fatal(err)
-}
-// Note: The index is created in-memory in the DuckDB session
-```
+## Troubleshooting
 
-### LakeFS Integration
+### Common Issues
 
-```go
-// Process file and upload embeddings to LakeFS (all-in-one convenience method)
-result, metadata, err := client.ProcessAndUploadFile(
-    ctx,
-    fileContent,
-    "document.txt",
-    "my-repository",
-    "main",
-    "embeddings/document_embeddings.parquet",
-    config,
-)
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| Empty search results | Query too specific | Try broader search terms |
+| Low relevance scores | Chunk size too large | Reduce chunk size |
+| Missing chunks | File format not supported | Check supported formats |
+| Dimension mismatch | Mixed models | Use consistent model for all files |
 
-// Or manually upload Parquet bytes
-parquetData, _ := client.SaveEmbeddingsToParquetBytes(ctx, result.Records)
-uploadConfig := embeddings.UploadConfig{
-    RepositoryID: "my-repository",
-    Branch:       "main",
-    Path:         "embeddings/custom_embeddings.parquet",
-    SourceFile:   "document.txt",
-    Model:        config.Model,
-    Dimensions:   config.Dimensions,
-    ChunkCount:   len(result.Records),
-}
-metadata, err := client.UploadToLakeFS(ctx, uploadConfig, parquetData)
+### Verifying Embeddings
 
-// Download embedding file from LakeFS
-embeddingData, err := client.DownloadFromLakeFS(ctx, "my-repository", "main", "embeddings/document_embeddings.parquet")
-
-// List all embedding files in a repository path
-embeddingFiles, err := client.ListEmbeddingFiles(ctx, "my-repository", "main", "embeddings/")
-for _, file := range embeddingFiles {
-    fmt.Printf("File: %s\n", file.Path)
-    if embeddings.IsEmbeddingFile(file.Metadata) {
-        model, dimensions, sourceFile := embeddings.GetEmbeddingMetadata(file.Metadata)
-        fmt.Printf("  Model: %s, Dimensions: %d, Source: %s\n", model, dimensions, sourceFile)
-    }
-}
-
-// Delete an embedding file
-err = client.DeleteEmbeddingFile(ctx, "my-repository", "main", "embeddings/old_embeddings.parquet")
-```
-
-### Text Chunking Strategies
-
-```go
-// Character-based chunking with overlap (default)
-chunks := embeddings.ChunkText(text, 1000, 200)
-
-// Sentence-based chunking for more semantic coherence
-chunks := embeddings.ChunkTextBySentences(text, 1000)
-// This respects sentence boundaries and provides better context
-```
-
-### Format-Specific Text Extraction
-
-The embeddings package supports a wide variety of document formats with intelligent text extraction:
-
-#### Structured Data Formats
-
-For structured formats (CSV, JSON, Parquet, Excel), the package extracts and concatenates all text fields:
-
-```go
-// Parquet files - efficient columnar format
-fileContent, _ := os.ReadFile("analytics.parquet")
-result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "analytics.parquet", config)
-// Extracts and embeds all text columns from the Parquet file
-
-// Excel spreadsheets - pure Go implementation
-fileContent, _ := os.ReadFile("report.xlsx")
-result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "report.xlsx", config)
-// Extracts text from all cells across all sheets using Excelize
-
-// CSV files with multiple text columns
-fileContent, _ := os.ReadFile("products.csv")
-result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "products.csv", config)
-// Concatenates all columns: "ProductName Category Description Features"
-```
-
-#### Markup and Configuration Formats
-
-XML and YAML files are parsed and text content is extracted recursively:
-
-```go
-// XML documents
-fileContent, _ := os.ReadFile("documentation.xml")
-result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "documentation.xml", config)
-// Recursively extracts all text nodes while preserving structure
-
-// YAML configuration files
-fileContent, _ := os.ReadFile("config.yaml")
-result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "config.yaml", config)
-// Extracts all string values from the YAML hierarchy
-```
-
-#### Document Formats
-
-PDF and Word documents are handled by pure Go libraries with no external dependencies:
-
-```go
-// PDF documents - pure Go implementation
-fileContent, _ := os.ReadFile("whitepaper.pdf")
-result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "whitepaper.pdf", config)
-if err != nil {
-    log.Fatal(err)
-}
-
-// Word DOCX documents - pure Go implementation
-fileContent, _ := os.ReadFile("proposal.docx")
-result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, "proposal.docx", config)
-// Extracts all text content from the Word document
-```
-
-#### Error Handling for Format-Specific Issues
-
-```go
-result, err := client.CreateEmbeddingsFromFile(ctx, fileContent, fileName, config)
-if err != nil {
-    switch {
-    case strings.Contains(err.Error(), "unsupported file format"):
-        // File format not supported
-        fmt.Println("File format not supported for embeddings")
-    case strings.Contains(err.Error(), "failed to open PDF"):
-        // Invalid or corrupted PDF file
-        fmt.Println("Could not read PDF file")
-    case strings.Contains(err.Error(), "failed to open DOCX"):
-        // Invalid or corrupted DOCX file
-        fmt.Println("Could not read DOCX file")
-    default:
-        log.Fatal(err)
-    }
-}
-```
-
-### Utility Functions
-
-```go
-// Check if a file format is supported
-if embeddings.IsSupportedFormat("document.pdf") {
-    // Process file
-}
-
-// Get list of all supported formats
-formats := embeddings.GetSupportedFormats()
-fmt.Printf("Supported: %v\n", formats)
-// Output: [.txt .md .csv .json .jsonl .ndjson .tsv .tab .parquet .xlsx .xlsm .xml .yaml .yml .pdf .docx]
-
-// Manually compute cosine similarity between vectors
-similarity, err := embeddings.ComputeCosineSimilarity(vector1, vector2)
-fmt.Printf("Similarity: %.4f\n", similarity)
-```
-
-## Configuration
-
-### EmbeddingConfig Defaults
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `Model` | string | `text-embedding-3-small` | OpenAI embedding model |
-| `Dimensions` | int | `1536` | Vector dimensions |
-| `ChunkSize` | int | `1000` | Characters per chunk (rune-based) |
-| `Overlap` | int | `200` | Overlap between chunks |
-
-```go
-// Get default configuration
-config := embeddings.DefaultConfig()
-
-// Or customize
-config := embeddings.EmbeddingConfig{
-    Model:      "text-embedding-3-large",
-    Dimensions: 3072,
-    ChunkSize:  1500,
-    Overlap:    300,
-}
-```
-
-### Supported Models
-
-| Model | Max Dimensions | Default Dimensions | Best For |
-|-------|---------------|-------------------|----------|
-| `text-embedding-3-small` | 1536 | 1536 | Cost-effective, general use |
-| `text-embedding-3-large` | 3072 | 3072 | Higher accuracy, specialized tasks |
-
-## Supported File Formats
-
-| Format | Extensions | Extraction Method |
-|--------|-----------|-------------------|
-| Plain Text | `.txt`, `.md` | Direct read |
-| CSV | `.csv` | DuckDB query |
-| JSON | `.json` | DuckDB query |
-| JSONL | `.jsonl`, `.ndjson` | DuckDB query |
-| TSV | `.tsv`, `.tab` | DuckDB query |
-| Parquet | `.parquet` | DuckDB query |
-| Excel | `.xlsx`, `.xlsm` | Excelize library (pure Go) |
-| XML | `.xml` | Go encoding/xml parser |
-| YAML | `.yaml`, `.yml` | gopkg.in/yaml.v3 parser |
-| PDF | `.pdf` | ledongthuc/pdf library (pure Go) |
-| Word | `.docx` | nguyenthenguyen/docx library (pure Go) |
-
-### External Dependencies
-
-All file formats are handled by pure Go libraries with **no external dependencies required**.
-
-- **PDF files**: Uses `github.com/ledongthuc/pdf` - pure Go PDF text extraction
-- **Word DOCX files**: Uses `github.com/nguyenthenguyen/docx` - pure Go DOCX reader
-- **Excel files**: Uses `github.com/xuri/excelize/v2` - pure Go Excel library
-
-## Parquet Schema
-
-Embeddings are stored with the following schema:
-
-```sql
-CREATE TABLE embeddings (
-    id VARCHAR,              -- Unique UUID for each embedding
-    source_file VARCHAR,     -- Original source file name
-    chunk_index INTEGER,     -- Sequential chunk number
-    content TEXT,            -- The actual text content
-    embedding FLOAT[N],      -- Native DuckDB array (N = dimensions)
-    metadata JSON,           -- Custom metadata as JSON object
-    created_at TIMESTAMP     -- Creation timestamp
-);
-```
-
-Notes:
-- The `embedding` column uses DuckDB's native fixed-size array type (e.g., `FLOAT[1536]`)
-- Parquet files are compressed with ZSTD for efficient storage
-- The schema supports batch insertion for performance
-
-## LakeFS Metadata
-
-Embedding files uploaded to LakeFS are tagged with the following metadata:
-
-| Key | Example Value | Description |
-|-----|--------------|-------------|
-| `irmin-file-type` | `embeddings` | Identifies file as an embeddings file |
-| `irmin-embedding-model` | `text-embedding-3-small` | The OpenAI model used |
-| `irmin-embedding-dimensions` | `1536` | Vector dimensions |
-| `irmin-source-file` | `document.txt` | Original source file name |
-| `irmin-chunk-count` | `42` | Number of embedding chunks |
-
-Use `IsEmbeddingFile()` and `GetEmbeddingMetadata()` to work with these metadata tags.
-
-## API Methods Summary
-
-### Core Embedding Operations
-- `NewClient()` - Create embeddings client
-- `Close()` - Release resources
-- `CreateEmbeddings()` - Generate embeddings for texts
-- `CreateEmbeddingForQuery()` - Generate single embedding for query
-- `CreateEmbeddingsFromFile()` - Extract text, chunk, and embed file
-
-### Parquet Operations
-- `SaveEmbeddingsToParquet()` - Save to Parquet file
-- `SaveEmbeddingsToParquetBytes()` - Get Parquet as bytes
-- `LoadEmbeddingsFromParquet()` - Load embeddings from file
-- `GetEmbeddingCount()` - Count embeddings in file
-- `MergeParquetFiles()` - Merge multiple Parquet files
-
-### Search Operations
-- `SearchSimilar()` - Vector similarity search
-- `SearchByText()` - Search using text query
-- `SearchSimilarFromBytes()` - Search from in-memory Parquet
-- `SearchWithFilter()` - Search with metadata filtering
-- `CreateVectorIndex()` - Create HNSW index for faster search
-- `ComputeCosineSimilarity()` - Manual similarity calculation
-
-### LakeFS Operations
-- `UploadToLakeFS()` - Upload Parquet to LakeFS
-- `DownloadFromLakeFS()` - Download from LakeFS
-- `ListEmbeddingFiles()` - List embedding files in path
-- `ProcessAndUploadFile()` - All-in-one process and upload
-- `DeleteEmbeddingFile()` - Delete from LakeFS
-- `IsEmbeddingFile()` - Check if file is an embedding file
-- `GetEmbeddingMetadata()` - Extract embedding metadata
-
-### Text Processing
-- `ExtractTextFromFile()` - Extract text from various formats
-- `ChunkText()` - Character-based chunking with overlap
-- `ChunkTextBySentences()` - Sentence-based semantic chunking
-- `GetSupportedFormats()` - Get list of supported formats
-- `IsSupportedFormat()` - Check if format is supported
-
-## Testing
+Use the embedding info endpoint to verify:
 
 ```bash
-cd irmin
-go test ./embeddings/... -v
-
-# Run specific test
-go test ./embeddings/... -v -run TestSearchSimilar
-
-# Run with coverage
-go test ./embeddings/... -cover
+GET /embeddings/info?embedding_path=embeddings/docs.parquet
 ```
+
+Check that:
+- `chunk_count` matches expected number of chunks
+- `model` and `dimensions` are correct
+- `source_files` lists all expected inputs
 
 ## Dependencies
 
@@ -542,3 +548,7 @@ go test ./embeddings/... -cover
 - `irmin-api/lakefs` - LakeFS client
 - DuckDB `vss` extension - Vector similarity search (auto-installed)
 
+## Related Documentation
+
+- [Pinecone Connector](../../irmin-connectors/connectors/pinecone/README.md) - Vector DB integration
+- [AI Applications](./ai-applications.md) - Using embeddings in AI apps

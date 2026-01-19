@@ -655,7 +655,7 @@ func RegisterAPIRoutes(
 		apiMiddlewares.RepositoryTagPermissionMiddleware(db.PolicyActionCreate),
 		apiControllers.RepositoryTagsStore,
 	)
-	tag := tags.Group("/:repository-tag", apiMiddlewares.RepositoryTagMiddleware)
+	tag := tags.Group("/:tag", apiMiddlewares.RepositoryTagMiddleware)
 	tag.Get(
 		"/",
 		apiMiddlewares.RepositoryTagPermissionMiddleware(db.PolicyActionRead),

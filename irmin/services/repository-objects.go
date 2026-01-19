@@ -580,8 +580,8 @@ func (api *APIServices) MoveRepositoryObject(
 		workspace.Slug,
 		repository.Slug,
 		object.Path,
-		req.NewPath,
 		object.RepositoryRef,
+		req.NewPath,
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error moving object in Data Engine", "error", err)
@@ -741,8 +741,8 @@ func (api *APIServices) CopyRepositoryObject(
 		workspace.Slug,
 		repository.Slug,
 		object.Path,
-		req.NewPath,
 		object.RepositoryRef,
+		req.NewPath,
 	)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error copying object in Data Engine", "error", err)

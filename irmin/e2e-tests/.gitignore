@@ -1,0 +1,25 @@
+# Test configuration (contains secrets)
+test-config.json
+
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+e2e-tests
+
+# Test binary
+*.test
+
+# Output
+*.out
+*.log
+
+# Go build artifacts
+tmp/
+bin/
+build/
+
+# OS files
+.DS_Store

@@ -679,6 +679,16 @@ func (api *APIServices) GetInviteByID(
 	inviteSqid string,
 ) (*db.Invite, error)
 
+func (api *APIServices) GetInviteForMiddleware(
+	c context.Context,
+	user *db.User,
+	inviteSqid string,
+) (*db.Invite, *db.Workspace, error)
+    GetInviteForMiddleware retrieves an invite by SQID and performs basic access
+    checks. This method is used by the middleware to load the invite without
+    requiring workspace context. It returns both the invite and its associated
+    workspace for setting in context.
+
 func (api *APIServices) GetLogEventByID(
 	c context.Context,
 	user *db.User,

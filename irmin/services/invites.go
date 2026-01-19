@@ -15,6 +15,53 @@ import (
 	"gorm.io/gorm"
 )
 
+// GetInviteForMiddleware retrieves an invite by SQID and performs basic access checks.
+// This method is used by the middleware to load the invite without requiring workspace context.
+// It returns both the invite and its associated workspace for setting in context.
+func (api *APIServices) GetInviteForMiddleware(
+	c context.Context,
+	user *db.User,
+	inviteSqid string,
+) (*db.Invite, *db.Workspace, error) {
+	// Get the invite by ID.
+	inviteID, err := api.SQIDManager.Decode("invites", inviteSqid)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error decoding invite sqid", "error", err)
+		return nil, nil, NewInternalErrorf("error decoding invite SQID: %w", err)
+	}
+
+	// Get the invite by ID (includes workspace preload).
+	invite, err := api.DB.GetInviteByID(uint(inviteID))
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error fetching invite", "error", err)
+		return nil, nil, NewInternalErrorf("error fetching invite: %w", err)
+	}
+
+	// Check if the invite is valid.
+	if invite == nil {
+		return nil, nil, ErrNotFound
+	}
+
+	// Make sure the invite is either to the user or the user has access to the workspace.
+	hasAccess := invite.Email == user.Email
+	if !hasAccess {
+		// Check if the user is a member of the workspace via database query.
+		// This is more reliable than checking preloaded workspaces which may not be loaded
+		// (e.g., when using API token authentication).
+		isInWorkspace, getIsInWorkspaceErr := api.DB.IsUserInWorkspace(user.ID, invite.WorkspaceID)
+		if getIsInWorkspaceErr != nil {
+			api.Logger.ErrorContext(c, "Error checking workspace membership", "error", getIsInWorkspaceErr)
+			return nil, nil, NewInternalErrorf("error checking workspace membership: %w", getIsInWorkspaceErr)
+		}
+		hasAccess = isInWorkspace
+	}
+	if !hasAccess {
+		return nil, nil, ErrInviteNotAllowed
+	}
+
+	return invite, &invite.Workspace, nil
+}
+
 func (api *APIServices) GetInviteByID(
 	c context.Context,
 	user *db.User,
@@ -557,8 +604,18 @@ func (api *APIServices) resendInviteInTransaction(
 		// Set the API key with your Clerk Secret Key.
 		clerk.SetKey(api.Env.ClerkSecretKey)
 
-		// Store the ID of the existing invite in Clerk
-		existingClerkInviteID := invite.ClerkID
+		// Revoke the existing invite in Clerk first (only if it has a ClerkID)
+		// This must happen before creating a new invite, otherwise Clerk will reject
+		// the new invite because a pending invite already exists for that email.
+		if invite.ClerkID != "" {
+			_, revokeErr := invitation.Revoke(ctx, invite.ClerkID)
+			if revokeErr != nil {
+				api.Logger.ErrorContext(ctx, "Error revoking existing invite in Clerk", "error", revokeErr)
+				return revokeErr
+			}
+		} else {
+			api.Logger.InfoContext(ctx, "Skipping Clerk invite revocation - original invite was not created in Clerk", "email", invite.Email)
+		}
 
 		// Create new invite in Clerk
 		inviteAcceptanceURL := fmt.Sprintf(
@@ -578,24 +635,13 @@ func (api *APIServices) resendInviteInTransaction(
 			return createClerkInviteErr
 		}
 
-		// Update the invite with the Clerk ID and the new expiration date
+		// Update the invite with the new Clerk ID and expiration date
 		expiresAt := time.Now().Add(time.Duration(api.Env.InviteExpiresInDays) * 24 * time.Hour)
 		invite.ClerkID = clerkInvite.ID
 		invite.ExpiresAt = expiresAt
 		if updateInviteErr := tx.Save(invite).Error; updateInviteErr != nil {
 			api.Logger.ErrorContext(ctx, "Error updating invite", "error", updateInviteErr)
 			return updateInviteErr
-		}
-
-		// Revoke the existing invite in Clerk (only if it has a ClerkID)
-		if existingClerkInviteID != "" {
-			_, revokeErr := invitation.Revoke(ctx, existingClerkInviteID)
-			if revokeErr != nil {
-				api.Logger.ErrorContext(ctx, "Error revoking existing invite in Clerk", "error", revokeErr)
-				return revokeErr
-			}
-		} else {
-			api.Logger.InfoContext(ctx, "Skipping Clerk invite revocation - original invite was not created in Clerk", "email", invite.Email)
 		}
 
 		return nil

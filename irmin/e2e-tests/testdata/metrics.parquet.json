@@ -1,0 +1,17 @@
+{
+  "_note": "This is a JSON representation of sample metrics data. In real tests, you might use actual Parquet files.",
+  "schema": {
+    "fields": [
+      {"name": "timestamp", "type": "timestamp"},
+      {"name": "metric_name", "type": "string"},
+      {"name": "value", "type": "float64"},
+      {"name": "labels", "type": "map"}
+    ]
+  },
+  "data": [
+    {"timestamp": "2024-01-15T10:00:00Z", "metric_name": "cpu_usage", "value": 45.2, "labels": {"host": "server1"}},
+    {"timestamp": "2024-01-15T10:01:00Z", "metric_name": "cpu_usage", "value": 52.1, "labels": {"host": "server1"}},
+    {"timestamp": "2024-01-15T10:00:00Z", "metric_name": "memory_usage", "value": 72.5, "labels": {"host": "server1"}},
+    {"timestamp": "2024-01-15T10:01:00Z", "metric_name": "memory_usage", "value": 71.8, "labels": {"host": "server1"}}
+  ]
+}

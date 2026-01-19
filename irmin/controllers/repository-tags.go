@@ -133,7 +133,7 @@ func (api *APIControllers) RepositoryTagsStore(c fiber.Ctx) error {
 // @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/tags/{tag_name} [get]
 func (api *APIControllers) RepositoryTagsShow(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	repositoryTag, repositoryTagOk := c.Locals("repository-tag").(*irminmodels.GitTag)
+	repositoryTag, repositoryTagOk := c.Locals("tag").(*irminmodels.GitTag)
 	if !dictOk || !repositoryTagOk {
 		return api.handleServiceError(
 			c,
@@ -170,7 +170,7 @@ func (api *APIControllers) RepositoryTagsDestroy(c fiber.Ctx) error {
 	user, userOk := c.Locals("user").(*db.User)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	repository, repositoryOk := c.Locals("repository").(*db.Repository)
-	repositoryTag, repositoryTagOk := c.Locals("repository-tag").(*irminmodels.GitTag)
+	repositoryTag, repositoryTagOk := c.Locals("tag").(*irminmodels.GitTag)
 
 	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk || !repositoryTagOk {
 		return api.handleServiceError(

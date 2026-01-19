@@ -3,6 +3,7 @@ package lakefs
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 // Tag represents a tag in a  repository.
@@ -27,7 +28,7 @@ type TagCreateRequest struct {
 // GetTag fetches a single repository tag by its ID.
 func (c *Client) GetTag(repositoryID, tagID string) (*Tag, error) {
 	var tag Tag
-	endpoint := fmt.Sprintf("/repositories/%s/tags/%s", repositoryID, tagID)
+	endpoint := fmt.Sprintf("/repositories/%s/tags/%s", repositoryID, url.PathEscape(tagID))
 	if err := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &tag); err != nil {
 		return nil, err
 	}
@@ -76,6 +77,6 @@ func (c *Client) CreateTag(repositoryID string, reqData TagCreateRequest) (*Tag,
 
 // DeleteTag deletes a repository tag by its ID.
 func (c *Client) DeleteTag(repositoryID, tagID string) error {
-	endpoint := fmt.Sprintf("/repositories/%s/tags/%s", repositoryID, tagID)
+	endpoint := fmt.Sprintf("/repositories/%s/tags/%s", repositoryID, url.PathEscape(tagID))
 	return c.doRequest("DELETE", endpoint, nil, []int{http.StatusOK, http.StatusNoContent}, nil)
 }

@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "product": "Laptop",
+    "category": "Electronics",
+    "price": 999.99,
+    "quantity": 50,
+    "in_stock": true
+  },
+  {
+    "id": 2,
+    "product": "Desk Chair",
+    "category": "Furniture",
+    "price": 249.99,
+    "quantity": 30,
+    "in_stock": true
+  },
+  {
+    "id": 3,
+    "product": "Wireless Mouse",
+    "category": "Electronics",
+    "price": 29.99,
+    "quantity": 200,
+    "in_stock": true
+  },
+  {
+    "id": 4,
+    "product": "Monitor Stand",
+    "category": "Accessories",
+    "price": 79.99,
+    "quantity": 0,
+    "in_stock": false
+  },
+  {
+    "id": 5,
+    "product": "USB-C Hub",
+    "category": "Electronics",
+    "price": 59.99,
+    "quantity": 75,
+    "in_stock": true
+  }
+]

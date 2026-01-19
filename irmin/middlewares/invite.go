@@ -9,11 +9,11 @@ import (
 )
 
 // InviteMiddleware parses the invite SQID from the request URL and sets the invite in the context.
+// This middleware works both for routes under workspace context and standalone invite routes.
 func (api *APIMiddlewares) InviteMiddleware(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	if !dictOk || !userOk || !workspaceOk {
+	if !dictOk || !userOk {
 		return api.handleServiceError(
 			c,
 			"Error getting locals in InviteMiddleware",
@@ -33,13 +33,15 @@ func (api *APIMiddlewares) InviteMiddleware(c fiber.Ctx) error {
 		)
 	}
 
-	// Find the invite by its ID.
-	invite, err := api.Services.GetInviteByID(c, user, workspace, inviteSqid)
+	// Find the invite by its ID and get its workspace.
+	// This method performs basic access checks without requiring workspace context.
+	invite, workspace, err := api.Services.GetInviteForMiddleware(c, user, inviteSqid)
 	if err != nil {
 		return api.handleServiceError(c, "Error retrieving invite", err, dict)
 	}
 
-	// Set the invite in the context for subsequent handlers.
+	// Set the invite and workspace in the context for subsequent handlers.
 	c.Locals("invite", invite)
+	c.Locals("workspace", workspace)
 	return c.Next()
 }

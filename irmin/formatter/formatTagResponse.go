@@ -102,6 +102,25 @@ func formatRepositoryObjects(
 	return formattedRepositoryObjects, nil
 }
 
+// formatScripts formats a slice of database scripts into model scripts.
+func formatScripts(
+	scripts []db.StoredScript,
+	sqidManager *irminsqids.SQIDManager,
+) ([]irminmodels.StoredScript, error) {
+	var formattedScripts []irminmodels.StoredScript
+	for _, script := range scripts {
+		formattedScript, err := FormatStoredScriptResponse(&script, sqidManager)
+		if err != nil {
+			return nil, fmt.Errorf("error formatting script: %w", err)
+		}
+		formattedScripts = append(formattedScripts, *formattedScript)
+	}
+	if len(formattedScripts) == 0 {
+		formattedScripts = make([]irminmodels.StoredScript, 0)
+	}
+	return formattedScripts, nil
+}
+
 // FormatTagWithAssetsResponse creates a tag response object from a database tag object.
 func FormatTagWithAssetsResponse(
 	tag *db.TagWithAssets,
@@ -120,6 +139,11 @@ func FormatTagWithAssetsResponse(
 
 	// Format all asset types
 	queries, err := formatQueries(tag.Assets.Queries, sqidManager)
+	if err != nil {
+		return nil, err
+	}
+
+	scripts, err := formatScripts(tag.Assets.Scripts, sqidManager)
 	if err != nil {
 		return nil, err
 	}
@@ -149,6 +173,7 @@ func FormatTagWithAssetsResponse(
 		Tag: *tagResponse,
 		Assets: irminmodels.TaggedAssets{
 			Queries:           queries,
+			Scripts:           scripts,
 			Repositories:      repositories,
 			Workflows:         workflows,
 			Connections:       connections,

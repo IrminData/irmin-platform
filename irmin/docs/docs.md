@@ -5891,6 +5891,16 @@ func GetDuckDBReadOptionsFromObject(object string) (*ReadOptions, error)
 
 GetDuckDBReadOptionsFromObject extracts read options from an object path This integrates with the query parsing functionality.
 
+# e2e\-tests
+
+```go
+import "github.com/IrminData/irmin-e2e-tests"
+```
+
+## Index
+
+
+
 # embeddings
 
 ```go
@@ -10651,7 +10661,7 @@ DocumentationPermissionMiddleware creates a middleware for documentation\-level 
 func (api *APIMiddlewares) InviteMiddleware(c fiber.Ctx) error
 ```
 
-InviteMiddleware parses the invite SQID from the request URL and sets the invite in the context.
+InviteMiddleware parses the invite SQID from the request URL and sets the invite in the context. This middleware works both for routes under workspace context and standalone invite routes.
 
 <a name="APIMiddlewares.InvitePermissionMiddleware"></a>
 ### func \(\*APIMiddlewares\) InvitePermissionMiddleware
@@ -12008,6 +12018,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) GetConnectorConfigurationFields\(c context.Context, locale string, connector \*db.Connector, configurationType string, req irmincore.ConnectorConfigurationRequest\) \(map\[string\]irminmodels.DynamicField, error\)](<#APIServices.GetConnectorConfigurationFields>)
   - [func \(api \*APIServices\) GetEmbeddingFileInfo\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, embeddingPath string, ref string\) \(\*irminmodels.EmbeddingFile, error\)](<#APIServices.GetEmbeddingFileInfo>)
   - [func \(api \*APIServices\) GetInviteByID\(c context.Context, user \*db.User, workspace \*db.Workspace, inviteSqid string\) \(\*db.Invite, error\)](<#APIServices.GetInviteByID>)
+  - [func \(api \*APIServices\) GetInviteForMiddleware\(c context.Context, user \*db.User, inviteSqid string\) \(\*db.Invite, \*db.Workspace, error\)](<#APIServices.GetInviteForMiddleware>)
   - [func \(api \*APIServices\) GetLogEventByID\(c context.Context, user \*db.User, workspace \*db.Workspace, logEventSqid string\) \(\*db.LogEvent, error\)](<#APIServices.GetLogEventByID>)
   - [func \(api \*APIServices\) GetPoliciesForUser\(c context.Context, workspace \*db.Workspace, user \*db.User\) \(\[\]db.Policy, \*db.WorkspaceUser, bool, error\)](<#APIServices.GetPoliciesForUser>)
   - [func \(api \*APIServices\) GetPoliciesForWorkspace\(c context.Context, user \*db.User, workspace \*db.Workspace, filters PolicyFilters\) \(\[\]db.Policy, error\)](<#APIServices.GetPoliciesForWorkspace>)
@@ -12983,6 +12994,15 @@ func (api *APIServices) GetInviteByID(c context.Context, user *db.User, workspac
 ```
 
 
+
+<a name="APIServices.GetInviteForMiddleware"></a>
+### func \(\*APIServices\) GetInviteForMiddleware
+
+```go
+func (api *APIServices) GetInviteForMiddleware(c context.Context, user *db.User, inviteSqid string) (*db.Invite, *db.Workspace, error)
+```
+
+GetInviteForMiddleware retrieves an invite by SQID and performs basic access checks. This method is used by the middleware to load the invite without requiring workspace context. It returns both the invite and its associated workspace for setting in context.
 
 <a name="APIServices.GetLogEventByID"></a>
 ### func \(\*APIServices\) GetLogEventByID
@@ -14867,6 +14887,498 @@ ReplaceFn is the type for a function that computes a replacement string for a pa
 ```go
 type ReplaceFn func(pi *ParsedQueryPlaceholder) (string, error)
 ```
+
+# config
+
+```go
+import "github.com/IrminData/irmin-e2e-tests/config"
+```
+
+## Index
+
+- [type Config](<#Config>)
+  - [func LoadConfig\(path string\) \(\*Config, error\)](<#LoadConfig>)
+  - [func \(c \*Config\) Validate\(\) error](<#Config.Validate>)
+- [type ConnectionConfig](<#ConnectionConfig>)
+
+
+<a name="Config"></a>
+## type Config
+
+Config holds the configuration for E2E tests.
+
+```go
+type Config struct {
+    // APIBaseURL is the Irmin API base URL (e.g., "https://api.irmin.co/api").
+    APIBaseURL string `json:"api_base_url"`
+
+    // AuthToken is the API token or JWT for authentication.
+    AuthToken string `json:"auth_token"`
+
+    // CleanupAfterTests determines whether to clean up test resources after tests complete.
+    CleanupAfterTests bool `json:"cleanup_after_tests"`
+
+    // Verbose enables verbose logging.
+    Verbose bool `json:"verbose"`
+
+    // Connection is an optional connection configuration for testing connection and workflow operations.
+    // If not provided, connection and import/export workflow tests will be skipped.
+    Connection *ConnectionConfig `json:"connection,omitempty"`
+
+    // Workspace is the workspace slug created for tests.
+    Workspace string `json:"-"`
+
+    // TestRepository is the shared repository slug created for tests.
+    TestRepository string `json:"-"`
+
+    // TestRepositoryID is the SQID of the shared repository created for tests.
+    TestRepositoryID string `json:"-"`
+
+    // TestConnection is the connection ID created for tests (if connection config is provided).
+    TestConnection string `json:"-"`
+}
+```
+
+<a name="LoadConfig"></a>
+### func LoadConfig
+
+```go
+func LoadConfig(path string) (*Config, error)
+```
+
+LoadConfig loads the configuration from a JSON file.
+
+<a name="Config.Validate"></a>
+### func \(\*Config\) Validate
+
+```go
+func (c *Config) Validate() error
+```
+
+Validate checks if the configuration is valid.
+
+<a name="ConnectionConfig"></a>
+## type ConnectionConfig
+
+ConnectionConfig holds configuration for a test connection.
+
+```go
+type ConnectionConfig struct {
+    // ConnectorName is the name of the connector to use (e.g., "HTTP", "PostgreSQL", "MySQL").
+    // The connector ID will be looked up automatically using GET /connectors.
+    ConnectorName string `json:"connector_name"`
+
+    // Details contains connector-specific connection details (credentials, endpoints, etc.).
+    Details map[string]any `json:"details"`
+
+    // Settings contains connector-specific settings.
+    Settings map[string]any `json:"settings"`
+
+    // ConnectorID is populated at runtime after looking up the connector by name.
+    ConnectorID string `json:"-"`
+}
+```
+
+# runner
+
+```go
+import "github.com/IrminData/irmin-e2e-tests/runner"
+```
+
+## Index
+
+- [type Runner](<#Runner>)
+  - [func NewRunner\(cfg \*config.Config, logger \*slog.Logger\) \*Runner](<#NewRunner>)
+  - [func \(r \*Runner\) Cleanup\(ctx context.Context\) error](<#Runner.Cleanup>)
+  - [func \(r \*Runner\) Client\(\) \*irmincore.Client](<#Runner.Client>)
+  - [func \(r \*Runner\) Config\(\) \*config.Config](<#Runner.Config>)
+  - [func \(r \*Runner\) HasFailures\(\) bool](<#Runner.HasFailures>)
+  - [func \(r \*Runner\) PrintSummary\(\)](<#Runner.PrintSummary>)
+  - [func \(r \*Runner\) RunTests\(ctx context.Context, tests \[\]TestCase\) \[\]TestResult](<#Runner.RunTests>)
+  - [func \(r \*Runner\) Setup\(ctx context.Context\) error](<#Runner.Setup>)
+- [type TestCase](<#TestCase>)
+- [type TestFunc](<#TestFunc>)
+- [type TestResult](<#TestResult>)
+
+
+<a name="Runner"></a>
+## type Runner
+
+Runner executes E2E tests.
+
+```go
+type Runner struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewRunner"></a>
+### func NewRunner
+
+```go
+func NewRunner(cfg *config.Config, logger *slog.Logger) *Runner
+```
+
+NewRunner creates a new test runner.
+
+<a name="Runner.Cleanup"></a>
+### func \(\*Runner\) Cleanup
+
+```go
+func (r *Runner) Cleanup(ctx context.Context) error
+```
+
+Cleanup deletes the shared workspace \(which cascades to delete the repository\).
+
+<a name="Runner.Client"></a>
+### func \(\*Runner\) Client
+
+```go
+func (r *Runner) Client() *irmincore.Client
+```
+
+Client returns the underlying API client.
+
+<a name="Runner.Config"></a>
+### func \(\*Runner\) Config
+
+```go
+func (r *Runner) Config() *config.Config
+```
+
+Config returns the runner's configuration.
+
+<a name="Runner.HasFailures"></a>
+### func \(\*Runner\) HasFailures
+
+```go
+func (r *Runner) HasFailures() bool
+```
+
+HasFailures returns true if any tests failed.
+
+<a name="Runner.PrintSummary"></a>
+### func \(\*Runner\) PrintSummary
+
+```go
+func (r *Runner) PrintSummary()
+```
+
+PrintSummary prints a summary of test results.
+
+<a name="Runner.RunTests"></a>
+### func \(\*Runner\) RunTests
+
+```go
+func (r *Runner) RunTests(ctx context.Context, tests []TestCase) []TestResult
+```
+
+RunTests executes all provided test cases.
+
+<a name="Runner.Setup"></a>
+### func \(\*Runner\) Setup
+
+```go
+func (r *Runner) Setup(ctx context.Context) error
+```
+
+Setup creates the shared workspace and repository for tests.
+
+<a name="TestCase"></a>
+## type TestCase
+
+TestCase represents a single test case.
+
+```go
+type TestCase struct {
+    Name        string
+    Description string
+    Run         TestFunc
+}
+```
+
+<a name="TestFunc"></a>
+## type TestFunc
+
+TestFunc is the signature for a test function.
+
+```go
+type TestFunc func(ctx context.Context, client *irmincore.Client, cfg *config.Config) error
+```
+
+<a name="TestResult"></a>
+## type TestResult
+
+TestResult holds the result of a single test.
+
+```go
+type TestResult struct {
+    Name     string
+    Passed   bool
+    Duration time.Duration
+    Error    error
+}
+```
+
+# scenarios
+
+```go
+import "github.com/IrminData/irmin-e2e-tests/scenarios"
+```
+
+## Index
+
+- [func AIApplicationScenarios\(\) \[\]runner.TestCase](<#AIApplicationScenarios>)
+- [func BranchScenarios\(\) \[\]runner.TestCase](<#BranchScenarios>)
+- [func CommitScenarios\(\) \[\]runner.TestCase](<#CommitScenarios>)
+- [func ConnectionScenarios\(\) \[\]runner.TestCase](<#ConnectionScenarios>)
+- [func ConnectorScenarios\(\) \[\]runner.TestCase](<#ConnectorScenarios>)
+- [func CredentialScenarios\(\) \[\]runner.TestCase](<#CredentialScenarios>)
+- [func EmbeddingScenarios\(\) \[\]runner.TestCase](<#EmbeddingScenarios>)
+- [func GitTagScenarios\(\) \[\]runner.TestCase](<#GitTagScenarios>)
+- [func InviteScenarios\(\) \[\]runner.TestCase](<#InviteScenarios>)
+- [func LogScenarios\(\) \[\]runner.TestCase](<#LogScenarios>)
+- [func MergeCompareScenarios\(\) \[\]runner.TestCase](<#MergeCompareScenarios>)
+- [func ObjectAdvancedScenarios\(\) \[\]runner.TestCase](<#ObjectAdvancedScenarios>)
+- [func ObjectScenarios\(\) \[\]runner.TestCase](<#ObjectScenarios>)
+- [func PolicyScenarios\(\) \[\]runner.TestCase](<#PolicyScenarios>)
+- [func ProfileScenarios\(\) \[\]runner.TestCase](<#ProfileScenarios>)
+- [func QueryScenarios\(\) \[\]runner.TestCase](<#QueryScenarios>)
+- [func RepositoryScenarios\(\) \[\]runner.TestCase](<#RepositoryScenarios>)
+- [func RoleScenarios\(\) \[\]runner.TestCase](<#RoleScenarios>)
+- [func ScriptScenarios\(\) \[\]runner.TestCase](<#ScriptScenarios>)
+- [func SearchScenarios\(\) \[\]runner.TestCase](<#SearchScenarios>)
+- [func UserScenarios\(\) \[\]runner.TestCase](<#UserScenarios>)
+- [func WorkflowRunScenarios\(\) \[\]runner.TestCase](<#WorkflowRunScenarios>)
+- [func WorkflowScenarios\(\) \[\]runner.TestCase](<#WorkflowScenarios>)
+- [func WorkspaceScenarios\(\) \[\]runner.TestCase](<#WorkspaceScenarios>)
+- [func WorkspaceTagScenarios\(\) \[\]runner.TestCase](<#WorkspaceTagScenarios>)
+
+
+<a name="AIApplicationScenarios"></a>
+## func AIApplicationScenarios
+
+```go
+func AIApplicationScenarios() []runner.TestCase
+```
+
+AIApplicationScenarios returns test cases for AI application operations.
+
+<a name="BranchScenarios"></a>
+## func BranchScenarios
+
+```go
+func BranchScenarios() []runner.TestCase
+```
+
+BranchScenarios returns test cases for branch operations.
+
+<a name="CommitScenarios"></a>
+## func CommitScenarios
+
+```go
+func CommitScenarios() []runner.TestCase
+```
+
+CommitScenarios returns test cases for commit operations.
+
+<a name="ConnectionScenarios"></a>
+## func ConnectionScenarios
+
+```go
+func ConnectionScenarios() []runner.TestCase
+```
+
+ConnectionScenarios returns test cases for connection operations.
+
+<a name="ConnectorScenarios"></a>
+## func ConnectorScenarios
+
+```go
+func ConnectorScenarios() []runner.TestCase
+```
+
+ConnectorScenarios returns test cases for connector operations.
+
+<a name="CredentialScenarios"></a>
+## func CredentialScenarios
+
+```go
+func CredentialScenarios() []runner.TestCase
+```
+
+CredentialScenarios returns test cases for API credential/token operations.
+
+<a name="EmbeddingScenarios"></a>
+## func EmbeddingScenarios
+
+```go
+func EmbeddingScenarios() []runner.TestCase
+```
+
+EmbeddingScenarios returns test cases for embedding operations.
+
+<a name="GitTagScenarios"></a>
+## func GitTagScenarios
+
+```go
+func GitTagScenarios() []runner.TestCase
+```
+
+GitTagScenarios returns test cases for git tag operations.
+
+<a name="InviteScenarios"></a>
+## func InviteScenarios
+
+```go
+func InviteScenarios() []runner.TestCase
+```
+
+InviteScenarios returns test cases for invite operations.
+
+<a name="LogScenarios"></a>
+## func LogScenarios
+
+```go
+func LogScenarios() []runner.TestCase
+```
+
+LogScenarios returns test cases for audit log operations.
+
+<a name="MergeCompareScenarios"></a>
+## func MergeCompareScenarios
+
+```go
+func MergeCompareScenarios() []runner.TestCase
+```
+
+MergeCompareScenarios returns test cases for merge and compare operations.
+
+<a name="ObjectAdvancedScenarios"></a>
+## func ObjectAdvancedScenarios
+
+```go
+func ObjectAdvancedScenarios() []runner.TestCase
+```
+
+ObjectAdvancedScenarios returns test cases for advanced object operations.
+
+<a name="ObjectScenarios"></a>
+## func ObjectScenarios
+
+```go
+func ObjectScenarios() []runner.TestCase
+```
+
+ObjectScenarios returns test cases for object/file operations.
+
+<a name="PolicyScenarios"></a>
+## func PolicyScenarios
+
+```go
+func PolicyScenarios() []runner.TestCase
+```
+
+PolicyScenarios returns test cases for policy operations.
+
+<a name="ProfileScenarios"></a>
+## func ProfileScenarios
+
+```go
+func ProfileScenarios() []runner.TestCase
+```
+
+ProfileScenarios returns test cases for profile and workspace operations.
+
+<a name="QueryScenarios"></a>
+## func QueryScenarios
+
+```go
+func QueryScenarios() []runner.TestCase
+```
+
+QueryScenarios returns test cases for SQL query operations.
+
+<a name="RepositoryScenarios"></a>
+## func RepositoryScenarios
+
+```go
+func RepositoryScenarios() []runner.TestCase
+```
+
+RepositoryScenarios returns test cases for repository operations.
+
+<a name="RoleScenarios"></a>
+## func RoleScenarios
+
+```go
+func RoleScenarios() []runner.TestCase
+```
+
+RoleScenarios returns test cases for role operations.
+
+<a name="ScriptScenarios"></a>
+## func ScriptScenarios
+
+```go
+func ScriptScenarios() []runner.TestCase
+```
+
+ScriptScenarios returns test cases for stored script operations.
+
+<a name="SearchScenarios"></a>
+## func SearchScenarios
+
+```go
+func SearchScenarios() []runner.TestCase
+```
+
+SearchScenarios returns test cases for search operations.
+
+<a name="UserScenarios"></a>
+## func UserScenarios
+
+```go
+func UserScenarios() []runner.TestCase
+```
+
+UserScenarios returns test cases for user operations.
+
+<a name="WorkflowRunScenarios"></a>
+## func WorkflowRunScenarios
+
+```go
+func WorkflowRunScenarios() []runner.TestCase
+```
+
+WorkflowRunScenarios returns test cases for workflow run operations.
+
+<a name="WorkflowScenarios"></a>
+## func WorkflowScenarios
+
+```go
+func WorkflowScenarios() []runner.TestCase
+```
+
+WorkflowScenarios returns test cases for workflow operations.
+
+<a name="WorkspaceScenarios"></a>
+## func WorkspaceScenarios
+
+```go
+func WorkspaceScenarios() []runner.TestCase
+```
+
+WorkspaceScenarios returns test cases for workspace operations.
+
+<a name="WorkspaceTagScenarios"></a>
+## func WorkspaceTagScenarios
+
+```go
+func WorkspaceTagScenarios() []runner.TestCase
+```
+
+WorkspaceTagScenarios returns test cases for workspace tag operations.
 
 # repositoryobjectcache
 

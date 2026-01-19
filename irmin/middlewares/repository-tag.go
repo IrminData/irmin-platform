@@ -26,7 +26,7 @@ func (api *APIMiddlewares) RepositoryTagMiddleware(c fiber.Ctx) error {
 	}
 
 	// Parse the tag name from the request URL.
-	tagName := c.Params("repository-tag")
+	tagName := c.Params("tag")
 
 	// Get the tag from the service
 	// Use context.Background() instead of Fiber context to ensure timeouts work properly for LakeFS calls
@@ -36,7 +36,7 @@ func (api *APIMiddlewares) RepositoryTagMiddleware(c fiber.Ctx) error {
 	}
 
 	// Set the tag in the context for subsequent handlers.
-	c.Locals("repository-tag", tag)
+	c.Locals("tag", tag)
 
 	return c.Next()
 }

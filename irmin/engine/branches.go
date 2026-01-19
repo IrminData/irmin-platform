@@ -148,14 +148,14 @@ func (c *Client) createBranchInternal(
 	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Check if "from" is a branch and find the latest commit ID.
-	fromBranch, getBranchErr := c.LakeFSClient.GetBranch(lakeFSRepositoryName, from)
+	// If "from" is not a branch (e.g., it's a commit hash), use it directly as the source ref.
 	fromRef := from
-	if getBranchErr != nil {
-		return nil, fmt.Errorf("failed to get branch %s: %w", from, getBranchErr)
-	}
-	if fromBranch != nil {
+	fromBranch, getBranchErr := c.LakeFSClient.GetBranch(lakeFSRepositoryName, from)
+	if getBranchErr == nil && fromBranch != nil {
+		// "from" is a valid branch, use its latest commit
 		fromRef = fromBranch.CommitID
 	}
+	// If getBranchErr is not nil, assume "from" is already a commit ref (hash) and use it directly
 
 	// Build branch creation request payload.
 	reqData := lakefs.BranchCreateRequest{
