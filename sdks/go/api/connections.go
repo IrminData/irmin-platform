@@ -1,9 +1,11 @@
 package irmincore
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -192,4 +194,123 @@ func (c *Client) TestConnection(
 		return nil, nil, fmt.Errorf("test connection error: %w", err)
 	}
 	return &validationResult, apiResp, nil
+}
+
+// ValidateSchemaFile represents a file to be validated against a connection schema.
+type ValidateSchemaFile struct {
+	// FileName is the name of the file (used for matching against group schema children).
+	FileName string
+	// Content is the file content as bytes.
+	Content []byte
+}
+
+// ValidateSchema validates data files against a connection's schema.
+//
+// For group schemas (schemas with multiple children like "users.json", "orders.json"),
+// files are automatically matched to child schemas by filename (case-insensitive).
+// For single schemas, all files are validated against the same schema.
+//
+// Parameters:
+//   - workspace: The workspace slug
+//   - connectionID: The connection's identifier
+//   - operationMethod: The operation method ("push" or "pull")
+//   - path: Optional path within the connection schema (empty string for root)
+//   - files: Files to validate (map of filename to content)
+//
+// The auto-matching logic works as follows:
+//   - If the target schema is a group, each file is matched by name to a child schema
+//   - Files that don't match any child schema will generate a warning
+//   - If the target schema is not a group, all files validate against it
+func (c *Client) ValidateSchema(
+	ctx context.Context,
+	workspace, connectionID, operationMethod, path string,
+	files []ValidateSchemaFile,
+) (*irminmodels.SchemaValidationResult, *irminmodels.IrminAPIResponse, error) {
+	// Build query parameters
+	params := url.Values{}
+	params.Set("operation_method", operationMethod)
+	if path != "" {
+		params.Set("path", path)
+	}
+
+	// Convert files to FormFile slice
+	formFiles := make([]FormFile, 0, len(files))
+	for _, f := range files {
+		formFiles = append(formFiles, FormFile{
+			FieldName: "files",
+			FileName:  f.FileName,
+			Reader:    bytes.NewReader(f.Content),
+		})
+	}
+
+	var result irminmodels.SchemaValidationResult
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/connections/%s/schema/validate?%s",
+			workspace,
+			connectionID,
+			params.Encode(),
+		),
+		ContentType: "multipart/form-data",
+		Files:       formFiles,
+	}, &result)
+	if err != nil {
+		return nil, nil, fmt.Errorf("validate schema error: %w", err)
+	}
+	return &result, apiResp, nil
+}
+
+// DiffSchema compares the schema of uploaded data against the connection's expected schema.
+//
+// This is useful for detecting schema drift or understanding what changes would be
+// needed to make data compatible with a connection's schema.
+//
+// Parameters:
+//   - workspace: The workspace slug
+//   - connectionID: The connection's identifier
+//   - operationMethod: The operation method ("push" or "pull")
+//   - path: Optional path within the connection schema (empty string for root)
+//   - file: The file to compare schema for
+//
+// Returns a SchemaDiff containing:
+//   - Whether schemas are compatible
+//   - Breaking changes (would cause validation failures)
+//   - Non-breaking changes (additive changes, type widenings)
+func (c *Client) DiffSchema(
+	ctx context.Context,
+	workspace, connectionID, operationMethod, path string,
+	file ValidateSchemaFile,
+) (*irminmodels.SchemaDiff, *irminmodels.IrminAPIResponse, error) {
+	// Build query parameters
+	params := url.Values{}
+	params.Set("operation_method", operationMethod)
+	if path != "" {
+		params.Set("path", path)
+	}
+
+	formFiles := []FormFile{
+		{
+			FieldName: "file",
+			FileName:  file.FileName,
+			Reader:    bytes.NewReader(file.Content),
+		},
+	}
+
+	var result irminmodels.SchemaDiff
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/connections/%s/schema/diff?%s",
+			workspace,
+			connectionID,
+			params.Encode(),
+		),
+		ContentType: "multipart/form-data",
+		Files:       formFiles,
+	}, &result)
+	if err != nil {
+		return nil, nil, fmt.Errorf("diff schema error: %w", err)
+	}
+	return &result, apiResp, nil
 }
