@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -178,4 +180,69 @@ func (c *Client) TransferAIApplication(
 		return nil, nil, fmt.Errorf("AI application ownership transfer error: %w", err)
 	}
 	return &aiApplication, apiResp, nil
+}
+
+// GetAIApplicationToolLogsOptions contains optional parameters for fetching tool logs.
+type GetAIApplicationToolLogsOptions struct {
+	Limit    int
+	Offset   int
+	ToolName string
+	Success  *bool
+}
+
+// GetAIApplicationToolLogs retrieves tool call audit logs for an AI application.
+func (c *Client) GetAIApplicationToolLogs(
+	ctx context.Context,
+	workspace, aiApplicationID string,
+	opts *GetAIApplicationToolLogsOptions,
+) (*irminmodels.AIApplicationToolLogsResponse, *irminmodels.IrminAPIResponse, error) {
+	endpoint := fmt.Sprintf("/v1/workspaces/%s/ai-applications/%s/tool-logs", workspace, aiApplicationID)
+
+	// Build query parameters
+	params := url.Values{}
+	if opts != nil {
+		if opts.Limit > 0 {
+			params.Set("limit", strconv.Itoa(opts.Limit))
+		}
+		if opts.Offset > 0 {
+			params.Set("offset", strconv.Itoa(opts.Offset))
+		}
+		if opts.ToolName != "" {
+			params.Set("tool_name", opts.ToolName)
+		}
+		if opts.Success != nil {
+			params.Set("success", strconv.FormatBool(*opts.Success))
+		}
+	}
+
+	// Append query parameters to endpoint
+	if len(params) > 0 {
+		endpoint += "?" + params.Encode()
+	}
+
+	var logsResponse irminmodels.AIApplicationToolLogsResponse
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: endpoint,
+	}, &logsResponse)
+	if err != nil {
+		return nil, nil, fmt.Errorf("get AI application tool logs error: %w", err)
+	}
+	return &logsResponse, apiResp, nil
+}
+
+// GetAIApplicationToolLogStats retrieves aggregated statistics for tool calls.
+func (c *Client) GetAIApplicationToolLogStats(
+	ctx context.Context,
+	workspace, aiApplicationID string,
+) (*irminmodels.AIApplicationToolLogStats, *irminmodels.IrminAPIResponse, error) {
+	var stats irminmodels.AIApplicationToolLogStats
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/ai-applications/%s/tool-logs/stats", workspace, aiApplicationID),
+	}, &stats)
+	if err != nil {
+		return nil, nil, fmt.Errorf("get AI application tool log stats error: %w", err)
+	}
+	return &stats, apiResp, nil
 }

@@ -379,6 +379,29 @@ func (c *Client) DeleteWorkspaceTag(
 ) (*irminmodels.IrminAPIResponse, error)
     DeleteWorkspaceTag deletes a workspace tag.
 
+func (c *Client) DiffSchema(
+	ctx context.Context,
+	workspace, connectionID, operationMethod, path string,
+	file ValidateSchemaFile,
+) (*irminmodels.SchemaDiff, *irminmodels.IrminAPIResponse, error)
+    DiffSchema compares the schema of uploaded data against the connection's
+    expected schema.
+
+    This is useful for detecting schema drift or understanding what changes
+    would be needed to make data compatible with a connection's schema.
+
+    Parameters:
+      - workspace: The workspace slug
+      - connectionID: The connection's identifier
+      - operationMethod: The operation method ("push" or "pull")
+      - path: Optional path within the connection schema (empty string for root)
+      - file: The file to compare schema for
+
+    Returns a SchemaDiff containing:
+      - Whether schemas are compatible
+      - Breaking changes (would cause validation failures)
+      - Non-breaking changes (additive changes, type widenings)
+
 func (c *Client) DownloadObject(ctx context.Context, workspace, repository, path, ref string) ([]byte, error)
     DownloadObject creates a zip file of the object at the given path and ref
     and returns the binary data.
@@ -501,6 +524,20 @@ func (c *Client) GetAIApplication(
 	workspace, aiApplicationID string,
 ) (*irminmodels.AIApplication, *irminmodels.IrminAPIResponse, error)
     GetAIApplication retrieves a specific AI application by ID.
+
+func (c *Client) GetAIApplicationToolLogStats(
+	ctx context.Context,
+	workspace, aiApplicationID string,
+) (*irminmodels.AIApplicationToolLogStats, *irminmodels.IrminAPIResponse, error)
+    GetAIApplicationToolLogStats retrieves aggregated statistics for tool calls.
+
+func (c *Client) GetAIApplicationToolLogs(
+	ctx context.Context,
+	workspace, aiApplicationID string,
+	opts *GetAIApplicationToolLogsOptions,
+) (*irminmodels.AIApplicationToolLogsResponse, *irminmodels.IrminAPIResponse, error)
+    GetAIApplicationToolLogs retrieves tool call audit logs for an AI
+    application.
 
 func (c *Client) GetBranch(
 	ctx context.Context,
@@ -1044,6 +1081,31 @@ func (c *Client) ValidateRequestEnhanced(req any) *irminvalidator.ValidationResu
     cases: - A single user-friendly message - A map of field-specific error
     messages - The original validation errors.
 
+func (c *Client) ValidateSchema(
+	ctx context.Context,
+	workspace, connectionID, operationMethod, path string,
+	files []ValidateSchemaFile,
+) (*irminmodels.SchemaValidationResult, *irminmodels.IrminAPIResponse, error)
+    ValidateSchema validates data files against a connection's schema.
+
+    For group schemas (schemas with multiple children like "users.json",
+    "orders.json"), files are automatically matched to child schemas by filename
+    (case-insensitive). For single schemas, all files are validated against the
+    same schema.
+
+    Parameters:
+      - workspace: The workspace slug
+      - connectionID: The connection's identifier
+      - operationMethod: The operation method ("push" or "pull")
+      - path: Optional path within the connection schema (empty string for root)
+      - files: Files to validate (map of filename to content)
+
+    The auto-matching logic works as follows:
+      - If the target schema is a group, each file is matched by name to a child
+        schema
+      - Files that don't match any child schema will generate a warning
+      - If the target schema is not a group, all files validate against it
+
 func (c *Client) ValidateVar(field any, tag string) error
     ValidateVar validates a single variable against validation tags. Example:
     client.ValidateVar("test@example.com", "email").
@@ -1262,6 +1324,15 @@ type FormFile struct {
 }
     FormFile holds information about a file you want to upload with
     multipart/form-data.
+
+type GetAIApplicationToolLogsOptions struct {
+	Limit    int
+	Offset   int
+	ToolName string
+	Success  *bool
+}
+    GetAIApplicationToolLogsOptions contains optional parameters for fetching
+    tool logs.
 
 type GetEmbeddingInfoRequest struct {
 	EmbeddingPath string `json:"embedding_path" validate:"required"          example:"embeddings/documents.parquet"` // Path to the embedding file
@@ -1540,6 +1611,15 @@ type ValidateObjectResponse struct {
 }
     ValidateObjectResponse represents the response from validating a repository
     object.
+
+type ValidateSchemaFile struct {
+	// FileName is the name of the file (used for matching against group schema children).
+	FileName string
+	// Content is the file content as bytes.
+	Content []byte
+}
+    ValidateSchemaFile represents a file to be validated against a connection
+    schema.
 
 type VectorizeObjectsRequest struct {
 	SourcePaths []string                     `json:"source_paths" validate:"required,min=1,dive,required" example:"data/documents/doc1.pdf"`      // List of source file paths to vectorize

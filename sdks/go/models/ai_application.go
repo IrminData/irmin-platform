@@ -76,3 +76,45 @@ type AIApplication struct {
 	CreatedAt      time.Time                 `json:"created_at"             validate:"required"                           example:"2025-01-15T10:30:00Z"`
 	UpdatedAt      time.Time                 `json:"updated_at"             validate:"required"                           example:"2025-12-01T14:22:30Z"`
 }
+
+// AIApplicationToolLog represents an audit log entry for an AI application tool call.
+type AIApplicationToolLog struct {
+	ID         uint      `json:"id"          example:"123"`
+	ToolName   string    `json:"tool_name"   example:"irmin_execute_sql"`
+	ToolType   string    `json:"tool_type"   example:"builtin"`
+	InputsJSON string    `json:"inputs_json"`
+	Protocol   string    `json:"protocol"    example:"mcp"`
+	RequestIP  string    `json:"request_ip"  example:"192.168.1.1"`
+	UserAgent  string    `json:"user_agent"  example:"Claude/1.0"`
+	Origin     string    `json:"origin"      example:"https://app.example.com"`
+	DurationMs int64     `json:"duration_ms" example:"150"`
+	Success    bool      `json:"success"     example:"true"`
+	ErrorMsg   string    `json:"error_msg"`
+	CreatedAt  time.Time `json:"created_at"  example:"2025-01-15T10:30:00Z"`
+}
+
+// AIApplicationToolLogsResponse represents a paginated list of tool logs.
+type AIApplicationToolLogsResponse struct {
+	Logs   []AIApplicationToolLog `json:"logs"`
+	Total  int64                  `json:"total"  example:"100"`
+	Limit  int                    `json:"limit"  example:"50"`
+	Offset int                    `json:"offset" example:"0"`
+}
+
+// AIApplicationToolStat represents statistics for a specific tool.
+type AIApplicationToolStat struct {
+	ToolName      string  `json:"tool_name"       example:"irmin_execute_sql"`
+	Count         int64   `json:"count"           example:"150"`
+	AvgDurationMs float64 `json:"avg_duration_ms" example:"125.5"`
+	SuccessCount  int64   `json:"success_count"   example:"147"`
+	ErrorCount    int64   `json:"error_count"     example:"3"`
+}
+
+// AIApplicationToolLogStats represents aggregated statistics for tool calls.
+type AIApplicationToolLogStats struct {
+	TotalCalls      int64                   `json:"total_calls"      example:"500"`
+	SuccessfulCalls int64                   `json:"successful_calls" example:"485"`
+	FailedCalls     int64                   `json:"failed_calls"     example:"15"`
+	AvgDurationMs   float64                 `json:"avg_duration_ms"  example:"125.5"`
+	ByTool          []AIApplicationToolStat `json:"by_tool"`
+}

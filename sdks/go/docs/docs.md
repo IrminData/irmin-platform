@@ -196,6 +196,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) DeleteWorkflow\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkflow>)
   - [func \(c \*Client\) DeleteWorkspace\(ctx context.Context, slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkspace>)
   - [func \(c \*Client\) DeleteWorkspaceTag\(ctx context.Context, workspace, tagID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkspaceTag>)
+  - [func \(c \*Client\) DiffSchema\(ctx context.Context, workspace, connectionID, operationMethod, path string, file ValidateSchemaFile\) \(\*irminmodels.SchemaDiff, \*irminmodels.IrminAPIResponse, error\)](<#Client.DiffSchema>)
   - [func \(c \*Client\) DownloadObject\(ctx context.Context, workspace, repository, path, ref string\) \(\[\]byte, error\)](<#Client.DownloadObject>)
   - [func \(c \*Client\) ExecuteSQL\(ctx context.Context, workspace string, limitResponse bool, req ExecuteSQLRequest\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteSQL>)
   - [func \(c \*Client\) ExecuteStoredQuery\(ctx context.Context, workspace, queryID string, limitResponse bool\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteStoredQuery>)
@@ -214,6 +215,8 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) FetchLogEventsForWorkflow\(ctx context.Context, workspace, workflowID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForWorkflow>)
   - [func \(c \*Client\) GenerateFileSchema\(ctx context.Context, fileName string, fileReader io.Reader\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GenerateFileSchema>)
   - [func \(c \*Client\) GetAIApplication\(ctx context.Context, workspace, aiApplicationID string\) \(\*irminmodels.AIApplication, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplication>)
+  - [func \(c \*Client\) GetAIApplicationToolLogStats\(ctx context.Context, workspace, aiApplicationID string\) \(\*irminmodels.AIApplicationToolLogStats, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationToolLogStats>)
+  - [func \(c \*Client\) GetAIApplicationToolLogs\(ctx context.Context, workspace, aiApplicationID string, opts \*GetAIApplicationToolLogsOptions\) \(\*irminmodels.AIApplicationToolLogsResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationToolLogs>)
   - [func \(c \*Client\) GetBranch\(ctx context.Context, workspace, repository, branchName string\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetBranch>)
   - [func \(c \*Client\) GetCommit\(ctx context.Context, workspace, repository, hash string\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetCommit>)
   - [func \(c \*Client\) GetConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnection>)
@@ -312,6 +315,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) ValidateObject\(ctx context.Context, workspace, repository, path, ref string, req ValidateObjectRequest\) \(\*ValidateObjectResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.ValidateObject>)
   - [func \(c \*Client\) ValidateRequest\(req any\) error](<#Client.ValidateRequest>)
   - [func \(c \*Client\) ValidateRequestEnhanced\(req any\) \*irminvalidator.ValidationResultError](<#Client.ValidateRequestEnhanced>)
+  - [func \(c \*Client\) ValidateSchema\(ctx context.Context, workspace, connectionID, operationMethod, path string, files \[\]ValidateSchemaFile\) \(\*irminmodels.SchemaValidationResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ValidateSchema>)
   - [func \(c \*Client\) ValidateVar\(field any, tag string\) error](<#Client.ValidateVar>)
   - [func \(c \*Client\) ValidateVarEnhanced\(field any, tag string\) \*irminvalidator.ValidationResultError](<#Client.ValidateVarEnhanced>)
   - [func \(c \*Client\) VectorizeObjects\(ctx context.Context, workspace, repository string, req VectorizeObjectsRequest\) \(\*irminmodels.EmbeddingFile, \*irminmodels.IrminAPIResponse, error\)](<#Client.VectorizeObjects>)
@@ -338,6 +342,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type ExecuteSQLRequest](<#ExecuteSQLRequest>)
 - [type ExecuteScriptRequest](<#ExecuteScriptRequest>)
 - [type FormFile](<#FormFile>)
+- [type GetAIApplicationToolLogsOptions](<#GetAIApplicationToolLogsOptions>)
 - [type GetEmbeddingInfoRequest](<#GetEmbeddingInfoRequest>)
 - [type ListEmbeddingsRequest](<#ListEmbeddingsRequest>)
 - [type ListPoliciesParams](<#ListPoliciesParams>)
@@ -372,6 +377,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type UploadObjectFromURLRequest](<#UploadObjectFromURLRequest>)
 - [type ValidateObjectRequest](<#ValidateObjectRequest>)
 - [type ValidateObjectResponse](<#ValidateObjectResponse>)
+- [type ValidateSchemaFile](<#ValidateSchemaFile>)
 - [type VectorizeObjectsRequest](<#VectorizeObjectsRequest>)
 - [type WorkflowRequest](<#WorkflowRequest>)
 
@@ -976,6 +982,31 @@ func (c *Client) DeleteWorkspaceTag(ctx context.Context, workspace, tagID string
 
 DeleteWorkspaceTag deletes a workspace tag.
 
+<a name="Client.DiffSchema"></a>
+### func \(\*Client\) DiffSchema
+
+```go
+func (c *Client) DiffSchema(ctx context.Context, workspace, connectionID, operationMethod, path string, file ValidateSchemaFile) (*irminmodels.SchemaDiff, *irminmodels.IrminAPIResponse, error)
+```
+
+DiffSchema compares the schema of uploaded data against the connection's expected schema.
+
+This is useful for detecting schema drift or understanding what changes would be needed to make data compatible with a connection's schema.
+
+Parameters:
+
+- workspace: The workspace slug
+- connectionID: The connection's identifier
+- operationMethod: The operation method \("push" or "pull"\)
+- path: Optional path within the connection schema \(empty string for root\)
+- file: The file to compare schema for
+
+Returns a SchemaDiff containing:
+
+- Whether schemas are compatible
+- Breaking changes \(would cause validation failures\)
+- Non\-breaking changes \(additive changes, type widenings\)
+
 <a name="Client.DownloadObject"></a>
 ### func \(\*Client\) DownloadObject
 
@@ -1139,6 +1170,24 @@ func (c *Client) GetAIApplication(ctx context.Context, workspace, aiApplicationI
 ```
 
 GetAIApplication retrieves a specific AI application by ID.
+
+<a name="Client.GetAIApplicationToolLogStats"></a>
+### func \(\*Client\) GetAIApplicationToolLogStats
+
+```go
+func (c *Client) GetAIApplicationToolLogStats(ctx context.Context, workspace, aiApplicationID string) (*irminmodels.AIApplicationToolLogStats, *irminmodels.IrminAPIResponse, error)
+```
+
+GetAIApplicationToolLogStats retrieves aggregated statistics for tool calls.
+
+<a name="Client.GetAIApplicationToolLogs"></a>
+### func \(\*Client\) GetAIApplicationToolLogs
+
+```go
+func (c *Client) GetAIApplicationToolLogs(ctx context.Context, workspace, aiApplicationID string, opts *GetAIApplicationToolLogsOptions) (*irminmodels.AIApplicationToolLogsResponse, *irminmodels.IrminAPIResponse, error)
+```
+
+GetAIApplicationToolLogs retrieves tool call audit logs for an AI application.
 
 <a name="Client.GetBranch"></a>
 ### func \(\*Client\) GetBranch
@@ -2022,6 +2071,31 @@ func (c *Client) ValidateRequestEnhanced(req any) *irminvalidator.ValidationResu
 
 ValidateRequestEnhanced validates a request struct and returns detailed validation results. This provides multiple error formats for different use cases: \- A single user\-friendly message \- A map of field\-specific error messages \- The original validation errors.
 
+<a name="Client.ValidateSchema"></a>
+### func \(\*Client\) ValidateSchema
+
+```go
+func (c *Client) ValidateSchema(ctx context.Context, workspace, connectionID, operationMethod, path string, files []ValidateSchemaFile) (*irminmodels.SchemaValidationResult, *irminmodels.IrminAPIResponse, error)
+```
+
+ValidateSchema validates data files against a connection's schema.
+
+For group schemas \(schemas with multiple children like "users.json", "orders.json"\), files are automatically matched to child schemas by filename \(case\-insensitive\). For single schemas, all files are validated against the same schema.
+
+Parameters:
+
+- workspace: The workspace slug
+- connectionID: The connection's identifier
+- operationMethod: The operation method \("push" or "pull"\)
+- path: Optional path within the connection schema \(empty string for root\)
+- files: Files to validate \(map of filename to content\)
+
+The auto\-matching logic works as follows:
+
+- If the target schema is a group, each file is matched by name to a child schema
+- Files that don't match any child schema will generate a warning
+- If the target schema is not a group, all files validate against it
+
 <a name="Client.ValidateVar"></a>
 ### func \(\*Client\) ValidateVar
 
@@ -2374,6 +2448,20 @@ type FormFile struct {
     FilePath  string    // Local path to the file on disk
     Reader    io.Reader // Use if you already have a stream (os.Open, bytes.Buffer, etc.)
     FileName  string    // Optional override for the actual filename
+}
+```
+
+<a name="GetAIApplicationToolLogsOptions"></a>
+## type GetAIApplicationToolLogsOptions
+
+GetAIApplicationToolLogsOptions contains optional parameters for fetching tool logs.
+
+```go
+type GetAIApplicationToolLogsOptions struct {
+    Limit    int
+    Offset   int
+    ToolName string
+    Success  *bool
 }
 ```
 
@@ -2834,6 +2922,20 @@ type ValidateObjectResponse struct {
 }
 ```
 
+<a name="ValidateSchemaFile"></a>
+## type ValidateSchemaFile
+
+ValidateSchemaFile represents a file to be validated against a connection schema.
+
+```go
+type ValidateSchemaFile struct {
+    // FileName is the name of the file (used for matching against group schema children).
+    FileName string
+    // Content is the file content as bytes.
+    Content []byte
+}
+```
+
 <a name="VectorizeObjectsRequest"></a>
 ## type VectorizeObjectsRequest
 
@@ -3209,6 +3311,10 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type AIApplicationCustomTool](<#AIApplicationCustomTool>)
 - [type AIApplicationDataSource](<#AIApplicationDataSource>)
 - [type AIApplicationToolConfig](<#AIApplicationToolConfig>)
+- [type AIApplicationToolLog](<#AIApplicationToolLog>)
+- [type AIApplicationToolLogStats](<#AIApplicationToolLogStats>)
+- [type AIApplicationToolLogsResponse](<#AIApplicationToolLogsResponse>)
+- [type AIApplicationToolStat](<#AIApplicationToolStat>)
 - [type APIToken](<#APIToken>)
 - [type ActionExecutableType](<#ActionExecutableType>)
 - [type ActionInputData](<#ActionInputData>)
@@ -3409,6 +3515,72 @@ type AIApplicationToolConfig struct {
     GetContentEnabled   bool `json:"get_content_enabled"   example:"true"`
     VectorSearchEnabled bool `json:"vector_search_enabled" example:"true"`
     DocsEnabled         bool `json:"docs_enabled"          example:"true"`
+}
+```
+
+<a name="AIApplicationToolLog"></a>
+## type AIApplicationToolLog
+
+AIApplicationToolLog represents an audit log entry for an AI application tool call.
+
+```go
+type AIApplicationToolLog struct {
+    ID         uint      `json:"id"          example:"123"`
+    ToolName   string    `json:"tool_name"   example:"irmin_execute_sql"`
+    ToolType   string    `json:"tool_type"   example:"builtin"`
+    InputsJSON string    `json:"inputs_json"`
+    Protocol   string    `json:"protocol"    example:"mcp"`
+    RequestIP  string    `json:"request_ip"  example:"192.168.1.1"`
+    UserAgent  string    `json:"user_agent"  example:"Claude/1.0"`
+    Origin     string    `json:"origin"      example:"https://app.example.com"`
+    DurationMs int64     `json:"duration_ms" example:"150"`
+    Success    bool      `json:"success"     example:"true"`
+    ErrorMsg   string    `json:"error_msg"`
+    CreatedAt  time.Time `json:"created_at"  example:"2025-01-15T10:30:00Z"`
+}
+```
+
+<a name="AIApplicationToolLogStats"></a>
+## type AIApplicationToolLogStats
+
+AIApplicationToolLogStats represents aggregated statistics for tool calls.
+
+```go
+type AIApplicationToolLogStats struct {
+    TotalCalls      int64                   `json:"total_calls"      example:"500"`
+    SuccessfulCalls int64                   `json:"successful_calls" example:"485"`
+    FailedCalls     int64                   `json:"failed_calls"     example:"15"`
+    AvgDurationMs   float64                 `json:"avg_duration_ms"  example:"125.5"`
+    ByTool          []AIApplicationToolStat `json:"by_tool"`
+}
+```
+
+<a name="AIApplicationToolLogsResponse"></a>
+## type AIApplicationToolLogsResponse
+
+AIApplicationToolLogsResponse represents a paginated list of tool logs.
+
+```go
+type AIApplicationToolLogsResponse struct {
+    Logs   []AIApplicationToolLog `json:"logs"`
+    Total  int64                  `json:"total"  example:"100"`
+    Limit  int                    `json:"limit"  example:"50"`
+    Offset int                    `json:"offset" example:"0"`
+}
+```
+
+<a name="AIApplicationToolStat"></a>
+## type AIApplicationToolStat
+
+AIApplicationToolStat represents statistics for a specific tool.
+
+```go
+type AIApplicationToolStat struct {
+    ToolName      string  `json:"tool_name"       example:"irmin_execute_sql"`
+    Count         int64   `json:"count"           example:"150"`
+    AvgDurationMs float64 `json:"avg_duration_ms" example:"125.5"`
+    SuccessCount  int64   `json:"success_count"   example:"147"`
+    ErrorCount    int64   `json:"error_count"     example:"3"`
 }
 ```
 
