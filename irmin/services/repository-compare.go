@@ -58,7 +58,7 @@ func (api *APIServices) CompareRepositoryRefs(
 	}
 
 	// Compare the refs
-	diff, err := dataEngine.CompareRefs(c, workspace.Slug, repository.Slug, baseRef, compareRef)
+	diff, err := dataEngine.CompareRefs(c, user, workspace, repository.Slug, baseRef, compareRef)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error comparing refs", "error", err)
 		return nil, NewInternalErrorf("error comparing refs: %w", err)

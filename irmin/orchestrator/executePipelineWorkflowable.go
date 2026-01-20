@@ -10,6 +10,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/embeddings"
 	"irmin-api/engine"
+	enginevalidation "irmin-api/engine/validation"
 	"irmin-api/lib"
 	"irmin-api/utils"
 	"maps"
@@ -1211,7 +1212,7 @@ func (o *Orchestrator) validateFiles(
 	sort.Strings(fileNames)
 
 	// Create validation config with DuckDB support
-	validationConfig := &lib.ValidationConfig{
+	validationConfig := &enginevalidation.Config{
 		Ctx:    ctx,
 		Env:    o.env,
 		Logger: o.logger,
@@ -1235,7 +1236,7 @@ func (o *Orchestrator) validateFiles(
 		// Log actual data structure (for JSON files)
 		o.logValidationDataStructure(fileData, logs)
 
-		result := lib.ValidateDataAgainstSchemaWithConfig(fileName, fileData, stage.ValidationSchema, validationConfig)
+		result := enginevalidation.ValidateFile(ctx, fileName, fileData, stage.ValidationSchema, validationConfig)
 		filesValidated++
 
 		// Log results
@@ -1245,8 +1246,8 @@ func (o *Orchestrator) validateFiles(
 		} else {
 			*logs = append(*logs, fmt.Sprintf("✗ File '%s' failed validation:", fileName))
 			for _, err := range result.Errors {
-				*logs = append(*logs, fmt.Sprintf("  - %s", err))
-				validationErrors = append(validationErrors, fmt.Sprintf("%s: %s", fileName, err))
+				*logs = append(*logs, fmt.Sprintf("  - %s", err.Message))
+				validationErrors = append(validationErrors, fmt.Sprintf("%s: %s", fileName, err.Message))
 			}
 		}
 

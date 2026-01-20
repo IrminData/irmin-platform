@@ -1,0 +1,158 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/engine/validation</title></head><body>
+<h1>Package irmin-api/engine/validation</h1>
+<pre>
+package validation // import "irmin-api/engine/validation"
+
+Package validation provides schema diff functionality for comparing
+ObjectSchemas.
+
+Package validation provides unified schema validation for the Irmin data engine.
+It supports JSON schema validation, DuckDB-based structured file validation,
+and schema compatibility checking.
+
+CONSTANTS
+
+const (
+	ValidationErrorMissingField = irminmodels.ValidationErrorMissingField
+	ValidationErrorTypeMismatch = irminmodels.ValidationErrorTypeMismatch
+	ValidationErrorConstraint   = irminmodels.ValidationErrorConstraint
+	ValidationErrorFormat       = irminmodels.ValidationErrorFormat
+	ValidationErrorExtraField   = irminmodels.ValidationErrorExtraField
+	ValidationErrorNullValue    = irminmodels.ValidationErrorNullValue
+	ValidationErrorEnumValue    = irminmodels.ValidationErrorEnumValue
+	ValidationErrorArrayItems   = irminmodels.ValidationErrorArrayItems
+)
+    Re-export error type constants for convenience.
+
+
+FUNCTIONS
+
+func AreSchemaTypesCompatible(sourceType, targetType string) bool
+    AreSchemaTypesCompatible checks if two schema types are compatible for data
+    operations. Returns true if data conforming to sourceType can be safely
+    converted to targetType.
+
+func CompareSchemas(source, target *irminmodels.ObjectSchema) *irminmodels.SchemaDiff
+    CompareSchemas compares two ObjectSchemas and returns a detailed diff. The
+    source is typically the current/existing schema, target is the new/expected
+    schema.
+
+func GenerateValidationSuggestion(err SchemaValidationError) string
+    GenerateValidationSuggestion creates a helpful suggestion for a validation
+    error.
+
+func GetSchemaCompatibilityIssues(diff *SchemaDiff) []string
+    GetSchemaCompatibilityIssues returns a list of human-readable compatibility
+    issues. This provides a simple string list for quick display without the
+    full SchemaDiff structure.
+
+func IsBreakingChange(fieldDiff irminmodels.SchemaFieldDiff) bool
+    IsBreakingChange determines if a single field diff represents a breaking
+    change.
+
+func ValidateStructuredFile(
+	ctx context.Context,
+	fileName string,
+	data []byte,
+	schema *JSONSchema,
+	env *utils.CoreAPIEnv,
+	logger *slog.Logger,
+) ([]string, []string)
+    ValidateStructuredFile validates a non-JSON structured file against its
+    expected schema. It uses DuckDB to read the file, extract its actual schema,
+    and compare it against the expected schema.
+
+
+TYPES
+
+type Config struct {
+	// Ctx is the context for the validation operation.
+	Ctx context.Context
+
+	// Env provides environment configuration for DuckDB operations.
+	Env *utils.CoreAPIEnv
+
+	// Logger is used for logging validation operations.
+	Logger *slog.Logger
+}
+    Config holds configuration for schema validation operations.
+
+type JSONSchema = irminmodels.JSONSchema
+    JSONSchema represents a JSON Schema definition.
+
+type ObjectSchema = irminmodels.ObjectSchema
+    ObjectSchema represents a schema for an object (file or directory).
+
+type SchemaDiff = irminmodels.SchemaDiff
+    SchemaDiff represents a comparison between two schemas.
+
+func CheckSchemaCompatibility(
+	dataSchema *ObjectSchema,
+	targetSchema *ObjectSchema,
+) *SchemaDiff
+    CheckSchemaCompatibility compares a data schema against a target connector
+    schema. Returns a SchemaDiff indicating whether the schemas are compatible
+    and what differences exist. This is useful for pre-flight checks before push
+    operations to ensure data will be accepted.
+
+type SchemaField struct {
+	Name         string        `json:"name"`
+	Type         string        `json:"type"`
+	Required     bool          `json:"required"`
+	Children     []SchemaField `json:"children,omitempty"`
+	OriginalType string        `json:"original_type,omitempty"`
+}
+    SchemaField represents one column or nested field in the DuckDB schema.
+
+type SchemaFieldDiff = irminmodels.SchemaFieldDiff
+    SchemaFieldDiff represents a single field-level difference between two
+    schemas.
+
+type SchemaValidationError = irminmodels.SchemaValidationError
+    SchemaValidationError represents a single validation failure with detailed
+    context.
+
+func ValidateJSONAgainstSchema(
+	_ context.Context,
+	fileName string,
+	data []byte,
+	schema *JSONSchema,
+) []SchemaValidationError
+    ValidateJSONAgainstSchema validates JSON data against a JSON schema. Returns
+    detailed validation errors with field paths and suggestions.
+
+type SchemaValidationErrorType = irminmodels.SchemaValidationErrorType
+    SchemaValidationErrorType categorizes the kind of validation failure.
+
+type SchemaValidationResult = irminmodels.SchemaValidationResult
+    SchemaValidationResult represents the complete outcome of schema validation.
+
+func NewInvalidResult(errors ...SchemaValidationError) *SchemaValidationResult
+    NewInvalidResult creates a new invalid SchemaValidationResult with initial
+    errors.
+
+func NewValidResult() *SchemaValidationResult
+    NewValidResult creates a new valid SchemaValidationResult.
+
+func ValidateFile(
+	ctx context.Context,
+	fileName string,
+	data []byte,
+	schema *ObjectSchema,
+	config *Config,
+) *SchemaValidationResult
+    ValidateFile validates a single file's data against an ObjectSchema.
+    Returns detailed validation results with field paths and suggestions.
+
+func ValidateFiles(
+	ctx context.Context,
+	files map[string][]byte,
+	schema *ObjectSchema,
+	config *Config,
+) *SchemaValidationResult
+    ValidateFiles validates multiple files against an ObjectSchema. This is the
+    main entry point for validating data before push operations.
+
+</pre>
+</body></html>

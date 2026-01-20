@@ -5,6 +5,14 @@
 package controllers // import "irmin-api/controllers"
 
 
+FUNCTIONS
+
+func CollectMultipartFiles(c fiber.Ctx, fieldNames ...string) (map[string][]byte, error)
+    CollectMultipartFiles collects files from a multipart form request. It
+    checks multiple field names and returns a map of filename to file contents.
+    Exported for testing.
+
+
 TYPES
 
 type APIControllers struct {
@@ -282,6 +290,58 @@ func (api *APIControllers) ConnectionSchema(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "Connection not found" @Failure 500
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/connections/{connection_slug}/schema [get]
+
+func (api *APIControllers) ConnectionSchemaDiff(c fiber.Ctx) error
+    ConnectionSchemaDiff godoc @Summary Compare data schema against connection
+    schema @Description Compares the schema of uploaded data against the
+    connection's expected schema @Tags connections @Security ApiKeyAuth @Accept
+    multipart/form-data @Produce json @Param workspace_slug path string true
+    "Workspace slug" @Param connection_slug path string true "Connection ID"
+    @Param operation_method query string true "Operation method (push or pull)"
+    @Param path query string false "Connection path for schema lookup" @Param
+    file formData file true "Data file to compare schema (JSON)" @Success
+    200 {object} irminmodels.IrminAPIResponse{data=irminmodels.SchemaDiff}
+    "Schema diff completed" @Failure 400 {object} irminmodels.IrminAPIResponse
+    "Invalid request" @Failure 401 {object} irminmodels.IrminAPIResponse
+    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "Connection not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/connections/{connection_slug}/schema/diff
+    [post]
+
+func (api *APIControllers) ConnectionSchemaValidate(c fiber.Ctx) error
+    ConnectionSchemaValidate godoc @Summary Validate data against
+    connection schema @Description Validates uploaded data files against
+    the connection's schema for the specified operation. @Description
+    @Description **Supported formats:** JSON, CSV, Parquet, Excel (.xlsx,
+    .xls), TSV, JSONL/NDJSON @Description @Description **Auto-matching for
+    group schemas:** @Description When the target schema is a group (e.g.,
+    a connector's root with children like users.json, orders.json),
+    @Description uploaded files are automatically matched to child schemas
+    by filename (case-insensitive). @Description - Files matching a child
+    schema are validated against that specific schema @Description - Files not
+    matching any child generate a warning but don't fail validation @Description
+    - Use the 'path' parameter to target a specific child schema directly
+    @Description @Description **Single schema validation:** @Description
+    When the target schema is a single structured file, all uploaded files
+    are validated against it. @Tags connections @Security ApiKeyAuth @Accept
+    multipart/form-data @Produce json @Param workspace_slug path string true
+    "Workspace slug" @Param connection_slug path string true "Connection
+    ID" @Param operation_method query string true "Operation method (push
+    or pull)" @Param path query string false "Schema path - empty for root,
+    or specific path like 'users.json' to target a child" @Param files formData
+    file false "Data files to validate (multiple allowed, matched by filename
+    to schema children)" @Param file formData file false "Single data file
+    to validate (legacy, use 'files' for multiple)" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.SchemaValidationResult}
+    "Validation completed" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Invalid request - no files provided"
+    @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized
+    - invalid or missing authentication" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "Connection not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/connections/{connection_slug}/schema/validate
+    [post]
 
 func (api *APIControllers) ConnectionsDestroy(c fiber.Ctx) error
     ConnectionsDestroy godoc @Summary Delete connection @Description Delete

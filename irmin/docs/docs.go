@@ -3212,6 +3212,211 @@ const docTemplate = `{
                 }
             }
         },
+        "/workspaces/{workspace_slug}/connections/{connection_slug}/schema/diff": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Compares the schema of uploaded data against the connection's expected schema",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "connections"
+                ],
+                "summary": "Compare data schema against connection schema",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection ID",
+                        "name": "connection_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Operation method (push or pull)",
+                        "name": "operation_method",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection path for schema lookup",
+                        "name": "path",
+                        "in": "query"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Data file to compare schema (JSON)",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Schema diff completed",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.SchemaDiff"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Connection not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/connections/{connection_slug}/schema/validate": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Validates uploaded data files against the connection's schema for the specified operation.\n\n**Supported formats:** JSON, CSV, Parquet, Excel (.xlsx, .xls), TSV, JSONL/NDJSON\n\n**Auto-matching for group schemas:**\nWhen the target schema is a group (e.g., a connector's root with children like users.json, orders.json),\nuploaded files are automatically matched to child schemas by filename (case-insensitive).\n- Files matching a child schema are validated against that specific schema\n- Files not matching any child generate a warning but don't fail validation\n- Use the 'path' parameter to target a specific child schema directly\n\n**Single schema validation:**\nWhen the target schema is a single structured file, all uploaded files are validated against it.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "connections"
+                ],
+                "summary": "Validate data against connection schema",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection ID",
+                        "name": "connection_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Operation method (push or pull)",
+                        "name": "operation_method",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Schema path - empty for root, or specific path like 'users.json' to target a child",
+                        "name": "path",
+                        "in": "query"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Data files to validate (multiple allowed, matched by filename to schema children)",
+                        "name": "files",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Single data file to validate (legacy, use 'files' for multiple)",
+                        "name": "file",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Validation completed",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.SchemaValidationResult"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request - no files provided",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Connection not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/connections/{connection_slug}/test": {
             "post": {
                 "security": [
@@ -14028,6 +14233,13 @@ const docTemplate = `{
                     "description": "Slug of the repository",
                     "type": "string",
                     "example": "customer-analytics"
+                },
+                "schema_diffs": {
+                    "description": "Schema diffs for objects that have schema changes",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.ObjectSchemaDiff"
+                    }
                 }
             }
         },
@@ -14888,6 +15100,28 @@ const docTemplate = `{
                         }
                     ],
                     "example": "structured"
+                }
+            }
+        },
+        "irminmodels.ObjectSchemaDiff": {
+            "type": "object",
+            "required": [
+                "diff",
+                "path"
+            ],
+            "properties": {
+                "diff": {
+                    "description": "Schema diff details",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.SchemaDiff"
+                        }
+                    ]
+                },
+                "path": {
+                    "description": "Path of the object whose schema changed",
+                    "type": "string",
+                    "example": "customers.json"
                 }
             }
         },
@@ -15777,6 +16011,243 @@ const docTemplate = `{
                         }
                     ],
                     "example": "post-workflow-run"
+                }
+            }
+        },
+        "irminmodels.SchemaChangeType": {
+            "type": "string",
+            "enum": [
+                "added",
+                "removed",
+                "modified",
+                "type_changed",
+                "nullability_changed",
+                "required_changed"
+            ],
+            "x-enum-varnames": [
+                "SchemaChangeAdded",
+                "SchemaChangeRemoved",
+                "SchemaChangeModified",
+                "SchemaChangeTypeChanged",
+                "SchemaChangeNullabilityChanged",
+                "SchemaChangeRequiredChanged"
+            ]
+        },
+        "irminmodels.SchemaDiff": {
+            "type": "object",
+            "properties": {
+                "breaking_changes": {
+                    "description": "BreakingChanges lists changes that would cause existing data to fail validation.\nExamples: required field added, type changed to incompatible type, field removed.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.SchemaFieldDiff"
+                    }
+                },
+                "compatible": {
+                    "description": "Compatible indicates whether the target schema is backward-compatible with source.\nTrue means data valid against the source schema will also be valid against target.",
+                    "type": "boolean",
+                    "example": false
+                },
+                "non_breaking_changes": {
+                    "description": "NonBreakingChanges lists changes that won't affect existing data validity.\nExamples: optional field added, constraint relaxed, field made nullable.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.SchemaFieldDiff"
+                    }
+                },
+                "source_schema_path": {
+                    "description": "SourceSchemaPath identifies the source schema (e.g., file path or connection path).",
+                    "type": "string",
+                    "example": "customers.json"
+                },
+                "summary": {
+                    "description": "Summary provides a human-readable overview of all changes.",
+                    "type": "string",
+                    "example": "2 breaking changes, 3 non-breaking changes"
+                },
+                "target_schema_path": {
+                    "description": "TargetSchemaPath identifies the target schema.",
+                    "type": "string",
+                    "example": "postgres/customers"
+                }
+            }
+        },
+        "irminmodels.SchemaFieldDiff": {
+            "type": "object",
+            "properties": {
+                "change_type": {
+                    "description": "ChangeType categorizes the kind of change detected.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.SchemaChangeType"
+                        }
+                    ],
+                    "example": "type_changed"
+                },
+                "description": {
+                    "description": "Description provides a human-readable explanation of the change.",
+                    "type": "string",
+                    "example": "Field type changed from string to integer"
+                },
+                "field_path": {
+                    "description": "FieldPath is the dot-notation path to the field (e.g., \"customers[].email\").",
+                    "type": "string",
+                    "example": "customers[].email"
+                },
+                "is_nullable": {
+                    "description": "IsNullable indicates if the field is nullable in the target schema.",
+                    "type": "boolean",
+                    "example": true
+                },
+                "is_required": {
+                    "description": "IsRequired indicates if the field is required in the target schema.",
+                    "type": "boolean",
+                    "example": false
+                },
+                "source_type": {
+                    "description": "SourceType is the data type in the source schema (nil if field was added).",
+                    "type": "string",
+                    "example": "string"
+                },
+                "source_value": {
+                    "description": "SourceValue holds constraint values from source (e.g., minLength, maxLength)."
+                },
+                "target_type": {
+                    "description": "TargetType is the data type in the target schema (nil if field was removed).",
+                    "type": "string",
+                    "example": "integer"
+                },
+                "target_value": {
+                    "description": "TargetValue holds constraint values from target."
+                },
+                "was_nullable": {
+                    "description": "WasNullable indicates if the field was nullable in the source schema.",
+                    "type": "boolean",
+                    "example": false
+                },
+                "was_required": {
+                    "description": "WasRequired indicates if the field was required in the source schema.",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "irminmodels.SchemaValidationError": {
+            "type": "object",
+            "properties": {
+                "actual_type": {
+                    "description": "ActualType is the actual type found in the data.",
+                    "type": "string",
+                    "example": "integer"
+                },
+                "actual_value": {
+                    "description": "ActualValue is the actual value that failed validation (truncated for large values)."
+                },
+                "expected_type": {
+                    "description": "ExpectedType is the type expected according to the schema.",
+                    "type": "string",
+                    "example": "string"
+                },
+                "expected_value": {
+                    "description": "ExpectedValue describes what was expected (for enum, format, constraint errors)."
+                },
+                "field_path": {
+                    "description": "FieldPath is the JSON path to the field that failed validation.\nUses bracket notation for arrays: \"customers[0].email\", \"orders[2].items[0].price\"",
+                    "type": "string",
+                    "example": "customers[0].email"
+                },
+                "file_name": {
+                    "description": "FileName identifies which file in a multi-file validation contains the error.",
+                    "type": "string",
+                    "example": "customers.json"
+                },
+                "message": {
+                    "description": "Message is a human-readable description of the validation failure.",
+                    "type": "string",
+                    "example": "expected string, got integer"
+                },
+                "row_index": {
+                    "description": "RowIndex identifies the array index for errors in array items.",
+                    "type": "integer",
+                    "example": 5
+                },
+                "suggestion": {
+                    "description": "Suggestion provides actionable advice on how to fix the error.",
+                    "type": "string",
+                    "example": "Convert 'age' values to integers"
+                },
+                "type": {
+                    "description": "Type categorizes the validation failure.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.SchemaValidationErrorType"
+                        }
+                    ],
+                    "example": "type_mismatch"
+                }
+            }
+        },
+        "irminmodels.SchemaValidationErrorType": {
+            "type": "string",
+            "enum": [
+                "missing_required_field",
+                "type_mismatch",
+                "constraint_violation",
+                "format_invalid",
+                "unexpected_field",
+                "null_not_allowed",
+                "invalid_enum_value",
+                "invalid_array_items"
+            ],
+            "x-enum-varnames": [
+                "ValidationErrorMissingField",
+                "ValidationErrorTypeMismatch",
+                "ValidationErrorConstraint",
+                "ValidationErrorFormat",
+                "ValidationErrorExtraField",
+                "ValidationErrorNullValue",
+                "ValidationErrorEnumValue",
+                "ValidationErrorArrayItems"
+            ]
+        },
+        "irminmodels.SchemaValidationResult": {
+            "type": "object",
+            "properties": {
+                "errors": {
+                    "description": "Errors contains detailed information about each validation failure.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.SchemaValidationError"
+                    }
+                },
+                "failed_records": {
+                    "description": "FailedRecords is the count of records that had at least one error.",
+                    "type": "integer",
+                    "example": 15
+                },
+                "files_summary": {
+                    "description": "FilesSummary maps file names to their error counts for multi-file validation.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "total_records_validated": {
+                    "description": "TotalRecordsValidated is the count of records/rows that were validated.",
+                    "type": "integer",
+                    "example": 1000
+                },
+                "valid": {
+                    "description": "Valid is true if all data passed validation against the schema.",
+                    "type": "boolean",
+                    "example": false
+                },
+                "warnings": {
+                    "description": "Warnings contains non-fatal issues (e.g., deprecated fields, recommendations).",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

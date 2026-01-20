@@ -828,6 +828,7 @@ import "irmin-api/controllers"
 
 ## Index
 
+- [func CollectMultipartFiles\(c fiber.Ctx, fieldNames ...string\) \(map\[string\]\[\]byte, error\)](<#CollectMultipartFiles>)
 - [type APIControllers](<#APIControllers>)
   - [func NewAPIControllers\(apiServices \*services.APIServices\) \*APIControllers](<#NewAPIControllers>)
   - [func \(api \*APIControllers\) AIAppAPIExecuteCustomTool\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIExecuteCustomTool>)
@@ -849,6 +850,8 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) CheckPermission\(c fiber.Ctx\) error](<#APIControllers.CheckPermission>)
   - [func \(api \*APIControllers\) CompareRefs\(c fiber.Ctx\) error](<#APIControllers.CompareRefs>)
   - [func \(api \*APIControllers\) ConnectionSchema\(c fiber.Ctx\) error](<#APIControllers.ConnectionSchema>)
+  - [func \(api \*APIControllers\) ConnectionSchemaDiff\(c fiber.Ctx\) error](<#APIControllers.ConnectionSchemaDiff>)
+  - [func \(api \*APIControllers\) ConnectionSchemaValidate\(c fiber.Ctx\) error](<#APIControllers.ConnectionSchemaValidate>)
   - [func \(api \*APIControllers\) ConnectionsDestroy\(c fiber.Ctx\) error](<#APIControllers.ConnectionsDestroy>)
   - [func \(api \*APIControllers\) ConnectionsIndex\(c fiber.Ctx\) error](<#APIControllers.ConnectionsIndex>)
   - [func \(api \*APIControllers\) ConnectionsShow\(c fiber.Ctx\) error](<#APIControllers.ConnectionsShow>)
@@ -983,6 +986,15 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) WorkspacesStore\(c fiber.Ctx\) error](<#APIControllers.WorkspacesStore>)
   - [func \(api \*APIControllers\) WorkspacesUpdate\(c fiber.Ctx\) error](<#APIControllers.WorkspacesUpdate>)
 
+
+<a name="CollectMultipartFiles"></a>
+## func CollectMultipartFiles
+
+```go
+func CollectMultipartFiles(c fiber.Ctx, fieldNames ...string) (map[string][]byte, error)
+```
+
+CollectMultipartFiles collects files from a multipart form request. It checks multiple field names and returns a map of filename to file contents. Exported for testing.
 
 <a name="APIControllers"></a>
 ## type APIControllers
@@ -1180,6 +1192,24 @@ func (api *APIControllers) ConnectionSchema(c fiber.Ctx) error
 ```
 
 ConnectionSchema godoc @Summary Get connection schema @Description Get the schema information for a specific connection and operation method @Tags connections @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection\_slug path string true "Connection ID" @Param operation\_method query string false "Operation method \(pull, push\)" default\(pull\) @Param path query string false "Path within the connection to get schema for, empty string means the root path" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=object\} "Connection schema retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid query parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\_slug\}/schema \[get\]
+
+<a name="APIControllers.ConnectionSchemaDiff"></a>
+### func \(\*APIControllers\) ConnectionSchemaDiff
+
+```go
+func (api *APIControllers) ConnectionSchemaDiff(c fiber.Ctx) error
+```
+
+ConnectionSchemaDiff godoc @Summary Compare data schema against connection schema @Description Compares the schema of uploaded data against the connection's expected schema @Tags connections @Security ApiKeyAuth @Accept multipart/form\-data @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection\_slug path string true "Connection ID" @Param operation\_method query string true "Operation method \(push or pull\)" @Param path query string false "Connection path for schema lookup" @Param file formData file true "Data file to compare schema \(JSON\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.SchemaDiff\} "Schema diff completed" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Invalid request" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\_slug\}/schema/diff \[post\]
+
+<a name="APIControllers.ConnectionSchemaValidate"></a>
+### func \(\*APIControllers\) ConnectionSchemaValidate
+
+```go
+func (api *APIControllers) ConnectionSchemaValidate(c fiber.Ctx) error
+```
+
+ConnectionSchemaValidate godoc @Summary Validate data against connection schema @Description Validates uploaded data files against the connection's schema for the specified operation. @Description @Description \*\*Supported formats:\*\* JSON, CSV, Parquet, Excel \(.xlsx, .xls\), TSV, JSONL/NDJSON @Description @Description \*\*Auto\-matching for group schemas:\*\* @Description When the target schema is a group \(e.g., a connector's root with children like users.json, orders.json\), @Description uploaded files are automatically matched to child schemas by filename \(case\-insensitive\). @Description \- Files matching a child schema are validated against that specific schema @Description \- Files not matching any child generate a warning but don't fail validation @Description \- Use the 'path' parameter to target a specific child schema directly @Description @Description \*\*Single schema validation:\*\* @Description When the target schema is a single structured file, all uploaded files are validated against it. @Tags connections @Security ApiKeyAuth @Accept multipart/form\-data @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection\_slug path string true "Connection ID" @Param operation\_method query string true "Operation method \(push or pull\)" @Param path query string false "Schema path \- empty for root, or specific path like 'users.json' to target a child" @Param files formData file false "Data files to validate \(multiple allowed, matched by filename to schema children\)" @Param file formData file false "Single data file to validate \(legacy, use 'files' for multiple\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.SchemaValidationResult\} "Validation completed" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Invalid request \- no files provided" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\_slug\}/schema/validate \[post\]
 
 <a name="APIControllers.ConnectionsDestroy"></a>
 ### func \(\*APIControllers\) ConnectionsDestroy
@@ -6356,6 +6386,7 @@ import "irmin-api/engine"
 - [func ExtractS3Paths\(query string\) \(\[\]string, error\)](<#ExtractS3Paths>)
 - [func IsPointerPath\(path string\) bool](<#IsPointerPath>)
 - [func IsRowReturningStatement\(stmt string\) bool](<#IsRowReturningStatement>)
+- [func IsSchemaValidationError\(err error\) bool](<#IsSchemaValidationError>)
 - [func IsSystemPath\(path string\) bool](<#IsSystemPath>)
 - [func MaskStringLiterals\(sql string\) string](<#MaskStringLiterals>)
 - [func ParseFieldNameAndTypeForTesting\(fieldDef string\) \(string, string\)](<#ParseFieldNameAndTypeForTesting>)
@@ -6376,7 +6407,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) ApplyFieldMappings\(ctx context.Context, duckDBClient \*duckdb.QueryClient, fileContent \[\]byte, originalFilePath string, mappings \[\]irminmodels.FieldMapping\) \(map\[string\]\[\]byte, error\)](<#Client.ApplyFieldMappings>)
   - [func \(c \*Client\) ApplyTransformations\(ctx context.Context, duckDBClient \*duckdb.QueryClient, files map\[string\]\[\]byte, config TransformConfig\) \(map\[string\]\[\]byte, error\)](<#Client.ApplyTransformations>)
   - [func \(c \*Client\) CommitChanges\(workspace, repository, branch, message, author string, allowEmpty bool\) \(\*irminmodels.Commit, error\)](<#Client.CommitChanges>)
-  - [func \(c \*Client\) CompareRefs\(ctx context.Context, workspace, repository, baseRef, compareRef string\) \(\*irminmodels.Diff, error\)](<#Client.CompareRefs>)
+  - [func \(c \*Client\) CompareRefs\(ctx context.Context, user \*db.User, workspace \*db.Workspace, repositorySlug, baseRef, compareRef string\) \(\*irminmodels.Diff, error\)](<#Client.CompareRefs>)
   - [func \(c \*Client\) ConfigureRepositoryWebhookNotifications\(lakefsRepository \*lakefs.Repository\) \(\*lakefs.ObjectMetadata, error\)](<#Client.ConfigureRepositoryWebhookNotifications>)
   - [func \(c \*Client\) CopyObject\(workspace, repository, path, ref, newPath string\) \(\*irminmodels.Object, error\)](<#Client.CopyObject>)
   - [func \(c \*Client\) CreateBranch\(workspace, repository, name, from string, isImmutable bool\) \(\*irminmodels.Branch, error\)](<#Client.CreateBranch>)
@@ -6416,6 +6447,14 @@ import "irmin-api/engine"
   - [func \(c \*Client\) UpdateBranch\(ctx context.Context, workspace, repository, currentName, name string, isImmutable bool\) \(\*irminmodels.Branch, error\)](<#Client.UpdateBranch>)
   - [func \(c \*Client\) UpdateRepository\(workspace, repository string, gcDefaultRetentionDays, gcDefaultBranchRetentionDays \*int\) \(\*Repository, error\)](<#Client.UpdateRepository>)
   - [func \(c \*Client\) UploadObject\(workspace, repository, path, ref string, file io.Reader\) \(\*irminmodels.Object, error\)](<#Client.UploadObject>)
+- [type ConnectorSchemaValidationError](<#ConnectorSchemaValidationError>)
+  - [func AsSchemaValidationError\(err error\) \*ConnectorSchemaValidationError](<#AsSchemaValidationError>)
+  - [func \(e \*ConnectorSchemaValidationError\) Error\(\) string](<#ConnectorSchemaValidationError.Error>)
+  - [func \(e \*ConnectorSchemaValidationError\) ErrorCount\(\) int](<#ConnectorSchemaValidationError.ErrorCount>)
+  - [func \(e \*ConnectorSchemaValidationError\) FormatUserMessage\(\) string](<#ConnectorSchemaValidationError.FormatUserMessage>)
+  - [func \(e \*ConnectorSchemaValidationError\) GetFirstError\(\) \*irminmodels.SchemaValidationError](<#ConnectorSchemaValidationError.GetFirstError>)
+  - [func \(e \*ConnectorSchemaValidationError\) HasErrors\(\) bool](<#ConnectorSchemaValidationError.HasErrors>)
+  - [func \(e \*ConnectorSchemaValidationError\) Unwrap\(\) error](<#ConnectorSchemaValidationError.Unwrap>)
 - [type FieldMappingResult](<#FieldMappingResult>)
 - [type PermissionChecker](<#PermissionChecker>)
 - [type Repository](<#Repository>)
@@ -6523,6 +6562,15 @@ func IsRowReturningStatement(stmt string) bool
 ```
 
 IsRowReturningStatement checks if a SQL statement returns rows.
+
+<a name="IsSchemaValidationError"></a>
+## func IsSchemaValidationError
+
+```go
+func IsSchemaValidationError(err error) bool
+```
+
+IsSchemaValidationError checks if an error is a ConnectorSchemaValidationError.
 
 <a name="IsSystemPath"></a>
 ## func IsSystemPath
@@ -6738,7 +6786,7 @@ func (c *Client) CommitChanges(workspace, repository, branch, message, author st
 ### func \(\*Client\) CompareRefs
 
 ```go
-func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef, compareRef string) (*irminmodels.Diff, error)
+func (c *Client) CompareRefs(ctx context.Context, user *db.User, workspace *db.Workspace, repositorySlug, baseRef, compareRef string) (*irminmodels.Diff, error)
 ```
 
 
@@ -7093,6 +7141,90 @@ func (c *Client) UploadObject(workspace, repository, path, ref string, file io.R
 ```
 
 
+
+<a name="ConnectorSchemaValidationError"></a>
+## type ConnectorSchemaValidationError
+
+ConnectorSchemaValidationError wraps schema validation failures with operation context. This error type provides detailed information about why data failed validation against a connector's expected schema.
+
+```go
+type ConnectorSchemaValidationError struct {
+    // Result contains the detailed validation errors and warnings.
+    Result *irminmodels.SchemaValidationResult
+
+    // OperationType indicates the operation that failed (e.g., "push", "pull").
+    OperationType string
+
+    // ConnectionName identifies which connection the validation was for.
+    ConnectionName string
+
+    // ConnectionPath is the target path within the connection.
+    ConnectionPath string
+}
+```
+
+<a name="AsSchemaValidationError"></a>
+### func AsSchemaValidationError
+
+```go
+func AsSchemaValidationError(err error) *ConnectorSchemaValidationError
+```
+
+AsSchemaValidationError attempts to convert an error to ConnectorSchemaValidationError. Returns nil if the error is not a schema validation error.
+
+<a name="ConnectorSchemaValidationError.Error"></a>
+### func \(\*ConnectorSchemaValidationError\) Error
+
+```go
+func (e *ConnectorSchemaValidationError) Error() string
+```
+
+Error implements the error interface.
+
+<a name="ConnectorSchemaValidationError.ErrorCount"></a>
+### func \(\*ConnectorSchemaValidationError\) ErrorCount
+
+```go
+func (e *ConnectorSchemaValidationError) ErrorCount() int
+```
+
+ErrorCount returns the number of validation errors.
+
+<a name="ConnectorSchemaValidationError.FormatUserMessage"></a>
+### func \(\*ConnectorSchemaValidationError\) FormatUserMessage
+
+```go
+func (e *ConnectorSchemaValidationError) FormatUserMessage() string
+```
+
+FormatUserMessage returns a user\-friendly error message with details.
+
+<a name="ConnectorSchemaValidationError.GetFirstError"></a>
+### func \(\*ConnectorSchemaValidationError\) GetFirstError
+
+```go
+func (e *ConnectorSchemaValidationError) GetFirstError() *irminmodels.SchemaValidationError
+```
+
+GetFirstError returns the first validation error, or nil if there are none.
+
+<a name="ConnectorSchemaValidationError.HasErrors"></a>
+### func \(\*ConnectorSchemaValidationError\) HasErrors
+
+```go
+func (e *ConnectorSchemaValidationError) HasErrors() bool
+```
+
+HasErrors returns true if there are any validation errors.
+
+<a name="ConnectorSchemaValidationError.Unwrap"></a>
+### func \(\*ConnectorSchemaValidationError\) Unwrap
+
+```go
+func (e *ConnectorSchemaValidationError) Unwrap() error
+```
+
+Unwrap returns nil as this error does not wrap another error.
 
 <a name="FieldMappingResult"></a>
 ## type FieldMappingResult
@@ -9768,7 +9900,6 @@ import "irmin-api/lib"
 - [func SkipIfNoTestData\(t \*testing.T, database \*db.Database, testUserEmail, testWorkspace string\) \(\*db.User, \*db.Workspace\)](<#SkipIfNoTestData>)
 - [func SkipIfNoTestRepository\(t \*testing.T, database \*db.Database, workspaceID uint, testRepository string\) \*db.Repository](<#SkipIfNoTestRepository>)
 - [func TeardownTestSuite\(\)](<#TeardownTestSuite>)
-- [func ValidateStructuredFileSchema\(ctx context.Context, fileName string, data \[\]byte, schema \*irminmodels.JSONSchema, env \*utils.CoreAPIEnv, logger \*slog.Logger\) \(\[\]string, \[\]string\)](<#ValidateStructuredFileSchema>)
 - [type InviteNotificationParams](<#InviteNotificationParams>)
 - [type InviteNotificationResult](<#InviteNotificationResult>)
   - [func SendFallbackInviteNotification\(ctx context.Context, database \*db.Database, sqidManager \*irminsqids.SQIDManager, env \*utils.CoreAPIEnv, logger \*slog.Logger, params InviteNotificationParams\) \*InviteNotificationResult](<#SendFallbackInviteNotification>)
@@ -9778,13 +9909,8 @@ import "irmin-api/lib"
   - [func NewSchemaCacheManager\(env \*utils.CoreAPIEnv, logger \*slog.Logger, db \*db.Database\) \*SchemaCacheManager](<#NewSchemaCacheManager>)
   - [func \(scm \*SchemaCacheManager\) GetConnectionSchema\(ctx context.Context, connection \*db.Connection, operationMethod, path, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, \[\]connectorsclient.OperationLog, error\)](<#SchemaCacheManager.GetConnectionSchema>)
   - [func \(scm \*SchemaCacheManager\) GetObjectSchema\(ctx context.Context, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, ref, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, error\)](<#SchemaCacheManager.GetObjectSchema>)
-- [type SchemaField](<#SchemaField>)
 - [type TestSuite](<#TestSuite>)
   - [func GetTestSuite\(\) \*TestSuite](<#GetTestSuite>)
-- [type ValidationConfig](<#ValidationConfig>)
-- [type ValidationResult](<#ValidationResult>)
-  - [func ValidateDataAgainstSchema\(fileName string, data \[\]byte, schema \*irminmodels.ObjectSchema\) ValidationResult](<#ValidateDataAgainstSchema>)
-  - [func ValidateDataAgainstSchemaWithConfig\(fileName string, data \[\]byte, schema \*irminmodels.ObjectSchema, config \*ValidationConfig\) ValidationResult](<#ValidateDataAgainstSchemaWithConfig>)
 
 
 ## Constants
@@ -10143,15 +10269,6 @@ func TeardownTestSuite()
 
 TeardownTestSuite cleans up the global test suite. This should be called from TestMain after all tests are done.
 
-<a name="ValidateStructuredFileSchema"></a>
-## func ValidateStructuredFileSchema
-
-```go
-func ValidateStructuredFileSchema(ctx context.Context, fileName string, data []byte, schema *irminmodels.JSONSchema, env *utils.CoreAPIEnv, logger *slog.Logger) ([]string, []string)
-```
-
-ValidateStructuredFileSchema validates a non\-JSON structured file against its expected schema. It uses DuckDB to read the file, extract its actual schema, and compare it against the expected schema.
-
 <a name="InviteNotificationParams"></a>
 ## type InviteNotificationParams
 
@@ -10248,21 +10365,6 @@ func (scm *SchemaCacheManager) GetObjectSchema(ctx context.Context, workspace *d
 
 GetObjectSchema returns the schema for an object. It first checks if the schema is cached, and if so, returns the cached schema. Otherwise, it fetches the schema from the Data Engine and caches it asynchronously.
 
-<a name="SchemaField"></a>
-## type SchemaField
-
-SchemaField represents one column or nested field in the DuckDB schema. This mirrors the engine.SchemaField structure for validation purposes.
-
-```go
-type SchemaField struct {
-    Name         string        `json:"name"`
-    Type         string        `json:"type"`
-    Required     bool          `json:"required"`
-    Children     []SchemaField `json:"children,omitempty"`
-    OriginalType string        `json:"original_type,omitempty"`
-}
-```
-
 <a name="TestSuite"></a>
 ## type TestSuite
 
@@ -10285,50 +10387,6 @@ func GetTestSuite() *TestSuite
 ```
 
 GetTestSuite returns the global test suite instance. This is safe to call from any test function.
-
-<a name="ValidationConfig"></a>
-## type ValidationConfig
-
-ValidationConfig holds optional configuration for schema validation.
-
-```go
-type ValidationConfig struct {
-    Ctx    context.Context
-    Env    *utils.CoreAPIEnv
-    Logger *slog.Logger
-}
-```
-
-<a name="ValidationResult"></a>
-## type ValidationResult
-
-
-
-```go
-type ValidationResult struct {
-    Valid    bool
-    Errors   []string
-    Warnings []string
-}
-```
-
-<a name="ValidateDataAgainstSchema"></a>
-### func ValidateDataAgainstSchema
-
-```go
-func ValidateDataAgainstSchema(fileName string, data []byte, schema *irminmodels.ObjectSchema) ValidationResult
-```
-
-ValidateDataAgainstSchema validates data bytes against an ObjectSchema. This is a simplified version that skips DuckDB\-based validation for non\-JSON files. For full validation including non\-JSON structured files, use ValidateDataAgainstSchemaWithConfig.
-
-<a name="ValidateDataAgainstSchemaWithConfig"></a>
-### func ValidateDataAgainstSchemaWithConfig
-
-```go
-func ValidateDataAgainstSchemaWithConfig(fileName string, data []byte, schema *irminmodels.ObjectSchema, config *ValidationConfig) ValidationResult
-```
-
-ValidateDataAgainstSchemaWithConfig validates data bytes against an ObjectSchema with optional configuration. When config is provided with Env and Logger, it enables DuckDB\-based schema validation for non\-JSON structured files \(CSV, Parquet, Excel, etc.\).
 
 # locales
 
@@ -15379,6 +15437,263 @@ func WorkspaceTagScenarios() []runner.TestCase
 ```
 
 WorkspaceTagScenarios returns test cases for workspace tag operations.
+
+# validation
+
+```go
+import "irmin-api/engine/validation"
+```
+
+Package validation provides schema diff functionality for comparing ObjectSchemas.
+
+Package validation provides unified schema validation for the Irmin data engine. It supports JSON schema validation, DuckDB\-based structured file validation, and schema compatibility checking.
+
+## Index
+
+- [Constants](<#constants>)
+- [func AreSchemaTypesCompatible\(sourceType, targetType string\) bool](<#AreSchemaTypesCompatible>)
+- [func CompareSchemas\(source, target \*irminmodels.ObjectSchema\) \*irminmodels.SchemaDiff](<#CompareSchemas>)
+- [func GenerateValidationSuggestion\(err SchemaValidationError\) string](<#GenerateValidationSuggestion>)
+- [func GetSchemaCompatibilityIssues\(diff \*SchemaDiff\) \[\]string](<#GetSchemaCompatibilityIssues>)
+- [func IsBreakingChange\(fieldDiff irminmodels.SchemaFieldDiff\) bool](<#IsBreakingChange>)
+- [func ValidateStructuredFile\(ctx context.Context, fileName string, data \[\]byte, schema \*JSONSchema, env \*utils.CoreAPIEnv, logger \*slog.Logger\) \(\[\]string, \[\]string\)](<#ValidateStructuredFile>)
+- [type Config](<#Config>)
+- [type JSONSchema](<#JSONSchema>)
+- [type ObjectSchema](<#ObjectSchema>)
+- [type SchemaDiff](<#SchemaDiff>)
+  - [func CheckSchemaCompatibility\(dataSchema \*ObjectSchema, targetSchema \*ObjectSchema\) \*SchemaDiff](<#CheckSchemaCompatibility>)
+- [type SchemaField](<#SchemaField>)
+- [type SchemaFieldDiff](<#SchemaFieldDiff>)
+- [type SchemaValidationError](<#SchemaValidationError>)
+  - [func ValidateJSONAgainstSchema\(\_ context.Context, fileName string, data \[\]byte, schema \*JSONSchema\) \[\]SchemaValidationError](<#ValidateJSONAgainstSchema>)
+- [type SchemaValidationErrorType](<#SchemaValidationErrorType>)
+- [type SchemaValidationResult](<#SchemaValidationResult>)
+  - [func NewInvalidResult\(errors ...SchemaValidationError\) \*SchemaValidationResult](<#NewInvalidResult>)
+  - [func NewValidResult\(\) \*SchemaValidationResult](<#NewValidResult>)
+  - [func ValidateFile\(ctx context.Context, fileName string, data \[\]byte, schema \*ObjectSchema, config \*Config\) \*SchemaValidationResult](<#ValidateFile>)
+  - [func ValidateFiles\(ctx context.Context, files map\[string\]\[\]byte, schema \*ObjectSchema, config \*Config\) \*SchemaValidationResult](<#ValidateFiles>)
+
+
+## Constants
+
+<a name="ValidationErrorMissingField"></a>Re\-export error type constants for convenience.
+
+```go
+const (
+    ValidationErrorMissingField = irminmodels.ValidationErrorMissingField
+    ValidationErrorTypeMismatch = irminmodels.ValidationErrorTypeMismatch
+    ValidationErrorConstraint   = irminmodels.ValidationErrorConstraint
+    ValidationErrorFormat       = irminmodels.ValidationErrorFormat
+    ValidationErrorExtraField   = irminmodels.ValidationErrorExtraField
+    ValidationErrorNullValue    = irminmodels.ValidationErrorNullValue
+    ValidationErrorEnumValue    = irminmodels.ValidationErrorEnumValue
+    ValidationErrorArrayItems   = irminmodels.ValidationErrorArrayItems
+)
+```
+
+<a name="AreSchemaTypesCompatible"></a>
+## func AreSchemaTypesCompatible
+
+```go
+func AreSchemaTypesCompatible(sourceType, targetType string) bool
+```
+
+AreSchemaTypesCompatible checks if two schema types are compatible for data operations. Returns true if data conforming to sourceType can be safely converted to targetType.
+
+<a name="CompareSchemas"></a>
+## func CompareSchemas
+
+```go
+func CompareSchemas(source, target *irminmodels.ObjectSchema) *irminmodels.SchemaDiff
+```
+
+CompareSchemas compares two ObjectSchemas and returns a detailed diff. The source is typically the current/existing schema, target is the new/expected schema.
+
+<a name="GenerateValidationSuggestion"></a>
+## func GenerateValidationSuggestion
+
+```go
+func GenerateValidationSuggestion(err SchemaValidationError) string
+```
+
+GenerateValidationSuggestion creates a helpful suggestion for a validation error.
+
+<a name="GetSchemaCompatibilityIssues"></a>
+## func GetSchemaCompatibilityIssues
+
+```go
+func GetSchemaCompatibilityIssues(diff *SchemaDiff) []string
+```
+
+GetSchemaCompatibilityIssues returns a list of human\-readable compatibility issues. This provides a simple string list for quick display without the full SchemaDiff structure.
+
+<a name="IsBreakingChange"></a>
+## func IsBreakingChange
+
+```go
+func IsBreakingChange(fieldDiff irminmodels.SchemaFieldDiff) bool
+```
+
+IsBreakingChange determines if a single field diff represents a breaking change.
+
+<a name="ValidateStructuredFile"></a>
+## func ValidateStructuredFile
+
+```go
+func ValidateStructuredFile(ctx context.Context, fileName string, data []byte, schema *JSONSchema, env *utils.CoreAPIEnv, logger *slog.Logger) ([]string, []string)
+```
+
+ValidateStructuredFile validates a non\-JSON structured file against its expected schema. It uses DuckDB to read the file, extract its actual schema, and compare it against the expected schema.
+
+<a name="Config"></a>
+## type Config
+
+Config holds configuration for schema validation operations.
+
+```go
+type Config struct {
+    // Ctx is the context for the validation operation.
+    Ctx context.Context
+
+    // Env provides environment configuration for DuckDB operations.
+    Env *utils.CoreAPIEnv
+
+    // Logger is used for logging validation operations.
+    Logger *slog.Logger
+}
+```
+
+<a name="JSONSchema"></a>
+## type JSONSchema
+
+JSONSchema represents a JSON Schema definition.
+
+```go
+type JSONSchema = irminmodels.JSONSchema
+```
+
+<a name="ObjectSchema"></a>
+## type ObjectSchema
+
+ObjectSchema represents a schema for an object \(file or directory\).
+
+```go
+type ObjectSchema = irminmodels.ObjectSchema
+```
+
+<a name="SchemaDiff"></a>
+## type SchemaDiff
+
+SchemaDiff represents a comparison between two schemas.
+
+```go
+type SchemaDiff = irminmodels.SchemaDiff
+```
+
+<a name="CheckSchemaCompatibility"></a>
+### func CheckSchemaCompatibility
+
+```go
+func CheckSchemaCompatibility(dataSchema *ObjectSchema, targetSchema *ObjectSchema) *SchemaDiff
+```
+
+CheckSchemaCompatibility compares a data schema against a target connector schema. Returns a SchemaDiff indicating whether the schemas are compatible and what differences exist. This is useful for pre\-flight checks before push operations to ensure data will be accepted.
+
+<a name="SchemaField"></a>
+## type SchemaField
+
+SchemaField represents one column or nested field in the DuckDB schema.
+
+```go
+type SchemaField struct {
+    Name         string        `json:"name"`
+    Type         string        `json:"type"`
+    Required     bool          `json:"required"`
+    Children     []SchemaField `json:"children,omitempty"`
+    OriginalType string        `json:"original_type,omitempty"`
+}
+```
+
+<a name="SchemaFieldDiff"></a>
+## type SchemaFieldDiff
+
+SchemaFieldDiff represents a single field\-level difference between two schemas.
+
+```go
+type SchemaFieldDiff = irminmodels.SchemaFieldDiff
+```
+
+<a name="SchemaValidationError"></a>
+## type SchemaValidationError
+
+SchemaValidationError represents a single validation failure with detailed context.
+
+```go
+type SchemaValidationError = irminmodels.SchemaValidationError
+```
+
+<a name="ValidateJSONAgainstSchema"></a>
+### func ValidateJSONAgainstSchema
+
+```go
+func ValidateJSONAgainstSchema(_ context.Context, fileName string, data []byte, schema *JSONSchema) []SchemaValidationError
+```
+
+ValidateJSONAgainstSchema validates JSON data against a JSON schema. Returns detailed validation errors with field paths and suggestions.
+
+<a name="SchemaValidationErrorType"></a>
+## type SchemaValidationErrorType
+
+SchemaValidationErrorType categorizes the kind of validation failure.
+
+```go
+type SchemaValidationErrorType = irminmodels.SchemaValidationErrorType
+```
+
+<a name="SchemaValidationResult"></a>
+## type SchemaValidationResult
+
+SchemaValidationResult represents the complete outcome of schema validation.
+
+```go
+type SchemaValidationResult = irminmodels.SchemaValidationResult
+```
+
+<a name="NewInvalidResult"></a>
+### func NewInvalidResult
+
+```go
+func NewInvalidResult(errors ...SchemaValidationError) *SchemaValidationResult
+```
+
+NewInvalidResult creates a new invalid SchemaValidationResult with initial errors.
+
+<a name="NewValidResult"></a>
+### func NewValidResult
+
+```go
+func NewValidResult() *SchemaValidationResult
+```
+
+NewValidResult creates a new valid SchemaValidationResult.
+
+<a name="ValidateFile"></a>
+### func ValidateFile
+
+```go
+func ValidateFile(ctx context.Context, fileName string, data []byte, schema *ObjectSchema, config *Config) *SchemaValidationResult
+```
+
+ValidateFile validates a single file's data against an ObjectSchema. Returns detailed validation results with field paths and suggestions.
+
+<a name="ValidateFiles"></a>
+### func ValidateFiles
+
+```go
+func ValidateFiles(ctx context.Context, files map[string][]byte, schema *ObjectSchema, config *Config) *SchemaValidationResult
+```
+
+ValidateFiles validates multiple files against an ObjectSchema. This is the main entry point for validating data before push operations.
 
 # repositoryobjectcache
 

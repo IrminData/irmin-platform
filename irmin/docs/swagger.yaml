@@ -1528,6 +1528,11 @@ definitions:
         description: Slug of the repository
         example: customer-analytics
         type: string
+      schema_diffs:
+        description: Schema diffs for objects that have schema changes
+        items:
+          $ref: '#/definitions/irminmodels.ObjectSchemaDiff'
+        type: array
     required:
     - base_ref
     - compare_ref
@@ -2168,6 +2173,20 @@ definitions:
         example: structured
     required:
     - type
+    type: object
+  irminmodels.ObjectSchemaDiff:
+    properties:
+      diff:
+        allOf:
+        - $ref: '#/definitions/irminmodels.SchemaDiff'
+        description: Schema diff details
+      path:
+        description: Path of the object whose schema changed
+        example: customers.json
+        type: string
+    required:
+    - diff
+    - path
     type: object
   irminmodels.ObjectType:
     enum:
@@ -2855,6 +2874,205 @@ definitions:
         example: post-workflow-run
     required:
     - type
+    type: object
+  irminmodels.SchemaChangeType:
+    enum:
+    - added
+    - removed
+    - modified
+    - type_changed
+    - nullability_changed
+    - required_changed
+    type: string
+    x-enum-varnames:
+    - SchemaChangeAdded
+    - SchemaChangeRemoved
+    - SchemaChangeModified
+    - SchemaChangeTypeChanged
+    - SchemaChangeNullabilityChanged
+    - SchemaChangeRequiredChanged
+  irminmodels.SchemaDiff:
+    properties:
+      breaking_changes:
+        description: |-
+          BreakingChanges lists changes that would cause existing data to fail validation.
+          Examples: required field added, type changed to incompatible type, field removed.
+        items:
+          $ref: '#/definitions/irminmodels.SchemaFieldDiff'
+        type: array
+      compatible:
+        description: |-
+          Compatible indicates whether the target schema is backward-compatible with source.
+          True means data valid against the source schema will also be valid against target.
+        example: false
+        type: boolean
+      non_breaking_changes:
+        description: |-
+          NonBreakingChanges lists changes that won't affect existing data validity.
+          Examples: optional field added, constraint relaxed, field made nullable.
+        items:
+          $ref: '#/definitions/irminmodels.SchemaFieldDiff'
+        type: array
+      source_schema_path:
+        description: SourceSchemaPath identifies the source schema (e.g., file path
+          or connection path).
+        example: customers.json
+        type: string
+      summary:
+        description: Summary provides a human-readable overview of all changes.
+        example: 2 breaking changes, 3 non-breaking changes
+        type: string
+      target_schema_path:
+        description: TargetSchemaPath identifies the target schema.
+        example: postgres/customers
+        type: string
+    type: object
+  irminmodels.SchemaFieldDiff:
+    properties:
+      change_type:
+        allOf:
+        - $ref: '#/definitions/irminmodels.SchemaChangeType'
+        description: ChangeType categorizes the kind of change detected.
+        example: type_changed
+      description:
+        description: Description provides a human-readable explanation of the change.
+        example: Field type changed from string to integer
+        type: string
+      field_path:
+        description: FieldPath is the dot-notation path to the field (e.g., "customers[].email").
+        example: customers[].email
+        type: string
+      is_nullable:
+        description: IsNullable indicates if the field is nullable in the target schema.
+        example: true
+        type: boolean
+      is_required:
+        description: IsRequired indicates if the field is required in the target schema.
+        example: false
+        type: boolean
+      source_type:
+        description: SourceType is the data type in the source schema (nil if field
+          was added).
+        example: string
+        type: string
+      source_value:
+        description: SourceValue holds constraint values from source (e.g., minLength,
+          maxLength).
+      target_type:
+        description: TargetType is the data type in the target schema (nil if field
+          was removed).
+        example: integer
+        type: string
+      target_value:
+        description: TargetValue holds constraint values from target.
+      was_nullable:
+        description: WasNullable indicates if the field was nullable in the source
+          schema.
+        example: false
+        type: boolean
+      was_required:
+        description: WasRequired indicates if the field was required in the source
+          schema.
+        example: true
+        type: boolean
+    type: object
+  irminmodels.SchemaValidationError:
+    properties:
+      actual_type:
+        description: ActualType is the actual type found in the data.
+        example: integer
+        type: string
+      actual_value:
+        description: ActualValue is the actual value that failed validation (truncated
+          for large values).
+      expected_type:
+        description: ExpectedType is the type expected according to the schema.
+        example: string
+        type: string
+      expected_value:
+        description: ExpectedValue describes what was expected (for enum, format,
+          constraint errors).
+      field_path:
+        description: |-
+          FieldPath is the JSON path to the field that failed validation.
+          Uses bracket notation for arrays: "customers[0].email", "orders[2].items[0].price"
+        example: customers[0].email
+        type: string
+      file_name:
+        description: FileName identifies which file in a multi-file validation contains
+          the error.
+        example: customers.json
+        type: string
+      message:
+        description: Message is a human-readable description of the validation failure.
+        example: expected string, got integer
+        type: string
+      row_index:
+        description: RowIndex identifies the array index for errors in array items.
+        example: 5
+        type: integer
+      suggestion:
+        description: Suggestion provides actionable advice on how to fix the error.
+        example: Convert 'age' values to integers
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/irminmodels.SchemaValidationErrorType'
+        description: Type categorizes the validation failure.
+        example: type_mismatch
+    type: object
+  irminmodels.SchemaValidationErrorType:
+    enum:
+    - missing_required_field
+    - type_mismatch
+    - constraint_violation
+    - format_invalid
+    - unexpected_field
+    - null_not_allowed
+    - invalid_enum_value
+    - invalid_array_items
+    type: string
+    x-enum-varnames:
+    - ValidationErrorMissingField
+    - ValidationErrorTypeMismatch
+    - ValidationErrorConstraint
+    - ValidationErrorFormat
+    - ValidationErrorExtraField
+    - ValidationErrorNullValue
+    - ValidationErrorEnumValue
+    - ValidationErrorArrayItems
+  irminmodels.SchemaValidationResult:
+    properties:
+      errors:
+        description: Errors contains detailed information about each validation failure.
+        items:
+          $ref: '#/definitions/irminmodels.SchemaValidationError'
+        type: array
+      failed_records:
+        description: FailedRecords is the count of records that had at least one error.
+        example: 15
+        type: integer
+      files_summary:
+        additionalProperties:
+          type: integer
+        description: FilesSummary maps file names to their error counts for multi-file
+          validation.
+        type: object
+      total_records_validated:
+        description: TotalRecordsValidated is the count of records/rows that were
+          validated.
+        example: 1000
+        type: integer
+      valid:
+        description: Valid is true if all data passed validation against the schema.
+        example: false
+        type: boolean
+      warnings:
+        description: Warnings contains non-fatal issues (e.g., deprecated fields,
+          recommendations).
+        items:
+          type: string
+        type: array
     type: object
   irminmodels.ScriptResult:
     properties:
@@ -5584,6 +5802,151 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Get connection schema
+      tags:
+      - connections
+  /workspaces/{workspace_slug}/connections/{connection_slug}/schema/diff:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Compares the schema of uploaded data against the connection's expected
+        schema
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Connection ID
+        in: path
+        name: connection_slug
+        required: true
+        type: string
+      - description: Operation method (push or pull)
+        in: query
+        name: operation_method
+        required: true
+        type: string
+      - description: Connection path for schema lookup
+        in: query
+        name: path
+        type: string
+      - description: Data file to compare schema (JSON)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Schema diff completed
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.SchemaDiff'
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Connection not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Compare data schema against connection schema
+      tags:
+      - connections
+  /workspaces/{workspace_slug}/connections/{connection_slug}/schema/validate:
+    post:
+      consumes:
+      - multipart/form-data
+      description: |-
+        Validates uploaded data files against the connection's schema for the specified operation.
+
+        **Supported formats:** JSON, CSV, Parquet, Excel (.xlsx, .xls), TSV, JSONL/NDJSON
+
+        **Auto-matching for group schemas:**
+        When the target schema is a group (e.g., a connector's root with children like users.json, orders.json),
+        uploaded files are automatically matched to child schemas by filename (case-insensitive).
+        - Files matching a child schema are validated against that specific schema
+        - Files not matching any child generate a warning but don't fail validation
+        - Use the 'path' parameter to target a specific child schema directly
+
+        **Single schema validation:**
+        When the target schema is a single structured file, all uploaded files are validated against it.
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Connection ID
+        in: path
+        name: connection_slug
+        required: true
+        type: string
+      - description: Operation method (push or pull)
+        in: query
+        name: operation_method
+        required: true
+        type: string
+      - description: Schema path - empty for root, or specific path like 'users.json'
+          to target a child
+        in: query
+        name: path
+        type: string
+      - description: Data files to validate (multiple allowed, matched by filename
+          to schema children)
+        in: formData
+        name: files
+        type: file
+      - description: Single data file to validate (legacy, use 'files' for multiple)
+        in: formData
+        name: file
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Validation completed
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.SchemaValidationResult'
+              type: object
+        "400":
+          description: Invalid request - no files provided
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Connection not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Validate data against connection schema
       tags:
       - connections
   /workspaces/{workspace_slug}/connections/{connection_slug}/test:

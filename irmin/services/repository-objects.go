@@ -7,6 +7,7 @@ import (
 	"io"
 	"irmin-api/db"
 	"irmin-api/engine"
+	enginevalidation "irmin-api/engine/validation"
 	"irmin-api/lib"
 	"irmin-api/permissions"
 	"irmin-api/utils"
@@ -1512,12 +1513,12 @@ func (api *APIServices) ValidateRepositoryObject(
 	}
 
 	// Validate the object content against the schema with DuckDB support for non-JSON files
-	validationConfig := &lib.ValidationConfig{
+	validationConfig := &enginevalidation.Config{
 		Ctx:    c,
 		Env:    api.Env,
 		Logger: api.Logger,
 	}
-	result := lib.ValidateDataAgainstSchemaWithConfig(object.Path, content, validationSchema, validationConfig)
+	result := enginevalidation.ValidateFile(c, object.Path, content, validationSchema, validationConfig)
 
 	// Build logs from validation result
 	var logs []string
@@ -1526,7 +1527,7 @@ func (api *APIServices) ValidateRepositoryObject(
 	} else {
 		logs = append(logs, fmt.Sprintf("✗ Object '%s' failed validation:", object.Path))
 		for _, err := range result.Errors {
-			logs = append(logs, fmt.Sprintf("  - %s", err))
+			logs = append(logs, fmt.Sprintf("  - %s", err.Message))
 		}
 	}
 

@@ -11,6 +11,7 @@ import (
 	connectorsclient "irmin-api/connectors-client"
 	"irmin-api/db"
 	"irmin-api/duckdb"
+	enginevalidation "irmin-api/engine/validation"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 
@@ -738,6 +739,26 @@ func (c *Client) PushFilesToConnector(
 	// Validate connector capability
 	if err := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPush); err != nil {
 		return nil, nil, err
+	}
+
+	// Validate files against push schema if available
+	targetSchema, _, schemaErr := c.DataMovementSchema(ctx, connection, "push", connectionPath, tx...)
+	if schemaErr == nil && targetSchema != nil {
+		// Create validation config with DuckDB support for non-JSON files (CSV, Parquet, etc.)
+		validationConfig := &enginevalidation.Config{
+			Ctx:    ctx,
+			Env:    c.Env,
+			Logger: c.Logger,
+		}
+		validationResult := enginevalidation.ValidateFiles(ctx, files, targetSchema, validationConfig)
+		if !validationResult.Valid {
+			return nil, nil, &ConnectorSchemaValidationError{
+				Result:         validationResult,
+				OperationType:  "push",
+				ConnectionName: connection.Name,
+				ConnectionPath: connectionPath,
+			}
+		}
 	}
 
 	// Zip the files.

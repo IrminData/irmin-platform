@@ -1,8 +1,13 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"mime/multipart"
+
 	"irmin-api/db"
+	enginevalidation "irmin-api/engine/validation"
 	"irmin-api/formatter"
 	"irmin-api/locales"
 	"irmin-api/services"
@@ -566,4 +571,363 @@ func (api *APIControllers) TestConnection(c fiber.Ctx) error {
 		Message: api.lm.T(dict, "connection_tested"),
 		Data:    result,
 	})
+}
+
+// ConnectionSchemaValidate godoc
+// @Summary Validate data against connection schema
+// @Description Validates uploaded data files against the connection's schema for the specified operation.
+// @Description
+// @Description **Supported formats:** JSON, CSV, Parquet, Excel (.xlsx, .xls), TSV, JSONL/NDJSON
+// @Description
+// @Description **Auto-matching for group schemas:**
+// @Description When the target schema is a group (e.g., a connector's root with children like users.json, orders.json),
+// @Description uploaded files are automatically matched to child schemas by filename (case-insensitive).
+// @Description - Files matching a child schema are validated against that specific schema
+// @Description - Files not matching any child generate a warning but don't fail validation
+// @Description - Use the 'path' parameter to target a specific child schema directly
+// @Description
+// @Description **Single schema validation:**
+// @Description When the target schema is a single structured file, all uploaded files are validated against it.
+// @Tags connections
+// @Security ApiKeyAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param connection_slug path string true "Connection ID"
+// @Param operation_method query string true "Operation method (push or pull)"
+// @Param path query string false "Schema path - empty for root, or specific path like 'users.json' to target a child"
+// @Param files formData file false "Data files to validate (multiple allowed, matched by filename to schema children)"
+// @Param file formData file false "Single data file to validate (legacy, use 'files' for multiple)"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.SchemaValidationResult} "Validation completed"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Invalid request - no files provided"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Connection not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/connections/{connection_slug}/schema/validate [post]
+func (api *APIControllers) ConnectionSchemaValidate(c fiber.Ctx) error {
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	connection, connectionOk := c.Locals("connection").(*db.Connection)
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !connectionOk {
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ConnectionSchemaValidate",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
+	}
+
+	// Get the operation method and path from query params
+	query, parseQueryParamsErr := utils.ParseQueryParams(c, []string{"operation_method"}, []string{"path"})
+	if parseQueryParamsErr != nil {
+		return api.handleServiceError(
+			c,
+			"Failed to parse query params",
+			fmt.Errorf("%w: %w", services.ErrInvalidQueryParams, parseQueryParamsErr),
+			dict,
+		)
+	}
+
+	// Collect files from the request - support both "files" (multiple) and "file" (single, legacy)
+	files, collectErr := CollectMultipartFiles(c, "files", "file")
+	if collectErr != nil {
+		return api.handleServiceError(
+			c,
+			"Failed to read files",
+			services.NewInternalError(collectErr.Error()),
+			dict,
+		)
+	}
+
+	// Ensure at least one file was provided
+	if len(files) == 0 {
+		return api.handleServiceError(
+			c,
+			"No files provided",
+			fmt.Errorf("%w: at least one file is required", services.ErrInvalidRequest),
+			dict,
+		)
+	}
+
+	// Get the schema of the connection
+	targetSchema, getConnectionSchemaErr := api.Services.GetConnectionSchema(
+		c,
+		locale,
+		user,
+		workspace,
+		connection,
+		query["operation_method"],
+		query["path"],
+	)
+	if getConnectionSchemaErr != nil {
+		return api.handleServiceError(c, "Failed to get connection schema", getConnectionSchemaErr, dict)
+	}
+
+	// Create validation config with DuckDB support for non-JSON files (CSV, Parquet, etc.)
+	validationConfig := &enginevalidation.Config{
+		Ctx:    c.Context(),
+		Env:    api.Env,
+		Logger: api.Logger,
+	}
+	result := enginevalidation.ValidateFiles(
+		c.Context(),
+		files,
+		targetSchema,
+		validationConfig,
+	)
+
+	// Return the response.
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: result,
+	})
+}
+
+// CollectMultipartFiles collects files from a multipart form request.
+// It checks multiple field names and returns a map of filename to file contents.
+// Exported for testing.
+func CollectMultipartFiles(c fiber.Ctx, fieldNames ...string) (map[string][]byte, error) {
+	files := make(map[string][]byte)
+
+	form, formErr := c.MultipartForm()
+	if formErr != nil {
+		return nil, fmt.Errorf("failed to parse multipart form: %w", formErr)
+	}
+	if form == nil || form.File == nil {
+		return files, nil
+	}
+
+	for _, fieldName := range fieldNames {
+		fileHeaders, ok := form.File[fieldName]
+		if !ok {
+			continue
+		}
+		for _, fileHeader := range fileHeaders {
+			fileData, readErr := readMultipartFileHeader(fileHeader)
+			if readErr != nil {
+				return nil, fmt.Errorf("failed to read file %s: %w", fileHeader.Filename, readErr)
+			}
+			files[fileHeader.Filename] = fileData
+		}
+	}
+
+	return files, nil
+}
+
+// readMultipartFileHeader reads the contents of a multipart file header.
+func readMultipartFileHeader(fileHeader *multipart.FileHeader) ([]byte, error) {
+	file, openErr := fileHeader.Open()
+	if openErr != nil {
+		return nil, fmt.Errorf("failed to open file: %w", openErr)
+	}
+	defer file.Close()
+
+	fileData, readErr := io.ReadAll(file)
+	if readErr != nil {
+		return nil, fmt.Errorf("failed to read file: %w", readErr)
+	}
+	return fileData, nil
+}
+
+// ConnectionSchemaDiff godoc
+// @Summary Compare data schema against connection schema
+// @Description Compares the schema of uploaded data against the connection's expected schema
+// @Tags connections
+// @Security ApiKeyAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param connection_slug path string true "Connection ID"
+// @Param operation_method query string true "Operation method (push or pull)"
+// @Param path query string false "Connection path for schema lookup"
+// @Param file formData file true "Data file to compare schema (JSON)"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.SchemaDiff} "Schema diff completed"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Invalid request"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Connection not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/connections/{connection_slug}/schema/diff [post]
+func (api *APIControllers) ConnectionSchemaDiff(c fiber.Ctx) error {
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	connection, connectionOk := c.Locals("connection").(*db.Connection)
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !connectionOk {
+		return api.handleServiceError(
+			c,
+			"Error getting locals for ConnectionSchemaDiff",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
+	}
+
+	// Get the operation method and path from query params
+	query, parseQueryParamsErr := utils.ParseQueryParams(c, []string{"operation_method"}, []string{"path"})
+	if parseQueryParamsErr != nil {
+		return api.handleServiceError(
+			c,
+			"Failed to parse query params",
+			fmt.Errorf("%w: %w", services.ErrInvalidQueryParams, parseQueryParamsErr),
+			dict,
+		)
+	}
+
+	// Get the file from the request
+	fileHeader, fileErr := c.FormFile("file")
+	if fileErr != nil {
+		return api.handleServiceError(
+			c,
+			"Failed to get file from request",
+			fmt.Errorf("%w: %w", services.ErrInvalidRequest, fileErr),
+			dict,
+		)
+	}
+
+	// Read the file contents
+	file, openErr := fileHeader.Open()
+	if openErr != nil {
+		return api.handleServiceError(
+			c,
+			"Failed to open file",
+			services.NewInternalError(fmt.Sprintf("failed to open file: %v", openErr)),
+			dict,
+		)
+	}
+	defer file.Close()
+
+	fileData, readErr := io.ReadAll(file)
+	if readErr != nil {
+		return api.handleServiceError(
+			c,
+			"Failed to read file",
+			services.NewInternalError(fmt.Sprintf("failed to read file: %v", readErr)),
+			dict,
+		)
+	}
+
+	// Get the target schema of the connection
+	targetSchema, getConnectionSchemaErr := api.Services.GetConnectionSchema(
+		c,
+		locale,
+		user,
+		workspace,
+		connection,
+		query["operation_method"],
+		query["path"],
+	)
+	if getConnectionSchemaErr != nil {
+		return api.handleServiceError(c, "Failed to get connection schema", getConnectionSchemaErr, dict)
+	}
+
+	// Parse the JSON data to infer its schema
+	var parsedData any
+	if unmarshalErr := json.Unmarshal(fileData, &parsedData); unmarshalErr != nil {
+		return api.handleServiceError(
+			c,
+			"Failed to parse JSON data",
+			fmt.Errorf("%w: %w", services.ErrInvalidRequest, unmarshalErr),
+			dict,
+		)
+	}
+
+	// Infer schema from the data
+	dataSchema := inferObjectSchemaFromData(fileHeader.Filename, parsedData)
+
+	// Compare schemas
+	diff := enginevalidation.CompareSchemas(dataSchema, targetSchema)
+
+	// Return the response.
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: diff,
+	})
+}
+
+// inferObjectSchemaFromData creates an ObjectSchema from parsed JSON data.
+func inferObjectSchemaFromData(name string, data any) *irminmodels.ObjectSchema {
+	jsonSchema := inferJSONSchemaFromValue(data)
+	return &irminmodels.ObjectSchema{
+		Name:   name,
+		Type:   irminmodels.ObjectTypeStructured,
+		Schema: jsonSchema,
+	}
+}
+
+// inferJSONSchemaFromValue recursively infers a JSONSchema from a Go value.
+func inferJSONSchemaFromValue(value any) *irminmodels.JSONSchema {
+	if value == nil {
+		return &irminmodels.JSONSchema{Type: "null"}
+	}
+
+	switch v := value.(type) {
+	case bool:
+		return &irminmodels.JSONSchema{Type: "boolean"}
+	case float64:
+		// Check if it's an integer
+		if v == float64(int64(v)) {
+			return &irminmodels.JSONSchema{Type: "integer"}
+		}
+		return &irminmodels.JSONSchema{Type: "number"}
+	case string:
+		return &irminmodels.JSONSchema{Type: "string"}
+	case []any:
+		schema := &irminmodels.JSONSchema{Type: "array"}
+		if len(v) > 0 {
+			// Merge schemas from all elements to handle heterogeneous arrays
+			schema.Items = mergeJSONSchemas(v)
+		}
+		return schema
+	case map[string]any:
+		schema := &irminmodels.JSONSchema{
+			Type:       "object",
+			Properties: make(map[string]irminmodels.JSONSchema),
+		}
+		for key, val := range v {
+			propSchema := inferJSONSchemaFromValue(val)
+			if propSchema != nil {
+				schema.Properties[key] = *propSchema
+			}
+		}
+		return schema
+	default:
+		return &irminmodels.JSONSchema{Type: "string"}
+	}
+}
+
+// mergeJSONSchemas merges schemas inferred from multiple array elements.
+// This handles heterogeneous arrays where different elements may have different properties.
+func mergeJSONSchemas(elements []any) *irminmodels.JSONSchema {
+	if len(elements) == 0 {
+		return nil
+	}
+
+	// Start with the schema from the first element
+	merged := inferJSONSchemaFromValue(elements[0])
+	if merged == nil {
+		return nil
+	}
+
+	// If not an object type, just return the first element's schema
+	// (arrays of primitives don't need merging)
+	if merged.Type != "object" {
+		return merged
+	}
+
+	// Merge properties from all subsequent elements
+	for i := 1; i < len(elements); i++ {
+		elemSchema := inferJSONSchemaFromValue(elements[i])
+		if elemSchema == nil || elemSchema.Type != "object" {
+			continue
+		}
+
+		// Add any new properties from this element
+		for propName, propSchema := range elemSchema.Properties {
+			if _, exists := merged.Properties[propName]; !exists {
+				merged.Properties[propName] = propSchema
+			}
+		}
+	}
+
+	return merged
 }

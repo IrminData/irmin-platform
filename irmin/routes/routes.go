@@ -385,6 +385,16 @@ func RegisterAPIRoutes(
 		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.TestConnection,
 	)
+	connection.Post(
+		"/schema/validate",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ConnectionSchemaValidate,
+	)
+	connection.Post(
+		"/schema/diff",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ConnectionSchemaDiff,
+	)
 
 	// Workflow routes
 	workflows := workspace.Group("/workflows")

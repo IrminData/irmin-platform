@@ -1,4 +1,4 @@
-package lib
+package validation
 
 import (
 	"context"
@@ -10,8 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 const (
@@ -19,7 +17,6 @@ const (
 )
 
 // SchemaField represents one column or nested field in the DuckDB schema.
-// This mirrors the engine.SchemaField structure for validation purposes.
 type SchemaField struct {
 	Name         string        `json:"name"`
 	Type         string        `json:"type"`
@@ -28,13 +25,13 @@ type SchemaField struct {
 	OriginalType string        `json:"original_type,omitempty"`
 }
 
-// ValidateStructuredFileSchema validates a non-JSON structured file against its expected schema.
+// ValidateStructuredFile validates a non-JSON structured file against its expected schema.
 // It uses DuckDB to read the file, extract its actual schema, and compare it against the expected schema.
-func ValidateStructuredFileSchema(
+func ValidateStructuredFile(
 	ctx context.Context,
 	fileName string,
 	data []byte,
-	schema *irminmodels.JSONSchema,
+	schema *JSONSchema,
 	env *utils.CoreAPIEnv,
 	logger *slog.Logger,
 ) ([]string, []string) {
@@ -185,7 +182,7 @@ func extractSchemaFromView(ctx context.Context, qc *duckdb.QueryClient, viewName
 
 // validateFieldsAgainstSchema compares actual fields from the file against the expected JSONSchema.
 // Field name matching is case-insensitive to handle DuckDB's case normalization.
-func validateFieldsAgainstSchema(actualFields []SchemaField, schema *irminmodels.JSONSchema) ([]string, []string) {
+func validateFieldsAgainstSchema(actualFields []SchemaField, schema *JSONSchema) ([]string, []string) {
 	var errors []string
 	var warnings []string
 
@@ -215,7 +212,7 @@ func buildActualFieldMap(actualFields []SchemaField) map[string]SchemaField {
 }
 
 // buildSchemaPropertyMap builds a case-insensitive map of schema property names.
-func buildSchemaPropertyMap(properties map[string]irminmodels.JSONSchema) map[string]string {
+func buildSchemaPropertyMap(properties map[string]JSONSchema) map[string]string {
 	schemaPropertyMap := make(map[string]string)
 	for propName := range properties {
 		schemaPropertyMap[strings.ToLower(propName)] = propName
@@ -236,7 +233,7 @@ func validateRequiredFields(required []string, actualFieldMap map[string]SchemaF
 
 // validateProperties validates each expected property against actual fields.
 func validateProperties(
-	properties map[string]irminmodels.JSONSchema,
+	properties map[string]JSONSchema,
 	required []string,
 	actualFieldMap map[string]SchemaField,
 ) ([]string, []string) {
@@ -290,7 +287,7 @@ func validateExtraFields(actualFieldMap map[string]SchemaField, schemaPropertyMa
 }
 
 // validateTypeCompatibility checks if a DuckDB type is compatible with a JSONSchema type.
-func validateTypeCompatibility(fieldName, duckDBType string, propSchema irminmodels.JSONSchema) string {
+func validateTypeCompatibility(fieldName, duckDBType string, propSchema JSONSchema) string {
 	// Normalize the DuckDB type
 	normalizedType := strings.ToUpper(strings.TrimSpace(duckDBType))
 
@@ -298,29 +295,49 @@ func validateTypeCompatibility(fieldName, duckDBType string, propSchema irminmod
 	expectedJSONType := propSchema.Type
 
 	switch expectedJSONType {
-	case "string":
+	case jsonSchemaTypeString:
 		if isStringCompatible(normalizedType) {
 			return ""
 		}
-		return fmt.Sprintf("Field '%s' has type '%s' but schema expects 'string'", fieldName, duckDBType)
+		return fmt.Sprintf(
+			"Field '%s' has type '%s' but schema expects '%s'",
+			fieldName,
+			duckDBType,
+			jsonSchemaTypeString,
+		)
 
-	case "integer":
+	case jsonSchemaTypeInteger:
 		if isIntegerCompatible(normalizedType) {
 			return ""
 		}
-		return fmt.Sprintf("Field '%s' has type '%s' but schema expects 'integer'", fieldName, duckDBType)
+		return fmt.Sprintf(
+			"Field '%s' has type '%s' but schema expects '%s'",
+			fieldName,
+			duckDBType,
+			jsonSchemaTypeInteger,
+		)
 
-	case "number":
+	case jsonSchemaTypeNumber:
 		if isNumberCompatible(normalizedType) {
 			return ""
 		}
-		return fmt.Sprintf("Field '%s' has type '%s' but schema expects 'number'", fieldName, duckDBType)
+		return fmt.Sprintf(
+			"Field '%s' has type '%s' but schema expects '%s'",
+			fieldName,
+			duckDBType,
+			jsonSchemaTypeNumber,
+		)
 
-	case "boolean":
+	case jsonSchemaTypeBoolean:
 		if normalizedType == "BOOLEAN" || normalizedType == "BOOL" {
 			return ""
 		}
-		return fmt.Sprintf("Field '%s' has type '%s' but schema expects 'boolean'", fieldName, duckDBType)
+		return fmt.Sprintf(
+			"Field '%s' has type '%s' but schema expects '%s'",
+			fieldName,
+			duckDBType,
+			jsonSchemaTypeBoolean,
+		)
 
 	case jsonSchemaTypeArray:
 		// DuckDB represents arrays as: TYPE[], TYPE[SIZE] (fixed-size), or LIST(TYPE)
@@ -330,7 +347,12 @@ func validateTypeCompatibility(fieldName, duckDBType string, propSchema irminmod
 			strings.HasPrefix(normalizedType, "LIST(") {
 			return ""
 		}
-		return fmt.Sprintf("Field '%s' has type '%s' but schema expects 'array'", fieldName, duckDBType)
+		return fmt.Sprintf(
+			"Field '%s' has type '%s' but schema expects '%s'",
+			fieldName,
+			duckDBType,
+			jsonSchemaTypeArray,
+		)
 
 	case jsonSchemaTypeObject:
 		// DuckDB represents maps as: MAP(KEY_TYPE, VALUE_TYPE)
@@ -339,9 +361,14 @@ func validateTypeCompatibility(fieldName, duckDBType string, propSchema irminmod
 			normalizedType == "JSON" {
 			return ""
 		}
-		return fmt.Sprintf("Field '%s' has type '%s' but schema expects 'object'", fieldName, duckDBType)
+		return fmt.Sprintf(
+			"Field '%s' has type '%s' but schema expects '%s'",
+			fieldName,
+			duckDBType,
+			jsonSchemaTypeObject,
+		)
 
-	case "null":
+	case jsonSchemaTypeNull:
 		// Any type can potentially be null in DuckDB
 		return ""
 
@@ -373,7 +400,14 @@ func isStringCompatible(duckDBType string) bool {
 		"VARBINARY":                true,
 		"BYTEA":                    true,
 	}
-	return stringTypes[duckDBType] || strings.HasPrefix(duckDBType, "VARCHAR(")
+	// Check base types first
+	if stringTypes[duckDBType] {
+		return true
+	}
+	// Handle parameterized character types like VARCHAR(n), CHAR(n), BPCHAR(n)
+	return strings.HasPrefix(duckDBType, "VARCHAR(") ||
+		strings.HasPrefix(duckDBType, "CHAR(") ||
+		strings.HasPrefix(duckDBType, "BPCHAR(")
 }
 
 // isIntegerCompatible checks if a DuckDB type can be represented as a JSON integer.

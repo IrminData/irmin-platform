@@ -125,6 +125,28 @@ SQL execution against repository data:
 - **Format Support**: Handle various data formats (CSV, JSON, Parquet)
 - **Error Handling**: Graceful fallback for unsupported formats
 
+##### Schema Validation (`validation/`)
+
+The validation subpackage provides comprehensive schema validation capabilities:
+
+- **JSON Schema Validation**: Validate JSON files against JSON Schema with detailed error reporting
+  - Type validation (string, number, integer, boolean, null, array, object)
+  - Required field validation and constraint checking
+  - Nested object and array item validation with path tracking
+  - Actionable error suggestions
+  
+- **Structured File Validation**: Validate CSV, Parquet, Excel files using DuckDB
+  - DuckDB-based schema extraction and type checking
+  - Automatic type mapping between DuckDB and JSON Schema types
+  - Missing/extra field detection
+  
+- **Schema Compatibility**: Compare schemas for breaking changes
+  - Detect added/removed fields
+  - Identify type changes and required field modifications
+  - Generate human-readable compatibility reports
+
+See [`validation/README.md`](./validation/README.md) for detailed usage documentation.
+
 #### 9. **Tag Management** (`tags.go`)
 
 - **Tag Lifecycle**: Create, list, retrieve, delete tags

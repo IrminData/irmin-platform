@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"irmin-api/db"
+	enginevalidation "irmin-api/engine/validation"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 	"time"
@@ -15,10 +16,12 @@ import (
 
 func (c *Client) CompareRefs(
 	ctx context.Context,
-	workspace, repository, baseRef, compareRef string,
+	user *db.User,
+	workspace *db.Workspace,
+	repositorySlug, baseRef, compareRef string,
 ) (*irminmodels.Diff, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace.Slug, repositorySlug)
 
 	// Run LakeFS API calls concurrently.
 	mergeBaseFuture := utils.AsyncWithContext(ctx, func() (*lakefs.MergeBase, error) {
@@ -95,15 +98,92 @@ func (c *Client) CompareRefs(
 			PreviousHash: &previousHash,
 		}
 	}
+
+	// Compute schema diffs for structured objects that changed
+	schemaDiffs := c.computeSchemaDiffs(ctx, user, workspace, repositorySlug, baseRef, compareRef, diff)
+
 	irminDiff := &irminmodels.Diff{
-		Repository: repository,
-		BaseRef:    baseRef,
-		CompareRef: compareRef,
-		Items:      irminChangeItems,
-		Commits:    irminCommits,
+		Repository:  repositorySlug,
+		BaseRef:     baseRef,
+		CompareRef:  compareRef,
+		Items:       irminChangeItems,
+		Commits:     irminCommits,
+		SchemaDiffs: schemaDiffs,
 	}
 
 	return irminDiff, nil
+}
+
+// computeSchemaDiffs computes schema differences for structured objects that changed between refs.
+//
+//nolint:gocognit // This function is complex but it's necessary to compute schema differences for structured objects.
+func (c *Client) computeSchemaDiffs(
+	ctx context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	repositorySlug, baseRef, compareRef string,
+	diffItems []lakefs.Diff,
+) []irminmodels.ObjectSchemaDiff {
+	var schemaDiffs []irminmodels.ObjectSchemaDiff
+
+	for _, diffItem := range diffItems {
+		objectDetails := irminutils.ParseObjectDetailsFromPath(diffItem.Path)
+
+		// Only compute schema diffs for structured objects
+		if objectDetails.Type != irminmodels.ObjectTypeStructured {
+			continue
+		}
+
+		var baseSchema, compareSchema *irminmodels.ObjectSchema
+		var baseErr, compareErr error
+
+		// Get schema from base ref (for changed or removed items)
+		if diffItem.Type == "changed" || diffItem.Type == "removed" {
+			baseSchema, baseErr = c.GenerateObjectSchema(
+				ctx,
+				user,
+				workspace,
+				repositorySlug,
+				objectDetails.FullPath,
+				baseRef,
+			)
+			if baseErr != nil {
+				c.Logger.WarnContext(ctx, "failed to get base schema for diff",
+					"path", objectDetails.FullPath, "ref", baseRef, "error", baseErr)
+			}
+		}
+
+		// Get schema from compare ref (for changed or added items)
+		if diffItem.Type == "changed" || diffItem.Type == "added" {
+			compareSchema, compareErr = c.GenerateObjectSchema(
+				ctx,
+				user,
+				workspace,
+				repositorySlug,
+				objectDetails.FullPath,
+				compareRef,
+			)
+			if compareErr != nil {
+				c.Logger.WarnContext(ctx, "failed to get compare schema for diff",
+					"path", objectDetails.FullPath, "ref", compareRef, "error", compareErr)
+			}
+		}
+
+		// Compute schema diff if we have at least one schema
+		if baseSchema != nil || compareSchema != nil {
+			schemaDiff := enginevalidation.CompareSchemas(baseSchema, compareSchema)
+
+			// Only include if there are actual changes
+			if schemaDiff != nil && schemaDiff.HasChanges() {
+				schemaDiffs = append(schemaDiffs, irminmodels.ObjectSchemaDiff{
+					Path: objectDetails.FullPath,
+					Diff: schemaDiff,
+				})
+			}
+		}
+	}
+
+	return schemaDiffs
 }
 
 func (c *Client) GetUncommittedChanges(

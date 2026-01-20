@@ -70,6 +70,10 @@ func IsPointerPath(path string) bool
 func IsRowReturningStatement(stmt string) bool
     IsRowReturningStatement checks if a SQL statement returns rows.
 
+func IsSchemaValidationError(err error) bool
+    IsSchemaValidationError checks if an error is a
+    ConnectorSchemaValidationError.
+
 func IsSystemPath(path string) bool
     IsSystemPath checks if the given path is a system path that should be
     hidden.
@@ -221,7 +225,9 @@ func (c *Client) CommitChanges(
 
 func (c *Client) CompareRefs(
 	ctx context.Context,
-	workspace, repository, baseRef, compareRef string,
+	user *db.User,
+	workspace *db.Workspace,
+	repositorySlug, baseRef, compareRef string,
 ) (*irminmodels.Diff, error)
 
 func (c *Client) ConfigureRepositoryWebhookNotifications(
@@ -426,6 +432,46 @@ func (c *Client) UpdateRepository(
 ) (*Repository, error)
 
 func (c *Client) UploadObject(workspace, repository, path, ref string, file io.Reader) (*irminmodels.Object, error)
+
+type ConnectorSchemaValidationError struct {
+	// Result contains the detailed validation errors and warnings.
+	Result *irminmodels.SchemaValidationResult
+
+	// OperationType indicates the operation that failed (e.g., "push", "pull").
+	OperationType string
+
+	// ConnectionName identifies which connection the validation was for.
+	ConnectionName string
+
+	// ConnectionPath is the target path within the connection.
+	ConnectionPath string
+}
+    ConnectorSchemaValidationError wraps schema validation failures with
+    operation context. This error type provides detailed information about why
+    data failed validation against a connector's expected schema.
+
+func AsSchemaValidationError(err error) *ConnectorSchemaValidationError
+    AsSchemaValidationError attempts to convert an error to
+    ConnectorSchemaValidationError. Returns nil if the error is not a schema
+    validation error.
+
+func (e *ConnectorSchemaValidationError) Error() string
+    Error implements the error interface.
+
+func (e *ConnectorSchemaValidationError) ErrorCount() int
+    ErrorCount returns the number of validation errors.
+
+func (e *ConnectorSchemaValidationError) FormatUserMessage() string
+    FormatUserMessage returns a user-friendly error message with details.
+
+func (e *ConnectorSchemaValidationError) GetFirstError() *irminmodels.SchemaValidationError
+    GetFirstError returns the first validation error, or nil if there are none.
+
+func (e *ConnectorSchemaValidationError) HasErrors() bool
+    HasErrors returns true if there are any validation errors.
+
+func (e *ConnectorSchemaValidationError) Unwrap() error
+    Unwrap returns nil as this error does not wrap another error.
 
 type FieldMappingResult struct {
 	Path    string `json:"path"`
