@@ -11960,6 +11960,7 @@ import "irmin-api/permissions"
 - [type Cache](<#Cache>)
   - [func NewCache\(\) \*Cache](<#NewCache>)
   - [func \(pc \*Cache\) Clear\(\)](<#Cache.Clear>)
+  - [func \(pc \*Cache\) ClearAll\(\)](<#Cache.ClearAll>)
   - [func \(pc \*Cache\) Get\(key string\) \(bool, bool\)](<#Cache.Get>)
   - [func \(pc \*Cache\) GetStats\(\) Stats](<#Cache.GetStats>)
   - [func \(pc \*Cache\) Set\(key string, allowed bool, ttl time.Duration\)](<#Cache.Set>)
@@ -11968,6 +11969,7 @@ import "irmin-api/permissions"
 - [type PolicyMatch](<#PolicyMatch>)
 - [type Service](<#Service>)
   - [func NewService\(database \*db.Database, logger \*slog.Logger\) \*Service](<#NewService>)
+  - [func \(ps \*Service\) ClearAllPermissionCache\(\)](<#Service.ClearAllPermissionCache>)
   - [func \(ps \*Service\) ClearPermissionCache\(\)](<#Service.ClearPermissionCache>)
   - [func \(ps \*Service\) IsAllowed\(user \*db.User, workspace \*db.Workspace, resource db.PolicyResource, resourceID \*uint, action db.PolicyAction\) \(bool, error\)](<#Service.IsAllowed>)
   - [func \(ps \*Service\) SetPermissionCacheTTL\(userID, workspaceID uint, resource db.PolicyResource, resourceID \*uint, action db.PolicyAction, allowed bool, ttl time.Duration\)](<#Service.SetPermissionCacheTTL>)
@@ -12031,6 +12033,15 @@ func (pc *Cache) Clear()
 ```
 
 Clear removes expired entries from cache.
+
+<a name="Cache.ClearAll"></a>
+### func \(\*Cache\) ClearAll
+
+```go
+func (pc *Cache) ClearAll()
+```
+
+ClearAll removes all entries from cache, regardless of expiration. Use this when permissions have changed and cached values must be invalidated immediately.
 
 <a name="Cache.Get"></a>
 ### func \(\*Cache\) Get
@@ -12116,6 +12127,15 @@ func NewService(database *db.Database, logger *slog.Logger) *Service
 
 NewService creates a new permission service.
 
+<a name="Service.ClearAllPermissionCache"></a>
+### func \(\*Service\) ClearAllPermissionCache
+
+```go
+func (ps *Service) ClearAllPermissionCache()
+```
+
+ClearAllPermissionCache removes all entries from the permission cache immediately. Use this when policies have changed and all cached permissions must be invalidated.
+
 <a name="Service.ClearPermissionCache"></a>
 ### func \(\*Service\) ClearPermissionCache
 
@@ -12190,6 +12210,7 @@ import "irmin-api/services"
 - [func GetInternalErrorMessage\(err error\) string](<#GetInternalErrorMessage>)
 - [func GetTranslationKeyForError\(err error\) string](<#GetTranslationKeyForError>)
 - [func IsInternalError\(err error\) bool](<#IsInternalError>)
+- [func IsPolicyAlreadyExistsError\(err error\) bool](<#IsPolicyAlreadyExistsError>)
 - [func MapErrorToStatusCode\(err error\) int](<#MapErrorToStatusCode>)
 - [func NewInternalError\(msg string\) error](<#NewInternalError>)
 - [func NewInternalErrorf\(format string, args ...any\) error](<#NewInternalErrorf>)
@@ -12531,6 +12552,15 @@ func IsInternalError(err error) bool
 ```
 
 IsInternalError checks if an error is marked as internal\-only and should not be exposed to clients.
+
+<a name="IsPolicyAlreadyExistsError"></a>
+## func IsPolicyAlreadyExistsError
+
+```go
+func IsPolicyAlreadyExistsError(err error) bool
+```
+
+IsPolicyAlreadyExistsError checks if an error is the policy already exists sentinel error.
 
 <a name="MapErrorToStatusCode"></a>
 ## func MapErrorToStatusCode

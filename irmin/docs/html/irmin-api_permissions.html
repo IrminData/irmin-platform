@@ -52,6 +52,11 @@ func NewCache() *Cache
 func (pc *Cache) Clear()
     Clear removes expired entries from cache.
 
+func (pc *Cache) ClearAll()
+    ClearAll removes all entries from cache, regardless of expiration.
+    Use this when permissions have changed and cached values must be invalidated
+    immediately.
+
 func (pc *Cache) Get(key string) (bool, bool)
     Get retrieves a cached permission result and updates its position in LRU
     order.
@@ -88,6 +93,11 @@ type Service struct {
 
 func NewService(database *db.Database, logger *slog.Logger) *Service
     NewService creates a new permission service.
+
+func (ps *Service) ClearAllPermissionCache()
+    ClearAllPermissionCache removes all entries from the permission cache
+    immediately. Use this when policies have changed and all cached permissions
+    must be invalidated.
 
 func (ps *Service) ClearPermissionCache()
     ClearPermissionCache clears expired entries from the permission cache.

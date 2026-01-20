@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"irmin-api/db"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -25,4 +26,15 @@ var ExportProcessSecretUpdates = func(
 	updates map[string]any,
 ) map[string]string {
 	return api.processSecretUpdates(current, updates)
+}
+
+// ExportCreatePolicyInTransaction exports createPolicyInTransaction method for testing.
+// Returns (replaced bool, err error) where replaced indicates if an existing policy was replaced.
+var ExportCreatePolicyInTransaction = func(
+	api *APIServices,
+	ctx context.Context,
+	workspace *db.Workspace,
+	newPolicy *db.Policy,
+) (bool, error) {
+	return api.createPolicyInTransaction(ctx, workspace, newPolicy)
 }

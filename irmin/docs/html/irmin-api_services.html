@@ -122,6 +122,10 @@ func IsInternalError(err error) bool
     IsInternalError checks if an error is marked as internal-only and should not
     be exposed to clients.
 
+func IsPolicyAlreadyExistsError(err error) bool
+    IsPolicyAlreadyExistsError checks if an error is the policy already exists
+    sentinel error.
+
 func MapErrorToStatusCode(err error) int
     MapErrorToStatusCode maps service layer errors to appropriate HTTP status
     codes

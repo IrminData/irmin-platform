@@ -1,12 +1,14 @@
 package permissions_test
 
 import (
-	"irmin-api/db"
-	"irmin-api/lib"
-	"irmin-api/permissions"
+	"io"
 	"log/slog"
 	"slices"
 	"testing"
+
+	"irmin-api/db"
+	"irmin-api/lib"
+	"irmin-api/permissions"
 
 	"github.com/zeebo/assert"
 	"gorm.io/gorm"
@@ -87,7 +89,10 @@ func createDenyPolicy(t *testing.T, ts *lib.TestSuite, workspace *db.Workspace, 
 
 func TestIsAllowedFilter(t *testing.T) {
 	ts := lib.GetTestSuite()
-	logger := slog.New(slog.NewTextHandler(nil, nil))
+	if ts == nil {
+		t.Skip("Test suite not initialized, skipping test")
+	}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	ps := permissions.NewService(ts.DB, logger)
 
 	// Find the test workspace

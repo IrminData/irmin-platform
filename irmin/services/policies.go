@@ -284,14 +284,19 @@ func (api *APIServices) handleOptionalPolicyFields(
 }
 
 // createPolicyInTransaction creates a policy within a transaction with advisory locking.
+// If a policy with the same principal/resource/action combination exists with a different effect,
+// it replaces the existing policy instead of creating a duplicate conflict.
+// Returns true if an existing policy was replaced (effect changed), false if a new policy was created.
 func (api *APIServices) createPolicyInTransaction(
 	c context.Context,
 	workspace *db.Workspace,
 	newPolicy *db.Policy,
-) error {
-	return api.DB.Transaction(func(tx *gorm.DB) error {
-		// Acquire advisory lock based on unique policy attributes
-		// Format pointer values properly to avoid using memory addresses
+) (bool, error) {
+	var wasReplaced bool
+	txErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock based on unique policy attributes (excluding effect)
+		// This ensures conflicting policies (same principal/resource/action but different effect)
+		// are handled atomically
 		resourceIDStr := nilPolicyValue
 		if newPolicy.ResourceID != nil {
 			resourceIDStr = strconv.FormatUint(uint64(*newPolicy.ResourceID), 10)
@@ -305,13 +310,13 @@ func (api *APIServices) createPolicyInTransaction(
 			workspaceUserIDStr = strconv.FormatUint(uint64(*newPolicy.WorkspaceUserID), 10)
 		}
 
+		// Lock key excludes effect to prevent conflicting policies from being created concurrently
 		lockKey := fmt.Sprintf(
-			"policy:create:%d:%s:%s:%s:%s:%s:%s:%s",
+			"policy:create:%d:%s:%s:%s:%s:%s:%s",
 			workspace.ID,
 			newPolicy.Principal,
 			newPolicy.Resource,
 			newPolicy.Action,
-			newPolicy.Effect,
 			resourceIDStr,
 			roleIDStr,
 			workspaceUserIDStr,
@@ -321,30 +326,57 @@ func (api *APIServices) createPolicyInTransaction(
 			return NewInternalErrorf("error acquiring lock for policy creation: %w", lockErr)
 		}
 
-		// Check for existing policy after acquiring lock
+		// Check for existing policy with same principal/resource/action (ignoring effect)
+		// This allows us to detect and replace conflicting policies
 		var existingPolicy db.Policy
 		existingPolicyErr := tx.Where(
-			"workspace_id = ? AND principal = ? AND resource = ? AND action = ? AND effect = ? AND COALESCE(resource_id, 0) = COALESCE(?, 0) AND COALESCE(role_id, 0) = COALESCE(?, 0) AND COALESCE(workspace_user_id, 0) = COALESCE(?, 0)",
+			"workspace_id = ? AND principal = ? AND resource = ? AND action = ? AND COALESCE(resource_id, 0) = COALESCE(?, 0) AND COALESCE(role_id, 0) = COALESCE(?, 0) AND COALESCE(workspace_user_id, 0) = COALESCE(?, 0)",
 			workspace.ID,
 			newPolicy.Principal,
 			newPolicy.Resource,
 			newPolicy.Action,
-			newPolicy.Effect,
 			newPolicy.ResourceID,
 			newPolicy.RoleID,
 			newPolicy.WorkspaceUserID,
 		).First(&existingPolicy).Error
 
 		if existingPolicyErr == nil {
-			api.Logger.ErrorContext(c, "Policy already exists")
-			return ErrPolicyAlreadyExists
+			// Policy exists for this principal/resource/action combination
+			if existingPolicy.Effect == newPolicy.Effect {
+				// Same effect - policy already exists, no change needed
+				api.Logger.InfoContext(c, "Policy already exists with same effect")
+				return ErrPolicyAlreadyExists
+			}
+
+			// Different effect - replace the existing policy by updating its effect
+			api.Logger.InfoContext(
+				c,
+				"Replacing conflicting policy",
+				"oldEffect", existingPolicy.Effect,
+				"newEffect", newPolicy.Effect,
+				"resource", newPolicy.Resource,
+				"action", newPolicy.Action,
+				"principal", newPolicy.Principal,
+			)
+			existingPolicy.Effect = newPolicy.Effect
+			if updateErr := tx.Save(&existingPolicy).Error; updateErr != nil {
+				api.Logger.ErrorContext(c, "Error updating existing policy", "error", updateErr)
+				return NewInternalErrorf("error updating existing policy: %w", updateErr)
+			}
+
+			// Copy the updated policy's ID back to newPolicy so the caller gets the correct ID
+			newPolicy.ID = existingPolicy.ID
+			newPolicy.CreatedAt = existingPolicy.CreatedAt
+			newPolicy.UpdatedAt = existingPolicy.UpdatedAt
+			wasReplaced = true
+			return nil
 		}
 		if !errors.Is(existingPolicyErr, gorm.ErrRecordNotFound) {
 			api.Logger.ErrorContext(c, "Error checking for existing policy", "error", existingPolicyErr)
 			return NewInternalErrorf("error checking for existing policy: %w", existingPolicyErr)
 		}
 
-		// Create the policy
+		// No existing policy - create new one
 		if createPolicyErr := tx.Create(newPolicy).Error; createPolicyErr != nil {
 			api.Logger.ErrorContext(c, "Error creating policy", "error", createPolicyErr)
 			return NewInternalErrorf("error creating policy: %w", createPolicyErr)
@@ -352,6 +384,7 @@ func (api *APIServices) createPolicyInTransaction(
 
 		return nil
 	})
+	return wasReplaced, txErr
 }
 
 func (api *APIServices) CreatePolicy(
@@ -420,15 +453,30 @@ func (api *APIServices) CreatePolicy(
 	}
 
 	// Create policy in transaction with advisory lock
-	if transactionErr := api.createPolicyInTransaction(c, workspace, newPolicy); transactionErr != nil {
+	// If a conflicting policy exists (same asset/action/principal but different effect), it will be replaced
+	replaced, transactionErr := api.createPolicyInTransaction(c, workspace, newPolicy)
+	if transactionErr != nil {
 		return nil, transactionErr
 	}
 
-	// Log the event
+	// Clear all permission cache when policy is replaced to ensure immediate effect
+	if replaced {
+		api.PermissionService.ClearAllPermissionCache()
+	}
+
+	// Log the event with appropriate action description
+	eventType := db.LogEventTypeCreate
+	actionDescription := "created"
+	if replaced {
+		eventType = db.LogEventTypeUpdate
+		actionDescription = "replaced"
+	}
+
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type: db.LogEventTypeCreate,
+		Type: eventType,
 		Description: fmt.Sprintf(
-			"Policy created for resource %s, action %s, principal %s, effect %s",
+			"Policy %s for resource %s, action %s, principal %s, effect %s",
+			actionDescription,
 			newPolicy.Resource,
 			newPolicy.Action,
 			newPolicy.Principal,

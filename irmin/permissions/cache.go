@@ -184,6 +184,21 @@ func (pc *Cache) Clear() {
 	pc.cleanExpiredEntriesUnsafe()
 }
 
+// ClearAll removes all entries from cache, regardless of expiration.
+// Use this when permissions have changed and cached values must be invalidated immediately.
+func (pc *Cache) ClearAll() {
+	pc.mu.Lock()
+	defer pc.mu.Unlock()
+
+	// Reset the cache map
+	pc.cache = make(map[string]*cacheNode)
+
+	// Reset the LRU linked list to empty state (head -> tail)
+	pc.head.next = pc.tail
+	pc.tail.prev = pc.head
+	pc.lastCleanup = time.Now()
+}
+
 // Size returns the current number of entries in the cache.
 func (pc *Cache) Size() int {
 	pc.mu.RLock()

@@ -85,6 +85,11 @@ func IsInternalError(err error) bool {
 	return strings.HasPrefix(err.Error(), internalErrorPrefix)
 }
 
+// IsPolicyAlreadyExistsError checks if an error is the policy already exists sentinel error.
+func IsPolicyAlreadyExistsError(err error) bool {
+	return errors.Is(err, ErrPolicyAlreadyExists)
+}
+
 // GetInternalErrorMessage strips the internal prefix for logging purposes.
 // This allows server-side logs to display the actual error message without the prefix.
 func GetInternalErrorMessage(err error) string {

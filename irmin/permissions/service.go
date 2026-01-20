@@ -279,6 +279,12 @@ func (ps *Service) ClearPermissionCache() {
 	ps.cache.Clear()
 }
 
+// ClearAllPermissionCache removes all entries from the permission cache immediately.
+// Use this when policies have changed and all cached permissions must be invalidated.
+func (ps *Service) ClearAllPermissionCache() {
+	ps.cache.ClearAll()
+}
+
 // SetPermissionCacheTTL allows customizing the cache TTL for specific permissions.
 func (ps *Service) SetPermissionCacheTTL(
 	userID, workspaceID uint,

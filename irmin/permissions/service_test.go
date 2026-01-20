@@ -1,12 +1,14 @@
 package permissions_test
 
 import (
-	"irmin-api/db"
-	"irmin-api/lib"
-	"irmin-api/permissions"
+	"io"
 	"log/slog"
 	"testing"
 	"time"
+
+	"irmin-api/db"
+	"irmin-api/lib"
+	"irmin-api/permissions"
 
 	"github.com/zeebo/assert"
 	"gorm.io/gorm"
@@ -194,7 +196,10 @@ func createTestCases(
 // TestPermissionService_IsAllowed tests the IsAllowed method of the PermissionService.
 func TestPermissionService_IsAllowed(t *testing.T) {
 	ts := lib.GetTestSuite()
-	logger := slog.New(slog.NewTextHandler(nil, nil))
+	if ts == nil {
+		t.Skip("Test suite not initialized, skipping test")
+	}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	ps := permissions.NewService(ts.DB, logger)
 
 	// Setup test environment
@@ -230,7 +235,10 @@ func TestPermissionService_IsAllowed(t *testing.T) {
 // TestResourceSpecificityPrecedence tests the resource specificity precedence.
 func TestResourceSpecificityPrecedence(t *testing.T) {
 	ts := lib.GetTestSuite()
-	logger := slog.New(slog.NewTextHandler(nil, nil))
+	if ts == nil {
+		t.Skip("Test suite not initialized, skipping test")
+	}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	ps := permissions.NewService(ts.DB, logger)
 
 	// Find the test workspace
@@ -365,7 +373,10 @@ func TestResourceSpecificityPrecedence(t *testing.T) {
 // TestPermissionCache tests the permission cache.
 func TestPermissionCache(t *testing.T) {
 	ts := lib.GetTestSuite()
-	logger := slog.New(slog.NewTextHandler(nil, nil))
+	if ts == nil {
+		t.Skip("Test suite not initialized, skipping test")
+	}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	ps := permissions.NewService(ts.DB, logger)
 
 	// Find the test workspace
