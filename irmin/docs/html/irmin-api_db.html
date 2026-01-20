@@ -250,6 +250,41 @@ type AIApplicationToolConfig struct {
     AIApplicationToolConfig defines which tools are enabled for an AI
     Application.
 
+type AIApplicationToolLog struct {
+	gorm.Model
+
+	AIApplicationID uint          `json:"ai_application_id" gorm:"index;not null"`
+	AIApplication   AIApplication `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
+
+	// Tool information
+	ToolName   string `json:"tool_name"   gorm:"not null"`
+	ToolType   string `json:"tool_type"`                     // "builtin" or "custom"
+	InputsJSON string `json:"inputs_json" gorm:"type:jsonb"` // JSON-encoded tool inputs
+
+	// Request metadata
+	Protocol    AIApplicationToolLogProtocol `json:"protocol"     gorm:"not null"`
+	RequestIP   string                       `json:"request_ip"`
+	UserAgent   string                       `json:"user_agent"`
+	Origin      string                       `json:"origin"`
+	ContentType string                       `json:"content_type"`
+
+	// Execution metadata
+	DurationMs int64  `json:"duration_ms"`
+	Success    bool   `json:"success"     gorm:"default:true"`
+	ErrorMsg   string `json:"error_msg"`
+}
+    AIApplicationToolLog represents an audit log entry for AI Application tool
+    calls.
+
+type AIApplicationToolLogProtocol string
+    AIApplicationToolLogProtocol represents the protocol used for the tool call.
+
+const (
+	// ToolLogProtocolMCP indicates the tool was called via MCP.
+	ToolLogProtocolMCP AIApplicationToolLogProtocol = "mcp"
+	// ToolLogProtocolREST indicates the tool was called via REST API.
+	ToolLogProtocolREST AIApplicationToolLogProtocol = "rest"
+)
 type APIToken struct {
 	gorm.Model
 
@@ -422,6 +457,9 @@ func (d *Database) CheckIfRepositoryExists(slug string, workspaceID uint) bool
 func (d *Database) Close()
     Close closes the shared database connection pool.
 
+func (d *Database) CreateAIApplicationToolLog(log *AIApplicationToolLog) error
+    CreateAIApplicationToolLog creates a new tool audit log entry.
+
 func (d *Database) CreateSearchIndexes() error
     CreateSearchIndexes creates indexes to optimize search performance.
 
@@ -499,6 +537,19 @@ func (d *Database) GetAIApplicationByID(id uint) (*AIApplication, error)
 
 func (d *Database) GetAIApplicationTags(aiApplicationID uint) ([]Tag, error)
     GetAIApplicationTags retrieves all tags for an AI application.
+
+func (d *Database) GetAIApplicationToolLogStats(
+	aiApplicationID uint,
+) (*irminmodels.AIApplicationToolLogStats, error)
+    GetAIApplicationToolLogStats retrieves aggregated statistics for tool calls.
+
+func (d *Database) GetAIApplicationToolLogs(
+	aiApplicationID uint,
+	toolName string,
+	limit, offset int,
+) ([]AIApplicationToolLog, int64, error)
+    GetAIApplicationToolLogs retrieves tool audit logs for an AI Application
+    with pagination.
 
 func (d *Database) GetAIApplicationsByTag(tagID uint) ([]AIApplication, error)
     GetAIApplicationsByTag retrieves all AI applications that have a specific

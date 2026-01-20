@@ -3,8 +3,10 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"irmin-api/db"
 	"irmin-api/formatter"
@@ -14,6 +16,70 @@ import (
 	adaptor "github.com/gofiber/fiber/v3/middleware/adaptor"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+// logToolCall creates an audit log entry for a tool call.
+func logToolCall(
+	ctx context.Context,
+	apiServices *services.APIServices,
+	aiApp *db.AIApplication,
+	toolName string,
+	toolType string,
+	inputs any,
+	startTime time.Time,
+	result *sdkmcp.CallToolResult,
+) {
+	// Get request metadata from context
+	metadata, _ := requestMetadataFromContext(ctx)
+	if metadata == nil {
+		metadata = &RequestMetadata{}
+	}
+
+	// Calculate duration
+	durationMs := time.Since(startTime).Milliseconds()
+
+	// Serialize inputs to JSON
+	inputsJSON := "{}"
+	if inputs != nil {
+		if jsonBytes, err := json.Marshal(inputs); err == nil {
+			inputsJSON = string(jsonBytes)
+		}
+	}
+
+	// Determine success and error message
+	success := result == nil || !result.IsError
+	errorMsg := ""
+	if result != nil && result.IsError && len(result.Content) > 0 {
+		if textContent, ok := result.Content[0].(*sdkmcp.TextContent); ok {
+			errorMsg = textContent.Text
+		}
+	}
+
+	// Create the audit log entry
+	log := &db.AIApplicationToolLog{
+		AIApplicationID: aiApp.ID,
+		ToolName:        toolName,
+		ToolType:        toolType,
+		InputsJSON:      inputsJSON,
+		Protocol:        db.ToolLogProtocolMCP,
+		RequestIP:       metadata.IP,
+		UserAgent:       metadata.UserAgent,
+		Origin:          metadata.Origin,
+		ContentType:     metadata.ContentType,
+		DurationMs:      durationMs,
+		Success:         success,
+		ErrorMsg:        errorMsg,
+	}
+
+	// Create log entry asynchronously to not block the response
+	go func() {
+		if err := apiServices.DB.CreateAIApplicationToolLog(log); err != nil {
+			apiServices.Logger.Error("Failed to create AI app tool audit log",
+				"error", err,
+				"tool_name", toolName,
+				"ai_app_id", aiApp.ID)
+		}
+	}()
+}
 
 const (
 	// AIAppMCPServerName is the name of the AI Application MCP server
@@ -60,8 +126,10 @@ func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices) {
 		// Create the streamable HTTP handler
 		handler := sdkmcp.NewStreamableHTTPHandler(func(*http.Request) *sdkmcp.Server { return server }, nil)
 
-		// Add AI Application to context
+		// Add AI Application and request metadata to context
 		aiAppCtx := withAIAppInContext(ctx, aiApp)
+		reqMetadata := ExtractRequestMetadata(r)
+		aiAppCtx = withRequestMetadataInContext(aiAppCtx, reqMetadata)
 
 		apiServices.Logger.Debug("AI App MCP request",
 			"path", r.URL.Path,
@@ -149,6 +217,8 @@ func registerAIAppInfoTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiSe
 			Description: "Get information about this AI Application, including enabled tools and available data sources.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args struct{}) (*sdkmcp.CallToolResult, struct{}, error) {
+			startTime := time.Now()
+
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
 			config := executor.GetToolConfig()
 
@@ -164,11 +234,14 @@ func registerAIAppInfoTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiSe
 			}
 
 			jsonData, _ := json.MarshalIndent(info, "", "  ")
-			return &sdkmcp.CallToolResult{
+			result := &sdkmcp.CallToolResult{
 				Content: []sdkmcp.Content{
 					&sdkmcp.TextContent{Text: string(jsonData)},
 				},
-			}, struct{}{}, nil
+			}
+
+			logToolCall(ctx, apiServices, aiApp, "irmin_ai_app_info", "builtin", args, startTime, result)
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -182,18 +255,25 @@ func registerAIAppQueryTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiS
 			Description: "Execute a SQL query on the workspace data. Query any repository object as a table using path-based syntax (e.g., SELECT * FROM 'repo/branch/path/file.json'). Returns query results as JSON.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppQueryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+			startTime := time.Now()
+
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
-			result, err := executor.ExecuteSQL(ctx, args.SQL, true)
+			queryResult, err := executor.ExecuteSQL(ctx, args.SQL, true)
 			if err != nil {
-				return mcpError(err.Error()), struct{}{}, nil
+				result := mcpError(err.Error())
+				logToolCall(ctx, apiServices, aiApp, "irmin_execute_sql", "builtin", args, startTime, result)
+				return result, struct{}{}, nil
 			}
 
-			jsonData, _ := json.MarshalIndent(result, "", "  ")
-			return &sdkmcp.CallToolResult{
+			jsonData, _ := json.MarshalIndent(queryResult, "", "  ")
+			result := &sdkmcp.CallToolResult{
 				Content: []sdkmcp.Content{
 					&sdkmcp.TextContent{Text: string(jsonData)},
 				},
-			}, struct{}{}, nil
+			}
+
+			logToolCall(ctx, apiServices, aiApp, "irmin_execute_sql", "builtin", args, startTime, result)
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -207,18 +287,25 @@ func registerAIAppSchemaTool(server *sdkmcp.Server, aiApp *db.AIApplication, api
 			Description: "Get the data schema for a data object, showing column names, data types, and descriptions. Essential for writing SQL queries. Use unified path format: /repo-slug/ref/path/to/file.json",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppSchemaArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+			startTime := time.Now()
+
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
 			schema, err := executor.GetSchemaByPath(ctx, args.Path)
 			if err != nil {
-				return mcpError(err.Error()), struct{}{}, nil
+				result := mcpError(err.Error())
+				logToolCall(ctx, apiServices, aiApp, "irmin_get_object_schema", "builtin", args, startTime, result)
+				return result, struct{}{}, nil
 			}
 
 			jsonData, _ := json.MarshalIndent(schema, "", "  ")
-			return &sdkmcp.CallToolResult{
+			result := &sdkmcp.CallToolResult{
 				Content: []sdkmcp.Content{
 					&sdkmcp.TextContent{Text: string(jsonData)},
 				},
-			}, struct{}{}, nil
+			}
+
+			logToolCall(ctx, apiServices, aiApp, "irmin_get_object_schema", "builtin", args, startTime, result)
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -232,25 +319,34 @@ func registerAIAppListObjectsTool(server *sdkmcp.Server, aiApp *db.AIApplication
 			Description: "List data objects (files and folders) at a path. Use unified path format: /repo-slug/ref/folder. If path is empty, lists all available data sources.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppListObjectsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+			startTime := time.Now()
+
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
 			object, err := executor.ListObjectsByPath(ctx, args.Path)
 			if err != nil {
-				return mcpError(err.Error()), struct{}{}, nil
+				result := mcpError(err.Error())
+				logToolCall(ctx, apiServices, aiApp, "irmin_list_objects", "builtin", args, startTime, result)
+				return result, struct{}{}, nil
 			}
 
 			// Format the object
 			formatted, formatErr := formatter.FormatRepositoryObjectResponse(object, apiServices.SQIDManager)
 			if formatErr != nil {
+				result := mcpError("Failed to format response")
+				logToolCall(ctx, apiServices, aiApp, "irmin_list_objects", "builtin", args, startTime, result)
 				//nolint:nilerr // Error is communicated via mcpError result with IsError: true
-				return mcpError("Failed to format response"), struct{}{}, nil
+				return result, struct{}{}, nil
 			}
 
 			jsonData, _ := json.MarshalIndent(formatted, "", "  ")
-			return &sdkmcp.CallToolResult{
+			result := &sdkmcp.CallToolResult{
 				Content: []sdkmcp.Content{
 					&sdkmcp.TextContent{Text: string(jsonData)},
 				},
-			}, struct{}{}, nil
+			}
+
+			logToolCall(ctx, apiServices, aiApp, "irmin_list_objects", "builtin", args, startTime, result)
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -261,24 +357,60 @@ func registerAIAppGetContentTool(server *sdkmcp.Server, aiApp *db.AIApplication,
 		server,
 		&sdkmcp.Tool{
 			Name:        "irmin_get_object_content",
-			Description: "Get the content of a data object. Use unified path format: /repo-slug/ref/path/to/file.json. Supports JSON, CSV, YAML, XML, and text files.",
+			Description: "Get the content of a data object. Use unified path format: /repo-slug/ref/path/to/file.json. Supports JSON, CSV, YAML, XML, text files, PDFs (returns extracted text), and tabular data (CSV, Excel, Parquet - returns as JSON).",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppGetContentArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+			startTime := time.Now()
+
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
 			content, err := executor.GetContentByPath(ctx, args.Path, true)
 			if err != nil {
-				return mcpError(err.Error()), struct{}{}, nil
+				result := mcpError(err.Error())
+				logToolCall(ctx, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
+				return result, struct{}{}, nil
 			}
 
 			// Detect content type
 			mimeType := http.DetectContentType(content)
 
-			// Only return text content
-			if !strings.HasPrefix(mimeType, "text/") && !strings.HasPrefix(mimeType, "application/json") {
-				return mcpError("Content is not a supported text format"), struct{}{}, nil
+			// Check if this is a format we can transform (binary or tabular text)
+			if IsBinaryFormatSupported(args.Path) || IsTabularTextFormat(args.Path) {
+				transformed, transformErr := TransformContentForLLM(content, args.Path)
+				if transformErr != nil {
+					apiServices.Logger.Warn("Failed to transform content, returning error",
+						"path", args.Path,
+						"error", transformErr)
+					result := mcpError(fmt.Sprintf("Failed to transform content: %v", transformErr))
+					logToolCall(ctx, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
+					return result, struct{}{}, nil
+				}
+
+				result := &sdkmcp.CallToolResult{
+					Content: []sdkmcp.Content{
+						&sdkmcp.TextContent{
+							Text: transformed.Content,
+							Meta: sdkmcp.Meta{
+								"mimeType":       transformed.MimeType,
+								"path":           args.Path,
+								"originalFormat": mimeType,
+								"transformedTo":  transformed.Format,
+							},
+						},
+					},
+				}
+
+				logToolCall(ctx, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
+				return result, struct{}{}, nil
 			}
 
-			return &sdkmcp.CallToolResult{
+			// For non-binary files, check if text-based
+			if !strings.HasPrefix(mimeType, "text/") && !strings.HasPrefix(mimeType, "application/json") {
+				result := mcpError("Content is not a supported text format")
+				logToolCall(ctx, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
+				return result, struct{}{}, nil
+			}
+
+			result := &sdkmcp.CallToolResult{
 				Content: []sdkmcp.Content{
 					&sdkmcp.TextContent{
 						Text: string(content),
@@ -288,7 +420,10 @@ func registerAIAppGetContentTool(server *sdkmcp.Server, aiApp *db.AIApplication,
 						},
 					},
 				},
-			}, struct{}{}, nil
+			}
+
+			logToolCall(ctx, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -306,6 +441,8 @@ func registerAIAppEmbeddingSearchTool(
 			Description: "Search for semantically similar content using natural language queries. If path is empty, searches all available embedding files. Use unified path format to filter: /repo-slug/ref/embeddings/file.parquet",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppEmbeddingSearchArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+			startTime := time.Now()
+
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
 
 			topK := args.TopK
@@ -321,15 +458,20 @@ func registerAIAppEmbeddingSearchTool(
 				args.Filter,
 			)
 			if err != nil {
-				return mcpError(err.Error()), struct{}{}, nil
+				result := mcpError(err.Error())
+				logToolCall(ctx, apiServices, aiApp, "irmin_search_embeddings", "builtin", args, startTime, result)
+				return result, struct{}{}, nil
 			}
 
 			jsonData, _ := json.MarshalIndent(results, "", "  ")
-			return &sdkmcp.CallToolResult{
+			result := &sdkmcp.CallToolResult{
 				Content: []sdkmcp.Content{
 					&sdkmcp.TextContent{Text: string(jsonData)},
 				},
-			}, struct{}{}, nil
+			}
+
+			logToolCall(ctx, apiServices, aiApp, "irmin_search_embeddings", "builtin", args, startTime, result)
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -343,6 +485,8 @@ func registerAIAppDocsTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiSe
 			Description: "Get documentation for this AI Application, including SQL syntax guide, tool usage instructions, and any custom documentation provided by the workspace administrator.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args struct{}) (*sdkmcp.CallToolResult, struct{}, error) {
+			startTime := time.Now()
+
 			// Generate the system prompt which contains comprehensive documentation
 			systemPrompt := apiServices.GenerateAIApplicationSystemPrompt(aiApp)
 
@@ -354,11 +498,14 @@ func registerAIAppDocsTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiSe
 				fullDocs = systemPrompt
 			}
 
-			return &sdkmcp.CallToolResult{
+			result := &sdkmcp.CallToolResult{
 				Content: []sdkmcp.Content{
 					&sdkmcp.TextContent{Text: fullDocs},
 				},
-			}, struct{}{}, nil
+			}
+
+			logToolCall(ctx, apiServices, aiApp, "irmin_get_documentation", "builtin", args, startTime, result)
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -435,18 +582,25 @@ func registerCustomNoArgsTool(
 			Description: description,
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args struct{}) (*sdkmcp.CallToolResult, struct{}, error) {
+			startTime := time.Now()
+
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
-			result, err := executor.ExecuteCustomTool(ctx, capturedToolName, "")
+			execResult, err := executor.ExecuteCustomTool(ctx, capturedToolName, "")
 			if err != nil {
-				return mcpError(err.Error()), struct{}{}, nil
+				result := mcpError(err.Error())
+				logToolCall(ctx, apiServices, aiApp, toolName, "custom", args, startTime, result)
+				return result, struct{}{}, nil
 			}
 
-			jsonData, _ := json.MarshalIndent(result.Data, "", "  ")
-			return &sdkmcp.CallToolResult{
+			jsonData, _ := json.MarshalIndent(execResult.Data, "", "  ")
+			result := &sdkmcp.CallToolResult{
 				Content: []sdkmcp.Content{
 					&sdkmcp.TextContent{Text: string(jsonData)},
 				},
-			}, struct{}{}, nil
+			}
+
+			logToolCall(ctx, apiServices, aiApp, toolName, "custom", args, startTime, result)
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -479,22 +633,31 @@ func registerCustomEmbeddingSearchTool(
 			Description: description,
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args customEmbeddingSearchArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+			startTime := time.Now()
+
 			if args.Query == "" {
-				return mcpError("Query is required"), struct{}{}, nil
+				result := mcpError("Query is required")
+				logToolCall(ctx, apiServices, aiApp, toolName, "custom", args, startTime, result)
+				return result, struct{}{}, nil
 			}
 
 			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
-			result, err := executor.ExecuteCustomTool(ctx, capturedToolName, args.Query)
+			execResult, err := executor.ExecuteCustomTool(ctx, capturedToolName, args.Query)
 			if err != nil {
-				return mcpError(err.Error()), struct{}{}, nil
+				result := mcpError(err.Error())
+				logToolCall(ctx, apiServices, aiApp, toolName, "custom", args, startTime, result)
+				return result, struct{}{}, nil
 			}
 
-			jsonData, _ := json.MarshalIndent(result.Data, "", "  ")
-			return &sdkmcp.CallToolResult{
+			jsonData, _ := json.MarshalIndent(execResult.Data, "", "  ")
+			result := &sdkmcp.CallToolResult{
 				Content: []sdkmcp.Content{
 					&sdkmcp.TextContent{Text: string(jsonData)},
 				},
-			}, struct{}{}, nil
+			}
+
+			logToolCall(ctx, apiServices, aiApp, toolName, "custom", args, startTime, result)
+			return result, struct{}{}, nil
 		},
 	)
 }

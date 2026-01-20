@@ -1111,6 +1111,96 @@ definitions:
         example: true
         type: boolean
     type: object
+  irminmodels.AIApplicationToolLog:
+    properties:
+      created_at:
+        example: "2025-01-15T10:30:00Z"
+        type: string
+      duration_ms:
+        example: 150
+        type: integer
+      error_msg:
+        type: string
+      id:
+        example: 123
+        type: integer
+      inputs_json:
+        type: string
+      origin:
+        example: https://app.example.com
+        type: string
+      protocol:
+        example: mcp
+        type: string
+      request_ip:
+        example: 192.168.1.1
+        type: string
+      success:
+        example: true
+        type: boolean
+      tool_name:
+        example: irmin_execute_sql
+        type: string
+      tool_type:
+        example: builtin
+        type: string
+      user_agent:
+        example: Claude/1.0
+        type: string
+    type: object
+  irminmodels.AIApplicationToolLogStats:
+    properties:
+      avg_duration_ms:
+        example: 125.5
+        type: number
+      by_tool:
+        items:
+          $ref: '#/definitions/irminmodels.AIApplicationToolStat'
+        type: array
+      failed_calls:
+        example: 15
+        type: integer
+      successful_calls:
+        example: 485
+        type: integer
+      total_calls:
+        example: 500
+        type: integer
+    type: object
+  irminmodels.AIApplicationToolLogsResponse:
+    properties:
+      limit:
+        example: 50
+        type: integer
+      logs:
+        items:
+          $ref: '#/definitions/irminmodels.AIApplicationToolLog'
+        type: array
+      offset:
+        example: 0
+        type: integer
+      total:
+        example: 100
+        type: integer
+    type: object
+  irminmodels.AIApplicationToolStat:
+    properties:
+      avg_duration_ms:
+        example: 125.5
+        type: number
+      count:
+        example: 150
+        type: integer
+      error_count:
+        example: 3
+        type: integer
+      success_count:
+        example: 147
+        type: integer
+      tool_name:
+        example: irmin_execute_sql
+        type: string
+    type: object
   irminmodels.APIToken:
     properties:
       created_at:
@@ -5401,6 +5491,116 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Update AI application
+      tags:
+      - ai-applications
+  /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/tool-logs:
+    get:
+      consumes:
+      - application/json
+      description: Get audit logs for all tool calls made through this AI application
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: AI application slug
+        in: path
+        name: ai_application_slug
+        required: true
+        type: string
+      - description: Filter by tool name
+        in: query
+        name: tool_name
+        type: string
+      - description: Maximum number of logs to return (default 50)
+        in: query
+        name: limit
+        type: integer
+      - description: Number of logs to skip for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tool logs retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.AIApplicationToolLogsResponse'
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: AI application not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List AI application tool audit logs
+      tags:
+      - ai-applications
+  /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/tool-logs/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get aggregated statistics for tool usage in this AI application
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: AI application slug
+        in: path
+        name: ai_application_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tool stats retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.AIApplicationToolLogStats'
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: AI application not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get AI application tool statistics
       tags:
       - ai-applications
   /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/transfer-ownership:

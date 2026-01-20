@@ -2567,6 +2567,184 @@
                 }
             }
         },
+        "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/tool-logs": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get audit logs for all tool calls made through this AI application",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-applications"
+                ],
+                "summary": "List AI application tool audit logs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "AI application slug",
+                        "name": "ai_application_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by tool name",
+                        "name": "tool_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Maximum number of logs to return (default 50)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of logs to skip for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tool logs retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.AIApplicationToolLogsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "AI application not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/tool-logs/stats": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get aggregated statistics for tool usage in this AI application",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-applications"
+                ],
+                "summary": "Get AI application tool statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "AI application slug",
+                        "name": "ai_application_slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tool stats retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.AIApplicationToolLogStats"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "AI application not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/transfer-ownership": {
             "post": {
                 "security": [
@@ -13689,6 +13867,132 @@
                 "vector_search_enabled": {
                     "type": "boolean",
                     "example": true
+                }
+            }
+        },
+        "irminmodels.AIApplicationToolLog": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2025-01-15T10:30:00Z"
+                },
+                "duration_ms": {
+                    "type": "integer",
+                    "example": 150
+                },
+                "error_msg": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 123
+                },
+                "inputs_json": {
+                    "type": "string"
+                },
+                "origin": {
+                    "type": "string",
+                    "example": "https://app.example.com"
+                },
+                "protocol": {
+                    "type": "string",
+                    "example": "mcp"
+                },
+                "request_ip": {
+                    "type": "string",
+                    "example": "192.168.1.1"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "tool_name": {
+                    "type": "string",
+                    "example": "irmin_execute_sql"
+                },
+                "tool_type": {
+                    "type": "string",
+                    "example": "builtin"
+                },
+                "user_agent": {
+                    "type": "string",
+                    "example": "Claude/1.0"
+                }
+            }
+        },
+        "irminmodels.AIApplicationToolLogStats": {
+            "type": "object",
+            "properties": {
+                "avg_duration_ms": {
+                    "type": "number",
+                    "example": 125.5
+                },
+                "by_tool": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.AIApplicationToolStat"
+                    }
+                },
+                "failed_calls": {
+                    "type": "integer",
+                    "example": 15
+                },
+                "successful_calls": {
+                    "type": "integer",
+                    "example": 485
+                },
+                "total_calls": {
+                    "type": "integer",
+                    "example": 500
+                }
+            }
+        },
+        "irminmodels.AIApplicationToolLogsResponse": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "example": 50
+                },
+                "logs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.AIApplicationToolLog"
+                    }
+                },
+                "offset": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 100
+                }
+            }
+        },
+        "irminmodels.AIApplicationToolStat": {
+            "type": "object",
+            "properties": {
+                "avg_duration_ms": {
+                    "type": "number",
+                    "example": 125.5
+                },
+                "count": {
+                    "type": "integer",
+                    "example": 150
+                },
+                "error_count": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "success_count": {
+                    "type": "integer",
+                    "example": 147
+                },
+                "tool_name": {
+                    "type": "string",
+                    "example": "irmin_execute_sql"
                 }
             }
         },

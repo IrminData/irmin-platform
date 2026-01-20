@@ -504,6 +504,16 @@ func RegisterAPIRoutes(
 		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionUpdate),
 		apiControllers.TransferAIApplicationOwnership,
 	)
+	aiApplication.Get(
+		"/tool-logs",
+		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.AIApplicationToolLogs,
+	)
+	aiApplication.Get(
+		"/tool-logs/stats",
+		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.AIApplicationToolLogStats,
+	)
 
 	// Repositories routes
 	repositories := workspace.Group("/repositories")

@@ -840,6 +840,8 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) AIAppAPIQuery\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIQuery>)
   - [func \(api \*APIControllers\) AIAppAPISearchEmbeddings\(c fiber.Ctx\) error](<#APIControllers.AIAppAPISearchEmbeddings>)
   - [func \(api \*APIControllers\) AIAppAPISystemPrompt\(c fiber.Ctx\) error](<#APIControllers.AIAppAPISystemPrompt>)
+  - [func \(api \*APIControllers\) AIApplicationToolLogStats\(c fiber.Ctx\) error](<#APIControllers.AIApplicationToolLogStats>)
+  - [func \(api \*APIControllers\) AIApplicationToolLogs\(c fiber.Ctx\) error](<#APIControllers.AIApplicationToolLogs>)
   - [func \(api \*APIControllers\) AIApplicationsDestroy\(c fiber.Ctx\) error](<#APIControllers.AIApplicationsDestroy>)
   - [func \(api \*APIControllers\) AIApplicationsIndex\(c fiber.Ctx\) error](<#APIControllers.AIApplicationsIndex>)
   - [func \(api \*APIControllers\) AIApplicationsShow\(c fiber.Ctx\) error](<#APIControllers.AIApplicationsShow>)
@@ -1102,6 +1104,24 @@ func (api *APIControllers) AIAppAPISystemPrompt(c fiber.Ctx) error
 ```
 
 AIAppAPISystemPrompt godoc @Summary Get system prompt @Description Get the recommended system prompt for this AI Application @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Success 200 \{object\} irminmodels.IrminAPIResponse "System prompt" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Router /ai\-app/system\-prompt \[get\]
+
+<a name="APIControllers.AIApplicationToolLogStats"></a>
+### func \(\*APIControllers\) AIApplicationToolLogStats
+
+```go
+func (api *APIControllers) AIApplicationToolLogStats(c fiber.Ctx) error
+```
+
+AIApplicationToolLogStats godoc @Summary Get AI application tool statistics @Description Get aggregated statistics for tool usage in this AI application @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.AIApplicationToolLogStats\} "Tool stats retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "AI application not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/tool\-logs/stats \[get\]
+
+<a name="APIControllers.AIApplicationToolLogs"></a>
+### func \(\*APIControllers\) AIApplicationToolLogs
+
+```go
+func (api *APIControllers) AIApplicationToolLogs(c fiber.Ctx) error
+```
+
+AIApplicationToolLogs godoc @Summary List AI application tool audit logs @Description Get audit logs for all tool calls made through this AI application @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param tool\_name query string false "Filter by tool name" @Param limit query int false "Maximum number of logs to return \(default 50\)" @Param offset query int false "Number of logs to skip for pagination" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.AIApplicationToolLogsResponse\} "Tool logs retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "AI application not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/tool\-logs \[get\]
 
 <a name="APIControllers.AIApplicationsDestroy"></a>
 ### func \(\*APIControllers\) AIApplicationsDestroy
@@ -2440,6 +2460,8 @@ import "irmin-api/db"
 - [type AIApplicationDataSource](<#AIApplicationDataSource>)
 - [type AIApplicationTag](<#AIApplicationTag>)
 - [type AIApplicationToolConfig](<#AIApplicationToolConfig>)
+- [type AIApplicationToolLog](<#AIApplicationToolLog>)
+- [type AIApplicationToolLogProtocol](<#AIApplicationToolLogProtocol>)
 - [type APIToken](<#APIToken>)
 - [type ActionWorkflowable](<#ActionWorkflowable>)
 - [type ActionWorkflowableInput](<#ActionWorkflowableInput>)
@@ -2463,6 +2485,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) AddUserToWorkspace\(tx \*gorm.DB, userID, workspaceID uint, roleIDs \[\]uint\) \(\*WorkspaceUser, error\)](<#Database.AddUserToWorkspace>)
   - [func \(d \*Database\) CheckIfRepositoryExists\(slug string, workspaceID uint\) bool](<#Database.CheckIfRepositoryExists>)
   - [func \(d \*Database\) Close\(\)](<#Database.Close>)
+  - [func \(d \*Database\) CreateAIApplicationToolLog\(log \*AIApplicationToolLog\) error](<#Database.CreateAIApplicationToolLog>)
   - [func \(d \*Database\) CreateSearchIndexes\(\) error](<#Database.CreateSearchIndexes>)
   - [func \(d \*Database\) CustomToolNameExists\(name string, aiApplicationID uint, excludeID \*uint\) \(bool, error\)](<#Database.CustomToolNameExists>)
   - [func \(d \*Database\) DeleteAIApplication\(tx \*gorm.DB, id uint\) error](<#Database.DeleteAIApplication>)
@@ -2486,6 +2509,8 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetAIApplicationByAPIKey\(apiKey string\) \(\*AIApplication, error\)](<#Database.GetAIApplicationByAPIKey>)
   - [func \(d \*Database\) GetAIApplicationByID\(id uint\) \(\*AIApplication, error\)](<#Database.GetAIApplicationByID>)
   - [func \(d \*Database\) GetAIApplicationTags\(aiApplicationID uint\) \(\[\]Tag, error\)](<#Database.GetAIApplicationTags>)
+  - [func \(d \*Database\) GetAIApplicationToolLogStats\(aiApplicationID uint\) \(\*irminmodels.AIApplicationToolLogStats, error\)](<#Database.GetAIApplicationToolLogStats>)
+  - [func \(d \*Database\) GetAIApplicationToolLogs\(aiApplicationID uint, toolName string, limit, offset int\) \(\[\]AIApplicationToolLog, int64, error\)](<#Database.GetAIApplicationToolLogs>)
   - [func \(d \*Database\) GetAIApplicationsByTag\(tagID uint\) \(\[\]AIApplication, error\)](<#Database.GetAIApplicationsByTag>)
   - [func \(d \*Database\) GetAIApplicationsByWorkspaceID\(workspaceID uint\) \(\[\]AIApplication, error\)](<#Database.GetAIApplicationsByWorkspaceID>)
   - [func \(d \*Database\) GetAPIToken\(id uint\) \(\*APIToken, error\)](<#Database.GetAPIToken>)
@@ -3009,6 +3034,57 @@ type AIApplicationToolConfig struct {
 }
 ```
 
+<a name="AIApplicationToolLog"></a>
+## type AIApplicationToolLog
+
+AIApplicationToolLog represents an audit log entry for AI Application tool calls.
+
+```go
+type AIApplicationToolLog struct {
+    gorm.Model
+
+    AIApplicationID uint          `json:"ai_application_id" gorm:"index;not null"`
+    AIApplication   AIApplication `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
+
+    // Tool information
+    ToolName   string `json:"tool_name"   gorm:"not null"`
+    ToolType   string `json:"tool_type"`                     // "builtin" or "custom"
+    InputsJSON string `json:"inputs_json" gorm:"type:jsonb"` // JSON-encoded tool inputs
+
+    // Request metadata
+    Protocol    AIApplicationToolLogProtocol `json:"protocol"     gorm:"not null"`
+    RequestIP   string                       `json:"request_ip"`
+    UserAgent   string                       `json:"user_agent"`
+    Origin      string                       `json:"origin"`
+    ContentType string                       `json:"content_type"`
+
+    // Execution metadata
+    DurationMs int64  `json:"duration_ms"`
+    Success    bool   `json:"success"     gorm:"default:true"`
+    ErrorMsg   string `json:"error_msg"`
+}
+```
+
+<a name="AIApplicationToolLogProtocol"></a>
+## type AIApplicationToolLogProtocol
+
+AIApplicationToolLogProtocol represents the protocol used for the tool call.
+
+```go
+type AIApplicationToolLogProtocol string
+```
+
+<a name="ToolLogProtocolMCP"></a>
+
+```go
+const (
+    // ToolLogProtocolMCP indicates the tool was called via MCP.
+    ToolLogProtocolMCP AIApplicationToolLogProtocol = "mcp"
+    // ToolLogProtocolREST indicates the tool was called via REST API.
+    ToolLogProtocolREST AIApplicationToolLogProtocol = "rest"
+)
+```
+
 <a name="APIToken"></a>
 ## type APIToken
 
@@ -3328,6 +3404,15 @@ func (d *Database) Close()
 
 Close closes the shared database connection pool.
 
+<a name="Database.CreateAIApplicationToolLog"></a>
+### func \(\*Database\) CreateAIApplicationToolLog
+
+```go
+func (d *Database) CreateAIApplicationToolLog(log *AIApplicationToolLog) error
+```
+
+CreateAIApplicationToolLog creates a new tool audit log entry.
+
 <a name="Database.CreateSearchIndexes"></a>
 ### func \(\*Database\) CreateSearchIndexes
 
@@ -3534,6 +3619,24 @@ func (d *Database) GetAIApplicationTags(aiApplicationID uint) ([]Tag, error)
 ```
 
 GetAIApplicationTags retrieves all tags for an AI application.
+
+<a name="Database.GetAIApplicationToolLogStats"></a>
+### func \(\*Database\) GetAIApplicationToolLogStats
+
+```go
+func (d *Database) GetAIApplicationToolLogStats(aiApplicationID uint) (*irminmodels.AIApplicationToolLogStats, error)
+```
+
+GetAIApplicationToolLogStats retrieves aggregated statistics for tool calls.
+
+<a name="Database.GetAIApplicationToolLogs"></a>
+### func \(\*Database\) GetAIApplicationToolLogs
+
+```go
+func (d *Database) GetAIApplicationToolLogs(aiApplicationID uint, toolName string, limit, offset int) ([]AIApplicationToolLog, int64, error)
+```
+
+GetAIApplicationToolLogs retrieves tool audit logs for an AI Application with pagination.
 
 <a name="Database.GetAIApplicationsByTag"></a>
 ### func \(\*Database\) GetAIApplicationsByTag
@@ -10460,8 +10563,14 @@ import "irmin-api/mcp"
 
 - [Constants](<#constants>)
 - [func CreateMCPClientSession\(ctx context.Context, apiServices \*services.APIServices\) \(\*mcp.ClientSession, error\)](<#CreateMCPClientSession>)
+- [func IsBinaryFormatSupported\(path string\) bool](<#IsBinaryFormatSupported>)
+- [func IsTabularTextFormat\(path string\) bool](<#IsTabularTextFormat>)
 - [func RegisterAIAppMCP\(app \*fiber.App, apiServices \*services.APIServices\)](<#RegisterAIAppMCP>)
 - [func RegisterFiber\(app \*fiber.App, apiServices \*services.APIServices\)](<#RegisterFiber>)
+- [type ContentTransformResult](<#ContentTransformResult>)
+  - [func TransformContentForLLM\(content \[\]byte, path string\) \(\*ContentTransformResult, error\)](<#TransformContentForLLM>)
+- [type RequestMetadata](<#RequestMetadata>)
+  - [func ExtractRequestMetadata\(r \*http.Request\) \*RequestMetadata](<#ExtractRequestMetadata>)
 
 
 ## Constants
@@ -10537,6 +10646,24 @@ func CreateMCPClientSession(ctx context.Context, apiServices *services.APIServic
 
 CreateMCPClientSession creates a new MCP client session
 
+<a name="IsBinaryFormatSupported"></a>
+## func IsBinaryFormatSupported
+
+```go
+func IsBinaryFormatSupported(path string) bool
+```
+
+IsBinaryFormatSupported checks if the file extension is a supported binary format that can be transformed for LLM consumption.
+
+<a name="IsTabularTextFormat"></a>
+## func IsTabularTextFormat
+
+```go
+func IsTabularTextFormat(path string) bool
+```
+
+IsTabularTextFormat checks if the file extension is a tabular text format that should be converted to JSON for better LLM consumption.
+
 <a name="RegisterAIAppMCP"></a>
 ## func RegisterAIAppMCP
 
@@ -10554,6 +10681,51 @@ func RegisterFiber(app *fiber.App, apiServices *services.APIServices)
 ```
 
 RegisterFiber mounts the existing MCP HTTP endpoint and the new HTTP\-only attach endpoint.
+
+<a name="ContentTransformResult"></a>
+## type ContentTransformResult
+
+ContentTransformResult represents the result of content transformation.
+
+```go
+type ContentTransformResult struct {
+    Content  string
+    MimeType string
+    Format   string // "text", "json", "original"
+}
+```
+
+<a name="TransformContentForLLM"></a>
+### func TransformContentForLLM
+
+```go
+func TransformContentForLLM(content []byte, path string) (*ContentTransformResult, error)
+```
+
+TransformContentForLLM transforms file content into a format suitable for LLM consumption. It handles PDFs \(extracts text\) and tabular files \(converts to JSON\).
+
+<a name="RequestMetadata"></a>
+## type RequestMetadata
+
+RequestMetadata contains HTTP request information for audit logging.
+
+```go
+type RequestMetadata struct {
+    IP          string
+    UserAgent   string
+    Origin      string
+    ContentType string
+}
+```
+
+<a name="ExtractRequestMetadata"></a>
+### func ExtractRequestMetadata
+
+```go
+func ExtractRequestMetadata(r *http.Request) *RequestMetadata
+```
+
+ExtractRequestMetadata extracts request metadata from an HTTP request for audit logging.
 
 # middlewares
 

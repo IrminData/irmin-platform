@@ -1,6 +1,7 @@
 package db
 
 import (
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"gorm.io/gorm"
 )
 
@@ -141,6 +142,11 @@ func (d *Database) DeleteAIApplication(tx *gorm.DB, id uint) error {
 		return err
 	}
 
+	// Delete tool audit logs
+	if err := tx.Where(&AIApplicationToolLog{AIApplicationID: id}).Delete(&AIApplicationToolLog{}).Error; err != nil {
+		return err
+	}
+
 	// Finally delete the AI application itself
 	return tx.Delete(&AIApplication{}, id).Error
 }
@@ -230,4 +236,140 @@ func (d *Database) CustomToolNameExists(name string, aiApplicationID uint, exclu
 		return false, err
 	}
 	return count > 0, nil
+}
+
+// === AI Application Tool Audit Logs ===
+
+// AIApplicationToolLogProtocol represents the protocol used for the tool call.
+type AIApplicationToolLogProtocol string
+
+const (
+	// ToolLogProtocolMCP indicates the tool was called via MCP.
+	ToolLogProtocolMCP AIApplicationToolLogProtocol = "mcp"
+	// ToolLogProtocolREST indicates the tool was called via REST API.
+	ToolLogProtocolREST AIApplicationToolLogProtocol = "rest"
+)
+
+// AIApplicationToolLog represents an audit log entry for AI Application tool calls.
+type AIApplicationToolLog struct {
+	gorm.Model
+
+	AIApplicationID uint          `json:"ai_application_id" gorm:"index;not null"`
+	AIApplication   AIApplication `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
+
+	// Tool information
+	ToolName   string `json:"tool_name"   gorm:"not null"`
+	ToolType   string `json:"tool_type"`                     // "builtin" or "custom"
+	InputsJSON string `json:"inputs_json" gorm:"type:jsonb"` // JSON-encoded tool inputs
+
+	// Request metadata
+	Protocol    AIApplicationToolLogProtocol `json:"protocol"     gorm:"not null"`
+	RequestIP   string                       `json:"request_ip"`
+	UserAgent   string                       `json:"user_agent"`
+	Origin      string                       `json:"origin"`
+	ContentType string                       `json:"content_type"`
+
+	// Execution metadata
+	DurationMs int64  `json:"duration_ms"`
+	Success    bool   `json:"success"     gorm:"default:true"`
+	ErrorMsg   string `json:"error_msg"`
+}
+
+// CreateAIApplicationToolLog creates a new tool audit log entry.
+func (d *Database) CreateAIApplicationToolLog(log *AIApplicationToolLog) error {
+	return d.Create(log).Error
+}
+
+// GetAIApplicationToolLogs retrieves tool audit logs for an AI Application with pagination.
+func (d *Database) GetAIApplicationToolLogs(
+	aiApplicationID uint,
+	toolName string,
+	limit, offset int,
+) ([]AIApplicationToolLog, int64, error) {
+	var logs []AIApplicationToolLog
+	var total int64
+
+	// Base query
+	query := d.Model(&AIApplicationToolLog{}).
+		Where("ai_application_id = ?", aiApplicationID)
+
+	// Optional tool name filter
+	if toolName != "" {
+		query = query.Where("tool_name = ?", toolName)
+	}
+
+	// Count total
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Fetch logs with pagination
+	if err := query.
+		Order("created_at desc").
+		Limit(limit).
+		Offset(offset).
+		Find(&logs).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return logs, total, nil
+}
+
+// GetAIApplicationToolLogStats retrieves aggregated statistics for tool calls.
+func (d *Database) GetAIApplicationToolLogStats(
+	aiApplicationID uint,
+) (*irminmodels.AIApplicationToolLogStats, error) {
+	result := &irminmodels.AIApplicationToolLogStats{
+		ByTool: make([]irminmodels.AIApplicationToolStat, 0),
+	}
+
+	// Get overall aggregated stats
+	var overallStats struct {
+		TotalCalls      int64   `gorm:"column:total_calls"`
+		SuccessfulCalls int64   `gorm:"column:successful_calls"`
+		FailedCalls     int64   `gorm:"column:failed_calls"`
+		AvgDurationMs   float64 `gorm:"column:avg_duration_ms"`
+	}
+
+	err := d.Model(&AIApplicationToolLog{}).
+		Select(`
+			COUNT(*) as total_calls,
+			SUM(CASE WHEN success THEN 1 ELSE 0 END) as successful_calls,
+			SUM(CASE WHEN success THEN 0 ELSE 1 END) as failed_calls,
+			COALESCE(AVG(duration_ms), 0) as avg_duration_ms
+		`).
+		Where("ai_application_id = ?", aiApplicationID).
+		Scan(&overallStats).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	result.TotalCalls = overallStats.TotalCalls
+	result.SuccessfulCalls = overallStats.SuccessfulCalls
+	result.FailedCalls = overallStats.FailedCalls
+	result.AvgDurationMs = overallStats.AvgDurationMs
+
+	// Get per-tool stats
+	var toolStats []irminmodels.AIApplicationToolStat
+
+	err = d.Model(&AIApplicationToolLog{}).
+		Select(`
+			tool_name,
+			COUNT(*) as count,
+			COALESCE(AVG(duration_ms), 0) as avg_duration_ms,
+			SUM(CASE WHEN success THEN 1 ELSE 0 END) as success_count,
+			SUM(CASE WHEN success THEN 0 ELSE 1 END) as error_count
+		`).
+		Where("ai_application_id = ?", aiApplicationID).
+		Group("tool_name").
+		Order("count desc").
+		Scan(&toolStats).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	result.ByTool = toolStats
+	return result, nil
 }

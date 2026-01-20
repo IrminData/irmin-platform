@@ -6,6 +6,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/services"
+	"strconv"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -381,5 +382,149 @@ func (api *APIControllers) TransferAIApplicationOwnership(c fiber.Ctx) error {
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "ai_application_ownership_transferred"),
 		Data:    aiApplicationResponse,
+	})
+}
+
+// AIApplicationToolLogs godoc
+// @Summary List AI application tool audit logs
+// @Description Get audit logs for all tool calls made through this AI application
+// @Tags ai-applications
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param ai_application_slug path string true "AI application slug"
+// @Param tool_name query string false "Filter by tool name"
+// @Param limit query int false "Maximum number of logs to return (default 50)"
+// @Param offset query int false "Number of logs to skip for pagination"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.AIApplicationToolLogsResponse} "Tool logs retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "AI application not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/tool-logs [get]
+func (api *APIControllers) AIApplicationToolLogs(c fiber.Ctx) error {
+	_, dict, _, _, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
+	}
+
+	// Get the AI application from locals
+	aiApplication, ok := c.Locals("ai_application").(*db.AIApplication)
+	if !ok {
+		return api.handleServiceError(
+			c,
+			"Error getting locals for AIApplicationToolLogs",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
+	}
+
+	// Parse query parameters
+	toolName := c.Query("tool_name", "")
+	limit, _ := strconv.Atoi(c.Query("limit", "50"))
+	offset, _ := strconv.Atoi(c.Query("offset", "0"))
+
+	// Clamp limit and offset to reasonable bounds
+	const (
+		defaultLimit = 50
+		maxLimit     = 200
+	)
+	if limit <= 0 {
+		limit = defaultLimit
+	} else if limit > maxLimit {
+		limit = maxLimit
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	// Get the audit logs
+	logs, total, dbErr := api.DB.GetAIApplicationToolLogs(aiApplication.ID, toolName, limit, offset)
+	if dbErr != nil {
+		return api.handleServiceError(
+			c,
+			"Failed to get AI application tool logs",
+			services.NewInternalErrorf("error getting tool logs: %v", dbErr),
+			dict,
+		)
+	}
+
+	// Format the response
+	formattedLogs := make([]irminmodels.AIApplicationToolLog, 0, len(logs))
+	for _, log := range logs {
+		formattedLogs = append(formattedLogs, irminmodels.AIApplicationToolLog{
+			ID:         log.ID,
+			ToolName:   log.ToolName,
+			ToolType:   log.ToolType,
+			InputsJSON: log.InputsJSON,
+			Protocol:   string(log.Protocol),
+			RequestIP:  log.RequestIP,
+			UserAgent:  log.UserAgent,
+			Origin:     log.Origin,
+			DurationMs: log.DurationMs,
+			Success:    log.Success,
+			ErrorMsg:   log.ErrorMsg,
+			CreatedAt:  log.CreatedAt,
+		})
+	}
+
+	// Return the response
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: irminmodels.AIApplicationToolLogsResponse{
+			Logs:   formattedLogs,
+			Total:  total,
+			Limit:  limit,
+			Offset: offset,
+		},
+	})
+}
+
+// AIApplicationToolLogStats godoc
+// @Summary Get AI application tool statistics
+// @Description Get aggregated statistics for tool usage in this AI application
+// @Tags ai-applications
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param ai_application_slug path string true "AI application slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.AIApplicationToolLogStats} "Tool stats retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "AI application not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/tool-logs/stats [get]
+func (api *APIControllers) AIApplicationToolLogStats(c fiber.Ctx) error {
+	_, dict, _, _, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
+	}
+
+	// Get the AI application from locals
+	aiApplication, ok := c.Locals("ai_application").(*db.AIApplication)
+	if !ok {
+		return api.handleServiceError(
+			c,
+			"Error getting locals for AIApplicationToolLogStats",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
+	}
+
+	// Get the stats
+	stats, dbErr := api.DB.GetAIApplicationToolLogStats(aiApplication.ID)
+	if dbErr != nil {
+		return api.handleServiceError(
+			c,
+			"Failed to get AI application tool stats",
+			services.NewInternalErrorf("error getting tool stats: %v", dbErr),
+			dict,
+		)
+	}
+
+	// Return the response
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: stats,
 	})
 }

@@ -60,6 +60,14 @@ FUNCTIONS
 func CreateMCPClientSession(ctx context.Context, apiServices *services.APIServices) (*mcp.ClientSession, error)
     CreateMCPClientSession creates a new MCP client session
 
+func IsBinaryFormatSupported(path string) bool
+    IsBinaryFormatSupported checks if the file extension is a supported binary
+    format that can be transformed for LLM consumption.
+
+func IsTabularTextFormat(path string) bool
+    IsTabularTextFormat checks if the file extension is a tabular text format
+    that should be converted to JSON for better LLM consumption.
+
 func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices)
     RegisterAIAppMCP mounts the AI Application MCP endpoint. This endpoint is
     authenticated by AI Application API keys instead of user tokens.
@@ -67,6 +75,33 @@ func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices)
 func RegisterFiber(app *fiber.App, apiServices *services.APIServices)
     RegisterFiber mounts the existing MCP HTTP endpoint and the new HTTP-only
     attach endpoint.
+
+
+TYPES
+
+type ContentTransformResult struct {
+	Content  string
+	MimeType string
+	Format   string // "text", "json", "original"
+}
+    ContentTransformResult represents the result of content transformation.
+
+func TransformContentForLLM(content []byte, path string) (*ContentTransformResult, error)
+    TransformContentForLLM transforms file content into a format suitable for
+    LLM consumption. It handles PDFs (extracts text) and tabular files (converts
+    to JSON).
+
+type RequestMetadata struct {
+	IP          string
+	UserAgent   string
+	Origin      string
+	ContentType string
+}
+    RequestMetadata contains HTTP request information for audit logging.
+
+func ExtractRequestMetadata(r *http.Request) *RequestMetadata
+    ExtractRequestMetadata extracts request metadata from an HTTP request for
+    audit logging.
 
 </pre>
 </body></html>

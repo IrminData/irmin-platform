@@ -137,6 +137,41 @@ func (api *APIControllers) AIAppAPISystemPrompt(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "Unauthorized - invalid API key" @Router
     /ai-app/system-prompt [get]
 
+func (api *APIControllers) AIApplicationToolLogStats(c fiber.Ctx) error
+    AIApplicationToolLogStats godoc @Summary Get AI application tool statistics
+    @Description Get aggregated statistics for tool usage in this AI application
+    @Tags ai-applications @Security ApiKeyAuth @Accept json @Produce json @Param
+    workspace_slug path string true "Workspace slug" @Param ai_application_slug
+    path string true "AI application slug" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.AIApplicationToolLogStats}
+    "Tool stats retrieved successfully" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - insufficient permissions" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "AI application not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/tool-logs/stats
+    [get]
+
+func (api *APIControllers) AIApplicationToolLogs(c fiber.Ctx) error
+    AIApplicationToolLogs godoc @Summary List AI application tool audit
+    logs @Description Get audit logs for all tool calls made through this
+    AI application @Tags ai-applications @Security ApiKeyAuth @Accept json
+    @Produce json @Param workspace_slug path string true "Workspace slug"
+    @Param ai_application_slug path string true "AI application slug" @Param
+    tool_name query string false "Filter by tool name" @Param limit query int
+    false "Maximum number of logs to return (default 50)" @Param offset query
+    int false "Number of logs to skip for pagination" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.AIApplicationToolLogsResponse}
+    "Tool logs retrieved successfully" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - insufficient permissions" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "AI application not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/tool-logs
+    [get]
+
 func (api *APIControllers) AIApplicationsDestroy(c fiber.Ctx) error
     AIApplicationsDestroy godoc @Summary Delete AI application @Description
     Delete an AI application and all its related data @Tags ai-applications

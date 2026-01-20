@@ -235,6 +235,7 @@ func (d *Database) Migrate() error {
 		&AIApplicationDataSource{},
 		&AIApplicationTag{},
 		&AIApplicationCustomTool{},
+		&AIApplicationToolLog{},
 		&Template{},
 	}
 	if err := d.migrateModels(models...); err != nil {
@@ -261,6 +262,7 @@ func (d *Database) Reset() error {
 		&AIApplicationTag{},
 		&AIApplicationDataSource{},
 		&AIApplicationCustomTool{},
+		&AIApplicationToolLog{},
 		&AIApplication{},
 		&Role{},
 		&Connector{},

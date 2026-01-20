@@ -1,6 +1,8 @@
 # API Routes
 
-HTTP route definitions and API endpoint organization for the Irmin platform. Defines RESTful API structure with middleware integration, authentication, and permission controls.
+HTTP route definitions and API endpoint organization for the Irmin platform (Fiber v3).
+
+**Source of truth**: `routes/routes.go`. This README documents the **high-level structure** (route groups, nesting, middleware boundaries). It is **not an exhaustive endpoint list**.
 
 ## Purpose
 
@@ -10,36 +12,74 @@ Organizes API endpoints for:
 - **Authentication**: Public and protected route separation
 - **Permission Control**: Role-based access control integration
 - **Middleware Integration**: Request processing pipeline
-- **API Versioning**: Structured versioning with `/api/v1` prefix
+- **API Versioning**: Authenticated REST API is versioned under `/api/v1`
 
 ## Route Structure
 
 ### Public Routes
 
-- **`/`**: Platform index and health checks
-- **`/health`**: System health and status endpoints
+No authentication required:
 
-### Protected Routes (`/api/v1`)
+- **Index**: `GET /` (returns `"Irmin API"`)
+- **Health probes**: `GET /livez`, `GET /readyz`, `GET /startupz`
+- **Docs**: Swagger UI + spec under `/swagger`
+- **Public system**: small set of system endpoints (e.g. sandbox health)
 
-All routes require authentication and include localization middleware:
+### AI Application API Routes (`/api/v1/ai-app`)
 
-- **System Routes**: Webhook endpoints for external integrations
-- **Profile Management**: User profile operations
-- **Workspace Management**: Multi-tenant workspace operations
-- **Repository Operations**: Data repository lifecycle
-- **Object Management**: File and data object operations
-- **Version Control**: Branch, commit, tag, and merge operations
-- **Workflow System**: Workflow creation, execution, and monitoring
-- **Data Operations**: Queries, connections, and transformations
-- **Access Control**: Users, roles, policies, and permissions
-- **Search & Discovery**: Full-text search across platform resources
+Authenticated by **AI Application API key** (middleware: `AIApplicationAPIKeyAuth`, expects `Authorization: Bearer ai_...`):
+
+- **App metadata & prompting** (info/system prompt)
+- **Querying** (LLM query endpoint)
+- **Object/content access** (list + fetch)
+- **Schema access**
+- **Embeddings search**
+- **Custom tools** (list + execute via `/tools/:tool_name/...`)
+
+### Authenticated REST API (`/api/v1`)
+
+All routes in this group use:
+
+- `LocaleMiddleware` (sets `locale` + `dict` in request locals)
+- `AuthMiddleware` (expects `Authorization: Bearer ...`, identifies user via Clerk token and sets `user` in request locals)
+
+#### Top-level resources under `/api/v1`
+
+These are “global” (non-workspace-scoped) resources:
+
+- **System** (webhooks, schema helpers)
+- **Profile** (current user)
+- **Roles**
+- **Connectors** (plus connector-scoped actions; loaded via `ConnectorMiddleware`)
+- **Credentials**
+- **Workspaces** (index/create, plus workspace-scoped subtree; loaded via `WorkspaceMiddleware`)
+- **Invites** (current-user invite management; loaded via `InviteMiddleware`)
+
+#### Workspace-scoped resources (`/api/v1/workspaces/:workspace/...`)
+
+Most platform resources are nested under a workspace. The structure is:
+
+- `/api/v1/workspaces/:workspace` (show/update/delete + a few workspace actions)
+- Nested sub-resources under the workspace (each with its own loader + permission middleware)
+
+Key workspace sub-resources (not exhaustive):
+
+- **Access control**: policies, users, invites, audit logs
+- **Data operations**: SQL, saved queries, scripts
+- **Connectivity**: connections
+- **Automation**: workflows (+ workflow runs)
+- **AI**: AI applications (+ tool logs)
+- **Versioned data**: repositories
+  - Nested under a repository: objects, branches, tags, commits, embeddings
 
 ## Middleware Integration
 
-- **Authentication Middleware**: JWT token validation
-- **Localization Middleware**: Multi-language support
-- **Permission Middleware**: Resource-based access control
-- **Resource Middleware**: Parameter validation and resource loading
+- **Authentication middleware**:
+  - **User auth**: `AuthMiddleware` (Bearer token; identifies user via Clerk)
+  - **AI App auth**: `AIApplicationAPIKeyAuth` (Bearer `ai_...` API key)
+- **Localization middleware**: `LocaleMiddleware`
+- **Permission middleware**: granular `*PermissionMiddleware(...)` checks on many endpoints
+- **Resource loading middleware**: `*Middleware` loaders (workspace, repository, object, etc.) to resolve route params into entities
 
 ## API Design
 

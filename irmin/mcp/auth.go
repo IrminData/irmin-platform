@@ -3,6 +3,7 @@ package mcp
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strings"
 
 	"irmin-api/db"
@@ -11,6 +12,47 @@ import (
 
 type userCtxKey struct{}
 type aiAppCtxKey struct{}
+type requestMetadataCtxKey struct{}
+
+// RequestMetadata contains HTTP request information for audit logging.
+type RequestMetadata struct {
+	IP          string
+	UserAgent   string
+	Origin      string
+	ContentType string
+}
+
+func withRequestMetadataInContext(ctx context.Context, metadata *RequestMetadata) context.Context {
+	return context.WithValue(ctx, requestMetadataCtxKey{}, metadata)
+}
+
+func requestMetadataFromContext(ctx context.Context) (*RequestMetadata, bool) {
+	m, ok := ctx.Value(requestMetadataCtxKey{}).(*RequestMetadata)
+	return m, ok && m != nil
+}
+
+// ExtractRequestMetadata extracts request metadata from an HTTP request for audit logging.
+func ExtractRequestMetadata(r *http.Request) *RequestMetadata {
+	// Get IP address (check X-Forwarded-For first for proxied requests)
+	ip := r.Header.Get("X-Forwarded-For")
+	if ip == "" {
+		ip = r.Header.Get("X-Real-IP")
+	}
+	if ip == "" {
+		ip = r.RemoteAddr
+	}
+	// Take only the first IP if there are multiple (X-Forwarded-For can be comma-separated)
+	if comma := strings.Index(ip, ","); comma != -1 {
+		ip = strings.TrimSpace(ip[:comma])
+	}
+
+	return &RequestMetadata{
+		IP:          ip,
+		UserAgent:   r.Header.Get("User-Agent"),
+		Origin:      r.Header.Get("Origin"),
+		ContentType: r.Header.Get("Content-Type"),
+	}
+}
 
 type authConfig struct {
 	apiServices *services.APIServices
