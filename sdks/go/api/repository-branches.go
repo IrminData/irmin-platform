@@ -21,6 +21,12 @@ type UpdateBranchRequest struct {
 	IsImmutable *bool   `json:"is_immutable,omitempty" example:"false"`
 }
 
+// ResetBranchRequest represents the JSON request body for resetting a branch to a specific commit.
+type ResetBranchRequest struct {
+	CommitRef string `json:"commit_ref"      validate:"required" example:"abc123def456"`
+	Force     bool   `json:"force,omitempty"                     example:"false"`
+}
+
 func (c *Client) ListBranches(
 	ctx context.Context,
 	workspace, repository string,
@@ -122,4 +128,24 @@ func (c *Client) GetUncommittedChanges(
 		return nil, nil, fmt.Errorf("fetch uncommitted changes error: %w", err)
 	}
 	return &diff, apiResp, nil
+}
+
+// ResetBranch resets a branch to a specific commit reference.
+// This performs a hard reset, moving the branch pointer to the specified commit.
+// If force is true, uncommitted changes will be discarded.
+func (c *Client) ResetBranch(
+	ctx context.Context,
+	workspace, repository, branch string,
+	req ResetBranchRequest,
+) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method:      http.MethodPost,
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches/%s/reset", workspace, repository, branch),
+		ContentType: "application/json",
+		Body:        req,
+	}, nil)
+	if err != nil {
+		return nil, fmt.Errorf("reset branch error: %w", err)
+	}
+	return apiResp, nil
 }
