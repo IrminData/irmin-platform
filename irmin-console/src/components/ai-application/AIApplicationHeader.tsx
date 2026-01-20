@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 import {
+  TbActivity,
   TbBook,
   TbBrain,
   TbFileText,
@@ -74,6 +75,13 @@ export default function AIApplicationHeader() {
         active: pathname === `${baseUrl}/policies`,
         icon: <TbShield size={14} />,
         hidden: !isResourceAllowed('policy', 'read'),
+      },
+      {
+        name: dict.aiApplication.activity,
+        link: `${baseUrl}/activity`,
+        active: pathname === `${baseUrl}/activity`,
+        icon: <TbActivity size={14} />,
+        hidden: !isResourceAllowed('audit_log', 'read'),
       },
       {
         name: dict.common.logs,

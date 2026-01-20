@@ -303,3 +303,26 @@ export const aiApplicationQueryKey = (
   workspaceSlug: string,
   aiApplicationID: string
 ) => ['ai_application', workspaceSlug, aiApplicationID] as const;
+
+export const aiApplicationToolLogsQueryKey = (
+  workspaceSlug: string,
+  aiApplicationID: string,
+  limit: number,
+  offset: number,
+  toolName?: string,
+  success?: boolean
+) =>
+  [
+    'ai_application_tool_logs',
+    workspaceSlug,
+    aiApplicationID,
+    limit,
+    offset,
+    toolName,
+    success,
+  ] as const;
+
+export const aiApplicationToolLogStatsQueryKey = (
+  workspaceSlug: string,
+  aiApplicationID: string
+) => ['ai_application_tool_log_stats', workspaceSlug, aiApplicationID] as const;

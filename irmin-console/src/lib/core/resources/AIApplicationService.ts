@@ -4,6 +4,8 @@ import type {
   AIApplication,
   AIApplicationDataSource,
   AIApplicationToolConfig,
+  AIApplicationToolLogsResponse,
+  AIApplicationToolLogStats,
   CreateAIApplicationRequest,
   TransferAIApplicationOwnershipRequest,
   UpdateAIApplicationRequest,
@@ -32,6 +34,8 @@ class AIApplicationService {
     this.deleteAIApplication = this.deleteAIApplication.bind(this);
     this.transferAIApplication = this.transferAIApplication.bind(this);
     this.getSystemPrompt = this.getSystemPrompt.bind(this);
+    this.getToolLogs = this.getToolLogs.bind(this);
+    this.getToolLogStats = this.getToolLogStats.bind(this);
   }
 
   /**
@@ -293,6 +297,82 @@ class AIApplicationService {
       return response as IrminAPIResponse<{ system_prompt: string }>;
     } catch (error) {
       console.error('Get system prompt error', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get tool logs for an AI Application.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.aiApplicationId - The AI Application ID.
+   * @param props.limit - Maximum number of logs to return (default 50).
+   * @param props.offset - Number of logs to skip (default 0).
+   * @param props.toolName - Filter by tool name.
+   * @param props.success - Filter by success status.
+   * @returns IrminAPIResponse containing tool logs.
+   */
+  async getToolLogs({
+    workspace,
+    aiApplicationId,
+    limit = 50,
+    offset = 0,
+    toolName,
+    success,
+  }: {
+    workspace: string;
+    aiApplicationId: string;
+    limit?: number;
+    offset?: number;
+    toolName?: string;
+    success?: boolean;
+  }): Promise<IrminAPIResponse<AIApplicationToolLogsResponse>> {
+    try {
+      const params = new URLSearchParams();
+      params.set('limit', limit.toString());
+      params.set('offset', offset.toString());
+      if (toolName) {
+        params.set('tool_name', toolName);
+      }
+      if (success !== undefined) {
+        params.set('success', success.toString());
+      }
+
+      const endpoint = `/v1/workspaces/${workspace}/ai-applications/${aiApplicationId}/tool-logs?${params.toString()}`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'GET',
+      });
+      return response as IrminAPIResponse<AIApplicationToolLogsResponse>;
+    } catch (error) {
+      console.error('Get AI Application tool logs error', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get tool log statistics for an AI Application.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.aiApplicationId - The AI Application ID.
+   * @returns IrminAPIResponse containing tool log statistics.
+   */
+  async getToolLogStats({
+    workspace,
+    aiApplicationId,
+  }: {
+    workspace: string;
+    aiApplicationId: string;
+  }): Promise<IrminAPIResponse<AIApplicationToolLogStats>> {
+    try {
+      const endpoint = `/v1/workspaces/${workspace}/ai-applications/${aiApplicationId}/tool-logs/stats`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'GET',
+      });
+      return response as IrminAPIResponse<AIApplicationToolLogStats>;
+    } catch (error) {
+      console.error('Get AI Application tool log stats error', error);
       throw error;
     }
   }

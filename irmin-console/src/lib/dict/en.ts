@@ -51,11 +51,20 @@ const en = {
 
     // Status and feedback
     success: 'Success',
+    successful: 'Successful',
     error: 'Error',
+    failed: 'Failed',
     info: 'Info',
     yes: 'Yes',
     no: 'No',
     optional: 'Optional',
+    all: 'All',
+
+    // Pagination and filtering
+    showing: 'Showing',
+    of: 'of',
+    page: 'Page',
+    clearFilters: 'Clear filters',
 
     // Content
     name: 'Name',
@@ -310,6 +319,21 @@ const en = {
     embeddingFilter: 'Metadata Filter',
     embeddingFilterHint:
       'Filter results by metadata. One key=value pair per line.',
+    // Activity / Tool Logs
+    activity: 'Activity',
+    activityDescription:
+      'View all tool calls made through this AI Application, including inputs, execution time, and status.',
+    noActivityYet: 'No activity recorded yet',
+    noActivityDescription:
+      'Tool calls made through the AI Application will appear here.',
+    toolCall: 'Tool Call',
+    toolCalls: 'Tool Calls',
+    duration: 'Duration',
+    avgDuration: 'Avg Duration',
+    inputs: 'Inputs',
+    noInputs: 'No inputs',
+    protocol: 'Protocol',
+    requestOrigin: 'Request Origin',
   },
 
   // === WORKSPACE ===

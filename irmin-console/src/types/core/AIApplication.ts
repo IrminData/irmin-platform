@@ -181,3 +181,84 @@ export interface TransferAIApplicationOwnershipRequest {
   /** New owner user ID */
   new_owner_id: string;
 }
+
+/**
+ * Tool log protocol type
+ */
+type AIApplicationToolLogProtocol = 'mcp' | 'rest';
+
+/**
+ * AI Application tool log entry
+ */
+export interface AIApplicationToolLog {
+  /** Log entry ID */
+  id: number;
+  /** Tool name that was called */
+  tool_name: string;
+  /** Tool type (built-in or custom) */
+  tool_type: string;
+  /** JSON string of inputs passed to the tool */
+  inputs_json: string;
+  /** Protocol used (MCP or REST) */
+  protocol: AIApplicationToolLogProtocol;
+  /** IP address of the request origin */
+  request_ip: string;
+  /** User agent of the request */
+  user_agent: string;
+  /** Origin header of the request */
+  origin: string;
+  /** Duration of the tool call in milliseconds */
+  duration_ms: number;
+  /** Whether the tool call was successful */
+  success: boolean;
+  /** Error message if the tool call failed */
+  error_msg: string;
+  /** Creation timestamp */
+  created_at: string;
+}
+
+/**
+ * Response for listing tool logs
+ */
+export interface AIApplicationToolLogsResponse {
+  /** Tool log entries */
+  logs: AIApplicationToolLog[];
+  /** Total number of logs */
+  total: number;
+  /** Current limit */
+  limit: number;
+  /** Current offset */
+  offset: number;
+}
+
+/**
+ * Statistics for a specific tool
+ */
+interface AIApplicationToolStat {
+  /** Tool name */
+  tool_name: string;
+  /** Number of calls */
+  count: number;
+  /** Average duration in milliseconds */
+  avg_duration_ms: number;
+  /** Number of successful calls */
+  success_count: number;
+  /** Number of failed calls */
+  error_count: number;
+}
+
+/**
+ * Aggregated statistics for tool logs
+ */
+export interface AIApplicationToolLogStats {
+  /** Total number of tool calls */
+  total_calls: number;
+  /** Number of successful calls */
+  successful_calls: number;
+  /** Number of failed calls */
+  failed_calls: number;
+  /** Average duration in milliseconds */
+  avg_duration_ms: number;
+  /** Per-tool statistics */
+  by_tool: AIApplicationToolStat[];
+}

@@ -51,11 +51,20 @@ const fi = {
 
     // Status and feedback
     success: 'Onnistui',
+    successful: 'Onnistuneet',
     error: 'Virhe',
+    failed: 'Epäonnistuneet',
     info: 'Info',
     yes: 'Kyllä',
     no: 'Ei',
     optional: 'Valinnainen',
+    all: 'Kaikki',
+
+    // Pagination and filtering
+    showing: 'Näytetään',
+    of: '/',
+    page: 'Sivu',
+    clearFilters: 'Tyhjennä suodattimet',
 
     // Content
     name: 'Nimi',
@@ -311,6 +320,21 @@ const fi = {
     embeddingFilter: 'Metadatan suodatin',
     embeddingFilterHint:
       'Suodata tuloksia metadatan perusteella. Yksi avain=arvo -pari per rivi.',
+    // Activity / Tool Logs
+    activity: 'Aktiviteetti',
+    activityDescription:
+      'Näytä kaikki tämän AI-sovelluksen kautta tehdyt työkalukutsut, mukaan lukien syötteet, suoritusaika ja tila.',
+    noActivityYet: 'Ei vielä aktiviteettia',
+    noActivityDescription:
+      'AI-sovelluksen kautta tehdyt työkalukutsut näkyvät täällä.',
+    toolCall: 'Työkalukutsu',
+    toolCalls: 'Työkalukutsut',
+    duration: 'Kesto',
+    avgDuration: 'Keskim. kesto',
+    inputs: 'Syötteet',
+    noInputs: 'Ei syötteitä',
+    protocol: 'Protokolla',
+    requestOrigin: 'Pyynnön alkuperä',
   },
 
   // === WORKSPACE ===
