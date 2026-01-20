@@ -662,6 +662,11 @@ func RegisterAPIRoutes(
 		apiMiddlewares.RepositoryBranchPermissionMiddleware(db.PolicyActionDelete),
 		apiControllers.RepositoryBranchesDestroy,
 	)
+	branch.Post(
+		"/reset",
+		apiMiddlewares.RepositoryBranchPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.RepositoryBranchesReset,
+	)
 
 	// Tag routes
 	tags := repository.Group("/tags")

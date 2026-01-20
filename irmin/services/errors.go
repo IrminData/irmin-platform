@@ -52,6 +52,7 @@ var (
 	ErrWorkflowAlreadyPaused                  = errors.New("workflow already paused")
 	ErrWorkflowAlreadyRunning                 = errors.New("workflow already running")
 	ErrBranchAlreadyExists                    = errors.New("branch already exists")
+	ErrBranchIsImmutable                      = errors.New("branch is immutable")
 	ErrNoContentExtracted                     = errors.New("no content could be extracted from AI response")
 	ErrReservedPathPrefix                     = errors.New("path uses reserved prefix")
 	ErrCannotMovePointerToRegularPath         = errors.New("cannot move or copy pointer to a non-pointer path")
@@ -266,6 +267,8 @@ func MapErrorToStatusCode(err error) int {
 		return fiber.StatusConflict
 	case errors.Is(err, ErrBranchAlreadyExists):
 		return fiber.StatusConflict
+	case errors.Is(err, ErrBranchIsImmutable):
+		return fiber.StatusBadRequest
 	case errors.Is(err, ErrNoContentExtracted):
 		return fiber.StatusUnprocessableEntity
 	case errors.Is(err, ErrReservedPathPrefix):

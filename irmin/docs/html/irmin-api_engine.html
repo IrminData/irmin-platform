@@ -415,6 +415,8 @@ func (c *Client) PushFilesToConnector(
     the files that were pushed and an error if any occurred. If tx is provided,
     it will be used instead of creating a new transaction.
 
+func (c *Client) ResetBranchToCommit(workspace, repository, branch, commitRef string, force bool) error
+
 func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pathType string) error
 
 func (c *Client) SetPermissionChecker(pc PermissionChecker)

@@ -906,6 +906,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) RepositoriesUpdate\(c fiber.Ctx\) error](<#APIControllers.RepositoriesUpdate>)
   - [func \(api \*APIControllers\) RepositoryBranchesDestroy\(c fiber.Ctx\) error](<#APIControllers.RepositoryBranchesDestroy>)
   - [func \(api \*APIControllers\) RepositoryBranchesIndex\(c fiber.Ctx\) error](<#APIControllers.RepositoryBranchesIndex>)
+  - [func \(api \*APIControllers\) RepositoryBranchesReset\(c fiber.Ctx\) error](<#APIControllers.RepositoryBranchesReset>)
   - [func \(api \*APIControllers\) RepositoryBranchesShow\(c fiber.Ctx\) error](<#APIControllers.RepositoryBranchesShow>)
   - [func \(api \*APIControllers\) RepositoryBranchesStore\(c fiber.Ctx\) error](<#APIControllers.RepositoryBranchesStore>)
   - [func \(api \*APIControllers\) RepositoryBranchesUpdate\(c fiber.Ctx\) error](<#APIControllers.RepositoryBranchesUpdate>)
@@ -1698,6 +1699,15 @@ func (api *APIControllers) RepositoryBranchesIndex(c fiber.Ctx) error
 ```
 
 RepositoryBranchesIndex godoc @Summary List repository branches @Description Get all branches in a specific repository @Tags repository\-branches @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.Branch\} "Branches retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Repository not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/branches \[get\]
+
+<a name="APIControllers.RepositoryBranchesReset"></a>
+### func \(\*APIControllers\) RepositoryBranchesReset
+
+```go
+func (api *APIControllers) RepositoryBranchesReset(c fiber.Ctx) error
+```
+
+RepositoryBranchesReset godoc @Summary Reset branch to a commit @Description Reset a branch to a specific commit, moving the branch pointer @Tags repository\-branches @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param branch\_name path string true "Branch name" @Param request body irmincore.ResetBranchRequest true "Reset parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse "Branch reset successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Branch or repository not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/branches/\{branch\_name\}/reset \[post\]
 
 <a name="APIControllers.RepositoryBranchesShow"></a>
 ### func \(\*APIControllers\) RepositoryBranchesShow
@@ -6545,6 +6555,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) ProcessTransformations\(ctx context.Context, files map\[string\]\[\]byte, config TransformConfig\) \(map\[string\]\[\]byte, error\)](<#Client.ProcessTransformations>)
   - [func \(c \*Client\) PullFilesFromConnector\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string\) \(map\[string\]\[\]byte, \[\]connectorsclient.OperationLog, error\)](<#Client.PullFilesFromConnector>)
   - [func \(c \*Client\) PushFilesToConnector\(ctx context.Context, connection \*db.Connection, connectionPath string, objects \[\]\*irminmodels.Object, files map\[string\]\[\]byte, tx ...\*gorm.DB\) \(\[\]string, \[\]connectorsclient.OperationLog, error\)](<#Client.PushFilesToConnector>)
+  - [func \(c \*Client\) ResetBranchToCommit\(workspace, repository, branch, commitRef string, force bool\) error](<#Client.ResetBranchToCommit>)
   - [func \(c \*Client\) RevertUncommitedChanges\(workspace, repository, branch, path, pathType string\) error](<#Client.RevertUncommitedChanges>)
   - [func \(c \*Client\) SetPermissionChecker\(pc PermissionChecker\)](<#Client.SetPermissionChecker>)
   - [func \(c \*Client\) UpdateBranch\(ctx context.Context, workspace, repository, currentName, name string, isImmutable bool\) \(\*irminmodels.Branch, error\)](<#Client.UpdateBranch>)
@@ -7199,6 +7210,15 @@ func (c *Client) PushFilesToConnector(ctx context.Context, connection *db.Connec
 ```
 
 PushFilesToConnector pushes files to a connector. It returns the paths of the files that were pushed and an error if any occurred. If tx is provided, it will be used instead of creating a new transaction.
+
+<a name="Client.ResetBranchToCommit"></a>
+### func \(\*Client\) ResetBranchToCommit
+
+```go
+func (c *Client) ResetBranchToCommit(workspace, repository, branch, commitRef string, force bool) error
+```
+
+
 
 <a name="Client.RevertUncommitedChanges"></a>
 ### func \(\*Client\) RevertUncommitedChanges
@@ -12308,6 +12328,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) RemoveTagFromEntity\(c context.Context, user \*db.User, workspace \*db.Workspace, tag \*db.Tag, entityType string, entityID uint\) error](<#APIServices.RemoveTagFromEntity>)
   - [func \(api \*APIServices\) RemoveUserFromWorkspace\(c context.Context, currentUser \*db.User, workspace \*db.Workspace, workspaceMember \*db.WorkspaceUser\) error](<#APIServices.RemoveUserFromWorkspace>)
   - [func \(api \*APIServices\) ResendInvite\(c context.Context, locale string, user \*db.User, invite \*db.Invite\) error](<#APIServices.ResendInvite>)
+  - [func \(api \*APIServices\) ResetRepositoryBranch\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, branch \*irminmodels.Branch, req irmincore.ResetBranchRequest\) error](<#APIServices.ResetRepositoryBranch>)
   - [func \(api \*APIServices\) RevertRepositoryUncommittedChanges\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.RevertUncommittedChangesRequest\) error](<#APIServices.RevertRepositoryUncommittedChanges>)
   - [func \(api \*APIServices\) SearchEmbeddings\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.SearchEmbeddingsRequest\) \(\*irminmodels.EmbeddingSearchResponse, error\)](<#APIServices.SearchEmbeddings>)
   - [func \(api \*APIServices\) SearchWorkspace\(c context.Context, user \*db.User, workspace \*db.Workspace, filters db.SearchFilters\) \(\*irminmodels.SearchResponse, error\)](<#APIServices.SearchWorkspace>)
@@ -12464,6 +12485,7 @@ var (
     ErrWorkflowAlreadyPaused                  = errors.New("workflow already paused")
     ErrWorkflowAlreadyRunning                 = errors.New("workflow already running")
     ErrBranchAlreadyExists                    = errors.New("branch already exists")
+    ErrBranchIsImmutable                      = errors.New("branch is immutable")
     ErrNoContentExtracted                     = errors.New("no content could be extracted from AI response")
     ErrReservedPathPrefix                     = errors.New("path uses reserved prefix")
     ErrCannotMovePointerToRegularPath         = errors.New("cannot move or copy pointer to a non-pointer path")
@@ -13761,6 +13783,15 @@ func (api *APIServices) RemoveUserFromWorkspace(c context.Context, currentUser *
 
 ```go
 func (api *APIServices) ResendInvite(c context.Context, locale string, user *db.User, invite *db.Invite) error
+```
+
+
+
+<a name="APIServices.ResetRepositoryBranch"></a>
+### func \(\*APIServices\) ResetRepositoryBranch
+
+```go
+func (api *APIServices) ResetRepositoryBranch(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, branch *irminmodels.Branch, req irmincore.ResetBranchRequest) error
 ```
 
 

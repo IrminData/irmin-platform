@@ -274,6 +274,50 @@ func (c *Client) updateBranchInternal(
 	}, nil
 }
 
+func (c *Client) ResetBranchToCommit(workspace, repository, branch, commitRef string, force bool) error {
+	// Create a lock key based on workspace, repository, and branch name to prevent race conditions
+	lockKey := fmt.Sprintf("branch_reset:%s:%s:%s", workspace, repository, branch)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent reset of the same branch
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf("failed to acquire advisory lock for branch %s: %w", branch, lockErr)
+		}
+
+		// Process the branch reset
+		return c.resetBranchToCommitInternal(workspace, repository, branch, commitRef, force)
+	})
+
+	return transactionErr
+}
+
+// resetBranchToCommitInternal contains the core branch reset logic, separated for clarity.
+func (c *Client) resetBranchToCommitInternal(workspace, repository, branch, commitRef string, force bool) error {
+	// Construct repository name.
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
+
+	// Ensure the branch exists.
+	_, err := c.LakeFSClient.GetBranch(lakeFSRepositoryName, branch)
+	if err != nil {
+		return fmt.Errorf("failed to get branch: %w", err)
+	}
+
+	// Verify the commit exists by attempting to get it
+	_, err = c.LakeFSClient.GetCommit(lakeFSRepositoryName, commitRef)
+	if err != nil {
+		return fmt.Errorf("failed to get commit: %w", err)
+	}
+
+	// Perform the hard reset to the specified commit
+	err = c.LakeFSClient.HardResetBranch(lakeFSRepositoryName, branch, commitRef, force)
+	if err != nil {
+		return fmt.Errorf("failed to reset branch to commit: %w", err)
+	}
+
+	return nil
+}
+
 func (c *Client) DeleteBranch(workspace, repository, branch string) error {
 	// Create a lock key based on workspace, repository, and branch name to prevent race conditions
 	lockKey := fmt.Sprintf("branch_delete:%s:%s:%s", workspace, repository, branch)

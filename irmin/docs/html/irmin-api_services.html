@@ -88,6 +88,7 @@ var (
 	ErrWorkflowAlreadyPaused                  = errors.New("workflow already paused")
 	ErrWorkflowAlreadyRunning                 = errors.New("workflow already running")
 	ErrBranchAlreadyExists                    = errors.New("branch already exists")
+	ErrBranchIsImmutable                      = errors.New("branch is immutable")
 	ErrNoContentExtracted                     = errors.New("no content could be extracted from AI response")
 	ErrReservedPathPrefix                     = errors.New("path uses reserved prefix")
 	ErrCannotMovePointerToRegularPath         = errors.New("cannot move or copy pointer to a non-pointer path")
@@ -1111,6 +1112,16 @@ func (api *APIServices) RemoveUserFromWorkspace(
 ) error
 
 func (api *APIServices) ResendInvite(c context.Context, locale string, user *db.User, invite *db.Invite) error
+
+func (api *APIServices) ResetRepositoryBranch(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	branch *irminmodels.Branch,
+	req irmincore.ResetBranchRequest,
+) error
 
 func (api *APIServices) RevertRepositoryUncommittedChanges(
 	c context.Context,

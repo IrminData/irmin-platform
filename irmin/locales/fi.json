@@ -49,6 +49,8 @@
   "branch_created": "Haara luotu",
   "branch_updated": "Haara päivitetty",
   "branch_deleted": "Haara poistettu",
+  "branch_reset": "Haara palautettu committiin",
+  "branch_is_immutable": "Haara on lukittu eikä sitä voi muokata",
   "commit_created": "Muutos tallennettu",
   "changes_reverted_to_previous_commit": "Muutokset palautettu edelliseen tallennukseen",
   "tag_created": "Tunniste luotu",

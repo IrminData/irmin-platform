@@ -349,6 +349,97 @@ func (api *APIServices) DeleteRepositoryBranch(
 	return nil
 }
 
+func (api *APIServices) ResetRepositoryBranch(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	branch *irminmodels.Branch,
+	req irmincore.ResetBranchRequest,
+) error {
+	// Make sure this is allowed - use Update permission for branch reset
+	isAllowed, err := api.PermissionService.IsAllowed(
+		user,
+		workspace,
+		db.PolicyResourceRepositoryBranch,
+		&repository.ID,
+		db.PolicyActionUpdate,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
+		return NewInternalErrorf("error checking permissions: %w", err)
+	}
+	if !isAllowed {
+		api.Logger.ErrorContext(
+			c,
+			"User is not allowed to reset repository branch",
+			"user",
+			user.Email,
+			"workspace",
+			workspace.Slug,
+			"repository",
+			repository.Slug,
+			"branch",
+			branch.Name,
+		)
+		return ErrAccessDenied
+	}
+
+	// Check if the branch is immutable - cannot reset immutable branches
+	if branch.IsImmutable {
+		api.Logger.ErrorContext(
+			c,
+			"Cannot reset immutable branch",
+			"user",
+			user.Email,
+			"workspace",
+			workspace.Slug,
+			"repository",
+			repository.Slug,
+			"branch",
+			branch.Name,
+		)
+		return ErrBranchIsImmutable
+	}
+
+	// Delete the cached objects for the branch since content will change
+	dbDeleteErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		if deleteErr := api.DB.DeleteObjects(tx, nil, &repository.ID, &branch.Name); deleteErr != nil {
+			return NewInternalErrorf("error deleting cached objects: %w", deleteErr)
+		}
+		return nil
+	})
+	if dbDeleteErr != nil {
+		api.Logger.ErrorContext(c, "Error deleting cached objects for branch", "error", dbDeleteErr)
+	}
+
+	// Initialize Data Engine client
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	if err != nil {
+		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
+		return NewInternalErrorf("error creating data engine client: %w", err)
+	}
+
+	// Reset the branch to the specified commit
+	err = dataEngine.ResetBranchToCommit(workspace.Slug, repository.Slug, branch.Name, req.CommitRef, req.Force)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error resetting branch in Data Engine", "error", err)
+		return NewInternalErrorf("error resetting branch in data engine: %w", err)
+	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
+		Type:         db.LogEventTypeUpdate,
+		Description:  fmt.Sprintf("Branch %s reset to commit %s", branch.Name, req.CommitRef),
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+	})
+
+	return nil
+}
+
 func (api *APIServices) GetRepositoryUncommittedChanges(
 	c context.Context,
 	locale string,

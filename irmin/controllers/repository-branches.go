@@ -234,6 +234,76 @@ func (api *APIControllers) RepositoryBranchesDestroy(c fiber.Ctx) error {
 	})
 }
 
+// RepositoryBranchesReset godoc
+// @Summary Reset branch to a commit
+// @Description Reset a branch to a specific commit, moving the branch pointer
+// @Tags repository-branches
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param branch_name path string true "Branch name"
+// @Param request body irmincore.ResetBranchRequest true "Reset parameters"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Branch reset successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Branch or repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/branches/{branch_name}/reset [post]
+func (api *APIControllers) RepositoryBranchesReset(c fiber.Ctx) error {
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	branch, branchOk := c.Locals("branch").(*irminmodels.Branch)
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk || !branchOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
+
+	// Parse the JSON request body
+	var req irmincore.ResetBranchRequest
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
+	}
+
+	// Reset the branch using the service
+	err := api.Services.ResetRepositoryBranch(c, locale, user, workspace, repository, branch, req)
+	if err != nil {
+		return api.handleServiceError(c, "Error resetting repository branch", err, dict)
+	}
+
+	// Invalidate branches list and branch details (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/branches", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
+	// Also invalidate commits cache since branch now points to a different commit
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/commits", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
+	// Invalidate objects cache since branch now has different content
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
+	// Return a success message
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Message: api.lm.T(dict, "branch_reset"),
+	})
+}
+
 // RepositoryGetUncommittedChanges godoc
 // @Summary Get uncommitted changes
 // @Description Get all uncommitted changes in a specific branch

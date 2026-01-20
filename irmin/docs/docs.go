@@ -6517,6 +6517,90 @@ const docTemplate = `{
                 }
             }
         },
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/branches/{branch_name}/reset": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Reset a branch to a specific commit, moving the branch pointer",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repository-branches"
+                ],
+                "summary": "Reset branch to a commit",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository slug",
+                        "name": "repository_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Branch name",
+                        "name": "branch_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Reset parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.ResetBranchRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Branch reset successfully",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Branch or repository not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/repositories/{repository_slug}/branches/{branch_name}/uncommitted-changes": {
             "get": {
                 "security": [
@@ -12944,6 +13028,22 @@ const docTemplate = `{
                 "new_path": {
                     "type": "string",
                     "example": "path/to/new/location"
+                }
+            }
+        },
+        "irmincore.ResetBranchRequest": {
+            "type": "object",
+            "required": [
+                "commit_ref"
+            ],
+            "properties": {
+                "commit_ref": {
+                    "type": "string",
+                    "example": "abc123def456"
+                },
+                "force": {
+                    "type": "boolean",
+                    "example": false
                 }
             }
         },
