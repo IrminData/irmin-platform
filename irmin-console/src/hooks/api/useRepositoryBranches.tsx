@@ -110,6 +110,38 @@ export function useRepositoryBranches(repositorySlug: string) {
     }),
   });
 
+  const resetBranchMutation = useMutation<
+    IrminAPIResponse<void>,
+    Error,
+    { branch: string; commitRef: string; force?: boolean }
+  >({
+    mutationFn: async ({ branch, commitRef, force }) => {
+      const token = await getToken();
+      const core = new IrminCore(locale, token);
+      return await core.repositoryBranchService.resetBranch({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        branch,
+        request: { commit_ref: commitRef, force },
+      });
+    },
+    onSuccess: (res) => {
+      irminAlert('success', res.message ?? 'Branch reset successfully');
+      // Invalidate branches cache
+      void queryClient.invalidateQueries({
+        queryKey: repositoryBranchesQueryKey(workspaceSlug, repositorySlug),
+      });
+      // Invalidate commits cache since branch now points to different commit
+      // Use partial key to match all commits for this repository (any branch, any cursor)
+      void queryClient.invalidateQueries({
+        queryKey: ['repository-commits', workspaceSlug, repositorySlug],
+      });
+    },
+    onError: (error) => {
+      irminAlert('error', error.message ?? 'Error resetting branch');
+    },
+  });
+
   return {
     // Queries
     repositoryBranchesQuery,
@@ -117,5 +149,6 @@ export function useRepositoryBranches(repositorySlug: string) {
     // Mutations
     createBranchMutation,
     deleteBranchMutation,
+    resetBranchMutation,
   };
 }

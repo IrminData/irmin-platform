@@ -22,6 +22,14 @@ interface UpdateBranchRequest {
 }
 
 /**
+ * Interface for resetting a branch to a specific commit
+ */
+interface ResetBranchRequest {
+  commit_ref: string;
+  force?: boolean;
+}
+
+/**
  * Repository Branch API service
  *
  * Responsible for all repository branch related API calls
@@ -38,6 +46,7 @@ class RepositoryBranchService {
     this.deleteBranch = this.deleteBranch.bind(this);
     this.updateBranch = this.updateBranch.bind(this);
     this.getUncommittedChanges = this.getUncommittedChanges.bind(this);
+    this.resetBranch = this.resetBranch.bind(this);
   }
 
   /**
@@ -234,6 +243,42 @@ class RepositoryBranchService {
         (error as Error).message,
         'Failed to get uncommitted changes'
       );
+      throw error;
+    }
+  }
+
+  /**
+   * Reset a branch to a specific commit
+   *
+   * @param props
+   * @param props.workspace - The workspace containing the repository
+   * @param props.repository - The repository slug
+   * @param props.branch - The branch name to reset
+   * @param props.request - The reset request containing commit_ref and optional force flag
+   */
+  async resetBranch({
+    workspace,
+    repository,
+    branch,
+    request,
+  }: {
+    workspace: string;
+    repository: string;
+    branch: string;
+    request: ResetBranchRequest;
+  }): Promise<IrminAPIResponse<void>> {
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}/reset`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(request),
+        }
+      );
+      return response as IrminAPIResponse<void>;
+    } catch (error) {
+      console.error((error as Error).message, 'Failed to reset branch');
       throw error;
     }
   }

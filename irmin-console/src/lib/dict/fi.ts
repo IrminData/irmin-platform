@@ -466,6 +466,10 @@ const fi = {
       commitMessage: 'Commit-viesti',
       commitMessagePlaceholder: 'Kuvaile muutokset',
       changes: 'Muutokset',
+      resetBranch: 'Palauta haara tähän committiin',
+      confirmResetBranch: 'Palauta haara committiin?',
+      resetBranchDescription:
+        'Tämä siirtää nykyisen haaran osoittimen tähän committiin. Tämän jälkeiset commitit eivät enää ole tässä haarassa. Tätä toimintoa ei voi peruuttaa.',
     },
     compare: {
       compare: 'Vertaa',

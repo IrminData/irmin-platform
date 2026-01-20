@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -10,6 +10,9 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
+
+import { useRepositoryBranches } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
 import type { Commit } from '@/types/core/Commit';
 import type { GridRow } from '@/types/internal/ListProps';
@@ -29,11 +32,47 @@ export default function CommitList({
   loading?: boolean;
 }) {
   const { dict, locale } = useLocale();
-  const { irminAlert } = usePopup();
+  const { irminAlert, irminConfirm } = usePopup();
   const router = useRouter();
+  const { isResourceAllowed } = useResourceAllowed();
 
-  const { viewRef, repository } = useRepositoryContext();
+  const { viewRef, repository, currentRef, immutable } = useRepositoryContext();
   const { workspaceSlug } = useWorkspaceContext();
+  const { repositoryBranchesQuery, resetBranchMutation } =
+    useRepositoryBranches(repository.slug);
+
+  // Check if currentRef is an actual branch name
+  const branches = repositoryBranchesQuery.data?.data;
+  const isCurrentRefABranch = useMemo(() => {
+    if (!currentRef || !branches) return false;
+    return branches.some((b) => b.name === currentRef);
+  }, [currentRef, branches]);
+
+  // Check if the current branch is immutable
+  const isCurrentBranchImmutable = immutable;
+
+  // Check if user can update branches (needed for reset)
+  const canUpdateBranch = useMemo(
+    () => isResourceAllowed('repository_branch', 'update', repository.id),
+    [isResourceAllowed, repository.id]
+  );
+
+  const handleResetBranch = useCallback(
+    async (commit: Commit) => {
+      if (!currentRef || !isCurrentRefABranch) return;
+
+      const confirmMessage = `${dict.repository.commit.confirmResetBranch}\n\n${dict.repository.commit.resetBranchDescription}`;
+      const confirmed = await irminConfirm('warning', confirmMessage);
+
+      if (confirmed) {
+        resetBranchMutation.mutate({
+          branch: currentRef,
+          commitRef: commit.hash,
+        });
+      }
+    },
+    [currentRef, isCurrentRefABranch, irminConfirm, dict, resetBranchMutation]
+  );
 
   const rows: GridRow[] = useMemo(
     () =>
@@ -82,6 +121,18 @@ export default function CommitList({
               irminAlert('success', dict.repository.commit.commitHashCopied);
             },
           },
+          // Reset branch action - only shown when viewing a mutable branch (not a tag, commit, or immutable branch)
+          ...(isCurrentRefABranch &&
+          canUpdateBranch &&
+          !isCurrentBranchImmutable
+            ? [
+                {
+                  label: dict.repository.commit.resetBranch,
+                  primary: false,
+                  onClick: () => handleResetBranch(commit),
+                },
+              ]
+            : []),
         ],
       })) ?? [],
     [
@@ -93,6 +144,10 @@ export default function CommitList({
       workspaceSlug,
       repository.slug,
       commits,
+      isCurrentRefABranch,
+      canUpdateBranch,
+      isCurrentBranchImmutable,
+      handleResetBranch,
     ]
   );
 

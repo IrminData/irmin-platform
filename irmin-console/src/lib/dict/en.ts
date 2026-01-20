@@ -466,6 +466,10 @@ const en = {
       commitMessage: 'Commit message',
       commitMessagePlaceholder: 'Describe your changes',
       changes: 'Changes',
+      resetBranch: 'Reset branch to this commit',
+      confirmResetBranch: 'Reset branch to commit?',
+      resetBranchDescription:
+        'This will move the current branch pointer to this commit. Any commits after this point will no longer be on this branch. This action cannot be undone.',
     },
 
     compare: {
