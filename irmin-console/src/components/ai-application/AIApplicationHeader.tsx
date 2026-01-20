@@ -64,6 +64,13 @@ export default function AIApplicationHeader() {
         icon: <TbBrain size={14} />,
       },
       {
+        name: dict.aiApplication.activity,
+        link: `${baseUrl}/activity`,
+        active: pathname === `${baseUrl}/activity`,
+        icon: <TbActivity size={14} />,
+        hidden: !isResourceAllowed('audit_log', 'read'),
+      },
+      {
         name: dict.documentation.documentation,
         link: `${baseUrl}/documentation`,
         active: pathname === `${baseUrl}/documentation`,
@@ -75,13 +82,6 @@ export default function AIApplicationHeader() {
         active: pathname === `${baseUrl}/policies`,
         icon: <TbShield size={14} />,
         hidden: !isResourceAllowed('policy', 'read'),
-      },
-      {
-        name: dict.aiApplication.activity,
-        link: `${baseUrl}/activity`,
-        active: pathname === `${baseUrl}/activity`,
-        icon: <TbActivity size={14} />,
-        hidden: !isResourceAllowed('audit_log', 'read'),
       },
       {
         name: dict.common.logs,
