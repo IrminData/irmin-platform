@@ -1,12 +1,14 @@
 import { notFound } from 'next/navigation';
 
-import ConnectionSchemaSection from '@/components/connection/ConnectionSchemaSection';
+import ConnectionSchemaPageContent from '@/components/connection/ConnectionSchemaPageContent';
 
 import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
 
 import type { PageSearchParams } from '@/types/internal/PageSearchParams';
 
 import type { SingleConnectionLayoutParams } from '../layout';
+
+type SchemaTab = 'view' | 'validate';
 
 /**
  * Page for the Connection Schema
@@ -29,11 +31,17 @@ export default async function ConnectionSchemaPage(props: {
     (searchParams.method === 'pull' || searchParams.method === 'push')
       ? searchParams.method
       : 'pull';
+  const tab: SchemaTab =
+    typeof searchParams.tab === 'string' &&
+    (searchParams.tab === 'view' || searchParams.tab === 'validate')
+      ? searchParams.tab
+      : 'view';
 
   return (
-    <ConnectionSchemaSection
+    <ConnectionSchemaPageContent
       operationMethod={operationMethod}
       focusedPath={path}
+      defaultTab={tab}
     />
   );
 }

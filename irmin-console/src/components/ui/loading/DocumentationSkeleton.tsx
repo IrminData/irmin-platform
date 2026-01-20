@@ -55,7 +55,6 @@ function DocumentationSkeleton({
                   `}
                 >
                   {Array.from({ length: 9 }).map((_, i) => (
-                    // eslint-disable-next-line react/no-array-index-key
                     <div key={i} className='space-y-1'>
                       <div className='h-4 w-24 rounded bg-muted' />
                       <div className='h-6 w-12 rounded bg-muted' />
@@ -69,7 +68,6 @@ function DocumentationSkeleton({
           {/* Content Sections */}
           <div className='space-y-12'>
             {Array.from({ length: contentSections }).map((_, sectionIndex) => (
-              // eslint-disable-next-line react/no-array-index-key
               <section key={sectionIndex} className='space-y-6'>
                 <div className='flex items-center gap-3'>
                   <div className='size-10 rounded-lg bg-muted' />
@@ -86,7 +84,6 @@ function DocumentationSkeleton({
                 >
                   {Array.from({ length: 4 }).map((_, cardIndex) => (
                     <div
-                      // eslint-disable-next-line react/no-array-index-key
                       key={cardIndex}
                       className='rounded-lg border bg-card p-6'
                     >
@@ -94,7 +91,6 @@ function DocumentationSkeleton({
                       <div className='mb-4 h-4 w-full rounded bg-muted' />
                       <div className='space-y-3'>
                         {Array.from({ length: 3 }).map((_, itemIndex) => (
-                          // eslint-disable-next-line react/no-array-index-key
                           <div key={itemIndex} className='space-y-1'>
                             <div className='h-3 w-20 rounded bg-muted' />
                             <div className='h-4 w-32 rounded bg-muted' />

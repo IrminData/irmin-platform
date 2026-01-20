@@ -51,7 +51,6 @@ function SchemaSkeleton({
                 `}
               >
                 {Array.from({ length: 4 }).map((_, i) => (
-                  // eslint-disable-next-line react/no-array-index-key
                   <div key={i} className='rounded-lg border bg-card p-4'>
                     <div className='mb-2 h-4 w-20 rounded bg-muted' />
                     <div className='h-6 w-12 rounded bg-muted' />
@@ -72,7 +71,6 @@ function SchemaSkeleton({
               >
                 <div className='flex gap-2'>
                   {Array.from({ length: 3 }).map((_, i) => (
-                    // eslint-disable-next-line react/no-array-index-key
                     <div key={i} className='h-8 w-28 rounded-lg bg-muted' />
                   ))}
                 </div>
@@ -80,7 +78,6 @@ function SchemaSkeleton({
                   <div className='h-10 w-64 rounded-lg bg-muted' />
                   <div className='flex gap-2'>
                     {Array.from({ length: 4 }).map((_, i) => (
-                      // eslint-disable-next-line react/no-array-index-key
                       <div key={i} className='h-8 w-20 rounded-lg bg-muted' />
                     ))}
                   </div>
@@ -94,7 +91,6 @@ function SchemaSkeleton({
             <div className='h-8 w-48 rounded bg-muted' />
             <div className='space-y-6'>
               {Array.from({ length: 3 }).map((_, i) => (
-                // eslint-disable-next-line react/no-array-index-key
                 <div key={i} className='rounded-lg border bg-card p-6'>
                   <div className='mb-4 flex flex-wrap items-center gap-3'>
                     <div className='h-7 w-48 rounded bg-muted' />
@@ -105,7 +101,6 @@ function SchemaSkeleton({
                   <div className='mb-2 h-3 w-16 rounded bg-muted' />
                   <div className='flex flex-wrap items-center gap-2'>
                     {Array.from({ length: 4 }).map((_, j) => (
-                      // eslint-disable-next-line react/no-array-index-key
                       <div key={j} className='h-8 w-32 rounded-md bg-muted' />
                     ))}
                   </div>
@@ -124,7 +119,6 @@ function SchemaSkeleton({
               `}
             >
               {Array.from({ length: 2 }).map((_, i) => (
-                // eslint-disable-next-line react/no-array-index-key
                 <div key={i} className='rounded-lg border bg-card p-6'>
                   <div className='mb-4 flex items-center gap-2'>
                     <div className='size-5 rounded bg-muted' />
@@ -133,7 +127,6 @@ function SchemaSkeleton({
                   <div className='space-y-4'>
                     {Array.from({ length: 4 }).map((_, j) => (
                       <div
-                        // eslint-disable-next-line react/no-array-index-key
                         key={j}
                         className={`
                           space-y-1 border-b pb-3

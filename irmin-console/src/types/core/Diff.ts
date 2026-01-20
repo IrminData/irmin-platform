@@ -1,5 +1,6 @@
 import type { Commit } from '@/types/core/Commit';
 import type { RepositoryObject } from '@/types/core/RepositoryObject';
+import type { ObjectSchemaDiff } from '@/types/core/SchemaValidation';
 
 /**
  * Represents the type of change in a diff, eg. what kind of change was made to the object
@@ -37,4 +38,6 @@ export interface Diff {
   items: ChangeItem[];
   /** (optional) List of commits between the refs */
   commits?: Commit[];
+  /** (optional) Schema diffs for objects that have schema changes */
+  schema_diffs?: ObjectSchemaDiff[];
 }

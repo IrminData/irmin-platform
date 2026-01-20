@@ -65,7 +65,6 @@ export const MessageMetadata = ({
               if (isStoredToolCall(toolCall)) {
                 return (
                   <Tool
-                    // eslint-disable-next-line react/no-array-index-key
                     key={`tool-${message.data?.id || message.type}-${toolCall.name}-${index}`}
                     defaultOpen={false}
                   >
@@ -89,7 +88,6 @@ export const MessageMetadata = ({
               if (isServerToolEvent(toolCall)) {
                 return (
                   <Tool
-                    // eslint-disable-next-line react/no-array-index-key
                     key={`tool-${message.data?.id || message.type}-${toolCall.toolCallId}-${index}`}
                     defaultOpen={false}
                   >
@@ -127,7 +125,6 @@ export const MessageMetadata = ({
             </div>
             {metadata.thinkingSteps.map((step: string, index: number) => (
               <Reasoning
-                // eslint-disable-next-line react/no-array-index-key
                 key={`thinking-${message.data?.id || message.type}-${step.slice(0, 20)}-${index}`}
                 defaultOpen={false}
               >

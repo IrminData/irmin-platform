@@ -169,7 +169,7 @@ export default tseslint.config(
       'react/prop-types': 'off',
       'react/react-in-jsx-scope': 'off',
       'react/jsx-uses-react': 'off',
-      'react/no-array-index-key': 'warn',
+      'react/no-array-index-key': 'off',
       'react/display-name': 'warn',
       'react/self-closing-comp': 'warn',
       'react/jsx-no-target-blank': 'warn',

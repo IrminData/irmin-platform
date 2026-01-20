@@ -30,31 +30,23 @@ const ConnectionSchemaSection = ({
   );
 
   if (connectionSchemaQuery.isLoading) {
-    return (
-      <div className='relative container mx-auto max-w-7xl px-4'>
-        <LoadingSkeleton className='h-80 w-full' />
-      </div>
-    );
+    return <LoadingSkeleton className='h-80 w-full' />;
   }
 
   if (!connectionSchemaQuery.data?.data) {
     return (
-      <div className='relative container mx-auto max-w-7xl px-4'>
-        <div className='flex h-full items-center justify-center py-4'>
-          <p className='text-2xl'>{dict.repository.schema.noSchema}</p>
-        </div>
+      <div className='flex h-full items-center justify-center py-4'>
+        <p className='text-2xl'>{dict.repository.schema.noSchema}</p>
       </div>
     );
   }
   return (
-    <div className='relative container mx-auto max-w-7xl px-4'>
-      <div className='min-h-96 w-full overflow-y-scroll rounded bg-background'>
-        <SchemaViewer
-          schema={connectionSchemaQuery.data.data}
-          isExpanded={true}
-          focusedPath={focusedPath}
-        />
-      </div>
+    <div className='min-h-96 w-full overflow-y-scroll rounded bg-background'>
+      <SchemaViewer
+        schema={connectionSchemaQuery.data.data}
+        isExpanded={true}
+        focusedPath={focusedPath}
+      />
     </div>
   );
 };

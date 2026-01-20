@@ -7,6 +7,10 @@ import type {
 import type { ConnectorConfigurationValidationResult } from '@/types/core/Connector';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
+import type {
+  SchemaDiff,
+  SchemaValidationResult,
+} from '@/types/core/SchemaValidation';
 
 /**
  * Interface for creating a new connection
@@ -69,6 +73,8 @@ class ConnectionService {
     this.deleteConnection = this.deleteConnection.bind(this);
     this.fetchConnectionSchema = this.fetchConnectionSchema.bind(this);
     this.testConnection = this.testConnection.bind(this);
+    this.validateSchema = this.validateSchema.bind(this);
+    this.diffSchema = this.diffSchema.bind(this);
   }
 
   /**
@@ -398,6 +404,101 @@ class ConnectionService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Test connection error');
+      throw error;
+    }
+  }
+
+  /**
+   * Validate data against a connection's schema.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.connectionID - The connection's identifier.
+   * @param props.operationMethod - The operation method (e.g., 'pull', 'push').
+   * @param props.files - The files to validate (matched by filename to schema children).
+   * @param props.path - The path within the connection to validate against.
+   * @returns IrminAPIResponse containing the validation result.
+   */
+  async validateSchema({
+    workspace,
+    connectionID,
+    operationMethod,
+    files,
+    path,
+  }: {
+    workspace: string;
+    connectionID: string;
+    operationMethod: string;
+    files: File[];
+    path?: string;
+  }): Promise<IrminAPIResponse<SchemaValidationResult>> {
+    try {
+      const urlParams = new URLSearchParams();
+      urlParams.append('operation_method', operationMethod);
+      if (path) urlParams.append('path', path);
+
+      const formData = new FormData();
+      for (const file of files) {
+        formData.append('files', file);
+      }
+
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/connections/${connectionID}/schema/validate?${urlParams.toString()}`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )) as IrminAPIResponse<SchemaValidationResult>;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Validate schema error');
+      throw error;
+    }
+  }
+
+  /**
+   * Compare data schema against a connection's expected schema.
+   * Note: Diff currently only supports a single file.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.connectionID - The connection's identifier.
+   * @param props.operationMethod - The operation method (e.g., 'pull', 'push').
+   * @param props.file - The file to compare schema for.
+   * @param props.path - The path within the connection to compare against.
+   * @returns IrminAPIResponse containing the schema diff.
+   */
+  async diffSchema({
+    workspace,
+    connectionID,
+    operationMethod,
+    file,
+    path,
+  }: {
+    workspace: string;
+    connectionID: string;
+    operationMethod: string;
+    file: File;
+    path?: string;
+  }): Promise<IrminAPIResponse<SchemaDiff>> {
+    try {
+      const urlParams = new URLSearchParams();
+      urlParams.append('operation_method', operationMethod);
+      if (path) urlParams.append('path', path);
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/connections/${connectionID}/schema/diff?${urlParams.toString()}`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )) as IrminAPIResponse<SchemaDiff>;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Diff schema error');
       throw error;
     }
   }

@@ -50,11 +50,7 @@ export const StreamingMetadata = ({
           {streamingParts.map((part, index) => {
             if (part.type === 'tool-input-available') {
               return (
-                <Tool
-                  // eslint-disable-next-line react/no-array-index-key
-                  key={`streaming-tool-input-${index}`}
-                  defaultOpen={false}
-                >
+                <Tool key={`streaming-tool-input-${index}`} defaultOpen={false}>
                   <ToolHeader
                     type={`tool-${part.toolName || 'unknown'}`}
                     state='input-available'
@@ -68,7 +64,6 @@ export const StreamingMetadata = ({
             if (part.type === 'tool-output-available') {
               return (
                 <Tool
-                  // eslint-disable-next-line react/no-array-index-key
                   key={`streaming-tool-output-${index}`}
                   defaultOpen={false}
                 >
@@ -99,7 +94,6 @@ export const StreamingMetadata = ({
             if (part.type === 'reasoning-end') {
               return (
                 <Reasoning
-                  // eslint-disable-next-line react/no-array-index-key
                   key={`streaming-reasoning-${index}`}
                   defaultOpen={false}
                 >
@@ -117,7 +111,6 @@ export const StreamingMetadata = ({
         if (part.type === 'system') {
           return (
             <div
-              // eslint-disable-next-line react/no-array-index-key
               key={`streaming-system-${index}`}
               className='mt-4 rounded-md bg-muted p-3 text-sm'
             >
@@ -131,7 +124,6 @@ export const StreamingMetadata = ({
         if (part.type === 'stream-complete') {
           return (
             <div
-              // eslint-disable-next-line react/no-array-index-key
               key={`streaming-complete-${index}`}
               className='mt-2 flex items-center gap-2 text-sm text-green-600'
             >
@@ -150,7 +142,6 @@ export const StreamingMetadata = ({
         if (part.type === 'stream-error' || part.type === 'error') {
           return (
             <div
-              // eslint-disable-next-line react/no-array-index-key
               key={`streaming-error-${index}`}
               className={`
                 mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm

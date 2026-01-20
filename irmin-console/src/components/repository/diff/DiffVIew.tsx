@@ -17,6 +17,7 @@ import type { Diff } from '@/types/core/Diff';
 import CommitList from '../commits/CommitList';
 import ContentDiff from './ContentDiff';
 import NoDiffWarning from './NoDiffWarning';
+import SchemaDiffSection from './SchemaDiffSection';
 
 type OpenDiffItem = {
   path: string;
@@ -254,6 +255,13 @@ const DiffView = ({
           );
         })}
       </div>
+
+      {/* Schema Diffs Section */}
+      {diff.schema_diffs && diff.schema_diffs.length > 0 && (
+        <div className='mt-4'>
+          <SchemaDiffSection schemaDiffs={diff.schema_diffs} />
+        </div>
+      )}
 
       {/* Diff Commites Section */}
       {diff.commits && diff.commits.length > 0 && !hideCommits && (

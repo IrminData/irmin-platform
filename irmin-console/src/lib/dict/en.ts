@@ -478,6 +478,11 @@ const en = {
       sourceWinsStrategy: 'Source wins',
       mergeExplanation:
         'In case of a merge conflict, this option will force the merge process to automatically favour changes from the base ("Destination wins") or from the comparison ("Source wins"). In case no selection is made, the merge process will fail in case of a conflict.',
+      schemaChanges: 'Schema Changes',
+      breakingChanges: 'Breaking Changes',
+      nonBreakingChanges: 'Non-Breaking Changes',
+      file: 'file',
+      files: 'files',
     },
 
     objects: {
@@ -645,6 +650,29 @@ const en = {
       updateConfiguration: 'Update configuration',
       updateSuccess: 'Connection updated successfully',
       updateFailed: 'Failed to update connection. Please review the errors.',
+    },
+
+    schemaValidation: {
+      title: 'Schema Validation',
+      viewTab: 'View Schema',
+      validateTab: 'Validate',
+      mode: 'Mode',
+      validateMode: 'Validate Data',
+      diffMode: 'Compare Schemas',
+      operationMethod: 'Operation Method',
+      uploadFile: 'Upload JSON File',
+      selectFile: 'Select a file...',
+      validateButton: 'Validate',
+      compareButton: 'Compare',
+      validationPassed: 'Validation Passed',
+      validationFailed: 'Validation Failed',
+      errors: 'error(s)',
+      errorsTitle: 'Errors',
+      warningsTitle: 'Warnings',
+      schemasCompatible: 'Schemas Compatible',
+      schemasIncompatible: 'Breaking Changes Detected',
+      breakingChanges: 'Breaking Changes',
+      nonBreakingChanges: 'Non-Breaking Changes',
     },
   },
 

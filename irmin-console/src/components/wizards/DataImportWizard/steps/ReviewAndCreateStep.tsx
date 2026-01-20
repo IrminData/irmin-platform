@@ -357,7 +357,6 @@ export default function ReviewAndCreateStep({
             <div className='space-y-2'>
               {wizardData.workflowData.field_mappings.map((mapping, index) => (
                 <div
-                  // eslint-disable-next-line react/no-array-index-key
                   key={`${mapping.source_path}-${mapping.destination_path}-${index}`}
                   className={`
                     flex items-center justify-between rounded-lg border
