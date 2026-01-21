@@ -110,7 +110,17 @@ func (cs *Controllers) OperationInit(c fiber.Ctx) error
     error" @Router /pinecone/operation/init [post]
 
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
-    OperationPatch is not supported by Pinecone connector.
+    OperationPatch godoc @Summary Apply patch operations to Pinecone vectors
+    @Description Apply JSON Patch operations to vectors in the Pinecone index.
+    Supports add (upsert), remove (delete), and replace (upsert) operations.
+    @Tags pinecone @Security OperationTokenAuth @Accept multipart/form-data
+    @Produce json @Param operation_token formData string true "Operation token
+    received from operation/init" @Param patches formData file true "JSON file
+    containing array of patch operations" @Success 200 {object} fiber.Map
+    "Patch operations applied successfully" @Failure 400 {object} fiber.Map
+    "Bad request - invalid patch format" @Failure 401 {object} fiber.Map
+    "Unauthorized - invalid or missing authentication" @Failure 500 {object}
+    fiber.Map "Internal server error" @Router /pinecone/operation/patch [post]
 
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
     OperationPull godoc @Summary Pull data from Pinecone @Description Pull

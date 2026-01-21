@@ -45,13 +45,13 @@ func capabilitiesToOperationTypes(capabilities []irminmodels.ConnectorCapability
 			types = append(types, "pull")
 		case irminmodels.ConnectorCapabilityPush:
 			types = append(types, "push")
-		case irminmodels.ConnectorCapabilityPushPatch:
+		case irminmodels.ConnectorCapabilityApplyPatch:
 			// Patch operations typically use the same schema as push
 			if !contains(types, "push") {
 				types = append(types, "push")
 			}
-		case irminmodels.ConnectorCapabilityEventWebhook:
-			// Event webhook doesn't have a schema endpoint
+		case irminmodels.ConnectorCapabilityPatchEvent:
+			// Patch event doesn't have a schema endpoint
 			continue
 		}
 	}

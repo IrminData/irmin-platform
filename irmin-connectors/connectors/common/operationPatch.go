@@ -29,6 +29,8 @@ type PatchOperationProvider interface {
 }
 
 // HandleOperationPatch provides a common HTTP handler for patch operation endpoints.
+//
+//nolint:gocognit // Patch operation handling requires multiple validation and processing steps
 func HandleOperationPatch(
 	c fiber.Ctx,
 	provider PatchOperationProvider,
@@ -184,7 +186,29 @@ func HandleOperationPatch(
 			fromDB, fromTable, fromRow, fromColumn = utils.ExtractPathComponents(*op.From)
 		}
 
+		// Log if this is a binary content patch
+		isBinary := utils.IsBinaryContentType(op.ContentType)
+		if isBinary {
+			contentType := ""
+			if op.ContentType != nil {
+				contentType = *op.ContentType
+			}
+			LogOperationEvent(
+				dbInstance,
+				logger,
+				operation.ID,
+				db.LogEventTypeInfo,
+				"Processing binary patch operation",
+				map[string]any{
+					"operation":    op.Op,
+					"path":         op.Path,
+					"content_type": contentType,
+				},
+			)
+		}
+
 		// Execute the operation using the provider - now with additional source location info
+		// The provider is responsible for decoding binary content using utils.DecodePatchValue
 		if err = provider.ExecutePatchOperation(c, client, op, tableName, rowIdentifier, columnName, fromDB, fromTable, fromRow, fromColumn); err != nil {
 			LogOperationEvent(
 				dbInstance,
@@ -196,6 +220,7 @@ func HandleOperationPatch(
 					"error":     err.Error(),
 					"operation": op.Op,
 					"path":      op.Path,
+					"is_binary": isBinary,
 				},
 			)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

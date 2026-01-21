@@ -38,9 +38,9 @@ func CapabilitiesToOperationTypes(capabilities []irminmodels.ConnectorCapability
 			operationTypes = append(operationTypes, "pull")
 		case irminmodels.ConnectorCapabilityPush:
 			operationTypes = append(operationTypes, "push")
-		case irminmodels.ConnectorCapabilityPushPatch:
+		case irminmodels.ConnectorCapabilityApplyPatch:
 			operationTypes = append(operationTypes, "patch")
-		case irminmodels.ConnectorCapabilityEventWebhook:
+		case irminmodels.ConnectorCapabilityPatchEvent:
 			operationTypes = append(operationTypes, "subscribe")
 		}
 	}

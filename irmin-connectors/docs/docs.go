@@ -1076,7 +1076,7 @@ const docTemplate = `{
                         "OperationTokenAuth": []
                     }
                 ],
-                "description": "HTTP connector does not support patch operations",
+                "description": "Apply JSON Patch operations by making HTTP requests to the configured endpoint. Each patch operation becomes an HTTP request.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -1086,7 +1086,7 @@ const docTemplate = `{
                 "tags": [
                     "http"
                 ],
-                "summary": "HTTP connector does not support patch operations",
+                "summary": "Apply patch operations via HTTP requests",
                 "parameters": [
                     {
                         "type": "string",
@@ -1094,17 +1094,36 @@ const docTemplate = `{
                         "name": "operation_token",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "JSON file containing array of patch operations",
+                        "name": "patches",
+                        "in": "formData",
+                        "required": true
                     }
                 ],
                 "responses": {
+                    "200": {
+                        "description": "Patch operations applied successfully",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid patch format",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized - invalid or missing authentication",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
-                    "501": {
-                        "description": "Not implemented - HTTP connector does not support patch operations",
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -2568,6 +2587,68 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad request - invalid operation data",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/pinecone/operation/patch": {
+            "post": {
+                "security": [
+                    {
+                        "OperationTokenAuth": []
+                    }
+                ],
+                "description": "Apply JSON Patch operations to vectors in the Pinecone index. Supports add (upsert), remove (delete), and replace (upsert) operations.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pinecone"
+                ],
+                "summary": "Apply patch operations to Pinecone vectors",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Operation token received from operation/init",
+                        "name": "operation_token",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "JSON file containing array of patch operations",
+                        "name": "patches",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Patch operations applied successfully",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid patch format",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -4086,7 +4167,7 @@ const docTemplate = `{
                         "OperationTokenAuth": []
                     }
                 ],
-                "description": "SFTP connector does not support patch operations as SFTP files are replaced entirely rather than patched with JSON updates",
+                "description": "Apply JSON Patch operations to files on the SFTP server. Supports add (upload), remove (delete), replace (overwrite), move, and copy operations.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -4096,7 +4177,7 @@ const docTemplate = `{
                 "tags": [
                     "sftp"
                 ],
-                "summary": "Patch operation (not supported)",
+                "summary": "Apply patch operations to SFTP files",
                 "parameters": [
                     {
                         "type": "string",
@@ -4107,21 +4188,33 @@ const docTemplate = `{
                     },
                     {
                         "type": "file",
-                        "description": "Patch file (not supported for SFTP)",
-                        "name": "patch",
+                        "description": "JSON file containing array of patch operations",
+                        "name": "patches",
                         "in": "formData",
                         "required": true
                     }
                 ],
                 "responses": {
+                    "200": {
+                        "description": "Patch operations applied successfully",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid patch format",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized - invalid or missing authentication",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
-                    "501": {
-                        "description": "Not implemented - SFTP does not support patch operations",
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -4800,14 +4893,14 @@ const docTemplate = `{
             "enum": [
                 "pull",
                 "push",
-                "push_patch",
-                "event_webhook"
+                "apply_patch",
+                "patch_event"
             ],
             "x-enum-varnames": [
                 "ConnectorCapabilityPull",
                 "ConnectorCapabilityPush",
-                "ConnectorCapabilityPushPatch",
-                "ConnectorCapabilityEventWebhook"
+                "ConnectorCapabilityApplyPatch",
+                "ConnectorCapabilityPatchEvent"
             ]
         },
         "irminmodels.ConnectorCategory": {
@@ -5411,8 +5504,8 @@ const docTemplate = `{
                         "enum": [
                             "pull",
                             "push",
-                            "push_patch",
-                            "event_webhook"
+                            "apply_patch",
+                            "patch_event"
                         ],
                         "$ref": "#/definitions/irminmodels.ConnectorCapability"
                     },

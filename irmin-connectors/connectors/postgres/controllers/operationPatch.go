@@ -71,15 +71,25 @@ func executePatchOperation(
 		}
 	}()
 
+	// Decode binary value if ContentType indicates binary data
+	value := op.Value
+	if op.ContentType != nil && value != nil {
+		decodedValue, _, decodeErr := utils.DecodeBinaryValue(op.ContentType, *value)
+		if decodeErr != nil {
+			return fmt.Errorf("failed to decode binary value: %w", decodeErr)
+		}
+		value = &decodedValue
+	}
+
 	// Handle the operation based on its type
 	var err error
 	switch op.Op {
 	case "add":
-		err = handleAddOperation(c, tx, tableName, op.Value)
+		err = handleAddOperation(c, tx, tableName, value)
 	case "remove":
 		err = handleRemoveOperation(c, tx, tableName, rowIdentifier)
 	case "replace":
-		err = handleReplaceOperation(c, tx, tableName, rowIdentifier, columnName, op.Value)
+		err = handleReplaceOperation(c, tx, tableName, rowIdentifier, columnName, value)
 	case "move":
 		err = handleMoveOperation(c, tx, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn)
 	case "copy":

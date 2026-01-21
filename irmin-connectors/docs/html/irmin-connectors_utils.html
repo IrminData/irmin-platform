@@ -39,10 +39,25 @@ func ConvertStringToType(stringValue string, referenceValue any) (any, error)
     of the reference value. Returns an error if the conversion fails, ensuring
     early failure detection.
 
+func DecodeBinaryValue(contentType *string, value any) (any, bool, error)
+    DecodeBinaryValue decodes a base64-encoded binary value from a patch
+    operation. It first checks if the content type indicates binary data.
+    If not binary, returns the original value unchanged. Returns:
+      - decoded: the decoded value ([]byte for binary, original value otherwise)
+      - isBinary: true if this was binary content that was decoded
+      - err: any error that occurred during decoding
+
 func DecodeCompositeKey(identifier string, expectedCount int) ([]string, error)
     DecodeCompositeKey decodes a composite key identifier back into individual
     values. This is the counterpart to EncodeCompositeKey and handles
     URL-encoded values.
+
+func DecodePatchValue(op irminmodels.PatchOperation) ([]byte, bool, error)
+    DecodePatchValue decodes the value of a patch operation. If the patch has a
+    binary content type, it decodes the base64-encoded value. Returns:
+      - decoded: the decoded bytes (or original value bytes for non-binary)
+      - isBinary: true if this was binary content
+      - err: any error that occurred during decoding
 
 func EncodeCompositeKey(values []string) string
     EncodeCompositeKey encodes multiple primary key values into a single string
@@ -91,6 +106,10 @@ func HashJSONFields(details, settings []byte) (string, error)
     HashJSONFields generates a deterministic hash from JSON fields (Details and
     Settings). Both fields are unmarshaled, keys are sorted, and then hashed
     together.
+
+func IsBinaryContentType(contentType *string) bool
+    IsBinaryContentType checks if the given content type indicates binary data.
+    Returns true if the content type should be treated as binary.
 
 func JoinURL(baseURL, path string) string
     JoinURL properly joins a base URL with a path, handling absolute URLs and

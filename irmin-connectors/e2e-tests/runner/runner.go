@@ -349,7 +349,7 @@ func (r *TestRunner) runPatchTest(
 	cfg *ConnectorConfig,
 	info *connectorsclient.ConnectorInfo,
 ) {
-	if tests.HasCapability(info.Capabilities, "push_patch") {
+	if tests.HasCapability(info.Capabilities, "apply_patch") {
 		r.RunTest("Patch", name, func() error {
 			return tests.TestPatch(ctx, opClient, cfg.TestData.PatchFile)
 		})
@@ -366,7 +366,7 @@ func (r *TestRunner) runSubscribeTest(
 	cfg *ConnectorConfig,
 	info *connectorsclient.ConnectorInfo,
 ) {
-	if tests.HasCapability(info.Capabilities, "event_webhook") {
+	if tests.HasCapability(info.Capabilities, "patch_event") {
 		r.RunTest("Subscribe", name, func() error {
 			return tests.TestSubscribe(ctx, opClient, cfg.TestData.WebhookURL, cfg.TestData.WebhookToken)
 		})

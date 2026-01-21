@@ -160,7 +160,7 @@ Routes are created automatically based on connector capabilities:
 **Capability-based routes:**
 - `POST /operation/pull` (ConnectorCapabilityPull)
 - `POST /operation/push` (ConnectorCapabilityPush)  
-- `POST /operation/patch` (ConnectorCapabilityPushPatch)
-- `POST /operation/subscribe` (ConnectorCapabilityEventWebhook)
+- `POST /operation/patch` (ConnectorCapabilityApplyPatch)
+- `POST /operation/subscribe` (ConnectorCapabilityPatchEvent)
 
 See existing connectors (MySQL, PostgreSQL, SFTP) for implementation examples.

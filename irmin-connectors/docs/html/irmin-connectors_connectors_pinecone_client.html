@@ -54,6 +54,9 @@ func InitPineconeClient(_ any, logger *slog.Logger, operation *db.Operation) (*P
 func (c *PineconeClient) Close() error
     Close releases resources held by the client.
 
+func (c *PineconeClient) Delete(ctx context.Context, ids []string) error
+    Delete removes vectors from the Pinecone index by their IDs.
+
 func (c *PineconeClient) FetchAll(ctx context.Context) ([]EmbeddingRecord, error)
     FetchAll fetches all vectors from the index/namespace.
 
@@ -62,6 +65,10 @@ func (c *PineconeClient) Search(ctx context.Context, queryVector []float32, topK
 
 func (c *PineconeClient) Upsert(ctx context.Context, records []EmbeddingRecord) error
     Upsert inserts or updates vectors in the Pinecone index.
+
+func (c *PineconeClient) UpsertSingle(ctx context.Context, record EmbeddingRecord) error
+    UpsertSingle inserts or updates a single vector in the Pinecone index. This
+    is a convenience method for patch operations that operate on single records.
 
 type SearchResponse struct {
 	Query   string         `json:"query"`

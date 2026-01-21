@@ -99,10 +99,10 @@ func setupCapabilityRoutes(
 		case irminmodels.ConnectorCapabilityPush:
 			routes.Post("/operation/push", controller.ValidateOperationTokenMiddleware, controller.OperationPush)
 
-		case irminmodels.ConnectorCapabilityPushPatch:
+		case irminmodels.ConnectorCapabilityApplyPatch:
 			routes.Post("/operation/patch", controller.ValidateOperationTokenMiddleware, controller.OperationPatch)
 
-		case irminmodels.ConnectorCapabilityEventWebhook:
+		case irminmodels.ConnectorCapabilityPatchEvent:
 			routes.Post(
 				"/operation/subscribe",
 				controller.ValidateOperationTokenMiddleware,

@@ -645,10 +645,3 @@ func handleUploadedFile(c fiber.Ctx) (map[string][]byte, error) {
 
 	return files, nil
 }
-
-// OperationPatch is not supported by Pinecone connector.
-func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"error": "Patch operations are not supported by the Pinecone connector. Use push to upsert vectors.",
-	})
-}

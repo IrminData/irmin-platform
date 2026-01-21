@@ -186,14 +186,14 @@ definitions:
     enum:
     - pull
     - push
-    - push_patch
-    - event_webhook
+    - apply_patch
+    - patch_event
     type: string
     x-enum-varnames:
     - ConnectorCapabilityPull
     - ConnectorCapabilityPush
-    - ConnectorCapabilityPushPatch
-    - ConnectorCapabilityEventWebhook
+    - ConnectorCapabilityApplyPatch
+    - ConnectorCapabilityPatchEvent
   irminmodels.ConnectorCategory:
     enum:
     - database
@@ -651,8 +651,8 @@ definitions:
           enum:
           - pull
           - push
-          - push_patch
-          - event_webhook
+          - apply_patch
+          - patch_event
         type: array
       categories:
         example:
@@ -1412,27 +1412,41 @@ paths:
     post:
       consumes:
       - multipart/form-data
-      description: HTTP connector does not support patch operations
+      description: Apply JSON Patch operations by making HTTP requests to the configured
+        endpoint. Each patch operation becomes an HTTP request.
       parameters:
       - description: Operation token received from operation/init
         in: formData
         name: operation_token
         required: true
         type: string
+      - description: JSON file containing array of patch operations
+        in: formData
+        name: patches
+        required: true
+        type: file
       produces:
       - application/json
       responses:
+        "200":
+          description: Patch operations applied successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid patch format
+          schema:
+            $ref: '#/definitions/fiber.Map'
         "401":
           description: Unauthorized - invalid or missing authentication
           schema:
             $ref: '#/definitions/fiber.Map'
-        "501":
-          description: Not implemented - HTTP connector does not support patch operations
+        "500":
+          description: Internal server error
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
       - OperationTokenAuth: []
-      summary: HTTP connector does not support patch operations
+      summary: Apply patch operations via HTTP requests
       tags:
       - http
   /http/operation/pull:
@@ -2420,6 +2434,47 @@ paths:
       security:
       - SystemTokenAuth: []
       summary: Initialize Pinecone operation
+      tags:
+      - pinecone
+  /pinecone/operation/patch:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Apply JSON Patch operations to vectors in the Pinecone index. Supports
+        add (upsert), remove (delete), and replace (upsert) operations.
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: JSON file containing array of patch operations
+        in: formData
+        name: patches
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Patch operations applied successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid patch format
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Apply patch operations to Pinecone vectors
       tags:
       - pinecone
   /pinecone/operation/pull:
@@ -3421,33 +3476,41 @@ paths:
     post:
       consumes:
       - multipart/form-data
-      description: SFTP connector does not support patch operations as SFTP files
-        are replaced entirely rather than patched with JSON updates
+      description: Apply JSON Patch operations to files on the SFTP server. Supports
+        add (upload), remove (delete), replace (overwrite), move, and copy operations.
       parameters:
       - description: Operation token received from operation/init
         in: formData
         name: operation_token
         required: true
         type: string
-      - description: Patch file (not supported for SFTP)
+      - description: JSON file containing array of patch operations
         in: formData
-        name: patch
+        name: patches
         required: true
         type: file
       produces:
       - application/json
       responses:
+        "200":
+          description: Patch operations applied successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid patch format
+          schema:
+            $ref: '#/definitions/fiber.Map'
         "401":
           description: Unauthorized - invalid or missing authentication
           schema:
             $ref: '#/definitions/fiber.Map'
-        "501":
-          description: Not implemented - SFTP does not support patch operations
+        "500":
+          description: Internal server error
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
       - OperationTokenAuth: []
-      summary: Patch operation (not supported)
+      summary: Apply patch operations to SFTP files
       tags:
       - sftp
   /sftp/operation/pull:

@@ -65,7 +65,7 @@ func getEventListeningDescription(config DetailsPageConfig) string {
 
 	// Generate default description based on capabilities
 	capabilities := config.ConnectorInfo.Capabilities
-	hasWebhook := containsCapability(capabilities, irminmodels.ConnectorCapabilityEventWebhook)
+	hasWebhook := containsCapability(capabilities, irminmodels.ConnectorCapabilityPatchEvent)
 
 	if hasWebhook {
 		return fmt.Sprintf(

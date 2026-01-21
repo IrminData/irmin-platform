@@ -436,6 +436,31 @@ func (c *PineconeClient) extractMetadataStrings(metadata *pinecone.Metadata) map
 	return result
 }
 
+// Delete removes vectors from the Pinecone index by their IDs.
+func (c *PineconeClient) Delete(ctx context.Context, ids []string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	err := c.index.DeleteVectorsById(ctx, ids)
+	if err != nil {
+		return fmt.Errorf("failed to delete vectors: %w", err)
+	}
+
+	c.logger.InfoContext(ctx, "deleted vectors from Pinecone",
+		"count", len(ids),
+		"namespace", c.namespace,
+	)
+
+	return nil
+}
+
+// UpsertSingle inserts or updates a single vector in the Pinecone index.
+// This is a convenience method for patch operations that operate on single records.
+func (c *PineconeClient) UpsertSingle(ctx context.Context, record EmbeddingRecord) error {
+	return c.Upsert(ctx, []EmbeddingRecord{record})
+}
+
 // ValidateAPIKey tests the API key by listing available indexes.
 // This validates that the API key is valid without requiring a specific index host.
 func ValidateAPIKey(apiKey string) error {

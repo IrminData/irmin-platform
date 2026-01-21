@@ -647,7 +647,7 @@ type ConnectorDetails struct {
     Author           string                            `json:"author"            example:"Irmin Team"`
     APIBaseURL       string                            `json:"api_base_url"      example:"https://connectors.irmin.co/mysql"`
     LogoURL          string                            `json:"logo_url"          example:"https://cdn.irmin.co/connectors/mysql.png"`
-    Capabilities     []irminmodels.ConnectorCapability `json:"capabilities"      example:"pull,push"                                                                                                                                  enums:"pull,push,push_patch,event_webhook"`
+    Capabilities     []irminmodels.ConnectorCapability `json:"capabilities"      example:"pull,push"                                                                                                                                  enums:"pull,push,apply_patch,patch_event"`
     Locales          []string                          `json:"locales"           example:"en,fi"`
     PrimaryCategory  irminmodels.ConnectorCategory     `json:"primary_category"  example:"database"`
     Categories       []irminmodels.ConnectorCategory   `json:"categories"        example:"database,crm,erp,warehouse,marketing,analytics,storage,messaging,payment,social,calendar,project_management,ecommerce,iot,monitoring,other"`
@@ -1002,7 +1002,9 @@ import "irmin-connectors/utils"
 - [Constants](<#constants>)
 - [func ConstructPath\(databaseName, tableName, rowIdentifier, columnName string\) string](<#ConstructPath>)
 - [func ConvertStringToType\(stringValue string, referenceValue any\) \(any, error\)](<#ConvertStringToType>)
+- [func DecodeBinaryValue\(contentType \*string, value any\) \(any, bool, error\)](<#DecodeBinaryValue>)
 - [func DecodeCompositeKey\(identifier string, expectedCount int\) \(\[\]string, error\)](<#DecodeCompositeKey>)
+- [func DecodePatchValue\(op irminmodels.PatchOperation\) \(\[\]byte, bool, error\)](<#DecodePatchValue>)
 - [func EncodeCompositeKey\(values \[\]string\) string](<#EncodeCompositeKey>)
 - [func ExtractPathComponents\(pathStr string\) \(string, string, string, string\)](<#ExtractPathComponents>)
 - [func FindProjectRoot\(\) \(string, error\)](<#FindProjectRoot>)
@@ -1011,6 +1013,7 @@ import "irmin-connectors/utils"
 - [func GetStringFromMap\(m map\[string\]any, key string, defaultValue string\) string](<#GetStringFromMap>)
 - [func HashConfigMap\(config map\[string\]string\) \(string, error\)](<#HashConfigMap>)
 - [func HashJSONFields\(details, settings \[\]byte\) \(string, error\)](<#HashJSONFields>)
+- [func IsBinaryContentType\(contentType \*string\) bool](<#IsBinaryContentType>)
 - [func JoinURL\(baseURL, path string\) string](<#JoinURL>)
 - [func ParseFormFields\(c fiber.Ctx, required, optional \[\]string\) \(map\[string\]string, error\)](<#ParseFormFields>)
 - [func ParseHeaders\(r \*http.Request, required, optional \[\]string\) \(map\[string\]string, error\)](<#ParseHeaders>)
@@ -1063,6 +1066,19 @@ func ConvertStringToType(stringValue string, referenceValue any) (any, error)
 
 ConvertStringToType attempts to convert a string value to match the type of the reference value. Returns an error if the conversion fails, ensuring early failure detection.
 
+<a name="DecodeBinaryValue"></a>
+## func DecodeBinaryValue
+
+```go
+func DecodeBinaryValue(contentType *string, value any) (any, bool, error)
+```
+
+DecodeBinaryValue decodes a base64\-encoded binary value from a patch operation. It first checks if the content type indicates binary data. If not binary, returns the original value unchanged. Returns:
+
+- decoded: the decoded value \(\[\]byte for binary, original value otherwise\)
+- isBinary: true if this was binary content that was decoded
+- err: any error that occurred during decoding
+
 <a name="DecodeCompositeKey"></a>
 ## func DecodeCompositeKey
 
@@ -1071,6 +1087,19 @@ func DecodeCompositeKey(identifier string, expectedCount int) ([]string, error)
 ```
 
 DecodeCompositeKey decodes a composite key identifier back into individual values. This is the counterpart to EncodeCompositeKey and handles URL\-encoded values.
+
+<a name="DecodePatchValue"></a>
+## func DecodePatchValue
+
+```go
+func DecodePatchValue(op irminmodels.PatchOperation) ([]byte, bool, error)
+```
+
+DecodePatchValue decodes the value of a patch operation. If the patch has a binary content type, it decodes the base64\-encoded value. Returns:
+
+- decoded: the decoded bytes \(or original value bytes for non\-binary\)
+- isBinary: true if this was binary content
+- err: any error that occurred during decoding
 
 <a name="EncodeCompositeKey"></a>
 ## func EncodeCompositeKey
@@ -1162,6 +1191,15 @@ func HashJSONFields(details, settings []byte) (string, error)
 ```
 
 HashJSONFields generates a deterministic hash from JSON fields \(Details and Settings\). Both fields are unmarshaled, keys are sorted, and then hashed together.
+
+<a name="IsBinaryContentType"></a>
+## func IsBinaryContentType
+
+```go
+func IsBinaryContentType(contentType *string) bool
+```
+
+IsBinaryContentType checks if the given content type indicates binary data. Returns true if the content type should be treated as binary.
 
 <a name="JoinURL"></a>
 ## func JoinURL
@@ -4379,7 +4417,7 @@ OperationInit godoc @Summary Initialize HTTP operation @Description Initialize a
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
 ```
 
-OperationPatch godoc @Summary HTTP connector does not support patch operations @Description HTTP connector does not support patch operations @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 501 \{object\} fiber.Map "Not implemented \- HTTP connector does not support patch operations" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /http/operation/patch \[post\]
+OperationPatch godoc @Summary Apply patch operations via HTTP requests @Description Apply JSON Patch operations by making HTTP requests to the configured endpoint. Each patch operation becomes an HTTP request. @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param patches formData file true "JSON file containing array of patch operations" @Success 200 \{object\} fiber.Map "Patch operations applied successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid patch format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/patch \[post\]
 
 <a name="Controllers.OperationPull"></a>
 ### func \(\*Controllers\) OperationPull
@@ -5405,9 +5443,11 @@ import "irmin-connectors/connectors/pinecone/client"
 - [type PineconeClient](<#PineconeClient>)
   - [func InitPineconeClient\(\_ any, logger \*slog.Logger, operation \*db.Operation\) \(\*PineconeClient, \*string, error\)](<#InitPineconeClient>)
   - [func \(c \*PineconeClient\) Close\(\) error](<#PineconeClient.Close>)
+  - [func \(c \*PineconeClient\) Delete\(ctx context.Context, ids \[\]string\) error](<#PineconeClient.Delete>)
   - [func \(c \*PineconeClient\) FetchAll\(ctx context.Context\) \(\[\]EmbeddingRecord, error\)](<#PineconeClient.FetchAll>)
   - [func \(c \*PineconeClient\) Search\(ctx context.Context, queryVector \[\]float32, topK int\) \(\*SearchResponse, error\)](<#PineconeClient.Search>)
   - [func \(c \*PineconeClient\) Upsert\(ctx context.Context, records \[\]EmbeddingRecord\) error](<#PineconeClient.Upsert>)
+  - [func \(c \*PineconeClient\) UpsertSingle\(ctx context.Context, record EmbeddingRecord\) error](<#PineconeClient.UpsertSingle>)
 - [type SearchResponse](<#SearchResponse>)
 - [type SearchResult](<#SearchResult>)
 
@@ -5494,6 +5534,15 @@ func (c *PineconeClient) Close() error
 
 Close releases resources held by the client.
 
+<a name="PineconeClient.Delete"></a>
+### func \(\*PineconeClient\) Delete
+
+```go
+func (c *PineconeClient) Delete(ctx context.Context, ids []string) error
+```
+
+Delete removes vectors from the Pinecone index by their IDs.
+
 <a name="PineconeClient.FetchAll"></a>
 ### func \(\*PineconeClient\) FetchAll
 
@@ -5520,6 +5569,15 @@ func (c *PineconeClient) Upsert(ctx context.Context, records []EmbeddingRecord) 
 ```
 
 Upsert inserts or updates vectors in the Pinecone index.
+
+<a name="PineconeClient.UpsertSingle"></a>
+### func \(\*PineconeClient\) UpsertSingle
+
+```go
+func (c *PineconeClient) UpsertSingle(ctx context.Context, record EmbeddingRecord) error
+```
+
+UpsertSingle inserts or updates a single vector in the Pinecone index. This is a convenience method for patch operations that operate on single records.
 
 <a name="SearchResponse"></a>
 ## type SearchResponse
@@ -5796,7 +5854,7 @@ OperationInit godoc @Summary Initialize Pinecone operation @Description Initiali
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
 ```
 
-OperationPatch is not supported by Pinecone connector.
+OperationPatch godoc @Summary Apply patch operations to Pinecone vectors @Description Apply JSON Patch operations to vectors in the Pinecone index. Supports add \(upsert\), remove \(delete\), and replace \(upsert\) operations. @Tags pinecone @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param patches formData file true "JSON file containing array of patch operations" @Success 200 \{object\} fiber.Map "Patch operations applied successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid patch format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/operation/patch \[post\]
 
 <a name="Controllers.OperationPull"></a>
 ### func \(\*Controllers\) OperationPull
@@ -7747,7 +7805,7 @@ OperationInit godoc @Summary Initialize SFTP operation @Description Initialize a
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
 ```
 
-OperationPatch godoc @Summary Patch operation \(not supported\) @Description SFTP connector does not support patch operations as SFTP files are replaced entirely rather than patched with JSON updates @Tags sftp @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param patch formData file true "Patch file \(not supported for SFTP\)" @Success 501 \{object\} fiber.Map "Not implemented \- SFTP does not support patch operations" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /sftp/operation/patch \[post\]
+OperationPatch godoc @Summary Apply patch operations to SFTP files @Description Apply JSON Patch operations to files on the SFTP server. Supports add \(upload\), remove \(delete\), replace \(overwrite\), move, and copy operations. @Tags sftp @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param patches formData file true "JSON file containing array of patch operations" @Success 200 \{object\} fiber.Map "Patch operations applied successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid patch format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/operation/patch \[post\]
 
 <a name="Controllers.OperationPull"></a>
 ### func \(\*Controllers\) OperationPull

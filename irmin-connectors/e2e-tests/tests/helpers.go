@@ -7,10 +7,10 @@ import (
 // HasCapability checks if a connector has a specific capability.
 func HasCapability(capabilities []irminmodels.ConnectorCapability, capability string) bool {
 	capabilityMap := map[string]irminmodels.ConnectorCapability{
-		"pull":          irminmodels.ConnectorCapabilityPull,
-		"push":          irminmodels.ConnectorCapabilityPush,
-		"push_patch":    irminmodels.ConnectorCapabilityPushPatch,
-		"event_webhook": irminmodels.ConnectorCapabilityEventWebhook,
+		"pull":        irminmodels.ConnectorCapabilityPull,
+		"push":        irminmodels.ConnectorCapabilityPush,
+		"apply_patch": irminmodels.ConnectorCapabilityApplyPatch,
+		"patch_event": irminmodels.ConnectorCapabilityPatchEvent,
 	}
 
 	targetCap, exists := capabilityMap[capability]

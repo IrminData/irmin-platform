@@ -187,9 +187,9 @@ func GetConnectorInfo() models.ConnectorDetails {
 		APIBaseURL:       "/sftp",
 		LogoURL:          "/public/sftp.png",
 		Capabilities: []irminmodels.ConnectorCapability{
-			irminmodels.ConnectorCapabilityPull, // Download files from SFTP server
-			irminmodels.ConnectorCapabilityPush, // Upload files to SFTP server
-			// Note: SFTP doesn't support patch operations or webhooks
+			irminmodels.ConnectorCapabilityPull,       // Download files from SFTP server
+			irminmodels.ConnectorCapabilityPush,       // Upload files to SFTP server
+			irminmodels.ConnectorCapabilityApplyPatch, // Apply patch operations to SFTP files
 		},
 		Locales:         []string{"en"},
 		PrimaryCategory: irminmodels.ConnectorCategoryOther,

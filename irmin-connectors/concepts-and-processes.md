@@ -86,15 +86,114 @@ The database maintains tables for:
 - **Credential Isolation**: User credentials are never stored permanently
 - **Audit Logging**: Comprehensive logging of all data operations
 
-## Webhooks and Generic Features
+## Webhooks and Patch Events
 
 ### Webhook Support
 
-Connectors can implement webhook endpoints for:
-- **Real-time Notifications**: Receive immediate updates from external systems
-- **Event Processing**: Handle specific events and trigger appropriate responses
-- **Status Updates**: Provide operation status updates to the Irmin API
-- **Error Reporting**: Report errors and exceptions to central monitoring
+Connectors with the `patch_event` capability can emit change events via webhooks when data changes in the external system. This enables real-time data synchronization workflows.
+
+#### Connection Subscriptions
+
+Subscriptions are managed through the main Irmin API:
+
+- **Create Subscription**: `POST /api/v1/workspaces/{workspace}/connections/{connection}/subscriptions`
+- **List Subscriptions**: `GET /api/v1/workspaces/{workspace}/connections/{connection}/subscriptions`
+- **Get Subscription**: `GET /api/v1/workspaces/{workspace}/connections/{connection}/subscriptions/{subscription}`
+- **Update Subscription**: `PATCH /api/v1/workspaces/{workspace}/connections/{connection}/subscriptions/{subscription}`
+- **Delete Subscription**: `DELETE /api/v1/workspaces/{workspace}/connections/{connection}/subscriptions/{subscription}`
+- **Regenerate Token**: `POST /api/v1/workspaces/{workspace}/connections/{connection}/subscriptions/{subscription}/regenerate-token`
+
+#### Webhook Event Format
+
+Connectors send patch events to the webhook URL with the following structure:
+
+```json
+{
+  "subscription_id": "cs_abc123",
+  "connection_id": "conn_xyz789",
+  "event_type": "update",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "patches": [
+    {
+      "op": "replace",
+      "path": "/users/john-doe/name",
+      "value": "John Smith"
+    }
+  ]
+}
+```
+
+#### Authentication
+
+Webhook requests include the subscription token in the `Authorization` header:
+
+```
+Authorization: Bearer <webhook_token>
+```
+
+### Patch Operations
+
+Connectors with the `apply_patch` capability can receive and apply incremental changes. The patch format follows JSON Patch (RFC 6902):
+
+```json
+[
+  {"op": "add", "path": "/data/new-file.json", "value": {...}},
+  {"op": "replace", "path": "/data/existing.json/field", "value": "new value"},
+  {"op": "remove", "path": "/data/old-file.json"}
+]
+```
+
+#### Binary Data in Patches
+
+For binary data (images, files), patches can include content type and base64 encoding:
+
+```json
+{
+  "op": "add",
+  "path": "/images/profile.png",
+  "value": "iVBORw0KGgoAAAANSUhEUgAA...",
+  "content_type": "image/png",
+  "encoding": "base64"
+}
+```
+
+### Pipeline Patch Stage
+
+Pipelines can include a `patch` stage type to apply patches from trigger events:
+
+```json
+{
+  "type": "patch",
+  "patch_direction": "to_repository",
+  "patch_source_file": "trigger_event.json",
+  "patch_repository": "my-repo",
+  "patch_repository_branch": "main",
+  "patch_repository_path": "/data"
+}
+```
+
+Or to apply patches to an external connection:
+
+```json
+{
+  "type": "patch",
+  "patch_direction": "to_connection",
+  "patch_source_file": "trigger_event.json",
+  "patch_connection_id": "conn_xyz789",
+  "patch_connection_path": "/leads"
+}
+```
+
+### Connector Capabilities
+
+The following capabilities determine what operations a connector supports:
+
+| Capability | Description |
+|------------|-------------|
+| `pull` | Can read/import data from external system |
+| `push` | Can write/export data to external system |
+| `apply_patch` | Can receive and apply incremental patches |
+| `patch_event` | Can emit change events via webhooks |
 
 ### Generic Connector Features
 
