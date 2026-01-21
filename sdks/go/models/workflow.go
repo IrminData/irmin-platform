@@ -85,6 +85,18 @@ const (
 	PatchDirectionToRepository PatchDirection = "to_repository"
 )
 
+// SyncMode represents the synchronization mode for import/export workflows.
+type SyncMode string
+
+const (
+	// SyncModeFull always performs a full data sync.
+	SyncModeFull SyncMode = "full"
+	// SyncModePatch only accepts patch-based events (requires event trigger).
+	SyncModePatch SyncMode = "patch"
+	// SyncModeAuto performs full sync on schedule/manual, patch sync on events (default).
+	SyncModeAuto SyncMode = "auto"
+)
+
 type RepositoryActionType string
 
 const (
@@ -190,6 +202,7 @@ type Workflowable struct {
 	ConnectionID     string         `json:"connection_id,omitempty"     validate:"validsqid=connections,required_if=Type import,required_if=Type export" example:"conn_8x2m9k4n7p5q"`
 	Repository       string         `json:"repository,omitempty"        validate:"required_if=Type import,required_if=Type export"                       example:"customer-analytics"`
 	RepositoryBranch string         `json:"repository_branch,omitempty" validate:"required_if=Type import,required_if=Type export"                       example:"main"`
+	SyncMode         SyncMode       `json:"sync_mode,omitempty"         validate:"omitempty,oneof=full patch auto"                                       example:"auto"`
 
 	// Import workflowable
 
