@@ -40,6 +40,7 @@ const (
 	PipelineStageTypeValidation       PipelineStageType = "validation"
 	PipelineStageTypeTransform        PipelineStageType = "transform"
 	PipelineStageTypeEmbeddings       PipelineStageType = "embeddings"
+	PipelineStageTypePatch            PipelineStageType = "patch"
 )
 
 // TransformOperationType represents the type of transformation to apply.
@@ -76,6 +77,14 @@ const (
 	EmbeddingsOpSearch    EmbeddingsOperationType = "search"
 )
 
+// PatchDirection represents the direction of a patch operation.
+type PatchDirection string
+
+const (
+	PatchDirectionToConnection PatchDirection = "to_connection"
+	PatchDirectionToRepository PatchDirection = "to_repository"
+)
+
 type RepositoryActionType string
 
 const (
@@ -86,11 +95,11 @@ const (
 )
 
 type PipelineStage struct {
-	Description   string            `json:"description"    validate:"required,max=200"                                                                                                                  example:"Process customer data"`
-	Write         bool              `json:"write"                                                                                                                                                       example:"true"`
-	Read          bool              `json:"read"                                                                                                                                                        example:"true"`
-	OrderSequence int               `json:"order_sequence"                                                                                                                                              example:"1"`
-	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform embeddings,validpipelinestage" example:"repository"`
+	Description   string            `json:"description"    validate:"required,max=200"                                                                                                                        example:"Process customer data"`
+	Write         bool              `json:"write"                                                                                                                                                             example:"true"`
+	Read          bool              `json:"read"                                                                                                                                                              example:"true"`
+	OrderSequence int               `json:"order_sequence"                                                                                                                                                    example:"1"`
+	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform embeddings patch,validpipelinestage" example:"repository"`
 
 	// Action stage specific
 	ExecutableType ActionExecutableType `json:"executable_type,omitempty" validate:"omitempty,oneof=script query,required_if=Type action"          example:"script"`
@@ -151,6 +160,13 @@ type PipelineStage struct {
 	EmbeddingsQuery      *string                  `json:"embeddings_query,omitempty"       validate:"omitempty"                                                    example:"What is machine learning?"`
 	EmbeddingsTopK       *int                     `json:"embeddings_top_k,omitempty"       validate:"omitempty,min=1"                                              example:"10"`
 	EmbeddingsFilter     map[string]string        `json:"embeddings_filter,omitempty"      validate:"omitempty"`
+
+	// Patch stage specific
+	PatchDirection        *PatchDirection `json:"patch_direction,omitempty"         validate:"omitempty,oneof=to_connection to_repository,required_if=Type patch" example:"to_connection"`
+	PatchConnectionID     *string         `json:"patch_connection_id,omitempty"     validate:"omitempty,validsqid=connections"                                    example:"conn_8x2m9k4n7p5q"`
+	PatchRepository       *string         `json:"patch_repository,omitempty"        validate:"omitempty"                                                          example:"customer-analytics"`
+	PatchRepositoryBranch *string         `json:"patch_repository_branch,omitempty" validate:"omitempty"                                                          example:"main"`
+	PatchSourceFileName   *string         `json:"patch_source_file_name,omitempty"  validate:"omitempty"                                                          example:"patches.json"`
 }
 
 type ActionInputData struct {

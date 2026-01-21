@@ -855,6 +855,15 @@ func (c *Client) ResendInvite(
 	inviteID string,
 ) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) ResetBranch(
+	ctx context.Context,
+	workspace, repository, branch string,
+	req ResetBranchRequest,
+) (*irminmodels.IrminAPIResponse, error)
+    ResetBranch resets a branch to a specific commit reference. This performs a
+    hard reset, moving the branch pointer to the specified commit. If force is
+    true, uncommitted changes will be discarded.
+
 func (c *Client) RevertChanges(
 	ctx context.Context,
 	workspace, repository string,
@@ -1174,6 +1183,15 @@ type CreateConnectionRequest struct {
     CreateConnectionRequest represents the JSON request body for creating
     connections.
 
+type CreateConnectionSubscriptionRequest struct {
+	Name        string   `json:"name"                   validate:"required,max=255"                             example:"CRM Lead Changes"`
+	Description string   `json:"description,omitempty"  validate:"max=1000"                                     example:"Subscribe to lead changes in the CRM"`
+	FilterPaths []string `json:"filter_paths,omitempty" validate:"dive,max=500"                                 example:"leads,contacts"`
+	EventTypes  []string `json:"event_types,omitempty"  validate:"dive,oneof=insert update delete upsert batch" example:"insert,update"`
+}
+    CreateConnectionSubscriptionRequest represents the JSON request body for
+    creating connection subscriptions.
+
 type CreateCredentialRequest struct {
 	Name   string `json:"name"   validate:"required,max=100" example:"API Token"`
 	Expiry int    `json:"expiry" validate:"required"         example:"3600"` // Seconds until expiry
@@ -1388,6 +1406,13 @@ type RequestOptions struct {
     RequestOptions allows you to specify how you'd like to send data in the
     request.
 
+type ResetBranchRequest struct {
+	CommitRef string `json:"commit_ref"      validate:"required" example:"abc123def456"`
+	Force     bool   `json:"force,omitempty"                     example:"false"`
+}
+    ResetBranchRequest represents the JSON request body for resetting a branch
+    to a specific commit.
+
 type RevertUncommittedChangesRequest struct {
 	Branch   string `json:"branch"              validate:"required" example:"main"`
 	Path     string `json:"path,omitempty"                          example:"path/to/file.txt"`
@@ -1487,6 +1512,16 @@ type UpdateConnectionRequest struct {
 }
     UpdateConnectionRequest represents the JSON request body for updating
     connections.
+
+type UpdateConnectionSubscriptionRequest struct {
+	Name        *string   `json:"name,omitempty"         validate:"omitnil,max=255"                                      example:"CRM Lead Changes"`
+	Description *string   `json:"description,omitempty"  validate:"omitnil,max=1000"                                     example:"Subscribe to lead changes in the CRM"`
+	FilterPaths *[]string `json:"filter_paths,omitempty" validate:"omitnil,dive,max=500"                                 example:"leads,contacts"`
+	EventTypes  *[]string `json:"event_types,omitempty"  validate:"omitnil,dive,oneof=insert update delete upsert batch" example:"insert,update"`
+	IsActive    *bool     `json:"is_active,omitempty"                                                                    example:"true"`
+}
+    UpdateConnectionSubscriptionRequest represents the JSON request body for
+    updating connection subscriptions.
 
 type UpdateCustomToolRequest struct {
 	ID          *string                    `json:"id,omitempty" validate:"omitempty,validsqid=ai_application_custom_tools"`

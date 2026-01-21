@@ -278,6 +278,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) RemoveUser\(ctx context.Context, workspace, userID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RemoveUser>)
   - [func \(c \*Client\) Request\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
   - [func \(c \*Client\) ResendInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ResendInvite>)
+  - [func \(c \*Client\) ResetBranch\(ctx context.Context, workspace, repository, branch string, req ResetBranchRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.ResetBranch>)
   - [func \(c \*Client\) RevertChanges\(ctx context.Context, workspace, repository string, req RevertUncommittedChangesRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RevertChanges>)
   - [func \(c \*Client\) Search\(ctx context.Context, workspace string, params irminmodels.SearchFilters\) \(\*irminmodels.SearchResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.Search>)
   - [func \(c \*Client\) SearchEmbeddings\(ctx context.Context, workspace, repository string, req SearchEmbeddingsRequest\) \(\*irminmodels.EmbeddingSearchResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.SearchEmbeddings>)
@@ -325,6 +326,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type CreateBranchRequest](<#CreateBranchRequest>)
 - [type CreateCommitRequest](<#CreateCommitRequest>)
 - [type CreateConnectionRequest](<#CreateConnectionRequest>)
+- [type CreateConnectionSubscriptionRequest](<#CreateConnectionSubscriptionRequest>)
 - [type CreateCredentialRequest](<#CreateCredentialRequest>)
 - [type CreateCustomToolRequest](<#CreateCustomToolRequest>)
 - [type CreatePointerRequest](<#CreatePointerRequest>)
@@ -349,6 +351,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type MergeRefsRequest](<#MergeRefsRequest>)
 - [type MoveObjectRequest](<#MoveObjectRequest>)
 - [type RequestOptions](<#RequestOptions>)
+- [type ResetBranchRequest](<#ResetBranchRequest>)
 - [type RevertUncommittedChangesRequest](<#RevertUncommittedChangesRequest>)
 - [type SearchEmbeddingsRequest](<#SearchEmbeddingsRequest>)
 - [type SendInviteRequest](<#SendInviteRequest>)
@@ -363,6 +366,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type UpdateBranchRequest](<#UpdateBranchRequest>)
 - [type UpdateConnectionConfigurationRequest](<#UpdateConnectionConfigurationRequest>)
 - [type UpdateConnectionRequest](<#UpdateConnectionRequest>)
+- [type UpdateConnectionSubscriptionRequest](<#UpdateConnectionSubscriptionRequest>)
 - [type UpdateCustomToolRequest](<#UpdateCustomToolRequest>)
 - [type UpdateInviteRequest](<#UpdateInviteRequest>)
 - [type UpdatePolicyRequest](<#UpdatePolicyRequest>)
@@ -1738,6 +1742,15 @@ func (c *Client) ResendInvite(ctx context.Context, inviteID string) (*irminmodel
 
 
 
+<a name="Client.ResetBranch"></a>
+### func \(\*Client\) ResetBranch
+
+```go
+func (c *Client) ResetBranch(ctx context.Context, workspace, repository, branch string, req ResetBranchRequest) (*irminmodels.IrminAPIResponse, error)
+```
+
+ResetBranch resets a branch to a specific commit reference. This performs a hard reset, moving the branch pointer to the specified commit. If force is true, uncommitted changes will be discarded.
+
 <a name="Client.RevertChanges"></a>
 ### func \(\*Client\) RevertChanges
 
@@ -2207,6 +2220,20 @@ type CreateConnectionRequest struct {
 }
 ```
 
+<a name="CreateConnectionSubscriptionRequest"></a>
+## type CreateConnectionSubscriptionRequest
+
+CreateConnectionSubscriptionRequest represents the JSON request body for creating connection subscriptions.
+
+```go
+type CreateConnectionSubscriptionRequest struct {
+    Name        string   `json:"name"                   validate:"required,max=255"                             example:"CRM Lead Changes"`
+    Description string   `json:"description,omitempty"  validate:"max=1000"                                     example:"Subscribe to lead changes in the CRM"`
+    FilterPaths []string `json:"filter_paths,omitempty" validate:"dive,max=500"                                 example:"leads,contacts"`
+    EventTypes  []string `json:"event_types,omitempty"  validate:"dive,oneof=insert update delete upsert batch" example:"insert,update"`
+}
+```
+
 <a name="CreateCredentialRequest"></a>
 ## type CreateCredentialRequest
 
@@ -2551,6 +2578,18 @@ type RequestOptions struct {
 }
 ```
 
+<a name="ResetBranchRequest"></a>
+## type ResetBranchRequest
+
+ResetBranchRequest represents the JSON request body for resetting a branch to a specific commit.
+
+```go
+type ResetBranchRequest struct {
+    CommitRef string `json:"commit_ref"      validate:"required" example:"abc123def456"`
+    Force     bool   `json:"force,omitempty"                     example:"false"`
+}
+```
+
 <a name="RevertUncommittedChangesRequest"></a>
 ## type RevertUncommittedChangesRequest
 
@@ -2720,6 +2759,21 @@ type UpdateConnectionRequest struct {
     Name          *string `json:"name,omitempty"          validate:"omitnil,max=100"            example:"Production MySQL Database"`
     Description   *string `json:"description,omitempty"   validate:"omitnil,max=500"            example:"Primary MySQL database for production customer data"`
     Documentation *string `json:"documentation,omitempty" validate:"omitnil,validdocumentation" example:"# Production Database"`
+}
+```
+
+<a name="UpdateConnectionSubscriptionRequest"></a>
+## type UpdateConnectionSubscriptionRequest
+
+UpdateConnectionSubscriptionRequest represents the JSON request body for updating connection subscriptions.
+
+```go
+type UpdateConnectionSubscriptionRequest struct {
+    Name        *string   `json:"name,omitempty"         validate:"omitnil,max=255"                                      example:"CRM Lead Changes"`
+    Description *string   `json:"description,omitempty"  validate:"omitnil,max=1000"                                     example:"Subscribe to lead changes in the CRM"`
+    FilterPaths *[]string `json:"filter_paths,omitempty" validate:"omitnil,dive,max=500"                                 example:"leads,contacts"`
+    EventTypes  *[]string `json:"event_types,omitempty"  validate:"omitnil,dive,oneof=insert update delete upsert batch" example:"insert,update"`
+    IsActive    *bool     `json:"is_active,omitempty"                                                                    example:"true"`
 }
 ```
 
@@ -3324,6 +3378,9 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type ChangeType](<#ChangeType>)
 - [type Commit](<#Commit>)
 - [type Connection](<#Connection>)
+- [type ConnectionEventType](<#ConnectionEventType>)
+- [type ConnectionSubscription](<#ConnectionSubscription>)
+- [type ConnectionSubscriptionWithToken](<#ConnectionSubscriptionWithToken>)
 - [type Connector](<#Connector>)
 - [type ConnectorCapability](<#ConnectorCapability>)
 - [type ConnectorCategory](<#ConnectorCategory>)
@@ -3359,6 +3416,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type ObjectType](<#ObjectType>)
 - [type OutputFormat](<#OutputFormat>)
 - [type Patch](<#Patch>)
+- [type PatchDirection](<#PatchDirection>)
 - [type PatchOperation](<#PatchOperation>)
 - [type PipelineStage](<#PipelineStage>)
 - [type PipelineStageType](<#PipelineStageType>)
@@ -3735,6 +3793,60 @@ type Connection struct {
 }
 ```
 
+<a name="ConnectionEventType"></a>
+## type ConnectionEventType
+
+ConnectionEventType represents the type of change event from a connector
+
+```go
+type ConnectionEventType string
+```
+
+<a name="ConnectionEventInsert"></a>
+
+```go
+const (
+    ConnectionEventInsert ConnectionEventType = "insert"
+    ConnectionEventUpdate ConnectionEventType = "update"
+    ConnectionEventDelete ConnectionEventType = "delete"
+    ConnectionEventUpsert ConnectionEventType = "upsert"
+    ConnectionEventBatch  ConnectionEventType = "batch"
+)
+```
+
+<a name="ConnectionSubscription"></a>
+## type ConnectionSubscription
+
+ConnectionSubscription represents a subscription to data changes in a connection. When data changes in the external system, the connector sends webhook events to the Irmin API using the WebhookToken for authentication.
+
+```go
+type ConnectionSubscription struct {
+    ID           string   `json:"id"                     validate:"required,validsqid=connection_subscriptions"  example:"cs_5p8q2n7m9x4k"`
+    Name         string   `json:"name"                   validate:"required,max=255"                             example:"CRM Lead Changes"`
+    Description  string   `json:"description,omitempty"  validate:"max=1000"                                     example:"Subscribe to lead changes in the CRM"`
+    ConnectionID string   `json:"connection_id"          validate:"required,validsqid=connections"               example:"conn_5p8q2n7m9x4k"`
+    FilterPaths  []string `json:"filter_paths,omitempty" validate:"dive,max=500"                                 example:"leads,contacts"`
+    EventTypes   []string `json:"event_types,omitempty"  validate:"dive,oneof=insert update delete upsert batch" example:"insert,update"`
+    IsActive     bool     `json:"is_active"                                                                      example:"true"`
+    WebhookURL   string   `json:"webhook_url,omitempty"  validate:"omitempty,url"                                example:"https://api.irmin.co/api/v1/webhooks/connectors/conn_123"`
+    Owner        *User    `json:"owner,omitempty"`
+    CreatedAt    string   `json:"created_at,omitempty"                                                           example:"2024-01-15T10:30:00Z"`
+    UpdatedAt    string   `json:"updated_at,omitempty"                                                           example:"2024-01-15T10:30:00Z"`
+}
+```
+
+<a name="ConnectionSubscriptionWithToken"></a>
+## type ConnectionSubscriptionWithToken
+
+ConnectionSubscriptionWithToken includes the webhook token \(only returned on creation\).
+
+```go
+type ConnectionSubscriptionWithToken struct {
+    ConnectionSubscription
+    WebhookToken string `json:"webhook_token,omitempty" example:"abc123def456..."`
+}
+```
+
 <a name="Connector"></a>
 ## type Connector
 
@@ -3757,7 +3869,7 @@ type Connector struct {
     // URL to the connector's logo
     LogoURL string `json:"logo_url"          validate:"required,validimageurl"                                                                                                                                         example:"https://cdn.irmin.dev/mysql.png"`
     // Array of capabilities of the connector, eg. what kind of operations the connector can perform
-    Capabilities []ConnectorCapability `json:"capabilities"      validate:"required,dive,oneof=pull push push_patch event_webhook"                                                                                                         example:"pull,push"`
+    Capabilities []ConnectorCapability `json:"capabilities"      validate:"required,dive,oneof=pull push apply_patch patch_event"                                                                                                          example:"pull,push"`
     // Array of locales supported by the connector, eg. what languages the connector supports
     Locales []string `json:"locales"           validate:"required,dive,min=2,max=5"                                                                                                                                      example:"en,fi"`
     // Array of categories associated with the connector, eg. what kind of connector it is
@@ -3788,10 +3900,13 @@ const (
     ConnectorCapabilityPull ConnectorCapability = "pull"
     // ConnectorCapabilityPush means that data files can be pushed to different paths in the connector.
     ConnectorCapabilityPush ConnectorCapability = "push"
-    // ConnectorCapabilityPushPatch means that JSON Patch based change sets can be pushed to the connector.
-    ConnectorCapabilityPushPatch ConnectorCapability = "push_patch"
-    // ConnectorCapabilityEventWebhook means that the connector can send webhook notifications when something changes in the underlying data.
-    ConnectorCapabilityEventWebhook ConnectorCapability = "event_webhook"
+    // ConnectorCapabilityApplyPatch means that the connector can receive and apply patch operations.
+    // Patches follow JSON Patch format (RFC 6902) and can include binary data when the target
+    // data type requires it (e.g., images, files). Binary data is base64-encoded with content_type set.
+    ConnectorCapabilityApplyPatch ConnectorCapability = "apply_patch"
+    // ConnectorCapabilityPatchEvent means that the connector can emit patch events via webhooks
+    // when data changes in the external system. Changes are always expressed as patches.
+    ConnectorCapabilityPatchEvent ConnectorCapability = "patch_event"
 )
 ```
 
@@ -4421,6 +4536,24 @@ Patch is a series of patch operations.
 type Patch []PatchOperation
 ```
 
+<a name="PatchDirection"></a>
+## type PatchDirection
+
+PatchDirection represents the direction of a patch operation.
+
+```go
+type PatchDirection string
+```
+
+<a name="PatchDirectionToConnection"></a>
+
+```go
+const (
+    PatchDirectionToConnection PatchDirection = "to_connection"
+    PatchDirectionToRepository PatchDirection = "to_repository"
+)
+```
+
 <a name="PatchOperation"></a>
 ## type PatchOperation
 
@@ -4429,13 +4562,16 @@ PatchOperation represents a single operation in a JSON Patch array.
 ```go
 type PatchOperation struct {
     // The operation: "add", "remove", "replace", "move" or "copy"
-    Op  string `json:"op"              validate:"required,oneof=add remove replace move copy" example:"replace"`
+    Op  string `json:"op"                     validate:"required,oneof=add remove replace move copy" example:"replace"`
     // The JSON-Pointer location to apply the operation
-    Path string `json:"path"            validate:"required"                                    example:"/users.json/1/name"`
+    Path string `json:"path"                   validate:"required"                                    example:"/users.json/1/name"`
     // Used for "move" or "copy" operations
-    From *string `json:"from,omitempty"  validate:"required_if=Op move,required_if=Op copy"     example:"/users.json/1/name"`
+    From *string `json:"from,omitempty"         validate:"required_if=Op move,required_if=Op copy"     example:"/users.json/1/name"`
     // Used for "add" or "replace" operations
-    Value *any `json:"value,omitempty" validate:"required_if=Op add,required_if=Op replace"   example:"John"`
+    Value *any `json:"value,omitempty"        validate:"required_if=Op add,required_if=Op replace"   example:"John"`
+    // ContentType indicates the MIME type for binary data.
+    // When set, Value should be base64-encoded binary content.
+    ContentType *string `json:"content_type,omitempty"                                                        example:"image/png"`
 }
 ```
 
@@ -4446,11 +4582,11 @@ type PatchOperation struct {
 
 ```go
 type PipelineStage struct {
-    Description   string            `json:"description"    validate:"required,max=200"                                                                                                                  example:"Process customer data"`
-    Write         bool              `json:"write"                                                                                                                                                       example:"true"`
-    Read          bool              `json:"read"                                                                                                                                                        example:"true"`
-    OrderSequence int               `json:"order_sequence"                                                                                                                                              example:"1"`
-    Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform embeddings,validpipelinestage" example:"repository"`
+    Description   string            `json:"description"    validate:"required,max=200"                                                                                                                        example:"Process customer data"`
+    Write         bool              `json:"write"                                                                                                                                                             example:"true"`
+    Read          bool              `json:"read"                                                                                                                                                              example:"true"`
+    OrderSequence int               `json:"order_sequence"                                                                                                                                                    example:"1"`
+    Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform embeddings patch,validpipelinestage" example:"repository"`
 
     // Action stage specific
     ExecutableType ActionExecutableType `json:"executable_type,omitempty" validate:"omitempty,oneof=script query,required_if=Type action"          example:"script"`
@@ -4511,6 +4647,13 @@ type PipelineStage struct {
     EmbeddingsQuery      *string                  `json:"embeddings_query,omitempty"       validate:"omitempty"                                                    example:"What is machine learning?"`
     EmbeddingsTopK       *int                     `json:"embeddings_top_k,omitempty"       validate:"omitempty,min=1"                                              example:"10"`
     EmbeddingsFilter     map[string]string        `json:"embeddings_filter,omitempty"      validate:"omitempty"`
+
+    // Patch stage specific
+    PatchDirection        *PatchDirection `json:"patch_direction,omitempty"         validate:"omitempty,oneof=to_connection to_repository,required_if=Type patch" example:"to_connection"`
+    PatchConnectionID     *string         `json:"patch_connection_id,omitempty"     validate:"omitempty,validsqid=connections"                                    example:"conn_8x2m9k4n7p5q"`
+    PatchRepository       *string         `json:"patch_repository,omitempty"        validate:"omitempty"                                                          example:"customer-analytics"`
+    PatchRepositoryBranch *string         `json:"patch_repository_branch,omitempty" validate:"omitempty"                                                          example:"main"`
+    PatchSourceFileName   *string         `json:"patch_source_file_name,omitempty"  validate:"omitempty"                                                          example:"patches.json"`
 }
 ```
 
@@ -4535,6 +4678,7 @@ const (
     PipelineStageTypeValidation       PipelineStageType = "validation"
     PipelineStageTypeTransform        PipelineStageType = "transform"
     PipelineStageTypeEmbeddings       PipelineStageType = "embeddings"
+    PipelineStageTypePatch            PipelineStageType = "patch"
 )
 ```
 
@@ -4890,20 +5034,26 @@ type Schedule struct {
 
 ```go
 type ScheduleTrigger struct {
-    Type WorkflowTriggerType `json:"type" validate:"required,oneof=time repository-event workflow-run-event,validschedule" example:"time"`
+    Type WorkflowTriggerType `json:"type" validate:"required,oneof=time repository-event workflow-run-event connection-event,validschedule" example:"time"`
 
     // Time trigger - these should only be validated if they have values
     RRule *string `json:"rrule,omitempty" example:"FREQ=DAILY;INTERVAL=1;BYHOUR=9"`
     Cron  *string `json:"cron,omitempty"  example:"0 9 * * *"`
 
     // Repository event trigger
-    RepositoryEvent *RepositoryEvent `json:"repository_event,omitempty" validate:"required_if=Type repository-event"       example:"post-commit"`
-    Repository      *string          `json:"repository,omitempty"       validate:"required_with=RepositoryEvent,validslug" example:"customer-analytics"` // Slug of the repository
-    RepositoryRef   *string          `json:"repository_ref,omitempty"   validate:"required_with=RepositoryEvent"           example:"main"`
+    RepositoryEvent    *RepositoryEvent `json:"repository_event,omitempty"      validate:"required_if=Type repository-event"       example:"post-commit"`
+    Repository         *string          `json:"repository,omitempty"            validate:"required_with=RepositoryEvent,validslug" example:"customer-analytics"` // Slug of the repository
+    RepositoryRef      *string          `json:"repository_ref,omitempty"        validate:"required_with=RepositoryEvent"           example:"main"`
+    IncludeDiffAsPatch *bool            `json:"include_diff_as_patch,omitempty"` // Generate patches from commit diff for export flows
 
     // Workflow run event trigger
     WorkflowRunEvent *WorkflowRunEvent `json:"workflow_run_event,omitempty" validate:"required_if=Type workflow-run-event"                example:"post-workflow-run"`
     WorkflowID       *string           `json:"workflow_id,omitempty"        validate:"required_with=WorkflowRunEvent,validsqid=workflows" example:"wf_8x2m9k4n7p5q"` // Sqid of the workflow
+
+    // Connection event trigger
+    ConnectionEventType  *ConnectionEventType `json:"connection_event_type,omitempty"`                                             // insert, update, delete, batch
+    ConnectionID         *string              `json:"connection_id,omitempty"          validate:"omitempty,validsqid=connections"` // Sqid of the connection
+    ConnectionEventPaths []string             `json:"connection_event_paths,omitempty"`                                            // Optional path filter (e.g., ["users", "orders"])
 }
 ```
 
@@ -5627,9 +5777,10 @@ type WorkflowTriggerType string
 
 ```go
 const (
-    TimeTriggerType        WorkflowTriggerType = "time"
-    RepositoryTriggerType  WorkflowTriggerType = "repository-event"
-    WorkflowRunTriggerType WorkflowTriggerType = "workflow-run-event"
+    TimeTriggerType            WorkflowTriggerType = "time"
+    RepositoryTriggerType      WorkflowTriggerType = "repository-event"
+    WorkflowRunTriggerType     WorkflowTriggerType = "workflow-run-event"
+    ConnectionEventTriggerType WorkflowTriggerType = "connection-event"
 )
 ```
 

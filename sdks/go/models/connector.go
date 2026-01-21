@@ -17,7 +17,7 @@ type Connector struct {
 	// URL to the connector's logo
 	LogoURL string `json:"logo_url"          validate:"required,validimageurl"                                                                                                                                         example:"https://cdn.irmin.dev/mysql.png"`
 	// Array of capabilities of the connector, eg. what kind of operations the connector can perform
-	Capabilities []ConnectorCapability `json:"capabilities"      validate:"required,dive,oneof=pull push push_patch event_webhook"                                                                                                         example:"pull,push"`
+	Capabilities []ConnectorCapability `json:"capabilities"      validate:"required,dive,oneof=pull push apply_patch patch_event"                                                                                                          example:"pull,push"`
 	// Array of locales supported by the connector, eg. what languages the connector supports
 	Locales []string `json:"locales"           validate:"required,dive,min=2,max=5"                                                                                                                                      example:"en,fi"`
 	// Array of categories associated with the connector, eg. what kind of connector it is
@@ -38,10 +38,13 @@ const (
 	ConnectorCapabilityPull ConnectorCapability = "pull"
 	// ConnectorCapabilityPush means that data files can be pushed to different paths in the connector.
 	ConnectorCapabilityPush ConnectorCapability = "push"
-	// ConnectorCapabilityPushPatch means that JSON Patch based change sets can be pushed to the connector.
-	ConnectorCapabilityPushPatch ConnectorCapability = "push_patch"
-	// ConnectorCapabilityEventWebhook means that the connector can send webhook notifications when something changes in the underlying data.
-	ConnectorCapabilityEventWebhook ConnectorCapability = "event_webhook"
+	// ConnectorCapabilityApplyPatch means that the connector can receive and apply patch operations.
+	// Patches follow JSON Patch format (RFC 6902) and can include binary data when the target
+	// data type requires it (e.g., images, files). Binary data is base64-encoded with content_type set.
+	ConnectorCapabilityApplyPatch ConnectorCapability = "apply_patch"
+	// ConnectorCapabilityPatchEvent means that the connector can emit patch events via webhooks
+	// when data changes in the external system. Changes are always expressed as patches.
+	ConnectorCapabilityPatchEvent ConnectorCapability = "patch_event"
 )
 
 // ConnectorCategory represents the category of a connector.
