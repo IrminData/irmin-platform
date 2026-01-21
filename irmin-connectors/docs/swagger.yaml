@@ -1761,10 +1761,10 @@ paths:
         in: formData
         name: details[default_db]
         type: string
-      - description: Target database name to validate connection
+      - description: Target database name to validate connection (optional for details-only
+          validation)
         in: formData
         name: settings[database]
-        required: true
         type: string
       produces:
       - application/json
@@ -2273,10 +2273,9 @@ paths:
         name: details[api_key]
         required: true
         type: string
-      - description: Pinecone index host URL
+      - description: Pinecone index host URL (optional for details-only validation)
         in: formData
         name: settings[host]
-        required: true
         type: string
       - description: Target namespace within the index
         in: formData
@@ -2761,10 +2760,10 @@ paths:
         in: formData
         name: details[ssl_mode]
         type: boolean
-      - description: Target database name to validate connection
+      - description: Target database name to validate connection (optional for details-only
+          validation)
         in: formData
         name: settings[database]
-        required: true
         type: string
       produces:
       - application/json

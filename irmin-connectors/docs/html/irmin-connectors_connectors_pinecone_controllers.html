@@ -39,11 +39,11 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
     ConfigValidate godoc @Summary Validate Pinecone connector configuration
     @Description Validate Pinecone connection details and settings by
     testing the actual connection to the Pinecone index @Tags pinecone
-    @Security SystemTokenAuth @Accept multipart/form-data @Produce
-    json @Param details[api_key] formData string true "Pinecone
-    API key" @Param settings[host] formData string true "Pinecone
-    index host URL" @Param settings[namespace] formData string
-    false "Target namespace within the index" @Success 200 {object}
+    @Security SystemTokenAuth @Accept multipart/form-data @Produce json
+    @Param details[api_key] formData string true "Pinecone API key" @Param
+    settings[host] formData string false "Pinecone index host URL (optional
+    for details-only validation)" @Param settings[namespace] formData
+    string false "Target namespace within the index" @Success 200 {object}
     irminmodels.ConnectorConfigurationValidationResult "Configuration validation
     result" @Failure 400 {object} fiber.Map "Bad request - invalid configuration
     data" @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing
@@ -70,9 +70,9 @@ func (cs *Controllers) GetOperationFormFields() ([]string, []string)
 
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
     GetRequiredFormFields implements the ConfigValidationProvider interface.
-    For validation, only details fields (api_key) are strictly required.
-    Settings fields are optional for validation - TestConnection will determine
-    their validity.
+    For validation, only required details fields (api_key) are strictly required
+    upfront. Settings fields are optional - TestConnection will validate them if
+    provided.
 
 func (cs *Controllers) Info(c fiber.Ctx) error
     Info godoc @Summary Get Pinecone connector information @Description Get

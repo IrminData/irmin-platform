@@ -26,8 +26,15 @@ func GetDetailsFields() []string
 func GetOptionalFields() []string
     GetOptionalFields returns the optional form fields for PostgreSQL.
 
+func GetRequiredDetailsFields() []string
+    GetRequiredDetailsFields returns only the required detail-specific fields.
+
 func GetRequiredFields() []string
     GetRequiredFields returns the mandatory form fields for PostgreSQL.
+
+func GetRequiredSettingsFields() []string
+    GetRequiredSettingsFields returns only the required settings-specific
+    fields.
 
 func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
     GetSettingsFieldDefinitions returns static settings fields (dynamic ones are

@@ -44,10 +44,22 @@ func GetDetailsFields() []string {
 	return common.GetDetailsFieldNames(details)
 }
 
+// GetRequiredDetailsFields returns only the required detail-specific fields.
+func GetRequiredDetailsFields() []string {
+	details, _ := initializeFieldDefinitions()
+	return common.GetRequiredDetailsFieldNames(details)
+}
+
 // GetSettingsFields returns the settings-specific fields.
 func GetSettingsFields() []string {
 	_, settings := initializeFieldDefinitions()
 	return common.GetSettingsFieldNames(settings)
+}
+
+// GetRequiredSettingsFields returns only the required settings-specific fields.
+func GetRequiredSettingsFields() []string {
+	_, settings := initializeFieldDefinitions()
+	return common.GetRequiredSettingsFieldNames(settings)
 }
 
 func initializeFieldDefinitions() (map[string]irminmodels.DynamicField, map[string]irminmodels.DynamicField) {

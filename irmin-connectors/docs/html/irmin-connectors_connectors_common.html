@@ -73,13 +73,33 @@ func GetDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []str
     GetDetailsFieldNames returns all detail field names from the provided
     definitions.
 
+func GetOptionalDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []string
+    GetOptionalDetailsFieldNames returns only detail field names that are marked
+    as optional.
+
 func GetOptionalFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string
-    GetOptionalFieldNames returns field names that are marked as optional from
-    both details and settings definitions.
+    GetOptionalFieldNames returns field names that are marked as
+    optional from both details and settings definitions. This composes
+    GetOptionalDetailsFieldNames and GetOptionalSettingsFieldNames.
+
+func GetOptionalSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string
+    GetOptionalSettingsFieldNames returns only settings field names that are
+    marked as optional.
+
+func GetRequiredDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []string
+    GetRequiredDetailsFieldNames returns only detail field names that are marked
+    as required. Use this when validating connection details separately from
+    settings.
 
 func GetRequiredFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string
-    GetRequiredFieldNames returns field names that are marked as required from
-    both details and settings definitions.
+    GetRequiredFieldNames returns field names that are marked as
+    required from both details and settings definitions. This composes
+    GetRequiredDetailsFieldNames and GetRequiredSettingsFieldNames.
+
+func GetRequiredSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string
+    GetRequiredSettingsFieldNames returns only settings field names that are
+    marked as required. Use this when validating connection settings separately
+    from details.
 
 func GetSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string
     GetSettingsFieldNames returns all settings field names from the provided

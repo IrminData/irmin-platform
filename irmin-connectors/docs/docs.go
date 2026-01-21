@@ -1508,10 +1508,9 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Target database name to validate connection",
+                        "description": "Target database name to validate connection (optional for details-only validation)",
                         "name": "settings[database]",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -2305,10 +2304,9 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Pinecone index host URL",
+                        "description": "Pinecone index host URL (optional for details-only validation)",
                         "name": "settings[host]",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     },
                     {
                         "type": "string",
@@ -3002,10 +3000,9 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Target database name to validate connection",
+                        "description": "Target database name to validate connection (optional for details-only validation)",
                         "name": "settings[database]",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     }
                 ],
                 "responses": {

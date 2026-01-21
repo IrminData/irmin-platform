@@ -22,7 +22,7 @@ import (
 // @Param details[password] formData string true "Password for PostgreSQL authentication"
 // @Param details[default_db] formData string false "Default database for initial connection"
 // @Param details[ssl_mode] formData boolean false "Enable SSL mode for secure connections"
-// @Param settings[database] formData string true "Target database name to validate connection"
+// @Param settings[database] formData string false "Target database name to validate connection (optional for details-only validation)"
 // @Success 200 {object} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result"
 // @Failure 400 {object} fiber.Map "Bad request - invalid configuration data"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
@@ -33,8 +33,19 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
 }
 
 // GetRequiredFormFields implements the ConfigValidationProvider interface.
+// For validation, only required details fields are strictly required upfront.
+// Settings fields are optional - TestConnection will validate them if provided.
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string) {
-	return postgresconfig.GetRequiredFields(), postgresconfig.GetOptionalFields()
+	// Only require the mandatory details fields for validation
+	// This allows validating connection credentials before selecting a database
+	requiredDetails := postgresconfig.GetRequiredDetailsFields()
+
+	// All other fields (optional details + optional settings + required settings) are optional for validation
+	// Note: GetOptionalFields() already includes optional settings, so only add required settings
+	optionalFields := postgresconfig.GetOptionalFields()
+	optionalFields = append(optionalFields, postgresconfig.GetRequiredSettingsFields()...)
+
+	return requiredDetails, optionalFields
 }
 
 // ValidateFields implements the ConfigValidationProvider interface.

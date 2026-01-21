@@ -18,7 +18,7 @@ import (
 // @Accept multipart/form-data
 // @Produce json
 // @Param details[api_key] formData string true "Pinecone API key"
-// @Param settings[host] formData string true "Pinecone index host URL"
+// @Param settings[host] formData string false "Pinecone index host URL (optional for details-only validation)"
 // @Param settings[namespace] formData string false "Target namespace within the index"
 // @Success 200 {object} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result"
 // @Failure 400 {object} fiber.Map "Bad request - invalid configuration data"
@@ -30,18 +30,19 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
 }
 
 // GetRequiredFormFields implements the ConfigValidationProvider interface.
-// For validation, only details fields (api_key) are strictly required.
-// Settings fields are optional for validation - TestConnection will determine their validity.
+// For validation, only required details fields (api_key) are strictly required upfront.
+// Settings fields are optional - TestConnection will validate them if provided.
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string) {
-	// Only require details fields for the validation endpoint
+	// Only require the mandatory details fields for validation
 	// This allows validating the API key even if settings are incomplete
-	requiredDetails := pineconeconfig.GetDetailsFields()
+	requiredDetails := pineconeconfig.GetRequiredDetailsFields()
 
-	// All settings fields are optional for validation
-	// The TestConnection method will validate them if provided
-	optionalSettings := pineconeconfig.GetSettingsFields()
+	// All other fields (optional details + optional settings + required settings) are optional for validation
+	// Note: GetOptionalFields() already includes optional settings, so only add required settings
+	optionalFields := pineconeconfig.GetOptionalFields()
+	optionalFields = append(optionalFields, pineconeconfig.GetRequiredSettingsFields()...)
 
-	return requiredDetails, optionalSettings
+	return requiredDetails, optionalFields
 }
 
 // ValidateFields implements the ConfigValidationProvider interface.

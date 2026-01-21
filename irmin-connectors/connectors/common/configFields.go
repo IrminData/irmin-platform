@@ -45,14 +45,22 @@ func BuildSettingsFromFields(
 	return settings
 }
 
-// GetRequiredFieldNames returns field names that are marked as required from both details and settings definitions.
-func GetRequiredFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string {
+// GetRequiredDetailsFieldNames returns only detail field names that are marked as required.
+// Use this when validating connection details separately from settings.
+func GetRequiredDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []string {
 	var required []string
 	for fieldName, fieldDef := range detailsDefs {
 		if fieldDef.Required {
 			required = append(required, "details["+fieldName+"]")
 		}
 	}
+	return required
+}
+
+// GetRequiredSettingsFieldNames returns only settings field names that are marked as required.
+// Use this when validating connection settings separately from details.
+func GetRequiredSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string {
+	var required []string
 	for fieldName, fieldDef := range settingsDefs {
 		if fieldDef.Required {
 			required = append(required, "settings["+fieldName+"]")
@@ -61,25 +69,40 @@ func GetRequiredFieldNames(detailsDefs, settingsDefs map[string]irminmodels.Dyna
 	return required
 }
 
-// GetOptionalFieldNames returns field names that are marked as optional from both details and settings definitions.
-func GetOptionalFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string {
-	var optional []string
+// GetRequiredFieldNames returns field names that are marked as required from both details and settings definitions.
+// This composes GetRequiredDetailsFieldNames and GetRequiredSettingsFieldNames.
+func GetRequiredFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string {
+	required := GetRequiredDetailsFieldNames(detailsDefs)
+	return append(required, GetRequiredSettingsFieldNames(settingsDefs)...)
+}
 
-	// Add optional detail fields
+// GetOptionalDetailsFieldNames returns only detail field names that are marked as optional.
+func GetOptionalDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []string {
+	var optional []string
 	for fieldName, fieldDef := range detailsDefs {
 		if !fieldDef.Required {
 			optional = append(optional, "details["+fieldName+"]")
 		}
 	}
+	return optional
+}
 
-	// Add optional settings fields
+// GetOptionalSettingsFieldNames returns only settings field names that are marked as optional.
+func GetOptionalSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string {
+	var optional []string
 	for fieldName, fieldDef := range settingsDefs {
 		if !fieldDef.Required {
 			optional = append(optional, "settings["+fieldName+"]")
 		}
 	}
-
 	return optional
+}
+
+// GetOptionalFieldNames returns field names that are marked as optional from both details and settings definitions.
+// This composes GetOptionalDetailsFieldNames and GetOptionalSettingsFieldNames.
+func GetOptionalFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string {
+	optional := GetOptionalDetailsFieldNames(detailsDefs)
+	return append(optional, GetOptionalSettingsFieldNames(settingsDefs)...)
 }
 
 // GetDetailsFieldNames returns all detail field names from the provided definitions.

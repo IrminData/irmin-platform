@@ -46,21 +46,22 @@ func (cs *Controllers) ConfigFields(c fiber.Ctx) error
 
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
     ConfigValidate godoc @Summary Validate MySQL connector configuration
-    @Description Validate MySQL connection details and settings by testing the
-    actual connection to the MySQL server and specified database @Tags mysql
-    @Security SystemTokenAuth @Accept multipart/form-data @Produce json @Param
-    details[host] formData string true "MySQL server hostname or IP address"
-    @Param details[port] formData integer false "MySQL server port (default:
-    3306)" @Param details[username] formData string true "Username for MySQL
-    authentication" @Param details[password] formData string true "Password
-    for MySQL authentication" @Param details[default_db] formData string false
-    "Default database for initial connection" @Param settings[database] formData
-    string true "Target database name to validate connection" @Success 200
-    {object} irminmodels.ConnectorConfigurationValidationResult "Configuration
-    validation result" @Failure 400 {object} fiber.Map "Bad request - invalid
-    configuration data" @Failure 401 {object} fiber.Map "Unauthorized - invalid
-    or missing authentication" @Failure 500 {object} fiber.Map "Internal server
-    error" @Router /mysql/configuration/validate [post]
+    @Description Validate MySQL connection details and settings by testing
+    the actual connection to the MySQL server and specified database @Tags
+    mysql @Security SystemTokenAuth @Accept multipart/form-data @Produce
+    json @Param details[host] formData string true "MySQL server hostname
+    or IP address" @Param details[port] formData integer false "MySQL server
+    port (default: 3306)" @Param details[username] formData string true
+    "Username for MySQL authentication" @Param details[password] formData
+    string true "Password for MySQL authentication" @Param details[default_db]
+    formData string false "Default database for initial connection" @Param
+    settings[database] formData string false "Target database name to validate
+    connection (optional for details-only validation)" @Success 200 {object}
+    irminmodels.ConnectorConfigurationValidationResult "Configuration validation
+    result" @Failure 400 {object} fiber.Map "Bad request - invalid configuration
+    data" @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing
+    authentication" @Failure 500 {object} fiber.Map "Internal server error"
+    @Router /mysql/configuration/validate [post]
 
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error
     DetailsPage godoc @Summary Get MySQL connector details page @Description Get
@@ -85,6 +86,9 @@ func (cs *Controllers) GetOperationFormFields() ([]string, []string)
 
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
     GetRequiredFormFields implements the ConfigValidationProvider interface.
+    For validation, only required details fields are strictly required upfront.
+    Settings fields are optional - TestConnection will validate them if
+    provided.
 
 func (cs *Controllers) Info(c fiber.Ctx) error
     Info godoc @Summary Get MySQL connector information @Description Get

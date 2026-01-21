@@ -1306,8 +1306,12 @@ import "irmin-connectors/connectors/common"
 - [func DefaultDatabaseCancellation\(app \*models.ConnectorsApp, operation \*db.Operation\) error](<#DefaultDatabaseCancellation>)
 - [func GetConnectorCapabilitiesFromConfig\(getConnectorInfo func\(\) models.ConnectorDetails\) \[\]irminmodels.ConnectorCapability](<#GetConnectorCapabilitiesFromConfig>)
 - [func GetDetailsFieldNames\(detailsDefs map\[string\]irminmodels.DynamicField\) \[\]string](<#GetDetailsFieldNames>)
+- [func GetOptionalDetailsFieldNames\(detailsDefs map\[string\]irminmodels.DynamicField\) \[\]string](<#GetOptionalDetailsFieldNames>)
 - [func GetOptionalFieldNames\(detailsDefs, settingsDefs map\[string\]irminmodels.DynamicField\) \[\]string](<#GetOptionalFieldNames>)
+- [func GetOptionalSettingsFieldNames\(settingsDefs map\[string\]irminmodels.DynamicField\) \[\]string](<#GetOptionalSettingsFieldNames>)
+- [func GetRequiredDetailsFieldNames\(detailsDefs map\[string\]irminmodels.DynamicField\) \[\]string](<#GetRequiredDetailsFieldNames>)
 - [func GetRequiredFieldNames\(detailsDefs, settingsDefs map\[string\]irminmodels.DynamicField\) \[\]string](<#GetRequiredFieldNames>)
+- [func GetRequiredSettingsFieldNames\(settingsDefs map\[string\]irminmodels.DynamicField\) \[\]string](<#GetRequiredSettingsFieldNames>)
 - [func GetSettingsFieldNames\(settingsDefs map\[string\]irminmodels.DynamicField\) \[\]string](<#GetSettingsFieldNames>)
 - [func HandleNotSupportedPatch\(c fiber.Ctx\) error](<#HandleNotSupportedPatch>)
 - [func HandleNotSupportedPull\(c fiber.Ctx\) error](<#HandleNotSupportedPull>)
@@ -1469,6 +1473,15 @@ func GetDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []str
 
 GetDetailsFieldNames returns all detail field names from the provided definitions.
 
+<a name="GetOptionalDetailsFieldNames"></a>
+## func GetOptionalDetailsFieldNames
+
+```go
+func GetOptionalDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []string
+```
+
+GetOptionalDetailsFieldNames returns only detail field names that are marked as optional.
+
 <a name="GetOptionalFieldNames"></a>
 ## func GetOptionalFieldNames
 
@@ -1476,7 +1489,25 @@ GetDetailsFieldNames returns all detail field names from the provided definition
 func GetOptionalFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string
 ```
 
-GetOptionalFieldNames returns field names that are marked as optional from both details and settings definitions.
+GetOptionalFieldNames returns field names that are marked as optional from both details and settings definitions. This composes GetOptionalDetailsFieldNames and GetOptionalSettingsFieldNames.
+
+<a name="GetOptionalSettingsFieldNames"></a>
+## func GetOptionalSettingsFieldNames
+
+```go
+func GetOptionalSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string
+```
+
+GetOptionalSettingsFieldNames returns only settings field names that are marked as optional.
+
+<a name="GetRequiredDetailsFieldNames"></a>
+## func GetRequiredDetailsFieldNames
+
+```go
+func GetRequiredDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []string
+```
+
+GetRequiredDetailsFieldNames returns only detail field names that are marked as required. Use this when validating connection details separately from settings.
 
 <a name="GetRequiredFieldNames"></a>
 ## func GetRequiredFieldNames
@@ -1485,7 +1516,16 @@ GetOptionalFieldNames returns field names that are marked as optional from both 
 func GetRequiredFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string
 ```
 
-GetRequiredFieldNames returns field names that are marked as required from both details and settings definitions.
+GetRequiredFieldNames returns field names that are marked as required from both details and settings definitions. This composes GetRequiredDetailsFieldNames and GetRequiredSettingsFieldNames.
+
+<a name="GetRequiredSettingsFieldNames"></a>
+## func GetRequiredSettingsFieldNames
+
+```go
+func GetRequiredSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string
+```
+
+GetRequiredSettingsFieldNames returns only settings field names that are marked as required. Use this when validating connection settings separately from details.
 
 <a name="GetSettingsFieldNames"></a>
 ## func GetSettingsFieldNames
@@ -4895,7 +4935,9 @@ import "irmin-connectors/connectors/mysql/config"
 - [func GetDetailsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetDetailsFieldDefinitions>)
 - [func GetDetailsFields\(\) \[\]string](<#GetDetailsFields>)
 - [func GetOptionalFields\(\) \[\]string](<#GetOptionalFields>)
+- [func GetRequiredDetailsFields\(\) \[\]string](<#GetRequiredDetailsFields>)
 - [func GetRequiredFields\(\) \[\]string](<#GetRequiredFields>)
+- [func GetRequiredSettingsFields\(\) \[\]string](<#GetRequiredSettingsFields>)
 - [func GetSettingsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetSettingsFieldDefinitions>)
 - [func GetSettingsFields\(\) \[\]string](<#GetSettingsFields>)
 
@@ -4947,6 +4989,15 @@ func GetOptionalFields() []string
 
 GetOptionalFields returns the optional form fields for MySQL.
 
+<a name="GetRequiredDetailsFields"></a>
+## func GetRequiredDetailsFields
+
+```go
+func GetRequiredDetailsFields() []string
+```
+
+GetRequiredDetailsFields returns only the required detail\-specific fields.
+
 <a name="GetRequiredFields"></a>
 ## func GetRequiredFields
 
@@ -4955,6 +5006,15 @@ func GetRequiredFields() []string
 ```
 
 GetRequiredFields returns the mandatory form fields for MySQL.
+
+<a name="GetRequiredSettingsFields"></a>
+## func GetRequiredSettingsFields
+
+```go
+func GetRequiredSettingsFields() []string
+```
+
+GetRequiredSettingsFields returns only the required settings\-specific fields.
 
 <a name="GetSettingsFieldDefinitions"></a>
 ## func GetSettingsFieldDefinitions
@@ -5076,7 +5136,7 @@ ConfigFields godoc @Summary Get MySQL connector configuration fields @Descriptio
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
 ```
 
-ConfigValidate godoc @Summary Validate MySQL connector configuration @Description Validate MySQL connection details and settings by testing the actual connection to the MySQL server and specified database @Tags mysql @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[host\] formData string true "MySQL server hostname or IP address" @Param details\[port\] formData integer false "MySQL server port \(default: 3306\)" @Param details\[username\] formData string true "Username for MySQL authentication" @Param details\[password\] formData string true "Password for MySQL authentication" @Param details\[default\_db\] formData string false "Default database for initial connection" @Param settings\[database\] formData string true "Target database name to validate connection" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/configuration/validate \[post\]
+ConfigValidate godoc @Summary Validate MySQL connector configuration @Description Validate MySQL connection details and settings by testing the actual connection to the MySQL server and specified database @Tags mysql @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[host\] formData string true "MySQL server hostname or IP address" @Param details\[port\] formData integer false "MySQL server port \(default: 3306\)" @Param details\[username\] formData string true "Username for MySQL authentication" @Param details\[password\] formData string true "Password for MySQL authentication" @Param details\[default\_db\] formData string false "Default database for initial connection" @Param settings\[database\] formData string false "Target database name to validate connection \(optional for details\-only validation\)" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/configuration/validate \[post\]
 
 <a name="Controllers.DetailsPage"></a>
 ### func \(\*Controllers\) DetailsPage
@@ -5121,7 +5181,7 @@ GetOperationFormFields implements the OperationInitProvider interface.
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
 ```
 
-GetRequiredFormFields implements the ConfigValidationProvider interface.
+GetRequiredFormFields implements the ConfigValidationProvider interface. For validation, only required details fields are strictly required upfront. Settings fields are optional \- TestConnection will validate them if provided.
 
 <a name="Controllers.Info"></a>
 ### func \(\*Controllers\) Info
@@ -5616,7 +5676,9 @@ import "irmin-connectors/connectors/pinecone/config"
 - [func GetDetailsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetDetailsFieldDefinitions>)
 - [func GetDetailsFields\(\) \[\]string](<#GetDetailsFields>)
 - [func GetOptionalFields\(\) \[\]string](<#GetOptionalFields>)
+- [func GetRequiredDetailsFields\(\) \[\]string](<#GetRequiredDetailsFields>)
 - [func GetRequiredFields\(\) \[\]string](<#GetRequiredFields>)
+- [func GetRequiredSettingsFields\(\) \[\]string](<#GetRequiredSettingsFields>)
 - [func GetSettingsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetSettingsFieldDefinitions>)
 - [func GetSettingsFields\(\) \[\]string](<#GetSettingsFields>)
 
@@ -5657,6 +5719,15 @@ func GetOptionalFields() []string
 
 GetOptionalFields returns the optional form fields for Pinecone.
 
+<a name="GetRequiredDetailsFields"></a>
+## func GetRequiredDetailsFields
+
+```go
+func GetRequiredDetailsFields() []string
+```
+
+GetRequiredDetailsFields returns only the required detail\-specific fields.
+
 <a name="GetRequiredFields"></a>
 ## func GetRequiredFields
 
@@ -5665,6 +5736,15 @@ func GetRequiredFields() []string
 ```
 
 GetRequiredFields returns the mandatory form fields for Pinecone.
+
+<a name="GetRequiredSettingsFields"></a>
+## func GetRequiredSettingsFields
+
+```go
+func GetRequiredSettingsFields() []string
+```
+
+GetRequiredSettingsFields returns only the required settings\-specific fields.
 
 <a name="GetSettingsFieldDefinitions"></a>
 ## func GetSettingsFieldDefinitions
@@ -5782,7 +5862,7 @@ ConfigFields godoc @Summary Get Pinecone connector configuration fields @Descrip
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
 ```
 
-ConfigValidate godoc @Summary Validate Pinecone connector configuration @Description Validate Pinecone connection details and settings by testing the actual connection to the Pinecone index @Tags pinecone @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[api\_key\] formData string true "Pinecone API key" @Param settings\[host\] formData string true "Pinecone index host URL" @Param settings\[namespace\] formData string false "Target namespace within the index" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/configuration/validate \[post\]
+ConfigValidate godoc @Summary Validate Pinecone connector configuration @Description Validate Pinecone connection details and settings by testing the actual connection to the Pinecone index @Tags pinecone @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[api\_key\] formData string true "Pinecone API key" @Param settings\[host\] formData string false "Pinecone index host URL \(optional for details\-only validation\)" @Param settings\[namespace\] formData string false "Target namespace within the index" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/configuration/validate \[post\]
 
 <a name="Controllers.DetailsPage"></a>
 ### func \(\*Controllers\) DetailsPage
@@ -5818,7 +5898,7 @@ GetOperationFormFields implements the OperationInitProvider interface.
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
 ```
 
-GetRequiredFormFields implements the ConfigValidationProvider interface. For validation, only details fields \(api\_key\) are strictly required. Settings fields are optional for validation \- TestConnection will determine their validity.
+GetRequiredFormFields implements the ConfigValidationProvider interface. For validation, only required details fields \(api\_key\) are strictly required upfront. Settings fields are optional \- TestConnection will validate them if provided.
 
 <a name="Controllers.Info"></a>
 ### func \(\*Controllers\) Info
@@ -6346,7 +6426,9 @@ import "irmin-connectors/connectors/postgres/config"
 - [func GetDetailsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetDetailsFieldDefinitions>)
 - [func GetDetailsFields\(\) \[\]string](<#GetDetailsFields>)
 - [func GetOptionalFields\(\) \[\]string](<#GetOptionalFields>)
+- [func GetRequiredDetailsFields\(\) \[\]string](<#GetRequiredDetailsFields>)
 - [func GetRequiredFields\(\) \[\]string](<#GetRequiredFields>)
+- [func GetRequiredSettingsFields\(\) \[\]string](<#GetRequiredSettingsFields>)
 - [func GetSettingsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetSettingsFieldDefinitions>)
 - [func GetSettingsFields\(\) \[\]string](<#GetSettingsFields>)
 
@@ -6398,6 +6480,15 @@ func GetOptionalFields() []string
 
 GetOptionalFields returns the optional form fields for PostgreSQL.
 
+<a name="GetRequiredDetailsFields"></a>
+## func GetRequiredDetailsFields
+
+```go
+func GetRequiredDetailsFields() []string
+```
+
+GetRequiredDetailsFields returns only the required detail\-specific fields.
+
 <a name="GetRequiredFields"></a>
 ## func GetRequiredFields
 
@@ -6406,6 +6497,15 @@ func GetRequiredFields() []string
 ```
 
 GetRequiredFields returns the mandatory form fields for PostgreSQL.
+
+<a name="GetRequiredSettingsFields"></a>
+## func GetRequiredSettingsFields
+
+```go
+func GetRequiredSettingsFields() []string
+```
+
+GetRequiredSettingsFields returns only the required settings\-specific fields.
 
 <a name="GetSettingsFieldDefinitions"></a>
 ## func GetSettingsFieldDefinitions
@@ -6526,7 +6626,7 @@ ConfigFields godoc @Summary Get PostgreSQL connector configuration fields @Descr
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
 ```
 
-ConfigValidate godoc @Summary Validate PostgreSQL connector configuration @Description Validate PostgreSQL connection details and settings by testing the actual connection to the PostgreSQL server and specified database @Tags postgres @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[host\] formData string true "PostgreSQL server hostname or IP address" @Param details\[port\] formData integer false "PostgreSQL server port \(default: 5432\)" @Param details\[username\] formData string true "Username for PostgreSQL authentication" @Param details\[password\] formData string true "Password for PostgreSQL authentication" @Param details\[default\_db\] formData string false "Default database for initial connection" @Param details\[ssl\_mode\] formData boolean false "Enable SSL mode for secure connections" @Param settings\[database\] formData string true "Target database name to validate connection" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/configuration/validate \[post\]
+ConfigValidate godoc @Summary Validate PostgreSQL connector configuration @Description Validate PostgreSQL connection details and settings by testing the actual connection to the PostgreSQL server and specified database @Tags postgres @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[host\] formData string true "PostgreSQL server hostname or IP address" @Param details\[port\] formData integer false "PostgreSQL server port \(default: 5432\)" @Param details\[username\] formData string true "Username for PostgreSQL authentication" @Param details\[password\] formData string true "Password for PostgreSQL authentication" @Param details\[default\_db\] formData string false "Default database for initial connection" @Param details\[ssl\_mode\] formData boolean false "Enable SSL mode for secure connections" @Param settings\[database\] formData string false "Target database name to validate connection \(optional for details\-only validation\)" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/configuration/validate \[post\]
 
 <a name="Controllers.DetailsPage"></a>
 ### func \(\*Controllers\) DetailsPage
@@ -6562,7 +6662,7 @@ GetOperationFormFields implements the OperationInitProvider interface.
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
 ```
 
-GetRequiredFormFields implements the ConfigValidationProvider interface.
+GetRequiredFormFields implements the ConfigValidationProvider interface. For validation, only required details fields are strictly required upfront. Settings fields are optional \- TestConnection will validate them if provided.
 
 <a name="Controllers.Info"></a>
 ### func \(\*Controllers\) Info
