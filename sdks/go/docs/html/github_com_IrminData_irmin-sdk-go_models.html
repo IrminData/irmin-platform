@@ -62,6 +62,33 @@ type AIApplicationDataSource struct {
 }
     AIApplicationDataSource represents a data source for an AI application.
 
+type AIApplicationPendingWrite struct {
+	ID              string             `json:"id"                        validate:"required,validsqid=ai_application_pending_writes" example:"pw_1a2b3c4d"`
+	AIApplicationID string             `json:"ai_application_id"         validate:"required,validsqid=ai_applications"               example:"ai_8x2m9k4n7p5q"`
+	Repository      string             `json:"repository"                                                                            example:"customer-analytics"`
+	Path            string             `json:"path"                                                                                  example:"/data/customers.json"`
+	Ref             string             `json:"ref"                                                                                   example:"main"`
+	Operation       string             `json:"operation"                                                                             example:"upload"`
+	ContentPreview  string             `json:"content_preview,omitempty"`
+	PatchJSON       string             `json:"patch_json,omitempty"`
+	CommitMessage   string             `json:"commit_message"                                                                        example:"Updated customer data"`
+	Status          PendingWriteStatus `json:"status"                                                                                example:"pending"`
+	ReviewedBy      *User              `json:"reviewed_by,omitempty"`
+	ReviewedAt      *time.Time         `json:"reviewed_at,omitempty"`
+	CreatedAt       time.Time          `json:"created_at"                validate:"required"                                         example:"2025-01-15T10:30:00Z"`
+	UpdatedAt       time.Time          `json:"updated_at"                validate:"required"                                         example:"2025-12-01T14:22:30Z"`
+}
+    AIApplicationPendingWrite represents a write operation awaiting approval.
+
+type AIApplicationPendingWritesResponse struct {
+	PendingWrites []AIApplicationPendingWrite `json:"pending_writes"`
+	Total         int64                       `json:"total"          example:"10"`
+	Limit         int                         `json:"limit"          example:"50"`
+	Offset        int                         `json:"offset"         example:"0"`
+}
+    AIApplicationPendingWritesResponse represents a paginated list of pending
+    writes.
+
 type AIApplicationToolConfig struct {
 	QueryEnabled        bool `json:"query_enabled"         example:"true"`
 	SchemaEnabled       bool `json:"schema_enabled"        example:"true"`
@@ -69,6 +96,10 @@ type AIApplicationToolConfig struct {
 	GetContentEnabled   bool `json:"get_content_enabled"   example:"true"`
 	VectorSearchEnabled bool `json:"vector_search_enabled" example:"true"`
 	DocsEnabled         bool `json:"docs_enabled"          example:"true"`
+
+	// Write tools configuration
+	WriteEnabled bool                      `json:"write_enabled"          example:"false"`
+	WriteConfig  *AIApplicationWriteConfig `json:"write_config,omitempty"`
 }
     AIApplicationToolConfig defines which tools are enabled for an AI
     Application.
@@ -86,6 +117,12 @@ type AIApplicationToolLog struct {
 	Success    bool      `json:"success"     example:"true"`
 	ErrorMsg   string    `json:"error_msg"`
 	CreatedAt  time.Time `json:"created_at"  example:"2025-01-15T10:30:00Z"`
+
+	// Write-specific audit fields
+	WriteOperation  string  `json:"write_operation,omitempty"   example:"upload"`
+	WriteTargetPath string  `json:"write_target_path,omitempty" example:"/repo/main/data/file.json"`
+	CommitID        string  `json:"commit_id,omitempty"         example:"abc123def456"`
+	PendingWriteID  *string `json:"pending_write_id,omitempty"  example:"pw_1a2b3c4d"`
 }
     AIApplicationToolLog represents an audit log entry for an AI application
     tool call.
@@ -115,6 +152,18 @@ type AIApplicationToolStat struct {
 	ErrorCount    int64   `json:"error_count"     example:"3"`
 }
     AIApplicationToolStat represents statistics for a specific tool.
+
+type AIApplicationWriteConfig struct {
+	FileUploadEnabled    bool   `json:"file_upload_enabled"             example:"true"`
+	FileUpdateEnabled    bool   `json:"file_update_enabled"             example:"true"`
+	PatchEnabled         bool   `json:"patch_enabled"                   example:"true"`
+	AutoCommit           bool   `json:"auto_commit"                     example:"true"`
+	RequireCommitMessage bool   `json:"require_commit_message"          example:"false"`
+	CommitMessagePrefix  string `json:"commit_message_prefix,omitempty" example:"[AI Agent] "`
+	RequireApproval      bool   `json:"require_approval"                example:"false"`
+}
+    AIApplicationWriteConfig defines write operation settings for an AI
+    Application.
 
 type APIToken struct {
 	ID        string    `json:"id"              validate:"required,validsqid=api_tokens" example:"token_1a2b3c"`
@@ -689,6 +738,17 @@ type PatchOperation struct {
 }
     PatchOperation represents a single operation in a JSON Patch array.
 
+type PendingWriteStatus string
+    PendingWriteStatus represents the status of a pending write operation.
+
+const (
+	// PendingWriteStatusPending indicates the write is awaiting approval.
+	PendingWriteStatusPending PendingWriteStatus = "pending"
+	// PendingWriteStatusApproved indicates the write has been approved and executed.
+	PendingWriteStatusApproved PendingWriteStatus = "approved"
+	// PendingWriteStatusRejected indicates the write has been rejected.
+	PendingWriteStatusRejected PendingWriteStatus = "rejected"
+)
 type PipelineStage struct {
 	Description   string            `json:"description"    validate:"required,max=200"                                                                                                                        example:"Process customer data"`
 	Write         bool              `json:"write"                                                                                                                                                             example:"true"`
@@ -1291,6 +1351,17 @@ type StoredScript struct {
 	UpdatedAt   time.Time `json:"updated_at"            validate:"required"                   example:"2025-12-01T14:22:30Z"`
 }
 
+type SyncMode string
+    SyncMode represents the synchronization mode for import/export workflows.
+
+const (
+	// SyncModeFull always performs a full data sync.
+	SyncModeFull SyncMode = "full"
+	// SyncModePatch only accepts patch-based events (requires event trigger).
+	SyncModePatch SyncMode = "patch"
+	// SyncModeAuto performs full sync on schedule/manual, patch sync on events (default).
+	SyncModeAuto SyncMode = "auto"
+)
 type Tag struct {
 	// ID is the unique sqid for the tag
 	ID string `json:"id"          validate:"required,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
@@ -1454,6 +1525,7 @@ type Workflowable struct {
 	ConnectionID     string         `json:"connection_id,omitempty"     validate:"validsqid=connections,required_if=Type import,required_if=Type export" example:"conn_8x2m9k4n7p5q"`
 	Repository       string         `json:"repository,omitempty"        validate:"required_if=Type import,required_if=Type export"                       example:"customer-analytics"`
 	RepositoryBranch string         `json:"repository_branch,omitempty" validate:"required_if=Type import,required_if=Type export"                       example:"main"`
+	SyncMode         SyncMode       `json:"sync_mode,omitempty"         validate:"omitempty,oneof=full patch auto"                                       example:"auto"`
 
 	ImportFromConnectionPaths []string `json:"import_from_connection_paths,omitempty" example:"/exports/customers.csv,/exports/metadata.json"`
 	ImportToRepositoryPath    string   `json:"import_to_repository_path,omitempty"    example:"/imported/customers.json"                      validate:"omitempty"`

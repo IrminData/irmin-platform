@@ -10,8 +10,11 @@ import (
 
 // CreateCommitRequest represents the JSON request body for creating a commit.
 type CreateCommitRequest struct {
-	Branch  string `json:"branch"  validate:"required" example:"main"`
-	Message string `json:"message" validate:"required" example:"Add customer data"`
+	Branch  string `json:"branch"           validate:"required" example:"main"`
+	Message string `json:"message"          validate:"required" example:"Add customer data"`
+	// Author optionally overrides the commit author. Format: "Name <email>"
+	// If not provided, the authenticated user's email will be used.
+	Author string `json:"author,omitempty"                     example:"AI App: Customer Analytics <ai-app@irmin.app>"`
 }
 
 // RevertUncommittedChangesRequest represents the JSON request body for reverting uncommitted changes.

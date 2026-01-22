@@ -242,3 +242,178 @@ func (c *AIAppClient) ExecuteCustomTool(
 	}
 	return &result, apiResp, nil
 }
+
+// === Write Operation Types ===
+
+// AIAppWriteFileRequest represents the request body for writing a file.
+type AIAppWriteFileRequest struct {
+	Path          string `json:"path"                     validate:"required" example:"/repo-slug/main/data/file.json"`
+	Content       string `json:"content,omitempty"`
+	ContentBase64 string `json:"content_base64,omitempty"`
+	CommitMessage string `json:"commit_message,omitempty"                     example:"Updated customer data"`
+	AutoCommit    bool   `json:"auto_commit"                                  example:"true"`
+}
+
+// AIAppPatchFileRequest represents the request body for patching a file with JSON Patch operations.
+type AIAppPatchFileRequest struct {
+	Path          string                       `json:"path"                     validate:"required" example:"/repo-slug/main/data/file.json"`
+	Operations    []irminmodels.PatchOperation `json:"operations"               validate:"required"`
+	CommitMessage string                       `json:"commit_message,omitempty"                     example:"Patched customer records"`
+	AutoCommit    bool                         `json:"auto_commit"                                  example:"true"`
+}
+
+// AIAppCommitRequest represents the request body for committing staged changes.
+type AIAppCommitRequest struct {
+	Path    string `json:"path,omitempty" example:"/repo-slug/main"`
+	Message string `json:"message"        example:"AI agent updates" validate:"required"`
+}
+
+// AIAppWriteResult represents the result of a write operation.
+type AIAppWriteResult struct {
+	Path             string  `json:"path"                 example:"/repo-slug/main/data/file.json"`
+	Operation        string  `json:"operation"            example:"upload"`
+	Committed        bool    `json:"committed"            example:"true"`
+	CommitID         *string `json:"commit_id,omitempty"  example:"abc123def456"`
+	PendingID        *string `json:"pending_id,omitempty" example:"pw_1a2b3c4d"`
+	RequiresApproval bool    `json:"requires_approval"    example:"false"`
+}
+
+// === Write Operation API Methods ===
+
+// WriteFile writes or updates a file at the specified path.
+// The path should be in unified format: /repo-slug/ref/path/to/file.json
+func (c *AIAppClient) WriteFile(
+	ctx context.Context,
+	req AIAppWriteFileRequest,
+) (*AIAppWriteResult, *irminmodels.IrminAPIResponse, error) {
+	var result AIAppWriteResult
+
+	apiResp, err := c.FetchAPI(ctx, AIAppRequestOptions{
+		Method:      http.MethodPost,
+		Endpoint:    "/v1/ai-app/write",
+		ContentType: "application/json",
+		Body:        req,
+	}, &result)
+	if err != nil {
+		return nil, apiResp, fmt.Errorf("write file error: %w", err)
+	}
+	return &result, apiResp, nil
+}
+
+// PatchFile applies JSON Patch operations to a file at the specified path.
+// The path should be in unified format: /repo-slug/ref/path/to/file.json
+func (c *AIAppClient) PatchFile(
+	ctx context.Context,
+	req AIAppPatchFileRequest,
+) (*AIAppWriteResult, *irminmodels.IrminAPIResponse, error) {
+	var result AIAppWriteResult
+
+	apiResp, err := c.FetchAPI(ctx, AIAppRequestOptions{
+		Method:      http.MethodPost,
+		Endpoint:    "/v1/ai-app/patch",
+		ContentType: "application/json",
+		Body:        req,
+	}, &result)
+	if err != nil {
+		return nil, apiResp, fmt.Errorf("patch file error: %w", err)
+	}
+	return &result, apiResp, nil
+}
+
+// CommitChanges commits all staged changes on the specified branch.
+// If path is empty, commits changes across all data sources.
+func (c *AIAppClient) CommitChanges(
+	ctx context.Context,
+	req AIAppCommitRequest,
+) (*AIAppWriteResult, *irminmodels.IrminAPIResponse, error) {
+	var result AIAppWriteResult
+
+	apiResp, err := c.FetchAPI(ctx, AIAppRequestOptions{
+		Method:      http.MethodPost,
+		Endpoint:    "/v1/ai-app/commit",
+		ContentType: "application/json",
+		Body:        req,
+	}, &result)
+	if err != nil {
+		return nil, apiResp, fmt.Errorf("commit changes error: %w", err)
+	}
+	return &result, apiResp, nil
+}
+
+// === Pending Writes API Methods ===
+
+// ListPendingWrites retrieves all pending write operations awaiting approval.
+func (c *AIAppClient) ListPendingWrites(
+	ctx context.Context,
+	limit, offset int,
+) (*irminmodels.AIApplicationPendingWritesResponse, *irminmodels.IrminAPIResponse, error) {
+	var result irminmodels.AIApplicationPendingWritesResponse
+
+	endpoint := fmt.Sprintf("/v1/ai-app/pending-writes?limit=%d&offset=%d", limit, offset)
+
+	apiResp, err := c.FetchAPI(ctx, AIAppRequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: endpoint,
+	}, &result)
+	if err != nil {
+		return nil, apiResp, fmt.Errorf("list pending writes error: %w", err)
+	}
+	return &result, apiResp, nil
+}
+
+// GetPendingWrite retrieves a specific pending write by ID.
+func (c *AIAppClient) GetPendingWrite(
+	ctx context.Context,
+	pendingWriteID string,
+) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error) {
+	var result irminmodels.AIApplicationPendingWrite
+
+	endpoint := fmt.Sprintf("/v1/ai-app/pending-writes/%s", url.PathEscape(pendingWriteID))
+
+	apiResp, err := c.FetchAPI(ctx, AIAppRequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: endpoint,
+	}, &result)
+	if err != nil {
+		return nil, apiResp, fmt.Errorf("get pending write error: %w", err)
+	}
+	return &result, apiResp, nil
+}
+
+// ApprovePendingWrite approves a pending write operation, executing the write.
+func (c *AIAppClient) ApprovePendingWrite(
+	ctx context.Context,
+	pendingWriteID string,
+) (*AIAppWriteResult, *irminmodels.IrminAPIResponse, error) {
+	var result AIAppWriteResult
+
+	endpoint := fmt.Sprintf("/v1/ai-app/pending-writes/%s/approve", url.PathEscape(pendingWriteID))
+
+	apiResp, err := c.FetchAPI(ctx, AIAppRequestOptions{
+		Method:   http.MethodPost,
+		Endpoint: endpoint,
+	}, &result)
+	if err != nil {
+		return nil, apiResp, fmt.Errorf("approve pending write error: %w", err)
+	}
+	return &result, apiResp, nil
+}
+
+// RejectPendingWrite rejects a pending write operation.
+func (c *AIAppClient) RejectPendingWrite(
+	ctx context.Context,
+	pendingWriteID string,
+) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error) {
+	var result irminmodels.AIApplicationPendingWrite
+
+	endpoint := fmt.Sprintf("/v1/ai-app/pending-writes/%s/reject", url.PathEscape(pendingWriteID))
+
+	apiResp, err := c.FetchAPI(ctx, AIAppRequestOptions{
+		Method:   http.MethodPost,
+		Endpoint: endpoint,
+	}, &result)
+	if err != nil {
+		return nil, apiResp, fmt.Errorf("reject pending write error: %w", err)
+	}
+	return &result, apiResp, nil
+}

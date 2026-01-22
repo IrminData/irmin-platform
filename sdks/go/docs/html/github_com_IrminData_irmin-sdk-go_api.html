@@ -37,6 +37,19 @@ func NewAIAppClientWithHTTPClient(baseURL, apiKey string, httpClient *http.Clien
     with a custom HTTP client. If httpClient is nil, a default client with
     DefaultAPITimeout is used.
 
+func (c *AIAppClient) ApprovePendingWrite(
+	ctx context.Context,
+	pendingWriteID string,
+) (*AIAppWriteResult, *irminmodels.IrminAPIResponse, error)
+    ApprovePendingWrite approves a pending write operation, executing the write.
+
+func (c *AIAppClient) CommitChanges(
+	ctx context.Context,
+	req AIAppCommitRequest,
+) (*AIAppWriteResult, *irminmodels.IrminAPIResponse, error)
+    CommitChanges commits all staged changes on the specified branch. If path is
+    empty, commits changes across all data sources.
+
 func (c *AIAppClient) ExecuteCustomTool(
 	ctx context.Context,
 	toolName string,
@@ -62,6 +75,12 @@ func (c *AIAppClient) GetContent(
 func (c *AIAppClient) GetInfo(ctx context.Context) (*AIAppInfo, *irminmodels.IrminAPIResponse, error)
     GetInfo retrieves information about the AI Application.
 
+func (c *AIAppClient) GetPendingWrite(
+	ctx context.Context,
+	pendingWriteID string,
+) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
+    GetPendingWrite retrieves a specific pending write by ID.
+
 func (c *AIAppClient) GetSchema(
 	ctx context.Context,
 	path string,
@@ -84,11 +103,30 @@ func (c *AIAppClient) ListObjects(
     ListObjects lists objects at the specified path. If path is empty, lists all
     data source roots.
 
+func (c *AIAppClient) ListPendingWrites(
+	ctx context.Context,
+	limit, offset int,
+) (*irminmodels.AIApplicationPendingWritesResponse, *irminmodels.IrminAPIResponse, error)
+    ListPendingWrites retrieves all pending write operations awaiting approval.
+
+func (c *AIAppClient) PatchFile(
+	ctx context.Context,
+	req AIAppPatchFileRequest,
+) (*AIAppWriteResult, *irminmodels.IrminAPIResponse, error)
+    PatchFile applies JSON Patch operations to a file at the specified path.
+    The path should be in unified format: /repo-slug/ref/path/to/file.json
+
 func (c *AIAppClient) Query(
 	ctx context.Context,
 	req AIAppQueryRequest,
 ) (any, *irminmodels.IrminAPIResponse, error)
     Query executes a SQL query within the AI Application's data scope.
+
+func (c *AIAppClient) RejectPendingWrite(
+	ctx context.Context,
+	pendingWriteID string,
+) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
+    RejectPendingWrite rejects a pending write operation.
 
 func (c *AIAppClient) Request(ctx context.Context, opts AIAppRequestOptions) ([]byte, error)
     Request sends a request to the AI Application API and returns raw response
@@ -100,6 +138,20 @@ func (c *AIAppClient) SearchEmbeddings(
 ) (*irminmodels.EmbeddingSearchResponse, *irminmodels.IrminAPIResponse, error)
     SearchEmbeddings performs vector similarity search. If path is empty,
     searches across all embedding files in data sources.
+
+func (c *AIAppClient) WriteFile(
+	ctx context.Context,
+	req AIAppWriteFileRequest,
+) (*AIAppWriteResult, *irminmodels.IrminAPIResponse, error)
+    WriteFile writes or updates a file at the specified path. The path should be
+    in unified format: /repo-slug/ref/path/to/file.json
+
+type AIAppCommitRequest struct {
+	Path    string `json:"path,omitempty" example:"/repo-slug/main"`
+	Message string `json:"message"        example:"AI agent updates" validate:"required"`
+}
+    AIAppCommitRequest represents the request body for committing staged
+    changes.
 
 type AIAppContent struct {
 	Content       string `json:"content,omitempty"`        // Text content (for text/json files)
@@ -116,6 +168,15 @@ type AIAppInfo struct {
 	DataSources []irminmodels.AIAppDataSourceUnified `json:"data_sources"`
 }
     AIAppInfo represents information about an AI Application.
+
+type AIAppPatchFileRequest struct {
+	Path          string                       `json:"path"                     validate:"required" example:"/repo-slug/main/data/file.json"`
+	Operations    []irminmodels.PatchOperation `json:"operations"               validate:"required"`
+	CommitMessage string                       `json:"commit_message,omitempty"                     example:"Patched customer records"`
+	AutoCommit    bool                         `json:"auto_commit"                                  example:"true"`
+}
+    AIAppPatchFileRequest represents the request body for patching a file with
+    JSON Patch operations.
 
 type AIAppQueryRequest struct {
 	SQL string `json:"sql" validate:"required" example:"SELECT * FROM $['data-source;file.json'] LIMIT 10"`
@@ -145,6 +206,25 @@ type AIAppSystemPrompt struct {
 	SystemPrompt string `json:"system_prompt"`
 }
     AIAppSystemPrompt represents the system prompt response.
+
+type AIAppWriteFileRequest struct {
+	Path          string `json:"path"                     validate:"required" example:"/repo-slug/main/data/file.json"`
+	Content       string `json:"content,omitempty"`
+	ContentBase64 string `json:"content_base64,omitempty"`
+	CommitMessage string `json:"commit_message,omitempty"                     example:"Updated customer data"`
+	AutoCommit    bool   `json:"auto_commit"                                  example:"true"`
+}
+    AIAppWriteFileRequest represents the request body for writing a file.
+
+type AIAppWriteResult struct {
+	Path             string  `json:"path"                 example:"/repo-slug/main/data/file.json"`
+	Operation        string  `json:"operation"            example:"upload"`
+	Committed        bool    `json:"committed"            example:"true"`
+	CommitID         *string `json:"commit_id,omitempty"  example:"abc123def456"`
+	PendingID        *string `json:"pending_id,omitempty" example:"pw_1a2b3c4d"`
+	RequiresApproval bool    `json:"requires_approval"    example:"false"`
+}
+    AIAppWriteResult represents the result of a write operation.
 
 type Client struct {
 	// BaseURL is your Irmin Core API base: e.g. "https://api.irmin.co/api"
@@ -1166,8 +1246,11 @@ type CreateBranchRequest struct {
     CreateBranchRequest represents the JSON request body for creating a branch.
 
 type CreateCommitRequest struct {
-	Branch  string `json:"branch"  validate:"required" example:"main"`
-	Message string `json:"message" validate:"required" example:"Add customer data"`
+	Branch  string `json:"branch"           validate:"required" example:"main"`
+	Message string `json:"message"          validate:"required" example:"Add customer data"`
+	// Author optionally overrides the commit author. Format: "Name &lt;email&gt;"
+	// If not provided, the authenticated user's email will be used.
+	Author string `json:"author,omitempty"                     example:"AI App: Customer Analytics &lt;ai-app@irmin.app&gt;"`
 }
     CreateCommitRequest represents the JSON request body for creating a commit.
 

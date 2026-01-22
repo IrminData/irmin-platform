@@ -139,23 +139,34 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type AIAppClient](<#AIAppClient>)
   - [func NewAIAppClient\(baseURL, apiKey string\) \*AIAppClient](<#NewAIAppClient>)
   - [func NewAIAppClientWithHTTPClient\(baseURL, apiKey string, httpClient \*http.Client\) \*AIAppClient](<#NewAIAppClientWithHTTPClient>)
+  - [func \(c \*AIAppClient\) ApprovePendingWrite\(ctx context.Context, pendingWriteID string\) \(\*AIAppWriteResult, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.ApprovePendingWrite>)
+  - [func \(c \*AIAppClient\) CommitChanges\(ctx context.Context, req AIAppCommitRequest\) \(\*AIAppWriteResult, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.CommitChanges>)
   - [func \(c \*AIAppClient\) ExecuteCustomTool\(ctx context.Context, toolName string, req ExecuteCustomToolRequest\) \(\*CustomToolResult, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.ExecuteCustomTool>)
   - [func \(c \*AIAppClient\) FetchAPI\(ctx context.Context, opts AIAppRequestOptions, out any\) \(\*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.FetchAPI>)
   - [func \(c \*AIAppClient\) GetContent\(ctx context.Context, path string\) \(\*AIAppContent, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.GetContent>)
   - [func \(c \*AIAppClient\) GetInfo\(ctx context.Context\) \(\*AIAppInfo, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.GetInfo>)
+  - [func \(c \*AIAppClient\) GetPendingWrite\(ctx context.Context, pendingWriteID string\) \(\*irminmodels.AIApplicationPendingWrite, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.GetPendingWrite>)
   - [func \(c \*AIAppClient\) GetSchema\(ctx context.Context, path string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.GetSchema>)
   - [func \(c \*AIAppClient\) GetSystemPrompt\(ctx context.Context\) \(string, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.GetSystemPrompt>)
   - [func \(c \*AIAppClient\) ListCustomTools\(ctx context.Context\) \(\[\]CustomToolInfo, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.ListCustomTools>)
   - [func \(c \*AIAppClient\) ListObjects\(ctx context.Context, path string\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.ListObjects>)
+  - [func \(c \*AIAppClient\) ListPendingWrites\(ctx context.Context, limit, offset int\) \(\*irminmodels.AIApplicationPendingWritesResponse, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.ListPendingWrites>)
+  - [func \(c \*AIAppClient\) PatchFile\(ctx context.Context, req AIAppPatchFileRequest\) \(\*AIAppWriteResult, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.PatchFile>)
   - [func \(c \*AIAppClient\) Query\(ctx context.Context, req AIAppQueryRequest\) \(any, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.Query>)
+  - [func \(c \*AIAppClient\) RejectPendingWrite\(ctx context.Context, pendingWriteID string\) \(\*irminmodels.AIApplicationPendingWrite, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.RejectPendingWrite>)
   - [func \(c \*AIAppClient\) Request\(ctx context.Context, opts AIAppRequestOptions\) \(\[\]byte, error\)](<#AIAppClient.Request>)
   - [func \(c \*AIAppClient\) SearchEmbeddings\(ctx context.Context, req AIAppSearchEmbeddingsRequest\) \(\*irminmodels.EmbeddingSearchResponse, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.SearchEmbeddings>)
+  - [func \(c \*AIAppClient\) WriteFile\(ctx context.Context, req AIAppWriteFileRequest\) \(\*AIAppWriteResult, \*irminmodels.IrminAPIResponse, error\)](<#AIAppClient.WriteFile>)
+- [type AIAppCommitRequest](<#AIAppCommitRequest>)
 - [type AIAppContent](<#AIAppContent>)
 - [type AIAppInfo](<#AIAppInfo>)
+- [type AIAppPatchFileRequest](<#AIAppPatchFileRequest>)
 - [type AIAppQueryRequest](<#AIAppQueryRequest>)
 - [type AIAppRequestOptions](<#AIAppRequestOptions>)
 - [type AIAppSearchEmbeddingsRequest](<#AIAppSearchEmbeddingsRequest>)
 - [type AIAppSystemPrompt](<#AIAppSystemPrompt>)
+- [type AIAppWriteFileRequest](<#AIAppWriteFileRequest>)
+- [type AIAppWriteResult](<#AIAppWriteResult>)
 - [type Client](<#Client>)
   - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
   - [func NewClientWithSQIDManager\(baseURL, token, locale string, sqidManager \*irminsqids.SQIDManager\) \*Client](<#NewClientWithSQIDManager>)
@@ -431,6 +442,24 @@ func NewAIAppClientWithHTTPClient(baseURL, apiKey string, httpClient *http.Clien
 
 NewAIAppClientWithHTTPClient creates a new AI Application API client with a custom HTTP client. If httpClient is nil, a default client with DefaultAPITimeout is used.
 
+<a name="AIAppClient.ApprovePendingWrite"></a>
+### func \(\*AIAppClient\) ApprovePendingWrite
+
+```go
+func (c *AIAppClient) ApprovePendingWrite(ctx context.Context, pendingWriteID string) (*AIAppWriteResult, *irminmodels.IrminAPIResponse, error)
+```
+
+ApprovePendingWrite approves a pending write operation, executing the write.
+
+<a name="AIAppClient.CommitChanges"></a>
+### func \(\*AIAppClient\) CommitChanges
+
+```go
+func (c *AIAppClient) CommitChanges(ctx context.Context, req AIAppCommitRequest) (*AIAppWriteResult, *irminmodels.IrminAPIResponse, error)
+```
+
+CommitChanges commits all staged changes on the specified branch. If path is empty, commits changes across all data sources.
+
 <a name="AIAppClient.ExecuteCustomTool"></a>
 ### func \(\*AIAppClient\) ExecuteCustomTool
 
@@ -466,6 +495,15 @@ func (c *AIAppClient) GetInfo(ctx context.Context) (*AIAppInfo, *irminmodels.Irm
 ```
 
 GetInfo retrieves information about the AI Application.
+
+<a name="AIAppClient.GetPendingWrite"></a>
+### func \(\*AIAppClient\) GetPendingWrite
+
+```go
+func (c *AIAppClient) GetPendingWrite(ctx context.Context, pendingWriteID string) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
+```
+
+GetPendingWrite retrieves a specific pending write by ID.
 
 <a name="AIAppClient.GetSchema"></a>
 ### func \(\*AIAppClient\) GetSchema
@@ -503,6 +541,24 @@ func (c *AIAppClient) ListObjects(ctx context.Context, path string) (*irminmodel
 
 ListObjects lists objects at the specified path. If path is empty, lists all data source roots.
 
+<a name="AIAppClient.ListPendingWrites"></a>
+### func \(\*AIAppClient\) ListPendingWrites
+
+```go
+func (c *AIAppClient) ListPendingWrites(ctx context.Context, limit, offset int) (*irminmodels.AIApplicationPendingWritesResponse, *irminmodels.IrminAPIResponse, error)
+```
+
+ListPendingWrites retrieves all pending write operations awaiting approval.
+
+<a name="AIAppClient.PatchFile"></a>
+### func \(\*AIAppClient\) PatchFile
+
+```go
+func (c *AIAppClient) PatchFile(ctx context.Context, req AIAppPatchFileRequest) (*AIAppWriteResult, *irminmodels.IrminAPIResponse, error)
+```
+
+PatchFile applies JSON Patch operations to a file at the specified path. The path should be in unified format: /repo\-slug/ref/path/to/file.json
+
 <a name="AIAppClient.Query"></a>
 ### func \(\*AIAppClient\) Query
 
@@ -511,6 +567,15 @@ func (c *AIAppClient) Query(ctx context.Context, req AIAppQueryRequest) (any, *i
 ```
 
 Query executes a SQL query within the AI Application's data scope.
+
+<a name="AIAppClient.RejectPendingWrite"></a>
+### func \(\*AIAppClient\) RejectPendingWrite
+
+```go
+func (c *AIAppClient) RejectPendingWrite(ctx context.Context, pendingWriteID string) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
+```
+
+RejectPendingWrite rejects a pending write operation.
 
 <a name="AIAppClient.Request"></a>
 ### func \(\*AIAppClient\) Request
@@ -529,6 +594,27 @@ func (c *AIAppClient) SearchEmbeddings(ctx context.Context, req AIAppSearchEmbed
 ```
 
 SearchEmbeddings performs vector similarity search. If path is empty, searches across all embedding files in data sources.
+
+<a name="AIAppClient.WriteFile"></a>
+### func \(\*AIAppClient\) WriteFile
+
+```go
+func (c *AIAppClient) WriteFile(ctx context.Context, req AIAppWriteFileRequest) (*AIAppWriteResult, *irminmodels.IrminAPIResponse, error)
+```
+
+WriteFile writes or updates a file at the specified path. The path should be in unified format: /repo\-slug/ref/path/to/file.json
+
+<a name="AIAppCommitRequest"></a>
+## type AIAppCommitRequest
+
+AIAppCommitRequest represents the request body for committing staged changes.
+
+```go
+type AIAppCommitRequest struct {
+    Path    string `json:"path,omitempty" example:"/repo-slug/main"`
+    Message string `json:"message"        example:"AI agent updates" validate:"required"`
+}
+```
 
 <a name="AIAppContent"></a>
 ## type AIAppContent
@@ -555,6 +641,20 @@ type AIAppInfo struct {
     Workspace   string                               `json:"workspace"`
     Tools       irminmodels.AIApplicationToolConfig  `json:"tools"`
     DataSources []irminmodels.AIAppDataSourceUnified `json:"data_sources"`
+}
+```
+
+<a name="AIAppPatchFileRequest"></a>
+## type AIAppPatchFileRequest
+
+AIAppPatchFileRequest represents the request body for patching a file with JSON Patch operations.
+
+```go
+type AIAppPatchFileRequest struct {
+    Path          string                       `json:"path"                     validate:"required" example:"/repo-slug/main/data/file.json"`
+    Operations    []irminmodels.PatchOperation `json:"operations"               validate:"required"`
+    CommitMessage string                       `json:"commit_message,omitempty"                     example:"Patched customer records"`
+    AutoCommit    bool                         `json:"auto_commit"                                  example:"true"`
 }
 ```
 
@@ -606,6 +706,37 @@ AIAppSystemPrompt represents the system prompt response.
 ```go
 type AIAppSystemPrompt struct {
     SystemPrompt string `json:"system_prompt"`
+}
+```
+
+<a name="AIAppWriteFileRequest"></a>
+## type AIAppWriteFileRequest
+
+AIAppWriteFileRequest represents the request body for writing a file.
+
+```go
+type AIAppWriteFileRequest struct {
+    Path          string `json:"path"                     validate:"required" example:"/repo-slug/main/data/file.json"`
+    Content       string `json:"content,omitempty"`
+    ContentBase64 string `json:"content_base64,omitempty"`
+    CommitMessage string `json:"commit_message,omitempty"                     example:"Updated customer data"`
+    AutoCommit    bool   `json:"auto_commit"                                  example:"true"`
+}
+```
+
+<a name="AIAppWriteResult"></a>
+## type AIAppWriteResult
+
+AIAppWriteResult represents the result of a write operation.
+
+```go
+type AIAppWriteResult struct {
+    Path             string  `json:"path"                 example:"/repo-slug/main/data/file.json"`
+    Operation        string  `json:"operation"            example:"upload"`
+    Committed        bool    `json:"committed"            example:"true"`
+    CommitID         *string `json:"commit_id,omitempty"  example:"abc123def456"`
+    PendingID        *string `json:"pending_id,omitempty" example:"pw_1a2b3c4d"`
+    RequiresApproval bool    `json:"requires_approval"    example:"false"`
 }
 ```
 
@@ -2198,8 +2329,11 @@ CreateCommitRequest represents the JSON request body for creating a commit.
 
 ```go
 type CreateCommitRequest struct {
-    Branch  string `json:"branch"  validate:"required" example:"main"`
-    Message string `json:"message" validate:"required" example:"Add customer data"`
+    Branch  string `json:"branch"           validate:"required" example:"main"`
+    Message string `json:"message"          validate:"required" example:"Add customer data"`
+    // Author optionally overrides the commit author. Format: "Name <email>"
+    // If not provided, the authenticated user's email will be used.
+    Author string `json:"author,omitempty"                     example:"AI App: Customer Analytics <ai-app@irmin.app>"`
 }
 ```
 
@@ -3364,11 +3498,14 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type AIApplication](<#AIApplication>)
 - [type AIApplicationCustomTool](<#AIApplicationCustomTool>)
 - [type AIApplicationDataSource](<#AIApplicationDataSource>)
+- [type AIApplicationPendingWrite](<#AIApplicationPendingWrite>)
+- [type AIApplicationPendingWritesResponse](<#AIApplicationPendingWritesResponse>)
 - [type AIApplicationToolConfig](<#AIApplicationToolConfig>)
 - [type AIApplicationToolLog](<#AIApplicationToolLog>)
 - [type AIApplicationToolLogStats](<#AIApplicationToolLogStats>)
 - [type AIApplicationToolLogsResponse](<#AIApplicationToolLogsResponse>)
 - [type AIApplicationToolStat](<#AIApplicationToolStat>)
+- [type AIApplicationWriteConfig](<#AIApplicationWriteConfig>)
 - [type APIToken](<#APIToken>)
 - [type ActionExecutableType](<#ActionExecutableType>)
 - [type ActionInputData](<#ActionInputData>)
@@ -3418,6 +3555,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type Patch](<#Patch>)
 - [type PatchDirection](<#PatchDirection>)
 - [type PatchOperation](<#PatchOperation>)
+- [type PendingWriteStatus](<#PendingWriteStatus>)
 - [type PipelineStage](<#PipelineStage>)
 - [type PipelineStageType](<#PipelineStageType>)
 - [type PointerTarget](<#PointerTarget>)
@@ -3462,6 +3600,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type SelectOption](<#SelectOption>)
 - [type StoredQuery](<#StoredQuery>)
 - [type StoredScript](<#StoredScript>)
+- [type SyncMode](<#SyncMode>)
 - [type Tag](<#Tag>)
 - [type TagEntityType](<#TagEntityType>)
 - [type TagWithAssets](<#TagWithAssets>)
@@ -3560,6 +3699,44 @@ type AIApplicationDataSource struct {
 }
 ```
 
+<a name="AIApplicationPendingWrite"></a>
+## type AIApplicationPendingWrite
+
+AIApplicationPendingWrite represents a write operation awaiting approval.
+
+```go
+type AIApplicationPendingWrite struct {
+    ID              string             `json:"id"                        validate:"required,validsqid=ai_application_pending_writes" example:"pw_1a2b3c4d"`
+    AIApplicationID string             `json:"ai_application_id"         validate:"required,validsqid=ai_applications"               example:"ai_8x2m9k4n7p5q"`
+    Repository      string             `json:"repository"                                                                            example:"customer-analytics"`
+    Path            string             `json:"path"                                                                                  example:"/data/customers.json"`
+    Ref             string             `json:"ref"                                                                                   example:"main"`
+    Operation       string             `json:"operation"                                                                             example:"upload"`
+    ContentPreview  string             `json:"content_preview,omitempty"`
+    PatchJSON       string             `json:"patch_json,omitempty"`
+    CommitMessage   string             `json:"commit_message"                                                                        example:"Updated customer data"`
+    Status          PendingWriteStatus `json:"status"                                                                                example:"pending"`
+    ReviewedBy      *User              `json:"reviewed_by,omitempty"`
+    ReviewedAt      *time.Time         `json:"reviewed_at,omitempty"`
+    CreatedAt       time.Time          `json:"created_at"                validate:"required"                                         example:"2025-01-15T10:30:00Z"`
+    UpdatedAt       time.Time          `json:"updated_at"                validate:"required"                                         example:"2025-12-01T14:22:30Z"`
+}
+```
+
+<a name="AIApplicationPendingWritesResponse"></a>
+## type AIApplicationPendingWritesResponse
+
+AIApplicationPendingWritesResponse represents a paginated list of pending writes.
+
+```go
+type AIApplicationPendingWritesResponse struct {
+    PendingWrites []AIApplicationPendingWrite `json:"pending_writes"`
+    Total         int64                       `json:"total"          example:"10"`
+    Limit         int                         `json:"limit"          example:"50"`
+    Offset        int                         `json:"offset"         example:"0"`
+}
+```
+
 <a name="AIApplicationToolConfig"></a>
 ## type AIApplicationToolConfig
 
@@ -3573,6 +3750,10 @@ type AIApplicationToolConfig struct {
     GetContentEnabled   bool `json:"get_content_enabled"   example:"true"`
     VectorSearchEnabled bool `json:"vector_search_enabled" example:"true"`
     DocsEnabled         bool `json:"docs_enabled"          example:"true"`
+
+    // Write tools configuration
+    WriteEnabled bool                      `json:"write_enabled"          example:"false"`
+    WriteConfig  *AIApplicationWriteConfig `json:"write_config,omitempty"`
 }
 ```
 
@@ -3595,6 +3776,12 @@ type AIApplicationToolLog struct {
     Success    bool      `json:"success"     example:"true"`
     ErrorMsg   string    `json:"error_msg"`
     CreatedAt  time.Time `json:"created_at"  example:"2025-01-15T10:30:00Z"`
+
+    // Write-specific audit fields
+    WriteOperation  string  `json:"write_operation,omitempty"   example:"upload"`
+    WriteTargetPath string  `json:"write_target_path,omitempty" example:"/repo/main/data/file.json"`
+    CommitID        string  `json:"commit_id,omitempty"         example:"abc123def456"`
+    PendingWriteID  *string `json:"pending_write_id,omitempty"  example:"pw_1a2b3c4d"`
 }
 ```
 
@@ -3639,6 +3826,23 @@ type AIApplicationToolStat struct {
     AvgDurationMs float64 `json:"avg_duration_ms" example:"125.5"`
     SuccessCount  int64   `json:"success_count"   example:"147"`
     ErrorCount    int64   `json:"error_count"     example:"3"`
+}
+```
+
+<a name="AIApplicationWriteConfig"></a>
+## type AIApplicationWriteConfig
+
+AIApplicationWriteConfig defines write operation settings for an AI Application.
+
+```go
+type AIApplicationWriteConfig struct {
+    FileUploadEnabled    bool   `json:"file_upload_enabled"             example:"true"`
+    FileUpdateEnabled    bool   `json:"file_update_enabled"             example:"true"`
+    PatchEnabled         bool   `json:"patch_enabled"                   example:"true"`
+    AutoCommit           bool   `json:"auto_commit"                     example:"true"`
+    RequireCommitMessage bool   `json:"require_commit_message"          example:"false"`
+    CommitMessagePrefix  string `json:"commit_message_prefix,omitempty" example:"[AI Agent] "`
+    RequireApproval      bool   `json:"require_approval"                example:"false"`
 }
 ```
 
@@ -4575,6 +4779,28 @@ type PatchOperation struct {
 }
 ```
 
+<a name="PendingWriteStatus"></a>
+## type PendingWriteStatus
+
+PendingWriteStatus represents the status of a pending write operation.
+
+```go
+type PendingWriteStatus string
+```
+
+<a name="PendingWriteStatusPending"></a>
+
+```go
+const (
+    // PendingWriteStatusPending indicates the write is awaiting approval.
+    PendingWriteStatusPending PendingWriteStatus = "pending"
+    // PendingWriteStatusApproved indicates the write has been approved and executed.
+    PendingWriteStatusApproved PendingWriteStatus = "approved"
+    // PendingWriteStatusRejected indicates the write has been rejected.
+    PendingWriteStatusRejected PendingWriteStatus = "rejected"
+)
+```
+
 <a name="PipelineStage"></a>
 ## type PipelineStage
 
@@ -5491,6 +5717,28 @@ type StoredScript struct {
 }
 ```
 
+<a name="SyncMode"></a>
+## type SyncMode
+
+SyncMode represents the synchronization mode for import/export workflows.
+
+```go
+type SyncMode string
+```
+
+<a name="SyncModeFull"></a>
+
+```go
+const (
+    // SyncModeFull always performs a full data sync.
+    SyncModeFull SyncMode = "full"
+    // SyncModePatch only accepts patch-based events (requires event trigger).
+    SyncModePatch SyncMode = "patch"
+    // SyncModeAuto performs full sync on schedule/manual, patch sync on events (default).
+    SyncModeAuto SyncMode = "auto"
+)
+```
+
 <a name="Tag"></a>
 ## type Tag
 
@@ -5798,6 +6046,7 @@ type Workflowable struct {
     ConnectionID     string         `json:"connection_id,omitempty"     validate:"validsqid=connections,required_if=Type import,required_if=Type export" example:"conn_8x2m9k4n7p5q"`
     Repository       string         `json:"repository,omitempty"        validate:"required_if=Type import,required_if=Type export"                       example:"customer-analytics"`
     RepositoryBranch string         `json:"repository_branch,omitempty" validate:"required_if=Type import,required_if=Type export"                       example:"main"`
+    SyncMode         SyncMode       `json:"sync_mode,omitempty"         validate:"omitempty,oneof=full patch auto"                                       example:"auto"`
 
     ImportFromConnectionPaths []string `json:"import_from_connection_paths,omitempty" example:"/exports/customers.csv,/exports/metadata.json"`
     ImportToRepositoryPath    string   `json:"import_to_repository_path,omitempty"    example:"/imported/customers.json"                      validate:"omitempty"`
