@@ -59,7 +59,7 @@ import "irmin-connectors/connectors"
 
 - [func RegisterAllConnectors\(ctx context.Context, database \*db.Database, logger \*slog.Logger, apiBaseURL, apiToken, url string\) error](<#RegisterAllConnectors>)
 - [func SetupConnectorRoutes\(app \*models.ConnectorsApp\)](<#SetupConnectorRoutes>)
-- [func StartConnectorSubscriptionListener\(ctx context.Context, connectorName string, subscription db.Subscription, d \*db.Database, logger \*slog.Logger\) error](<#StartConnectorSubscriptionListener>)
+- [func SetupListenerManager\(logger \*slog.Logger, database \*db.Database\) \*listeners.Manager](<#SetupListenerManager>)
 
 
 <a name="RegisterAllConnectors"></a>
@@ -80,14 +80,14 @@ func SetupConnectorRoutes(app *models.ConnectorsApp)
 
 SetupConnectorRoutes sets up the routes for all connectors.
 
-<a name="StartConnectorSubscriptionListener"></a>
-## func StartConnectorSubscriptionListener
+<a name="SetupListenerManager"></a>
+## func SetupListenerManager
 
 ```go
-func StartConnectorSubscriptionListener(ctx context.Context, connectorName string, subscription db.Subscription, d *db.Database, logger *slog.Logger) error
+func SetupListenerManager(logger *slog.Logger, database *db.Database) *listeners.Manager
 ```
 
-StartConnectorSubscriptionListener starts a listener for a subscription with the correct connector.
+SetupListenerManager creates a new listener manager and registers all connector listeners.
 
 # db
 
@@ -114,6 +114,7 @@ import "irmin-connectors/db"
   - [func \(d \*Database\) CreateSubscription\(subscription \*Subscription\) \(\*Subscription, error\)](<#Database.CreateSubscription>)
   - [func \(d \*Database\) DeleteConnectorRegistration\(id uint\) error](<#Database.DeleteConnectorRegistration>)
   - [func \(d \*Database\) DeleteOperation\(id uint\) error](<#Database.DeleteOperation>)
+  - [func \(d \*Database\) DeleteSubscriptionByID\(id uint\) error](<#Database.DeleteSubscriptionByID>)
   - [func \(d \*Database\) DeleteSubscriptionsByConnectorRegistrationID\(connectorRegistrationID uint\) error](<#Database.DeleteSubscriptionsByConnectorRegistrationID>)
   - [func \(d \*Database\) DeleteSubscriptionsByOperationID\(operationID uint\) error](<#Database.DeleteSubscriptionsByOperationID>)
   - [func \(d \*Database\) FindOperationByConfigHash\(connectorRegistrationID uint, configHash \*string\) \(\*Operation, error\)](<#Database.FindOperationByConfigHash>)
@@ -127,6 +128,7 @@ import "irmin-connectors/db"
   - [func \(d \*Database\) GetOperationByID\(id uint\) \(\*Operation, error\)](<#Database.GetOperationByID>)
   - [func \(d \*Database\) GetOperationsByConnectorRegistrationID\(id uint\) \(\[\]Operation, error\)](<#Database.GetOperationsByConnectorRegistrationID>)
   - [func \(d \*Database\) GetPgxConn\(ctx context.Context\) \(\*pgxpool.Conn, error\)](<#Database.GetPgxConn>)
+  - [func \(d \*Database\) GetSubscriptionByID\(id uint\) \(\*Subscription, error\)](<#Database.GetSubscriptionByID>)
   - [func \(d \*Database\) Migrate\(\) error](<#Database.Migrate>)
   - [func \(d \*Database\) Reset\(\) error](<#Database.Reset>)
   - [func \(d \*Database\) RunRawQuery\(sqlQuery string, args ...any\) error](<#Database.RunRawQuery>)
@@ -308,6 +310,15 @@ func (d *Database) DeleteOperation(id uint) error
 
 DeleteOperation removes the record with the specified ID from the database.
 
+<a name="Database.DeleteSubscriptionByID"></a>
+### func \(\*Database\) DeleteSubscriptionByID
+
+```go
+func (d *Database) DeleteSubscriptionByID(id uint) error
+```
+
+DeleteSubscriptionByID removes a subscription by its ID.
+
 <a name="Database.DeleteSubscriptionsByConnectorRegistrationID"></a>
 ### func \(\*Database\) DeleteSubscriptionsByConnectorRegistrationID
 
@@ -424,6 +435,15 @@ func (d *Database) GetPgxConn(ctx context.Context) (*pgxpool.Conn, error)
 ```
 
 GetPgxConn returns a pgx connection from the shared pool.
+
+<a name="Database.GetSubscriptionByID"></a>
+### func \(\*Database\) GetSubscriptionByID
+
+```go
+func (d *Database) GetSubscriptionByID(id uint) (*Subscription, error)
+```
+
+GetSubscriptionByID retrieves a Subscription by its ID.
 
 <a name="Database.Migrate"></a>
 ### func \(\*Database\) Migrate
@@ -621,6 +641,122 @@ func ValidateOperationToken(d *db.Database, logger *slog.Logger, c fiber.Ctx, co
 
 ValidateOperationToken validates the provided token against the operation token of the connector registration instance.
 
+# listeners
+
+```go
+import "irmin-connectors/listeners"
+```
+
+## Index
+
+- [type ListenerFunc](<#ListenerFunc>)
+- [type Manager](<#Manager>)
+  - [func NewManager\(logger \*slog.Logger, database \*db.Database\) \*Manager](<#NewManager>)
+  - [func \(m \*Manager\) GetActiveListenerCount\(\) int](<#Manager.GetActiveListenerCount>)
+  - [func \(m \*Manager\) IsListenerRunning\(subscriptionID uint\) bool](<#Manager.IsListenerRunning>)
+  - [func \(m \*Manager\) RegisterConnectorListener\(connectorName string, listenerFunc ListenerFunc\)](<#Manager.RegisterConnectorListener>)
+  - [func \(m \*Manager\) StartListener\(connectorName string, subscription db.Subscription\) error](<#Manager.StartListener>)
+  - [func \(m \*Manager\) StopAll\(\)](<#Manager.StopAll>)
+  - [func \(m \*Manager\) StopListener\(subscriptionID uint\) error](<#Manager.StopListener>)
+  - [func \(m \*Manager\) StopListenerAsync\(subscriptionID uint\) error](<#Manager.StopListenerAsync>)
+
+
+<a name="ListenerFunc"></a>
+## type ListenerFunc
+
+ListenerFunc is a function type for starting a connector\-specific listener. It should block until the context is cancelled or an error occurs.
+
+```go
+type ListenerFunc func(ctx context.Context, logger *slog.Logger, subscription db.Subscription, database *db.Database) error
+```
+
+<a name="Manager"></a>
+## type Manager
+
+Manager manages active listeners for subscriptions. It provides thread\-safe methods to start and stop listeners dynamically.
+
+```go
+type Manager struct {
+
+    // ConnectorListeners maps connector names to their listener functions.
+    // This is populated during initialization.
+    ConnectorListeners map[string]ListenerFunc
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewManager"></a>
+### func NewManager
+
+```go
+func NewManager(logger *slog.Logger, database *db.Database) *Manager
+```
+
+NewManager creates a new listener manager.
+
+<a name="Manager.GetActiveListenerCount"></a>
+### func \(\*Manager\) GetActiveListenerCount
+
+```go
+func (m *Manager) GetActiveListenerCount() int
+```
+
+GetActiveListenerCount returns the number of active listeners.
+
+<a name="Manager.IsListenerRunning"></a>
+### func \(\*Manager\) IsListenerRunning
+
+```go
+func (m *Manager) IsListenerRunning(subscriptionID uint) bool
+```
+
+IsListenerRunning checks if a listener is running for the given subscription ID.
+
+<a name="Manager.RegisterConnectorListener"></a>
+### func \(\*Manager\) RegisterConnectorListener
+
+```go
+func (m *Manager) RegisterConnectorListener(connectorName string, listenerFunc ListenerFunc)
+```
+
+RegisterConnectorListener registers a listener function for a connector.
+
+<a name="Manager.StartListener"></a>
+### func \(\*Manager\) StartListener
+
+```go
+func (m *Manager) StartListener(connectorName string, subscription db.Subscription) error
+```
+
+StartListener starts a listener for the given subscription. If a listener is already running for this subscription, it returns an error.
+
+<a name="Manager.StopAll"></a>
+### func \(\*Manager\) StopAll
+
+```go
+func (m *Manager) StopAll()
+```
+
+StopAll stops all active listeners. This should be called during graceful shutdown.
+
+<a name="Manager.StopListener"></a>
+### func \(\*Manager\) StopListener
+
+```go
+func (m *Manager) StopListener(subscriptionID uint) error
+```
+
+StopListener stops the listener for the given subscription ID. It waits for the listener to fully stop before returning.
+
+<a name="Manager.StopListenerAsync"></a>
+### func \(\*Manager\) StopListenerAsync
+
+```go
+func (m *Manager) StopListenerAsync(subscriptionID uint) error
+```
+
+StopListenerAsync stops the listener without waiting for it to finish.
+
 # models
 
 ```go
@@ -663,10 +799,11 @@ ConnectorsApp holds all the application dependencies.
 
 ```go
 type ConnectorsApp struct {
-    App    *fiber.App
-    DB     *db.Database
-    Env    *utils.ConnectorsEnv
-    Logger *slog.Logger
+    App             *fiber.App
+    DB              *db.Database
+    Env             *utils.ConnectorsEnv
+    Logger          *slog.Logger
+    ListenerManager *listeners.Manager
 }
 ```
 
@@ -1339,7 +1476,10 @@ import "irmin-connectors/connectors/common"
   - [func \(cs \*Controllers\) HandleConfigFields\(c fiber.Ctx, provider ConfigFieldProvider\) error](<#Controllers.HandleConfigFields>)
   - [func \(cs \*Controllers\) HandleConfigValidation\(c fiber.Ctx, provider ConfigValidationProvider\) error](<#Controllers.HandleConfigValidation>)
   - [func \(cs \*Controllers\) HandleOperationInit\(c fiber.Ctx, provider OperationInitProvider\) error](<#Controllers.HandleOperationInit>)
+  - [func \(cs \*Controllers\) HandleUnsubscribeFromChanges\(c fiber.Ctx, provider UnsubscribeProvider\) error](<#Controllers.HandleUnsubscribeFromChanges>)
 - [type DetailsPageConfig](<#DetailsPageConfig>)
+- [type ListenerManagerUnsubscribeProvider](<#ListenerManagerUnsubscribeProvider>)
+  - [func \(p \*ListenerManagerUnsubscribeProvider\) StopListener\(subscriptionID uint\) error](<#ListenerManagerUnsubscribeProvider.StopListener>)
 - [type NotSupportedPatchProvider](<#NotSupportedPatchProvider>)
   - [func \(p \*NotSupportedPatchProvider\) ExecutePatchOperation\(\_ fiber.Ctx, \_ any, \_ irminmodels.PatchOperation, \_, \_, \_ string, \_, \_, \_, \_ string\) error](<#NotSupportedPatchProvider.ExecutePatchOperation>)
   - [func \(p \*NotSupportedPatchProvider\) InitializeClient\(\_ fiber.Ctx, \_ \*slog.Logger, \_ \*db.Operation\) \(any, func\(\), error\)](<#NotSupportedPatchProvider.InitializeClient>)
@@ -1363,6 +1503,7 @@ import "irmin-connectors/connectors/common"
 - [type PushOperationProvider](<#PushOperationProvider>)
 - [type SchemaOperationProvider](<#SchemaOperationProvider>)
 - [type Subscription](<#Subscription>)
+- [type UnsubscribeProvider](<#UnsubscribeProvider>)
 
 
 <a name="BuildDetailsFromFields"></a>
@@ -1748,6 +1889,7 @@ type ConnectorController interface {
     OperationPush(c fiber.Ctx) error
     OperationPatch(c fiber.Ctx) error
     SubscribeToChanges(c fiber.Ctx) error
+    UnsubscribeFromChanges(c fiber.Ctx) error
 }
 ```
 
@@ -1814,6 +1956,15 @@ func (cs *Controllers) HandleOperationInit(c fiber.Ctx, provider OperationInitPr
 
 HandleOperationInit provides a common HTTP handler for operation initialization endpoints.
 
+<a name="Controllers.HandleUnsubscribeFromChanges"></a>
+### func \(\*Controllers\) HandleUnsubscribeFromChanges
+
+```go
+func (cs *Controllers) HandleUnsubscribeFromChanges(c fiber.Ctx, provider UnsubscribeProvider) error
+```
+
+HandleUnsubscribeFromChanges provides common logic for unsubscribing from database changes. It validates the request, verifies subscription ownership, stops any active listeners, and deletes the subscription from the database.
+
 <a name="DetailsPageConfig"></a>
 ## type DetailsPageConfig
 
@@ -1826,6 +1977,26 @@ type DetailsPageConfig struct {
     EventListeningDescription string // Custom description for event listening capabilities
 }
 ```
+
+<a name="ListenerManagerUnsubscribeProvider"></a>
+## type ListenerManagerUnsubscribeProvider
+
+ListenerManagerUnsubscribeProvider implements UnsubscribeProvider using a ListenerManager.
+
+```go
+type ListenerManagerUnsubscribeProvider struct {
+    App *models.ConnectorsApp
+}
+```
+
+<a name="ListenerManagerUnsubscribeProvider.StopListener"></a>
+### func \(\*ListenerManagerUnsubscribeProvider\) StopListener
+
+```go
+func (p *ListenerManagerUnsubscribeProvider) StopListener(subscriptionID uint) error
+```
+
+StopListener implements UnsubscribeProvider by delegating to the ListenerManager.
 
 <a name="NotSupportedPatchProvider"></a>
 ## type NotSupportedPatchProvider
@@ -2116,6 +2287,19 @@ type Subscription struct {
     WebhookAccessToken      string  `json:"webhook_access_token"      example:"1234567890"`
     ConnectorRegistrationID uint    `json:"connector_registration_id" example:"1"`
     OperationID             uint    `json:"operation_id"              example:"1"`
+}
+```
+
+<a name="UnsubscribeProvider"></a>
+## type UnsubscribeProvider
+
+UnsubscribeProvider defines the interface for handling subscription unsubscription.
+
+```go
+type UnsubscribeProvider interface {
+    // StopListener stops the listener for the given subscription ID.
+    // Returns nil if no listener management is needed or if the listener was stopped successfully.
+    StopListener(subscriptionID uint) error
 }
 ```
 
@@ -3799,6 +3983,7 @@ import "irmin-connectors/connectors/firecrawl/controllers"
   - [func \(cs \*Controllers\) OperationStatus\(c fiber.Ctx\) error](<#Controllers.OperationStatus>)
   - [func \(cs \*Controllers\) SubscribeToChanges\(c fiber.Ctx\) error](<#Controllers.SubscribeToChanges>)
   - [func \(cs \*Controllers\) TestConnection\(\_ fiber.Ctx, details map\[string\]any, \_ map\[string\]any\) \(bool, bool, bool, \[\]string\)](<#Controllers.TestConnection>)
+  - [func \(cs \*Controllers\) UnsubscribeFromChanges\(c fiber.Ctx\) error](<#Controllers.UnsubscribeFromChanges>)
   - [func \(cs \*Controllers\) ValidateFields\(\_ fiber.Ctx, details map\[string\]any, \_ map\[string\]any\) \[\]string](<#Controllers.ValidateFields>)
   - [func \(cs \*Controllers\) ValidateOperationTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateOperationTokenMiddleware>)
   - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
@@ -3993,6 +4178,15 @@ func (cs *Controllers) TestConnection(_ fiber.Ctx, details map[string]any, _ map
 ```
 
 TestConnection implements the ConfigValidationProvider interface. For Firecrawl, we validate the configuration but don't make an actual API call since that would consume credits.
+
+<a name="Controllers.UnsubscribeFromChanges"></a>
+### func \(\*Controllers\) UnsubscribeFromChanges
+
+```go
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+```
+
+UnsubscribeFromChanges godoc @Summary Firecrawl connector does not support webhook subscriptions @Description Firecrawl connector does not support webhook subscriptions @Tags firecrawl @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param subscription\_id formData string true "Subscription ID" @Success 501 \{object\} fiber.Map "Not implemented \- Firecrawl connector does not support webhook subscriptions" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /firecrawl/operation/unsubscribe \[post\]
 
 <a name="Controllers.ValidateFields"></a>
 ### func \(\*Controllers\) ValidateFields
@@ -4315,6 +4509,7 @@ import "irmin-connectors/connectors/http/controllers"
   - [func \(cs \*Controllers\) OperationStatus\(c fiber.Ctx\) error](<#Controllers.OperationStatus>)
   - [func \(cs \*Controllers\) SubscribeToChanges\(c fiber.Ctx\) error](<#Controllers.SubscribeToChanges>)
   - [func \(cs \*Controllers\) TestConnection\(ctx fiber.Ctx, details map\[string\]any, settings map\[string\]any\) \(bool, bool, bool, \[\]string\)](<#Controllers.TestConnection>)
+  - [func \(cs \*Controllers\) UnsubscribeFromChanges\(c fiber.Ctx\) error](<#Controllers.UnsubscribeFromChanges>)
   - [func \(cs \*Controllers\) ValidateFields\(\_ fiber.Ctx, details map\[string\]any, \_ map\[string\]any\) \[\]string](<#Controllers.ValidateFields>)
   - [func \(cs \*Controllers\) ValidateOperationTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateOperationTokenMiddleware>)
   - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
@@ -4512,6 +4707,15 @@ func (cs *Controllers) TestConnection(ctx fiber.Ctx, details map[string]any, set
 ```
 
 TestConnection implements the ConfigValidationProvider interface.
+
+<a name="Controllers.UnsubscribeFromChanges"></a>
+### func \(\*Controllers\) UnsubscribeFromChanges
+
+```go
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+```
+
+UnsubscribeFromChanges godoc @Summary HTTP connector does not support webhook subscriptions @Description HTTP connector does not support webhook subscriptions @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param subscription\_id formData string true "Subscription ID" @Success 501 \{object\} fiber.Map "Not implemented \- HTTP connector does not support webhook subscriptions" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /http/operation/unsubscribe \[post\]
 
 <a name="Controllers.ValidateFields"></a>
 ### func \(\*Controllers\) ValidateFields
@@ -5042,6 +5246,7 @@ import "irmin-connectors/connectors/mysql/controllers"
 
 ## Index
 
+- [Constants](<#constants>)
 - [type Controllers](<#Controllers>)
   - [func NewControllers\(app \*models.ConnectorsApp\) \*Controllers](<#NewControllers>)
   - [func \(cs \*Controllers\) BuildDetails\(fields map\[string\]string\) \(map\[string\]string, error\)](<#Controllers.BuildDetails>)
@@ -5063,6 +5268,7 @@ import "irmin-connectors/connectors/mysql/controllers"
   - [func \(cs \*Controllers\) OperationStatus\(c fiber.Ctx\) error](<#Controllers.OperationStatus>)
   - [func \(cs \*Controllers\) SubscribeToChanges\(c fiber.Ctx\) error](<#Controllers.SubscribeToChanges>)
   - [func \(cs \*Controllers\) TestConnection\(ctx fiber.Ctx, details map\[string\]any, settings map\[string\]any\) \(bool, bool, bool, \[\]string\)](<#Controllers.TestConnection>)
+  - [func \(cs \*Controllers\) UnsubscribeFromChanges\(c fiber.Ctx\) error](<#Controllers.UnsubscribeFromChanges>)
   - [func \(cs \*Controllers\) ValidateFields\(\_ fiber.Ctx, details map\[string\]any, \_ map\[string\]any\) \[\]string](<#Controllers.ValidateFields>)
   - [func \(cs \*Controllers\) ValidateOperationTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateOperationTokenMiddleware>)
   - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
@@ -5081,6 +5287,14 @@ import "irmin-connectors/connectors/mysql/controllers"
   - [func \(p \*MySQLSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#MySQLSchemaProvider.GetSupportedOperationTypes>)
   - [func \(p \*MySQLSchemaProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#MySQLSchemaProvider.InitializeClient>)
 
+
+## Constants
+
+<a name="ConnectorName"></a>ConnectorName is the name used to identify this connector in the listener manager.
+
+```go
+const ConnectorName = "MySQL"
+```
 
 <a name="Controllers"></a>
 ## type Controllers
@@ -5272,6 +5486,15 @@ func (cs *Controllers) TestConnection(ctx fiber.Ctx, details map[string]any, set
 ```
 
 TestConnection implements the ConfigValidationProvider interface.
+
+<a name="Controllers.UnsubscribeFromChanges"></a>
+### func \(\*Controllers\) UnsubscribeFromChanges
+
+```go
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+```
+
+UnsubscribeFromChanges godoc @Summary Unsubscribe from MySQL database changes @Description Stop monitoring MySQL database changes and remove the subscription @Tags mysql @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param subscription\_id formData string true "ID of the subscription to remove" @Success 200 \{object\} fiber.Map "Subscription removed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid parameters" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} fiber.Map "Forbidden \- subscription does not belong to this operation" @Failure 404 \{object\} fiber.Map "Subscription not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/operation/unsubscribe \[post\]
 
 <a name="Controllers.ValidateFields"></a>
 ### func \(\*Controllers\) ValidateFields
@@ -5792,6 +6015,7 @@ import "irmin-connectors/connectors/pinecone/controllers"
   - [func \(cs \*Controllers\) OperationStatus\(c fiber.Ctx\) error](<#Controllers.OperationStatus>)
   - [func \(cs \*Controllers\) SubscribeToChanges\(c fiber.Ctx\) error](<#Controllers.SubscribeToChanges>)
   - [func \(cs \*Controllers\) TestConnection\(\_ fiber.Ctx, details map\[string\]any, settings map\[string\]any\) \(bool, bool, bool, \[\]string\)](<#Controllers.TestConnection>)
+  - [func \(cs \*Controllers\) UnsubscribeFromChanges\(c fiber.Ctx\) error](<#Controllers.UnsubscribeFromChanges>)
   - [func \(cs \*Controllers\) ValidateFields\(\_ fiber.Ctx, details map\[string\]any, \_ map\[string\]any\) \[\]string](<#Controllers.ValidateFields>)
   - [func \(cs \*Controllers\) ValidateOperationTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateOperationTokenMiddleware>)
   - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
@@ -5990,6 +6214,15 @@ func (cs *Controllers) TestConnection(_ fiber.Ctx, details map[string]any, setti
 
 TestConnection implements the ConfigValidationProvider interface.
 
+<a name="Controllers.UnsubscribeFromChanges"></a>
+### func \(\*Controllers\) UnsubscribeFromChanges
+
+```go
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+```
+
+UnsubscribeFromChanges is not supported by Pinecone connector.
+
 <a name="Controllers.ValidateFields"></a>
 ### func \(\*Controllers\) ValidateFields
 
@@ -6187,7 +6420,7 @@ import "irmin-connectors/connectors/postgres/client"
 - [type ColumnInfo](<#ColumnInfo>)
 - [type PostgresClient](<#PostgresClient>)
   - [func InitPostgresClient\(ctx context.Context, logger \*slog.Logger, operation \*db.Operation\) \(\*PostgresClient, \*string, error\)](<#InitPostgresClient>)
-  - [func NewPostgresClient\(ctx context.Context, host string, port int, user, password, defaultDB string, sslMode bool\) \(\*PostgresClient, error\)](<#NewPostgresClient>)
+  - [func NewPostgresClient\(ctx context.Context, host string, port int, user, password, defaultDB string, sslMode bool, channelBinding string\) \(\*PostgresClient, error\)](<#NewPostgresClient>)
   - [func \(pc \*PostgresClient\) BeginTransaction\(ctx context.Context\) \(\*Tx, error\)](<#PostgresClient.BeginTransaction>)
   - [func \(pc \*PostgresClient\) Close\(\)](<#PostgresClient.Close>)
   - [func \(pc \*PostgresClient\) Exec\(ctx context.Context, sql string, args ...any\) \(pgconn.CommandTag, error\)](<#PostgresClient.Exec>)
@@ -6253,7 +6486,7 @@ InitPostgresClient initializes a PostgresClient instance based on the data provi
 ### func NewPostgresClient
 
 ```go
-func NewPostgresClient(ctx context.Context, host string, port int, user, password, defaultDB string, sslMode bool) (*PostgresClient, error)
+func NewPostgresClient(ctx context.Context, host string, port int, user, password, defaultDB string, sslMode bool, channelBinding string) (*PostgresClient, error)
 ```
 
 NewPostgresClient connects to Postgres without specifying a database. This is useful for listing available databases or validating credentials without "locking" into a specific dbName.
@@ -6533,6 +6766,7 @@ import "irmin-connectors/connectors/postgres/controllers"
 
 ## Index
 
+- [Constants](<#constants>)
 - [type Controllers](<#Controllers>)
   - [func NewControllers\(app \*models.ConnectorsApp\) \*Controllers](<#NewControllers>)
   - [func \(cs \*Controllers\) BuildDetails\(fields map\[string\]string\) \(map\[string\]string, error\)](<#Controllers.BuildDetails>)
@@ -6553,6 +6787,7 @@ import "irmin-connectors/connectors/postgres/controllers"
   - [func \(cs \*Controllers\) OperationStatus\(c fiber.Ctx\) error](<#Controllers.OperationStatus>)
   - [func \(cs \*Controllers\) SubscribeToChanges\(c fiber.Ctx\) error](<#Controllers.SubscribeToChanges>)
   - [func \(cs \*Controllers\) TestConnection\(ctx fiber.Ctx, details map\[string\]any, settings map\[string\]any\) \(bool, bool, bool, \[\]string\)](<#Controllers.TestConnection>)
+  - [func \(cs \*Controllers\) UnsubscribeFromChanges\(c fiber.Ctx\) error](<#Controllers.UnsubscribeFromChanges>)
   - [func \(cs \*Controllers\) ValidateFields\(\_ fiber.Ctx, details map\[string\]any, \_ map\[string\]any\) \[\]string](<#Controllers.ValidateFields>)
   - [func \(cs \*Controllers\) ValidateOperationTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateOperationTokenMiddleware>)
   - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
@@ -6571,6 +6806,14 @@ import "irmin-connectors/connectors/postgres/controllers"
   - [func \(p \*PostgresPushProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#PostgresPushProvider.InitializeClient>)
   - [func \(p \*PostgresPushProvider\) ProcessFiles\(c fiber.Ctx, client any, files map\[string\]\[\]byte, rawPath string\) error](<#PostgresPushProvider.ProcessFiles>)
 
+
+## Constants
+
+<a name="ConnectorName"></a>ConnectorName is the name used to identify this connector in the listener manager.
+
+```go
+const ConnectorName = "PostgreSQL"
+```
 
 <a name="Controllers"></a>
 ## type Controllers
@@ -6617,7 +6860,7 @@ BuildSettings implements the OperationInitProvider interface.
 func (cs *Controllers) ConfigFields(c fiber.Ctx) error
 ```
 
-ConfigFields godoc @Summary Get PostgreSQL connector configuration fields @Description Get dynamic configuration fields for the PostgreSQL connector based on the configuration key \(details or settings\). For settings, dynamically fetches available databases from the PostgreSQL server. @Tags postgres @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Param details\[host\] formData string false "PostgreSQL server hostname \(required for settings key to fetch databases\)" @Param details\[port\] formData integer false "PostgreSQL server port \(required for settings key to fetch databases\)" @Param details\[username\] formData string false "Username \(required for settings key to fetch databases\)" @Param details\[password\] formData string false "Password \(required for settings key to fetch databases\)" @Param details\[default\_db\] formData string false "Default database \(required for settings key to fetch databases\)" @Param details\[ssl\_mode\] formData boolean false "SSL mode enabled \(required for settings key to fetch databases\)" @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration key or missing connection details" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/configuration/\{key\}/fields \[post\]
+ConfigFields godoc @Summary Get PostgreSQL connector configuration fields @Description Get dynamic configuration fields for the PostgreSQL connector based on the configuration key \(details or settings\). For settings, dynamically fetches available databases from the PostgreSQL server. @Tags postgres @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Param details\[host\] formData string false "PostgreSQL server hostname \(required for settings key to fetch databases\)" @Param details\[port\] formData integer false "PostgreSQL server port \(required for settings key to fetch databases\)" @Param details\[username\] formData string false "Username \(required for settings key to fetch databases\)" @Param details\[password\] formData string false "Password \(required for settings key to fetch databases\)" @Param details\[default\_db\] formData string false "Default database \(required for settings key to fetch databases\)" @Param details\[ssl\_mode\] formData boolean false "SSL mode enabled \(required for settings key to fetch databases\)" @Param details\[channel\_binding\] formData string false "Channel binding mode for SCRAM authentication \(disable, prefer, require\)" @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration key or missing connection details" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/configuration/\{key\}/fields \[post\]
 
 <a name="Controllers.ConfigValidate"></a>
 ### func \(\*Controllers\) ConfigValidate
@@ -6626,7 +6869,7 @@ ConfigFields godoc @Summary Get PostgreSQL connector configuration fields @Descr
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
 ```
 
-ConfigValidate godoc @Summary Validate PostgreSQL connector configuration @Description Validate PostgreSQL connection details and settings by testing the actual connection to the PostgreSQL server and specified database @Tags postgres @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[host\] formData string true "PostgreSQL server hostname or IP address" @Param details\[port\] formData integer false "PostgreSQL server port \(default: 5432\)" @Param details\[username\] formData string true "Username for PostgreSQL authentication" @Param details\[password\] formData string true "Password for PostgreSQL authentication" @Param details\[default\_db\] formData string false "Default database for initial connection" @Param details\[ssl\_mode\] formData boolean false "Enable SSL mode for secure connections" @Param settings\[database\] formData string false "Target database name to validate connection \(optional for details\-only validation\)" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/configuration/validate \[post\]
+ConfigValidate godoc @Summary Validate PostgreSQL connector configuration @Description Validate PostgreSQL connection details and settings by testing the actual connection to the PostgreSQL server and specified database @Tags postgres @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[host\] formData string true "PostgreSQL server hostname or IP address" @Param details\[port\] formData integer false "PostgreSQL server port \(default: 5432\)" @Param details\[username\] formData string true "Username for PostgreSQL authentication" @Param details\[password\] formData string true "Password for PostgreSQL authentication" @Param details\[default\_db\] formData string false "Default database for initial connection" @Param details\[ssl\_mode\] formData boolean false "Enable SSL mode for secure connections" @Param details\[channel\_binding\] formData string false "Channel binding mode for SCRAM authentication \(disable, prefer, require\)" @Param settings\[database\] formData string false "Target database name to validate connection \(optional for details\-only validation\)" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/configuration/validate \[post\]
 
 <a name="Controllers.DetailsPage"></a>
 ### func \(\*Controllers\) DetailsPage
@@ -6753,6 +6996,15 @@ func (cs *Controllers) TestConnection(ctx fiber.Ctx, details map[string]any, set
 ```
 
 TestConnection implements the ConfigValidationProvider interface.
+
+<a name="Controllers.UnsubscribeFromChanges"></a>
+### func \(\*Controllers\) UnsubscribeFromChanges
+
+```go
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+```
+
+UnsubscribeFromChanges godoc @Summary Unsubscribe from PostgreSQL database changes @Description Stop monitoring PostgreSQL database changes and remove the subscription @Tags postgres @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param subscription\_id formData string true "ID of the subscription to remove" @Success 200 \{object\} fiber.Map "Subscription removed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid parameters" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} fiber.Map "Forbidden \- subscription does not belong to this operation" @Failure 404 \{object\} fiber.Map "Subscription not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/operation/unsubscribe \[post\]
 
 <a name="Controllers.ValidateFields"></a>
 ### func \(\*Controllers\) ValidateFields
@@ -6932,12 +7184,13 @@ import "irmin-connectors/connectors/postgres/models"
 
 ```go
 type ConnectionDetails struct {
-    Host      string `json:"host"`
-    Port      int    `json:"port"`
-    Username  string `json:"username"`
-    Password  string `json:"password"`
-    SSLMode   bool   `json:"ssl_mode"`
-    DefaultDB string `json:"default_db"`
+    Host           string `json:"host"`
+    Port           int    `json:"port"`
+    Username       string `json:"username"`
+    Password       string `json:"password"`
+    SSLMode        bool   `json:"ssl_mode"`
+    DefaultDB      string `json:"default_db"`
+    ChannelBinding string `json:"channel_binding"` // "", "disable", "prefer", "require"
 }
 ```
 
@@ -7737,6 +7990,7 @@ import "irmin-connectors/connectors/sftp/controllers"
   - [func \(cs \*Controllers\) OperationStatus\(c fiber.Ctx\) error](<#Controllers.OperationStatus>)
   - [func \(cs \*Controllers\) SubscribeToChanges\(c fiber.Ctx\) error](<#Controllers.SubscribeToChanges>)
   - [func \(cs \*Controllers\) TestConnection\(\_ fiber.Ctx, details map\[string\]any, settings map\[string\]any\) \(bool, bool, bool, \[\]string\)](<#Controllers.TestConnection>)
+  - [func \(cs \*Controllers\) UnsubscribeFromChanges\(c fiber.Ctx\) error](<#Controllers.UnsubscribeFromChanges>)
   - [func \(cs \*Controllers\) ValidateFields\(\_ fiber.Ctx, details map\[string\]any, \_ map\[string\]any\) \[\]string](<#Controllers.ValidateFields>)
   - [func \(cs \*Controllers\) ValidateOperationTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateOperationTokenMiddleware>)
   - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
@@ -7960,6 +8214,15 @@ func (cs *Controllers) TestConnection(_ fiber.Ctx, details map[string]any, setti
 ```
 
 TestConnection implements the ConfigValidationProvider interface.
+
+<a name="Controllers.UnsubscribeFromChanges"></a>
+### func \(\*Controllers\) UnsubscribeFromChanges
+
+```go
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+```
+
+UnsubscribeFromChanges godoc @Summary Unsubscribe from changes \(not supported\) @Description SFTP connector does not support real\-time subscriptions as SFTP is a file transfer protocol without webhook capabilities @Tags sftp @Security OperationTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param subscription\_id formData string true "Subscription ID \(not supported for SFTP\)" @Success 501 \{object\} fiber.Map "Not implemented \- SFTP does not support subscriptions" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /sftp/operation/unsubscribe \[post\]
 
 <a name="Controllers.ValidateFields"></a>
 ### func \(\*Controllers\) ValidateFields

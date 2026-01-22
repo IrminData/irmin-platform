@@ -53,6 +53,7 @@ func InitPostgresClient(
 		connectionDetails.Password,
 		connectionDetails.DefaultDB,
 		connectionDetails.SSLMode,
+		connectionDetails.ChannelBinding,
 	)
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to create Postgres client",

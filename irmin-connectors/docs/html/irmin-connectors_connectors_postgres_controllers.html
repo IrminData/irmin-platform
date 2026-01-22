@@ -5,6 +5,13 @@
 package postgrescontrollers // import "irmin-connectors/connectors/postgres/controllers"
 
 
+CONSTANTS
+
+const ConnectorName = "PostgreSQL"
+    ConnectorName is the name used to identify this connector in the listener
+    manager.
+
+
 TYPES
 
 type Controllers struct {
@@ -31,20 +38,21 @@ func (cs *Controllers) ConfigFields(c fiber.Ctx) error
     @Produce json @Param key path string true "Configuration key" Enums(details,
     settings) @Param details[host] formData string false "PostgreSQL
     server hostname (required for settings key to fetch databases)" @Param
-    details[port] formData integer false "PostgreSQL server port (required
-    for settings key to fetch databases)" @Param details[username] formData
-    string false "Username (required for settings key to fetch databases)"
-    @Param details[password] formData string false "Password (required for
-    settings key to fetch databases)" @Param details[default_db] formData
-    string false "Default database (required for settings key to fetch
-    databases)" @Param details[ssl_mode] formData boolean false "SSL mode
-    enabled (required for settings key to fetch databases)" @Success 200
-    {object} map[string]irminmodels.DynamicField "Configuration fields
-    retrieved successfully" @Failure 400 {object} fiber.Map "Bad request -
-    invalid configuration key or missing connection details" @Failure 401
-    {object} fiber.Map "Unauthorized - invalid or missing authentication"
-    @Failure 500 {object} fiber.Map "Internal server error" @Router
-    /postgres/configuration/{key}/fields [post]
+    details[port] formData integer false "PostgreSQL server port (required for
+    settings key to fetch databases)" @Param details[username] formData string
+    false "Username (required for settings key to fetch databases)" @Param
+    details[password] formData string false "Password (required for settings
+    key to fetch databases)" @Param details[default_db] formData string false
+    "Default database (required for settings key to fetch databases)" @Param
+    details[ssl_mode] formData boolean false "SSL mode enabled (required for
+    settings key to fetch databases)" @Param details[channel_binding] formData
+    string false "Channel binding mode for SCRAM authentication (disable,
+    prefer, require)" @Success 200 {object} map[string]irminmodels.DynamicField
+    "Configuration fields retrieved successfully" @Failure 400 {object}
+    fiber.Map "Bad request - invalid configuration key or missing connection
+    details" @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing
+    authentication" @Failure 500 {object} fiber.Map "Internal server error"
+    @Router /postgres/configuration/{key}/fields [post]
 
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
     ConfigValidate godoc @Summary Validate PostgreSQL connector configuration
@@ -58,14 +66,15 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
     true "Password for PostgreSQL authentication" @Param details[default_db]
     formData string false "Default database for initial connection" @Param
     details[ssl_mode] formData boolean false "Enable SSL mode for secure
-    connections" @Param settings[database] formData string false "Target
-    database name to validate connection (optional for details-only validation)"
-    @Success 200 {object} irminmodels.ConnectorConfigurationValidationResult
-    "Configuration validation result" @Failure 400 {object} fiber.Map "Bad
-    request - invalid configuration data" @Failure 401 {object} fiber.Map
-    "Unauthorized - invalid or missing authentication" @Failure 500 {object}
-    fiber.Map "Internal server error" @Router /postgres/configuration/validate
-    [post]
+    connections" @Param details[channel_binding] formData string false "Channel
+    binding mode for SCRAM authentication (disable, prefer, require)" @Param
+    settings[database] formData string false "Target database name to validate
+    connection (optional for details-only validation)" @Success 200 {object}
+    irminmodels.ConnectorConfigurationValidationResult "Configuration validation
+    result" @Failure 400 {object} fiber.Map "Bad request - invalid configuration
+    data" @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing
+    authentication" @Failure 500 {object} fiber.Map "Internal server error"
+    @Router /postgres/configuration/validate [post]
 
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error
     DetailsPage godoc @Summary Get PostgreSQL connector details page
@@ -224,6 +233,21 @@ func (cs *Controllers) TestConnection(
 	settings map[string]any,
 ) (bool, bool, bool, []string)
     TestConnection implements the ConfigValidationProvider interface.
+
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+    UnsubscribeFromChanges godoc @Summary Unsubscribe from PostgreSQL database
+    changes @Description Stop monitoring PostgreSQL database changes and
+    remove the subscription @Tags postgres @Security OperationTokenAuth @Accept
+    multipart/form-data @Produce json @Param operation_token formData string
+    true "Operation token received from operation/init" @Param subscription_id
+    formData string true "ID of the subscription to remove" @Success 200
+    {object} fiber.Map "Subscription removed successfully" @Failure 400
+    {object} fiber.Map "Bad request - invalid parameters" @Failure 401
+    {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Failure 403 {object} fiber.Map "Forbidden - subscription does not belong
+    to this operation" @Failure 404 {object} fiber.Map "Subscription not
+    found" @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /postgres/operation/unsubscribe [post]
 
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
     ValidateFields implements the ConfigValidationProvider interface.

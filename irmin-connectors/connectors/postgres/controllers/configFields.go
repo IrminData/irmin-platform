@@ -28,6 +28,7 @@ import (
 // @Param details[password] formData string false "Password (required for settings key to fetch databases)"
 // @Param details[default_db] formData string false "Default database (required for settings key to fetch databases)"
 // @Param details[ssl_mode] formData boolean false "SSL mode enabled (required for settings key to fetch databases)"
+// @Param details[channel_binding] formData string false "Channel binding mode for SCRAM authentication (disable, prefer, require)"
 // @Success 200 {object} map[string]irminmodels.DynamicField "Configuration fields retrieved successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid configuration key or missing connection details"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
@@ -89,6 +90,9 @@ func (cs *Controllers) getSettingsFields(
 	if sslMode := fields["details[ssl_mode]"]; sslMode != "" {
 		details["ssl_mode"] = sslMode
 	}
+	if channelBinding := fields["details[channel_binding]"]; channelBinding != "" {
+		details["channel_binding"] = channelBinding
+	}
 
 	// Extract values using utility functions with defaults
 	host := utils.GetStringFromMap(details, "host", "")
@@ -98,6 +102,15 @@ func (cs *Controllers) getSettingsFields(
 	defaultDB := utils.GetStringFromMap(details, "default_db", "")
 	sslModeStr := utils.GetStringFromMap(details, "ssl_mode", "false")
 	sslMode := sslModeStr == "true"
+	channelBinding := utils.GetStringFromMap(details, "channel_binding", "")
+
+	// Validate channel_binding to prevent DSN injection
+	switch channelBinding {
+	case "", "disable", "prefer", "require":
+		// Valid values
+	default:
+		channelBinding = "" // Invalid value, reset to default
+	}
 
 	// Quick validation
 	if host == "" || port <= 0 || user == "" {
@@ -105,7 +118,7 @@ func (cs *Controllers) getSettingsFields(
 	}
 
 	// Create a client WITHOUT specifying a database (so we can fetch them)
-	pc, err := postgresclient.NewPostgresClient(c, host, port, user, password, defaultDB, sslMode)
+	pc, err := postgresclient.NewPostgresClient(c, host, port, user, password, defaultDB, sslMode, channelBinding)
 	if err != nil {
 		cs.Logger.Error("Error initialising Postgres client",
 			"error", err)

@@ -22,6 +22,7 @@ import (
 // @Param details[password] formData string true "Password for PostgreSQL authentication"
 // @Param details[default_db] formData string false "Default database for initial connection"
 // @Param details[ssl_mode] formData boolean false "Enable SSL mode for secure connections"
+// @Param details[channel_binding] formData string false "Channel binding mode for SCRAM authentication (disable, prefer, require)"
 // @Param settings[database] formData string false "Target database name to validate connection (optional for details-only validation)"
 // @Success 200 {object} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result"
 // @Failure 400 {object} fiber.Map "Bad request - invalid configuration data"
@@ -88,6 +89,7 @@ func (cs *Controllers) TestConnection(
 		connectionDetails.Password,
 		connectionDetails.DefaultDB,
 		connectionDetails.SSLMode,
+		connectionDetails.ChannelBinding,
 	)
 	if err != nil {
 		errors = append(errors, fmt.Sprintf("Failed to connect to PostgreSQL server: %v", err))

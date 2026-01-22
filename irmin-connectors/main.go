@@ -285,11 +285,15 @@ func setupRestrictedCORS(env *utils.ConnectorsEnv) fiber.Handler {
 
 // setupConnectorsApp creates a new application instance with all dependencies.
 func setupConnectorsApp(env *utils.ConnectorsEnv, database *db.Database, app *fiber.App) *models.ConnectorsApp {
+	logger := slog.Default()
+	listenerManager := connectors.SetupListenerManager(logger, database)
+
 	return &models.ConnectorsApp{
-		App:    app,
-		DB:     database,
-		Env:    env,
-		Logger: slog.Default(),
+		App:             app,
+		DB:              database,
+		Env:             env,
+		Logger:          logger,
+		ListenerManager: listenerManager,
 	}
 }
 
@@ -311,11 +315,11 @@ func initializeConnectors(app *models.ConnectorsApp, skipRegistrations bool) err
 		return err
 	}
 
-	ctx := context.Background()
+	// Start listeners for all existing subscriptions using the listener manager
 	for _, subscription := range subscriptions {
 		for _, reg := range registrations {
 			if reg.ID == subscription.ConnectorRegistrationID {
-				if listenerErr := connectors.StartConnectorSubscriptionListener(ctx, reg.ConnectorName, subscription, app.DB, app.Logger); listenerErr != nil {
+				if listenerErr := app.ListenerManager.StartListener(reg.ConnectorName, subscription); listenerErr != nil {
 					log.Printf(
 						"error starting subscription listener for subscription %d: %v",
 						subscription.ID,
@@ -564,6 +568,10 @@ func main() {
 			}
 		case <-quit:
 			log.Println("Shutting down server...")
+
+			// Stop all active listeners first
+			log.Println("Stopping all subscription listeners...")
+			connectorsApp.ListenerManager.StopAll()
 
 			// Shutdown with timeout
 			if appShutdownErr := app.Shutdown(); appShutdownErr != nil {

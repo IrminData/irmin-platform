@@ -38,6 +38,7 @@ func NewPostgresClient(
 	port int,
 	user, password, defaultDB string,
 	sslMode bool,
+	channelBinding string,
 ) (*PostgresClient, error)
     NewPostgresClient connects to Postgres without specifying a database.
     This is useful for listing available databases or validating credentials

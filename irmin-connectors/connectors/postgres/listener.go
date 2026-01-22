@@ -151,6 +151,15 @@ func StartListener(ctx context.Context, logger *slog.Logger, subscription db.Sub
 		return fmt.Errorf("invalid port number '%s': %w", details["port"], err)
 	}
 
+	// Validate channel_binding to prevent DSN injection
+	channelBinding := details["channel_binding"]
+	switch channelBinding {
+	case "", "disable", "prefer", "require":
+		// Valid values
+	default:
+		channelBinding = "" // Invalid value, reset to default
+	}
+
 	// Establish a connection to the PostgreSQL server
 	pgClient, err := postgresclient.NewPostgresClient(
 		ctx,
@@ -160,6 +169,7 @@ func StartListener(ctx context.Context, logger *slog.Logger, subscription db.Sub
 		details["password"],
 		details["default_db"],
 		details["ssl_mode"] == "true",
+		channelBinding,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create Postgres client: %w", err)

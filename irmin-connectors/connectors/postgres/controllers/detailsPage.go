@@ -22,6 +22,6 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error {
 		cs.App,
 		"postgres",
 		config.GetConnectorInfo,
-		"The connector sets up notification triggers on all tables. These triggers broadcast changes (inserts, updates, deletes) which are then captured by an event listener. The listener processes these notifications and can forward them via webhook endpoints, enabling real-time reactive workflows.",
+		"When you create a subscription in Irmin, this connector automatically sets up PostgreSQL notification triggers and starts a dedicated listener. Changes (inserts, updates, deletes) are captured in real-time using pg_notify and automatically sent to Irmin's webhook endpoint as patch operations. No manual webhook configuration is required - it's fully automatic.",
 	)
 }

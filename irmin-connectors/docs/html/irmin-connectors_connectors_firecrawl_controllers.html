@@ -191,6 +191,17 @@ func (cs *Controllers) TestConnection(
     Firecrawl, we validate the configuration but don't make an actual API call
     since that would consume credits.
 
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+    UnsubscribeFromChanges godoc @Summary Firecrawl connector does not support
+    webhook subscriptions @Description Firecrawl connector does not support
+    webhook subscriptions @Tags firecrawl @Security OperationTokenAuth @Accept
+    multipart/form-data @Produce json @Param operation_token formData string
+    true "Operation token received from operation/init" @Param subscription_id
+    formData string true "Subscription ID" @Success 501 {object} fiber.Map "Not
+    implemented - Firecrawl connector does not support webhook subscriptions"
+    @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing
+    authentication" @Router /firecrawl/operation/unsubscribe [post]
+
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
     ValidateFields implements the ConfigValidationProvider interface.
 

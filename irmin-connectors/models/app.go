@@ -2,6 +2,7 @@ package models
 
 import (
 	"irmin-connectors/db"
+	"irmin-connectors/listeners"
 	"irmin-connectors/utils"
 	"log/slog"
 
@@ -10,8 +11,9 @@ import (
 
 // ConnectorsApp holds all the application dependencies.
 type ConnectorsApp struct {
-	App    *fiber.App
-	DB     *db.Database
-	Env    *utils.ConnectorsEnv
-	Logger *slog.Logger
+	App             *fiber.App
+	DB              *db.Database
+	Env             *utils.ConnectorsEnv
+	Logger          *slog.Logger
+	ListenerManager *listeners.Manager
 }

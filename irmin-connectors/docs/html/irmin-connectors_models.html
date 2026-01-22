@@ -24,10 +24,11 @@ type ConnectorDetails struct {
 }
 
 type ConnectorsApp struct {
-	App    *fiber.App
-	DB     *db.Database
-	Env    *utils.ConnectorsEnv
-	Logger *slog.Logger
+	App             *fiber.App
+	DB              *db.Database
+	Env             *utils.ConnectorsEnv
+	Logger          *slog.Logger
+	ListenerManager *listeners.Manager
 }
     ConnectorsApp holds all the application dependencies.
 

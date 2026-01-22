@@ -111,6 +111,18 @@ func initializeFieldDefinitions() (map[string]irminmodels.DynamicField, map[stri
 				"false": "Disabled",
 			}),
 		},
+		"channel_binding": {
+			Type:     "select",
+			Label:    "Channel Binding",
+			Required: false,
+			HelpText: "Channel binding mode for SCRAM authentication. Enhances security against man-in-the-middle attacks.",
+			Options: common.CreateSelectOptionsWithLabels(map[string]string{
+				"":        "Default",
+				"disable": "Disable",
+				"prefer":  "Prefer (use if available)",
+				"require": "Require",
+			}),
+		},
 	}
 
 	settingsFieldDefinitions := map[string]irminmodels.DynamicField{

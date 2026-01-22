@@ -18,15 +18,9 @@ func RegisterAllConnectors(
 func SetupConnectorRoutes(app *models.ConnectorsApp)
     SetupConnectorRoutes sets up the routes for all connectors.
 
-func StartConnectorSubscriptionListener(
-	ctx context.Context,
-	connectorName string,
-	subscription db.Subscription,
-	d *db.Database,
-	logger *slog.Logger,
-) error
-    StartConnectorSubscriptionListener starts a listener for a subscription with
-    the correct connector.
+func SetupListenerManager(logger *slog.Logger, database *db.Database) *listeners.Manager
+    SetupListenerManager creates a new listener manager and registers all
+    connector listeners.
 
 </pre>
 </body></html>

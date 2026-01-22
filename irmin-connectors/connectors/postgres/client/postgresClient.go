@@ -14,13 +14,14 @@ import (
 // PostgresClient manages a pgxpool.Pool connection to Postgres.
 // It may or may not be connected to a specific database, depending on how it's instantiated.
 type PostgresClient struct {
-	pool     *pgxpool.Pool
-	host     string
-	port     int
-	user     string
-	password string
-	sslMode  bool
-	dbName   string // May be empty if no specific database is chosen
+	pool           *pgxpool.Pool
+	host           string
+	port           int
+	user           string
+	password       string
+	sslMode        bool
+	channelBinding string // "", "disable", "prefer", "require"
+	dbName         string // May be empty if no specific database is chosen
 }
 
 // NewPostgresClient connects to Postgres without specifying a database.
@@ -32,22 +33,26 @@ func NewPostgresClient(
 	port int,
 	user, password, defaultDB string,
 	sslMode bool,
+	channelBinding string,
 ) (*PostgresClient, error) {
 	if host == "" || port == 0 || user == "" {
 		return nil, errors.New("missing required connection details: host, port, user")
 	}
-	// Build the DSN without a database.
-	var dsn string
+
+	// Build the DSN
+	sslModeStr := "disable"
 	if sslMode {
-		dsn = fmt.Sprintf(
-			"host=%s port=%d user=%s password=%s dbname=%s sslmode=require",
-			host, port, user, password, defaultDB,
-		)
-	} else {
-		dsn = fmt.Sprintf(
-			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			host, port, user, password, defaultDB,
-		)
+		sslModeStr = "require"
+	}
+
+	dsn := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		host, port, user, password, defaultDB, sslModeStr,
+	)
+
+	// Add channel_binding if specified
+	if channelBinding != "" {
+		dsn += fmt.Sprintf(" channel_binding=%s", channelBinding)
 	}
 
 	poolConfig, err := pgxpool.ParseConfig(dsn)
@@ -68,30 +73,33 @@ func NewPostgresClient(
 	}
 
 	return &PostgresClient{
-		pool:     pool,
-		host:     host,
-		port:     port,
-		user:     user,
-		password: password,
-		dbName:   defaultDB,
-		sslMode:  sslMode,
+		pool:           pool,
+		host:           host,
+		port:           port,
+		user:           user,
+		password:       password,
+		dbName:         defaultDB,
+		sslMode:        sslMode,
+		channelBinding: channelBinding,
 	}, nil
 }
 
 // WithDatabase creates a new client instance *connected to a specific database*.
 // This is handy once you decide which database you want to use (e.g. after listing them).
 func (pc *PostgresClient) WithDatabase(ctx context.Context, dbName string) (*PostgresClient, error) {
-	var dsn string
+	sslModeStr := "disable"
 	if pc.sslMode {
-		dsn = fmt.Sprintf(
-			"host=%s port=%d user=%s password=%s dbname=%s sslmode=require",
-			pc.host, pc.port, pc.user, pc.password, dbName,
-		)
-	} else {
-		dsn = fmt.Sprintf(
-			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			pc.host, pc.port, pc.user, pc.password, dbName,
-		)
+		sslModeStr = "require"
+	}
+
+	dsn := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		pc.host, pc.port, pc.user, pc.password, dbName, sslModeStr,
+	)
+
+	// Add channel_binding if specified
+	if pc.channelBinding != "" {
+		dsn += fmt.Sprintf(" channel_binding=%s", pc.channelBinding)
 	}
 
 	poolConfig, err := pgxpool.ParseConfig(dsn)
@@ -110,13 +118,14 @@ func (pc *PostgresClient) WithDatabase(ctx context.Context, dbName string) (*Pos
 	}
 
 	return &PostgresClient{
-		pool:     newPool,
-		host:     pc.host,
-		port:     pc.port,
-		user:     pc.user,
-		password: pc.password,
-		sslMode:  pc.sslMode,
-		dbName:   dbName,
+		pool:           newPool,
+		host:           pc.host,
+		port:           pc.port,
+		user:           pc.user,
+		password:       pc.password,
+		sslMode:        pc.sslMode,
+		channelBinding: pc.channelBinding,
+		dbName:         dbName,
 	}, nil
 }
 

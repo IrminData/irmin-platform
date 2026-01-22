@@ -8,6 +8,9 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// ConnectorName is the name used to identify this connector in the listener manager.
+const ConnectorName = "MySQL"
+
 // SubscribeToChanges godoc
 // @Summary Subscribe to MySQL database changes
 // @Description Set up real-time monitoring of MySQL database changes using binary log tracking and webhook notifications
@@ -70,6 +73,17 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to create subscription: " + err.Error(),
 		})
+	}
+
+	// Start the listener goroutine for this subscription using the listener manager
+	if cs.App.ListenerManager != nil {
+		if listenerErr := cs.App.ListenerManager.StartListener(ConnectorName, *subscription); listenerErr != nil {
+			cs.Logger.Error("Failed to start listener for new subscription",
+				"subscription_id", subscription.ID,
+				"error", listenerErr)
+			// Note: We don't fail the request here - the subscription is created and
+			// the listener will be started on next service restart if needed
+		}
 	}
 
 	// Send success response

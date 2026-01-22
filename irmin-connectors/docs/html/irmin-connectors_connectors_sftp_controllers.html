@@ -221,6 +221,18 @@ func (cs *Controllers) TestConnection(
 ) (bool, bool, bool, []string)
     TestConnection implements the ConfigValidationProvider interface.
 
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+    UnsubscribeFromChanges godoc @Summary Unsubscribe from changes (not
+    supported) @Description SFTP connector does not support real-time
+    subscriptions as SFTP is a file transfer protocol without webhook
+    capabilities @Tags sftp @Security OperationTokenAuth @Accept json @Produce
+    json @Param operation_token formData string true "Operation token
+    received from operation/init" @Param subscription_id formData string true
+    "Subscription ID (not supported for SFTP)" @Success 501 {object} fiber.Map
+    "Not implemented - SFTP does not support subscriptions" @Failure 401
+    {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Router /sftp/operation/unsubscribe [post]
+
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
     ValidateFields implements the ConfigValidationProvider interface.
 

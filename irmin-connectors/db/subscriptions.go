@@ -51,3 +51,20 @@ func (d *Database) DeleteSubscriptionsByConnectorRegistrationID(connectorRegistr
 	}
 	return nil
 }
+
+// GetSubscriptionByID retrieves a Subscription by its ID.
+func (d *Database) GetSubscriptionByID(id uint) (*Subscription, error) {
+	var subscription Subscription
+	if err := d.First(&subscription, id).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch subscription: %w", err)
+	}
+	return &subscription, nil
+}
+
+// DeleteSubscriptionByID removes a subscription by its ID.
+func (d *Database) DeleteSubscriptionByID(id uint) error {
+	if err := d.Delete(&Subscription{}, id).Error; err != nil {
+		return fmt.Errorf("failed to delete subscription: %w", err)
+	}
+	return nil
+}

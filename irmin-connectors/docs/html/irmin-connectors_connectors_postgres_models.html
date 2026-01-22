@@ -8,12 +8,13 @@ package postgresmodels // import "irmin-connectors/connectors/postgres/models"
 TYPES
 
 type ConnectionDetails struct {
-	Host      string `json:"host"`
-	Port      int    `json:"port"`
-	Username  string `json:"username"`
-	Password  string `json:"password"`
-	SSLMode   bool   `json:"ssl_mode"`
-	DefaultDB string `json:"default_db"`
+	Host           string `json:"host"`
+	Port           int    `json:"port"`
+	Username       string `json:"username"`
+	Password       string `json:"password"`
+	SSLMode        bool   `json:"ssl_mode"`
+	DefaultDB      string `json:"default_db"`
+	ChannelBinding string `json:"channel_binding"` // "", "disable", "prefer", "require"
 }
 
 func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, error)

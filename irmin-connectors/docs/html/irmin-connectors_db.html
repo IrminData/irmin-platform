@@ -98,6 +98,9 @@ func (d *Database) DeleteConnectorRegistration(id uint) error
 func (d *Database) DeleteOperation(id uint) error
     DeleteOperation removes the record with the specified ID from the database.
 
+func (d *Database) DeleteSubscriptionByID(id uint) error
+    DeleteSubscriptionByID removes a subscription by its ID.
+
 func (d *Database) DeleteSubscriptionsByConnectorRegistrationID(connectorRegistrationID uint) error
     DeleteSubscriptionsByConnectorRegistrationID removes all subscriptions
     associated with the specified connector registration ID.
@@ -150,6 +153,9 @@ func (d *Database) GetOperationsByConnectorRegistrationID(id uint) ([]Operation,
 
 func (d *Database) GetPgxConn(ctx context.Context) (*pgxpool.Conn, error)
     GetPgxConn returns a pgx connection from the shared pool.
+
+func (d *Database) GetSubscriptionByID(id uint) (*Subscription, error)
+    GetSubscriptionByID retrieves a Subscription by its ID.
 
 func (d *Database) Migrate() error
     Migrate runs the auto migration calls in the correct order. It separates the

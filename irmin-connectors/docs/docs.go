@@ -704,6 +704,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/firecrawl/operation/unsubscribe": {
+            "post": {
+                "security": [
+                    {
+                        "OperationTokenAuth": []
+                    }
+                ],
+                "description": "Firecrawl connector does not support webhook subscriptions",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "firecrawl"
+                ],
+                "summary": "Firecrawl connector does not support webhook subscriptions",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Operation token received from operation/init",
+                        "name": "operation_token",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Subscription ID",
+                        "name": "subscription_id",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "501": {
+                        "description": "Not implemented - Firecrawl connector does not support webhook subscriptions",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/http/configuration/validate": {
             "post": {
                 "security": [
@@ -1434,6 +1484,56 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Operation token received from operation/init",
                         "name": "operation_token",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "501": {
+                        "description": "Not implemented - HTTP connector does not support webhook subscriptions",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/http/operation/unsubscribe": {
+            "post": {
+                "security": [
+                    {
+                        "OperationTokenAuth": []
+                    }
+                ],
+                "description": "HTTP connector does not support webhook subscriptions",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "http"
+                ],
+                "summary": "HTTP connector does not support webhook subscriptions",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Operation token received from operation/init",
+                        "name": "operation_token",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Subscription ID",
+                        "name": "subscription_id",
                         "in": "formData",
                         "required": true
                     }
@@ -2276,6 +2376,80 @@ const docTemplate = `{
                 }
             }
         },
+        "/mysql/operation/unsubscribe": {
+            "post": {
+                "security": [
+                    {
+                        "OperationTokenAuth": []
+                    }
+                ],
+                "description": "Stop monitoring MySQL database changes and remove the subscription",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mysql"
+                ],
+                "summary": "Unsubscribe from MySQL database changes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Operation token received from operation/init",
+                        "name": "operation_token",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of the subscription to remove",
+                        "name": "subscription_id",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription removed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid parameters",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - subscription does not belong to this operation",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Subscription not found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/pinecone/configuration/validate": {
             "post": {
                 "security": [
@@ -3000,6 +3174,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Channel binding mode for SCRAM authentication (disable, prefer, require)",
+                        "name": "details[channel_binding]",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
                         "description": "Target database name to validate connection (optional for details-only validation)",
                         "name": "settings[database]",
                         "in": "formData"
@@ -3098,6 +3278,12 @@ const docTemplate = `{
                         "type": "boolean",
                         "description": "SSL mode enabled (required for settings key to fetch databases)",
                         "name": "details[ssl_mode]",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Channel binding mode for SCRAM authentication (disable, prefer, require)",
+                        "name": "details[channel_binding]",
                         "in": "formData"
                     }
                 ],
@@ -3767,6 +3953,80 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Operation not found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/postgres/operation/unsubscribe": {
+            "post": {
+                "security": [
+                    {
+                        "OperationTokenAuth": []
+                    }
+                ],
+                "description": "Stop monitoring PostgreSQL database changes and remove the subscription",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "postgres"
+                ],
+                "summary": "Unsubscribe from PostgreSQL database changes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Operation token received from operation/init",
+                        "name": "operation_token",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of the subscription to remove",
+                        "name": "subscription_id",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription removed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid parameters",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - subscription does not belong to this operation",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Subscription not found",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -4530,6 +4790,56 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Webhook URL (not supported for SFTP)",
                         "name": "webhook",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "501": {
+                        "description": "Not implemented - SFTP does not support subscriptions",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/sftp/operation/unsubscribe": {
+            "post": {
+                "security": [
+                    {
+                        "OperationTokenAuth": []
+                    }
+                ],
+                "description": "SFTP connector does not support real-time subscriptions as SFTP is a file transfer protocol without webhook capabilities",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sftp"
+                ],
+                "summary": "Unsubscribe from changes (not supported)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Operation token received from operation/init",
+                        "name": "operation_token",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Subscription ID (not supported for SFTP)",
+                        "name": "subscription_id",
                         "in": "formData",
                         "required": true
                     }

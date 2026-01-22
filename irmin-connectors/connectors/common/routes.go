@@ -28,6 +28,7 @@ type ConnectorController interface {
 	OperationPush(c fiber.Ctx) error
 	OperationPatch(c fiber.Ctx) error
 	SubscribeToChanges(c fiber.Ctx) error
+	UnsubscribeFromChanges(c fiber.Ctx) error
 }
 
 // ConnectorRouteConfig holds the configuration for setting up connector routes.
@@ -107,6 +108,11 @@ func setupCapabilityRoutes(
 				"/operation/subscribe",
 				controller.ValidateOperationTokenMiddleware,
 				controller.SubscribeToChanges,
+			)
+			routes.Post(
+				"/operation/unsubscribe",
+				controller.ValidateOperationTokenMiddleware,
+				controller.UnsubscribeFromChanges,
 			)
 		}
 	}

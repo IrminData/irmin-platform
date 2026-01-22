@@ -5,6 +5,13 @@
 package mysqlcontrollers // import "irmin-connectors/connectors/mysql/controllers"
 
 
+CONSTANTS
+
+const ConnectorName = "MySQL"
+    ConnectorName is the name used to identify this connector in the listener
+    manager.
+
+
 TYPES
 
 type Controllers struct {
@@ -220,6 +227,21 @@ func (cs *Controllers) TestConnection(
 	settings map[string]any,
 ) (bool, bool, bool, []string)
     TestConnection implements the ConfigValidationProvider interface.
+
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+    UnsubscribeFromChanges godoc @Summary Unsubscribe from MySQL database
+    changes @Description Stop monitoring MySQL database changes and remove
+    the subscription @Tags mysql @Security OperationTokenAuth @Accept
+    multipart/form-data @Produce json @Param operation_token formData string
+    true "Operation token received from operation/init" @Param subscription_id
+    formData string true "ID of the subscription to remove" @Success 200
+    {object} fiber.Map "Subscription removed successfully" @Failure 400
+    {object} fiber.Map "Bad request - invalid parameters" @Failure 401
+    {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Failure 403 {object} fiber.Map "Forbidden - subscription does not belong
+    to this operation" @Failure 404 {object} fiber.Map "Subscription not
+    found" @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /mysql/operation/unsubscribe [post]
 
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
     ValidateFields implements the ConfigValidationProvider interface.

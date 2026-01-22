@@ -271,6 +271,7 @@ type ConnectorController interface {
 	OperationPush(c fiber.Ctx) error
 	OperationPatch(c fiber.Ctx) error
 	SubscribeToChanges(c fiber.Ctx) error
+	UnsubscribeFromChanges(c fiber.Ctx) error
 }
     ConnectorController defines the interface that all connector controllers
     must implement.
@@ -307,6 +308,14 @@ func (cs *Controllers) HandleOperationInit(c fiber.Ctx, provider OperationInitPr
     HandleOperationInit provides a common HTTP handler for operation
     initialization endpoints.
 
+func (cs *Controllers) HandleUnsubscribeFromChanges(
+	c fiber.Ctx,
+	provider UnsubscribeProvider,
+) error
+    HandleUnsubscribeFromChanges provides common logic for unsubscribing from
+    database changes. It validates the request, verifies subscription ownership,
+    stops any active listeners, and deletes the subscription from the database.
+
 type DetailsPageConfig struct {
 	ConnectorSlug             string
 	ConnectorInfo             models.ConnectorDetails
@@ -314,6 +323,16 @@ type DetailsPageConfig struct {
 }
     DetailsPageConfig holds configuration for rendering a connector details
     page.
+
+type ListenerManagerUnsubscribeProvider struct {
+	App *models.ConnectorsApp
+}
+    ListenerManagerUnsubscribeProvider implements UnsubscribeProvider using a
+    ListenerManager.
+
+func (p *ListenerManagerUnsubscribeProvider) StopListener(subscriptionID uint) error
+    StopListener implements UnsubscribeProvider by delegating to the
+    ListenerManager.
 
 type NotSupportedPatchProvider struct{}
     NotSupportedPatchProvider provides a default implementation for connectors
@@ -523,6 +542,14 @@ type Subscription struct {
 }
     Subscription represents a record of an active subscription to changes in
     data.
+
+type UnsubscribeProvider interface {
+	// StopListener stops the listener for the given subscription ID.
+	// Returns nil if no listener management is needed or if the listener was stopped successfully.
+	StopListener(subscriptionID uint) error
+}
+    UnsubscribeProvider defines the interface for handling subscription
+    unsubscription.
 
 </pre>
 </body></html>

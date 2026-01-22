@@ -3,6 +3,7 @@ package connectors
 import (
 	"context"
 	"encoding/json"
+
 	firecrawlconnector "irmin-connectors/connectors/firecrawl"
 	httpconnector "irmin-connectors/connectors/http"
 	mysqlconnector "irmin-connectors/connectors/mysql"
@@ -10,6 +11,7 @@ import (
 	postgresconnector "irmin-connectors/connectors/postgres"
 	sftpconnector "irmin-connectors/connectors/sftp"
 	"irmin-connectors/db"
+	"irmin-connectors/listeners"
 	"irmin-connectors/models"
 	"log/slog"
 )
@@ -26,29 +28,16 @@ func SetupConnectorRoutes(app *models.ConnectorsApp) {
 	// ... Add new connectors here ...
 }
 
-// StartConnectorSubscriptionListener starts a listener for a subscription with the correct connector.
-func StartConnectorSubscriptionListener(
-	ctx context.Context,
-	connectorName string,
-	subscription db.Subscription,
-	d *db.Database,
-	logger *slog.Logger,
-) error {
-	var err error
+// SetupListenerManager creates a new listener manager and registers all connector listeners.
+func SetupListenerManager(logger *slog.Logger, database *db.Database) *listeners.Manager {
+	manager := listeners.NewManager(logger, database)
 
-	// Start the listener using the correct connector
-	switch connectorName {
-	case "PostgreSQL":
-		err = postgresconnector.StartListener(ctx, logger, subscription, d)
-	case "MySQL":
-		err = mysqlconnector.StartListener(ctx, logger, subscription, d)
-	}
-	// ... Add new connectors here ...
+	// Register listener functions for connectors that support patch_event
+	manager.RegisterConnectorListener("PostgreSQL", postgresconnector.StartListener)
+	manager.RegisterConnectorListener("MySQL", mysqlconnector.StartListener)
+	// ... Add new connector listeners here ...
 
-	if err != nil {
-		return err
-	}
-	return nil
+	return manager
 }
 
 // RegisterAllConnectors registers all connectors.

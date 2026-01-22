@@ -186,6 +186,9 @@ func (cs *Controllers) TestConnection(
 ) (bool, bool, bool, []string)
     TestConnection implements the ConfigValidationProvider interface.
 
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+    UnsubscribeFromChanges is not supported by Pinecone connector.
+
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
     ValidateFields implements the ConfigValidationProvider interface.
 

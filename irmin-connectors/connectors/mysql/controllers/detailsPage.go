@@ -22,6 +22,6 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error {
 		cs.App,
 		"mysql",
 		config.GetConnectorInfo,
-		"The connector can monitor MySQL binary logs for real-time change detection. This enables capture of inserts, updates, and deletes which can be forwarded via webhook endpoints for reactive workflows.",
+		"When you create a subscription in Irmin, this connector automatically sets up change tracking and starts a dedicated listener. Changes (inserts, updates, deletes) are captured and automatically sent to Irmin's webhook endpoint as patch operations. No manual webhook configuration is required - it's fully automatic.",
 	)
 }

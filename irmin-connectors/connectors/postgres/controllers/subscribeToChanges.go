@@ -8,6 +8,9 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// ConnectorName is the name used to identify this connector in the listener manager.
+const ConnectorName = "PostgreSQL"
+
 // SubscribeToChanges godoc
 // @Summary Subscribe to PostgreSQL database changes
 // @Description Set up real-time monitoring of PostgreSQL database changes using notification triggers and webhook notifications
@@ -51,6 +54,14 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error {
 		})
 	}
 
+	// Setup database notification triggers first
+	err = postgresclient.SetupNotifications(dbClient)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to setup notifications: " + err.Error(),
+		})
+	}
+
 	// Create a new subscription record in the database
 	subscription, err := cs.DB.CreateSubscription(&db.Subscription{
 		ConnectorRegistrationID: registration.ID,
@@ -64,12 +75,15 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error {
 		})
 	}
 
-	// Start the listener for the new subscription
-	err = postgresclient.SetupNotifications(dbClient)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to setup notifications: " + err.Error(),
-		})
+	// Start the listener goroutine for this subscription using the listener manager
+	if cs.App.ListenerManager != nil {
+		if listenerErr := cs.App.ListenerManager.StartListener(ConnectorName, *subscription); listenerErr != nil {
+			cs.Logger.Error("Failed to start listener for new subscription",
+				"subscription_id", subscription.ID,
+				"error", listenerErr)
+			// Note: We don't fail the request here - the subscription is created and
+			// the listener will be started on next service restart if needed
+		}
 	}
 
 	// Send success response

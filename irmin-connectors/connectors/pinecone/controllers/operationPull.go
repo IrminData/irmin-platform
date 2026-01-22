@@ -571,3 +571,10 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error {
 		"error": "Subscribe to changes is not supported by the Pinecone connector",
 	})
 }
+
+// UnsubscribeFromChanges is not supported by Pinecone connector.
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error {
+	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
+		"error": "Subscribe to changes is not supported by the Pinecone connector",
+	})
+}

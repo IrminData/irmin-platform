@@ -1167,6 +1167,39 @@ paths:
       summary: Firecrawl connector does not support webhook subscriptions
       tags:
       - firecrawl
+  /firecrawl/operation/unsubscribe:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Firecrawl connector does not support webhook subscriptions
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: Subscription ID
+        in: formData
+        name: subscription_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "501":
+          description: Not implemented - Firecrawl connector does not support webhook
+            subscriptions
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Firecrawl connector does not support webhook subscriptions
+      tags:
+      - firecrawl
   /http/configuration/{key}/fields:
     post:
       consumes:
@@ -1649,6 +1682,38 @@ paths:
       - description: Operation token received from operation/init
         in: formData
         name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "501":
+          description: Not implemented - HTTP connector does not support webhook subscriptions
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: HTTP connector does not support webhook subscriptions
+      tags:
+      - http
+  /http/operation/unsubscribe:
+    post:
+      consumes:
+      - multipart/form-data
+      description: HTTP connector does not support webhook subscriptions
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: Subscription ID
+        in: formData
+        name: subscription_id
         required: true
         type: string
       produces:
@@ -2219,6 +2284,54 @@ paths:
       summary: Subscribe to MySQL database changes
       tags:
       - mysql
+  /mysql/operation/unsubscribe:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Stop monitoring MySQL database changes and remove the subscription
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: ID of the subscription to remove
+        in: formData
+        name: subscription_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscription removed successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid parameters
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "403":
+          description: Forbidden - subscription does not belong to this operation
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Subscription not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Unsubscribe from MySQL database changes
+      tags:
+      - mysql
   /pinecone/configuration/{key}/fields:
     post:
       consumes:
@@ -2699,6 +2812,11 @@ paths:
         in: formData
         name: details[ssl_mode]
         type: boolean
+      - description: Channel binding mode for SCRAM authentication (disable, prefer,
+          require)
+        in: formData
+        name: details[channel_binding]
+        type: string
       produces:
       - application/json
       responses:
@@ -2760,6 +2878,11 @@ paths:
         in: formData
         name: details[ssl_mode]
         type: boolean
+      - description: Channel binding mode for SCRAM authentication (disable, prefer,
+          require)
+        in: formData
+        name: details[channel_binding]
+        type: string
       - description: Target database name to validate connection (optional for details-only
           validation)
         in: formData
@@ -3220,6 +3343,54 @@ paths:
       security:
       - OperationTokenAuth: []
       summary: Subscribe to PostgreSQL database changes
+      tags:
+      - postgres
+  /postgres/operation/unsubscribe:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Stop monitoring PostgreSQL database changes and remove the subscription
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: ID of the subscription to remove
+        in: formData
+        name: subscription_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscription removed successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid parameters
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "403":
+          description: Forbidden - subscription does not belong to this operation
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Subscription not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Unsubscribe from PostgreSQL database changes
       tags:
       - postgres
   /sftp/configuration/{key}/fields:
@@ -3731,6 +3902,39 @@ paths:
       security:
       - OperationTokenAuth: []
       summary: Subscribe to changes (not supported)
+      tags:
+      - sftp
+  /sftp/operation/unsubscribe:
+    post:
+      consumes:
+      - application/json
+      description: SFTP connector does not support real-time subscriptions as SFTP
+        is a file transfer protocol without webhook capabilities
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: Subscription ID (not supported for SFTP)
+        in: formData
+        name: subscription_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "501":
+          description: Not implemented - SFTP does not support subscriptions
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Unsubscribe from changes (not supported)
       tags:
       - sftp
   /swagger:

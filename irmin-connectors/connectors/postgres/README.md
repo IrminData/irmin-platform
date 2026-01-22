@@ -78,19 +78,77 @@ The connector uses the `pgx` library (via `database/sql` interface) for PostgreS
 
 ## Subscription Features
 
-The PostgreSQL connector supports real-time change monitoring through:
+The PostgreSQL connector supports real-time change monitoring through PostgreSQL's notification system (`pg_notify`). When Irmin creates a subscription, the connector automatically:
 
-### Logical Replication
-- Uses PostgreSQL's logical replication slots
-- Monitors INSERT, UPDATE, DELETE operations
-- Provides change data capture (CDC) capabilities
-- Filters changes by table or schema
+1. **Sets up database triggers** on monitored tables
+2. **Starts a listener goroutine** that maintains a persistent connection
+3. **Sends webhook notifications** to Irmin when data changes occur
+
+### How It Works
+
+```
+┌─────────────┐      ┌─────────────────┐      ┌─────────────┐
+│  PostgreSQL │──────│ Connector       │──────│   Irmin     │
+│  Database   │      │ Listener        │      │   API       │
+└─────────────┘      └─────────────────┘      └─────────────┘
+      │                      │                       │
+      │  1. Data change      │                       │
+      │  triggers pg_notify  │                       │
+      │─────────────────────>│                       │
+      │                      │  2. Listener receives │
+      │                      │     notification      │
+      │                      │                       │
+      │                      │  3. Sends webhook     │
+      │                      │     with patch data   │
+      │                      │──────────────────────>│
+      │                      │                       │
+      │                      │                       │  4. Irmin processes
+      │                      │                       │     patch and triggers
+      │                      │                       │     workflows
+```
+
+### Subscription Lifecycle
+
+1. **Subscribe** (`POST /postgres/operation/subscribe`)
+   - Irmin calls this endpoint when a user creates a subscription
+   - Creates notification triggers on the database
+   - Starts a dedicated listener goroutine
+   - Returns a subscription ID for management
+
+2. **Listening**
+   - The listener maintains a persistent connection to PostgreSQL
+   - Uses `LISTEN` command to receive `pg_notify` events
+   - Automatically reconnects on connection loss
+
+3. **Notification**
+   - When data changes, triggers fire `pg_notify`
+   - Listener receives the notification with change details
+   - Sends HTTP POST to Irmin's webhook endpoint with patch data
+
+4. **Unsubscribe** (`POST /postgres/operation/unsubscribe`)
+   - Stops the listener goroutine
+   - Cleans up the subscription record
+   - Does NOT remove database triggers (for safety)
 
 ### Configuration Requirements
 For subscriptions to work, the PostgreSQL instance must have:
-- `wal_level = logical`
-- Appropriate replication user permissions
-- Available replication slots
+- Connection user with `TRIGGER` and `EXECUTE` privileges
+- Access to create functions in the target schema
+- Firewall rules allowing persistent connections
+
+### Webhook Payload Format
+```json
+{
+  "event_type": "upsert",
+  "patches": [
+    {
+      "op": "replace",
+      "path": "/users/123/email",
+      "value": "new@example.com"
+    }
+  ]
+}
+```
 
 ## File Structure
 

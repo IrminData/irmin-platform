@@ -51,11 +51,73 @@ Update specific data within tables:
 - Returns summary of changes made
 
 ### Change Subscriptions
-Monitor database changes in real-time:
-- Binary log monitoring for change detection
-- Webhook notifications for INSERT, UPDATE, DELETE operations
-- Configurable event filtering
-- Reliable delivery mechanisms
+Monitor database changes in real-time through MySQL's binary log and trigger-based change tracking:
+
+#### How It Works
+
+When Irmin creates a subscription, the connector automatically:
+
+1. **Sets up change tracking triggers** on monitored tables
+2. **Starts a listener goroutine** that polls for changes
+3. **Sends webhook notifications** to Irmin when data changes occur
+
+```
+┌─────────────┐      ┌─────────────────┐      ┌─────────────┐
+│   MySQL     │──────│ Connector       │──────│   Irmin     │
+│  Database   │      │ Listener        │      │   API       │
+└─────────────┘      └─────────────────┘      └─────────────┘
+      │                      │                       │
+      │  1. Data change      │                       │
+      │  triggers tracking   │                       │
+      │                      │                       │
+      │                      │  2. Listener polls    │
+      │                      │     change table      │
+      │<─────────────────────│                       │
+      │                      │                       │
+      │                      │  3. Sends webhook     │
+      │                      │     with patch data   │
+      │                      │──────────────────────>│
+      │                      │                       │
+      │                      │                       │  4. Irmin processes
+      │                      │                       │     patch and triggers
+      │                      │                       │     workflows
+```
+
+#### Subscription Lifecycle
+
+1. **Subscribe** (`POST /mysql/operation/subscribe`)
+   - Irmin calls this endpoint when a user creates a subscription
+   - Creates change tracking infrastructure
+   - Starts a dedicated listener goroutine
+   - Returns a subscription ID for management
+
+2. **Listening**
+   - The listener polls for changes at regular intervals
+   - Detects INSERT, UPDATE, DELETE operations
+   - Automatically handles connection issues
+
+3. **Notification**
+   - When changes are detected, builds patch operations
+   - Sends HTTP POST to Irmin's webhook endpoint
+   - Includes event type and detailed change data
+
+4. **Unsubscribe** (`POST /mysql/operation/unsubscribe`)
+   - Stops the listener goroutine
+   - Cleans up the subscription record
+
+#### Webhook Payload Format
+```json
+{
+  "event_type": "upsert",
+  "patches": [
+    {
+      "op": "replace",
+      "path": "/customers/456/name",
+      "value": "Updated Name"
+    }
+  ]
+}
+```
 
 ## Security Considerations
 
@@ -71,7 +133,12 @@ For basic data operations:
 GRANT SELECT, INSERT, UPDATE, DELETE ON your_database.* TO 'irmin_user'@'%';
 ```
 
-For change monitoring (additional):
+For change monitoring with trigger-based tracking:
+```sql
+GRANT CREATE, DROP, TRIGGER ON your_database.* TO 'irmin_user'@'%';
+```
+
+For advanced change monitoring using binary logs (optional):
 ```sql
 GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'irmin_user'@'%';
 ```
