@@ -5,6 +5,21 @@
 package middlewares // import "irmin-api/middlewares"
 
 
+CONSTANTS
+
+const (
+	// WebhookTokenHeader is the header name for the webhook authentication token.
+	//nolint:gosec // G101: This is a header name, not a credential
+	WebhookTokenHeader = "X-Webhook-Token"
+)
+
+VARIABLES
+
+var ErrNoMatchingSubscription = errors.New("no matching subscription found")
+    ErrNoMatchingSubscription indicates no active subscription matches the
+    provided webhook token.
+
+
 TYPES
 
 type APIMiddlewares struct {
@@ -50,9 +65,20 @@ func (api *APIMiddlewares) ConnectionPermissionMiddleware(action db.PolicyAction
     ConnectionPermissionMiddleware creates a middleware for connection-level
     permissions.
 
+func (api *APIMiddlewares) ConnectionSubscriptionMiddleware(c fiber.Ctx) error
+    ConnectionSubscriptionMiddleware loads a connection subscription by its ID
+    from the URL.
+
 func (api *APIMiddlewares) ConnectorMiddleware(c fiber.Ctx) error
     ConnectorMiddleware parses the connector SQID from the request URL and sets
     the connector in the context.
+
+func (api *APIMiddlewares) ConnectorWebhookMiddleware(c fiber.Ctx) error
+    ConnectorWebhookMiddleware validates webhook requests from connectors.
+    It verifies the webhook token and loads the connection into the context.
+
+    This middleware does NOT require user authentication - it uses webhook
+    tokens that are generated when a connection subscription is created.
 
 func (api *APIMiddlewares) DocumentationPermissionMiddleware(action db.PolicyAction) fiber.Handler
     DocumentationPermissionMiddleware creates a middleware for
@@ -69,6 +95,10 @@ func (api *APIMiddlewares) InvitePermissionMiddleware(action db.PolicyAction) fi
 
 func (api *APIMiddlewares) LocaleMiddleware(c fiber.Ctx) error
     LocaleMiddleware sets the dictionary and locale for the request.
+
+func (api *APIMiddlewares) LocaleMiddlewareForWebhooks(c fiber.Ctx) error
+    LocaleMiddlewareForWebhooks provides locale detection for webhook endpoints
+    that don't have user authentication.
 
 func (api *APIMiddlewares) PolicyMiddleware(c fiber.Ctx) error
     PolicyMiddleware verifies that the policy exists and belongs to the

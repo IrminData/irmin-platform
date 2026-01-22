@@ -14,12 +14,24 @@ const (
 	PostWorkflowRun WorkflowRunEventType = "post-workflow-run"
 )
 
+// ConnectionEventType represents the type of change event from a connector
+type ConnectionEventType string
+
+const (
+	ConnectionEventInsert ConnectionEventType = "insert"
+	ConnectionEventUpdate ConnectionEventType = "update"
+	ConnectionEventDelete ConnectionEventType = "delete"
+	ConnectionEventUpsert ConnectionEventType = "upsert"
+	ConnectionEventBatch  ConnectionEventType = "batch"
+)
+
 type WorkflowTriggerType string
 
 const (
-	TimeTriggerType        WorkflowTriggerType = "time"
-	RepositoryTriggerType  WorkflowTriggerType = "repository-event"
-	WorkflowRunTriggerType WorkflowTriggerType = "workflow-run-event"
+	TimeTriggerType            WorkflowTriggerType = "time"
+	RepositoryTriggerType      WorkflowTriggerType = "repository-event"
+	WorkflowRunTriggerType     WorkflowTriggerType = "workflow-run-event"
+	ConnectionEventTriggerType WorkflowTriggerType = "connection-event"
 )
 
 type WorkflowTrigger struct {
@@ -36,15 +48,22 @@ type WorkflowTrigger struct {
 	NextRun *time.Time `json:"next_run,omitempty"`
 
 	// Repository event trigger
-	RepositoryEvent *lakefs.WebhookEventType `json:"repository_event,omitempty"`
-	Repository      *Repository              `json:"repository,omitempty"       gorm:"foreignKey:RepositoryID"`
-	RepositoryID    *uint                    `json:"repository_id,omitempty"`
-	RepositoryRef   *string                  `json:"repository_ref,omitempty"`
+	RepositoryEvent    *lakefs.WebhookEventType `json:"repository_event,omitempty"`
+	Repository         *Repository              `json:"repository,omitempty"            gorm:"foreignKey:RepositoryID"`
+	RepositoryID       *uint                    `json:"repository_id,omitempty"`
+	RepositoryRef      *string                  `json:"repository_ref,omitempty"`
+	IncludeDiffAsPatch bool                     `json:"include_diff_as_patch,omitempty"` // Generate patches from commit diff
 
 	// Workflow run event trigger
 	WorkflowRunEvent *WorkflowRunEventType `json:"workflow_run_event,omitempty"`
 	Workflow         *Workflow             `json:"workflow,omitempty"           gorm:"foreignKey:WorkflowID"`
 	WorkflowID       *uint                 `json:"workflow_id,omitempty"`
+
+	// Connection event trigger
+	ConnectionEventType  *ConnectionEventType `json:"connection_event_type,omitempty"` // insert, update, delete, batch
+	Connection           *Connection          `json:"connection,omitempty"             gorm:"foreignKey:ConnectionID"`
+	ConnectionID         *uint                `json:"connection_id,omitempty"`
+	ConnectionEventPaths []string             `json:"connection_event_paths,omitempty" gorm:"type:jsonb;serializer:json"` // Optional path filter
 }
 
 type Schedule struct {
@@ -63,7 +82,12 @@ type Schedule struct {
 // GetScheduleByID retrieves a schedule record from the database by its ID.
 func (d *Database) GetScheduleByID(id uint) (*Schedule, error) {
 	var schedule Schedule
-	if err := d.Preload("Triggers").Preload("Triggers.Repository").Preload("Triggers.Workflow").First(&schedule, id).Error; err != nil {
+	if err := d.Preload("Triggers").
+		Preload("Triggers.Repository").
+		Preload("Triggers.Workflow").
+		Preload("Triggers.Connection").
+		Preload("Triggers.Connection.Connector").
+		First(&schedule, id).Error; err != nil {
 		return nil, err
 	}
 	return &schedule, nil

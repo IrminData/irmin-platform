@@ -1,6 +1,7 @@
 package db
 
 import (
+	"encoding/json"
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -21,6 +22,12 @@ type WorkflowRun struct {
 	TriggeredByUserID *uint                      `json:"triggered_by_user_id"`
 	Workflow          Workflow                   `json:"workflow"              gorm:"foreignKey:WorkflowID"`
 	WorkflowID        uint                       `json:"workflow_id"           gorm:"index"`
+
+	// TriggerPayload contains the event data that triggered this workflow run.
+	// For connection events, contains the webhook payload with patches.
+	// For repository events with IncludeDiffAsPatch, contains generated patches.
+	// Available to pipeline stages as trigger_event.json in previousStageResults.
+	TriggerPayload json.RawMessage `json:"trigger_payload,omitempty" gorm:"type:jsonb"`
 }
 
 // GetWorkflowRunsByWorkflowID returns workflow runs for the given workflow ID,

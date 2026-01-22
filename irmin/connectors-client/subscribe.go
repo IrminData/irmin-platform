@@ -3,6 +3,7 @@ package connectorsclient
 import (
 	"context"
 	"net/http"
+	"strconv"
 )
 
 // Subscription represents a record of an active subscription to changes in data.
@@ -23,23 +24,46 @@ type Subscription struct {
 //
 // Parameters:
 // - ctx: Context for request cancellation and timeout control.
-// - webhook: The URL of the webhook to send the changes to.
+// - webhookURL: The URL of the webhook to send the changes to.
 // - webhookAccessToken: The token to authenticate the webhook request with.
 //
 // Returns:
-// - The schema for the specified operation method if the request is successful.
+// - The subscription record if the request is successful.
 // - An error if the request fails.
-func (c *Client) SubscribeToChanges(ctx context.Context, webhook, webhookAccessToken string) (*Subscription, error) {
+func (c *Client) SubscribeToChanges(ctx context.Context, webhookURL, webhookAccessToken string) (*Subscription, error) {
 	var subscription Subscription
 	if err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodPost,
 		Endpoint: "/operation/subscribe",
 		FormFields: map[string]string{
-			"webhook":              webhook,
+			"webhook_url":          webhookURL,
 			"webhook_access_token": webhookAccessToken,
 		},
 	}, &subscription); err != nil {
 		return nil, err
 	}
 	return &subscription, nil
+}
+
+// UnsubscribeFromChanges removes a subscription and stops the connector from sending webhook notifications.
+//
+// Note: Operation token is required for this operation.
+//
+// Parameters:
+// - ctx: Context for request cancellation and timeout control.
+// - subscriptionID: The ID of the subscription to remove.
+//
+// Returns:
+// - An error if the request fails.
+func (c *Client) UnsubscribeFromChanges(ctx context.Context, subscriptionID uint) error {
+	if err := c.FetchAPI(ctx, RequestOptions{
+		Method:   http.MethodPost,
+		Endpoint: "/operation/unsubscribe",
+		FormFields: map[string]string{
+			"subscription_id": strconv.FormatUint(uint64(subscriptionID), 10),
+		},
+	}, nil); err != nil {
+		return err
+	}
+	return nil
 }

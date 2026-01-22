@@ -38,6 +38,8 @@ type Orchestrator struct {
 	workerEventQueue chan *WorkerEvent
 	// Dispatched events are events that are dispatched to the API to be executed.
 	dispatchedEventQueue chan *DispatchEvent
+	// Connection events are events from connector webhooks (insert, update, delete, batch).
+	connectionEventQueue chan *ConnectionEvent
 
 	// Active workflow run contexts for cancellation
 	activeRunContexts map[uint]context.CancelFunc
@@ -65,6 +67,7 @@ func NewOrchestrator(
 		lakefsEventQueue:     make(chan *lakefs.WebhookEvent, DefaultChannelBufferSize),
 		dispatchedEventQueue: make(chan *DispatchEvent, DefaultChannelBufferSize),
 		workerEventQueue:     make(chan *WorkerEvent, DefaultChannelBufferSize),
+		connectionEventQueue: make(chan *ConnectionEvent, DefaultChannelBufferSize),
 		activeRunContexts:    make(map[uint]context.CancelFunc),
 	}
 }
@@ -79,6 +82,10 @@ func (o *Orchestrator) AddDispatchedEvent(event *DispatchEvent) {
 
 func (o *Orchestrator) AddWorkerEvent(event *WorkerEvent) {
 	o.workerEventQueue <- event
+}
+
+func (o *Orchestrator) AddConnectionEvent(event *ConnectionEvent) {
+	o.connectionEventQueue <- event
 }
 
 // RegisterActiveRun registers a workflow run's cancel function for later cancellation.
@@ -283,6 +290,23 @@ func (o *Orchestrator) StartOrchestrator(ctx context.Context) error {
 				// Process the worker event
 				if err := o.processWorkerEvent(workerCtx, evt); err != nil {
 					o.logger.ErrorContext(workerCtx, "error processing worker event", "error", err)
+				}
+			}(event)
+
+		case event := <-o.connectionEventQueue:
+			o.logger.InfoContext(ctx, "received connection event", "event", event)
+
+			// Process connection events asynchronously to avoid blocking the main loop
+			// Connection events trigger workflows based on connector data changes
+			go func(evt *ConnectionEvent) {
+				// Create a dedicated context for this connection event derived from the parent context
+				// This ensures the goroutine is cancelled when the orchestrator shuts down
+				connectionCtx, cancelConnection := context.WithCancel(ctx)
+				defer cancelConnection()
+
+				// Process the connection event
+				if err := o.processConnectionEvent(connectionCtx, evt); err != nil {
+					o.logger.ErrorContext(connectionCtx, "error processing connection event", "error", err)
 				}
 			}(event)
 
@@ -507,11 +531,14 @@ func (o *Orchestrator) createWorkflowRunForTimeTrigger(ctx context.Context, tx *
 
 // processRepositoryTrigger handles a single repository trigger, creating a workflow run if conditions match.
 // Returns true if a workflow run was created, false otherwise.
+//
+//nolint:gocognit // Complex trigger matching logic requires multiple condition checks
 func (o *Orchestrator) processRepositoryTrigger(
 	ctx context.Context,
 	tx *gorm.DB,
 	t *db.WorkflowTrigger,
 	event *lakefs.WebhookEvent,
+	repository *db.Repository,
 ) (bool, error) {
 	o.logger.InfoContext(ctx, "processing repository trigger",
 		"trigger_id", t.ID,
@@ -580,10 +607,31 @@ func (o *Orchestrator) processRepositoryTrigger(
 		"workflow_name", workflow.Name,
 		"event_type", event.EventType,
 		"repository", event.RepositoryID,
+		"include_diff_as_patch", t.IncludeDiffAsPatch,
 	)
 
-	// Create a new workflow run
-	run, err := lib.CreateWorkflowRun(tx, &workflow, nil, t)
+	// Create a new workflow run, optionally with diff patches as payload
+	var run *db.WorkflowRun
+	var err error
+
+	if t.IncludeDiffAsPatch && event.CommitID != nil {
+		// Generate patches from the commit diff
+		payload, patchErr := o.generatePatchPayloadFromCommit(ctx, repository, event)
+		if patchErr != nil {
+			o.logger.WarnContext(ctx, "failed to generate patch payload, creating run without payload",
+				"error", patchErr,
+				"trigger_id", t.ID,
+				"commit_id", *event.CommitID,
+			)
+			// Fall back to creating run without payload
+			run, err = lib.CreateWorkflowRun(tx, &workflow, nil, t)
+		} else {
+			run, err = lib.CreateWorkflowRunWithPayload(tx, &workflow, nil, t, payload)
+		}
+	} else {
+		run, err = lib.CreateWorkflowRun(tx, &workflow, nil, t)
+	}
+
 	if err != nil {
 		o.logger.ErrorContext(ctx, "failed to create workflow run from repository event",
 			"error", err,
@@ -603,6 +651,49 @@ func (o *Orchestrator) processRepositoryTrigger(
 		"repository", event.RepositoryID,
 	)
 	return true, nil
+}
+
+// generatePatchPayloadFromCommit generates a patch payload from a commit's diff.
+func (o *Orchestrator) generatePatchPayloadFromCommit(
+	_ context.Context,
+	repository *db.Repository,
+	event *lakefs.WebhookEvent,
+) (map[string]any, error) {
+	if event.CommitID == nil {
+		// No commit to generate patches from
+		return nil, nil //nolint:nilnil // Intentional: nil result with no error when no commit
+	}
+
+	// Get the ref (branch or commit)
+	ref := *event.CommitID
+	if event.BranchID != nil {
+		ref = *event.BranchID
+	}
+
+	// Fetch the diff for this commit
+	// For commit events, we diff against the parent commit
+	diffs, diffErr := o.dataEngine.GetCommitDiff(
+		repository.Workspace.Slug,
+		repository.Slug,
+		*event.CommitID,
+	)
+	if diffErr != nil {
+		return nil, diffErr
+	}
+
+	// Convert diffs to patches
+	result, err := o.dataEngine.ConvertDiffToPatches(diffs, engine.DiffToPatchOptions{
+		WorkspaceSlug:         repository.Workspace.Slug,
+		RepositorySlug:        repository.Slug,
+		Ref:                   ref,
+		IncludeBinaryAsBase64: false, // Skip binary files by default
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate the payload
+	return engine.GeneratePatchPayload(result, repository.Slug, ref, *event.CommitID), nil
 }
 
 func (o *Orchestrator) processRepositoryEvent(ctx context.Context, event *lakefs.WebhookEvent) error {
@@ -667,7 +758,7 @@ func (o *Orchestrator) processRepositoryEvent(ctx context.Context, event *lakefs
 		// Process each trigger
 		runsCreated := 0
 		for _, t := range triggers {
-			created, triggerErr := o.processRepositoryTrigger(ctx, tx, &t, event)
+			created, triggerErr := o.processRepositoryTrigger(ctx, tx, &t, event, &repository)
 			if triggerErr != nil {
 				// Log error but continue processing other triggers
 				o.logger.ErrorContext(ctx, "error processing repository trigger",

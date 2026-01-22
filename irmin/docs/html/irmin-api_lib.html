@@ -83,6 +83,18 @@ func CreateWorkflowRun(
     previous run time, and return the new workflow run. Creating a new workflow
     run will cause the orchestrator to pick it up and execute it.
 
+func CreateWorkflowRunWithPayload(
+	tx *gorm.DB,
+	workflow *db.Workflow,
+	user *db.User,
+	trigger *db.WorkflowTrigger,
+	payload any,
+) (*db.WorkflowRun, error)
+    CreateWorkflowRunWithPayload creates a workflow run and attaches trigger
+    event data as payload. The payload will be available to pipeline stages as
+    trigger_event.json in previousStageResults. This is used for connection
+    events and repository events with IncludeDiffAsPatch enabled.
+
 func DecodePolicyResourceID(
 	sqid string,
 	resource db.PolicyResource,

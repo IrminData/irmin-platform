@@ -378,6 +378,102 @@ func (api *APIControllers) ConnectionSchemaValidate(c fiber.Ctx) error
     /workspaces/{workspace_slug}/connections/{connection_slug}/schema/validate
     [post]
 
+func (api *APIControllers) ConnectionSubscriptionsDestroy(c fiber.Ctx) error
+    ConnectionSubscriptionsDestroy godoc @Summary Delete subscription
+    @Description Delete a subscription @Tags connection-subscriptions
+    @Security ApiKeyAuth @Accept json @Produce json @Param workspace_slug
+    path string true "Workspace slug" @Param connection path string true
+    "Connection ID" @Param subscription path string true "Subscription
+    ID" @Success 200 {object} irminmodels.IrminAPIResponse "Subscription
+    deleted successfully" @Failure 401 {object} irminmodels.IrminAPIResponse
+    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "Subscription not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/connections/{connection}/subscriptions/{subscription}
+    [delete]
+
+func (api *APIControllers) ConnectionSubscriptionsIndex(c fiber.Ctx) error
+    ConnectionSubscriptionsIndex godoc @Summary List subscriptions for
+    a connection @Description Get all subscriptions for the specified
+    connection @Tags connection-subscriptions @Security ApiKeyAuth @Accept
+    json @Produce json @Param workspace_slug path string true "Workspace slug"
+    @Param connection path string true "Connection ID" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=[]irminmodels.ConnectionSubscription}
+    "Subscriptions retrieved successfully" @Failure 401
+    {object} irminmodels.IrminAPIResponse "Unauthorized -
+    invalid or missing authentication" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "Connection not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/connections/{connection}/subscriptions [get]
+
+func (api *APIControllers) ConnectionSubscriptionsRegenerateToken(c fiber.Ctx) error
+    ConnectionSubscriptionsRegenerateToken godoc @Summary Regenerate webhook
+    token @Description Regenerate the webhook token for a subscription.
+    The old token will no longer work. @Tags connection-subscriptions @Security
+    ApiKeyAuth @Accept json @Produce json @Param workspace_slug path string
+    true "Workspace slug" @Param connection path string true "Connection ID"
+    @Param subscription path string true "Subscription ID" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.ConnectionSubscriptionWithToken}
+    "Token regenerated successfully" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 404 {object} irminmodels.IrminAPIResponse
+    "Subscription not found" @Failure 500 {object}
+    irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/connections/{connection}/subscriptions/{subscription}/regenerate-token
+    [post]
+
+func (api *APIControllers) ConnectionSubscriptionsShow(c fiber.Ctx) error
+    ConnectionSubscriptionsShow godoc @Summary Get subscription
+    details @Description Get details of a specific subscription
+    @Tags connection-subscriptions @Security ApiKeyAuth @Accept json
+    @Produce json @Param workspace_slug path string true "Workspace
+    slug" @Param connection path string true "Connection ID" @Param
+    subscription path string true "Subscription ID" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.ConnectionSubscription}
+    "Subscription retrieved successfully" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 404 {object} irminmodels.IrminAPIResponse
+    "Subscription not found" @Failure 500 {object}
+    irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/connections/{connection}/subscriptions/{subscription}
+    [get]
+
+func (api *APIControllers) ConnectionSubscriptionsStore(c fiber.Ctx) error
+    ConnectionSubscriptionsStore godoc @Summary Create a new subscription
+    @Description Create a new subscription for the specified connection.
+    Returns the webhook URL and token. @Tags connection-subscriptions @Security
+    ApiKeyAuth @Accept json @Produce json @Param workspace_slug path string
+    true "Workspace slug" @Param connection path string true "Connection
+    ID" @Param request body irmincore.CreateConnectionSubscriptionRequest
+    true "Subscription creation parameters" @Success 201 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.ConnectionSubscriptionWithToken}
+    "Subscription created successfully" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - invalid request body"
+    @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized
+    - invalid or missing authentication" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "Connection not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/connections/{connection}/subscriptions [post]
+
+func (api *APIControllers) ConnectionSubscriptionsUpdate(c fiber.Ctx) error
+    ConnectionSubscriptionsUpdate godoc @Summary Update subscription
+    @Description Update an existing subscription's details @Tags
+    connection-subscriptions @Security ApiKeyAuth @Accept json
+    @Produce json @Param workspace_slug path string true "Workspace
+    slug" @Param connection path string true "Connection ID"
+    @Param subscription path string true "Subscription ID" @Param
+    request body irmincore.UpdateConnectionSubscriptionRequest
+    true "Subscription update parameters" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.ConnectionSubscription}
+    "Subscription updated successfully" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - invalid request body"
+    @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized
+    - invalid or missing authentication" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "Subscription not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/connections/{connection}/subscriptions/{subscription}
+    [patch]
+
 func (api *APIControllers) ConnectionsDestroy(c fiber.Ctx) error
     ConnectionsDestroy godoc @Summary Delete connection @Description Delete
     an existing connection from the workspace @Tags connections @Security
@@ -462,6 +558,20 @@ func (api *APIControllers) ConnectionsUpdateConfiguration(c fiber.Ctx) error
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/connections/{connection_slug}/configuration
     [patch]
+
+func (api *APIControllers) ConnectorWebhook(c fiber.Ctx) error
+    ConnectorWebhook godoc @Summary Receive connector webhook events
+    @Description Handle webhook events from external connectors when
+    data changes occur @Tags webhooks @Accept json @Produce json @Param
+    connection path string true "Connection ID (SQID)" @Param X-Webhook-Token
+    header string true "Webhook authentication token" @Param body body
+    ConnectorWebhookPayload true "Webhook event payload" @Success 200 {object}
+    irminmodels.IrminAPIResponse "Webhook processed successfully" @Failure
+    400 {object} irminmodels.IrminAPIResponse "Bad request - invalid payload"
+    @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid
+    or missing webhook token" @Failure 404 {object} irminmodels.IrminAPIResponse
+    "Connection not found" @Failure 500 {object} irminmodels.IrminAPIResponse
+    "Internal server error" @Router /webhooks/connectors/{connection} [post]
 
 func (api *APIControllers) ConnectorsDestroy(c fiber.Ctx) error
     ConnectorsDestroy godoc @Summary Delete connector @Description Delete an
@@ -2373,6 +2483,24 @@ func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "Workspace not found" @Failure 500
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug} [patch]
+
+type ConnectorWebhookPayload struct {
+	// EventType is the type of change (insert, update, delete, upsert, batch)
+	EventType string `json:"event_type"              validate:"required,oneof=insert update delete upsert batch"`
+	// Path is the logical path of the affected data (e.g., "users", "orders/2024")
+	Path string `json:"path"                    validate:"required"`
+	// Timestamp is when the event occurred in the external system (Unix milliseconds)
+	Timestamp int64 `json:"timestamp,omitempty"`
+	// AffectedRows is the number of rows affected by this event
+	AffectedRows int `json:"affected_rows,omitempty"`
+	// Patches contains pre-computed patch operations from the connector
+	Patches []irminmodels.PatchOperation `json:"patches,omitempty"`
+	// Payload contains any additional raw event data from the connector
+	Payload json.RawMessage `json:"payload,omitempty"`
+}
+    ConnectorWebhookPayload represents the expected payload from connector
+    webhooks. This is the data structure that connectors send when data changes
+    occur.
 
 </pre>
 </body></html>

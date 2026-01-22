@@ -445,7 +445,8 @@ import "irmin-api/connectors-client"
   - [func \(c \*Client\) OperationPull\(ctx context.Context, path string\) \(\[\]PulledFile, error\)](<#Client.OperationPull>)
   - [func \(c \*Client\) OperationPush\(ctx context.Context, path string, file FormFile\) \(string, error\)](<#Client.OperationPush>)
   - [func \(c \*Client\) Request\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
-  - [func \(c \*Client\) SubscribeToChanges\(ctx context.Context, webhook, webhookAccessToken string\) \(\*Subscription, error\)](<#Client.SubscribeToChanges>)
+  - [func \(c \*Client\) SubscribeToChanges\(ctx context.Context, webhookURL, webhookAccessToken string\) \(\*Subscription, error\)](<#Client.SubscribeToChanges>)
+  - [func \(c \*Client\) UnsubscribeFromChanges\(ctx context.Context, subscriptionID uint\) error](<#Client.UnsubscribeFromChanges>)
   - [func \(c \*Client\) ValidateConfigFields\(ctx context.Context, details map\[string\]string, settings map\[string\]string\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#Client.ValidateConfigFields>)
 - [type ConnectorInfo](<#ConnectorInfo>)
 - [type FormFile](<#FormFile>)
@@ -658,16 +659,31 @@ Request sends requests to the REST API of the connector and returns the raw resp
 ### func \(\*Client\) SubscribeToChanges
 
 ```go
-func (c *Client) SubscribeToChanges(ctx context.Context, webhook, webhookAccessToken string) (*Subscription, error)
+func (c *Client) SubscribeToChanges(ctx context.Context, webhookURL, webhookAccessToken string) (*Subscription, error)
 ```
 
 SubscribeToChanges subscribes to changes in the data and sends the changes to the specified webhook.
 
 Note: Operation token is required for this operation.
 
-Parameters: \- ctx: Context for request cancellation and timeout control. \- webhook: The URL of the webhook to send the changes to. \- webhookAccessToken: The token to authenticate the webhook request with.
+Parameters: \- ctx: Context for request cancellation and timeout control. \- webhookURL: The URL of the webhook to send the changes to. \- webhookAccessToken: The token to authenticate the webhook request with.
 
-Returns: \- The schema for the specified operation method if the request is successful. \- An error if the request fails.
+Returns: \- The subscription record if the request is successful. \- An error if the request fails.
+
+<a name="Client.UnsubscribeFromChanges"></a>
+### func \(\*Client\) UnsubscribeFromChanges
+
+```go
+func (c *Client) UnsubscribeFromChanges(ctx context.Context, subscriptionID uint) error
+```
+
+UnsubscribeFromChanges removes a subscription and stops the connector from sending webhook notifications.
+
+Note: Operation token is required for this operation.
+
+Parameters: \- ctx: Context for request cancellation and timeout control. \- subscriptionID: The ID of the subscription to remove.
+
+Returns: \- An error if the request fails.
 
 <a name="Client.ValidateConfigFields"></a>
 ### func \(\*Client\) ValidateConfigFields
@@ -854,12 +870,19 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) ConnectionSchema\(c fiber.Ctx\) error](<#APIControllers.ConnectionSchema>)
   - [func \(api \*APIControllers\) ConnectionSchemaDiff\(c fiber.Ctx\) error](<#APIControllers.ConnectionSchemaDiff>)
   - [func \(api \*APIControllers\) ConnectionSchemaValidate\(c fiber.Ctx\) error](<#APIControllers.ConnectionSchemaValidate>)
+  - [func \(api \*APIControllers\) ConnectionSubscriptionsDestroy\(c fiber.Ctx\) error](<#APIControllers.ConnectionSubscriptionsDestroy>)
+  - [func \(api \*APIControllers\) ConnectionSubscriptionsIndex\(c fiber.Ctx\) error](<#APIControllers.ConnectionSubscriptionsIndex>)
+  - [func \(api \*APIControllers\) ConnectionSubscriptionsRegenerateToken\(c fiber.Ctx\) error](<#APIControllers.ConnectionSubscriptionsRegenerateToken>)
+  - [func \(api \*APIControllers\) ConnectionSubscriptionsShow\(c fiber.Ctx\) error](<#APIControllers.ConnectionSubscriptionsShow>)
+  - [func \(api \*APIControllers\) ConnectionSubscriptionsStore\(c fiber.Ctx\) error](<#APIControllers.ConnectionSubscriptionsStore>)
+  - [func \(api \*APIControllers\) ConnectionSubscriptionsUpdate\(c fiber.Ctx\) error](<#APIControllers.ConnectionSubscriptionsUpdate>)
   - [func \(api \*APIControllers\) ConnectionsDestroy\(c fiber.Ctx\) error](<#APIControllers.ConnectionsDestroy>)
   - [func \(api \*APIControllers\) ConnectionsIndex\(c fiber.Ctx\) error](<#APIControllers.ConnectionsIndex>)
   - [func \(api \*APIControllers\) ConnectionsShow\(c fiber.Ctx\) error](<#APIControllers.ConnectionsShow>)
   - [func \(api \*APIControllers\) ConnectionsStore\(c fiber.Ctx\) error](<#APIControllers.ConnectionsStore>)
   - [func \(api \*APIControllers\) ConnectionsUpdate\(c fiber.Ctx\) error](<#APIControllers.ConnectionsUpdate>)
   - [func \(api \*APIControllers\) ConnectionsUpdateConfiguration\(c fiber.Ctx\) error](<#APIControllers.ConnectionsUpdateConfiguration>)
+  - [func \(api \*APIControllers\) ConnectorWebhook\(c fiber.Ctx\) error](<#APIControllers.ConnectorWebhook>)
   - [func \(api \*APIControllers\) ConnectorsDestroy\(c fiber.Ctx\) error](<#APIControllers.ConnectorsDestroy>)
   - [func \(api \*APIControllers\) ConnectorsIndex\(c fiber.Ctx\) error](<#APIControllers.ConnectorsIndex>)
   - [func \(api \*APIControllers\) ConnectorsShow\(c fiber.Ctx\) error](<#APIControllers.ConnectorsShow>)
@@ -988,6 +1011,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) WorkspacesShow\(c fiber.Ctx\) error](<#APIControllers.WorkspacesShow>)
   - [func \(api \*APIControllers\) WorkspacesStore\(c fiber.Ctx\) error](<#APIControllers.WorkspacesStore>)
   - [func \(api \*APIControllers\) WorkspacesUpdate\(c fiber.Ctx\) error](<#APIControllers.WorkspacesUpdate>)
+- [type ConnectorWebhookPayload](<#ConnectorWebhookPayload>)
 
 
 <a name="CollectMultipartFiles"></a>
@@ -1232,6 +1256,60 @@ func (api *APIControllers) ConnectionSchemaValidate(c fiber.Ctx) error
 
 ConnectionSchemaValidate godoc @Summary Validate data against connection schema @Description Validates uploaded data files against the connection's schema for the specified operation. @Description @Description \*\*Supported formats:\*\* JSON, CSV, Parquet, Excel \(.xlsx, .xls\), TSV, JSONL/NDJSON @Description @Description \*\*Auto\-matching for group schemas:\*\* @Description When the target schema is a group \(e.g., a connector's root with children like users.json, orders.json\), @Description uploaded files are automatically matched to child schemas by filename \(case\-insensitive\). @Description \- Files matching a child schema are validated against that specific schema @Description \- Files not matching any child generate a warning but don't fail validation @Description \- Use the 'path' parameter to target a specific child schema directly @Description @Description \*\*Single schema validation:\*\* @Description When the target schema is a single structured file, all uploaded files are validated against it. @Tags connections @Security ApiKeyAuth @Accept multipart/form\-data @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection\_slug path string true "Connection ID" @Param operation\_method query string true "Operation method \(push or pull\)" @Param path query string false "Schema path \- empty for root, or specific path like 'users.json' to target a child" @Param files formData file false "Data files to validate \(multiple allowed, matched by filename to schema children\)" @Param file formData file false "Single data file to validate \(legacy, use 'files' for multiple\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.SchemaValidationResult\} "Validation completed" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Invalid request \- no files provided" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\_slug\}/schema/validate \[post\]
 
+<a name="APIControllers.ConnectionSubscriptionsDestroy"></a>
+### func \(\*APIControllers\) ConnectionSubscriptionsDestroy
+
+```go
+func (api *APIControllers) ConnectionSubscriptionsDestroy(c fiber.Ctx) error
+```
+
+ConnectionSubscriptionsDestroy godoc @Summary Delete subscription @Description Delete a subscription @Tags connection\-subscriptions @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection path string true "Connection ID" @Param subscription path string true "Subscription ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Subscription deleted successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Subscription not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\}/subscriptions/\{subscription\} \[delete\]
+
+<a name="APIControllers.ConnectionSubscriptionsIndex"></a>
+### func \(\*APIControllers\) ConnectionSubscriptionsIndex
+
+```go
+func (api *APIControllers) ConnectionSubscriptionsIndex(c fiber.Ctx) error
+```
+
+ConnectionSubscriptionsIndex godoc @Summary List subscriptions for a connection @Description Get all subscriptions for the specified connection @Tags connection\-subscriptions @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection path string true "Connection ID" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.ConnectionSubscription\} "Subscriptions retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\}/subscriptions \[get\]
+
+<a name="APIControllers.ConnectionSubscriptionsRegenerateToken"></a>
+### func \(\*APIControllers\) ConnectionSubscriptionsRegenerateToken
+
+```go
+func (api *APIControllers) ConnectionSubscriptionsRegenerateToken(c fiber.Ctx) error
+```
+
+ConnectionSubscriptionsRegenerateToken godoc @Summary Regenerate webhook token @Description Regenerate the webhook token for a subscription. The old token will no longer work. @Tags connection\-subscriptions @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection path string true "Connection ID" @Param subscription path string true "Subscription ID" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ConnectionSubscriptionWithToken\} "Token regenerated successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Subscription not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\}/subscriptions/\{subscription\}/regenerate\-token \[post\]
+
+<a name="APIControllers.ConnectionSubscriptionsShow"></a>
+### func \(\*APIControllers\) ConnectionSubscriptionsShow
+
+```go
+func (api *APIControllers) ConnectionSubscriptionsShow(c fiber.Ctx) error
+```
+
+ConnectionSubscriptionsShow godoc @Summary Get subscription details @Description Get details of a specific subscription @Tags connection\-subscriptions @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection path string true "Connection ID" @Param subscription path string true "Subscription ID" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ConnectionSubscription\} "Subscription retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Subscription not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\}/subscriptions/\{subscription\} \[get\]
+
+<a name="APIControllers.ConnectionSubscriptionsStore"></a>
+### func \(\*APIControllers\) ConnectionSubscriptionsStore
+
+```go
+func (api *APIControllers) ConnectionSubscriptionsStore(c fiber.Ctx) error
+```
+
+ConnectionSubscriptionsStore godoc @Summary Create a new subscription @Description Create a new subscription for the specified connection. Returns the webhook URL and token. @Tags connection\-subscriptions @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection path string true "Connection ID" @Param request body irmincore.CreateConnectionSubscriptionRequest true "Subscription creation parameters" @Success 201 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ConnectionSubscriptionWithToken\} "Subscription created successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\}/subscriptions \[post\]
+
+<a name="APIControllers.ConnectionSubscriptionsUpdate"></a>
+### func \(\*APIControllers\) ConnectionSubscriptionsUpdate
+
+```go
+func (api *APIControllers) ConnectionSubscriptionsUpdate(c fiber.Ctx) error
+```
+
+ConnectionSubscriptionsUpdate godoc @Summary Update subscription @Description Update an existing subscription's details @Tags connection\-subscriptions @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection path string true "Connection ID" @Param subscription path string true "Subscription ID" @Param request body irmincore.UpdateConnectionSubscriptionRequest true "Subscription update parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ConnectionSubscription\} "Subscription updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Subscription not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\}/subscriptions/\{subscription\} \[patch\]
+
 <a name="APIControllers.ConnectionsDestroy"></a>
 ### func \(\*APIControllers\) ConnectionsDestroy
 
@@ -1285,6 +1363,15 @@ func (api *APIControllers) ConnectionsUpdateConfiguration(c fiber.Ctx) error
 ```
 
 ConnectionsUpdateConfiguration godoc @Summary Update connection configuration @Description Update an existing connection's configuration \(details and settings\) @Tags connections @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection\_slug path string true "Connection ID" @Param request body irmincore.UpdateConnectionConfigurationRequest true "Connection configuration update parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Connection\} "Connection configuration updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\_slug\}/configuration \[patch\]
+
+<a name="APIControllers.ConnectorWebhook"></a>
+### func \(\*APIControllers\) ConnectorWebhook
+
+```go
+func (api *APIControllers) ConnectorWebhook(c fiber.Ctx) error
+```
+
+ConnectorWebhook godoc @Summary Receive connector webhook events @Description Handle webhook events from external connectors when data changes occur @Tags webhooks @Accept json @Produce json @Param connection path string true "Connection ID \(SQID\)" @Param X\-Webhook\-Token header string true "Webhook authentication token" @Param body body ConnectorWebhookPayload true "Webhook event payload" @Success 200 \{object\} irminmodels.IrminAPIResponse "Webhook processed successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid payload" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing webhook token" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /webhooks/connectors/\{connection\} \[post\]
 
 <a name="APIControllers.ConnectorsDestroy"></a>
 ### func \(\*APIControllers\) ConnectorsDestroy
@@ -2438,6 +2525,28 @@ func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error
 
 WorkspacesUpdate godoc @Summary Update workspace @Description Update workspace properties \(name, description\) \- slug cannot be changed @Tags workspaces @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param body body irmincore.UpdateWorkspaceRequest true "Workspace update request" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Workspace\} "Workspace updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid workspace data" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\} \[patch\]
 
+<a name="ConnectorWebhookPayload"></a>
+## type ConnectorWebhookPayload
+
+ConnectorWebhookPayload represents the expected payload from connector webhooks. This is the data structure that connectors send when data changes occur.
+
+```go
+type ConnectorWebhookPayload struct {
+    // EventType is the type of change (insert, update, delete, upsert, batch)
+    EventType string `json:"event_type"              validate:"required,oneof=insert update delete upsert batch"`
+    // Path is the logical path of the affected data (e.g., "users", "orders/2024")
+    Path string `json:"path"                    validate:"required"`
+    // Timestamp is when the event occurred in the external system (Unix milliseconds)
+    Timestamp int64 `json:"timestamp,omitempty"`
+    // AffectedRows is the number of rows affected by this event
+    AffectedRows int `json:"affected_rows,omitempty"`
+    // Patches contains pre-computed patch operations from the connector
+    Patches []irminmodels.PatchOperation `json:"patches,omitempty"`
+    // Payload contains any additional raw event data from the connector
+    Payload json.RawMessage `json:"payload,omitempty"`
+}
+```
+
 # db
 
 ```go
@@ -2450,6 +2559,7 @@ import "irmin-api/db"
 - [Variables](<#variables>)
 - [func ContainsSQLInjectionPattern\(input string\) bool](<#ContainsSQLInjectionPattern>)
 - [func ContainsSuspiciousPatterns\(input string\) bool](<#ContainsSuspiciousPatterns>)
+- [func GenerateWebhookToken\(\) \(string, error\)](<#GenerateWebhookToken>)
 - [func GetNormalizedQuery\(query string\) string](<#GetNormalizedQuery>)
 - [func GetNormalizedQueryWithOptions\(query string, options QueryNormalizationOptions\) string](<#GetNormalizedQueryWithOptions>)
 - [func IsValidFieldName\(fieldName string\) bool](<#IsValidFieldName>)
@@ -2477,7 +2587,9 @@ import "irmin-api/db"
 - [type ActionWorkflowableInput](<#ActionWorkflowableInput>)
 - [type BatchLoadResult](<#BatchLoadResult>)
 - [type Connection](<#Connection>)
+- [type ConnectionEventType](<#ConnectionEventType>)
 - [type ConnectionSchemaCache](<#ConnectionSchemaCache>)
+- [type ConnectionSubscription](<#ConnectionSubscription>)
 - [type ConnectionTag](<#ConnectionTag>)
 - [type Connector](<#Connector>)
 - [type CursorPagination](<#CursorPagination>)
@@ -2496,11 +2608,14 @@ import "irmin-api/db"
   - [func \(d \*Database\) CheckIfRepositoryExists\(slug string, workspaceID uint\) bool](<#Database.CheckIfRepositoryExists>)
   - [func \(d \*Database\) Close\(\)](<#Database.Close>)
   - [func \(d \*Database\) CreateAIApplicationToolLog\(log \*AIApplicationToolLog\) error](<#Database.CreateAIApplicationToolLog>)
+  - [func \(d \*Database\) CreateConnectionSubscription\(subscription \*ConnectionSubscription\) error](<#Database.CreateConnectionSubscription>)
   - [func \(d \*Database\) CreateSearchIndexes\(\) error](<#Database.CreateSearchIndexes>)
   - [func \(d \*Database\) CustomToolNameExists\(name string, aiApplicationID uint, excludeID \*uint\) \(bool, error\)](<#Database.CustomToolNameExists>)
   - [func \(d \*Database\) DeleteAIApplication\(tx \*gorm.DB, id uint\) error](<#Database.DeleteAIApplication>)
   - [func \(d \*Database\) DeleteAPIToken\(id uint\) error](<#Database.DeleteAPIToken>)
   - [func \(d \*Database\) DeleteConnection\(tx \*gorm.DB, id uint\) error](<#Database.DeleteConnection>)
+  - [func \(d \*Database\) DeleteConnectionSubscription\(id uint\) error](<#Database.DeleteConnectionSubscription>)
+  - [func \(d \*Database\) DeleteConnectionSubscriptionsByConnectionID\(connectionID uint\) error](<#Database.DeleteConnectionSubscriptionsByConnectionID>)
   - [func \(d \*Database\) DeleteConnector\(tx \*gorm.DB, id uint\) error](<#Database.DeleteConnector>)
   - [func \(d \*Database\) DeleteInvite\(id uint\) error](<#Database.DeleteInvite>)
   - [func \(d \*Database\) DeleteObjects\(tx \*gorm.DB, path \*string, repositoryID \*uint, ref \*string\) error](<#Database.DeleteObjects>)
@@ -2532,6 +2647,9 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetAllConnectors\(\) \(\[\]Connector, error\)](<#Database.GetAllConnectors>)
   - [func \(d \*Database\) GetAllWorkspaces\(\) \(\[\]Workspace, error\)](<#Database.GetAllWorkspaces>)
   - [func \(d \*Database\) GetConnectionByID\(id uint\) \(\*Connection, error\)](<#Database.GetConnectionByID>)
+  - [func \(d \*Database\) GetConnectionByIDAndWorkspaceID\(id uint, workspaceID uint\) \(\*Connection, error\)](<#Database.GetConnectionByIDAndWorkspaceID>)
+  - [func \(d \*Database\) GetConnectionSubscriptionByID\(id uint\) \(\*ConnectionSubscription, error\)](<#Database.GetConnectionSubscriptionByID>)
+  - [func \(d \*Database\) GetConnectionSubscriptionsByConnectionID\(connectionID uint\) \(\[\]ConnectionSubscription, error\)](<#Database.GetConnectionSubscriptionsByConnectionID>)
   - [func \(d \*Database\) GetConnectionTags\(connectionID uint\) \(\[\]Tag, error\)](<#Database.GetConnectionTags>)
   - [func \(d \*Database\) GetConnectionsByTag\(tagID uint\) \(\[\]Connection, error\)](<#Database.GetConnectionsByTag>)
   - [func \(d \*Database\) GetConnectionsByWorkspaceID\(workspaceID uint\) \(\[\]Connection, error\)](<#Database.GetConnectionsByWorkspaceID>)
@@ -2608,6 +2726,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) SearchWithCursor\(ctx context.Context, workspaceID uint, filters SearchFilters, pagination CursorPagination\) \(\[\]SearchResult, \*string, \*string, error\)](<#Database.SearchWithCursor>)
   - [func \(d \*Database\) SearchWorkspace\(workspaceID uint, filters SearchFilters\) \(\[\]SearchResult, int, error\)](<#Database.SearchWorkspace>)
   - [func \(d \*Database\) SearchWorkspaceCount\(workspaceID uint, filters SearchFilters\) \(int, error\)](<#Database.SearchWorkspaceCount>)
+  - [func \(d \*Database\) UpdateConnectionSubscription\(subscription \*ConnectionSubscription\) error](<#Database.UpdateConnectionSubscription>)
   - [func \(d \*Database\) UpdateWorkspaceUserRoles\(tx \*gorm.DB, userID, workspaceID uint, roleIDs \[\]uint\) \(\*WorkspaceUser, error\)](<#Database.UpdateWorkspaceUserRoles>)
   - [func \(d \*Database\) UpsertTemplate\(template \*Template\) error](<#Database.UpsertTemplate>)
   - [func \(d \*Database\) WaitForNotification\(ctx context.Context, channel string\) \(\*pgconn.Notification, error\)](<#Database.WaitForNotification>)
@@ -2620,6 +2739,7 @@ import "irmin-api/db"
 - [type Invite](<#Invite>)
 - [type LogEvent](<#LogEvent>)
 - [type LogEventType](<#LogEventType>)
+- [type PatchDirection](<#PatchDirection>)
 - [type PipelineStage](<#PipelineStage>)
 - [type PipelineStageType](<#PipelineStageType>)
 - [type PipelineWorkflowable](<#PipelineWorkflowable>)
@@ -2804,6 +2924,15 @@ func ContainsSuspiciousPatterns(input string) bool
 ```
 
 ContainsSuspiciousPatterns checks for additional suspicious patterns.
+
+<a name="GenerateWebhookToken"></a>
+## func GenerateWebhookToken
+
+```go
+func GenerateWebhookToken() (string, error)
+```
+
+GenerateWebhookToken creates a secure random token for webhook authentication.
 
 <a name="GetNormalizedQuery"></a>
 ## func GetNormalizedQuery
@@ -3188,6 +3317,27 @@ type Connection struct {
 }
 ```
 
+<a name="ConnectionEventType"></a>
+## type ConnectionEventType
+
+ConnectionEventType represents the type of change event from a connector
+
+```go
+type ConnectionEventType string
+```
+
+<a name="ConnectionEventInsert"></a>
+
+```go
+const (
+    ConnectionEventInsert ConnectionEventType = "insert"
+    ConnectionEventUpdate ConnectionEventType = "update"
+    ConnectionEventDelete ConnectionEventType = "delete"
+    ConnectionEventUpsert ConnectionEventType = "upsert"
+    ConnectionEventBatch  ConnectionEventType = "batch"
+)
+```
+
 <a name="ConnectionSchemaCache"></a>
 ## type ConnectionSchemaCache
 
@@ -3201,6 +3351,54 @@ type ConnectionSchemaCache struct {
     OpMethod     *string                   `json:"op_method,omitempty"`
     ConnectionID uint                      `json:"connection_id,omitempty" gorm:"index"`
     Connection   Connection                `json:"connection"              gorm:"foreignKey:ConnectionID"`
+}
+```
+
+<a name="ConnectionSubscription"></a>
+## type ConnectionSubscription
+
+ConnectionSubscription represents a subscription to data changes in a connection. When data changes in the external system, the connector sends webhook events to the Irmin API using the WebhookToken for authentication.
+
+```go
+type ConnectionSubscription struct {
+    gorm.Model
+
+    // Name is a user-friendly name for this subscription
+    Name string `json:"name"                  gorm:"type:varchar(255)"`
+    // Description provides additional context about the subscription
+    Description string `json:"description,omitempty" gorm:"type:text"`
+
+    // Connection is the connection this subscription monitors
+    Connection   Connection `json:"connection,omitempty" gorm:"foreignKey:ConnectionID"`
+    ConnectionID uint       `json:"connection_id"        gorm:"index;not null"`
+
+    // WebhookToken is the secret token used to authenticate webhook requests
+    // This should be kept secret and only shared with the connector
+    WebhookToken string `json:"-" gorm:"type:varchar(255);not null"`
+
+    // FilterPaths is an optional list of paths to filter events (e.g., ["users", "orders"])
+    // If empty, all paths are included
+    FilterPaths []string `json:"filter_paths,omitempty" gorm:"type:jsonb;serializer:json"`
+
+    // EventTypes is an optional list of event types to filter (e.g., ["insert", "update"])
+    // If empty, all event types are included
+    EventTypes []string `json:"event_types,omitempty" gorm:"type:jsonb;serializer:json"`
+
+    // IsActive indicates whether the subscription is currently active
+    IsActive bool `json:"is_active" gorm:"default:true"`
+
+    // ConnectorSubscriptionID is the ID of the subscription in the connector service.
+    // This is set when the connector supports automatic change detection (patch_event capability).
+    // It's used to unsubscribe when the subscription is deleted.
+    ConnectorSubscriptionID *uint `json:"connector_subscription_id,omitempty"`
+
+    // Owner is the user who created this subscription
+    Owner   *User `json:"owner,omitempty"    gorm:"foreignKey:OwnerID"`
+    OwnerID *uint `json:"owner_id,omitempty"`
+
+    // Workspace is the workspace this subscription belongs to (derived from connection)
+    Workspace   *Workspace `json:"workspace,omitempty" gorm:"foreignKey:WorkspaceID"`
+    WorkspaceID uint       `json:"workspace_id"        gorm:"index;not null"`
 }
 ```
 
@@ -3423,6 +3621,15 @@ func (d *Database) CreateAIApplicationToolLog(log *AIApplicationToolLog) error
 
 CreateAIApplicationToolLog creates a new tool audit log entry.
 
+<a name="Database.CreateConnectionSubscription"></a>
+### func \(\*Database\) CreateConnectionSubscription
+
+```go
+func (d *Database) CreateConnectionSubscription(subscription *ConnectionSubscription) error
+```
+
+CreateConnectionSubscription creates a new subscription in the database. It automatically generates a webhook token if not provided.
+
 <a name="Database.CreateSearchIndexes"></a>
 ### func \(\*Database\) CreateSearchIndexes
 
@@ -3466,7 +3673,25 @@ DeleteAPIToken deletes an API token by its ID.
 func (d *Database) DeleteConnection(tx *gorm.DB, id uint) error
 ```
 
-DeleteConnection deletes a connection and its associated schema cache from the database.
+DeleteConnection deletes a connection and its associated data from the database.
+
+<a name="Database.DeleteConnectionSubscription"></a>
+### func \(\*Database\) DeleteConnectionSubscription
+
+```go
+func (d *Database) DeleteConnectionSubscription(id uint) error
+```
+
+DeleteConnectionSubscription deletes a subscription by ID.
+
+<a name="Database.DeleteConnectionSubscriptionsByConnectionID"></a>
+### func \(\*Database\) DeleteConnectionSubscriptionsByConnectionID
+
+```go
+func (d *Database) DeleteConnectionSubscriptionsByConnectionID(connectionID uint) error
+```
+
+DeleteConnectionSubscriptionsByConnectionID deletes all subscriptions for a connection.
 
 <a name="Database.DeleteConnector"></a>
 ### func \(\*Database\) DeleteConnector
@@ -3746,6 +3971,33 @@ func (d *Database) GetConnectionByID(id uint) (*Connection, error)
 ```
 
 GetConnectionByID finds a connection by its ID.
+
+<a name="Database.GetConnectionByIDAndWorkspaceID"></a>
+### func \(\*Database\) GetConnectionByIDAndWorkspaceID
+
+```go
+func (d *Database) GetConnectionByIDAndWorkspaceID(id uint, workspaceID uint) (*Connection, error)
+```
+
+GetConnectionByIDAndWorkspaceID finds a connection by its ID and verifies it belongs to the given workspace.
+
+<a name="Database.GetConnectionSubscriptionByID"></a>
+### func \(\*Database\) GetConnectionSubscriptionByID
+
+```go
+func (d *Database) GetConnectionSubscriptionByID(id uint) (*ConnectionSubscription, error)
+```
+
+GetConnectionSubscriptionByID retrieves a subscription by its ID.
+
+<a name="Database.GetConnectionSubscriptionsByConnectionID"></a>
+### func \(\*Database\) GetConnectionSubscriptionsByConnectionID
+
+```go
+func (d *Database) GetConnectionSubscriptionsByConnectionID(connectionID uint) ([]ConnectionSubscription, error)
+```
+
+GetConnectionSubscriptionsByConnectionID retrieves all subscriptions for a connection.
 
 <a name="Database.GetConnectionTags"></a>
 ### func \(\*Database\) GetConnectionTags
@@ -4435,6 +4687,15 @@ func (d *Database) SearchWorkspaceCount(workspaceID uint, filters SearchFilters)
 
 SearchWorkspaceCount performs a search and returns only the total count of results with timeout protection.
 
+<a name="Database.UpdateConnectionSubscription"></a>
+### func \(\*Database\) UpdateConnectionSubscription
+
+```go
+func (d *Database) UpdateConnectionSubscription(subscription *ConnectionSubscription) error
+```
+
+UpdateConnectionSubscription updates an existing subscription.
+
 <a name="Database.UpdateWorkspaceUserRoles"></a>
 ### func \(\*Database\) UpdateWorkspaceUserRoles
 
@@ -4516,6 +4777,7 @@ type ExportWorkflowable struct {
     Repository                Repository                 `json:"repository"                   gorm:"foreignKey:RepositoryID"`
     RepositoryID              uint                       `json:"repository_id"                gorm:"index"`
     RepositoryBranch          string                     `json:"repository_branch"`
+    SyncMode                  string                     `json:"sync_mode"                    gorm:"type:varchar(20);default:'auto'"`
 }
 ```
 
@@ -4535,6 +4797,7 @@ type ImportWorkflowable struct {
     Repository                Repository                 `json:"repository"                   gorm:"foreignKey:RepositoryID"`
     RepositoryID              uint                       `json:"repository_id"                gorm:"index"`
     RepositoryBranch          string                     `json:"repository_branch"`
+    SyncMode                  string                     `json:"sync_mode"                    gorm:"type:varchar(20);default:'auto'"`
 }
 ```
 
@@ -4620,6 +4883,24 @@ const (
 )
 ```
 
+<a name="PatchDirection"></a>
+## type PatchDirection
+
+PatchDirection indicates whether to apply patches to a connection or repository
+
+```go
+type PatchDirection string
+```
+
+<a name="PatchDirectionToConnection"></a>
+
+```go
+const (
+    PatchDirectionToConnection PatchDirection = "to_connection"
+    PatchDirectionToRepository PatchDirection = "to_repository"
+)
+```
+
 <a name="PipelineStage"></a>
 ## type PipelineStage
 
@@ -4694,6 +4975,14 @@ type PipelineStage struct {
     EmbeddingsQuery        *string                              `json:"embeddings_query,omitempty"`
     EmbeddingsTopK         *int                                 `json:"embeddings_top_k,omitempty"`
     EmbeddingsFilter       map[string]string                    `json:"embeddings_filter,omitempty"        gorm:"type:jsonb;serializer:json"`
+
+    PatchDirection        *PatchDirection `json:"patch_direction,omitempty"`                                             // to_connection or to_repository
+    PatchConnection       *Connection     `json:"patch_connection,omitempty"        gorm:"foreignKey:PatchConnectionID"` // Target connection for to_connection
+    PatchConnectionID     *uint           `json:"patch_connection_id,omitempty"`
+    PatchRepository       *Repository     `json:"patch_repository,omitempty"        gorm:"foreignKey:PatchRepositoryID"` // Target repository for to_repository
+    PatchRepositoryID     *uint           `json:"patch_repository_id,omitempty"`
+    PatchRepositoryBranch *string         `json:"patch_repository_branch,omitempty"` // Branch for repository patches
+    PatchSourceFileName   *string         `json:"patch_source_file_name,omitempty"`  // Which file in previousStageResults contains patches (defaults to patches.json)
 }
 ```
 
@@ -4718,6 +5007,7 @@ const (
     PipelineStageTypeValidation       PipelineStageType = "validation"
     PipelineStageTypeTransform        PipelineStageType = "transform"
     PipelineStageTypeEmbeddings       PipelineStageType = "embeddings"
+    PipelineStageTypePatch            PipelineStageType = "patch"
 )
 ```
 
@@ -5589,6 +5879,12 @@ type WorkflowRun struct {
     TriggeredByUserID *uint                      `json:"triggered_by_user_id"`
     Workflow          Workflow                   `json:"workflow"              gorm:"foreignKey:WorkflowID"`
     WorkflowID        uint                       `json:"workflow_id"           gorm:"index"`
+
+    // TriggerPayload contains the event data that triggered this workflow run.
+    // For connection events, contains the webhook payload with patches.
+    // For repository events with IncludeDiffAsPatch, contains generated patches.
+    // Available to pipeline stages as trigger_event.json in previousStageResults.
+    TriggerPayload json.RawMessage `json:"trigger_payload,omitempty" gorm:"type:jsonb"`
 }
 ```
 
@@ -5644,15 +5940,22 @@ type WorkflowTrigger struct {
     NextRun *time.Time `json:"next_run,omitempty"`
 
     // Repository event trigger
-    RepositoryEvent *lakefs.WebhookEventType `json:"repository_event,omitempty"`
-    Repository      *Repository              `json:"repository,omitempty"       gorm:"foreignKey:RepositoryID"`
-    RepositoryID    *uint                    `json:"repository_id,omitempty"`
-    RepositoryRef   *string                  `json:"repository_ref,omitempty"`
+    RepositoryEvent    *lakefs.WebhookEventType `json:"repository_event,omitempty"`
+    Repository         *Repository              `json:"repository,omitempty"            gorm:"foreignKey:RepositoryID"`
+    RepositoryID       *uint                    `json:"repository_id,omitempty"`
+    RepositoryRef      *string                  `json:"repository_ref,omitempty"`
+    IncludeDiffAsPatch bool                     `json:"include_diff_as_patch,omitempty"` // Generate patches from commit diff
 
     // Workflow run event trigger
     WorkflowRunEvent *WorkflowRunEventType `json:"workflow_run_event,omitempty"`
     Workflow         *Workflow             `json:"workflow,omitempty"           gorm:"foreignKey:WorkflowID"`
     WorkflowID       *uint                 `json:"workflow_id,omitempty"`
+
+    // Connection event trigger
+    ConnectionEventType  *ConnectionEventType `json:"connection_event_type,omitempty"` // insert, update, delete, batch
+    Connection           *Connection          `json:"connection,omitempty"             gorm:"foreignKey:ConnectionID"`
+    ConnectionID         *uint                `json:"connection_id,omitempty"`
+    ConnectionEventPaths []string             `json:"connection_event_paths,omitempty" gorm:"type:jsonb;serializer:json"` // Optional path filter
 }
 ```
 
@@ -5669,9 +5972,10 @@ type WorkflowTriggerType string
 
 ```go
 const (
-    TimeTriggerType        WorkflowTriggerType = "time"
-    RepositoryTriggerType  WorkflowTriggerType = "repository-event"
-    WorkflowRunTriggerType WorkflowTriggerType = "workflow-run-event"
+    TimeTriggerType            WorkflowTriggerType = "time"
+    RepositoryTriggerType      WorkflowTriggerType = "repository-event"
+    WorkflowRunTriggerType     WorkflowTriggerType = "workflow-run-event"
+    ConnectionEventTriggerType WorkflowTriggerType = "connection-event"
 )
 ```
 
@@ -6497,6 +6801,7 @@ import "irmin-api/engine"
 - [func DetectOperationType\(stmt string\) string](<#DetectOperationType>)
 - [func ExtractArrayElementTypeForTesting\(arrayType string\) string](<#ExtractArrayElementTypeForTesting>)
 - [func ExtractS3Paths\(query string\) \(\[\]string, error\)](<#ExtractS3Paths>)
+- [func GeneratePatchPayload\(result \*DiffToPatchResult, repositorySlug string, ref string, commitID string\) map\[string\]any](<#GeneratePatchPayload>)
 - [func IsPointerPath\(path string\) bool](<#IsPointerPath>)
 - [func IsRowReturningStatement\(stmt string\) bool](<#IsRowReturningStatement>)
 - [func IsSchemaValidationError\(err error\) bool](<#IsSchemaValidationError>)
@@ -6522,6 +6827,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) CommitChanges\(workspace, repository, branch, message, author string, allowEmpty bool\) \(\*irminmodels.Commit, error\)](<#Client.CommitChanges>)
   - [func \(c \*Client\) CompareRefs\(ctx context.Context, user \*db.User, workspace \*db.Workspace, repositorySlug, baseRef, compareRef string\) \(\*irminmodels.Diff, error\)](<#Client.CompareRefs>)
   - [func \(c \*Client\) ConfigureRepositoryWebhookNotifications\(lakefsRepository \*lakefs.Repository\) \(\*lakefs.ObjectMetadata, error\)](<#Client.ConfigureRepositoryWebhookNotifications>)
+  - [func \(c \*Client\) ConvertDiffToPatches\(diffs \[\]lakefs.Diff, opts DiffToPatchOptions\) \(\*DiffToPatchResult, error\)](<#Client.ConvertDiffToPatches>)
   - [func \(c \*Client\) CopyObject\(workspace, repository, path, ref, newPath string\) \(\*irminmodels.Object, error\)](<#Client.CopyObject>)
   - [func \(c \*Client\) CreateBranch\(workspace, repository, name, from string, isImmutable bool\) \(\*irminmodels.Branch, error\)](<#Client.CreateBranch>)
   - [func \(c \*Client\) CreateRepository\(workspace, name, defaultBranch string, isImmutable bool, gcDefaultRetentionDays, gcDefaultBranchRetentionDays \*int\) \(\*Repository, error\)](<#Client.CreateRepository>)
@@ -6539,6 +6845,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) GenerateSchemaFromFile\(ctx context.Context, filename string, fileData \[\]byte\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GenerateSchemaFromFile>)
   - [func \(c \*Client\) GetBranch\(ctx context.Context, workspace, repository, branch string\) \(\*irminmodels.Branch, error\)](<#Client.GetBranch>)
   - [func \(c \*Client\) GetCommit\(workspace, repository, hash string\) \(\*irminmodels.Commit, error\)](<#Client.GetCommit>)
+  - [func \(c \*Client\) GetCommitDiff\(workspace, repository, commitHash string\) \(\[\]lakefs.Diff, error\)](<#Client.GetCommitDiff>)
   - [func \(c \*Client\) GetObjectChanges\(workspace, repository, path, ref string\) \(\[\]irminmodels.Commit, error\)](<#Client.GetObjectChanges>)
   - [func \(c \*Client\) GetObjectContent\(workspace, repository, path, ref string\) \(\[\]byte, error\)](<#Client.GetObjectContent>)
   - [func \(c \*Client\) GetPath\(workspace, repository, path, ref string\) \(\*irminmodels.Object, error\)](<#Client.GetPath>)
@@ -6569,6 +6876,8 @@ import "irmin-api/engine"
   - [func \(e \*ConnectorSchemaValidationError\) GetFirstError\(\) \*irminmodels.SchemaValidationError](<#ConnectorSchemaValidationError.GetFirstError>)
   - [func \(e \*ConnectorSchemaValidationError\) HasErrors\(\) bool](<#ConnectorSchemaValidationError.HasErrors>)
   - [func \(e \*ConnectorSchemaValidationError\) Unwrap\(\) error](<#ConnectorSchemaValidationError.Unwrap>)
+- [type DiffToPatchOptions](<#DiffToPatchOptions>)
+- [type DiffToPatchResult](<#DiffToPatchResult>)
 - [type FieldMappingResult](<#FieldMappingResult>)
 - [type PermissionChecker](<#PermissionChecker>)
 - [type Repository](<#Repository>)
@@ -6658,6 +6967,15 @@ func ExtractS3Paths(query string) ([]string, error)
 ```
 
 ExtractS3Paths extracts all S3 URLs from a SQL query Returns unique S3 paths found in the query, with quotes unescaped
+
+<a name="GeneratePatchPayload"></a>
+## func GeneratePatchPayload
+
+```go
+func GeneratePatchPayload(result *DiffToPatchResult, repositorySlug string, ref string, commitID string) map[string]any
+```
+
+GeneratePatchPayload creates a complete payload structure for trigger events that includes the patches along with metadata.
 
 <a name="IsPointerPath"></a>
 ## func IsPointerPath
@@ -6914,6 +7232,15 @@ func (c *Client) ConfigureRepositoryWebhookNotifications(lakefsRepository *lakef
 
 ConfigureRepositoryWebhookNotifications configures the webhook notifications for the main branch of a repository. This should be called once, right after the repository is created.
 
+<a name="Client.ConvertDiffToPatches"></a>
+### func \(\*Client\) ConvertDiffToPatches
+
+```go
+func (c *Client) ConvertDiffToPatches(diffs []lakefs.Diff, opts DiffToPatchOptions) (*DiffToPatchResult, error)
+```
+
+ConvertDiffToPatches converts LakeFS diff entries to JSON patch operations. For added and changed files, it fetches the file content and includes it in the patch value. For removed files, it creates a remove operation.
+
 <a name="Client.CopyObject"></a>
 ### func \(\*Client\) CopyObject
 
@@ -7066,6 +7393,15 @@ func (c *Client) GetCommit(workspace, repository, hash string) (*irminmodels.Com
 ```
 
 
+
+<a name="Client.GetCommitDiff"></a>
+### func \(\*Client\) GetCommitDiff
+
+```go
+func (c *Client) GetCommitDiff(workspace, repository, commitHash string) ([]lakefs.Diff, error)
+```
+
+GetCommitDiff returns the diff for a commit compared to its parent. If the commit has no parent \(initial commit\), it returns all files as added.
 
 <a name="Client.GetObjectChanges"></a>
 ### func \(\*Client\) GetObjectChanges
@@ -7349,6 +7685,38 @@ func (e *ConnectorSchemaValidationError) Unwrap() error
 
 Unwrap returns nil as this error does not wrap another error.
 
+<a name="DiffToPatchOptions"></a>
+## type DiffToPatchOptions
+
+DiffToPatchOptions contains options for converting diffs to patches.
+
+```go
+type DiffToPatchOptions struct {
+    // WorkspaceSlug is the workspace containing the repository.
+    WorkspaceSlug string
+    // RepositorySlug is the repository where the diff occurred.
+    RepositorySlug string
+    // Ref is the reference (branch/commit) to get file content from.
+    Ref string
+    // IncludeBinaryAsBase64 determines whether binary files should be
+    // included as base64-encoded values. If false, binary files are skipped.
+    IncludeBinaryAsBase64 bool
+}
+```
+
+<a name="DiffToPatchResult"></a>
+## type DiffToPatchResult
+
+DiffToPatchResult contains the result of converting diffs to patches.
+
+```go
+type DiffToPatchResult struct {
+    Patches      []irminmodels.PatchOperation `json:"patches"`
+    SkippedFiles []string                     `json:"skipped_files,omitempty"`
+    Errors       []string                     `json:"errors,omitempty"`
+}
+```
+
 <a name="FieldMappingResult"></a>
 ## type FieldMappingResult
 
@@ -7503,6 +7871,8 @@ import "irmin-api/formatter"
 - [func FormatAIApplicationResponse\(database \*db.Database, aiApplication \*db.AIApplication, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.AIApplication, error\)](<#FormatAIApplicationResponse>)
 - [func FormatAPITokenResponse\(token \*db.APIToken, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.APIToken, error\)](<#FormatAPITokenResponse>)
 - [func FormatConnectionResponse\(connection \*db.Connection, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Connection, error\)](<#FormatConnectionResponse>)
+- [func FormatConnectionSubscriptionResponse\(subscription \*db.ConnectionSubscription, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.ConnectionSubscription, error\)](<#FormatConnectionSubscriptionResponse>)
+- [func FormatConnectionSubscriptionWithTokenResponse\(subscription \*db.ConnectionSubscription, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.ConnectionSubscriptionWithToken, error\)](<#FormatConnectionSubscriptionWithTokenResponse>)
 - [func FormatConnectorResponse\(connector \*db.Connector, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Connector, error\)](<#FormatConnectorResponse>)
 - [func FormatIndexResponse\[T any, R any\]\(items \[\]T, formatter func\(\*T, \*irminsqids.SQIDManager\) \(\*R, error\), sqidManager \*irminsqids.SQIDManager\) \(\[\]R, error\)](<#FormatIndexResponse>)
 - [func FormatInviteResponse\(invite \*db.Invite, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Invite, error\)](<#FormatInviteResponse>)
@@ -7554,6 +7924,24 @@ func FormatConnectionResponse(connection *db.Connection, sqidManager *irminsqids
 ```
 
 FormatConnectionResponse creates a connection response object from a connection object.
+
+<a name="FormatConnectionSubscriptionResponse"></a>
+## func FormatConnectionSubscriptionResponse
+
+```go
+func FormatConnectionSubscriptionResponse(subscription *db.ConnectionSubscription, sqidManager *irminsqids.SQIDManager) (*irminmodels.ConnectionSubscription, error)
+```
+
+FormatConnectionSubscriptionResponse creates a subscription response object from a database subscription object.
+
+<a name="FormatConnectionSubscriptionWithTokenResponse"></a>
+## func FormatConnectionSubscriptionWithTokenResponse
+
+```go
+func FormatConnectionSubscriptionWithTokenResponse(subscription *db.ConnectionSubscription, sqidManager *irminsqids.SQIDManager) (*irminmodels.ConnectionSubscriptionWithToken, error)
+```
+
+FormatConnectionSubscriptionWithTokenResponse creates a subscription response with the webhook token. This should only be used when returning a newly created subscription.
 
 <a name="FormatConnectorResponse"></a>
 ## func FormatConnectorResponse
@@ -10000,6 +10388,7 @@ import "irmin-api/lib"
 - [func CreateAuditLogEventAsync\(d \*db.Database, logger \*slog.Logger, event \*db.LogEvent\)](<#CreateAuditLogEventAsync>)
 - [func CreatePointerContent\(target \*irminmodels.PointerTarget\) \(\[\]byte, error\)](<#CreatePointerContent>)
 - [func CreateWorkflowRun\(tx \*gorm.DB, workflow \*db.Workflow, user \*db.User, trigger \*db.WorkflowTrigger\) \(\*db.WorkflowRun, error\)](<#CreateWorkflowRun>)
+- [func CreateWorkflowRunWithPayload\(tx \*gorm.DB, workflow \*db.Workflow, user \*db.User, trigger \*db.WorkflowTrigger, payload any\) \(\*db.WorkflowRun, error\)](<#CreateWorkflowRunWithPayload>)
 - [func DecodePolicyResourceID\(sqid string, resource db.PolicyResource, sqidManager \*irminsqids.SQIDManager\) \(\*uint, error\)](<#DecodePolicyResourceID>)
 - [func DownloadFileFromURL\(ctx context.Context, targetURL string, headers map\[string\]string\) \(io.ReadCloser, error\)](<#DownloadFileFromURL>)
 - [func EncodePolicyResourceID\(id uint, resource db.PolicyResource, sqidManager \*irminsqids.SQIDManager\) \(string, error\)](<#EncodePolicyResourceID>)
@@ -10161,6 +10550,15 @@ func CreateWorkflowRun(tx *gorm.DB, workflow *db.Workflow, user *db.User, trigge
 ```
 
 CreateWorkflowRun will check if enough time has passed since the last run. If so, it will create a new pending workflow run, update the schedule's previous run time, and return the new workflow run. Creating a new workflow run will cause the orchestrator to pick it up and execute it.
+
+<a name="CreateWorkflowRunWithPayload"></a>
+## func CreateWorkflowRunWithPayload
+
+```go
+func CreateWorkflowRunWithPayload(tx *gorm.DB, workflow *db.Workflow, user *db.User, trigger *db.WorkflowTrigger, payload any) (*db.WorkflowRun, error)
+```
+
+CreateWorkflowRunWithPayload creates a workflow run and attaches trigger event data as payload. The payload will be available to pipeline stages as trigger\_event.json in previousStageResults. This is used for connection events and repository events with IncludeDiffAsPatch enabled.
 
 <a name="DecodePolicyResourceID"></a>
 ## func DecodePolicyResourceID
@@ -10755,6 +11153,8 @@ import "irmin-api/middlewares"
 
 ## Index
 
+- [Constants](<#constants>)
+- [Variables](<#variables>)
 - [type APIMiddlewares](<#APIMiddlewares>)
   - [func NewAPIMiddlewares\(apiServices \*services.APIServices\) \*APIMiddlewares](<#NewAPIMiddlewares>)
   - [func \(m \*APIMiddlewares\) AIApplicationAPIKeyAuth\(c fiber.Ctx\) error](<#APIMiddlewares.AIApplicationAPIKeyAuth>)
@@ -10764,11 +11164,14 @@ import "irmin-api/middlewares"
   - [func \(api \*APIMiddlewares\) AuthMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.AuthMiddleware>)
   - [func \(api \*APIMiddlewares\) ConnectionMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.ConnectionMiddleware>)
   - [func \(api \*APIMiddlewares\) ConnectionPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.ConnectionPermissionMiddleware>)
+  - [func \(api \*APIMiddlewares\) ConnectionSubscriptionMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.ConnectionSubscriptionMiddleware>)
   - [func \(api \*APIMiddlewares\) ConnectorMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.ConnectorMiddleware>)
+  - [func \(api \*APIMiddlewares\) ConnectorWebhookMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.ConnectorWebhookMiddleware>)
   - [func \(api \*APIMiddlewares\) DocumentationPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.DocumentationPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) InviteMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.InviteMiddleware>)
   - [func \(api \*APIMiddlewares\) InvitePermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.InvitePermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) LocaleMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.LocaleMiddleware>)
+  - [func \(api \*APIMiddlewares\) LocaleMiddlewareForWebhooks\(c fiber.Ctx\) error](<#APIMiddlewares.LocaleMiddlewareForWebhooks>)
   - [func \(api \*APIMiddlewares\) PolicyMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.PolicyMiddleware>)
   - [func \(api \*APIMiddlewares\) PolicyPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.PolicyPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) QueryMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.QueryMiddleware>)
@@ -10796,6 +11199,26 @@ import "irmin-api/middlewares"
   - [func \(api \*APIMiddlewares\) WorkspaceTagPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.WorkspaceTagPermissionMiddleware>)
 - [type PermissionCheck](<#PermissionCheck>)
 
+
+## Constants
+
+<a name="WebhookTokenHeader"></a>
+
+```go
+const (
+    // WebhookTokenHeader is the header name for the webhook authentication token.
+    //nolint:gosec // G101: This is a header name, not a credential
+    WebhookTokenHeader = "X-Webhook-Token"
+)
+```
+
+## Variables
+
+<a name="ErrNoMatchingSubscription"></a>ErrNoMatchingSubscription indicates no active subscription matches the provided webhook token.
+
+```go
+var ErrNoMatchingSubscription = errors.New("no matching subscription found")
+```
 
 <a name="APIMiddlewares"></a>
 ## type APIMiddlewares
@@ -10886,6 +11309,15 @@ func (api *APIMiddlewares) ConnectionPermissionMiddleware(action db.PolicyAction
 
 ConnectionPermissionMiddleware creates a middleware for connection\-level permissions.
 
+<a name="APIMiddlewares.ConnectionSubscriptionMiddleware"></a>
+### func \(\*APIMiddlewares\) ConnectionSubscriptionMiddleware
+
+```go
+func (api *APIMiddlewares) ConnectionSubscriptionMiddleware(c fiber.Ctx) error
+```
+
+ConnectionSubscriptionMiddleware loads a connection subscription by its ID from the URL.
+
 <a name="APIMiddlewares.ConnectorMiddleware"></a>
 ### func \(\*APIMiddlewares\) ConnectorMiddleware
 
@@ -10894,6 +11326,17 @@ func (api *APIMiddlewares) ConnectorMiddleware(c fiber.Ctx) error
 ```
 
 ConnectorMiddleware parses the connector SQID from the request URL and sets the connector in the context.
+
+<a name="APIMiddlewares.ConnectorWebhookMiddleware"></a>
+### func \(\*APIMiddlewares\) ConnectorWebhookMiddleware
+
+```go
+func (api *APIMiddlewares) ConnectorWebhookMiddleware(c fiber.Ctx) error
+```
+
+ConnectorWebhookMiddleware validates webhook requests from connectors. It verifies the webhook token and loads the connection into the context.
+
+This middleware does NOT require user authentication \- it uses webhook tokens that are generated when a connection subscription is created.
 
 <a name="APIMiddlewares.DocumentationPermissionMiddleware"></a>
 ### func \(\*APIMiddlewares\) DocumentationPermissionMiddleware
@@ -10930,6 +11373,15 @@ func (api *APIMiddlewares) LocaleMiddleware(c fiber.Ctx) error
 ```
 
 LocaleMiddleware sets the dictionary and locale for the request.
+
+<a name="APIMiddlewares.LocaleMiddlewareForWebhooks"></a>
+### func \(\*APIMiddlewares\) LocaleMiddlewareForWebhooks
+
+```go
+func (api *APIMiddlewares) LocaleMiddlewareForWebhooks(c fiber.Ctx) error
+```
+
+LocaleMiddlewareForWebhooks provides locale detection for webhook endpoints that don't have user authentication.
 
 <a name="APIMiddlewares.PolicyMiddleware"></a>
 ### func \(\*APIMiddlewares\) PolicyMiddleware
@@ -11176,6 +11628,7 @@ import "irmin-api/orchestrator"
 - [Constants](<#constants>)
 - [type BaseLogEntry](<#BaseLogEntry>)
 - [type CommitLog](<#CommitLog>)
+- [type ConnectionEvent](<#ConnectionEvent>)
 - [type ConnectorOperationLog](<#ConnectorOperationLog>)
 - [type DispatchEvent](<#DispatchEvent>)
 - [type DispatchEventType](<#DispatchEventType>)
@@ -11188,6 +11641,7 @@ import "irmin-api/orchestrator"
 - [type ObjectModifiedLog](<#ObjectModifiedLog>)
 - [type Orchestrator](<#Orchestrator>)
   - [func NewOrchestrator\(d \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, dataEngine \*engine.Client, cacheStorage fiber.Storage\) \*Orchestrator](<#NewOrchestrator>)
+  - [func \(o \*Orchestrator\) AddConnectionEvent\(event \*ConnectionEvent\)](<#Orchestrator.AddConnectionEvent>)
   - [func \(o \*Orchestrator\) AddDispatchedEvent\(event \*DispatchEvent\)](<#Orchestrator.AddDispatchedEvent>)
   - [func \(o \*Orchestrator\) AddLakefsEvent\(event \*lakefs.WebhookEvent\)](<#Orchestrator.AddLakefsEvent>)
   - [func \(o \*Orchestrator\) AddWorkerEvent\(event \*WorkerEvent\)](<#Orchestrator.AddWorkerEvent>)
@@ -11275,6 +11729,32 @@ type CommitLog struct {
     Branch         string `json:"branch"`
     CommitHash     string `json:"commit_hash"`
     Author         string `json:"author"`
+}
+```
+
+<a name="ConnectionEvent"></a>
+## type ConnectionEvent
+
+ConnectionEvent represents an event received from a connector webhook. It contains information about data changes in the external system.
+
+```go
+type ConnectionEvent struct {
+    // EventType is the type of change (insert, update, delete, batch)
+    EventType db.ConnectionEventType `json:"event_type"`
+    // EventTime is when the event occurred in the external system
+    EventTime time.Time `json:"event_time"`
+    // ConnectionID identifies which Irmin connection this event is for
+    ConnectionID uint `json:"connection_id"`
+    // ConnectorID identifies which connector type generated this event
+    ConnectorID uint `json:"connector_id"`
+    // Path is the logical path of the affected data (e.g., "users", "orders/2024")
+    Path string `json:"path"`
+    // AffectedRows is the number of rows affected by this event
+    AffectedRows int `json:"affected_rows,omitempty"`
+    // Payload contains the raw event data from the connector
+    Payload json.RawMessage `json:"payload,omitempty"`
+    // Patches contains pre-computed patch operations from the connector
+    Patches []irminmodels.PatchOperation `json:"patches,omitempty"`
 }
 ```
 
@@ -11463,6 +11943,15 @@ type Orchestrator struct {
 
 ```go
 func NewOrchestrator(d *db.Database, logger *slog.Logger, env *utils.CoreAPIEnv, dataEngine *engine.Client, cacheStorage fiber.Storage) *Orchestrator
+```
+
+
+
+<a name="Orchestrator.AddConnectionEvent"></a>
+### func \(\*Orchestrator\) AddConnectionEvent
+
+```go
+func (o *Orchestrator) AddConnectionEvent(event *ConnectionEvent)
 ```
 
 
@@ -11944,6 +12433,10 @@ type WorkflowStartLog struct {
     WorkflowRunEvent   string `json:"workflow_run_event,omitempty"` // "pre-workflow-run", "post-workflow-run"
     LinkedWorkflowID   *uint  `json:"linked_workflow_id,omitempty"`
     LinkedWorkflowName string `json:"linked_workflow_name,omitempty"`
+    // Connection event trigger details
+    ConnectionEventType string `json:"connection_event_type,omitempty"` // "insert", "update", "delete"
+    ConnectionID        *uint  `json:"connection_id,omitempty"`
+    ConnectionName      string `json:"connection_name,omitempty"`
 }
 ```
 
@@ -12389,6 +12882,10 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ZipRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(\[\]byte, string, error\)](<#APIServices.ZipRepositoryObject>)
 - [type AuthCache](<#AuthCache>)
 - [type AuthCacheEntry](<#AuthCacheEntry>)
+- [type ConnectionSubscriptionService](<#ConnectionSubscriptionService>)
+  - [func NewConnectionSubscriptionService\(database \*db.Database, apiURL string\) \*ConnectionSubscriptionService](<#NewConnectionSubscriptionService>)
+  - [func \(s \*ConnectionSubscriptionService\) RegisterSubscriptionWithConnector\(ctx context.Context, connection \*db.Connection, subscription \*db.ConnectionSubscription, connectionSqid string\) \(\*uint, error\)](<#ConnectionSubscriptionService.RegisterSubscriptionWithConnector>)
+  - [func \(s \*ConnectionSubscriptionService\) UnregisterSubscriptionFromConnector\(ctx context.Context, connection \*db.Connection, connectorSubscriptionID uint\) error](<#ConnectionSubscriptionService.UnregisterSubscriptionFromConnector>)
 - [type CreateCustomToolRequest](<#CreateCustomToolRequest>)
 - [type CustomToolResult](<#CustomToolResult>)
 - [type ErrorHandler](<#ErrorHandler>)
@@ -12515,6 +13012,12 @@ var (
     ErrConnectorMissingPatchCapability        = engine.ErrConnectorMissingPatchCapability
     ErrConnectorMissingWebhookCapability      = engine.ErrConnectorMissingWebhookCapability
 )
+```
+
+<a name="ErrConnectorCapabilityNotSupported"></a>ErrConnectorCapabilityNotSupported indicates the connector doesn't support the required capability.
+
+```go
+var ErrConnectorCapabilityNotSupported = errors.New("connector does not support required capability")
 ```
 
 <a name="BuildUnifiedPath"></a>
@@ -14181,6 +14684,44 @@ type AuthCacheEntry struct {
     ExpiresAt time.Time
 }
 ```
+
+<a name="ConnectionSubscriptionService"></a>
+## type ConnectionSubscriptionService
+
+ConnectionSubscriptionService handles business logic for connection subscriptions.
+
+```go
+type ConnectionSubscriptionService struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewConnectionSubscriptionService"></a>
+### func NewConnectionSubscriptionService
+
+```go
+func NewConnectionSubscriptionService(database *db.Database, apiURL string) *ConnectionSubscriptionService
+```
+
+NewConnectionSubscriptionService creates a new connection subscription service.
+
+<a name="ConnectionSubscriptionService.RegisterSubscriptionWithConnector"></a>
+### func \(\*ConnectionSubscriptionService\) RegisterSubscriptionWithConnector
+
+```go
+func (s *ConnectionSubscriptionService) RegisterSubscriptionWithConnector(ctx context.Context, connection *db.Connection, subscription *db.ConnectionSubscription, connectionSqid string) (*uint, error)
+```
+
+RegisterSubscriptionWithConnector registers a subscription with the connector service. It initializes a connector operation, subscribes to changes, and returns the connector subscription ID. If the connector doesn't support patch\_event capability, it returns ErrConnectorCapabilityNotSupported.
+
+<a name="ConnectionSubscriptionService.UnregisterSubscriptionFromConnector"></a>
+### func \(\*ConnectionSubscriptionService\) UnregisterSubscriptionFromConnector
+
+```go
+func (s *ConnectionSubscriptionService) UnregisterSubscriptionFromConnector(ctx context.Context, connection *db.Connection, connectorSubscriptionID uint) error
+```
+
+UnregisterSubscriptionFromConnector removes a subscription from the connector service. It cancels the operation and unsubscribes from changes.
 
 <a name="CreateCustomToolRequest"></a>
 ## type CreateCustomToolRequest

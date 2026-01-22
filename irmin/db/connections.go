@@ -43,6 +43,17 @@ func (d *Database) GetConnectionByID(id uint) (*Connection, error) {
 	return &connection, nil
 }
 
+// GetConnectionByIDAndWorkspaceID finds a connection by its ID and verifies it belongs to the given workspace.
+func (d *Database) GetConnectionByIDAndWorkspaceID(id uint, workspaceID uint) (*Connection, error) {
+	var connection Connection
+	if err := d.Preload("Owner").Preload("Connector").Preload("Tags").
+		Where(&Connection{WorkspaceID: workspaceID}).
+		First(&connection, id).Error; err != nil {
+		return nil, err
+	}
+	return &connection, nil
+}
+
 // GetConnectionsByWorkspaceID finds all connections in a workspace.
 func (d *Database) GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, error) {
 	var connections []Connection
@@ -52,7 +63,7 @@ func (d *Database) GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, 
 	return connections, nil
 }
 
-// DeleteConnection deletes a connection and its associated schema cache from the database.
+// DeleteConnection deletes a connection and its associated data from the database.
 func (d *Database) DeleteConnection(tx *gorm.DB, id uint) error {
 	// Remove tag associations first
 	if err := tx.Where(&ConnectionTag{ConnectionID: id}).Delete(&ConnectionTag{}).Error; err != nil {
@@ -60,6 +71,10 @@ func (d *Database) DeleteConnection(tx *gorm.DB, id uint) error {
 	}
 	// Delete associated schema cache
 	if err := tx.Where(&ConnectionSchemaCache{ConnectionID: id}).Delete(&ConnectionSchemaCache{}).Error; err != nil {
+		return err
+	}
+	// Delete associated subscriptions
+	if err := tx.Where(&ConnectionSubscription{ConnectionID: id}).Delete(&ConnectionSubscription{}).Error; err != nil {
 		return err
 	}
 	// Then delete the connection

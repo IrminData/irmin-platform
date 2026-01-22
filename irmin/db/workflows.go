@@ -45,6 +45,7 @@ type ImportWorkflowable struct {
 	Repository                Repository                 `json:"repository"                   gorm:"foreignKey:RepositoryID"`
 	RepositoryID              uint                       `json:"repository_id"                gorm:"index"`
 	RepositoryBranch          string                     `json:"repository_branch"`
+	SyncMode                  string                     `json:"sync_mode"                    gorm:"type:varchar(20);default:'auto'"`
 }
 
 type ExportWorkflowable struct {
@@ -57,6 +58,7 @@ type ExportWorkflowable struct {
 	Repository                Repository                 `json:"repository"                   gorm:"foreignKey:RepositoryID"`
 	RepositoryID              uint                       `json:"repository_id"                gorm:"index"`
 	RepositoryBranch          string                     `json:"repository_branch"`
+	SyncMode                  string                     `json:"sync_mode"                    gorm:"type:varchar(20);default:'auto'"`
 }
 
 type ActionWorkflowableInput struct {
@@ -99,6 +101,15 @@ const (
 	PipelineStageTypeValidation       PipelineStageType = "validation"
 	PipelineStageTypeTransform        PipelineStageType = "transform"
 	PipelineStageTypeEmbeddings       PipelineStageType = "embeddings"
+	PipelineStageTypePatch            PipelineStageType = "patch"
+)
+
+// PatchDirection indicates whether to apply patches to a connection or repository
+type PatchDirection string
+
+const (
+	PatchDirectionToConnection PatchDirection = "to_connection"
+	PatchDirectionToRepository PatchDirection = "to_repository"
 )
 
 type PipelineStage struct {
@@ -185,6 +196,16 @@ type PipelineStage struct {
 	EmbeddingsQuery        *string                              `json:"embeddings_query,omitempty"`
 	EmbeddingsTopK         *int                                 `json:"embeddings_top_k,omitempty"`
 	EmbeddingsFilter       map[string]string                    `json:"embeddings_filter,omitempty"        gorm:"type:jsonb;serializer:json"`
+
+	// Patch stage specific - applies JSON patches to connections or repositories
+
+	PatchDirection        *PatchDirection `json:"patch_direction,omitempty"`                                             // to_connection or to_repository
+	PatchConnection       *Connection     `json:"patch_connection,omitempty"        gorm:"foreignKey:PatchConnectionID"` // Target connection for to_connection
+	PatchConnectionID     *uint           `json:"patch_connection_id,omitempty"`
+	PatchRepository       *Repository     `json:"patch_repository,omitempty"        gorm:"foreignKey:PatchRepositoryID"` // Target repository for to_repository
+	PatchRepositoryID     *uint           `json:"patch_repository_id,omitempty"`
+	PatchRepositoryBranch *string         `json:"patch_repository_branch,omitempty"` // Branch for repository patches
+	PatchSourceFileName   *string         `json:"patch_source_file_name,omitempty"`  // Which file in previousStageResults contains patches (defaults to patches.json)
 }
 
 // GetWorkflowsByWorkspaceID retrieves all workflows for a workspace.
@@ -277,6 +298,9 @@ func (d *Database) GetPipelineWorkflowableByID(id uint) (*PipelineWorkflowable, 
 		Preload("Stages.RepositoryActionRepository").
 		Preload("Stages.TriggerWorkflow").
 		Preload("Stages.EmbeddingsRepository").
+		Preload("Stages.PatchConnection").
+		Preload("Stages.PatchConnection.Connector").
+		Preload("Stages.PatchRepository").
 		First(&pipeline, id)
 	return &pipeline, result.Error
 }

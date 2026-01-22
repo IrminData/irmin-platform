@@ -99,6 +99,10 @@ var (
 )
     Sentinel errors used for consistent HTTP mapping in controllers
 
+var ErrConnectorCapabilityNotSupported = errors.New("connector does not support required capability")
+    ErrConnectorCapabilityNotSupported indicates the connector doesn't support
+    the required capability.
+
 
 FUNCTIONS
 
@@ -1459,6 +1463,36 @@ type AuthCacheEntry struct {
 	ExpiresAt time.Time
 }
     AuthCacheEntry represents a cached authentication result.
+
+type ConnectionSubscriptionService struct {
+	// Has unexported fields.
+}
+    ConnectionSubscriptionService handles business logic for connection
+    subscriptions.
+
+func NewConnectionSubscriptionService(database *db.Database, apiURL string) *ConnectionSubscriptionService
+    NewConnectionSubscriptionService creates a new connection subscription
+    service.
+
+func (s *ConnectionSubscriptionService) RegisterSubscriptionWithConnector(
+	ctx context.Context,
+	connection *db.Connection,
+	subscription *db.ConnectionSubscription,
+	connectionSqid string,
+) (*uint, error)
+    RegisterSubscriptionWithConnector registers a subscription with
+    the connector service. It initializes a connector operation,
+    subscribes to changes, and returns the connector subscription ID.
+    If the connector doesn't support patch_event capability, it returns
+    ErrConnectorCapabilityNotSupported.
+
+func (s *ConnectionSubscriptionService) UnregisterSubscriptionFromConnector(
+	ctx context.Context,
+	connection *db.Connection,
+	connectorSubscriptionID uint,
+) error
+    UnregisterSubscriptionFromConnector removes a subscription from the
+    connector service. It cancels the operation and unsubscribes from changes.
 
 type CreateCustomToolRequest struct {
 	Name            string            `json:"name"`

@@ -981,6 +981,12 @@ func (api *APIServices) createImportExportWorkflowable(
 		}
 	}
 
+	// Determine sync mode (default to "auto" if not set)
+	syncMode := "auto"
+	if wflConfig.SyncMode != "" {
+		syncMode = string(wflConfig.SyncMode)
+	}
+
 	// Handle import workflowable case
 	if workflowableType == irminmodels.WorkflowableTypeImport {
 		// Validate connector capability
@@ -996,6 +1002,7 @@ func (api *APIServices) createImportExportWorkflowable(
 			RepositoryBranch:          wflConfig.RepositoryBranch,
 			ImportToRepositoryPath:    trimmedImportToRepositoryPath,
 			FieldMappings:             fieldMappings,
+			SyncMode:                  syncMode,
 		}
 		if createImportWorkflowableErr := txDB.Create(importWorkflowable).Error; createImportWorkflowableErr != nil {
 			return nil, nil, createImportWorkflowableErr
@@ -1016,6 +1023,7 @@ func (api *APIServices) createImportExportWorkflowable(
 		RepositoryBranch:          wflConfig.RepositoryBranch,
 		ExportFromRepositoryPaths: trimmedExportFromRepositoryPaths,
 		FieldMappings:             fieldMappings,
+		SyncMode:                  syncMode,
 	}
 	if createExportWorkflowableErr := txDB.Create(exportWorkflowable).Error; createExportWorkflowableErr != nil {
 		return nil, nil, createExportWorkflowableErr
@@ -1317,6 +1325,8 @@ func (api *APIServices) processStageByType(
 		return api.processTransformStage(newStage, stage)
 	case irminmodels.PipelineStageTypeEmbeddings:
 		return api.processEmbeddingsStage(txDB, newStage, stage, workspace)
+	case irminmodels.PipelineStageTypePatch:
+		return api.processPatchStage(txDB, newStage, stage, workspace)
 	default:
 		return fmt.Errorf("invalid stage type: %s", stage.Type)
 	}
@@ -1843,6 +1853,64 @@ func (api *APIServices) processEmbeddingsStage(
 	return nil
 }
 
+// processPatchStage processes a patch stage.
+func (api *APIServices) processPatchStage(
+	txDB *db.Database,
+	newStage *db.PipelineStage,
+	stage irminmodels.PipelineStage,
+	workspace *db.Workspace,
+) error {
+	newStage.Type = db.PipelineStageTypePatch
+
+	// Patch direction is required
+	if stage.PatchDirection == nil {
+		return errors.New("patch direction is required for patch stage")
+	}
+
+	// Validate direction is valid
+	direction := *stage.PatchDirection
+	if direction != irminmodels.PatchDirectionToConnection && direction != irminmodels.PatchDirectionToRepository {
+		return fmt.Errorf("invalid patch direction: %s", direction)
+	}
+
+	patchDirection := db.PatchDirection(direction)
+	newStage.PatchDirection = &patchDirection
+
+	// Validate direction-specific requirements
+	switch direction {
+	case irminmodels.PatchDirectionToConnection:
+		if stage.PatchConnectionID == nil || *stage.PatchConnectionID == "" {
+			return errors.New("patch_connection_id is required when direction is to_connection")
+		}
+		connectionID, err := api.SQIDManager.Decode("connections", *stage.PatchConnectionID)
+		if err != nil {
+			return fmt.Errorf("invalid patch connection ID: %w", err)
+		}
+		// Verify connection exists and belongs to the current workspace
+		connection, err := txDB.GetConnectionByIDAndWorkspaceID(uint(connectionID), workspace.ID)
+		if err != nil {
+			return fmt.Errorf("error getting patch connection: %w", err)
+		}
+		newStage.PatchConnectionID = &connection.ID
+
+	case irminmodels.PatchDirectionToRepository:
+		if stage.PatchRepository == nil || *stage.PatchRepository == "" {
+			return errors.New("patch_repository is required when direction is to_repository")
+		}
+		repository, err := txDB.GetRepositoryBySlugAndWorkspaceID(*stage.PatchRepository, workspace.ID)
+		if err != nil {
+			return fmt.Errorf("error getting patch repository: %w", err)
+		}
+		newStage.PatchRepositoryID = &repository.ID
+		newStage.PatchRepositoryBranch = stage.PatchRepositoryBranch
+	}
+
+	// Optional source file name
+	newStage.PatchSourceFileName = stage.PatchSourceFileName
+
+	return nil
+}
+
 // validateTransformOperationType validates that the transform operation is one of the supported types.
 func (api *APIServices) validateTransformOperationType(operation *irminmodels.TransformOperationType) error {
 	validOperations := []irminmodels.TransformOperationType{
@@ -1966,9 +2034,9 @@ func (api *APIServices) validateConnectionCapability(
 		return ErrConnectorMissingPullCapability
 	case irminmodels.ConnectorCapabilityPush:
 		return ErrConnectorMissingPushCapability
-	case irminmodels.ConnectorCapabilityPushPatch:
+	case irminmodels.ConnectorCapabilityApplyPatch:
 		return ErrConnectorMissingPatchCapability
-	case irminmodels.ConnectorCapabilityEventWebhook:
+	case irminmodels.ConnectorCapabilityPatchEvent:
 		return ErrConnectorMissingWebhookCapability
 	default:
 		return fmt.Errorf("connector does not support %s operations", requiredCapability)

@@ -434,8 +434,6 @@ func (api *APIServices) processSecretUpdates(current map[string]string, updates 
 }
 
 // DeleteConnection deletes a connection from a workspace.
-//
-//nolint:dupl // This is not a duplicate, it's a different service, which functions in a similar way to other services.
 func (api *APIServices) DeleteConnection(
 	c context.Context,
 	user *db.User,
@@ -475,6 +473,31 @@ func (api *APIServices) DeleteConnection(
 	// - Check if connection is referenced in any workflow templates
 	// - Optionally provide a force delete option that removes workflow references
 	// - Return appropriate error message if connection is in use
+
+	// Unregister all subscriptions from the connector before database deletion
+	// This prevents orphaned subscriptions on the connector side
+	subscriptions, subErr := api.DB.GetConnectionSubscriptionsByConnectionID(connection.ID)
+	if subErr != nil {
+		api.Logger.ErrorContext(c, "Error fetching subscriptions for cleanup", "error", subErr)
+		// Continue with deletion even if we can't fetch subscriptions
+	} else {
+		subscriptionService := NewConnectionSubscriptionService(api.DB, api.Env.URL)
+		for _, sub := range subscriptions {
+			if sub.ConnectorSubscriptionID != nil {
+				if unsubErr := subscriptionService.UnregisterSubscriptionFromConnector(
+					c,
+					connection,
+					*sub.ConnectorSubscriptionID,
+				); unsubErr != nil {
+					// Log but don't fail - we still want to delete the connection
+					api.Logger.ErrorContext(c, "Failed to unsubscribe from connector during connection deletion",
+						"error", unsubErr,
+						"subscription_id", sub.ID,
+						"connector_subscription_id", *sub.ConnectorSubscriptionID)
+				}
+			}
+		}
+	}
 
 	// Delete the connection
 	deleteConnectionErr := api.DB.Transaction(func(tx *gorm.DB) error {

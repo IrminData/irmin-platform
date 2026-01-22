@@ -316,6 +316,35 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			EmbeddingsTopK:       stage.EmbeddingsTopK,
 			EmbeddingsFilter:     stage.EmbeddingsFilter,
 		}
+	case db.PipelineStageTypePatch:
+		var patchConnectionSqid *string
+		if stage.PatchConnectionID != nil {
+			encoded, sqidErr := sqidManager.Encode("connections", uint64(*stage.PatchConnectionID))
+			if sqidErr == nil {
+				patchConnectionSqid = &encoded
+			}
+		}
+		var patchRepositorySlug *string
+		if stage.PatchRepository != nil {
+			patchRepositorySlug = &stage.PatchRepository.Slug
+		}
+		var patchDirection *irminmodels.PatchDirection
+		if stage.PatchDirection != nil {
+			pd := irminmodels.PatchDirection(*stage.PatchDirection)
+			patchDirection = &pd
+		}
+		return irminmodels.PipelineStage{
+			Description:           stage.Description,
+			Write:                 stage.Write,
+			Read:                  stage.Read,
+			OrderSequence:         stage.OrderSequence,
+			Type:                  irminmodels.PipelineStageTypePatch,
+			PatchDirection:        patchDirection,
+			PatchConnectionID:     patchConnectionSqid,
+			PatchRepository:       patchRepositorySlug,
+			PatchRepositoryBranch: stage.PatchRepositoryBranch,
+			PatchSourceFileName:   stage.PatchSourceFileName,
+		}
 	default:
 		return irminmodels.PipelineStage{}
 	}

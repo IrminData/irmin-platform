@@ -1835,6 +1835,78 @@ const docTemplate = `{
                 }
             }
         },
+        "/webhooks/connectors/{connection}": {
+            "post": {
+                "description": "Handle webhook events from external connectors when data changes occur",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "webhooks"
+                ],
+                "summary": "Receive connector webhook events",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Connection ID (SQID)",
+                        "name": "connection",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Webhook authentication token",
+                        "name": "X-Webhook-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Webhook event payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ConnectorWebhookPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Webhook processed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid payload",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing webhook token",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Connection not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces": {
             "get": {
                 "security": [
@@ -3745,6 +3817,493 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Connection not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/connections/{connection}/subscriptions": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get all subscriptions for the specified connection",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "connection-subscriptions"
+                ],
+                "summary": "List subscriptions for a connection",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection ID",
+                        "name": "connection",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscriptions retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/irminmodels.ConnectionSubscription"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Connection not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create a new subscription for the specified connection. Returns the webhook URL and token.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "connection-subscriptions"
+                ],
+                "summary": "Create a new subscription",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection ID",
+                        "name": "connection",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Subscription creation parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.CreateConnectionSubscriptionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Subscription created successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.ConnectionSubscriptionWithToken"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Connection not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/connections/{connection}/subscriptions/{subscription}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get details of a specific subscription",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "connection-subscriptions"
+                ],
+                "summary": "Get subscription details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection ID",
+                        "name": "connection",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Subscription ID",
+                        "name": "subscription",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.ConnectionSubscription"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Subscription not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete a subscription",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "connection-subscriptions"
+                ],
+                "summary": "Delete subscription",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection ID",
+                        "name": "connection",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Subscription ID",
+                        "name": "subscription",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Subscription not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Update an existing subscription's details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "connection-subscriptions"
+                ],
+                "summary": "Update subscription",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection ID",
+                        "name": "connection",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Subscription ID",
+                        "name": "subscription",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Subscription update parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.UpdateConnectionSubscriptionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription updated successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.ConnectionSubscription"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Subscription not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/connections/{connection}/subscriptions/{subscription}/regenerate-token": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Regenerate the webhook token for a subscription. The old token will no longer work.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "connection-subscriptions"
+                ],
+                "summary": "Regenerate webhook token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection ID",
+                        "name": "connection",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Subscription ID",
+                        "name": "subscription",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token regenerated successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.ConnectionSubscriptionWithToken"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Subscription not found",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -12409,6 +12968,9 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "controllers.ConnectorWebhookPayload": {
+            "type": "object"
+        },
         "irmincore.ConnectorConfigurationRequest": {
             "type": "object",
             "properties": {
@@ -12579,6 +13141,44 @@ const docTemplate = `{
                     "example": [
                         "tag_7k3m9x2n5q8p"
                     ]
+                }
+            }
+        },
+        "irmincore.CreateConnectionSubscriptionRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "example": "Subscribe to lead changes in the CRM"
+                },
+                "event_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "insert",
+                        "update"
+                    ]
+                },
+                "filter_paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "leads",
+                        "contacts"
+                    ]
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "CRM Lead Changes"
                 }
             }
         },
@@ -13295,6 +13895,45 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 100,
                     "example": "Production MySQL Database"
+                }
+            }
+        },
+        "irmincore.UpdateConnectionSubscriptionRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "example": "Subscribe to lead changes in the CRM"
+                },
+                "event_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "insert",
+                        "update"
+                    ]
+                },
+                "filter_paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "leads",
+                        "contacts"
+                    ]
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "CRM Lead Changes"
                 }
             }
         },
@@ -14362,6 +15001,161 @@ const docTemplate = `{
                 }
             }
         },
+        "irminmodels.ConnectionEventType": {
+            "type": "string",
+            "enum": [
+                "insert",
+                "update",
+                "delete",
+                "upsert",
+                "batch"
+            ],
+            "x-enum-varnames": [
+                "ConnectionEventInsert",
+                "ConnectionEventUpdate",
+                "ConnectionEventDelete",
+                "ConnectionEventUpsert",
+                "ConnectionEventBatch"
+            ]
+        },
+        "irminmodels.ConnectionSubscription": {
+            "type": "object",
+            "required": [
+                "connection_id",
+                "id",
+                "name"
+            ],
+            "properties": {
+                "connection_id": {
+                    "type": "string",
+                    "example": "conn_5p8q2n7m9x4k"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "example": "Subscribe to lead changes in the CRM"
+                },
+                "event_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "insert",
+                        "update"
+                    ]
+                },
+                "filter_paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "leads",
+                        "contacts"
+                    ]
+                },
+                "id": {
+                    "type": "string",
+                    "example": "cs_5p8q2n7m9x4k"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "CRM Lead Changes"
+                },
+                "owner": {
+                    "$ref": "#/definitions/irminmodels.User"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "webhook_url": {
+                    "type": "string",
+                    "example": "https://api.irmin.co/api/v1/webhooks/connectors/conn_123"
+                }
+            }
+        },
+        "irminmodels.ConnectionSubscriptionWithToken": {
+            "type": "object",
+            "required": [
+                "connection_id",
+                "id",
+                "name"
+            ],
+            "properties": {
+                "connection_id": {
+                    "type": "string",
+                    "example": "conn_5p8q2n7m9x4k"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "example": "Subscribe to lead changes in the CRM"
+                },
+                "event_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "insert",
+                        "update"
+                    ]
+                },
+                "filter_paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "leads",
+                        "contacts"
+                    ]
+                },
+                "id": {
+                    "type": "string",
+                    "example": "cs_5p8q2n7m9x4k"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "CRM Lead Changes"
+                },
+                "owner": {
+                    "$ref": "#/definitions/irminmodels.User"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "webhook_token": {
+                    "type": "string",
+                    "example": "abc123def456..."
+                },
+                "webhook_url": {
+                    "type": "string",
+                    "example": "https://api.irmin.co/api/v1/webhooks/connectors/conn_123"
+                }
+            }
+        },
         "irminmodels.Connector": {
             "type": "object",
             "required": [
@@ -14496,14 +15290,14 @@ const docTemplate = `{
             "enum": [
                 "pull",
                 "push",
-                "push_patch",
-                "event_webhook"
+                "apply_patch",
+                "patch_event"
             ],
             "x-enum-varnames": [
                 "ConnectorCapabilityPull",
                 "ConnectorCapabilityPush",
-                "ConnectorCapabilityPushPatch",
-                "ConnectorCapabilityEventWebhook"
+                "ConnectorCapabilityApplyPatch",
+                "ConnectorCapabilityPatchEvent"
             ]
         },
         "irminmodels.ConnectorCategory": {
@@ -15555,6 +16349,17 @@ const docTemplate = `{
                 "OutputFormatParquet"
             ]
         },
+        "irminmodels.PatchDirection": {
+            "type": "string",
+            "enum": [
+                "to_connection",
+                "to_repository"
+            ],
+            "x-enum-varnames": [
+                "PatchDirectionToConnection",
+                "PatchDirectionToRepository"
+            ]
+        },
         "irminmodels.PipelineStage": {
             "type": "object",
             "required": [
@@ -15669,6 +16474,35 @@ const docTemplate = `{
                 "order_sequence": {
                     "type": "integer",
                     "example": 1
+                },
+                "patch_connection_id": {
+                    "type": "string",
+                    "example": "conn_8x2m9k4n7p5q"
+                },
+                "patch_direction": {
+                    "description": "Patch stage specific",
+                    "enum": [
+                        "to_connection",
+                        "to_repository"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.PatchDirection"
+                        }
+                    ],
+                    "example": "to_connection"
+                },
+                "patch_repository": {
+                    "type": "string",
+                    "example": "customer-analytics"
+                },
+                "patch_repository_branch": {
+                    "type": "string",
+                    "example": "main"
+                },
+                "patch_source_file_name": {
+                    "type": "string",
+                    "example": "patches.json"
                 },
                 "query_id": {
                     "type": "string",
@@ -15827,7 +16661,8 @@ const docTemplate = `{
                         "trigger_workflow",
                         "validation",
                         "transform",
-                        "embeddings"
+                        "embeddings",
+                        "patch"
                     ],
                     "allOf": [
                         {
@@ -15867,7 +16702,8 @@ const docTemplate = `{
                 "trigger_workflow",
                 "validation",
                 "transform",
-                "embeddings"
+                "embeddings",
+                "patch"
             ],
             "x-enum-varnames": [
                 "PipelineStageTypeAction",
@@ -15877,7 +16713,8 @@ const docTemplate = `{
                 "PipelineStageTypeTriggerWorkflow",
                 "PipelineStageTypeValidation",
                 "PipelineStageTypeTransform",
-                "PipelineStageTypeEmbeddings"
+                "PipelineStageTypeEmbeddings",
+                "PipelineStageTypePatch"
             ]
         },
         "irminmodels.PointerTarget": {
@@ -16362,9 +17199,32 @@ const docTemplate = `{
                 "type"
             ],
             "properties": {
+                "connection_event_paths": {
+                    "description": "Optional path filter (e.g., [\"users\", \"orders\"])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "connection_event_type": {
+                    "description": "Connection event trigger",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.ConnectionEventType"
+                        }
+                    ]
+                },
+                "connection_id": {
+                    "description": "Sqid of the connection",
+                    "type": "string"
+                },
                 "cron": {
                     "type": "string",
                     "example": "0 9 * * *"
+                },
+                "include_diff_as_patch": {
+                    "description": "Generate patches from commit diff for export flows",
+                    "type": "boolean"
                 },
                 "repository": {
                     "description": "Slug of the repository",
@@ -16393,7 +17253,8 @@ const docTemplate = `{
                     "enum": [
                         "time",
                         "repository-event",
-                        "workflow-run-event"
+                        "workflow-run-event",
+                        "connection-event"
                     ],
                     "allOf": [
                         {
@@ -16946,6 +17807,19 @@ const docTemplate = `{
                 }
             }
         },
+        "irminmodels.SyncMode": {
+            "type": "string",
+            "enum": [
+                "full",
+                "patch",
+                "auto"
+            ],
+            "x-enum-varnames": [
+                "SyncModeFull",
+                "SyncModePatch",
+                "SyncModeAuto"
+            ]
+        },
         "irminmodels.Tag": {
             "type": "object",
             "required": [
@@ -17438,12 +18312,14 @@ const docTemplate = `{
             "enum": [
                 "time",
                 "repository-event",
-                "workflow-run-event"
+                "workflow-run-event",
+                "connection-event"
             ],
             "x-enum-varnames": [
                 "TimeTriggerType",
                 "RepositoryTriggerType",
-                "WorkflowRunTriggerType"
+                "WorkflowRunTriggerType",
+                "ConnectionEventTriggerType"
             ]
         },
         "irminmodels.Workflowable": {
@@ -17542,6 +18418,19 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/irminmodels.PipelineStage"
                     }
+                },
+                "sync_mode": {
+                    "enum": [
+                        "full",
+                        "patch",
+                        "auto"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.SyncMode"
+                        }
+                    ],
+                    "example": "auto"
                 },
                 "type": {
                     "enum": [

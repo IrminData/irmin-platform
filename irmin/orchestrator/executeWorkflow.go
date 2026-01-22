@@ -52,6 +52,8 @@ func populateTriggerDetails(log *WorkflowStartLog, trigger *db.WorkflowTrigger) 
 		populateRepositoryTrigger(log, trigger)
 	case db.WorkflowRunTriggerType:
 		populateWorkflowRunTrigger(log, trigger)
+	case db.ConnectionEventTriggerType:
+		populateConnectionEventTrigger(log, trigger)
 	}
 }
 
@@ -76,6 +78,17 @@ func populateWorkflowRunTrigger(log *WorkflowStartLog, trigger *db.WorkflowTrigg
 	if trigger.Workflow != nil {
 		log.LinkedWorkflowID = &trigger.Workflow.ID
 		log.LinkedWorkflowName = trigger.Workflow.Name
+	}
+}
+
+// populateConnectionEventTrigger fills connection event trigger details.
+func populateConnectionEventTrigger(log *WorkflowStartLog, trigger *db.WorkflowTrigger) {
+	if trigger.ConnectionEventType != nil {
+		log.ConnectionEventType = string(*trigger.ConnectionEventType)
+	}
+	if trigger.Connection != nil {
+		log.ConnectionID = &trigger.Connection.ID
+		log.ConnectionName = trigger.Connection.Name
 	}
 }
 

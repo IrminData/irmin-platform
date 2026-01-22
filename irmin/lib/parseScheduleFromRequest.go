@@ -46,6 +46,8 @@ func parseOptionalFields(scheduleReq *irminmodels.Schedule) db.Schedule {
 }
 
 // parseTrigger parses a single trigger from the structured data.
+//
+//nolint:gocognit // Multiple trigger types require comprehensive parsing logic
 func parseTrigger(
 	trigger irminmodels.ScheduleTrigger,
 	d *db.Database,
@@ -69,11 +71,16 @@ func parseTrigger(
 			return nil, err
 		}
 		event := lakefs.WebhookEventType(*trigger.RepositoryEvent)
+		includeDiff := false
+		if trigger.IncludeDiffAsPatch != nil {
+			includeDiff = *trigger.IncludeDiffAsPatch
+		}
 		return &db.WorkflowTrigger{
-			Type:            db.RepositoryTriggerType,
-			RepositoryEvent: &event,
-			RepositoryID:    &repository.ID,
-			RepositoryRef:   trigger.RepositoryRef,
+			Type:               db.RepositoryTriggerType,
+			RepositoryEvent:    &event,
+			RepositoryID:       &repository.ID,
+			RepositoryRef:      trigger.RepositoryRef,
+			IncludeDiffAsPatch: includeDiff,
 		}, nil
 
 	case irminmodels.WorkflowRunTriggerType:
@@ -93,6 +100,34 @@ func parseTrigger(
 			Type:             db.WorkflowRunTriggerType,
 			WorkflowRunEvent: &event,
 			WorkflowID:       &workflow.ID,
+		}, nil
+
+	case irminmodels.ConnectionEventTriggerType:
+		if trigger.ConnectionID == nil {
+			return nil, errors.New("connection_id is required for connection-event trigger")
+		}
+		connectionID, err := sqidManager.Decode("connections", *trigger.ConnectionID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid connection_id: %w", err)
+		}
+		connection, err := d.GetConnectionByID(uint(connectionID))
+		if err != nil {
+			return nil, fmt.Errorf("connection not found: %w", err)
+		}
+		// Verify the connection belongs to the workspace
+		if connection.WorkspaceID != workspace.ID {
+			return nil, errors.New("connection does not belong to this workspace")
+		}
+		var eventType *db.ConnectionEventType
+		if trigger.ConnectionEventType != nil {
+			et := db.ConnectionEventType(*trigger.ConnectionEventType)
+			eventType = &et
+		}
+		return &db.WorkflowTrigger{
+			Type:                 db.ConnectionEventTriggerType,
+			ConnectionEventType:  eventType,
+			ConnectionID:         &connection.ID,
+			ConnectionEventPaths: trigger.ConnectionEventPaths,
 		}, nil
 
 	default:

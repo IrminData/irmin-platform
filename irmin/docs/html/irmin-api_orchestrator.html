@@ -39,6 +39,27 @@ type CommitLog struct {
 }
     CommitLog logs a repository commit.
 
+type ConnectionEvent struct {
+	// EventType is the type of change (insert, update, delete, batch)
+	EventType db.ConnectionEventType `json:"event_type"`
+	// EventTime is when the event occurred in the external system
+	EventTime time.Time `json:"event_time"`
+	// ConnectionID identifies which Irmin connection this event is for
+	ConnectionID uint `json:"connection_id"`
+	// ConnectorID identifies which connector type generated this event
+	ConnectorID uint `json:"connector_id"`
+	// Path is the logical path of the affected data (e.g., "users", "orders/2024")
+	Path string `json:"path"`
+	// AffectedRows is the number of rows affected by this event
+	AffectedRows int `json:"affected_rows,omitempty"`
+	// Payload contains the raw event data from the connector
+	Payload json.RawMessage `json:"payload,omitempty"`
+	// Patches contains pre-computed patch operations from the connector
+	Patches []irminmodels.PatchOperation `json:"patches,omitempty"`
+}
+    ConnectionEvent represents an event received from a connector webhook.
+    It contains information about data changes in the external system.
+
 type ConnectorOperationLog struct {
 	BaseLogEntry
 	ConnectorName string         `json:"connector_name,omitempty"`
@@ -154,6 +175,8 @@ func NewOrchestrator(
 	dataEngine *engine.Client,
 	cacheStorage fiber.Storage,
 ) *Orchestrator
+
+func (o *Orchestrator) AddConnectionEvent(event *ConnectionEvent)
 
 func (o *Orchestrator) AddDispatchedEvent(event *DispatchEvent)
 
@@ -394,6 +417,10 @@ type WorkflowStartLog struct {
 	WorkflowRunEvent   string `json:"workflow_run_event,omitempty"` // "pre-workflow-run", "post-workflow-run"
 	LinkedWorkflowID   *uint  `json:"linked_workflow_id,omitempty"`
 	LinkedWorkflowName string `json:"linked_workflow_name,omitempty"`
+	// Connection event trigger details
+	ConnectionEventType string `json:"connection_event_type,omitempty"` // "insert", "update", "delete"
+	ConnectionID        *uint  `json:"connection_id,omitempty"`
+	ConnectionName      string `json:"connection_name,omitempty"`
 }
     WorkflowStartLog logs the start of a workflow run with trigger information.
 

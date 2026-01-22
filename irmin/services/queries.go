@@ -310,8 +310,6 @@ func (api *APIServices) UpdateQuery(
 }
 
 // DeleteQuery deletes a query from a workspace.
-//
-//nolint:dupl // This is not a duplicate, it's a different service, which functions in a similar way to other services.
 func (api *APIServices) DeleteQuery(
 	c context.Context,
 	user *db.User,

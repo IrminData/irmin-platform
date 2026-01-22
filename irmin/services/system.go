@@ -43,6 +43,17 @@ func (api *APIServices) ProcessSystemWebhook(
 		// Add the event to the orchestrator
 		api.Orchestrator.AddDispatchedEvent(&dispatchEvent)
 
+	case "connector":
+		// Handle connection events from connector webhooks
+		var connectionEvent orchestrator.ConnectionEvent
+		if unmarshalErr := json.Unmarshal(payload, &connectionEvent); unmarshalErr != nil {
+			api.Logger.ErrorContext(c, "Error unmarshalling connection event", "error", unmarshalErr)
+			return NewInternalErrorf("error unmarshalling connection event: %w", unmarshalErr)
+		}
+
+		// Add the event to the orchestrator
+		api.Orchestrator.AddConnectionEvent(&connectionEvent)
+
 	default:
 		api.Logger.ErrorContext(c, "Invalid webhook type", "type", webhookType)
 		return ErrInvalidWebhookType

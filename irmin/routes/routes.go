@@ -56,6 +56,17 @@ func RegisterAPIRoutes(
 	aiAppAPI.Get("/tools", apiControllers.AIAppAPIListCustomTools)
 	aiAppAPI.Post("/tools/:tool_name/execute", apiControllers.AIAppAPIExecuteCustomTool)
 
+	// Connector webhook routes (authenticated by webhook token, not user auth)
+	// These endpoints receive events from external connectors when data changes
+	webhooks := app.Group("/api/v1/webhooks",
+		apiMiddlewares.LocaleMiddlewareForWebhooks,
+	)
+	webhooks.Post(
+		"/connectors/:connection",
+		apiMiddlewares.ConnectorWebhookMiddleware,
+		apiControllers.ConnectorWebhook,
+	)
+
 	// Secure API routes
 	v1 := app.Group("/api/v1", apiMiddlewares.LocaleMiddleware, apiMiddlewares.AuthMiddleware)
 
@@ -394,6 +405,40 @@ func RegisterAPIRoutes(
 		"/schema/diff",
 		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.ConnectionSchemaDiff,
+	)
+
+	// Connection subscription routes
+	subscriptions := connection.Group("/subscriptions")
+	subscriptions.Get(
+		"/",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ConnectionSubscriptionsIndex,
+	)
+	subscriptions.Post(
+		"/",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.ConnectionSubscriptionsStore,
+	)
+	subscription := subscriptions.Group("/:subscription", apiMiddlewares.ConnectionSubscriptionMiddleware)
+	subscription.Get(
+		"/",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ConnectionSubscriptionsShow,
+	)
+	subscription.Patch(
+		"/",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.ConnectionSubscriptionsUpdate,
+	)
+	subscription.Delete(
+		"/",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.ConnectionSubscriptionsDestroy,
+	)
+	subscription.Post(
+		"/regenerate-token",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.ConnectionSubscriptionsRegenerateToken,
 	)
 
 	// Workflow routes

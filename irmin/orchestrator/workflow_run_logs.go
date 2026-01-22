@@ -74,6 +74,10 @@ type WorkflowStartLog struct {
 	WorkflowRunEvent   string `json:"workflow_run_event,omitempty"` // "pre-workflow-run", "post-workflow-run"
 	LinkedWorkflowID   *uint  `json:"linked_workflow_id,omitempty"`
 	LinkedWorkflowName string `json:"linked_workflow_name,omitempty"`
+	// Connection event trigger details
+	ConnectionEventType string `json:"connection_event_type,omitempty"` // "insert", "update", "delete"
+	ConnectionID        *uint  `json:"connection_id,omitempty"`
+	ConnectionName      string `json:"connection_name,omitempty"`
 }
 
 // WorkflowEndLog logs the end of a workflow run.

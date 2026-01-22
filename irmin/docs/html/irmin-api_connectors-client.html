@@ -167,18 +167,29 @@ func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, erro
     response data. It utilises prepareBodyAndHeaders and doRequest to reduce
     code duplication.
 
-func (c *Client) SubscribeToChanges(ctx context.Context, webhook, webhookAccessToken string) (*Subscription, error)
+func (c *Client) SubscribeToChanges(ctx context.Context, webhookURL, webhookAccessToken string) (*Subscription, error)
     SubscribeToChanges subscribes to changes in the data and sends the changes
     to the specified webhook.
 
     Note: Operation token is required for this operation.
 
-    Parameters: - ctx: Context for request cancellation and timeout
-    control. - webhook: The URL of the webhook to send the changes to.
+    Parameters: - ctx: Context for request cancellation and timeout control.
+    - webhookURL: The URL of the webhook to send the changes to.
     - webhookAccessToken: The token to authenticate the webhook request with.
 
-    Returns: - The schema for the specified operation method if the request is
-    successful. - An error if the request fails.
+    Returns: - The subscription record if the request is successful. - An error
+    if the request fails.
+
+func (c *Client) UnsubscribeFromChanges(ctx context.Context, subscriptionID uint) error
+    UnsubscribeFromChanges removes a subscription and stops the connector from
+    sending webhook notifications.
+
+    Note: Operation token is required for this operation.
+
+    Parameters: - ctx: Context for request cancellation and timeout control.
+    - subscriptionID: The ID of the subscription to remove.
+
+    Returns: - An error if the request fails.
 
 func (c *Client) ValidateConfigFields(
 	ctx context.Context,

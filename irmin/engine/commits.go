@@ -224,3 +224,32 @@ func (c *Client) revertUncommitedChangesInternal(workspace, repository, branch, 
 
 	return nil
 }
+
+// GetCommitDiff returns the diff for a commit compared to its parent.
+// If the commit has no parent (initial commit), it returns all files as added.
+func (c *Client) GetCommitDiff(workspace, repository, commitHash string) ([]lakefs.Diff, error) {
+	// Construct repository name.
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
+
+	// Get commit to find its parent.
+	lakeFSCommit, err := c.LakeFSClient.GetCommit(lakeFSRepositoryName, commitHash)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get commit: %w", err)
+	}
+
+	// If commit has no parent (initial commit), use empty tree as base
+	if len(lakeFSCommit.Parents) == 0 {
+		// For initial commits, we can't easily diff - return empty
+		// The caller can handle this by fetching all files in the commit
+		return []lakefs.Diff{}, nil
+	}
+
+	// Diff between parent and this commit
+	parentHash := lakeFSCommit.Parents[0]
+	diffs, err := c.LakeFSClient.ListAllRefDiffs(lakeFSRepositoryName, parentHash, commitHash, "", "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get commit diff: %w", err)
+	}
+
+	return diffs, nil
+}

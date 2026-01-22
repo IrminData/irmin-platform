@@ -39,6 +39,8 @@ const (
 // It returns the logs from each stage and any errors that occurred during execution.
 //
 // It also listens for context cancellation and returns an error if the context is cancelled.
+//
+//nolint:funlen // Pipeline orchestration requires handling multiple stage types in a single flow
 func (o *Orchestrator) executePipelineWorkflowable(
 	ctx context.Context,
 	workflow *db.Workflow,
@@ -56,6 +58,13 @@ func (o *Orchestrator) executePipelineWorkflowable(
 	// Store the results of the previously executed stage
 	// This is a byte array map where the key is the result file name and the value is the file content
 	previousStageResults := make(map[string][]byte)
+
+	// Inject trigger payload as trigger_event.json if present on the workflow run
+	// This makes connection event data and diff patches available to pipeline stages
+	if len(run.TriggerPayload) > 0 {
+		previousStageResults["trigger_event.json"] = run.TriggerPayload
+		logs = append(logs, "Injected trigger payload as trigger_event.json")
+	}
 
 	// Sort the stages by order sequence
 	slices.SortFunc(workflowable.Stages, func(a, b db.PipelineStage) int {
@@ -137,6 +146,13 @@ func (o *Orchestrator) executePipelineWorkflowable(
 			)
 		case db.PipelineStageTypeEmbeddings:
 			stageLogs, errResult = o.handleEmbeddingsStage(
+				ctx,
+				workflow,
+				&stage,
+				previousStageResults,
+			)
+		case db.PipelineStageTypePatch:
+			stageLogs, errResult = o.handlePatchStage(
 				ctx,
 				workflow,
 				&stage,

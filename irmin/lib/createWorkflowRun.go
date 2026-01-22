@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"irmin-api/db"
@@ -80,6 +81,37 @@ func CreateWorkflowRun(
 	if workflow.Schedule != nil {
 		workflow.Schedule.PreviousRun = &startedAt
 		tx.Save(workflow.Schedule)
+	}
+
+	return run, nil
+}
+
+// CreateWorkflowRunWithPayload creates a workflow run and attaches trigger event data as payload.
+// The payload will be available to pipeline stages as trigger_event.json in previousStageResults.
+// This is used for connection events and repository events with IncludeDiffAsPatch enabled.
+func CreateWorkflowRunWithPayload(
+	tx *gorm.DB,
+	workflow *db.Workflow,
+	user *db.User,
+	trigger *db.WorkflowTrigger,
+	payload any,
+) (*db.WorkflowRun, error) {
+	// Create the base workflow run using the existing function
+	run, err := CreateWorkflowRun(tx, workflow, user, trigger)
+	if err != nil {
+		return nil, err
+	}
+
+	// If a payload was provided, serialize and attach it
+	if payload != nil {
+		payloadBytes, marshalErr := json.Marshal(payload)
+		if marshalErr != nil {
+			return nil, fmt.Errorf("failed to marshal trigger payload: %w", marshalErr)
+		}
+		run.TriggerPayload = payloadBytes
+		if saveErr := tx.Save(run).Error; saveErr != nil {
+			return nil, fmt.Errorf("failed to save trigger payload: %w", saveErr)
+		}
 	}
 
 	return run, nil

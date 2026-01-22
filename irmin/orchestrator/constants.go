@@ -14,4 +14,11 @@ const (
 
 	// DefaultMaxWorkflowRuntime is the default maximum runtime for a workflow in seconds.
 	DefaultMaxWorkflowRuntime = 120
+
+	// syncModeFull always performs a full data sync.
+	syncModeFull = "full"
+	// syncModePatch only accepts patch-based events.
+	syncModePatch = "patch"
+	// syncModeAuto performs full sync on schedule/manual, patch sync on events.
+	syncModeAuto = "auto"
 )

@@ -61,6 +61,15 @@ func ExtractS3Paths(query string) ([]string, error)
     ExtractS3Paths extracts all S3 URLs from a SQL query Returns unique S3 paths
     found in the query, with quotes unescaped
 
+func GeneratePatchPayload(
+	result *DiffToPatchResult,
+	repositorySlug string,
+	ref string,
+	commitID string,
+) map[string]any
+    GeneratePatchPayload creates a complete payload structure for trigger events
+    that includes the patches along with metadata.
+
 func IsPointerPath(path string) bool
     IsPointerPath checks if the given path or filename represents a pointer
     file. Pointer files are identified by the "_ptr." prefix in their filename.
@@ -237,6 +246,14 @@ func (c *Client) ConfigureRepositoryWebhookNotifications(
     for the main branch of a repository. This should be called once, right after
     the repository is created.
 
+func (c *Client) ConvertDiffToPatches(
+	diffs []lakefs.Diff,
+	opts DiffToPatchOptions,
+) (*DiffToPatchResult, error)
+    ConvertDiffToPatches converts LakeFS diff entries to JSON patch operations.
+    For added and changed files, it fetches the file content and includes it in
+    the patch value. For removed files, it creates a remove operation.
+
 func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*irminmodels.Object, error)
 
 func (c *Client) CreateBranch(
@@ -341,6 +358,10 @@ func (c *Client) GenerateSchemaFromFile(
 func (c *Client) GetBranch(ctx context.Context, workspace, repository, branch string) (*irminmodels.Branch, error)
 
 func (c *Client) GetCommit(workspace, repository, hash string) (*irminmodels.Commit, error)
+
+func (c *Client) GetCommitDiff(workspace, repository, commitHash string) ([]lakefs.Diff, error)
+    GetCommitDiff returns the diff for a commit compared to its parent. If the
+    commit has no parent (initial commit), it returns all files as added.
 
 func (c *Client) GetObjectChanges(workspace, repository, path, ref string) ([]irminmodels.Commit, error)
 
@@ -474,6 +495,26 @@ func (e *ConnectorSchemaValidationError) HasErrors() bool
 
 func (e *ConnectorSchemaValidationError) Unwrap() error
     Unwrap returns nil as this error does not wrap another error.
+
+type DiffToPatchOptions struct {
+	// WorkspaceSlug is the workspace containing the repository.
+	WorkspaceSlug string
+	// RepositorySlug is the repository where the diff occurred.
+	RepositorySlug string
+	// Ref is the reference (branch/commit) to get file content from.
+	Ref string
+	// IncludeBinaryAsBase64 determines whether binary files should be
+	// included as base64-encoded values. If false, binary files are skipped.
+	IncludeBinaryAsBase64 bool
+}
+    DiffToPatchOptions contains options for converting diffs to patches.
+
+type DiffToPatchResult struct {
+	Patches      []irminmodels.PatchOperation `json:"patches"`
+	SkippedFiles []string                     `json:"skipped_files,omitempty"`
+	Errors       []string                     `json:"errors,omitempty"`
+}
+    DiffToPatchResult contains the result of converting diffs to patches.
 
 type FieldMappingResult struct {
 	Path    string `json:"path"`

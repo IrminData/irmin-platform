@@ -1,5 +1,7 @@
 basePath: /api/v1
 definitions:
+  controllers.ConnectorWebhookPayload:
+    type: object
   irmincore.ConnectorConfigurationRequest:
     properties:
       details:
@@ -126,6 +128,33 @@ definitions:
         type: array
     required:
     - connector
+    - name
+    type: object
+  irmincore.CreateConnectionSubscriptionRequest:
+    properties:
+      description:
+        example: Subscribe to lead changes in the CRM
+        maxLength: 1000
+        type: string
+      event_types:
+        example:
+        - insert
+        - update
+        items:
+          type: string
+        type: array
+      filter_paths:
+        example:
+        - leads
+        - contacts
+        items:
+          type: string
+        type: array
+      name:
+        example: CRM Lead Changes
+        maxLength: 255
+        type: string
+    required:
     - name
     type: object
   irmincore.CreateCredentialRequest:
@@ -641,6 +670,34 @@ definitions:
       name:
         example: Production MySQL Database
         maxLength: 100
+        type: string
+    type: object
+  irmincore.UpdateConnectionSubscriptionRequest:
+    properties:
+      description:
+        example: Subscribe to lead changes in the CRM
+        maxLength: 1000
+        type: string
+      event_types:
+        example:
+        - insert
+        - update
+        items:
+          type: string
+        type: array
+      filter_paths:
+        example:
+        - leads
+        - contacts
+        items:
+          type: string
+        type: array
+      is_active:
+        example: true
+        type: boolean
+      name:
+        example: CRM Lead Changes
+        maxLength: 255
         type: string
     type: object
   irmincore.UpdateCustomToolRequest:
@@ -1407,6 +1464,121 @@ definitions:
     - name
     - owner
     type: object
+  irminmodels.ConnectionEventType:
+    enum:
+    - insert
+    - update
+    - delete
+    - upsert
+    - batch
+    type: string
+    x-enum-varnames:
+    - ConnectionEventInsert
+    - ConnectionEventUpdate
+    - ConnectionEventDelete
+    - ConnectionEventUpsert
+    - ConnectionEventBatch
+  irminmodels.ConnectionSubscription:
+    properties:
+      connection_id:
+        example: conn_5p8q2n7m9x4k
+        type: string
+      created_at:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+      description:
+        example: Subscribe to lead changes in the CRM
+        maxLength: 1000
+        type: string
+      event_types:
+        example:
+        - insert
+        - update
+        items:
+          type: string
+        type: array
+      filter_paths:
+        example:
+        - leads
+        - contacts
+        items:
+          type: string
+        type: array
+      id:
+        example: cs_5p8q2n7m9x4k
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      name:
+        example: CRM Lead Changes
+        maxLength: 255
+        type: string
+      owner:
+        $ref: '#/definitions/irminmodels.User'
+      updated_at:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+      webhook_url:
+        example: https://api.irmin.co/api/v1/webhooks/connectors/conn_123
+        type: string
+    required:
+    - connection_id
+    - id
+    - name
+    type: object
+  irminmodels.ConnectionSubscriptionWithToken:
+    properties:
+      connection_id:
+        example: conn_5p8q2n7m9x4k
+        type: string
+      created_at:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+      description:
+        example: Subscribe to lead changes in the CRM
+        maxLength: 1000
+        type: string
+      event_types:
+        example:
+        - insert
+        - update
+        items:
+          type: string
+        type: array
+      filter_paths:
+        example:
+        - leads
+        - contacts
+        items:
+          type: string
+        type: array
+      id:
+        example: cs_5p8q2n7m9x4k
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      name:
+        example: CRM Lead Changes
+        maxLength: 255
+        type: string
+      owner:
+        $ref: '#/definitions/irminmodels.User'
+      updated_at:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+      webhook_token:
+        example: abc123def456...
+        type: string
+      webhook_url:
+        example: https://api.irmin.co/api/v1/webhooks/connectors/conn_123
+        type: string
+    required:
+    - connection_id
+    - id
+    - name
+    type: object
   irminmodels.Connector:
     properties:
       author:
@@ -1520,14 +1692,14 @@ definitions:
     enum:
     - pull
     - push
-    - push_patch
-    - event_webhook
+    - apply_patch
+    - patch_event
     type: string
     x-enum-varnames:
     - ConnectorCapabilityPull
     - ConnectorCapabilityPush
-    - ConnectorCapabilityPushPatch
-    - ConnectorCapabilityEventWebhook
+    - ConnectorCapabilityApplyPatch
+    - ConnectorCapabilityPatchEvent
   irminmodels.ConnectorCategory:
     enum:
     - database
@@ -2309,6 +2481,14 @@ definitions:
     - OutputFormatCSV
     - OutputFormatJSON
     - OutputFormatParquet
+  irminmodels.PatchDirection:
+    enum:
+    - to_connection
+    - to_repository
+    type: string
+    x-enum-varnames:
+    - PatchDirectionToConnection
+    - PatchDirectionToRepository
   irminmodels.PipelineStage:
     properties:
       connection_id:
@@ -2389,6 +2569,26 @@ definitions:
       order_sequence:
         example: 1
         type: integer
+      patch_connection_id:
+        example: conn_8x2m9k4n7p5q
+        type: string
+      patch_direction:
+        allOf:
+        - $ref: '#/definitions/irminmodels.PatchDirection'
+        description: Patch stage specific
+        enum:
+        - to_connection
+        - to_repository
+        example: to_connection
+      patch_repository:
+        example: customer-analytics
+        type: string
+      patch_repository_branch:
+        example: main
+        type: string
+      patch_source_file_name:
+        example: patches.json
+        type: string
       query_id:
         example: qry_8x2m9k4n7p5q
         type: string
@@ -2507,6 +2707,7 @@ definitions:
         - validation
         - transform
         - embeddings
+        - patch
         example: repository
       validation_mode:
         description: '"single" or "all"'
@@ -2534,6 +2735,7 @@ definitions:
     - validation
     - transform
     - embeddings
+    - patch
     type: string
     x-enum-varnames:
     - PipelineStageTypeAction
@@ -2544,6 +2746,7 @@ definitions:
     - PipelineStageTypeValidation
     - PipelineStageTypeTransform
     - PipelineStageTypeEmbeddings
+    - PipelineStageTypePatch
   irminmodels.PointerTarget:
     properties:
       target_path:
@@ -2937,9 +3140,24 @@ definitions:
     type: object
   irminmodels.ScheduleTrigger:
     properties:
+      connection_event_paths:
+        description: Optional path filter (e.g., ["users", "orders"])
+        items:
+          type: string
+        type: array
+      connection_event_type:
+        allOf:
+        - $ref: '#/definitions/irminmodels.ConnectionEventType'
+        description: Connection event trigger
+      connection_id:
+        description: Sqid of the connection
+        type: string
       cron:
         example: 0 9 * * *
         type: string
+      include_diff_as_patch:
+        description: Generate patches from commit diff for export flows
+        type: boolean
       repository:
         description: Slug of the repository
         example: customer-analytics
@@ -2963,6 +3181,7 @@ definitions:
         - time
         - repository-event
         - workflow-run-event
+        - connection-event
         example: time
       workflow_id:
         description: Sqid of the workflow
@@ -3387,6 +3606,16 @@ definitions:
     - owner
     - updated_at
     type: object
+  irminmodels.SyncMode:
+    enum:
+    - full
+    - patch
+    - auto
+    type: string
+    x-enum-varnames:
+    - SyncModeFull
+    - SyncModePatch
+    - SyncModeAuto
   irminmodels.Tag:
     properties:
       color:
@@ -3745,11 +3974,13 @@ definitions:
     - time
     - repository-event
     - workflow-run-event
+    - connection-event
     type: string
     x-enum-varnames:
     - TimeTriggerType
     - RepositoryTriggerType
     - WorkflowRunTriggerType
+    - ConnectionEventTriggerType
   irminmodels.Workflowable:
     properties:
       connection_id:
@@ -3816,6 +4047,14 @@ definitions:
         items:
           $ref: '#/definitions/irminmodels.PipelineStage'
         type: array
+      sync_mode:
+        allOf:
+        - $ref: '#/definitions/irminmodels.SyncMode'
+        enum:
+        - full
+        - patch
+        - auto
+        example: auto
       type:
         allOf:
         - $ref: '#/definitions/irminmodels.WorkflowableType'
@@ -5046,6 +5285,55 @@ paths:
       summary: System webhook endpoint
       tags:
       - system
+  /webhooks/connectors/{connection}:
+    post:
+      consumes:
+      - application/json
+      description: Handle webhook events from external connectors when data changes
+        occur
+      parameters:
+      - description: Connection ID (SQID)
+        in: path
+        name: connection
+        required: true
+        type: string
+      - description: Webhook authentication token
+        in: header
+        name: X-Webhook-Token
+        required: true
+        type: string
+      - description: Webhook event payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.ConnectorWebhookPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Webhook processed successfully
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "400":
+          description: Bad request - invalid payload
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing webhook token
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Connection not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      summary: Receive connector webhook events
+      tags:
+      - webhooks
   /workspaces:
     get:
       consumes:
@@ -6260,6 +6548,312 @@ paths:
       summary: Transfer connection ownership
       tags:
       - connections
+  /workspaces/{workspace_slug}/connections/{connection}/subscriptions:
+    get:
+      consumes:
+      - application/json
+      description: Get all subscriptions for the specified connection
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Connection ID
+        in: path
+        name: connection
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscriptions retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/irminmodels.ConnectionSubscription'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Connection not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List subscriptions for a connection
+      tags:
+      - connection-subscriptions
+    post:
+      consumes:
+      - application/json
+      description: Create a new subscription for the specified connection. Returns
+        the webhook URL and token.
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Connection ID
+        in: path
+        name: connection
+        required: true
+        type: string
+      - description: Subscription creation parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.CreateConnectionSubscriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Subscription created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.ConnectionSubscriptionWithToken'
+              type: object
+        "400":
+          description: Bad request - invalid request body
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Connection not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new subscription
+      tags:
+      - connection-subscriptions
+  /workspaces/{workspace_slug}/connections/{connection}/subscriptions/{subscription}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a subscription
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Connection ID
+        in: path
+        name: connection
+        required: true
+        type: string
+      - description: Subscription ID
+        in: path
+        name: subscription
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscription deleted successfully
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Subscription not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete subscription
+      tags:
+      - connection-subscriptions
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific subscription
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Connection ID
+        in: path
+        name: connection
+        required: true
+        type: string
+      - description: Subscription ID
+        in: path
+        name: subscription
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscription retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.ConnectionSubscription'
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Subscription not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get subscription details
+      tags:
+      - connection-subscriptions
+    patch:
+      consumes:
+      - application/json
+      description: Update an existing subscription's details
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Connection ID
+        in: path
+        name: connection
+        required: true
+        type: string
+      - description: Subscription ID
+        in: path
+        name: subscription
+        required: true
+        type: string
+      - description: Subscription update parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.UpdateConnectionSubscriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscription updated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.ConnectionSubscription'
+              type: object
+        "400":
+          description: Bad request - invalid request body
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Subscription not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update subscription
+      tags:
+      - connection-subscriptions
+  /workspaces/{workspace_slug}/connections/{connection}/subscriptions/{subscription}/regenerate-token:
+    post:
+      consumes:
+      - application/json
+      description: Regenerate the webhook token for a subscription. The old token
+        will no longer work.
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Connection ID
+        in: path
+        name: connection
+        required: true
+        type: string
+      - description: Subscription ID
+        in: path
+        name: subscription
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token regenerated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.ConnectionSubscriptionWithToken'
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Subscription not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Regenerate webhook token
+      tags:
+      - connection-subscriptions
   /workspaces/{workspace_slug}/execute-sql:
     post:
       consumes:

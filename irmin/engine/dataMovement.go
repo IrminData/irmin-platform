@@ -36,9 +36,9 @@ func (c *Client) validateConnectionCapability(
 		return ErrConnectorMissingPullCapability
 	case irminmodels.ConnectorCapabilityPush:
 		return ErrConnectorMissingPushCapability
-	case irminmodels.ConnectorCapabilityPushPatch:
+	case irminmodels.ConnectorCapabilityApplyPatch:
 		return ErrConnectorMissingPatchCapability
-	case irminmodels.ConnectorCapabilityEventWebhook:
+	case irminmodels.ConnectorCapabilityPatchEvent:
 		return ErrConnectorMissingWebhookCapability
 	default:
 		return fmt.Errorf("connector does not support %s operations", requiredCapability)
@@ -149,8 +149,8 @@ func (c *Client) DataMovementSchema(
 		if validateCapabilityErr := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPush); validateCapabilityErr != nil {
 			return nil, nil, validateCapabilityErr
 		}
-	case string(irminmodels.ConnectorCapabilityPushPatch):
-		if validateCapabilityErr := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPushPatch); validateCapabilityErr != nil {
+	case string(irminmodels.ConnectorCapabilityApplyPatch):
+		if validateCapabilityErr := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityApplyPatch); validateCapabilityErr != nil {
 			return nil, nil, validateCapabilityErr
 		}
 	default:

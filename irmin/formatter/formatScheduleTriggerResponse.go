@@ -10,6 +10,8 @@ import (
 )
 
 // FormatScheduleTriggerResponse formats a schedule trigger for the response.
+//
+//nolint:gocognit // Multiple trigger types require comprehensive handling
 func FormatScheduleTriggerResponse(
 	trigger *db.WorkflowTrigger,
 	sqidManager *irminsqids.SQIDManager,
@@ -62,11 +64,32 @@ func FormatScheduleTriggerResponse(
 		}
 		return &newTrigger, nil
 	case db.RepositoryTriggerType:
+		includeDiffAsPatch := trigger.IncludeDiffAsPatch
 		return &irminmodels.ScheduleTrigger{
-			Type:            irminmodels.RepositoryTriggerType,
-			RepositoryEvent: &repositoryEvent,
-			Repository:      repositorySlug,
-			RepositoryRef:   trigger.RepositoryRef,
+			Type:               irminmodels.RepositoryTriggerType,
+			RepositoryEvent:    &repositoryEvent,
+			Repository:         repositorySlug,
+			RepositoryRef:      trigger.RepositoryRef,
+			IncludeDiffAsPatch: &includeDiffAsPatch,
+		}, nil
+	case db.ConnectionEventTriggerType:
+		var connectionEventType *irminmodels.ConnectionEventType
+		if trigger.ConnectionEventType != nil {
+			cet := irminmodels.ConnectionEventType(*trigger.ConnectionEventType)
+			connectionEventType = &cet
+		}
+		var connectionSqid *string
+		if trigger.ConnectionID != nil {
+			encoded, sqidErr := sqidManager.Encode("connections", uint64(*trigger.ConnectionID))
+			if sqidErr == nil {
+				connectionSqid = &encoded
+			}
+		}
+		return &irminmodels.ScheduleTrigger{
+			Type:                 irminmodels.ConnectionEventTriggerType,
+			ConnectionEventType:  connectionEventType,
+			ConnectionID:         connectionSqid,
+			ConnectionEventPaths: trigger.ConnectionEventPaths,
 		}, nil
 	default:
 		return nil, fmt.Errorf("unknown trigger type: %s", trigger.Type)
