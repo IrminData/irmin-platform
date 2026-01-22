@@ -1,7 +1,7 @@
 import type { Connection } from '@/types/core/Connection';
 import type { Repository } from '@/types/core/Repository';
 import type { WorkflowSchedule } from '@/types/core/Schedule';
-import type { FieldMapping } from '@/types/core/Workflow';
+import type { FieldMapping, SyncMode } from '@/types/core/Workflow';
 
 /**
  * Data export wizard data state
@@ -24,5 +24,6 @@ export interface DataExportWizardData {
     repository_branch: string;
     export_to_connection_path: string;
     field_mappings: FieldMapping[];
+    sync_mode?: SyncMode;
   };
 }

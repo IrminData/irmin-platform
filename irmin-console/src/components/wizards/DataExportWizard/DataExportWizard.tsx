@@ -27,6 +27,7 @@ const initialWizardData: DataExportWizardData = {
     repository_branch: 'main',
     export_to_connection_path: '/',
     field_mappings: [],
+    sync_mode: 'auto',
   },
 };
 

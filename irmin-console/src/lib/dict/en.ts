@@ -704,6 +704,59 @@ const en = {
     },
   },
 
+  // === SUBSCRIPTIONS ===
+  subscriptions: {
+    title: 'Subscriptions',
+    explanation:
+      'Subscriptions allow this connection to notify Irmin when data changes. When the external system sends a webhook with patch data, it can trigger workflows to automatically sync only the changed data instead of doing a full import/export. This is ideal for real-time incremental updates.',
+    autoConfigureNotice:
+      'This connection supports automatic change detection. When you create a subscription, the connector will automatically listen for changes in the external system and notify Irmin. No additional configuration is required.',
+    manualWebhookNotice:
+      'The webhook URL and token below are for advanced use cases only, such as custom integrations or debugging. For most use cases, the connector handles notifications automatically.',
+    subscription: 'Subscription',
+    create: 'Create Subscription',
+    createTitle: 'Create Subscription',
+    createDescription:
+      'Subscribe to data changes in this connection. You will receive webhook notifications when data changes.',
+    editTitle: 'Edit Subscription',
+    editDescription: 'Update subscription settings and filter configuration.',
+    activeHelp:
+      'When disabled, webhooks using this subscription will be rejected.',
+    created: 'Subscription created',
+    createdDescription: 'Your subscription has been created successfully.',
+    createError: 'Failed to create subscription',
+    deleted: 'Subscription deleted',
+    deletedDescription: 'Your subscription has been deleted.',
+    deleteError: 'Failed to delete subscription',
+    noSubscriptions: 'No subscriptions yet',
+    status: 'Status',
+    active: 'Active',
+    inactive: 'Inactive',
+    eventTypes: 'Event Types',
+    selectEventTypes: 'Select event types',
+    allEvents: 'All events',
+    filterPaths: 'Filter Paths',
+    filterPathsPlaceholder: 'leads, contacts, orders',
+    filterPathsHelp:
+      'Comma-separated list of paths to filter events (leave empty for all)',
+    allPaths: 'All paths',
+    namePlaceholder: 'e.g., CRM Lead Changes',
+    descriptionPlaceholder: 'e.g., Subscribe to lead changes in the CRM',
+    webhookCredentials: 'Webhook Credentials',
+    webhookCredentialsDescription:
+      'Save these credentials securely. The token will not be shown again.',
+    webhookUrl: 'Webhook URL',
+    webhookToken: 'Webhook Token',
+    tokenWarning:
+      'This token will only be shown once. Save it securely before closing this dialog.',
+    copyWebhookUrl: 'Copy webhook URL',
+    regenerateToken: 'Regenerate token',
+    tokenRegenerated: 'Token regenerated',
+    tokenRegeneratedDescription:
+      'A new webhook token has been generated. The old token is no longer valid.',
+    regenerateError: 'Failed to regenerate token',
+  },
+
   connectors: {
     connector: 'Connector',
     connectors: 'Connectors',
@@ -715,8 +768,8 @@ const en = {
     capabilitiesDescription: {
       pull: 'Can import data from external source',
       push: 'Can export data to external source',
-      push_patch: 'Can update data in external source',
-      event_webhook: 'Supports webhook events',
+      apply_patch: 'Can receive and apply patch operations',
+      patch_event: 'Can emit patch events when data changes',
     },
     locales: 'Locales',
   },
@@ -774,6 +827,16 @@ const en = {
     exportSourceRepository: 'Export from repository',
     exportSourceBranch: 'Export from branch',
     exportSourcePath: 'Export from path',
+    syncMode: 'Sync Mode',
+    syncModeAuto: 'Auto',
+    syncModeFull: 'Full',
+    syncModePatch: 'Patch',
+    syncModeDescription:
+      'Auto: Full sync on schedule, patch on events. Full: Always full sync. Patch: Only patch-based sync (requires event trigger).',
+    syncModeImportExplanation:
+      'Sync mode controls how data is imported. In "Auto" mode, scheduled imports perform a full data sync, while connection event triggers apply only the changed data (patches). Use "Patch" mode when your connection emits change events and you only want incremental updates.',
+    syncModeExportExplanation:
+      'Sync mode controls how data is exported. In "Auto" mode, scheduled exports push all data, while repository event triggers send only the changed data (patches). Use "Patch" mode for incremental exports when the destination connection supports applying patches.',
     triggeredBy: 'Triggered by',
     duration: 'Duration',
     addPath: 'Add Path',
@@ -959,7 +1022,19 @@ const en = {
           'Transform stages modify data by renaming fields, removing fields, renaming files, or converting between formats (CSV, JSON, Parquet).',
         embeddings:
           'Embeddings stages create vector representations of documents for semantic search, or search existing embeddings using natural language queries.',
+        patch:
+          'Patch stages apply incremental changes from incoming events to repositories or connections, enabling real-time data synchronization.',
       },
+      patch: 'Patch',
+      patchDirection: 'Patch direction',
+      patchToRepository: 'To repository',
+      patchToConnection: 'To connection',
+      patchSourceFile: 'Source file',
+      patchSourceFileHelp:
+        'File containing the patch data (default: trigger_event.json from connection event)',
+      patchTargetPath: 'Target path',
+      patchStageExplanation:
+        'The Patch stage applies incremental changes (JSON patches) from a source file to either a repository or a connection. Use "To repository" to apply incoming patches (e.g., from connection events) to your data. Use "To connection" to push patches (e.g., from repository changes) to an external system.',
     },
 
     schedule: {
@@ -972,6 +1047,14 @@ const en = {
       timeTrigger: 'Time based trigger',
       repositoryEventTrigger: 'Repository event trigger',
       workflowRunEventTrigger: 'Workflow run event trigger',
+      connectionEventTrigger: 'Connection event trigger',
+      selectConnection: 'Select connection',
+      connectionEventType: 'Event type',
+      anyEvent: 'Any event',
+      connectionPaths: 'Filter paths',
+      connectionPathsPlaceholder: 'leads, contacts, orders',
+      connectionPathsHelp:
+        'Comma-separated list of paths to filter events (leave empty for all)',
       addTrigger: 'Add trigger',
       maxRetries: 'Max Retries',
       maxRuntime: 'Max Runtime (seconds)',

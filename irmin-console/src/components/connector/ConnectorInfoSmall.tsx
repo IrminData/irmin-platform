@@ -50,10 +50,10 @@ const ConnectorInfoSmall = ({ connector }: { connector: Connector }) => {
               case 'push':
                 icon = <TbUpload className='size-3' />;
                 break;
-              case 'push_patch':
+              case 'apply_patch':
                 icon = <TbEdit className='size-3' />;
                 break;
-              case 'event_webhook':
+              case 'patch_event':
                 icon = <TbWebhook className='size-3' />;
                 break;
             }

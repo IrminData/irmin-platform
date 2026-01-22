@@ -6,7 +6,8 @@
 export type ScheduleTrigger =
   | RepositoryTrigger
   | TimeTrigger
-  | WorkflowRunTrigger;
+  | WorkflowRunTrigger
+  | ConnectionEventTrigger;
 
 /**
  * Time trigger type, which represents a time-based trigger using cron syntax.
@@ -63,6 +64,24 @@ export interface WorkflowRunTrigger {
   /** (optional) ID of the workflow that the occurred event should reference */
   workflow?: string;
   type: 'workflow-run-event';
+}
+
+/**
+ * Connection related events that can trigger a workflow run.
+ */
+export type ConnectionEvent = 'insert' | 'update' | 'delete' | 'upsert';
+
+/**
+ * Trigger type for connection events (data changes in external systems)
+ */
+export interface ConnectionEventTrigger {
+  /** The event type that triggers the workflow */
+  event?: ConnectionEvent;
+  /** ID of the connection that the event should come from */
+  connection?: string;
+  /** (optional) List of paths to filter events (e.g., ["leads", "contacts"]) */
+  connection_paths?: string[];
+  type: 'connection-event';
 }
 
 /**

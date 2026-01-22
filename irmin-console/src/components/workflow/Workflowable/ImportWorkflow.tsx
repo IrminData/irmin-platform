@@ -19,7 +19,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { useConnections, useRepositories } from '@/hooks/api';
 import { useBaseUrl } from '@/hooks/utils';
 
-import type { Import } from '@/types/core/Workflow';
+import type { Import, SyncMode } from '@/types/core/Workflow';
 import type { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
 interface ImportWorkflowProps {
@@ -215,6 +215,34 @@ export default function ImportWorkflow({
           />
         </div>
       )}
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.workflow.syncMode}</Label>
+        <Select
+          value={workflowable.sync_mode ?? 'auto'}
+          onValueChange={(value) => {
+            if (!value) return;
+            setWorkflowData((prev) => ({
+              ...prev,
+              workflowable: {
+                ...(prev.workflowable as Import),
+                sync_mode: value as SyncMode,
+              },
+            }));
+          }}
+        >
+          <SelectTrigger className='w-full'>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='auto'>{dict.workflow.syncModeAuto}</SelectItem>
+            <SelectItem value='full'>{dict.workflow.syncModeFull}</SelectItem>
+            <SelectItem value='patch'>{dict.workflow.syncModePatch}</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className='text-xs text-muted-foreground'>
+          {dict.workflow.syncModeDescription}
+        </p>
+      </div>
     </>
   );
 }

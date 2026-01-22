@@ -17,29 +17,36 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useRepositories, useWorkflows } from '@/hooks/api';
+import { useConnections, useRepositories, useWorkflows } from '@/hooks/api';
 
 import deepEqual from '@/utils/deepEqual';
 
 import type {
+  ConnectionEventTrigger,
   RepositoryTrigger,
   ScheduleTrigger,
   TimeTrigger,
   WorkflowRunTrigger,
   WorkflowSchedule,
 } from '@/types/core/Schedule';
-import { RepositoryEvent, WorkflowRunEvent } from '@/types/core/Schedule';
+import {
+  ConnectionEvent,
+  RepositoryEvent,
+  WorkflowRunEvent,
+} from '@/types/core/Schedule';
 
 interface FormTrigger {
   id: string;
-  type: 'repository-event' | 'time' | 'workflow-run-event';
+  type: 'repository-event' | 'time' | 'workflow-run-event' | 'connection-event';
   timeFormat?: 'cron' | 'rrule';
   rrule?: string;
   cron?: string;
-  event?: RepositoryEvent | WorkflowRunEvent;
+  event?: RepositoryEvent | WorkflowRunEvent | ConnectionEvent;
   repository?: string;
   ref?: string;
   workflow?: string;
+  connection?: string;
+  connectionPaths?: string[];
 }
 
 /**
@@ -65,6 +72,7 @@ function WorkflowScheduleForm({
   const { dict } = useLocale();
   const { workflowsQuery } = useWorkflows();
   const { repositoriesQuery } = useRepositories();
+  const { connectionsQuery } = useConnections();
 
   // Form state
   const [triggers, setTriggers] = useState<FormTrigger[]>(() => {
@@ -103,6 +111,15 @@ function WorkflowScheduleForm({
             workflow: workflowTrigger.workflow,
           } as FormTrigger;
         }
+        case 'connection-event': {
+          const connectionTrigger = trigger as ConnectionEventTrigger;
+          return {
+            ...baseTrigger,
+            event: connectionTrigger.event,
+            connection: connectionTrigger.connection,
+            connectionPaths: connectionTrigger.connection_paths,
+          } as FormTrigger;
+        }
         default:
           throw new Error(`Unknown trigger type`);
       }
@@ -126,6 +143,10 @@ function WorkflowScheduleForm({
       {
         value: 'workflow-run-event',
         label: dict.workflow.schedule.workflowRunEventTrigger,
+      },
+      {
+        value: 'connection-event',
+        label: dict.workflow.schedule.connectionEventTrigger,
       },
     ],
     [dict.workflow.schedule]
@@ -158,6 +179,13 @@ function WorkflowScheduleForm({
             event: trigger.event as WorkflowRunEvent,
             workflow: trigger.workflow,
           } as WorkflowRunTrigger;
+        } else if (type === 'connection-event') {
+          return {
+            type,
+            event: trigger.event as ConnectionEvent,
+            connection: trigger.connection,
+            connection_paths: trigger.connectionPaths,
+          } as ConnectionEventTrigger;
         } else {
           throw new Error(`Unknown trigger type: ${type}`);
         }
@@ -248,6 +276,10 @@ function WorkflowScheduleForm({
         } else if (newType === 'workflow-run-event') {
           updatedTrigger.event = 'post-workflow-run';
           updatedTrigger.workflow = '';
+        } else if (newType === 'connection-event') {
+          updatedTrigger.event = undefined;
+          updatedTrigger.connection = '';
+          updatedTrigger.connectionPaths = [];
         }
         newTriggers[index] = updatedTrigger;
         return newTriggers;
@@ -599,6 +631,95 @@ function WorkflowScheduleForm({
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              </>
+            )}
+
+            {trigger.type === 'connection-event' && (
+              <>
+                <div className='flex flex-col space-y-2'>
+                  <Label htmlFor={`triggers.${index}.connection`}>
+                    {dict.connections.connection}
+                  </Label>
+                  <Select
+                    value={trigger.connection || undefined}
+                    onValueChange={(value) =>
+                      updateTriggerField(index, 'connection', value)
+                    }
+                    disabled={isUpdatingSchedule || connectionsQuery.isLoading}
+                  >
+                    <SelectTrigger
+                      id={`triggers.${index}.connection`}
+                      className='w-full'
+                    >
+                      <SelectValue
+                        placeholder={dict.workflow.schedule.selectConnection}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {connectionsQuery.data?.data
+                        ?.filter((conn) =>
+                          conn.connector?.capabilities?.includes('patch_event')
+                        )
+                        ?.map((conn) => (
+                          <SelectItem key={conn.id} value={conn.id}>
+                            {conn.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className='flex flex-col space-y-2'>
+                  <Label>{dict.workflow.schedule.connectionEventType}</Label>
+                  <Select
+                    value={trigger.event || 'any'}
+                    onValueChange={(value) =>
+                      updateTriggerField(
+                        index,
+                        'event',
+                        value === 'any' ? undefined : (value as ConnectionEvent)
+                      )
+                    }
+                    disabled={isUpdatingSchedule}
+                  >
+                    <SelectTrigger className='w-full'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='any'>
+                        {dict.workflow.schedule.anyEvent}
+                      </SelectItem>
+                      <SelectItem value='insert'>insert</SelectItem>
+                      <SelectItem value='update'>update</SelectItem>
+                      <SelectItem value='delete'>delete</SelectItem>
+                      <SelectItem value='upsert'>upsert</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className='flex flex-col space-y-2'>
+                  <Label htmlFor={`triggers.${index}.connectionPaths`}>
+                    {dict.workflow.schedule.connectionPaths}
+                  </Label>
+                  <Input
+                    id={`triggers.${index}.connectionPaths`}
+                    value={trigger.connectionPaths?.join(', ') || ''}
+                    onChange={(e) => {
+                      const paths = e.target.value
+                        .split(',')
+                        .map((p) => p.trim())
+                        .filter((p) => p.length > 0);
+                      updateTriggerField(index, 'connectionPaths', paths);
+                    }}
+                    placeholder={
+                      dict.workflow.schedule.connectionPathsPlaceholder
+                    }
+                    disabled={isUpdatingSchedule}
+                  />
+                  <p className='text-xs text-muted-foreground'>
+                    {dict.workflow.schedule.connectionPathsHelp}
+                  </p>
                 </div>
               </>
             )}

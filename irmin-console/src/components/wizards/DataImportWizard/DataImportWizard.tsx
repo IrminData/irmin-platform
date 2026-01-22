@@ -43,6 +43,7 @@ const initialWizardData: DataImportWizardData = {
     repository_branch: 'main',
     import_to_repository_path: '/',
     field_mappings: [],
+    sync_mode: 'auto',
   },
 };
 

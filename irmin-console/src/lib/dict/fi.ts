@@ -696,6 +696,59 @@ const fi = {
     },
   },
 
+  // === TILAUKSET ===
+  subscriptions: {
+    title: 'Tilaukset',
+    explanation:
+      'Tilaukset mahdollistavat tämän yhteyden ilmoittamaan Irminille datamuutoksista. Kun ulkoinen järjestelmä lähettää webhookin päivitysdatalla, se voi käynnistää prosesseja automaattisesti synkronoimaan vain muuttuneet tiedot täyden tuonnin/viennin sijaan. Tämä on ihanteellinen reaaliaikaisiin inkrementaalisiin päivityksiin.',
+    autoConfigureNotice:
+      'Tämä yhteys tukee automaattista muutosten havaitsemista. Kun luot tilauksen, liitin alkaa automaattisesti kuuntelemaan muutoksia ulkoisessa järjestelmässä ja ilmoittamaan Irminille. Lisäkonfiguraatiota ei tarvita.',
+    manualWebhookNotice:
+      'Alla oleva webhook-URL ja -token ovat vain edistyneisiin käyttötapauksiin, kuten mukautettuihin integraatioihin tai virheenkorjaukseen. Useimmissa tapauksissa liitin hoitaa ilmoitukset automaattisesti.',
+    subscription: 'Tilaus',
+    create: 'Luo tilaus',
+    createTitle: 'Luo tilaus',
+    createDescription:
+      'Tilaa datamuutokset tästä yhteydestä. Saat webhook-ilmoitukset kun data muuttuu.',
+    editTitle: 'Muokkaa tilausta',
+    editDescription: 'Päivitä tilauksen asetukset ja suodatuskonfiguraatio.',
+    activeHelp:
+      'Kun poistettu käytöstä, tätä tilausta käyttävät webhookit hylätään.',
+    created: 'Tilaus luotu',
+    createdDescription: 'Tilauksesi on luotu onnistuneesti.',
+    createError: 'Tilauksen luonti epäonnistui',
+    deleted: 'Tilaus poistettu',
+    deletedDescription: 'Tilauksesi on poistettu.',
+    deleteError: 'Tilauksen poisto epäonnistui',
+    noSubscriptions: 'Ei tilauksia vielä',
+    status: 'Tila',
+    active: 'Aktiivinen',
+    inactive: 'Ei-aktiivinen',
+    eventTypes: 'Tapahtumatyypit',
+    selectEventTypes: 'Valitse tapahtumatyypit',
+    allEvents: 'Kaikki tapahtumat',
+    filterPaths: 'Suodatuspolut',
+    filterPathsPlaceholder: 'leads, contacts, orders',
+    filterPathsHelp:
+      'Pilkulla eroteltu lista poluista tapahtumien suodattamiseen (tyhjä = kaikki)',
+    allPaths: 'Kaikki polut',
+    namePlaceholder: 'esim. CRM-liidien muutokset',
+    descriptionPlaceholder: 'esim. Tilaa liidimuutokset CRM:stä',
+    webhookCredentials: 'Webhook-tunnisteet',
+    webhookCredentialsDescription:
+      'Tallenna nämä tunnisteet turvallisesti. Tokenia ei näytetä uudelleen.',
+    webhookUrl: 'Webhook URL',
+    webhookToken: 'Webhook-token',
+    tokenWarning:
+      'Tämä token näytetään vain kerran. Tallenna se turvallisesti ennen tämän dialogin sulkemista.',
+    copyWebhookUrl: 'Kopioi webhook URL',
+    regenerateToken: 'Uusi token',
+    tokenRegenerated: 'Token uusittu',
+    tokenRegeneratedDescription:
+      'Uusi webhook-token on luotu. Vanha token ei enää toimi.',
+    regenerateError: 'Tokenin uusiminen epäonnistui',
+  },
+
   connectors: {
     connector: 'Yhdistin',
     connectors: 'Yhdistimet',
@@ -707,8 +760,8 @@ const fi = {
     capabilitiesDescription: {
       pull: 'Voi tuoda dataa ulkoisesta lähteestä',
       push: 'Voi viedä dataa ulkoiseen lähteeseen',
-      push_patch: 'Voi päivittää dataa ulkoisessa lähteessä',
-      event_webhook: 'Tukee webhook-tapahtumia',
+      apply_patch: 'Voi vastaanottaa ja soveltaa muutoksia',
+      patch_event: 'Voi lähettää muutostapahtumia',
     },
     locales: 'Kielet',
   },
@@ -765,6 +818,16 @@ const fi = {
     exportSourceRepository: 'Vientilähteen data-arkisto',
     exportSourceBranch: 'Vientilähteen haara',
     exportSourcePath: 'Vientilähteen polku',
+    syncMode: 'Synkronointitila',
+    syncModeAuto: 'Automaattinen',
+    syncModeFull: 'Täysi',
+    syncModePatch: 'Päivitys',
+    syncModeDescription:
+      'Automaattinen: Täysi synkronointi aikataululla, päivitys tapahtumilla. Täysi: Aina täysi synkronointi. Päivitys: Vain päivityspohjainen synkronointi (vaatii tapahtuman).',
+    syncModeImportExplanation:
+      'Synkronointitila määrittää miten data tuodaan. "Automaattinen"-tilassa ajastetut tuonnit suorittavat täyden synkronoinnin, kun taas yhteystapahtumien laukaisemana tuodaan vain muuttuneet tiedot (päivitykset). Käytä "Päivitys"-tilaa kun yhteytesi lähettää muutostapahtumia ja haluat vain inkrementaalisia päivityksiä.',
+    syncModeExportExplanation:
+      'Synkronointitila määrittää miten data viedään. "Automaattinen"-tilassa ajastetut viennit lähettävät kaiken datan, kun taas repositoriotapahtumien laukaisemana lähetetään vain muuttuneet tiedot (päivitykset). Käytä "Päivitys"-tilaa inkrementaalisiin vienteihin kun kohdeyhteys tukee päivitysten soveltamista.',
     triggeredBy: 'Laukaisija',
     duration: 'Kesto',
     // New translations for MultiplePathsSelector
@@ -947,7 +1010,19 @@ const fi = {
           'Muunnosvaiheet muokkaavat dataa nimeämällä kenttiä uudelleen, poistamalla kenttiä, nimeämällä tiedostoja uudelleen tai muuntamalla formaatteja (CSV, JSON, Parquet).',
         embeddings:
           'Upotukset-vaiheet luovat dokumenteista vektori esityksiä semanttista hakua varten tai etsivät olemassa olevista upotuksista luonnollisen kielen kyselyillä.',
+        patch:
+          'Päivitysvaiheet soveltavat inkrementaalisia muutoksia saapuvista tapahtumista arkistoihin tai yhteyksiin, mahdollistaen reaaliaikaisen datasynkronoinnin.',
       },
+      patch: 'Päivitys',
+      patchDirection: 'Päivityssuunta',
+      patchToRepository: 'Arkistoon',
+      patchToConnection: 'Yhteyteen',
+      patchSourceFile: 'Lähdetiedosto',
+      patchSourceFileHelp:
+        'Päivitysdatan sisältävä tiedosto (oletus: trigger_event.json yhteystapahtumasta)',
+      patchTargetPath: 'Kohdepolku',
+      patchStageExplanation:
+        'Päivitysvaihe soveltaa inkrementaalisia muutoksia (JSON-päivityksiä) lähdetiedostosta joko arkistoon tai yhteyteen. Käytä "Arkistoon" soveltaaksesi saapuvia päivityksiä (esim. yhteystapahtumista) dataasi. Käytä "Yhteyteen" lähettääksesi päivityksiä (esim. arkistomuutoksista) ulkoiseen järjestelmään.',
     },
     schedule: {
       workflowSchedule: 'Prosessin aikataulu',
@@ -959,6 +1034,14 @@ const fi = {
       timeTrigger: 'Aikapohjainen laukaisin',
       repositoryEventTrigger: 'Data-arkiston tapahtumalaukaisin',
       workflowRunEventTrigger: 'Prosessin ajotapahtuma-laukaisin',
+      connectionEventTrigger: 'Yhteyden tapahtumalaukaisin',
+      selectConnection: 'Valitse yhteys',
+      connectionEventType: 'Tapahtumatyyppi',
+      anyEvent: 'Mikä tahansa tapahtuma',
+      connectionPaths: 'Suodatuspolut',
+      connectionPathsPlaceholder: 'leads, contacts, orders',
+      connectionPathsHelp:
+        'Pilkulla eroteltu lista poluista tapahtumien suodattamiseen (tyhjä = kaikki)',
       addTrigger: 'Lisää laukaisin',
       maxRetries: 'Enimmäisyritykset',
       maxRuntime: 'Maksimiaika (sekunteina)',

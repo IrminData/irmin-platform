@@ -372,6 +372,7 @@ function Stage({
               {stage.type === 'validation' && dict.workflow.pipeline.validation}
               {stage.type === 'transform' && dict.workflow.pipeline.transform}
               {stage.type === 'embeddings' && dict.workflow.pipeline.embeddings}
+              {stage.type === 'patch' && dict.workflow.pipeline.patch}
             </Badge>
 
             {stage.description && (
@@ -585,6 +586,21 @@ function Stage({
                     read: true,
                     order_sequence: prevStage.order_sequence,
                   }));
+                } else if (value === 'patch') {
+                  setStage((prevStage) => ({
+                    type: 'patch',
+                    patch_direction: 'to_repository',
+                    patch_source_file: 'trigger_event.json',
+                    patch_repository: '',
+                    patch_repository_branch: '',
+                    patch_repository_path: '',
+                    patch_connection_id: '',
+                    patch_connection_path: '',
+                    description: prevStage.description,
+                    write: false,
+                    read: false,
+                    order_sequence: prevStage.order_sequence,
+                  }));
                 }
               }}
               disabled={readOnly}
@@ -604,6 +620,7 @@ function Stage({
                     dict.workflow.pipeline.transform}
                   {stage.type === 'embeddings' &&
                     dict.workflow.pipeline.embeddings}
+                  {stage.type === 'patch' && dict.workflow.pipeline.patch}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -628,6 +645,9 @@ function Stage({
                 </SelectItem>
                 <SelectItem value='embeddings'>
                   {dict.workflow.pipeline.embeddings}
+                </SelectItem>
+                <SelectItem value='patch'>
+                  {dict.workflow.pipeline.patch}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -2305,6 +2325,239 @@ function Stage({
                             embeddings_top_k: e.target.value
                               ? parseInt(e.target.value)
                               : undefined,
+                          };
+                        });
+                      }}
+                      readOnly={readOnly}
+                    />
+                  </div>
+                </>
+              )}
+            </>
+          )}
+
+          {stage.type === 'patch' && (
+            <>
+              {/* Patch Stage Explanation */}
+              <div
+                className={`
+                  rounded-md border border-blue-200 bg-blue-50 p-4
+                  dark:border-blue-800 dark:bg-blue-950
+                `}
+              >
+                <p
+                  className={`
+                    text-sm text-blue-800
+                    dark:text-blue-200
+                  `}
+                >
+                  {dict.workflow.pipeline.patchStageExplanation}
+                </p>
+              </div>
+
+              {/* Patch Direction */}
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`patch-direction-${index}`}>
+                  {dict.workflow.pipeline.patchDirection}
+                </Label>
+                <Select
+                  value={stage.patch_direction}
+                  onValueChange={(value: 'to_repository' | 'to_connection') => {
+                    setStage((prevStage) => {
+                      if (prevStage.type !== 'patch') return prevStage;
+                      return {
+                        ...prevStage,
+                        patch_direction: value,
+                      };
+                    });
+                  }}
+                  disabled={readOnly}
+                >
+                  <SelectTrigger
+                    id={`patch-direction-${index}`}
+                    className='w-full'
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='to_repository'>
+                      {dict.workflow.pipeline.patchToRepository}
+                    </SelectItem>
+                    <SelectItem value='to_connection'>
+                      {dict.workflow.pipeline.patchToConnection}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Patch Source File */}
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`patch-source-file-${index}`}>
+                  {dict.workflow.pipeline.patchSourceFile}
+                </Label>
+                <Input
+                  id={`patch-source-file-${index}`}
+                  placeholder='trigger_event.json'
+                  value={stage.patch_source_file ?? ''}
+                  onChange={(e) => {
+                    setStage((prevStage) => {
+                      if (prevStage.type !== 'patch') return prevStage;
+                      return {
+                        ...prevStage,
+                        patch_source_file: e.target.value,
+                      };
+                    });
+                  }}
+                  readOnly={readOnly}
+                />
+                <p className='text-xs text-muted-foreground'>
+                  {dict.workflow.pipeline.patchSourceFileHelp}
+                </p>
+              </div>
+
+              {/* Repository target fields */}
+              {stage.patch_direction === 'to_repository' && (
+                <>
+                  <div className='flex flex-col gap-2'>
+                    <Label htmlFor={`patch-repository-${index}`}>
+                      {dict.repository.repository}
+                    </Label>
+                    <Select
+                      value={stage.patch_repository || ''}
+                      onValueChange={(value) => {
+                        if (!value) return;
+                        const repo = repositoriesQuery.data?.data?.find(
+                          (r) => r.slug === value
+                        );
+                        setStage((prevStage) => {
+                          if (prevStage.type !== 'patch') return prevStage;
+                          return {
+                            ...prevStage,
+                            patch_repository: value,
+                            patch_repository_branch:
+                              repo?.default_branch || 'main',
+                          };
+                        });
+                      }}
+                      disabled={readOnly || repositoriesQuery.isLoading}
+                    >
+                      <SelectTrigger
+                        id={`patch-repository-${index}`}
+                        className='w-full'
+                      >
+                        <SelectValue placeholder={dict.repository.repository} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {repositoriesQuery.data?.data?.map((repo) => (
+                          <SelectItem key={repo.slug} value={repo.slug}>
+                            {repo.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className='flex flex-col gap-2'>
+                    <Label htmlFor={`patch-repository-branch-${index}`}>
+                      {dict.repository.branches.branch}
+                    </Label>
+                    <Input
+                      id={`patch-repository-branch-${index}`}
+                      placeholder='main'
+                      value={stage.patch_repository_branch || ''}
+                      onChange={(e) => {
+                        setStage((prevStage) => {
+                          if (prevStage.type !== 'patch') return prevStage;
+                          return {
+                            ...prevStage,
+                            patch_repository_branch: e.target.value,
+                          };
+                        });
+                      }}
+                      readOnly={readOnly}
+                    />
+                  </div>
+
+                  <div className='flex flex-col gap-2'>
+                    <Label htmlFor={`patch-repository-path-${index}`}>
+                      {dict.workflow.pipeline.patchTargetPath}
+                    </Label>
+                    <Input
+                      id={`patch-repository-path-${index}`}
+                      placeholder='/'
+                      value={stage.patch_repository_path || ''}
+                      onChange={(e) => {
+                        setStage((prevStage) => {
+                          if (prevStage.type !== 'patch') return prevStage;
+                          return {
+                            ...prevStage,
+                            patch_repository_path: e.target.value,
+                          };
+                        });
+                      }}
+                      readOnly={readOnly}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Connection target fields */}
+              {stage.patch_direction === 'to_connection' && (
+                <>
+                  <div className='flex flex-col gap-2'>
+                    <Label htmlFor={`patch-connection-${index}`}>
+                      {dict.connections.connection}
+                    </Label>
+                    <Select
+                      value={stage.patch_connection_id || ''}
+                      onValueChange={(value) => {
+                        if (!value) return;
+                        setStage((prevStage) => {
+                          if (prevStage.type !== 'patch') return prevStage;
+                          return {
+                            ...prevStage,
+                            patch_connection_id: value,
+                          };
+                        });
+                      }}
+                      disabled={readOnly || connectionsQuery.isLoading}
+                    >
+                      <SelectTrigger
+                        id={`patch-connection-${index}`}
+                        className='w-full'
+                      >
+                        <SelectValue
+                          placeholder={dict.connections.connection}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {connectionsQuery.data?.data
+                          ?.filter((c) =>
+                            c.connector?.capabilities?.includes('apply_patch')
+                          )
+                          ?.map((conn) => (
+                            <SelectItem key={conn.id} value={conn.id}>
+                              {conn.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className='flex flex-col gap-2'>
+                    <Label htmlFor={`patch-connection-path-${index}`}>
+                      {dict.workflow.pipeline.patchTargetPath}
+                    </Label>
+                    <Input
+                      id={`patch-connection-path-${index}`}
+                      placeholder='/'
+                      value={stage.patch_connection_path || ''}
+                      onChange={(e) => {
+                        setStage((prevStage) => {
+                          if (prevStage.type !== 'patch') return prevStage;
+                          return {
+                            ...prevStage,
+                            patch_connection_path: e.target.value,
                           };
                         });
                       }}

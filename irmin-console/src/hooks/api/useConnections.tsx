@@ -120,7 +120,7 @@ export function useConnections() {
 
   // Filter connections by capability
   const getConnectionsWithCapability = (
-    capability: 'event_webhook' | 'pull' | 'push' | 'push_patch'
+    capability: 'pull' | 'push' | 'apply_patch' | 'patch_event'
   ) => {
     return (
       connectionsQuery.data?.data?.filter((connection) =>

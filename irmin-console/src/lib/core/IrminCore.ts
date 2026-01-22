@@ -10,6 +10,7 @@ import type {
 
 import AIApplicationService from './resources/AIApplicationService';
 import ConnectionService from './resources/ConnectionService';
+import ConnectionSubscriptionService from './resources/ConnectionSubscriptionService';
 import ConnectorService from './resources/ConnectorService';
 import CredentialService from './resources/CredentialService';
 import DiffService from './resources/DiffService';
@@ -54,6 +55,7 @@ class IrminCore {
   public aiApplicationService: AIApplicationService;
   public scriptsService: ScriptsService;
   public connectionService: ConnectionService;
+  public connectionSubscriptionService: ConnectionSubscriptionService;
   public connectorService: ConnectorService;
   public repositoryService: RepositoryService;
   public repositoryBranchService: RepositoryBranchService;
@@ -92,6 +94,9 @@ class IrminCore {
     this.aiApplicationService = new AIApplicationService(this);
     this.scriptsService = new ScriptsService(this);
     this.connectionService = new ConnectionService(this);
+    this.connectionSubscriptionService = new ConnectionSubscriptionService(
+      this
+    );
     this.connectorService = new ConnectorService(this);
     this.repositoryService = new RepositoryService(this);
     this.repositoryBranchService = new RepositoryBranchService(this);

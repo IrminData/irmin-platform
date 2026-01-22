@@ -178,10 +178,10 @@ function ConnectorInfoModal({
                   case 'push':
                     icon = <TbUpload className='mr-1' />;
                     break;
-                  case 'push_patch':
+                  case 'apply_patch':
                     icon = <TbEdit className='mr-1' />;
                     break;
-                  case 'event_webhook':
+                  case 'patch_event':
                     icon = <TbWebhook className='mr-1' />;
                     break;
                 }

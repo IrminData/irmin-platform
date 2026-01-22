@@ -115,6 +115,7 @@ export default function ReviewAndCreateStep({
           import_to_repository_path:
             wizardData.workflowData.import_to_repository_path,
           field_mappings: wizardData.workflowData.field_mappings,
+          sync_mode: wizardData.workflowData.sync_mode,
         },
       });
 

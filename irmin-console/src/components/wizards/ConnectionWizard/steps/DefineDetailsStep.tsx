@@ -103,7 +103,13 @@ export default function DefineDetailsStep({
           }
           goNext();
         } else {
-          irminAlert('error', dict.connections.create.failed);
+          // Show specific validation errors if available
+          const errors = res.data?.errors;
+          if (errors && errors.length > 0) {
+            irminAlert('error', errors.join('\n'));
+          } else {
+            irminAlert('error', dict.connections.create.failed);
+          }
         }
       } catch (error) {
         console.error('Test connection error:', error);

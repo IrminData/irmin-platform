@@ -2,7 +2,7 @@ import type { Connection } from '@/types/core/Connection';
 import type { Connector } from '@/types/core/Connector';
 import type { Repository } from '@/types/core/Repository';
 import type { WorkflowSchedule } from '@/types/core/Schedule';
-import type { FieldMapping } from '@/types/core/Workflow';
+import type { FieldMapping, SyncMode } from '@/types/core/Workflow';
 import type {
   DynamicFields,
   DynamicFieldValues,
@@ -44,5 +44,6 @@ export interface DataImportWizardData {
     repository_branch: string;
     import_to_repository_path: string;
     field_mappings: FieldMapping[];
+    sync_mode?: SyncMode;
   };
 }

@@ -168,6 +168,11 @@ export const connectionQueryKey = (
   connectionID: string
 ) => ['connection', workspaceSlug, connectionID] as const;
 
+export const connectionSubscriptionsQueryKey = (
+  workspaceSlug: string,
+  connectionID: string
+) => ['connection-subscriptions', workspaceSlug, connectionID] as const;
+
 export const connectionSchemaQueryKey = (
   workspaceSlug: string,
   connectionID: string,

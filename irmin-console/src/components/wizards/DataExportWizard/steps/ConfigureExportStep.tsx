@@ -9,12 +9,21 @@ import RepositoryPathSelector from '@/components/repository/objects/RepositoryPa
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import MultiplePathsSelector from '@/components/workflow/MultiplePathsSelector';
 import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+
+import type { SyncMode } from '@/types/core/Workflow';
 
 import type { DataExportWizardData } from '../types';
 
@@ -241,6 +250,58 @@ export default function ConfigureExportStep({
               />
             )}
           />
+        </div>
+
+        {/* Sync Mode Configuration */}
+        <div className='space-y-4'>
+          <h4 className='font-medium'>{dict.workflow.syncMode}</h4>
+          <div
+            className={`
+              rounded-md border border-blue-200 bg-blue-50 p-4
+              dark:border-blue-800 dark:bg-blue-950
+            `}
+          >
+            <p
+              className={`
+                text-sm text-blue-800
+                dark:text-blue-200
+              `}
+            >
+              {dict.workflow.syncModeExportExplanation}
+            </p>
+          </div>
+          <div className='flex flex-col gap-2'>
+            <Label>{dict.workflow.syncMode}</Label>
+            <Select
+              value={wizardData.workflowData.sync_mode ?? 'auto'}
+              onValueChange={(value) => {
+                updateWizardData({
+                  workflowData: {
+                    ...wizardData.workflowData,
+                    sync_mode: value as SyncMode,
+                  },
+                });
+              }}
+            >
+              <SelectTrigger className='w-full'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='auto'>
+                  {dict.workflow.syncModeAuto}
+                </SelectItem>
+                <SelectItem value='full'>
+                  {dict.workflow.syncModeFull}
+                </SelectItem>
+                <SelectItem value='patch'>
+                  {dict.workflow.syncModePatch}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className='text-xs text-muted-foreground'>
+              {dict.workflow.syncModeDescription}
+            </p>
+          </div>
         </div>
 
         {/* Schedule Configuration */}

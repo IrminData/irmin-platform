@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import ConnectionConfigTable from '@/components/connection/ConnectionConfigTable';
+import ConnectionSubscriptionsSection from '@/components/connection/ConnectionSubscriptionsSection';
 import EditConnectionConfigurationModal from '@/components/connection/EditConnectionConfigurationModal';
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import { Button } from '@/components/ui/button';
@@ -151,6 +152,9 @@ const ConnectionSection = () => {
               />
             )}
           </div>
+          {/* Connection Subscriptions for patch_event capable connectors */}
+          <ConnectionSubscriptionsSection />
+
           {canViewWorkflows && (
             <WorkflowList
               workflows={relatedWorkflows ?? []}

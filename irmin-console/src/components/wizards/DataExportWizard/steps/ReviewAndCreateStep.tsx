@@ -59,6 +59,7 @@ export default function ReviewAndCreateStep({
           export_to_connection_path:
             wizardData.workflowData.export_to_connection_path,
           field_mappings: wizardData.workflowData.field_mappings,
+          sync_mode: wizardData.workflowData.sync_mode,
         },
       });
 

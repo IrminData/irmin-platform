@@ -90,7 +90,13 @@ export default function DefineSettingsStep({
           });
           goNext();
         } else {
-          irminAlert('error', dict.connections.create.configuration_invalid);
+          // Show specific validation errors if available
+          const errors = res.data?.errors;
+          if (errors && errors.length > 0) {
+            irminAlert('error', errors.join('\n'));
+          } else {
+            irminAlert('error', dict.connections.create.configuration_invalid);
+          }
         }
       } catch (error) {
         console.error('Test connection error:', error);

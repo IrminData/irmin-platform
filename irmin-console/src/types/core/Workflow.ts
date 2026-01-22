@@ -134,6 +134,14 @@ export type WorkflowStatus =
   | 'cancelled';
 
 /**
+ * Sync mode for import/export workflows
+ * - 'full': Always perform full data sync
+ * - 'patch': Only accept patch-based events (requires event trigger)
+ * - 'auto': Full sync on schedule/manual, patch sync on events (default)
+ */
+export type SyncMode = 'full' | 'patch' | 'auto';
+
+/**
  * Import object - workflowable for the Workflow
  */
 export interface Import {
@@ -150,6 +158,8 @@ export interface Import {
   import_to_repository_path: string;
   /** Field mappings for the import */
   field_mappings?: FieldMapping[];
+  /** Sync mode for the import workflow */
+  sync_mode?: SyncMode;
 }
 
 /**
@@ -169,6 +179,8 @@ export interface Export {
   export_to_connection_path: string;
   /** Field mappings for the export */
   field_mappings?: FieldMapping[];
+  /** Sync mode for the export workflow */
+  sync_mode?: SyncMode;
 }
 
 /**
@@ -214,6 +226,11 @@ export interface Pipeline {
 }
 
 /**
+ * Patch direction enum
+ */
+type PatchDirection = 'to_repository' | 'to_connection';
+
+/**
  * One stage of a Pipeline
  */
 export type PipelineStage = {
@@ -234,6 +251,7 @@ export type PipelineStage = {
   | PipelineStageValidation
   | PipelineStageTransform
   | PipelineStageEmbeddings
+  | PipelineStagePatch
 );
 
 /**
@@ -347,6 +365,27 @@ interface PipelineStageTransform {
   transform_output_name?: string;
   /** Output format (for format_convert operation) */
   transform_output_format?: OutputFormat;
+}
+
+/**
+ * Pipeline Stage that applies patches to a repository or connection
+ */
+interface PipelineStagePatch {
+  type: 'patch';
+  /** Direction of the patch operation */
+  patch_direction: PatchDirection;
+  /** Source file containing the patch data (default: trigger_event.json) */
+  patch_source_file?: string;
+  /** Target repository slug (when direction is to_repository) */
+  patch_repository?: string;
+  /** Target repository branch (when direction is to_repository) */
+  patch_repository_branch?: string;
+  /** Target path within the repository (when direction is to_repository) */
+  patch_repository_path?: string;
+  /** Target connection ID (when direction is to_connection) */
+  patch_connection_id?: string;
+  /** Target path within the connection (when direction is to_connection) */
+  patch_connection_path?: string;
 }
 
 /**

@@ -20,8 +20,8 @@ interface ConnectorRequest {
  * Interface for connector configuration operations
  */
 interface ConnectorConfigurationRequest {
-  details: ConnectionFieldValues;
-  settings: ConnectionFieldValues;
+  details?: ConnectionFieldValues;
+  settings?: ConnectionFieldValues;
 }
 
 /**
@@ -155,10 +155,14 @@ class ConnectorService {
     settings?: ConnectionFieldValues;
   }): Promise<IrminAPIResponse<ConnectorConfigurationValidationResult>> {
     try {
-      const requestBody: ConnectorConfigurationRequest = {
-        details: details || {},
-        settings: settings || {},
-      };
+      const requestBody: ConnectorConfigurationRequest = {};
+
+      if (details) {
+        requestBody.details = details;
+      }
+      if (settings) {
+        requestBody.settings = settings;
+      }
 
       const response = (await this.irminCore.fetchAPI(
         `/v1/connectors/${connectorId}/validate`,

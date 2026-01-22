@@ -4,6 +4,7 @@ export * from './useConnection';
 export * from './useConnectionConfiguration';
 export * from './useConnectionSchema';
 export * from './useConnections';
+export * from './useConnectionSubscriptions';
 export * from './useConnector';
 export * from './useConnectors';
 
