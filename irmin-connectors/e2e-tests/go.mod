@@ -2,4 +2,4 @@ module irmin-connectors/e2e-tests
 
 go 1.25.0
 
-require github.com/IrminData/irmin-sdk-go v0.0.0-20260121121256-887323aeeb02
+require github.com/IrminData/irmin-sdk-go v0.0.0-20260122215448-c4da763294b6
