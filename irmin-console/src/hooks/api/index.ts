@@ -55,6 +55,7 @@ export * from './useInvites';
 // AI hooks
 export * from './useAIAgent';
 export * from './useAIApplications';
+export * from './useAIApplicationPendingWrites';
 export * from './useAIApplicationToolLogs';
 export * from './useAIConversations';
 export * from './useAIConversation';

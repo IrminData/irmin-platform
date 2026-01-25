@@ -278,6 +278,23 @@ const en = {
     toolVectorSearchDescription: 'Semantic search on embeddings',
     toolDocsName: 'Documentation',
     toolDocsDescription: 'Access AI Application documentation',
+    // Write Tools
+    toolWriteName: 'Write Operations',
+    toolWriteDescription: 'Allow agents to modify data in repositories',
+    writeConfigTitle: 'Write Configuration',
+    writeFileUpload: 'File Upload',
+    writeFileUpdate: 'File Update',
+    writePatch: 'JSON Patch Operations',
+    writeAutoCommit: 'Auto-commit changes',
+    writeRequireCommitMessage: 'Require commit message',
+    writeCommitMessagePrefix: 'Commit message prefix',
+    writeRequireApproval: 'Require human approval',
+    // Pending Writes
+    pendingWritesTitle: 'Pending Writes',
+    pendingWritesDescription:
+      'Review and approve write operations from AI agents',
+    pendingWritesError: 'Failed to load pending writes',
+    noPendingWrites: 'No pending writes to review',
     howToConnect: 'How to Connect',
     howToConnectMcp:
       'Use the <strong>MCP Endpoint</strong> to connect with Cursor, Claude Desktop, or other MCP clients.',

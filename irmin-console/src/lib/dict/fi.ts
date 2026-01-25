@@ -278,6 +278,23 @@ const fi = {
     toolVectorSearchDescription: 'Semanttinen haku upotuksissa',
     toolDocsName: 'Dokumentaatio',
     toolDocsDescription: 'Käytä AI-sovelluksen dokumentaatiota',
+    // Write Tools
+    toolWriteName: 'Kirjoitusoperaatiot',
+    toolWriteDescription: 'Salli agenttien muokata dataa tietovarastoissa',
+    writeConfigTitle: 'Kirjoitusasetukset',
+    writeFileUpload: 'Tiedoston lataus',
+    writeFileUpdate: 'Tiedoston päivitys',
+    writePatch: 'JSON Patch -operaatiot',
+    writeAutoCommit: 'Automaattinen tallentaminen',
+    writeRequireCommitMessage: 'Vaadi tallennusviesti',
+    writeCommitMessagePrefix: 'Tallennusviestin etuliite',
+    writeRequireApproval: 'Vaadi ihmisen hyväksyntä',
+    // Pending Writes
+    pendingWritesTitle: 'Odottavat kirjoitukset',
+    pendingWritesDescription:
+      'Tarkista ja hyväksy AI-agenttien kirjoitusoperaatiot',
+    pendingWritesError: 'Odottavien kirjoitusten lataaminen epäonnistui',
+    noPendingWrites: 'Ei odottavia kirjoituksia tarkistettavaksi',
     howToConnect: 'Kuinka yhdistää',
     howToConnectMcp:
       'Käytä <strong>MCP-päätepistettä</strong> yhdistääksesi Cursorin, Claude Desktopin tai muiden MCP-asiakkaiden kanssa.',

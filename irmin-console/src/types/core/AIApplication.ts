@@ -14,6 +14,26 @@ export interface AIApplicationDataSource {
 }
 
 /**
+ * Write configuration for an AI Application
+ */
+export interface AIApplicationWriteConfig {
+  /** Whether file upload is enabled */
+  file_upload_enabled: boolean;
+  /** Whether file update is enabled */
+  file_update_enabled: boolean;
+  /** Whether JSON patch operations are enabled */
+  patch_enabled: boolean;
+  /** Whether changes are automatically committed */
+  auto_commit: boolean;
+  /** Whether commit messages are required */
+  require_commit_message: boolean;
+  /** Prefix added to all commit messages */
+  commit_message_prefix?: string;
+  /** Whether human approval is required for writes */
+  require_approval: boolean;
+}
+
+/**
  * Tool configuration for an AI Application
  */
 export interface AIApplicationToolConfig {
@@ -29,6 +49,10 @@ export interface AIApplicationToolConfig {
   vector_search_enabled: boolean;
   /** Whether documentation tool is enabled */
   docs_enabled: boolean;
+  /** Whether write operations are enabled */
+  write_enabled?: boolean;
+  /** Write operation configuration */
+  write_config?: AIApplicationWriteConfig;
 }
 
 /**
@@ -261,4 +285,57 @@ export interface AIApplicationToolLogStats {
   avg_duration_ms: number;
   /** Per-tool statistics */
   by_tool: AIApplicationToolStat[];
+}
+
+/**
+ * Status of a pending write operation
+ */
+export type PendingWriteStatus = 'pending' | 'approved' | 'rejected';
+
+/**
+ * Pending write operation awaiting approval
+ */
+export interface AIApplicationPendingWrite {
+  /** Pending write ID */
+  id: string;
+  /** AI Application ID */
+  ai_application_id: string;
+  /** Repository slug */
+  repository: string;
+  /** Path within the repository */
+  path: string;
+  /** Branch/ref name */
+  ref: string;
+  /** Operation type: upload, update, or patch */
+  operation: 'upload' | 'update' | 'patch';
+  /** Preview of the content (truncated) */
+  content_preview?: string;
+  /** JSON patch operations if applicable */
+  patch_json?: string;
+  /** Commit message */
+  commit_message: string;
+  /** Current status */
+  status: PendingWriteStatus;
+  /** User who reviewed the pending write */
+  reviewed_by?: User;
+  /** Timestamp when reviewed */
+  reviewed_at?: string;
+  /** Creation timestamp */
+  created_at: string;
+  /** Last update timestamp */
+  updated_at: string;
+}
+
+/**
+ * Response for listing pending writes
+ */
+export interface AIApplicationPendingWritesResponse {
+  /** Pending write entries */
+  pending_writes: AIApplicationPendingWrite[];
+  /** Total number of pending writes */
+  total: number;
+  /** Current limit */
+  limit: number;
+  /** Current offset */
+  offset: number;
 }

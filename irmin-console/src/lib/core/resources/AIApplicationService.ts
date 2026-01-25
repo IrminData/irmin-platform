@@ -3,6 +3,8 @@ import type IrminCore from '@/lib/core';
 import type {
   AIApplication,
   AIApplicationDataSource,
+  AIApplicationPendingWrite,
+  AIApplicationPendingWritesResponse,
   AIApplicationToolConfig,
   AIApplicationToolLogsResponse,
   AIApplicationToolLogStats,
@@ -36,6 +38,9 @@ class AIApplicationService {
     this.getSystemPrompt = this.getSystemPrompt.bind(this);
     this.getToolLogs = this.getToolLogs.bind(this);
     this.getToolLogStats = this.getToolLogStats.bind(this);
+    this.getPendingWrites = this.getPendingWrites.bind(this);
+    this.approvePendingWrite = this.approvePendingWrite.bind(this);
+    this.rejectPendingWrite = this.rejectPendingWrite.bind(this);
   }
 
   /**
@@ -373,6 +378,103 @@ class AIApplicationService {
       return response as IrminAPIResponse<AIApplicationToolLogStats>;
     } catch (error) {
       console.error('Get AI Application tool log stats error', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get pending writes for an AI Application.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.aiApplicationId - The AI Application ID.
+   * @param props.limit - Maximum number of pending writes to return (default 50).
+   * @param props.offset - Number of pending writes to skip (default 0).
+   * @returns IrminAPIResponse containing pending writes.
+   */
+  async getPendingWrites({
+    workspace,
+    aiApplicationId,
+    limit = 50,
+    offset = 0,
+  }: {
+    workspace: string;
+    aiApplicationId: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<IrminAPIResponse<AIApplicationPendingWritesResponse>> {
+    try {
+      const params = new URLSearchParams();
+      params.set('limit', limit.toString());
+      params.set('offset', offset.toString());
+
+      const endpoint = `/v1/workspaces/${workspace}/ai-applications/${aiApplicationId}/pending-writes?${params.toString()}`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'GET',
+      });
+      return response as IrminAPIResponse<AIApplicationPendingWritesResponse>;
+    } catch (error) {
+      console.error('Get AI Application pending writes error', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Approve a pending write for an AI Application.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.aiApplicationId - The AI Application ID.
+   * @param props.pendingWriteId - The pending write ID.
+   * @returns IrminAPIResponse with the approval result.
+   */
+  async approvePendingWrite({
+    workspace,
+    aiApplicationId,
+    pendingWriteId,
+  }: {
+    workspace: string;
+    aiApplicationId: string;
+    pendingWriteId: string;
+  }): Promise<IrminAPIResponse<AIApplicationPendingWrite>> {
+    try {
+      const endpoint = `/v1/workspaces/${workspace}/ai-applications/${aiApplicationId}/pending-writes/${pendingWriteId}/approve`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'POST',
+      });
+      return response as IrminAPIResponse<AIApplicationPendingWrite>;
+    } catch (error) {
+      console.error('Approve pending write error', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Reject a pending write for an AI Application.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.aiApplicationId - The AI Application ID.
+   * @param props.pendingWriteId - The pending write ID.
+   * @returns IrminAPIResponse with the rejection result.
+   */
+  async rejectPendingWrite({
+    workspace,
+    aiApplicationId,
+    pendingWriteId,
+  }: {
+    workspace: string;
+    aiApplicationId: string;
+    pendingWriteId: string;
+  }): Promise<IrminAPIResponse<AIApplicationPendingWrite>> {
+    try {
+      const endpoint = `/v1/workspaces/${workspace}/ai-applications/${aiApplicationId}/pending-writes/${pendingWriteId}/reject`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'POST',
+      });
+      return response as IrminAPIResponse<AIApplicationPendingWrite>;
+    } catch (error) {
+      console.error('Reject pending write error', error);
       throw error;
     }
   }
