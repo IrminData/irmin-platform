@@ -27,6 +27,13 @@ type ResetBranchRequest struct {
 	Force     bool   `json:"force,omitempty"                     example:"false"`
 }
 
+// RevertCommitRequest represents the JSON request body for reverting a commit.
+// This creates a new commit that undoes the changes from the specified commit.
+type RevertCommitRequest struct {
+	CommitRef    string `json:"commit_ref"              validate:"required" example:"abc123def456"`
+	ParentNumber *int   `json:"parent_number,omitempty"                     example:"0"`
+}
+
 func (c *Client) ListBranches(
 	ctx context.Context,
 	workspace, repository string,
@@ -148,4 +155,25 @@ func (c *Client) ResetBranch(
 		return nil, fmt.Errorf("reset branch error: %w", err)
 	}
 	return apiResp, nil
+}
+
+// RevertCommit reverts a commit on a branch by creating a new commit that undoes its changes.
+// This is a non-destructive operation that preserves history.
+// ParentNumber is used for merge commits to specify which parent to follow (0 = first parent).
+func (c *Client) RevertCommit(
+	ctx context.Context,
+	workspace, repository, branch string,
+	req RevertCommitRequest,
+) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error) {
+	var commit irminmodels.Commit
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method:      http.MethodPost,
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches/%s/revert", workspace, repository, branch),
+		ContentType: "application/json",
+		Body:        req,
+	}, &commit)
+	if err != nil {
+		return nil, nil, fmt.Errorf("revert commit error: %w", err)
+	}
+	return &commit, apiResp, nil
 }

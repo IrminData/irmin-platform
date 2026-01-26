@@ -291,6 +291,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) ResendInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ResendInvite>)
   - [func \(c \*Client\) ResetBranch\(ctx context.Context, workspace, repository, branch string, req ResetBranchRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.ResetBranch>)
   - [func \(c \*Client\) RevertChanges\(ctx context.Context, workspace, repository string, req RevertUncommittedChangesRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RevertChanges>)
+  - [func \(c \*Client\) RevertCommit\(ctx context.Context, workspace, repository, branch string, req RevertCommitRequest\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.RevertCommit>)
   - [func \(c \*Client\) Search\(ctx context.Context, workspace string, params irminmodels.SearchFilters\) \(\*irminmodels.SearchResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.Search>)
   - [func \(c \*Client\) SearchEmbeddings\(ctx context.Context, workspace, repository string, req SearchEmbeddingsRequest\) \(\*irminmodels.EmbeddingSearchResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.SearchEmbeddings>)
   - [func \(c \*Client\) SendInvite\(ctx context.Context, workspace string, req SendInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.SendInvite>)
@@ -363,6 +364,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type MoveObjectRequest](<#MoveObjectRequest>)
 - [type RequestOptions](<#RequestOptions>)
 - [type ResetBranchRequest](<#ResetBranchRequest>)
+- [type RevertCommitRequest](<#RevertCommitRequest>)
 - [type RevertUncommittedChangesRequest](<#RevertUncommittedChangesRequest>)
 - [type SearchEmbeddingsRequest](<#SearchEmbeddingsRequest>)
 - [type SendInviteRequest](<#SendInviteRequest>)
@@ -1891,6 +1893,15 @@ func (c *Client) RevertChanges(ctx context.Context, workspace, repository string
 
 
 
+<a name="Client.RevertCommit"></a>
+### func \(\*Client\) RevertCommit
+
+```go
+func (c *Client) RevertCommit(ctx context.Context, workspace, repository, branch string, req RevertCommitRequest) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
+```
+
+RevertCommit reverts a commit on a branch by creating a new commit that undoes its changes. This is a non\-destructive operation that preserves history. ParentNumber is used for merge commits to specify which parent to follow \(0 = first parent\).
+
 <a name="Client.Search"></a>
 ### func \(\*Client\) Search
 
@@ -2721,6 +2732,18 @@ ResetBranchRequest represents the JSON request body for resetting a branch to a 
 type ResetBranchRequest struct {
     CommitRef string `json:"commit_ref"      validate:"required" example:"abc123def456"`
     Force     bool   `json:"force,omitempty"                     example:"false"`
+}
+```
+
+<a name="RevertCommitRequest"></a>
+## type RevertCommitRequest
+
+RevertCommitRequest represents the JSON request body for reverting a commit. This creates a new commit that undoes the changes from the specified commit.
+
+```go
+type RevertCommitRequest struct {
+    CommitRef    string `json:"commit_ref"              validate:"required" example:"abc123def456"`
+    ParentNumber *int   `json:"parent_number,omitempty"                     example:"0"`
 }
 ```
 

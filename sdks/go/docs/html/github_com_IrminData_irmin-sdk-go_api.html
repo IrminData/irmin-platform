@@ -950,6 +950,16 @@ func (c *Client) RevertChanges(
 	req RevertUncommittedChangesRequest,
 ) (*irminmodels.IrminAPIResponse, error)
 
+func (c *Client) RevertCommit(
+	ctx context.Context,
+	workspace, repository, branch string,
+	req RevertCommitRequest,
+) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
+    RevertCommit reverts a commit on a branch by creating a new commit that
+    undoes its changes. This is a non-destructive operation that preserves
+    history. ParentNumber is used for merge commits to specify which parent to
+    follow (0 = first parent).
+
 func (c *Client) Search(
 	ctx context.Context,
 	workspace string,
@@ -1495,6 +1505,13 @@ type ResetBranchRequest struct {
 }
     ResetBranchRequest represents the JSON request body for resetting a branch
     to a specific commit.
+
+type RevertCommitRequest struct {
+	CommitRef    string `json:"commit_ref"              validate:"required" example:"abc123def456"`
+	ParentNumber *int   `json:"parent_number,omitempty"                     example:"0"`
+}
+    RevertCommitRequest represents the JSON request body for reverting a commit.
+    This creates a new commit that undoes the changes from the specified commit.
 
 type RevertUncommittedChangesRequest struct {
 	Branch   string `json:"branch"              validate:"required" example:"main"`
