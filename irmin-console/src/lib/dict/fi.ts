@@ -487,6 +487,10 @@ const fi = {
       confirmResetBranch: 'Palauta haara committiin?',
       resetBranchDescription:
         'Tämä siirtää nykyisen haaran osoittimen tähän committiin. Tämän jälkeiset commitit eivät enää ole tässä haarassa. Tätä toimintoa ei voi peruuttaa.',
+      revertCommit: 'Peruuta tämä commit',
+      confirmRevertCommit: 'Peruuta tämä commit?',
+      revertCommitDescription:
+        'Tämä luo uuden commitin, joka kumoaa tämän commitin muutokset. Alkuperäinen commit säilyy historiassa. Tämä on turvallinen, ei-tuhoisa toiminto.',
     },
     compare: {
       compare: 'Vertaa',

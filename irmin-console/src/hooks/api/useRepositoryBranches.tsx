@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
-import type { CreateBranchRequest } from '@/lib/core/resources/RepositoryBranchService';
+import type {
+  CreateBranchRequest,
+  RevertCommitRequest,
+} from '@/lib/core/resources/RepositoryBranchService';
 import { repositoryBranchesQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
@@ -10,6 +13,7 @@ import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { Branch } from '@/types/core/Branch';
+import type { Commit } from '@/types/core/Commit';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 import {
@@ -142,6 +146,37 @@ export function useRepositoryBranches(repositorySlug: string) {
     },
   });
 
+  const revertCommitMutation = useMutation<
+    IrminAPIResponse<Commit>,
+    Error,
+    { branch: string; request: RevertCommitRequest }
+  >({
+    mutationFn: async ({ branch, request }) => {
+      const token = await getToken();
+      const core = new IrminCore(locale, token);
+      return await core.repositoryBranchService.revertCommit({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        branch,
+        request,
+      });
+    },
+    onSuccess: (res) => {
+      irminAlert('success', res.message ?? 'Commit reverted successfully');
+      // Invalidate branches cache
+      void queryClient.invalidateQueries({
+        queryKey: repositoryBranchesQueryKey(workspaceSlug, repositorySlug),
+      });
+      // Invalidate commits cache since a new revert commit was created
+      void queryClient.invalidateQueries({
+        queryKey: ['repository-commits', workspaceSlug, repositorySlug],
+      });
+    },
+    onError: (error) => {
+      irminAlert('error', error.message ?? 'Error reverting commit');
+    },
+  });
+
   return {
     // Queries
     repositoryBranchesQuery,
@@ -150,5 +185,6 @@ export function useRepositoryBranches(repositorySlug: string) {
     createBranchMutation,
     deleteBranchMutation,
     resetBranchMutation,
+    revertCommitMutation,
   };
 }

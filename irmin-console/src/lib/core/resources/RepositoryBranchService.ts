@@ -1,6 +1,7 @@
 import type IrminCore from '@/lib/core';
 
 import type { Branch } from '@/types/core/Branch';
+import type { Commit } from '@/types/core/Commit';
 import type { Diff } from '@/types/core/Diff';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
@@ -30,6 +31,14 @@ interface ResetBranchRequest {
 }
 
 /**
+ * Interface for reverting a commit on a branch
+ */
+export interface RevertCommitRequest {
+  commit_ref: string;
+  parent_number?: number;
+}
+
+/**
  * Repository Branch API service
  *
  * Responsible for all repository branch related API calls
@@ -47,6 +56,7 @@ class RepositoryBranchService {
     this.updateBranch = this.updateBranch.bind(this);
     this.getUncommittedChanges = this.getUncommittedChanges.bind(this);
     this.resetBranch = this.resetBranch.bind(this);
+    this.revertCommit = this.revertCommit.bind(this);
   }
 
   /**
@@ -279,6 +289,42 @@ class RepositoryBranchService {
       return response as IrminAPIResponse<void>;
     } catch (error) {
       console.error((error as Error).message, 'Failed to reset branch');
+      throw error;
+    }
+  }
+
+  /**
+   * Revert a commit on a branch by creating a new commit that undoes its changes
+   *
+   * @param props
+   * @param props.workspace - The workspace containing the repository
+   * @param props.repository - The repository slug
+   * @param props.branch - The branch name to revert the commit on
+   * @param props.request - The revert request containing commit_ref and optional parent_number
+   */
+  async revertCommit({
+    workspace,
+    repository,
+    branch,
+    request,
+  }: {
+    workspace: string;
+    repository: string;
+    branch: string;
+    request: RevertCommitRequest;
+  }): Promise<IrminAPIResponse<Commit>> {
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}/revert`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(request),
+        }
+      );
+      return response as IrminAPIResponse<Commit>;
+    } catch (error) {
+      console.error((error as Error).message, 'Failed to revert commit');
       throw error;
     }
   }

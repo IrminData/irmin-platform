@@ -487,6 +487,10 @@ const en = {
       confirmResetBranch: 'Reset branch to commit?',
       resetBranchDescription:
         'This will move the current branch pointer to this commit. Any commits after this point will no longer be on this branch. This action cannot be undone.',
+      revertCommit: 'Revert this commit',
+      confirmRevertCommit: 'Revert this commit?',
+      revertCommitDescription:
+        'This will create a new commit that undoes the changes from this commit. The original commit will remain in history. This is a safe, non-destructive operation.',
     },
 
     compare: {

@@ -38,7 +38,7 @@ export default function CommitList({
 
   const { viewRef, repository, currentRef, immutable } = useRepositoryContext();
   const { workspaceSlug } = useWorkspaceContext();
-  const { repositoryBranchesQuery, resetBranchMutation } =
+  const { repositoryBranchesQuery, resetBranchMutation, revertCommitMutation } =
     useRepositoryBranches(repository.slug);
 
   // Check if currentRef is an actual branch name
@@ -72,6 +72,23 @@ export default function CommitList({
       }
     },
     [currentRef, isCurrentRefABranch, irminConfirm, dict, resetBranchMutation]
+  );
+
+  const handleRevertCommit = useCallback(
+    async (commit: Commit) => {
+      if (!currentRef || !isCurrentRefABranch) return;
+
+      const confirmMessage = `${dict.repository.commit.confirmRevertCommit}\n\n${dict.repository.commit.revertCommitDescription}`;
+      const confirmed = await irminConfirm('warning', confirmMessage);
+
+      if (confirmed) {
+        revertCommitMutation.mutate({
+          branch: currentRef,
+          request: { commit_ref: commit.hash },
+        });
+      }
+    },
+    [currentRef, isCurrentRefABranch, irminConfirm, dict, revertCommitMutation]
   );
 
   const rows: GridRow[] = useMemo(
@@ -133,6 +150,18 @@ export default function CommitList({
                 },
               ]
             : []),
+          // Revert commit action - creates a new commit that undoes this commit's changes
+          ...(isCurrentRefABranch &&
+          canUpdateBranch &&
+          !isCurrentBranchImmutable
+            ? [
+                {
+                  label: dict.repository.commit.revertCommit,
+                  primary: false,
+                  onClick: () => handleRevertCommit(commit),
+                },
+              ]
+            : []),
         ],
       })) ?? [],
     [
@@ -148,6 +177,7 @@ export default function CommitList({
       canUpdateBranch,
       isCurrentBranchImmutable,
       handleResetBranch,
+      handleRevertCommit,
     ]
   );
 

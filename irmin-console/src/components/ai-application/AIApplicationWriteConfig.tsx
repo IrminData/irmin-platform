@@ -58,14 +58,16 @@ const DebouncedInput = ({
   });
 
   // When disabled with a pending debounce, flush immediately to preserve user's
-  // uncommitted value. The ref is updated by the effect above (which runs first).
+  // uncommitted value. Use queueMicrotask for isTyping reset to avoid synchronous
+  // setState in effect (which the linter disallows).
   useEffect(() => {
     if (disabled && timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
       // Flush the uncommitted value immediately
       onChangeRef.current(localValueRef.current);
-      setIsTyping(false);
+      // Reset isTyping async to avoid linter warning about sync setState in effect
+      queueMicrotask(() => setIsTyping(false));
     }
   }, [disabled]);
 
@@ -77,27 +79,24 @@ const DebouncedInput = ({
     setLocalValue(value);
   }
 
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newValue = e.target.value;
-      setLocalValue(newValue);
-      setIsTyping(true);
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setLocalValue(newValue);
+    setIsTyping(true);
 
-      // Clear any pending timeout
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+    // Clear any pending timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
-      // Set new debounced call — use onChangeRef to avoid stale closure when
-      // parent state (e.g. other toggles) changes during the debounce delay
-      timeoutRef.current = setTimeout(() => {
-        onChangeRef.current(newValue);
-        setIsTyping(false);
-        timeoutRef.current = null;
-      }, DEBOUNCE_DELAY_MS);
-    },
-    []
-  );
+    // Set new debounced call — use onChangeRef to avoid stale closure when
+    // parent state (e.g. other toggles) changes during the debounce delay
+    timeoutRef.current = setTimeout(() => {
+      onChangeRef.current(newValue);
+      setIsTyping(false);
+      timeoutRef.current = null;
+    }, DEBOUNCE_DELAY_MS);
+  }, []);
 
   // Cleanup timeout on unmount - don't flush because onChangeRef may be stale
   // (the effect that updates it doesn't run on unmount) and could cause
