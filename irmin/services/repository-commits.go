@@ -126,13 +126,19 @@ func (api *APIServices) CreateRepositoryCommit(
 		return nil, NewInternalErrorf("error creating data engine client: %w", createDataEngineClientErr)
 	}
 
+	// Use the provided author or fall back to the user's email
+	author := user.Email
+	if req.Author != "" {
+		author = req.Author
+	}
+
 	// Commit the changes in the data engine
 	commit, commitChangesErr := dataEngine.CommitChanges(
 		workspace.Slug,
 		repository.Slug,
 		req.Branch,
 		req.Message,
-		user.Email,
+		author,
 		true,
 	)
 	if commitChangesErr != nil {

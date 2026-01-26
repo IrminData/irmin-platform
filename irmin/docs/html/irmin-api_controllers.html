@@ -30,6 +30,30 @@ func NewAPIControllers(
 	apiServices *services.APIServices,
 ) *APIControllers
 
+func (api *APIControllers) AIAppAPIApprovePendingWrite(c fiber.Ctx) error
+    AIAppAPIApprovePendingWrite godoc @Summary Approve pending write (forbidden)
+    @Description Approval of pending writes is not allowed via the AI App API.
+    Use the workspace API with user authentication to approve writes. This
+    prevents AI applications from self-approving and preserves RequireApproval
+    human oversight. @Tags ai-app-api @Security AIAppAPIKey @Accept json
+    @Produce json @Param id path string true "Pending write ID" @Failure 401
+    {object} irminmodels.IrminAPIResponse "Unauthorized - invalid API key"
+    @Failure 403 {object} irminmodels.IrminAPIResponse "Approval not allowed via
+    AI App API; use workspace API" @Router /ai-app/pending-writes/{id}/approve
+    [post]
+
+func (api *APIControllers) AIAppAPICommit(c fiber.Ctx) error
+    AIAppAPICommit godoc @Summary Commit staged changes @Description Commit
+    all staged changes on the specified branch @Tags ai-app-api @Security
+    AIAppAPIKey @Accept json @Produce json @Param body body object true
+    "Commit request with message (required), path (optional)" @Success 200
+    {object} irminmodels.IrminAPIResponse "Commit result" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - missing commit message" @Failure
+    401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid API key"
+    @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - write not
+    enabled" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server
+    error" @Router /ai-app/commit [post]
+
 func (api *APIControllers) AIAppAPIExecuteCustomTool(c fiber.Ctx) error
     AIAppAPIExecuteCustomTool godoc @Summary Execute custom tool @Description
     Execute a custom tool defined for this AI Application @Tags ai-app-api
@@ -57,6 +81,17 @@ func (api *APIControllers) AIAppAPIGetObject(c fiber.Ctx) error
     "Forbidden - tool not enabled or path not allowed" @Failure 500 {object}
     irminmodels.IrminAPIResponse "Internal server error" @Router /ai-app/content
     [get]
+
+func (api *APIControllers) AIAppAPIGetPendingWrite(c fiber.Ctx) error
+    AIAppAPIGetPendingWrite godoc @Summary Get pending write details
+    @Description Get details of a specific pending write @Tags ai-app-api
+    @Security AIAppAPIKey @Accept json @Produce json @Param id path string
+    true "Pending write ID" @Success 200 {object} irminmodels.IrminAPIResponse
+    "Pending write details" @Failure 401 {object} irminmodels.IrminAPIResponse
+    "Unauthorized - invalid API key" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "Pending write not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /ai-app/pending-writes/{id} [get]
 
 func (api *APIControllers) AIAppAPIGetSchema(c fiber.Ctx) error
     AIAppAPIGetSchema godoc @Summary Get object schema @Description
@@ -101,6 +136,32 @@ func (api *APIControllers) AIAppAPIListObjects(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "Internal server error" @Router /ai-app/objects
     [get]
 
+func (api *APIControllers) AIAppAPIListPendingWrites(c fiber.Ctx) error
+    AIAppAPIListPendingWrites godoc @Summary List pending writes @Description
+    List all pending write operations awaiting approval @Tags ai-app-api
+    @Security AIAppAPIKey @Accept json @Produce json @Param limit query int
+    false "Number of results per page (default 50)" @Param offset query
+    int false "Offset for pagination (default 0)" @Success 200 {object}
+    irminmodels.IrminAPIResponse "Pending writes list" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid API key" @Failure
+    500 {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /ai-app/pending-writes [get]
+
+func (api *APIControllers) AIAppAPIPatchFile(c fiber.Ctx) error
+    AIAppAPIPatchFile godoc @Summary Patch a file with JSON Patch operations
+    @Description Apply JSON Patch operations to a file at the specified path.
+    Use unified path format: /{repository-slug}/{ref}/{path} @Tags ai-app-api
+    @Security AIAppAPIKey @Accept json @Produce json @Param body body
+    object true "Patch request with path (required), operations (required),
+    commit_message (optional), auto_commit (optional)" @Success 200 {object}
+    irminmodels.IrminAPIResponse "Patch result" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - missing required fields"
+    @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized -
+    invalid API key" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - patch not enabled or path not allowed" @Failure 500 {object}
+    irminmodels.IrminAPIResponse "Internal server error" @Router /ai-app/patch
+    [post]
+
 func (api *APIControllers) AIAppAPIQuery(c fiber.Ctx) error
     AIAppAPIQuery godoc @Summary Execute SQL query @Description Execute
     a SQL query within the AI Application's data scope @Tags ai-app-api
@@ -113,6 +174,18 @@ func (api *APIControllers) AIAppAPIQuery(c fiber.Ctx) error
     not enabled, path not in data sources, or path traversal detected" @Failure
     500 {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /ai-app/query [post]
+
+func (api *APIControllers) AIAppAPIRejectPendingWrite(c fiber.Ctx) error
+    AIAppAPIRejectPendingWrite godoc @Summary Reject pending write (forbidden)
+    @Description Rejection of pending writes is not allowed via the AI App API.
+    Use the workspace API with user authentication to reject writes.
+    This prevents AI applications from self-rejecting and preserves
+    RequireApproval human oversight. @Tags ai-app-api @Security AIAppAPIKey
+    @Accept json @Produce json @Param id path string true "Pending write
+    ID" @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized
+    - invalid API key" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Rejection not allowed via AI App API; use workspace API" @Router
+    /ai-app/pending-writes/{id}/reject [post]
 
 func (api *APIControllers) AIAppAPISearchEmbeddings(c fiber.Ctx) error
     AIAppAPISearchEmbeddings godoc @Summary Search embeddings
@@ -136,6 +209,86 @@ func (api *APIControllers) AIAppAPISystemPrompt(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "System prompt" @Failure 401 {object}
     irminmodels.IrminAPIResponse "Unauthorized - invalid API key" @Router
     /ai-app/system-prompt [get]
+
+func (api *APIControllers) AIAppAPIWriteFile(c fiber.Ctx) error
+    AIAppAPIWriteFile godoc @Summary Write or update a file @Description
+    Write or update a file at the specified path. Use unified path format:
+    /{repository-slug}/{ref}/{path} @Tags ai-app-api @Security AIAppAPIKey
+    @Accept json @Produce json @Param body body object true "Write request
+    with path (required), content (required), commit_message (optional),
+    auto_commit (optional)" @Success 200 {object} irminmodels.IrminAPIResponse
+    "Write result" @Failure 400 {object} irminmodels.IrminAPIResponse
+    "Bad request - missing required fields" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid API key" @Failure 403
+    {object} irminmodels.IrminAPIResponse "Forbidden - write not enabled or path
+    not allowed" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
+    server error" @Router /ai-app/write [post]
+
+func (api *APIControllers) AIApplicationPendingWriteApprove(c fiber.Ctx) error
+    AIApplicationPendingWriteApprove godoc @Summary Approve a pending
+    write @Description Approve a pending write operation, executing
+    the write @Tags ai-applications @Security ApiKeyAuth @Accept json
+    @Produce json @Param workspace_slug path string true "Workspace slug"
+    @Param ai_application_slug path string true "AI application slug"
+    @Param pending_write path string true "Pending write ID" @Success
+    200 {object} irminmodels.IrminAPIResponse "Pending write approved
+    and executed" @Failure 401 {object} irminmodels.IrminAPIResponse
+    "Unauthorized - invalid or missing authentication" @Failure 403 {object}
+    irminmodels.IrminAPIResponse "Forbidden - insufficient permissions" @Failure
+    404 {object} irminmodels.IrminAPIResponse "Not found" @Failure 409 {object}
+    irminmodels.IrminAPIResponse "Conflict - already processed" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write}/approve
+    [post]
+
+func (api *APIControllers) AIApplicationPendingWriteReject(c fiber.Ctx) error
+    AIApplicationPendingWriteReject godoc @Summary Reject a pending write
+    @Description Reject a pending write operation @Tags ai-applications
+    @Security ApiKeyAuth @Accept json @Produce json @Param workspace_slug
+    path string true "Workspace slug" @Param ai_application_slug path string
+    true "AI application slug" @Param pending_write path string true "Pending
+    write ID" @Success 200 {object} irminmodels.IrminAPIResponse "Pending
+    write rejected" @Failure 401 {object} irminmodels.IrminAPIResponse
+    "Unauthorized - invalid or missing authentication" @Failure 403 {object}
+    irminmodels.IrminAPIResponse "Forbidden - insufficient permissions" @Failure
+    404 {object} irminmodels.IrminAPIResponse "Not found" @Failure 409 {object}
+    irminmodels.IrminAPIResponse "Conflict - already processed" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write}/reject
+    [post]
+
+func (api *APIControllers) AIApplicationPendingWriteShow(c fiber.Ctx) error
+    AIApplicationPendingWriteShow godoc @Summary Get a specific pending
+    write @Description Get details of a specific pending write operation
+    @Tags ai-applications @Security ApiKeyAuth @Accept json @Produce
+    json @Param workspace_slug path string true "Workspace slug" @Param
+    ai_application_slug path string true "AI application slug" @Param
+    pending_write path string true "Pending write ID" @Success 200
+    {object} irminmodels.IrminAPIResponse "Pending write retrieved
+    successfully" @Failure 401 {object} irminmodels.IrminAPIResponse
+    "Unauthorized - invalid or missing authentication" @Failure 403 {object}
+    irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+    @Failure 404 {object} irminmodels.IrminAPIResponse "Not found" @Failure
+    500 {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write}
+    [get]
+
+func (api *APIControllers) AIApplicationPendingWrites(c fiber.Ctx) error
+    AIApplicationPendingWrites godoc @Summary Get AI application pending
+    writes @Description Get pending write operations awaiting approval for
+    this AI application @Tags ai-applications @Security ApiKeyAuth @Accept json
+    @Produce json @Param workspace_slug path string true "Workspace slug" @Param
+    ai_application_slug path string true "AI application slug" @Param limit
+    query int false "Limit (default 50, max 200)" @Param offset query int false
+    "Offset (default 0)" @Success 200 {object} irminmodels.IrminAPIResponse
+    "Pending writes retrieved successfully" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - insufficient permissions" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "AI application not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes
+    [get]
 
 func (api *APIControllers) AIApplicationToolLogStats(c fiber.Ctx) error
     AIApplicationToolLogStats godoc @Summary Get AI application tool statistics

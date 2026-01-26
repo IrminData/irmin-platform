@@ -8,6 +8,16 @@ package services // import "irmin-api/services"
 CONSTANTS
 
 const (
+	// WriteOperationUpload represents a file upload operation.
+	WriteOperationUpload = "upload"
+	// WriteOperationUpdate represents a file update operation.
+	WriteOperationUpdate = "update"
+	// WriteOperationPatch represents a JSON patch operation.
+	WriteOperationPatch = "patch"
+)
+    Write operation type constants.
+
+const (
 	// UserDetailsCacheMaxAge is the maximum age for cached user details before refresh
 	UserDetailsCacheMaxAge = 24 * time.Hour
 
@@ -51,6 +61,20 @@ var (
 	ErrCustomToolDisabled = errors.New("custom tool is disabled")
 	// ErrQueryRequired is returned when a query parameter is required but not provided.
 	ErrQueryRequired = errors.New("query is required")
+)
+var (
+	// ErrWriteNotEnabled is returned when write operations are not enabled for the AI Application.
+	ErrWriteNotEnabled = errors.New("write operations not enabled for this AI Application")
+	// ErrFileUploadNotEnabled is returned when file upload is not enabled.
+	ErrFileUploadNotEnabled = errors.New("file upload not enabled for this AI Application")
+	// ErrFileUpdateNotEnabled is returned when file update is not enabled.
+	ErrFileUpdateNotEnabled = errors.New("file update not enabled for this AI Application")
+	// ErrPatchNotEnabled is returned when patch operations are not enabled.
+	ErrPatchNotEnabled = errors.New("patch operations not enabled for this AI Application")
+	// ErrCommitMessageRequired is returned when a commit message is required but not provided.
+	ErrCommitMessageRequired = errors.New("commit message is required")
+	// ErrWriteAccessDenied is returned when write access is denied to a path.
+	ErrWriteAccessDenied = errors.New("write access denied to this path")
 )
 var (
 	ErrNotFound                               = errors.New("not found")
@@ -156,12 +180,24 @@ type AIAppToolExecutor struct {
 func NewAIAppToolExecutor(aiApp *db.AIApplication, apiServices *APIServices) *AIAppToolExecutor
     NewAIAppToolExecutor creates a new AIAppToolExecutor.
 
+func (e *AIAppToolExecutor) CommitStagedChanges(
+	ctx context.Context,
+	repoSlug, ref, message string,
+) (*irminmodels.Commit, error)
+    CommitStagedChanges commits all staged changes on a branch.
+
 func (e *AIAppToolExecutor) ExecuteCustomTool(
 	ctx context.Context,
 	toolName string,
 	query string,
 ) (*CustomToolResult, error)
     ExecuteCustomTool executes a custom tool by name.
+
+func (e *AIAppToolExecutor) ExecutePendingWrite(
+	ctx context.Context,
+	pendingWrite *db.AIApplicationPendingWrite,
+) (*WriteResult, error)
+    ExecutePendingWrite executes a previously approved pending write.
 
 func (e *AIAppToolExecutor) ExecuteSQL(
 	ctx context.Context,
@@ -243,6 +279,15 @@ func (e *AIAppToolExecutor) ListRepositoryObjects(
     ListRepositoryObjects lists objects in a repository path. Returns the raw
     db.RepositoryObject which can be formatted by the caller.
 
+func (e *AIAppToolExecutor) PatchFile(
+	ctx context.Context,
+	unifiedPath string,
+	operations []irminmodels.PatchOperation,
+	commitMessage string,
+	autoCommit bool,
+) (*WriteResult, error)
+    PatchFile applies JSON Patch operations to a structured file.
+
 func (e *AIAppToolExecutor) ResolvePath(unifiedPath string) (*ResolvedPath, error)
     ResolvePath parses a unified path (/{repo-slug}/{ref}/{path}) and
     resolves it to a repository, path, and ref. The unified path format is:
@@ -278,6 +323,15 @@ func (e *AIAppToolExecutor) SearchEmbeddingsByPath(
     filtered by a unified path. If pathFilter is empty, searches across all
     embedding files in all data sources. If pathFilter is provided, searches
     only in the specified embedding file.
+
+func (e *AIAppToolExecutor) WriteFile(
+	ctx context.Context,
+	unifiedPath string,
+	content []byte,
+	commitMessage string,
+	autoCommit bool,
+) (*WriteResult, error)
+    WriteFile uploads or updates a file in a data source.
 
 type APIServices struct {
 	DB                *db.Database
@@ -1582,6 +1636,16 @@ type UpdateCustomToolRequest struct {
 }
     UpdateCustomToolRequest represents the request body for updating a custom
     tool.
+
+type WriteResult struct {
+	Path             string  `json:"path"`
+	Operation        string  `json:"operation"`
+	Committed        bool    `json:"committed"`
+	CommitID         *string `json:"commit_id,omitempty"`
+	PendingID        *string `json:"pending_id,omitempty"`
+	RequiresApproval bool    `json:"requires_approval"`
+}
+    WriteResult represents the result of a write operation.
 
 </pre>
 </body></html>

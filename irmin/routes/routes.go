@@ -55,6 +55,15 @@ func RegisterAPIRoutes(
 	aiAppAPI.Post("/embeddings/search", apiControllers.AIAppAPISearchEmbeddings)
 	aiAppAPI.Get("/tools", apiControllers.AIAppAPIListCustomTools)
 	aiAppAPI.Post("/tools/:tool_name/execute", apiControllers.AIAppAPIExecuteCustomTool)
+	// Write operation routes
+	aiAppAPI.Post("/write", apiControllers.AIAppAPIWriteFile)
+	aiAppAPI.Post("/patch", apiControllers.AIAppAPIPatchFile)
+	aiAppAPI.Post("/commit", apiControllers.AIAppAPICommit)
+	// Pending writes routes
+	aiAppAPI.Get("/pending-writes", apiControllers.AIAppAPIListPendingWrites)
+	aiAppAPI.Get("/pending-writes/:id", apiControllers.AIAppAPIGetPendingWrite)
+	aiAppAPI.Post("/pending-writes/:id/approve", apiControllers.AIAppAPIApprovePendingWrite)
+	aiAppAPI.Post("/pending-writes/:id/reject", apiControllers.AIAppAPIRejectPendingWrite)
 
 	// Connector webhook routes (authenticated by webhook token, not user auth)
 	// These endpoints receive events from external connectors when data changes
@@ -558,6 +567,27 @@ func RegisterAPIRoutes(
 		"/tool-logs/stats",
 		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.AIApplicationToolLogStats,
+	)
+	// Pending writes routes (workspace-scoped for console)
+	aiApplication.Get(
+		"/pending-writes",
+		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.AIApplicationPendingWrites,
+	)
+	aiApplication.Get(
+		"/pending-writes/:pending_write",
+		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.AIApplicationPendingWriteShow,
+	)
+	aiApplication.Post(
+		"/pending-writes/:pending_write/approve",
+		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.AIApplicationPendingWriteApprove,
+	)
+	aiApplication.Post(
+		"/pending-writes/:pending_write/reject",
+		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.AIApplicationPendingWriteReject,
 	)
 
 	// Repositories routes

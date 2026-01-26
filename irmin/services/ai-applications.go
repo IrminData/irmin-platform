@@ -198,14 +198,28 @@ func (api *APIServices) UpdateAIApplication(
 			aiApplication.AllowedOrigins = req.AllowedOrigins
 		}
 		if req.Tools != nil {
-			aiApplication.Tools = &db.AIApplicationToolConfig{
+			toolConfig := &db.AIApplicationToolConfig{
 				QueryEnabled:        req.Tools.QueryEnabled,
 				SchemaEnabled:       req.Tools.SchemaEnabled,
 				ListObjectsEnabled:  req.Tools.ListObjectsEnabled,
 				GetContentEnabled:   req.Tools.GetContentEnabled,
 				VectorSearchEnabled: req.Tools.VectorSearchEnabled,
 				DocsEnabled:         req.Tools.DocsEnabled,
+				WriteEnabled:        req.Tools.WriteEnabled,
 			}
+			// Copy write config if provided
+			if req.Tools.WriteConfig != nil {
+				toolConfig.WriteConfig = &db.AIApplicationWriteConfig{
+					FileUploadEnabled:    req.Tools.WriteConfig.FileUploadEnabled,
+					FileUpdateEnabled:    req.Tools.WriteConfig.FileUpdateEnabled,
+					PatchEnabled:         req.Tools.WriteConfig.PatchEnabled,
+					AutoCommit:           req.Tools.WriteConfig.AutoCommit,
+					RequireCommitMessage: req.Tools.WriteConfig.RequireCommitMessage,
+					CommitMessagePrefix:  req.Tools.WriteConfig.CommitMessagePrefix,
+					RequireApproval:      req.Tools.WriteConfig.RequireApproval,
+				}
+			}
+			aiApplication.Tools = toolConfig
 		}
 
 		// Save the AI application

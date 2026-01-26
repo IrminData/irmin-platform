@@ -847,15 +847,26 @@ import "irmin-api/controllers"
 - [func CollectMultipartFiles\(c fiber.Ctx, fieldNames ...string\) \(map\[string\]\[\]byte, error\)](<#CollectMultipartFiles>)
 - [type APIControllers](<#APIControllers>)
   - [func NewAPIControllers\(apiServices \*services.APIServices\) \*APIControllers](<#NewAPIControllers>)
+  - [func \(api \*APIControllers\) AIAppAPIApprovePendingWrite\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIApprovePendingWrite>)
+  - [func \(api \*APIControllers\) AIAppAPICommit\(c fiber.Ctx\) error](<#APIControllers.AIAppAPICommit>)
   - [func \(api \*APIControllers\) AIAppAPIExecuteCustomTool\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIExecuteCustomTool>)
   - [func \(api \*APIControllers\) AIAppAPIGetObject\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIGetObject>)
+  - [func \(api \*APIControllers\) AIAppAPIGetPendingWrite\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIGetPendingWrite>)
   - [func \(api \*APIControllers\) AIAppAPIGetSchema\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIGetSchema>)
   - [func \(api \*APIControllers\) AIAppAPIInfo\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIInfo>)
   - [func \(api \*APIControllers\) AIAppAPIListCustomTools\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIListCustomTools>)
   - [func \(api \*APIControllers\) AIAppAPIListObjects\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIListObjects>)
+  - [func \(api \*APIControllers\) AIAppAPIListPendingWrites\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIListPendingWrites>)
+  - [func \(api \*APIControllers\) AIAppAPIPatchFile\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIPatchFile>)
   - [func \(api \*APIControllers\) AIAppAPIQuery\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIQuery>)
+  - [func \(api \*APIControllers\) AIAppAPIRejectPendingWrite\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIRejectPendingWrite>)
   - [func \(api \*APIControllers\) AIAppAPISearchEmbeddings\(c fiber.Ctx\) error](<#APIControllers.AIAppAPISearchEmbeddings>)
   - [func \(api \*APIControllers\) AIAppAPISystemPrompt\(c fiber.Ctx\) error](<#APIControllers.AIAppAPISystemPrompt>)
+  - [func \(api \*APIControllers\) AIAppAPIWriteFile\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIWriteFile>)
+  - [func \(api \*APIControllers\) AIApplicationPendingWriteApprove\(c fiber.Ctx\) error](<#APIControllers.AIApplicationPendingWriteApprove>)
+  - [func \(api \*APIControllers\) AIApplicationPendingWriteReject\(c fiber.Ctx\) error](<#APIControllers.AIApplicationPendingWriteReject>)
+  - [func \(api \*APIControllers\) AIApplicationPendingWriteShow\(c fiber.Ctx\) error](<#APIControllers.AIApplicationPendingWriteShow>)
+  - [func \(api \*APIControllers\) AIApplicationPendingWrites\(c fiber.Ctx\) error](<#APIControllers.AIApplicationPendingWrites>)
   - [func \(api \*APIControllers\) AIApplicationToolLogStats\(c fiber.Ctx\) error](<#APIControllers.AIApplicationToolLogStats>)
   - [func \(api \*APIControllers\) AIApplicationToolLogs\(c fiber.Ctx\) error](<#APIControllers.AIApplicationToolLogs>)
   - [func \(api \*APIControllers\) AIApplicationsDestroy\(c fiber.Ctx\) error](<#APIControllers.AIApplicationsDestroy>)
@@ -1049,6 +1060,24 @@ func NewAPIControllers(apiServices *services.APIServices) *APIControllers
 
 
 
+<a name="APIControllers.AIAppAPIApprovePendingWrite"></a>
+### func \(\*APIControllers\) AIAppAPIApprovePendingWrite
+
+```go
+func (api *APIControllers) AIAppAPIApprovePendingWrite(c fiber.Ctx) error
+```
+
+AIAppAPIApprovePendingWrite godoc @Summary Approve pending write \(forbidden\) @Description Approval of pending writes is not allowed via the AI App API. Use the workspace API with user authentication to approve writes. This prevents AI applications from self\-approving and preserves RequireApproval human oversight. @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param id path string true "Pending write ID" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Approval not allowed via AI App API; use workspace API" @Router /ai\-app/pending\-writes/\{id\}/approve \[post\]
+
+<a name="APIControllers.AIAppAPICommit"></a>
+### func \(\*APIControllers\) AIAppAPICommit
+
+```go
+func (api *APIControllers) AIAppAPICommit(c fiber.Ctx) error
+```
+
+AIAppAPICommit godoc @Summary Commit staged changes @Description Commit all staged changes on the specified branch @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param body body object true "Commit request with message \(required\), path \(optional\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Commit result" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing commit message" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- write not enabled" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/commit \[post\]
+
 <a name="APIControllers.AIAppAPIExecuteCustomTool"></a>
 ### func \(\*APIControllers\) AIAppAPIExecuteCustomTool
 
@@ -1066,6 +1095,15 @@ func (api *APIControllers) AIAppAPIGetObject(c fiber.Ctx) error
 ```
 
 AIAppAPIGetObject godoc @Summary Get object content @Description Get the content of an object using unified path format: /\{repository\-slug\}/\{ref\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param path query string true "Unified path to object \(e.g., /repo\-slug/main/data/file.json\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Object content" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing path" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/content \[get\]
+
+<a name="APIControllers.AIAppAPIGetPendingWrite"></a>
+### func \(\*APIControllers\) AIAppAPIGetPendingWrite
+
+```go
+func (api *APIControllers) AIAppAPIGetPendingWrite(c fiber.Ctx) error
+```
+
+AIAppAPIGetPendingWrite godoc @Summary Get pending write details @Description Get details of a specific pending write @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param id path string true "Pending write ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending write details" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Pending write not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/pending\-writes/\{id\} \[get\]
 
 <a name="APIControllers.AIAppAPIGetSchema"></a>
 ### func \(\*APIControllers\) AIAppAPIGetSchema
@@ -1103,6 +1141,24 @@ func (api *APIControllers) AIAppAPIListObjects(c fiber.Ctx) error
 
 AIAppAPIListObjects godoc @Summary List objects @Description List objects within the AI Application's data sources. Use unified path format: /\{repository\-slug\}/\{ref\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param path query string false "Unified path \(e.g., /repo\-slug/main/folder\). If empty, lists all data source roots." @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Object\} "Objects" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/objects \[get\]
 
+<a name="APIControllers.AIAppAPIListPendingWrites"></a>
+### func \(\*APIControllers\) AIAppAPIListPendingWrites
+
+```go
+func (api *APIControllers) AIAppAPIListPendingWrites(c fiber.Ctx) error
+```
+
+AIAppAPIListPendingWrites godoc @Summary List pending writes @Description List all pending write operations awaiting approval @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param limit query int false "Number of results per page \(default 50\)" @Param offset query int false "Offset for pagination \(default 0\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending writes list" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/pending\-writes \[get\]
+
+<a name="APIControllers.AIAppAPIPatchFile"></a>
+### func \(\*APIControllers\) AIAppAPIPatchFile
+
+```go
+func (api *APIControllers) AIAppAPIPatchFile(c fiber.Ctx) error
+```
+
+AIAppAPIPatchFile godoc @Summary Patch a file with JSON Patch operations @Description Apply JSON Patch operations to a file at the specified path. Use unified path format: /\{repository\-slug\}/\{ref\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param body body object true "Patch request with path \(required\), operations \(required\), commit\_message \(optional\), auto\_commit \(optional\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Patch result" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing required fields" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- patch not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/patch \[post\]
+
 <a name="APIControllers.AIAppAPIQuery"></a>
 ### func \(\*APIControllers\) AIAppAPIQuery
 
@@ -1111,6 +1167,15 @@ func (api *APIControllers) AIAppAPIQuery(c fiber.Ctx) error
 ```
 
 AIAppAPIQuery godoc @Summary Execute SQL query @Description Execute a SQL query within the AI Application's data scope @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param body body object true "SQL query request with 'sql' field" @Success 200 \{object\} irminmodels.IrminAPIResponse "Query results" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid SQL" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- query tool not enabled, path not in data sources, or path traversal detected" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/query \[post\]
+
+<a name="APIControllers.AIAppAPIRejectPendingWrite"></a>
+### func \(\*APIControllers\) AIAppAPIRejectPendingWrite
+
+```go
+func (api *APIControllers) AIAppAPIRejectPendingWrite(c fiber.Ctx) error
+```
+
+AIAppAPIRejectPendingWrite godoc @Summary Reject pending write \(forbidden\) @Description Rejection of pending writes is not allowed via the AI App API. Use the workspace API with user authentication to reject writes. This prevents AI applications from self\-rejecting and preserves RequireApproval human oversight. @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param id path string true "Pending write ID" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Rejection not allowed via AI App API; use workspace API" @Router /ai\-app/pending\-writes/\{id\}/reject \[post\]
 
 <a name="APIControllers.AIAppAPISearchEmbeddings"></a>
 ### func \(\*APIControllers\) AIAppAPISearchEmbeddings
@@ -1129,6 +1194,51 @@ func (api *APIControllers) AIAppAPISystemPrompt(c fiber.Ctx) error
 ```
 
 AIAppAPISystemPrompt godoc @Summary Get system prompt @Description Get the recommended system prompt for this AI Application @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Success 200 \{object\} irminmodels.IrminAPIResponse "System prompt" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Router /ai\-app/system\-prompt \[get\]
+
+<a name="APIControllers.AIAppAPIWriteFile"></a>
+### func \(\*APIControllers\) AIAppAPIWriteFile
+
+```go
+func (api *APIControllers) AIAppAPIWriteFile(c fiber.Ctx) error
+```
+
+AIAppAPIWriteFile godoc @Summary Write or update a file @Description Write or update a file at the specified path. Use unified path format: /\{repository\-slug\}/\{ref\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param body body object true "Write request with path \(required\), content \(required\), commit\_message \(optional\), auto\_commit \(optional\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Write result" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing required fields" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- write not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/write \[post\]
+
+<a name="APIControllers.AIApplicationPendingWriteApprove"></a>
+### func \(\*APIControllers\) AIApplicationPendingWriteApprove
+
+```go
+func (api *APIControllers) AIApplicationPendingWriteApprove(c fiber.Ctx) error
+```
+
+AIApplicationPendingWriteApprove godoc @Summary Approve a pending write @Description Approve a pending write operation, executing the write @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param pending\_write path string true "Pending write ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending write approved and executed" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Not found" @Failure 409 \{object\} irminmodels.IrminAPIResponse "Conflict \- already processed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-writes/\{pending\_write\}/approve \[post\]
+
+<a name="APIControllers.AIApplicationPendingWriteReject"></a>
+### func \(\*APIControllers\) AIApplicationPendingWriteReject
+
+```go
+func (api *APIControllers) AIApplicationPendingWriteReject(c fiber.Ctx) error
+```
+
+AIApplicationPendingWriteReject godoc @Summary Reject a pending write @Description Reject a pending write operation @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param pending\_write path string true "Pending write ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending write rejected" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Not found" @Failure 409 \{object\} irminmodels.IrminAPIResponse "Conflict \- already processed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-writes/\{pending\_write\}/reject \[post\]
+
+<a name="APIControllers.AIApplicationPendingWriteShow"></a>
+### func \(\*APIControllers\) AIApplicationPendingWriteShow
+
+```go
+func (api *APIControllers) AIApplicationPendingWriteShow(c fiber.Ctx) error
+```
+
+AIApplicationPendingWriteShow godoc @Summary Get a specific pending write @Description Get details of a specific pending write operation @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param pending\_write path string true "Pending write ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending write retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-writes/\{pending\_write\} \[get\]
+
+<a name="APIControllers.AIApplicationPendingWrites"></a>
+### func \(\*APIControllers\) AIApplicationPendingWrites
+
+```go
+func (api *APIControllers) AIApplicationPendingWrites(c fiber.Ctx) error
+```
+
+AIApplicationPendingWrites godoc @Summary Get AI application pending writes @Description Get pending write operations awaiting approval for this AI application @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param limit query int false "Limit \(default 50, max 200\)" @Param offset query int false "Offset \(default 0\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending writes retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "AI application not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-writes \[get\]
 
 <a name="APIControllers.AIApplicationToolLogStats"></a>
 ### func \(\*APIControllers\) AIApplicationToolLogStats
@@ -2578,10 +2688,12 @@ import "irmin-api/db"
   - [func \(a \*AIApplication\) ParseToolConfig\(\) AIApplicationToolConfig](<#AIApplication.ParseToolConfig>)
 - [type AIApplicationCustomTool](<#AIApplicationCustomTool>)
 - [type AIApplicationDataSource](<#AIApplicationDataSource>)
+- [type AIApplicationPendingWrite](<#AIApplicationPendingWrite>)
 - [type AIApplicationTag](<#AIApplicationTag>)
 - [type AIApplicationToolConfig](<#AIApplicationToolConfig>)
 - [type AIApplicationToolLog](<#AIApplicationToolLog>)
 - [type AIApplicationToolLogProtocol](<#AIApplicationToolLogProtocol>)
+- [type AIApplicationWriteConfig](<#AIApplicationWriteConfig>)
 - [type APIToken](<#APIToken>)
 - [type ActionWorkflowable](<#ActionWorkflowable>)
 - [type ActionWorkflowableInput](<#ActionWorkflowableInput>)
@@ -2607,6 +2719,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) AddUserToWorkspace\(tx \*gorm.DB, userID, workspaceID uint, roleIDs \[\]uint\) \(\*WorkspaceUser, error\)](<#Database.AddUserToWorkspace>)
   - [func \(d \*Database\) CheckIfRepositoryExists\(slug string, workspaceID uint\) bool](<#Database.CheckIfRepositoryExists>)
   - [func \(d \*Database\) Close\(\)](<#Database.Close>)
+  - [func \(d \*Database\) CreateAIApplicationPendingWrite\(pw \*AIApplicationPendingWrite\) error](<#Database.CreateAIApplicationPendingWrite>)
   - [func \(d \*Database\) CreateAIApplicationToolLog\(log \*AIApplicationToolLog\) error](<#Database.CreateAIApplicationToolLog>)
   - [func \(d \*Database\) CreateConnectionSubscription\(subscription \*ConnectionSubscription\) error](<#Database.CreateConnectionSubscription>)
   - [func \(d \*Database\) CreateSearchIndexes\(\) error](<#Database.CreateSearchIndexes>)
@@ -2619,6 +2732,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) DeleteConnector\(tx \*gorm.DB, id uint\) error](<#Database.DeleteConnector>)
   - [func \(d \*Database\) DeleteInvite\(id uint\) error](<#Database.DeleteInvite>)
   - [func \(d \*Database\) DeleteObjects\(tx \*gorm.DB, path \*string, repositoryID \*uint, ref \*string\) error](<#Database.DeleteObjects>)
+  - [func \(d \*Database\) DeletePendingWritesByAIApplicationID\(tx \*gorm.DB, aiApplicationID uint\) error](<#Database.DeletePendingWritesByAIApplicationID>)
   - [func \(d \*Database\) DeleteStoredQuery\(tx \*gorm.DB, id uint\) error](<#Database.DeleteStoredQuery>)
   - [func \(d \*Database\) DeleteStoredScript\(tx \*gorm.DB, id uint\) error](<#Database.DeleteStoredScript>)
   - [func \(d \*Database\) DeleteTag\(tx \*gorm.DB, id uint\) error](<#Database.DeleteTag>)
@@ -2633,6 +2747,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) GenerateAllPossiblePolicies\(workspaceID uint, principal PolicyPrincipal, principalID \*uint, opts ...PolicyGenerationOptions\) \[\]Policy](<#Database.GenerateAllPossiblePolicies>)
   - [func \(d \*Database\) GetAIApplicationByAPIKey\(apiKey string\) \(\*AIApplication, error\)](<#Database.GetAIApplicationByAPIKey>)
   - [func \(d \*Database\) GetAIApplicationByID\(id uint\) \(\*AIApplication, error\)](<#Database.GetAIApplicationByID>)
+  - [func \(d \*Database\) GetAIApplicationPendingWriteByID\(id uint\) \(\*AIApplicationPendingWrite, error\)](<#Database.GetAIApplicationPendingWriteByID>)
   - [func \(d \*Database\) GetAIApplicationTags\(aiApplicationID uint\) \(\[\]Tag, error\)](<#Database.GetAIApplicationTags>)
   - [func \(d \*Database\) GetAIApplicationToolLogStats\(aiApplicationID uint\) \(\*irminmodels.AIApplicationToolLogStats, error\)](<#Database.GetAIApplicationToolLogStats>)
   - [func \(d \*Database\) GetAIApplicationToolLogs\(aiApplicationID uint, toolName string, limit, offset int\) \(\[\]AIApplicationToolLog, int64, error\)](<#Database.GetAIApplicationToolLogs>)
@@ -2669,6 +2784,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetLogEventsByWorkspaceAndAsset\(workspaceID uint, assetType string, assetID uint, searchTerm string, limit, offset int\) \(\[\]LogEvent, int64, error\)](<#Database.GetLogEventsByWorkspaceAndAsset>)
   - [func \(d \*Database\) GetLogEventsForWorkspace\(workspaceID uint, searchTerm string, limit, offset int\) \(\[\]LogEvent, int64, error\)](<#Database.GetLogEventsForWorkspace>)
   - [func \(d \*Database\) GetOwnerRole\(\) \(\*Role, error\)](<#Database.GetOwnerRole>)
+  - [func \(d \*Database\) GetPendingWritesByAIApplicationID\(aiApplicationID uint, status \*PendingWriteStatus, limit, offset int\) \(\[\]AIApplicationPendingWrite, int64, error\)](<#Database.GetPendingWritesByAIApplicationID>)
   - [func \(d \*Database\) GetPgxConn\(ctx context.Context\) \(\*pgxpool.Conn, error\)](<#Database.GetPgxConn>)
   - [func \(d \*Database\) GetPipelineWorkflowableByID\(id uint\) \(\*PipelineWorkflowable, error\)](<#Database.GetPipelineWorkflowableByID>)
   - [func \(d \*Database\) GetQueriesByTag\(tagID uint\) \(\[\]StoredQuery, error\)](<#Database.GetQueriesByTag>)
@@ -2722,11 +2838,14 @@ import "irmin-api/db"
   - [func \(d \*Database\) RemoveTagFromWorkflow\(workflowID, tagID uint\) error](<#Database.RemoveTagFromWorkflow>)
   - [func \(d \*Database\) RemoveUserFromWorkspace\(tx \*gorm.DB, userID, workspaceID uint\) error](<#Database.RemoveUserFromWorkspace>)
   - [func \(d \*Database\) Reset\(\) error](<#Database.Reset>)
+  - [func \(d \*Database\) RevertPendingWriteToPending\(id uint\) error](<#Database.RevertPendingWriteToPending>)
   - [func \(d \*Database\) RunRawQuery\(sqlQuery string, args ...any\) error](<#Database.RunRawQuery>)
   - [func \(d \*Database\) SearchWithCursor\(ctx context.Context, workspaceID uint, filters SearchFilters, pagination CursorPagination\) \(\[\]SearchResult, \*string, \*string, error\)](<#Database.SearchWithCursor>)
   - [func \(d \*Database\) SearchWorkspace\(workspaceID uint, filters SearchFilters\) \(\[\]SearchResult, int, error\)](<#Database.SearchWorkspace>)
   - [func \(d \*Database\) SearchWorkspaceCount\(workspaceID uint, filters SearchFilters\) \(int, error\)](<#Database.SearchWorkspaceCount>)
   - [func \(d \*Database\) UpdateConnectionSubscription\(subscription \*ConnectionSubscription\) error](<#Database.UpdateConnectionSubscription>)
+  - [func \(d \*Database\) UpdatePendingWriteStatus\(id uint, status PendingWriteStatus, reviewedByID \*uint\) error](<#Database.UpdatePendingWriteStatus>)
+  - [func \(d \*Database\) UpdatePendingWriteStatusAtomic\(id uint, expectedStatus PendingWriteStatus, newStatus PendingWriteStatus, reviewedByID \*uint\) \(bool, error\)](<#Database.UpdatePendingWriteStatusAtomic>)
   - [func \(d \*Database\) UpdateWorkspaceUserRoles\(tx \*gorm.DB, userID, workspaceID uint, roleIDs \[\]uint\) \(\*WorkspaceUser, error\)](<#Database.UpdateWorkspaceUserRoles>)
   - [func \(d \*Database\) UpsertTemplate\(template \*Template\) error](<#Database.UpsertTemplate>)
   - [func \(d \*Database\) WaitForNotification\(ctx context.Context, channel string\) \(\*pgconn.Notification, error\)](<#Database.WaitForNotification>)
@@ -2740,6 +2859,7 @@ import "irmin-api/db"
 - [type LogEvent](<#LogEvent>)
 - [type LogEventType](<#LogEventType>)
 - [type PatchDirection](<#PatchDirection>)
+- [type PendingWriteStatus](<#PendingWriteStatus>)
 - [type PipelineStage](<#PipelineStage>)
 - [type PipelineStageType](<#PipelineStageType>)
 - [type PipelineWorkflowable](<#PipelineWorkflowable>)
@@ -3143,6 +3263,44 @@ type AIApplicationDataSource struct {
 }
 ```
 
+<a name="AIApplicationPendingWrite"></a>
+## type AIApplicationPendingWrite
+
+AIApplicationPendingWrite represents a write operation awaiting human approval.
+
+```go
+type AIApplicationPendingWrite struct {
+    gorm.Model
+
+    AIApplicationID uint          `json:"ai_application_id" gorm:"index;not null"`
+    AIApplication   AIApplication `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
+
+    // Link to the tool log entry that created this pending write
+    ToolLogID *uint                 `json:"tool_log_id,omitempty"`
+    ToolLog   *AIApplicationToolLog `json:"tool_log,omitempty"    gorm:"foreignKey:ToolLogID"`
+
+    // Target location
+    RepositoryID uint       `json:"repository_id" gorm:"index"`
+    Repository   Repository `json:"repository"    gorm:"foreignKey:RepositoryID"`
+    Path         string     `json:"path"`
+    Ref          string     `json:"ref"`
+
+    // Operation details
+    Operation      string `json:"operation"`                                   // "upload", "update", "patch"
+    Content        []byte `json:"-"                         gorm:"type:bytea"` // Full content for file operations (not serialized to JSON)
+    ContentHash    string `json:"content_hash"`                                // Hash reference to staged content
+    ContentPreview string `json:"content_preview,omitempty"`                   // Preview of content for display
+    PatchJSON      string `json:"patch_json,omitempty"      gorm:"type:jsonb"` // For patch operations
+    CommitMessage  string `json:"commit_message"`
+
+    // Status and review
+    Status       PendingWriteStatus `json:"status"                   gorm:"default:pending;index"`
+    ReviewedByID *uint              `json:"reviewed_by_id,omitempty"`
+    ReviewedBy   *User              `json:"reviewed_by,omitempty"    gorm:"foreignKey:ReviewedByID"`
+    ReviewedAt   *time.Time         `json:"reviewed_at,omitempty"`
+}
+```
+
 <a name="AIApplicationTag"></a>
 ## type AIApplicationTag
 
@@ -3170,6 +3328,10 @@ type AIApplicationToolConfig struct {
     GetContentEnabled   bool `json:"get_content_enabled"`   // Get object content
     VectorSearchEnabled bool `json:"vector_search_enabled"` // Search embeddings in repos
     DocsEnabled         bool `json:"docs_enabled"`          // Retrieve documentation
+
+    // Write tools configuration
+    WriteEnabled bool                      `json:"write_enabled"` // Master switch for write operations
+    WriteConfig  *AIApplicationWriteConfig `json:"write_config,omitempty"`
 }
 ```
 
@@ -3201,6 +3363,12 @@ type AIApplicationToolLog struct {
     DurationMs int64  `json:"duration_ms"`
     Success    bool   `json:"success"     gorm:"default:true"`
     ErrorMsg   string `json:"error_msg"`
+
+    // Write-specific audit fields
+    WriteOperation  string `json:"write_operation,omitempty"`   // "upload", "update", "patch"
+    WriteTargetPath string `json:"write_target_path,omitempty"` // Path that was written to
+    CommitID        string `json:"commit_id,omitempty"`         // Commit ID if changes were committed
+    PendingWriteID  *uint  `json:"pending_write_id,omitempty"`  // Link to pending write if approval required
 }
 ```
 
@@ -3222,6 +3390,23 @@ const (
     // ToolLogProtocolREST indicates the tool was called via REST API.
     ToolLogProtocolREST AIApplicationToolLogProtocol = "rest"
 )
+```
+
+<a name="AIApplicationWriteConfig"></a>
+## type AIApplicationWriteConfig
+
+AIApplicationWriteConfig defines write operation settings for an AI Application.
+
+```go
+type AIApplicationWriteConfig struct {
+    FileUploadEnabled    bool   `json:"file_upload_enabled"`             // Allow uploading new files
+    FileUpdateEnabled    bool   `json:"file_update_enabled"`             // Allow updating existing files
+    PatchEnabled         bool   `json:"patch_enabled"`                   // Allow JSON Patch operations
+    AutoCommit           bool   `json:"auto_commit"`                     // Auto-commit after each write
+    RequireCommitMessage bool   `json:"require_commit_message"`          // Require commit message from agent
+    CommitMessagePrefix  string `json:"commit_message_prefix,omitempty"` // Prefix for all commit messages
+    RequireApproval      bool   `json:"require_approval"`                // Require human approval for writes
+}
 ```
 
 <a name="APIToken"></a>
@@ -3612,6 +3797,15 @@ func (d *Database) Close()
 
 Close closes the shared database connection pool.
 
+<a name="Database.CreateAIApplicationPendingWrite"></a>
+### func \(\*Database\) CreateAIApplicationPendingWrite
+
+```go
+func (d *Database) CreateAIApplicationPendingWrite(pw *AIApplicationPendingWrite) error
+```
+
+CreateAIApplicationPendingWrite creates a new pending write entry.
+
 <a name="Database.CreateAIApplicationToolLog"></a>
 ### func \(\*Database\) CreateAIApplicationToolLog
 
@@ -3719,6 +3913,15 @@ func (d *Database) DeleteObjects(tx *gorm.DB, path *string, repositoryID *uint, 
 ```
 
 
+
+<a name="Database.DeletePendingWritesByAIApplicationID"></a>
+### func \(\*Database\) DeletePendingWritesByAIApplicationID
+
+```go
+func (d *Database) DeletePendingWritesByAIApplicationID(tx *gorm.DB, aiApplicationID uint) error
+```
+
+DeletePendingWritesByAIApplicationID deletes all pending writes for an AI Application.
 
 <a name="Database.DeleteStoredQuery"></a>
 ### func \(\*Database\) DeleteStoredQuery
@@ -3845,6 +4048,15 @@ func (d *Database) GetAIApplicationByID(id uint) (*AIApplication, error)
 ```
 
 GetAIApplicationByID retrieves an AI application by its ID.
+
+<a name="Database.GetAIApplicationPendingWriteByID"></a>
+### func \(\*Database\) GetAIApplicationPendingWriteByID
+
+```go
+func (d *Database) GetAIApplicationPendingWriteByID(id uint) (*AIApplicationPendingWrite, error)
+```
+
+GetAIApplicationPendingWriteByID retrieves a pending write by its ID.
 
 <a name="Database.GetAIApplicationTags"></a>
 ### func \(\*Database\) GetAIApplicationTags
@@ -4173,6 +4385,15 @@ func (d *Database) GetOwnerRole() (*Role, error)
 ```
 
 
+
+<a name="Database.GetPendingWritesByAIApplicationID"></a>
+### func \(\*Database\) GetPendingWritesByAIApplicationID
+
+```go
+func (d *Database) GetPendingWritesByAIApplicationID(aiApplicationID uint, status *PendingWriteStatus, limit, offset int) ([]AIApplicationPendingWrite, int64, error)
+```
+
+GetPendingWritesByAIApplicationID retrieves all pending writes for an AI Application.
 
 <a name="Database.GetPgxConn"></a>
 ### func \(\*Database\) GetPgxConn
@@ -4651,6 +4872,15 @@ func (d *Database) Reset() error
 
 Reset drops all tables to start fresh.
 
+<a name="Database.RevertPendingWriteToPending"></a>
+### func \(\*Database\) RevertPendingWriteToPending
+
+```go
+func (d *Database) RevertPendingWriteToPending(id uint) error
+```
+
+RevertPendingWriteToPending reverts a pending write back to pending status, clearing any review metadata \(reviewed\_by\_id and reviewed\_at\). This is used when a pending write approval fails during execution.
+
 <a name="Database.RunRawQuery"></a>
 ### func \(\*Database\) RunRawQuery
 
@@ -4695,6 +4925,24 @@ func (d *Database) UpdateConnectionSubscription(subscription *ConnectionSubscrip
 ```
 
 UpdateConnectionSubscription updates an existing subscription.
+
+<a name="Database.UpdatePendingWriteStatus"></a>
+### func \(\*Database\) UpdatePendingWriteStatus
+
+```go
+func (d *Database) UpdatePendingWriteStatus(id uint, status PendingWriteStatus, reviewedByID *uint) error
+```
+
+UpdatePendingWriteStatus updates the status of a pending write.
+
+<a name="Database.UpdatePendingWriteStatusAtomic"></a>
+### func \(\*Database\) UpdatePendingWriteStatusAtomic
+
+```go
+func (d *Database) UpdatePendingWriteStatusAtomic(id uint, expectedStatus PendingWriteStatus, newStatus PendingWriteStatus, reviewedByID *uint) (bool, error)
+```
+
+UpdatePendingWriteStatusAtomic atomically updates the status of a pending write only if it's currently in the expected status. This prevents race conditions where concurrent requests could both execute the same pending write. Returns true if the update was successful \(row was modified\), false if the status was already changed by another request.
 
 <a name="Database.UpdateWorkspaceUserRoles"></a>
 ### func \(\*Database\) UpdateWorkspaceUserRoles
@@ -4898,6 +5146,28 @@ type PatchDirection string
 const (
     PatchDirectionToConnection PatchDirection = "to_connection"
     PatchDirectionToRepository PatchDirection = "to_repository"
+)
+```
+
+<a name="PendingWriteStatus"></a>
+## type PendingWriteStatus
+
+PendingWriteStatus represents the status of a pending write operation.
+
+```go
+type PendingWriteStatus string
+```
+
+<a name="PendingWriteStatusPending"></a>
+
+```go
+const (
+    // PendingWriteStatusPending indicates the write is awaiting approval.
+    PendingWriteStatusPending PendingWriteStatus = "pending"
+    // PendingWriteStatusApproved indicates the write has been approved and executed.
+    PendingWriteStatusApproved PendingWriteStatus = "approved"
+    // PendingWriteStatusRejected indicates the write has been rejected.
+    PendingWriteStatusRejected PendingWriteStatus = "rejected"
 )
 ```
 
@@ -10989,6 +11259,7 @@ import "irmin-api/mcp"
   - [func TransformContentForLLM\(content \[\]byte, path string\) \(\*ContentTransformResult, error\)](<#TransformContentForLLM>)
 - [type RequestMetadata](<#RequestMetadata>)
   - [func ExtractRequestMetadata\(r \*http.Request\) \*RequestMetadata](<#ExtractRequestMetadata>)
+- [type WriteAuditInfo](<#WriteAuditInfo>)
 
 
 ## Constants
@@ -11144,6 +11415,20 @@ func ExtractRequestMetadata(r *http.Request) *RequestMetadata
 ```
 
 ExtractRequestMetadata extracts request metadata from an HTTP request for audit logging.
+
+<a name="WriteAuditInfo"></a>
+## type WriteAuditInfo
+
+WriteAuditInfo contains write\-specific audit information.
+
+```go
+type WriteAuditInfo struct {
+    Operation      string // "upload", "update", "patch", "commit"
+    TargetPath     string // Unified path that was written to
+    CommitID       string // Commit ID if changes were committed
+    PendingWriteID *uint  // Link to pending write if approval required
+}
+```
 
 # middlewares
 
@@ -12709,7 +12994,9 @@ import "irmin-api/services"
 - [func NewInternalErrorf\(format string, args ...any\) error](<#NewInternalErrorf>)
 - [type AIAppToolExecutor](<#AIAppToolExecutor>)
   - [func NewAIAppToolExecutor\(aiApp \*db.AIApplication, apiServices \*APIServices\) \*AIAppToolExecutor](<#NewAIAppToolExecutor>)
+  - [func \(e \*AIAppToolExecutor\) CommitStagedChanges\(ctx context.Context, repoSlug, ref, message string\) \(\*irminmodels.Commit, error\)](<#AIAppToolExecutor.CommitStagedChanges>)
   - [func \(e \*AIAppToolExecutor\) ExecuteCustomTool\(ctx context.Context, toolName string, query string\) \(\*CustomToolResult, error\)](<#AIAppToolExecutor.ExecuteCustomTool>)
+  - [func \(e \*AIAppToolExecutor\) ExecutePendingWrite\(ctx context.Context, pendingWrite \*db.AIApplicationPendingWrite\) \(\*WriteResult, error\)](<#AIAppToolExecutor.ExecutePendingWrite>)
   - [func \(e \*AIAppToolExecutor\) ExecuteSQL\(ctx context.Context, sql string, limitResponse bool\) \(any, error\)](<#AIAppToolExecutor.ExecuteSQL>)
   - [func \(e \*AIAppToolExecutor\) GetAIApplication\(\) \*db.AIApplication](<#AIAppToolExecutor.GetAIApplication>)
   - [func \(e \*AIAppToolExecutor\) GetContentByPath\(ctx context.Context, unifiedPath string, limitResponse bool\) \(\[\]byte, error\)](<#AIAppToolExecutor.GetContentByPath>)
@@ -12725,10 +13012,12 @@ import "irmin-api/services"
   - [func \(e \*AIAppToolExecutor\) ListDataSourcesUnified\(\) \[\]irminmodels.AIAppDataSourceUnified](<#AIAppToolExecutor.ListDataSourcesUnified>)
   - [func \(e \*AIAppToolExecutor\) ListObjectsByPath\(ctx context.Context, unifiedPath string\) \(\*db.RepositoryObject, error\)](<#AIAppToolExecutor.ListObjectsByPath>)
   - [func \(e \*AIAppToolExecutor\) ListRepositoryObjects\(ctx context.Context, repoSlug, path, ref string\) \(\*db.RepositoryObject, error\)](<#AIAppToolExecutor.ListRepositoryObjects>)
+  - [func \(e \*AIAppToolExecutor\) PatchFile\(ctx context.Context, unifiedPath string, operations \[\]irminmodels.PatchOperation, commitMessage string, autoCommit bool\) \(\*WriteResult, error\)](<#AIAppToolExecutor.PatchFile>)
   - [func \(e \*AIAppToolExecutor\) ResolvePath\(unifiedPath string\) \(\*ResolvedPath, error\)](<#AIAppToolExecutor.ResolvePath>)
   - [func \(e \*AIAppToolExecutor\) ResolvePathOrFindInDataSources\(inputPath string\) \(\*ResolvedPath, error\)](<#AIAppToolExecutor.ResolvePathOrFindInDataSources>)
   - [func \(e \*AIAppToolExecutor\) SearchEmbeddings\(ctx context.Context, repoSlug, embeddingPath, query, ref string, topK int, filter map\[string\]string\) \(\*irminmodels.EmbeddingSearchResponse, error\)](<#AIAppToolExecutor.SearchEmbeddings>)
   - [func \(e \*AIAppToolExecutor\) SearchEmbeddingsByPath\(ctx context.Context, query string, topK int, pathFilter string, metadataFilter map\[string\]string\) \(\*irminmodels.EmbeddingSearchResponse, error\)](<#AIAppToolExecutor.SearchEmbeddingsByPath>)
+  - [func \(e \*AIAppToolExecutor\) WriteFile\(ctx context.Context, unifiedPath string, content \[\]byte, commitMessage string, autoCommit bool\) \(\*WriteResult, error\)](<#AIAppToolExecutor.WriteFile>)
 - [type APIServices](<#APIServices>)
   - [func NewAPIServices\(db \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, orchestrator \*orchestrator.Orchestrator, sqidManager \*irminsqids.SQIDManager, localeManager \*locales.LocaleManager, permissionService \*permissions.Service, cacheStorage fiber.Storage\) \*APIServices](<#NewAPIServices>)
   - [func \(api \*APIServices\) AcceptInvite\(c context.Context, user \*db.User, invite \*db.Invite\) error](<#APIServices.AcceptInvite>)
@@ -12896,9 +13185,23 @@ import "irmin-api/services"
 - [type ResolvedPath](<#ResolvedPath>)
 - [type TagEntityOperation](<#TagEntityOperation>)
 - [type UpdateCustomToolRequest](<#UpdateCustomToolRequest>)
+- [type WriteResult](<#WriteResult>)
 
 
 ## Constants
+
+<a name="WriteOperationUpload"></a>Write operation type constants.
+
+```go
+const (
+    // WriteOperationUpload represents a file upload operation.
+    WriteOperationUpload = "upload"
+    // WriteOperationUpdate represents a file update operation.
+    WriteOperationUpdate = "update"
+    // WriteOperationPatch represents a JSON patch operation.
+    WriteOperationPatch = "patch"
+)
+```
 
 <a name="UserDetailsCacheMaxAge"></a>
 
@@ -12961,6 +13264,25 @@ var (
     ErrCustomToolDisabled = errors.New("custom tool is disabled")
     // ErrQueryRequired is returned when a query parameter is required but not provided.
     ErrQueryRequired = errors.New("query is required")
+)
+```
+
+<a name="ErrWriteNotEnabled"></a>
+
+```go
+var (
+    // ErrWriteNotEnabled is returned when write operations are not enabled for the AI Application.
+    ErrWriteNotEnabled = errors.New("write operations not enabled for this AI Application")
+    // ErrFileUploadNotEnabled is returned when file upload is not enabled.
+    ErrFileUploadNotEnabled = errors.New("file upload not enabled for this AI Application")
+    // ErrFileUpdateNotEnabled is returned when file update is not enabled.
+    ErrFileUpdateNotEnabled = errors.New("file update not enabled for this AI Application")
+    // ErrPatchNotEnabled is returned when patch operations are not enabled.
+    ErrPatchNotEnabled = errors.New("patch operations not enabled for this AI Application")
+    // ErrCommitMessageRequired is returned when a commit message is required but not provided.
+    ErrCommitMessageRequired = errors.New("commit message is required")
+    // ErrWriteAccessDenied is returned when write access is denied to a path.
+    ErrWriteAccessDenied = errors.New("write access denied to this path")
 )
 ```
 
@@ -13112,6 +13434,15 @@ func NewAIAppToolExecutor(aiApp *db.AIApplication, apiServices *APIServices) *AI
 
 NewAIAppToolExecutor creates a new AIAppToolExecutor.
 
+<a name="AIAppToolExecutor.CommitStagedChanges"></a>
+### func \(\*AIAppToolExecutor\) CommitStagedChanges
+
+```go
+func (e *AIAppToolExecutor) CommitStagedChanges(ctx context.Context, repoSlug, ref, message string) (*irminmodels.Commit, error)
+```
+
+CommitStagedChanges commits all staged changes on a branch.
+
 <a name="AIAppToolExecutor.ExecuteCustomTool"></a>
 ### func \(\*AIAppToolExecutor\) ExecuteCustomTool
 
@@ -13120,6 +13451,15 @@ func (e *AIAppToolExecutor) ExecuteCustomTool(ctx context.Context, toolName stri
 ```
 
 ExecuteCustomTool executes a custom tool by name.
+
+<a name="AIAppToolExecutor.ExecutePendingWrite"></a>
+### func \(\*AIAppToolExecutor\) ExecutePendingWrite
+
+```go
+func (e *AIAppToolExecutor) ExecutePendingWrite(ctx context.Context, pendingWrite *db.AIApplicationPendingWrite) (*WriteResult, error)
+```
+
+ExecutePendingWrite executes a previously approved pending write.
 
 <a name="AIAppToolExecutor.ExecuteSQL"></a>
 ### func \(\*AIAppToolExecutor\) ExecuteSQL
@@ -13256,6 +13596,15 @@ func (e *AIAppToolExecutor) ListRepositoryObjects(ctx context.Context, repoSlug,
 
 ListRepositoryObjects lists objects in a repository path. Returns the raw db.RepositoryObject which can be formatted by the caller.
 
+<a name="AIAppToolExecutor.PatchFile"></a>
+### func \(\*AIAppToolExecutor\) PatchFile
+
+```go
+func (e *AIAppToolExecutor) PatchFile(ctx context.Context, unifiedPath string, operations []irminmodels.PatchOperation, commitMessage string, autoCommit bool) (*WriteResult, error)
+```
+
+PatchFile applies JSON Patch operations to a structured file.
+
 <a name="AIAppToolExecutor.ResolvePath"></a>
 ### func \(\*AIAppToolExecutor\) ResolvePath
 
@@ -13291,6 +13640,15 @@ func (e *AIAppToolExecutor) SearchEmbeddingsByPath(ctx context.Context, query st
 ```
 
 SearchEmbeddingsByPath performs vector similarity search, optionally filtered by a unified path. If pathFilter is empty, searches across all embedding files in all data sources. If pathFilter is provided, searches only in the specified embedding file.
+
+<a name="AIAppToolExecutor.WriteFile"></a>
+### func \(\*AIAppToolExecutor\) WriteFile
+
+```go
+func (e *AIAppToolExecutor) WriteFile(ctx context.Context, unifiedPath string, content []byte, commitMessage string, autoCommit bool) (*WriteResult, error)
+```
+
+WriteFile uploads or updates a file in a data source.
 
 <a name="APIServices"></a>
 ## type APIServices
@@ -14864,6 +15222,22 @@ type UpdateCustomToolRequest struct {
     EmbeddingPath   string            `json:"embedding_path,omitempty"`
     EmbeddingTopK   int               `json:"embedding_top_k,omitempty"`
     EmbeddingFilter map[string]string `json:"embedding_filter,omitempty"`
+}
+```
+
+<a name="WriteResult"></a>
+## type WriteResult
+
+WriteResult represents the result of a write operation.
+
+```go
+type WriteResult struct {
+    Path             string  `json:"path"`
+    Operation        string  `json:"operation"`
+    Committed        bool    `json:"committed"`
+    CommitID         *string `json:"commit_id,omitempty"`
+    PendingID        *string `json:"pending_id,omitempty"`
+    RequiresApproval bool    `json:"requires_approval"`
 }
 ```
 

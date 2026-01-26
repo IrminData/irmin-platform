@@ -103,5 +103,13 @@ func ExtractRequestMetadata(r *http.Request) *RequestMetadata
     ExtractRequestMetadata extracts request metadata from an HTTP request for
     audit logging.
 
+type WriteAuditInfo struct {
+	Operation      string // "upload", "update", "patch", "commit"
+	TargetPath     string // Unified path that was written to
+	CommitID       string // Commit ID if changes were committed
+	PendingWriteID *uint  // Link to pending write if approval required
+}
+    WriteAuditInfo contains write-specific audit information.
+
 </pre>
 </body></html>

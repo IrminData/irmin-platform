@@ -64,6 +64,19 @@ func FormatAIApplicationResponse(
 			GetContentEnabled:   aiApplication.Tools.GetContentEnabled,
 			VectorSearchEnabled: aiApplication.Tools.VectorSearchEnabled,
 			DocsEnabled:         aiApplication.Tools.DocsEnabled,
+			WriteEnabled:        aiApplication.Tools.WriteEnabled,
+		}
+		// Include write config if present
+		if aiApplication.Tools.WriteConfig != nil {
+			toolsResponse.WriteConfig = &irminmodels.AIApplicationWriteConfig{
+				FileUploadEnabled:    aiApplication.Tools.WriteConfig.FileUploadEnabled,
+				FileUpdateEnabled:    aiApplication.Tools.WriteConfig.FileUpdateEnabled,
+				PatchEnabled:         aiApplication.Tools.WriteConfig.PatchEnabled,
+				AutoCommit:           aiApplication.Tools.WriteConfig.AutoCommit,
+				RequireCommitMessage: aiApplication.Tools.WriteConfig.RequireCommitMessage,
+				CommitMessagePrefix:  aiApplication.Tools.WriteConfig.CommitMessagePrefix,
+				RequireApproval:      aiApplication.Tools.WriteConfig.RequireApproval,
+			}
 		}
 	}
 

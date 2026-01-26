@@ -237,6 +237,7 @@ func (d *Database) Migrate() error {
 		&AIApplicationTag{},
 		&AIApplicationCustomTool{},
 		&AIApplicationToolLog{},
+		&AIApplicationPendingWrite{},
 		&Template{},
 	}
 	if err := d.migrateModels(models...); err != nil {
@@ -263,6 +264,7 @@ func (d *Database) Reset() error {
 		&AIApplicationTag{},
 		&AIApplicationDataSource{},
 		&AIApplicationCustomTool{},
+		&AIApplicationPendingWrite{}, // Must be before ToolLog due to foreign key
 		&AIApplicationToolLog{},
 		&AIApplication{},
 		&Role{},

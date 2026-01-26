@@ -1,9 +1,22 @@
 package db
 
 import (
+	"time"
+
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"gorm.io/gorm"
 )
+
+// AIApplicationWriteConfig defines write operation settings for an AI Application.
+type AIApplicationWriteConfig struct {
+	FileUploadEnabled    bool   `json:"file_upload_enabled"`             // Allow uploading new files
+	FileUpdateEnabled    bool   `json:"file_update_enabled"`             // Allow updating existing files
+	PatchEnabled         bool   `json:"patch_enabled"`                   // Allow JSON Patch operations
+	AutoCommit           bool   `json:"auto_commit"`                     // Auto-commit after each write
+	RequireCommitMessage bool   `json:"require_commit_message"`          // Require commit message from agent
+	CommitMessagePrefix  string `json:"commit_message_prefix,omitempty"` // Prefix for all commit messages
+	RequireApproval      bool   `json:"require_approval"`                // Require human approval for writes
+}
 
 // AIApplicationToolConfig defines which tools are enabled for an AI Application.
 type AIApplicationToolConfig struct {
@@ -13,6 +26,10 @@ type AIApplicationToolConfig struct {
 	GetContentEnabled   bool `json:"get_content_enabled"`   // Get object content
 	VectorSearchEnabled bool `json:"vector_search_enabled"` // Search embeddings in repos
 	DocsEnabled         bool `json:"docs_enabled"`          // Retrieve documentation
+
+	// Write tools configuration
+	WriteEnabled bool                      `json:"write_enabled"` // Master switch for write operations
+	WriteConfig  *AIApplicationWriteConfig `json:"write_config,omitempty"`
 }
 
 // AIApplication represents an AI application in the system.
@@ -94,7 +111,8 @@ type AIApplicationCustomTool struct {
 // GetAIApplicationByID retrieves an AI application by its ID.
 func (d *Database) GetAIApplicationByID(id uint) (*AIApplication, error) {
 	var aiApplication AIApplication
-	if err := d.Preload("Owner").
+	if err := d.Preload("Workspace").
+		Preload("Owner").
 		Preload("DataSources").
 		Preload("DataSources.Repository").
 		Preload("CustomTools").
@@ -142,7 +160,12 @@ func (d *Database) DeleteAIApplication(tx *gorm.DB, id uint) error {
 		return err
 	}
 
-	// Delete tool audit logs
+	// Delete pending writes first (has foreign key to tool logs)
+	if err := tx.Where(&AIApplicationPendingWrite{AIApplicationID: id}).Delete(&AIApplicationPendingWrite{}).Error; err != nil {
+		return err
+	}
+
+	// Delete tool audit logs (after pending writes due to foreign key constraint)
 	if err := tx.Where(&AIApplicationToolLog{AIApplicationID: id}).Delete(&AIApplicationToolLog{}).Error; err != nil {
 		return err
 	}
@@ -273,6 +296,12 @@ type AIApplicationToolLog struct {
 	DurationMs int64  `json:"duration_ms"`
 	Success    bool   `json:"success"     gorm:"default:true"`
 	ErrorMsg   string `json:"error_msg"`
+
+	// Write-specific audit fields
+	WriteOperation  string `json:"write_operation,omitempty"`   // "upload", "update", "patch"
+	WriteTargetPath string `json:"write_target_path,omitempty"` // Path that was written to
+	CommitID        string `json:"commit_id,omitempty"`         // Commit ID if changes were committed
+	PendingWriteID  *uint  `json:"pending_write_id,omitempty"`  // Link to pending write if approval required
 }
 
 // CreateAIApplicationToolLog creates a new tool audit log entry.
@@ -372,4 +401,165 @@ func (d *Database) GetAIApplicationToolLogStats(
 
 	result.ByTool = toolStats
 	return result, nil
+}
+
+// === AI Application Pending Writes ===
+
+// PendingWriteStatus represents the status of a pending write operation.
+type PendingWriteStatus string
+
+const (
+	// PendingWriteStatusPending indicates the write is awaiting approval.
+	PendingWriteStatusPending PendingWriteStatus = "pending"
+	// PendingWriteStatusApproved indicates the write has been approved and executed.
+	PendingWriteStatusApproved PendingWriteStatus = "approved"
+	// PendingWriteStatusRejected indicates the write has been rejected.
+	PendingWriteStatusRejected PendingWriteStatus = "rejected"
+)
+
+// AIApplicationPendingWrite represents a write operation awaiting human approval.
+type AIApplicationPendingWrite struct {
+	gorm.Model
+
+	AIApplicationID uint          `json:"ai_application_id" gorm:"index;not null"`
+	AIApplication   AIApplication `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
+
+	// Link to the tool log entry that created this pending write
+	ToolLogID *uint                 `json:"tool_log_id,omitempty"`
+	ToolLog   *AIApplicationToolLog `json:"tool_log,omitempty"    gorm:"foreignKey:ToolLogID"`
+
+	// Target location
+	RepositoryID uint       `json:"repository_id" gorm:"index"`
+	Repository   Repository `json:"repository"    gorm:"foreignKey:RepositoryID"`
+	Path         string     `json:"path"`
+	Ref          string     `json:"ref"`
+
+	// Operation details
+	Operation      string `json:"operation"`                                   // "upload", "update", "patch"
+	Content        []byte `json:"-"                         gorm:"type:bytea"` // Full content for file operations (not serialized to JSON)
+	ContentHash    string `json:"content_hash"`                                // Hash reference to staged content
+	ContentPreview string `json:"content_preview,omitempty"`                   // Preview of content for display
+	PatchJSON      string `json:"patch_json,omitempty"      gorm:"type:jsonb"` // For patch operations
+	CommitMessage  string `json:"commit_message"`
+
+	// Status and review
+	Status       PendingWriteStatus `json:"status"                   gorm:"default:pending;index"`
+	ReviewedByID *uint              `json:"reviewed_by_id,omitempty"`
+	ReviewedBy   *User              `json:"reviewed_by,omitempty"    gorm:"foreignKey:ReviewedByID"`
+	ReviewedAt   *time.Time         `json:"reviewed_at,omitempty"`
+}
+
+// CreateAIApplicationPendingWrite creates a new pending write entry.
+func (d *Database) CreateAIApplicationPendingWrite(pw *AIApplicationPendingWrite) error {
+	return d.Create(pw).Error
+}
+
+// GetAIApplicationPendingWriteByID retrieves a pending write by its ID.
+func (d *Database) GetAIApplicationPendingWriteByID(id uint) (*AIApplicationPendingWrite, error) {
+	var pw AIApplicationPendingWrite
+	if err := d.Preload("AIApplication").
+		Preload("Repository").
+		Preload("ToolLog").
+		Preload("ReviewedBy").
+		First(&pw, id).Error; err != nil {
+		return nil, err
+	}
+	return &pw, nil
+}
+
+// GetPendingWritesByAIApplicationID retrieves all pending writes for an AI Application.
+func (d *Database) GetPendingWritesByAIApplicationID(
+	aiApplicationID uint,
+	status *PendingWriteStatus,
+	limit, offset int,
+) ([]AIApplicationPendingWrite, int64, error) {
+	var pendingWrites []AIApplicationPendingWrite
+	var total int64
+
+	query := d.Model(&AIApplicationPendingWrite{}).
+		Where("ai_application_id = ?", aiApplicationID)
+
+	if status != nil {
+		query = query.Where("status = ?", *status)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.
+		Preload("Repository").
+		Preload("ToolLog").
+		Preload("ReviewedBy").
+		Order("created_at desc").
+		Limit(limit).
+		Offset(offset).
+		Find(&pendingWrites).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return pendingWrites, total, nil
+}
+
+// UpdatePendingWriteStatus updates the status of a pending write.
+func (d *Database) UpdatePendingWriteStatus(
+	id uint,
+	status PendingWriteStatus,
+	reviewedByID *uint,
+) error {
+	updates := map[string]any{
+		"status":      status,
+		"reviewed_at": time.Now(),
+	}
+	if reviewedByID != nil {
+		updates["reviewed_by_id"] = *reviewedByID
+	}
+	return d.Model(&AIApplicationPendingWrite{}).Where("id = ?", id).Updates(updates).Error
+}
+
+// UpdatePendingWriteStatusAtomic atomically updates the status of a pending write
+// only if it's currently in the expected status. This prevents race conditions
+// where concurrent requests could both execute the same pending write.
+// Returns true if the update was successful (row was modified), false if the
+// status was already changed by another request.
+func (d *Database) UpdatePendingWriteStatusAtomic(
+	id uint,
+	expectedStatus PendingWriteStatus,
+	newStatus PendingWriteStatus,
+	reviewedByID *uint,
+) (bool, error) {
+	updates := map[string]any{
+		"status":      newStatus,
+		"reviewed_at": time.Now(),
+	}
+	if reviewedByID != nil {
+		updates["reviewed_by_id"] = *reviewedByID
+	}
+
+	result := d.Model(&AIApplicationPendingWrite{}).
+		Where("id = ? AND status = ?", id, expectedStatus).
+		Updates(updates)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	// RowsAffected == 0 means the status was already changed
+	return result.RowsAffected > 0, nil
+}
+
+// RevertPendingWriteToPending reverts a pending write back to pending status,
+// clearing any review metadata (reviewed_by_id and reviewed_at).
+// This is used when a pending write approval fails during execution.
+func (d *Database) RevertPendingWriteToPending(id uint) error {
+	return d.Model(&AIApplicationPendingWrite{}).Where("id = ?", id).Updates(map[string]any{
+		"status":         PendingWriteStatusPending,
+		"reviewed_by_id": nil,
+		"reviewed_at":    nil,
+	}).Error
+}
+
+// DeletePendingWritesByAIApplicationID deletes all pending writes for an AI Application.
+func (d *Database) DeletePendingWritesByAIApplicationID(tx *gorm.DB, aiApplicationID uint) error {
+	return tx.Where("ai_application_id = ?", aiApplicationID).Delete(&AIApplicationPendingWrite{}).Error
 }

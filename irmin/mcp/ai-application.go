@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,10 +13,19 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/services"
 
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 	adaptor "github.com/gofiber/fiber/v3/middleware/adaptor"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+// WriteAuditInfo contains write-specific audit information.
+type WriteAuditInfo struct {
+	Operation      string // "upload", "update", "patch", "commit"
+	TargetPath     string // Unified path that was written to
+	CommitID       string // Commit ID if changes were committed
+	PendingWriteID *uint  // Link to pending write if approval required
+}
 
 // logToolCall creates an audit log entry for a tool call.
 func logToolCall(
@@ -27,6 +37,21 @@ func logToolCall(
 	inputs any,
 	startTime time.Time,
 	result *sdkmcp.CallToolResult,
+) {
+	logToolCallWithWriteInfo(ctx, apiServices, aiApp, toolName, toolType, inputs, startTime, result, nil)
+}
+
+// logToolCallWithWriteInfo creates an audit log entry for a tool call with optional write audit info.
+func logToolCallWithWriteInfo(
+	ctx context.Context,
+	apiServices *services.APIServices,
+	aiApp *db.AIApplication,
+	toolName string,
+	toolType string,
+	inputs any,
+	startTime time.Time,
+	result *sdkmcp.CallToolResult,
+	writeInfo *WriteAuditInfo,
 ) {
 	// Get request metadata from context
 	metadata, _ := requestMetadataFromContext(ctx)
@@ -68,6 +93,14 @@ func logToolCall(
 		DurationMs:      durationMs,
 		Success:         success,
 		ErrorMsg:        errorMsg,
+	}
+
+	// Add write-specific audit fields if provided
+	if writeInfo != nil {
+		log.WriteOperation = writeInfo.Operation
+		log.WriteTargetPath = writeInfo.TargetPath
+		log.CommitID = writeInfo.CommitID
+		log.PendingWriteID = writeInfo.PendingWriteID
 	}
 
 	// Create log entry asynchronously to not block the response
@@ -176,6 +209,21 @@ func registerAIAppTools(server *sdkmcp.Server, aiApp *db.AIApplication, apiServi
 		registerAIAppDocsTool(server, aiApp, apiServices)
 	}
 
+	// Register write tools if enabled
+	if config.WriteEnabled && config.WriteConfig != nil {
+		writeConfig := config.WriteConfig
+		if writeConfig.FileUploadEnabled || writeConfig.FileUpdateEnabled {
+			registerAIAppWriteFileTool(server, aiApp, apiServices)
+		}
+		if writeConfig.PatchEnabled {
+			registerAIAppPatchFileTool(server, aiApp, apiServices)
+		}
+		// Register commit tool if not using auto-commit
+		if !writeConfig.AutoCommit {
+			registerAIAppCommitTool(server, aiApp, apiServices)
+		}
+	}
+
 	// Register custom tools
 	registerAIAppCustomTools(server, aiApp, apiServices)
 
@@ -206,6 +254,26 @@ type aiAppEmbeddingSearchArgs struct {
 	Path   string            `json:"path"   jsonschema:"optional,Unified path to specific embedding file (e.g. /repo-slug/main/embeddings/file.parquet). If empty searches all embeddings."`
 	TopK   int               `json:"top_k"  jsonschema:"optional,Number of results to return (default 10)"`
 	Filter map[string]string `json:"filter" jsonschema:"optional,Metadata filter for search results"`
+}
+
+// Write tool argument structs
+
+type aiAppWriteFileArgs struct {
+	Path          string `json:"path"           jsonschema:"required,Unified path (e.g. /repo-slug/main/data/file.json)"`
+	Content       string `json:"content"        jsonschema:"required,File content (text for text files or base64 for binary)"`
+	IsBase64      bool   `json:"is_base64"      jsonschema:"optional,Set to true if content is base64 encoded (for binary files)"`
+	CommitMessage string `json:"commit_message" jsonschema:"optional,Commit message describing the change"`
+}
+
+type aiAppPatchFileArgs struct {
+	Path          string `json:"path"           jsonschema:"required,Unified path to the file to patch (e.g. /repo-slug/main/data/file.json)"`
+	Operations    string `json:"operations"     jsonschema:"required,JSON Patch operations as a JSON array string"`
+	CommitMessage string `json:"commit_message" jsonschema:"optional,Commit message describing the change"`
+}
+
+type aiAppCommitArgs struct {
+	Path    string `json:"path"    jsonschema:"optional,Unified path prefix to commit (e.g. /repo-slug/main). If empty commits all staged changes."`
+	Message string `json:"message" jsonschema:"required,Commit message describing the changes"`
 }
 
 // registerAIAppInfoTool registers a tool to get info about the AI Application.
@@ -505,6 +573,231 @@ func registerAIAppDocsTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiSe
 			}
 
 			logToolCall(ctx, apiServices, aiApp, "irmin_get_documentation", "builtin", args, startTime, result)
+			return result, struct{}{}, nil
+		},
+	)
+}
+
+// registerAIAppWriteFileTool registers the write file tool.
+func registerAIAppWriteFileTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+	sdkmcp.AddTool(
+		server,
+		&sdkmcp.Tool{
+			Name:        "irmin_write_file",
+			Description: "Write or update a file at the specified path. Use unified path format: /repo-slug/ref/path/to/file.json. Supports text content directly, or binary content encoded as base64 (set is_base64 to true).",
+		},
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppWriteFileArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+			startTime := time.Now()
+
+			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
+
+			// Convert content to bytes, handling base64 if specified
+			var content []byte
+			if args.IsBase64 {
+				decoded, err := base64.StdEncoding.DecodeString(args.Content)
+				if err != nil {
+					result := mcpError(fmt.Sprintf("Invalid base64 content: %v", err))
+					logToolCall(ctx, apiServices, aiApp, "irmin_write_file", "builtin", args, startTime, result)
+					return result, struct{}{}, nil
+				}
+				content = decoded
+			} else {
+				content = []byte(args.Content)
+			}
+
+			writeResult, err := executor.WriteFile(ctx, args.Path, content, args.CommitMessage, false)
+			if err != nil {
+				result := mcpError(err.Error())
+				logToolCall(ctx, apiServices, aiApp, "irmin_write_file", "builtin", args, startTime, result)
+				return result, struct{}{}, nil
+			}
+
+			// Prepare write audit info
+			writeInfo := &WriteAuditInfo{
+				Operation:  writeResult.Operation,
+				TargetPath: writeResult.Path,
+			}
+			if writeResult.CommitID != nil {
+				writeInfo.CommitID = *writeResult.CommitID
+			}
+			if writeResult.PendingID != nil {
+				// Decode pending ID to get the uint for audit
+				if pendingID, decErr := apiServices.SQIDManager.Decode("ai_application_pending_writes", *writeResult.PendingID); decErr == nil {
+					pendingIDUint := uint(pendingID)
+					writeInfo.PendingWriteID = &pendingIDUint
+				}
+			}
+
+			jsonData, _ := json.MarshalIndent(writeResult, "", "  ")
+			result := &sdkmcp.CallToolResult{
+				Content: []sdkmcp.Content{
+					&sdkmcp.TextContent{Text: string(jsonData)},
+				},
+			}
+
+			logToolCallWithWriteInfo(
+				ctx,
+				apiServices,
+				aiApp,
+				"irmin_write_file",
+				"builtin",
+				args,
+				startTime,
+				result,
+				writeInfo,
+			)
+			return result, struct{}{}, nil
+		},
+	)
+}
+
+// registerAIAppPatchFileTool registers the patch file tool.
+func registerAIAppPatchFileTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+	sdkmcp.AddTool(
+		server,
+		&sdkmcp.Tool{
+			Name:        "irmin_patch_file",
+			Description: "Apply JSON Patch operations to a JSON file. Use unified path format: /repo-slug/ref/path/to/file.json. Operations should be a JSON array of patch operations with 'op', 'path', and optionally 'value' or 'from' fields.",
+		},
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppPatchFileArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+			startTime := time.Now()
+
+			// Parse the operations JSON string
+			var operations []irminmodels.PatchOperation
+			if err := json.Unmarshal([]byte(args.Operations), &operations); err != nil {
+				result := mcpError(fmt.Sprintf("Invalid operations JSON: %v", err))
+				logToolCall(ctx, apiServices, aiApp, "irmin_patch_file", "builtin", args, startTime, result)
+				return result, struct{}{}, nil
+			}
+
+			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
+
+			writeResult, err := executor.PatchFile(ctx, args.Path, operations, args.CommitMessage, false)
+			if err != nil {
+				result := mcpError(err.Error())
+				logToolCall(ctx, apiServices, aiApp, "irmin_patch_file", "builtin", args, startTime, result)
+				return result, struct{}{}, nil
+			}
+
+			// Prepare write audit info
+			writeInfo := &WriteAuditInfo{
+				Operation:  "patch",
+				TargetPath: writeResult.Path,
+			}
+			if writeResult.CommitID != nil {
+				writeInfo.CommitID = *writeResult.CommitID
+			}
+			if writeResult.PendingID != nil {
+				if pendingID, decErr := apiServices.SQIDManager.Decode("ai_application_pending_writes", *writeResult.PendingID); decErr == nil {
+					pendingIDUint := uint(pendingID)
+					writeInfo.PendingWriteID = &pendingIDUint
+				}
+			}
+
+			jsonData, _ := json.MarshalIndent(writeResult, "", "  ")
+			result := &sdkmcp.CallToolResult{
+				Content: []sdkmcp.Content{
+					&sdkmcp.TextContent{Text: string(jsonData)},
+				},
+			}
+
+			logToolCallWithWriteInfo(
+				ctx,
+				apiServices,
+				aiApp,
+				"irmin_patch_file",
+				"builtin",
+				args,
+				startTime,
+				result,
+				writeInfo,
+			)
+			return result, struct{}{}, nil
+		},
+	)
+}
+
+// registerAIAppCommitTool registers the commit tool.
+func registerAIAppCommitTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+	sdkmcp.AddTool(
+		server,
+		&sdkmcp.Tool{
+			Name:        "irmin_commit",
+			Description: "Commit staged changes. Use when auto-commit is disabled to batch multiple writes into a single commit. Provide a path prefix to commit changes for a specific repository/branch, or leave empty to commit all staged changes.",
+		},
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppCommitArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+			startTime := time.Now()
+
+			executor := services.NewAIAppToolExecutor(aiApp, apiServices)
+
+			// Parse the path to get repo and ref
+			var repoSlug, ref string
+			if args.Path != "" {
+				resolved, err := executor.ResolvePath(args.Path)
+				if err != nil {
+					result := mcpError(err.Error())
+					logToolCall(ctx, apiServices, aiApp, "irmin_commit", "builtin", args, startTime, result)
+					return result, struct{}{}, nil
+				}
+				repoSlug = resolved.Repository.Slug
+				ref = resolved.Ref
+			} else {
+				// Default to first data source
+				dataSources := executor.ListDataSourcesUnified()
+				if len(dataSources) == 0 {
+					result := mcpError("No data sources configured")
+					logToolCall(ctx, apiServices, aiApp, "irmin_commit", "builtin", args, startTime, result)
+					return result, struct{}{}, nil
+				}
+				resolved, err := executor.ResolvePath(dataSources[0].Path)
+				if err != nil {
+					result := mcpError(err.Error())
+					logToolCall(ctx, apiServices, aiApp, "irmin_commit", "builtin", args, startTime, result)
+					return result, struct{}{}, nil
+				}
+				repoSlug = resolved.Repository.Slug
+				ref = resolved.Ref
+			}
+
+			commit, err := executor.CommitStagedChanges(ctx, repoSlug, ref, args.Message)
+			if err != nil {
+				result := mcpError(err.Error())
+				logToolCall(ctx, apiServices, aiApp, "irmin_commit", "builtin", args, startTime, result)
+				return result, struct{}{}, nil
+			}
+
+			writeResult := &services.WriteResult{
+				Path:      args.Path,
+				Operation: "commit",
+				Committed: true,
+				CommitID:  &commit.Hash,
+			}
+
+			// Prepare write audit info
+			writeInfo := &WriteAuditInfo{
+				Operation:  "commit",
+				TargetPath: args.Path,
+				CommitID:   commit.Hash,
+			}
+
+			jsonData, _ := json.MarshalIndent(writeResult, "", "  ")
+			result := &sdkmcp.CallToolResult{
+				Content: []sdkmcp.Content{
+					&sdkmcp.TextContent{Text: string(jsonData)},
+				},
+			}
+
+			logToolCallWithWriteInfo(
+				ctx,
+				apiServices,
+				aiApp,
+				"irmin_commit",
+				"builtin",
+				args,
+				startTime,
+				result,
+				writeInfo,
+			)
 			return result, struct{}{}, nil
 		},
 	)

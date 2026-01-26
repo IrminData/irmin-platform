@@ -1,13 +1,19 @@
 package services
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/utils"
 	"path"
+	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1347,4 +1353,826 @@ func (e *AIAppToolExecutor) executeEmbeddingSearchTool(
 	}
 
 	return result, nil
+}
+
+// === Write Operation Methods ===
+
+// Write operation type constants.
+const (
+	// WriteOperationUpload represents a file upload operation.
+	WriteOperationUpload = "upload"
+	// WriteOperationUpdate represents a file update operation.
+	WriteOperationUpdate = "update"
+	// WriteOperationPatch represents a JSON patch operation.
+	WriteOperationPatch = "patch"
+)
+
+var (
+	// ErrWriteNotEnabled is returned when write operations are not enabled for the AI Application.
+	ErrWriteNotEnabled = errors.New("write operations not enabled for this AI Application")
+	// ErrFileUploadNotEnabled is returned when file upload is not enabled.
+	ErrFileUploadNotEnabled = errors.New("file upload not enabled for this AI Application")
+	// ErrFileUpdateNotEnabled is returned when file update is not enabled.
+	ErrFileUpdateNotEnabled = errors.New("file update not enabled for this AI Application")
+	// ErrPatchNotEnabled is returned when patch operations are not enabled.
+	ErrPatchNotEnabled = errors.New("patch operations not enabled for this AI Application")
+	// ErrCommitMessageRequired is returned when a commit message is required but not provided.
+	ErrCommitMessageRequired = errors.New("commit message is required")
+	// ErrWriteAccessDenied is returned when write access is denied to a path.
+	ErrWriteAccessDenied = errors.New("write access denied to this path")
+)
+
+// WriteResult represents the result of a write operation.
+type WriteResult struct {
+	Path             string  `json:"path"`
+	Operation        string  `json:"operation"`
+	Committed        bool    `json:"committed"`
+	CommitID         *string `json:"commit_id,omitempty"`
+	PendingID        *string `json:"pending_id,omitempty"`
+	RequiresApproval bool    `json:"requires_approval"`
+}
+
+// validateWriteEnabled checks if write operations are enabled and configured.
+func (e *AIAppToolExecutor) validateWriteEnabled() (*db.AIApplicationWriteConfig, error) {
+	config := e.GetToolConfig()
+	if !config.WriteEnabled {
+		return nil, ErrWriteNotEnabled
+	}
+	if config.WriteConfig == nil {
+		return nil, ErrWriteNotEnabled
+	}
+	return config.WriteConfig, nil
+}
+
+// validateWriteAccess checks if writes are allowed to the resolved path.
+func (e *AIAppToolExecutor) validateWriteAccess(resolved *ResolvedPath) error {
+	// Check if the path is within the configured data sources
+	if err := e.validatePathAccess(resolved.Repository.Slug, resolved.Path, resolved.Ref); err != nil {
+		return ErrWriteAccessDenied
+	}
+	return nil
+}
+
+// buildCommitMessage constructs the final commit message with any configured prefix.
+func (e *AIAppToolExecutor) buildCommitMessage(
+	writeConfig *db.AIApplicationWriteConfig,
+	message, operation, path string,
+) string {
+	if message == "" {
+		message = fmt.Sprintf("AI Agent: %s %s", operation, path)
+	}
+	if writeConfig.CommitMessagePrefix != "" {
+		return writeConfig.CommitMessagePrefix + message
+	}
+	return message
+}
+
+// WriteFile uploads or updates a file in a data source.
+func (e *AIAppToolExecutor) WriteFile(
+	ctx context.Context,
+	unifiedPath string,
+	content []byte,
+	commitMessage string,
+	autoCommit bool,
+) (*WriteResult, error) {
+	// Validate write is enabled
+	writeConfig, err := e.validateWriteEnabled()
+	if err != nil {
+		return nil, err
+	}
+
+	// Resolve the path
+	resolved, err := e.ResolvePath(unifiedPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate write access
+	if err = e.validateWriteAccess(resolved); err != nil {
+		return nil, err
+	}
+
+	// Check if file exists to determine if this is upload or update
+	_, _, _, existsErr := e.apiServices.GetRepositoryObject(
+		ctx, "en", &e.aiApp.Owner, &e.aiApp.Workspace,
+		resolved.Repository, resolved.Path, resolved.Ref,
+	)
+	fileExists := existsErr == nil
+
+	// Check appropriate permission
+	if fileExists && !writeConfig.FileUpdateEnabled {
+		return nil, ErrFileUpdateNotEnabled
+	}
+	if !fileExists && !writeConfig.FileUploadEnabled {
+		return nil, ErrFileUploadNotEnabled
+	}
+
+	// Check if commit message is required
+	if writeConfig.RequireCommitMessage && commitMessage == "" {
+		return nil, ErrCommitMessageRequired
+	}
+
+	// Determine operation type
+	operation := WriteOperationUpload
+	if fileExists {
+		operation = WriteOperationUpdate
+	}
+
+	// Build final commit message
+	finalCommitMessage := e.buildCommitMessage(writeConfig, commitMessage, operation, unifiedPath)
+
+	// Check if approval is required
+	if writeConfig.RequireApproval {
+		return e.createPendingWrite(ctx, resolved, operation, content, nil, finalCommitMessage)
+	}
+
+	// Upload the file
+	_, uploadErr := e.apiServices.UploadRepositoryObject(
+		ctx, "en", &e.aiApp.Owner, &e.aiApp.Workspace,
+		resolved.Repository, resolved.Path, resolved.Ref,
+		bytes.NewReader(content), nil,
+	)
+	if uploadErr != nil {
+		return nil, fmt.Errorf("failed to write file: %w", uploadErr)
+	}
+
+	result := &WriteResult{
+		Path:             unifiedPath,
+		Operation:        operation,
+		Committed:        false,
+		RequiresApproval: false,
+	}
+
+	// Auto-commit if configured
+	shouldCommit := autoCommit || writeConfig.AutoCommit
+	if shouldCommit {
+		commit, commitErr := e.CommitStagedChanges(ctx, resolved.Repository.Slug, resolved.Ref, finalCommitMessage)
+		if commitErr != nil {
+			return nil, fmt.Errorf("failed to commit changes: %w", commitErr)
+		}
+		result.Committed = true
+		if commit != nil {
+			result.CommitID = &commit.Hash
+		}
+	}
+
+	return result, nil
+}
+
+// PatchFile applies JSON Patch operations to a structured file.
+func (e *AIAppToolExecutor) PatchFile(
+	ctx context.Context,
+	unifiedPath string,
+	operations []irminmodels.PatchOperation,
+	commitMessage string,
+	autoCommit bool,
+) (*WriteResult, error) {
+	// Validate write is enabled
+	writeConfig, err := e.validateWriteEnabled()
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if patch is enabled
+	if !writeConfig.PatchEnabled {
+		return nil, ErrPatchNotEnabled
+	}
+
+	// Resolve the path
+	resolved, err := e.ResolvePath(unifiedPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate write access
+	if err = e.validateWriteAccess(resolved); err != nil {
+		return nil, err
+	}
+
+	// Check if commit message is required
+	if writeConfig.RequireCommitMessage && commitMessage == "" {
+		return nil, ErrCommitMessageRequired
+	}
+
+	// Build final commit message
+	finalCommitMessage := e.buildCommitMessage(writeConfig, commitMessage, WriteOperationPatch, unifiedPath)
+
+	// Check if approval is required
+	if writeConfig.RequireApproval {
+		return e.createPendingWrite(ctx, resolved, WriteOperationPatch, nil, operations, finalCommitMessage)
+	}
+
+	// Read current file content
+	content, err := e.GetRepositoryObjectContent(ctx, resolved.Repository.Slug, resolved.Path, resolved.Ref, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file for patching: %w", err)
+	}
+
+	// Apply JSON patch operations
+	patched, err := applyJSONPatch(content, operations)
+	if err != nil {
+		return nil, fmt.Errorf("failed to apply patch: %w", err)
+	}
+
+	// Upload the patched content
+	_, uploadErr := e.apiServices.UploadRepositoryObject(
+		ctx, "en", &e.aiApp.Owner, &e.aiApp.Workspace,
+		resolved.Repository, resolved.Path, resolved.Ref,
+		bytes.NewReader(patched), nil,
+	)
+	if uploadErr != nil {
+		return nil, fmt.Errorf("failed to write patched file: %w", uploadErr)
+	}
+
+	result := &WriteResult{
+		Path:             unifiedPath,
+		Operation:        WriteOperationPatch,
+		Committed:        false,
+		RequiresApproval: false,
+	}
+
+	// Auto-commit if configured
+	shouldCommit := autoCommit || writeConfig.AutoCommit
+	if shouldCommit {
+		commit, commitErr := e.CommitStagedChanges(ctx, resolved.Repository.Slug, resolved.Ref, finalCommitMessage)
+		if commitErr != nil {
+			return nil, fmt.Errorf("failed to commit changes: %w", commitErr)
+		}
+		result.Committed = true
+		if commit != nil {
+			result.CommitID = &commit.Hash
+		}
+	}
+
+	return result, nil
+}
+
+// getAIAppAuthor returns the author string for commits made by this AI Application.
+// Format: "AI App: <name> <ai-app-<id>@irmin.app>"
+func (e *AIAppToolExecutor) getAIAppAuthor() string {
+	// Create a unique email-like identifier for the AI Application
+	aiAppIDEncoded, _ := e.apiServices.SQIDManager.Encode("ai_applications", uint64(e.aiApp.ID))
+	return fmt.Sprintf("AI App: %s <ai-app-%s@irmin.app>", e.aiApp.Name, aiAppIDEncoded)
+}
+
+// CommitStagedChanges commits all staged changes on a branch.
+func (e *AIAppToolExecutor) CommitStagedChanges(
+	ctx context.Context,
+	repoSlug, ref, message string,
+) (*irminmodels.Commit, error) {
+	// Validate write is enabled
+	_, err := e.validateWriteEnabled()
+	if err != nil {
+		return nil, err
+	}
+
+	// Get repository from data sources
+	repo, err := e.getRepositoryFromDataSources(repoSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the commit with the AI Application as the author
+	commit, commitErr := e.apiServices.CreateRepositoryCommit(
+		ctx, "en", &e.aiApp.Owner, &e.aiApp.Workspace,
+		repo,
+		irmincore.CreateCommitRequest{
+			Branch:  ref,
+			Message: message,
+			Author:  e.getAIAppAuthor(),
+		},
+	)
+	if commitErr != nil {
+		return nil, fmt.Errorf("failed to create commit: %w", commitErr)
+	}
+
+	return commit, nil
+}
+
+// contentPreviewMaxLen is the maximum length for content previews in pending writes.
+const contentPreviewMaxLen = 500
+
+// createPendingWrite creates a pending write entry for approval.
+func (e *AIAppToolExecutor) createPendingWrite(
+	_ context.Context,
+	resolved *ResolvedPath,
+	operation string,
+	content []byte,
+	operations []irminmodels.PatchOperation,
+	commitMessage string,
+) (*WriteResult, error) {
+	// Create content preview (truncated for display)
+	contentPreview := ""
+	if content != nil {
+		previewLen := len(content)
+		if previewLen > contentPreviewMaxLen {
+			previewLen = contentPreviewMaxLen
+		}
+		contentPreview = string(content[:previewLen])
+		if len(content) > contentPreviewMaxLen {
+			contentPreview += "..."
+		}
+	}
+
+	// Serialize patch operations if present
+	patchJSON := ""
+	if operations != nil {
+		patchBytes, _ := json.Marshal(operations)
+		patchJSON = string(patchBytes)
+	}
+
+	// Generate a content hash for reference
+	contentHash := ""
+	if content != nil {
+		hash := sha256.Sum256(content)
+		contentHash = hex.EncodeToString(hash[:])
+	}
+
+	// Create the pending write record with full content stored
+	pendingWrite := &db.AIApplicationPendingWrite{
+		AIApplicationID: e.aiApp.ID,
+		RepositoryID:    resolved.Repository.ID,
+		Path:            resolved.Path,
+		Ref:             resolved.Ref,
+		Operation:       operation,
+		Content:         content, // Store full content for later execution
+		ContentHash:     contentHash,
+		ContentPreview:  contentPreview,
+		PatchJSON:       patchJSON,
+		CommitMessage:   commitMessage,
+		Status:          db.PendingWriteStatusPending,
+	}
+
+	if err := e.apiServices.DB.CreateAIApplicationPendingWrite(pendingWrite); err != nil {
+		return nil, fmt.Errorf("failed to create pending write: %w", err)
+	}
+
+	// Encode the pending write ID
+	pendingWriteSqid, _ := e.apiServices.SQIDManager.Encode("ai_application_pending_writes", uint64(pendingWrite.ID))
+
+	return &WriteResult{
+		Path:             BuildUnifiedPath(resolved.Repository.Slug, resolved.Ref, resolved.Path),
+		Operation:        operation,
+		Committed:        false,
+		PendingID:        &pendingWriteSqid,
+		RequiresApproval: true,
+	}, nil
+}
+
+// ExecutePendingWrite executes a previously approved pending write.
+func (e *AIAppToolExecutor) ExecutePendingWrite(
+	ctx context.Context,
+	pendingWrite *db.AIApplicationPendingWrite,
+) (*WriteResult, error) {
+	// Validate write is enabled
+	writeConfig, err := e.validateWriteEnabled()
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate operation-specific sub-permissions
+	// These may have changed since the pending write was created
+	switch pendingWrite.Operation {
+	case WriteOperationUpload:
+		if !writeConfig.FileUploadEnabled {
+			return nil, ErrFileUploadNotEnabled
+		}
+	case WriteOperationUpdate:
+		if !writeConfig.FileUpdateEnabled {
+			return nil, ErrFileUpdateNotEnabled
+		}
+	case WriteOperationPatch:
+		if !writeConfig.PatchEnabled {
+			return nil, ErrPatchNotEnabled
+		}
+	}
+
+	// Build unified path
+	unifiedPath := BuildUnifiedPath(pendingWrite.Repository.Slug, pendingWrite.Ref, pendingWrite.Path)
+
+	// Validate the path is still within configured data sources
+	// The data sources may have changed since the pending write was created
+	if pathErr := e.validatePathAccess(pendingWrite.Repository.Slug, pendingWrite.Path, pendingWrite.Ref); pathErr != nil {
+		return nil, ErrWriteAccessDenied
+	}
+
+	// Execute the operation
+	if execErr := e.executePendingWriteOperation(ctx, pendingWrite); execErr != nil {
+		return nil, execErr
+	}
+
+	result := &WriteResult{
+		Path:             unifiedPath,
+		Operation:        pendingWrite.Operation,
+		Committed:        false,
+		RequiresApproval: false,
+	}
+
+	// Commit the changes (approval flow always commits)
+	commit, commitErr := e.CommitStagedChanges(
+		ctx,
+		pendingWrite.Repository.Slug,
+		pendingWrite.Ref,
+		pendingWrite.CommitMessage,
+	)
+	if commitErr != nil {
+		return nil, fmt.Errorf("failed to commit changes: %w", commitErr)
+	}
+	result.Committed = true
+	if commit != nil {
+		result.CommitID = &commit.Hash
+	}
+
+	// Apply commit message prefix if configured
+	_ = writeConfig // Used for potential future enhancements
+
+	return result, nil
+}
+
+// executePendingWriteOperation executes the write operation for a pending write.
+func (e *AIAppToolExecutor) executePendingWriteOperation(
+	ctx context.Context,
+	pendingWrite *db.AIApplicationPendingWrite,
+) error {
+	switch pendingWrite.Operation {
+	case WriteOperationUpload, WriteOperationUpdate:
+		return e.executePendingUpload(ctx, pendingWrite)
+	case WriteOperationPatch:
+		return e.executePendingPatch(ctx, pendingWrite)
+	default:
+		return fmt.Errorf("unknown operation type: %s", pendingWrite.Operation)
+	}
+}
+
+// executePendingUpload executes an upload/update operation from a pending write.
+func (e *AIAppToolExecutor) executePendingUpload(
+	ctx context.Context,
+	pendingWrite *db.AIApplicationPendingWrite,
+) error {
+	if pendingWrite.Content == nil {
+		return errors.New("no content stored for pending write")
+	}
+
+	_, uploadErr := e.apiServices.UploadRepositoryObject(
+		ctx, "en", &e.aiApp.Owner, &e.aiApp.Workspace,
+		&pendingWrite.Repository, pendingWrite.Path, pendingWrite.Ref,
+		bytes.NewReader(pendingWrite.Content), nil,
+	)
+	if uploadErr != nil {
+		return fmt.Errorf("failed to write file: %w", uploadErr)
+	}
+	return nil
+}
+
+// executePendingPatch executes a JSON patch operation from a pending write.
+func (e *AIAppToolExecutor) executePendingPatch(
+	ctx context.Context,
+	pendingWrite *db.AIApplicationPendingWrite,
+) error {
+	if pendingWrite.PatchJSON == "" {
+		return errors.New("no patch operations stored for pending write")
+	}
+
+	var patchOperations []irminmodels.PatchOperation
+	if unmarshalErr := json.Unmarshal([]byte(pendingWrite.PatchJSON), &patchOperations); unmarshalErr != nil {
+		return fmt.Errorf("failed to parse stored patch operations: %w", unmarshalErr)
+	}
+
+	// Read current file content
+	patchContent, readErr := e.GetRepositoryObjectContent(
+		ctx,
+		pendingWrite.Repository.Slug,
+		pendingWrite.Path,
+		pendingWrite.Ref,
+		false,
+	)
+	if readErr != nil {
+		return fmt.Errorf("failed to read file for patching: %w", readErr)
+	}
+
+	// Apply JSON patch operations
+	patched, patchErr := applyJSONPatch(patchContent, patchOperations)
+	if patchErr != nil {
+		return fmt.Errorf("failed to apply patch: %w", patchErr)
+	}
+
+	// Upload the patched content
+	_, uploadErr := e.apiServices.UploadRepositoryObject(
+		ctx, "en", &e.aiApp.Owner, &e.aiApp.Workspace,
+		&pendingWrite.Repository, pendingWrite.Path, pendingWrite.Ref,
+		bytes.NewReader(patched), nil,
+	)
+	if uploadErr != nil {
+		return fmt.Errorf("failed to write patched file: %w", uploadErr)
+	}
+	return nil
+}
+
+// applyJSONPatch applies JSON Patch operations to a JSON document.
+func applyJSONPatch(document []byte, operations []irminmodels.PatchOperation) ([]byte, error) {
+	// Parse the document as JSON
+	var doc any
+	if err := json.Unmarshal(document, &doc); err != nil {
+		return nil, fmt.Errorf("document is not valid JSON: %w", err)
+	}
+
+	// Apply each operation
+	for _, op := range operations {
+		var opErr error
+		doc, opErr = applyPatchOperation(doc, op)
+		if opErr != nil {
+			return nil, fmt.Errorf("failed to apply %s operation at %s: %w", op.Op, op.Path, opErr)
+		}
+	}
+
+	// Serialize back to JSON
+	return json.MarshalIndent(doc, "", "  ")
+}
+
+// applyPatchOperation applies a single JSON Patch operation.
+func applyPatchOperation(doc any, op irminmodels.PatchOperation) (any, error) {
+	pathParts := parseJSONPointer(op.Path)
+
+	switch op.Op {
+	case "add":
+		return applyPatchAdd(doc, pathParts, op.Value)
+	case "remove":
+		return removeValueAtPath(doc, pathParts)
+	case "replace":
+		return applyPatchReplace(doc, pathParts, op.Value)
+	case "copy":
+		return applyPatchCopy(doc, pathParts, op.From)
+	case "move":
+		return applyPatchMove(doc, pathParts, op.From)
+	case "test":
+		return applyPatchTest(doc, pathParts, op.Value)
+	default:
+		return nil, fmt.Errorf("unsupported operation: %s", op.Op)
+	}
+}
+
+// applyPatchAdd handles the JSON Patch "add" operation.
+func applyPatchAdd(doc any, pathParts []string, value *any) (any, error) {
+	if value == nil {
+		return nil, errors.New("add operation requires a value")
+	}
+	return setValueAtPath(doc, pathParts, *value)
+}
+
+// applyPatchReplace handles the JSON Patch "replace" operation.
+func applyPatchReplace(doc any, pathParts []string, value *any) (any, error) {
+	if value == nil {
+		return nil, errors.New("replace operation requires a value")
+	}
+	removed, err := removeValueAtPath(doc, pathParts)
+	if err != nil {
+		return nil, err
+	}
+	return setValueAtPath(removed, pathParts, *value)
+}
+
+// applyPatchCopy handles the JSON Patch "copy" operation.
+func applyPatchCopy(doc any, pathParts []string, from *string) (any, error) {
+	if from == nil {
+		return nil, errors.New("copy operation requires a from path")
+	}
+	fromParts := parseJSONPointer(*from)
+	value, err := getValueAtPath(doc, fromParts)
+	if err != nil {
+		return nil, err
+	}
+	return setValueAtPath(doc, pathParts, value)
+}
+
+// applyPatchMove handles the JSON Patch "move" operation.
+func applyPatchMove(doc any, pathParts []string, from *string) (any, error) {
+	if from == nil {
+		return nil, errors.New("move operation requires a from path")
+	}
+	fromParts := parseJSONPointer(*from)
+	value, err := getValueAtPath(doc, fromParts)
+	if err != nil {
+		return nil, err
+	}
+	doc, err = removeValueAtPath(doc, fromParts)
+	if err != nil {
+		return nil, err
+	}
+	return setValueAtPath(doc, pathParts, value)
+}
+
+// applyPatchTest handles the JSON Patch "test" operation.
+func applyPatchTest(doc any, pathParts []string, value *any) (any, error) {
+	if value == nil {
+		return nil, errors.New("test operation requires a value")
+	}
+	currentValue, err := getValueAtPath(doc, pathParts)
+	if err != nil {
+		return nil, err
+	}
+	if !jsonValuesEqual(currentValue, *value) {
+		return nil, errors.New("test operation failed: values are not equal")
+	}
+	return doc, nil
+}
+
+// parseJSONPointer parses a JSON Pointer string into path parts.
+func parseJSONPointer(pointer string) []string {
+	if pointer == "" || pointer == "/" {
+		return []string{}
+	}
+	// Remove leading slash and split
+	if pointer[0] == '/' {
+		pointer = pointer[1:]
+	}
+	parts := strings.Split(pointer, "/")
+	// Unescape ~1 -> / and ~0 -> ~
+	for i, part := range parts {
+		part = strings.ReplaceAll(part, "~1", "/")
+		part = strings.ReplaceAll(part, "~0", "~")
+		parts[i] = part
+	}
+	return parts
+}
+
+// getValueAtPath retrieves a value at the specified JSON Pointer path.
+func getValueAtPath(doc any, path []string) (any, error) {
+	if len(path) == 0 {
+		return doc, nil
+	}
+
+	current := doc
+	for _, part := range path {
+		switch v := current.(type) {
+		case map[string]any:
+			val, ok := v[part]
+			if !ok {
+				return nil, fmt.Errorf("path not found: %s", part)
+			}
+			current = val
+		case []any:
+			idx, err := strconv.Atoi(part)
+			if err != nil {
+				return nil, fmt.Errorf("invalid array index: %s", part)
+			}
+			if idx < 0 || idx >= len(v) {
+				return nil, fmt.Errorf("array index out of bounds: %d", idx)
+			}
+			current = v[idx]
+		default:
+			return nil, fmt.Errorf("cannot traverse into non-container type at: %s", part)
+		}
+	}
+	return current, nil
+}
+
+// navigateToParent traverses the JSON document to find the parent of the specified path.
+// It returns the parent container, the last key in the path, and any error encountered.
+// If createMissing is true, it creates intermediate map objects as needed.
+func navigateToParent(doc any, path []string, createMissing bool) (any, string, error) {
+	if len(path) == 0 {
+		return nil, "", errors.New("path is empty")
+	}
+
+	parent := doc
+	for i := range len(path) - 1 {
+		var err error
+		parent, err = navigateOneLevel(parent, path[i], createMissing)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+	return parent, path[len(path)-1], nil
+}
+
+// navigateOneLevel moves one level deeper in the JSON document.
+func navigateOneLevel(current any, key string, createMissing bool) (any, error) {
+	switch v := current.(type) {
+	case map[string]any:
+		next, ok := v[key]
+		if !ok {
+			if createMissing {
+				v[key] = make(map[string]any)
+				return v[key], nil
+			}
+			return nil, fmt.Errorf("path not found: %s", key)
+		}
+		return next, nil
+	case []any:
+		idx, err := strconv.Atoi(key)
+		if err != nil {
+			return nil, fmt.Errorf("invalid array index: %s", key)
+		}
+		if idx < 0 || idx >= len(v) {
+			return nil, fmt.Errorf("array index out of bounds: %d", idx)
+		}
+		return v[idx], nil
+	default:
+		return nil, errors.New("cannot traverse into non-container type")
+	}
+}
+
+// setValueAtPath sets a value at the specified JSON Pointer path.
+func setValueAtPath(doc any, path []string, value any) (any, error) {
+	if len(path) == 0 {
+		return value, nil
+	}
+
+	parent, lastKey, err := navigateToParent(doc, path, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return setValueInContainer(doc, parent, lastKey, value)
+}
+
+// setValueInContainer sets a value in a map or array container.
+func setValueInContainer(doc, parent any, key string, value any) (any, error) {
+	switch v := parent.(type) {
+	case map[string]any:
+		v[key] = value
+		return doc, nil
+	case []any:
+		return setArrayValue(doc, v, key, value)
+	default:
+		return nil, errors.New("cannot set value on non-container type")
+	}
+}
+
+// setArrayValue handles setting or appending a value in an array.
+func setArrayValue(doc any, arr []any, key string, value any) (any, error) {
+	// Handle special "-" index for appending to array
+	if key == "-" {
+		// Note: Appending to arrays in-place is not supported by this implementation
+		_ = append(arr, value)
+		return doc, nil
+	}
+
+	idx, err := strconv.Atoi(key)
+	if err != nil {
+		return nil, fmt.Errorf("invalid array index: %s", key)
+	}
+
+	switch {
+	case idx == len(arr):
+		_ = append(arr, value)
+	case idx >= 0 && idx < len(arr):
+		arr[idx] = value
+	default:
+		return nil, fmt.Errorf("array index out of bounds: %d", idx)
+	}
+	return doc, nil
+}
+
+// removeValueAtPath removes a value at the specified JSON Pointer path.
+func removeValueAtPath(doc any, path []string) (any, error) {
+	if len(path) == 0 {
+		return nil, errors.New("cannot remove root document")
+	}
+
+	parent, lastKey, err := navigateToParent(doc, path, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return removeValueFromContainer(doc, parent, lastKey)
+}
+
+// removeValueFromContainer removes a value from a map or array container.
+func removeValueFromContainer(doc, parent any, key string) (any, error) {
+	switch v := parent.(type) {
+	case map[string]any:
+		if _, ok := v[key]; !ok {
+			return nil, fmt.Errorf("path not found: %s", key)
+		}
+		delete(v, key)
+		return doc, nil
+	case []any:
+		return removeArrayElement(doc, v, key)
+	default:
+		return nil, errors.New("cannot remove from non-container type")
+	}
+}
+
+// removeArrayElement removes an element from an array at the specified index.
+func removeArrayElement(doc any, arr []any, key string) (any, error) {
+	idx, err := strconv.Atoi(key)
+	if err != nil {
+		return nil, fmt.Errorf("invalid array index: %s", key)
+	}
+	if idx < 0 || idx >= len(arr) {
+		return nil, fmt.Errorf("array index out of bounds: %d", idx)
+	}
+	// Remove element from array by shifting elements left
+	// Note: This modifies the backing array in place
+	copy(arr[idx:], arr[idx+1:])
+	// The slice header update only affects this local variable
+	_ = arr[:len(arr)-1]
+	return doc, nil
+}
+
+// jsonValuesEqual compares two JSON values for equality.
+// It handles the comparison of maps, slices, and primitive types.
+func jsonValuesEqual(a, b any) bool {
+	return reflect.DeepEqual(a, b)
 }

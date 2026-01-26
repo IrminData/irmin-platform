@@ -17,6 +17,69 @@
     "host": "api.irmin.co",
     "basePath": "/api/v1",
     "paths": {
+        "/ai-app/commit": {
+            "post": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "Commit all staged changes on the specified branch",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "Commit staged changes",
+                "parameters": [
+                    {
+                        "description": "Commit request with message (required), path (optional)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Commit result",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - missing commit message",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - write not enabled",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/ai-app/content": {
             "get": {
                 "security": [
@@ -246,6 +309,264 @@
                     },
                     "500": {
                         "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ai-app/patch": {
+            "post": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "Apply JSON Patch operations to a file at the specified path. Use unified path format: /{repository-slug}/{ref}/{path}",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "Patch a file with JSON Patch operations",
+                "parameters": [
+                    {
+                        "description": "Patch request with path (required), operations (required), commit_message (optional), auto_commit (optional)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Patch result",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - missing required fields",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - patch not enabled or path not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ai-app/pending-writes": {
+            "get": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "List all pending write operations awaiting approval",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "List pending writes",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of results per page (default 50)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pending writes list",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ai-app/pending-writes/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "Get details of a specific pending write",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "Get pending write details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pending write ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pending write details",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Pending write not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ai-app/pending-writes/{id}/approve": {
+            "post": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "Approval of pending writes is not allowed via the AI App API. Use the workspace API with user authentication to approve writes. This prevents AI applications from self-approving and preserves RequireApproval human oversight.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "Approve pending write (forbidden)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pending write ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Approval not allowed via AI App API; use workspace API",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ai-app/pending-writes/{id}/reject": {
+            "post": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "Rejection of pending writes is not allowed via the AI App API. Use the workspace API with user authentication to reject writes. This prevents AI applications from self-rejecting and preserves RequireApproval human oversight.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "Reject pending write (forbidden)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pending write ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Rejection not allowed via AI App API; use workspace API",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -513,6 +834,69 @@
                     },
                     "403": {
                         "description": "Forbidden - tool not found or disabled",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ai-app/write": {
+            "post": {
+                "security": [
+                    {
+                        "AIAppAPIKey": []
+                    }
+                ],
+                "description": "Write or update a file at the specified path. Use unified path format: /{repository-slug}/{ref}/{path}",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-app-api"
+                ],
+                "summary": "Write or update a file",
+                "parameters": [
+                    {
+                        "description": "Write request with path (required), content (required), commit_message (optional), auto_commit (optional)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Write result",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - missing required fields",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid API key",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - write not enabled or path not allowed",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -2626,6 +3010,323 @@
                     },
                     "404": {
                         "description": "AI application not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get pending write operations awaiting approval for this AI application",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-applications"
+                ],
+                "summary": "Get AI application pending writes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "AI application slug",
+                        "name": "ai_application_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit (default 50, max 200)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pending writes retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "AI application not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get details of a specific pending write operation",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-applications"
+                ],
+                "summary": "Get a specific pending write",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "AI application slug",
+                        "name": "ai_application_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pending write ID",
+                        "name": "pending_write",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pending write retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write}/approve": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Approve a pending write operation, executing the write",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-applications"
+                ],
+                "summary": "Approve a pending write",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "AI application slug",
+                        "name": "ai_application_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pending write ID",
+                        "name": "pending_write",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pending write approved and executed",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict - already processed",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write}/reject": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Reject a pending write operation",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-applications"
+                ],
+                "summary": "Reject a pending write",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "AI application slug",
+                        "name": "ai_application_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pending write ID",
+                        "name": "pending_write",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pending write rejected",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict - already processed",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -13085,6 +13786,11 @@
                 "message"
             ],
             "properties": {
+                "author": {
+                    "description": "Author optionally overrides the commit author. Format: \"Name \u003cemail\u003e\"\nIf not provided, the authenticated user's email will be used.",
+                    "type": "string",
+                    "example": "AI App: Customer Analytics \u003cai-app@irmin.app\u003e"
+                },
                 "branch": {
                     "type": "string",
                     "example": "main"
@@ -14606,12 +15312,24 @@
                 "vector_search_enabled": {
                     "type": "boolean",
                     "example": true
+                },
+                "write_config": {
+                    "$ref": "#/definitions/irminmodels.AIApplicationWriteConfig"
+                },
+                "write_enabled": {
+                    "description": "Write tools configuration",
+                    "type": "boolean",
+                    "example": false
                 }
             }
         },
         "irminmodels.AIApplicationToolLog": {
             "type": "object",
             "properties": {
+                "commit_id": {
+                    "type": "string",
+                    "example": "abc123def456"
+                },
                 "created_at": {
                     "type": "string",
                     "example": "2025-01-15T10:30:00Z"
@@ -14633,6 +15351,10 @@
                 "origin": {
                     "type": "string",
                     "example": "https://app.example.com"
+                },
+                "pending_write_id": {
+                    "type": "string",
+                    "example": "pw_1a2b3c4d"
                 },
                 "protocol": {
                     "type": "string",
@@ -14657,6 +15379,15 @@
                 "user_agent": {
                     "type": "string",
                     "example": "Claude/1.0"
+                },
+                "write_operation": {
+                    "description": "Write-specific audit fields",
+                    "type": "string",
+                    "example": "upload"
+                },
+                "write_target_path": {
+                    "type": "string",
+                    "example": "/repo/main/data/file.json"
                 }
             }
         },
@@ -14732,6 +15463,39 @@
                 "tool_name": {
                     "type": "string",
                     "example": "irmin_execute_sql"
+                }
+            }
+        },
+        "irminmodels.AIApplicationWriteConfig": {
+            "type": "object",
+            "properties": {
+                "auto_commit": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "commit_message_prefix": {
+                    "type": "string",
+                    "example": "[AI Agent] "
+                },
+                "file_update_enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "file_upload_enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "patch_enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "require_approval": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "require_commit_message": {
+                    "type": "boolean",
+                    "example": false
                 }
             }
         },

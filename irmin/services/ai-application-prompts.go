@@ -36,6 +36,11 @@ func (api *APIServices) GenerateAIApplicationSystemPrompt(aiApp *db.AIApplicatio
 		sections = append(sections, generateVectorSearchSection())
 	}
 
+	// Write tools guide (only if write is enabled)
+	if config.WriteEnabled && config.WriteConfig != nil {
+		sections = append(sections, generateWriteToolsGuideSection(config.WriteConfig))
+	}
+
 	return strings.Join(sections, "\n\n")
 }
 
@@ -74,6 +79,9 @@ func generateDataSourcesSection(aiApp *db.AIApplication) string {
 func generateToolsSection(config db.AIApplicationToolConfig) string {
 	section := "## Available Tools\n\nThe following tools are available for data access. All tools use unified paths (e.g., `/repo-slug/main/folder/file.json`):\n"
 
+	// Read tools
+	section += "\n### Read Tools\n"
+
 	if config.QueryEnabled {
 		section += "\n- **irmin_execute_sql** - Execute SQL queries on data using DuckDB"
 	}
@@ -93,8 +101,51 @@ func generateToolsSection(config db.AIApplicationToolConfig) string {
 		section += "\n- **irmin_get_documentation** - Get comprehensive documentation including SQL syntax guide"
 	}
 
+	// Write tools
+	if config.WriteEnabled && config.WriteConfig != nil {
+		section += generateWriteToolsSubsection(config.WriteConfig)
+	}
+
 	// Always available
+	section += "\n\n### Utility Tools\n"
 	section += "\n- **irmin_ai_app_info** - Get information about available data sources and tools"
+
+	return section
+}
+
+func generateWriteToolsSubsection(writeConfig *db.AIApplicationWriteConfig) string {
+	section := "\n\n### Write Tools\n"
+
+	if writeConfig.FileUploadEnabled || writeConfig.FileUpdateEnabled {
+		section += "\n- **irmin_write_file** - Write or update a file at a specified path"
+	}
+	if writeConfig.PatchEnabled {
+		section += "\n- **irmin_patch_file** - Apply JSON Patch operations to modify structured JSON files"
+	}
+	if !writeConfig.AutoCommit {
+		section += "\n- **irmin_commit** - Commit staged changes (use when auto-commit is disabled)"
+	}
+
+	// Add write behavior notes
+	section += "\n\n#### Write Behavior\n"
+
+	if writeConfig.AutoCommit {
+		section += "\n- Changes are automatically committed after each write operation"
+	} else {
+		section += "\n- Changes are staged and must be committed using `irmin_commit`"
+	}
+
+	if writeConfig.RequireCommitMessage {
+		section += "\n- A commit message is required for all write operations"
+	}
+
+	if writeConfig.CommitMessagePrefix != "" {
+		section += fmt.Sprintf("\n- All commit messages are prefixed with: `%s`", writeConfig.CommitMessagePrefix)
+	}
+
+	if writeConfig.RequireApproval {
+		section += "\n- **Human approval required**: Write operations create pending requests that must be approved before taking effect"
+	}
 
 	return section
 }
@@ -220,4 +271,62 @@ func generateCustomToolsSection(customTools []db.AIApplicationCustomTool) string
 	section += toolsBuilder.String()
 
 	return section
+}
+
+func generateWriteToolsGuideSection(writeConfig *db.AIApplicationWriteConfig) string {
+	return `## Write Operations Guide
+
+Write operations allow you to modify data files in the configured data sources. All changes are versioned and can be rolled back.
+
+### Writing Files
+
+Use **irmin_write_file** to create new files or update existing ones:
+
+` + "```" + `json
+{
+  "path": "/repo-slug/main/data/customers.json",
+  "content": "{\"name\": \"John Doe\", \"email\": \"john@example.com\"}",
+  "commit_message": "Added new customer record"
+}
+` + "```" + `
+
+### Patching JSON Files
+
+Use **irmin_patch_file** to apply partial modifications using JSON Patch operations:
+
+` + "```" + `json
+{
+  "path": "/repo-slug/main/data/customers.json",
+  "operations": "[{\"op\": \"replace\", \"path\": \"/name\", \"value\": \"Jane Doe\"}]",
+  "commit_message": "Updated customer name"
+}
+` + "```" + `
+
+### JSON Patch Operations
+
+Supported operations:
+- **add** - Add a new value at the specified path
+- **remove** - Remove the value at the specified path  
+- **replace** - Replace the value at the specified path
+- **copy** - Copy a value from one path to another
+- **move** - Move a value from one path to another
+
+### Example Operations
+
+` + "```" + `json
+[
+  {"op": "add", "path": "/users/-", "value": {"id": 123, "name": "New User"}},
+  {"op": "replace", "path": "/users/0/status", "value": "active"},
+  {"op": "remove", "path": "/users/5"},
+  {"op": "copy", "from": "/users/0/name", "path": "/users/1/name"},
+  {"op": "move", "from": "/temp", "path": "/archive"}
+]
+` + "```" + `
+
+### Best Practices
+
+1. **Read before write**: Use irmin_get_object_content to understand the current state
+2. **Use descriptive commit messages**: Explain what changed and why
+3. **Prefer patches for small changes**: Use JSON Patch for surgical updates to reduce conflicts
+4. **Check schema first**: Use irmin_get_object_schema to understand the data structure before modifying`
 }
