@@ -52,6 +52,7 @@
   "branch_reset": "Branch reset to commit",
   "branch_is_immutable": "Branch is immutable and cannot be modified",
   "commit_created": "Commit created",
+  "commit_reverted": "Commit reverted successfully",
   "changes_reverted_to_previous_commit": "Changes reverted to previous commit",
   "tag_created": "Tag created",
   "tag_deleted": "Tag deleted",

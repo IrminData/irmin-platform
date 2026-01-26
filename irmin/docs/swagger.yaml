@@ -502,6 +502,17 @@ definitions:
     required:
     - commit_ref
     type: object
+  irmincore.RevertCommitRequest:
+    properties:
+      commit_ref:
+        example: abc123def456
+        type: string
+      parent_number:
+        example: 0
+        type: integer
+    required:
+    - commit_ref
+    type: object
   irmincore.RevertUncommittedChangesRequest:
     properties:
       branch:
@@ -9129,6 +9140,67 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Reset branch to a commit
+      tags:
+      - repository-branches
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/branches/{branch_name}/revert:
+    post:
+      consumes:
+      - application/json
+      description: Create a new commit that undoes the changes from a specified commit
+        (non-destructive)
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Repository slug
+        in: path
+        name: repository_slug
+        required: true
+        type: string
+      - description: Branch name
+        in: path
+        name: branch_name
+        required: true
+        type: string
+      - description: Revert parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.RevertCommitRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Commit reverted successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.Commit'
+              type: object
+        "400":
+          description: Bad request - invalid request body
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Branch or repository not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Revert a commit on a branch
       tags:
       - repository-branches
   /workspaces/{workspace_slug}/repositories/{repository_slug}/branches/{branch_name}/uncommitted-changes:

@@ -1185,6 +1185,16 @@ func (api *APIServices) ResetRepositoryBranch(
 	req irmincore.ResetBranchRequest,
 ) error
 
+func (api *APIServices) RevertRepositoryCommit(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	branch *irminmodels.Branch,
+	req irmincore.RevertCommitRequest,
+) (*irminmodels.Commit, error)
+
 func (api *APIServices) RevertRepositoryUncommittedChanges(
 	c context.Context,
 	locale string,

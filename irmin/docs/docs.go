@@ -7861,6 +7861,102 @@ const docTemplate = `{
                 }
             }
         },
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/branches/{branch_name}/revert": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create a new commit that undoes the changes from a specified commit (non-destructive)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repository-branches"
+                ],
+                "summary": "Revert a commit on a branch",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository slug",
+                        "name": "repository_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Branch name",
+                        "name": "branch_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Revert parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.RevertCommitRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Commit reverted successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.Commit"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Branch or repository not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/repositories/{repository_slug}/branches/{branch_name}/uncommitted-changes": {
             "get": {
                 "security": [
@@ -14350,6 +14446,22 @@ const docTemplate = `{
                 "force": {
                     "type": "boolean",
                     "example": false
+                }
+            }
+        },
+        "irmincore.RevertCommitRequest": {
+            "type": "object",
+            "required": [
+                "commit_ref"
+            ],
+            "properties": {
+                "commit_ref": {
+                    "type": "string",
+                    "example": "abc123def456"
+                },
+                "parent_number": {
+                    "type": "integer",
+                    "example": 0
                 }
             }
         },

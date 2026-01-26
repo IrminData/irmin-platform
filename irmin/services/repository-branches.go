@@ -440,6 +440,109 @@ func (api *APIServices) ResetRepositoryBranch(
 	return nil
 }
 
+func (api *APIServices) RevertRepositoryCommit(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	branch *irminmodels.Branch,
+	req irmincore.RevertCommitRequest,
+) (*irminmodels.Commit, error) {
+	// Make sure this is allowed - use Update permission for revert (creates new commit)
+	isAllowed, err := api.PermissionService.IsAllowed(
+		user,
+		workspace,
+		db.PolicyResourceRepositoryBranch,
+		&repository.ID,
+		db.PolicyActionUpdate,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
+	}
+	if !isAllowed {
+		api.Logger.ErrorContext(
+			c,
+			"User is not allowed to revert commit on repository branch",
+			"user",
+			user.Email,
+			"workspace",
+			workspace.Slug,
+			"repository",
+			repository.Slug,
+			"branch",
+			branch.Name,
+		)
+		return nil, ErrAccessDenied
+	}
+
+	// Check if the branch is immutable - cannot revert on immutable branches
+	if branch.IsImmutable {
+		api.Logger.ErrorContext(
+			c,
+			"Cannot revert commit on immutable branch",
+			"user",
+			user.Email,
+			"workspace",
+			workspace.Slug,
+			"repository",
+			repository.Slug,
+			"branch",
+			branch.Name,
+		)
+		return nil, ErrBranchIsImmutable
+	}
+
+	// Delete the cached objects for the branch since content will change
+	dbDeleteErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		if deleteErr := api.DB.DeleteObjects(tx, nil, &repository.ID, &branch.Name); deleteErr != nil {
+			return NewInternalErrorf("error deleting cached objects: %w", deleteErr)
+		}
+		return nil
+	})
+	if dbDeleteErr != nil {
+		api.Logger.ErrorContext(c, "Error deleting cached objects for branch", "error", dbDeleteErr)
+	}
+
+	// Initialize Data Engine client
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	if err != nil {
+		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
+		return nil, NewInternalErrorf("error creating data engine client: %w", err)
+	}
+
+	// Determine parent number (default to 0 if not specified)
+	parentNumber := 0
+	if req.ParentNumber != nil {
+		parentNumber = *req.ParentNumber
+	}
+
+	// Revert the commit on the branch
+	revertCommit, err := dataEngine.RevertCommit(
+		workspace.Slug,
+		repository.Slug,
+		branch.Name,
+		req.CommitRef,
+		parentNumber,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error reverting commit in Data Engine", "error", err)
+		return nil, NewInternalErrorf("error reverting commit in data engine: %w", err)
+	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
+		Type:         db.LogEventTypeUpdate,
+		Description:  fmt.Sprintf("Commit %s reverted on branch %s", req.CommitRef, branch.Name),
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+	})
+
+	return revertCommit, nil
+}
+
 func (api *APIServices) GetRepositoryUncommittedChanges(
 	c context.Context,
 	locale string,

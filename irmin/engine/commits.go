@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lakefs"
@@ -223,6 +224,71 @@ func (c *Client) revertUncommitedChangesInternal(workspace, repository, branch, 
 	}
 
 	return nil
+}
+
+// RevertCommit creates a new commit that undoes the changes from a specified commit.
+// This is a non-destructive operation that preserves history.
+// parentNumber is used for merge commits to specify which parent to follow (1-indexed, 0 means use default).
+func (c *Client) RevertCommit(
+	workspace, repository, branch, commitRef string,
+	parentNumber int,
+) (*irminmodels.Commit, error) {
+	// Use the same lock key as CommitChanges since both operations modify the branch.
+	// This prevents a race where another commit could occur between RevertBranch and
+	// ListCommits (which fetches the revert commit since LakeFS doesn't return it).
+	lockKey := fmt.Sprintf("commit_changes:%s:%s:%s", workspace, repository, branch)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	var result *irminmodels.Commit
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent commits/reverts on the same branch
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf("failed to acquire advisory lock for revert on branch %s: %w", branch, lockErr)
+		}
+
+		// Process the revert
+		var processErr error
+		result, processErr = c.revertCommitInternal(workspace, repository, branch, commitRef, parentNumber)
+		return processErr
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
+	}
+
+	return result, nil
+}
+
+// revertCommitInternal contains the core revert commit logic, separated for clarity.
+func (c *Client) revertCommitInternal(
+	workspace, repository, branch, commitRef string,
+	parentNumber int,
+) (*irminmodels.Commit, error) {
+	// Construct repository name.
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
+
+	// Revert the commit by creating a new commit that undoes its changes
+	revertErr := c.LakeFSClient.RevertBranch(lakeFSRepositoryName, branch, lakefs.BranchRevertRequest{
+		Ref:          commitRef,
+		ParentNumber: parentNumber,
+	})
+	if revertErr != nil {
+		return nil, fmt.Errorf("failed to revert commit: %w", revertErr)
+	}
+
+	// Get the latest commit on the branch (the revert commit)
+	// Use limit=1 to fetch only the most recent commit, avoiding pagination of entire history
+	limitOne := 1
+	latestCommits, _, err := c.ListCommits(workspace, repository, branch, nil, &limitOne)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get revert commit: %w", err)
+	}
+
+	if len(latestCommits) == 0 {
+		return nil, errors.New("no commits found after revert")
+	}
+
+	return &latestCommits[0], nil
 }
 
 // GetCommitDiff returns the diff for a commit compared to its parent.

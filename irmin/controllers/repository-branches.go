@@ -304,6 +304,77 @@ func (api *APIControllers) RepositoryBranchesReset(c fiber.Ctx) error {
 	})
 }
 
+// RepositoryBranchesRevert godoc
+// @Summary Revert a commit on a branch
+// @Description Create a new commit that undoes the changes from a specified commit (non-destructive)
+// @Tags repository-branches
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param branch_name path string true "Branch name"
+// @Param request body irmincore.RevertCommitRequest true "Revert parameters"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Commit} "Commit reverted successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Branch or repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/branches/{branch_name}/revert [post]
+func (api *APIControllers) RepositoryBranchesRevert(c fiber.Ctx) error {
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	branch, branchOk := c.Locals("branch").(*irminmodels.Branch)
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk || !branchOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
+
+	// Parse the JSON request body
+	var req irmincore.RevertCommitRequest
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
+	}
+
+	// Revert the commit using the service
+	revertCommit, err := api.Services.RevertRepositoryCommit(c, locale, user, workspace, repository, branch, req)
+	if err != nil {
+		return api.handleServiceError(c, "Error reverting commit on repository branch", err, dict)
+	}
+
+	// Invalidate branches list and branch details (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/branches", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
+	// Invalidate commits cache since a new revert commit was created
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/commits", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
+	// Invalidate objects cache since branch now has different content
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
+	// Return the revert commit
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Message: api.lm.T(dict, "commit_reverted"),
+		Data:    revertCommit,
+	})
+}
+
 // RepositoryGetUncommittedChanges godoc
 // @Summary Get uncommitted changes
 // @Description Get all uncommitted changes in a specific branch

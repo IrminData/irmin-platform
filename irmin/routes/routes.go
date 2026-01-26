@@ -742,6 +742,11 @@ func RegisterAPIRoutes(
 		apiMiddlewares.RepositoryBranchPermissionMiddleware(db.PolicyActionUpdate),
 		apiControllers.RepositoryBranchesReset,
 	)
+	branch.Post(
+		"/revert",
+		apiMiddlewares.RepositoryBranchPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.RepositoryBranchesRevert,
+	)
 
 	// Tag routes
 	tags := repository.Group("/tags")

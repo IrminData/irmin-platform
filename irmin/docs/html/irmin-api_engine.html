@@ -438,6 +438,15 @@ func (c *Client) PushFilesToConnector(
 
 func (c *Client) ResetBranchToCommit(workspace, repository, branch, commitRef string, force bool) error
 
+func (c *Client) RevertCommit(
+	workspace, repository, branch, commitRef string,
+	parentNumber int,
+) (*irminmodels.Commit, error)
+    RevertCommit creates a new commit that undoes the changes from a specified
+    commit. This is a non-destructive operation that preserves history.
+    parentNumber is used for merge commits to specify which parent to follow
+    (1-indexed, 0 means use default).
+
 func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pathType string) error
 
 func (c *Client) SetPermissionChecker(pc PermissionChecker)

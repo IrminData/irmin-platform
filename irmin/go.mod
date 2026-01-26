@@ -3,7 +3,7 @@ module irmin-api
 go 1.25.0
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20260122215448-c4da763294b6
+	github.com/IrminData/irmin-sdk-go v0.0.0-20260126174612-386c1f8e2874
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.95.1
 	github.com/clerk/clerk-sdk-go/v2 v2.5.1
 	github.com/gofiber/fiber/v3 v3.0.0-rc.3.0.20251222104845-680f3c3ffec9
@@ -32,7 +32,7 @@ require (
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
-	github.com/apache/arrow-go/v18 v18.5.0 // indirect
+	github.com/apache/arrow-go/v18 v18.5.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.41.1 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.4 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.32.7 // indirect
@@ -100,7 +100,7 @@ require (
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
-	github.com/zeebo/xxh3 v1.0.2 // indirect
+	github.com/zeebo/xxh3 v1.1.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.47.0 // indirect
 	golang.org/x/exp v0.0.0-20260112195511-716be5621a96 // indirect
