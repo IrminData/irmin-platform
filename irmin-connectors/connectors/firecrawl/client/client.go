@@ -46,6 +46,7 @@ type FirecrawlClient struct {
 	URL           string
 	Query         string
 	Limit         *int
+	WaitFor       *int
 }
 
 // Config holds the configuration for the Firecrawl client.
@@ -56,14 +57,21 @@ type Config struct {
 	URL           string `json:"url"`
 	Query         string `json:"query"`
 	Limit         *int   `json:"limit,omitempty"`
+	WaitFor       *int   `json:"wait_for,omitempty"`
 }
 
 // InitFirecrawlClient initializes a Firecrawl client from operation configuration.
 func InitFirecrawlClient(_ any, logger *slog.Logger, operation *db.Operation) (*FirecrawlClient, error) {
-	// Parse configuration from operation
+	// Parse configuration from operation details
 	var config map[string]any
 	if err := json.Unmarshal(operation.Details, &config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal operation details: %w", err)
+	}
+
+	// Parse settings from operation settings
+	var settings map[string]any
+	if err := json.Unmarshal(operation.Settings, &settings); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal operation settings: %w", err)
 	}
 
 	// Validate configuration before proceeding
@@ -83,8 +91,11 @@ func InitFirecrawlClient(_ any, logger *slog.Logger, operation *db.Operation) (*
 		return nil, err
 	}
 
-	// Extract optional limit
+	// Extract optional limit from details
 	limit := extractLimit(config)
+
+	// Extract optional waitFor setting from settings (for JavaScript rendering)
+	waitFor := extractWaitFor(settings)
 
 	// Initialize Firecrawl app
 	app, err := firecrawl.NewFirecrawlApp(apiKey, DefaultAPIURL)
@@ -99,6 +110,7 @@ func InitFirecrawlClient(_ any, logger *slog.Logger, operation *db.Operation) (*
 		URL:           targetURL,
 		Query:         query,
 		Limit:         limit,
+		WaitFor:       waitFor,
 	}
 
 	logger.Info("Firecrawl client initialized",
@@ -166,6 +178,37 @@ func extractLimit(config map[string]any) *int {
 		var l int
 		if _, err := fmt.Sscanf(v, "%d", &l); err == nil {
 			return &l
+		}
+	}
+	return nil
+}
+
+// extractWaitFor extracts the optional wait_for setting from configuration.
+// This setting tells Firecrawl to wait for JavaScript to render before capturing content.
+func extractWaitFor(settings map[string]any) *int {
+	if settings == nil {
+		return nil
+	}
+
+	waitForVal, exists := settings["wait_for"]
+	if !exists || waitForVal == nil {
+		return nil
+	}
+
+	switch v := waitForVal.(type) {
+	case float64:
+		w := int(v)
+		if w > 0 {
+			return &w
+		}
+	case int:
+		if v > 0 {
+			return &v
+		}
+	case string:
+		var w int
+		if _, err := fmt.Sscanf(v, "%d", &w); err == nil && w > 0 {
+			return &w
 		}
 	}
 	return nil
@@ -239,6 +282,7 @@ func (c *FirecrawlClient) Scrape() (map[string][]byte, error) {
 	// Prepare scrape parameters
 	params := &firecrawl.ScrapeParams{
 		Formats: c.getFormats(),
+		WaitFor: c.WaitFor,
 	}
 
 	// Perform scrape
@@ -270,6 +314,7 @@ func (c *FirecrawlClient) Crawl() (map[string][]byte, error) {
 	params := &firecrawl.CrawlParams{
 		ScrapeOptions: firecrawl.ScrapeParams{
 			Formats: c.getFormats(),
+			WaitFor: c.WaitFor,
 		},
 		Limit: c.Limit,
 	}

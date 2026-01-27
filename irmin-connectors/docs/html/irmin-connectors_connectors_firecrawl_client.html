@@ -48,6 +48,7 @@ type Config struct {
 	URL           string `json:"url"`
 	Query         string `json:"query"`
 	Limit         *int   `json:"limit,omitempty"`
+	WaitFor       *int   `json:"wait_for,omitempty"`
 }
     Config holds the configuration for the Firecrawl client.
 
@@ -58,6 +59,7 @@ type FirecrawlClient struct {
 	URL           string
 	Query         string
 	Limit         *int
+	WaitFor       *int
 }
     FirecrawlClient represents a client for interacting with the Firecrawl API.
 

@@ -3802,6 +3802,7 @@ type Config struct {
     URL           string `json:"url"`
     Query         string `json:"query"`
     Limit         *int   `json:"limit,omitempty"`
+    WaitFor       *int   `json:"wait_for,omitempty"`
 }
 ```
 
@@ -3818,6 +3819,7 @@ type FirecrawlClient struct {
     URL           string
     Query         string
     Limit         *int
+    WaitFor       *int
 }
 ```
 

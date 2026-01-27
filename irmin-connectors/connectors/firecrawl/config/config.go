@@ -8,7 +8,10 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-const maxLimitValue = 1000
+const (
+	maxLimitValue   = 1000
+	maxWaitForValue = 30000 // Maximum wait time in milliseconds (30 seconds)
+)
 
 // GetDetailsFieldDefinitions returns all detail fields with their metadata.
 func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField {
@@ -107,7 +110,15 @@ func initializeFieldDefinitions() (map[string]irminmodels.DynamicField, map[stri
 	}
 
 	settingsFieldDefinitions := map[string]irminmodels.DynamicField{
-		// No settings fields for Firecrawl connector - all configuration is in details
+		"wait_for": {
+			Type:     "integer",
+			Label:    "Wait For (ms)",
+			Required: false,
+			Default:  "0",
+			Min:      0,
+			Max:      maxWaitForValue,
+			HelpText: "Time in milliseconds to wait for JavaScript to render before capturing content. Recommended: 3000-5000ms for JS-heavy sites.",
+		},
 	}
 
 	return detailsFieldDefinitions, settingsFieldDefinitions
