@@ -67,9 +67,7 @@ const Modal = ({
             />
           </div>
           <div
-            className={`
-              relative max-h-[calc(100vh-150px)] overflow-scroll px-4 pt-4
-            `}
+            className={`relative max-h-[calc(100vh-150px)] overflow-scroll p-4`}
           >
             {children}
           </div>

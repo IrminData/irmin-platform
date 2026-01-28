@@ -23,8 +23,10 @@ export const useRepositoryObject = (
   const { workspaceSlug } = useWorkspaceContext();
   const { irminAlert } = usePopup();
 
-  const { invalidateObjectQueries } =
-    useInvalidateObjectQueries(repositorySlug);
+  const { invalidateObjectQueries } = useInvalidateObjectQueries(
+    workspaceSlug,
+    repositorySlug
+  );
 
   const repositoryObjectQuery = useQuery({
     queryKey: repositoryObjectQueryKey(

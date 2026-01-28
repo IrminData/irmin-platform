@@ -9,8 +9,6 @@ import {
   repositoryUncommittedChangesQueryKey,
 } from '@/lib/queryKeys';
 
-import { useWorkspaceContext } from '@/context/WorkspaceContext';
-
 /**
  * Get the parent directory path from a file/directory path
  * @param path - The file or directory path
@@ -42,11 +40,14 @@ const getParentDirectoryPath = (path: string): string => {
 /**
  * Hook to invalidate object-related queries when an object is uploaded, deleted, moved, or renamed
  *
+ * @param workspaceSlug - The workspace slug
  * @param repositorySlug - The repository slug
  * @returns The invalidateObjectQueries function
  */
-export const useInvalidateObjectQueries = (repositorySlug: string) => {
-  const { workspaceSlug } = useWorkspaceContext();
+export const useInvalidateObjectQueries = (
+  workspaceSlug: string,
+  repositorySlug: string
+) => {
   const queryClient = useQueryClient();
 
   // Helper function to invalidate object-related queries for a specific path

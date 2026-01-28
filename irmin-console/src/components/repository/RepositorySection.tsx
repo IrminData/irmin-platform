@@ -49,7 +49,7 @@ import type { Tag } from '@/types/core/Tag';
 import CreatePointerModal from './objects/CreatePointerModal';
 import ObjectDetails from './objects/ObjectDetails';
 import ObjectList from './objects/ObjectList';
-import UploadObjectModal from './objects/UploadObjectModal';
+import { FileUploadManager } from './objects/upload';
 
 /**
  * Repository viewer section, provides UI for the Repository viewer Page.
@@ -100,12 +100,11 @@ function RepositorySectionContent({
   // Initialize selected object from search params if present
   const currentObjectPath = searchParams.get('object');
 
-  const { repositoryObjectQuery, uploadObjectMutation, createPointerMutation } =
-    useRepositoryObject(
-      repository.slug,
-      currentRef,
-      '' // Always fetch root object of the repository
-    );
+  const { repositoryObjectQuery, createPointerMutation } = useRepositoryObject(
+    repository.slug,
+    currentRef,
+    '' // Always fetch root object of the repository
+  );
 
   // Effect to sync selected object from URL params (for initial load or back/forward navigation)
   // We need to find the object in the fetched data that matches the path
@@ -209,20 +208,23 @@ function RepositorySectionContent({
 
   const handleUpload = useCallback(() => {
     irminModal.show(
-      dict.repository.objects.uploadObject,
-      <UploadObjectModal
-        currentRepository={repository.slug}
+      dict.repository.objects.uploadFiles.title,
+      <FileUploadManager
+        currentPath={currentDirectoryPath}
         currentRef={currentRef ?? repository.default_branch}
-        uploadObject={async (path: string, ref: string, files: FileList) => {
-          uploadObjectMutation.mutate({
-            path,
-            ref,
-            files,
-          });
-        }}
+        repository={repository.slug}
+        workspaceSlug={workspaceSlug}
+        onComplete={() => irminModal.close()}
       />
     );
-  }, [dict, irminModal, repository, currentRef, uploadObjectMutation]);
+  }, [
+    dict,
+    irminModal,
+    repository,
+    currentRef,
+    currentDirectoryPath,
+    workspaceSlug,
+  ]);
 
   const handleCreatePointer = useCallback(() => {
     irminModal.show(

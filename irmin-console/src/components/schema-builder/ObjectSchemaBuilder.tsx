@@ -112,15 +112,19 @@ export default function ObjectSchemaBuilder({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {allowedTypes.map((t) => (
-                    <SelectItem key={t} value={t} className='text-sm'>
-                      {
-                        dict.repository.objects[
-                          t as keyof typeof dict.repository.objects
-                        ]
-                      }
-                    </SelectItem>
-                  ))}
+                  {allowedTypes.map((t) => {
+                    const label =
+                      dict.repository.objects[
+                        t as keyof typeof dict.repository.objects
+                      ];
+                    // Only render string labels (skip nested objects like uploadFiles)
+                    if (typeof label !== 'string') return null;
+                    return (
+                      <SelectItem key={t} value={t} className='text-sm'>
+                        {label}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
