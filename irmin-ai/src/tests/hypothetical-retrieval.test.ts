@@ -300,7 +300,7 @@ async function testFallbackBehavior(): Promise<boolean> {
   }
 }
 
-// Test 4: Performance Metrics
+// Test 4: Performance Metrics (using built-in metrics)
 async function testPerformance(): Promise<boolean> {
   logTest('Performance Metrics', 'RUNNING');
 
@@ -312,27 +312,16 @@ async function testPerformance(): Promise<boolean> {
 
     const performanceResults: Array<{
       query: string;
-      baselineTime: number;
-      hypotheticalTime: number;
-      overhead: number;
+      generationTimeMs: number;
+      searchTimeMs: number;
+      totalTimeMs: number;
     }> = [];
 
     const testQueries = TEST_QUERIES.questions; // Test with all questions
 
     for (const query of testQueries) {
-      // Baseline timing
-      const baselineStart = Date.now();
-      await retrievalService.retrieveContext(collectionName, query, {
-        maxDocuments: 5,
-        scoreThreshold: 0.3,
-        includeMetadata: false,
-        maxTokens: 2000,
-      });
-      const baselineTime = Date.now() - baselineStart;
-
-      // Hypothetical timing
-      const hypotheticalStart = Date.now();
-      await retrievalService.retrieveWithHypotheticalContent(
+      // Use HyDE retrieval with built-in metrics
+      const result = await retrievalService.retrieveWithHypotheticalContent(
         collectionName,
         query,
         {
@@ -342,45 +331,40 @@ async function testPerformance(): Promise<boolean> {
           maxTokens: 2000,
         }
       );
-      const hypotheticalTime = Date.now() - hypotheticalStart;
-
-      const overhead = hypotheticalTime - baselineTime;
 
       performanceResults.push({
         query,
-        baselineTime,
-        hypotheticalTime,
-        overhead,
+        generationTimeMs: result.metrics.generationTimeMs,
+        searchTimeMs: result.metrics.searchTimeMs,
+        totalTimeMs: result.metrics.totalTimeMs,
       });
     }
 
-    const avgBaselineTime =
-      performanceResults.reduce((sum, r) => sum + r.baselineTime, 0) /
+    const avgGenerationTime =
+      performanceResults.reduce((sum, r) => sum + r.generationTimeMs, 0) /
       performanceResults.length;
-    const avgHypotheticalTime =
-      performanceResults.reduce((sum, r) => sum + r.hypotheticalTime, 0) /
+    const avgSearchTime =
+      performanceResults.reduce((sum, r) => sum + r.searchTimeMs, 0) /
       performanceResults.length;
-    const avgOverhead =
-      performanceResults.reduce((sum, r) => sum + r.overhead, 0) /
+    const avgTotalTime =
+      performanceResults.reduce((sum, r) => sum + r.totalTimeMs, 0) /
       performanceResults.length;
 
     logTest(
       'Performance Metrics',
       'PASS',
-      `Avg overhead: ${avgOverhead.toFixed(0)}ms (${((avgOverhead / avgBaselineTime) * 100).toFixed(1)}%)`
+      `Avg total: ${avgTotalTime.toFixed(0)}ms (gen: ${avgGenerationTime.toFixed(0)}ms, search: ${avgSearchTime.toFixed(0)}ms)`
     );
 
-    console.log(`  Average baseline time: ${avgBaselineTime.toFixed(0)}ms`);
+    console.log(`  Average generation time: ${avgGenerationTime.toFixed(0)}ms`);
+    console.log(`  Average search time: ${avgSearchTime.toFixed(0)}ms`);
+    console.log(`  Average total time: ${avgTotalTime.toFixed(0)}ms`);
     console.log(
-      `  Average hypothetical time: ${avgHypotheticalTime.toFixed(0)}ms`
-    );
-    console.log(`  Average overhead: ${avgOverhead.toFixed(0)}ms`);
-    console.log(
-      `  Overhead percentage: ${((avgOverhead / avgBaselineTime) * 100).toFixed(1)}%`
+      `  Generation overhead: ${((avgGenerationTime / avgTotalTime) * 100).toFixed(1)}%`
     );
 
     // Check if total time is acceptable (< 2s)
-    const acceptableLatency = avgHypotheticalTime < 2000;
+    const acceptableLatency = avgTotalTime < 2000;
     console.log(
       `  ${acceptableLatency ? '✅' : '⚠️'} Total latency ${acceptableLatency ? 'acceptable' : 'high'} (target <2000ms)`
     );

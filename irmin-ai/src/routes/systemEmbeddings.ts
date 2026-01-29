@@ -429,8 +429,8 @@ export async function systemEmbeddingRoutes(fastify: FastifyInstance) {
           collectionConfig.createdBy ?? undefined
         );
 
-        // Retrieve context
-        const result = await retrievalService.retrieveContext(
+        // Retrieve context (with or without HyDE based on useHyde flag)
+        const result = await retrievalService.retrieveContextWithOptions(
           collectionName,
           validatedData.query,
           {
@@ -438,6 +438,7 @@ export async function systemEmbeddingRoutes(fastify: FastifyInstance) {
             scoreThreshold: validatedData.scoreThreshold,
             includeMetadata: validatedData.includeMetadata,
             maxTokens: validatedData.maxTokens,
+            useHyde: validatedData.useHyde,
           }
         );
 
@@ -449,6 +450,12 @@ export async function systemEmbeddingRoutes(fastify: FastifyInstance) {
             sourcesCount: result.sources.length,
             estimatedTokens: result.totalTokens,
             collectionName: collectionConfig.name,
+            useHyde: result.useHyde,
+            usedHypothetical: result.usedHypothetical,
+            reason: validatedData.reason,
+            generationTimeMs: result.metrics.generationTimeMs,
+            searchTimeMs: result.metrics.searchTimeMs,
+            totalTimeMs: result.metrics.totalTimeMs,
           },
         });
 

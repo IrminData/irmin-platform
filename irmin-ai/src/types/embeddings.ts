@@ -58,6 +58,8 @@ export const RetrieveContextRequestSchema = z.object({
   scoreThreshold: z.number().min(0).max(1).default(0.0),
   includeMetadata: z.boolean().default(false),
   maxTokens: z.number().min(1).max(10000).default(4000),
+  useHyde: z.boolean().default(true), // Use HyDE by default for better retrieval quality
+  reason: z.string().optional(), // Optional debugging context explaining why search is needed
 });
 
 // Type exports

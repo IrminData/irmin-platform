@@ -86,16 +86,16 @@ const vectorStore = await indexingService.initVectorStore('irmin-docs', true);
 | `retrieveContext(vectorStore, query, options?, collectionName?)` | Builds a context string (with optional metadata blocks) constrained by token estimates. |
 | `multiQueryRetrieval(vectorStore, queries, options?, collectionName?)` | Executes multiple queries and optionally deduplicates by content. |
 | `retrieveWithCompression(vectorStore, query, options?, collectionName?)` | Filters results by score and truncates content to reduce tokens. |
-| `retrieveWithHypotheticalContent(vectorStore, query, options?, collectionName?)` | HyDE-style retrieval: generates hypothetical content using Groq LLMs, falls back to the raw query if generation fails, and returns context + metadata about the hypothetical usage. |
+| `retrieveWithHypotheticalContent(vectorStore, query, options?, collectionName?)` | HyDE-style retrieval: generates hypothetical content using domain-specific prompts and Groq LLMs, falls back to the raw query if generation fails. Returns structured context with source attribution, scores, and granular timing metrics. |
 
-### Example: build RAG context
+### Example: build RAG context with HyDE
 
 ```typescript
 import { indexingService, retrievalService } from '@/vector';
 
 const vectorStore = await indexingService.initVectorStore('irmin-docs', true);
 
-const { context, sources, totalTokens } = await retrievalService.retrieveWithHypotheticalContent(
+const result = await retrievalService.retrieveWithHypotheticalContent(
   vectorStore,
   'How does Irmin handle branching for data pipelines?',
   {
@@ -107,8 +107,35 @@ const { context, sources, totalTokens } = await retrievalService.retrieveWithHyp
   'irmin-docs'
 );
 
-console.log(totalTokens, sources.length, context.slice(0, 200));
+// Structured context with source attribution and scores
+console.log(result.context);
+// === Search Results for: "How does Irmin handle branching..." ===
+// [Result 1 - Source: docs/branching.md, Score: 0.892]
+// Content here...
+// ---
+// [Result 2 - Source: docs/pipelines.md, Score: 0.845]
+// ...
+
+// Granular timing metrics
+console.log(result.metrics);
+// { generationTimeMs: 450, searchTimeMs: 120, totalTimeMs: 580 }
+
+// Access sources and metadata
+console.log(result.sources.length, result.totalTokens);
+console.log(result.usedHypothetical, result.hypotheticalContent);
 ```
+
+### HyDE Domain-Specific Prompts
+
+The retrieval service uses specialized prompts based on collection name:
+
+| Collection | Prompt Focus |
+| --- | --- |
+| `duckdb-sql-syntax-docs` | SQL syntax, function signatures, data types, query patterns |
+| `irmin-docs` | API endpoints, SDK methods, configuration, integration patterns |
+| Default | Generic technical documentation format |
+
+These domain-specific prompts generate richer hypothetical documents that better match the actual documentation structure.
 
 ### Example: similarity search with filters
 
@@ -177,7 +204,9 @@ Agents expect system collections to exist. The `vectorize-docs` script populates
 
 ### Retrieval
 - Apply score thresholds to trim irrelevant content (`0.2`–`0.3` works well for most docs)
-- Leverage `retrieveWithHypotheticalContent` when queries are short or ambiguous
+- Use `retrieveWithHypotheticalContent` by default for better semantic matching
+- The structured output format includes source attribution and relevance scores for transparency
+- Monitor `metrics.generationTimeMs` to track HyDE overhead (typically 300-600ms)
 - Cap `maxTokens` to stay within LLM context limits and avoid flooding prompts with stale data
 
 ### Performance
@@ -187,6 +216,9 @@ Agents expect system collections to exist. The `vectorize-docs` script populates
 
 ## Advanced features
 
-- **HyDE retrieval** – `retrieveWithHypotheticalContent` automatically logs hypothetical usage via the analytics service.
+- **HyDE retrieval** – `retrieveWithHypotheticalContent` uses domain-specific prompts (SQL docs, Irmin docs, generic) to generate hypothetical documents that improve semantic matching. Returns structured output with:
+  - Numbered results with source files and relevance scores
+  - Granular timing metrics (`generationTimeMs`, `searchTimeMs`, `totalTimeMs`)
+  - Hypothetical content for debugging/inspection
 - **Contextual compression** – `retrieveWithCompression` trims low-scoring chunks and shortens content to a defined size.
 - **Chunk deletion helpers** – Use `deleteSpecificChunks` or `deleteDocuments` to surgically remove outdated content without dropping entire collections.

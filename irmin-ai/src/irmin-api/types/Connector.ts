@@ -35,10 +35,10 @@ export interface Connector {
  *
  * 'pull' means that data files can be pulled from different paths in the connector
  * 'push' means that data files can be pushed to different paths in the connector
- * 'push_patch' means that JSON Patch based change sets can be pushed to the connector
- * 'event_webhook' means that the connector can send webhook notifications when something changes in the underlying data
+ * 'apply_patch' means that the connector can receive and apply patch operations
+ * 'patch_event' means that the connector can emit patch events via webhooks when data changes
  */
-type ConnectorCapability = 'event_webhook' | 'pull' | 'push_patch' | 'push';
+type ConnectorCapability = 'pull' | 'push' | 'apply_patch' | 'patch_event';
 
 /**
  * Represents the category of a connector.

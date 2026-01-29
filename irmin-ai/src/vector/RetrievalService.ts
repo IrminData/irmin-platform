@@ -9,6 +9,125 @@ import { getContentAsString } from '@/utils/getContentAsString';
 import { indexingService } from './IndexingService';
 import { qdrantService, SearchResult } from './QdrantService';
 
+/**
+ * Domain-specific prompts for HyDE (Hypothetical Document Embeddings)
+ * These prompts generate hypothetical documentation excerpts that improve vector search quality
+ * by creating richer embeddings that better match actual document content.
+ */
+const HYDE_PROMPTS: Record<string, string> = {
+  'duckdb-sql-syntax-docs': `You are a technical documentation writer for DuckDB SQL.
+
+Given a user's SQL question, write a hypothetical excerpt from DuckDB documentation that would contain the answer.
+
+Include:
+- SQL syntax patterns with code examples
+- Function signatures and parameter descriptions
+- Data type considerations
+- Common use cases and edge cases
+- Performance notes where relevant
+
+Write 2-3 paragraphs as if from official DuckDB documentation.`,
+
+  'irmin-docs': `You are a technical documentation writer for Irmin data platform.
+
+Given a user's question about Irmin, write a hypothetical excerpt from Irmin documentation that would contain the answer.
+
+Include:
+- API endpoints or SDK methods where relevant
+- Configuration options and parameters
+- Code examples in Go or TypeScript
+- Integration patterns and best practices
+- Related features or workflows
+
+Write 2-3 paragraphs as if from official Irmin documentation.`,
+
+  default: `Given the user's question, write a hypothetical documentation excerpt that would contain the answer.
+
+Include:
+- Technical specifications and parameters
+- Code examples where relevant
+- Configuration options
+- Best practices and common patterns
+
+Write 2-3 paragraphs of documentation content.`,
+};
+
+/**
+ * Format search results into a structured context string with source attribution and scores
+ */
+function formatSearchContext(
+  results: VectorSearchResult[],
+  query: string,
+  options: { includeMetadata?: boolean } = {}
+): { formatted: string; tokenCount: number } {
+  if (results.length === 0) {
+    return {
+      formatted: '',
+      tokenCount: 0,
+    };
+  }
+
+  const contextParts = results.map((result, index) => {
+    const source =
+      (result.document.metadata?.source as string) ||
+      (result.document.metadata?.sourceFile as string) ||
+      'Unknown';
+    const score = result.score?.toFixed(3) || 'N/A';
+
+    let header = `[Result ${index + 1} - Source: ${source}, Score: ${score}]`;
+    if (options.includeMetadata && result.document.metadata) {
+      const metaStr = Object.entries(result.document.metadata)
+        .filter(([key]) => !['source', 'sourceFile'].includes(key))
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(', ');
+      if (metaStr) {
+        header += `\nMetadata: ${metaStr}`;
+      }
+    }
+
+    return `${header}\n${result.document.pageContent}`;
+  });
+
+  const truncatedQuery =
+    query.length > 100 ? query.slice(0, 100) + '...' : query;
+  const formatted = `=== Search Results for: "${truncatedQuery}" ===\n\n${contextParts.join('\n\n---\n\n')}`;
+  const tokenCount = Math.ceil(formatted.length / 4);
+
+  return { formatted, tokenCount };
+}
+
+/**
+ * Filter search results to fit within a token limit and prepare for formatting
+ */
+function filterResultsByTokenLimit(
+  results: VectorSearchResult[],
+  maxTokens: number
+): { resultsToFormat: VectorSearchResult[]; sources: Document[] } {
+  const sources: Document[] = [];
+  const resultsToFormat: VectorSearchResult[] = [];
+  let estimatedTokens = 100; // Reserve for header
+
+  for (const result of results) {
+    const docTokens = Math.ceil(result.document.pageContent.length / 4) + 50; // +50 for formatting overhead
+    if (estimatedTokens + docTokens <= maxTokens) {
+      resultsToFormat.push(result);
+      sources.push(result.document);
+      estimatedTokens += docTokens;
+    } else {
+      break;
+    }
+  }
+
+  return { resultsToFormat, sources };
+}
+
+/**
+ * Check if a query is empty or whitespace-only
+ */
+function isEmptyQuery(query: string): boolean {
+  return !query || query.trim().length === 0;
+}
+
 // Zod schemas for type safety
 const VectorSearchSchema = z.object({
   query: z.string().min(1, 'Query cannot be empty'),
@@ -217,6 +336,7 @@ class RetrievalService {
 
   /**
    * Retrieve relevant context for generation (preparing documents for LLM)
+   * Returns structured context with source attribution and scores for consistency with HyDE retrieval.
    */
   async retrieveContext(
     collectionName: string,
@@ -231,7 +351,18 @@ class RetrievalService {
     context: string;
     sources: Document[];
     totalTokens: number;
+    searchTimeMs: number;
   }> {
+    // Handle empty/whitespace queries consistently with HyDE path
+    if (isEmptyQuery(query)) {
+      return {
+        context: '',
+        sources: [],
+        totalTokens: 0,
+        searchTimeMs: 0,
+      };
+    }
+
     try {
       const {
         maxDocuments = 5,
@@ -240,51 +371,36 @@ class RetrievalService {
         maxTokens = 4000,
       } = options;
 
-      // Retrieve relevant documents
+      // Track search timing for consistent metrics with HyDE path
+      const searchStartTime = Date.now();
       const retrievalResult = await this.searchSimilar(collectionName, {
         query,
         k: maxDocuments,
         scoreThreshold,
       });
+      const searchTimeMs = Date.now() - searchStartTime;
 
-      // Filter and prepare context
-      let context = '';
-      let tokenCount = 0;
-      const sources: Document[] = [];
+      // Filter results that fit within token limit
+      const { resultsToFormat, sources } = filterResultsByTokenLimit(
+        retrievalResult.documents,
+        maxTokens
+      );
 
-      for (const result of retrievalResult.documents) {
-        const docContent = result.document.pageContent;
-        const metadataStr = includeMetadata
-          ? `\n[Source: ${JSON.stringify(result.document.metadata)}]\n`
-          : '';
+      // Format context with structured output (consistent with HyDE retrieval)
+      const { formatted: context, tokenCount } = formatSearchContext(
+        resultsToFormat,
+        query,
+        { includeMetadata }
+      );
 
-        const docText = `${docContent}${metadataStr}\n\n`;
-        const estimatedTokens = Math.ceil(docText.length / 4); // Rough token estimation
-
-        if (tokenCount + estimatedTokens <= maxTokens) {
-          context += docText;
-          tokenCount += estimatedTokens;
-          sources.push(result.document);
-        } else {
-          break;
-        }
-      }
-
-      // Log vector operation
-      analyticsService.logEvent({
-        eventType: 'context_retrieved',
-        eventData: {
-          query,
-          sourcesCount: sources.length,
-          estimatedTokens: tokenCount,
-          collectionName: collectionName || this.defaultCollectionName,
-        },
-      });
+      // Note: Analytics logging is handled by callers (route handlers) to avoid duplicates
+      // and provide more comprehensive context (useHyde, reason, etc.)
 
       return {
         context: context.trim(),
         sources,
         totalTokens: tokenCount,
+        searchTimeMs,
       };
     } catch (error) {
       analyticsService.logEvent({
@@ -444,23 +560,24 @@ class RetrievalService {
         provider: 'groq',
         model: 'llama-3.1-8b-instant',
         temperature: 0.6,
-        maxTokens: 300,
+        maxTokens: 500, // Increased for 2-3 paragraph responses
       });
 
-      // Use SQL-specific prompt for DuckDB SQL documentation collection
-      const isSQLDocs = collectionName === 'duckdb-sql-syntax-docs';
+      // Select domain-specific prompt based on collection name
+      const basePrompt =
+        HYDE_PROMPTS[collectionName ?? ''] || HYDE_PROMPTS.default;
 
       // Format agent context if provided
       let contextStr = '';
       if (agentContext && Object.keys(agentContext).length > 0) {
-        contextStr = `\n\nAgent Context:\n${Object.entries(agentContext)
+        contextStr = `\n\nAdditional Context:\n${Object.entries(agentContext)
           .map(([key, value]) => `${key}: ${value}`)
           .join('\n')}`;
       }
 
-      const systemPrompt = isSQLDocs
-        ? `Convert the user's SQL-related question into a hypothetical SQL documentation excerpt that would contain the answer. Include SQL syntax patterns, keywords, clauses, functions, and examples that would be found in SQL documentation. Focus on DuckDB SQL syntax, data types, query patterns, and statement structures. Just respond with the hypothetical documentation excerpt, no other text.${contextStr}`
-        : `Convert the user message in to a hypothetical answer/response that would contain keywords, concepts, topics, etc. that would likely contain the answer or relevant information about this topic, which will be used to retrieve relevant documents from the vector store. Just respond with the hypothetical answer/response, no other text.${contextStr}`;
+      const systemPrompt = `${basePrompt}${contextStr}
+
+Just respond with the hypothetical documentation excerpt, no other text.`;
 
       const response = await Promise.race([
         llm.invoke([
@@ -490,23 +607,25 @@ class RetrievalService {
           query,
           collectionName: collectionName || this.defaultCollectionName,
           processingTimeMs: generationTime,
-          isSQLDocs,
+          promptType: HYDE_PROMPTS[collectionName ?? '']
+            ? collectionName
+            : 'default',
         },
       });
 
       return hypotheticalContent || null;
     } catch (error) {
+      // Log the error but return null for graceful fallback to direct query
       analyticsService.logEvent({
-        eventType: 'hypothetical_generation',
+        eventType: 'hypothetical_generation_error',
         eventData: {
           query,
           collectionName: collectionName || this.defaultCollectionName,
           error: error instanceof Error ? error.message : 'Unknown error',
         },
       });
-      throw new Error(
-        `Failed to generate hypothetical content: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      // Return null to trigger fallback to direct query search
+      return null;
     }
   }
 
@@ -530,15 +649,25 @@ class RetrievalService {
     totalTokens: number;
     usedHypothetical: boolean;
     hypotheticalContent?: string;
+    metrics: {
+      generationTimeMs: number;
+      searchTimeMs: number;
+      totalTimeMs: number;
+    };
   }> {
     const startTime = Date.now();
 
-    if (!query || query.trim().length === 0) {
+    if (isEmptyQuery(query)) {
       return {
         context: '',
         sources: [],
         totalTokens: 0,
         usedHypothetical: false,
+        metrics: {
+          generationTimeMs: 0,
+          searchTimeMs: 0,
+          totalTimeMs: 0,
+        },
       };
     }
 
@@ -547,14 +676,17 @@ class RetrievalService {
         maxDocuments = 5,
         scoreThreshold = 0.0,
         includeMetadata = false,
-        maxTokens = 8000,
+        maxTokens = 4000, // Consistent with retrieveContext and API schema default
       } = options;
 
+      // Track generation timing
+      const generationStartTime = Date.now();
       const hypotheticalContent = await this.generateHypotheticalContent(
         query,
         collectionName,
         agentContext
       );
+      const generationTimeMs = Date.now() - generationStartTime;
 
       const searchQuery = hypotheticalContent || query;
       const usedHypothetical = !!hypotheticalContent;
@@ -569,34 +701,29 @@ class RetrievalService {
         });
       }
 
+      // Track search timing
+      const searchStartTime = Date.now();
       const retrievalResult = await this.searchSimilar(collectionName, {
         query: searchQuery,
         k: maxDocuments,
         scoreThreshold,
       });
+      const searchTimeMs = Date.now() - searchStartTime;
 
-      // Filter and prepare context
-      let context = '';
-      let tokenCount = 0;
-      const sources: Document[] = [];
+      // Filter results that fit within token limit
+      const { resultsToFormat, sources } = filterResultsByTokenLimit(
+        retrievalResult.documents,
+        maxTokens
+      );
 
-      for (const result of retrievalResult.documents) {
-        const docContent = result.document.pageContent;
-        const metadataStr = includeMetadata
-          ? `\n[Source: ${JSON.stringify(result.document.metadata)}]\n`
-          : '';
+      // Format context with structured output
+      const { formatted: context, tokenCount } = formatSearchContext(
+        resultsToFormat,
+        query,
+        { includeMetadata }
+      );
 
-        const docText = `${docContent}${metadataStr}\n\n`;
-        const estimatedTokens = Math.ceil(docText.length / 4); // Rough token estimation
-
-        if (tokenCount + estimatedTokens <= maxTokens) {
-          context += docText;
-          tokenCount += estimatedTokens;
-          sources.push(result.document);
-        } else {
-          break;
-        }
-      }
+      const totalTimeMs = Date.now() - startTime;
 
       analyticsService.logEvent({
         eventType: 'hypothetical_context_retrieved',
@@ -604,7 +731,9 @@ class RetrievalService {
           query,
           sourcesCount: sources.length,
           estimatedTokens: tokenCount,
-          processingTimeMs: Date.now() - startTime,
+          generationTimeMs,
+          searchTimeMs,
+          totalTimeMs,
           collectionName: collectionName || this.defaultCollectionName,
         },
       });
@@ -618,6 +747,11 @@ class RetrievalService {
           usedHypothetical && hypotheticalContent
             ? hypotheticalContent
             : undefined,
+        metrics: {
+          generationTimeMs,
+          searchTimeMs,
+          totalTimeMs,
+        },
       };
     } catch (error) {
       analyticsService.logEvent({
@@ -631,6 +765,76 @@ class RetrievalService {
         `Failed to retrieve context with hypothetical content: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
+  }
+
+  /**
+   * Unified context retrieval that handles both HyDE and direct query modes.
+   * Use this method from API routes to avoid duplicating the useHyde conditional logic.
+   *
+   * @param collectionName - The collection to search
+   * @param query - The search query
+   * @param options - Retrieval options including useHyde flag
+   * @returns Unified result with context, sources, metrics, and HyDE-specific data
+   */
+  async retrieveContextWithOptions(
+    collectionName: string,
+    query: string,
+    options: {
+      maxDocuments?: number;
+      scoreThreshold?: number;
+      includeMetadata?: boolean;
+      maxTokens?: number;
+      useHyde?: boolean;
+    } = {}
+  ): Promise<{
+    context: string;
+    sources: Document[];
+    totalTokens: number;
+    useHyde: boolean;
+    usedHypothetical: boolean;
+    hypotheticalContent?: string;
+    metrics: {
+      generationTimeMs: number;
+      searchTimeMs: number;
+      totalTimeMs: number;
+    };
+  }> {
+    const { useHyde = true, ...retrievalOptions } = options;
+
+    if (useHyde) {
+      const result = await this.retrieveWithHypotheticalContent(
+        collectionName,
+        query,
+        retrievalOptions
+      );
+      return {
+        ...result,
+        useHyde: true,
+      };
+    }
+
+    // Direct query without HyDE
+    const startTime = Date.now();
+    const result = await this.retrieveContext(
+      collectionName,
+      query,
+      retrievalOptions
+    );
+    const totalTimeMs = Date.now() - startTime;
+
+    // Extract searchTimeMs from result to avoid including it in spread
+    const { searchTimeMs, ...restResult } = result;
+
+    return {
+      ...restResult,
+      useHyde: false,
+      usedHypothetical: false,
+      metrics: {
+        generationTimeMs: 0,
+        searchTimeMs,
+        totalTimeMs,
+      },
+    };
   }
 }
 

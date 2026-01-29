@@ -917,6 +917,17 @@ export const swaggerSchemas = {
           description: 'Maximum number of tokens in the context',
           default: 4000,
         },
+        useHyde: {
+          type: 'boolean',
+          description:
+            'Use HyDE (Hypothetical Document Embeddings) for better retrieval quality',
+          default: true,
+        },
+        reason: {
+          type: 'string',
+          description:
+            'Optional debugging context explaining why search is needed',
+        },
       },
       required: ['query'],
       additionalProperties: false,
@@ -932,6 +943,17 @@ export const swaggerSchemas = {
             items: documentSchema,
           },
           totalTokens: { type: 'number' },
+          useHyde: { type: 'boolean' },
+          usedHypothetical: { type: 'boolean' },
+          hypotheticalContent: { type: 'string' },
+          metrics: {
+            type: 'object',
+            properties: {
+              generationTimeMs: { type: 'number' },
+              searchTimeMs: { type: 'number' },
+              totalTimeMs: { type: 'number' },
+            },
+          },
         },
       },
     },

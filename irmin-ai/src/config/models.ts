@@ -30,12 +30,13 @@ export const availableAIModels: NewAIModel[] = [
     isActive: true,
   },
   {
-    name: 'Claude Haiku 3.5',
+    name: 'Claude Haiku 4.5',
     provider: 'anthropic',
-    modelId: 'claude-3-5-haiku-20241022',
-    description: "Anthropic's fastest, most cost-effective model",
-    inputPricePerMillionTokens: 0.8,
-    outputPricePerMillionTokens: 4,
+    modelId: 'claude-haiku-4-5-20251001',
+    description:
+      "Anthropic's fastest, most cost-effective model, with near-frontier intelligence",
+    inputPricePerMillionTokens: 1,
+    outputPricePerMillionTokens: 5,
     isActive: true,
   },
   // OpenAI Models
