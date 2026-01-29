@@ -19,6 +19,16 @@ import (
 type RetrieveContextRequest struct {
 	Query       string   `json:"query"`
 	Collections []string `json:"collections,omitempty"`
+	UseHyde     *bool    `json:"useHyde,omitempty"` // Use HyDE by default (true); set to false to disable
+	Reason      string   `json:"reason,omitempty"`  // Optional debugging context explaining why search is needed
+}
+
+// getAvailableDocsCollections returns the mapping of user-friendly collection names to internal names
+func getAvailableDocsCollections() map[string]string {
+	return map[string]string{
+		"irmin":  "irmin-docs",
+		"duckdb": "duckdb-sql-syntax-docs",
+	}
 }
 
 // RegisterDocsTools registers the tools for documentation retrieval
@@ -26,13 +36,34 @@ func (mcpTools *MCPTools) RegisterDocsTools() {
 	mcpTools.registerRetrieveDocsContextTool()
 }
 
+// retrieveDocsContextToolDescription is the description for the irmin_retrieve_docs_context tool
+const retrieveDocsContextToolDescription = `Search documentation using advanced semantic search with HyDE (Hypothetical Document Embeddings).
+
+Use this tool when:
+- Initial context doesn't contain enough specific information
+- You need detailed technical specifications or API references
+- The user asks about specific features, functions, or configurations
+- You want to verify or expand on information from conversation context
+
+Collections available:
+- 'irmin': Platform features, repositories, workflows, scripts, API endpoints
+- 'duckdb': SQL syntax, functions, query optimization, data types
+
+Returns numbered results with source attribution and relevance scores.
+
+Parameters:
+- query: Natural language search query (required)
+- collections: Array of collection names to search (default: both)
+- useHyde: Use hypothetical document generation for better matching (default: true)
+- reason: Brief explanation of why search is needed (optional, for debugging)`
+
 // registerRetrieveDocsContextTool registers the irmin_retrieve_docs_context tool for getting context from documentation
 func (mcpTools *MCPTools) registerRetrieveDocsContextTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
 			Name:        "irmin_retrieve_docs_context",
-			Description: "Retrieve relevant documentation context using semantic search across Irmin platform docs and DuckDB SQL reference. Returns context-aware documentation snippets for specific features, concepts, or SQL syntax. Requires a natural language query describing what you need to learn. Optionally specify collections array: 'irmin' (platform features, repositories, workflows, scripts) or 'duckdb' (SQL syntax, functions, query optimization). Defaults to searching both. Use this before creating repositories, workflows, queries, or scripts to understand configuration options and best practices.",
+			Description: retrieveDocsContextToolDescription,
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args RetrieveContextRequest) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -41,69 +72,11 @@ func (mcpTools *MCPTools) registerRetrieveDocsContextTool() {
 				return nil, struct{}{}, err
 			}
 
-			// Define available collections
-			availableCollections := map[string]string{
-				"irmin":  "irmin-docs",
-				"duckdb": "duckdb-sql-syntax-docs",
-			}
-
 			// Determine which collections to search
-			targetCollections := make(map[string]string)
-			if len(args.Collections) == 0 {
-				targetCollections = availableCollections
-			} else {
-				for _, reqCol := range args.Collections {
-					if val, ok := availableCollections[reqCol]; ok {
-						targetCollections[reqCol] = val
-					}
-				}
-			}
+			targetCollections := mcpTools.resolveTargetCollections(args.Collections)
 
-			combinedResults := make(map[string]any)
-
-			for key, colName := range targetCollections {
-				// Get collection ID
-				var collectionID string
-				collectionID, err = mcpTools.getCollectionIDByName(ctx, colName)
-				if err != nil {
-					mcpTools.apiServices.Logger.Error(
-						"Failed to get collection ID",
-						"collection",
-						colName,
-						"error",
-						err,
-					)
-					combinedResults[key] = map[string]string{"error": fmt.Sprintf("Collection %s not found", colName)}
-					continue
-				}
-
-				// Make request to AI service
-				retrieveReq := map[string]any{
-					"query": args.Query,
-				}
-
-				result, retrieveErr := mcpTools.makeAIRequest(
-					ctx,
-					http.MethodPost,
-					fmt.Sprintf("/api/system/embeddings/collections/%s/retrieve-context", collectionID),
-					retrieveReq,
-				)
-				if retrieveErr != nil {
-					mcpTools.apiServices.Logger.Error(
-						"Failed to retrieve docs context",
-						"collection",
-						colName,
-						"error",
-						retrieveErr,
-					)
-					combinedResults[key] = map[string]string{
-						"error": fmt.Sprintf("Failed to retrieve context: %v", retrieveErr),
-					}
-					continue
-				}
-
-				combinedResults[key] = result
-			}
+			// Retrieve context from each collection
+			combinedResults := mcpTools.retrieveFromCollections(ctx, targetCollections, args)
 
 			// Convert combined response to JSON
 			responseJSON, err := json.MarshalIndent(combinedResults, "", "  ")
@@ -120,6 +93,88 @@ func (mcpTools *MCPTools) registerRetrieveDocsContextTool() {
 			}, struct{}{}, nil
 		},
 	)
+}
+
+// resolveTargetCollections determines which collections to search based on requested collections
+func (mcpTools *MCPTools) resolveTargetCollections(requested []string) map[string]string {
+	available := getAvailableDocsCollections()
+
+	if len(requested) == 0 {
+		return available
+	}
+
+	targetCollections := make(map[string]string)
+	for _, reqCol := range requested {
+		if val, ok := available[reqCol]; ok {
+			targetCollections[reqCol] = val
+		}
+	}
+	return targetCollections
+}
+
+// retrieveFromCollections retrieves context from multiple collections
+func (mcpTools *MCPTools) retrieveFromCollections(
+	ctx context.Context,
+	targetCollections map[string]string,
+	args RetrieveContextRequest,
+) map[string]any {
+	combinedResults := make(map[string]any)
+
+	for key, colName := range targetCollections {
+		result := mcpTools.retrieveFromSingleCollection(ctx, colName, args)
+		combinedResults[key] = result
+	}
+
+	return combinedResults
+}
+
+// retrieveFromSingleCollection retrieves context from a single collection
+func (mcpTools *MCPTools) retrieveFromSingleCollection(
+	ctx context.Context,
+	colName string,
+	args RetrieveContextRequest,
+) any {
+	// Get collection ID
+	collectionID, err := mcpTools.getCollectionIDByName(ctx, colName)
+	if err != nil {
+		mcpTools.apiServices.Logger.ErrorContext(
+			ctx,
+			"Failed to get collection ID",
+			"collection", colName,
+			"error", err,
+		)
+		return map[string]string{"error": fmt.Sprintf("Collection %s not found", colName)}
+	}
+
+	// Build request
+	retrieveReq := map[string]any{
+		"query": args.Query,
+	}
+	if args.UseHyde != nil {
+		retrieveReq["useHyde"] = *args.UseHyde
+	}
+	if args.Reason != "" {
+		retrieveReq["reason"] = args.Reason
+	}
+
+	// Make request to AI service
+	result, err := mcpTools.makeAIRequest(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf("/api/system/embeddings/collections/%s/retrieve-context", collectionID),
+		retrieveReq,
+	)
+	if err != nil {
+		mcpTools.apiServices.Logger.ErrorContext(
+			ctx,
+			"Failed to retrieve docs context",
+			"collection", colName,
+			"error", err,
+		)
+		return map[string]string{"error": fmt.Sprintf("Failed to retrieve context: %v", err)}
+	}
+
+	return result
 }
 
 // getCollectionIDByName retrieves the collection ID for a given collection name

@@ -254,6 +254,7 @@ type aiAppEmbeddingSearchArgs struct {
 	Path   string            `json:"path"   jsonschema:"optional,Unified path to specific embedding file (e.g. /repo-slug/main/embeddings/file.parquet). If empty searches all embeddings."`
 	TopK   int               `json:"top_k"  jsonschema:"optional,Number of results to return (default 10)"`
 	Filter map[string]string `json:"filter" jsonschema:"optional,Metadata filter for search results"`
+	Reason string            `json:"reason" jsonschema:"optional,Brief explanation of why search is needed (recorded in audit logs)"`
 }
 
 // Write tool argument structs
@@ -505,8 +506,20 @@ func registerAIAppEmbeddingSearchTool(
 	sdkmcp.AddTool(
 		server,
 		&sdkmcp.Tool{
-			Name:        "irmin_search_embeddings",
-			Description: "Search for semantically similar content using natural language queries. If path is empty, searches all available embedding files. Use unified path format to filter: /repo-slug/ref/embeddings/file.parquet",
+			Name: "irmin_search_embeddings",
+			Description: `Search for semantically similar content using natural language queries.
+
+Use this tool when:
+- You need to find relevant information based on semantic meaning
+- The user asks questions about stored data or documents
+- You want to retrieve context for answering domain-specific questions
+
+Parameters:
+- query: Natural language search query (required)
+- path: Unified path to filter (e.g. /repo-slug/ref/embeddings/file.parquet). If empty, searches all embeddings.
+- top_k: Number of results to return (default: 10)
+- filter: Optional metadata filter for results
+- reason: Brief explanation of why search is needed (optional, recorded in audit logs)`,
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppEmbeddingSearchArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			startTime := time.Now()
@@ -900,7 +913,8 @@ func registerCustomNoArgsTool(
 
 // customEmbeddingSearchArgs defines arguments for custom embedding search tools.
 type customEmbeddingSearchArgs struct {
-	Query string `json:"query" jsonschema:"required,The search query"`
+	Query  string `json:"query"  jsonschema:"required,The search query"`
+	Reason string `json:"reason" jsonschema:"optional,Brief explanation of why search is needed (recorded in audit logs)"`
 }
 
 // registerCustomEmbeddingSearchTool registers an embedding search custom tool.

@@ -17231,6 +17231,8 @@ RetrieveContextRequest represents the request structure for retrieving context
 type RetrieveContextRequest struct {
     Query       string   `json:"query"`
     Collections []string `json:"collections,omitempty"`
+    UseHyde     *bool    `json:"useHyde,omitempty"` // Use HyDE by default (true); set to false to disable
+    Reason      string   `json:"reason,omitempty"`  // Optional debugging context explaining why search is needed
 }
 ```
 
