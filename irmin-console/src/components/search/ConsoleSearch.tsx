@@ -1,6 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -128,10 +135,12 @@ export default function ConsoleSearch() {
     };
   }, [isMac, isFocused]);
 
-  // Debounce useEffect hook
+  // Debounce useEffect hook - use startTransition for non-urgent update
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedQuery(query);
+      startTransition(() => {
+        setDebouncedQuery(query);
+      });
     }, 300); // 300ms debounce time
 
     return () => {

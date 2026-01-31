@@ -1,10 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { workspaceSearchQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { SearchFilters, SearchResponse } from '@/types/core/Search';
@@ -16,8 +14,7 @@ export function useWorkspaceSearch(
     enabled?: boolean;
   }
 ) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
 
   const workspaceSearchQuery = useQuery<
     IrminAPIResponse<SearchResponse>,
@@ -27,8 +24,7 @@ export function useWorkspaceSearch(
     queryFn: async () => {
       if (!workspaceSlug) throw new Error('Workspace slug is required');
 
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.searchService.search({
         workspace: workspaceSlug,
         params,

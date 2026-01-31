@@ -116,8 +116,9 @@ export default function ConversationsList({
                 key={`conversation-${conversation.id}`}
                 className={cn(
                   `
-                    group flex cursor-pointer items-center justify-between gap-3
-                    rounded-md p-3 text-sm transition-all
+                    content-visibility-auto group flex cursor-pointer
+                    items-center justify-between gap-3 rounded-md p-3 text-sm
+                    transition-all
                   `,
                   selectedConversation?.id === conversation.id
                     ? `

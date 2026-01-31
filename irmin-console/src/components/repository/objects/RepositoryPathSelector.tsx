@@ -287,7 +287,7 @@ const RepositoryPathSelector = ({
     segmentsAfter: 1,
   });
 
-  const renderItem = (item: RepositoryObject) => {
+  const renderItem = (item: RepositoryObject, index: number) => {
     // Check if this item can be selected based on type constraints
     const canSelect = matchesTypeConstraints(
       item,
@@ -299,7 +299,7 @@ const RepositoryPathSelector = ({
 
     if (item.type === 'group') {
       return (
-        <div key={item.path} className='my-1'>
+        <div key={item.path || `group-${index}`} className='my-1'>
           <div
             className={`
               flex items-center justify-normal rounded-md p-1 text-sm
@@ -376,7 +376,7 @@ const RepositoryPathSelector = ({
             item.children &&
             item.children.length > 0 && (
               <div className='pl-6'>
-                {item.children.map((child) => renderItem(child))}
+                {item.children.map((child, idx) => renderItem(child, idx))}
               </div>
             )}
         </div>
@@ -385,7 +385,7 @@ const RepositoryPathSelector = ({
 
     return (
       <div
-        key={item.path}
+        key={item.path || `item-${index}`}
         className={`
           my-1 ml-6 flex items-center justify-normal rounded-md p-1 text-sm
           ${
@@ -643,7 +643,7 @@ const RepositoryPathSelector = ({
                     </div>
                   </div>
                 )}
-                {rootObject.children?.map((item) => renderItem(item))}
+                {rootObject.children?.map((item, idx) => renderItem(item, idx))}
               </>
             )}
           </div>

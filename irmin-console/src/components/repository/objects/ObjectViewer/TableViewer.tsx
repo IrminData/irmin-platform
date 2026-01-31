@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AiOutlineDownload } from 'react-icons/ai';
 import { TbSearch } from 'react-icons/tb';
 
-import AdvancedDatatable from '@/components/repository/objects/ObjectViewer/AdvancedDatatable';
+import AdvancedDatatable from '@/components/repository/objects/ObjectViewer/AdvancedDatatable/Async';
 import JSONViewer from '@/components/repository/objects/ObjectViewer/JSONViewer';
 import { Button } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';

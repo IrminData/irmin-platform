@@ -1,25 +1,21 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { connectorQueryKey, connectorsQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 
 import type { Connector } from '@/types/core/Connector';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 export function useConnector(connectorID: string) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const queryClient = useQueryClient();
 
   // Query for fetching all connections in the current workspace
   const connectorQuery = useQuery<IrminAPIResponse<Connector>>({
     queryKey: connectorQueryKey(connectorID),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const connector = await core.connectorService.fetchConnector({
         connectorId: connectorID,
       });

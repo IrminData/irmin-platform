@@ -2,10 +2,9 @@ import { useRouter } from 'next/navigation';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { inviteInboxQueryKey, inviteQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -13,7 +12,7 @@ import type { Invite } from '@/types/core/Invite';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 export function useInvite(inviteID: string) {
-  const { getToken } = useIAM();
+  const { getCore } = useIrminCore();
   const { locale } = useLocale();
   const { irminAlert } = usePopup();
   const router = useRouter();
@@ -23,8 +22,7 @@ export function useInvite(inviteID: string) {
   const inviteQuery = useQuery<IrminAPIResponse<Invite>, Error>({
     queryKey: inviteQueryKey(inviteID),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.inviteService.fetchInvite({
         inviteID,
       });
@@ -49,8 +47,7 @@ export function useInvite(inviteID: string) {
   const acceptInviteMutation = useMutation({
     mutationFn: async (inviteID: string) => {
       if (!inviteID) throw new Error('Invite ID is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.inviteService.acceptInvite({ inviteID });
     },
     onSuccess: (res) => {
@@ -69,8 +66,7 @@ export function useInvite(inviteID: string) {
   const declineInviteMutation = useMutation({
     mutationFn: async (inviteID: string) => {
       if (!inviteID) throw new Error('Invite ID is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.inviteService.declineInvite({ inviteID });
     },
     onSuccess: (res) => {

@@ -1,10 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { repositoryObjectHistoryQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 export function useRepositoryObjectHistory(
@@ -12,8 +10,7 @@ export function useRepositoryObjectHistory(
   branch: string,
   path: string
 ) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
 
   const objectHistoryQuery = useQuery({
@@ -24,8 +21,7 @@ export function useRepositoryObjectHistory(
       path
     ),
     queryFn: async () => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
+      const irminCore = await getCore();
       const res = await irminCore.objectService.getObjectHistory({
         workspace: workspaceSlug,
         repository: repositorySlug,

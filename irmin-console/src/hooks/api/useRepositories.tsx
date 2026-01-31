@@ -1,10 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { repositoriesQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -25,8 +23,7 @@ type RepositoryCreateInput = {
 };
 
 export function useRepositories() {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
@@ -34,8 +31,7 @@ export function useRepositories() {
   const repositoriesQuery = useQuery<IrminAPIResponse<Repository[]>, Error>({
     queryKey: repositoriesQueryKey(workspaceSlug),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.repositoryService.fetchRepositories({
         workspace: workspaceSlug,
       });
@@ -48,8 +44,7 @@ export function useRepositories() {
     RepositoryCreateInput
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.repositoryService.createRepository({
         workspace: workspaceSlug,
         name: data.name,

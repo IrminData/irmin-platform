@@ -1,10 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { policiesQueryKey, policyQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -60,8 +58,7 @@ export function usePolicies({
   roleId?: string;
   userId?: string;
 }) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
@@ -78,8 +75,7 @@ export function usePolicies({
       userId
     ),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.policyService.listPolicies({
         workspace: workspaceSlug,
         effect,
@@ -99,8 +95,7 @@ export function usePolicies({
     PolicyCreateInput
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.policyService.createPolicy({
         workspace: workspaceSlug,
         effect: data.effect,
@@ -174,8 +169,7 @@ export function usePolicies({
 
   const deletePolicyMutation = useMutation<IrminAPIResponse, Error, string>({
     mutationFn: async (policyId: string) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.policyService.deletePolicy({
         workspace: workspaceSlug,
         policyId: policyId,
@@ -216,8 +210,7 @@ export function usePolicies({
     PolicyUpdateInput
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.policyService.updatePolicy({
         workspace: workspaceSlug,
         policyId: data.policyId,

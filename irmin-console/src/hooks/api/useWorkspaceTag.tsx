@@ -1,18 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { workspaceTagsQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { TagWithAssets } from '@/types/core/Tag';
 
 export function useWorkspaceTag(tagID?: string) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
 
   const workspaceTagQuery = useQuery<IrminAPIResponse<TagWithAssets>, Error>({
@@ -21,8 +18,7 @@ export function useWorkspaceTag(tagID?: string) {
       if (!tagID) throw new Error('Tag ID is required');
       if (!workspaceSlug) throw new Error('Workspace slug is required');
 
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const tag = await core.tagService.getWorkspaceTag({
         workspace: workspaceSlug,
         tagId: tagID,

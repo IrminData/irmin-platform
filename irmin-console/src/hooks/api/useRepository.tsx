@@ -1,10 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { repositoriesQueryKey, repositoryQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -26,8 +24,7 @@ type RepositoryUpdateInput = {
 };
 
 export function useRepository(slug: string) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
@@ -35,8 +32,7 @@ export function useRepository(slug: string) {
   const repositoryQuery = useQuery<IrminAPIResponse<Repository>, Error>({
     queryKey: repositoryQueryKey(workspaceSlug, slug),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.repositoryService.fetchRepository({
         workspace: workspaceSlug,
         slug: slug,
@@ -59,8 +55,7 @@ export function useRepository(slug: string) {
   const deleteRepositoryMutation = useMutation<IrminAPIResponse, Error, string>(
     {
       mutationFn: async (repositorySlug: string) => {
-        const token = await getToken();
-        const core = new IrminCore(locale, token);
+        const core = await getCore();
         return await core.repositoryService.deleteRepository({
           workspace: workspaceSlug,
           repositorySlug,
@@ -91,8 +86,7 @@ export function useRepository(slug: string) {
     RepositoryUpdateInput
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.repositoryService.updateRepository({
         workspace: workspaceSlug,
         slug: slug,
@@ -126,8 +120,7 @@ export function useRepository(slug: string) {
     string
   >({
     mutationFn: async (newOwnerID) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.repositoryService.transferRepository({
         workspace: workspaceSlug,
         slug: slug,

@@ -55,9 +55,7 @@ const LanguageSwitcher = () => {
   return (
     <Select value={currentLanguage.code} onValueChange={changeHandler}>
       <SelectTrigger className='w-[140px]'>
-        <SelectValue placeholder={dict.common.selectLanguage}>
-          {currentLanguage.name}
-        </SelectValue>
+        <SelectValue placeholder={dict.common.selectLanguage} />
       </SelectTrigger>
       <SelectContent>
         {languages.map((lang) => (

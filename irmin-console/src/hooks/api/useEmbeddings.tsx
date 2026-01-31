@@ -1,8 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
-
-import { useIAM } from '@/context/IAMContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
@@ -21,8 +19,8 @@ import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
  * @param ref - (optional) The ref (branch, tag or commit hash).
  */
 export const useEmbeddings = (repositorySlug: string, ref?: string) => {
-  const { getToken } = useIAM();
-  const { locale, dict } = useLocale();
+  const { getCore } = useIrminCore();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const { irminAlert } = usePopup();
   const queryClient = useQueryClient();
@@ -33,8 +31,7 @@ export const useEmbeddings = (repositorySlug: string, ref?: string) => {
   const listEmbeddingsQuery = useQuery({
     queryKey: ['embeddings', workspaceSlug, repositorySlug, ref ?? ''],
     queryFn: async () => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
+      const irminCore = await getCore();
       return irminCore.embeddingsService.listEmbeddings({
         workspace: workspaceSlug,
         repository: repositorySlug,
@@ -63,8 +60,7 @@ export const useEmbeddings = (repositorySlug: string, ref?: string) => {
       ref: mutationRef,
       config,
     }) => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
+      const irminCore = await getCore();
       return irminCore.embeddingsService.vectorizeObjects({
         workspace: workspaceSlug,
         repository: repositorySlug,
@@ -121,8 +117,7 @@ export const useEmbeddings = (repositorySlug: string, ref?: string) => {
       topK,
       filter,
     }) => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
+      const irminCore = await getCore();
       return irminCore.embeddingsService.searchEmbeddings({
         workspace: workspaceSlug,
         repository: repositorySlug,

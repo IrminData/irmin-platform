@@ -1,10 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { repositoryObjectSchemaQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 export const useRepositoryObjectSchemaQuery = (
@@ -14,8 +12,7 @@ export const useRepositoryObjectSchemaQuery = (
   path?: string,
   options?: { enabled?: boolean }
 ) => {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
 
   return useQuery({
     enabled: options?.enabled,
@@ -26,8 +23,7 @@ export const useRepositoryObjectSchemaQuery = (
       path ?? ''
     ),
     queryFn: async () => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
+      const irminCore = await getCore();
       return irminCore.objectService.getObjectSchema({
         workspace: workspaceSlug,
         repository: repositorySlug,

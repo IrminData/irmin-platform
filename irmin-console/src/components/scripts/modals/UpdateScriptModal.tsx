@@ -180,7 +180,7 @@ export default function UpdateScriptModal({
           rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => {
             const selectedUser = usersQuery.data?.data?.find(
-              (user) => user.id === field.value
+              (u) => u.id === field.value
             );
             const displayName = selectedUser
               ? `${selectedUser.first_name} ${selectedUser.last_name}`
@@ -193,7 +193,11 @@ export default function UpdateScriptModal({
                 disabled={loading || usersQuery.isLoading}
               >
                 <SelectTrigger id='script-owner'>
-                  <SelectValue>{displayName}</SelectValue>
+                  <SelectValue
+                    placeholder={`${script.owner.first_name} ${script.owner.last_name}`}
+                  >
+                    {displayName}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {usersQuery.data?.data?.map((user) => (

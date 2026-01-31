@@ -2,11 +2,9 @@ import { useMemo } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { inviteInboxQueryKey, invitesQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -30,8 +28,7 @@ type InviteWorkspaceUserInput = {
 
 export function useInvites() {
   const { workspaceSlug } = useWorkspaceContext();
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const queryClient = useQueryClient();
 
@@ -39,8 +36,7 @@ export function useInvites() {
   const inviteInboxQuery = useQuery<IrminAPIResponse<Invite[]>>({
     queryKey: inviteInboxQueryKey,
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const invites = await core.inviteService.listInviteInbox();
       return invites;
     },
@@ -50,8 +46,7 @@ export function useInvites() {
   const invitesQuery = useQuery<IrminAPIResponse<Invite[]>>({
     queryKey: invitesQueryKey(workspaceSlug),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const invites = await core.inviteService.listInvitesToWorkspace({
         workspace: workspaceSlug,
       });
@@ -62,8 +57,7 @@ export function useInvites() {
   // Mutation for deleting an invite
   const deleteInviteMutation = useMutation<IrminAPIResponse, Error, string>({
     mutationFn: async (inviteID: string) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const res = await core.inviteService.deleteInvite({ inviteID });
       return res;
     },
@@ -88,8 +82,7 @@ export function useInvites() {
     ChangeInviteRoleInput
   >({
     mutationFn: async (input) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const res = await core.inviteService.updateInvite({
         inviteID: input.id,
         role: input.roleId,
@@ -113,8 +106,7 @@ export function useInvites() {
   // Mutation to resend an invite
   const resendInviteMutation = useMutation({
     mutationFn: async (inviteID: string) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const res = await core.inviteService.resendInvite({ inviteID });
       return res;
     },
@@ -192,8 +184,7 @@ export function useInvites() {
     InviteWorkspaceUserInput
   >({
     mutationFn: async (input) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const res = await core.inviteService.sendInvite({
         workspace: workspaceSlug,
         email: input.email,

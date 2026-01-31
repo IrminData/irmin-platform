@@ -131,9 +131,9 @@ export function GroupItemViewer({
           </Button>
           {expanded && (
             <div className='mt-3 space-y-3 pl-2'>
-              {item.children?.map((child) => (
+              {item.children?.map((child, index) => (
                 <ObjectSchemaViewer
-                  key={child.path}
+                  key={child.path || `child-${index}`}
                   schema={child}
                   depth={depth + 1}
                   isExpanded={isExpanded}

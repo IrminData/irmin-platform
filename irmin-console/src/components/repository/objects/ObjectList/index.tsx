@@ -292,7 +292,10 @@ export default function ObjectList({
               </TableHeader>
               <TableBody>
                 {sortedObjects.map((obj) => (
-                  <TableRow key={obj.path}>
+                  <TableRow
+                    key={obj.path}
+                    className='content-visibility-auto-lg'
+                  >
                     <TableCell>
                       <div className='flex flex-col gap-1'>
                         <div className='flex items-center space-x-2'>

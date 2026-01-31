@@ -1,10 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { userQueryKey, usersQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
@@ -12,8 +10,7 @@ import type { User } from '@/types/core/User';
 
 export function useUser(userID: string) {
   const { workspaceSlug } = useWorkspaceContext();
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const queryClient = useQueryClient();
 
   // Query for fetching a single user by ID
@@ -21,8 +18,7 @@ export function useUser(userID: string) {
     queryKey: userQueryKey(userID!, workspaceSlug),
     queryFn: async () => {
       if (!userID) throw new Error('User ID is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const user = await core.userService.fetchUser({
         workspace: workspaceSlug,
         user: userID,

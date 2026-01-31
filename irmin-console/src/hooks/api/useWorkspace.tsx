@@ -4,12 +4,11 @@ import { useRouter } from 'next/navigation';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { workspaceQueryKey, workspacesQueryKey } from '@/lib/queryKeys';
 
 import WorkspaceDeletionConfirmationModal from '@/components/workspace/WorkspaceDeletionConfirmationModal';
 
-import { useIAM } from '@/context/IAMContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -24,7 +23,7 @@ import {
 type UpdateWorkspaceInput = Pick<Workspace, 'description' | 'name'>;
 
 export function useWorkspace(slug: string) {
-  const { getToken } = useIAM();
+  const { getCore } = useIrminCore();
   const { locale, dict } = useLocale();
   const { irminAlert, irminModal, irminConfirm } = usePopup();
   const queryClient = useQueryClient();
@@ -35,8 +34,7 @@ export function useWorkspace(slug: string) {
     queryKey: workspaceQueryKey(slug!),
     queryFn: async () => {
       if (!slug) throw new Error('Workspace slug is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const workspace = await core.workspaceService.fetchWorkspace({
         workspaceSlug: slug,
       });
@@ -66,8 +64,7 @@ export function useWorkspace(slug: string) {
   >({
     mutationFn: async (input) => {
       if (!slug) throw new Error('Workspace slug is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return core.workspaceService.updateWorkspace({
         workspace: slug,
         data: input,
@@ -92,8 +89,7 @@ export function useWorkspace(slug: string) {
   // Mutation for deleting a workspace (only if slug is provided)
   const deleteMutation = useMutation<IrminAPIResponse, Error, string>({
     mutationFn: async (workspaceSlug: string) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return core.workspaceService.deleteWorkspace({
         workspace: workspaceSlug,
       });
@@ -145,8 +141,7 @@ export function useWorkspace(slug: string) {
   const transferMutation = useMutation<IrminAPIResponse, Error, string>({
     mutationFn: async (newOwnerID) => {
       if (!slug) throw new Error('Workspace slug is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return core.workspaceService.transferWorkspace({
         workspace: slug,
         newOwnerID,
@@ -198,8 +193,7 @@ export function useWorkspace(slug: string) {
   const leaveMutation = useMutation<IrminAPIResponse, Error, void>({
     mutationFn: async () => {
       if (!slug) throw new Error('Workspace slug is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return core.workspaceService.leaveWorkspace({
         workspaceSlug: slug,
       });

@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import {
   connectionsQueryKey,
   repositoriesQueryKey,
@@ -9,8 +8,7 @@ import {
   workspaceTagsQueryKey,
 } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
@@ -127,16 +125,14 @@ const invalidateEntityQueries = (
 };
 
 export const useWorkspaceTags = (workspaceSlug: string) => {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const queryClient = useQueryClient();
 
   const workspaceTagsQuery = useQuery<IrminAPIResponse<Tag[]>, Error>({
     queryKey: workspaceTagsQueryKey(workspaceSlug),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.tagService.listWorkspaceTags({
         workspace: workspaceSlug,
       });
@@ -149,8 +145,7 @@ export const useWorkspaceTags = (workspaceSlug: string) => {
     TagCreateRequest
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.tagService.createWorkspaceTag({
         workspace: workspaceSlug,
         name: data.name,
@@ -190,8 +185,7 @@ export const useWorkspaceTags = (workspaceSlug: string) => {
     TagUpdateRequest
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.tagService.updateWorkspaceTag({
         workspace: workspaceSlug,
         tagId: data.id,
@@ -220,8 +214,7 @@ export const useWorkspaceTags = (workspaceSlug: string) => {
     string
   >({
     mutationFn: async (tagId: string) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.tagService.deleteWorkspaceTag({
         workspace: workspaceSlug,
         tagId,
@@ -247,8 +240,7 @@ export const useWorkspaceTags = (workspaceSlug: string) => {
     TagAddToEntityRequest
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.tagService.addTagToEntity({
         workspace: workspaceSlug,
         tagId: data.id,
@@ -271,8 +263,7 @@ export const useWorkspaceTags = (workspaceSlug: string) => {
     TagRemoveFromEntityRequest
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.tagService.removeTagFromEntity({
         workspace: workspaceSlug,
         tagId: data.id,

@@ -1,14 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import type {
   CreateBranchRequest,
   RevertCommitRequest,
 } from '@/lib/core/resources/RepositoryBranchService';
 import { repositoryBranchesQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -22,8 +20,7 @@ import {
 } from './mutations/utils';
 
 export function useRepositoryBranches(repositorySlug: string) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
@@ -31,8 +28,7 @@ export function useRepositoryBranches(repositorySlug: string) {
   const repositoryBranchesQuery = useQuery<IrminAPIResponse<Branch[]>, Error>({
     queryKey: repositoryBranchesQueryKey(workspaceSlug, repositorySlug),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.repositoryBranchService.fetchBranches({
         workspace: workspaceSlug,
         repository: repositorySlug,
@@ -46,8 +42,7 @@ export function useRepositoryBranches(repositorySlug: string) {
     CreateBranchRequest
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.repositoryBranchService.createBranch({
         workspace: workspaceSlug,
         repository: repositorySlug,
@@ -89,8 +84,7 @@ export function useRepositoryBranches(repositorySlug: string) {
 
   const deleteBranchMutation = useMutation<IrminAPIResponse, Error, string>({
     mutationFn: async (branch) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.repositoryBranchService.deleteBranch({
         workspace: workspaceSlug,
         repository: repositorySlug,
@@ -120,8 +114,7 @@ export function useRepositoryBranches(repositorySlug: string) {
     { branch: string; commitRef: string; force?: boolean }
   >({
     mutationFn: async ({ branch, commitRef, force }) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.repositoryBranchService.resetBranch({
         workspace: workspaceSlug,
         repository: repositorySlug,
@@ -152,8 +145,7 @@ export function useRepositoryBranches(repositorySlug: string) {
     { branch: string; request: RevertCommitRequest }
   >({
     mutationFn: async ({ branch, request }) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.repositoryBranchService.revertCommit({
         workspace: workspaceSlug,
         repository: repositorySlug,

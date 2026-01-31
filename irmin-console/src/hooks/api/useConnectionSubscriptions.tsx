@@ -1,10 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { connectionSubscriptionsQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type {
@@ -26,8 +24,7 @@ export function useConnectionSubscriptions(
   connectionID: string,
   enabled: boolean = true
 ) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -37,8 +34,7 @@ export function useConnectionSubscriptions(
   >({
     queryKey: connectionSubscriptionsQueryKey(workspaceSlug, connectionID),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return core.connectionSubscriptionService.fetchSubscriptions({
         workspace: workspaceSlug,
         connectionID,
@@ -54,8 +50,7 @@ export function useConnectionSubscriptions(
     CreateConnectionSubscriptionRequest
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return core.connectionSubscriptionService.createSubscription({
         workspace: workspaceSlug,
         connectionID,
@@ -76,8 +71,7 @@ export function useConnectionSubscriptions(
     { subscriptionID: string; data: UpdateConnectionSubscriptionRequest }
   >({
     mutationFn: async ({ subscriptionID, data }) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return core.connectionSubscriptionService.updateSubscription({
         workspace: workspaceSlug,
         connectionID,
@@ -99,8 +93,7 @@ export function useConnectionSubscriptions(
     string
   >({
     mutationFn: async (subscriptionID) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return core.connectionSubscriptionService.deleteSubscription({
         workspace: workspaceSlug,
         connectionID,
@@ -121,8 +114,7 @@ export function useConnectionSubscriptions(
     string
   >({
     mutationFn: async (subscriptionID) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return core.connectionSubscriptionService.regenerateToken({
         workspace: workspaceSlug,
         connectionID,

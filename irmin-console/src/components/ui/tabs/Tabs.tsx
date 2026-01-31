@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -83,7 +83,9 @@ export default function Tabs({ tabs }: { tabs: TabDetails[] }) {
             variant={'outline'}
             aria-label={`Switch to ${tab.name} tab`}
             onClick={() => {
-              setActiveTab(tab.slug ?? tab.name);
+              startTransition(() => {
+                setActiveTab(tab.slug ?? tab.name);
+              });
               if (tab.link) router.push(tab.link);
             }}
             icon={tab.icon && tab.icon}

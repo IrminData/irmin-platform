@@ -1,10 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { connectorConfigurationQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 
 import type { ConnectionFieldValues } from '@/types/core/Connection';
@@ -23,8 +21,7 @@ export function useConnectionConfiguration(
   details?: ConnectionFieldValues,
   settings?: ConnectionFieldValues
 ) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const queryClient = useQueryClient();
   const { irminAlert } = usePopup();
 
@@ -39,8 +36,7 @@ export function useConnectionConfiguration(
       settings
     ),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.connectorService.fetchConnectorConfigurationFields({
         connectorId: connectorID ?? '',
         configurationType: type,
@@ -59,8 +55,7 @@ export function useConnectionConfiguration(
   >({
     mutationFn: async (input: ValidateConnectorConfigurationInput) => {
       if (!connectorID) throw new Error('Connector ID is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.connectorService.validateConnectorConfiguration({
         connectorId: connectorID,
         details: input.details,

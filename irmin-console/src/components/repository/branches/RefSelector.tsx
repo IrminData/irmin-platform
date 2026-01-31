@@ -83,28 +83,6 @@ export default function RefSelector({
     [tags]
   );
 
-  // Find the currently selected ref and determine its display label
-  const selectedRef = useMemo(() => {
-    const branchMatch = branchOptions.find(
-      (option) => option.value === currentRef
-    );
-    if (branchMatch) return branchMatch;
-
-    const tagMatch = tagOptions.find((option) => option.value === currentRef);
-    if (tagMatch) return tagMatch;
-
-    // If it's a custom ref (not in branches or tags), display it as is
-    if (currentRef) {
-      return {
-        label: currentRef,
-        value: currentRef,
-        type: 'custom' as const,
-      };
-    }
-
-    return undefined;
-  }, [currentRef, branchOptions, tagOptions]);
-
   /**
    * Handle showing the custom ref modal
    */
@@ -149,18 +127,23 @@ export default function RefSelector({
     [branchOptions, tagOptions, onSelect, handleShowCustomRefModal]
   );
 
-  // Use currentRef as value if it exists in dropdown options, otherwise use empty string
-  // to keep the Select controlled
-  const selectValue = useMemo(() => {
-    if (!currentRef) return '';
+  // Check if currentRef exists in dropdown options
+  const isCustomRef = useMemo(() => {
+    if (!currentRef) return false;
 
-    // Check if currentRef exists in branches or tags
     const existsInOptions =
       branchOptions.some((option) => option.value === currentRef) ||
       tagOptions.some((option) => option.value === currentRef);
 
-    return existsInOptions ? currentRef : '';
+    return !existsInOptions;
   }, [currentRef, branchOptions, tagOptions]);
+
+  // Use currentRef as value if it exists in dropdown options, otherwise use empty string
+  // to keep the Select controlled (custom refs are displayed via SelectValue children)
+  const selectValue = useMemo(() => {
+    if (!currentRef) return '';
+    return isCustomRef ? '' : currentRef;
+  }, [currentRef, isCustomRef]);
 
   return (
     <div
@@ -182,7 +165,7 @@ export default function RefSelector({
       >
         <SelectTrigger className='w-full'>
           <SelectValue placeholder={dict.repository.branches.branches}>
-            {selectedRef?.label}
+            {isCustomRef && currentRef ? currentRef : undefined}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>

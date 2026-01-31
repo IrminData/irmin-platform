@@ -13,7 +13,7 @@ import { downloadFile } from '@/utils/downloadFile';
 import type { ChangeItem } from '@/types/core/Diff';
 import type { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 
-import TextDiff from './TextDiff';
+import TextDiff from './TextDiffAsync';
 
 /**
  * Component to display the difference between two unknown contents

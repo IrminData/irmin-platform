@@ -1,10 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { repositoryDiffContentQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
@@ -15,8 +13,7 @@ export function useRepositoryDiffContent(
   compare?: string,
   objectPath?: string
 ) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
 
   const diffContentQuery = useQuery<
@@ -34,8 +31,7 @@ export function useRepositoryDiffContent(
       compare ?? ''
     ),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const [baseContent, compareContent] = await Promise.all([
         core.objectService.getObjectContent({
           workspace: workspaceSlug,

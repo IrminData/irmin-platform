@@ -280,7 +280,7 @@ const ConnectionPathSelector = ({
     segmentsAfter: 1,
   });
 
-  const renderItem = (item: ObjectSchema) => {
+  const renderItem = (item: ObjectSchema, index: number) => {
     // Check if this item can be selected based on type constraints
     const canSelect = matchesTypeConstraints(
       item,
@@ -292,7 +292,7 @@ const ConnectionPathSelector = ({
 
     if (item.type === 'group') {
       return (
-        <div key={item.path} className='my-1'>
+        <div key={item.path || `group-${index}`} className='my-1'>
           <div
             className={`
               flex items-center justify-normal rounded-md p-1 text-sm
@@ -371,7 +371,7 @@ const ConnectionPathSelector = ({
             item.children &&
             item.children.length > 0 && (
               <div className='pl-6'>
-                {item.children.map((child) => renderItem(child))}
+                {item.children.map((child, idx) => renderItem(child, idx))}
               </div>
             )}
         </div>
@@ -380,7 +380,7 @@ const ConnectionPathSelector = ({
 
     return (
       <div
-        key={item.path}
+        key={item.path || `item-${index}`}
         className={`
           my-1 ml-6 flex items-center justify-normal rounded-md p-1 text-sm
           ${
@@ -639,7 +639,9 @@ const ConnectionPathSelector = ({
                   </div>
                 )}
                 {rootSchema.type === 'group' &&
-                  rootSchema.children?.map((item) => renderItem(item))}
+                  rootSchema.children?.map((item, idx) =>
+                    renderItem(item, idx)
+                  )}
               </>
             )}
           </div>

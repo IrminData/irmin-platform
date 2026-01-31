@@ -94,10 +94,7 @@ export const WorkspaceSendInviteModalContent = ({
                   disabled={false}
                 >
                   <SelectTrigger className='w-full'>
-                    <SelectValue>
-                      {roles.find((role) => role.id === field.value)?.role ??
-                        roles[0]?.role}
-                    </SelectValue>
+                    <SelectValue placeholder={roles[0]?.role} />
                   </SelectTrigger>
                   <SelectContent>
                     {roles.map((role) => (

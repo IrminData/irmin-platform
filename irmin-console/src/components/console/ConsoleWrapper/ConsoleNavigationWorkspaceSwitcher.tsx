@@ -95,10 +95,7 @@ export default function ConsoleNavigationWorkspaceSwitcher({
         disabled={processing}
       >
         <SelectTrigger className='w-full' loading={processing}>
-          <SelectValue>
-            {options.find((opt) => opt.value === currentValue)?.label ??
-              dict.workspaceSwitcher.selectWorkspace}
-          </SelectValue>
+          <SelectValue placeholder={dict.workspaceSwitcher.selectWorkspace} />
         </SelectTrigger>
         <SelectContent>
           {options.map((option) => (

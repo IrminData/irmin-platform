@@ -1,14 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import {
   repositoryCommitsQueryKey,
   repositoryObjectHistoryQueryKey,
   repositoryUncommittedChangesQueryKey,
 } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -19,8 +17,7 @@ export function useRepositoryUncommittedChanges(
   repositorySlug: string,
   branch: string
 ) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
@@ -32,8 +29,7 @@ export function useRepositoryUncommittedChanges(
       branch
     ),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.repositoryBranchService.getUncommittedChanges({
         workspace: workspaceSlug,
         repository: repositorySlug,
@@ -48,8 +44,7 @@ export function useRepositoryUncommittedChanges(
     { message: string }
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.repositoryCommitService.createCommit({
         workspace: workspaceSlug,
         repository: repositorySlug,
@@ -90,8 +85,7 @@ export function useRepositoryUncommittedChanges(
 
   const revertChangesMutation = useMutation<IrminAPIResponse, Error, void>({
     mutationFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.repositoryCommitService.revertUncommittedChanges({
         workspace: workspaceSlug,
         repository: repositorySlug,

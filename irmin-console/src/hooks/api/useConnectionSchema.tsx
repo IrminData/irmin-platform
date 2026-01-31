@@ -2,11 +2,9 @@ import { useMemo } from 'react';
 
 import { useQueries, useQuery } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { connectionSchemaQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
@@ -17,8 +15,7 @@ export function useConnectionSchema(
   operationMethod?: 'pull' | 'push',
   paths?: string[]
 ) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
 
   // If no paths provided, fetch root schema (single query)
@@ -33,8 +30,7 @@ export function useConnectionSchema(
       []
     ),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.connectionService.fetchConnectionSchema({
         workspace: workspaceSlug,
         connectionID,
@@ -57,8 +53,7 @@ export function useConnectionSchema(
             [path]
           ),
           queryFn: async () => {
-            const token = await getToken();
-            const core = new IrminCore(locale, token);
+            const core = await getCore();
             return await core.connectionService.fetchConnectionSchema({
               workspace: workspaceSlug,
               connectionID,

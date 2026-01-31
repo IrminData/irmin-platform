@@ -79,6 +79,16 @@ class IrminCore {
   public embeddingsService: EmbeddingsService;
 
   /**
+   * Updates the authentication token.
+   * Used by IrminCoreContext to refresh tokens on cached instances.
+   *
+   * @param newToken - The new authentication token.
+   */
+  public setToken(newToken: string): void {
+    this.token = newToken;
+  }
+
+  /**
    * Creates an instance of IrminCore.
    *
    * @param locale - The locale to use for API messages.

@@ -51,12 +51,6 @@ export default function BranchSelector({
     [branches]
   );
 
-  // Find the currently selected branch
-  const selectedBranch = useMemo(
-    () => options.find((option) => option.value === currentRef),
-    [currentRef, options]
-  );
-
   return (
     <div
       className='relative flex w-full min-w-max flex-col'
@@ -83,9 +77,7 @@ export default function BranchSelector({
         }}
       >
         <SelectTrigger className='w-full'>
-          <SelectValue placeholder={dict.repository.branches.branches}>
-            {selectedBranch?.label}
-          </SelectValue>
+          <SelectValue placeholder={dict.repository.branches.branches} />
         </SelectTrigger>
         <SelectContent>
           {options.map((option) => (

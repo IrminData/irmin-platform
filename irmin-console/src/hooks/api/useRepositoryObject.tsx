@@ -1,9 +1,8 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { repositoryObjectQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
@@ -18,8 +17,8 @@ export const useRepositoryObject = (
   ref?: string,
   path?: string
 ) => {
-  const { getToken } = useIAM();
-  const { locale, dict } = useLocale();
+  const { getCore } = useIrminCore();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const { irminAlert } = usePopup();
 
@@ -36,9 +35,8 @@ export const useRepositoryObject = (
       path ?? ''
     ),
     queryFn: async () => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      return irminCore.objectService.getObjectAtPath({
+      const core = await getCore();
+      return core.objectService.getObjectAtPath({
         workspace: workspaceSlug,
         repository: repositorySlug,
         path: path ?? '/',
@@ -54,9 +52,8 @@ export const useRepositoryObject = (
     { path: string; ref: string }
   >({
     mutationFn: async ({ path, ref }: { path: string; ref: string }) => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      return irminCore.objectService.deleteObject({
+      const core = await getCore();
+      return core.objectService.deleteObject({
         workspace: workspaceSlug,
         repository: repositorySlug,
         path,
@@ -78,9 +75,8 @@ export const useRepositoryObject = (
     { oldPath: string; newPath: string; ref: string }
   >({
     mutationFn: async ({ oldPath, newPath, ref }) => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      return irminCore.objectService.moveObject({
+      const core = await getCore();
+      return core.objectService.moveObject({
         workspace: workspaceSlug,
         repository: repositorySlug,
         path: oldPath,
@@ -105,9 +101,8 @@ export const useRepositoryObject = (
     { oldPath: string; newPath: string; ref: string }
   >({
     mutationFn: async ({ oldPath, newPath, ref }) => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      return irminCore.objectService.copyObject({
+      const core = await getCore();
+      return core.objectService.copyObject({
         workspace: workspaceSlug,
         repository: repositorySlug,
         path: oldPath,
@@ -132,9 +127,8 @@ export const useRepositoryObject = (
     { path: string; ref: string; files: FileList; tags?: string[] }
   >({
     mutationFn: async ({ path, ref, files, tags }) => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      return irminCore.objectService.uploadObject({
+      const core = await getCore();
+      return core.objectService.uploadObject({
         workspace: workspaceSlug,
         repository: repositorySlug,
         path,
@@ -164,9 +158,8 @@ export const useRepositoryObject = (
     }
   >({
     mutationFn: async ({ path, ref, fileURL, headers, tags }) => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      return irminCore.objectService.uploadObjectFromURL({
+      const core = await getCore();
+      return core.objectService.uploadObjectFromURL({
         workspace: workspaceSlug,
         repository: repositorySlug,
         path,
@@ -203,9 +196,8 @@ export const useRepositoryObject = (
       targetPath,
       targetRef,
     }) => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      return irminCore.objectService.createPointer({
+      const core = await getCore();
+      return core.objectService.createPointer({
         workspace: workspaceSlug,
         repository: repositorySlug,
         path: pointerPath,
@@ -239,9 +231,8 @@ export const useRepositoryObject = (
     }
   >({
     mutationFn: async ({ path, ref, validationSchema, validationMode }) => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      return irminCore.objectService.validateObject({
+      const core = await getCore();
+      return core.objectService.validateObject({
         workspace: workspaceSlug,
         repository: repositorySlug,
         path,

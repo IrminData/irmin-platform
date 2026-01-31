@@ -33,4 +33,23 @@
     box-shadow: none !important;
     backdrop-filter: none !important;
   }
+
+  /* --- Content Visibility Optimization for Long Lists --- */
+  /* Apply to list items in scrollable containers to skip rendering off-screen content */
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 50px; /* Estimated height for list items */
+  }
+
+  /* For larger items like cards or table rows */
+  .content-visibility-auto-lg {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 80px;
+  }
+
+  /* For chat messages or conversation items */
+  .content-visibility-auto-message {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 120px;
+  }
 }

@@ -72,19 +72,26 @@ async function setupMutationContext<TData, TInput = unknown>(
   config: MutationCacheConfig<TData, TInput>,
   singleItemQueryKey?: QueryKey
 ): Promise<Omit<MutationContext<TData>, 'tempId'>> {
-  // Cancel any outgoing refetches
-  await queryClient.cancelQueries({ queryKey: config.primaryQueryKey });
+  // Cancel any outgoing refetches in parallel for better performance
+  const cancelPromises: Promise<void>[] = [
+    queryClient.cancelQueries({ queryKey: config.primaryQueryKey }),
+  ];
 
   if (singleItemQueryKey) {
-    await queryClient.cancelQueries({ queryKey: singleItemQueryKey });
+    cancelPromises.push(
+      queryClient.cancelQueries({ queryKey: singleItemQueryKey })
+    );
   }
 
-  // Cancel related queries
+  // Add related query cancellations to the batch
   if (config.relatedQueryKeys) {
     for (const queryKey of config.relatedQueryKeys) {
-      await queryClient.cancelQueries({ queryKey });
+      cancelPromises.push(queryClient.cancelQueries({ queryKey }));
     }
   }
+
+  // Execute all cancellations in parallel
+  await Promise.all(cancelPromises);
 
   // Snapshot the previous values
   const previousData = queryClient.getQueryData<IrminAPIResponse<TData[]>>(

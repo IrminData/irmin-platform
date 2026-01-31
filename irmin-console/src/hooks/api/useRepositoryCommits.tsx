@@ -2,11 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { repositoryCommitsQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { Commit } from '@/types/core/Commit';
@@ -27,8 +25,7 @@ interface CommitsResponse extends IrminAPIResponse<Commit[]> {
  * @returns pagination state and control functions
  */
 export function useRepositoryCommits(repositorySlug: string, branch?: string) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -44,9 +41,8 @@ export function useRepositoryCommits(repositorySlug: string, branch?: string) {
       after
     ),
     queryFn: async () => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      const res = await irminCore.repositoryCommitService.fetchCommits({
+      const core = await getCore();
+      const res = await core.repositoryCommitService.fetchCommits({
         workspace: workspaceSlug,
         repository: repositorySlug,
         ref: branch,

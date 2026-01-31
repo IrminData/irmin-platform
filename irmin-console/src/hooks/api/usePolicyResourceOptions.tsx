@@ -1,18 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { policyResourceOptionsQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { PolicyResourceOptions } from '@/types/core/Policy';
 
 export function usePolicyResourceOptions() {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
 
   const policyResourceOptionsQuery = useQuery<
@@ -21,8 +18,7 @@ export function usePolicyResourceOptions() {
   >({
     queryKey: policyResourceOptionsQueryKey(workspaceSlug),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.policyService.getPolicyResourceOptions({
         workspace: workspaceSlug,
       });

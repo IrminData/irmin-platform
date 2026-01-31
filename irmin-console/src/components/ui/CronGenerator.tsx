@@ -220,12 +220,18 @@ const CronGenerator = ({
   const [copied, setCopied] = useState(false);
   const [isValid, setIsValid] = useState(true);
 
-  // Custom fields state
-  const [minute, setMinute] = useState({ type: 'every', value: '*' });
-  const [hour, setHour] = useState({ type: 'specific', value: '0' });
-  const [dayOfMonth, setDayOfMonth] = useState({ type: 'every', value: '*' });
-  const [month, setMonth] = useState({ type: 'every', value: '*' });
-  const [dayOfWeek, setDayOfWeek] = useState({ type: 'every', value: '*' });
+  // Custom fields state (lazy initialization to avoid object creation on every render)
+  const [minute, setMinute] = useState(() => ({ type: 'every', value: '*' }));
+  const [hour, setHour] = useState(() => ({ type: 'specific', value: '0' }));
+  const [dayOfMonth, setDayOfMonth] = useState(() => ({
+    type: 'every',
+    value: '*',
+  }));
+  const [month, setMonth] = useState(() => ({ type: 'every', value: '*' }));
+  const [dayOfWeek, setDayOfWeek] = useState(() => ({
+    type: 'every',
+    value: '*',
+  }));
 
   // Update cron expression when prop changes
   useEffect(() => {

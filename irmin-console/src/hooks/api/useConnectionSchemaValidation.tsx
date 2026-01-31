@@ -1,9 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
-
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -33,8 +30,7 @@ interface DiffSchemaInput {
  * @returns Mutations for schema validation and diff operations.
  */
 export function useConnectionSchemaValidation() {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
   const { irminAlert } = usePopup();
 
@@ -45,8 +41,7 @@ export function useConnectionSchemaValidation() {
     ValidateSchemaInput
   >({
     mutationFn: async ({ connectionID, operationMethod, files, path }) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const res = await core.connectionService.validateSchema({
         workspace: workspaceSlug,
         connectionID,
@@ -68,8 +63,7 @@ export function useConnectionSchemaValidation() {
     DiffSchemaInput
   >({
     mutationFn: async ({ connectionID, operationMethod, file, path }) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const res = await core.connectionService.diffSchema({
         workspace: workspaceSlug,
         connectionID,

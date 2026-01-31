@@ -1,9 +1,8 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { repositoryObjectContentQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
@@ -18,8 +17,7 @@ export const useRepositoryObjectContent = (
   path?: string,
   limitResponse?: boolean
 ) => {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
   const { irminAlert } = usePopup();
   const { dict } = useLocale();
@@ -33,8 +31,7 @@ export const useRepositoryObjectContent = (
       limitResponse
     ),
     queryFn: async () => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
+      const irminCore = await getCore();
       return irminCore.objectService.getObjectContent({
         workspace: workspaceSlug,
         repository: repositorySlug,
@@ -55,8 +52,7 @@ export const useRepositoryObjectContent = (
     }
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
+      const irminCore = await getCore();
       return irminCore.objectService.downloadObjectZip({
         workspace: workspaceSlug,
         repository: repositorySlug,

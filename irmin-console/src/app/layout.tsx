@@ -8,6 +8,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { defaultLocale, findLocale } from '@/lib/dict';
 
 import { IAMProvider } from '@/context/IAMContext';
+import { IrminCoreProvider } from '@/context/IrminCoreContext';
 import { LocaleProvider } from '@/context/LocaleContext';
 import { PopupProvider } from '@/context/PopupContext';
 import { PostHogProvider } from '@/context/PostHogProvider';
@@ -78,16 +79,18 @@ export default async function RootLayout(props: {
             <ReactQueryProvider>
               <LocaleProvider>
                 <IAMProvider>
-                  <PopupProvider>
-                    <ThemeProvider
-                      attribute='class'
-                      defaultTheme='system'
-                      enableSystem
-                      disableTransitionOnChange
-                    >
-                      {children}
-                    </ThemeProvider>
-                  </PopupProvider>
+                  <IrminCoreProvider>
+                    <PopupProvider>
+                      <ThemeProvider
+                        attribute='class'
+                        defaultTheme='system'
+                        enableSystem
+                        disableTransitionOnChange
+                      >
+                        {children}
+                      </ThemeProvider>
+                    </PopupProvider>
+                  </IrminCoreProvider>
                 </IAMProvider>
               </LocaleProvider>
             </ReactQueryProvider>

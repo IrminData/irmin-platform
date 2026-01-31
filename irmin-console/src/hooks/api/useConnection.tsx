@@ -2,10 +2,9 @@ import { useCallback } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { connectionQueryKey, connectionsQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
@@ -30,8 +29,8 @@ type UpdateConnectionConfigurationInput = Pick<
 >;
 
 export function useConnection(connectionID: string) {
-  const { getToken } = useIAM();
-  const { locale, dict } = useLocale();
+  const { getCore } = useIrminCore();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
   const { irminAlert, irminConfirm } = usePopup();
@@ -40,8 +39,7 @@ export function useConnection(connectionID: string) {
   const connectionQuery = useQuery<IrminAPIResponse<Connection>>({
     queryKey: connectionQueryKey(workspaceSlug, connectionID),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const connection = await core.connectionService.fetchConnection({
         workspace: workspaceSlug,
         connectionID,
@@ -69,8 +67,7 @@ export function useConnection(connectionID: string) {
   const deleteConnectionMutation = useMutation<IrminAPIResponse, Error, string>(
     {
       mutationFn: async (connId: string) => {
-        const token = await getToken();
-        const core = new IrminCore(locale, token);
+        const core = await getCore();
         const res = await core.connectionService.deleteConnection({
           workspace: workspaceSlug,
           connectionID: connId,
@@ -126,8 +123,7 @@ export function useConnection(connectionID: string) {
   >({
     mutationFn: async (input: UpdateConnectionInput) => {
       if (!connectionID) throw new Error('Connection ID is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const res = await core.connectionService.updateConnection({
         workspace: workspaceSlug,
         connectionID,
@@ -156,8 +152,7 @@ export function useConnection(connectionID: string) {
   const updateConnectionConfigurationMutation = useMutation({
     mutationFn: async (input: UpdateConnectionConfigurationInput) => {
       if (!connectionID) throw new Error('Connection ID is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const res = await core.connectionService.updateConnectionConfiguration({
         workspace: workspaceSlug,
         connectionID,
@@ -281,8 +276,7 @@ export function useConnection(connectionID: string) {
   const transferConnectionMutation = useMutation({
     mutationFn: async (newOwner: string) => {
       if (!connectionID) throw new Error('Connection ID is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const res = await core.connectionService.transferConnection({
         workspace: workspaceSlug,
         connectionID,
@@ -314,8 +308,7 @@ export function useConnection(connectionID: string) {
   >({
     mutationFn: async () => {
       if (!connectionID) throw new Error('Connection ID is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.connectionService.testConnection({
         workspace: workspaceSlug,
         connectionID,

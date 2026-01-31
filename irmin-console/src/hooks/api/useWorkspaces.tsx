@@ -4,10 +4,9 @@ import { useRouter } from 'next/navigation';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { workspacesQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -19,7 +18,7 @@ import { createMutationHandlers } from './mutations/utils';
 type CreateWorkspaceInput = Pick<Workspace, 'description' | 'name'>;
 
 export function useWorkspaces() {
-  const { getToken } = useIAM();
+  const { getCore } = useIrminCore();
   const { locale } = useLocale();
   const { irminAlert } = usePopup();
   const queryClient = useQueryClient();
@@ -29,8 +28,7 @@ export function useWorkspaces() {
   const workspacesQuery = useQuery<IrminAPIResponse<Workspace[]>>({
     queryKey: workspacesQueryKey,
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const workspaces = await core.workspaceService.fetchWorkspaces();
       return workspaces;
     },
@@ -43,8 +41,7 @@ export function useWorkspaces() {
     CreateWorkspaceInput
   >({
     mutationFn: async (input) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return core.workspaceService.createWorkspace({
         name: input.name,
         description: input.description,

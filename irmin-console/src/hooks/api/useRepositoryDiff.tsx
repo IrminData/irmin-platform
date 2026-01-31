@@ -1,13 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import {
   repositoryCommitsQueryKey,
   repositoryDiffQueryKey,
 } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -27,8 +25,7 @@ export function useRepositoryDiff(
   base?: string,
   compare?: string
 ) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
@@ -41,8 +38,7 @@ export function useRepositoryDiff(
       compare ?? ''
     ),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.diffService.compareRefs({
         workspace: workspaceSlug,
         repository: repositorySlug,
@@ -59,8 +55,7 @@ export function useRepositoryDiff(
     MergeRefsInput
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.diffService.mergeRefs({
         workspace: workspaceSlug,
         repository: repositorySlug,
