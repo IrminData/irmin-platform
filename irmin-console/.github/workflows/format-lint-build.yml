@@ -23,6 +23,8 @@ jobs:
         run: pnpm format:fix
       - name: ESLint
         run: pnpm lint
+      - name: Knip (unused code detection)
+        run: pnpm knip
       - name: Build
         run: |
           pnpm build | tee build-log.txt
