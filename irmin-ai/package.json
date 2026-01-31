@@ -16,7 +16,10 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/database/migrate.ts",
     "db:studio": "drizzle-kit studio",
+    "migrate:ulid": "tsx scripts/migrate-uuids-to-ulid.ts",
     "clean": "rimraf dist",
+    "knip": "knip",
+    "knip:fix": "knip --fix",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org irmin-dw --project irmin-ai ./dist && sentry-cli sourcemaps upload --org irmin-dw --project irmin-ai ./dist"
   },
   "author": "Tim Borovkov / Irmin",
@@ -42,11 +45,13 @@
     "langchain": "^1.2.3",
     "langsmith": "^0.4.2",
     "postgres": "^3.4.7",
+    "ulid": "^2.3.0",
     "uuid": "^13.0.0",
     "zod": "^4.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "knip": "^5.61.0",
     "@swc/core": "^1.15.7",
     "@trivago/prettier-plugin-sort-imports": "^6.0.0",
     "@types/node": "^25.0.3",

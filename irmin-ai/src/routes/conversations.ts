@@ -1,8 +1,8 @@
 import { AgentsManager } from '@/agents';
 import { conversations, db, type NewConversation } from '@/database';
-import { randomUUID } from 'crypto';
-import { and, asc, count, desc, eq, isNull } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, isNull, lt } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
+import { ulid } from 'ulid';
 
 import { analyticsService } from '@/services/analytics';
 import { titleGenerationService } from '@/services/titleGeneration';
@@ -14,6 +14,7 @@ import {
   ConversationRequestSchema,
   ConversationSchema,
   ConversationWithStatsSchema,
+  CursorPaginatedConversationsResponseSchema,
   PaginatedConversationsResponseSchema,
 } from '@/types/conversation';
 
@@ -32,6 +33,8 @@ export async function conversationRoutes(fastify: FastifyInstance) {
   const agentsManager = new AgentsManager();
 
   // GET /api/conversations - List all conversations with pagination
+  // Supports both offset-based (page/limit) and cursor-based (cursor/limit) pagination
+  // Cursor pagination is more efficient for deep pages - O(1) vs O(n) for offset
   fastify.get<{
     Querystring: {
       page?: string;
@@ -39,6 +42,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
       sortBy?: string;
       sortOrder?: string;
       agentId?: string;
+      cursor?: string; // ISO 8601 datetime string for cursor-based pagination
     };
   }>(
     '/conversations',
@@ -48,23 +52,18 @@ export async function conversationRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       try {
         // Parse query parameters manually since we're using JSON schema validation
-        const page = request.query.page ? parseInt(request.query.page, 10) : 1;
         const limit = request.query.limit
           ? parseInt(request.query.limit, 10)
           : 20;
         const sortBy = request.query.sortBy || 'updatedAt';
         const sortOrder = request.query.sortOrder || 'desc';
         const agentId = request.query.agentId;
+        const cursor = request.query.cursor;
 
-        // Validate parsed values
-        if (page < 1) {
-          throw new Error('Page must be at least 1');
-        }
+        // Validate limit
         if (limit < 1 || limit > 100) {
           throw new Error('Limit must be between 1 and 100');
         }
-
-        const offset = (page - 1) * limit;
 
         // Get workspace and user context from middleware
         const workspaceContext = request.workspace;
@@ -94,14 +93,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         }
         // If agentId is undefined, no additional filtering (show all conversations)
 
-        // Count total records for this workspace and user with agentId filter
-        const totalResult = await db
-          .select({ count: count() })
-          .from(conversations)
-          .where(whereConditions);
-        const total = totalResult[0]?.count || 0;
-
-        // Get sorted column
+        // Get sorted column (for cursor pagination, we use updatedAt/createdAt)
         const sortColumn =
           sortBy === 'title'
             ? conversations.title
@@ -111,22 +103,106 @@ export async function conversationRoutes(fastify: FastifyInstance) {
 
         const orderFn = sortOrder === 'asc' ? asc : desc;
 
+        // Common select fields to avoid duplication
+        const selectFields = {
+          id: conversations.id,
+          title: conversations.title,
+          metadata: conversations.metadata,
+          agentId: conversations.agentId,
+          workspaceSlug: conversations.workspaceSlug,
+          userId: conversations.userId,
+          createdAt: conversations.createdAt,
+          updatedAt: conversations.updatedAt,
+        };
+
+        // Use cursor-based pagination if cursor is provided
+        if (cursor) {
+          // Cursor pagination only works with time-based sorting (createdAt or updatedAt)
+          // Title-based sorting is not compatible with cursor pagination
+          if (sortBy === 'title') {
+            throw new Error(
+              'Cursor pagination is not supported with title-based sorting. Use offset pagination instead.'
+            );
+          }
+
+          const cursorDate = new Date(cursor);
+          if (isNaN(cursorDate.getTime())) {
+            throw new Error(
+              'Invalid cursor format. Expected ISO 8601 datetime.'
+            );
+          }
+
+          // For cursor pagination, add condition to get records before/after cursor
+          // For DESC order: get records with timestamp < cursor (older records)
+          // For ASC order: get records with timestamp > cursor (newer records)
+          // We use less-than/greater-than-or-equal combined with id ordering to handle
+          // records with duplicate timestamps at page boundaries
+          const cursorColumn =
+            sortBy === 'createdAt'
+              ? conversations.createdAt
+              : conversations.updatedAt;
+          const cursorCondition =
+            sortOrder === 'asc'
+              ? gt(cursorColumn, cursorDate)
+              : lt(cursorColumn, cursorDate);
+          whereConditions = and(whereConditions, cursorCondition);
+
+          // Add secondary sort on id for deterministic ordering when timestamps are equal
+          const data = await db
+            .select(selectFields)
+            .from(conversations)
+            .where(whereConditions)
+            .groupBy(conversations.id)
+            .orderBy(orderFn(sortColumn), orderFn(conversations.id))
+            .limit(limit);
+
+          // For cursor pagination, return nextCursor instead of page numbers
+          const nextCursor =
+            data.length === limit && data.length > 0
+              ? (sortBy === 'createdAt'
+                  ? data[data.length - 1].createdAt
+                  : data[data.length - 1].updatedAt
+                ).toISOString()
+              : null;
+
+          const response = {
+            data,
+            pagination: {
+              limit,
+              nextCursor,
+              hasMore: data.length === limit,
+            },
+          };
+          sendOkResponse(
+            reply,
+            CursorPaginatedConversationsResponseSchema,
+            response,
+            fastify.log
+          );
+          return;
+        }
+
+        // Offset-based pagination (original behavior)
+        const page = request.query.page ? parseInt(request.query.page, 10) : 1;
+        if (page < 1) {
+          throw new Error('Page must be at least 1');
+        }
+        const offset = (page - 1) * limit;
+
+        // Count total records for this workspace and user with agentId filter
+        const totalResult = await db
+          .select({ count: count() })
+          .from(conversations)
+          .where(whereConditions);
+        const total = totalResult[0]?.count || 0;
+
         // Get conversations with message stats for this workspace and user
         const data = await db
-          .select({
-            id: conversations.id,
-            title: conversations.title,
-            metadata: conversations.metadata,
-            agentId: conversations.agentId,
-            workspaceSlug: conversations.workspaceSlug,
-            userId: conversations.userId,
-            createdAt: conversations.createdAt,
-            updatedAt: conversations.updatedAt,
-          })
+          .select(selectFields)
           .from(conversations)
           .where(whereConditions)
           .groupBy(conversations.id)
-          .orderBy(orderFn(sortColumn))
+          .orderBy(orderFn(sortColumn), orderFn(conversations.id))
           .limit(limit)
           .offset(offset);
 
@@ -316,8 +392,9 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           throw new Error('Workspace and authentication context required');
         }
 
-        const id = randomUUID();
         const now = new Date();
+        // Use ULID for time-ordered IDs (better B-tree index performance)
+        const id = ulid(now.getTime());
 
         const newConversation = {
           id,

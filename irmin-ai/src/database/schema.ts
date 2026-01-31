@@ -7,9 +7,12 @@ import {
   text,
   timestamp,
 } from 'drizzle-orm/pg-core';
+import { ulid } from 'ulid';
 
 export const conversations = pgTable('conversations', {
-  id: text('id').primaryKey(),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => ulid()),
   title: text('title').notNull(),
   metadata: jsonb('metadata').default({}),
   context: jsonb('context').default({}),
@@ -58,7 +61,9 @@ export const aiModels = pgTable('ai_models', {
 });
 
 export const analytics = pgTable('analytics', {
-  id: text('id').primaryKey(),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => ulid()),
 
   // Event information
   eventType: text('event_type').notNull(),
@@ -79,7 +84,9 @@ export const analytics = pgTable('analytics', {
 });
 
 export const vectorCollections = pgTable('vector_collections', {
-  id: text('id').primaryKey(),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => ulid()),
 
   // Collection identification
   name: text('name').notNull().unique(),

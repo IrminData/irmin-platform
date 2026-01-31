@@ -29,7 +29,7 @@ export const ConversationWithStatsSchema = z.object({
   updatedAt: z.date(),
 });
 
-// Paginated conversations response schema
+// Paginated conversations response schema (offset-based)
 export const PaginatedConversationsResponseSchema = z.object({
   data: z.array(ConversationWithStatsSchema),
   pagination: z.object({
@@ -40,5 +40,19 @@ export const PaginatedConversationsResponseSchema = z.object({
   }),
 });
 
+// Cursor-paginated conversations response schema
+export const CursorPaginatedConversationsResponseSchema = z.object({
+  data: z.array(ConversationWithStatsSchema),
+  pagination: z.object({
+    limit: z.number(),
+    nextCursor: z.string().nullable(),
+    hasMore: z.boolean(),
+  }),
+});
+
 // Type exports
 export type ConversationRequest = z.infer<typeof ConversationRequestSchema>;
+/** Exported for API consumers to type their responses @public */
+export type CursorPaginatedConversationsResponse = z.infer<
+  typeof CursorPaginatedConversationsResponseSchema
+>;

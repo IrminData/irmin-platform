@@ -43,6 +43,13 @@
       "when": 1764618486043,
       "tag": "0005_neat_metal_master",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1769932800000,
+      "tag": "0006_add_performance_indexes",
+      "breakpoints": true
     }
   ]
 }

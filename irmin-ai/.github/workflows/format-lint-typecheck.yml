@@ -25,6 +25,8 @@ jobs:
         run: pnpm lint:fix
       - name: Typecheck
         run: pnpm typecheck
+      - name: Knip (unused code detection)
+        run: pnpm knip
       - name: PR Comment (Success)
         if: success()
         run: |

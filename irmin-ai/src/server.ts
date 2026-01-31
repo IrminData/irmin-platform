@@ -1,5 +1,6 @@
 import './instrument';
 
+import { runMigrations } from '@/database';
 import { indexingService } from '@/vector';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
@@ -204,9 +205,13 @@ server.setNotFoundHandler(async (request, reply) => {
 // Start server
 async function start() {
   try {
+    // Run database migrations (safe to call multiple times)
+    await runMigrations();
+    server.log.info('Database migrations completed');
+
     // Seed default AI models
     await seedDefaultModels();
-    server.log.info('Database initialized and AI models seeded');
+    server.log.info('AI models seeded');
 
     // Ensure system collections exist
     await indexingService.ensureSystemCollections();

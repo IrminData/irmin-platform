@@ -166,19 +166,15 @@ export const availableAIModels: NewAIModel[] = [
 ];
 
 /**
- * Seed default AI models in the database
+ * Seed default AI models in the database.
+ * Uses batch upsert to avoid N+1 queries - inserts all models in a single query,
+ * skipping any that already exist based on the unique modelId constraint.
  */
 export async function seedDefaultModels() {
   const { db, aiModels } = await import('@/database');
-  const { eq } = await import('drizzle-orm');
 
-  for (const modelData of availableAIModels) {
-    const existing = await db
-      .select()
-      .from(aiModels)
-      .where(eq(aiModels.modelId, modelData.modelId));
-    if (!existing.length) {
-      await db.insert(aiModels).values(modelData);
-    }
-  }
+  // Batch insert with ON CONFLICT DO NOTHING - single query instead of N queries
+  await db.insert(aiModels).values(availableAIModels).onConflictDoNothing({
+    target: aiModels.modelId,
+  });
 }
