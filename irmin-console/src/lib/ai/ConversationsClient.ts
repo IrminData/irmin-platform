@@ -7,7 +7,10 @@ import {
   AIUpdateConversationRequest,
   AIUpdateConversationRequestSchema,
 } from '@/types/ai/requests';
-import { AIConversationsListResponseSchema } from '@/types/ai/responses';
+import {
+  AIConversationsListCursorResponseSchema,
+  AIConversationsListResponseSchema,
+} from '@/types/ai/responses';
 
 import { BaseClient } from './BaseClient';
 
@@ -15,6 +18,14 @@ interface ListConversationsParams {
   page?: number;
   limit?: number;
   sortBy?: 'title' | 'createdAt' | 'updatedAt';
+  sortOrder?: 'asc' | 'desc';
+  agentId?: string;
+}
+
+interface ListConversationsWithCursorParams {
+  limit?: number;
+  cursor?: string;
+  sortBy?: 'createdAt' | 'updatedAt';
   sortOrder?: 'asc' | 'desc';
   agentId?: string;
 }
@@ -38,6 +49,43 @@ export class ConversationsClient extends BaseClient {
     );
 
     return this.handleResponse(response, AIConversationsListResponseSchema);
+  }
+
+  /**
+   * List conversations using cursor-based pagination.
+   * Cursor pagination is more efficient than page-based for deep pages (O(1) vs O(n)).
+   *
+   * @param params - The parameters.
+   * @param params.limit - (Optional) Number of items to fetch.
+   * @param params.cursor - (Optional) ISO 8601 datetime cursor from previous response.
+   * @param params.sortBy - (Optional) Field to sort by (createdAt or updatedAt).
+   * @param params.sortOrder - (Optional) Sort order (asc or desc).
+   * @param params.agentId - (Optional) Filter by agent ID.
+   * @returns Response with cursor pagination metadata (nextCursor, hasMore).
+   */
+  async listConversationsWithCursor(
+    params: ListConversationsWithCursorParams = {}
+  ) {
+    const searchParams = new URLSearchParams();
+
+    if (params.limit) searchParams.set('limit', params.limit.toString());
+    if (params.cursor) searchParams.set('cursor', params.cursor);
+    if (params.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
+    if (params.agentId !== undefined)
+      searchParams.set('agentId', params.agentId);
+
+    const response = await fetch(
+      `${this.baseUrl}/api/conversations?${searchParams}`,
+      {
+        headers: this.getHeaders(),
+      }
+    );
+
+    return this.handleResponse(
+      response,
+      AIConversationsListCursorResponseSchema
+    );
   }
 
   async createConversation(request: AICreateConversationRequest = {}) {

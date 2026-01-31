@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { AIAgentSchema, AIConversationSchema, AIModelSchema } from './base';
 
-// Response schemas
+// Response schemas for page-based pagination
 export const AIConversationsListResponseSchema = z.object({
   data: z.array(AIConversationSchema),
   pagination: z.object({
@@ -11,6 +11,16 @@ export const AIConversationsListResponseSchema = z.object({
     limit: z.number(),
     total: z.number(),
     totalPages: z.number(),
+  }),
+});
+
+// Response schema for cursor-based pagination
+export const AIConversationsListCursorResponseSchema = z.object({
+  data: z.array(AIConversationSchema),
+  pagination: z.object({
+    limit: z.number(),
+    nextCursor: z.string().nullable(),
+    hasMore: z.boolean(),
   }),
 });
 
@@ -59,6 +69,10 @@ export const AIModelsResponseSchema = z.object({
 // Type exports
 export type AIConversationsListResponse = z.infer<
   typeof AIConversationsListResponseSchema
+>;
+// eslint-disable-next-line import-x/no-unused-modules
+export type AIConversationsListCursorResponse = z.infer<
+  typeof AIConversationsListCursorResponseSchema
 >;
 export type AIAgentExecuteResponse = z.infer<
   typeof AIAgentExecuteResponseSchema

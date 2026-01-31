@@ -20,10 +20,14 @@ class WorkflowRunService {
     this.irminCore = irminCore;
     // Bind methods
     this.fetchWorkflowRuns = this.fetchWorkflowRuns.bind(this);
+    this.fetchWorkflowRunsWithCursor =
+      this.fetchWorkflowRunsWithCursor.bind(this);
     this.fetchWorkflowRun = this.fetchWorkflowRun.bind(this);
     this.cancelWorkflowRun = this.cancelWorkflowRun.bind(this);
     this.triggerWorkflowRun = this.triggerWorkflowRun.bind(this);
     this.fetchAllWorkflowRuns = this.fetchAllWorkflowRuns.bind(this);
+    this.fetchAllWorkflowRunsWithCursor =
+      this.fetchAllWorkflowRunsWithCursor.bind(this);
   }
 
   /**
@@ -172,6 +176,83 @@ class WorkflowRunService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch all workflow runs error');
+      throw error;
+    }
+  }
+
+  /**
+   * List workflow runs using cursor-based pagination.
+   * Cursor pagination is more efficient than page-based for deep pages (O(1) vs O(n)).
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.workflowID - The workflow identifier.
+   * @param props.limit - (Optional) Number of items to fetch.
+   * @param props.cursor - (Optional) Cursor from previous response for next page.
+   * @returns IrminAPIResponse containing an array of WorkflowRun with cursor pagination metadata.
+   */
+  async fetchWorkflowRunsWithCursor({
+    workspace,
+    workflowID,
+    limit = 100,
+    cursor,
+  }: {
+    workspace: string;
+    workflowID: string;
+    limit?: number;
+    cursor?: string;
+  }): Promise<IrminAPIResponse<WorkflowRun[]>> {
+    try {
+      let url = `/v1/workspaces/${workspace}/workflows/${workflowID}/runs?per_page=${limit}`;
+      if (cursor) {
+        url += `&cursor=${encodeURIComponent(cursor)}`;
+      }
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'GET',
+      })) as IrminAPIResponse<WorkflowRun[]>;
+      return response;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Fetch workflow runs with cursor error'
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * List all workflow runs using cursor-based pagination.
+   * Cursor pagination is more efficient than page-based for deep pages (O(1) vs O(n)).
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.limit - (Optional) Number of items to fetch.
+   * @param props.cursor - (Optional) Cursor from previous response for next page.
+   * @returns IrminAPIResponse containing an array of WorkflowRun with cursor pagination metadata.
+   */
+  async fetchAllWorkflowRunsWithCursor({
+    workspace,
+    limit = 100,
+    cursor,
+  }: {
+    workspace: string;
+    limit?: number;
+    cursor?: string;
+  }): Promise<IrminAPIResponse<WorkflowRun[]>> {
+    try {
+      let url = `/v1/workspaces/${workspace}/workflows/runs?per_page=${limit}`;
+      if (cursor) {
+        url += `&cursor=${encodeURIComponent(cursor)}`;
+      }
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'GET',
+      })) as IrminAPIResponse<WorkflowRun[]>;
+      return response;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Fetch all workflow runs with cursor error'
+      );
       throw error;
     }
   }

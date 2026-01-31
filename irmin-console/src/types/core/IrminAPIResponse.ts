@@ -1,21 +1,26 @@
 import type { JSONValue } from '@/types/internal/GenericJSON';
 
 /**
- * Interface for the pagination metadata from Irmin Core API
+ * Interface for the pagination metadata from Irmin Core API.
+ * Supports both page-based and cursor-based pagination.
  */
 export interface IrminAPIPaginationMetadata {
-  /** Total number of items available */
+  /** Total number of items available (page-based pagination) */
   total?: number;
-  /** Current page number */
+  /** Current page number (page-based pagination) */
   page?: number;
   /** Number of items per page */
   per_page?: number;
-  /** Total number of pages */
+  /** Total number of pages (page-based pagination) */
   total_pages?: number;
   /** Whether there are more items available */
   has_more?: boolean;
-  /** The next identifier (page number or token) */
+  /** The next identifier (page number or cursor token) */
   next?: string;
+  /** Cursor for the next page (cursor-based pagination) */
+  nextCursor?: string | null;
+  /** Limit used for the query */
+  limit?: number;
 }
 
 /**
