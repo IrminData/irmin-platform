@@ -4,9 +4,23 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
+
+// LogEventFilters contains optional filters for log event queries.
+type LogEventFilters struct {
+	UserID             string
+	RepositorySlug     string
+	ConnectionID       string
+	WorkflowID         string
+	StoredQueryID      string
+	PolicyID           string
+	RepositoryObjectID string
+	Search             string
+}
 
 // FetchLogEvents retrieves general audit log events for the current workspace.
 func (c *Client) FetchLogEvents(
@@ -189,6 +203,62 @@ func (c *Client) FetchLogEventsForObject(
 	}, &logEvents)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch log events error: %w", err)
+	}
+	return logEvents, apiResp, nil
+}
+
+// FetchLogEventsWithCursor retrieves log events using cursor-based pagination.
+// Cursor pagination is more efficient than page-based pagination for deep pages (O(1) vs O(n)).
+// Pass an empty string for cursor to get the first page.
+// The next cursor is returned in the response pagination metadata (Next field).
+func (c *Client) FetchLogEventsWithCursor(
+	ctx context.Context,
+	workspace string,
+	filters LogEventFilters,
+	cursor string,
+	limit int,
+) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error) {
+	var logEvents []irminmodels.LogEvent
+
+	params := url.Values{}
+	params.Set("per_page", strconv.Itoa(limit))
+
+	if cursor != "" {
+		params.Set("cursor", cursor)
+	}
+	if filters.UserID != "" {
+		params.Set("user_id", filters.UserID)
+	}
+	if filters.RepositorySlug != "" {
+		params.Set("repository", filters.RepositorySlug)
+	}
+	if filters.ConnectionID != "" {
+		params.Set("connection_id", filters.ConnectionID)
+	}
+	if filters.WorkflowID != "" {
+		params.Set("workflow_id", filters.WorkflowID)
+	}
+	if filters.StoredQueryID != "" {
+		params.Set("stored_query_id", filters.StoredQueryID)
+	}
+	if filters.PolicyID != "" {
+		params.Set("policy_id", filters.PolicyID)
+	}
+	if filters.RepositoryObjectID != "" {
+		params.Set("repository_object_id", filters.RepositoryObjectID)
+	}
+	if filters.Search != "" {
+		params.Set("search", filters.Search)
+	}
+
+	endpoint := fmt.Sprintf("/v1/workspaces/%s/logs?%s", workspace, params.Encode())
+
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: endpoint,
+	}, &logEvents)
+	if err != nil {
+		return nil, nil, fmt.Errorf("fetch log events with cursor error: %w", err)
 	}
 	return logEvents, apiResp, nil
 }

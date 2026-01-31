@@ -589,6 +589,19 @@ func (c *Client) FetchLogEventsForWorkflow(
 ) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
     FetchLogEventsForWorkflow retrieves general audit log events for a workflow.
 
+func (c *Client) FetchLogEventsWithCursor(
+	ctx context.Context,
+	workspace string,
+	filters LogEventFilters,
+	cursor string,
+	limit int,
+) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+    FetchLogEventsWithCursor retrieves log events using cursor-based pagination.
+    Cursor pagination is more efficient than page-based pagination for deep
+    pages (O(1) vs O(n)). Pass an empty string for cursor to get the first page.
+    The next cursor is returned in the response pagination metadata (Next
+    field).
+
 func (c *Client) GenerateFileSchema(
 	ctx context.Context,
 	fileName string,
@@ -790,6 +803,15 @@ func (c *Client) ListAllWorkflowRuns(
 	page, perPage int,
 ) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) ListAllWorkflowRunsWithCursor(
+	ctx context.Context,
+	workspace string,
+	cursor string,
+	limit int,
+) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+    ListAllWorkflowRunsWithCursor retrieves all workflow runs using cursor-based
+    pagination. Pass an empty string for cursor to get the first page.
+
 func (c *Client) ListBranches(
 	ctx context.Context,
 	workspace, repository string,
@@ -873,6 +895,18 @@ func (c *Client) ListWorkflowRuns(
 	workspace, workflowID string,
 	page, perPage int,
 ) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListWorkflowRunsWithCursor(
+	ctx context.Context,
+	workspace, workflowID string,
+	cursor string,
+	limit int,
+) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+    ListWorkflowRunsWithCursor retrieves workflow runs using cursor-based
+    pagination. Cursor pagination is more efficient than page-based pagination
+    for deep pages (O(1) vs O(n)). Pass an empty string for cursor to get the
+    first page. The next cursor is returned in the response pagination metadata
+    (Next field).
 
 func (c *Client) ListWorkflows(
 	ctx context.Context,
@@ -1469,6 +1503,18 @@ type ListPoliciesParams struct {
 	UserID     *string                      `form:"user_id,omitempty"`     // ID of the user if principal is user
 }
     ListPoliciesParams represents the parameters for listing policies.
+
+type LogEventFilters struct {
+	UserID             string
+	RepositorySlug     string
+	ConnectionID       string
+	WorkflowID         string
+	StoredQueryID      string
+	PolicyID           string
+	RepositoryObjectID string
+	Search             string
+}
+    LogEventFilters contains optional filters for log event queries.
 
 type MergeRefsRequest struct {
 	BaseRef     string `json:"base_ref"              validate:"required"                                     example:"main"`

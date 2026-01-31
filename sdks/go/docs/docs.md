@@ -224,6 +224,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) FetchLogEventsForStoredQuery\(ctx context.Context, workspace, storedQueryID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForStoredQuery>)
   - [func \(c \*Client\) FetchLogEventsForUser\(ctx context.Context, workspace, userID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForUser>)
   - [func \(c \*Client\) FetchLogEventsForWorkflow\(ctx context.Context, workspace, workflowID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForWorkflow>)
+  - [func \(c \*Client\) FetchLogEventsWithCursor\(ctx context.Context, workspace string, filters LogEventFilters, cursor string, limit int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsWithCursor>)
   - [func \(c \*Client\) GenerateFileSchema\(ctx context.Context, fileName string, fileReader io.Reader\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GenerateFileSchema>)
   - [func \(c \*Client\) GetAIApplication\(ctx context.Context, workspace, aiApplicationID string\) \(\*irminmodels.AIApplication, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplication>)
   - [func \(c \*Client\) GetAIApplicationToolLogStats\(ctx context.Context, workspace, aiApplicationID string\) \(\*irminmodels.AIApplicationToolLogStats, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationToolLogStats>)
@@ -259,6 +260,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) LeaveWorkspace\(ctx context.Context, slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.LeaveWorkspace>)
   - [func \(c \*Client\) ListAIApplications\(ctx context.Context, workspace string\) \(\[\]irminmodels.AIApplication, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAIApplications>)
   - [func \(c \*Client\) ListAllWorkflowRuns\(ctx context.Context, workspace string, page, perPage int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAllWorkflowRuns>)
+  - [func \(c \*Client\) ListAllWorkflowRunsWithCursor\(ctx context.Context, workspace string, cursor string, limit int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAllWorkflowRunsWithCursor>)
   - [func \(c \*Client\) ListBranches\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListBranches>)
   - [func \(c \*Client\) ListCommits\(ctx context.Context, workspace, repository, ref, after string, perPage int\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListCommits>)
   - [func \(c \*Client\) ListConnections\(ctx context.Context, workspace string\) \(\[\]irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnections>)
@@ -277,6 +279,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) ListTokens\(ctx context.Context\) \(\[\]irminmodels.APIToken, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListTokens>)
   - [func \(c \*Client\) ListUsers\(ctx context.Context, workspace string\) \(\[\]irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListUsers>)
   - [func \(c \*Client\) ListWorkflowRuns\(ctx context.Context, workspace, workflowID string, page, perPage int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkflowRuns>)
+  - [func \(c \*Client\) ListWorkflowRunsWithCursor\(ctx context.Context, workspace, workflowID string, cursor string, limit int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkflowRunsWithCursor>)
   - [func \(c \*Client\) ListWorkflows\(ctx context.Context, workspace string\) \(\[\]irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkflows>)
   - [func \(c \*Client\) ListWorkflowsOfType\(ctx context.Context, workspace, workflowType string\) \(\[\]irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkflowsOfType>)
   - [func \(c \*Client\) ListWorkspaceTags\(ctx context.Context, workspace string\) \(\[\]irminmodels.Tag, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkspaceTags>)
@@ -360,6 +363,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type GetEmbeddingInfoRequest](<#GetEmbeddingInfoRequest>)
 - [type ListEmbeddingsRequest](<#ListEmbeddingsRequest>)
 - [type ListPoliciesParams](<#ListPoliciesParams>)
+- [type LogEventFilters](<#LogEventFilters>)
 - [type MergeRefsRequest](<#MergeRefsRequest>)
 - [type MoveObjectRequest](<#MoveObjectRequest>)
 - [type RequestOptions](<#RequestOptions>)
@@ -1288,6 +1292,15 @@ func (c *Client) FetchLogEventsForWorkflow(ctx context.Context, workspace, workf
 
 FetchLogEventsForWorkflow retrieves general audit log events for a workflow.
 
+<a name="Client.FetchLogEventsWithCursor"></a>
+### func \(\*Client\) FetchLogEventsWithCursor
+
+```go
+func (c *Client) FetchLogEventsWithCursor(ctx context.Context, workspace string, filters LogEventFilters, cursor string, limit int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+```
+
+FetchLogEventsWithCursor retrieves log events using cursor\-based pagination. Cursor pagination is more efficient than page\-based pagination for deep pages \(O\(1\) vs O\(n\)\). Pass an empty string for cursor to get the first page. The next cursor is returned in the response pagination metadata \(Next field\).
+
 <a name="Client.GenerateFileSchema"></a>
 ### func \(\*Client\) GenerateFileSchema
 
@@ -1605,6 +1618,15 @@ func (c *Client) ListAllWorkflowRuns(ctx context.Context, workspace string, page
 
 
 
+<a name="Client.ListAllWorkflowRunsWithCursor"></a>
+### func \(\*Client\) ListAllWorkflowRunsWithCursor
+
+```go
+func (c *Client) ListAllWorkflowRunsWithCursor(ctx context.Context, workspace string, cursor string, limit int) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+```
+
+ListAllWorkflowRunsWithCursor retrieves all workflow runs using cursor\-based pagination. Pass an empty string for cursor to get the first page.
+
 <a name="Client.ListBranches"></a>
 ### func \(\*Client\) ListBranches
 
@@ -1766,6 +1788,15 @@ func (c *Client) ListWorkflowRuns(ctx context.Context, workspace, workflowID str
 ```
 
 
+
+<a name="Client.ListWorkflowRunsWithCursor"></a>
+### func \(\*Client\) ListWorkflowRunsWithCursor
+
+```go
+func (c *Client) ListWorkflowRunsWithCursor(ctx context.Context, workspace, workflowID string, cursor string, limit int) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+```
+
+ListWorkflowRunsWithCursor retrieves workflow runs using cursor\-based pagination. Cursor pagination is more efficient than page\-based pagination for deep pages \(O\(1\) vs O\(n\)\). Pass an empty string for cursor to get the first page. The next cursor is returned in the response pagination metadata \(Next field\).
 
 <a name="Client.ListWorkflows"></a>
 ### func \(\*Client\) ListWorkflows
@@ -2675,6 +2706,24 @@ type ListPoliciesParams struct {
     ResourceID *string                      `form:"resource_id,omitempty"` // ID of the specific resource
     RoleID     *string                      `form:"role_id,omitempty"`     // ID of the role if principal is role
     UserID     *string                      `form:"user_id,omitempty"`     // ID of the user if principal is user
+}
+```
+
+<a name="LogEventFilters"></a>
+## type LogEventFilters
+
+LogEventFilters contains optional filters for log event queries.
+
+```go
+type LogEventFilters struct {
+    UserID             string
+    RepositorySlug     string
+    ConnectionID       string
+    WorkflowID         string
+    StoredQueryID      string
+    PolicyID           string
+    RepositoryObjectID string
+    Search             string
 }
 ```
 
