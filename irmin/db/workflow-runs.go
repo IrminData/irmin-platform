@@ -82,6 +82,63 @@ func (d *Database) GetWorkflowRunByID(id uint) (*WorkflowRun, error) {
 	return &workflowRun, result.Error
 }
 
+// GetWorkflowRunsByWorkflowIDWithCursor returns workflow runs using cursor-based pagination.
+// This is more efficient than offset pagination for deep pages (O(1) vs O(n) for page depth).
+// cursor: timestamp to start after (exclusive). Use nil for first page.
+// Returns runs created before the cursor, sorted by created_at DESC.
+func (d *Database) GetWorkflowRunsByWorkflowIDWithCursor(
+	workflowID uint,
+	cursor *time.Time,
+	limit int,
+) ([]WorkflowRun, error) {
+	var workflowRuns []WorkflowRun
+
+	query := d.Preload("TriggeredBy").
+		Preload("TriggeredBy.Repository").
+		Preload("TriggeredBy.Workflow").
+		Preload("TriggeredByUser").
+		Preload("Workflow").
+		Where(&WorkflowRun{WorkflowID: workflowID})
+
+	if cursor != nil {
+		query = query.Where("created_at < ?", cursor)
+	}
+
+	if err := query.Order("created_at desc").Limit(limit).Find(&workflowRuns).Error; err != nil {
+		return nil, err
+	}
+
+	return workflowRuns, nil
+}
+
+// GetWorkflowRunsByWorkspaceIDWithCursor returns workflow runs using cursor-based pagination.
+// cursor: timestamp to start after (exclusive). Use nil for first page.
+func (d *Database) GetWorkflowRunsByWorkspaceIDWithCursor(
+	workspaceID uint,
+	cursor *time.Time,
+	limit int,
+) ([]WorkflowRun, error) {
+	var workflowRuns []WorkflowRun
+
+	query := d.Preload("TriggeredBy").
+		Preload("TriggeredBy.Repository").
+		Preload("TriggeredBy.Workflow").
+		Preload("TriggeredByUser").
+		Preload("Workflow").
+		Joins("JOIN workflows ON workflow_runs.workflow_id = workflows.id").
+		Where("workflows.workspace_id = ?", workspaceID)
+
+	if cursor != nil {
+		query = query.Where("workflow_runs.created_at < ?", cursor)
+	}
+
+	if err := query.Order("workflow_runs.created_at desc").Limit(limit).Find(&workflowRuns).Error; err != nil {
+		return nil, err
+	}
+
+	return workflowRuns, nil
+}
+
 // GetWorkflowRunsByWorkspaceID returns workflow runs for all workflows in the given workspace,
 // sorted by creation time, along with the total count of matching runs for pagination.
 func (d *Database) GetWorkflowRunsByWorkspaceID(workspaceID uint, limit, offset int) ([]WorkflowRun, int, error) {

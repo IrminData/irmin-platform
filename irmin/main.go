@@ -120,10 +120,12 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
 
 	// Handle command line flags
 	reset := flag.Bool("reset", false, "Reset the database")
-	migrate := flag.Bool("migrate", false, "Run database migrations")
+	skipMigrate := flag.Bool("skip-migrate", false, "Skip automatic database migrations")
 	overridePolicies := flag.Bool("override-policies", false, "Override existing policies")
 	seedTags := flag.Bool("seed-tags", false, "Seed default tags for all workspaces")
 	seedTemplates := flag.Bool("seed-templates", false, "Seed templates from embedded files")
+	// Keep -migrate flag for backwards compatibility (now a no-op since migrations run by default)
+	_ = flag.Bool("migrate", false, "Run database migrations (deprecated: migrations now run automatically)")
 	flag.Parse()
 
 	// Empty the database if the reset flag is set
@@ -133,9 +135,11 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
 		}
 	}
 
-	// Run database migrations if the migrate flag is set
-	if *migrate {
-		// Create database tables, add indexes, or update existing once
+	// Run database migrations on startup (unless explicitly skipped)
+	// This ensures the database schema is always up-to-date for Railway, Docker, etc.
+	if !*skipMigrate {
+		log.Println("Running database migrations...")
+		// Create database tables, add indexes, or update existing ones
 		if dbMigrateErr := d.Migrate(); dbMigrateErr != nil {
 			return nil, dbMigrateErr
 		}
@@ -144,6 +148,9 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
 		if setupRolesAndPoliciesErr := setupRolesAndPolicies(d, overridePolicies); setupRolesAndPoliciesErr != nil {
 			return nil, setupRolesAndPoliciesErr
 		}
+		log.Println("Database migrations completed")
+	} else {
+		log.Println("Database migrations skipped (-skip-migrate flag set)")
 	}
 
 	// Seed default tags for all workspaces if the seedTags flag is set

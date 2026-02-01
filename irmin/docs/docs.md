@@ -1320,7 +1320,7 @@ AcceptInvite godoc @Summary Accept invite @Description Accept an invite and join
 func (api *APIControllers) AllWorkflowRunsIndex(c fiber.Ctx) error
 ```
 
-AllWorkflowRunsIndex godoc @Summary List all workflow runs in workspace @Description Get all workflow runs for all workflows in the workspace with pagination and permission filtering @Tags workflow\-runs @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param page query int false "Page number for pagination" default\(1\) @Param per\_page query int false "Number of items per page" default\(10\) @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.WorkflowRun,pagination=irminmodels.IrminAPIPaginationMetadata\} "All workflow runs retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid pagination parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/workflows/runs \[get\]
+AllWorkflowRunsIndex godoc @Summary List all workflow runs in workspace @Description Get all workflow runs for all workflows in the workspace with pagination and permission filtering. @Description Supports both offset\-based \(page/per\_page\) and cursor\-based \(cursor/per\_page\) pagination. @Description Cursor pagination is more efficient for deep pages \- O\(1\) vs O\(n\) for offset. @Tags workflow\-runs @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param page query int false "Page number for pagination" default\(1\) @Param per\_page query int false "Number of items per page" default\(100\) @Param cursor query string false "ISO 8601 datetime cursor for cursor\-based pagination" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.WorkflowRun,pagination=irminmodels.IrminAPIPaginationMetadata\} "All workflow runs retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid pagination parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/workflows/runs \[get\]
 
 <a name="APIControllers.CheckPermission"></a>
 ### func \(\*APIControllers\) CheckPermission
@@ -2445,7 +2445,7 @@ WorkflowRunsDestroy godoc @Summary Cancel workflow run @Description Cancel a run
 func (api *APIControllers) WorkflowRunsIndex(c fiber.Ctx) error
 ```
 
-WorkflowRunsIndex godoc @Summary List workflow runs @Description Get all runs for a specific workflow with pagination and permission filtering @Tags workflow\-runs @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param workflow\_slug path string true "Workflow slug" @Param page query int false "Page number for pagination" default\(1\) @Param per\_page query int false "Number of items per page" default\(10\) @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.WorkflowRun,pagination=irminmodels.IrminAPIPaginationMetadata\} "Workflow runs retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid pagination parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workflow not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/workflows/\{workflow\_slug\}/runs \[get\]
+WorkflowRunsIndex godoc @Summary List workflow runs @Description Get all runs for a specific workflow with pagination and permission filtering. @Description Supports both offset\-based \(page/per\_page\) and cursor\-based \(cursor/per\_page\) pagination. @Description Cursor pagination is more efficient for deep pages \- O\(1\) vs O\(n\) for offset. @Tags workflow\-runs @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param workflow\_slug path string true "Workflow slug" @Param page query int false "Page number for pagination" default\(1\) @Param per\_page query int false "Number of items per page" default\(100\) @Param cursor query string false "ISO 8601 datetime cursor for cursor\-based pagination" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.WorkflowRun,pagination=irminmodels.IrminAPIPaginationMetadata\} "Workflow runs retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid pagination parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workflow not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/workflows/\{workflow\_slug\}/runs \[get\]
 
 <a name="APIControllers.WorkflowRunsShow"></a>
 ### func \(\*APIControllers\) WorkflowRunsShow
@@ -2828,7 +2828,9 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetWorkflowByID\(id uint\) \(\*Workflow, error\)](<#Database.GetWorkflowByID>)
   - [func \(d \*Database\) GetWorkflowRunByID\(id uint\) \(\*WorkflowRun, error\)](<#Database.GetWorkflowRunByID>)
   - [func \(d \*Database\) GetWorkflowRunsByWorkflowID\(workflowID uint, limit, offset int\) \(\[\]WorkflowRun, int, error\)](<#Database.GetWorkflowRunsByWorkflowID>)
+  - [func \(d \*Database\) GetWorkflowRunsByWorkflowIDWithCursor\(workflowID uint, cursor \*time.Time, limit int\) \(\[\]WorkflowRun, error\)](<#Database.GetWorkflowRunsByWorkflowIDWithCursor>)
   - [func \(d \*Database\) GetWorkflowRunsByWorkspaceID\(workspaceID uint, limit, offset int\) \(\[\]WorkflowRun, int, error\)](<#Database.GetWorkflowRunsByWorkspaceID>)
+  - [func \(d \*Database\) GetWorkflowRunsByWorkspaceIDWithCursor\(workspaceID uint, cursor \*time.Time, limit int\) \(\[\]WorkflowRun, error\)](<#Database.GetWorkflowRunsByWorkspaceIDWithCursor>)
   - [func \(d \*Database\) GetWorkflowTags\(workflowID uint\) \(\[\]Tag, error\)](<#Database.GetWorkflowTags>)
   - [func \(d \*Database\) GetWorkflowsByTag\(tagID uint\) \(\[\]Workflow, error\)](<#Database.GetWorkflowsByTag>)
   - [func \(d \*Database\) GetWorkflowsByWorkspaceID\(workspaceID uint\) \(\[\]Workflow, error\)](<#Database.GetWorkflowsByWorkspaceID>)
@@ -2935,6 +2937,21 @@ import "irmin-api/db"
 
 
 ## Constants
+
+<a name="LogAssetTypeRepository"></a>LogAssetType constants for filtering log events by asset type.
+
+```go
+const (
+    LogAssetTypeRepository       = "repository"
+    LogAssetTypeWorkflow         = "workflow"
+    LogAssetTypeUser             = "user"
+    LogAssetTypeConnection       = "connection"
+    LogAssetTypeStoredQuery      = "stored_query"
+    LogAssetTypePolicy           = "policy"
+    LogAssetTypeRepositoryObject = "repository_object"
+    LogAssetTypeAIApplication    = "ai_application"
+)
+```
 
 <a name="MinRelevanceThreshold"></a>Search\-related constants.
 
@@ -4702,6 +4719,15 @@ func (d *Database) GetWorkflowRunsByWorkflowID(workflowID uint, limit, offset in
 
 GetWorkflowRunsByWorkflowID returns workflow runs for the given workflow ID, sorted by creation time, along with the total count of matching runs for pagination.
 
+<a name="Database.GetWorkflowRunsByWorkflowIDWithCursor"></a>
+### func \(\*Database\) GetWorkflowRunsByWorkflowIDWithCursor
+
+```go
+func (d *Database) GetWorkflowRunsByWorkflowIDWithCursor(workflowID uint, cursor *time.Time, limit int) ([]WorkflowRun, error)
+```
+
+GetWorkflowRunsByWorkflowIDWithCursor returns workflow runs using cursor\-based pagination. This is more efficient than offset pagination for deep pages \(O\(1\) vs O\(n\) for page depth\). cursor: timestamp to start after \(exclusive\). Use nil for first page. Returns runs created before the cursor, sorted by created\_at DESC.
+
 <a name="Database.GetWorkflowRunsByWorkspaceID"></a>
 ### func \(\*Database\) GetWorkflowRunsByWorkspaceID
 
@@ -4710,6 +4736,15 @@ func (d *Database) GetWorkflowRunsByWorkspaceID(workspaceID uint, limit, offset 
 ```
 
 GetWorkflowRunsByWorkspaceID returns workflow runs for all workflows in the given workspace, sorted by creation time, along with the total count of matching runs for pagination.
+
+<a name="Database.GetWorkflowRunsByWorkspaceIDWithCursor"></a>
+### func \(\*Database\) GetWorkflowRunsByWorkspaceIDWithCursor
+
+```go
+func (d *Database) GetWorkflowRunsByWorkspaceIDWithCursor(workspaceID uint, cursor *time.Time, limit int) ([]WorkflowRun, error)
+```
+
+GetWorkflowRunsByWorkspaceIDWithCursor returns workflow runs using cursor\-based pagination. cursor: timestamp to start after \(exclusive\). Use nil for first page.
 
 <a name="Database.GetWorkflowTags"></a>
 ### func \(\*Database\) GetWorkflowTags
@@ -13122,6 +13157,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ListAIApplications\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.AIApplication, error\)](<#APIServices.ListAIApplications>)
   - [func \(api \*APIServices\) ListAPITokens\(c context.Context, user \*db.User\) \(\[\]db.APIToken, error\)](<#APIServices.ListAPITokens>)
   - [func \(api \*APIServices\) ListAllWorkflowRuns\(c context.Context, user \*db.User, workspace \*db.Workspace, perPage, offset int\) \(\[\]db.WorkflowRun, int, error\)](<#APIServices.ListAllWorkflowRuns>)
+  - [func \(api \*APIServices\) ListAllWorkflowRunsWithCursor\(c context.Context, user \*db.User, workspace \*db.Workspace, cursor \*time.Time, limit int\) \(\[\]db.WorkflowRun, \*time.Time, bool, error\)](<#APIServices.ListAllWorkflowRunsWithCursor>)
   - [func \(api \*APIServices\) ListConnections\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.Connection, error\)](<#APIServices.ListConnections>)
   - [func \(api \*APIServices\) ListConnectors\(c context.Context\) \(\[\]db.Connector, error\)](<#APIServices.ListConnectors>)
   - [func \(api \*APIServices\) ListEmbeddingFiles\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, prefix string, ref string\) \(\[\]irminmodels.EmbeddingFile, error\)](<#APIServices.ListEmbeddingFiles>)
@@ -13136,6 +13172,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ListRoles\(c context.Context\) \(\[\]irminmodels.Role, error\)](<#APIServices.ListRoles>)
   - [func \(api \*APIServices\) ListTemplatesByType\(c context.Context, templateType irminmodels.TemplateType\) \(\[\]db.Template, error\)](<#APIServices.ListTemplatesByType>)
   - [func \(api \*APIServices\) ListWorkflowRuns\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, perPage, offset int\) \(\[\]db.WorkflowRun, int, error\)](<#APIServices.ListWorkflowRuns>)
+  - [func \(api \*APIServices\) ListWorkflowRunsWithCursor\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, cursor \*time.Time, limit int\) \(\[\]db.WorkflowRun, error\)](<#APIServices.ListWorkflowRunsWithCursor>)
   - [func \(api \*APIServices\) ListWorkflows\(c context.Context, user \*db.User, workspace \*db.Workspace, workflowType string\) \(\[\]db.Workflow, error\)](<#APIServices.ListWorkflows>)
   - [func \(api \*APIServices\) ListWorkspaceQueries\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.StoredQuery, error\)](<#APIServices.ListWorkspaceQueries>)
   - [func \(api \*APIServices\) ListWorkspaceScripts\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.StoredScript, error\)](<#APIServices.ListWorkspaceScripts>)
@@ -14438,6 +14475,15 @@ func (api *APIServices) ListAllWorkflowRuns(c context.Context, user *db.User, wo
 
 
 
+<a name="APIServices.ListAllWorkflowRunsWithCursor"></a>
+### func \(\*APIServices\) ListAllWorkflowRunsWithCursor
+
+```go
+func (api *APIServices) ListAllWorkflowRunsWithCursor(c context.Context, user *db.User, workspace *db.Workspace, cursor *time.Time, limit int) ([]db.WorkflowRun, *time.Time, bool, error)
+```
+
+ListAllWorkflowRunsWithCursor returns all workflow runs using cursor\-based pagination. This is more efficient than offset pagination for deep pages \(O\(1\) vs O\(n\) for page depth\). cursor: timestamp to start after \(exclusive\). Use nil for first page. Returns: filtered runs, nextCursorTime \(for pagination even when items filtered\), hasMoreInDB, error.
+
 <a name="APIServices.ListConnections"></a>
 ### func \(\*APIServices\) ListConnections
 
@@ -14563,6 +14609,15 @@ func (api *APIServices) ListWorkflowRuns(c context.Context, user *db.User, works
 ```
 
 
+
+<a name="APIServices.ListWorkflowRunsWithCursor"></a>
+### func \(\*APIServices\) ListWorkflowRunsWithCursor
+
+```go
+func (api *APIServices) ListWorkflowRunsWithCursor(c context.Context, user *db.User, workspace *db.Workspace, workflow *db.Workflow, cursor *time.Time, limit int) ([]db.WorkflowRun, error)
+```
+
+ListWorkflowRunsWithCursor returns workflow runs using cursor\-based pagination. This is more efficient than offset pagination for deep pages \(O\(1\) vs O\(n\) for page depth\). cursor: timestamp to start after \(exclusive\). Use nil for first page.
 
 <a name="APIServices.ListWorkflows"></a>
 ### func \(\*APIServices\) ListWorkflows

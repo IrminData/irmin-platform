@@ -336,3 +336,110 @@ func (api *APIServices) ListAllWorkflowRuns(
 	// Return the filtered workflow runs
 	return filteredRuns, count, nil
 }
+
+// ListWorkflowRunsWithCursor returns workflow runs using cursor-based pagination.
+// This is more efficient than offset pagination for deep pages (O(1) vs O(n) for page depth).
+// cursor: timestamp to start after (exclusive). Use nil for first page.
+func (api *APIServices) ListWorkflowRunsWithCursor(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workflow *db.Workflow,
+	cursor *time.Time,
+	limit int,
+) ([]db.WorkflowRun, error) {
+	// Make sure this is allowed
+	isAllowed, err := api.PermissionService.IsAllowed(
+		user,
+		workspace,
+		db.PolicyResourceWorkflowRun,
+		&workflow.ID,
+		db.PolicyActionRead,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
+		return nil, err
+	}
+	if !isAllowed {
+		api.Logger.ErrorContext(
+			c,
+			"User is not allowed to list workflow runs",
+			"user",
+			user.Email,
+			"workspace",
+			workspace.Slug,
+			"workflow",
+			workflow.Name,
+		)
+		return nil, ErrAccessDenied
+	}
+
+	// Get the workflow runs for the workflow using cursor pagination.
+	runs, getWorkflowRunsErr := api.DB.GetWorkflowRunsByWorkflowIDWithCursor(
+		workflow.ID,
+		cursor,
+		limit,
+	)
+	if getWorkflowRunsErr != nil {
+		api.Logger.ErrorContext(c, "error getting workflow runs", "error", getWorkflowRunsErr)
+		return nil, NewInternalErrorf("error getting workflow runs: %w", getWorkflowRunsErr)
+	}
+
+	return runs, nil
+}
+
+// ListAllWorkflowRunsWithCursor returns all workflow runs using cursor-based pagination.
+// This is more efficient than offset pagination for deep pages (O(1) vs O(n) for page depth).
+// cursor: timestamp to start after (exclusive). Use nil for first page.
+// Returns: filtered runs, nextCursorTime (for pagination even when items filtered), hasMoreInDB, error.
+func (api *APIServices) ListAllWorkflowRunsWithCursor(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	cursor *time.Time,
+	limit int,
+) ([]db.WorkflowRun, *time.Time, bool, error) {
+	// Fetch limit + 1 to determine if there are more items in the database
+	runs, getWorkflowRunsErr := api.DB.GetWorkflowRunsByWorkspaceIDWithCursor(
+		workspace.ID,
+		cursor,
+		limit+1,
+	)
+	if getWorkflowRunsErr != nil {
+		api.Logger.ErrorContext(c, "error getting workflow runs", "error", getWorkflowRunsErr)
+		return nil, nil, false, NewInternalErrorf("error getting workflow runs: %w", getWorkflowRunsErr)
+	}
+
+	// Check if there are more items in DB (before filtering)
+	hasMoreInDB := len(runs) > limit
+
+	// Trim to limit before filtering (we only needed the extra to check hasMore)
+	if len(runs) > limit {
+		runs = runs[:limit]
+	}
+
+	// Store the last pre-filter item's timestamp for cursor generation
+	// This ensures we can paginate even when all items are filtered out
+	var lastPreFilterTime *time.Time
+	if len(runs) > 0 {
+		t := runs[len(runs)-1].CreatedAt
+		lastPreFilterTime = &t
+	}
+
+	// Filter workflow runs based on user permissions for the associated workflows
+	filteredRuns, err := permissions.IsAllowedFilter(
+		api.PermissionService,
+		user,
+		workspace,
+		db.PolicyResourceWorkflowRun,
+		db.PolicyActionRead,
+		runs,
+		func(run db.WorkflowRun) uint { return run.WorkflowID },
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error filtering workflow runs by permissions", "error", err)
+		return nil, nil, false, err
+	}
+
+	return filteredRuns, lastPreFilterTime, hasMoreInDB, nil
+}

@@ -33,15 +33,18 @@ air
 ```
 
 ### Database Operations
+
+**Note:** Migrations run automatically on startup. This ensures the database schema is always up-to-date for Railway, Docker, and other deployment platforms.
+
 ```bash
 # Reset the database (empties all tables)
 go run main.go -reset
 
-# Run migrations (creates tables, indexes, seeds roles and policies)
-go run main.go -migrate
+# Skip automatic migrations (for specific use cases)
+go run main.go -skip-migrate
 
-# Run migrations and override existing policies
-go run main.go -migrate -override-policies
+# Run with policy override (replaces existing policies with defaults)
+go run main.go -override-policies
 
 # Seed default tags for all workspaces
 go run main.go -seed-tags

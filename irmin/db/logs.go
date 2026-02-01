@@ -20,6 +20,18 @@ const (
 	LogEventTypeWarning LogEventType = "WARNING"
 )
 
+// LogAssetType constants for filtering log events by asset type.
+const (
+	LogAssetTypeRepository       = "repository"
+	LogAssetTypeWorkflow         = "workflow"
+	LogAssetTypeUser             = "user"
+	LogAssetTypeConnection       = "connection"
+	LogAssetTypeStoredQuery      = "stored_query"
+	LogAssetTypePolicy           = "policy"
+	LogAssetTypeRepositoryObject = "repository_object"
+	LogAssetTypeAIApplication    = "ai_application"
+)
+
 type LogEvent struct {
 	gorm.Model
 
@@ -138,21 +150,21 @@ func (d *Database) GetLogEventsByWorkspaceAndAsset(
 
 	// asset-specific filter for counting
 	switch assetType {
-	case "repository":
+	case LogAssetTypeRepository:
 		countQuery = countQuery.Where(&LogEvent{RepositoryID: &assetID})
-	case "workflow":
+	case LogAssetTypeWorkflow:
 		countQuery = countQuery.Where(&LogEvent{WorkflowID: &assetID})
-	case "user":
+	case LogAssetTypeUser:
 		countQuery = countQuery.Where(&LogEvent{UserID: &assetID})
-	case "connection":
+	case LogAssetTypeConnection:
 		countQuery = countQuery.Where(&LogEvent{ConnectionID: &assetID})
-	case "stored_query":
+	case LogAssetTypeStoredQuery:
 		countQuery = countQuery.Where(&LogEvent{StoredQueryID: &assetID})
-	case "policy":
+	case LogAssetTypePolicy:
 		countQuery = countQuery.Where(&LogEvent{PolicyID: &assetID})
-	case "repository_object":
+	case LogAssetTypeRepositoryObject:
 		countQuery = countQuery.Where(&LogEvent{RepositoryObjectID: &assetID})
-	case "ai_application":
+	case LogAssetTypeAIApplication:
 		countQuery = countQuery.Where(&LogEvent{AIApplicationID: &assetID})
 	}
 
@@ -182,21 +194,21 @@ func (d *Database) GetLogEventsByWorkspaceAndAsset(
 
 	// asset-specific filter for fetching
 	switch assetType {
-	case "repository":
+	case LogAssetTypeRepository:
 		query = query.Where(&LogEvent{RepositoryID: &assetID})
-	case "workflow":
+	case LogAssetTypeWorkflow:
 		query = query.Where(&LogEvent{WorkflowID: &assetID})
-	case "user":
+	case LogAssetTypeUser:
 		query = query.Where(&LogEvent{UserID: &assetID})
-	case "connection":
+	case LogAssetTypeConnection:
 		query = query.Where(&LogEvent{ConnectionID: &assetID})
-	case "stored_query":
+	case LogAssetTypeStoredQuery:
 		query = query.Where(&LogEvent{StoredQueryID: &assetID})
-	case "policy":
+	case LogAssetTypePolicy:
 		query = query.Where(&LogEvent{PolicyID: &assetID})
-	case "repository_object":
+	case LogAssetTypeRepositoryObject:
 		query = query.Where(&LogEvent{RepositoryObjectID: &assetID})
-	case "ai_application":
+	case LogAssetTypeAIApplication:
 		query = query.Where(&LogEvent{AIApplicationID: &assetID})
 	}
 

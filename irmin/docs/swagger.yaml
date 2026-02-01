@@ -12352,8 +12352,10 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get all runs for a specific workflow with pagination and permission
-        filtering
+      description: |-
+        Get all runs for a specific workflow with pagination and permission filtering.
+        Supports both offset-based (page/per_page) and cursor-based (cursor/per_page) pagination.
+        Cursor pagination is more efficient for deep pages - O(1) vs O(n) for offset.
       parameters:
       - description: Workspace slug
         in: path
@@ -12370,11 +12372,15 @@ paths:
         in: query
         name: page
         type: integer
-      - default: 10
+      - default: 100
         description: Number of items per page
         in: query
         name: per_page
         type: integer
+      - description: ISO 8601 datetime cursor for cursor-based pagination
+        in: query
+        name: cursor
+        type: string
       produces:
       - application/json
       responses:
@@ -12815,8 +12821,10 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get all workflow runs for all workflows in the workspace with pagination
-        and permission filtering
+      description: |-
+        Get all workflow runs for all workflows in the workspace with pagination and permission filtering.
+        Supports both offset-based (page/per_page) and cursor-based (cursor/per_page) pagination.
+        Cursor pagination is more efficient for deep pages - O(1) vs O(n) for offset.
       parameters:
       - description: Workspace slug
         in: path
@@ -12828,11 +12836,15 @@ paths:
         in: query
         name: page
         type: integer
-      - default: 10
+      - default: 100
         description: Number of items per page
         in: query
         name: per_page
         type: integer
+      - description: ISO 8601 datetime cursor for cursor-based pagination
+        in: query
+        name: cursor
+        type: string
       produces:
       - application/json
       responses:

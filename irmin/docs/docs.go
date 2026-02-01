@@ -12613,7 +12613,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get all workflow runs for all workflows in the workspace with pagination and permission filtering",
+                "description": "Get all workflow runs for all workflows in the workspace with pagination and permission filtering.\nSupports both offset-based (page/per_page) and cursor-based (cursor/per_page) pagination.\nCursor pagination is more efficient for deep pages - O(1) vs O(n) for offset.",
                 "consumes": [
                     "application/json"
                 ],
@@ -12641,9 +12641,15 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "default": 10,
+                        "default": 100,
                         "description": "Number of items per page",
                         "name": "per_page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ISO 8601 datetime cursor for cursor-based pagination",
+                        "name": "cursor",
                         "in": "query"
                     }
                 ],
@@ -13031,7 +13037,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get all runs for a specific workflow with pagination and permission filtering",
+                "description": "Get all runs for a specific workflow with pagination and permission filtering.\nSupports both offset-based (page/per_page) and cursor-based (cursor/per_page) pagination.\nCursor pagination is more efficient for deep pages - O(1) vs O(n) for offset.",
                 "consumes": [
                     "application/json"
                 ],
@@ -13066,9 +13072,15 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "default": 10,
+                        "default": 100,
                         "description": "Number of items per page",
                         "name": "per_page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ISO 8601 datetime cursor for cursor-based pagination",
+                        "name": "cursor",
                         "in": "query"
                     }
                 ],
