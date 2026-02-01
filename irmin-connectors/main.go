@@ -91,14 +91,19 @@ const (
 	URLHealthCheckInterval = 1 * time.Second
 )
 
-// setupDatabase initializes and configures the database based on command line flags.
-func setupDatabase(ctx context.Context) (*db.Database, error) {
-	migrate := flag.Bool("migrate", false, "Run database migrations")
-	flag.Parse()
+// setupDatabase initializes and configures the database.
+func setupDatabase(ctx context.Context, runMigrations bool) (*db.Database, error) {
+	if runMigrations {
+		log.Println("Running database migrations...")
+	}
 
-	database, err := db.InitialiseDB(ctx, *migrate)
+	database, err := db.InitialiseDB(ctx, runMigrations)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
+	}
+
+	if runMigrations {
+		log.Println("Database migrations completed")
 	}
 
 	return database, nil
@@ -454,8 +459,12 @@ func setupGracefulShutdown() chan os.Signal {
 
 //nolint:gocognit // This function simply orchestrates the startup of the server and the connectors
 func main() {
-	// Define flags
+	// Define all flags in one place
 	skipRegistrations := flag.Bool("skip-registrations", false, "Skip connector registrations")
+	skipMigrate := flag.Bool("skip-migrate", false, "Skip automatic database migrations")
+	// Keep -migrate flag for backwards compatibility (now a no-op since migrations run by default)
+	_ = flag.Bool("migrate", false, "Run database migrations (deprecated: migrations now run automatically)")
+	flag.Parse()
 
 	// Load environment variables
 	env, err := utils.LoadEnv()
@@ -463,9 +472,9 @@ func main() {
 		log.Fatalf("failed to load environment variables: %v", err)
 	}
 
-	// Setup database
+	// Setup database (migrations run by default unless explicitly skipped)
 	databaseContext := context.Background()
-	database, err := setupDatabase(databaseContext)
+	database, err := setupDatabase(databaseContext, !*skipMigrate)
 	if err != nil {
 		log.Fatalf("failed to setup database: %v", err)
 	}

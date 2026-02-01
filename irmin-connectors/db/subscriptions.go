@@ -13,9 +13,9 @@ type Subscription struct {
 	WebhookURL         string `json:"webhookUrl"         gorm:"type:varchar(255);not null"`
 	WebhookAccessToken string `json:"webhookAccessToken" gorm:"type:varchar(255);not null"`
 
-	ConnectorRegistrationID uint                   `json:"connectorRegistrationID"`
+	ConnectorRegistrationID uint                   `json:"connectorRegistrationID"         gorm:"index"`
 	Connector               *ConnectorRegistration `json:"connectorRegistration,omitempty" gorm:"foreignKey:ConnectorRegistrationID"`
-	OperationID             uint                   `json:"operationID"`
+	OperationID             uint                   `json:"operationID"                     gorm:"index"`
 	Operation               *Operation             `json:"operation,omitempty"             gorm:"foreignKey:OperationID"`
 }
 

@@ -414,22 +414,10 @@ func (c *FirecrawlClient) Search() (map[string][]byte, error) {
 		return nil, errors.New("query is required for search operation")
 	}
 
-	// Note: Search is marked as "not implemented in API version 1.0.0" in the SDK
-	// We'll try to call it and handle any errors gracefully
-	result, err := c.App.Search(c.Query, nil)
-	if err != nil {
-		return nil, fmt.Errorf("search operation failed (may not be available): %w", err)
-	}
-
-	// Convert result to JSON since search returns any type
-	jsonBytes, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal search result: %w", err)
-	}
-
-	return map[string][]byte{
-		"search-results.json": jsonBytes,
-	}, nil
+	// Note: Search is not implemented in firecrawl-go SDK v1.0.0.
+	// The SDK function unconditionally returns an error, so we return a clear message.
+	// When the SDK is updated to support Search, this should be changed to call c.App.Search().
+	return nil, errors.New("search operation is not available: firecrawl API v1.0.0 does not support search")
 }
 
 // Execute runs the configured operation and returns the resulting files.
