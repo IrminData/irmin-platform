@@ -25,7 +25,10 @@
     "e2e:codegen": "playwright codegen --load-storage=playwright/.auth/auth.json https://localhost:3000/en",
     "e2e:codegen-mobile": "playwright codegen --load-storage=playwright/.auth/auth.json --device=\"iPhone 12\" https://localhost:3000/en",
     "knip": "knip",
-    "knip:fix": "knip --fix"
+    "knip:fix": "knip --fix",
+    "dict:validate": "tsx scripts/dict-validate.ts",
+    "dict:fix": "tsx scripts/dict-validate.ts --fix",
+    "dict:report": "tsx scripts/dict-validate.ts --json"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.8",
@@ -99,7 +102,6 @@
   },
   "devDependencies": {
     "@clerk/types": "^4.101.11",
-    "knip": "^5.61.0",
     "@eslint/compat": "^2.0.1",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.39.1",
@@ -133,6 +135,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.0.0",
     "import-in-the-middle": "1.14.4",
+    "knip": "^5.61.0",
     "postcss": "^8.5.6",
     "postcss-flexbugs-fixes": "^5.0.2",
     "postcss-nested": "^7.0.2",
@@ -140,6 +143,7 @@
     "prettier": "^3.8.0",
     "require-in-the-middle": "7.5.2",
     "tailwindcss": "^4.1.17",
+    "tsx": "^4.21.0",
     "typedoc": "^0.28.16",
     "typedoc-plugin-missing-exports": "^4.1.0",
     "typescript": "5.9.3",

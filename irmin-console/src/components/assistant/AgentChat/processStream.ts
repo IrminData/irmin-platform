@@ -11,12 +11,42 @@ interface ToolCallState {
   args: Record<string, unknown>;
 }
 
+// Irmin AI custom streaming events (stream-first architecture)
+interface IrminStreamEvent {
+  event: 'stream_start' | 'metadata' | 'stream_end' | 'error';
+  data: {
+    status?: string;
+    agentId?: string;
+    message?: string;
+    conversationId?: string;
+    type?: string;
+  };
+  timestamp?: number;
+}
+
+// Type guard for Irmin AI custom events
+function isIrminStreamEvent(parsed: unknown): parsed is IrminStreamEvent {
+  return (
+    typeof parsed === 'object' &&
+    parsed !== null &&
+    'event' in parsed &&
+    typeof (parsed as IrminStreamEvent).event === 'string' &&
+    ['stream_start', 'metadata', 'stream_end', 'error'].includes(
+      (parsed as IrminStreamEvent).event
+    ) &&
+    'data' in parsed &&
+    typeof (parsed as IrminStreamEvent).data === 'object' &&
+    (parsed as IrminStreamEvent).data !== null
+  );
+}
+
 // Process LangChain streaming response chunks
 export const processStream = async (
   stream: ReadableStream,
   signal?: AbortSignal,
   onContentUpdate?: (content: string) => void,
-  onPartsUpdate?: (parts: ServerStreamEvent[]) => void
+  onPartsUpdate?: (parts: ServerStreamEvent[]) => void,
+  onMetadata?: (metadata: { conversationId?: string; agentId?: string }) => void
 ): Promise<{ content: string; parts: ServerStreamEvent[] }> => {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
@@ -41,12 +71,54 @@ export const processStream = async (
 
       for (const line of lines) {
         try {
-          const parsed = JSON.parse(line) as LangChainStreamEvent;
+          const parsed = JSON.parse(line);
 
-          switch (parsed.event) {
+          // Handle Irmin AI custom streaming events (stream-first architecture)
+          if (isIrminStreamEvent(parsed)) {
+            switch (parsed.event) {
+              case 'stream_start':
+                // Agent is initializing - could show a loading indicator
+                parts.push({
+                  type: 'system',
+                  content: parsed.data.message || 'Agent is preparing...',
+                });
+                onPartsUpdate?.(parts);
+                break;
+
+              case 'metadata':
+                // Received conversation metadata early in stream
+                if (parsed.data.conversationId || parsed.data.agentId) {
+                  onMetadata?.({
+                    conversationId: parsed.data.conversationId,
+                    agentId: parsed.data.agentId,
+                  });
+                }
+                break;
+
+              case 'stream_end':
+                // Stream completed successfully
+                parts.push({ type: 'stream-complete' });
+                onPartsUpdate?.(parts);
+                break;
+
+              case 'error':
+                // Error occurred during streaming
+                parts.push({
+                  type: 'stream-error',
+                  error: parsed.data.message || 'Unknown error',
+                });
+                onPartsUpdate?.(parts);
+                break;
+            }
+            continue; // Skip LangChain event processing
+          }
+
+          // Handle LangChain streaming events
+          const langChainEvent = parsed as LangChainStreamEvent;
+          switch (langChainEvent.event) {
             case 'on_chat_model_stream': {
               // Extract text content from the chunk
-              const chunkContent = parsed.data.chunk?.kwargs.content;
+              const chunkContent = langChainEvent.data.chunk?.kwargs.content;
               const text = extractTextFromContent(chunkContent);
 
               if (text) {
@@ -85,7 +157,7 @@ export const processStream = async (
 
               // Check for tool calls in the chunk
               const toolCallsData =
-                parsed.data.chunk?.kwargs.additional_kwargs?.tool_calls;
+                langChainEvent.data.chunk?.kwargs.additional_kwargs?.tool_calls;
               if (toolCallsData && Array.isArray(toolCallsData)) {
                 for (const toolCall of toolCallsData) {
                   if (toolCall.type === 'function') {
@@ -123,14 +195,14 @@ export const processStream = async (
 
             case 'on_tool_start': {
               // Tool execution started
-              const toolName = parsed.name;
-              const runId = parsed.run_id;
+              const toolName = langChainEvent.name;
+              const runId = langChainEvent.run_id;
               if (toolName && runId) {
                 const existingToolCall = toolCalls.get(runId);
                 if (!existingToolCall) {
                   // If we don't have the tool call from chat model stream,
                   // add it now from the tool start event
-                  const input = parsed.data.input || {};
+                  const input = langChainEvent.data.input || {};
                   parts.push({
                     type: 'tool-input-available',
                     toolCallId: runId,
@@ -145,8 +217,8 @@ export const processStream = async (
 
             case 'on_tool_end': {
               // Tool execution completed
-              const toolOutput = parsed.data.output;
-              const runId = parsed.run_id;
+              const toolOutput = langChainEvent.data.output;
+              const runId = langChainEvent.run_id;
               if (runId && toolOutput !== undefined) {
                 const outputString =
                   typeof toolOutput === 'string'

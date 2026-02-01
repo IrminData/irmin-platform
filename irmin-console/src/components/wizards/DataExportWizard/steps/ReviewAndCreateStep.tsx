@@ -208,7 +208,7 @@ export default function ReviewAndCreateStep({
             </div>
             <div className='flex items-center gap-2'>
               <span className='text-sm font-medium'>
-                {dict.wizard.description}:
+                {dict.common.description}:
               </span>
               <span
                 className={`

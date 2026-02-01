@@ -905,7 +905,7 @@ function Stage({
                     className='w-full'
                     size={'sm'}
                   >
-                    {dict.list.view}
+                    {dict.common.view}
                   </Button>
                 )}
                 {!readOnly && (
@@ -1049,7 +1049,7 @@ function Stage({
                     className='w-full'
                     size={'sm'}
                   >
-                    {dict.list.view}
+                    {dict.common.view}
                   </Button>
                 )}
                 {!readOnly && (
@@ -1503,7 +1503,7 @@ function Stage({
                     className='w-full'
                     size={'sm'}
                   >
-                    {dict.list.view}
+                    {dict.common.view}
                   </Button>
                 )}
               </div>

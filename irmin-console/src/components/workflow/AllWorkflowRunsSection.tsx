@@ -165,7 +165,7 @@ const AllWorkflowRunsSection = () => {
           >
             {run.triggered_by_user && (
               <span className='text-sm text-gray-400'>
-                {dict.list.owner}: {run.triggered_by_user.email}
+                {dict.common.owner}: {run.triggered_by_user.email}
                 {run.triggered_by_user.company
                   ? ` (${run.triggered_by_user.company})`
                   : ''}
@@ -319,7 +319,7 @@ const AllWorkflowRunsSection = () => {
                   dict.workflow.run,
                   dict.workflow.triggeredBy,
                   dict.list.status,
-                  dict.list.actions,
+                  dict.common.actions,
                 ]}
                 loading={allWorkflowRunsQuery.isLoading}
                 hideHeaders={false}

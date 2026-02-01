@@ -52,12 +52,12 @@ const PipelineWorkflowList = ({
 
           const actions: (TableRowAction & { hidden?: boolean })[] = [
             {
-              label: dict.list.view,
+              label: dict.common.view,
               primary: true,
               href: `${workspaceUrl}/workflows/${item.id}`,
             },
             {
-              label: dict.list.edit,
+              label: dict.common.edit,
               primary: false,
               href: `${workspaceUrl}/workflows/${item.id}/settings`,
               hidden: !isResourceAllowed('workflow', 'update', item.id),
@@ -83,7 +83,7 @@ const PipelineWorkflowList = ({
                     dark:text-gray-400
                   `}
                 >
-                  {dict.list.owner}: {item.owner.email}
+                  {dict.common.owner}: {item.owner.email}
                   {item.owner.company ? ` (${item.owner.company})` : ''}
                 </span>
               </div>,
@@ -143,7 +143,7 @@ const PipelineWorkflowList = ({
   return (
     <CardOrNormalList
       loading={loading}
-      headers={[dict.common.name, dict.list.status, dict.list.actions]}
+      headers={[dict.common.name, dict.list.status, dict.common.actions]}
       rows={rows}
       hideHeaders={false}
       emptyStateTitle={dict.list.emptyState.workflows.title}

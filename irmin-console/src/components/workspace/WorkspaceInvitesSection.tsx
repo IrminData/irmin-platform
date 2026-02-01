@@ -139,7 +139,7 @@ const WorkspaceInvitesSection = () => {
                   md:table-cell
                 `}
               >
-                {dict.users.email}
+                {dict.common.email}
               </TableHead>
               <TableHead
                 className={`

@@ -47,7 +47,7 @@ const RepositoryList = ({
       items.map((item) => {
         const actions: TableRowAction[] = [
           {
-            label: dict.list.view,
+            label: dict.common.view,
             primary: true,
             href: `${workspaceUrl}/repositories/${item.slug}`,
           },
@@ -78,7 +78,7 @@ const RepositoryList = ({
                   dark:text-gray-400
                 `}
               >
-                {dict.list.owner}: {item.owner.email}
+                {dict.common.owner}: {item.owner.email}
                 {item.owner.company ? ` (${item.owner.company})` : ''}
               </span>
             </div>,
@@ -142,7 +142,7 @@ const RepositoryList = ({
   return (
     <CardOrNormalList
       loading={loading}
-      headers={[dict.common.name, dict.list.status, dict.list.actions]}
+      headers={[dict.common.name, dict.list.status, dict.common.actions]}
       rows={rows}
       hideHeaders={false}
       emptyStateTitle={dict.list.emptyState.repositories.title}

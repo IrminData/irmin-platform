@@ -189,7 +189,7 @@ export default function ConnectionLayoutWrapper({
                   md:text-sm
                 `}
               >
-                {dict.list.owner}:{' '}
+                {dict.common.owner}:{' '}
                 {`${connection.owner.first_name} ${connection.owner.last_name}`}
                 {connection.owner.company
                   ? ` (${connection.owner.company})`

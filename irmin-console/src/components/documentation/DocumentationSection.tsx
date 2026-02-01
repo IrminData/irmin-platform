@@ -538,7 +538,7 @@ export default function DocumentationSection() {
                   </div>
                   <div>
                     <dt className='text-muted-foreground'>
-                      {dict.scripts.scripts}
+                      {dict.consoleNavigation.scripts}
                     </dt>
                     <dd className='text-base font-medium'>{stats.scripts}</dd>
                   </div>
@@ -664,7 +664,7 @@ export default function DocumentationSection() {
                                   `}
                                 >
                                   <BsPerson className='size-4' />
-                                  {dict.list.owner}
+                                  {dict.common.owner}
                                 </dt>
                                 <dd className='text-foreground'>
                                   {owner.name}
@@ -781,7 +781,7 @@ export default function DocumentationSection() {
                                   `}
                                 >
                                   <BsPerson className='size-4' />
-                                  {dict.list.owner}
+                                  {dict.common.owner}
                                 </dt>
                                 <dd className='text-foreground'>
                                   {owner.name}
@@ -931,7 +931,7 @@ export default function DocumentationSection() {
                                   `}
                                 >
                                   <BsPerson className='size-4' />
-                                  {dict.list.owner}
+                                  {dict.common.owner}
                                 </dt>
                                 <dd className={`font-medium text-foreground`}>
                                   {owner.name}
@@ -984,7 +984,8 @@ export default function DocumentationSection() {
                                     <span
                                       className={`text-xs text-muted-foreground`}
                                     >
-                                      {dict.list.owner}: {repositoryOwner.name}
+                                      {dict.common.owner}:{' '}
+                                      {repositoryOwner.name}
                                     </span>
                                   )}
                                 </dd>
@@ -1022,7 +1023,7 @@ export default function DocumentationSection() {
                   <TbCode className='size-5 text-muted-foreground' />
                 </div>
                 <div>
-                  <h2 className='text-2xl'>{dict.scripts.scripts}</h2>
+                  <h2 className='text-2xl'>{dict.consoleNavigation.scripts}</h2>
                   <p className='text-sm text-muted-foreground'>
                     {dict.documentation.scriptSectionDescription}
                   </p>
@@ -1078,7 +1079,7 @@ export default function DocumentationSection() {
                                   `}
                                 >
                                   <BsPerson className='size-4' />
-                                  {dict.list.owner}
+                                  {dict.common.owner}
                                 </dt>
                                 <dd className={`font-medium text-foreground`}>
                                   {owner.name}
@@ -1167,7 +1168,7 @@ export default function DocumentationSection() {
                                   `}
                                 >
                                   <BsPerson className='size-4' />
-                                  {dict.list.owner}
+                                  {dict.common.owner}
                                 </dt>
                                 <dd className={`font-medium text-foreground`}>
                                   {owner.name}

@@ -46,12 +46,12 @@ const ConnectionList = ({
       items.map((item) => {
         const actions: TableRowAction[] = [
           {
-            label: dict.list.view,
+            label: dict.common.view,
             primary: true,
             href: `${workspaceUrl}/connections/${item.id}`,
           },
           {
-            label: dict.list.edit,
+            label: dict.common.edit,
             primary: false,
             href: `${workspaceUrl}/connections/${item.id}/settings`,
           },
@@ -75,7 +75,7 @@ const ConnectionList = ({
                   dark:text-gray-400
                 `}
               >
-                {dict.list.owner}: {item.owner.email}
+                {dict.common.owner}: {item.owner.email}
               </span>
             </div>,
             <div
@@ -123,7 +123,11 @@ const ConnectionList = ({
   return (
     <CardOrNormalList
       loading={loading}
-      headers={[dict.common.name, dict.connectors.connector, dict.list.actions]}
+      headers={[
+        dict.common.name,
+        dict.connectors.connector,
+        dict.common.actions,
+      ]}
       rows={rows}
       hideHeaders={false}
       emptyStateTitle={dict.list.emptyState.connections.title}

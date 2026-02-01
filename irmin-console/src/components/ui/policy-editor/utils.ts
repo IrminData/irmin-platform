@@ -19,13 +19,13 @@ export const formatActionName = (
   let actionStr: string;
   switch (action) {
     case 'create':
-      return dict.policy.actionCreate;
+      return dict.common.create;
     case 'read':
       return dict.policy.actionRead;
     case 'update':
-      return dict.policy.actionUpdate;
+      return dict.common.update;
     case 'delete':
-      return dict.policy.actionDelete;
+      return dict.common.delete;
     default:
       actionStr = String(action);
       return actionStr.charAt(0).toUpperCase() + actionStr.slice(1);

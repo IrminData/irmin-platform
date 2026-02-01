@@ -172,7 +172,7 @@ export default function ObjectSchemaBuilder({
 
             <div className='col-span-full space-y-1'>
               <Label className='text-xs text-muted-foreground'>
-                {dict.schemaBuilder.description}
+                {dict.common.description}
               </Label>
               <Input
                 value={value.description || ''}

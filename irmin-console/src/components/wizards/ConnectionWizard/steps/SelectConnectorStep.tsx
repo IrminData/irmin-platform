@@ -36,9 +36,7 @@ export default function SelectConnectorStep({
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
 
-  const [activeCategory, setActiveCategory] = useState<string>(
-    dict.connections.create.categoryAll
-  );
+  const [activeCategory, setActiveCategory] = useState<string>(dict.common.all);
   const [selectedConnector, setSelectedConnector] = useState<Connector | null>(
     null
   );
@@ -49,13 +47,13 @@ export default function SelectConnectorStep({
     .map((connector) => [...connector.categories, connector.primary_category])
     .flat();
   const categoryFilterOptions = [
-    dict.connections.create.categoryAll,
+    dict.common.all,
     ...Array.from(new Set(filterOptions)),
   ];
 
   // Compute filtered connectors based on active category
   const filteredConnectors =
-    activeCategory === dict.connections.create.categoryAll
+    activeCategory === dict.common.all
       ? connectorData
       : connectorData.filter(
           (connector) =>

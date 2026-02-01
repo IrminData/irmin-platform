@@ -119,7 +119,7 @@ export function useWorkspace(slug: string) {
   const confirmDeleteWorkspace = useCallback(() => {
     if (isDeletePending || isDeleteSuccess) return;
     irminModal.show(
-      dict.list.delete,
+      dict.common.delete,
       <WorkspaceDeletionConfirmationModal
         dict={dict}
         close={irminModal.close}

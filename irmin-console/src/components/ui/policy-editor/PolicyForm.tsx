@@ -118,16 +118,10 @@ export default function PolicyForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={'create'}>
-                {dict.policy.actionCreate}
-              </SelectItem>
+              <SelectItem value={'create'}>{dict.common.create}</SelectItem>
               <SelectItem value={'read'}>{dict.policy.actionRead}</SelectItem>
-              <SelectItem value={'update'}>
-                {dict.policy.actionUpdate}
-              </SelectItem>
-              <SelectItem value={'delete'}>
-                {dict.policy.actionDelete}
-              </SelectItem>
+              <SelectItem value={'update'}>{dict.common.update}</SelectItem>
+              <SelectItem value={'delete'}>{dict.common.delete}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -239,7 +233,7 @@ export default function PolicyForm({
             }
           >
             <SelectTrigger className='w-full'>
-              <SelectValue placeholder={dict.policy.allResources} />
+              <SelectValue placeholder={dict.common.all} />
             </SelectTrigger>
             <SelectContent>
               {formData.resource === 'script' &&

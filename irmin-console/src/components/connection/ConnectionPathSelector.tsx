@@ -537,7 +537,7 @@ const ConnectionPathSelector = ({
             tooltip={selectedPath}
             className='mb-2 w-full'
           >
-            {dict.list.view}
+            {dict.common.view}
           </ButtonWithTooltip>
         )}
 

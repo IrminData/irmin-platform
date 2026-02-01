@@ -232,7 +232,7 @@ const RepositorySettingsSectionContent = () => {
     },
     {
       name: 'owner',
-      label: dict.list.owner,
+      label: dict.common.owner,
       type: 'select',
       options:
         workspaceQuery?.data?.data?.users?.map((user) => ({

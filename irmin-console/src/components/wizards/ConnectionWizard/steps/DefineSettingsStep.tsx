@@ -151,7 +151,7 @@ export default function DefineSettingsStep({
       <DynamicForm
         fields={settingsFields}
         onSubmit={handleContinue}
-        submitButtonText={dict.connections.create.continue}
+        submitButtonText={dict.common.continue}
         loading={validateConnectorConfigurationMutation.isPending}
         formProps={{
           autoCapitalize: 'none',

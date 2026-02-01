@@ -153,7 +153,7 @@ export default function UserProfileForm() {
           </div>
           <div className='flex flex-col gap-2'>
             <Label htmlFor='email' className='text-sm'>
-              {dict.users.email}
+              {dict.common.email}
             </Label>
             <Input
               id='email'

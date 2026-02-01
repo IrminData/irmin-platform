@@ -77,7 +77,7 @@ export default function ScriptSelector({
         <SelectContent>
           <div className='p-2'>
             <Input
-              placeholder={dict.list.search}
+              placeholder={dict.common.search}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className='mb-2'
@@ -85,7 +85,7 @@ export default function ScriptSelector({
           </div>
           {scriptsQuery.isLoading ? (
             <SelectItem value='loading' disabled>
-              {dict.list.loading}
+              {dict.common.loading}
             </SelectItem>
           ) : filteredScripts.length === 0 ? (
             <SelectItem value='no-scripts' disabled>
@@ -109,7 +109,7 @@ export default function ScriptSelector({
           </div>
           {selectedScript.tags && selectedScript.tags.length > 0 && (
             <div>
-              <strong>{dict.list.tags}:</strong>{' '}
+              <strong>{dict.common.tags}:</strong>{' '}
               {selectedScript.tags.map((tag) => tag.name).join(', ')}
             </div>
           )}

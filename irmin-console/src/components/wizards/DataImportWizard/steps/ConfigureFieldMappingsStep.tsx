@@ -152,7 +152,7 @@ export default function ConfigureFieldMappingsStep({
             size={'lg'}
             onClick={handleContinue}
           >
-            {dict.connections.create.continue}
+            {dict.common.continue}
           </Button>
           <Button
             className='mb-6 inline-block w-full'
@@ -212,7 +212,7 @@ export default function ConfigureFieldMappingsStep({
           variant='default'
           onClick={handleContinue}
         >
-          {dict.connections.create.continue}
+          {dict.common.continue}
         </Button>
       </div>
     </div>

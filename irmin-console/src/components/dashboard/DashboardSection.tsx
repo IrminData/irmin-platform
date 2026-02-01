@@ -270,7 +270,7 @@ const DashboardSection = () => {
             )}
             {isResourceAllowed('ai_application', 'read') && (
               <DashboardListCard
-                title={dict.aiApplication.aiApplications}
+                title={dict.consoleNavigation.aiApplications}
                 type='ai-applications'
                 loading={aiApplicationsQuery.isLoading}
                 items={aiApplicationsQuery.data?.data?.slice(0, 5) || []}

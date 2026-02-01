@@ -59,7 +59,7 @@ export const WorkspaceSendInviteModalContent = ({
         className='flex flex-col gap-4 pb-4'
       >
         <div className='flex flex-col gap-2'>
-          <Label>{dict.users.email}</Label>
+          <Label>{dict.common.email}</Label>
           <Controller
             name='email'
             control={control}

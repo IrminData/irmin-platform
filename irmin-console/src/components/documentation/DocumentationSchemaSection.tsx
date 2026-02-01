@@ -538,7 +538,7 @@ export default function DocumentationSchemaSection() {
                         )}
                         {owner && (
                           <p className='text-xs text-muted-foreground'>
-                            {dict.list.owner}: {owner}
+                            {dict.common.owner}: {owner}
                           </p>
                         )}
                         <p className='text-xs text-muted-foreground'>
@@ -601,7 +601,7 @@ export default function DocumentationSchemaSection() {
                         )}
                         {owner && (
                           <p className='text-xs text-muted-foreground'>
-                            {dict.list.owner}: {owner}
+                            {dict.common.owner}: {owner}
                           </p>
                         )}
                         <p className='text-xs text-muted-foreground'>

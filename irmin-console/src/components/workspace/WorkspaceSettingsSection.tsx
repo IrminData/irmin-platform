@@ -81,7 +81,7 @@ const WorkspaceSettingsSection = () => {
       deleteItem={confirmDeleteWorkspace}
       deleteItemLoading={deleteMutation?.isPending}
       itemName={dict.consoleNavigation.workspace}
-      submitButtonLabel={dict.workspace.saveChanges}
+      submitButtonLabel={dict.common.saveChanges}
       deleteButtonLabel={dict.workspace.deleteWorkspace}
       dangerZoneMessage={dict.workspace.deletionNote}
       additionalDangerContent={

@@ -212,7 +212,7 @@ export default function ActionWorkflow({
             variant='secondary'
             className='w-full'
           >
-            {dict.list.view}
+            {dict.common.view}
           </Button>
         )}
         <Button

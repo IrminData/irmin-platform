@@ -477,7 +477,7 @@ export default function ScriptsSection() {
                   !isResourceAllowed('script', 'update', selectedScript.id)
                 }
               >
-                {dict.list.edit}
+                {dict.common.edit}
               </Button>
               <Button
                 variant='secondary'
@@ -489,7 +489,7 @@ export default function ScriptsSection() {
                   !isResourceAllowed('script', 'delete', selectedScript.id)
                 }
               >
-                {dict.list.delete}
+                {dict.common.delete}
               </Button>
             </div>
           )}

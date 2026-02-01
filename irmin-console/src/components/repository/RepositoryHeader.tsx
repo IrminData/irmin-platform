@@ -180,7 +180,7 @@ export default function RepositoryHeader() {
               )}
             </div>
             <span className='px-2 text-sm text-gray-400'>
-              {dict.list.owner}:{' '}
+              {dict.common.owner}:{' '}
               {`${repository.owner.first_name} ${repository.owner.last_name}`}
               {repository.owner.company
                 ? ` (${repository.owner.company})`

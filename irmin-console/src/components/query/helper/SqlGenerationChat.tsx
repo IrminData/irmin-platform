@@ -255,7 +255,7 @@ export function SqlGenerationChat({
                             <TbCopy size={14} />
                           )}
                           {copiedMessageId === message.id
-                            ? dict.queryHelper.copy
+                            ? dict.common.copied
                             : dict.queryHelper.sqlGeneration.copySql}
                         </Button>
                       </div>
@@ -291,8 +291,8 @@ export function SqlGenerationChat({
                             <TbCopy size={14} />
                           )}
                           {copiedMessageId === message.id
-                            ? dict.queryHelper.copy
-                            : dict.queryHelper.sqlGeneration.copyText}
+                            ? dict.common.copied
+                            : dict.common.copy}
                         </Button>
                       </div>
                       <p className='text-sm wrap-break-word whitespace-pre-wrap'>

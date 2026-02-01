@@ -271,7 +271,7 @@ export default function SetupRepositoryStep({
             onClick={handleContinue}
             disabled={!wizardData.repository}
           >
-            {dict.connections.create.continue}
+            {dict.common.continue}
           </Button>
         </div>
       )}

@@ -91,7 +91,7 @@ const WorkspaceUsersSection = () => {
                 md:table-cell
               `}
             >
-              {dict.users.email}
+              {dict.common.email}
             </TableHead>
             <TableHead
               className={`
@@ -187,7 +187,7 @@ const WorkspaceUsersSection = () => {
                 `}
               >
                 {workspaceQuery?.data?.data?.owner?.id === user.id ? (
-                  dict.list.owner
+                  dict.common.owner
                 ) : (
                   <MultiSelect
                     options={

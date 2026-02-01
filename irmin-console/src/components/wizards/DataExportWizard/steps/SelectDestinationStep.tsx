@@ -268,7 +268,7 @@ export default function SelectDestinationStep({
               onClick={handleContinue}
               disabled={!wizardData.connection}
             >
-              {dict.connections.create.continue}
+              {dict.common.continue}
             </Button>
           </div>
 

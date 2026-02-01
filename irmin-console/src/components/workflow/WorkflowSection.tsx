@@ -597,7 +597,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                   dict.workflow.run,
                   dict.workflow.triggeredBy,
                   dict.list.status,
-                  dict.list.actions,
+                  dict.common.actions,
                 ]}
                 loading={workflowRunsQuery.isLoading}
                 hideHeaders={false}

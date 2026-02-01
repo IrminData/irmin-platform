@@ -226,7 +226,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
                     dark:text-gray-300
                   `}
                 >
-                  {dict.scripts.scripts} ({assets.scripts.length})
+                  {dict.consoleNavigation.scripts} ({assets.scripts.length})
                 </h3>
                 <Table>
                   <TableHeader>

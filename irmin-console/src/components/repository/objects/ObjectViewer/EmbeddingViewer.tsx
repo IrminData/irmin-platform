@@ -243,7 +243,7 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
               {object.name}
             </h2>
             <p className='text-sm text-muted-foreground'>
-              {dict.repository.objects.embeddingFile ?? 'Embedding File'}
+              {dict.repository.objects.embeddingFile}
             </p>
           </div>
         </div>

@@ -280,9 +280,7 @@ function PropertyEditor({
           <div className='rounded-md border bg-muted/20 p-3'>
             <div className='grid grid-cols-2 gap-4'>
               <div className='col-span-2'>
-                <Label className='text-xs'>
-                  {dict.schemaBuilder.description}
-                </Label>
+                <Label className='text-xs'>{dict.common.description}</Label>
                 <Input
                   value={schema.description || ''}
                   onChange={(e) =>

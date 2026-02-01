@@ -383,7 +383,7 @@ export default function ConsoleSearch() {
                         {type === 'user' && dict.workspace.users}
                         {type === 'workspace' &&
                           dict.consoleNavigation.workspaces}
-                        {type === 'script' && dict.scripts.scripts}
+                        {type === 'script' && dict.consoleNavigation.scripts}
                         {type === 'query' && dict.query.queries}
                         {type === 'irmin' && dict.consoleNavigation.irmin}
                         {type === 'structured-object' && 'Structured Objects'}

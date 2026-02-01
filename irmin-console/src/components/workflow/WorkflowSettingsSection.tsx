@@ -228,7 +228,7 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
     },
     {
       name: 'owner',
-      label: dict.list.owner,
+      label: dict.common.owner,
       type: 'select',
       options:
         usersQuery.data?.data?.map((user) => ({

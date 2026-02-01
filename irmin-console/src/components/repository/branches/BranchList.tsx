@@ -71,7 +71,7 @@ export default function BranchList({
         actions: (() => {
           const addActions: TableRowAction[] = [
             {
-              label: dict.list.view,
+              label: dict.common.view,
               primary: true,
               onClick: () => {
                 handleViewBranch(branch.name);
@@ -85,7 +85,7 @@ export default function BranchList({
             handleDeleteBranch
           ) {
             addActions.push({
-              label: dict.list.delete,
+              label: dict.common.delete,
               primary: false,
               onClick: () => {
                 handleDeleteBranch(branch.name);
@@ -108,7 +108,7 @@ export default function BranchList({
   return (
     <div id='branches-list'>
       <NormalList
-        headers={[dict.common.name, dict.list.actions]}
+        headers={[dict.common.name, dict.common.actions]}
         hideHeaders={false}
         loading={loading}
         rows={rows}

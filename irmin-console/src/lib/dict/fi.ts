@@ -16,19 +16,17 @@ const fi = {
     update: 'Päivitä',
     add: 'Lisää',
     remove: 'Poista',
-    upload: 'Lataa',
     download: 'Lataa',
     back: 'Takaisin',
     next: 'Seuraava',
-    previous: 'Edellinen',
     continue: 'Jatka',
+    previous: 'Edellinen',
+    saveChanges: 'Tallenna muutokset',
     close: 'Sulje',
-    open: 'Avaa',
     refresh: 'Päivitä',
     tryAgain: 'Yritä uudelleen',
     hideAdvancedOption: 'Piilota lisäasetukset',
     showAdvancedOptions: 'Näytä lisäasetukset',
-    comingSoon: 'Tulossa pian!',
 
     // Error display
     pageNotFoundDescription:
@@ -55,8 +53,6 @@ const fi = {
     error: 'Virhe',
     failed: 'Epäonnistuneet',
     info: 'Info',
-    yes: 'Kyllä',
-    no: 'Ei',
     optional: 'Valinnainen',
     all: 'Kaikki',
 
@@ -70,7 +66,6 @@ const fi = {
     name: 'Nimi',
     description: 'Kuvaus',
     email: 'Sähköposti',
-    message: 'Viesti',
     overview: 'Yleiskatsaus',
     actions: 'Toiminnot',
     logs: 'Lokit',
@@ -86,7 +81,6 @@ const fi = {
     fieldInvalid: 'Kenttä on virheellinen',
     resetForm: 'Tyhjennä lomake',
     pleaseFixErrors: 'Korjaa virheet yllä',
-    messagePlaceholder: 'Kirjoita viestisi tähän...',
 
     // Messages and alerts
     insufficientPermissions: 'Liian vähän oikeuksia',
@@ -96,7 +90,6 @@ const fi = {
     weEncounteredError: 'Kohtasimme virheen',
     tryAgainOrContactSupport: 'Yritä uudelleen tai ota yhteyttä tukeen',
     goBackHome: 'Mene takaisin kotisivulle',
-    goBackConsole: 'Palaa Irmin-konsoliin',
     noOptionsMessage: 'Ei vaihtoehtoja',
     downloadSuccess: 'Lataus onnistui',
     dangerZone: 'Vaaravyöhyke',
@@ -106,10 +99,8 @@ const fi = {
       'Oletko varma, että haluat poistaa tämän kohteen?',
     areYouSureYouWantToTransferOwnership:
       'Oletko varma, että haluat vaihtaa tämän kohteen omistajan?',
-    deleteConfirmation: 'Oletko varma, että haluat poistaa',
     saved: 'Tallennettu onnistuneesti',
     deleted: 'Poistettu onnistuneesti',
-    saveChanges: 'Tallenna muutokset',
 
     createFromTemplate: 'Luo mallista',
     templates: {
@@ -120,15 +111,10 @@ const fi = {
       noPlaceholders: 'Ei täytettäviä paikkamerkkejä tässä mallissa',
       selectTemplate: 'Valitse malli',
       fillPlaceholders: 'Täytä mallin paikkamerkit',
-      fillPlaceholdersDescription: 'Anna arvot mallin paikkamerkeille',
-      placeholder: 'Paikkamerkki',
-      value: 'Arvo',
       example: 'Esimerkki',
       preview: 'Esikatselu',
       createNew: 'Luo uusi',
       replaceCurrent: 'Korvaa nykyinen',
-      useTemplate: 'Käytä mallia',
-      templateUsed: 'Malli otettu käyttöön onnistuneesti',
     },
 
     // Contact and support
@@ -186,7 +172,6 @@ const fi = {
     guides: 'Oppaat',
     contactSupport: 'Ota yhteyttä tukeen',
     developerDocs: 'Dokumentaatio kehittäjille',
-    termsAndPrivacy: 'Käyttöehdot ja tietosuoja',
 
     staticSearchItems: {
       guides: 'Irmin Oppaat',
@@ -196,13 +181,10 @@ const fi = {
       workspaceDocumentation: 'Työtilan Dokumentaatio',
       myProfile: 'Oma Profiili',
       manageWorkspaces: 'Hallitse Työtiloja',
-      scripts: 'Skriptit',
       workspaceSettings: 'Työtilan asetukset',
       createWorkflow: 'Luo uusi prosessi',
       createConnection: 'Luo uusi yhteys',
       createRepository: 'Luo uusi data-arkisto',
-      createAIApplication: 'Luo uusi AI-sovellus',
-      aiApplications: 'AI-sovellukset',
 
       description: {
         irminWebsite: 'Siirry Irmin verkkosivustolle',
@@ -227,7 +209,6 @@ const fi = {
         createConnection: 'Luo uusi yhteys käytettäväksi prosesseissa',
         repositories: 'Näytä ja hallitse data-arkistoja',
         createRepository: 'Luo uusi data-arkisto tietojen tallentamista varten',
-        aiApplications: 'Luo ja hallinnoi AI-sovelluksia',
         createAIApplication:
           'Luo uusi AI-sovellus jakaaksesi dataa tekoälytyökalujen kanssa',
       },
@@ -236,10 +217,8 @@ const fi = {
 
   // === AI APPLICATIONS ===
   aiApplication: {
-    aiApplications: 'AI-sovellukset',
     aiApplication: 'AI-sovellus',
     createAIApplication: 'Luo AI-sovellus',
-    noAIApplications: 'Ei AI-sovelluksia',
     dataSources: 'tietolähdettä',
     dataSource: 'tietolähde',
     toolsEnabled: 'työkalua käytössä',
@@ -259,11 +238,8 @@ const fi = {
       'Käytä tätä API-avainta todentaaksesi pyynnöt AI-sovelluksen API:in ja MCP-palvelimeen.',
     apiKeyOnlyShownOnce:
       'API-avain näytetään vain kerran kun AI-sovellus luodaan. Ota yhteyttä omistajaan, jos tarvitset pääsyn.',
-    mcpConnection: 'MCP-yhteys',
     mcpEndpoint: 'MCP-päätepiste',
     restApiEndpoint: 'REST API -päätepiste',
-    mcpConnectionDescription:
-      'Yhdistä LLM-agenttisi Model Context Protocol (MCP) -protokollalla. Sisällytä API-avain Bearer-tokenina Authorization-otsikossa.',
     enabledTools: 'Käytössä olevat työkalut',
     // Tools
     toolQueryName: 'SQL-kysely',
@@ -302,9 +278,7 @@ const fi = {
       'Sisällytä <strong>API-avain</strong> Bearer-tunnisteena Authorization-otsikkoon.',
     howToConnectTools:
       'Ota käyttöön tiettyjä työkaluja alta paljastaaksesi ominaisuuksia AI-agentillesi.',
-    mcpDocumentation: 'MCP-dokumentaatio',
     apiReference: 'API-viite',
-    repositoriesLinked: 'Tähän AI-sovellukseen linkitetyt tietovarastot.',
     toolsControlDescription:
       'Hallitse, mitkä ominaisuudet paljastetaan MCP-palvelimen kautta.',
     hideApiKey: 'Piilota API-avain',
@@ -323,7 +297,6 @@ const fi = {
     toolName: 'Työkalun nimi',
     toolNameHint:
       'Vain pieniä kirjaimia, numeroita ja alaviivoja. Täytyy alkaa kirjaimella.',
-    toolDescription: 'Kuvaus',
     toolDescriptionHint:
       'Tämä kuvaus auttaa tekoälyä ymmärtämään, milloin tätä työkalua kannattaa käyttää.',
     toolType: 'Tyyppi',
@@ -344,14 +317,9 @@ const fi = {
     noActivityYet: 'Ei vielä aktiviteettia',
     noActivityDescription:
       'AI-sovelluksen kautta tehdyt työkalukutsut näkyvät täällä.',
-    toolCall: 'Työkalukutsu',
     toolCalls: 'Työkalukutsut',
-    duration: 'Kesto',
     avgDuration: 'Keskim. kesto',
-    inputs: 'Syötteet',
     noInputs: 'Ei syötteitä',
-    protocol: 'Protokolla',
-    requestOrigin: 'Pyynnön alkuperä',
   },
 
   // === WORKSPACE ===
@@ -364,11 +332,9 @@ const fi = {
     billing: 'Laskutus',
     deletionWarning:
       'Oletko varma, että haluat poistaa tämän työtilan? Tätä toimintoa ei voi peruuttaa ja se poistaa kaiken tähän työtilaan liittyvän datan.',
-    generalSettings: 'Yleiset asetukset',
     workspaceName: 'Työtilan nimi',
     workspaceDescription: 'Työtilan kuvaus',
     noWorkspaceDescription: 'Ei työtilan kuvausta',
-    saveChanges: 'Tallenna muutokset',
     deletionNote:
       'Työtilan poistaminen poistaa kaiken siihen liittyvän datan. Tätä toimintoa ei voi peruuttaa.',
     deleteWorkspace: 'Poista työtila',
@@ -419,7 +385,6 @@ const fi = {
   },
 
   workspaceSwitcher: {
-    manageWorkspaces: 'Hallinnoi työtiloja',
     selectWorkspace: 'Valitse työtila',
     createNewWorkspace: 'Luo uusi työtila',
     createFirstWorkspace: 'Luo ensimmäinen työtilasi',
@@ -455,9 +420,7 @@ const fi = {
       confirmDeleteBranch: 'Oletko varma, että haluat poistaa tämän haaran?',
     },
     tags: {
-      tag: 'Tagi',
       tags: 'Tagit',
-      tagDescription: 'Tagi on immuuttinen viittaus tiettyyn commit-tilaan.',
       createTag: 'Luo tagi',
       newTagName: 'Uuden tagin nimi',
       fromCommit: 'Commitista',
@@ -673,15 +636,11 @@ const fi = {
     connection: 'Yhteys',
     connections: 'Yhteydet',
     testConnection: 'Testaa yhteys',
-    connectionTestSuccess: 'Yhteys validoitu onnistuneesti',
     settings: {
-      title: 'Yhteyden asetukset',
       saveChanges: 'Tallenna muutokset',
       deletionNote:
         'Poistamalla tämän yhteyden poistetaan kaikki siihen liittyvä data. Tätä toimintoa ei voi peruuttaa.',
       delete: 'Poista yhteys',
-      areYouSureYouWantToDelete:
-        'Oletko varma, että haluat poistaa tämän yhteyden?',
     },
     create: {
       selectConnector: 'Valitse yhdistin',
@@ -689,10 +648,8 @@ const fi = {
       configureSettings: 'Määritä asetukset',
       configureConnection: 'Määritä yhteys',
       createNewConnection: 'Luo uusi yhteys',
-      pleaseSelectConnector: 'Valitse yhdistin jatkaaksesi',
       confirmConnectorSelection: 'Vahvista yhdistimen valinta ja jatka',
       selectedConnector: 'Valittu yhdistin',
-      categoryAll: 'Kaikki',
       connectionName: 'Yhteyden nimi',
       connectionNamePlaceholder: 'esim. Minun Google Analytics -yhteys',
       connectionDescription: 'Yhteyden kuvaus',
@@ -701,14 +658,12 @@ const fi = {
       addCustomConnector: 'Lisää oma yhdistin',
       continueAndTest: 'Jatka ja testaa yhteys',
       createConnection: 'Luo yhteys',
-      continue: 'Jatka',
       goBack: 'Mene takaisin',
       success: 'Yhteys onnistui',
       failed: 'Yhteys epäonnistui',
       configuration_valid: 'Yhteyden konfiguraatio on validi',
       configuration_invalid: 'Yhteyden konfiguraatio on virheellinen',
       contactSupport: 'Ota yhteyttä tukeen',
-      requiredFieldsMissing: 'Pakollisia kenttiä puuttuu',
     },
 
     config: {
@@ -720,7 +675,6 @@ const fi = {
       editDescription:
         'Päivitä yhteyden tunnistetiedot ja asetukset ennen tallennusta.',
       updateConfiguration: 'Päivitä konfiguraatio',
-      updateSuccess: 'Yhteys päivitettiin onnistuneesti',
       updateFailed: 'Yhteyden päivitys epäonnistui. Tarkista virheet.',
     },
 
@@ -751,13 +705,10 @@ const fi = {
   // === TILAUKSET ===
   subscriptions: {
     title: 'Tilaukset',
-    explanation:
-      'Tilaukset mahdollistavat tämän yhteyden ilmoittamaan Irminille datamuutoksista. Kun ulkoinen järjestelmä lähettää webhookin päivitysdatalla, se voi käynnistää prosesseja automaattisesti synkronoimaan vain muuttuneet tiedot täyden tuonnin/viennin sijaan. Tämä on ihanteellinen reaaliaikaisiin inkrementaalisiin päivityksiin.',
     autoConfigureNotice:
       'Tämä yhteys tukee automaattista muutosten havaitsemista. Kun luot tilauksen, liitin alkaa automaattisesti kuuntelemaan muutoksia ulkoisessa järjestelmässä ja ilmoittamaan Irminille. Lisäkonfiguraatiota ei tarvita.',
     manualWebhookNotice:
       'Alla oleva webhook-URL ja -token ovat vain edistyneisiin käyttötapauksiin, kuten mukautettuihin integraatioihin tai virheenkorjaukseen. Useimmissa tapauksissa liitin hoitaa ilmoitukset automaattisesti.',
-    subscription: 'Tilaus',
     create: 'Luo tilaus',
     createTitle: 'Luo tilaus',
     createDescription:
@@ -766,12 +717,6 @@ const fi = {
     editDescription: 'Päivitä tilauksen asetukset ja suodatuskonfiguraatio.',
     activeHelp:
       'Kun poistettu käytöstä, tätä tilausta käyttävät webhookit hylätään.',
-    created: 'Tilaus luotu',
-    createdDescription: 'Tilauksesi on luotu onnistuneesti.',
-    createError: 'Tilauksen luonti epäonnistui',
-    deleted: 'Tilaus poistettu',
-    deletedDescription: 'Tilauksesi on poistettu.',
-    deleteError: 'Tilauksen poisto epäonnistui',
     noSubscriptions: 'Ei tilauksia vielä',
     status: 'Tila',
     active: 'Aktiivinen',
@@ -795,15 +740,10 @@ const fi = {
       'Tämä token näytetään vain kerran. Tallenna se turvallisesti ennen tämän dialogin sulkemista.',
     copyWebhookUrl: 'Kopioi webhook URL',
     regenerateToken: 'Uusi token',
-    tokenRegenerated: 'Token uusittu',
-    tokenRegeneratedDescription:
-      'Uusi webhook-token on luotu. Vanha token ei enää toimi.',
-    regenerateError: 'Tokenin uusiminen epäonnistui',
   },
 
   connectors: {
     connector: 'Yhdistin',
-    connectors: 'Yhdistimet',
     version: 'Versio',
     author: 'Tekijä',
     authorEmail: 'Tekijän sähköposti',
@@ -833,7 +773,6 @@ const fi = {
     exports: 'Viennit',
     pipelines: 'Dataputket',
     triggerRun: 'Käynnistä ajo',
-    triggeringRun: 'Käynnistetään ajoa',
     workflow: 'Prosessi',
     import: 'Tuonti',
     action: 'Toiminto',
@@ -844,7 +783,6 @@ const fi = {
     finishedAt: 'Valmis',
     scheduled: 'Aikataulutettu',
     notScheduled: 'Ei aikataulutettu',
-    openInEditor: 'Avaa editorissa',
     scriptInputData: 'Syötteet',
     selectRepository: 'Valitse data-arkisto',
     selectConnection: 'Valitse yhteys',
@@ -882,10 +820,8 @@ const fi = {
       'Synkronointitila määrittää miten data viedään. "Automaattinen"-tilassa ajastetut viennit lähettävät kaiken datan, kun taas repositoriotapahtumien laukaisemana lähetetään vain muuttuneet tiedot (päivitykset). Käytä "Päivitys"-tilaa inkrementaalisiin vienteihin kun kohdeyhteys tukee päivitysten soveltamista.',
     triggeredBy: 'Laukaisija',
     duration: 'Kesto',
-    // New translations for MultiplePathsSelector
     addPath: 'Lisää polku',
     removePath: 'Poista polku',
-    multiplePaths: 'Useita polkuja',
     tabs: {
       data: 'Data',
       schedule: 'Aikataulu',
@@ -895,8 +831,6 @@ const fi = {
       deletionNote:
         'Poistamalla tämän prosessin poistetaan kaikki siihen liittyvä data. Tätä toimintoa ei voi peruuttaa.',
       delete: 'Poista prosessi',
-      areYouSureYouWantToDelete:
-        'Oletko varma, että haluat poistaa tämän prosessin?',
       resumeWorkflow: 'Jatka',
       pauseWorkflow: 'Pysäytä',
     },
@@ -947,9 +881,7 @@ const fi = {
     },
     pipeline: {
       pipeline: 'Dataputki',
-      addNewStage: 'Lisää uusi vaihe',
       addStage: 'Lisää vaihe',
-      stage: 'Vaihe',
       descriptionPlaceholder: 'Kuvaile, mitä tämä dataputken vaihe tekee',
       foldAll: 'Sulje kaikki',
       unfoldAll: 'Avaa kaikki',
@@ -961,9 +893,6 @@ const fi = {
         'ensimmäinen vaihe ei voi käyttää edellisiä tuloksia',
       lastStageCannotRead:
         'viimeisellä vaiheella ei ole seuraavia vaiheita, joille välittää tulokset',
-      executablePath: 'Suoritettava polku',
-      executablePathDescription:
-        'Polku suoritettavaan skriptiin (esim. /path/to/script.py)',
       executableScript: 'Suoritettava skripti',
       executableQuery: 'Suoritettava kysely',
       connectionWritePath: 'Kirjoittamisen polku',
@@ -1006,7 +935,6 @@ const fi = {
       validationTargetName: 'Kohdetiedoston nimi (valinnainen)',
       validationTargetNamePlaceholder: 'esim. asiakkaat.json',
       validationSchema: 'Validointiskeema',
-      validationSchemaPlaceholder: 'Syötä JSON-skeema validointia varten',
       transform: 'Muunnos',
       transformOperation: 'Muunnostoiminto',
       transformFieldRename: 'Nimeä kentät uudelleen',
@@ -1048,7 +976,6 @@ const fi = {
       embeddingsQuery: 'Hakukysely',
       embeddingsQueryPlaceholder: 'Kirjoita hakukysely...',
       embeddingsTopK: 'Tulosten määrä',
-      embeddingsFilter: 'Metatietosuodattimet',
       stageTypeDescription: {
         action:
           'Toimintovaiheet suorittavat mukautettuja skriptejä datan käsittelyyn, vastaanottaen syötettä edellisistä vaiheista ja tuottaen tulosta seuraaville vaiheille.',
@@ -1078,11 +1005,7 @@ const fi = {
     },
     schedule: {
       workflowSchedule: 'Prosessin aikataulu',
-      frequency: 'Usein toistuva?',
-      interval: 'Väli',
-      weekdays: 'Viikonpäivät',
       trigger: 'Laukaisin',
-      triggers: 'Laukaisimet',
       timeTrigger: 'Aikapohjainen laukaisin',
       repositoryEventTrigger: 'Data-arkiston tapahtumalaukaisin',
       workflowRunEventTrigger: 'Prosessin ajotapahtuma-laukaisin',
@@ -1112,7 +1035,6 @@ const fi = {
       scheduledTrigger: 'Aikataulutettu laukaisin',
       unknownTrigger: 'Tuntematon laukaisin',
       noTriggerInformation: 'Ei laukaisintietoja',
-      triggerDetails: 'Laukaisimen tiedot',
       rawTriggerData: 'Raaka laukaisintiedot',
       sourceWorkflow: 'Lähdeprosessi',
       cron: {
@@ -1198,7 +1120,6 @@ const fi = {
     updateScript: 'Päivitä skripti',
     owner: 'Omistaja',
     scriptManagement: 'Skriptien hallinta',
-    scripts: 'Skriptit',
     scriptName: 'Skriptin nimi',
     scriptDescription: 'Skriptin kuvaus',
     scriptNotFound: 'Skriptiä ei löytynyt. Palautetaan tyhjä editori.',
@@ -1217,11 +1138,9 @@ const fi = {
     queryExecutionStarted: 'Kyselyn suoritus aloitettu',
     results: 'Tulokset',
     errors: 'Virheet',
-    noErrors: 'Ei virheitä',
     queryResults: 'Kyselyn tulokset',
     createQuery: 'Luo kysely',
     saveQuery: 'Tallenna kysely',
-    saveAsWorkflow: 'Tallenna prosessina',
     run: 'Suorita',
     rowsReturnedIn: 'riviä palautettu ajassa',
     exportTable: 'vie taulukko (.csv)',
@@ -1229,7 +1148,6 @@ const fi = {
     newQuery: 'Uusi kysely',
     selectedQuery: 'Valittu kysely',
     editor: 'SQL-editori',
-    syntaxHelper: 'Syntaksiavustaja',
     queryNotFound: 'Kyselyä ei löytynyt',
     queryDeleted: 'Kyselyä ei ole enää saatavilla',
     searchQueries: 'Hae kyselyjä...',
@@ -1248,8 +1166,6 @@ const fi = {
     placeholderSyntax: 'Paikkamerkkisyntaksi',
     placeholderDescription:
       'Irmin käyttää erityistä paikkamerkkisyntaksia viitatakseen dataan eri työtilojen, data-arkistojen ja versioiden välillä. Tämä on suositeltu syntaksi useimmissa käyttötapauksissa.',
-    placeholderRecommended:
-      'Paikkamerkit ovat siirrettäviä ja tarjoavat paremman selkeyden.',
     placeholderSyntaxNote:
       'Ref (haara/commit) on valinnainen. Työtila on valinnainen, jos ajetaan samassa työtilassa.',
     alternativeS3Syntax: 'Vaihtoehto: Natiivi DuckDB S3 -syntaksi',
@@ -1259,7 +1175,6 @@ const fi = {
     alternativeS3Example: 'Natiivi DuckDB S3 -syntaksi (Vaihtoehto)',
     alternativeS3ExampleExplanation:
       'Käytä natiiveja DuckDB-funktioita S3-poluilla edistyneissä käyttötapauksissa. Molemmat syntaksit pakottavat samat käyttöoikeudet.',
-    basicSyntax: 'Perussyntaksi',
     examples: 'Kyselyesimerkit',
     basicQueries: 'Peruskyselyt',
     advancedAnalytics: 'Kehittynyt analytiikka',
@@ -1267,11 +1182,7 @@ const fi = {
     crossRepoAndBranch: 'Repositorioiden ja haarojen välillä',
     queryDocumentationTab: 'SQL-syntaksi',
     generateSql: 'Generoi SQL',
-    sqlSelector: 'SQL valitsin',
     copySelector: 'Kopioi valitsin',
-    copy: 'Kopioi',
-    close: 'Sulje',
-    noSchemaAvailable: 'Ei rakennetta saatavilla nykyisessä kontekstissa.',
     availableColumns: 'Saatavilla olevat sarakkeet',
     basicSelect: 'Perusvalinta',
     filterAndSort: 'Suodatus ja lajittelu',
@@ -1322,12 +1233,10 @@ const fi = {
         'Kyselytulokset muunnetaan automaattisesti CSV-muotoon (query_results.csv). Tuloste voidaan tallentaa repositoryihin tai välittää seuraaville putkilinjan vaiheille.',
     },
     sqlGeneration: {
-      title: 'Luo SQL-kysely',
       placeholder: 'Kuvaile mitä haluat kysellä...',
       send: 'Lähetä',
       generatedSql: 'Luotu SQL',
       copySql: 'Kopioi SQL',
-      copyText: 'Kopioi',
       response: 'Vastaus',
       clearChat: 'Tyhjennä',
       loading: 'Luodaan SQL:ää...',
@@ -1337,41 +1246,13 @@ const fi = {
   },
 
   fileNavigator: {
-    original: 'Alkuperäinen',
-    saveFile: 'Tallenna tiedosto',
-    createFile: 'Luo tiedosto',
-    createFolder: 'Luo kansio',
-    updateFile: 'Päivitä tiedosto',
-    updateFolder: 'Päivitä kansio',
-    copyFolder: 'Kopioi kansio',
-    copyFile: 'Kopioi tiedosto',
     open: 'Avaa',
-    rename: 'Nimeä uudelleen',
-    move: 'Siirrä',
     root: 'Juuri',
     rootDirectory: 'Juurihakemisto',
-    newNameOfTheFile: 'Tiedoston uusi nimi',
-    newNameOfTheFolder: 'Kansion uusi nimi',
-    newPathOfTheFile: 'Tiedoston uusi polku',
-    newPathOfTheFolder: 'Kansion uusi polku',
-    newFileName: 'Uuden tiedoston nimi',
-    newFolderName: 'Uuden kansion nimi',
-    newFilePath: 'Uuden tiedoston polku',
-    newFolderPath: 'Uuden kansion polku',
     deleteConfirmation: 'Oletko varma, että haluat poistaa',
-    deleteFolderWarning:
-      'Kaikki tämän kansion tiedostot ja alikansiot poistetaan',
 
     errors: {
-      invalidType: 'Virheellinen tyyppi (tiedosto tai kansio)',
-      noExtension: 'Tiedoston pääte puuttuu tai on virheellinen',
-      invalidExtension: 'Virheellinen tiedostopääte (js, py, sql)',
-      emptyName: 'Nimi ei voi olla tyhjä',
-      longName: 'Nimi on liian pitkä',
-      invalidName: 'Virheellinen nimi',
       invalidPath: 'Virheellinen polku',
-      pathExists: 'Polku on jo olemassa',
-      parentPathNotExist: 'Yläkansiota ei ole olemassa',
     },
   },
 
@@ -1385,7 +1266,6 @@ const fi = {
     repositoryDescription: 'Luo uusi data-arkisto',
     connectionDescription: 'Yhdistä ulkoisiin tietolähteisiin',
     workflowDescription: 'Luo automatisoituja datatyökuluja',
-    dataExportWizardComingSoon: 'Datan vientiohjattu tulee pian!',
 
     // Data Import Wizard Steps
     connectDataSource: 'Tietolähde',
@@ -1433,7 +1313,6 @@ const fi = {
       'Valitse olemassa olevista data-arkistoista',
     searchRepositories: 'Hae data-arkistoja...',
     defaultBranch: 'Oletushaara:',
-    failedToCreateRepository: 'Data-arkiston luominen epäonnistui',
     pleaseSelectRepository: 'Valitse data-arkisto',
     createNewRepositoryDescription: 'Luo uusi data-arkisto datallesi',
     noRepositoriesFound: 'Data-arkistoja ei löytynyt hakuasi vastaavasti.',
@@ -1442,7 +1321,6 @@ const fi = {
     // Configure Import Step
     pleaseSpecifyImportPath: 'Määritä vähintään yksi tuontipolku',
     failedToConfigureImport: 'Tuontiasetusten määrittäminen epäonnistui',
-    importDestinationPath: 'Tuonnin kohdepolku',
 
     // Review and Create Step
     reviewYourSetup: 'Tarkista asetuksesi',
@@ -1495,12 +1373,9 @@ const fi = {
     workflowDescriptionPlaceholder: 'Anna prosessin kuvaus',
     workflowDocumentationPlaceholder: 'Anna prosessin dokumentaatio',
     repositoryBranchPlaceholder: 'Anna data-arkiston haara',
-    selectRepositoryPaths: 'Valitse data-arkiston polut',
-    selectConnectionPath: 'Valitse yhteyden polku',
     workflowDocumentation: 'Prosessin dokumentaatio',
     connection: 'Yhteys',
     repository: 'Data-arkisto',
-    description: 'Kuvaus',
     documentation: 'Dokumentaatio',
   },
 
@@ -1509,7 +1384,6 @@ const fi = {
     // Assistant Section
     title: 'Avustaja',
     conversations: 'Keskustelut',
-    noConversationSelected: 'Ei keskustelua valittuna',
     noConversationSelectedDescription:
       'Valitse olemassa oleva keskustelu sivupalkista tai luo uusi aloittaaksesi keskustelun tekoälyavustajan kanssa.',
     noMessagesInTheConversation: 'Keskustelussa ei ole viestejä',
@@ -1518,7 +1392,6 @@ const fi = {
     assistantInterfaceError: 'Avustajakäyttöliittymän virhe',
     failedToLoadAssistantInterface:
       'Avustajakäyttöliittymän lataaminen epäonnistui',
-    openSidebar: 'Avaa sivupalkki',
     openInFullPage: 'Avaa täysikokoisessa sivussa',
     contextAwareBanner:
       'Olen tietoinen kontekstista! Näen millä sivulla olet, avoimet tiedostosi ja valitut objektit.',
@@ -1530,20 +1403,13 @@ const fi = {
     // Conversation Details
     created: 'Luotu',
     lastUpdated: 'Viimeksi päivitetty',
-    lastMessage: 'Viimeisin viesti',
     totalMessages: 'Viestit yhteensä',
-    userMessages: 'Käyttäjän viestit',
-    assistantMessages: 'Avustajan viestit',
     estimatedTokens: 'Arvioitu määrä tokeneita',
-    openConversation: 'Avaa keskustelu',
     deleteConversation: 'Poista keskustelu',
-    clearConversation: 'Tyhjennä keskustelu',
 
     // Assistant Chat
     askMeAnything:
       'Kysy minulta mitä tahansa - ohjelmointia, liiketoimintaa, kirjoittamista tai yleisiä kysymyksiä...',
-    toggleWebSearch: 'Vaihda verkkohakusimulaatiota',
-    search: 'Hae',
 
     // Chat Suggestions
     querySyntaxExamples: 'Näytä esimerkki SQL kyselystä',
@@ -1551,14 +1417,6 @@ const fi = {
     whatRepositoriesDoIHave: 'Mitkä data-arkistot minulla on?',
     whatConnectionsAndWorkflowsDoIHave:
       'Mitkä yhteydet ja työnkulut minulla on?',
-
-    // Chat Elements
-    webSearchResult: 'Verkkohakutulos',
-    tool: 'Työkalu',
-    back: 'Takaisin',
-    forward: 'Eteenpäin',
-    thisIsDetailedExplanation:
-      'Tämä on yksityiskohtainen selitys {approach} lähestymistavasta.',
 
     // Message Actions
     copyMessage: 'Kopioi viesti',
@@ -1569,7 +1427,6 @@ const fi = {
     toolCalls: 'Työkalukutsut',
     thinkingSteps: 'Ajatteluvaiheet',
     iteration: 'Iteraatio',
-    iterations: 'iteraatiota',
     systemMessage: 'Järjestelmäviesti',
     streamCompleted: 'Virta valmis',
     error: 'Virhe',
@@ -1581,17 +1438,10 @@ const fi = {
 
   // === USER MANAGEMENT ===
   users: {
-    removeUserConfirmation:
-      'Oletko varma, että haluat poistaa tämän käyttäjän?',
-    transferOwnershipConfirmation:
-      'Oletko varma, että haluat siirtää omistajuuden?',
-    usersAndPermissions: 'Käyttäjät ja oikeudet',
-    invites: 'Kutsut työtilaan',
     inviteUser: 'Kutsu käyttäjä',
     changeProfilePicture: 'Vaihda profiilikuva',
     firstName: 'Etunimi',
     lastName: 'Sukunimi',
-    email: 'Sähköposti',
     phone: 'Puhelinnumero',
     company: 'Yritys',
     role: 'Rooli',
@@ -1616,7 +1466,6 @@ const fi = {
 
   tokens: {
     apiTokens: 'API avaimet',
-    noTokens: 'Sinulla ei ole vielä luotuja API avaimia',
     createAPIToken: 'Luo API avain',
     validFor: 'Voimassa (sekunneissa)',
     expiresAt: 'Vanhenee',
@@ -1651,10 +1500,7 @@ const fi = {
     description: 'Hallitse käyttöoikeuksia ja käyttöoikeuksia',
     addPolicy: 'Lisää käyttöoikeus',
     createPolicy: 'Luo uusi käyttöoikeus',
-    createPolicyDescription: 'Määritä uusi käyttöoikeus työtilallesi',
     editPolicy: 'Muokkaa käyttöoikeutta',
-    editPolicyDescription: 'Muokkaa käyttöoikeuden asetuksia',
-    deletePolicy: 'Poista käyttöoikeus',
     deletePolicyDescription:
       'Haluatko varmasti poistaa tämän käyttöoikeuden? Tätä toimintoa ei voi peruuttaa.',
     effect: 'Vaikutus',
@@ -1662,23 +1508,15 @@ const fi = {
     resource: 'Resurssi',
     principal: 'Kohde',
     resourceId: 'Resurssin tunniste (valinnainen)',
-    resourceIdPlaceholder: 'Jätä tyhjäksi kaikille resursseille',
-    loading: 'Ladataan käyttöoikeuksia...',
     error: 'Virhe käyttöoikeuksien lataamisessa',
     noPolicies: 'Ei käyttöoikeuksia',
     creating: 'Luodaan...',
-    updating: 'Päivitetään...',
-    deleting: 'Poistetaan...',
     effectAllow: 'Salli',
     effectDeny: 'Estä',
     actionRead: 'Lue',
-    actionCreate: 'Luo',
-    actionUpdate: 'Päivitä',
-    actionDelete: 'Poista',
     principalWorkspaceUser: 'Käyttäjä',
     principalRole: 'Rooli',
     principalEveryone: 'Kaikki',
-    allResources: 'Kaikki',
 
     tooltips: {
       effect: 'Onko käyttöoikeus eksplisiittisesti estävä vai salliva',
@@ -1776,23 +1614,12 @@ const fi = {
   list: {
     status: 'Tila',
     runs: 'Ajot',
-    actions: 'Toiminnot',
-    view: 'Katso',
     viewAll: 'Näytä kaikki',
-    delete: 'Poista',
-    edit: 'Muokkaa',
-    owner: 'Omistaja',
-    author: 'Luoja',
     lastUpdated: 'Päivitetty',
     createdAt: 'Luotu',
     immutable: 'Muuttumaton',
-    source: 'Lähde',
-    destination: 'Kohde',
     searchPlaceholder: 'Kirjoita hakusana...',
     noItemsFound: 'Ei kohteita',
-    tags: 'Tagit',
-    search: 'Hae',
-    loading: 'Ladataan...',
     noItems: 'Ei kohteita',
     emptyState: {
       repositories: {
@@ -1820,10 +1647,6 @@ const fi = {
         description:
           'Yhteydet mahdollistavat tuonnin ja viennin ulkoisista tietolähteistä. Luo ensimmäinen yhteys aloittaaksesi.',
       },
-      users: {
-        title: 'Ei vielä käyttäjiä',
-        description: 'Kutsu tiimin jäseniä yhteistyöhön tässä työtilassa.',
-      },
       invites: {
         title: 'Ei odottavia kutsuja',
         description:
@@ -1838,26 +1661,6 @@ const fi = {
         title: 'Ei API-tunnuksia',
         description:
           'API-tunnukset mahdollistavat ohjelmoitavan autentikoinnin Irmin API:n kanssa. Luo ensimmäinen tunnus aloittaaksesi.',
-      },
-      commits: {
-        title: 'Ei vielä committeja',
-        description:
-          'Aloita tekemällä muutoksia repositorioosi nähdäksesi commitit täällä.',
-      },
-      tags: {
-        title: 'Ei vielä tageja',
-        description:
-          'Tagit ovat muuttumattomia osoittimia tiettyihin committeihin. Luo tageja merkitäksesi tärkeitä versioita.',
-      },
-      branches: {
-        title: 'Ei vielä haaroja',
-        description:
-          'Haarat mahdollistavat datasi eri versioiden käsittelyn samanaikaisesti.',
-      },
-      objects: {
-        title: 'Ei vielä objekteja',
-        description:
-          'Aloita lataamalla tiedostoja tai luo työnkulku täyttääksesi tämän repositorion.',
       },
       scripts: {
         title: 'Ei vielä skriptejä',
@@ -1944,7 +1747,6 @@ const fi = {
     type: 'Tyyppi',
     name: 'Nimi',
     path: 'Polku',
-    description: 'Kuvaus',
     contentType: 'Sisältötyyppi',
     size: 'Koko',
     metadata: 'Metatiedot',

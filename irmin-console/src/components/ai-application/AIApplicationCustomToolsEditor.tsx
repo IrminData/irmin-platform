@@ -419,7 +419,7 @@ const AIApplicationCustomToolsEditor = () => {
             {/* Tool Description */}
             <div className='flex flex-col gap-2'>
               <Label htmlFor='tool-description'>
-                {dict.aiApplication.toolDescription}
+                {dict.common.description}
               </Label>
               <Textarea
                 id='tool-description'

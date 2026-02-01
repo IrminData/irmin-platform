@@ -183,7 +183,7 @@ export default function PolicyTable({
     resourceId?: string
   ) => {
     if (!resourceId) {
-      return dict.policy.allResources;
+      return dict.common.all;
     }
     if (resourceType === 'query') {
       return (

@@ -373,7 +373,7 @@ export default function InlineScriptEditor({
             </SelectItem>
             {scriptsQuery.isLoading ? (
               <SelectItem value='loading' disabled>
-                {dict.list.loading}
+                {dict.common.loading}
               </SelectItem>
             ) : scripts.length === 0 ? (
               <SelectItem value='no-scripts' disabled>
@@ -396,7 +396,7 @@ export default function InlineScriptEditor({
             className='w-full'
             icon={<TbExternalLink />}
           >
-            {dict.list.view}
+            {dict.common.view}
           </Button>
         )}
       </div>
@@ -453,7 +453,7 @@ export default function InlineScriptEditor({
               flex h-full items-center justify-center text-muted-foreground
             `}
           >
-            {dict.list.loading}
+            {dict.common.loading}
           </div>
         ) : scriptQuery.isError && normalizedScriptId ? (
           <div
@@ -493,7 +493,7 @@ export default function InlineScriptEditor({
           </div>
           {currentScript.tags && currentScript.tags.length > 0 && (
             <div>
-              <strong>{dict.list.tags}:</strong>{' '}
+              <strong>{dict.common.tags}:</strong>{' '}
               {currentScript.tags.map((tag) => tag.name).join(', ')}
             </div>
           )}

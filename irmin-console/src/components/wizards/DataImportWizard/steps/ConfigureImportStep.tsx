@@ -324,7 +324,7 @@ export default function ConfigureImportStep({
             onClick={handleSubmit(handleSubmitForm)}
             loading={isSubmitting}
           >
-            {dict.connections.create.continue}
+            {dict.common.continue}
           </Button>
         </div>
       </div>

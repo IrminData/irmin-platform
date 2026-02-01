@@ -35,7 +35,7 @@ export default function WorkspaceDeletionConfirmationModal({
             handleDelete();
           }}
         >
-          {dict.list.delete}
+          {dict.common.delete}
         </Button>
       </div>
     </div>

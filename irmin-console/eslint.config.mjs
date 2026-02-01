@@ -185,5 +185,13 @@ export default tseslint.config(
     },
   },
   prettierConfig,
-  next.configs.recommended
+  next.configs.recommended,
+  {
+    files: ['scripts/**/*.{js,ts}'],
+    rules: {
+      'no-console': 'off', // Scripts are CLI tools that need console output
+      'import-x/no-unused-modules': 'off',
+      'import-x/no-nodejs-modules': 'off',
+    },
+  }
 );

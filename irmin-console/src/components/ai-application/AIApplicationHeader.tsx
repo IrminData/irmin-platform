@@ -130,7 +130,7 @@ export default function AIApplicationHeader() {
               </span>
             </div>
             <span className='px-2 text-sm text-gray-400'>
-              {dict.list.owner}:{' '}
+              {dict.common.owner}:{' '}
               {`${aiApplication.owner.first_name} ${aiApplication.owner.last_name}`}
               {aiApplication.owner.company
                 ? ` (${aiApplication.owner.company})`

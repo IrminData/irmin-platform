@@ -128,3 +128,34 @@ E2E tests use Playwright. Test user credentials configured via environment varia
 pnpm e2e:codegen          # Record new tests for desktop
 pnpm e2e:codegen-mobile   # Record new tests for mobile
 ```
+
+## Translation System
+
+### Dictionary Files
+
+- `src/lib/dict/en.ts` - English (source of truth for TypeScript types)
+- `src/lib/dict/fi.ts` - Finnish
+
+The `Dictionary` type is inferred from `en.ts`, ensuring type safety. Access translations via the `useLocale()` hook from `LocaleContext`.
+
+### Validation Commands
+
+```bash
+pnpm dict:validate        # Check for parity issues, unused keys, duplicates
+pnpm dict:fix             # Auto-fix missing translations in fi.ts
+```
+
+### Adding Translations
+
+1. Add new keys to `en.ts` first
+2. Run `pnpm dict:fix` to sync structure to `fi.ts`
+3. Replace `[TODO: Translate]` markers with Finnish translations
+4. Run `pnpm dict:validate` to verify
+
+### Best Practices
+
+- Use `common.*` for reusable strings (e.g., `common.loading`, `common.save`)
+- Avoid duplicating values across modules
+- Always access dict via `useLocale()` hook: `const { dict } = useLocale();`
+- Never use optional chaining (`dict?.key`) - dict is always defined
+- Never use fallback patterns (`dict.key ?? 'fallback'`) for existing keys

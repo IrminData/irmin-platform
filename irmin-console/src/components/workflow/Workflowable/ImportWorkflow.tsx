@@ -84,7 +84,7 @@ export default function ImportWorkflow({
             className='w-full'
             size={'sm'}
           >
-            {dict.list.view}
+            {dict.common.view}
           </Button>
         )}
         <Button
@@ -165,7 +165,7 @@ export default function ImportWorkflow({
             className='w-full'
             size={'sm'}
           >
-            {dict.list.view}
+            {dict.common.view}
           </Button>
         )}
         <Button

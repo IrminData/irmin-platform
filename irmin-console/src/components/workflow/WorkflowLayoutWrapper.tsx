@@ -286,7 +286,7 @@ export default function WorkflowLayoutWrapper({
                   md:text-sm
                 `}
               >
-                {dict.list.owner}:{' '}
+                {dict.common.owner}:{' '}
                 {`${workflow.owner.first_name} ${workflow.owner.last_name}`}
                 {workflow.owner.company
                   ? ` (${workflow.owner.company})`

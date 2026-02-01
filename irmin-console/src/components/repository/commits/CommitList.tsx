@@ -114,7 +114,7 @@ export default function CommitList({
         ],
         actions: [
           {
-            label: dict.list.view,
+            label: dict.common.view,
             primary: true,
             onClick: () => viewRef(commit.hash),
           },
@@ -187,7 +187,7 @@ export default function CommitList({
         headers={[
           dict.common.description,
           dict.repository.commit.commitHash,
-          dict.list.actions,
+          dict.common.actions,
         ]}
         hideHeaders={false}
         loading={loading}

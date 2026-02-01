@@ -827,7 +827,7 @@ export default function ObjectDetails({
               disabled={immutable}
               onClick={handleDelete}
             >
-              {dict.list.delete}
+              {dict.common.delete}
             </Button>
           )}
         </div>

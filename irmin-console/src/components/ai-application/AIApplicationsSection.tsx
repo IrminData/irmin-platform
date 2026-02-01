@@ -83,7 +83,7 @@ export default function AIApplicationsSection({
     >
       <div className='relative container mx-auto max-w-7xl px-4 py-8'>
         <div className='my-4 flex flex-row items-center justify-between gap-4'>
-          <DisplayTitle>{dict.aiApplication.aiApplications}</DisplayTitle>
+          <DisplayTitle>{dict.consoleNavigation.aiApplications}</DisplayTitle>
           <Button
             variant='gradient'
             size='lg'

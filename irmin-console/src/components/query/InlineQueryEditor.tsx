@@ -394,7 +394,7 @@ export default function InlineQueryEditor({
             </SelectItem>
             {storedQueriesQuery.isLoading ? (
               <SelectItem value='loading' disabled>
-                {dict.list.loading}
+                {dict.common.loading}
               </SelectItem>
             ) : queries.length === 0 ? (
               <SelectItem value='no-queries' disabled>
@@ -417,7 +417,7 @@ export default function InlineQueryEditor({
             className='w-full'
             icon={<TbExternalLink />}
           >
-            {dict.list.view}
+            {dict.common.view}
           </Button>
         )}
       </div>
@@ -459,7 +459,7 @@ export default function InlineQueryEditor({
               flex h-full items-center justify-center text-muted-foreground
             `}
           >
-            {dict.list.loading}
+            {dict.common.loading}
           </div>
         ) : queryQuery.isError && normalizedQueryId ? (
           <div
@@ -499,7 +499,7 @@ export default function InlineQueryEditor({
           </div>
           {currentQuery.tags && currentQuery.tags.length > 0 && (
             <div>
-              <strong>{dict.list.tags}:</strong>{' '}
+              <strong>{dict.common.tags}:</strong>{' '}
               {currentQuery.tags.map((tag) => tag.name).join(', ')}
             </div>
           )}

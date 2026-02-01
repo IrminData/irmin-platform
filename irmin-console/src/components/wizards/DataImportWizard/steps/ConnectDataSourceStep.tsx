@@ -273,7 +273,7 @@ export default function ConnectDataSourceStep({
               onClick={handleContinue}
               disabled={!wizardData.connection}
             >
-              {dict.connections.create.continue}
+              {dict.common.continue}
             </Button>
           </div>
 

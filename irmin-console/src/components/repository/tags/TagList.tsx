@@ -71,7 +71,7 @@ export default function TagList({
         ],
         actions: [
           {
-            label: dict.list.view,
+            label: dict.common.view,
             primary: true,
             onClick: () => {
               handleViewRef(tag.ref);
@@ -86,7 +86,7 @@ export default function TagList({
             },
           },
           {
-            label: dict.list.delete,
+            label: dict.common.delete,
             primary: false,
             hide: !isResourceAllowed('repository_tag', 'delete', repositoryID),
             onClick: () => {
@@ -115,7 +115,7 @@ export default function TagList({
         headers={[
           dict.common.name,
           dict.repository.commit.commitHash,
-          dict.list.actions,
+          dict.common.actions,
         ]}
         hideHeaders={false}
         loading={loading}

@@ -626,7 +626,7 @@ export default function QueriesSection() {
                 icon={<TbPencil />}
                 onClick={handleEditQuery}
               >
-                {dict.list.edit}
+                {dict.common.edit}
               </Button>
               <Button
                 variant='secondary'
@@ -635,7 +635,7 @@ export default function QueriesSection() {
                 icon={<TbTrash />}
                 onClick={handleDeleteQuery}
               >
-                {dict.list.delete}
+                {dict.common.delete}
               </Button>
             </div>
           )}

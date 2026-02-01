@@ -16,19 +16,17 @@ const en = {
     update: 'Update',
     add: 'Add',
     remove: 'Remove',
-    upload: 'Upload',
     download: 'Download',
     back: 'Back',
     next: 'Next',
-    previous: 'Previous',
     continue: 'Continue',
+    previous: 'Previous',
+    saveChanges: 'Save Changes',
     close: 'Close',
-    open: 'Open',
     refresh: 'Refresh',
     tryAgain: 'Try again',
     hideAdvancedOption: 'Hide advanced options',
     showAdvancedOptions: 'Show advanced options',
-    comingSoon: 'Coming Soon!',
 
     // Error display
     pageNotFoundDescription:
@@ -55,8 +53,6 @@ const en = {
     error: 'Error',
     failed: 'Failed',
     info: 'Info',
-    yes: 'Yes',
-    no: 'No',
     optional: 'Optional',
     all: 'All',
 
@@ -70,7 +66,6 @@ const en = {
     name: 'Name',
     description: 'Description',
     email: 'Email',
-    message: 'Message',
     overview: 'Overview',
     actions: 'Actions',
     logs: 'Logs',
@@ -86,7 +81,6 @@ const en = {
     fieldInvalid: 'This field is invalid',
     resetForm: 'Clear form',
     pleaseFixErrors: 'Please fix the errors above',
-    messagePlaceholder: 'Write your message here...',
 
     // Messages and alerts
     insufficientPermissions: 'Insufficient permissions',
@@ -96,7 +90,6 @@ const en = {
     weEncounteredError: 'We encountered an error',
     tryAgainOrContactSupport: 'Please try again or contact support',
     goBackHome: 'Go back to the home page',
-    goBackConsole: 'Go back to Irmin Console',
     noOptionsMessage: 'No options',
     downloadSuccess: 'Download successful',
     dangerZone: 'Danger zone',
@@ -105,10 +98,8 @@ const en = {
     areYouSureYouWantToDelete: 'Are you sure you want to delete this item?',
     areYouSureYouWantToTransferOwnership:
       'Are you sure you want to transfer the ownership of this item?',
-    deleteConfirmation: 'Are you sure you want to delete',
     saved: 'Saved successfully',
     deleted: 'Deleted successfully',
-    saveChanges: 'Save Changes',
 
     createFromTemplate: 'Create from Template',
     templates: {
@@ -119,16 +110,10 @@ const en = {
       noPlaceholders: 'No placeholders to fill in this template',
       selectTemplate: 'Select a template',
       fillPlaceholders: 'Fill Template Placeholders',
-      fillPlaceholdersDescription:
-        'Provide values for the placeholders in the template',
-      placeholder: 'Placeholder',
-      value: 'Value',
       example: 'Example',
       preview: 'Preview',
       createNew: 'Create New',
       replaceCurrent: 'Replace Current',
-      useTemplate: 'Use Template',
-      templateUsed: 'Template applied successfully',
     },
 
     // Contact and support
@@ -186,7 +171,6 @@ const en = {
     guides: 'Guides',
     contactSupport: 'Contact our team',
     developerDocs: 'Developer Docs',
-    termsAndPrivacy: 'Terms & Privacy',
 
     staticSearchItems: {
       guides: 'Irmin Guides',
@@ -196,13 +180,10 @@ const en = {
       workspaceDocumentation: 'Workspace Documentation',
       myProfile: 'My Profile',
       manageWorkspaces: 'Manage Workspaces',
-      scripts: 'Scripts',
       workspaceSettings: 'Workspace settings',
       createWorkflow: 'Create new workflow',
       createConnection: 'Create new connection',
       createRepository: 'Create new repository',
-      createAIApplication: 'Create new AI application',
-      aiApplications: 'AI Applications',
 
       description: {
         irminWebsite: 'Go to the Irmin website',
@@ -227,7 +208,6 @@ const en = {
         createConnection: 'Create a new connection to use in your workflows',
         repositories: 'View and manage repositories',
         createRepository: 'Create a new repository to store your data',
-        aiApplications: 'Create and manage AI applications',
         createAIApplication:
           'Create a new AI application to expose your data to AI tools',
       },
@@ -236,10 +216,8 @@ const en = {
 
   // === AI APPLICATIONS ===
   aiApplication: {
-    aiApplications: 'AI Applications',
     aiApplication: 'AI Application',
     createAIApplication: 'Create AI Application',
-    noAIApplications: 'No AI applications',
     dataSources: 'data sources',
     dataSource: 'data source',
     toolsEnabled: 'tools enabled',
@@ -259,11 +237,8 @@ const en = {
       'Use this API key to authenticate requests to the AI Application API and MCP server.',
     apiKeyOnlyShownOnce:
       'API key is only shown once when the AI Application is created. Contact the owner if you need access.',
-    mcpConnection: 'MCP Connection',
     mcpEndpoint: 'MCP Endpoint',
     restApiEndpoint: 'REST API Endpoint',
-    mcpConnectionDescription:
-      'Connect your LLM agent using the Model Context Protocol (MCP). Include the API key as a Bearer token in the Authorization header.',
     enabledTools: 'Enabled Tools',
     // Tools
     toolQueryName: 'SQL Query',
@@ -302,9 +277,7 @@ const en = {
       'Include your <strong>API Key</strong> as a Bearer token in the Authorization header.',
     howToConnectTools:
       'Enable specific tools below to expose capabilities to your AI agent.',
-    mcpDocumentation: 'MCP Documentation',
     apiReference: 'API Reference',
-    repositoriesLinked: 'Repositories linked to this AI application.',
     toolsControlDescription:
       'Control which capabilities are exposed via the MCP server.',
     hideApiKey: 'Hide API Key',
@@ -322,7 +295,6 @@ const en = {
     toolName: 'Tool Name',
     toolNameHint:
       'Lowercase letters, numbers, and underscores only. Must start with a letter.',
-    toolDescription: 'Description',
     toolDescriptionHint:
       'This description helps AI understand when to use this tool.',
     toolType: 'Type',
@@ -343,14 +315,9 @@ const en = {
     noActivityYet: 'No activity recorded yet',
     noActivityDescription:
       'Tool calls made through the AI Application will appear here.',
-    toolCall: 'Tool Call',
     toolCalls: 'Tool Calls',
-    duration: 'Duration',
     avgDuration: 'Avg Duration',
-    inputs: 'Inputs',
     noInputs: 'No inputs',
-    protocol: 'Protocol',
-    requestOrigin: 'Request Origin',
   },
 
   // === WORKSPACE ===
@@ -363,11 +330,9 @@ const en = {
     billing: 'Billing',
     deletionWarning:
       'Are you sure you want to delete this workspace? This action cannot be undone and will remove all data associated with this workspace.',
-    generalSettings: 'General Settings',
     workspaceName: 'Workspace Name',
     workspaceDescription: 'Workspace Description',
     noWorkspaceDescription: 'No description provided',
-    saveChanges: 'Save Changes',
     deletionNote:
       'Deleting your workspace will remove all data associated with it. This action is irreversible.',
     deleteWorkspace: 'Delete Workspace',
@@ -418,7 +383,6 @@ const en = {
   },
 
   workspaceSwitcher: {
-    manageWorkspaces: 'Manage Workspaces',
     selectWorkspace: 'Select a workspace',
     createNewWorkspace: 'Create new workspace',
     createFirstWorkspace: 'Create your first workspace',
@@ -455,9 +419,7 @@ const en = {
     },
 
     tags: {
-      tag: 'Tag',
       tags: 'Tags',
-      tagDescription: 'A tag is an immutable pointer to a single commit.',
       createTag: 'Create tag',
       newTagName: 'New tag name',
       fromCommit: 'From commit',
@@ -679,16 +641,12 @@ const en = {
     connection: 'Connection',
     connections: 'Connections',
     testConnection: 'Test Connection',
-    connectionTestSuccess: 'Connection validated successfully',
 
     settings: {
-      title: 'Connection settings',
       saveChanges: 'Save changes',
       deletionNote:
         'Deleting this connection will remove all data associated with it. This action is irreversible.',
       delete: 'Delete connection',
-      areYouSureYouWantToDelete:
-        'Are you sure you want to delete this connection?',
     },
 
     create: {
@@ -697,10 +655,8 @@ const en = {
       configureSettings: 'Configure settings',
       configureConnection: 'Configure connection',
       createNewConnection: 'Create new connection',
-      pleaseSelectConnector: 'Please select a connector to continue.',
       confirmConnectorSelection: 'Confirm connector selection and continue',
       selectedConnector: 'Selected connector',
-      categoryAll: 'All',
       connectionName: 'Connection name',
       connectionNamePlaceholder: 'eg. My Google Analytics connection',
       connectionDescription: 'Connection description',
@@ -709,14 +665,12 @@ const en = {
       addCustomConnector: 'Add custom connector',
       continueAndTest: 'Continue & test connection',
       createConnection: 'Create connection',
-      continue: 'Continue',
       goBack: 'Go back',
       success: 'Connection successful',
       failed: 'Connection failed',
       configuration_valid: 'Connection configuration valid',
       configuration_invalid: 'Connection configuration invalid',
       contactSupport: 'Contact support',
-      requiredFieldsMissing: 'Required fields are missing',
     },
 
     config: {
@@ -728,7 +682,6 @@ const en = {
       editDescription:
         'Update connection credentials and settings, then validate before saving.',
       updateConfiguration: 'Update configuration',
-      updateSuccess: 'Connection updated successfully',
       updateFailed: 'Failed to update connection. Please review the errors.',
     },
 
@@ -759,13 +712,10 @@ const en = {
   // === SUBSCRIPTIONS ===
   subscriptions: {
     title: 'Subscriptions',
-    explanation:
-      'Subscriptions allow this connection to notify Irmin when data changes. When the external system sends a webhook with patch data, it can trigger workflows to automatically sync only the changed data instead of doing a full import/export. This is ideal for real-time incremental updates.',
     autoConfigureNotice:
       'This connection supports automatic change detection. When you create a subscription, the connector will automatically listen for changes in the external system and notify Irmin. No additional configuration is required.',
     manualWebhookNotice:
       'The webhook URL and token below are for advanced use cases only, such as custom integrations or debugging. For most use cases, the connector handles notifications automatically.',
-    subscription: 'Subscription',
     create: 'Create Subscription',
     createTitle: 'Create Subscription',
     createDescription:
@@ -774,12 +724,6 @@ const en = {
     editDescription: 'Update subscription settings and filter configuration.',
     activeHelp:
       'When disabled, webhooks using this subscription will be rejected.',
-    created: 'Subscription created',
-    createdDescription: 'Your subscription has been created successfully.',
-    createError: 'Failed to create subscription',
-    deleted: 'Subscription deleted',
-    deletedDescription: 'Your subscription has been deleted.',
-    deleteError: 'Failed to delete subscription',
     noSubscriptions: 'No subscriptions yet',
     status: 'Status',
     active: 'Active',
@@ -803,15 +747,10 @@ const en = {
       'This token will only be shown once. Save it securely before closing this dialog.',
     copyWebhookUrl: 'Copy webhook URL',
     regenerateToken: 'Regenerate token',
-    tokenRegenerated: 'Token regenerated',
-    tokenRegeneratedDescription:
-      'A new webhook token has been generated. The old token is no longer valid.',
-    regenerateError: 'Failed to regenerate token',
   },
 
   connectors: {
     connector: 'Connector',
-    connectors: 'Connectors',
     version: 'Version',
     author: 'Author',
     authorEmail: 'Author email',
@@ -841,7 +780,6 @@ const en = {
     exports: 'Exports',
     pipelines: 'Pipelines',
     triggerRun: 'Trigger workflow run',
-    triggeringRun: 'Triggering run',
     workflow: 'Workflow',
     import: 'Import',
     action: 'Action',
@@ -852,7 +790,6 @@ const en = {
     finishedAt: 'Finished at',
     scheduled: 'Scheduled',
     notScheduled: 'Not scheduled',
-    openInEditor: 'Open in editor',
     scriptInputData: 'Input data',
     selectRepository: 'Select repository',
     selectConnection: 'Select connection',
@@ -893,7 +830,6 @@ const en = {
     duration: 'Duration',
     addPath: 'Add Path',
     removePath: 'Remove path',
-    multiplePaths: 'Multiple paths',
 
     tabs: {
       data: 'Data',
@@ -905,8 +841,6 @@ const en = {
       deletionNote:
         'Deleting this workflow will remove all data associated with it. This action is irreversible.',
       delete: 'Delete workflow',
-      areYouSureYouWantToDelete:
-        'Are you sure you want to delete this workflow?',
       resumeWorkflow: 'Resume',
       pauseWorkflow: 'Pause',
     },
@@ -961,9 +895,7 @@ const en = {
 
     pipeline: {
       pipeline: 'Pipeline',
-      addNewStage: 'Add new stage',
       addStage: 'Add stage',
-      stage: 'Stage',
       descriptionPlaceholder: 'Describe what this pipeline stage does',
       foldAll: 'Fold All',
       unfoldAll: 'Unfold All',
@@ -974,9 +906,6 @@ const en = {
       firstStageCannotWrite: 'first stage cannot consume previous results',
       lastStageCannotRead:
         'last stage has no subsequent stages to pass results to',
-      executablePath: 'Executable path',
-      executablePathDescription:
-        'Path to the action script e.g. /path/to/script.py',
       executableScript: 'Executable script',
       executableQuery: 'Executable query',
       connectionWritePath: 'Write Path',
@@ -999,7 +928,6 @@ const en = {
       validationTargetName: 'Target file name (optional)',
       validationTargetNamePlaceholder: 'e.g., customers.json',
       validationSchema: 'Validation Schema',
-      validationSchemaPlaceholder: 'Define the schema to validate data against',
       transform: 'Transform',
       transformOperation: 'Transform Operation',
       transformFieldRename: 'Rename Fields',
@@ -1041,7 +969,6 @@ const en = {
       embeddingsQuery: 'Search Query',
       embeddingsQueryPlaceholder: 'Enter your search query...',
       embeddingsTopK: 'Number of Results',
-      embeddingsFilter: 'Metadata Filters',
       actionType: 'Action Type',
       commit: 'Commit',
       merge: 'Merge',
@@ -1091,11 +1018,7 @@ const en = {
 
     schedule: {
       workflowSchedule: 'Workflow schedule',
-      frequency: 'Frequency',
-      interval: 'Interval',
-      weekdays: 'Weekdays',
       trigger: 'Trigger',
-      triggers: 'Triggers',
       timeTrigger: 'Time based trigger',
       repositoryEventTrigger: 'Repository event trigger',
       workflowRunEventTrigger: 'Workflow run event trigger',
@@ -1125,7 +1048,6 @@ const en = {
       scheduledTrigger: 'Scheduled Trigger',
       unknownTrigger: 'Unknown Trigger',
       noTriggerInformation: 'No Trigger Information',
-      triggerDetails: 'Trigger Details',
       rawTriggerData: 'Raw Trigger Data',
       sourceWorkflow: 'Source Workflow',
 
@@ -1213,7 +1135,6 @@ const en = {
     updateScript: 'Update Script',
     owner: 'Owner',
     scriptManagement: 'Script Management',
-    scripts: 'Scripts',
     scriptName: 'Script name',
     scriptDescription: 'Script description',
     scriptNotFound: 'Script not found. Resetting to blank editor.',
@@ -1232,11 +1153,9 @@ const en = {
     queryExecutionStarted: 'Query execution started',
     results: 'Results',
     errors: 'Errors',
-    noErrors: 'No errors',
     queryResults: 'Query results',
     createQuery: 'Create query',
     saveQuery: 'Save Query',
-    saveAsWorkflow: 'Save as workflow',
     run: 'Run',
     rowsReturnedIn: 'rows returned in',
     exportTable: 'export table (.csv)',
@@ -1244,7 +1163,6 @@ const en = {
     newQuery: 'New query',
     selectedQuery: 'Selected query',
     editor: 'SQL Editor',
-    syntaxHelper: 'Syntax helper',
     queryNotFound: 'Query not found',
     queryDeleted: 'Query was deleted',
     searchQueries: 'Search queries...',
@@ -1263,8 +1181,6 @@ const en = {
     placeholderSyntax: 'Placeholder Syntax',
     placeholderDescription:
       'Irmin uses a special placeholder syntax to reference data across workspaces, repositories, and versions. This is the recommended syntax for most use cases.',
-    placeholderRecommended:
-      'Placeholders are portable and provide better clarity.',
     placeholderSyntaxNote:
       'Ref (branch/commit) is optional. Workspace is optional if running in the same workspace.',
     alternativeS3Syntax: 'Alternative: Native DuckDB S3 Syntax',
@@ -1274,7 +1190,6 @@ const en = {
     alternativeS3Example: 'Native DuckDB S3 Syntax (Alternative)',
     alternativeS3ExampleExplanation:
       'Use native DuckDB functions with S3 paths for advanced use cases. Both syntaxes enforce the same permissions.',
-    basicSyntax: 'Basic Syntax',
     examples: 'Query Examples',
     basicQueries: 'Basic Queries',
     advancedAnalytics: 'Advanced Analytics',
@@ -1282,11 +1197,7 @@ const en = {
     crossRepoAndBranch: 'Cross-Repository & Branch',
     queryDocumentationTab: 'SQL Syntax',
     generateSql: 'Generate SQL',
-    sqlSelector: 'SQL Selector',
     copySelector: 'Copy selector',
-    copy: 'Copy',
-    close: 'Close',
-    noSchemaAvailable: 'No schema available for the current context.',
     availableColumns: 'Available Columns',
     basicSelect: 'Basic Select',
     filterAndSort: 'Filter & Sort',
@@ -1337,12 +1248,10 @@ const en = {
         'Query results are automatically converted to CSV format (query_results.csv). The output can be saved to repositories or passed to subsequent pipeline stages.',
     },
     sqlGeneration: {
-      title: 'Generate SQL Query',
       placeholder: 'Describe what you want to query...',
       send: 'Send',
       generatedSql: 'Generated SQL',
       copySql: 'Copy SQL',
-      copyText: 'Copy',
       response: 'Response',
       clearChat: 'Clear',
       loading: 'Generating SQL...',
@@ -1352,40 +1261,13 @@ const en = {
   },
 
   fileNavigator: {
-    original: 'Original',
-    saveFile: 'Save file',
-    createFile: 'Create file',
-    createFolder: 'Create folder',
-    updateFile: 'Update file',
-    updateFolder: 'Update folder',
-    copyFolder: 'Copy folder',
-    copyFile: 'Copy file',
     open: 'Open',
-    rename: 'Rename',
-    move: 'Move',
     root: 'Root',
     rootDirectory: 'Root directory',
-    newNameOfTheFile: 'New name of the file',
-    newNameOfTheFolder: 'New name of the folder',
-    newPathOfTheFile: 'New path of the file',
-    newPathOfTheFolder: 'New path of the folder',
-    newFileName: 'New file name',
-    newFolderName: 'New folder name',
-    newFilePath: 'New file path',
-    newFolderPath: 'New folder path',
     deleteConfirmation: 'Are you sure you want to delete',
-    deleteFolderWarning: 'All files and folders inside will be deleted',
 
     errors: {
-      invalidType: 'Invalid item type (file or folder)',
-      noExtension: 'No extension provided',
-      invalidExtension: 'Invalid file extension (js, py, sql)',
-      emptyName: 'Name is empty',
-      longName: 'Name is too long',
-      invalidName: 'Invalid name',
       invalidPath: 'Invalid path',
-      pathExists: 'Path already exists',
-      parentPathNotExist: 'Parent path does not exist',
     },
   },
 
@@ -1401,7 +1283,6 @@ const en = {
     repositoryDescription: 'Create a new repository to store data',
     connectionDescription: 'Connect to external data sources',
     workflowDescription: 'Create automated data workflows',
-    dataExportWizardComingSoon: 'Data Export Wizard is coming soon!',
 
     // Data Import Wizard Steps
     connectDataSource: 'Connect',
@@ -1450,7 +1331,6 @@ const en = {
     selectFromExistingRepositories: 'Select from your existing repositories',
     searchRepositories: 'Search repositories...',
     defaultBranch: 'Default branch:',
-    failedToCreateRepository: 'Failed to create repository',
     pleaseSelectRepository: 'Please select a repository',
     createNewRepositoryDescription: 'Create a new repository for your data',
     noRepositoriesFound: 'No repositories found matching your search.',
@@ -1459,7 +1339,6 @@ const en = {
     // Configure Import Step
     pleaseSpecifyImportPath: 'Please specify at least one import path',
     failedToConfigureImport: 'Failed to configure import settings',
-    importDestinationPath: 'Import Destination Path',
 
     // Review and Create Step
     reviewYourSetup: 'Review Your Setup',
@@ -1510,12 +1389,9 @@ const en = {
     workflowDescriptionPlaceholder: 'Enter workflow description',
     workflowDocumentationPlaceholder: 'Enter workflow documentation',
     repositoryBranchPlaceholder: 'Enter repository branch',
-    selectRepositoryPaths: 'Select repository paths',
-    selectConnectionPath: 'Select connection path',
     workflowDocumentation: 'Workflow Documentation',
     connection: 'Connection',
     repository: 'Repository',
-    description: 'Description',
     documentation: 'Documentation',
   },
 
@@ -1524,7 +1400,6 @@ const en = {
     // Assistant Section
     title: 'Assistant',
     conversations: 'Conversations',
-    noConversationSelected: 'No conversation selected',
     noConversationSelectedDescription:
       'Select an existing conversation from the sidebar or create a new one to start chatting with the AI assistant.',
     noMessagesInTheConversation: 'No messages in the conversation',
@@ -1532,7 +1407,6 @@ const en = {
       'This conversation has no messages. Start by sending a message to the assistant.',
     assistantInterfaceError: 'Assistant Interface Error',
     failedToLoadAssistantInterface: 'Failed to load assistant interface',
-    openSidebar: 'Open sidebar',
     openInFullPage: 'Open in full page',
     contextAwareBanner:
       "I'm context-aware! I can see the page you are on, your open files, and selected objects.",
@@ -1544,20 +1418,13 @@ const en = {
     // Conversation Details
     created: 'Created',
     lastUpdated: 'Last updated',
-    lastMessage: 'Last message',
     totalMessages: 'Total Messages',
-    userMessages: 'User Messages',
-    assistantMessages: 'Assistant Messages',
     estimatedTokens: 'Estimated Tokens',
-    openConversation: 'Open Conversation',
     deleteConversation: 'Delete Conversation',
-    clearConversation: 'Clear Conversation',
 
     // Assistant Chat
     askMeAnything:
       'Ask me anything - coding, business, writing, or general questions...',
-    toggleWebSearch: 'Toggle web search simulation',
-    search: 'Search',
 
     // Chat Suggestions
     querySyntaxExamples: 'Show me query syntax examples',
@@ -1565,14 +1432,6 @@ const en = {
     whatRepositoriesDoIHave: 'What repositories do I have?',
     whatConnectionsAndWorkflowsDoIHave:
       'What connections and workflows do I have?',
-
-    // Chat Elements
-    webSearchResult: 'Web search result',
-    tool: 'Tool',
-    back: 'Back',
-    forward: 'Forward',
-    thisIsDetailedExplanation:
-      'This is a detailed explanation of the {approach} approach.',
 
     // Message Actions
     copyMessage: 'Copy message',
@@ -1583,7 +1442,6 @@ const en = {
     toolCalls: 'Tool Calls',
     thinkingSteps: 'Thinking Steps',
     iteration: 'Iteration',
-    iterations: 'iterations',
     systemMessage: 'System Message',
     streamCompleted: 'Stream completed',
     error: 'Error',
@@ -1595,16 +1453,10 @@ const en = {
 
   // === USER MANAGEMENT ===
   users: {
-    removeUserConfirmation: 'Are you sure you want to remove this user?',
-    transferOwnershipConfirmation:
-      'Are you sure you want to transfer ownership?',
-    usersAndPermissions: 'Users & Permissions',
-    invites: 'Invites to the workspace',
     inviteUser: 'Invite a User',
     changeProfilePicture: 'Change profile picture',
     firstName: 'First name',
     lastName: 'Last name',
-    email: 'Email',
     phone: 'Phone',
     company: 'Company',
     role: 'Role',
@@ -1629,7 +1481,6 @@ const en = {
 
   tokens: {
     apiTokens: 'API tokens',
-    noTokens: 'You have no API tokens',
     createAPIToken: 'Create API token',
     validFor: 'Valid for (in seconds)',
     expiresAt: 'Expires at',
@@ -1664,10 +1515,7 @@ const en = {
     description: 'Manage access policies and permissions',
     addPolicy: 'Add Policy',
     createPolicy: 'Create New Policy',
-    createPolicyDescription: 'Define a new access policy for your workspace',
     editPolicy: 'Edit Policy',
-    editPolicyDescription: 'Modify the access policy settings',
-    deletePolicy: 'Delete Policy',
     deletePolicyDescription:
       'Are you sure you want to delete this policy? This action cannot be undone.',
     effect: 'Effect',
@@ -1675,23 +1523,15 @@ const en = {
     resource: 'Resource',
     principal: 'Principal',
     resourceId: 'Resource ID (Optional)',
-    resourceIdPlaceholder: 'Leave empty for all resources',
-    loading: 'Loading policies...',
     error: 'Error loading policies',
     noPolicies: 'No policies found',
     creating: 'Creating...',
-    updating: 'Updating...',
-    deleting: 'Deleting...',
     effectAllow: 'Allow',
     effectDeny: 'Deny',
     actionRead: 'Read',
-    actionCreate: 'Create',
-    actionUpdate: 'Update',
-    actionDelete: 'Delete',
     principalWorkspaceUser: 'User',
     principalRole: 'Role',
     principalEveryone: 'Everyone',
-    allResources: 'All',
 
     tooltips: {
       effect: 'Whether the policy explicitly denies or allows the action',
@@ -1789,23 +1629,12 @@ const en = {
   list: {
     status: 'Status',
     runs: 'Runs',
-    actions: 'Actions',
-    view: 'View',
     viewAll: 'View all',
-    delete: 'Delete',
-    edit: 'Edit',
-    owner: 'Owner',
-    author: 'Author',
     lastUpdated: 'Last updated',
     createdAt: 'Created at',
     immutable: 'Immutable',
-    source: 'Source',
-    destination: 'Destination',
     searchPlaceholder: 'Type to search...',
     noItemsFound: 'No items found',
-    tags: 'Tags',
-    search: 'Search',
-    loading: 'Loading...',
     noItems: 'No items found',
 
     emptyState: {
@@ -1834,10 +1663,6 @@ const en = {
         description:
           'Connections allow you to import from and export to external data sources. Create your first connection to get started.',
       },
-      users: {
-        title: 'No users yet',
-        description: 'Invite team members to collaborate on this workspace.',
-      },
       invites: {
         title: 'No pending invites',
         description:
@@ -1852,26 +1677,6 @@ const en = {
         title: 'No API tokens',
         description:
           'API tokens allow you to authenticate with the Irmin API programmatically. Create your first token to get started.',
-      },
-      commits: {
-        title: 'No commits yet',
-        description:
-          'Start making changes to your repository to see commits here.',
-      },
-      tags: {
-        title: 'No tags yet',
-        description:
-          'Tags are immutable pointers to specific commits. Create tags to mark important versions.',
-      },
-      branches: {
-        title: 'No branches yet',
-        description:
-          'Branches allow you to work on different versions of your data simultaneously.',
-      },
-      objects: {
-        title: 'No objects yet',
-        description:
-          'Start by uploading files or create a workflow to populate this repository.',
       },
       scripts: {
         title: 'No scripts yet',
@@ -1957,7 +1762,6 @@ const en = {
     type: 'Type',
     name: 'Name',
     path: 'Path',
-    description: 'Description',
     contentType: 'Content Type',
     size: 'Size',
     metadata: 'Metadata',
