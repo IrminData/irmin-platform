@@ -1037,8 +1037,8 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 		}
 	})
 
-	// Test invalid pipeline workflowable - missing stages
-	t.Run("invalid pipeline workflowable - missing stages", func(t *testing.T) {
+	// Test valid pipeline workflowable - empty stages is allowed (pipeline being configured)
+	t.Run("valid pipeline workflowable - empty stages", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		scriptID, _ := sqidManager.Encode("scripts", 123)
 		resultsRepository := "results-repo"
@@ -1046,8 +1046,9 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 		resultsRepositoryPath := "/results"
 
 		workflowable := models.Workflowable{
-			Type: models.WorkflowableTypePipeline,
-			// Missing Stages
+			Type:   models.WorkflowableTypePipeline,
+			Stages: []models.PipelineStage{}, // Empty stages is valid - pipeline being configured
+			// Provide other fields for completeness
 			ConnectionID:            connectionID,
 			Repository:              "dummy-repo",
 			RepositoryBranch:        "main",
@@ -1060,8 +1061,8 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 		}
 
 		err := validator.Validate(workflowable)
-		if err == nil {
-			t.Error("Expected validation error for pipeline workflowable with missing stages")
+		if err != nil {
+			t.Errorf("Expected valid pipeline workflowable with empty stages, got error: %v", err)
 		}
 	})
 
@@ -1250,8 +1251,8 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 		}
 	})
 
-	// Test invalid export workflowable - missing field mappings
-	t.Run("invalid export workflowable - missing field mappings", func(t *testing.T) {
+	// Test valid export workflowable - empty field mappings is allowed (export data as-is)
+	t.Run("valid export workflowable - empty field mappings", func(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		scriptID, _ := sqidManager.Encode("scripts", 123)
 		resultsRepository := "results-repo"
@@ -1259,8 +1260,9 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 		resultsRepositoryPath := "/results"
 
 		workflowable := models.Workflowable{
-			Type: models.WorkflowableTypeExport,
-			// Missing FieldMappings
+			Type:          models.WorkflowableTypeExport,
+			FieldMappings: []models.FieldMapping{}, // Empty field mappings is valid - export as-is
+			// Provide other required fields
 			ConnectionID:              connectionID,
 			Repository:                "my-repo",
 			RepositoryBranch:          "main",
@@ -1274,8 +1276,8 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 		}
 
 		err := validator.Validate(workflowable)
-		if err == nil {
-			t.Error("Expected validation error for export workflowable with missing field mappings")
+		if err != nil {
+			t.Errorf("Expected valid export workflowable with empty field mappings, got error: %v", err)
 		}
 	})
 }

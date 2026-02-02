@@ -398,18 +398,35 @@ func (v *Validator) buildValidationResult(err error) *ValidationResultError {
 }
 
 // getFieldName extracts a user-friendly field name from a validation error.
+// It uses the full namespace to show nested field paths (e.g., "workflowable.type" instead of just "type").
 func (v *Validator) getFieldName(fieldError validator.FieldError) string {
-	fieldName := fieldError.Field()
+	// Use Namespace() to get the full field path with JSON tag names
+	namespace := fieldError.Namespace()
 
-	// Convert PascalCase to snake_case for better readability
-	result := make([]rune, 0, len(fieldName)+FieldNameConversionBuffer)
-	for i, r := range fieldName {
+	// Remove the root struct name (first segment before the first dot)
+	// e.g., "Workflow.Workflowable.Type" -> "Workflowable.Type"
+	if idx := strings.Index(namespace, "."); idx != -1 {
+		namespace = namespace[idx+1:]
+	}
+
+	// Convert each segment from PascalCase to snake_case
+	segments := strings.Split(namespace, ".")
+	for i, segment := range segments {
+		segments[i] = v.toSnakeCase(segment)
+	}
+
+	return strings.Join(segments, ".")
+}
+
+// toSnakeCase converts a PascalCase string to snake_case.
+func (v *Validator) toSnakeCase(s string) string {
+	result := make([]rune, 0, len(s)+FieldNameConversionBuffer)
+	for i, r := range s {
 		if i > 0 && 'A' <= r && r <= 'Z' {
 			result = append(result, '_')
 		}
 		result = append(result, r)
 	}
-
 	return strings.ToLower(string(result))
 }
 

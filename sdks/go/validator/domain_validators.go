@@ -129,9 +129,7 @@ func (v *Validator) validateActionPipelineStage(parentStruct reflect.Value) bool
 func (v *Validator) validateConnectionPipelineStage(parentStruct reflect.Value) bool {
 	connectionIDField := parentStruct.FieldByName("ConnectionID")
 	writeField := parentStruct.FieldByName("Write")
-	readField := parentStruct.FieldByName("Read")
 	writePathField := parentStruct.FieldByName("ConnectionWritePath")
-	readPathsField := parentStruct.FieldByName("ConnectionReadPaths")
 
 	// Connection stages must have a valid connection ID (validated as SQID)
 	if !v.validateResourceID(connectionIDField, "connections") {
@@ -146,33 +144,10 @@ func (v *Validator) validateConnectionPipelineStage(parentStruct reflect.Value) 
 		}
 	}
 
-	// If it's a read stage, must have read paths
-	if readField.IsValid() && readField.Bool() {
-		return v.validateReadPaths(readPathsField)
-	}
+	// Read paths are optional - empty paths means "read from root" which is valid
+	// The field can be nil, empty, or populated with specific paths
 
 	return true
-}
-
-// validateReadPaths validates that a read paths field is non-empty.
-// Handles both direct slices and pointers to slices.
-func (v *Validator) validateReadPaths(readPathsField reflect.Value) bool {
-	if !readPathsField.IsValid() {
-		return false
-	}
-
-	// Handle pointer to slice: dereference before checking length
-	var pathsLen int
-	if readPathsField.Kind() == reflect.Pointer {
-		if readPathsField.IsNil() {
-			return false
-		}
-		pathsLen = readPathsField.Elem().Len()
-	} else {
-		pathsLen = readPathsField.Len()
-	}
-
-	return pathsLen > 0
 }
 
 // validateRepositoryPipelineStage validates repository-type pipeline stages.
