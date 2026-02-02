@@ -20,6 +20,11 @@ import {
   PromptInputToolbar,
 } from '@/components/ui/ai-elements/prompt-input';
 import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from '@/components/ui/ai-elements/reasoning';
+import {
   Suggestion,
   Suggestions,
 } from '@/components/ui/ai-elements/suggestion';
@@ -424,13 +429,28 @@ const AgentChat = ({
                 return (
                   <Message key={messageId} from={role}>
                     <MessageContent>
+                      {/* Render thinking BEFORE content for assistant messages */}
+                      {role === 'assistant' && (
+                        <MessageMetadata
+                          message={message}
+                          agentId={agentId}
+                          section='thinking'
+                        />
+                      )}
+
                       {renderMessageContent(content, messageType)}
 
                       {/* Render stored message metadata for different message types */}
                       <StoredMessageMetadata message={message} />
 
-                      {/* Render agent graph metadata for assistant messages */}
-                      <MessageMetadata message={message} agentId={agentId} />
+                      {/* Render tools and iterations AFTER content for assistant messages */}
+                      {role === 'assistant' && (
+                        <MessageMetadata
+                          message={message}
+                          agentId={agentId}
+                          section='tools'
+                        />
+                      )}
 
                       {role === 'assistant' &&
                         renderMessageActions(messageId, content)}
@@ -459,21 +479,33 @@ const AgentChat = ({
                     {/* Render main text message content if it exists */}
                     {mainTextMessage && (
                       <>
+                        {/* Render thinking BEFORE content */}
+                        {getMessageRole(mainTextMessage) === 'assistant' && (
+                          <MessageMetadata
+                            message={mainTextMessage}
+                            agentId={agentId}
+                            section='thinking'
+                          />
+                        )}
+
                         {renderMessageContent(
                           getMessageContent(mainTextMessage),
                           getMessageType(mainTextMessage)
                         )}
 
-                        {/* Always render metadata, but MessageMetadata will handle tool call conflicts */}
-                        <MessageMetadata
-                          message={mainTextMessage}
-                          agentId={agentId}
-                          hasStoredToolMessages={otherMessages.some(
-                            (m) =>
-                              getMessageType(m) === 'tool_call' ||
-                              getMessageType(m) === 'tool_result'
-                          )}
-                        />
+                        {/* Render tools and iterations AFTER content */}
+                        {getMessageRole(mainTextMessage) === 'assistant' && (
+                          <MessageMetadata
+                            message={mainTextMessage}
+                            agentId={agentId}
+                            hasStoredToolMessages={otherMessages.some(
+                              (m) =>
+                                getMessageType(m) === 'tool_call' ||
+                                getMessageType(m) === 'tool_result'
+                            )}
+                            section='tools'
+                          />
+                        )}
 
                         {getMessageRole(mainTextMessage) === 'assistant' &&
                           renderMessageActions(
@@ -498,9 +530,32 @@ const AgentChat = ({
           {streamingState.isStreaming && streamingState.streamingMessageId && (
             <Message key={streamingState.streamingMessageId} from='assistant'>
               <MessageContent>
+                {/* Thinking/Reasoning at the TOP - streams as it happens */}
+                {streamingState.streamingParts.some(
+                  (p) => p.type === 'reasoning-end'
+                ) && (
+                  <div className='mb-4 space-y-2'>
+                    {streamingState.streamingParts
+                      .filter((p) => p.type === 'reasoning-end')
+                      .map((part, index) => (
+                        <Reasoning
+                          key={`streaming-reasoning-${index}`}
+                          defaultOpen={true}
+                        >
+                          <ReasoningTrigger />
+                          <ReasoningContent>
+                            {(part as { delta?: string }).delta || ''}
+                          </ReasoningContent>
+                        </Reasoning>
+                      ))}
+                  </div>
+                )}
+
+                {/* Message content */}
                 {streamingState.streamingMessage &&
                   renderMessageContent(streamingState.streamingMessage)}
 
+                {/* Tool calls and errors after content */}
                 <StreamingMetadata
                   streamingParts={streamingState.streamingParts}
                 />

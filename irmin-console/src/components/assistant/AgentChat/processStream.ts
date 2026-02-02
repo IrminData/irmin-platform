@@ -77,12 +77,7 @@ export const processStream = async (
           if (isIrminStreamEvent(parsed)) {
             switch (parsed.event) {
               case 'stream_start':
-                // Agent is initializing - could show a loading indicator
-                parts.push({
-                  type: 'system',
-                  content: parsed.data.message || 'Agent is preparing...',
-                });
-                onPartsUpdate?.(parts);
+                // Agent is initializing - no UI needed, the streaming message itself indicates activity
                 break;
 
               case 'metadata':
@@ -98,7 +93,7 @@ export const processStream = async (
               case 'stream_end':
                 // Stream completed successfully
                 parts.push({ type: 'stream-complete' });
-                onPartsUpdate?.(parts);
+                onPartsUpdate?.([...parts]);
                 break;
 
               case 'error':
@@ -107,7 +102,7 @@ export const processStream = async (
                   type: 'stream-error',
                   error: parsed.data.message || 'Unknown error',
                 });
-                onPartsUpdate?.(parts);
+                onPartsUpdate?.([...parts]);
                 break;
             }
             continue; // Skip LangChain event processing
@@ -142,7 +137,7 @@ export const processStream = async (
                     delta: accumulatedThinking,
                   });
                 } else {
-                  // Update the existing reasoning event
+                  // Update the existing reasoning event with new accumulated content
                   const existingEvent = parts[thinkingEventIndex];
                   if (existingEvent.type === 'reasoning-end') {
                     parts[thinkingEventIndex] = {
@@ -152,7 +147,8 @@ export const processStream = async (
                     };
                   }
                 }
-                onPartsUpdate?.(parts);
+                // Create a new array reference to ensure React detects the change
+                onPartsUpdate?.([...parts]);
               }
 
               // Check for tool calls in the chunk
@@ -182,7 +178,7 @@ export const processStream = async (
                           toolName: toolCall.function.name,
                           input: args,
                         });
-                        onPartsUpdate?.(parts);
+                        onPartsUpdate?.([...parts]);
                       }
                     } catch {
                       // Failed to parse tool call arguments
@@ -209,7 +205,7 @@ export const processStream = async (
                     toolName,
                     input,
                   });
-                  onPartsUpdate?.(parts);
+                  onPartsUpdate?.([...parts]);
                 }
               }
               break;
@@ -235,7 +231,7 @@ export const processStream = async (
                     toolCallId: runId,
                     output: outputString,
                   });
-                  onPartsUpdate?.(parts);
+                  onPartsUpdate?.([...parts]);
                 }
               }
               break;
@@ -269,7 +265,7 @@ export const processStream = async (
       type: 'stream-error',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
-    onPartsUpdate?.(parts);
+    onPartsUpdate?.([...parts]);
   } finally {
     reader.releaseLock();
   }

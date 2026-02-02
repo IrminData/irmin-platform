@@ -13,8 +13,6 @@ import {
   ToolOutput,
 } from '@/components/ui/ai-elements/tool';
 
-import { useLocale } from '@/context/LocaleContext';
-
 import {
   getMessageContent,
   getMessageRole,
@@ -66,8 +64,6 @@ interface StoredMessageMetadataProps {
 export const StoredMessageMetadata = ({
   message,
 }: StoredMessageMetadataProps) => {
-  const { dict } = useLocale();
-
   const role = getMessageRole(message);
   const messageType = getMessageType(message);
   const content = getMessageContent(message);
@@ -109,10 +105,7 @@ export const StoredMessageMetadata = ({
     }
 
     return (
-      <div className='mt-4 space-y-2'>
-        <div className='text-sm font-medium text-muted-foreground'>
-          {dict.assistant.toolCalls} (1)
-        </div>
+      <div className='mt-4'>
         <Tool defaultOpen={false}>
           <ToolHeader
             type={`tool-${toolCallData.name || 'unknown'}`}
@@ -128,10 +121,7 @@ export const StoredMessageMetadata = ({
 
   if (messageType === 'tool_result') {
     return (
-      <div className='mt-4 space-y-2'>
-        <div className='text-sm font-medium text-muted-foreground'>
-          {dict.assistant.toolCalls} (1)
-        </div>
+      <div className='mt-4'>
         <Tool defaultOpen={false}>
           <ToolHeader type='tool-result' state='output-available' />
           <ToolContent>
@@ -144,10 +134,7 @@ export const StoredMessageMetadata = ({
 
   if (messageType === 'reasoning') {
     return (
-      <div className='mt-4 space-y-2'>
-        <div className='text-sm font-medium text-muted-foreground'>
-          {dict.assistant.thinkingSteps} (1)
-        </div>
+      <div className='mt-4'>
         <Reasoning defaultOpen={false}>
           <ReasoningTrigger />
           <ReasoningContent>{content}</ReasoningContent>

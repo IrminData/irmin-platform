@@ -34,11 +34,14 @@ interface MessageMetadataProps {
   message: StoredMessage;
   agentId: string;
   hasStoredToolMessages?: boolean;
+  /** Which section to render: 'thinking' (before content), 'tools' (after content), or 'all' (default) */
+  section?: 'thinking' | 'tools' | 'all';
 }
 
 export const MessageMetadata = ({
   message,
   hasStoredToolMessages = false,
+  section = 'all',
 }: MessageMetadataProps) => {
   const { dict } = useLocale();
 
@@ -49,128 +52,162 @@ export const MessageMetadata = ({
     return null;
   }
 
-  return (
-    <>
-      {/* Render tool calls if available and no stored tool messages exist */}
-      {!hasStoredToolMessages &&
-        ((isStoredToolCallsArray(metadata.toolCalls) &&
-          metadata.toolCalls.length > 0) ||
-          (isServerToolEventsArray(metadata.toolCalls) &&
-            metadata.toolCalls.length > 0)) && (
-          <div className='mt-4 space-y-2'>
-            <div className='text-sm font-medium text-muted-foreground'>
-              {dict.assistant.toolCalls} ({metadata.toolCalls.length})
-            </div>
-            {metadata.toolCalls.map((toolCall, index) => {
-              if (isStoredToolCall(toolCall)) {
-                return (
-                  <Tool
-                    key={`tool-${message.data?.id || message.type}-${toolCall.name}-${index}`}
-                    defaultOpen={false}
-                  >
-                    <ToolHeader
-                      type={`tool-${toolCall.name}`}
-                      state='output-available'
-                    />
-                    <ToolContent>
-                      {toolCall.args && <ToolInput input={toolCall.args} />}
-                      {toolCall.output && (
-                        <ToolOutput
-                          output={toolCall.output}
-                          errorText={undefined}
-                        />
-                      )}
-                    </ToolContent>
-                  </Tool>
-                );
-              }
+  const renderThinking = () => {
+    if (
+      !isThinkingStepsArray(metadata.thinkingSteps) ||
+      metadata.thinkingSteps.length === 0
+    ) {
+      return null;
+    }
 
-              if (isServerToolEvent(toolCall)) {
-                return (
-                  <Tool
-                    key={`tool-${message.data?.id || message.type}-${toolCall.toolCallId}-${index}`}
-                    defaultOpen={false}
-                  >
-                    <ToolHeader
-                      type={`tool-${toolCall.toolName || toolCall.toolCallId || 'unknown'}`}
-                      state={
-                        toolCall.type === 'tool-output-available'
-                          ? 'output-available'
-                          : 'input-available'
-                      }
-                    />
-                    <ToolContent>
-                      {toolCall.input && <ToolInput input={toolCall.input} />}
-                      {toolCall.output && (
-                        <ToolOutput
-                          output={toolCall.output}
-                          errorText={undefined}
-                        />
-                      )}
-                    </ToolContent>
-                  </Tool>
-                );
-              }
+    return (
+      <div className='mb-4 space-y-2'>
+        {metadata.thinkingSteps.map((step: string, index: number) => (
+          <Reasoning
+            key={`thinking-${message.data?.id || message.type}-${step.slice(0, 20)}-${index}`}
+            defaultOpen={false}
+          >
+            <ReasoningTrigger />
+            <ReasoningContent>{step}</ReasoningContent>
+          </Reasoning>
+        ))}
+      </div>
+    );
+  };
 
-              return null;
-            })}
-          </div>
-        )}
+  const renderToolCalls = () => {
+    if (
+      hasStoredToolMessages ||
+      ((!isStoredToolCallsArray(metadata.toolCalls) ||
+        metadata.toolCalls.length === 0) &&
+        (!isServerToolEventsArray(metadata.toolCalls) ||
+          metadata.toolCalls.length === 0))
+    ) {
+      return null;
+    }
 
-      {isThinkingStepsArray(metadata.thinkingSteps) &&
-        metadata.thinkingSteps.length > 0 && (
-          <div className='mt-4 space-y-2'>
-            <div className='text-sm font-medium text-muted-foreground'>
-              {dict.assistant.thinkingSteps} ({metadata.thinkingSteps.length})
-            </div>
-            {metadata.thinkingSteps.map((step: string, index: number) => (
-              <Reasoning
-                key={`thinking-${message.data?.id || message.type}-${step.slice(0, 20)}-${index}`}
+    return (
+      <div className='mt-4 space-y-2'>
+        {metadata.toolCalls.map((toolCall, index) => {
+          if (isStoredToolCall(toolCall)) {
+            return (
+              <Tool
+                key={`tool-${message.data?.id || message.type}-${toolCall.name}-${index}`}
                 defaultOpen={false}
               >
-                <ReasoningTrigger />
-                <ReasoningContent>{step}</ReasoningContent>
-              </Reasoning>
-            ))}
-          </div>
-        )}
+                <ToolHeader
+                  type={`tool-${toolCall.name}`}
+                  state='output-available'
+                />
+                <ToolContent>
+                  {toolCall.args && <ToolInput input={toolCall.args} />}
+                  {toolCall.output && (
+                    <ToolOutput
+                      output={toolCall.output}
+                      errorText={undefined}
+                    />
+                  )}
+                </ToolContent>
+              </Tool>
+            );
+          }
 
-      {isIterationsNumber(metadata.iterations) && (
-        <Task
-          title={`${dict.assistant.iteration} ${metadata.iterations}`}
-          defaultOpen={false}
-        >
-          <TaskTrigger
-            title={`${dict.assistant.iteration} ${metadata.iterations}`}
-          >
-            <div className='flex items-center gap-2'>
-              <div
-                className={`
-                  flex size-6 items-center justify-center rounded-full
-                  bg-blue-500 text-xs font-medium text-white
-                `}
+          if (isServerToolEvent(toolCall)) {
+            return (
+              <Tool
+                key={`tool-${message.data?.id || message.type}-${toolCall.toolCallId}-${index}`}
+                defaultOpen={false}
               >
-                {metadata.iterations}
-              </div>
-              <div className='text-sm font-medium text-blue-900'>
-                {metadata.iterations} {dict.assistant.iteration.toLowerCase()}
-                {metadata.iterations !== 1 ? 's' : ''}
-                {(isStoredToolCallsArray(metadata.toolCalls) ||
-                  isServerToolEventsArray(metadata.toolCalls)) &&
-                  ` • ${metadata.toolCalls.length} tool call${metadata.toolCalls.length !== 1 ? 's' : ''}`}
-              </div>
+                <ToolHeader
+                  type={`tool-${toolCall.toolName || toolCall.toolCallId || 'unknown'}`}
+                  state={
+                    toolCall.type === 'tool-output-available'
+                      ? 'output-available'
+                      : 'input-available'
+                  }
+                />
+                <ToolContent>
+                  {toolCall.input && <ToolInput input={toolCall.input} />}
+                  {toolCall.output && (
+                    <ToolOutput
+                      output={toolCall.output}
+                      errorText={undefined}
+                    />
+                  )}
+                </ToolContent>
+              </Tool>
+            );
+          }
+
+          return null;
+        })}
+      </div>
+    );
+  };
+
+  const renderIterations = () => {
+    if (!isIterationsNumber(metadata.iterations)) {
+      return null;
+    }
+
+    return (
+      <Task
+        title={`${dict.assistant.iteration} ${metadata.iterations}`}
+        defaultOpen={false}
+      >
+        <TaskTrigger
+          title={`${dict.assistant.iteration} ${metadata.iterations}`}
+        >
+          <div className='flex items-center gap-2'>
+            <div
+              className={`
+                flex size-6 items-center justify-center rounded-full
+                bg-blue-500 text-xs font-medium text-white
+              `}
+            >
+              {metadata.iterations}
             </div>
-          </TaskTrigger>
-          <TaskContent>
-            <div className='text-sm text-muted-foreground'>
-              {dict.assistant.thisResponseWasGeneratedThrough}{' '}
+            <div className='text-sm font-medium text-blue-900'>
               {metadata.iterations} {dict.assistant.iteration.toLowerCase()}
-              {metadata.iterations !== 1 ? 's' : ''}{' '}
-              {dict.assistant.ofReasoningAndToolUsage}.
+              {metadata.iterations !== 1 ? 's' : ''}
+              {(isStoredToolCallsArray(metadata.toolCalls) ||
+                isServerToolEventsArray(metadata.toolCalls)) &&
+                ` • ${metadata.toolCalls.length} tool call${metadata.toolCalls.length !== 1 ? 's' : ''}`}
             </div>
-          </TaskContent>
-        </Task>
-      )}
+          </div>
+        </TaskTrigger>
+        <TaskContent>
+          <div className='text-sm text-muted-foreground'>
+            {dict.assistant.thisResponseWasGeneratedThrough}{' '}
+            {metadata.iterations} {dict.assistant.iteration.toLowerCase()}
+            {metadata.iterations !== 1 ? 's' : ''}{' '}
+            {dict.assistant.ofReasoningAndToolUsage}.
+          </div>
+        </TaskContent>
+      </Task>
+    );
+  };
+
+  // Render based on section prop
+  if (section === 'thinking') {
+    return renderThinking();
+  }
+
+  if (section === 'tools') {
+    return (
+      <>
+        {renderToolCalls()}
+        {renderIterations()}
+      </>
+    );
+  }
+
+  // 'all' - render everything (thinking first, then tools, then iterations)
+  return (
+    <>
+      {renderThinking()}
+      {renderToolCalls()}
+      {renderIterations()}
     </>
   );
 };
