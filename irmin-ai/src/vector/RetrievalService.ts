@@ -2,6 +2,7 @@ import type { Document } from '@langchain/core/documents';
 import { z } from 'zod';
 
 import { analyticsService } from '@/services/analytics';
+import { hydeCacheService } from '@/services/hydeCache';
 import { llmService } from '@/services/llm';
 
 import { getContentAsString } from '@/utils/getContentAsString';
@@ -211,17 +212,25 @@ class RetrievalService {
       const validatedOptions = VectorSearchSchema.parse(options);
 
       // 1. Generate query embedding
+      const embeddingStart = Date.now();
       const queryEmbedding = await indexingService.createEmbedding(
         validatedOptions.query
       );
+      console.log(
+        `[Agent Timing] createEmbedding: ${Date.now() - embeddingStart}ms`
+      );
 
       // 2. Perform similarity search
+      const qdrantStart = Date.now();
       const results = await qdrantService.search(
         collectionName,
         queryEmbedding,
         validatedOptions.k,
         validatedOptions.filter,
         validatedOptions.scoreThreshold
+      );
+      console.log(
+        `[Agent Timing] qdrantService.search: ${Date.now() - qdrantStart}ms`
       );
 
       // 3. Convert to our result format
@@ -552,81 +561,99 @@ class RetrievalService {
     collectionName?: string,
     agentContext?: Record<string, unknown>
   ): Promise<string | null> {
-    const startTime = Date.now();
-    const TIMEOUT_MS = 5000;
+    const effectiveCollectionName =
+      collectionName || this.defaultCollectionName;
 
-    try {
-      const llm = llmService.createLLM({
-        provider: 'groq',
-        model: 'llama-3.1-8b-instant',
-        temperature: 0.6,
-        maxTokens: 500, // Increased for 2-3 paragraph responses
-      });
+    // Use cache to avoid repeated LLM calls for similar queries
+    // This saves 1-3 seconds on cache hits
+    // Include agentContext in cache key since it affects the generated content
+    return hydeCacheService.getCachedHydeOrGenerate(
+      query,
+      effectiveCollectionName,
+      async () => {
+        const startTime = Date.now();
+        const TIMEOUT_MS = 5000;
 
-      // Select domain-specific prompt based on collection name
-      const basePrompt =
-        HYDE_PROMPTS[collectionName ?? ''] || HYDE_PROMPTS.default;
+        try {
+          const llm = llmService.createLLM({
+            provider: 'groq',
+            model: 'llama-3.1-8b-instant',
+            temperature: 0.6,
+            maxTokens: 500, // Increased for 2-3 paragraph responses
+          });
 
-      // Format agent context if provided
-      let contextStr = '';
-      if (agentContext && Object.keys(agentContext).length > 0) {
-        contextStr = `\n\nAdditional Context:\n${Object.entries(agentContext)
-          .map(([key, value]) => `${key}: ${value}`)
-          .join('\n')}`;
-      }
+          // Select domain-specific prompt based on collection name
+          const basePrompt =
+            HYDE_PROMPTS[collectionName ?? ''] || HYDE_PROMPTS.default;
 
-      const systemPrompt = `${basePrompt}${contextStr}
+          // Format agent context if provided
+          let contextStr = '';
+          if (agentContext && Object.keys(agentContext).length > 0) {
+            contextStr = `\n\nAdditional Context:\n${Object.entries(
+              agentContext
+            )
+              .map(([key, value]) => `${key}: ${value}`)
+              .join('\n')}`;
+          }
+
+          const systemPrompt = `${basePrompt}${contextStr}
 
 Just respond with the hypothetical documentation excerpt, no other text.`;
 
-      const response = await Promise.race([
-        llm.invoke([
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          {
-            role: 'user',
-            content: query,
-          },
-        ]),
-        new Promise<never>((_resolve, reject) =>
-          setTimeout(
-            () => reject(new Error('Hypothetical generation timeout')),
-            TIMEOUT_MS
-          )
-        ),
-      ]);
+          const response = await Promise.race([
+            llm.invoke([
+              {
+                role: 'system',
+                content: systemPrompt,
+              },
+              {
+                role: 'user',
+                content: query,
+              },
+            ]),
+            new Promise<never>((_resolve, reject) =>
+              setTimeout(
+                () => reject(new Error('Hypothetical generation timeout')),
+                TIMEOUT_MS
+              )
+            ),
+          ]);
 
-      const hypotheticalContent = getContentAsString(response.content).trim();
-      const generationTime = Date.now() - startTime;
+          const hypotheticalContent = getContentAsString(
+            response.content
+          ).trim();
+          const generationTime = Date.now() - startTime;
 
-      analyticsService.logEvent({
-        eventType: 'hypothetical_generation',
-        eventData: {
-          query,
-          collectionName: collectionName || this.defaultCollectionName,
-          processingTimeMs: generationTime,
-          promptType: HYDE_PROMPTS[collectionName ?? '']
-            ? collectionName
-            : 'default',
-        },
-      });
+          analyticsService.logEvent({
+            eventType: 'hypothetical_generation',
+            eventData: {
+              query,
+              collectionName: effectiveCollectionName,
+              processingTimeMs: generationTime,
+              promptType: HYDE_PROMPTS[collectionName ?? '']
+                ? collectionName
+                : 'default',
+              cached: false,
+            },
+          });
 
-      return hypotheticalContent || null;
-    } catch (error) {
-      // Log the error but return null for graceful fallback to direct query
-      analyticsService.logEvent({
-        eventType: 'hypothetical_generation_error',
-        eventData: {
-          query,
-          collectionName: collectionName || this.defaultCollectionName,
-          error: error instanceof Error ? error.message : 'Unknown error',
-        },
-      });
-      // Return null to trigger fallback to direct query search
-      return null;
-    }
+          return hypotheticalContent || null;
+        } catch (error) {
+          // Log the error but return null for graceful fallback to direct query
+          analyticsService.logEvent({
+            eventType: 'hypothetical_generation_error',
+            eventData: {
+              query,
+              collectionName: effectiveCollectionName,
+              error: error instanceof Error ? error.message : 'Unknown error',
+            },
+          });
+          // Return null to trigger fallback to direct query search
+          return null;
+        }
+      },
+      agentContext
+    );
   }
 
   /**

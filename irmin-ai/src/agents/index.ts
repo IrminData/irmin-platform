@@ -31,14 +31,15 @@ export class AgentsManager {
     this.agents.set(agent.config.id, agent);
   }
 
-  async executeAgent(
+  /**
+   * Get or create a conversation for agent execution.
+   * This is extracted to allow getting the conversation ID before streaming starts,
+   * so we can include it in HTTP headers.
+   */
+  async getOrCreateConversation(
     agentId: string,
     input: AgentInput
-  ): Promise<{
-    agentResponse: AgentResponse;
-    conversationId: string;
-    sanitizedMessage: string;
-  }> {
+  ): Promise<{ conversation: typeof conversations.$inferSelect }> {
     const agent = this.agents.get(agentId);
     if (!agent) {
       throw new Error(`Agent ${agentId} not found`);
@@ -48,16 +49,14 @@ export class AgentsManager {
       throw new Error('Invalid input for agent');
     }
 
-    let conversation: typeof conversations.$inferSelect;
-
-    // Validate workspace and user context
     if (!input.workspace || !input.user) {
       throw new Error(
         'Workspace and user context required for agent execution'
       );
     }
 
-    // Create or get existing conversation
+    let conversation: typeof conversations.$inferSelect;
+
     if (input.conversationId) {
       const existingConversation = await db
         .select()
@@ -74,29 +73,23 @@ export class AgentsManager {
       }
       conversation = existingConversation[0];
 
-      // Check if conversation has an agentId set
       if (conversation.agentId && conversation.agentId !== agentId) {
         throw new Error(
           `This conversation is associated with agent '${conversation.agentId}' and cannot be used with agent '${agentId}'`
         );
       }
 
-      // Merge contexts: new values replace existing, but keep existing values not provided
-      // If new context has keys with empty/null/undefined values, keep stored values
       const storedContext =
         (conversation.context as Record<string, unknown>) || {};
       const newContext = input.context || {};
       const mergedContext: Record<string, unknown> = { ...storedContext };
 
       for (const [key, value] of Object.entries(newContext)) {
-        // Only update if the new value is not empty/null/undefined
         if (value !== null && value !== undefined && value !== '') {
           mergedContext[key] = value;
         }
-        // If value is null/undefined/empty string, keep the stored value (already in mergedContext)
       }
 
-      // If conversation doesn't have an agentId set, update it to the current agent
       if (!conversation.agentId) {
         await db
           .update(conversations)
@@ -105,7 +98,6 @@ export class AgentsManager {
         conversation.agentId = agentId;
         conversation.context = mergedContext;
       } else {
-        // Update context for existing conversation
         await db
           .update(conversations)
           .set({ updatedAt: new Date(), context: mergedContext })
@@ -113,11 +105,8 @@ export class AgentsManager {
         conversation.context = mergedContext;
       }
     } else {
-      // Create new conversation with fallback title
       const id = randomUUID();
       const now = new Date();
-
-      // Use titleGenerationService to create fallback title
       const fallbackTitle = titleGenerationService.createFallbackTitle();
 
       const newConversation = {
@@ -135,6 +124,43 @@ export class AgentsManager {
       await db.insert(conversations).values(newConversation);
       conversation = newConversation;
     }
+
+    return { conversation };
+  }
+
+  /**
+   * Execute an agent with the given input.
+   * Optionally accepts a pre-created conversation (from getOrCreateConversation)
+   * to avoid duplicate DB calls when the conversation ID is needed before execution.
+   */
+  async executeAgent(
+    agentId: string,
+    input: AgentInput,
+    existingConversation?: typeof conversations.$inferSelect
+  ): Promise<{
+    agentResponse: AgentResponse;
+    conversationId: string;
+    sanitizedMessage: string;
+  }> {
+    const agent = this.agents.get(agentId);
+    if (!agent) {
+      throw new Error(`Agent ${agentId} not found`);
+    }
+
+    if (!agent.validateInput(input)) {
+      throw new Error('Invalid input for agent');
+    }
+
+    if (!input.workspace || !input.user) {
+      throw new Error(
+        'Workspace and user context required for agent execution'
+      );
+    }
+
+    // Use existing conversation or create/get one
+    const conversation =
+      existingConversation ||
+      (await this.getOrCreateConversation(agentId, input)).conversation;
 
     // Sanitize user message
     const sanitizedMessage = textSanitizer.sanitizeUserMessage(input.message);

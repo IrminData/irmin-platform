@@ -52,7 +52,3 @@ export const CursorPaginatedConversationsResponseSchema = z.object({
 
 // Type exports
 export type ConversationRequest = z.infer<typeof ConversationRequestSchema>;
-/** Exported for API consumers to type their responses @public */
-export type CursorPaginatedConversationsResponse = z.infer<
-  typeof CursorPaginatedConversationsResponseSchema
->;

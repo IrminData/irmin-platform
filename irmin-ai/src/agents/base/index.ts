@@ -1,11 +1,16 @@
 import IrminCore from '@/irmin-api';
-import { indexingService, retrievalService } from '@/vector';
 import fs from 'fs/promises';
 import { AgentMiddleware, BaseMessage, DynamicStructuredTool } from 'langchain';
 import path from 'path';
 
 import agentService from '@/services/agent';
 import type { LLMOptions } from '@/services/llm';
+import {
+  DOC_SETS,
+  type DocFile,
+  loadDocs,
+  loadDocSet,
+} from '@/services/staticDocs';
 import { systemPromptBuilder } from '@/services/systemPromptBuilder';
 
 import type {
@@ -44,52 +49,63 @@ export abstract class BaseAgent implements BaseAgentInterface {
 
   /**
    * Subclasses can override to add custom context (e.g., vector search)
+   *
+   * NOTE: Upfront vector search is DISABLED to reduce latency.
+   * The agent has access to irmin_hyde_search and irmin_retrieve_docs_context tools
+   * for on-demand documentation retrieval when needed.
+   * This saves ~1.5s (embedding API call) on every request.
+   *
+   * Static docs can be injected via the agent's config.staticDocs setting.
    */
   protected async prepareContext(
     input: AgentInput
   ): Promise<Record<string, unknown>> {
+    const prepareStart = Date.now();
     const context: Record<string, unknown> = { ...(input.context || {}) };
 
-    // We shall keep this log in the code for now, since it would make it easier to debug
-    // in case something goes wrong with the context preparation.
-    console.log(
-      'Agent Base prepareContext agent input',
-      JSON.stringify(input, null, 2)
-    );
+    // Run static docs loading and API context fetching in parallel
+    const staticDocsPromise = this.loadStaticDocs();
+    const nonDocsPromise = this.prepareNonDocsContext(input, context);
 
-    // Fetch Irmin documentation from vector store (common to all agents)
-    // This runs regardless of workspace/authToken since docs are system-wide
-    try {
-      const collectionName = await indexingService.validateCollectionAccess(
-        'irmin-docs',
-        true
-      );
+    const [staticDocs] = await Promise.all([staticDocsPromise, nonDocsPromise]);
 
-      const docsResult = await retrievalService.retrieveWithHypotheticalContent(
-        collectionName,
-        input.message,
-        {
-          maxDocuments: 5,
-          scoreThreshold: 0.3,
-          includeMetadata: false,
-          maxTokens: 6000,
-        },
-        {
-          agentDescription: this.config.description,
-          agentName: this.config.name,
-        }
-      );
-
-      if (docsResult.context && docsResult.context.trim()) {
-        context.irmin_documentation = docsResult.context;
-      }
-    } catch (error) {
-      console.warn('Failed to retrieve Irmin documentation context:', error);
+    // Add static docs to context if available
+    if (staticDocs) {
+      context['irmin-documentation'] = staticDocs;
     }
 
-    await this.prepareNonDocsContext(input, context);
+    console.log(
+      `[Agent Timing] prepareContext total: ${Date.now() - prepareStart}ms`
+    );
 
     return context;
+  }
+
+  /**
+   * Load static documentation based on agent config
+   */
+  protected async loadStaticDocs(): Promise<string | null> {
+    const staticDocsConfig = this.config.staticDocs;
+    if (!staticDocsConfig) {
+      return null;
+    }
+
+    const docsStart = Date.now();
+
+    let docs: string;
+    if (typeof staticDocsConfig === 'string') {
+      // It's a doc set name
+      docs = await loadDocSet(staticDocsConfig as keyof typeof DOC_SETS);
+    } else {
+      // It's an array of specific doc files
+      docs = await loadDocs(staticDocsConfig as DocFile[]);
+    }
+
+    console.log(
+      `[Agent Timing] loadStaticDocs: ${Date.now() - docsStart}ms (${docs.length} chars)`
+    );
+
+    return docs || null;
   }
 
   protected async prepareNonDocsContext(
@@ -317,20 +333,41 @@ export abstract class BaseAgent implements BaseAgentInterface {
    * Creates a configured LangChain agent ready for execution
    */
   async createAgent(input: AgentInput, conversationId: string) {
+    const createStart = Date.now();
+
     // 1. Validate input
     if (!this.validateInput(input)) {
       throw new Error('Invalid input for agent');
     }
 
-    // 2. Get agent options from subclass
-    const options = await this.getAgentOptions(input);
+    // 2. Run independent operations in parallel for faster agent creation
+    // This saves 100-500ms by not waiting for each operation sequentially
+    const parallelStart = Date.now();
+    const [options, context, basePrompt] = await Promise.all([
+      this.getAgentOptions(input).then((r) => {
+        console.log(
+          `[Agent Timing] getAgentOptions completed: ${Date.now() - parallelStart}ms`
+        );
+        return r;
+      }),
+      this.prepareContext(input).then((r) => {
+        console.log(
+          `[Agent Timing] prepareContext completed: ${Date.now() - parallelStart}ms`
+        );
+        return r;
+      }),
+      this.loadSystemPrompt().then((r) => {
+        console.log(
+          `[Agent Timing] loadSystemPrompt completed: ${Date.now() - parallelStart}ms`
+        );
+        return r;
+      }),
+    ]);
+    console.log(
+      `[Agent Timing] Parallel ops total: ${Date.now() - parallelStart}ms`
+    );
 
-    // 3. Prepare context
-    const context = await this.prepareContext(input);
-
-    // 4. Build system prompt
-    const basePrompt = await this.loadSystemPrompt();
-
+    // 3. Build system prompt (depends on context, so runs after parallel ops)
     // Extract context descriptions from config
     const contextDescriptions: Record<string, string> = {};
     if (this.config.contextRequirements) {
@@ -348,13 +385,20 @@ export abstract class BaseAgent implements BaseAgentInterface {
       contextDescriptions,
     });
 
-    // 5. Create LangChain agent via AgentService
+    // 4. Create LangChain agent via AgentService
+    const agentCreateStart = Date.now();
     const agent = await agentService.getAgent({
       llmOptions: options.llmOptions,
       systemPrompt,
       tools: options.tools,
       middleware: options.middleware,
     });
+    console.log(
+      `[Agent Timing] agentService.getAgent: ${Date.now() - agentCreateStart}ms`
+    );
+    console.log(
+      `[Agent Timing] Total createAgent: ${Date.now() - createStart}ms`
+    );
 
     return agent;
   }

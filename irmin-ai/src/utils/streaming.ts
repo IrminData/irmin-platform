@@ -1,77 +1,148 @@
 /**
- * Convert LangChain agent stream to text stream for Fastify
- * Streams chunks live as they arrive - Fastify requires string or Buffer chunks
- * Handles LangChain agent stream events and extracts content
+ * Stream event types for the streaming protocol
  */
-export function stringifyLangChainStream(
-  stream: ReadableStream
-): ReadableStream {
-  const textEncoder = new TextEncoder();
-
-  return new ReadableStream({
-    async start(controller) {
-      const reader = stream.getReader();
-
-      try {
-        let done = false;
-        while (!done) {
-          const { value, done: readerDone } = await reader.read();
-          done = readerDone;
-
-          if (!done && value) {
-            try {
-              // Stringify the chunk and send it
-              const chunk = JSON.stringify(value) + '\n';
-              controller.enqueue(textEncoder.encode(chunk));
-            } catch (error) {
-              // If processing fails (e.g. JSON.stringify error), we must signal the error
-              // to the downstream consumer before closing.
-              console.error('Error processing stream chunk:', error);
-
-              try {
-                controller.error(error);
-              } catch (e) {
-                // Ignore if controller is already closed/errored
-                console.warn(
-                  'Failed to signal error to closed stream controller',
-                  e
-                );
-              }
-
-              // Cancel the reader to ensure upstream cleanup since we're stopping early
-              await reader.cancel();
-              break;
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error in stream conversion:', error);
-        try {
-          if (controller.desiredSize !== null) {
-            controller.error(error);
-          }
-        } catch (e) {
-          // Ignore error if controller is already closed/errored
-          console.warn('Failed to signal error to closed stream controller', e);
-        }
-      } finally {
-        try {
-          // Check if controller is already closed/errored before trying to close
-          if (controller.desiredSize !== null) {
-            controller.close();
-          }
-        } catch (e) {
-          // Ignore error if controller is already closed
-          console.warn('Failed to close stream controller', e);
-        }
-        reader.releaseLock();
-      }
-    },
-  });
+interface StreamingEvent {
+  event: string;
+  data: unknown;
+  timestamp?: number;
 }
 
 /**
- * Apply streaming-friendly headers to the response
+ * Creates a deferred stream that allows pushing events before the source stream is ready.
+ * This enables sending initial events (like "thinking" indicators) immediately while
+ * the actual agent execution is still being set up in the background.
+ *
+ * @returns An object containing the readable stream and a controller for pushing events
+ */
+export function createDeferredStream(): {
+  readable: ReadableStream<Uint8Array>;
+  pushEvent: (event: StreamingEvent) => void;
+  pipeFrom: (
+    sourceStream: ReadableStream,
+    onFirstChunk?: () => void
+  ) => Promise<void>;
+  close: () => void;
+  error: (err: Error) => void;
+} {
+  const textEncoder = new TextEncoder();
+  let controller: ReadableStreamDefaultController<Uint8Array> | null = null;
+  let isClosed = false;
+
+  const readable = new ReadableStream<Uint8Array>({
+    start(ctrl) {
+      controller = ctrl;
+    },
+    cancel() {
+      // Client disconnected - stop consuming from source stream
+      console.log('[Streaming] Client disconnected, marking stream as closed');
+      isClosed = true;
+    },
+  });
+
+  const pushEvent = (event: StreamingEvent) => {
+    if (isClosed || !controller) return;
+    try {
+      const eventWithTimestamp = { ...event, timestamp: Date.now() };
+      const chunk = JSON.stringify(eventWithTimestamp) + '\n';
+      controller.enqueue(textEncoder.encode(chunk));
+    } catch (e) {
+      console.warn('Failed to push event to stream:', e);
+    }
+  };
+
+  const pipeFrom = async (
+    sourceStream: ReadableStream,
+    onFirstChunk?: () => void
+  ) => {
+    if (isClosed || !controller) return;
+
+    const reader = sourceStream.getReader();
+    let isFirstChunk = true;
+    try {
+      while (true) {
+        // Check if stream was closed externally - stop consuming LLM tokens
+        if (isClosed) {
+          console.log('[Streaming] Stream closed, stopping LLM consumption');
+          break;
+        }
+
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        if (value && controller && !isClosed) {
+          // Track first actual chunk from LLM
+          if (isFirstChunk) {
+            isFirstChunk = false;
+            onFirstChunk?.();
+          }
+          try {
+            const chunk = JSON.stringify(value) + '\n';
+            controller.enqueue(textEncoder.encode(chunk));
+          } catch (e) {
+            // Stringify failure is a data integrity issue - notify client and stop
+            console.error('Error stringifying stream chunk:', e);
+            const errorEvent =
+              JSON.stringify({
+                event: 'error',
+                data: {
+                  message: 'Failed to serialize stream data',
+                  type: 'serialization_error',
+                },
+                timestamp: Date.now(),
+              }) + '\n';
+            controller.enqueue(textEncoder.encode(errorEvent));
+            isClosed = true;
+            controller.error(e instanceof Error ? e : new Error(String(e)));
+            break;
+          }
+        } else if (isClosed) {
+          // Stream was closed while we were processing - exit loop
+          break;
+        }
+      }
+    } catch (e) {
+      console.error('Error piping from source stream:', e);
+      if (controller && !isClosed) {
+        isClosed = true;
+        try {
+          controller.error(e);
+        } catch {
+          // Ignore if already closed
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  };
+
+  const close = () => {
+    if (isClosed || !controller) return;
+    isClosed = true;
+    try {
+      controller.close();
+    } catch {
+      // Ignore if already closed
+    }
+  };
+
+  const error = (err: Error) => {
+    if (isClosed || !controller) return;
+    isClosed = true;
+    try {
+      controller.error(err);
+    } catch {
+      // Ignore if already closed
+    }
+  };
+
+  return { readable, pushEvent, pipeFrom, close, error };
+}
+
+/**
+ * Apply streaming-friendly headers to the response.
+ * Note: Don't set Transfer-Encoding manually - Fastify handles it automatically
+ * when sending a stream, and setting both Transfer-Encoding and Content-Length
+ * violates HTTP/1.1 protocol.
  */
 export function applyStreamingHeaders(
   reply: { header: (key: string, value: string) => void },
@@ -80,7 +151,6 @@ export function applyStreamingHeaders(
   reply.header('Content-Type', 'application/x-ndjson; charset=utf-8');
   reply.header('Cache-Control', 'no-cache');
   reply.header('Connection', 'keep-alive');
-  reply.header('Transfer-Encoding', 'chunked');
 
   // Add custom headers
   Object.entries(customHeaders).forEach(([key, value]) => {

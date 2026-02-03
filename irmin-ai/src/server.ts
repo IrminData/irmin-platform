@@ -10,6 +10,7 @@ import * as Sentry from '@sentry/node';
 import Fastify, { FastifyError } from 'fastify';
 
 import { analyticsService } from '@/services/analytics';
+import { preloadAllDocs } from '@/services/staticDocs';
 
 import { authMiddlewareOnRequestHook } from '@/middleware/auth';
 import { systemAuthMiddlewareOnRequestHook } from '@/middleware/systemAuth';
@@ -213,8 +214,14 @@ async function start() {
     await seedDefaultModels();
     server.log.info('AI models seeded');
 
-    // Ensure system collections exist
-    await indexingService.ensureSystemCollections();
+    // Run parallel initialization tasks
+    await Promise.all([
+      // Ensure system collections exist
+      indexingService.ensureSystemCollections(),
+      // Preload static docs into cache for faster first requests
+      preloadAllDocs(),
+    ]);
+    server.log.info('System collections and static docs initialized');
 
     // Start the server
     await server.listen({

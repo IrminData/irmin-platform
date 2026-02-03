@@ -8,9 +8,17 @@ import {
 
 import agentService from '@/services/agent';
 import { LLMOptions, llmService } from '@/services/llm';
-import { toolsService } from '@/services/tools';
+import { toolCacheService } from '@/services/toolCache';
 
 import { BaseAgent } from '@/agents/base';
+import {
+  createDuckDbHydeSearchTool,
+  createHydeSearchTool,
+} from '@/agents/tools/hydeSearchTool';
+import {
+  createBatchContextTool,
+  createLazyContextTool,
+} from '@/agents/tools/lazyContextTool';
 import type { AgentInput, AgentResponse } from '@/agents/types';
 
 import { agentConfig } from './config';
@@ -20,22 +28,95 @@ export class AssistantAgent extends BaseAgent {
     super(agentConfig);
   }
 
+  // Core tools that should always be included by the LLM tool selector
+  private static readonly ALWAYS_INCLUDE_TOOLS = [
+    'irmin_retrieve_docs_context',
+    'irmin_list_repositories',
+    'irmin_execute_sql',
+  ];
+
+  // Maximum tools for LLM selector (keeps context manageable)
+  private static readonly MAX_SELECTED_TOOLS = 12;
+
+  // Patterns that indicate a docs-only query (no tools needed beyond docs retrieval)
+  // NOTE: Be careful not to match queries about user data (e.g., "What connections do I have?")
+  private static readonly DOCS_ONLY_PATTERNS = [
+    /^(what|who|when|where|why|how)\s+(is|are|does|do|can|should|would|could)\s+(irmin|a|an|the)/i,
+    /^(explain|describe|tell me about|define|clarify)\s+(irmin|what|how|the)/i,
+    /^(help me understand|i want to learn|teach me)/i,
+  ];
+
+  // Patterns that indicate tools are needed (actions, data operations, user data queries)
+  private static readonly NEEDS_TOOLS_PATTERNS = [
+    /\b(list|show|get|fetch|find|search|query|execute|run|create|update|delete|insert)\b/i,
+    /\b(my|our)\s+(repositor(y|ies)|connections?|workflows?|data|tables?)/i,
+    /\bdo\s+I\s+have\b/i, // "What connections do I have?"
+    /\b(sql|duckdb|database)\b/i,
+    /\b(repositor(y|ies)|branch(es)?|commits?|objects?|schemas?|connections?|workflows?)\b/i,
+  ];
+
+  /**
+   * Determine if a query is a simple docs-only question.
+   * Returns true if we can skip the LLM tool selector and just use docs retrieval.
+   */
+  private isDocsOnlyQuery(message: string): boolean {
+    const trimmed = message.trim();
+
+    // If message explicitly needs tools, return false
+    for (const pattern of AssistantAgent.NEEDS_TOOLS_PATTERNS) {
+      if (pattern.test(trimmed)) {
+        return false;
+      }
+    }
+
+    // If message matches docs-only patterns, return true
+    for (const pattern of AssistantAgent.DOCS_ONLY_PATTERNS) {
+      if (pattern.test(trimmed)) {
+        return true;
+      }
+    }
+
+    // Default: assume tools might be needed
+    return false;
+  }
+
   protected async getAgentOptions(input: AgentInput): Promise<{
     llmOptions: LLMOptions;
     tools?: DynamicStructuredTool[];
     middleware?: AgentMiddleware[];
     systemPrompt?: string;
   }> {
-    // Create MCP tools with auth token
-    const tools: DynamicStructuredTool[] = [];
-    if (input.authToken) {
-      const mcpConfig = toolsService.getIrminMCPConfig(input.authToken);
-      const mcpClient = toolsService.createClient({
-        // Add MCP servers here...
-        ...mcpConfig,
-      });
-      const mcpTools = await toolsService.getTools(mcpClient);
-      tools.push(...mcpTools);
+    const optionsStart = Date.now();
+
+    // Check if this is a simple docs-only query (skip expensive tool selection)
+    const docsOnly = this.isDocsOnlyQuery(input.message);
+    console.log(
+      `[Agent Timing] docsOnly=${docsOnly} for query: "${input.message.slice(0, 50)}..."`
+    );
+
+    // Get MCP tools from cache (1-minute TTL per auth token)
+    // This saves 100-300ms on cache hits vs fetching fresh tools
+    let tools: DynamicStructuredTool[] = [];
+    if (!docsOnly && input.authToken) {
+      const toolsStart = Date.now();
+      tools = await toolCacheService.getTools(input.authToken);
+      console.log(
+        `[Agent Timing] MCP tools loaded: ${Date.now() - toolsStart}ms (${tools.length} tools)`
+      );
+    } else {
+      console.log('[Agent Timing] Skipping MCP tools (docsOnly mode)');
+    }
+
+    // Add HyDE search tools for enhanced retrieval when needed
+    // These allow the agent to get higher quality search results on demand
+    tools.push(createHydeSearchTool('irmin-docs'));
+    tools.push(createDuckDbHydeSearchTool());
+
+    // Add lazy context tools for on-demand Irmin API data fetching
+    // Only add these if we're not in docs-only mode
+    if (!docsOnly && input.authToken && input.workspace?.slug) {
+      tools.push(createLazyContextTool(input.authToken, input.workspace.slug));
+      tools.push(createBatchContextTool(input.authToken, input.workspace.slug));
     }
 
     const fallbackLLM = llmService.createLLM({
@@ -56,6 +137,38 @@ export class AssistantAgent extends BaseAgent {
       streaming: false,
     });
 
+    // Build middleware array - skip tool selector for docs-only queries
+    const middleware: AgentMiddleware[] = [
+      summarizationMiddleware({
+        model: cheaperLLM,
+        trigger: [
+          { tokens: 5000, messages: 3 },
+          { tokens: 3000, messages: 6 },
+        ],
+        keep: { messages: 20 },
+      }),
+    ];
+
+    // Only add tool selector middleware if this isn't a docs-only query
+    if (!docsOnly) {
+      middleware.push(
+        llmToolSelectorMiddleware({
+          model: cheaperLLM,
+          maxTools: AssistantAgent.MAX_SELECTED_TOOLS,
+          alwaysInclude: AssistantAgent.ALWAYS_INCLUDE_TOOLS,
+        })
+      );
+      console.log('[Agent Timing] Tool selector middleware added');
+    } else {
+      console.log('[Agent Timing] Skipping tool selector (docsOnly mode)');
+    }
+
+    middleware.push(modelFallbackMiddleware(fallbackLLM));
+
+    console.log(
+      `[Agent Timing] getAgentOptions total: ${Date.now() - optionsStart}ms (tools=${tools.length}, middleware=${middleware.length})`
+    );
+
     return {
       llmOptions: {
         provider: 'anthropic' as const,
@@ -71,28 +184,7 @@ export class AssistantAgent extends BaseAgent {
         },
       },
       tools,
-      middleware: [
-        summarizationMiddleware({
-          model: cheaperLLM,
-          trigger: [
-            { tokens: 5000, messages: 3 },
-            { tokens: 3000, messages: 6 },
-          ],
-          keep: { messages: 20 },
-        }),
-        llmToolSelectorMiddleware({
-          model: cheaperLLM,
-          maxTools: 10,
-          alwaysInclude: [
-            'irmin_retrieve_docs_context',
-            'irmin_list_repositories',
-            'irmin_list_connections',
-            'irmin_list_workflows',
-            'irmin_get_repository_object_schema',
-          ],
-        }),
-        modelFallbackMiddleware(fallbackLLM),
-      ],
+      middleware,
     };
   }
 

@@ -3,6 +3,12 @@ import { z } from 'zod';
 
 config();
 
+// Skip validation during static analysis (knip, etc.)
+const isStaticAnalysis =
+  process.env.npm_lifecycle_event === 'knip' ||
+  process.env.KNIP === 'true' ||
+  process.env.STATIC_ANALYSIS === 'true';
+
 const envSchema = z.object({
   PORT: z.string().default('3000').transform(Number),
   HOST: z.string().default('0.0.0.0'),
@@ -61,7 +67,22 @@ const envSchema = z.object({
   TEST_WORKSPACE_SLUG: z.string().optional(),
 });
 
-const result = envSchema.safeParse(process.env);
+// During static analysis, provide mock values to avoid validation errors
+// This allows tools like knip to analyze the codebase without real env vars
+const envToParse = isStaticAnalysis
+  ? {
+      ...process.env,
+      AI_API_SYSTEM_TOKEN: process.env.AI_API_SYSTEM_TOKEN || 'mock-token',
+      DATABASE_URL:
+        process.env.DATABASE_URL || 'postgres://mock:mock@localhost:5432/mock',
+      GROQ_API_KEY: process.env.GROQ_API_KEY || 'mock-groq-key',
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY || 'mock-openai-key',
+      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || 'mock-anthropic-key',
+      LANGSMITH_API_KEY: process.env.LANGSMITH_API_KEY || 'mock-langsmith-key',
+    }
+  : process.env;
+
+const result = envSchema.safeParse(envToParse);
 
 if (!result.success) {
   console.error('Environment validation failed:');

@@ -6,6 +6,10 @@ export const agentConfig: AgentConfig = {
   description:
     'General purpose chat agent that can answer questions and help with tasks',
   supportsStreaming: true,
+  // Include minimal core docs statically (avoids ~1.5s embedding latency)
+  // Keep this small (~4KB) to minimize time-to-first-token
+  // Agent can use irmin_hyde_search tool for deeper queries about specific topics
+  staticDocs: 'core', // concepts only (~4KB)
   contextRequirements: [
     // Connection context
     {
@@ -54,12 +58,12 @@ export const agentConfig: AgentConfig = {
       description:
         'The ref of the object that the user is currently working with',
     },
-    // Documentation context (auto-retrieved from the vector store)
+    // Documentation context (statically injected from llm-docs folder)
     {
-      name: 'irmin_documentation',
+      name: 'irmin-documentation',
       required: false,
       description:
-        'Relevant documentation snippet (guides, docs, APIs, SDK, etc.) retrieved from the Irmin knowledge base based on the user query. This documentation is retrieved using RAG (Retrieval Augmented Generation) and should be used to answer the user request.',
+        'Core Irmin documentation covering concepts, connections, and workflows. This is statically injected from local files for fast context loading. For deeper queries, use the irmin_hyde_search or irmin_retrieve_docs_context tools.',
     },
   ],
 };

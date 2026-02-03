@@ -3,6 +3,7 @@ import { IterableReadableStream } from '@langchain/core/utils/stream';
 import type { BaseMessage } from 'langchain';
 
 import type agentService from '@/services/agent';
+import type { DOC_SETS, DocFile } from '@/services/staticDocs';
 
 import type { User } from '@/irmin-api/types/user';
 import type { Workspace } from '@/irmin-api/types/workspace';
@@ -19,6 +20,12 @@ export interface AgentConfig {
   description: string;
   supportsStreaming: boolean;
   contextRequirements: ContextRequirement[];
+  /**
+   * Static documentation to inject into agent context.
+   * Can be a predefined doc set name or an array of specific doc files.
+   * This avoids the ~1.5s embedding latency of vector retrieval.
+   */
+  staticDocs?: keyof typeof DOC_SETS | DocFile[];
 }
 
 export interface AgentInput {

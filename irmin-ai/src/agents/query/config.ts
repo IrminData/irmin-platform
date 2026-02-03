@@ -5,6 +5,8 @@ export const agentConfig: AgentConfig = {
   name: 'SQL Query Generator',
   description: 'Converts natural language to SQL queries',
   supportsStreaming: false,
+  // Include SQL-focused docs statically (avoids ~1.5s embedding latency)
+  staticDocs: 'query', // concepts, sql, object-schema
   contextRequirements: [
     // Current SQL query
     {
@@ -31,18 +33,19 @@ export const agentConfig: AgentConfig = {
       description:
         'The ref of the object that the user is currently working with',
     },
-    // Documentation context (auto-retrieved from the vector store)
+    // Documentation context (statically injected from llm-docs folder)
     {
-      name: 'irmin_documentation',
+      name: 'irmin-documentation',
       required: false,
       description:
-        'Relevant documentation snippet (guides, docs, APIs, SDK, etc.) retrieved from the Irmin knowledge base based on the user query. This documentation is retrieved using RAG (Retrieval Augmented Generation) and should be used to answer the user request.',
+        'Irmin documentation covering concepts, SQL querying, and object schemas. Statically injected for fast context loading. Use irmin_hyde_search for deeper queries.',
     },
+    // DuckDB documentation (can be retrieved on-demand via tools)
     {
       name: 'duckdb_documentation',
       required: false,
       description:
-        'Relevant DuckDB SQL syntax documentation retrieved from the DuckDB knowledge base based on the user query. This includes SQL syntax, data types, statements, and query patterns. Use this documentation to ensure SQL queries follow correct DuckDB syntax and best practices.',
+        'DuckDB SQL syntax documentation. Use the duckdb_hyde_search tool for specific syntax questions.',
     },
   ],
 };
