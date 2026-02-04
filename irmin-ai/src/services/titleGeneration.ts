@@ -20,9 +20,15 @@ interface TitleGenerationResult {
 }
 
 class TitleGenerationService {
-  private readonly titleGenerationSystemPrompt = `You are a conversation title generator.
+  private readonly titleGenerationSystemPrompt = `You are a conversation title generator for Irmin, a data warehouse platform.
 
 Your task is to create a concise, descriptive title for a conversation based on the user's message and optionally the AI's response.
+
+Context about Irmin:
+- Irmin is a data warehouse platform with repositories, workflows, connections, and stored queries
+- Irmin repositories are NOT Git repositories - they are data versioning containers (like Git but for data)
+- Connections are data source integrations (PostgreSQL, MySQL, S3, etc.)
+- Workflows are data pipeline orchestrations
 
 Rules:
 - Create a title that summarizes the main topic or intent
@@ -33,18 +39,21 @@ Rules:
 - Do NOT say "Title Generator" or similar meta-text
 - Focus on the core subject matter
 - If AI response is provided, use it to better understand the conversation context
+- When user mentions "repositories", refer to data repositories, not Git
 
 Examples:
 - User: "How do I connect to my PostgreSQL database?"
-- Title: "PostgreSQL connection help"
+- Title: "PostgreSQL Connection Setup"
+
+- User: "What repositories do I have?"
+- Title: "List Data Repositories"
 
 - User: "Can you help me write a Python script to process CSV files?"
 - AI Response: "I'll help you create a Python script using pandas to read and process CSV files..."
-- Title: "Python CSV reading and processing script"
+- Title: "Python CSV Processing Script"
 
-- User: "What's the best way to optimize my React app performance?"
-- AI Response: "Here are several optimization techniques for React apps: code splitting, memoization, lazy loading..."
-- Title: "React app performance optimization"
+- User: "How do I create a new workflow?"
+- Title: "Workflow Creation Help"
 
 Return only the title, nothing else.`;
   private readonly TITLE_GENERATION_TIMEOUT_MS = 15000;
