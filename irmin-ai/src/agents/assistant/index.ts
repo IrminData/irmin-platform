@@ -132,8 +132,8 @@ export class AssistantAgent extends BaseAgent {
     });
 
     const cheaperLLM = llmService.createLLM({
-      provider: 'openai',
-      model: 'gpt-5-mini',
+      provider: 'groq',
+      model: 'llama-3.3-70b-versatile',
       streaming: false,
     });
 
