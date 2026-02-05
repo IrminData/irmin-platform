@@ -19,11 +19,12 @@ type VectorizeObjectsRequest struct {
 
 // SearchEmbeddingsRequest represents the JSON request body for searching embeddings.
 type SearchEmbeddingsRequest struct {
-	Query         string            `json:"query"          validate:"required"          example:"What is machine learning?"`    // Query text to search for
-	EmbeddingPath string            `json:"embedding_path" validate:"required"          example:"embeddings/documents.parquet"` // Path to the embedding file
-	Ref           string            `json:"ref"            validate:"omitempty,max=100" example:"main"`                         // Repository reference (branch/tag/commit)
-	TopK          int               `json:"top_k"          validate:"omitempty,min=1"   example:"10"`                           // Number of results to return (default: 10)
-	Filter        map[string]string `json:"filter"         validate:"omitempty"`                                                // Optional metadata filters
+	Query          string            `json:"query"           validate:"required"             example:"What is machine learning?"`    // Query text to search for
+	EmbeddingPath  string            `json:"embedding_path"  validate:"required"             example:"embeddings/documents.parquet"` // Path to the embedding file
+	Ref            string            `json:"ref"             validate:"omitempty,max=100"    example:"main"`                         // Repository reference (branch/tag/commit)
+	TopK           int               `json:"top_k"           validate:"omitempty,min=1"      example:"10"`                           // Number of results to return (default: 10)
+	Filter         map[string]string `json:"filter"          validate:"omitempty"`                                                   // Optional metadata filters
+	PriorityWeight *float64          `json:"priority_weight" validate:"omitempty,gt=0,max=1" example:"0.5"`                          // Priority weighting factor (>0 to 1, default: disabled)
 }
 
 // ListEmbeddingsRequest represents query parameters for listing embedding files.

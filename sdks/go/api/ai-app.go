@@ -18,10 +18,11 @@ type AIAppQueryRequest struct {
 
 // AIAppSearchEmbeddingsRequest represents the request body for searching embeddings.
 type AIAppSearchEmbeddingsRequest struct {
-	Query  string            `json:"query"  validate:"required" example:"What is machine learning?"`
-	Path   string            `json:"path"                       example:"/data-source/embeddings/docs.parquet"` // Optional: filter to specific embedding file
-	TopK   int               `json:"top_k"                      example:"10"`                                   // Optional: defaults to 10
-	Filter map[string]string `json:"filter"`                                                                    // Optional: metadata filter
+	Query          string            `json:"query"           validate:"required"             example:"What is machine learning?"`
+	Path           string            `json:"path"                                            example:"/data-source/embeddings/docs.parquet"` // Optional: filter to specific embedding file
+	TopK           int               `json:"top_k"                                           example:"10"`                                   // Optional: defaults to 10
+	Filter         map[string]string `json:"filter"`                                                                                         // Optional: metadata filter
+	PriorityWeight *float64          `json:"priority_weight" validate:"omitempty,gt=0,max=1" example:"0.5"`                                  // Priority weighting factor (>0 to 1, default: disabled)
 }
 
 // === Response Types ===
