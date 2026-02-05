@@ -38,6 +38,31 @@ type GetEmbeddingInfoRequest struct {
 	Ref           string `json:"ref"            validate:"omitempty,max=100" example:"main"`                         // Repository reference (branch/tag/commit)
 }
 
+// UpsertEmbeddingsRequest represents the request to upsert embeddings with deduplication.
+type UpsertEmbeddingsRequest struct {
+	SourcePaths []string                          `json:"source_paths,omitempty" validate:"omitempty,dive,required"` // Source file paths to vectorize
+	Embeddings  []irminmodels.UpsertEmbeddingItem `json:"embeddings,omitempty"   validate:"omitempty,dive"`          // Pre-defined embeddings to upsert
+	OutputPath  string                            `json:"output_path"            validate:"required"`
+	Ref         string                            `json:"ref,omitempty"          validate:"omitempty,max=100"`
+	Config      *irminmodels.EmbeddingConfig      `json:"config,omitempty"`
+	Metadata    map[string]string                 `json:"metadata,omitempty"`                                      // Default metadata for all chunks
+	Priority    *float64                          `json:"priority,omitempty"     validate:"omitempty,min=0,max=1"` // Default priority (pointer to allow 0)
+}
+
+// UpdateEmbeddingMetadataRequest represents the request to update embedding metadata.
+type UpdateEmbeddingMetadataRequest struct {
+	EmbeddingPath string                       `json:"embedding_path" validate:"required"`          // Path to embedding file
+	Ref           string                       `json:"ref,omitempty"  validate:"omitempty,max=100"` // Repository reference
+	Updates       map[string]map[string]string `json:"updates"        validate:"required"`          // ID -> metadata map
+}
+
+// UpdateEmbeddingPriorityRequest represents the request to update embedding priority.
+type UpdateEmbeddingPriorityRequest struct {
+	EmbeddingPath string             `json:"embedding_path" validate:"required"`                  // Path to embedding file
+	Ref           string             `json:"ref,omitempty"  validate:"omitempty,max=100"`         // Repository reference
+	Updates       map[string]float64 `json:"updates"        validate:"required,dive,min=0,max=1"` // ID -> priority map (values must be 0.0-1.0)
+}
+
 // VectorizeObjects creates embeddings from one or more repository objects.
 func (c *Client) VectorizeObjects(
 	ctx context.Context,
@@ -149,4 +174,71 @@ func (c *Client) GetEmbeddingInfo(
 		return nil, nil, fmt.Errorf("get embedding info error: %w", err)
 	}
 	return &embeddingFile, apiResp, nil
+}
+
+// UpsertEmbeddings inserts or updates embeddings with content-hash-based deduplication.
+func (c *Client) UpsertEmbeddings(
+	ctx context.Context,
+	workspace, repository string,
+	req UpsertEmbeddingsRequest,
+) (*irminmodels.UpsertEmbeddingsResponse, *irminmodels.IrminAPIResponse, error) {
+	var upsertResponse irminmodels.UpsertEmbeddingsResponse
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/embeddings/upsert",
+			workspace,
+			repository,
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &upsertResponse)
+	if err != nil {
+		return nil, nil, fmt.Errorf("upsert embeddings error: %w", err)
+	}
+	return &upsertResponse, apiResp, nil
+}
+
+// UpdateEmbeddingMetadata updates metadata for specific embeddings by ID.
+func (c *Client) UpdateEmbeddingMetadata(
+	ctx context.Context,
+	workspace, repository string,
+	req UpdateEmbeddingMetadataRequest,
+) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPatch,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/embeddings/metadata",
+			workspace,
+			repository,
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, nil)
+	if err != nil {
+		return nil, fmt.Errorf("update embedding metadata error: %w", err)
+	}
+	return apiResp, nil
+}
+
+// UpdateEmbeddingPriority updates priority for specific embeddings by ID.
+func (c *Client) UpdateEmbeddingPriority(
+	ctx context.Context,
+	workspace, repository string,
+	req UpdateEmbeddingPriorityRequest,
+) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPatch,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/embeddings/priority",
+			workspace,
+			repository,
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, nil)
+	if err != nil {
+		return nil, fmt.Errorf("update embedding priority error: %w", err)
+	}
+	return apiResp, nil
 }

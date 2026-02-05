@@ -312,6 +312,8 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) UpdateBranch\(ctx context.Context, workspace, repository, oldName string, req UpdateBranchRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateBranch>)
   - [func \(c \*Client\) UpdateConnection\(ctx context.Context, workspace, connectionID string, req UpdateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateConnection>)
   - [func \(c \*Client\) UpdateConnectionConfiguration\(ctx context.Context, workspace, connectionID string, req UpdateConnectionConfigurationRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateConnectionConfiguration>)
+  - [func \(c \*Client\) UpdateEmbeddingMetadata\(ctx context.Context, workspace, repository string, req UpdateEmbeddingMetadataRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateEmbeddingMetadata>)
+  - [func \(c \*Client\) UpdateEmbeddingPriority\(ctx context.Context, workspace, repository string, req UpdateEmbeddingPriorityRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateEmbeddingPriority>)
   - [func \(c \*Client\) UpdateInvite\(ctx context.Context, inviteID string, req UpdateInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateInvite>)
   - [func \(c \*Client\) UpdatePolicy\(ctx context.Context, workspace, policyID string, req UpdatePolicyRequest\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdatePolicy>)
   - [func \(c \*Client\) UpdateProfile\(ctx context.Context, firstName, lastName, email, phone, company \*string, profilePicture \*os.File\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateProfile>)
@@ -327,6 +329,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) UpdateWorkspaceTag\(ctx context.Context, workspace, tagID string, req UpdateTagRequest\) \(\*irminmodels.Tag, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateWorkspaceTag>)
   - [func \(c \*Client\) UploadObject\(ctx context.Context, workspace, repository, ref, path string, files map\[string\]\[\]byte\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.UploadObject>)
   - [func \(c \*Client\) UploadObjectFromURL\(ctx context.Context, workspace, repository, ref, path string, req UploadObjectFromURLRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.UploadObjectFromURL>)
+  - [func \(c \*Client\) UpsertEmbeddings\(ctx context.Context, workspace, repository string, req UpsertEmbeddingsRequest\) \(\*irminmodels.UpsertEmbeddingsResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpsertEmbeddings>)
   - [func \(c \*Client\) ValidateConnectorConfiguration\(ctx context.Context, connectorID string, req ConnectorConfigurationRequest\) \(\*irminmodels.ConnectorConfigurationValidationResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ValidateConnectorConfiguration>)
   - [func \(c \*Client\) ValidateObject\(ctx context.Context, workspace, repository, path, ref string, req ValidateObjectRequest\) \(\*ValidateObjectResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.ValidateObject>)
   - [func \(c \*Client\) ValidateRequest\(req any\) error](<#Client.ValidateRequest>)
@@ -385,6 +388,8 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type UpdateConnectionRequest](<#UpdateConnectionRequest>)
 - [type UpdateConnectionSubscriptionRequest](<#UpdateConnectionSubscriptionRequest>)
 - [type UpdateCustomToolRequest](<#UpdateCustomToolRequest>)
+- [type UpdateEmbeddingMetadataRequest](<#UpdateEmbeddingMetadataRequest>)
+- [type UpdateEmbeddingPriorityRequest](<#UpdateEmbeddingPriorityRequest>)
 - [type UpdateInviteRequest](<#UpdateInviteRequest>)
 - [type UpdatePolicyRequest](<#UpdatePolicyRequest>)
 - [type UpdateProfileRequest](<#UpdateProfileRequest>)
@@ -396,6 +401,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type UpdateWorkflowRequest](<#UpdateWorkflowRequest>)
 - [type UpdateWorkspaceRequest](<#UpdateWorkspaceRequest>)
 - [type UploadObjectFromURLRequest](<#UploadObjectFromURLRequest>)
+- [type UpsertEmbeddingsRequest](<#UpsertEmbeddingsRequest>)
 - [type ValidateObjectRequest](<#ValidateObjectRequest>)
 - [type ValidateObjectResponse](<#ValidateObjectResponse>)
 - [type ValidateSchemaFile](<#ValidateSchemaFile>)
@@ -2086,6 +2092,24 @@ func (c *Client) UpdateConnectionConfiguration(ctx context.Context, workspace, c
 
 
 
+<a name="Client.UpdateEmbeddingMetadata"></a>
+### func \(\*Client\) UpdateEmbeddingMetadata
+
+```go
+func (c *Client) UpdateEmbeddingMetadata(ctx context.Context, workspace, repository string, req UpdateEmbeddingMetadataRequest) (*irminmodels.IrminAPIResponse, error)
+```
+
+UpdateEmbeddingMetadata updates metadata for specific embeddings by ID.
+
+<a name="Client.UpdateEmbeddingPriority"></a>
+### func \(\*Client\) UpdateEmbeddingPriority
+
+```go
+func (c *Client) UpdateEmbeddingPriority(ctx context.Context, workspace, repository string, req UpdateEmbeddingPriorityRequest) (*irminmodels.IrminAPIResponse, error)
+```
+
+UpdateEmbeddingPriority updates priority for specific embeddings by ID.
+
 <a name="Client.UpdateInvite"></a>
 ### func \(\*Client\) UpdateInvite
 
@@ -2220,6 +2244,15 @@ func (c *Client) UploadObjectFromURL(ctx context.Context, workspace, repository,
 ```
 
 UploadObjectFromURL uploads an object from a URL to the given path and ref.
+
+<a name="Client.UpsertEmbeddings"></a>
+### func \(\*Client\) UpsertEmbeddings
+
+```go
+func (c *Client) UpsertEmbeddings(ctx context.Context, workspace, repository string, req UpsertEmbeddingsRequest) (*irminmodels.UpsertEmbeddingsResponse, *irminmodels.IrminAPIResponse, error)
+```
+
+UpsertEmbeddings inserts or updates embeddings with content\-hash\-based deduplication.
 
 <a name="Client.ValidateConnectorConfiguration"></a>
 ### func \(\*Client\) ValidateConnectorConfiguration
@@ -3009,6 +3042,32 @@ type UpdateCustomToolRequest struct {
 }
 ```
 
+<a name="UpdateEmbeddingMetadataRequest"></a>
+## type UpdateEmbeddingMetadataRequest
+
+UpdateEmbeddingMetadataRequest represents the request to update embedding metadata.
+
+```go
+type UpdateEmbeddingMetadataRequest struct {
+    EmbeddingPath string                       `json:"embedding_path" validate:"required"`          // Path to embedding file
+    Ref           string                       `json:"ref,omitempty"  validate:"omitempty,max=100"` // Repository reference
+    Updates       map[string]map[string]string `json:"updates"        validate:"required"`          // ID -> metadata map
+}
+```
+
+<a name="UpdateEmbeddingPriorityRequest"></a>
+## type UpdateEmbeddingPriorityRequest
+
+UpdateEmbeddingPriorityRequest represents the request to update embedding priority.
+
+```go
+type UpdateEmbeddingPriorityRequest struct {
+    EmbeddingPath string             `json:"embedding_path" validate:"required"`                  // Path to embedding file
+    Ref           string             `json:"ref,omitempty"  validate:"omitempty,max=100"`         // Repository reference
+    Updates       map[string]float64 `json:"updates"        validate:"required,dive,min=0,max=1"` // ID -> priority map (values must be 0.0-1.0)
+}
+```
+
 <a name="UpdateInviteRequest"></a>
 ## type UpdateInviteRequest
 
@@ -3154,6 +3213,23 @@ type UploadObjectFromURLRequest struct {
     URL     string            `json:"url"            validate:"required"                      example:"https://example.com/file.json"`
     Headers map[string]string `json:"headers"        validate:"omitempty"                     example:"Authorization: Bearer <token>"`
     Tags    []string          `json:"tags,omitempty" validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
+}
+```
+
+<a name="UpsertEmbeddingsRequest"></a>
+## type UpsertEmbeddingsRequest
+
+UpsertEmbeddingsRequest represents the request to upsert embeddings with deduplication.
+
+```go
+type UpsertEmbeddingsRequest struct {
+    SourcePaths []string                          `json:"source_paths,omitempty" validate:"omitempty,dive,required"` // Source file paths to vectorize
+    Embeddings  []irminmodels.UpsertEmbeddingItem `json:"embeddings,omitempty"   validate:"omitempty,dive"`          // Pre-defined embeddings to upsert
+    OutputPath  string                            `json:"output_path"            validate:"required"`
+    Ref         string                            `json:"ref,omitempty"          validate:"omitempty,max=100"`
+    Config      *irminmodels.EmbeddingConfig      `json:"config,omitempty"`
+    Metadata    map[string]string                 `json:"metadata,omitempty"`                                      // Default metadata for all chunks
+    Priority    *float64                          `json:"priority,omitempty"     validate:"omitempty,min=0,max=1"` // Default priority (pointer to allow 0)
 }
 ```
 
@@ -3682,6 +3758,8 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type TemplatePlaceholder](<#TemplatePlaceholder>)
 - [type TemplateType](<#TemplateType>)
 - [type TransformOperationType](<#TransformOperationType>)
+- [type UpsertEmbeddingItem](<#UpsertEmbeddingItem>)
+- [type UpsertEmbeddingsResponse](<#UpsertEmbeddingsResponse>)
 - [type User](<#User>)
 - [type UserPolicySummary](<#UserPolicySummary>)
 - [type Workflow](<#Workflow>)
@@ -4405,13 +4483,15 @@ EmbeddingSearchResult represents a single search result from vector similarity s
 
 ```go
 type EmbeddingSearchResult struct {
-    ID         string            `json:"id"          validate:"required"    example:"550e8400-e29b-41d4-a716-446655440000"`  // Unique ID for the embedding chunk
-    Content    string            `json:"content"     validate:"required"    example:"Machine learning is a subset of AI..."` // The actual text content of the chunk
-    SourceFile string            `json:"source_file" validate:"required"    example:"data/documents/doc1.pdf"`               // Original source file name
-    ChunkIndex int               `json:"chunk_index" validate:"min=0"       example:"5"`                                     // Sequential chunk number within the source file
-    Score      float64           `json:"score"       validate:"min=0,max=1" example:"0.92"`                                  // Cosine similarity score (0-1, higher is better)
-    Distance   float64           `json:"distance"    validate:"min=0"       example:"0.08"`                                  // Cosine distance (0-2, lower is better)
-    Metadata   map[string]string `json:"metadata"    validate:"omitempty"`                                                   // Custom metadata associated with the chunk
+    ID          string            `json:"id"           validate:"required"    example:"550e8400-e29b-41d4-a716-446655440000"`  // Unique ID for the embedding chunk
+    Content     string            `json:"content"      validate:"required"    example:"Machine learning is a subset of AI..."` // The actual text content of the chunk
+    SourceFile  string            `json:"source_file"  validate:"required"    example:"data/documents/doc1.pdf"`               // Original source file name
+    ChunkIndex  int               `json:"chunk_index"  validate:"min=0"       example:"5"`                                     // Sequential chunk number within the source file
+    Score       float64           `json:"score"        validate:"min=0,max=1" example:"0.92"`                                  // Cosine similarity score (0-1, higher is better)
+    Distance    float64           `json:"distance"     validate:"min=0"       example:"0.08"`                                  // Cosine distance (0-2, lower is better)
+    Metadata    map[string]string `json:"metadata"     validate:"omitempty"`                                                   // Custom metadata associated with the chunk
+    ContentHash string            `json:"content_hash" validate:"omitempty"   example:"abc123..."`                             // SHA-256 hash of content for deduplication
+    Priority    float64           `json:"priority"     validate:"min=0,max=1" example:"1.0"`                                   // RAG weight (0.0-1.0, default 1.0)
 }
 ```
 
@@ -5965,6 +6045,35 @@ const (
     TransformOpFileRemove    TransformOperationType = "file_remove"
     TransformOpFormatConvert TransformOperationType = "format_convert"
 )
+```
+
+<a name="UpsertEmbeddingItem"></a>
+## type UpsertEmbeddingItem
+
+UpsertEmbeddingItem represents a single embedding to upsert.
+
+```go
+type UpsertEmbeddingItem struct {
+    Text        string            `json:"text"                   validate:"required"`              // Text content to embed
+    SourceFile  string            `json:"source_file,omitempty"  validate:"omitempty"`             // Original source file path
+    SourceChunk *int              `json:"source_chunk,omitempty" validate:"omitempty,min=0"`       // Chunk index within source file (pointer to allow 0)
+    Metadata    map[string]string `json:"metadata,omitempty"     validate:"omitempty"`             // Custom metadata key-value pairs
+    Priority    *float64          `json:"priority,omitempty"     validate:"omitempty,min=0,max=1"` // RAG weight (0.0-1.0, default 1.0, pointer to allow 0)
+}
+```
+
+<a name="UpsertEmbeddingsResponse"></a>
+## type UpsertEmbeddingsResponse
+
+UpsertEmbeddingsResponse represents the result of an upsert operation.
+
+```go
+type UpsertEmbeddingsResponse struct {
+    Inserted int    `json:"inserted" example:"10"`                           // Number of new embeddings inserted
+    Skipped  int    `json:"skipped"  example:"5"`                            // Number of embeddings skipped (already exist)
+    Updated  int    `json:"updated"  example:"2"`                            // Number of existing embeddings updated
+    Path     string `json:"path"     example:"embeddings/documents.parquet"` // Output path of the embedding file
+}
 ```
 
 <a name="User"></a>
