@@ -1,12 +1,13 @@
 import { useCallback } from 'react';
 
 import type { StoredMessage } from '@langchain/core/messages';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminAIClient from '@/lib/ai';
 import {
   aiConversationMessagesQueryKey,
   aiConversationQueryKey,
+  aiConversationsQueryKey,
 } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
@@ -30,6 +31,7 @@ export function useAIConversation(
   conversationID: string,
   options?: UseAIConversationOptions
 ) {
+  const queryClient = useQueryClient();
   const { getToken } = useIAM();
   const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
@@ -89,13 +91,30 @@ export function useAIConversation(
   const deleteAIConversationMutation = useMutation<void, Error, string>({
     mutationFn: async (convId: string) => {
       const token = await getToken();
-      const client = new IrminAIClient(token, workspaceSlug);
-      await client.conversations.deleteConversation(convId);
+      const response = await fetch(`/api/ai/conversations/${convId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'X-Workspace-Slug': workspaceSlug,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error ||
+            `Failed to delete conversation: ${response.statusText}`
+        );
+      }
     },
     onError: (error) => {
       irminAlert('error', error.message ?? 'Error deleting the conversation');
     },
     onSuccess: () => {
+      // Invalidate the conversations list so it refreshes
+      queryClient.invalidateQueries({
+        queryKey: aiConversationsQueryKey(workspaceSlug),
+      });
       irminAlert('success', 'Conversation deleted successfully');
     },
   });

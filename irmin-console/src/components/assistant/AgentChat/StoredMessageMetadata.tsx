@@ -120,10 +120,15 @@ export const StoredMessageMetadata = ({
   }
 
   if (messageType === 'tool_result') {
+    // Get the tool name from the message data (LangChain stores it in data.name)
+    const data = message.data as unknown as Record<string, unknown>;
+    const toolName =
+      (data?.name as string) || (data?.tool_name as string) || 'result';
+
     return (
       <div className='mt-4'>
         <Tool defaultOpen={false}>
-          <ToolHeader type='tool-result' state='output-available' />
+          <ToolHeader type={`tool-${toolName}`} state='output-available' />
           <ToolContent>
             <ToolOutput output={content} errorText={undefined} />
           </ToolContent>

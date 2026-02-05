@@ -1,3 +1,7 @@
+import { useMemo } from 'react';
+
+import type { ToolUIPart } from 'ai';
+
 import {
   Tool,
   ToolContent,
@@ -9,9 +13,18 @@ import {
 import { useLocale } from '@/context/LocaleContext';
 
 import type { ServerStreamEvent } from './types';
+import { shouldHideTool } from './utils';
 
 interface StreamingMetadataProps {
   streamingParts: ServerStreamEvent[];
+}
+
+interface ConsolidatedToolCall {
+  toolName: string;
+  toolCallId: string;
+  state: ToolUIPart['state'];
+  input?: ToolUIPart['input'];
+  output?: string;
 }
 
 export const StreamingMetadata = ({
@@ -19,60 +32,88 @@ export const StreamingMetadata = ({
 }: StreamingMetadataProps) => {
   const { dict } = useLocale();
 
-  if (streamingParts.length === 0) {
-    return null;
-  }
+  // Consolidate tool calls by toolCallId - single entry per tool call that updates
+  const consolidatedToolCalls = useMemo(() => {
+    const toolCallsMap = new Map<string, ConsolidatedToolCall>();
 
-  // Render tool calls inline as they happen (in order)
-  const toolParts = streamingParts.filter(
-    (p) =>
-      p.type === 'tool-input-available' || p.type === 'tool-output-available'
-  );
+    for (const part of streamingParts) {
+      if (
+        part.type !== 'tool-input-available' &&
+        part.type !== 'tool-output-available'
+      ) {
+        continue;
+      }
+
+      const toolCallId = part.toolCallId || `tool-${toolCallsMap.size}`;
+      const toolName = part.toolName || '';
+
+      // Skip hidden/internal tools early
+      if (shouldHideTool(toolName)) {
+        continue;
+      }
+
+      const existing = toolCallsMap.get(toolCallId);
+
+      if (part.type === 'tool-input-available') {
+        toolCallsMap.set(toolCallId, {
+          toolName: toolName || existing?.toolName || 'unknown',
+          toolCallId,
+          state: existing?.output ? 'output-available' : 'input-available',
+          input: part.input as ToolUIPart['input'],
+          output: existing?.output,
+        });
+      } else if (part.type === 'tool-output-available') {
+        // Format output as string for display
+        const outputString =
+          typeof part.output === 'string'
+            ? part.output
+            : JSON.stringify(part.output, null, 2);
+        toolCallsMap.set(toolCallId, {
+          toolName: toolName || existing?.toolName || 'unknown',
+          toolCallId,
+          state: 'output-available',
+          input: existing?.input,
+          output: outputString,
+        });
+      }
+    }
+
+    // Filter out any remaining hidden tools (e.g., if toolName was set from existing)
+    return Array.from(toolCallsMap.values()).filter(
+      (tc) => !shouldHideTool(tc.toolName)
+    );
+  }, [streamingParts]);
 
   // Render errors only
   const errorParts = streamingParts.filter(
     (p) => p.type === 'stream-error' || p.type === 'error'
   );
 
+  if (consolidatedToolCalls.length === 0 && errorParts.length === 0) {
+    return null;
+  }
+
   return (
     <>
-      {/* Tool calls - rendered inline as they happen */}
-      {toolParts.length > 0 && (
+      {/* Tool calls - consolidated by toolCallId, single entry per call */}
+      {consolidatedToolCalls.length > 0 && (
         <div className='mt-4 space-y-2'>
-          {toolParts.map((part, index) => {
-            if (part.type === 'tool-input-available') {
-              return (
-                <Tool key={`streaming-tool-input-${index}`} defaultOpen={false}>
-                  <ToolHeader
-                    type={`tool-${part.toolName || 'unknown'}`}
-                    state='input-available'
-                  />
-                  <ToolContent>
-                    {part.input && <ToolInput input={part.input} />}
-                  </ToolContent>
-                </Tool>
-              );
-            }
-            if (part.type === 'tool-output-available') {
-              return (
-                <Tool
-                  key={`streaming-tool-output-${index}`}
-                  defaultOpen={false}
-                >
-                  <ToolHeader
-                    type={`tool-${part.toolName || part.toolCallId || 'unknown'}`}
-                    state='output-available'
-                  />
-                  <ToolContent>
-                    {part.output && (
-                      <ToolOutput output={part.output} errorText={undefined} />
-                    )}
-                  </ToolContent>
-                </Tool>
-              );
-            }
-            return null;
-          })}
+          {consolidatedToolCalls.map((toolCall) => (
+            <Tool key={toolCall.toolCallId} defaultOpen={false}>
+              <ToolHeader
+                type={`tool-${toolCall.toolName}`}
+                state={toolCall.state}
+              />
+              <ToolContent>
+                {toolCall.input !== undefined && (
+                  <ToolInput input={toolCall.input} />
+                )}
+                {toolCall.output !== undefined && (
+                  <ToolOutput output={toolCall.output} errorText={undefined} />
+                )}
+              </ToolContent>
+            </Tool>
+          ))}
         </div>
       )}
 

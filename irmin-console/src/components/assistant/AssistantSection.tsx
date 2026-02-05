@@ -31,7 +31,6 @@ import { useBaseUrl } from '@/hooks/utils';
 import type { AIConversation } from '@/types/ai/base';
 
 import { ButtonWithTooltip } from '../ui/button-with-tooltip';
-import ConversationDetails from './ConversationDetails';
 import ConversationsList from './ConversationsList';
 
 interface AssistantSectionProps {
@@ -92,7 +91,6 @@ export default function AssistantSection({
   };
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const refetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Extract context from URL params
@@ -347,7 +345,6 @@ export default function AssistantSection({
                     selectedConversation={selectedConversation}
                     onSelectConversation={handleSelectConversation}
                     onSidebarClose={() => setSidebarOpen(false)}
-                    onDetailsOpen={() => setDetailsOpen(true)}
                   />
                 </div>
               </SheetContent>
@@ -365,7 +362,6 @@ export default function AssistantSection({
               selectedConversation={selectedConversation}
               onSelectConversation={handleSelectConversation}
               onSidebarClose={() => {}}
-              onDetailsOpen={() => setDetailsOpen(true)}
             />
           </div>
 
@@ -427,16 +423,6 @@ export default function AssistantSection({
             </Card>
           </div>
         </div>
-
-        {/* Conversation Details Sheet */}
-        {selectedConversation && (
-          <ConversationDetails
-            conversation={selectedConversation}
-            open={detailsOpen}
-            onOpenChange={setDetailsOpen}
-            onCloseConversation={() => setSelectedConversationId(null)}
-          />
-        )}
       </div>
     </SafeComponent>
   );

@@ -1,9 +1,12 @@
 'use client';
 
-import { TbInfoCircle, TbMessage, TbPlus } from 'react-icons/tb';
+import { useMemo, useState } from 'react';
+
+import { TbMessageCircle, TbPlus, TbTrash } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { Input } from '@/components/ui/input';
 import ListSkeleton from '@/components/ui/loading/ListSkeleton';
 import {
   Pagination,
@@ -15,10 +18,12 @@ import {
 } from '@/components/ui/pagination';
 
 import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
 
+import { useAIConversation } from '@/hooks/api/useAIConversation';
 import { useAIConversations } from '@/hooks/api/useAIConversations';
 
-import { formatTimestamp } from '@/utils/formatTimestamp';
+import { formatRelativeTime } from '@/utils/formatTimestamp';
 import { cn } from '@/utils/tw';
 
 import type { AIConversation } from '@/types/ai/base';
@@ -27,16 +32,16 @@ interface ConversationsListProps {
   selectedConversation?: AIConversation | null;
   onSelectConversation: (conversation: AIConversation | null) => void;
   onSidebarClose: () => void;
-  onDetailsOpen: () => void;
 }
 
 export default function ConversationsList({
   selectedConversation,
   onSelectConversation,
   onSidebarClose,
-  onDetailsOpen,
 }: ConversationsListProps) {
   const { locale, dict } = useLocale();
+  const { irminConfirm } = usePopup();
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch conversations with pagination, sorted by creation date descending
   const {
@@ -67,21 +72,65 @@ export default function ConversationsList({
     }
   };
 
-  const conversations = aiConversationsQuery.data?.data || [];
+  const conversations = useMemo(
+    () => aiConversationsQuery.data?.data || [],
+    [aiConversationsQuery.data?.data]
+  );
   const isLoading = aiConversationsQuery.isLoading;
   const error = aiConversationsQuery.error;
 
+  // Filter conversations by search query
+  const filteredConversations = useMemo(() => {
+    if (!searchQuery.trim()) return conversations;
+    const query = searchQuery.toLowerCase();
+    return conversations.filter(
+      (c) =>
+        c.title?.toLowerCase().includes(query) ||
+        c.id.toLowerCase().includes(query)
+    );
+  }, [conversations, searchQuery]);
+
+  // Get the delete mutation from useAIConversation hook
+  // We use a dummy conversation ID since we only need the mutation
+  const { deleteAIConversationMutation } = useAIConversation('');
+
+  const handleDeleteConversation = async (
+    e: React.MouseEvent,
+    conversation: AIConversation
+  ) => {
+    e.stopPropagation();
+    const confirmed = await irminConfirm(
+      'warning',
+      `${dict.common.areYouSureYouWantToDelete} (${conversation.title || 'Untitled'})`
+    );
+    if (confirmed) {
+      deleteAIConversationMutation.mutate(conversation.id);
+      // If the deleted conversation was selected, clear selection
+      if (selectedConversation?.id === conversation.id) {
+        onSelectConversation(null);
+      }
+    }
+  };
+
   return (
     <div className='flex h-full flex-col bg-background'>
-      <div className='shrink-0 border-b border-border/40 p-4'>
+      <div
+        className={`flex shrink-0 flex-col gap-3 border-b border-border/40 p-4`}
+      >
         <Button
-          className='w-full justify-start gap-2'
+          className='w-full justify-center gap-2'
           variant='default'
           onClick={handleCreateConversation}
         >
           <TbPlus size={18} />
           {dict.assistant.newConversation}
         </Button>
+        <Input
+          placeholder={dict.assistant.searchConversations}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className='h-9'
+        />
       </div>
 
       <div className='flex-1 overflow-y-auto p-2'>
@@ -104,27 +153,34 @@ export default function ConversationsList({
               text-muted-foreground
             `}
           >
-            <TbMessage size={24} className='mb-2 opacity-20' />
+            <TbMessageCircle size={24} className='mb-2 opacity-20' />
             <p className='text-sm'>
               {dict.assistant.noConversations || 'No conversations yet'}
             </p>
           </div>
+        ) : filteredConversations.length === 0 ? (
+          <div
+            className={`
+              flex h-40 flex-col items-center justify-center text-center
+              text-muted-foreground
+            `}
+          >
+            <TbMessageCircle size={24} className='mb-2 opacity-20' />
+            <p className='text-sm'>{dict.assistant.noSearchResults}</p>
+          </div>
         ) : (
-          <div className='flex flex-col gap-1'>
-            {conversations.map((conversation: AIConversation) => (
+          <div className='flex flex-col gap-0.5'>
+            {filteredConversations.map((conversation: AIConversation) => (
               <div
                 key={`conversation-${conversation.id}`}
                 className={cn(
                   `
                     content-visibility-auto group flex cursor-pointer
-                    items-center justify-between gap-3 rounded-md p-3 text-sm
-                    transition-all
+                    items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm
+                    transition-colors
                   `,
                   selectedConversation?.id === conversation.id
-                    ? `
-                      bg-card text-card-foreground shadow-sm ring-1
-                      ring-border/50
-                    `
+                    ? 'bg-accent text-accent-foreground'
                     : `
                       text-muted-foreground
                       hover:bg-muted/50 hover:text-foreground
@@ -143,48 +199,56 @@ export default function ConversationsList({
                   }
                 }}
               >
-                <div className='flex min-w-0 flex-1 flex-col gap-1'>
+                <TbMessageCircle
+                  size={16}
+                  className={cn(
+                    'shrink-0',
+                    selectedConversation?.id === conversation.id
+                      ? 'text-accent-foreground/70'
+                      : 'text-muted-foreground/50'
+                  )}
+                />
+                <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
                   <span
                     className={cn(
-                      'truncate font-medium transition-colors',
+                      'truncate text-[13px] leading-tight font-medium',
                       selectedConversation?.id === conversation.id
-                        ? 'text-foreground'
+                        ? 'text-accent-foreground'
                         : `
-                          text-foreground/80
+                          text-foreground/90
                           group-hover:text-foreground
                         `
                     )}
                   >
-                    {conversation.title || 'Untitled Conversation'}
+                    {conversation.title || 'Untitled'}
                   </span>
-                  <span className='truncate text-xs opacity-70'>
-                    {formatTimestamp(conversation.createdAt, locale)}
+                  <span className='text-[11px] leading-tight opacity-60'>
+                    {formatRelativeTime(conversation.createdAt, locale)}
                   </span>
                 </div>
 
-                <Button
-                  variant='ghost'
-                  size='icon'
+                <button
+                  type='button'
                   className={cn(
                     `
-                      size-7 shrink-0 transition-opacity
-                      hover:bg-background/50
+                      flex size-5 shrink-0 items-center justify-center rounded
+                      text-muted-foreground/60 transition-all
+                      hover:bg-destructive/10 hover:text-destructive
                     `,
                     selectedConversation?.id === conversation.id
-                      ? 'opacity-100'
+                      ? `
+                        opacity-60
+                        hover:opacity-100
+                      `
                       : `
                         opacity-0
-                        group-hover:opacity-100
+                        group-hover:opacity-60 group-hover:hover:opacity-100
                       `
                   )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectConversation(conversation);
-                    onDetailsOpen();
-                  }}
+                  onClick={(e) => handleDeleteConversation(e, conversation)}
                 >
-                  <TbInfoCircle size={16} />
-                </Button>
+                  <TbTrash size={13} />
+                </button>
               </div>
             ))}
           </div>
@@ -198,6 +262,7 @@ export default function ConversationsList({
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
+                  hideLabel={true}
                   onClick={previousPage}
                   className={
                     !hasPreviousPage ? 'pointer-events-none opacity-50' : ''
@@ -235,6 +300,7 @@ export default function ConversationsList({
 
               <PaginationItem>
                 <PaginationNext
+                  hideLabel={true}
                   onClick={nextPage}
                   className={
                     !hasNextPage ? 'pointer-events-none opacity-50' : ''

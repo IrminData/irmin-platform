@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import type { StoredMessage } from '@langchain/core/messages';
 
 import {
@@ -28,6 +30,7 @@ import {
   isStoredToolCall,
   isStoredToolCallsArray,
   isThinkingStepsArray,
+  shouldHideTool,
 } from './utils';
 
 interface MessageMetadataProps {
@@ -47,6 +50,81 @@ export const MessageMetadata = ({
 
   const role = getMessageRole(message);
   const metadata = getMessageMetadata(message);
+
+  // Consolidate and filter tool calls - must be before early return
+  const consolidatedToolCalls = useMemo(() => {
+    if (!metadata) return [];
+
+    if (
+      hasStoredToolMessages ||
+      ((!isStoredToolCallsArray(metadata.toolCalls) ||
+        metadata.toolCalls.length === 0) &&
+        (!isServerToolEventsArray(metadata.toolCalls) ||
+          metadata.toolCalls.length === 0))
+    ) {
+      return [];
+    }
+
+    // For server tool events, consolidate by toolCallId
+    if (isServerToolEventsArray(metadata.toolCalls)) {
+      const toolCallsMap = new Map<
+        string,
+        {
+          toolCallId: string;
+          toolName: string;
+          state: 'input-available' | 'output-available';
+          input?: Record<string, unknown>;
+          output?: string;
+        }
+      >();
+
+      for (const event of metadata.toolCalls) {
+        if (!isServerToolEvent(event)) continue;
+
+        const toolCallId = event.toolCallId || `tool-${toolCallsMap.size}`;
+        const toolName = event.toolName || '';
+
+        // Skip hidden tools
+        if (shouldHideTool(toolName)) continue;
+
+        const existing = toolCallsMap.get(toolCallId);
+
+        if (event.type === 'tool-input-available') {
+          toolCallsMap.set(toolCallId, {
+            toolCallId,
+            toolName: toolName || existing?.toolName || 'unknown',
+            state: existing?.output ? 'output-available' : 'input-available',
+            input: event.input as Record<string, unknown>,
+            output: existing?.output,
+          });
+        } else if (event.type === 'tool-output-available') {
+          toolCallsMap.set(toolCallId, {
+            toolCallId,
+            toolName: toolName || existing?.toolName || 'unknown',
+            state: 'output-available',
+            input: existing?.input,
+            output:
+              typeof event.output === 'string'
+                ? event.output
+                : JSON.stringify(event.output, null, 2),
+          });
+        }
+      }
+
+      return Array.from(toolCallsMap.values()).filter(
+        (tc) => !shouldHideTool(tc.toolName)
+      );
+    }
+
+    // For stored tool calls, just filter
+    if (isStoredToolCallsArray(metadata.toolCalls)) {
+      return metadata.toolCalls.filter(
+        (tc) => isStoredToolCall(tc) && !shouldHideTool(tc.name)
+      );
+    }
+
+    return [];
+  }, [metadata, hasStoredToolMessages]);
 
   if (role !== 'assistant' || !metadata) {
     return null;
@@ -76,19 +154,39 @@ export const MessageMetadata = ({
   };
 
   const renderToolCalls = () => {
-    if (
-      hasStoredToolMessages ||
-      ((!isStoredToolCallsArray(metadata.toolCalls) ||
-        metadata.toolCalls.length === 0) &&
-        (!isServerToolEventsArray(metadata.toolCalls) ||
-          metadata.toolCalls.length === 0))
-    ) {
+    if (consolidatedToolCalls.length === 0) {
       return null;
     }
 
     return (
       <div className='mt-4 space-y-2'>
-        {metadata.toolCalls.map((toolCall, index) => {
+        {consolidatedToolCalls.map((toolCall, index) => {
+          // Check if it's a consolidated server tool event
+          if ('toolCallId' in toolCall && 'toolName' in toolCall) {
+            const tc = toolCall as {
+              toolCallId: string;
+              toolName: string;
+              state: 'input-available' | 'output-available';
+              input?: Record<string, unknown>;
+              output?: string;
+            };
+            return (
+              <Tool
+                key={`tool-${message.data?.id || message.type}-${tc.toolCallId}-${index}`}
+                defaultOpen={false}
+              >
+                <ToolHeader type={`tool-${tc.toolName}`} state={tc.state} />
+                <ToolContent>
+                  {tc.input && <ToolInput input={tc.input} />}
+                  {tc.output && (
+                    <ToolOutput output={tc.output} errorText={undefined} />
+                  )}
+                </ToolContent>
+              </Tool>
+            );
+          }
+
+          // Stored tool call format
           if (isStoredToolCall(toolCall)) {
             return (
               <Tool
@@ -101,33 +199,6 @@ export const MessageMetadata = ({
                 />
                 <ToolContent>
                   {toolCall.args && <ToolInput input={toolCall.args} />}
-                  {toolCall.output && (
-                    <ToolOutput
-                      output={toolCall.output}
-                      errorText={undefined}
-                    />
-                  )}
-                </ToolContent>
-              </Tool>
-            );
-          }
-
-          if (isServerToolEvent(toolCall)) {
-            return (
-              <Tool
-                key={`tool-${message.data?.id || message.type}-${toolCall.toolCallId}-${index}`}
-                defaultOpen={false}
-              >
-                <ToolHeader
-                  type={`tool-${toolCall.toolName || toolCall.toolCallId || 'unknown'}`}
-                  state={
-                    toolCall.type === 'tool-output-available'
-                      ? 'output-available'
-                      : 'input-available'
-                  }
-                />
-                <ToolContent>
-                  {toolCall.input && <ToolInput input={toolCall.input} />}
                   {toolCall.output && (
                     <ToolOutput
                       output={toolCall.output}
@@ -161,8 +232,8 @@ export const MessageMetadata = ({
           <div className='flex items-center gap-2'>
             <div
               className={`
-                flex size-6 items-center justify-center rounded-full
-                bg-blue-500 text-xs font-medium text-white
+                flex size-6 items-center justify-center rounded-full bg-blue-500
+                text-xs font-medium text-white
               `}
             >
               {metadata.iterations}

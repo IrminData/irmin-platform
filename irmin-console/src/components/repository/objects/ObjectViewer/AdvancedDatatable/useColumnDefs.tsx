@@ -8,6 +8,8 @@ import type {
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { formatTimestamp } from '@/utils/formatTimestamp';
+
 import type { TableRow } from '@/types/internal/Datatable';
 
 import type { ColumnType } from './types';
@@ -77,7 +79,7 @@ export const useColumnDefs = (items: TableRow[]) => {
             filter: 'agDateColumnFilter',
             valueFormatter: (params: ValueFormatterParams) => {
               if (!params.value) return '';
-              return new Date(params.value).toLocaleString(locale);
+              return formatTimestamp(params.value, locale);
             },
           };
         }

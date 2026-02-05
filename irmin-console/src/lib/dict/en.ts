@@ -1414,6 +1414,8 @@ const en = {
     // Conversations List
     newConversation: 'New Conversation',
     noConversations: 'No conversations yet',
+    searchConversations: 'Search conversations...',
+    noSearchResults: 'No conversations found',
 
     // Conversation Details
     created: 'Created',

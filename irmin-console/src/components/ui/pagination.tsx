@@ -37,6 +37,7 @@ type PaginationLinkProps = Pick<ComponentProps<typeof Button>, 'size'> &
   ComponentProps<'a'> & {
     isActive?: boolean;
     label?: string;
+    hideLabel?: boolean;
   };
 
 function PaginationLink({
@@ -75,6 +76,7 @@ function PaginationLink({
 function PaginationPrevious({
   className,
   label,
+  hideLabel,
   ...props
 }: ComponentProps<typeof PaginationLink>) {
   return (
@@ -91,14 +93,16 @@ function PaginationPrevious({
       {...props}
     >
       <TbChevronLeft />
-      <span
-        className={`
-          hidden
-          sm:block
-        `}
-      >
-        {label ?? 'Previous'}
-      </span>
+      {!hideLabel && (
+        <span
+          className={`
+            hidden
+            sm:block
+          `}
+        >
+          {label ?? 'Previous'}
+        </span>
+      )}
     </PaginationLink>
   );
 }
@@ -106,6 +110,7 @@ function PaginationPrevious({
 function PaginationNext({
   className,
   label,
+  hideLabel,
   ...props
 }: ComponentProps<typeof PaginationLink>) {
   return (
@@ -121,14 +126,16 @@ function PaginationNext({
       )}
       {...props}
     >
-      <span
-        className={`
-          hidden
-          sm:block
-        `}
-      >
-        {label ?? 'Next'}
-      </span>
+      {!hideLabel && (
+        <span
+          className={`
+            hidden
+            sm:block
+          `}
+        >
+          {label ?? 'Next'}
+        </span>
+      )}
       <TbChevronRight />
     </PaginationLink>
   );

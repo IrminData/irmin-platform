@@ -72,6 +72,7 @@ export interface LangChainStreamEvent {
   event:
     | 'on_chain_start'
     | 'on_chain_end'
+    | 'on_chain_stream'
     | 'on_chat_model_start'
     | 'on_chat_model_stream'
     | 'on_chat_model_end'
@@ -110,6 +111,7 @@ export function extractTextFromContent(
 }
 
 // Helper function to extract thinking blocks from content
+// Handles multiple formats: LangChain 'thinking' type, Anthropic signature blocks, etc.
 export function extractThinkingFromContent(
   content: ContentBlock[] | string | undefined
 ): string[] {
@@ -120,10 +122,24 @@ export function extractThinkingFromContent(
   }
 
   if (Array.isArray(content)) {
-    return content
-      .filter((block) => block.type === 'thinking' && block.thinking)
-      .map((block) => block.thinking!)
-      .filter(Boolean);
+    const thinkingBlocks: string[] = [];
+
+    for (const block of content) {
+      // LangChain format: type: 'thinking' with thinking property
+      if (block.type === 'thinking' && block.thinking) {
+        thinkingBlocks.push(block.thinking);
+        continue;
+      }
+
+      // Anthropic format: may use 'signature' or other types
+      // Also check for any block with a 'thinking' property regardless of type
+      const anyBlock = block as unknown as Record<string, unknown>;
+      if (anyBlock.thinking && typeof anyBlock.thinking === 'string') {
+        thinkingBlocks.push(anyBlock.thinking);
+      }
+    }
+
+    return thinkingBlocks.filter(Boolean);
   }
 
   return [];

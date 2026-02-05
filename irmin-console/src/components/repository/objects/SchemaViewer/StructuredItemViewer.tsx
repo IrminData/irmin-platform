@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLocale } from '@/context/LocaleContext';
 
 import { formatFileSizeForUI } from '@/utils/formatFileSizeForUI';
+import { formatTimestamp } from '@/utils/formatTimestamp';
 
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
 
@@ -87,7 +88,7 @@ export function StructuredItemViewer({
                 `}
               >
                 {dict.common.lastModified}:{' '}
-                {new Date(item.last_modified).toLocaleDateString(locale)}
+                {formatTimestamp(item.last_modified, locale)}
               </span>
             )}
           </div>

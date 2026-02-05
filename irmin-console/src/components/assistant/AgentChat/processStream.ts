@@ -110,6 +110,7 @@ export const processStream = async (
 
           // Handle LangChain streaming events
           const langChainEvent = parsed as LangChainStreamEvent;
+
           switch (langChainEvent.event) {
             case 'on_chat_model_stream': {
               // Extract text content from the chunk
@@ -215,6 +216,8 @@ export const processStream = async (
               // Tool execution completed
               const toolOutput = langChainEvent.data.output;
               const runId = langChainEvent.run_id;
+              const toolName = langChainEvent.name;
+
               if (runId && toolOutput !== undefined) {
                 const outputString =
                   typeof toolOutput === 'string'
@@ -229,6 +232,7 @@ export const processStream = async (
                   parts.push({
                     type: 'tool-output-available',
                     toolCallId: runId,
+                    toolName: toolName || toolCalls.get(runId)?.name,
                     output: outputString,
                   });
                   onPartsUpdate?.([...parts]);
@@ -244,11 +248,13 @@ export const processStream = async (
 
             case 'on_chain_start':
             case 'on_chain_end':
+            case 'on_chain_stream':
             case 'on_chat_model_start':
               // These events don't need specific handling for UI rendering
               break;
 
             default:
+              // Unhandled events are ignored
               break;
           }
         } catch (error) {

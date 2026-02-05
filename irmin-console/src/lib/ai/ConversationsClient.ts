@@ -144,9 +144,13 @@ export class ConversationsClient extends BaseClient {
   }
 
   async deleteConversation(id: string): Promise<void> {
+    // Don't include Content-Type for DELETE requests with no body
     const response = await fetch(`${this.baseUrl}/api/conversations/${id}`, {
       method: 'DELETE',
-      headers: this.getHeaders(),
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        'X-Workspace-Slug': this.workspaceSlug,
+      },
     });
 
     return this.handleDeleteResponse(response);

@@ -24,6 +24,8 @@ import { usePopup } from '@/context/PopupContext';
 
 import { useCredentials } from '@/hooks/api';
 
+import { formatTimestamp } from '@/utils/formatTimestamp';
+
 import APITokenDisplay from './APITokenDisplay';
 import CreateTokenModalContent from './CreateTokenModalContent';
 
@@ -180,7 +182,7 @@ export default function TokensSection() {
                     dark:text-gray-400
                   `}
                 >
-                  {new Date(token.expiry).toLocaleDateString(locale)}
+                  {formatTimestamp(token.expiry, locale)}
                 </TableCell>
                 <TableCell className='px-4 py-2 text-right'>
                   <div

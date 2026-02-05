@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { formatTimestamp } from '@/utils/formatTimestamp';
+
 import type { AIApplication } from '@/types/core/AIApplication';
 
 interface AIApplicationCardProps {
@@ -76,9 +78,7 @@ export default function AIApplicationCard({
             `}
           >
             <span>Owner: {aiApplication.owner.first_name}</span>
-            <span>
-              {new Date(aiApplication.updated_at).toLocaleDateString()}
-            </span>
+            <span>{formatTimestamp(aiApplication.updated_at, locale)}</span>
           </div>
         </CardContent>
       </Card>

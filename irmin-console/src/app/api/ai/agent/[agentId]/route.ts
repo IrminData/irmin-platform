@@ -8,6 +8,10 @@ import { AIAgentExecuteRequestSchema } from '@/types/ai/requests';
 
 import { resolveToken } from '../../utils/resolveToken';
 
+// Configure for streaming - allow longer execution time
+export const maxDuration = 300; // 5 minutes
+export const dynamic = 'force-dynamic';
+
 const AgentIdParamsSchema = z.object({
   agentId: z.string().min(1, 'agentId is required'),
 });
@@ -90,17 +94,43 @@ export async function POST(req: NextRequest, context: RouteContext) {
         executeRequest
       );
 
-      // Create a ReadableStream response
-      const response = new NextResponse(stream, {
+      // Create a pass-through stream to ensure proper flushing
+      const { readable, writable } = new TransformStream();
+
+      // Pipe the source stream to the writable side
+      (async () => {
+        const reader = stream.getReader();
+        const writer = writable.getWriter();
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              await writer.close();
+              break;
+            }
+            await writer.write(value);
+          }
+        } catch (error) {
+          console.error('Stream pipe error:', error);
+          // Cancel the source stream to stop the upstream AI service
+          await reader.cancel();
+          await writer.abort(
+            error instanceof Error ? error : new Error('Stream error')
+          );
+        }
+      })();
+
+      // Return the readable side as the response
+      return new Response(readable, {
         headers: {
           'Content-Type': 'application/x-ndjson',
-          'Cache-Control': 'no-cache',
+          'Cache-Control': 'no-cache, no-transform',
           Connection: 'keep-alive',
+          'Transfer-Encoding': 'chunked',
+          'X-Accel-Buffering': 'no',
           ...(conversationId && { 'X-Conversation-Id': conversationId }),
         },
       });
-
-      return response;
     }
 
     // Otherwise, use non-streaming endpoint

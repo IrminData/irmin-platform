@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { formatTimestamp } from '@/utils/formatTimestamp';
+
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
 
 // eslint-disable-next-line import-x/no-cycle
@@ -84,7 +86,7 @@ export function GroupItemViewer({
                 `}
               >
                 {dict.common.lastModified}:{' '}
-                {new Date(item.last_modified).toLocaleDateString(locale)}
+                {formatTimestamp(item.last_modified, locale)}
               </span>
             )}
           </div>

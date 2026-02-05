@@ -37,6 +37,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { useAIAgent } from '@/hooks/api/useAIAgent';
 import { useAIConversation } from '@/hooks/api/useAIConversation';
 
+import { ConsolidatedToolMessages } from './ConsolidatedToolMessages';
 import { MessageMetadata } from './MessageMetadata';
 import { processStream } from './processStream';
 import {
@@ -54,7 +55,7 @@ import type {
 } from './types';
 import { useMessageActions } from './useMessageActions';
 import { useStreamingState } from './useStreamingState';
-import { renderMessageContent } from './utils';
+import { renderMessageContent, shouldHideTool } from './utils';
 
 // Helper to create a StoredMessage from streaming data
 const createAssistantMessage = (
@@ -63,10 +64,17 @@ const createAssistantMessage = (
   agentId: string,
   messageId?: string
 ): StoredMessage => {
-  const toolCalls = parts.filter(
-    (p) =>
-      p.type === 'tool-input-available' || p.type === 'tool-output-available'
-  );
+  // Filter out hidden/internal tools when storing
+  const toolCalls = parts.filter((p) => {
+    if (
+      p.type !== 'tool-input-available' &&
+      p.type !== 'tool-output-available'
+    ) {
+      return false;
+    }
+    const toolName = (p as { toolName?: string }).toolName;
+    return !shouldHideTool(toolName);
+  });
   const thinkingSteps = parts
     .filter((p) => p.type === 'reasoning-end')
     .map((p) => (p as ServerReasoningEvent).delta || '');
@@ -136,67 +144,32 @@ const AgentChat = ({
     return aiConversationMessagesQuery.data;
   }, [aiConversationMessagesQuery.data, currentConversationId]);
 
-  // Group related messages (main text + reasoning + tool_call + tool_result) into single displays
+  // Group all assistant messages, tool_calls, and tool_results between user messages together
+  // This ensures multi-turn agent interactions (thinking → tool call → result → response) appear in one box
   const groupedMessages = useMemo(() => {
     const groups: StoredMessage[][] = [];
-    let currentGroup: StoredMessage[] = [];
-    let lastAssistantMessage: StoredMessage | null = null;
+    let currentAssistantGroup: StoredMessage[] = [];
 
     for (const message of localMessages) {
-      const messageType = getMessageType(message);
       const role = getMessageRole(message);
 
-      // If this is a reasoning, tool_call, or tool_result message, add to current group
-      if (
-        messageType === 'reasoning' ||
-        messageType === 'tool_call' ||
-        messageType === 'tool_result'
-      ) {
-        currentGroup.push(message);
+      if (role === 'user') {
+        // Finalize any pending assistant group
+        if (currentAssistantGroup.length > 0) {
+          groups.push([...currentAssistantGroup]);
+          currentAssistantGroup = [];
+        }
+        // Add user message as its own group
+        groups.push([message]);
       } else {
-        // If we have a current group, finalize it by attaching to the last assistant message
-        if (currentGroup.length > 0) {
-          if (lastAssistantMessage) {
-            // Add the last assistant message to the beginning of the current group
-            currentGroup.unshift(lastAssistantMessage);
-            groups.push([...currentGroup]);
-            lastAssistantMessage = null;
-          } else {
-            // If no assistant message to attach to, add the group as is
-            groups.push([...currentGroup]);
-          }
-          currentGroup = [];
-        }
-
-        // Handle the current message
-        if (role === 'assistant' && messageType === 'text') {
-          // If we already have a lastAssistantMessage, add it to groups first
-          if (lastAssistantMessage) {
-            groups.push([lastAssistantMessage]);
-          }
-          // Store this assistant message to potentially attach tool calls to it
-          lastAssistantMessage = message;
-        } else {
-          // If this is a user message or other type, add it as its own group
-          if (lastAssistantMessage) {
-            groups.push([lastAssistantMessage]);
-            lastAssistantMessage = null;
-          }
-          groups.push([message]);
-        }
+        // Assistant messages, tool_calls, tool_results, reasoning - all go in the same group
+        currentAssistantGroup.push(message);
       }
     }
 
-    // Handle remaining messages
-    if (currentGroup.length > 0) {
-      if (lastAssistantMessage) {
-        currentGroup.unshift(lastAssistantMessage);
-        groups.push([...currentGroup]);
-      } else {
-        groups.push([...currentGroup]);
-      }
-    } else if (lastAssistantMessage) {
-      groups.push([lastAssistantMessage]);
+    // Handle remaining assistant messages
+    if (currentAssistantGroup.length > 0) {
+      groups.push([...currentAssistantGroup]);
     }
 
     return groups;
@@ -460,68 +433,58 @@ const AgentChat = ({
               }
 
               // If this is a group of related messages, render them together
+              // Groups can contain multiple text messages (initial thought + final response)
               const firstMessage = messageGroup[0];
               const firstMessageId = getMessageId(firstMessage);
-              const firstMessageRole = getMessageRole(firstMessage);
-              const mainTextMessage = messageGroup.find(
+
+              // Separate text messages from tool/reasoning messages
+              const textMessages = messageGroup.filter(
                 (m) => getMessageType(m) === 'text'
               );
-              const otherMessages = messageGroup.filter(
+              const toolAndReasoningMessages = messageGroup.filter(
                 (m) => getMessageType(m) !== 'text'
               );
 
+              // Combine all text content for the final display
+              const allTextContent = textMessages
+                .map((m) => getMessageContent(m))
+                .filter((c) => c.trim())
+                .join('\n\n');
+
               return (
-                <Message
-                  key={`group-${firstMessageId}`}
-                  from={firstMessageRole}
-                >
+                <Message key={`group-${firstMessageId}`} from='assistant'>
                   <MessageContent>
-                    {/* Render main text message content if it exists */}
-                    {mainTextMessage && (
-                      <>
-                        {/* Render thinking BEFORE content */}
-                        {getMessageRole(mainTextMessage) === 'assistant' && (
-                          <MessageMetadata
-                            message={mainTextMessage}
-                            agentId={agentId}
-                            section='thinking'
-                          />
-                        )}
-
-                        {renderMessageContent(
-                          getMessageContent(mainTextMessage),
-                          getMessageType(mainTextMessage)
-                        )}
-
-                        {/* Render tools and iterations AFTER content */}
-                        {getMessageRole(mainTextMessage) === 'assistant' && (
-                          <MessageMetadata
-                            message={mainTextMessage}
-                            agentId={agentId}
-                            hasStoredToolMessages={otherMessages.some(
-                              (m) =>
-                                getMessageType(m) === 'tool_call' ||
-                                getMessageType(m) === 'tool_result'
-                            )}
-                            section='tools'
-                          />
-                        )}
-
-                        {getMessageRole(mainTextMessage) === 'assistant' &&
-                          renderMessageActions(
-                            getMessageId(mainTextMessage),
-                            getMessageContent(mainTextMessage)
-                          )}
-                      </>
-                    )}
-
-                    {/* Render other messages (reasoning, tool calls, tool results) */}
-                    {otherMessages.map((message: StoredMessage) => (
-                      <StoredMessageMetadata
-                        key={`${getMessageId(message)}-${getMessageType(message)}`}
-                        message={message}
+                    {/* Render thinking from all text messages */}
+                    {textMessages.map((msg, idx) => (
+                      <MessageMetadata
+                        key={`thinking-${getMessageId(msg)}-${idx}`}
+                        message={msg}
+                        agentId={agentId}
+                        section='thinking'
                       />
                     ))}
+
+                    {/* Render all text message content */}
+                    {textMessages.map((msg, idx) => {
+                      const content = getMessageContent(msg);
+                      if (!content.trim()) return null;
+                      return (
+                        <div key={`text-${getMessageId(msg)}-${idx}`}>
+                          {renderMessageContent(content, 'text')}
+                        </div>
+                      );
+                    })}
+
+                    {/* Render tool calls and reasoning at the bottom (matching streaming behavior) */}
+                    <ConsolidatedToolMessages messages={toolAndReasoningMessages} />
+
+                    {/* Actions for the combined message */}
+                    {renderMessageActions(
+                      getMessageId(
+                        textMessages[textMessages.length - 1] || firstMessage
+                      ),
+                      allTextContent
+                    )}
                   </MessageContent>
                 </Message>
               );

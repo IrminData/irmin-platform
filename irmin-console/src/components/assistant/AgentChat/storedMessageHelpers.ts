@@ -90,10 +90,14 @@ export function getMessageId(message: StoredMessage): string {
 export function getMessageMetadata(
   message: StoredMessage
 ): Record<string, unknown> {
-  const responseMetadata = message.data?.response_metadata || {};
+  const responseMetadata =
+    (message.data?.response_metadata as Record<string, unknown>) || {};
   const metadata: Record<string, unknown> = { ...responseMetadata };
 
-  // Extract thinking blocks if they exist in content
+  // Extract thinking blocks from multiple possible locations:
+  // 1. From content array (LangChain content blocks with type: 'thinking')
+  // 2. From response_metadata.thinkingSteps (our streaming format)
+  // 3. From response_metadata.thinking (alternative format)
   const rawContent = message.data?.content;
   if (Array.isArray(rawContent)) {
     const thinkingBlocks = extractThinkingFromContent(rawContent);
@@ -102,8 +106,20 @@ export function getMessageMetadata(
     }
   }
 
+  // Also check response_metadata for thinking (may already be there from streaming)
+  if (!metadata.thinkingSteps && responseMetadata.thinking) {
+    const thinking = responseMetadata.thinking;
+    if (typeof thinking === 'string') {
+      metadata.thinkingSteps = [thinking];
+    } else if (Array.isArray(thinking)) {
+      metadata.thinkingSteps = thinking;
+    }
+  }
+
   // Extract tool calls if they exist
-  const additionalKwargs = message.data?.additional_kwargs;
+  const additionalKwargs = message.data?.additional_kwargs as
+    | Record<string, unknown>
+    | undefined;
   if (
     additionalKwargs?.tool_calls &&
     Array.isArray(additionalKwargs.tool_calls)

@@ -1399,6 +1399,8 @@ const fi = {
     // Conversations List
     newConversation: 'Uusi keskustelu',
     noConversations: 'Ei vielä keskusteluja',
+    searchConversations: 'Hae keskusteluja...',
+    noSearchResults: 'Keskusteluja ei löytynyt',
 
     // Conversation Details
     created: 'Luotu',

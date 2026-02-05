@@ -8,7 +8,37 @@ import { Response } from '@/components/ui/ai-elements/response';
 
 import type { ServerToolEvent, StoredToolCall } from './types';
 
+// ============================================================================
+// Tool Filtering Utilities (centralized to avoid duplication)
+// ============================================================================
+
+/** Internal/middleware tools that shouldn't be shown to users */
+const HIDDEN_TOOLS = new Set(['extract', '__extract', 'tool_selector']);
+
+/** Check if a string looks like a UUID (internal ID, not a real tool name) */
+const isUUID = (str: string): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
+/**
+ * Check if a tool should be hidden from display.
+ * Filters out internal middleware tools, UUIDs, and placeholder names.
+ */
+export const shouldHideTool = (toolName: string | undefined): boolean => {
+  if (!toolName || toolName === 'unknown' || toolName === 'result') {
+    return true;
+  }
+  if (HIDDEN_TOOLS.has(toolName.toLowerCase())) {
+    return true;
+  }
+  if (isUUID(toolName)) {
+    return true;
+  }
+  return false;
+};
+
+// ============================================================================
 // Type guards for message metadata (handles both stored and streaming formats)
+// ============================================================================
 export const isStoredToolCall = (item: unknown): item is StoredToolCall => {
   return typeof item === 'object' && item !== null && 'name' in item;
 };
