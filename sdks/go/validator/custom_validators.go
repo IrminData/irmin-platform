@@ -436,6 +436,52 @@ func validateImageURL(fl validator.FieldLevel) bool {
 	return true
 }
 
+// validateToolName validates tool name format.
+// Tool names must:
+// - Be at least 1 character
+// - Contain only lowercase alphanumeric characters and underscores
+// - Start with a lowercase letter.
+func validateToolName(fl validator.FieldLevel) bool {
+	field := fl.Field()
+
+	// Handle nil pointers
+	if field.Kind() == reflect.Ptr && field.IsNil() {
+		return true
+	}
+
+	// Get the actual string value
+	var name string
+	if field.Kind() == reflect.Ptr {
+		name = field.Elem().String()
+	} else {
+		name = field.String()
+	}
+
+	// Must be at least 1 character
+	if len(name) == 0 {
+		return false
+	}
+
+	// Must start with a lowercase letter
+	first := name[0]
+	if first < 'a' || first > 'z' {
+		return false
+	}
+
+	// Check that the name contains only lowercase alphanumeric characters and underscores
+	for _, char := range name {
+		isLowerAlpha := char >= 'a' && char <= 'z'
+		isDigit := char >= '0' && char <= '9'
+		isUnderscore := char == '_'
+
+		if !isLowerAlpha && !isDigit && !isUnderscore {
+			return false
+		}
+	}
+
+	return true
+}
+
 // validateScheduleTrigger validates schedule trigger configuration.
 func validateScheduleTrigger(fl validator.FieldLevel) bool {
 	// Get the parent struct (ScheduleTrigger) from the Type field

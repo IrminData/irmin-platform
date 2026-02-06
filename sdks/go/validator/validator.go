@@ -128,6 +128,9 @@ func registerValidations(v *validator.Validate, validator *Validator) {
 	if err := v.RegisterValidation("validphone", validatePhone); err != nil {
 		panic(err)
 	}
+	if err := v.RegisterValidation("validtoolname", validateToolName); err != nil {
+		panic(err)
+	}
 
 	// Register custom pipeline stage validation
 	if err := v.RegisterValidation("validpipelinestage", validator.validatePipelineStage); err != nil {
@@ -495,6 +498,11 @@ func (v *Validator) getCustomValidationMessage(field, tag string) (string, bool)
 		return fmt.Sprintf("%s must be a valid phone number", field), true
 	case "validimageurl":
 		return fmt.Sprintf("%s must be a valid image URL", field), true
+	case "validtoolname":
+		return fmt.Sprintf(
+			"%s must contain only lowercase letters, numbers, and underscores, and start with a letter",
+			field,
+		), true
 	case "validpipelinestage":
 		return fmt.Sprintf("%s must have valid configuration for its type", field), true
 	case "validworkflowable":
