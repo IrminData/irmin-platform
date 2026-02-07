@@ -172,6 +172,8 @@ type PipelineStage struct {
 	EmbeddingsQuery      *string                  `json:"embeddings_query,omitempty"       validate:"omitempty"                                                    example:"What is machine learning?"`
 	EmbeddingsTopK       *int                     `json:"embeddings_top_k,omitempty"       validate:"omitempty,min=1"                                              example:"10"`
 	EmbeddingsFilter     map[string]string        `json:"embeddings_filter,omitempty"      validate:"omitempty"`
+	EmbeddingsMetadata   map[string]string        `json:"embeddings_metadata,omitempty"    validate:"omitempty"`
+	EmbeddingsPriority   *float64                 `json:"embeddings_priority,omitempty"    validate:"omitempty,min=0,max=1"                                            example:"0.8"`
 
 	// Patch stage specific
 	PatchDirection        *PatchDirection `json:"patch_direction,omitempty"         validate:"omitempty,oneof=to_connection to_repository,required_if=Type patch" example:"to_connection"`
