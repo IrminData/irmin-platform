@@ -4,10 +4,19 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 
-import { TbFile, TbLoader2, TbSearch, TbVectorTriangle } from 'react-icons/tb';
+import {
+  TbEdit,
+  TbFile,
+  TbLoader2,
+  TbSearch,
+  TbStar,
+  TbTag,
+  TbVectorTriangle,
+} from 'react-icons/tb';
 
 import IrminCore from '@/lib/core';
 
+import EmbeddingEditSheet from '@/components/repository/objects/ObjectViewer/EmbeddingEditSheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,10 +55,11 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
   const { workspaceSlug } = useWorkspaceContext();
   const { getToken } = useIAM();
 
-  const { searchEmbeddingsMutation } = useEmbeddings(
-    repository.slug,
-    currentRef
-  );
+  const {
+    searchEmbeddingsMutation,
+    updateEmbeddingMetadataMutation,
+    updateEmbeddingPriorityMutation,
+  } = useEmbeddings(repository.slug, currentRef);
 
   // Fetch embedding info directly using useQuery
   const embeddingInfoQuery = useQuery({
@@ -91,6 +101,7 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
     topK: number;
     results: EmbeddingSearchResult[];
     searchContext: { objectPath: string; query: string; ref: string } | null;
+    editingEmbedding: EmbeddingSearchResult | null;
   };
 
   type SearchAction =
@@ -99,8 +110,17 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
     | { type: 'SET_TOP_K'; topK: number }
     | { type: 'SET_RESULTS'; results: EmbeddingSearchResult[] }
     | {
+        type: 'UPDATE_RESULT';
+        id: string;
+        patch: Partial<EmbeddingSearchResult>;
+      }
+    | {
         type: 'SET_SEARCH_CONTEXT';
         context: { objectPath: string; query: string; ref: string } | null;
+      }
+    | {
+        type: 'SET_EDITING_EMBEDDING';
+        embedding: EmbeddingSearchResult | null;
       };
 
   const searchStateReducer = (
@@ -114,6 +134,7 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
           topK: 10,
           results: [],
           searchContext: null,
+          editingEmbedding: null,
         };
       case 'SET_QUERY':
         return { ...state, query: action.query };
@@ -121,8 +142,17 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
         return { ...state, topK: action.topK };
       case 'SET_RESULTS':
         return { ...state, results: action.results };
+      case 'UPDATE_RESULT':
+        return {
+          ...state,
+          results: state.results.map((r) =>
+            r.id === action.id ? { ...r, ...action.patch } : r
+          ),
+        };
       case 'SET_SEARCH_CONTEXT':
         return { ...state, searchContext: action.context };
+      case 'SET_EDITING_EMBEDDING':
+        return { ...state, editingEmbedding: action.embedding };
       default:
         return state;
     }
@@ -133,6 +163,7 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
     topK: 10,
     results: [],
     searchContext: null,
+    editingEmbedding: null,
   });
 
   // Track the latest view context so async search results can't apply stale updates.
@@ -219,6 +250,50 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   };
 
+  // Handler for saving metadata
+  const handleSaveMetadata = useCallback(
+    async (embeddingId: string, metadata: Record<string, string>) => {
+      await updateEmbeddingMetadataMutation.mutateAsync({
+        embeddingPath: object.path,
+        updates: { [embeddingId]: metadata },
+        ref: currentRef,
+      });
+      // Update the single result in local state via reducer so we always
+      // operate on the latest results array, avoiding race conditions with
+      // concurrent searches.
+      dispatchSearchState({
+        type: 'UPDATE_RESULT',
+        id: embeddingId,
+        patch: { metadata },
+      });
+    },
+    [object.path, currentRef, updateEmbeddingMetadataMutation]
+  );
+
+  // Handler for saving priority
+  const handleSavePriority = useCallback(
+    async (embeddingId: string, priority: number) => {
+      await updateEmbeddingPriorityMutation.mutateAsync({
+        embeddingPath: object.path,
+        updates: { [embeddingId]: priority },
+        ref: currentRef,
+      });
+      // Update the single result in local state via reducer so we always
+      // operate on the latest results array, avoiding race conditions with
+      // concurrent searches.
+      dispatchSearchState({
+        type: 'UPDATE_RESULT',
+        id: embeddingId,
+        patch: { priority },
+      });
+    },
+    [object.path, currentRef, updateEmbeddingPriorityMutation]
+  );
+
+  const isSavingEmbedding =
+    updateEmbeddingMetadataMutation.isPending ||
+    updateEmbeddingPriorityMutation.isPending;
+
   return (
     <div className='flex flex-col gap-8 p-6'>
       {/* File Info & Stats */}
@@ -254,6 +329,8 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
             <TbLoader2 className='size-4 animate-spin' />
             <span>{dict.common.loading}</span>
           </div>
+        ) : embeddingInfoQuery.isError ? (
+          <div className='text-sm text-destructive'>{dict.common.error}</div>
         ) : embeddingInfo ? (
           <div className='flex flex-wrap gap-x-12 gap-y-4 text-sm'>
             <div>
@@ -385,6 +462,13 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
                   <TableHead className='w-24 text-right'>
                     {dict.repository.objects.embeddingsChunk}
                   </TableHead>
+                  <TableHead className='w-20'>
+                    {dict.repository.objects.embeddingsPriority}
+                  </TableHead>
+                  <TableHead className='w-32'>
+                    {dict.repository.objects.embeddingsMetadata}
+                  </TableHead>
+                  <TableHead className='w-16'>{dict.common.actions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -421,6 +505,69 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
                         #{result.chunk_index}
                       </span>
                     </TableCell>
+                    <TableCell>
+                      {result.priority !== undefined && (
+                        <div className='flex items-center gap-1'>
+                          <TbStar
+                            className={`
+                              size-3
+                              ${
+                                result.priority >= 0.8
+                                  ? 'text-yellow-500'
+                                  : 'text-muted-foreground/50'
+                              }
+                            `}
+                          />
+                          <span
+                            className={`font-mono text-xs text-muted-foreground`}
+                          >
+                            {result.priority.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {result.metadata &&
+                        Object.keys(result.metadata).length > 0 && (
+                          <div className='flex flex-wrap gap-1'>
+                            {Object.entries(result.metadata)
+                              .slice(0, 2)
+                              .map(([key, val]) => (
+                                <Badge
+                                  key={key}
+                                  variant='outline'
+                                  className='text-xs font-normal'
+                                >
+                                  <TbTag className='mr-1 size-3' />
+                                  {key}: {val}
+                                </Badge>
+                              ))}
+                            {Object.keys(result.metadata).length > 2 && (
+                              <Badge
+                                variant='outline'
+                                className='text-xs font-normal'
+                              >
+                                +{Object.keys(result.metadata).length - 2}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        onClick={() =>
+                          dispatchSearchState({
+                            type: 'SET_EDITING_EMBEDDING',
+                            embedding: result,
+                          })
+                        }
+                        title={dict.common.edit}
+                      >
+                        <TbEdit className='size-4' />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -453,6 +600,24 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
             </div>
           )}
       </div>
+
+      {/* Edit Sheet */}
+      {searchState.editingEmbedding && (
+        <EmbeddingEditSheet
+          embedding={searchState.editingEmbedding}
+          open={!!searchState.editingEmbedding}
+          onOpenChange={(open) => {
+            if (!open)
+              dispatchSearchState({
+                type: 'SET_EDITING_EMBEDDING',
+                embedding: null,
+              });
+          }}
+          onSaveMetadata={handleSaveMetadata}
+          onSavePriority={handleSavePriority}
+          isSaving={isSavingEmbedding}
+        />
+      )}
     </div>
   );
 }

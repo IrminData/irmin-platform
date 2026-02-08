@@ -4,22 +4,13 @@ import type {
   EmbeddingConfig,
   EmbeddingFile,
   EmbeddingSearchResponse,
+  UpdateEmbeddingMetadataRequest,
+  UpdateEmbeddingPriorityRequest,
+  UpsertEmbeddingItem,
+  UpsertEmbeddingsRequest,
+  UpsertEmbeddingsResponse,
 } from '@/types/core/Embedding';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-
-/**
- * Request body for vectorizing repository objects.
- */
-interface VectorizeObjectsRequest {
-  /** List of source file paths to vectorize */
-  source_paths: string[];
-  /** Output path for the embedding file */
-  output_path: string;
-  /** Repository reference (branch/tag/commit) */
-  ref?: string;
-  /** Optional embedding configuration */
-  config?: EmbeddingConfig;
-}
 
 /**
  * Request body for searching embeddings.
@@ -53,59 +44,12 @@ class EmbeddingsService {
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
-    this.vectorizeObjects = this.vectorizeObjects.bind(this);
     this.searchEmbeddings = this.searchEmbeddings.bind(this);
     this.listEmbeddings = this.listEmbeddings.bind(this);
     this.getEmbeddingInfo = this.getEmbeddingInfo.bind(this);
-  }
-
-  /**
-   * Create embeddings from one or more repository objects.
-   *
-   * @param props - The vectorization properties.
-   * @param props.workspace - The workspace slug.
-   * @param props.repository - The repository slug.
-   * @param props.sourcePaths - List of source file paths to vectorize.
-   * @param props.outputPath - Output path for the embedding file.
-   * @param props.ref - (optional) Repository reference (branch/tag/commit).
-   * @param props.config - (optional) Embedding configuration.
-   * @returns IrminAPIResponse containing the created embedding file.
-   */
-  async vectorizeObjects({
-    workspace,
-    repository,
-    sourcePaths,
-    outputPath,
-    ref,
-    config,
-  }: {
-    workspace: string;
-    repository: string;
-    sourcePaths: string[];
-    outputPath: string;
-    ref?: string;
-    config?: EmbeddingConfig;
-  }): Promise<IrminAPIResponse<EmbeddingFile>> {
-    try {
-      const requestBody: VectorizeObjectsRequest = {
-        source_paths: sourcePaths,
-        output_path: outputPath,
-        ref,
-        config,
-      };
-
-      const url = `/v1/workspaces/${workspace}/repositories/${repository}/embeddings/vectorize`;
-      const response = (await this.irminCore.fetchAPI(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      })) as IrminAPIResponse<EmbeddingFile>;
-
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Vectorize objects error');
-      throw error;
-    }
+    this.upsertEmbeddings = this.upsertEmbeddings.bind(this);
+    this.updateEmbeddingMetadata = this.updateEmbeddingMetadata.bind(this);
+    this.updateEmbeddingPriority = this.updateEmbeddingPriority.bind(this);
   }
 
   /**
@@ -238,6 +182,163 @@ class EmbeddingsService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Get embedding info error');
+      throw error;
+    }
+  }
+
+  /**
+   * Upsert embeddings with deduplication by content hash.
+   *
+   * @param props - The upsert properties.
+   * @param props.workspace - The workspace slug.
+   * @param props.repository - The repository slug.
+   * @param props.outputPath - Output path for the embedding file.
+   * @param props.sourcePaths - (optional) List of source file paths to vectorize.
+   * @param props.embeddings - (optional) Pre-defined embedding items.
+   * @param props.ref - (optional) Repository reference.
+   * @param props.config - (optional) Embedding configuration.
+   * @param props.metadata - (optional) Metadata to apply to all embeddings.
+   * @param props.priority - (optional) Default priority for all embeddings.
+   * @returns IrminAPIResponse containing upsert statistics.
+   */
+  async upsertEmbeddings({
+    workspace,
+    repository,
+    outputPath,
+    sourcePaths,
+    embeddings,
+    ref,
+    config,
+    metadata,
+    priority,
+  }: {
+    workspace: string;
+    repository: string;
+    outputPath: string;
+    sourcePaths?: string[];
+    embeddings?: UpsertEmbeddingItem[];
+    ref?: string;
+    config?: EmbeddingConfig;
+    metadata?: Record<string, string>;
+    priority?: number;
+  }): Promise<IrminAPIResponse<UpsertEmbeddingsResponse>> {
+    try {
+      const requestBody: UpsertEmbeddingsRequest = {
+        output_path: outputPath,
+        source_paths: sourcePaths,
+        embeddings,
+        ref,
+        config,
+        metadata,
+        priority,
+      };
+
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/embeddings/upsert`;
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      })) as IrminAPIResponse<UpsertEmbeddingsResponse>;
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Upsert embeddings error');
+      throw error;
+    }
+  }
+
+  /**
+   * Update metadata for specific embeddings.
+   *
+   * @param props - The update properties.
+   * @param props.workspace - The workspace slug.
+   * @param props.repository - The repository slug.
+   * @param props.embeddingPath - Path to the embedding file.
+   * @param props.updates - Map of embedding ID to new metadata.
+   * @param props.ref - (optional) Repository reference.
+   * @returns IrminAPIResponse indicating success.
+   */
+  async updateEmbeddingMetadata({
+    workspace,
+    repository,
+    embeddingPath,
+    updates,
+    ref,
+  }: {
+    workspace: string;
+    repository: string;
+    embeddingPath: string;
+    updates: Record<string, Record<string, string>>;
+    ref?: string;
+  }): Promise<IrminAPIResponse<void>> {
+    try {
+      const requestBody: UpdateEmbeddingMetadataRequest = {
+        embedding_path: embeddingPath,
+        ref,
+        updates,
+      };
+
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/embeddings/metadata`;
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      })) as IrminAPIResponse<void>;
+
+      return response;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Update embedding metadata error'
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Update priority for specific embeddings.
+   *
+   * @param props - The update properties.
+   * @param props.workspace - The workspace slug.
+   * @param props.repository - The repository slug.
+   * @param props.embeddingPath - Path to the embedding file.
+   * @param props.updates - Map of embedding ID to new priority.
+   * @param props.ref - (optional) Repository reference.
+   * @returns IrminAPIResponse indicating success.
+   */
+  async updateEmbeddingPriority({
+    workspace,
+    repository,
+    embeddingPath,
+    updates,
+    ref,
+  }: {
+    workspace: string;
+    repository: string;
+    embeddingPath: string;
+    updates: Record<string, number>;
+    ref?: string;
+  }): Promise<IrminAPIResponse<void>> {
+    try {
+      const requestBody: UpdateEmbeddingPriorityRequest = {
+        embedding_path: embeddingPath,
+        ref,
+        updates,
+      };
+
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/embeddings/priority`;
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      })) as IrminAPIResponse<void>;
+
+      return response;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Update embedding priority error'
+      );
       throw error;
     }
   }

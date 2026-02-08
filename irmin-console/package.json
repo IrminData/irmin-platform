@@ -12,7 +12,7 @@
     "dev:no-https": "next dev",
     "build": "pnpm docs && next build",
     "start": "next start",
-    "validate": "tsc --noEmit && prettier --write .&& eslint --fix .",
+    "validate": "tsc --noEmit && prettier --write . && eslint --fix . && knip",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",

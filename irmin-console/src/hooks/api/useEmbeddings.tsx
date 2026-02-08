@@ -7,8 +7,9 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type {
   EmbeddingConfig,
-  EmbeddingFile,
   EmbeddingSearchResponse,
+  UpsertEmbeddingItem,
+  UpsertEmbeddingsResponse,
 } from '@/types/core/Embedding';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
@@ -39,61 +40,6 @@ export const useEmbeddings = (repositorySlug: string, ref?: string) => {
       });
     },
     enabled: !!repositorySlug,
-  });
-
-  /**
-   * Mutation to vectorize repository objects.
-   */
-  const vectorizeObjectsMutation = useMutation<
-    IrminAPIResponse<EmbeddingFile>,
-    Error,
-    {
-      sourcePaths: string[];
-      outputPath: string;
-      ref?: string;
-      config?: EmbeddingConfig;
-    }
-  >({
-    mutationFn: async ({
-      sourcePaths,
-      outputPath,
-      ref: mutationRef,
-      config,
-    }) => {
-      const irminCore = await getCore();
-      return irminCore.embeddingsService.vectorizeObjects({
-        workspace: workspaceSlug,
-        repository: repositorySlug,
-        sourcePaths,
-        outputPath,
-        ref: mutationRef ?? ref,
-        config,
-      });
-    },
-    onSuccess: (res) => {
-      // Invalidate embeddings list query for all refs
-      queryClient.invalidateQueries({
-        queryKey: ['embeddings', workspaceSlug, repositorySlug],
-      });
-      // Invalidate repository object queries to show new embedding file
-      queryClient.invalidateQueries({
-        queryKey: ['repositoryObject', workspaceSlug, repositorySlug],
-      });
-      irminAlert(
-        'success',
-        res.message ??
-          dict.repository.objects.vectorizeSuccess ??
-          'Embeddings created successfully'
-      );
-    },
-    onError: (error) => {
-      irminAlert(
-        'error',
-        error.message ??
-          dict.repository.objects.vectorizeError ??
-          'Failed to create embeddings'
-      );
-    },
   });
 
   /**
@@ -138,12 +84,137 @@ export const useEmbeddings = (repositorySlug: string, ref?: string) => {
     },
   });
 
+  /**
+   * Mutation to upsert embeddings with deduplication.
+   */
+  const upsertEmbeddingsMutation = useMutation<
+    IrminAPIResponse<UpsertEmbeddingsResponse>,
+    Error,
+    {
+      outputPath: string;
+      sourcePaths?: string[];
+      embeddings?: UpsertEmbeddingItem[];
+      ref?: string;
+      config?: EmbeddingConfig;
+      metadata?: Record<string, string>;
+      priority?: number;
+    }
+  >({
+    mutationFn: async ({
+      outputPath,
+      sourcePaths,
+      embeddings,
+      ref: mutationRef,
+      config,
+      metadata,
+      priority,
+    }) => {
+      const irminCore = await getCore();
+      return irminCore.embeddingsService.upsertEmbeddings({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        outputPath,
+        sourcePaths,
+        embeddings,
+        ref: mutationRef ?? ref,
+        config,
+        metadata,
+        priority,
+      });
+    },
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({
+        queryKey: ['embeddings', workspaceSlug, repositorySlug],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['repositoryObject', workspaceSlug, repositorySlug],
+      });
+      const data = res.data;
+      irminAlert(
+        'success',
+        res.message ??
+          `Embeddings upserted: ${data?.inserted ?? 0} inserted, ${data?.skipped ?? 0} skipped, ${data?.updated ?? 0} updated`
+      );
+    },
+    onError: (error) => {
+      irminAlert('error', error.message ?? 'Failed to upsert embeddings');
+    },
+  });
+
+  /**
+   * Mutation to update embedding metadata.
+   */
+  const updateEmbeddingMetadataMutation = useMutation<
+    IrminAPIResponse<void>,
+    Error,
+    {
+      embeddingPath: string;
+      updates: Record<string, Record<string, string>>;
+      ref?: string;
+    }
+  >({
+    mutationFn: async ({ embeddingPath, updates, ref: mutationRef }) => {
+      const irminCore = await getCore();
+      return irminCore.embeddingsService.updateEmbeddingMetadata({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        embeddingPath,
+        updates,
+        ref: mutationRef ?? ref,
+      });
+    },
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({
+        queryKey: ['embeddings', workspaceSlug, repositorySlug],
+      });
+      irminAlert('success', res.message ?? 'Metadata updated successfully');
+    },
+    onError: (error) => {
+      irminAlert('error', error.message ?? 'Failed to update metadata');
+    },
+  });
+
+  /**
+   * Mutation to update embedding priority.
+   */
+  const updateEmbeddingPriorityMutation = useMutation<
+    IrminAPIResponse<void>,
+    Error,
+    {
+      embeddingPath: string;
+      updates: Record<string, number>;
+      ref?: string;
+    }
+  >({
+    mutationFn: async ({ embeddingPath, updates, ref: mutationRef }) => {
+      const irminCore = await getCore();
+      return irminCore.embeddingsService.updateEmbeddingPriority({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        embeddingPath,
+        updates,
+        ref: mutationRef ?? ref,
+      });
+    },
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({
+        queryKey: ['embeddings', workspaceSlug, repositorySlug],
+      });
+      irminAlert('success', res.message ?? 'Priority updated successfully');
+    },
+    onError: (error) => {
+      irminAlert('error', error.message ?? 'Failed to update priority');
+    },
+  });
+
   return {
     // Queries
     listEmbeddingsQuery,
 
     // Mutations
-    vectorizeObjectsMutation,
     searchEmbeddingsMutation,
+    upsertEmbeddingsMutation,
+    updateEmbeddingMetadataMutation,
+    updateEmbeddingPriorityMutation,
   };
 };

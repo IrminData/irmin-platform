@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 
 import type { Locale } from '@/lib/dict';
 
+import { PopupOutlet } from '@/context/PopupContext';
 import { WorkspaceProvider } from '@/context/WorkspaceContext';
 
 export type WorkspaceLayoutParams = {
@@ -27,6 +28,10 @@ export async function generateMetadata(props: {
 /**
  * Console workspace layout
  * Provides the {@link WorkspaceProvider} context for the workspace pages.
+ *
+ * The {@link PopupOutlet} is placed inside the {@link WorkspaceProvider} so that
+ * popup content (modals, alerts, confirms) has access to workspace context.
+ * It takes over rendering from the root {@link PopupProvider} while this layout is mounted.
  */
 export default async function ConsoleWorkspaceLayout(props: {
   children: React.ReactNode;
@@ -41,6 +46,7 @@ export default async function ConsoleWorkspaceLayout(props: {
   return (
     <WorkspaceProvider workspaceSlug={workspaceSlug}>
       {children}
+      <PopupOutlet />
     </WorkspaceProvider>
   );
 }

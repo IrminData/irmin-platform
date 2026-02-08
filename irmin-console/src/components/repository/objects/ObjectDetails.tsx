@@ -41,10 +41,10 @@ import type { ObjectSchema } from '@/types/core/ObjectSchema';
 import type { RepositoryObject } from '@/types/core/RepositoryObject';
 import type { Tag } from '@/types/core/Tag';
 
+import EmbeddingWizard from './EmbeddingWizard';
 import MoveRenameObjectModal from './MoveRenameObjectModal';
 import UploadObjectModal from './UploadObjectModal';
 import ValidateObjectModal from './ValidateObjectModal';
-import VectorizeObjectModal from './VectorizeObjectModal';
 
 /**
  * List of file extensions supported for vectorization.
@@ -307,8 +307,8 @@ export default function ObjectDetails({
   const handleVectorize = useCallback(() => {
     if (!selectedObject || immutable) return;
     irminModal.show(
-      `${dict.repository.objects.vectorize}: ${selectedObject.name}`,
-      <VectorizeObjectModal
+      dict.repository.objects.embeddingsWizardTitle,
+      <EmbeddingWizard
         repositorySlug={repository.slug}
         currentRef={currentRef ?? repository.default_branch}
         initialSourcePath={selectedObject.path}

@@ -422,4 +422,8 @@ interface PipelineStageEmbeddings {
   embeddings_top_k?: number;
   /** Optional metadata filters (for search) */
   embeddings_filter?: Record<string, string>;
+  /** Custom metadata key-value pairs applied to all embedding records (vectorize only) */
+  embeddings_metadata?: Record<string, string>;
+  /** Priority weight for RAG retrieval, 0.0-1.0 (vectorize only) */
+  embeddings_priority?: number;
 }

@@ -476,7 +476,9 @@ const AgentChat = ({
                     })}
 
                     {/* Render tool calls and reasoning at the bottom (matching streaming behavior) */}
-                    <ConsolidatedToolMessages messages={toolAndReasoningMessages} />
+                    <ConsolidatedToolMessages
+                      messages={toolAndReasoningMessages}
+                    />
 
                     {/* Actions for the combined message */}
                     {renderMessageActions(

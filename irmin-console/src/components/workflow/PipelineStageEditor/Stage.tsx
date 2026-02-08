@@ -32,6 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MetadataEditor } from '@/components/ui/MetadataEditor';
 import {
   Select,
   SelectContent,
@@ -39,6 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import MultiplePathsSelector from '@/components/workflow/MultiplePathsSelector';
 
@@ -581,6 +583,8 @@ function Stage({
                     embeddings_query: '',
                     embeddings_top_k: 10,
                     embeddings_filter: {},
+                    embeddings_metadata: {},
+                    embeddings_priority: undefined,
                     description: prevStage.description,
                     write: true,
                     read: true,
@@ -2227,6 +2231,67 @@ function Stage({
                             readOnly={readOnly}
                           />
                         </div>
+
+                        {/* Priority and Metadata (vectorize only) */}
+                        {stage.embeddings_operation === 'vectorize' && (
+                          <>
+                            <Separator />
+
+                            {/* Priority Slider */}
+                            <div className='flex flex-col gap-2'>
+                              <Label htmlFor={`embeddings-priority-${index}`}>
+                                {dict.workflow.pipeline.embeddingsPriority}:{' '}
+                                {(stage.embeddings_priority ?? 1.0).toFixed(2)}
+                              </Label>
+                              <input
+                                id={`embeddings-priority-${index}`}
+                                type='range'
+                                min={0}
+                                max={1}
+                                step={0.1}
+                                value={stage.embeddings_priority ?? 1.0}
+                                onChange={(e) => {
+                                  setStage((prevStage) => {
+                                    if (prevStage.type !== 'embeddings')
+                                      return prevStage;
+                                    return {
+                                      ...prevStage,
+                                      embeddings_priority: parseFloat(
+                                        e.target.value
+                                      ),
+                                    };
+                                  });
+                                }}
+                                className='w-full'
+                                disabled={readOnly}
+                              />
+                              <p className='text-xs text-muted-foreground'>
+                                {
+                                  dict.workflow.pipeline
+                                    .embeddingsPriorityDescription
+                                }
+                              </p>
+                            </div>
+
+                            <Separator />
+
+                            {/* Metadata Editor */}
+                            <MetadataEditor
+                              value={stage.embeddings_metadata ?? {}}
+                              onChange={(metadata) => {
+                                setStage((prevStage) => {
+                                  if (prevStage.type !== 'embeddings')
+                                    return prevStage;
+                                  return {
+                                    ...prevStage,
+                                    embeddings_metadata: metadata,
+                                  };
+                                });
+                              }}
+                              disabled={readOnly}
+                            />
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
