@@ -142,10 +142,31 @@ func TestInvalidateKey(t *testing.T) {
 	store := cache.NewDefaultStorage()
 	k := "some-key"
 	_ = store.Set(k, []byte("v"), 5*time.Second)
-	if err := cache.InvalidateKey(store, k); err != nil {
+	if err := cache.InvalidateKey(store, k, ""); err != nil {
 		t.Fatalf("InvalidateKey err: %v", err)
 	}
 	if b, _ := store.Get(k); len(b) != 0 {
 		t.Fatalf("key still present after InvalidateKey")
+	}
+}
+
+func TestInvalidateKey_WithAuthHash(t *testing.T) {
+	store := cache.NewDefaultStorage()
+	baseKey := "/api/v1/workspaces/ws1/itemsBearer A"
+	authHash := "abc123def456"
+	// Simulate what Fiber v3 stores: baseKey_GET_auth_<hash>
+	fullKey := baseKey + "_GET_auth_" + authHash
+	_ = store.Set(fullKey, []byte("cached-response"), 5*time.Second)
+	_ = store.Set(fullKey+"_body", []byte("cached-body"), 5*time.Second)
+
+	// InvalidateKey with authHash should also delete the _auth_ suffixed variants
+	if err := cache.InvalidateKey(store, baseKey, authHash); err != nil {
+		t.Fatalf("InvalidateKey err: %v", err)
+	}
+	if b, _ := store.Get(fullKey); len(b) != 0 {
+		t.Fatalf("auth-suffixed key still present after InvalidateKey")
+	}
+	if b, _ := store.Get(fullKey + "_body"); len(b) != 0 {
+		t.Fatalf("auth-suffixed body key still present after InvalidateKey")
 	}
 }

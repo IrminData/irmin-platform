@@ -308,6 +308,7 @@ func (e *AIAppToolExecutor) SearchEmbeddings(
 	repoSlug, embeddingPath, query, ref string,
 	topK int,
 	filter map[string]string,
+	priorityWeight *float64,
 ) (*irminmodels.EmbeddingSearchResponse, error)
     SearchEmbeddings performs vector similarity search on repository-based
     embeddings.
@@ -318,6 +319,7 @@ func (e *AIAppToolExecutor) SearchEmbeddingsByPath(
 	topK int,
 	pathFilter string,
 	metadataFilter map[string]string,
+	priorityWeight *float64,
 ) (*irminmodels.EmbeddingSearchResponse, error)
     SearchEmbeddingsByPath performs vector similarity search, optionally
     filtered by a unified path. If pathFilter is empty, searches across all
@@ -1374,6 +1376,30 @@ func (api *APIServices) UpdateConnector(
 	req irmincore.ConnectorRequest,
 ) (*db.Connector, error)
 
+func (api *APIServices) UpdateEmbeddingMetadata(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	embeddingPath string,
+	ref string,
+	updates map[string]map[string]string,
+) error
+    UpdateEmbeddingMetadata updates metadata for specific embeddings.
+
+func (api *APIServices) UpdateEmbeddingPriority(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	embeddingPath string,
+	ref string,
+	updates map[string]float64,
+) error
+    UpdateEmbeddingPriority updates priority for specific embeddings.
+
 func (api *APIServices) UpdateInvite(
 	c context.Context,
 	user *db.User,
@@ -1504,6 +1530,17 @@ func (api *APIServices) UploadRepositoryObjectFromURL(
 	headers map[string]string,
 	tags []string,
 ) (*db.RepositoryObject, error)
+
+func (api *APIServices) UpsertEmbeddings(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	req irmincore.UpsertEmbeddingsRequest,
+) (*irminmodels.UpsertEmbeddingsResponse, error)
+    UpsertEmbeddings inserts or updates embeddings, skipping duplicates by
+    content hash.
 
 func (api *APIServices) ValidateConnectorConfiguration(
 	c context.Context,

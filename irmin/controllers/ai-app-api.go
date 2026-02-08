@@ -375,10 +375,11 @@ func (api *APIControllers) AIAppAPISearchEmbeddings(c fiber.Ctx) error {
 
 	// Parse request body with simplified parameters
 	var req struct {
-		Query  string            `json:"query"`
-		Path   string            `json:"path"`   // Optional: unified path to specific embedding file
-		TopK   int               `json:"top_k"`  // Optional: defaults to 10
-		Filter map[string]string `json:"filter"` // Optional: metadata filter
+		Query          string            `json:"query"`
+		Path           string            `json:"path"`            // Optional: unified path to specific embedding file
+		TopK           int               `json:"top_k"`           // Optional: defaults to 10
+		Filter         map[string]string `json:"filter"`          // Optional: metadata filter
+		PriorityWeight *float64          `json:"priority_weight"` // Optional: priority weighting factor (0-1)
 	}
 	if err := c.Bind().JSON(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(irminmodels.IrminAPIResponse{
@@ -405,6 +406,7 @@ func (api *APIControllers) AIAppAPISearchEmbeddings(c fiber.Ctx) error {
 		req.TopK,
 		req.Path,
 		req.Filter,
+		req.PriorityWeight,
 	)
 	if err != nil {
 		if errors.Is(err, services.ErrToolNotEnabled) {

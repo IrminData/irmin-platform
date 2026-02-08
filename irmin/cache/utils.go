@@ -2,6 +2,8 @@ package cache
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"slices"
 	"sort"
@@ -9,6 +11,16 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 )
+
+// hashAuthorization computes the SHA256 hash of the authorization header,
+// matching Fiber v3's internal cache key format for authenticated requests.
+func hashAuthorization(auth string) string {
+	if auth == "" {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(auth))
+	return hex.EncodeToString(sum[:])
+}
 
 // BuildKeyFromParts builds a cache key compatible with the cache middleware key generator
 // using an explicit path, query parameters, and authorization header value.
@@ -31,7 +43,10 @@ func BuildKeyFromParts(path string, queryParams map[string]string, authorization
 }
 
 // InvalidateKey deletes a specific cache entry key from storage.
-func InvalidateKey(storage fiber.Storage, key string) error {
+// authHash is the SHA256 hex digest of the Authorization header; when non-empty,
+// Fiber v3's "_auth_<hash>" suffixed variants are also deleted for each HTTP method.
+// Pass an empty string when the key already contains the auth suffix (e.g. from index lookups).
+func InvalidateKey(storage fiber.Storage, key string, authHash string) error {
 	// Delete exact key and any Fiber cache variants (method and body suffixes)
 	var firstErr error
 	deleteOne := func(k string) {
@@ -47,12 +62,18 @@ func InvalidateKey(storage fiber.Storage, key string) error {
 	deleteOne(key)
 	for _, m := range []string{"GET", "HEAD", "OPTIONS"} {
 		deleteOne(key + "_" + m)
+		// Fiber v3 appends "_auth_<hash>" for authenticated requests
+		if authHash != "" {
+			deleteOne(key + "_" + m + "_auth_" + authHash)
+		}
 	}
 	return firstErr
 }
 
 // InvalidatePathForCurrentUser computes the cache key for the given path and query using
 // the current request's Authorization header, and deletes it from storage.
+// The auth hash is computed from the Authorization header so that Fiber v3's
+// "_auth_<hash>" suffixed cache entries are also deleted.
 func InvalidatePathForCurrentUser(
 	c fiber.Ctx,
 	storage fiber.Storage,
@@ -61,7 +82,7 @@ func InvalidatePathForCurrentUser(
 ) error {
 	auth := c.Get("authorization")
 	key := BuildKeyFromParts(path, queryParams, auth)
-	return InvalidateKey(storage, key)
+	return InvalidateKey(storage, key, hashAuthorization(auth))
 }
 
 // InvalidatePathsForCurrentUser invalidates multiple paths for the current request's user.
@@ -77,11 +98,18 @@ func InvalidatePathsForCurrentUser(c fiber.Ctx, storage fiber.Storage, paths []s
 
 // TrackKeyForRequest indexes a generated cache key by all path prefixes for fast prefix invalidation later.
 // Keys are indexed per-authorization to avoid cross-tenant invalidations.
+// The tracked key includes the auth hash suffix that Fiber v3 appends for authenticated requests.
 func TrackKeyForRequest(c fiber.Ctx, storage fiber.Storage, key string) {
 	auth := c.Get("authorization")
 	path := c.Path()
 	// Track the exact storage key used by Fiber cache (includes method suffix)
 	keyWithMethod := key + "_" + c.Method()
+
+	// Fiber v3 appends "_auth_<hash>" when Authorization header is present
+	if auth != "" {
+		keyWithMethod += "_auth_" + hashAuthorization(auth)
+	}
+
 	TrackKeyForPath(storage, auth, path, keyWithMethod)
 }
 
@@ -95,10 +123,12 @@ func InvalidatePathPrefixForCurrentUser(c fiber.Ctx, storage fiber.Storage, path
 		return err
 	}
 	keys := bytes.Split(bytes.TrimSpace(raw), []byte("\n"))
-	// Delete all keys referenced by this index (including body variants)
+	// Delete all keys referenced by this index (including body variants).
+	// Keys from the index already include the full suffix (method + auth hash),
+	// so pass empty authHash to avoid double-suffixing.
 	for _, key := range keys {
 		k := string(key)
-		_ = InvalidateKey(storage, k)
+		_ = InvalidateKey(storage, k, "")
 	}
 	// Clear the index entry itself
 	_ = storage.Delete(indexKey)
@@ -161,9 +191,11 @@ func InvalidatePathPrefixForAllUsers(storage fiber.Storage, pathPrefix string) e
 		return err
 	}
 	keys := bytes.Split(bytes.TrimSpace(raw), []byte("\n"))
+	// Keys from the index already include the full suffix (method + auth hash),
+	// so pass empty authHash to avoid double-suffixing.
 	for _, key := range keys {
 		k := string(key)
-		_ = InvalidateKey(storage, k)
+		_ = InvalidateKey(storage, k, "")
 	}
 	_ = storage.Delete(indexKey)
 	return nil

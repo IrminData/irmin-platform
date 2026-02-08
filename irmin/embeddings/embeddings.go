@@ -2,6 +2,8 @@ package embeddings
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"irmin-api/duckdb"
@@ -14,6 +16,12 @@ import (
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
 )
+
+// ComputeContentHash computes SHA-256 hash of content for deduplication.
+func ComputeContentHash(content string) string {
+	hash := sha256.Sum256([]byte(content))
+	return hex.EncodeToString(hash[:])
+}
 
 // Default configuration values.
 const (
@@ -47,13 +55,16 @@ func DefaultConfig() EmbeddingConfig {
 
 // EmbeddingRecord represents a single embedding with its associated metadata.
 type EmbeddingRecord struct {
-	ID         string            `json:"id"`
-	SourceFile string            `json:"source_file"`
-	ChunkIndex int               `json:"chunk_index"`
-	Content    string            `json:"content"`
-	Embedding  []float32         `json:"embedding"`
-	Metadata   map[string]string `json:"metadata"`
-	CreatedAt  time.Time         `json:"created_at"`
+	ID          string            `json:"id"`
+	SourceFile  string            `json:"source_file"`
+	ChunkIndex  int               `json:"chunk_index"`
+	Content     string            `json:"content"`
+	ContentHash string            `json:"content_hash"` // SHA-256 hash for deduplication
+	Embedding   []float32         `json:"embedding"`
+	Metadata    map[string]string `json:"metadata"`
+	Priority    float32           `json:"priority"` // RAG weight (0.0-1.0, default 1.0)
+	CreatedAt   time.Time         `json:"created_at"`
+	UpdatedAt   time.Time         `json:"updated_at"`
 }
 
 // EmbeddingResult represents the result of an embedding operation.
@@ -330,13 +341,16 @@ func (c *Client) CreateEmbeddingsFromFile(
 	records := make([]EmbeddingRecord, len(allChunks))
 	for i, chunk := range allChunks {
 		records[i] = EmbeddingRecord{
-			ID:         uuid.New().String(),
-			SourceFile: fileName,
-			ChunkIndex: i,
-			Content:    chunk,
-			Embedding:  embeddings[i],
-			Metadata:   make(map[string]string),
-			CreatedAt:  now,
+			ID:          uuid.New().String(),
+			SourceFile:  fileName,
+			ChunkIndex:  i,
+			Content:     chunk,
+			ContentHash: ComputeContentHash(chunk),
+			Embedding:   embeddings[i],
+			Metadata:    make(map[string]string),
+			Priority:    1.0, // Default priority
+			CreatedAt:   now,
+			UpdatedAt:   now,
 		}
 	}
 

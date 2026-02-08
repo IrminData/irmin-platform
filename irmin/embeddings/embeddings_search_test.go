@@ -1,6 +1,7 @@
 package embeddings_test
 
 import (
+	"fmt"
 	"irmin-api/embeddings"
 	"os"
 	"strings"
@@ -134,6 +135,75 @@ func TestComputeCosineSimilarityZeroVector(t *testing.T) {
 // =============================================================================
 // Parquet Search Integration Tests
 // =============================================================================
+
+// TestSearchWithLegacyParquet tests that SearchSimilar and LoadEmbeddingsFromParquet
+// work with parquet files that lack content_hash and priority columns (pre-existing files).
+func TestSearchWithLegacyParquet(t *testing.T) {
+	suite := setupEmbeddingsTestSuite(t)
+	defer cleanupEmbeddingsTestSuite(suite)
+
+	if suite.DuckDBClient == nil {
+		t.Skip("DuckDB client not available")
+	}
+
+	// Create legacy parquet (old schema: no content_hash, no priority)
+	tempFile, err := os.CreateTemp(t.TempDir(), "legacy_search_*.parquet")
+	assert.NoError(t, err)
+	tempPath := tempFile.Name()
+	tempFile.Close()
+	defer os.Remove(tempPath)
+
+	// Build 128-dim embedding arrays for DuckDB
+	emb1 := generateTestEmbedding(128, 0.1)
+	emb2 := generateTestEmbedding(128, 0.15)
+	emb1Parts := make([]string, len(emb1))
+	emb2Parts := make([]string, len(emb2))
+	for i := range emb1 {
+		emb1Parts[i] = fmt.Sprintf("%.9g", emb1[i])
+		emb2Parts[i] = fmt.Sprintf("%.9g", emb2[i])
+	}
+	emb1Str := "[" + strings.Join(emb1Parts, ", ") + "]"
+	emb2Str := "[" + strings.Join(emb2Parts, ", ") + "]"
+
+	// Use DuckDB to create parquet with legacy schema (no content_hash, no priority, no updated_at)
+	escapedPath := strings.ReplaceAll(tempPath, "\\", "\\\\")
+	escapedPath = strings.ReplaceAll(escapedPath, "'", "''")
+	createSQL := fmt.Sprintf(`
+		CREATE OR REPLACE TABLE legacy_embeddings (
+			id VARCHAR,
+			source_file VARCHAR,
+			chunk_index INTEGER,
+			content TEXT,
+			embedding FLOAT[128],
+			metadata JSON,
+			created_at TIMESTAMP
+		);
+		INSERT INTO legacy_embeddings VALUES
+			('legacy-1', 'test.txt', 0, 'Legacy content one', %s::FLOAT[128], '{}', now()),
+			('legacy-2', 'test.txt', 1, 'Legacy content two', %s::FLOAT[128], '{}', now());
+		COPY legacy_embeddings TO '%s' (FORMAT PARQUET, COMPRESSION ZSTD);
+		DROP TABLE legacy_embeddings;
+	`, emb1Str, emb2Str, escapedPath)
+
+	_, err = suite.DuckDBClient.ExecuteNonQuery(t.Context(), createSQL)
+	assert.NoError(t, err)
+
+	// SearchSimilar must work (retry with minimal schema when column not found)
+	queryVector := generateTestEmbedding(128, 0.1)
+	results, err := suite.embeddingsClient.SearchSimilar(t.Context(), queryVector, tempPath, 2)
+	assert.NoError(t, err)
+	assert.NotNil(t, results)
+	assert.True(t, len(results) >= 1)
+	assert.Equal(t, "", results[0].ContentHash)
+	assert.Equal(t, float32(1.0), results[0].Priority)
+
+	// LoadEmbeddingsFromParquet must work
+	records, err := suite.embeddingsClient.LoadEmbeddingsFromParquet(t.Context(), tempPath)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(records))
+	assert.Equal(t, "", records[0].ContentHash)
+	assert.Equal(t, float32(1.0), records[0].Priority)
+}
 
 // TestSearchWithParquetIntegration tests search on an actual parquet file.
 func TestSearchWithParquetIntegration(t *testing.T) {

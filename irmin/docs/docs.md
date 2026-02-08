@@ -133,7 +133,7 @@ import "irmin-api/cache"
 - [func BuildAllIndexKey\(pathPrefix string\) string](<#BuildAllIndexKey>)
 - [func BuildIndexKey\(authorization string, pathPrefix string\) string](<#BuildIndexKey>)
 - [func BuildKeyFromParts\(path string, queryParams map\[string\]string, authorization string\) string](<#BuildKeyFromParts>)
-- [func InvalidateKey\(storage fiber.Storage, key string\) error](<#InvalidateKey>)
+- [func InvalidateKey\(storage fiber.Storage, key string, authHash string\) error](<#InvalidateKey>)
 - [func InvalidatePathForCurrentUser\(c fiber.Ctx, storage fiber.Storage, path string, queryParams map\[string\]string\) error](<#InvalidatePathForCurrentUser>)
 - [func InvalidatePathPrefixForAllUsers\(storage fiber.Storage, pathPrefix string\) error](<#InvalidatePathPrefixForAllUsers>)
 - [func InvalidatePathPrefixForCurrentUser\(c fiber.Ctx, storage fiber.Storage, pathPrefix string\) error](<#InvalidatePathPrefixForCurrentUser>)
@@ -189,10 +189,10 @@ BuildKeyFromParts builds a cache key compatible with the cache middleware key ge
 ## func InvalidateKey
 
 ```go
-func InvalidateKey(storage fiber.Storage, key string) error
+func InvalidateKey(storage fiber.Storage, key string, authHash string) error
 ```
 
-InvalidateKey deletes a specific cache entry key from storage.
+InvalidateKey deletes a specific cache entry key from storage. authHash is the SHA256 hex digest of the Authorization header; when non\-empty, Fiber v3's "\_auth\_\<hash\>" suffixed variants are also deleted for each HTTP method. Pass an empty string when the key already contains the auth suffix \(e.g. from index lookups\).
 
 <a name="InvalidatePathForCurrentUser"></a>
 ## func InvalidatePathForCurrentUser
@@ -201,7 +201,7 @@ InvalidateKey deletes a specific cache entry key from storage.
 func InvalidatePathForCurrentUser(c fiber.Ctx, storage fiber.Storage, path string, queryParams map[string]string) error
 ```
 
-InvalidatePathForCurrentUser computes the cache key for the given path and query using the current request's Authorization header, and deletes it from storage.
+InvalidatePathForCurrentUser computes the cache key for the given path and query using the current request's Authorization header, and deletes it from storage. The auth hash is computed from the Authorization header so that Fiber v3's "\_auth\_\<hash\>" suffixed cache entries are also deleted.
 
 <a name="InvalidatePathPrefixForAllUsers"></a>
 ## func InvalidatePathPrefixForAllUsers
@@ -282,7 +282,7 @@ func TrackKeyForPath(storage fiber.Storage, authorization string, path string, k
 func TrackKeyForRequest(c fiber.Ctx, storage fiber.Storage, key string)
 ```
 
-TrackKeyForRequest indexes a generated cache key by all path prefixes for fast prefix invalidation later. Keys are indexed per\-authorization to avoid cross\-tenant invalidations.
+TrackKeyForRequest indexes a generated cache key by all path prefixes for fast prefix invalidation later. Keys are indexed per\-authorization to avoid cross\-tenant invalidations. The tracked key includes the auth hash suffix that Fiber v3 appends for authenticated requests.
 
 <a name="UpsertIndexEntry"></a>
 ## func UpsertIndexEntry
@@ -993,6 +993,9 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) TransferWorkflowOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferWorkflowOwnership>)
   - [func \(api \*APIControllers\) TransferWorkspaceOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferWorkspaceOwnership>)
   - [func \(api \*APIControllers\) TriggerWorkflowRun\(c fiber.Ctx\) error](<#APIControllers.TriggerWorkflowRun>)
+  - [func \(api \*APIControllers\) UpdateEmbeddingMetadata\(c fiber.Ctx\) error](<#APIControllers.UpdateEmbeddingMetadata>)
+  - [func \(api \*APIControllers\) UpdateEmbeddingPriority\(c fiber.Ctx\) error](<#APIControllers.UpdateEmbeddingPriority>)
+  - [func \(api \*APIControllers\) UpsertEmbeddings\(c fiber.Ctx\) error](<#APIControllers.UpsertEmbeddings>)
   - [func \(api \*APIControllers\) UsersDestroy\(c fiber.Ctx\) error](<#APIControllers.UsersDestroy>)
   - [func \(api \*APIControllers\) UsersIndex\(c fiber.Ctx\) error](<#APIControllers.UsersIndex>)
   - [func \(api \*APIControllers\) UsersShow\(c fiber.Ctx\) error](<#APIControllers.UsersShow>)
@@ -2374,6 +2377,33 @@ func (api *APIControllers) TriggerWorkflowRun(c fiber.Ctx) error
 ```
 
 TriggerWorkflowRun godoc @Summary Trigger workflow execution @Description Create and start a new workflow run for the specified workflow @Tags workflow\-runs @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param workflow\_slug path string true "Workflow slug" @Success 201 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.WorkflowRun\} "Workflow run created and started successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workflow not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/workflows/\{workflow\_slug\}/runs \[post\]
+
+<a name="APIControllers.UpdateEmbeddingMetadata"></a>
+### func \(\*APIControllers\) UpdateEmbeddingMetadata
+
+```go
+func (api *APIControllers) UpdateEmbeddingMetadata(c fiber.Ctx) error
+```
+
+UpdateEmbeddingMetadata godoc @Summary Update embedding metadata @Description Update metadata for specific embeddings by ID @Tags embeddings @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param body body irmincore.UpdateEmbeddingMetadataRequest true "Metadata update request" @Success 200 \{object\} irminmodels.IrminAPIResponse "Metadata updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/embeddings/metadata \[patch\]
+
+<a name="APIControllers.UpdateEmbeddingPriority"></a>
+### func \(\*APIControllers\) UpdateEmbeddingPriority
+
+```go
+func (api *APIControllers) UpdateEmbeddingPriority(c fiber.Ctx) error
+```
+
+UpdateEmbeddingPriority godoc @Summary Update embedding priority @Description Update priority for specific embeddings by ID @Tags embeddings @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param body body irmincore.UpdateEmbeddingPriorityRequest true "Priority update request" @Success 200 \{object\} irminmodels.IrminAPIResponse "Priority updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/embeddings/priority \[patch\]
+
+<a name="APIControllers.UpsertEmbeddings"></a>
+### func \(\*APIControllers\) UpsertEmbeddings
+
+```go
+func (api *APIControllers) UpsertEmbeddings(c fiber.Ctx) error
+```
+
+UpsertEmbeddings godoc @Summary Upsert embeddings @Description Insert or update embeddings, skipping duplicates by content hash @Tags embeddings @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param body body irmincore.UpsertEmbeddingsRequest true "Upsert request" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.UpsertEmbeddingsResponse\} "Upsert completed successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/embeddings/upsert \[post\]
 
 <a name="APIControllers.UsersDestroy"></a>
 ### func \(\*APIControllers\) UsersDestroy
@@ -5290,6 +5320,8 @@ type PipelineStage struct {
     EmbeddingsQuery        *string                              `json:"embeddings_query,omitempty"`
     EmbeddingsTopK         *int                                 `json:"embeddings_top_k,omitempty"`
     EmbeddingsFilter       map[string]string                    `json:"embeddings_filter,omitempty"        gorm:"type:jsonb;serializer:json"`
+    EmbeddingsMetadata     map[string]string                    `json:"embeddings_metadata,omitempty"      gorm:"type:jsonb;serializer:json"`
+    EmbeddingsPriority     *float64                             `json:"embeddings_priority,omitempty"`
 
     PatchDirection        *PatchDirection `json:"patch_direction,omitempty"`                                             // to_connection or to_repository
     PatchConnection       *Connection     `json:"patch_connection,omitempty"        gorm:"foreignKey:PatchConnectionID"` // Target connection for to_connection
@@ -6674,6 +6706,7 @@ import "irmin-api/embeddings"
 - [Constants](<#constants>)
 - [func ChunkText\(text string, chunkSize, overlap int\) \[\]string](<#ChunkText>)
 - [func ChunkTextBySentences\(text string, maxChunkSize int\) \[\]string](<#ChunkTextBySentences>)
+- [func ComputeContentHash\(content string\) string](<#ComputeContentHash>)
 - [func ComputeCosineSimilarity\(a, b \[\]float32\) \(float64, error\)](<#ComputeCosineSimilarity>)
 - [func ExtractTextFromFile\(ctx context.Context, duckDBClient \*duckdb.QueryClient, fileContent \[\]byte, fileName string\) \(\[\]string, error\)](<#ExtractTextFromFile>)
 - [func GetEmbeddingMetadata\(metadata map\[string\]string\) \(string, int, \[\]string\)](<#GetEmbeddingMetadata>)
@@ -6700,7 +6733,11 @@ import "irmin-api/embeddings"
   - [func \(c \*Client\) SearchSimilar\(ctx context.Context, queryVector \[\]float32, parquetPath string, topK int\) \(\[\]SearchResult, error\)](<#Client.SearchSimilar>)
   - [func \(c \*Client\) SearchSimilarFromBytes\(ctx context.Context, queryVector \[\]float32, parquetContent \[\]byte, topK int\) \(\[\]SearchResult, error\)](<#Client.SearchSimilarFromBytes>)
   - [func \(c \*Client\) SearchWithFilter\(ctx context.Context, queryVector \[\]float32, parquetPath string, topK int, filter map\[string\]string\) \(\[\]SearchResult, error\)](<#Client.SearchWithFilter>)
+  - [func \(c \*Client\) SearchWithFilterAndPriority\(ctx context.Context, queryVector \[\]float32, parquetPath string, topK int, filter map\[string\]string, priorityWeight float64\) \(\[\]SearchResult, error\)](<#Client.SearchWithFilterAndPriority>)
+  - [func \(c \*Client\) SearchWithFilterAndPriorityFromBytes\(ctx context.Context, queryVector \[\]float32, parquetContent \[\]byte, topK int, filter map\[string\]string, priorityWeight float64\) \(\[\]SearchResult, error\)](<#Client.SearchWithFilterAndPriorityFromBytes>)
   - [func \(c \*Client\) SearchWithFilterFromBytes\(ctx context.Context, queryVector \[\]float32, parquetContent \[\]byte, topK int, filter map\[string\]string\) \(\[\]SearchResult, error\)](<#Client.SearchWithFilterFromBytes>)
+  - [func \(c \*Client\) SearchWithPriority\(ctx context.Context, queryVector \[\]float32, parquetPath string, topK int, priorityWeight float64\) \(\[\]SearchResult, error\)](<#Client.SearchWithPriority>)
+  - [func \(c \*Client\) SearchWithPriorityFromBytes\(ctx context.Context, queryVector \[\]float32, parquetContent \[\]byte, topK int, priorityWeight float64\) \(\[\]SearchResult, error\)](<#Client.SearchWithPriorityFromBytes>)
   - [func \(c \*Client\) UploadToLakeFS\(ctx context.Context, config UploadConfig, data \[\]byte\) \(\*lakefs.ObjectMetadata, error\)](<#Client.UploadToLakeFS>)
 - [type EmbeddingConfig](<#EmbeddingConfig>)
   - [func DefaultConfig\(\) EmbeddingConfig](<#DefaultConfig>)
@@ -6757,6 +6794,15 @@ func ChunkTextBySentences(text string, maxChunkSize int) []string
 ```
 
 ChunkTextBySentences splits text into chunks by sentence boundaries. This provides more semantically meaningful chunks.
+
+<a name="ComputeContentHash"></a>
+## func ComputeContentHash
+
+```go
+func ComputeContentHash(content string) string
+```
+
+ComputeContentHash computes SHA\-256 hash of content for deduplication.
 
 <a name="ComputeCosineSimilarity"></a>
 ## func ComputeCosineSimilarity
@@ -6994,6 +7040,24 @@ func (c *Client) SearchWithFilter(ctx context.Context, queryVector []float32, pa
 
 SearchWithFilter performs vector similarity search with metadata filtering.
 
+<a name="Client.SearchWithFilterAndPriority"></a>
+### func \(\*Client\) SearchWithFilterAndPriority
+
+```go
+func (c *Client) SearchWithFilterAndPriority(ctx context.Context, queryVector []float32, parquetPath string, topK int, filter map[string]string, priorityWeight float64) ([]SearchResult, error)
+```
+
+SearchWithFilterAndPriority performs vector similarity search with both metadata filtering and priority weighting. Rows are first filtered by metadata, then scored using: similarity \* \(1 \+ priority \* priorityWeight\).
+
+<a name="Client.SearchWithFilterAndPriorityFromBytes"></a>
+### func \(\*Client\) SearchWithFilterAndPriorityFromBytes
+
+```go
+func (c *Client) SearchWithFilterAndPriorityFromBytes(ctx context.Context, queryVector []float32, parquetContent []byte, topK int, filter map[string]string, priorityWeight float64) ([]SearchResult, error)
+```
+
+SearchWithFilterAndPriorityFromBytes performs filtered priority\-weighted search on parquet content provided as bytes.
+
 <a name="Client.SearchWithFilterFromBytes"></a>
 ### func \(\*Client\) SearchWithFilterFromBytes
 
@@ -7002,6 +7066,24 @@ func (c *Client) SearchWithFilterFromBytes(ctx context.Context, queryVector []fl
 ```
 
 SearchWithFilterFromBytes performs vector similarity search with metadata filtering on parquet content provided as bytes.
+
+<a name="Client.SearchWithPriority"></a>
+### func \(\*Client\) SearchWithPriority
+
+```go
+func (c *Client) SearchWithPriority(ctx context.Context, queryVector []float32, parquetPath string, topK int, priorityWeight float64) ([]SearchResult, error)
+```
+
+SearchWithPriority performs vector similarity search with priority weighting. The final score combines similarity score and priority: score \* \(1 \+ priority \* priorityWeight\). Higher priority embeddings are boosted in the results.
+
+<a name="Client.SearchWithPriorityFromBytes"></a>
+### func \(\*Client\) SearchWithPriorityFromBytes
+
+```go
+func (c *Client) SearchWithPriorityFromBytes(ctx context.Context, queryVector []float32, parquetContent []byte, topK int, priorityWeight float64) ([]SearchResult, error)
+```
+
+SearchWithPriorityFromBytes performs priority\-weighted search on parquet content provided as bytes.
 
 <a name="Client.UploadToLakeFS"></a>
 ### func \(\*Client\) UploadToLakeFS
@@ -7042,13 +7124,16 @@ EmbeddingRecord represents a single embedding with its associated metadata.
 
 ```go
 type EmbeddingRecord struct {
-    ID         string            `json:"id"`
-    SourceFile string            `json:"source_file"`
-    ChunkIndex int               `json:"chunk_index"`
-    Content    string            `json:"content"`
-    Embedding  []float32         `json:"embedding"`
-    Metadata   map[string]string `json:"metadata"`
-    CreatedAt  time.Time         `json:"created_at"`
+    ID          string            `json:"id"`
+    SourceFile  string            `json:"source_file"`
+    ChunkIndex  int               `json:"chunk_index"`
+    Content     string            `json:"content"`
+    ContentHash string            `json:"content_hash"` // SHA-256 hash for deduplication
+    Embedding   []float32         `json:"embedding"`
+    Metadata    map[string]string `json:"metadata"`
+    Priority    float32           `json:"priority"` // RAG weight (0.0-1.0, default 1.0)
+    CreatedAt   time.Time         `json:"created_at"`
+    UpdatedAt   time.Time         `json:"updated_at"`
 }
 ```
 
@@ -7073,13 +7158,15 @@ SearchResult represents a single search result from vector similarity search.
 
 ```go
 type SearchResult struct {
-    ID         string            `json:"id"`
-    SourceFile string            `json:"source_file"`
-    ChunkIndex int               `json:"chunk_index"`
-    Content    string            `json:"content"`
-    Score      float64           `json:"score"`
-    Distance   float64           `json:"distance"`
-    Metadata   map[string]string `json:"metadata"`
+    ID          string            `json:"id"`
+    SourceFile  string            `json:"source_file"`
+    ChunkIndex  int               `json:"chunk_index"`
+    Content     string            `json:"content"`
+    ContentHash string            `json:"content_hash"`
+    Score       float64           `json:"score"`
+    Distance    float64           `json:"distance"`
+    Metadata    map[string]string `json:"metadata"`
+    Priority    float32           `json:"priority"`
 }
 ```
 
@@ -13070,8 +13157,8 @@ import "irmin-api/services"
   - [func \(e \*AIAppToolExecutor\) PatchFile\(ctx context.Context, unifiedPath string, operations \[\]irminmodels.PatchOperation, commitMessage string, autoCommit bool\) \(\*WriteResult, error\)](<#AIAppToolExecutor.PatchFile>)
   - [func \(e \*AIAppToolExecutor\) ResolvePath\(unifiedPath string\) \(\*ResolvedPath, error\)](<#AIAppToolExecutor.ResolvePath>)
   - [func \(e \*AIAppToolExecutor\) ResolvePathOrFindInDataSources\(inputPath string\) \(\*ResolvedPath, error\)](<#AIAppToolExecutor.ResolvePathOrFindInDataSources>)
-  - [func \(e \*AIAppToolExecutor\) SearchEmbeddings\(ctx context.Context, repoSlug, embeddingPath, query, ref string, topK int, filter map\[string\]string\) \(\*irminmodels.EmbeddingSearchResponse, error\)](<#AIAppToolExecutor.SearchEmbeddings>)
-  - [func \(e \*AIAppToolExecutor\) SearchEmbeddingsByPath\(ctx context.Context, query string, topK int, pathFilter string, metadataFilter map\[string\]string\) \(\*irminmodels.EmbeddingSearchResponse, error\)](<#AIAppToolExecutor.SearchEmbeddingsByPath>)
+  - [func \(e \*AIAppToolExecutor\) SearchEmbeddings\(ctx context.Context, repoSlug, embeddingPath, query, ref string, topK int, filter map\[string\]string, priorityWeight \*float64\) \(\*irminmodels.EmbeddingSearchResponse, error\)](<#AIAppToolExecutor.SearchEmbeddings>)
+  - [func \(e \*AIAppToolExecutor\) SearchEmbeddingsByPath\(ctx context.Context, query string, topK int, pathFilter string, metadataFilter map\[string\]string, priorityWeight \*float64\) \(\*irminmodels.EmbeddingSearchResponse, error\)](<#AIAppToolExecutor.SearchEmbeddingsByPath>)
   - [func \(e \*AIAppToolExecutor\) WriteFile\(ctx context.Context, unifiedPath string, content \[\]byte, commitMessage string, autoCommit bool\) \(\*WriteResult, error\)](<#AIAppToolExecutor.WriteFile>)
 - [type APIServices](<#APIServices>)
   - [func NewAPIServices\(db \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, orchestrator \*orchestrator.Orchestrator, sqidManager \*irminsqids.SQIDManager, localeManager \*locales.LocaleManager, permissionService \*permissions.Service, cacheStorage fiber.Storage\) \*APIServices](<#NewAPIServices>)
@@ -13208,6 +13295,8 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) UpdateConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, req irmincore.UpdateConnectionRequest\) \(\*db.Connection, error\)](<#APIServices.UpdateConnection>)
   - [func \(api \*APIServices\) UpdateConnectionConfiguration\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, req irmincore.UpdateConnectionConfigurationRequest\) \(\*db.Connection, error\)](<#APIServices.UpdateConnectionConfiguration>)
   - [func \(api \*APIServices\) UpdateConnector\(c context.Context, locale string, isSystem bool, connector \*db.Connector, req irmincore.ConnectorRequest\) \(\*db.Connector, error\)](<#APIServices.UpdateConnector>)
+  - [func \(api \*APIServices\) UpdateEmbeddingMetadata\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, embeddingPath string, ref string, updates map\[string\]map\[string\]string\) error](<#APIServices.UpdateEmbeddingMetadata>)
+  - [func \(api \*APIServices\) UpdateEmbeddingPriority\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, embeddingPath string, ref string, updates map\[string\]float64\) error](<#APIServices.UpdateEmbeddingPriority>)
   - [func \(api \*APIServices\) UpdateInvite\(c context.Context, user \*db.User, invite \*db.Invite, req irmincore.UpdateInviteRequest\) \(\*db.Invite, error\)](<#APIServices.UpdateInvite>)
   - [func \(api \*APIServices\) UpdatePolicy\(c context.Context, user \*db.User, workspace \*db.Workspace, policy \*db.Policy, req irmincore.UpdatePolicyRequest\) \(\*db.Policy, error\)](<#APIServices.UpdatePolicy>)
   - [func \(api \*APIServices\) UpdateProfile\(c context.Context, au \*db.User, req \*irmincore.UpdateProfileRequest, form \*multipart.Form\) \(\*db.User, error\)](<#APIServices.UpdateProfile>)
@@ -13223,6 +13312,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) UpdateWorkspaceUserRoles\(c context.Context, currentUser \*db.User, workspace \*db.Workspace, workspaceMember \*db.WorkspaceUser, req irmincore.UpdateUserRolesRequest\) \(\*db.WorkspaceUser, error\)](<#APIServices.UpdateWorkspaceUserRoles>)
   - [func \(api \*APIServices\) UploadRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, objectPath string, objectRef string, file io.Reader, tags \[\]string\) \(\*db.RepositoryObject, error\)](<#APIServices.UploadRepositoryObject>)
   - [func \(api \*APIServices\) UploadRepositoryObjectFromURL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, objectPath string, objectRef string, url string, headers map\[string\]string, tags \[\]string\) \(\*db.RepositoryObject, error\)](<#APIServices.UploadRepositoryObjectFromURL>)
+  - [func \(api \*APIServices\) UpsertEmbeddings\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.UpsertEmbeddingsRequest\) \(\*irminmodels.UpsertEmbeddingsResponse, error\)](<#APIServices.UpsertEmbeddings>)
   - [func \(api \*APIServices\) ValidateConnectorConfiguration\(c context.Context, locale string, connector \*db.Connector, req irmincore.ConnectorConfigurationRequest\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#APIServices.ValidateConnectorConfiguration>)
   - [func \(api \*APIServices\) ValidateRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, validationSchema \*irminmodels.ObjectSchema, validationMode string\) \(\*irmincore.ValidateObjectResponse, error\)](<#APIServices.ValidateRepositoryObject>)
   - [func \(api \*APIServices\) VectorizeObjects\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.VectorizeObjectsRequest\) \(\*irminmodels.EmbeddingFile, error\)](<#APIServices.VectorizeObjects>)
@@ -13685,7 +13775,7 @@ ResolvePathOrFindInDataSources attempts to resolve a unified path or find a matc
 ### func \(\*AIAppToolExecutor\) SearchEmbeddings
 
 ```go
-func (e *AIAppToolExecutor) SearchEmbeddings(ctx context.Context, repoSlug, embeddingPath, query, ref string, topK int, filter map[string]string) (*irminmodels.EmbeddingSearchResponse, error)
+func (e *AIAppToolExecutor) SearchEmbeddings(ctx context.Context, repoSlug, embeddingPath, query, ref string, topK int, filter map[string]string, priorityWeight *float64) (*irminmodels.EmbeddingSearchResponse, error)
 ```
 
 SearchEmbeddings performs vector similarity search on repository\-based embeddings.
@@ -13694,7 +13784,7 @@ SearchEmbeddings performs vector similarity search on repository\-based embeddin
 ### func \(\*AIAppToolExecutor\) SearchEmbeddingsByPath
 
 ```go
-func (e *AIAppToolExecutor) SearchEmbeddingsByPath(ctx context.Context, query string, topK int, pathFilter string, metadataFilter map[string]string) (*irminmodels.EmbeddingSearchResponse, error)
+func (e *AIAppToolExecutor) SearchEmbeddingsByPath(ctx context.Context, query string, topK int, pathFilter string, metadataFilter map[string]string, priorityWeight *float64) (*irminmodels.EmbeddingSearchResponse, error)
 ```
 
 SearchEmbeddingsByPath performs vector similarity search, optionally filtered by a unified path. If pathFilter is empty, searches across all embedding files in all data sources. If pathFilter is provided, searches only in the specified embedding file.
@@ -14934,6 +15024,24 @@ func (api *APIServices) UpdateConnector(c context.Context, locale string, isSyst
 
 
 
+<a name="APIServices.UpdateEmbeddingMetadata"></a>
+### func \(\*APIServices\) UpdateEmbeddingMetadata
+
+```go
+func (api *APIServices) UpdateEmbeddingMetadata(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, embeddingPath string, ref string, updates map[string]map[string]string) error
+```
+
+UpdateEmbeddingMetadata updates metadata for specific embeddings.
+
+<a name="APIServices.UpdateEmbeddingPriority"></a>
+### func \(\*APIServices\) UpdateEmbeddingPriority
+
+```go
+func (api *APIServices) UpdateEmbeddingPriority(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, embeddingPath string, ref string, updates map[string]float64) error
+```
+
+UpdateEmbeddingPriority updates priority for specific embeddings.
+
 <a name="APIServices.UpdateInvite"></a>
 ### func \(\*APIServices\) UpdateInvite
 
@@ -15068,6 +15176,15 @@ func (api *APIServices) UploadRepositoryObjectFromURL(c context.Context, locale 
 ```
 
 
+
+<a name="APIServices.UpsertEmbeddings"></a>
+### func \(\*APIServices\) UpsertEmbeddings
+
+```go
+func (api *APIServices) UpsertEmbeddings(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, req irmincore.UpsertEmbeddingsRequest) (*irminmodels.UpsertEmbeddingsResponse, error)
+```
+
+UpsertEmbeddings inserts or updates embeddings, skipping duplicates by content hash.
 
 <a name="APIServices.ValidateConnectorConfiguration"></a>
 ### func \(\*APIServices\) ValidateConnectorConfiguration

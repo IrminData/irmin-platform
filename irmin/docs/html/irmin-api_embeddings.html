@@ -39,6 +39,9 @@ func ChunkTextBySentences(text string, maxChunkSize int) []string
     ChunkTextBySentences splits text into chunks by sentence boundaries.
     This provides more semantically meaningful chunks.
 
+func ComputeContentHash(content string) string
+    ComputeContentHash computes SHA-256 hash of content for deduplication.
+
 func ComputeCosineSimilarity(a, b []float32) (float64, error)
     ComputeCosineSimilarity computes the cosine similarity between two vectors.
 
@@ -222,6 +225,29 @@ func (c *Client) SearchWithFilter(
 ) ([]SearchResult, error)
     SearchWithFilter performs vector similarity search with metadata filtering.
 
+func (c *Client) SearchWithFilterAndPriority(
+	ctx context.Context,
+	queryVector []float32,
+	parquetPath string,
+	topK int,
+	filter map[string]string,
+	priorityWeight float64,
+) ([]SearchResult, error)
+    SearchWithFilterAndPriority performs vector similarity search with both
+    metadata filtering and priority weighting. Rows are first filtered by
+    metadata, then scored using: similarity * (1 + priority * priorityWeight).
+
+func (c *Client) SearchWithFilterAndPriorityFromBytes(
+	ctx context.Context,
+	queryVector []float32,
+	parquetContent []byte,
+	topK int,
+	filter map[string]string,
+	priorityWeight float64,
+) ([]SearchResult, error)
+    SearchWithFilterAndPriorityFromBytes performs filtered priority-weighted
+    search on parquet content provided as bytes.
+
 func (c *Client) SearchWithFilterFromBytes(
 	ctx context.Context,
 	queryVector []float32,
@@ -231,6 +257,28 @@ func (c *Client) SearchWithFilterFromBytes(
 ) ([]SearchResult, error)
     SearchWithFilterFromBytes performs vector similarity search with metadata
     filtering on parquet content provided as bytes.
+
+func (c *Client) SearchWithPriority(
+	ctx context.Context,
+	queryVector []float32,
+	parquetPath string,
+	topK int,
+	priorityWeight float64,
+) ([]SearchResult, error)
+    SearchWithPriority performs vector similarity search with priority
+    weighting. The final score combines similarity score and priority: score *
+    (1 + priority * priorityWeight). Higher priority embeddings are boosted in
+    the results.
+
+func (c *Client) SearchWithPriorityFromBytes(
+	ctx context.Context,
+	queryVector []float32,
+	parquetContent []byte,
+	topK int,
+	priorityWeight float64,
+) ([]SearchResult, error)
+    SearchWithPriorityFromBytes performs priority-weighted search on parquet
+    content provided as bytes.
 
 func (c *Client) UploadToLakeFS(
 	ctx context.Context,
@@ -251,13 +299,16 @@ func DefaultConfig() EmbeddingConfig
     DefaultConfig returns the default embedding configuration.
 
 type EmbeddingRecord struct {
-	ID         string            `json:"id"`
-	SourceFile string            `json:"source_file"`
-	ChunkIndex int               `json:"chunk_index"`
-	Content    string            `json:"content"`
-	Embedding  []float32         `json:"embedding"`
-	Metadata   map[string]string `json:"metadata"`
-	CreatedAt  time.Time         `json:"created_at"`
+	ID          string            `json:"id"`
+	SourceFile  string            `json:"source_file"`
+	ChunkIndex  int               `json:"chunk_index"`
+	Content     string            `json:"content"`
+	ContentHash string            `json:"content_hash"` // SHA-256 hash for deduplication
+	Embedding   []float32         `json:"embedding"`
+	Metadata    map[string]string `json:"metadata"`
+	Priority    float32           `json:"priority"` // RAG weight (0.0-1.0, default 1.0)
+	CreatedAt   time.Time         `json:"created_at"`
+	UpdatedAt   time.Time         `json:"updated_at"`
 }
     EmbeddingRecord represents a single embedding with its associated metadata.
 
@@ -270,13 +321,15 @@ type EmbeddingResult struct {
     EmbeddingResult represents the result of an embedding operation.
 
 type SearchResult struct {
-	ID         string            `json:"id"`
-	SourceFile string            `json:"source_file"`
-	ChunkIndex int               `json:"chunk_index"`
-	Content    string            `json:"content"`
-	Score      float64           `json:"score"`
-	Distance   float64           `json:"distance"`
-	Metadata   map[string]string `json:"metadata"`
+	ID          string            `json:"id"`
+	SourceFile  string            `json:"source_file"`
+	ChunkIndex  int               `json:"chunk_index"`
+	Content     string            `json:"content"`
+	ContentHash string            `json:"content_hash"`
+	Score       float64           `json:"score"`
+	Distance    float64           `json:"distance"`
+	Metadata    map[string]string `json:"metadata"`
+	Priority    float32           `json:"priority"`
 }
     SearchResult represents a single search result from vector similarity
     search.

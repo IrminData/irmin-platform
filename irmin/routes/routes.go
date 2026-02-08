@@ -817,4 +817,19 @@ func RegisterAPIRoutes(
 		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.GetEmbeddingInfo,
 	)
+	embeddings.Post(
+		"/upsert",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.UpsertEmbeddings,
+	)
+	embeddings.Patch(
+		"/metadata",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.UpdateEmbeddingMetadata,
+	)
+	embeddings.Patch(
+		"/priority",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.UpdateEmbeddingPriority,
+	)
 }

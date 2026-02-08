@@ -196,6 +196,8 @@ type PipelineStage struct {
 	EmbeddingsQuery        *string                              `json:"embeddings_query,omitempty"`
 	EmbeddingsTopK         *int                                 `json:"embeddings_top_k,omitempty"`
 	EmbeddingsFilter       map[string]string                    `json:"embeddings_filter,omitempty"        gorm:"type:jsonb;serializer:json"`
+	EmbeddingsMetadata     map[string]string                    `json:"embeddings_metadata,omitempty"      gorm:"type:jsonb;serializer:json"`
+	EmbeddingsPriority     *float64                             `json:"embeddings_priority,omitempty"`
 
 	// Patch stage specific - applies JSON patches to connections or repositories
 

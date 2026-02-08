@@ -8591,6 +8591,160 @@
                 }
             }
         },
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/metadata": {
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Update metadata for specific embeddings by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "embeddings"
+                ],
+                "summary": "Update embedding metadata",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository slug",
+                        "name": "repository_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Metadata update request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.UpdateEmbeddingMetadataRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Metadata updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid parameters",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/priority": {
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Update priority for specific embeddings by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "embeddings"
+                ],
+                "summary": "Update embedding priority",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository slug",
+                        "name": "repository_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Priority update request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.UpdateEmbeddingPriorityRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Priority updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid parameters",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/search": {
             "post": {
                 "security": [
@@ -8673,6 +8827,95 @@
                     },
                     "404": {
                         "description": "Embedding file not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/upsert": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Insert or update embeddings, skipping duplicates by content hash",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "embeddings"
+                ],
+                "summary": "Upsert embeddings",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository slug",
+                        "name": "repository_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Upsert request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.UpsertEmbeddingsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Upsert completed successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.UpsertEmbeddingsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid parameters",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -14513,6 +14756,12 @@
                         "type": "string"
                     }
                 },
+                "priority_weight": {
+                    "description": "Priority weighting factor (\u003e0 to 1, default: disabled)",
+                    "type": "number",
+                    "maximum": 1,
+                    "example": 0.5
+                },
                 "query": {
                     "description": "Query text to search for",
                     "type": "string",
@@ -14828,6 +15077,60 @@
                 }
             }
         },
+        "irmincore.UpdateEmbeddingMetadataRequest": {
+            "type": "object",
+            "required": [
+                "embedding_path",
+                "updates"
+            ],
+            "properties": {
+                "embedding_path": {
+                    "description": "Path to embedding file",
+                    "type": "string"
+                },
+                "ref": {
+                    "description": "Repository reference",
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "updates": {
+                    "description": "ID -\u003e metadata map",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "irmincore.UpdateEmbeddingPriorityRequest": {
+            "type": "object",
+            "required": [
+                "embedding_path",
+                "updates"
+            ],
+            "properties": {
+                "embedding_path": {
+                    "description": "Path to embedding file",
+                    "type": "string"
+                },
+                "ref": {
+                    "description": "Repository reference",
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "updates": {
+                    "description": "ID -\u003e priority map (values must be 0.0-1.0)",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number",
+                        "format": "float64"
+                    }
+                }
+            }
+        },
         "irmincore.UpdateInviteRequest": {
             "type": "object",
             "required": [
@@ -15095,6 +15398,52 @@
                 "url": {
                     "type": "string",
                     "example": "https://example.com/file.json"
+                }
+            }
+        },
+        "irmincore.UpsertEmbeddingsRequest": {
+            "type": "object",
+            "required": [
+                "output_path",
+                "source_paths"
+            ],
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/irminmodels.EmbeddingConfig"
+                },
+                "embeddings": {
+                    "description": "Pre-defined embeddings to upsert",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.UpsertEmbeddingItem"
+                    }
+                },
+                "metadata": {
+                    "description": "Default metadata for all chunks",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "output_path": {
+                    "type": "string"
+                },
+                "priority": {
+                    "description": "Default priority (pointer to allow 0)",
+                    "type": "number",
+                    "maximum": 1,
+                    "minimum": 0
+                },
+                "ref": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "source_paths": {
+                    "description": "Source file paths to vectorize",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -16469,6 +16818,11 @@
                     "type": "string",
                     "example": "Machine learning is a subset of AI..."
                 },
+                "content_hash": {
+                    "description": "SHA-256 hash of content for deduplication",
+                    "type": "string",
+                    "example": "abc123..."
+                },
                 "distance": {
                     "description": "Cosine distance (0-2, lower is better)",
                     "type": "number",
@@ -16486,6 +16840,13 @@
                     "additionalProperties": {
                         "type": "string"
                     }
+                },
+                "priority": {
+                    "description": "RAG weight (0.0-1.0, default 1.0)",
+                    "type": "number",
+                    "maximum": 1,
+                    "minimum": 0,
+                    "example": 1
                 },
                 "score": {
                     "description": "Cosine similarity score (0-1, higher is better)",
@@ -17296,6 +17657,12 @@
                         "type": "string"
                     }
                 },
+                "embeddings_metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "embeddings_model": {
                     "type": "string",
                     "maxLength": 100,
@@ -17326,6 +17693,12 @@
                 "embeddings_path": {
                     "type": "string",
                     "example": "embeddings/documents.parquet"
+                },
+                "embeddings_priority": {
+                    "type": "number",
+                    "maximum": 1,
+                    "minimum": 0,
+                    "example": 0.8
                 },
                 "embeddings_query": {
                     "type": "string",
@@ -18925,6 +19298,65 @@
                 "TransformOpFileRemove",
                 "TransformOpFormatConvert"
             ]
+        },
+        "irminmodels.UpsertEmbeddingItem": {
+            "type": "object",
+            "required": [
+                "text"
+            ],
+            "properties": {
+                "metadata": {
+                    "description": "Custom metadata key-value pairs",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "priority": {
+                    "description": "RAG weight (0.0-1.0, default 1.0, pointer to allow 0)",
+                    "type": "number",
+                    "maximum": 1,
+                    "minimum": 0
+                },
+                "source_chunk": {
+                    "description": "Chunk index within source file (pointer to allow 0)",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "source_file": {
+                    "description": "Original source file path",
+                    "type": "string"
+                },
+                "text": {
+                    "description": "Text content to embed",
+                    "type": "string"
+                }
+            }
+        },
+        "irminmodels.UpsertEmbeddingsResponse": {
+            "type": "object",
+            "properties": {
+                "inserted": {
+                    "description": "Number of new embeddings inserted",
+                    "type": "integer",
+                    "example": 10
+                },
+                "path": {
+                    "description": "Output path of the embedding file",
+                    "type": "string",
+                    "example": "embeddings/documents.parquet"
+                },
+                "skipped": {
+                    "description": "Number of embeddings skipped (already exist)",
+                    "type": "integer",
+                    "example": 5
+                },
+                "updated": {
+                    "description": "Number of existing embeddings updated",
+                    "type": "integer",
+                    "example": 2
+                }
+            }
         },
         "irminmodels.User": {
             "type": "object",

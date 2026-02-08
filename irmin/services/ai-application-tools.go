@@ -702,6 +702,7 @@ func (e *AIAppToolExecutor) SearchEmbeddings(
 	repoSlug, embeddingPath, query, ref string,
 	topK int,
 	filter map[string]string,
+	priorityWeight *float64,
 ) (*irminmodels.EmbeddingSearchResponse, error) {
 	config := e.GetToolConfig()
 	if !config.VectorSearchEnabled {
@@ -732,11 +733,12 @@ func (e *AIAppToolExecutor) SearchEmbeddings(
 		&e.aiApp.Workspace,
 		repo,
 		irmincore.SearchEmbeddingsRequest{
-			EmbeddingPath: embeddingPath,
-			Query:         query,
-			Ref:           ref,
-			TopK:          topK,
-			Filter:        filter,
+			EmbeddingPath:  embeddingPath,
+			Query:          query,
+			Ref:            ref,
+			TopK:           topK,
+			Filter:         filter,
+			PriorityWeight: priorityWeight,
 		},
 	)
 	if err != nil {
@@ -909,6 +911,7 @@ func (e *AIAppToolExecutor) SearchEmbeddingsByPath(
 	topK int,
 	pathFilter string,
 	metadataFilter map[string]string,
+	priorityWeight *float64,
 ) (*irminmodels.EmbeddingSearchResponse, error) {
 	config := e.GetToolConfig()
 	if !config.VectorSearchEnabled {
@@ -933,11 +936,12 @@ func (e *AIAppToolExecutor) SearchEmbeddingsByPath(
 			resolved.Ref,
 			topK,
 			metadataFilter,
+			priorityWeight,
 		)
 	}
 
 	// No path filter - search across all embedding files in all data sources
-	return e.searchAllEmbeddings(ctx, query, topK, metadataFilter)
+	return e.searchAllEmbeddings(ctx, query, topK, metadataFilter, priorityWeight)
 }
 
 // searchAllEmbeddings searches across all embedding files in all data sources and merges results.
@@ -946,6 +950,7 @@ func (e *AIAppToolExecutor) searchAllEmbeddings(
 	query string,
 	topK int,
 	metadataFilter map[string]string,
+	priorityWeight *float64,
 ) (*irminmodels.EmbeddingSearchResponse, error) {
 	var allResults []irminmodels.EmbeddingSearchResult
 	var model string
@@ -953,7 +958,7 @@ func (e *AIAppToolExecutor) searchAllEmbeddings(
 	// Search each data source for embedding files
 	for i := range e.aiApp.DataSources {
 		ds := &e.aiApp.DataSources[i]
-		results, dsModel := e.searchDataSourceEmbeddings(ctx, ds, query, topK, metadataFilter)
+		results, dsModel := e.searchDataSourceEmbeddings(ctx, ds, query, topK, metadataFilter, priorityWeight)
 		allResults = append(allResults, results...)
 		if model == "" && dsModel != "" {
 			model = dsModel
@@ -982,6 +987,7 @@ func (e *AIAppToolExecutor) searchDataSourceEmbeddings(
 	query string,
 	topK int,
 	metadataFilter map[string]string,
+	priorityWeight *float64,
 ) ([]irminmodels.EmbeddingSearchResult, string) {
 	ref := getEffectiveRef(ds)
 
@@ -1004,7 +1010,9 @@ func (e *AIAppToolExecutor) searchDataSourceEmbeddings(
 
 	// Search each embedding file
 	for _, ef := range embeddingFiles {
-		fileResults, fileModel := e.searchSingleEmbeddingFile(ctx, ds, ef.Path, ref, query, topK, metadataFilter)
+		fileResults, fileModel := e.searchSingleEmbeddingFile(
+			ctx, ds, ef.Path, ref, query, topK, metadataFilter, priorityWeight,
+		)
 		results = append(results, fileResults...)
 		if model == "" && fileModel != "" {
 			model = fileModel
@@ -1021,6 +1029,7 @@ func (e *AIAppToolExecutor) searchSingleEmbeddingFile(
 	embeddingPath, ref, query string,
 	topK int,
 	metadataFilter map[string]string,
+	priorityWeight *float64,
 ) ([]irminmodels.EmbeddingSearchResult, string) {
 	result, err := e.apiServices.SearchEmbeddings(
 		ctx,
@@ -1029,11 +1038,12 @@ func (e *AIAppToolExecutor) searchSingleEmbeddingFile(
 		&e.aiApp.Workspace,
 		&ds.Repository,
 		irmincore.SearchEmbeddingsRequest{
-			EmbeddingPath: embeddingPath,
-			Query:         query,
-			Ref:           ref,
-			TopK:          topK,
-			Filter:        metadataFilter,
+			EmbeddingPath:  embeddingPath,
+			Query:          query,
+			Ref:            ref,
+			TopK:           topK,
+			Filter:         metadataFilter,
+			PriorityWeight: priorityWeight,
 		},
 	)
 	if err != nil {
@@ -1339,6 +1349,7 @@ func (e *AIAppToolExecutor) executeEmbeddingSearchTool(
 	}
 
 	// Execute the embedding search
+	// Note: Custom tools don't support priority weighting yet, passing nil
 	result, err := e.SearchEmbeddings(
 		ctx,
 		resolved.Repository.Slug,
@@ -1347,6 +1358,7 @@ func (e *AIAppToolExecutor) executeEmbeddingSearchTool(
 		resolved.Ref,
 		topK,
 		tool.EmbeddingFilter,
+		nil, // priorityWeight not supported for custom tools yet
 	)
 	if err != nil {
 		return nil, fmt.Errorf("embedding search failed: %w", err)

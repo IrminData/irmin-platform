@@ -21,8 +21,12 @@ func BuildKeyFromParts(path string, queryParams map[string]string, authorization
     key generator using an explicit path, query parameters, and authorization
     header value.
 
-func InvalidateKey(storage fiber.Storage, key string) error
-    InvalidateKey deletes a specific cache entry key from storage.
+func InvalidateKey(storage fiber.Storage, key string, authHash string) error
+    InvalidateKey deletes a specific cache entry key from storage. authHash is
+    the SHA256 hex digest of the Authorization header; when non-empty, Fiber
+    v3's "_auth_&lt;hash&gt;" suffixed variants are also deleted for each HTTP method.
+    Pass an empty string when the key already contains the auth suffix (e.g.
+    from index lookups).
 
 func InvalidatePathForCurrentUser(
 	c fiber.Ctx,
@@ -32,7 +36,8 @@ func InvalidatePathForCurrentUser(
 ) error
     InvalidatePathForCurrentUser computes the cache key for the given path and
     query using the current request's Authorization header, and deletes it from
-    storage.
+    storage. The auth hash is computed from the Authorization header so that
+    Fiber v3's "_auth_&lt;hash&gt;" suffixed cache entries are also deleted.
 
 func InvalidatePathPrefixForAllUsers(storage fiber.Storage, pathPrefix string) error
     InvalidatePathPrefixForAllUsers invalidates all cached entries under the
@@ -64,7 +69,8 @@ func TrackKeyForPath(storage fiber.Storage, authorization string, path string, k
 func TrackKeyForRequest(c fiber.Ctx, storage fiber.Storage, key string)
     TrackKeyForRequest indexes a generated cache key by all path prefixes for
     fast prefix invalidation later. Keys are indexed per-authorization to avoid
-    cross-tenant invalidations.
+    cross-tenant invalidations. The tracked key includes the auth hash suffix
+    that Fiber v3 appends for authenticated requests.
 
 func UpsertIndexEntry(storage fiber.Storage, indexKey string, key string)
 </pre>

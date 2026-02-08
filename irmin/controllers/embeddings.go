@@ -64,7 +64,11 @@ func (api *APIControllers) VectorizeObjects(c fiber.Ctx) error {
 	params, err := api.validateEmbeddingParams(c)
 	if err != nil {
 		api.Logger.Error("Error validating embedding parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return utils.WriteResponse(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.IrminAPIResponse{},
+		)
 	}
 
 	// Parse and validate request body
@@ -129,7 +133,11 @@ func (api *APIControllers) SearchEmbeddings(c fiber.Ctx) error {
 	params, err := api.validateEmbeddingParams(c)
 	if err != nil {
 		api.Logger.Error("Error validating embedding parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return utils.WriteResponse(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.IrminAPIResponse{},
+		)
 	}
 
 	// Parse and validate request body
@@ -176,7 +184,11 @@ func (api *APIControllers) ListEmbeddings(c fiber.Ctx) error {
 	params, err := api.validateEmbeddingParams(c)
 	if err != nil {
 		api.Logger.Error("Error validating embedding parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return utils.WriteResponse(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.IrminAPIResponse{},
+		)
 	}
 
 	// Get query parameters
@@ -224,13 +236,22 @@ func (api *APIControllers) GetEmbeddingInfo(c fiber.Ctx) error {
 	params, err := api.validateEmbeddingParams(c)
 	if err != nil {
 		api.Logger.Error("Error validating embedding parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return utils.WriteResponse(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.IrminAPIResponse{},
+		)
 	}
 
 	// Get query parameters
 	embeddingPath := c.Query("embedding_path")
 	if embeddingPath == "" {
-		return api.handleServiceError(c, "Missing embedding_path", services.ErrInvalidRequest, params.dict)
+		return api.handleServiceError(
+			c,
+			"Missing embedding_path",
+			services.ErrInvalidRequest,
+			params.dict,
+		)
 	}
 	ref := c.Query("ref", "")
 
@@ -250,5 +271,191 @@ func (api *APIControllers) GetEmbeddingInfo(c fiber.Ctx) error {
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: embeddingFile,
+	})
+}
+
+// UpsertEmbeddings godoc
+// @Summary Upsert embeddings
+// @Description Insert or update embeddings, skipping duplicates by content hash
+// @Tags embeddings
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param body body irmincore.UpsertEmbeddingsRequest true "Upsert request"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.UpsertEmbeddingsResponse} "Upsert completed successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/upsert [post]
+func (api *APIControllers) UpsertEmbeddings(c fiber.Ctx) error {
+	params, err := api.validateEmbeddingParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating embedding parameters", "error", err)
+		return utils.WriteResponse(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.IrminAPIResponse{},
+		)
+	}
+
+	// Parse and validate request body
+	var req irmincore.UpsertEmbeddingsRequest
+	if bindErr := api.validateAndBindRequestWithResponse(c, &req, params.dict); bindErr != nil {
+		return bindErr
+	}
+
+	// Call service to upsert embeddings
+	result, err := api.Services.UpsertEmbeddings(
+		c,
+		params.locale,
+		params.user,
+		params.workspace,
+		params.repository,
+		req,
+	)
+	if err != nil {
+		return api.handleServiceError(c, "Error upserting embeddings", err, params.dict)
+	}
+
+	// Invalidate caches
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/embeddings", params.workspace.Slug, params.repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating embeddings cache", "error", invalidationErr)
+	}
+
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Message: api.lm.T(params.dict, "embeddings_upserted"),
+		Data:    result,
+	})
+}
+
+// UpdateEmbeddingMetadata godoc
+// @Summary Update embedding metadata
+// @Description Update metadata for specific embeddings by ID
+// @Tags embeddings
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param body body irmincore.UpdateEmbeddingMetadataRequest true "Metadata update request"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Metadata updated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/metadata [patch]
+//
+//nolint:dupl // Similar structure to UpdateEmbeddingPriority is intentional for consistency.
+func (api *APIControllers) UpdateEmbeddingMetadata(c fiber.Ctx) error {
+	params, err := api.validateEmbeddingParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating embedding parameters", "error", err)
+		return utils.WriteResponse(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.IrminAPIResponse{},
+		)
+	}
+
+	// Parse and validate request body
+	var req irmincore.UpdateEmbeddingMetadataRequest
+	if bindErr := api.validateAndBindRequestWithResponse(c, &req, params.dict); bindErr != nil {
+		return bindErr
+	}
+
+	// Call service to update metadata
+	err = api.Services.UpdateEmbeddingMetadata(
+		c,
+		params.locale,
+		params.user,
+		params.workspace,
+		params.repository,
+		req.EmbeddingPath,
+		req.Ref,
+		req.Updates,
+	)
+	if err != nil {
+		return api.handleServiceError(c, "Error updating embedding metadata", err, params.dict)
+	}
+
+	// Invalidate caches
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/embeddings", params.workspace.Slug, params.repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating embeddings cache", "error", invalidationErr)
+	}
+
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Message: api.lm.T(params.dict, "embeddings_metadata_updated"),
+	})
+}
+
+// UpdateEmbeddingPriority godoc
+// @Summary Update embedding priority
+// @Description Update priority for specific embeddings by ID
+// @Tags embeddings
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param body body irmincore.UpdateEmbeddingPriorityRequest true "Priority update request"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Priority updated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/priority [patch]
+//
+//nolint:dupl // Similar structure to UpdateEmbeddingMetadata is intentional for consistency.
+func (api *APIControllers) UpdateEmbeddingPriority(c fiber.Ctx) error {
+	params, err := api.validateEmbeddingParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating embedding parameters", "error", err)
+		return utils.WriteResponse(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.IrminAPIResponse{},
+		)
+	}
+
+	// Parse and validate request body
+	var req irmincore.UpdateEmbeddingPriorityRequest
+	if bindErr := api.validateAndBindRequestWithResponse(c, &req, params.dict); bindErr != nil {
+		return bindErr
+	}
+
+	// Call service to update priority
+	err = api.Services.UpdateEmbeddingPriority(
+		c,
+		params.locale,
+		params.user,
+		params.workspace,
+		params.repository,
+		req.EmbeddingPath,
+		req.Ref,
+		req.Updates,
+	)
+	if err != nil {
+		return api.handleServiceError(c, "Error updating embedding priority", err, params.dict)
+	}
+
+	// Invalidate caches
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/embeddings", params.workspace.Slug, params.repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating embeddings cache", "error", invalidationErr)
+	}
+
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Message: api.lm.T(params.dict, "embeddings_priority_updated"),
 	})
 }

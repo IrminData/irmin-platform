@@ -1574,7 +1574,7 @@ func (o *Orchestrator) handleEmbeddingsStage(
 
 // handleEmbeddingsVectorize creates embeddings from previous stage files.
 //
-//nolint:funlen // Complex but well-structured function for embeddings vectorize workflow
+//nolint:funlen,gocognit // Complex but well-structured function for embeddings vectorize workflow
 func (o *Orchestrator) handleEmbeddingsVectorize(
 	ctx context.Context,
 	workflow *db.Workflow,
@@ -1644,7 +1644,21 @@ func (o *Orchestrator) handleEmbeddingsVectorize(
 		}
 
 		logs = append(logs, fmt.Sprintf("Created %d embedding chunks from %s", result.TotalChunks, fileName))
+
+		// Apply stage-level metadata and priority to all records from this file
+		for i := range result.Records {
+			maps.Copy(result.Records[i].Metadata, stage.EmbeddingsMetadata)
+			if stage.EmbeddingsPriority != nil {
+				result.Records[i].Priority = float32(*stage.EmbeddingsPriority)
+			}
+		}
+
 		allRecords = append(allRecords, result.Records...)
+	}
+
+	if len(stage.EmbeddingsMetadata) > 0 || stage.EmbeddingsPriority != nil {
+		logs = append(logs, fmt.Sprintf("Applied stage metadata (%d keys) and priority to embedding records",
+			len(stage.EmbeddingsMetadata)))
 	}
 
 	logs = append(logs, fmt.Sprintf("Total embeddings created: %d chunks", len(allRecords)))

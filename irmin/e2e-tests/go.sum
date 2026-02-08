@@ -1,9 +1,9 @@
-github.com/IrminData/irmin-sdk-go v0.0.0-20260126174612-386c1f8e2874 h1:TvXUe52MGjd4v4Yfs63CTqtaQyVZoupaDwUMLWVj3WI=
-github.com/IrminData/irmin-sdk-go v0.0.0-20260126174612-386c1f8e2874/go.mod h1:KT38lpv+eZ/d3U18ECKfLKqniZHs4eXNHIiIg4kVSh0=
+github.com/IrminData/irmin-sdk-go v0.0.0-20260207114343-7c900a82b595 h1:hvxecWhjtQNn5xpuHtJSZCgKCRed4Q5ZFXTTQTlyvH0=
+github.com/IrminData/irmin-sdk-go v0.0.0-20260207114343-7c900a82b595/go.mod h1:Ttyod4YQRU/HKhwbNwu0Gwg6zFOed2kJGyZgeo/j2JU=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/gabriel-vasile/mimetype v1.4.12 h1:e9hWvmLYvtp846tLHam2o++qitpguFiYCKbn0w9jyqw=
-github.com/gabriel-vasile/mimetype v1.4.12/go.mod h1:d+9Oxyo1wTzWdyVUPMmXFvp4F9tea18J8ufA774AB3s=
+github.com/gabriel-vasile/mimetype v1.4.13 h1:46nXokslUBsAJE/wMsp5gtO500a4F3Nkz9Ufpk2AcUM=
+github.com/gabriel-vasile/mimetype v1.4.13/go.mod h1:d+9Oxyo1wTzWdyVUPMmXFvp4F9tea18J8ufA774AB3s=
 github.com/go-playground/assert/v2 v2.2.0 h1:JvknZsQTYeFEAhQwI4qEt9cyV5ONwRHC+lYKSsYSR8s=
 github.com/go-playground/assert/v2 v2.2.0/go.mod h1:VDjEfimB/XKnb+ZQfWdccd7VUvScMdVu0Titje2rxJ4=
 github.com/go-playground/locales v0.14.1 h1:EWaQ/wswjilfKLTECiXz7Rh+3BjFhfDFKv/oXslEjJA=

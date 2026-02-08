@@ -1280,6 +1280,8 @@ type PipelineStage struct {
 	EmbeddingsQuery        *string                              `json:"embeddings_query,omitempty"`
 	EmbeddingsTopK         *int                                 `json:"embeddings_top_k,omitempty"`
 	EmbeddingsFilter       map[string]string                    `json:"embeddings_filter,omitempty"        gorm:"type:jsonb;serializer:json"`
+	EmbeddingsMetadata     map[string]string                    `json:"embeddings_metadata,omitempty"      gorm:"type:jsonb;serializer:json"`
+	EmbeddingsPriority     *float64                             `json:"embeddings_priority,omitempty"`
 
 	PatchDirection        *PatchDirection `json:"patch_direction,omitempty"`                                             // to_connection or to_repository
 	PatchConnection       *Connection     `json:"patch_connection,omitempty"        gorm:"foreignKey:PatchConnectionID"` // Target connection for to_connection

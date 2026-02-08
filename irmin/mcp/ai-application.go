@@ -250,11 +250,12 @@ type aiAppGetContentArgs struct {
 }
 
 type aiAppEmbeddingSearchArgs struct {
-	Query  string            `json:"query"  jsonschema:"required,The search query"`
-	Path   string            `json:"path"   jsonschema:"optional,Unified path to specific embedding file (e.g. /repo-slug/main/embeddings/file.parquet). If empty searches all embeddings."`
-	TopK   int               `json:"top_k"  jsonschema:"optional,Number of results to return (default 10)"`
-	Filter map[string]string `json:"filter" jsonschema:"optional,Metadata filter for search results"`
-	Reason string            `json:"reason" jsonschema:"optional,Brief explanation of why search is needed (recorded in audit logs)"`
+	Query          string            `json:"query"           jsonschema:"required,The search query"`
+	Path           string            `json:"path"            jsonschema:"optional,Unified path to specific embedding file (e.g. /repo-slug/main/embeddings/file.parquet). If empty searches all embeddings."`
+	TopK           int               `json:"top_k"           jsonschema:"optional,Number of results to return (default 10)"`
+	Filter         map[string]string `json:"filter"          jsonschema:"optional,Metadata filter for search results"`
+	PriorityWeight *float64          `json:"priority_weight" jsonschema:"optional,Priority weighting factor (0-1). When set higher priority embeddings are boosted in results."`
+	Reason         string            `json:"reason"          jsonschema:"optional,Brief explanation of why search is needed (recorded in audit logs)"`
 }
 
 // Write tool argument structs
@@ -519,7 +520,10 @@ Parameters:
 - path: Unified path to filter (e.g. /repo-slug/ref/embeddings/file.parquet). If empty, searches all embeddings.
 - top_k: Number of results to return (default: 10)
 - filter: Optional metadata filter for results
-- reason: Brief explanation of why search is needed (optional, recorded in audit logs)`,
+- priority_weight: Priority weighting factor (0-1). When set, higher priority embeddings are boosted in results.
+- reason: Brief explanation of why search is needed (optional, recorded in audit logs)
+
+Results include priority and metadata fields for each embedding chunk.`,
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args aiAppEmbeddingSearchArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			startTime := time.Now()
@@ -537,6 +541,7 @@ Parameters:
 				topK,
 				args.Path,
 				args.Filter,
+				args.PriorityWeight,
 			)
 			if err != nil {
 				result := mcpError(err.Error())

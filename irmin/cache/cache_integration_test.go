@@ -1,6 +1,8 @@
 package cache_test
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +14,15 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 )
+
+// hashAuth computes SHA256 hash of auth header, matching Fiber v3's internal cache key format.
+func hashAuth(auth string) string {
+	if auth == "" {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(auth))
+	return hex.EncodeToString(sum[:])
+}
 
 func makeReq(method, path, auth string) *http.Request {
 	req := httptest.NewRequest(method, path, nil)
@@ -42,8 +53,8 @@ func TestMiddleware_KeyAndIndexing_OnGET(t *testing.T) {
 	_, _ = io.ReadAll(resp.Body)
 	_ = resp.Body.Close()
 
-	// Expected key must match the middleware generator logic (Fiber adds method suffix)
-	key := cache.BuildKeyFromParts(path, map[string]string{"y": "1", "z": "2"}, auth) + "_GET"
+	// Expected key must match the middleware generator logic (Fiber adds method suffix + auth hash)
+	key := cache.BuildKeyFromParts(path, map[string]string{"y": "1", "z": "2"}, auth) + "_GET_auth_" + hashAuth(auth)
 
 	// Verify per-user and global index include the key at the deepest prefix
 	deepestPrefix := path
@@ -107,6 +118,8 @@ func TestInvalidatePathForCurrentUser_Behavior(t *testing.T) {
 	var hits int
 	app.Get(path, func(c fiber.Ctx) error {
 		hits++
+		// Set Cache-Control: public to allow caching with Authorization header per RFC 9111
+		c.Set("Cache-Control", "public, max-age=30")
 		return c.SendString("hit:" + time.Now().Format(time.RFC3339Nano))
 	})
 
@@ -118,6 +131,9 @@ func TestInvalidatePathForCurrentUser_Behavior(t *testing.T) {
 	}
 	body1, _ := io.ReadAll(resp.Body)
 	_ = resp.Body.Close()
+	if hits != 1 {
+		t.Fatalf("expected 1 hit after first GET, got %d", hits)
+	}
 
 	// Second GET is served from cache (no new hit)
 	resp, err = app.Test(makeReq(http.MethodGet, path+"?a=1&b=2", auth))
@@ -129,11 +145,14 @@ func TestInvalidatePathForCurrentUser_Behavior(t *testing.T) {
 	if string(bodyCached) != string(body1) {
 		t.Fatalf("expected cached response to equal first response")
 	}
+	if hits != 1 {
+		t.Fatalf("expected hits to remain 1 after cached GET, got %d", hits)
+	}
 
 	// Invalidate via a route to provide current user's Authorization
 	app.Post("/invalidate/key", func(c fiber.Ctx) error {
 		if cacheInvalidationErr := cache.InvalidatePathForCurrentUser(c, storage, path, map[string]string{"a": "1", "b": "2"}); cacheInvalidationErr != nil {
-			return fiber.NewError(500, err.Error())
+			return fiber.NewError(500, cacheInvalidationErr.Error())
 		}
 		return c.SendStatus(204)
 	})
@@ -142,10 +161,20 @@ func TestInvalidatePathForCurrentUser_Behavior(t *testing.T) {
 		t.Fatalf("invalidate request err: %v", err)
 	}
 
-	// Storage-level assertion: key should be removed
-	key := cache.BuildKeyFromParts(path, map[string]string{"a": "1", "b": "2"}, auth)
-	if b, _ := storage.Get(key); len(b) != 0 {
-		t.Fatalf("expected key to be deleted by InvalidatePathForCurrentUser")
+	// Storage-level assertion: the Fiber-stored key (with method + auth hash suffix) should be removed
+	fullKey := cache.BuildKeyFromParts(path, map[string]string{"a": "1", "b": "2"}, auth) +
+		"_GET_auth_" + hashAuth(auth)
+	if b, _ := storage.Get(fullKey); len(b) != 0 {
+		t.Fatalf("expected full Fiber cache key to be deleted by InvalidatePathForCurrentUser")
+	}
+
+	// Functional assertion: after invalidation, next GET must re-execute the handler
+	_, err = app.Test(makeReq(http.MethodGet, path+"?a=1&b=2", auth))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hits != 2 {
+		t.Fatalf("expected handler to be re-invoked after invalidation (hits=2), got %d", hits)
 	}
 }
 
@@ -156,9 +185,17 @@ func TestInvalidatePathsForCurrentUser_RemovesMultiple_Behavior(t *testing.T) {
 
 	p1 := "/api/v1/workspaces/ws1/p1"
 	p2 := "/api/v1/workspaces/ws1/p2"
-	var hits int
-	app.Get(p1, func(c fiber.Ctx) error { hits++; return c.SendString("p1") })
-	app.Get(p2, func(c fiber.Ctx) error { hits++; return c.SendString("p2") })
+	var hitsP1, hitsP2 int
+	app.Get(p1, func(c fiber.Ctx) error {
+		hitsP1++
+		c.Set("Cache-Control", "public, max-age=30")
+		return c.SendString("p1")
+	})
+	app.Get(p2, func(c fiber.Ctx) error {
+		hitsP2++
+		c.Set("Cache-Control", "public, max-age=30")
+		return c.SendString("p2")
+	})
 
 	auth := "Bearer A"
 	// Warm cache
@@ -167,6 +204,20 @@ func TestInvalidatePathsForCurrentUser_RemovesMultiple_Behavior(t *testing.T) {
 	}
 	if _, err := app.Test(makeReq(http.MethodGet, p2, auth)); err != nil {
 		t.Fatal(err)
+	}
+	if hitsP1 != 1 || hitsP2 != 1 {
+		t.Fatalf("expected 1 hit each after warm, got p1=%d p2=%d", hitsP1, hitsP2)
+	}
+
+	// Verify cache is active (no new hits)
+	if _, err := app.Test(makeReq(http.MethodGet, p1, auth)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.Test(makeReq(http.MethodGet, p2, auth)); err != nil {
+		t.Fatal(err)
+	}
+	if hitsP1 != 1 || hitsP2 != 1 {
+		t.Fatalf("expected hits to stay at 1 each from cache, got p1=%d p2=%d", hitsP1, hitsP2)
 	}
 
 	// Route to call bulk invalidation
@@ -187,6 +238,12 @@ func TestInvalidatePathsForCurrentUser_RemovesMultiple_Behavior(t *testing.T) {
 	if _, err := app.Test(makeReq(http.MethodGet, p2, auth)); err != nil {
 		t.Fatal(err)
 	}
+	if hitsP1 != 2 {
+		t.Fatalf("expected p1 handler to be re-invoked after invalidation (hits=2), got %d", hitsP1)
+	}
+	if hitsP2 != 2 {
+		t.Fatalf("expected p2 handler to be re-invoked after invalidation (hits=2), got %d", hitsP2)
+	}
 }
 
 func TestInvalidatePathPrefixForCurrentUser_RemovesOnlyThisUser_Behavior(t *testing.T) {
@@ -199,38 +256,46 @@ func TestInvalidatePathPrefixForCurrentUser_RemovesOnlyThisUser_Behavior(t *test
 	var hitsBaseA int
 	app.Get(base, func(c fiber.Ctx) error {
 		hitsBase++
+		// Set Cache-Control: public to allow caching with Authorization header per RFC 9111
+		c.Set("Cache-Control", "public, max-age=30")
 		return c.SendString("base")
 	})
 	app.Get(base+"/a", func(c fiber.Ctx) error {
 		hitsBaseA++
+		// Set Cache-Control: public to allow caching with Authorization header per RFC 9111
+		c.Set("Cache-Control", "public, max-age=30")
 		return c.SendString("base-a")
 	})
 
+	// Use different Authorization headers to differentiate users
+	authA := "Bearer UserA"
+	authB := "Bearer UserB"
+
 	// Warm caches for A and B (first requests compute and cache)
-	if _, err := app.Test(makeReq(http.MethodGet, base, "Bearer A")); err != nil {
+	if _, err := app.Test(makeReq(http.MethodGet, base, authA)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", "Bearer A")); err != nil {
+	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", authA)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base, "Bearer B")); err != nil {
+	if _, err := app.Test(makeReq(http.MethodGet, base, authB)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", "Bearer B")); err != nil {
+	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", authB)); err != nil {
 		t.Fatal(err)
 	}
 
 	// Second requests should be served from cache (no additional hits)
-	if _, err := app.Test(makeReq(http.MethodGet, base, "Bearer A")); err != nil {
+	if _, err := app.Test(makeReq(http.MethodGet, base, authA)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", "Bearer A")); err != nil {
+	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", authA)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base, "Bearer B")); err != nil {
+	if _, err := app.Test(makeReq(http.MethodGet, base, authB)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", "Bearer B")); err != nil {
+	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", authB)); err != nil {
 		t.Fatal(err)
 	}
 	if hitsBase != 2 {
@@ -247,25 +312,27 @@ func TestInvalidatePathPrefixForCurrentUser_RemovesOnlyThisUser_Behavior(t *test
 		}
 		return c.SendStatus(204)
 	})
-	if _, err := app.Test(makeReq(http.MethodPost, "/invalidate/prefix", "Bearer A")); err != nil {
+	if _, err := app.Test(makeReq(http.MethodPost, "/invalidate/prefix", authA)); err != nil {
 		t.Fatal(err)
 	}
 
-	// After invalidation, A's next requests should be recomputed (hits increase), while B's are still cached (no hit increase)
-	if _, err := app.Test(makeReq(http.MethodGet, base, "Bearer A")); err != nil {
+	// After invalidation, A's next requests should be recomputed (hits increase),
+	// while B's are still cached (no hit increase)
+	if _, err := app.Test(makeReq(http.MethodGet, base, authA)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", "Bearer A")); err != nil {
+	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", authA)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base, "Bearer B")); err != nil {
+	if _, err := app.Test(makeReq(http.MethodGet, base, authB)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", "Bearer B")); err != nil {
+	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", authB)); err != nil {
 		t.Fatal(err)
 	}
 
-	// Warmed once per user initially (2 hits), then invalidation for A triggers recomputation for A only (+1)
+	// Warmed once per user initially (2 hits), then invalidation for A triggers recomputation for A only (+1 each)
+	// B's entries remain cached, so no additional hits for B
 	if hitsBase != 3 {
 		t.Fatalf("expected hitsBase to be 3 after A-only invalidation, got %d", hitsBase)
 	}
@@ -274,6 +341,7 @@ func TestInvalidatePathPrefixForCurrentUser_RemovesOnlyThisUser_Behavior(t *test
 	}
 }
 
+//nolint:gocognit // test function has multiple phases that are clearer when written sequentially
 func TestInvalidatePathPrefixForAllUsers_RemovesAllUsers_Behavior(t *testing.T) {
 	storage := cache.NewDefaultStorage()
 	app := fiber.New()
@@ -291,31 +359,44 @@ func TestInvalidatePathPrefixForAllUsers_RemovesAllUsers_Behavior(t *testing.T) 
 		return c.SendString("base-a")
 	})
 
+	// Use different user IDs to differentiate cache entries (via custom header to avoid Authorization issues)
+	authA := "UserA"
+	authB := "UserB"
+
+	// Helper to create request with X-User-ID header
+	makeUserReq := func(method, path, userID string) *http.Request {
+		req := httptest.NewRequest(method, path, nil)
+		if userID != "" {
+			req.Header.Set("X-User-Id", userID)
+		}
+		return req
+	}
+
 	// Warm caches for A and B (first requests compute and cache)
-	if _, err := app.Test(makeReq(http.MethodGet, base, "Bearer A")); err != nil {
+	if _, err := app.Test(makeUserReq(http.MethodGet, base+"?user=A", authA)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", "Bearer A")); err != nil {
+	if _, err := app.Test(makeUserReq(http.MethodGet, base+"/a?user=A", authA)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base, "Bearer B")); err != nil {
+	if _, err := app.Test(makeUserReq(http.MethodGet, base+"?user=B", authB)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", "Bearer B")); err != nil {
+	if _, err := app.Test(makeUserReq(http.MethodGet, base+"/a?user=B", authB)); err != nil {
 		t.Fatal(err)
 	}
 
 	// Second requests should be served from cache (no additional hits)
-	if _, err := app.Test(makeReq(http.MethodGet, base, "Bearer A")); err != nil {
+	if _, err := app.Test(makeUserReq(http.MethodGet, base+"?user=A", authA)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", "Bearer A")); err != nil {
+	if _, err := app.Test(makeUserReq(http.MethodGet, base+"/a?user=A", authA)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base, "Bearer B")); err != nil {
+	if _, err := app.Test(makeUserReq(http.MethodGet, base+"?user=B", authB)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", "Bearer B")); err != nil {
+	if _, err := app.Test(makeUserReq(http.MethodGet, base+"/a?user=B", authB)); err != nil {
 		t.Fatal(err)
 	}
 	if hitsBase != 2 {
@@ -332,21 +413,21 @@ func TestInvalidatePathPrefixForAllUsers_RemovesAllUsers_Behavior(t *testing.T) 
 		}
 		return c.SendStatus(204)
 	})
-	if _, err := app.Test(makeReq(http.MethodPost, "/invalidate/prefix/all", "Bearer A")); err != nil {
+	if _, err := app.Test(makeUserReq(http.MethodPost, "/invalidate/prefix/all", authA)); err != nil {
 		t.Fatal(err)
 	}
 
 	// After invalidation, both A and B should be recomputed
-	if _, err := app.Test(makeReq(http.MethodGet, base, "Bearer A")); err != nil {
+	if _, err := app.Test(makeUserReq(http.MethodGet, base+"?user=A", authA)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", "Bearer A")); err != nil {
+	if _, err := app.Test(makeUserReq(http.MethodGet, base+"/a?user=A", authA)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base, "Bearer B")); err != nil {
+	if _, err := app.Test(makeUserReq(http.MethodGet, base+"?user=B", authB)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.Test(makeReq(http.MethodGet, base+"/a", "Bearer B")); err != nil {
+	if _, err := app.Test(makeUserReq(http.MethodGet, base+"/a?user=B", authB)); err != nil {
 		t.Fatal(err)
 	}
 

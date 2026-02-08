@@ -538,6 +538,11 @@ definitions:
           type: string
         description: Optional metadata filters
         type: object
+      priority_weight:
+        description: 'Priority weighting factor (>0 to 1, default: disabled)'
+        example: 0.5
+        maximum: 1
+        type: number
       query:
         description: Query text to search for
         example: What is machine learning?
@@ -763,6 +768,45 @@ definitions:
     - name
     - type
     type: object
+  irmincore.UpdateEmbeddingMetadataRequest:
+    properties:
+      embedding_path:
+        description: Path to embedding file
+        type: string
+      ref:
+        description: Repository reference
+        maxLength: 100
+        type: string
+      updates:
+        additionalProperties:
+          additionalProperties:
+            type: string
+          type: object
+        description: ID -> metadata map
+        type: object
+    required:
+    - embedding_path
+    - updates
+    type: object
+  irmincore.UpdateEmbeddingPriorityRequest:
+    properties:
+      embedding_path:
+        description: Path to embedding file
+        type: string
+      ref:
+        description: Repository reference
+        maxLength: 100
+        type: string
+      updates:
+        additionalProperties:
+          format: float64
+          type: number
+        description: ID -> priority map (values must be 0.0-1.0)
+        type: object
+    required:
+    - embedding_path
+    - updates
+    type: object
   irmincore.UpdateInviteRequest:
     properties:
       role:
@@ -955,6 +999,39 @@ definitions:
         type: string
     required:
     - url
+    type: object
+  irmincore.UpsertEmbeddingsRequest:
+    properties:
+      config:
+        $ref: '#/definitions/irminmodels.EmbeddingConfig'
+      embeddings:
+        description: Pre-defined embeddings to upsert
+        items:
+          $ref: '#/definitions/irminmodels.UpsertEmbeddingItem'
+        type: array
+      metadata:
+        additionalProperties:
+          type: string
+        description: Default metadata for all chunks
+        type: object
+      output_path:
+        type: string
+      priority:
+        description: Default priority (pointer to allow 0)
+        maximum: 1
+        minimum: 0
+        type: number
+      ref:
+        maxLength: 100
+        type: string
+      source_paths:
+        description: Source file paths to vectorize
+        items:
+          type: string
+        type: array
+    required:
+    - output_path
+    - source_paths
     type: object
   irmincore.ValidateObjectRequest:
     properties:
@@ -1980,6 +2057,10 @@ definitions:
         description: The actual text content of the chunk
         example: Machine learning is a subset of AI...
         type: string
+      content_hash:
+        description: SHA-256 hash of content for deduplication
+        example: abc123...
+        type: string
       distance:
         description: Cosine distance (0-2, lower is better)
         example: 0.08
@@ -1994,6 +2075,12 @@ definitions:
           type: string
         description: Custom metadata associated with the chunk
         type: object
+      priority:
+        description: RAG weight (0.0-1.0, default 1.0)
+        example: 1
+        maximum: 1
+        minimum: 0
+        type: number
       score:
         description: Cosine similarity score (0-1, higher is better)
         example: 0.92
@@ -2584,6 +2671,10 @@ definitions:
         additionalProperties:
           type: string
         type: object
+      embeddings_metadata:
+        additionalProperties:
+          type: string
+        type: object
       embeddings_model:
         example: text-embedding-3-small
         maxLength: 100
@@ -2606,6 +2697,11 @@ definitions:
       embeddings_path:
         example: embeddings/documents.parquet
         type: string
+      embeddings_priority:
+        example: 0.8
+        maximum: 1
+        minimum: 0
+        type: number
       embeddings_query:
         example: What is machine learning?
         type: string
@@ -3835,6 +3931,50 @@ definitions:
     - TransformOpFileRename
     - TransformOpFileRemove
     - TransformOpFormatConvert
+  irminmodels.UpsertEmbeddingItem:
+    properties:
+      metadata:
+        additionalProperties:
+          type: string
+        description: Custom metadata key-value pairs
+        type: object
+      priority:
+        description: RAG weight (0.0-1.0, default 1.0, pointer to allow 0)
+        maximum: 1
+        minimum: 0
+        type: number
+      source_chunk:
+        description: Chunk index within source file (pointer to allow 0)
+        minimum: 0
+        type: integer
+      source_file:
+        description: Original source file path
+        type: string
+      text:
+        description: Text content to embed
+        type: string
+    required:
+    - text
+    type: object
+  irminmodels.UpsertEmbeddingsResponse:
+    properties:
+      inserted:
+        description: Number of new embeddings inserted
+        example: 10
+        type: integer
+      path:
+        description: Output path of the embedding file
+        example: embeddings/documents.parquet
+        type: string
+      skipped:
+        description: Number of embeddings skipped (already exist)
+        example: 5
+        type: integer
+      updated:
+        description: Number of existing embeddings updated
+        example: 2
+        type: integer
+    type: object
   irminmodels.User:
     properties:
       company:
@@ -9601,6 +9741,106 @@ paths:
       summary: Get embedding file info
       tags:
       - embeddings
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/metadata:
+    patch:
+      consumes:
+      - application/json
+      description: Update metadata for specific embeddings by ID
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Repository slug
+        in: path
+        name: repository_slug
+        required: true
+        type: string
+      - description: Metadata update request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.UpdateEmbeddingMetadataRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Metadata updated successfully
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "400":
+          description: Bad request - invalid parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update embedding metadata
+      tags:
+      - embeddings
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/priority:
+    patch:
+      consumes:
+      - application/json
+      description: Update priority for specific embeddings by ID
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Repository slug
+        in: path
+        name: repository_slug
+        required: true
+        type: string
+      - description: Priority update request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.UpdateEmbeddingPriorityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Priority updated successfully
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "400":
+          description: Bad request - invalid parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update embedding priority
+      tags:
+      - embeddings
   /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/search:
     post:
       consumes:
@@ -9658,6 +9898,61 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Search embeddings
+      tags:
+      - embeddings
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/upsert:
+    post:
+      consumes:
+      - application/json
+      description: Insert or update embeddings, skipping duplicates by content hash
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Repository slug
+        in: path
+        name: repository_slug
+        required: true
+        type: string
+      - description: Upsert request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.UpsertEmbeddingsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Upsert completed successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.UpsertEmbeddingsResponse'
+              type: object
+        "400":
+          description: Bad request - invalid parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Upsert embeddings
       tags:
       - embeddings
   /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/vectorize:

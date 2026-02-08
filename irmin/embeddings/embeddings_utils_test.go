@@ -810,11 +810,10 @@ func TestExtractTextFromPDF(t *testing.T) {
 		t.Skip("Test suite not initialized")
 	}
 
-	// Note: This test requires pdftotext (poppler-utils) to be installed
-	// We'll test with minimal PDF content
-	// A real PDF would need proper PDF structure
+	// Note: This test uses a minimal PDF header which is not a valid PDF file.
+	// The pdf library will fail to open/parse it, which is expected behavior.
 
-	// Minimal PDF header
+	// Minimal PDF header (not a valid complete PDF)
 	content := []byte("%PDF-1.4\n")
 
 	texts, err := embeddings.ExtractTextFromFile(
@@ -824,11 +823,19 @@ func TestExtractTextFromPDF(t *testing.T) {
 		"document.pdf",
 	)
 
-	// Either succeeds or fails with missing tool error
+	// Either succeeds or fails with expected error types:
+	// - "failed to open PDF" when the PDF library can't parse the minimal content
+	// - "failed to extract" when text extraction fails
+	// - "poppler-utils" or "pdftotext" if external tools are required but missing
 	if err != nil {
-		assert.True(t, strings.Contains(err.Error(), "poppler-utils") ||
-			strings.Contains(err.Error(), "pdftotext") ||
-			strings.Contains(err.Error(), "failed to extract"))
+		errMsg := err.Error()
+		validError := strings.Contains(errMsg, "poppler-utils") ||
+			strings.Contains(errMsg, "pdftotext") ||
+			strings.Contains(errMsg, "failed to extract") ||
+			strings.Contains(errMsg, "failed to open PDF")
+		if !validError {
+			t.Errorf("unexpected error: %s", errMsg)
+		}
 	} else {
 		assert.NotNil(t, texts)
 	}

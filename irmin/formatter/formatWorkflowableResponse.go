@@ -315,6 +315,8 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			EmbeddingsQuery:      stage.EmbeddingsQuery,
 			EmbeddingsTopK:       stage.EmbeddingsTopK,
 			EmbeddingsFilter:     stage.EmbeddingsFilter,
+			EmbeddingsMetadata:   stage.EmbeddingsMetadata,
+			EmbeddingsPriority:   stage.EmbeddingsPriority,
 		}
 	case db.PipelineStageTypePatch:
 		var patchConnectionSqid *string

@@ -1831,6 +1831,8 @@ func (api *APIServices) processEmbeddingsStage(
 	newStage.EmbeddingsOverlap = stage.EmbeddingsOverlap
 	newStage.EmbeddingsTopK = stage.EmbeddingsTopK
 	newStage.EmbeddingsFilter = stage.EmbeddingsFilter
+	newStage.EmbeddingsMetadata = stage.EmbeddingsMetadata
+	newStage.EmbeddingsPriority = stage.EmbeddingsPriority
 
 	// Validate operation-specific requirements
 	switch operation {

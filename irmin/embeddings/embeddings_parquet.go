@@ -50,9 +50,12 @@ func (c *Client) SaveEmbeddingsToParquet(
 			source_file VARCHAR,
 			chunk_index INTEGER,
 			content TEXT,
+			content_hash VARCHAR,
 			embedding FLOAT[%d],
 			metadata JSON,
-			created_at TIMESTAMP
+			priority FLOAT DEFAULT 1.0,
+			created_at TIMESTAMP,
+			updated_at TIMESTAMP
 		)
 	`, escapedTableName, dimensions)
 
@@ -119,22 +122,32 @@ func (c *Client) insertEmbeddingBatch(ctx context.Context, records []EmbeddingRe
 		}
 		metadataStr := duckdb.EscapeSQLString(string(metadataBytes))
 
-		// Format the row value
-		value := fmt.Sprintf(`('%s', '%s', %d, '%s', %s::FLOAT[%d], '%s'::JSON, '%s')`,
+		// Ensure priority has a valid default
+		priority := record.Priority
+		if priority < 0 {
+			priority = 1.0
+		}
+
+		// Format the row value with new columns
+		value := fmt.Sprintf(
+			`('%s', '%s', %d, '%s', '%s', %s::FLOAT[%d], '%s'::JSON, %f, '%s', '%s')`,
 			duckdb.EscapeSQLString(record.ID),
 			duckdb.EscapeSQLString(record.SourceFile),
 			record.ChunkIndex,
 			duckdb.EscapeSQLString(record.Content),
+			duckdb.EscapeSQLString(record.ContentHash),
 			embeddingStr,
 			len(record.Embedding),
 			metadataStr,
+			priority,
 			record.CreatedAt.Format("2006-01-02 15:04:05"),
+			record.UpdatedAt.Format("2006-01-02 15:04:05"),
 		)
 		values = append(values, value)
 	}
 
 	insertSQL := fmt.Sprintf(`
-		INSERT INTO %s (id, source_file, chunk_index, content, embedding, metadata, created_at)
+		INSERT INTO %s (id, source_file, chunk_index, content, content_hash, embedding, metadata, priority, created_at, updated_at)
 		VALUES %s
 	`, tableName, strings.Join(values, ", "))
 
@@ -194,20 +207,50 @@ func (c *Client) LoadEmbeddingsFromParquet(
 		"parquet_path", parquetPath,
 	)
 
+	// Check which optional columns exist in the parquet file for backward compatibility
+	colInfo, err := c.getParquetColumnInfo(ctx, parquetPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check parquet schema: %w", err)
+	}
+
 	escapedPath := duckdb.EscapeSQLString(parquetPath)
+	// Build expressions for optional columns to handle missing columns in older parquet files
+	colExpr := buildColumnExpressions(colInfo)
+
 	query := fmt.Sprintf(`
-		SELECT 
-			id, 
-			source_file, 
-			chunk_index, 
-			content, 
+		SELECT
+			id,
+			source_file,
+			chunk_index,
+			content,
+			%s as content_hash,
 			CAST(embedding AS VARCHAR) as embedding,
-			CAST(metadata AS VARCHAR) as metadata, 
-			created_at
+			CAST(metadata AS VARCHAR) as metadata,
+			%s as priority,
+			created_at,
+			%s
 		FROM read_parquet('%s')
-	`, escapedPath)
+	`, colExpr.outerContentHash, colExpr.outerPriority, colExpr.updatedAt, escapedPath)
 
 	rows, err := c.duckDBClient.ExecuteQuery(ctx, query)
+	if err != nil && isColumnNotFoundError(err) {
+		colExpr = buildColumnExpressions(parquetColumnInfo{})
+		query = fmt.Sprintf(`
+			SELECT
+				id,
+				source_file,
+				chunk_index,
+				content,
+				%s as content_hash,
+				CAST(embedding AS VARCHAR) as embedding,
+				CAST(metadata AS VARCHAR) as metadata,
+				%s as priority,
+				created_at,
+				%s
+			FROM read_parquet('%s')
+		`, colExpr.outerContentHash, colExpr.outerPriority, colExpr.updatedAt, escapedPath)
+		rows, err = c.duckDBClient.ExecuteQuery(ctx, query)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to query parquet file: %w", err)
 	}
@@ -224,9 +267,12 @@ func (c *Client) LoadEmbeddingsFromParquet(
 			&record.SourceFile,
 			&record.ChunkIndex,
 			&record.Content,
+			&record.ContentHash,
 			&embeddingStr,
 			&metadataStr,
+			&record.Priority,
 			&record.CreatedAt,
+			&record.UpdatedAt,
 		); scanErr != nil {
 			return nil, fmt.Errorf("failed to scan record: %w", scanErr)
 		}

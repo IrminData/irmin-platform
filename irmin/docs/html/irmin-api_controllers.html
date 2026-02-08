@@ -2203,6 +2203,55 @@ func (api *APIControllers) TriggerWorkflowRun(c fiber.Ctx) error
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/workflows/{workflow_slug}/runs [post]
 
+func (api *APIControllers) UpdateEmbeddingMetadata(c fiber.Ctx) error
+    UpdateEmbeddingMetadata godoc @Summary Update embedding metadata
+    @Description Update metadata for specific embeddings by ID @Tags embeddings
+    @Security ApiKeyAuth @Accept json @Produce json @Param workspace_slug
+    path string true "Workspace slug" @Param repository_slug path string true
+    "Repository slug" @Param body body irmincore.UpdateEmbeddingMetadataRequest
+    true "Metadata update request" @Success 200 {object}
+    irminmodels.IrminAPIResponse "Metadata updated successfully" @Failure
+    400 {object} irminmodels.IrminAPIResponse "Bad request - invalid
+    parameters" @Failure 401 {object} irminmodels.IrminAPIResponse
+    "Unauthorized - invalid or missing authentication" @Failure 403 {object}
+    irminmodels.IrminAPIResponse "Forbidden - insufficient permissions" @Failure
+    500 {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/metadata
+    [patch]
+
+func (api *APIControllers) UpdateEmbeddingPriority(c fiber.Ctx) error
+    UpdateEmbeddingPriority godoc @Summary Update embedding priority
+    @Description Update priority for specific embeddings by ID @Tags embeddings
+    @Security ApiKeyAuth @Accept json @Produce json @Param workspace_slug
+    path string true "Workspace slug" @Param repository_slug path string true
+    "Repository slug" @Param body body irmincore.UpdateEmbeddingPriorityRequest
+    true "Priority update request" @Success 200 {object}
+    irminmodels.IrminAPIResponse "Priority updated successfully" @Failure
+    400 {object} irminmodels.IrminAPIResponse "Bad request - invalid
+    parameters" @Failure 401 {object} irminmodels.IrminAPIResponse
+    "Unauthorized - invalid or missing authentication" @Failure 403 {object}
+    irminmodels.IrminAPIResponse "Forbidden - insufficient permissions" @Failure
+    500 {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/priority
+    [patch]
+
+func (api *APIControllers) UpsertEmbeddings(c fiber.Ctx) error
+    UpsertEmbeddings godoc @Summary Upsert embeddings @Description Insert or
+    update embeddings, skipping duplicates by content hash @Tags embeddings
+    @Security ApiKeyAuth @Accept json @Produce json @Param workspace_slug
+    path string true "Workspace slug" @Param repository_slug path string true
+    "Repository slug" @Param body body irmincore.UpsertEmbeddingsRequest
+    true "Upsert request" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.UpsertEmbeddingsResponse}
+    "Upsert completed successfully" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - invalid parameters" @Failure
+    401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or
+    missing authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - insufficient permissions" @Failure 500 {object}
+    irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/upsert
+    [post]
+
 func (api *APIControllers) UsersDestroy(c fiber.Ctx) error
     UsersDestroy godoc @Summary Remove user from workspace @Description Remove
     a user from the workspace (cannot remove self or workspace owner) @Tags
