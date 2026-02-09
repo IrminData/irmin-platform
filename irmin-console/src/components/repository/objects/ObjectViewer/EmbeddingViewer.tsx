@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
+import Link from 'next/link';
+
 import { useQuery } from '@tanstack/react-query';
 
 import {
@@ -367,13 +369,20 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
                   </span>
                   <div className='flex flex-wrap gap-1.5'>
                     {embeddingInfo.source_files.map((file) => (
-                      <Badge
+                      <Link
                         key={file}
-                        variant='secondary'
-                        className='font-normal'
+                        href={`/${locale}/workspace/${workspaceSlug}/repositories/${repository.slug}/object?path=${encodeURIComponent(file)}&ref=${encodeURIComponent(currentRef ?? repository.default_branch)}`}
                       >
-                        {file}
-                      </Badge>
+                        <Badge
+                          variant='secondary'
+                          className={`
+                            cursor-pointer font-normal
+                            hover:bg-secondary/80
+                          `}
+                        >
+                          {file}
+                        </Badge>
+                      </Link>
                     ))}
                   </div>
                 </div>
