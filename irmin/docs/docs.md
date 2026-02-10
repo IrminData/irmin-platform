@@ -1016,6 +1016,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) WorkspaceRemoveTagFromEntity\(c fiber.Ctx\) error](<#APIControllers.WorkspaceRemoveTagFromEntity>)
   - [func \(api \*APIControllers\) WorkspaceSchemaIndex\(c fiber.Ctx\) error](<#APIControllers.WorkspaceSchemaIndex>)
   - [func \(api \*APIControllers\) WorkspaceSearch\(c fiber.Ctx\) error](<#APIControllers.WorkspaceSearch>)
+  - [func \(api \*APIControllers\) WorkspaceSummariesIndex\(c fiber.Ctx\) error](<#APIControllers.WorkspaceSummariesIndex>)
   - [func \(api \*APIControllers\) WorkspaceTagsDestroy\(c fiber.Ctx\) error](<#APIControllers.WorkspaceTagsDestroy>)
   - [func \(api \*APIControllers\) WorkspaceTagsIndex\(c fiber.Ctx\) error](<#APIControllers.WorkspaceTagsIndex>)
   - [func \(api \*APIControllers\) WorkspaceTagsShow\(c fiber.Ctx\) error](<#APIControllers.WorkspaceTagsShow>)
@@ -2585,6 +2586,15 @@ func (api *APIControllers) WorkspaceSearch(c fiber.Ctx) error
 
 WorkspaceSearch godoc @Summary Search workspace @Description Search across all resources in a workspace with filtering, pagination, and permission\-based results @Tags search @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param q query string false "Search query string" @Param types query string false "Comma\-separated list of resource types to search \(workflow,repository,connection,query,user,repository\_object,invite\)" @Param tags query string false "Comma\-separated list of tag IDs \(SQID encoded\)" @Param owner query string false "Owner user ID \(SQID encoded\)" @Param date\_from query string false "Start date filter \(ISO 8601 format\)" @Param date\_to query string false "End date filter \(ISO 8601 format\)" @Param limit query int false "Number of results per page \(max 100\)" default\(20\) @Param offset query int false "Number of results to skip" default\(0\) @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.SearchResponse\} "Search results with pagination and filtering" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid search parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/search \[get\]
 
+<a name="APIControllers.WorkspaceSummariesIndex"></a>
+### func \(\*APIControllers\) WorkspaceSummariesIndex
+
+```go
+func (api *APIControllers) WorkspaceSummariesIndex(c fiber.Ctx) error
+```
+
+WorkspaceSummariesIndex godoc @Summary List workspace summaries @Description Get lightweight workspace summaries with resource counts for the authenticated user @Tags workspaces @Security ApiKeyAuth @Accept json @Produce json @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.WorkspaceSummary\} "Summaries retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/summary \[get\]
+
 <a name="APIControllers.WorkspaceTagsDestroy"></a>
 ### func \(\*APIControllers\) WorkspaceTagsDestroy
 
@@ -2866,6 +2876,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetWorkflowsByWorkspaceID\(workspaceID uint\) \(\[\]Workflow, error\)](<#Database.GetWorkflowsByWorkspaceID>)
   - [func \(d \*Database\) GetWorkflowsOfTypeByWorkspaceID\(workspaceID uint, workflowType irminmodels.WorkflowableType\) \(\[\]Workflow, error\)](<#Database.GetWorkflowsOfTypeByWorkspaceID>)
   - [func \(d \*Database\) GetWorkspaceBySlug\(slug string\) \(\*Workspace, error\)](<#Database.GetWorkspaceBySlug>)
+  - [func \(d \*Database\) GetWorkspaceSummaries\(userID uint\) \(\[\]WorkspaceSummaryRow, error\)](<#Database.GetWorkspaceSummaries>)
   - [func \(d \*Database\) GetWorkspaceUser\(workspaceID, userID uint\) \(\*WorkspaceUser, error\)](<#Database.GetWorkspaceUser>)
   - [func \(d \*Database\) IsUserInWorkspace\(userID, workspaceID uint\) \(bool, error\)](<#Database.IsUserInWorkspace>)
   - [func \(d \*Database\) IsUserInWorkspaceByEmail\(email string, workspaceID uint\) \(bool, error\)](<#Database.IsUserInWorkspaceByEmail>)
@@ -2964,6 +2975,7 @@ import "irmin-api/db"
 - [type WorkflowTrigger](<#WorkflowTrigger>)
 - [type WorkflowTriggerType](<#WorkflowTriggerType>)
 - [type Workspace](<#Workspace>)
+- [type WorkspaceSummaryRow](<#WorkspaceSummaryRow>)
 - [type WorkspaceUser](<#WorkspaceUser>)
 - [type WorkspaceUserRole](<#WorkspaceUserRole>)
 
@@ -4823,6 +4835,15 @@ func (d *Database) GetWorkspaceBySlug(slug string) (*Workspace, error)
 
 GetWorkspaceBySlug retrieves a workspace by its slug.
 
+<a name="Database.GetWorkspaceSummaries"></a>
+### func \(\*Database\) GetWorkspaceSummaries
+
+```go
+func (d *Database) GetWorkspaceSummaries(userID uint) ([]WorkspaceSummaryRow, error)
+```
+
+GetWorkspaceSummaries retrieves lightweight workspace summaries with resource counts for a given user. Uses subquery counts instead of preloading full objects.
+
 <a name="Database.GetWorkspaceUser"></a>
 ### func \(\*Database\) GetWorkspaceUser
 
@@ -6365,6 +6386,22 @@ type Workspace struct {
 }
 ```
 
+<a name="WorkspaceSummaryRow"></a>
+## type WorkspaceSummaryRow
+
+WorkspaceSummaryRow represents the raw result of the workspace summary query.
+
+```go
+type WorkspaceSummaryRow struct {
+    Workspace
+    MemberCount     int        `json:"member_count"`
+    RepositoryCount int        `json:"repository_count"`
+    WorkflowCount   int        `json:"workflow_count"`
+    ConnectionCount int        `json:"connection_count"`
+    LastAccessedAt  *time.Time `json:"last_accessed_at"`
+}
+```
+
 <a name="WorkspaceUser"></a>
 ## type WorkspaceUser
 
@@ -6373,12 +6410,13 @@ type Workspace struct {
 ```go
 type WorkspaceUser struct {
     gorm.Model
-    UserID      uint                `json:"user_id"      gorm:"index"`
-    User        User                `json:"user"         gorm:"foreignKey:UserID"`
-    WorkspaceID uint                `json:"workspace_id" gorm:"index"`
-    Workspace   Workspace           `json:"workspace"    gorm:"foreignKey:WorkspaceID"`
-    Roles       []WorkspaceUserRole `json:"roles"        gorm:"foreignKey:WorkspaceUserID"`
-    Policies    []Policy            `json:"policies"     gorm:"foreignKey:WorkspaceUserID"`
+    UserID         uint                `json:"user_id"          gorm:"index"`
+    User           User                `json:"user"             gorm:"foreignKey:UserID"`
+    WorkspaceID    uint                `json:"workspace_id"     gorm:"index"`
+    Workspace      Workspace           `json:"workspace"        gorm:"foreignKey:WorkspaceID"`
+    Roles          []WorkspaceUserRole `json:"roles"            gorm:"foreignKey:WorkspaceUserID"`
+    Policies       []Policy            `json:"policies"         gorm:"foreignKey:WorkspaceUserID"`
+    LastAccessedAt *time.Time          `json:"last_accessed_at"`
 }
 ```
 
@@ -8347,6 +8385,7 @@ import "irmin-api/formatter"
 - [func FormatWorkflowRunResponse\(workflowRun \*db.WorkflowRun, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.WorkflowRun, error\)](<#FormatWorkflowRunResponse>)
 - [func FormatWorkflowableResponse\(d \*db.Database, workflow \*db.Workflow, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Workflowable, error\)](<#FormatWorkflowableResponse>)
 - [func FormatWorkspaceResponse\(workspace \*db.Workspace, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Workspace, error\)](<#FormatWorkspaceResponse>)
+- [func FormatWorkspaceSummaryResponse\(summary \*db.WorkspaceSummaryRow, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.WorkspaceSummary, error\)](<#FormatWorkspaceSummaryResponse>)
 - [func FormatWorkspaceUserResponse\(workspaceUser \*db.WorkspaceUser, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.User, error\)](<#FormatWorkspaceUserResponse>)
 
 
@@ -8592,6 +8631,15 @@ func FormatWorkspaceResponse(workspace *db.Workspace, sqidManager *irminsqids.SQ
 ```
 
 
+
+<a name="FormatWorkspaceSummaryResponse"></a>
+## func FormatWorkspaceSummaryResponse
+
+```go
+func FormatWorkspaceSummaryResponse(summary *db.WorkspaceSummaryRow, sqidManager *irminsqids.SQIDManager) (*irminmodels.WorkspaceSummary, error)
+```
+
+FormatWorkspaceSummaryResponse formats a WorkspaceSummaryRow into a WorkspaceSummary API response.
 
 <a name="FormatWorkspaceUserResponse"></a>
 ## func FormatWorkspaceUserResponse
@@ -13303,6 +13351,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ListWorkflows\(c context.Context, user \*db.User, workspace \*db.Workspace, workflowType string\) \(\[\]db.Workflow, error\)](<#APIServices.ListWorkflows>)
   - [func \(api \*APIServices\) ListWorkspaceQueries\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.StoredQuery, error\)](<#APIServices.ListWorkspaceQueries>)
   - [func \(api \*APIServices\) ListWorkspaceScripts\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.StoredScript, error\)](<#APIServices.ListWorkspaceScripts>)
+  - [func \(api \*APIServices\) ListWorkspaceSummaries\(user \*db.User\) \(\[\]db.WorkspaceSummaryRow, error\)](<#APIServices.ListWorkspaceSummaries>)
   - [func \(api \*APIServices\) ListWorkspaceTags\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.Tag, error\)](<#APIServices.ListWorkspaceTags>)
   - [func \(api \*APIServices\) ListWorkspaceUsers\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.WorkspaceUser, error\)](<#APIServices.ListWorkspaceUsers>)
   - [func \(api \*APIServices\) ListWorkspaces\(user \*db.User\) \(\[\]db.Workspace, error\)](<#APIServices.ListWorkspaces>)
@@ -14773,6 +14822,15 @@ func (api *APIServices) ListWorkspaceQueries(c context.Context, user *db.User, w
 
 ```go
 func (api *APIServices) ListWorkspaceScripts(c context.Context, user *db.User, workspace *db.Workspace) ([]db.StoredScript, error)
+```
+
+
+
+<a name="APIServices.ListWorkspaceSummaries"></a>
+### func \(\*APIServices\) ListWorkspaceSummaries
+
+```go
+func (api *APIServices) ListWorkspaceSummaries(user *db.User) ([]db.WorkspaceSummaryRow, error)
 ```
 
 

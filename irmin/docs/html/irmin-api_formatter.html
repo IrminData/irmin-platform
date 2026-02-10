@@ -149,6 +149,13 @@ func FormatWorkspaceResponse(
 	workspace *db.Workspace,
 	sqidManager *irminsqids.SQIDManager,
 ) (*irminmodels.Workspace, error)
+func FormatWorkspaceSummaryResponse(
+	summary *db.WorkspaceSummaryRow,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.WorkspaceSummary, error)
+    FormatWorkspaceSummaryResponse formats a WorkspaceSummaryRow into a
+    WorkspaceSummary API response.
+
 func FormatWorkspaceUserResponse(
 	workspaceUser *db.WorkspaceUser,
 	sqidManager *irminsqids.SQIDManager,

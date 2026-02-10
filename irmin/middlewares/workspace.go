@@ -4,6 +4,8 @@ import (
 	"irmin-api/db"
 	"irmin-api/locales"
 	"irmin-api/services"
+	"log/slog"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -41,6 +43,21 @@ func (api *APIMiddlewares) WorkspaceMiddleware(c fiber.Ctx) error {
 
 	// Set the workspace in the context for subsequent handlers.
 	c.Locals("workspace", workspace)
+
+	// Update last_accessed_at asynchronously to avoid blocking the request
+	go func() {
+		now := time.Now()
+		result := api.Services.DB.Model(&db.WorkspaceUser{}).
+			Where("user_id = ? AND workspace_id = ?", user.ID, workspace.ID).
+			Update("last_accessed_at", now)
+		if result.Error != nil {
+			slog.Error("Failed to update last_accessed_at",
+				"user_id", user.ID,
+				"workspace_id", workspace.ID,
+				"error", result.Error,
+			)
+		}
+	}()
 
 	return c.Next()
 }

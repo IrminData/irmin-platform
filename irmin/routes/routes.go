@@ -112,6 +112,7 @@ func RegisterAPIRoutes(
 	// Workspace routes
 	v1.Get("/workspaces", apiControllers.WorkspacesIndex)
 	v1.Post("/workspaces", apiControllers.WorkspacesStore)
+	v1.Get("/workspaces/summary", apiControllers.WorkspaceSummariesIndex)
 	workspace := v1.Group("/workspaces/:workspace", apiMiddlewares.WorkspaceMiddleware)
 	workspace.Get("/", apiMiddlewares.WorkspacePermissionMiddleware(db.PolicyActionRead), apiControllers.WorkspacesShow)
 	workspace.Patch(

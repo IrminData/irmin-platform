@@ -96,6 +96,54 @@ func (api *APIControllers) WorkspacesIndex(c fiber.Ctx) error {
 	})
 }
 
+// WorkspaceSummariesIndex godoc
+// @Summary List workspace summaries
+// @Description Get lightweight workspace summaries with resource counts for the authenticated user
+// @Tags workspaces
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.WorkspaceSummary} "Summaries retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/summary [get]
+func (api *APIControllers) WorkspaceSummariesIndex(c fiber.Ctx) error {
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+
+	if !dictOk || !userOk {
+		return api.handleServiceError(
+			c,
+			"Error getting locals for WorkspaceSummariesIndex",
+			services.NewInternalError("error getting locals"),
+			dict,
+		)
+	}
+
+	summaries, err := api.Services.ListWorkspaceSummaries(user)
+	if err != nil {
+		return api.handleServiceError(c, "Error listing workspace summaries", err, dict)
+	}
+
+	summariesResponse, formatErr := formatter.FormatIndexResponse(
+		summaries,
+		formatter.FormatWorkspaceSummaryResponse,
+		api.SQIDManager,
+	)
+	if formatErr != nil {
+		return api.handleServiceError(
+			c,
+			"Error formatting workspace summaries response",
+			services.NewInternalErrorf("error formatting workspace summaries: %v", formatErr),
+			dict,
+		)
+	}
+
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: summariesResponse,
+	})
+}
+
 // WorkspacesStore godoc
 // @Summary Create workspace
 // @Description Create a new workspace with default settings, policies, and tags (user becomes owner)

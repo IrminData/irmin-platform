@@ -1,6 +1,8 @@
 package db
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -57,4 +59,63 @@ func (d *Database) DeleteWorkspace(id uint, tx *gorm.DB) error {
 		return err
 	}
 	return nil
+}
+
+// WorkspaceSummaryRow represents the raw result of the workspace summary query.
+type WorkspaceSummaryRow struct {
+	Workspace
+	MemberCount     int        `json:"member_count"`
+	RepositoryCount int        `json:"repository_count"`
+	WorkflowCount   int        `json:"workflow_count"`
+	ConnectionCount int        `json:"connection_count"`
+	LastAccessedAt  *time.Time `json:"last_accessed_at"`
+}
+
+// GetWorkspaceSummaries retrieves lightweight workspace summaries with resource counts
+// for a given user. Uses subquery counts instead of preloading full objects.
+func (d *Database) GetWorkspaceSummaries(userID uint) ([]WorkspaceSummaryRow, error) {
+	var summaries []WorkspaceSummaryRow
+
+	err := d.Raw(`
+		SELECT w.*,
+			(SELECT COUNT(*) FROM workspace_users WHERE workspace_id = w.id AND deleted_at IS NULL) as member_count,
+			(SELECT COUNT(*) FROM repositories WHERE workspace_id = w.id AND deleted_at IS NULL) as repository_count,
+			(SELECT COUNT(*) FROM workflows WHERE workspace_id = w.id AND deleted_at IS NULL) as workflow_count,
+			(SELECT COUNT(*) FROM connections WHERE workspace_id = w.id AND deleted_at IS NULL) as connection_count,
+			wu.last_accessed_at
+		FROM workspaces w
+		JOIN workspace_users wu ON wu.workspace_id = w.id AND wu.user_id = ? AND wu.deleted_at IS NULL
+		WHERE w.deleted_at IS NULL
+		ORDER BY wu.last_accessed_at DESC NULLS LAST, w.created_at DESC
+	`, userID).Scan(&summaries).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Preload Owner for each workspace via a single batched query
+	ownerIDs := make([]uint, 0, len(summaries))
+	for _, s := range summaries {
+		ownerIDs = append(ownerIDs, s.OwnerID)
+	}
+
+	if len(ownerIDs) > 0 {
+		var owners []User
+		if ownerErr := d.Where("id IN ?", ownerIDs).Find(&owners).Error; ownerErr != nil {
+			return nil, ownerErr
+		}
+
+		ownerMap := make(map[uint]User, len(owners))
+		for _, owner := range owners {
+			ownerMap[owner.ID] = owner
+		}
+
+		for i := range summaries {
+			if owner, ok := ownerMap[summaries[i].OwnerID]; ok {
+				summaries[i].Owner = owner
+			}
+		}
+	}
+
+	return summaries, nil
 }

@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -29,12 +30,13 @@ type WorkspaceUserRole struct {
 
 type WorkspaceUser struct {
 	gorm.Model
-	UserID      uint                `json:"user_id"      gorm:"index"`
-	User        User                `json:"user"         gorm:"foreignKey:UserID"`
-	WorkspaceID uint                `json:"workspace_id" gorm:"index"`
-	Workspace   Workspace           `json:"workspace"    gorm:"foreignKey:WorkspaceID"`
-	Roles       []WorkspaceUserRole `json:"roles"        gorm:"foreignKey:WorkspaceUserID"`
-	Policies    []Policy            `json:"policies"     gorm:"foreignKey:WorkspaceUserID"`
+	UserID         uint                `json:"user_id"          gorm:"index"`
+	User           User                `json:"user"             gorm:"foreignKey:UserID"`
+	WorkspaceID    uint                `json:"workspace_id"     gorm:"index"`
+	Workspace      Workspace           `json:"workspace"        gorm:"foreignKey:WorkspaceID"`
+	Roles          []WorkspaceUserRole `json:"roles"            gorm:"foreignKey:WorkspaceUserID"`
+	Policies       []Policy            `json:"policies"         gorm:"foreignKey:WorkspaceUserID"`
+	LastAccessedAt *time.Time          `json:"last_accessed_at"`
 }
 
 // GetUser retrieves a user from the database by their ID.

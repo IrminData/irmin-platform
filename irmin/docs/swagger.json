@@ -2416,6 +2416,61 @@
                 }
             }
         },
+        "/workspaces/summary": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get lightweight workspace summaries with resource counts for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "workspaces"
+                ],
+                "summary": "List workspace summaries",
+                "responses": {
+                    "200": {
+                        "description": "Summaries retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/irminmodels.WorkspaceSummary"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}": {
             "get": {
                 "security": [
@@ -19852,6 +19907,58 @@
                 "WorkspaceSearchResultTypeRepositoryObject",
                 "WorkspaceSearchResultTypeInvite"
             ]
+        },
+        "irminmodels.WorkspaceSummary": {
+            "type": "object",
+            "required": [
+                "id",
+                "name",
+                "owner",
+                "slug"
+            ],
+            "properties": {
+                "connection_count": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Workspace for data analytics"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "ws_5n8k2m7x9q4p"
+                },
+                "last_accessed_at": {
+                    "type": "string",
+                    "example": "2025-01-15T10:30:00Z"
+                },
+                "member_count": {
+                    "type": "integer",
+                    "example": 12
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "example": "Data Analytics Team"
+                },
+                "owner": {
+                    "$ref": "#/definitions/irminmodels.User"
+                },
+                "repository_count": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "data-analytics-team"
+                },
+                "workflow_count": {
+                    "type": "integer",
+                    "example": 8
+                }
+            }
         },
         "time.Duration": {
             "type": "integer",

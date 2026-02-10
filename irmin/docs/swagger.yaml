@@ -4337,6 +4337,45 @@ definitions:
     - WorkspaceSearchResultTypeUser
     - WorkspaceSearchResultTypeRepositoryObject
     - WorkspaceSearchResultTypeInvite
+  irminmodels.WorkspaceSummary:
+    properties:
+      connection_count:
+        example: 3
+        type: integer
+      description:
+        example: Workspace for data analytics
+        maxLength: 500
+        type: string
+      id:
+        example: ws_5n8k2m7x9q4p
+        type: string
+      last_accessed_at:
+        example: "2025-01-15T10:30:00Z"
+        type: string
+      member_count:
+        example: 12
+        type: integer
+      name:
+        example: Data Analytics Team
+        maxLength: 100
+        type: string
+      owner:
+        $ref: '#/definitions/irminmodels.User'
+      repository_count:
+        example: 5
+        type: integer
+      slug:
+        example: data-analytics-team
+        type: string
+      workflow_count:
+        example: 8
+        type: integer
+    required:
+    - id
+    - name
+    - owner
+    - slug
+    type: object
   time.Duration:
     enum:
     - -9223372036854775808
@@ -13191,6 +13230,39 @@ paths:
       summary: List all workflow runs in workspace
       tags:
       - workflow-runs
+  /workspaces/summary:
+    get:
+      consumes:
+      - application/json
+      description: Get lightweight workspace summaries with resource counts for the
+        authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Summaries retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/irminmodels.WorkspaceSummary'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List workspace summaries
+      tags:
+      - workspaces
 schemes:
 - https
 securityDefinitions:

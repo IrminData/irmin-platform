@@ -60,6 +60,23 @@ func (api *APIServices) ListWorkspaces(user *db.User) ([]db.Workspace, error) {
 	return workspaces, nil
 }
 
+func (api *APIServices) ListWorkspaceSummaries(user *db.User) ([]db.WorkspaceSummaryRow, error) {
+	summaries, err := api.DB.GetWorkspaceSummaries(user.ID)
+	if err != nil {
+		api.Logger.ErrorContext(
+			context.Background(),
+			"Error fetching workspace summaries",
+			"error",
+			err,
+			"user_id",
+			user.ID,
+		)
+		return nil, NewInternalErrorf("error fetching workspace summaries: %w", err)
+	}
+
+	return summaries, nil
+}
+
 func (api *APIServices) CreateWorkspace(
 	ctx context.Context,
 	user *db.User,

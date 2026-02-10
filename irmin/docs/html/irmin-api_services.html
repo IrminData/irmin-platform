@@ -1131,6 +1131,8 @@ func (api *APIServices) ListWorkspaceScripts(
 	workspace *db.Workspace,
 ) ([]db.StoredScript, error)
 
+func (api *APIServices) ListWorkspaceSummaries(user *db.User) ([]db.WorkspaceSummaryRow, error)
+
 func (api *APIServices) ListWorkspaceTags(
 	c context.Context,
 	user *db.User,

@@ -976,6 +976,11 @@ func (d *Database) GetWorkflowsOfTypeByWorkspaceID(
 func (d *Database) GetWorkspaceBySlug(slug string) (*Workspace, error)
     GetWorkspaceBySlug retrieves a workspace by its slug.
 
+func (d *Database) GetWorkspaceSummaries(userID uint) ([]WorkspaceSummaryRow, error)
+    GetWorkspaceSummaries retrieves lightweight workspace summaries with
+    resource counts for a given user. Uses subquery counts instead of preloading
+    full objects.
+
 func (d *Database) GetWorkspaceUser(workspaceID, userID uint) (*WorkspaceUser, error)
     GetWorkspaceUser retrieves a workspace user record from the database by the
     workspace and user IDs.
@@ -1911,14 +1916,26 @@ type Workspace struct {
 	Policies    []Policy        `json:"policies"    gorm:"foreignKey:WorkspaceID"`
 }
 
+type WorkspaceSummaryRow struct {
+	Workspace
+	MemberCount     int        `json:"member_count"`
+	RepositoryCount int        `json:"repository_count"`
+	WorkflowCount   int        `json:"workflow_count"`
+	ConnectionCount int        `json:"connection_count"`
+	LastAccessedAt  *time.Time `json:"last_accessed_at"`
+}
+    WorkspaceSummaryRow represents the raw result of the workspace summary
+    query.
+
 type WorkspaceUser struct {
 	gorm.Model
-	UserID      uint                `json:"user_id"      gorm:"index"`
-	User        User                `json:"user"         gorm:"foreignKey:UserID"`
-	WorkspaceID uint                `json:"workspace_id" gorm:"index"`
-	Workspace   Workspace           `json:"workspace"    gorm:"foreignKey:WorkspaceID"`
-	Roles       []WorkspaceUserRole `json:"roles"        gorm:"foreignKey:WorkspaceUserID"`
-	Policies    []Policy            `json:"policies"     gorm:"foreignKey:WorkspaceUserID"`
+	UserID         uint                `json:"user_id"          gorm:"index"`
+	User           User                `json:"user"             gorm:"foreignKey:UserID"`
+	WorkspaceID    uint                `json:"workspace_id"     gorm:"index"`
+	Workspace      Workspace           `json:"workspace"        gorm:"foreignKey:WorkspaceID"`
+	Roles          []WorkspaceUserRole `json:"roles"            gorm:"foreignKey:WorkspaceUserID"`
+	Policies       []Policy            `json:"policies"         gorm:"foreignKey:WorkspaceUserID"`
+	LastAccessedAt *time.Time          `json:"last_accessed_at"`
 }
 
 type WorkspaceUserRole struct {
