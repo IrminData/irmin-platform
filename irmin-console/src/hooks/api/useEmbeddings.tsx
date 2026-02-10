@@ -7,6 +7,7 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type {
   EmbeddingConfig,
+  EmbeddingFile,
   EmbeddingSearchResponse,
   UpsertEmbeddingItem,
   UpsertEmbeddingsResponse,
@@ -18,8 +19,13 @@ import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
  *
  * @param repositorySlug - The repository slug.
  * @param ref - (optional) The ref (branch, tag or commit hash).
+ * @param embeddingPath - (optional) Path to a specific embedding file for info queries.
  */
-export const useEmbeddings = (repositorySlug: string, ref?: string) => {
+export const useEmbeddings = (
+  repositorySlug: string,
+  ref?: string,
+  embeddingPath?: string
+) => {
   const { getCore } = useIrminCore();
   const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
@@ -40,6 +46,30 @@ export const useEmbeddings = (repositorySlug: string, ref?: string) => {
       });
     },
     enabled: !!repositorySlug,
+  });
+
+  /**
+   * Query to get info about a specific embedding file.
+   */
+  const embeddingInfoQuery = useQuery<IrminAPIResponse<EmbeddingFile>>({
+    queryKey: [
+      'embeddingInfo',
+      workspaceSlug,
+      repositorySlug,
+      embeddingPath ?? '',
+      ref ?? '',
+    ],
+    queryFn: async () => {
+      const irminCore = await getCore();
+      return irminCore.embeddingsService.getEmbeddingInfo({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        embeddingPath: embeddingPath!,
+        ref,
+      });
+    },
+    enabled: !!repositorySlug && !!embeddingPath,
+    retry: false,
   });
 
   /**
@@ -210,6 +240,7 @@ export const useEmbeddings = (repositorySlug: string, ref?: string) => {
   return {
     // Queries
     listEmbeddingsQuery,
+    embeddingInfoQuery,
 
     // Mutations
     searchEmbeddingsMutation,

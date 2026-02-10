@@ -610,6 +610,9 @@ const en = {
       embeddingsPriority: 'Priority',
       embeddingsPriorityDescription:
         'Higher priority embeddings are favored in RAG retrieval (0.0-1.0)',
+      embeddingsConfigLoaded: 'Using existing file configuration',
+      embeddingsConfigLoadedDescription:
+        'Configuration was loaded from the existing embedding file to ensure compatibility.',
       embeddingsMetadata: 'Metadata',
       embeddingsMetadataKey: 'Key',
       embeddingsMetadataValue: 'Value',

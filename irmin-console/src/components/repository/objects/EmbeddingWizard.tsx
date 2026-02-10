@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   TbCheck,
@@ -58,11 +58,6 @@ export default function EmbeddingWizard({
   const { dict } = useLocale();
   const { irminModal } = usePopup();
 
-  const { upsertEmbeddingsMutation } = useEmbeddings(
-    repositorySlug,
-    currentRef
-  );
-
   // Wizard state
   const [currentStep, setCurrentStep] = useState<WizardStep>('source');
 
@@ -99,6 +94,35 @@ export default function EmbeddingWizard({
     metadata: Record<string, string>;
     priority: number;
   } | null>(null);
+
+  // Resolve embedding path for the info query (only valid .parquet paths)
+  const trimmedOutputPath = outputPath.trim();
+  const embeddingPathForQuery =
+    trimmedOutputPath.endsWith('.parquet') && trimmedOutputPath.length > 8
+      ? trimmedOutputPath
+      : undefined;
+
+  const { upsertEmbeddingsMutation, embeddingInfoQuery } = useEmbeddings(
+    repositorySlug,
+    currentRef,
+    embeddingPathForQuery
+  );
+
+  // Derive locked config from existing embedding file (no useEffect needed)
+  const existingEmbeddingInfo = embeddingInfoQuery.data?.data ?? null;
+  const configLocked = existingEmbeddingInfo != null;
+
+  const effectiveConfig = useMemo<EmbeddingConfig>(() => {
+    if (existingEmbeddingInfo) {
+      return {
+        model: existingEmbeddingInfo.model ?? 'text-embedding-3-small',
+        dimensions: existingEmbeddingInfo.dimensions ?? undefined,
+        chunk_size: existingEmbeddingInfo.chunk_size ?? 1000,
+        overlap: existingEmbeddingInfo.overlap ?? 200,
+      };
+    }
+    return config;
+  }, [existingEmbeddingInfo, config]);
 
   const currentStepIndex = STEPS.indexOf(currentStep);
 
@@ -138,21 +162,22 @@ export default function EmbeddingWizard({
     const validSourcePaths = sourcePaths.filter((p) => p.trim());
     if (validSourcePaths.length === 0 || !outputPath.trim()) return;
 
-    // Build config
+    // Build config from effective config (which uses existing file config when locked)
     const embeddingConfig: EmbeddingConfig = {};
-    if (config.model?.trim()) embeddingConfig.model = config.model.trim();
-    if (config.dimensions && config.dimensions > 0)
-      embeddingConfig.dimensions = config.dimensions;
-    if (config.chunk_size && config.chunk_size > 0)
-      embeddingConfig.chunk_size = config.chunk_size;
-    if (config.overlap !== undefined && config.overlap >= 0)
-      embeddingConfig.overlap = config.overlap;
+    if (effectiveConfig.model?.trim())
+      embeddingConfig.model = effectiveConfig.model.trim();
+    if (effectiveConfig.dimensions && effectiveConfig.dimensions > 0)
+      embeddingConfig.dimensions = effectiveConfig.dimensions;
+    if (effectiveConfig.chunk_size && effectiveConfig.chunk_size > 0)
+      embeddingConfig.chunk_size = effectiveConfig.chunk_size;
+    if (effectiveConfig.overlap !== undefined && effectiveConfig.overlap >= 0)
+      embeddingConfig.overlap = effectiveConfig.overlap;
 
     // Capture submitted values before mutation to ensure summary accuracy
     setSubmittedValues({
       sourcePaths: validSourcePaths,
       outputPath: outputPath.trim(),
-      config: { ...config },
+      config: { ...effectiveConfig },
       metadata: { ...metadata },
       priority,
     });
@@ -184,7 +209,7 @@ export default function EmbeddingWizard({
     sourcePaths,
     outputPath,
     currentRef,
-    config,
+    effectiveConfig,
     metadata,
     priority,
     upsertEmbeddingsMutation,
@@ -239,10 +264,11 @@ export default function EmbeddingWizard({
       <div className='flex flex-col gap-2'>
         <Label htmlFor='model'>{dict.repository.objects.embeddingsModel}</Label>
         <Select
-          value={config.model || 'text-embedding-3-small'}
+          value={effectiveConfig.model || 'text-embedding-3-small'}
           onValueChange={(value) =>
             setConfig((prev) => ({ ...prev, model: value }))
           }
+          disabled={configLocked}
         >
           <SelectTrigger id='model'>
             <SelectValue />
@@ -305,6 +331,32 @@ export default function EmbeddingWizard({
         </h3>
       </div>
 
+      {configLocked && (
+        <div
+          className={`
+            rounded-lg border border-blue-200 bg-blue-50 p-3
+            dark:border-blue-900 dark:bg-blue-950/30
+          `}
+        >
+          <p
+            className={`
+              text-sm font-medium text-blue-700
+              dark:text-blue-400
+            `}
+          >
+            {dict.repository.objects.embeddingsConfigLoaded}
+          </p>
+          <p
+            className={`
+              text-xs text-blue-600
+              dark:text-blue-500
+            `}
+          >
+            {dict.repository.objects.embeddingsConfigLoadedDescription}
+          </p>
+        </div>
+      )}
+
       <div
         className={`
           grid gap-4
@@ -320,13 +372,14 @@ export default function EmbeddingWizard({
             type='number'
             min={100}
             max={4000}
-            value={config.chunk_size ?? 1000}
+            value={effectiveConfig.chunk_size ?? 1000}
             onChange={(e) =>
               setConfig((prev) => ({
                 ...prev,
                 chunk_size: e.target.value ? parseInt(e.target.value) : 1000,
               }))
             }
+            disabled={configLocked}
           />
           <p className='text-xs text-muted-foreground'>
             Characters per chunk (100-4000)
@@ -342,13 +395,14 @@ export default function EmbeddingWizard({
             type='number'
             min={0}
             max={500}
-            value={config.overlap ?? 200}
+            value={effectiveConfig.overlap ?? 200}
             onChange={(e) =>
               setConfig((prev) => ({
                 ...prev,
                 overlap: e.target.value ? parseInt(e.target.value) : 200,
               }))
             }
+            disabled={configLocked}
           />
           <p className='text-xs text-muted-foreground'>
             Overlap between chunks (0-500)
@@ -363,7 +417,7 @@ export default function EmbeddingWizard({
             id='dimensions'
             type='number'
             min={0}
-            value={config.dimensions ?? ''}
+            value={effectiveConfig.dimensions ?? ''}
             onChange={(e) =>
               setConfig((prev) => ({
                 ...prev,
@@ -373,6 +427,7 @@ export default function EmbeddingWizard({
               }))
             }
             placeholder='Auto (model default)'
+            disabled={configLocked}
           />
           <p className='text-xs text-muted-foreground'>
             Leave empty for model default
@@ -433,7 +488,7 @@ export default function EmbeddingWizard({
         const displaySourcePaths =
           submittedValues?.sourcePaths ?? sourcePaths.filter((p) => p.trim());
         const displayOutputPath = submittedValues?.outputPath ?? outputPath;
-        const displayConfig = submittedValues?.config ?? config;
+        const displayConfig = submittedValues?.config ?? effectiveConfig;
         const displayMetadata = submittedValues?.metadata ?? metadata;
         const displayPriority = submittedValues?.priority ?? priority;
 

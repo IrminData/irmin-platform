@@ -26,6 +26,10 @@ export interface EmbeddingFile {
   dimensions: number;
   /** Total number of embedding chunks */
   chunk_count: number;
+  /** Text chunk size used for splitting documents */
+  chunk_size?: number;
+  /** Overlap between consecutive chunks */
+  overlap?: number;
   /** File size in bytes */
   size_bytes: number;
   /** Creation timestamp */

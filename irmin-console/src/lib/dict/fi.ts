@@ -609,6 +609,9 @@ const fi = {
       embeddingsPriority: 'Prioriteetti',
       embeddingsPriorityDescription:
         'Korkeamman prioriteetin upotukset suositaan RAG-haussa (0.0-1.0)',
+      embeddingsConfigLoaded: 'Käytetään olemassa olevan tiedoston asetuksia',
+      embeddingsConfigLoadedDescription:
+        'Asetukset ladattiin olemassa olevasta upotustiedostosta yhteensopivuuden varmistamiseksi.',
       embeddingsMetadata: 'Metatiedot',
       embeddingsMetadataKey: 'Avain',
       embeddingsMetadataValue: 'Arvo',

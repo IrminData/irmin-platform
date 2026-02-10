@@ -4,8 +4,6 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import Link from 'next/link';
 
-import { useQuery } from '@tanstack/react-query';
-
 import {
   TbEdit,
   TbFile,
@@ -15,8 +13,6 @@ import {
   TbTag,
   TbVectorTriangle,
 } from 'react-icons/tb';
-
-import IrminCore from '@/lib/core';
 
 import EmbeddingEditSheet from '@/components/repository/objects/ObjectViewer/EmbeddingEditSheet';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +29,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
@@ -55,35 +50,14 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
   const { dict, locale } = useLocale();
   const { repository, currentRef } = useRepositoryContext();
   const { workspaceSlug } = useWorkspaceContext();
-  const { getToken } = useIAM();
 
   const {
+    embeddingInfoQuery,
     searchEmbeddingsMutation,
     updateEmbeddingMetadataMutation,
     updateEmbeddingPriorityMutation,
-  } = useEmbeddings(repository.slug, currentRef);
+  } = useEmbeddings(repository.slug, currentRef, object.path);
 
-  // Fetch embedding info directly using useQuery
-  const embeddingInfoQuery = useQuery({
-    queryKey: [
-      'embeddingInfo',
-      workspaceSlug,
-      repository.slug,
-      object.path,
-      currentRef ?? '',
-    ],
-    queryFn: async () => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      return irminCore.embeddingsService.getEmbeddingInfo({
-        workspace: workspaceSlug,
-        repository: repository.slug,
-        embeddingPath: object.path,
-        ref: currentRef,
-      });
-    },
-    enabled: !!object.path && !!repository.slug,
-  });
   const embeddingInfo = embeddingInfoQuery.data?.data;
 
   // Derive the current state key from props to track changes
@@ -297,7 +271,7 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
     updateEmbeddingPriorityMutation.isPending;
 
   return (
-    <div className='flex flex-col gap-8 p-6'>
+    <div className='flex min-w-0 flex-col gap-8 overflow-hidden p-6'>
       {/* File Info & Stats */}
       <div className='flex flex-col gap-6'>
         {/* Header */}
@@ -353,6 +327,25 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
               </span>
               <span className='font-medium'>{embeddingInfo.chunk_count}</span>
             </div>
+            {embeddingInfo.chunk_size != null &&
+              embeddingInfo.chunk_size > 0 && (
+                <div>
+                  <span className='mr-2 text-muted-foreground'>
+                    {dict.repository.objects.embeddingsChunkSize}
+                  </span>
+                  <span className='font-medium'>
+                    {embeddingInfo.chunk_size}
+                  </span>
+                </div>
+              )}
+            {embeddingInfo.overlap != null && embeddingInfo.overlap > 0 && (
+              <div>
+                <span className='mr-2 text-muted-foreground'>
+                  {dict.repository.objects.embeddingsOverlap}
+                </span>
+                <span className='font-medium'>{embeddingInfo.overlap}</span>
+              </div>
+            )}
             <div>
               <span className='mr-2 text-muted-foreground'>
                 {dict.common.size}
@@ -456,28 +449,28 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
         {/* Search Results */}
         {searchState.results.length > 0 && (
           <div className='rounded-md border'>
-            <Table>
+            <Table className='table-fixed'>
               <TableHeader>
                 <TableRow>
-                  <TableHead className='w-20'>
+                  <TableHead className='w-16'>
                     {dict.repository.objects.embeddingsScore}
                   </TableHead>
                   <TableHead>
                     {dict.repository.objects.embeddingsContent}
                   </TableHead>
-                  <TableHead className='w-48'>
+                  <TableHead className='w-28'>
                     {dict.repository.objects.embeddingsSourceFile}
                   </TableHead>
-                  <TableHead className='w-24 text-right'>
+                  <TableHead className='w-16 text-right'>
                     {dict.repository.objects.embeddingsChunk}
                   </TableHead>
-                  <TableHead className='w-20'>
+                  <TableHead className='w-16'>
                     {dict.repository.objects.embeddingsPriority}
                   </TableHead>
-                  <TableHead className='w-32'>
+                  <TableHead className='w-28'>
                     {dict.repository.objects.embeddingsMetadata}
                   </TableHead>
-                  <TableHead className='w-16'>{dict.common.actions}</TableHead>
+                  <TableHead className='w-12'>{dict.common.actions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -494,7 +487,7 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
                     <TableCell>
                       <p
                         className={`
-                          line-clamp-3 max-w-xl text-sm leading-relaxed
+                          line-clamp-3 max-w-xs text-sm leading-relaxed
                           text-muted-foreground
                         `}
                       >
@@ -502,8 +495,12 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
                       </p>
                     </TableCell>
                     <TableCell>
-                      <div className='flex items-center gap-2'>
-                        <TbFile className='size-4 text-muted-foreground/50' />
+                      <div className='flex max-w-28 items-center gap-1.5'>
+                        <TbFile
+                          className={`
+                            size-3.5 shrink-0 text-muted-foreground/50
+                          `}
+                        />
                         <span className='truncate text-xs font-medium'>
                           {result.source_file}
                         </span>
