@@ -56,11 +56,11 @@ func TestGetEmbeddingMetadataComplete(t *testing.T) {
 		embeddings.MetadataKeySourceFile:          string(sourceFilesJSON),
 	}
 
-	model, dimensions, actualSourceFiles := embeddings.GetEmbeddingMetadata(metadata)
+	meta := embeddings.GetEmbeddingMetadata(metadata)
 
-	assert.Equal(t, "text-embedding-3-small", model)
-	assert.Equal(t, 1536, dimensions)
-	assert.Equal(t, sourceFiles, actualSourceFiles)
+	assert.Equal(t, "text-embedding-3-small", meta.Model)
+	assert.Equal(t, 1536, meta.Dimensions)
+	assert.Equal(t, sourceFiles, meta.SourceFiles)
 }
 
 // TestGetEmbeddingMetadataPartial tests extracting partial metadata.
@@ -69,20 +69,22 @@ func TestGetEmbeddingMetadataPartial(t *testing.T) {
 		embeddings.MetadataKeyEmbeddingModel: "text-embedding-3-large",
 	}
 
-	model, dimensions, sourceFiles := embeddings.GetEmbeddingMetadata(metadata)
+	meta := embeddings.GetEmbeddingMetadata(metadata)
 
-	assert.Equal(t, "text-embedding-3-large", model)
-	assert.Equal(t, 0, dimensions) // Not specified
-	assert.Nil(t, sourceFiles)     // Not specified
+	assert.Equal(t, "text-embedding-3-large", meta.Model)
+	assert.Equal(t, 0, meta.Dimensions) // Not specified
+	assert.Nil(t, meta.SourceFiles)     // Not specified
+	assert.Equal(t, 0, meta.ChunkSize)  // Not specified
+	assert.Equal(t, 0, meta.Overlap)    // Not specified
 }
 
 // TestGetEmbeddingMetadataNil tests nil metadata handling.
 func TestGetEmbeddingMetadataNil(t *testing.T) {
-	model, dimensions, sourceFiles := embeddings.GetEmbeddingMetadata(nil)
+	meta := embeddings.GetEmbeddingMetadata(nil)
 
-	assert.Equal(t, "", model)
-	assert.Equal(t, 0, dimensions)
-	assert.Nil(t, sourceFiles)
+	assert.Equal(t, "", meta.Model)
+	assert.Equal(t, 0, meta.Dimensions)
+	assert.Nil(t, meta.SourceFiles)
 }
 
 // TestGetEmbeddingMetadataInvalidDimensions tests invalid dimensions handling.
@@ -91,9 +93,9 @@ func TestGetEmbeddingMetadataInvalidDimensions(t *testing.T) {
 		embeddings.MetadataKeyEmbeddingDimensions: "not-a-number",
 	}
 
-	_, dimensions, _ := embeddings.GetEmbeddingMetadata(metadata)
+	meta := embeddings.GetEmbeddingMetadata(metadata)
 
-	assert.Equal(t, 0, dimensions) // Should default to 0 on parse error
+	assert.Equal(t, 0, meta.Dimensions) // Should default to 0 on parse error
 }
 
 // TestGetEmbeddingMetadataBackwardCompatibility tests that old plain string format still works.
@@ -106,12 +108,12 @@ func TestGetEmbeddingMetadataBackwardCompatibility(t *testing.T) {
 		embeddings.MetadataKeySourceFile:          "legacy-document.pdf",
 	}
 
-	model, dimensions, sourceFiles := embeddings.GetEmbeddingMetadata(metadata)
+	meta := embeddings.GetEmbeddingMetadata(metadata)
 
-	assert.Equal(t, "text-embedding-3-small", model)
-	assert.Equal(t, 1536, dimensions)
+	assert.Equal(t, "text-embedding-3-small", meta.Model)
+	assert.Equal(t, 1536, meta.Dimensions)
 	// Old format should be parsed as a single-element array
-	assert.Equal(t, []string{"legacy-document.pdf"}, sourceFiles)
+	assert.Equal(t, []string{"legacy-document.pdf"}, meta.SourceFiles)
 }
 
 // =============================================================================
@@ -815,12 +817,12 @@ func TestGetEmbeddingMetadataWithChunkCount(t *testing.T) {
 		embeddings.MetadataKeyChunkCount:          "25",
 	}
 
-	model, dimensions, actualSourceFiles := embeddings.GetEmbeddingMetadata(metadata)
+	meta := embeddings.GetEmbeddingMetadata(metadata)
 
-	assert.Equal(t, "text-embedding-3-small", model)
-	assert.Equal(t, 1536, dimensions)
-	assert.Equal(t, sourceFiles, actualSourceFiles)
+	assert.Equal(t, "text-embedding-3-small", meta.Model)
+	assert.Equal(t, 1536, meta.Dimensions)
+	assert.Equal(t, sourceFiles, meta.SourceFiles)
 
-	// Note: GetEmbeddingMetadata currently doesn't return chunk count
+	// Note: GetEmbeddingMetadata does not return chunk count (it's parsed separately)
 	// This test documents the current behavior
 }

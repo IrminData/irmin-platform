@@ -1979,6 +1979,11 @@ definitions:
         example: 42
         minimum: 0
         type: integer
+      chunk_size:
+        description: Text chunk size used for splitting documents
+        example: 1000
+        minimum: 0
+        type: integer
       created_at:
         description: Creation timestamp
         example: "2025-12-01T14:22:30Z"
@@ -1993,6 +1998,11 @@ definitions:
         example: text-embedding-3-small
         maxLength: 100
         type: string
+      overlap:
+        description: Overlap between consecutive chunks
+        example: 200
+        minimum: 0
+        type: integer
       path:
         description: Path to the embedding file in the repository
         example: embeddings/documents.parquet

@@ -161,6 +161,8 @@ func (api *APIServices) VectorizeObjects(
 		Model:        config.Model,
 		Dimensions:   config.Dimensions,
 		ChunkCount:   len(allRecords),
+		ChunkSize:    config.ChunkSize,
+		Overlap:      config.Overlap,
 	}
 
 	// Create embeddings client with LakeFS
@@ -291,12 +293,12 @@ func (api *APIServices) SearchEmbeddings(
 	model := embeddings.DefaultModel
 	dimensions := embeddings.DefaultDimensions
 	if objectMetadata != nil && objectMetadata.Metadata != nil {
-		extractedModel, extractedDimensions, _ := embeddings.GetEmbeddingMetadata(objectMetadata.Metadata)
-		if extractedModel != "" {
-			model = extractedModel
+		meta := embeddings.GetEmbeddingMetadata(objectMetadata.Metadata)
+		if meta.Model != "" {
+			model = meta.Model
 		}
-		if extractedDimensions > 0 {
-			dimensions = extractedDimensions
+		if meta.Dimensions > 0 {
+			dimensions = meta.Dimensions
 		}
 	}
 
@@ -442,7 +444,7 @@ func (api *APIServices) ListEmbeddingFiles(
 	// Convert to API response format
 	embeddingFiles := make([]irminmodels.EmbeddingFile, 0, len(embeddingObjects))
 	for _, obj := range embeddingObjects {
-		model, dimensions, sourceFiles := embeddings.GetEmbeddingMetadata(obj.Metadata)
+		meta := embeddings.GetEmbeddingMetadata(obj.Metadata)
 
 		// Parse chunk count from metadata
 		chunkCount := 0
@@ -452,12 +454,14 @@ func (api *APIServices) ListEmbeddingFiles(
 
 		embeddingFile := irminmodels.EmbeddingFile{
 			Path:        obj.Path,
-			SourceFiles: sourceFiles,
-			Model:       model,
-			Dimensions:  dimensions,
+			SourceFiles: meta.SourceFiles,
+			Model:       meta.Model,
+			Dimensions:  meta.Dimensions,
 			ChunkCount:  chunkCount,
 			SizeBytes:   obj.SizeBytes,
 			Ref:         ref,
+			ChunkSize:   meta.ChunkSize,
+			Overlap:     meta.Overlap,
 		}
 		embeddingFiles = append(embeddingFiles, embeddingFile)
 	}
@@ -528,7 +532,7 @@ func (api *APIServices) GetEmbeddingFileInfo(
 	}
 
 	// Extract embedding metadata
-	model, dimensions, sourceFiles := embeddings.GetEmbeddingMetadata(objectMetadata.Metadata)
+	meta := embeddings.GetEmbeddingMetadata(objectMetadata.Metadata)
 
 	// Parse chunk count from metadata
 	chunkCount := 0
@@ -538,12 +542,14 @@ func (api *APIServices) GetEmbeddingFileInfo(
 
 	embeddingFile := &irminmodels.EmbeddingFile{
 		Path:        embeddingPath,
-		SourceFiles: sourceFiles,
-		Model:       model,
-		Dimensions:  dimensions,
+		SourceFiles: meta.SourceFiles,
+		Model:       meta.Model,
+		Dimensions:  meta.Dimensions,
 		ChunkCount:  chunkCount,
 		SizeBytes:   objectMetadata.SizeBytes,
 		Ref:         ref,
+		ChunkSize:   meta.ChunkSize,
+		Overlap:     meta.Overlap,
 	}
 
 	return embeddingFile, nil
@@ -737,6 +743,13 @@ func (api *APIServices) UpsertEmbeddings(
 		}
 	}
 
+	// Validate config against existing file to prevent corruption
+	if validationErr := api.validateExistingEmbeddingConfig(
+		dataEngine, lakeFSRepositoryName, ref, req.OutputPath, config, len(existingRecords),
+	); validationErr != nil {
+		return nil, validationErr
+	}
+
 	// Build hash lookup
 	existingHashes := make(map[string]*embeddings.EmbeddingRecord, len(existingRecords))
 	for i := range existingRecords {
@@ -802,6 +815,8 @@ func (api *APIServices) UpsertEmbeddings(
 			Model:        config.Model,
 			Dimensions:   config.Dimensions,
 			ChunkCount:   len(finalRecords),
+			ChunkSize:    config.ChunkSize,
+			Overlap:      config.Overlap,
 		}
 
 		_, uploadErr := embeddingsWithLakeFS.UploadToLakeFS(c, uploadConfig, parquetData)
@@ -910,21 +925,21 @@ func (api *APIServices) UpdateEmbeddingMetadata(
 		true,
 		false,
 	)
-	var model string
-	var dimensions int
-	var sourceFiles []string
+	var existingEmbMeta embeddings.EmbeddingMeta
 	if metaErr == nil && existingMeta != nil && existingMeta.Metadata != nil {
-		model, dimensions, sourceFiles = embeddings.GetEmbeddingMetadata(existingMeta.Metadata)
+		existingEmbMeta = embeddings.GetEmbeddingMetadata(existingMeta.Metadata)
 	}
 
 	uploadConfig := embeddings.UploadConfig{
 		RepositoryID: lakeFSRepositoryName,
 		Branch:       ref,
 		Path:         embeddingPath,
-		SourceFiles:  sourceFiles,
-		Model:        model,
-		Dimensions:   dimensions,
+		SourceFiles:  existingEmbMeta.SourceFiles,
+		Model:        existingEmbMeta.Model,
+		Dimensions:   existingEmbMeta.Dimensions,
 		ChunkCount:   len(records),
+		ChunkSize:    existingEmbMeta.ChunkSize,
+		Overlap:      existingEmbMeta.Overlap,
 	}
 
 	_, uploadErr := embeddingsClient.UploadToLakeFS(c, uploadConfig, parquetData)
@@ -1025,21 +1040,21 @@ func (api *APIServices) UpdateEmbeddingPriority(
 		true,
 		false,
 	)
-	var model string
-	var dimensions int
-	var sourceFiles []string
+	var existingEmbMeta embeddings.EmbeddingMeta
 	if metaErr == nil && existingMeta != nil && existingMeta.Metadata != nil {
-		model, dimensions, sourceFiles = embeddings.GetEmbeddingMetadata(existingMeta.Metadata)
+		existingEmbMeta = embeddings.GetEmbeddingMetadata(existingMeta.Metadata)
 	}
 
 	uploadConfig := embeddings.UploadConfig{
 		RepositoryID: lakeFSRepositoryName,
 		Branch:       ref,
 		Path:         embeddingPath,
-		SourceFiles:  sourceFiles,
-		Model:        model,
-		Dimensions:   dimensions,
+		SourceFiles:  existingEmbMeta.SourceFiles,
+		Model:        existingEmbMeta.Model,
+		Dimensions:   existingEmbMeta.Dimensions,
 		ChunkCount:   len(records),
+		ChunkSize:    existingEmbMeta.ChunkSize,
+		Overlap:      existingEmbMeta.Overlap,
 	}
 
 	_, uploadErr := embeddingsClient.UploadToLakeFS(c, uploadConfig, parquetData)
@@ -1081,6 +1096,46 @@ func mapsEqualString(a, b map[string]string) bool {
 		}
 	}
 	return true
+}
+
+// validateExistingEmbeddingConfig checks that the requested config matches an existing embedding file's
+// model and dimensions to prevent corruption from mismatched settings.
+func (api *APIServices) validateExistingEmbeddingConfig(
+	dataEngine *engine.Client,
+	lakeFSRepositoryName, ref, outputPath string,
+	config embeddings.EmbeddingConfig,
+	existingRecordCount int,
+) error {
+	if existingRecordCount == 0 {
+		return nil
+	}
+
+	existingObjMeta, metaErr := dataEngine.LakeFSClient.GetObjectMetadata(
+		lakeFSRepositoryName, ref, outputPath, true, false,
+	)
+	if metaErr != nil {
+		// Cannot fetch metadata — skip validation rather than blocking the upsert
+		return nil //nolint:nilerr // intentionally ignoring metadata fetch errors
+	}
+	if existingObjMeta == nil {
+		return nil
+	}
+
+	existingMeta := embeddings.GetEmbeddingMetadata(existingObjMeta.Metadata)
+	if existingMeta.Model != "" && existingMeta.Model != config.Model {
+		return fmt.Errorf(
+			"model mismatch: existing file uses %s, request uses %s: %w",
+			existingMeta.Model, config.Model, ErrEmbeddingConfigMismatch,
+		)
+	}
+	if existingMeta.Dimensions > 0 && existingMeta.Dimensions != config.Dimensions {
+		return fmt.Errorf(
+			"dimensions mismatch: existing file uses %d, request uses %d: %w",
+			existingMeta.Dimensions, config.Dimensions, ErrEmbeddingConfigMismatch,
+		)
+	}
+
+	return nil
 }
 
 // copyStringMap creates a deep copy of a string map to avoid shared references.

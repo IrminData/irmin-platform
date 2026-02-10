@@ -25,6 +25,8 @@ const (
 	MetadataKeyEmbeddingDimensions = "irmin-embedding-dimensions"
 	MetadataKeySourceFile          = "irmin-source-file"
 	MetadataKeyChunkCount          = "irmin-chunk-count"
+	MetadataKeyChunkSize           = "irmin-embedding-chunk-size"
+	MetadataKeyOverlap             = "irmin-embedding-overlap"
 	MetadataValueEmbeddings        = "embeddings"
 )
     LakeFS metadata keys for embedding files.
@@ -53,10 +55,6 @@ func ExtractTextFromFile(
 ) ([]string, error)
     ExtractTextFromFile extracts text content from a file based on its format.
     Returns a slice of text strings that can be chunked and embedded.
-
-func GetEmbeddingMetadata(metadata map[string]string) (string, int, []string)
-    GetEmbeddingMetadata extracts embedding-specific metadata from LakeFS object
-    metadata.
 
 func GetSupportedFormats() []string
     GetSupportedFormats returns a list of file extensions supported for
@@ -298,6 +296,19 @@ type EmbeddingConfig struct {
 func DefaultConfig() EmbeddingConfig
     DefaultConfig returns the default embedding configuration.
 
+type EmbeddingMeta struct {
+	Model       string
+	Dimensions  int
+	SourceFiles []string
+	ChunkSize   int
+	Overlap     int
+}
+    EmbeddingMeta holds parsed metadata extracted from a LakeFS embedding file.
+
+func GetEmbeddingMetadata(metadata map[string]string) EmbeddingMeta
+    GetEmbeddingMetadata extracts embedding-specific metadata from LakeFS object
+    metadata.
+
 type EmbeddingRecord struct {
 	ID          string            `json:"id"`
 	SourceFile  string            `json:"source_file"`
@@ -338,10 +349,12 @@ type UploadConfig struct {
 	RepositoryID string
 	Branch       string
 	Path         string
-	SourceFiles  []string // Changed from SourceFile (singular) to SourceFiles (plural)
+	SourceFiles  []string
 	Model        string
 	Dimensions   int
 	ChunkCount   int
+	ChunkSize    int
+	Overlap      int
 }
     UploadConfig holds configuration for uploading embeddings to LakeFS.
 

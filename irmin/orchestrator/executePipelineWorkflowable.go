@@ -1827,12 +1827,12 @@ func (o *Orchestrator) handleEmbeddingsSearch(
 
 	// Override with metadata if available
 	if objectMetadata != nil && objectMetadata.Metadata != nil {
-		extractedModel, extractedDimensions, _ := embeddings.GetEmbeddingMetadata(objectMetadata.Metadata)
-		if extractedModel != "" {
-			model = extractedModel
+		meta := embeddings.GetEmbeddingMetadata(objectMetadata.Metadata)
+		if meta.Model != "" {
+			model = meta.Model
 		}
-		if extractedDimensions > 0 {
-			dimensions = extractedDimensions
+		if meta.Dimensions > 0 {
+			dimensions = meta.Dimensions
 		}
 	}
 

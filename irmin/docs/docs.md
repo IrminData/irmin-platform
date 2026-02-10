@@ -6709,7 +6709,6 @@ import "irmin-api/embeddings"
 - [func ComputeContentHash\(content string\) string](<#ComputeContentHash>)
 - [func ComputeCosineSimilarity\(a, b \[\]float32\) \(float64, error\)](<#ComputeCosineSimilarity>)
 - [func ExtractTextFromFile\(ctx context.Context, duckDBClient \*duckdb.QueryClient, fileContent \[\]byte, fileName string\) \(\[\]string, error\)](<#ExtractTextFromFile>)
-- [func GetEmbeddingMetadata\(metadata map\[string\]string\) \(string, int, \[\]string\)](<#GetEmbeddingMetadata>)
 - [func GetSupportedFormats\(\) \[\]string](<#GetSupportedFormats>)
 - [func IsEmbeddingFile\(metadata map\[string\]string\) bool](<#IsEmbeddingFile>)
 - [func IsSupportedFormat\(fileName string\) bool](<#IsSupportedFormat>)
@@ -6741,6 +6740,8 @@ import "irmin-api/embeddings"
   - [func \(c \*Client\) UploadToLakeFS\(ctx context.Context, config UploadConfig, data \[\]byte\) \(\*lakefs.ObjectMetadata, error\)](<#Client.UploadToLakeFS>)
 - [type EmbeddingConfig](<#EmbeddingConfig>)
   - [func DefaultConfig\(\) EmbeddingConfig](<#DefaultConfig>)
+- [type EmbeddingMeta](<#EmbeddingMeta>)
+  - [func GetEmbeddingMetadata\(metadata map\[string\]string\) EmbeddingMeta](<#GetEmbeddingMetadata>)
 - [type EmbeddingRecord](<#EmbeddingRecord>)
 - [type EmbeddingResult](<#EmbeddingResult>)
 - [type SearchResult](<#SearchResult>)
@@ -6773,6 +6774,8 @@ const (
     MetadataKeyEmbeddingDimensions = "irmin-embedding-dimensions"
     MetadataKeySourceFile          = "irmin-source-file"
     MetadataKeyChunkCount          = "irmin-chunk-count"
+    MetadataKeyChunkSize           = "irmin-embedding-chunk-size"
+    MetadataKeyOverlap             = "irmin-embedding-overlap"
     MetadataValueEmbeddings        = "embeddings"
 )
 ```
@@ -6821,15 +6824,6 @@ func ExtractTextFromFile(ctx context.Context, duckDBClient *duckdb.QueryClient, 
 ```
 
 ExtractTextFromFile extracts text content from a file based on its format. Returns a slice of text strings that can be chunked and embedded.
-
-<a name="GetEmbeddingMetadata"></a>
-## func GetEmbeddingMetadata
-
-```go
-func GetEmbeddingMetadata(metadata map[string]string) (string, int, []string)
-```
-
-GetEmbeddingMetadata extracts embedding\-specific metadata from LakeFS object metadata.
 
 <a name="GetSupportedFormats"></a>
 ## func GetSupportedFormats
@@ -7117,6 +7111,30 @@ func DefaultConfig() EmbeddingConfig
 
 DefaultConfig returns the default embedding configuration.
 
+<a name="EmbeddingMeta"></a>
+## type EmbeddingMeta
+
+EmbeddingMeta holds parsed metadata extracted from a LakeFS embedding file.
+
+```go
+type EmbeddingMeta struct {
+    Model       string
+    Dimensions  int
+    SourceFiles []string
+    ChunkSize   int
+    Overlap     int
+}
+```
+
+<a name="GetEmbeddingMetadata"></a>
+### func GetEmbeddingMetadata
+
+```go
+func GetEmbeddingMetadata(metadata map[string]string) EmbeddingMeta
+```
+
+GetEmbeddingMetadata extracts embedding\-specific metadata from LakeFS object metadata.
+
 <a name="EmbeddingRecord"></a>
 ## type EmbeddingRecord
 
@@ -7180,10 +7198,12 @@ type UploadConfig struct {
     RepositoryID string
     Branch       string
     Path         string
-    SourceFiles  []string // Changed from SourceFile (singular) to SourceFiles (plural)
+    SourceFiles  []string
     Model        string
     Dimensions   int
     ChunkCount   int
+    ChunkSize    int
+    Overlap      int
 }
 ```
 
@@ -13481,6 +13501,7 @@ var (
     ErrConnectorMissingPushCapability         = engine.ErrConnectorMissingPushCapability
     ErrConnectorMissingPatchCapability        = engine.ErrConnectorMissingPatchCapability
     ErrConnectorMissingWebhookCapability      = engine.ErrConnectorMissingWebhookCapability
+    ErrEmbeddingConfigMismatch                = errors.New("embedding config mismatch")
 )
 ```
 

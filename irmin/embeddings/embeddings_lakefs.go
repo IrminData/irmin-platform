@@ -19,18 +19,31 @@ const (
 	MetadataKeyEmbeddingDimensions = "irmin-embedding-dimensions"
 	MetadataKeySourceFile          = "irmin-source-file"
 	MetadataKeyChunkCount          = "irmin-chunk-count"
+	MetadataKeyChunkSize           = "irmin-embedding-chunk-size"
+	MetadataKeyOverlap             = "irmin-embedding-overlap"
 	MetadataValueEmbeddings        = "embeddings"
 )
+
+// EmbeddingMeta holds parsed metadata extracted from a LakeFS embedding file.
+type EmbeddingMeta struct {
+	Model       string
+	Dimensions  int
+	SourceFiles []string
+	ChunkSize   int
+	Overlap     int
+}
 
 // UploadConfig holds configuration for uploading embeddings to LakeFS.
 type UploadConfig struct {
 	RepositoryID string
 	Branch       string
 	Path         string
-	SourceFiles  []string // Changed from SourceFile (singular) to SourceFiles (plural)
+	SourceFiles  []string
 	Model        string
 	Dimensions   int
 	ChunkCount   int
+	ChunkSize    int
+	Overlap      int
 }
 
 // UploadToLakeFS uploads embedding data to LakeFS with appropriate metadata.
@@ -166,6 +179,12 @@ func buildEmbeddingMetadata(config UploadConfig) (map[string]string, error) {
 	if config.ChunkCount > 0 {
 		metadata[MetadataKeyChunkCount] = strconv.Itoa(config.ChunkCount)
 	}
+	if config.ChunkSize > 0 {
+		metadata[MetadataKeyChunkSize] = strconv.Itoa(config.ChunkSize)
+	}
+	if config.Overlap > 0 {
+		metadata[MetadataKeyOverlap] = strconv.Itoa(config.Overlap)
+	}
 
 	return metadata, nil
 }
@@ -179,32 +198,34 @@ func IsEmbeddingFile(metadata map[string]string) bool {
 }
 
 // GetEmbeddingMetadata extracts embedding-specific metadata from LakeFS object metadata.
-func GetEmbeddingMetadata(metadata map[string]string) (string, int, []string) {
+func GetEmbeddingMetadata(metadata map[string]string) EmbeddingMeta {
 	if metadata == nil {
-		return "", 0, nil
+		return EmbeddingMeta{}
 	}
 
-	model := metadata[MetadataKeyEmbeddingModel]
-	sourceFileStr := metadata[MetadataKeySourceFile]
-	dimensions := 0
+	meta := EmbeddingMeta{
+		Model: metadata[MetadataKeyEmbeddingModel],
+	}
 
 	if dimStr, ok := metadata[MetadataKeyEmbeddingDimensions]; ok {
-		_, _ = fmt.Sscanf(dimStr, "%d", &dimensions)
-		// If parsing fails, dimensions remains 0 (the default)
-		// This is acceptable since 0 is a valid signal for "unknown dimensions"
+		_, _ = fmt.Sscanf(dimStr, "%d", &meta.Dimensions)
+	}
+	if csStr, ok := metadata[MetadataKeyChunkSize]; ok {
+		_, _ = fmt.Sscanf(csStr, "%d", &meta.ChunkSize)
+	}
+	if olStr, ok := metadata[MetadataKeyOverlap]; ok {
+		_, _ = fmt.Sscanf(olStr, "%d", &meta.Overlap)
 	}
 
 	// Parse source files - try JSON first (new format), fallback to single string (old format)
-	var sourceFiles []string
-	if sourceFileStr != "" {
-		// Try to parse as JSON array
-		if err := json.Unmarshal([]byte(sourceFileStr), &sourceFiles); err != nil {
+	if sourceFileStr := metadata[MetadataKeySourceFile]; sourceFileStr != "" {
+		if err := json.Unmarshal([]byte(sourceFileStr), &meta.SourceFiles); err != nil {
 			// Fallback to old format - single file or comma-separated
-			sourceFiles = []string{sourceFileStr}
+			meta.SourceFiles = []string{sourceFileStr}
 		}
 	}
 
-	return model, dimensions, sourceFiles
+	return meta
 }
 
 // DownloadFromLakeFS downloads an embedding file from LakeFS.
@@ -328,6 +349,8 @@ func (c *Client) ProcessAndUploadFile(
 		Model:        result.Model,
 		Dimensions:   result.Dimensions,
 		ChunkCount:   result.TotalChunks,
+		ChunkSize:    config.ChunkSize,
+		Overlap:      config.Overlap,
 	}
 
 	metadata, err := c.UploadToLakeFS(ctx, uploadConfig, parquetData)

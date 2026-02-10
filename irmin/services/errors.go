@@ -60,6 +60,7 @@ var (
 	ErrConnectorMissingPushCapability         = engine.ErrConnectorMissingPushCapability
 	ErrConnectorMissingPatchCapability        = engine.ErrConnectorMissingPatchCapability
 	ErrConnectorMissingWebhookCapability      = engine.ErrConnectorMissingWebhookCapability
+	ErrEmbeddingConfigMismatch                = errors.New("embedding config mismatch")
 )
 
 // internalErrorPrefix is used to mark errors that should not be exposed to clients
@@ -287,6 +288,8 @@ func MapErrorToStatusCode(err error) int {
 	case errors.Is(err, ErrConnectorMissingPatchCapability):
 		return fiber.StatusBadRequest
 	case errors.Is(err, ErrConnectorMissingWebhookCapability):
+		return fiber.StatusBadRequest
+	case errors.Is(err, ErrEmbeddingConfigMismatch):
 		return fiber.StatusBadRequest
 	case errors.Is(err, gorm.ErrRecordNotFound):
 		return fiber.StatusNotFound

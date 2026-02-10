@@ -16720,6 +16720,12 @@ const docTemplate = `{
                     "minimum": 0,
                     "example": 42
                 },
+                "chunk_size": {
+                    "description": "Text chunk size used for splitting documents",
+                    "type": "integer",
+                    "minimum": 0,
+                    "example": 1000
+                },
                 "created_at": {
                     "description": "Creation timestamp",
                     "type": "string",
@@ -16736,6 +16742,12 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 100,
                     "example": "text-embedding-3-small"
+                },
+                "overlap": {
+                    "description": "Overlap between consecutive chunks",
+                    "type": "integer",
+                    "minimum": 0,
+                    "example": 200
                 },
                 "path": {
                     "description": "Path to the embedding file in the repository",

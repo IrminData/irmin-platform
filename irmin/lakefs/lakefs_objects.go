@@ -375,7 +375,7 @@ func (c *Client) RewriteObjectMetadata(repositoryID, branch, objectPath string, 
 		branch,
 		url.QueryEscape(objectPath),
 	)
-	if doRequestErr := c.doRequest("PUT", endpoint, reqData, []int{http.StatusOK, http.StatusCreated}, nil); doRequestErr != nil {
+	if doRequestErr := c.doRequest("PUT", endpoint, reqData, []int{http.StatusOK, http.StatusCreated, http.StatusNoContent}, nil); doRequestErr != nil {
 		return fmt.Errorf("failed to rewrite object metadata: %w", doRequestErr)
 	}
 	return nil
