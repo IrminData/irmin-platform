@@ -1,5 +1,5 @@
 /* eslint-disable import-x/no-unused-modules */
-import type { NextRequest } from 'next/server';
+import type { NextFetchEvent, NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
@@ -90,24 +90,22 @@ const isProtectedRoute = createRouteMatcher([
   '/:lang([a-z]{2})?/:section(workspace|profile)/:rest*',
 ]);
 
-/**
- * Main application middleware
- *
- * @remarks
- *
- * Middleware handles locale, Clerk, dev env auth and TSDoc path redirects.
- *
- * Env authentication is required for development environments and TSDoc paths.
- *
- * - Redirects to the correct locale if not found in the URL
- * - Redirects to the /api/verify-env-access route if the user is not authenticated and the environment requires it or the path is a TSDoc path
- * - Redirects to the /frontend-docs/index.html route if the path is /frontend-docs or /tsdocs
- *
- * {@link https://nextjs.org/docs/app/building-your-application/routing/middleware}
- * {@link https://clerk.com/docs/references/nextjs/clerk-middleware}
- */
-export default clerkMiddleware(async (auth, req) => {
-  const resolvedAuth = await auth();
+/** Maximum time to wait for Clerk auth resolution before falling back */
+const MIDDLEWARE_TIMEOUT_MS = 5000;
+
+const clerkHandler = clerkMiddleware(async (auth, req) => {
+  let resolvedAuth;
+  try {
+    resolvedAuth = await auth();
+  } catch {
+    // Clerk auth resolution failed (API unreachable, expired token, etc.)
+    if (isProtectedRoute(req)) {
+      const locale = getLocale(req);
+      return NextResponse.redirect(new URL(`/${locale}/sign-in`, req.url));
+    }
+    return NextResponse.next();
+  }
+
   // Protect certain routes using Clerk
   if (isProtectedRoute(req) && !resolvedAuth.userId) {
     resolvedAuth.redirectToSignIn();
@@ -193,6 +191,55 @@ export default clerkMiddleware(async (auth, req) => {
   setLocaleCookie(response, locale);
   return NextResponse.redirect(req.nextUrl);
 });
+
+/**
+ * Middleware wrapper with graceful fallback for Clerk failures.
+ *
+ * @remarks
+ * When Clerk's API is unreachable (e.g., network issues, expired tokens),
+ * the handshake can take 10+ seconds to timeout. This wrapper uses
+ * Promise.race to enforce a shorter timeout, redirecting to sign-in
+ * for protected routes instead of leaving the user waiting.
+ */
+export default async function middleware(
+  req: NextRequest,
+  event: NextFetchEvent
+) {
+  try {
+    return await Promise.race([
+      clerkHandler(req, event),
+      new Promise<NextResponse>((resolve) =>
+        setTimeout(() => {
+          const { pathname } = req.nextUrl;
+          // Let API and static asset requests pass through
+          if (pathname.startsWith('/api') || pathname.startsWith('/_next')) {
+            resolve(NextResponse.next());
+            return;
+          }
+          const locale = getLocale(req);
+          // Redirect protected routes to sign-in
+          if (isProtectedRoute(req)) {
+            resolve(
+              NextResponse.redirect(new URL(`/${locale}/sign-in`, req.url))
+            );
+          } else {
+            resolve(NextResponse.next());
+          }
+        }, MIDDLEWARE_TIMEOUT_MS)
+      ),
+    ]);
+  } catch {
+    const { pathname } = req.nextUrl;
+    if (pathname.startsWith('/api') || pathname.startsWith('/_next')) {
+      return NextResponse.next();
+    }
+    const locale = getLocale(req);
+    if (isProtectedRoute(req)) {
+      return NextResponse.redirect(new URL(`/${locale}/sign-in`, req.url));
+    }
+    return NextResponse.next();
+  }
+}
 
 /**
  * Configuration for the middleware
