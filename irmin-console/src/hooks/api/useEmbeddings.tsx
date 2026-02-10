@@ -14,6 +14,8 @@ import type {
 } from '@/types/core/Embedding';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
+import { useInvalidateObjectQueries } from './useInvalidateObjectQueries';
+
 /**
  * Hook for embeddings operations (vectorize, search, list, get info).
  *
@@ -31,6 +33,10 @@ export const useEmbeddings = (
   const { workspaceSlug } = useWorkspaceContext();
   const { irminAlert } = usePopup();
   const queryClient = useQueryClient();
+  const { invalidateObjectQueries } = useInvalidateObjectQueries(
+    workspaceSlug,
+    repositorySlug
+  );
 
   /**
    * Query to list embedding files in a repository.
@@ -152,13 +158,12 @@ export const useEmbeddings = (
         priority,
       });
     },
-    onSuccess: (res) => {
+    onSuccess: (res, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['embeddings', workspaceSlug, repositorySlug],
       });
-      queryClient.invalidateQueries({
-        queryKey: ['repositoryObject', workspaceSlug, repositorySlug],
-      });
+      const effectiveRef = variables.ref ?? ref ?? '';
+      invalidateObjectQueries(variables.outputPath, effectiveRef);
       const data = res.data;
       irminAlert(
         'success',

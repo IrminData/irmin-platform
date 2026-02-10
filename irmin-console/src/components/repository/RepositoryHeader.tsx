@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
@@ -65,57 +65,73 @@ export default function RepositoryHeader() {
   // The repositories list URL
   const repositoriesListUrl = `${workspaceUrl}/repositories`;
 
+  // Build search params string with only the ref parameter
+  // This prevents page-specific params like `path` and `object` from leaking across tabs
+  const tabSearchParams = useMemo(() => {
+    const ref = searchParams.get('ref');
+    if (!ref) return '';
+    const params = new URLSearchParams();
+    params.set('ref', ref);
+    return params.toString();
+  }, [searchParams]);
+
+  /** Helper to build tab link with only the ref param */
+  const tabLink = useCallback(
+    (path: string) => (tabSearchParams ? `${path}?${tabSearchParams}` : path),
+    [tabSearchParams]
+  );
+
   const tabs = useMemo(
     () => [
       {
         name: dict.repository.objects.objects,
-        link: `${baseUrl}?${searchParams.toString()}`,
+        link: tabLink(baseUrl),
         active: pathname === `${baseUrl}`,
         icon: <TbDatabase size={14} />,
       },
       {
         name: dict.repository.schema.schema,
-        link: `${baseUrl}/schema?${searchParams.toString()}`,
+        link: tabLink(`${baseUrl}/schema`),
         active: pathname === `${baseUrl}/schema`,
         icon: <TbSchema size={14} />,
       },
       {
         name: dict.repository.commit.commits,
-        link: `${baseUrl}/commits?${searchParams.toString()}`,
+        link: tabLink(`${baseUrl}/commits`),
         active: pathname === `${baseUrl}/commits`,
         icon: <GoGitCommit size={14} />,
         hidden: !isResourceAllowed('repository_commit', 'read', repository.id),
       },
       {
         name: dict.repository.tags.tags,
-        link: `${baseUrl}/tags?${searchParams.toString()}`,
+        link: tabLink(`${baseUrl}/tags`),
         active: pathname === `${baseUrl}/tags`,
         icon: <TbTags size={14} />,
         hidden: !isResourceAllowed('repository_tag', 'read', repository.id),
       },
       {
         name: dict.repository.branches.branches,
-        link: `${baseUrl}/branches?${searchParams.toString()}`,
+        link: tabLink(`${baseUrl}/branches`),
         active: pathname === `${baseUrl}/branches`,
         icon: <GoGitBranch size={14} />,
         hidden: !isResourceAllowed('repository_branch', 'read', repository.id),
       },
       {
         name: dict.repository.compare.compare,
-        link: `${baseUrl}/compare?${searchParams.toString()}`,
+        link: tabLink(`${baseUrl}/compare`),
         active: pathname === `${baseUrl}/compare`,
         icon: <GoGitCompare size={14} />,
         hidden: !isResourceAllowed('repository_commit', 'read', repository.id),
       },
       {
         name: dict.documentation.documentation,
-        link: `${baseUrl}/documentation?${searchParams.toString()}`,
+        link: tabLink(`${baseUrl}/documentation`),
         active: pathname === `${baseUrl}/documentation`,
         icon: <TbFileText size={14} />,
       },
       {
         name: dict.workspace.policies,
-        link: `${baseUrl}/policies?${searchParams.toString()}`,
+        link: tabLink(`${baseUrl}/policies`),
         active: pathname === `${baseUrl}/policies`,
         icon: <TbShield size={14} />,
         hidden: !isResourceAllowed('policy', 'read'),
@@ -129,7 +145,7 @@ export default function RepositoryHeader() {
       },
       {
         name: dict.consoleNavigation.settings,
-        link: `${baseUrl}/settings?${searchParams.toString()}`,
+        link: tabLink(`${baseUrl}/settings`),
         active: pathname === `${baseUrl}/settings`,
         icon: <TbSettings size={14} />,
         hidden: immutable,
@@ -137,7 +153,7 @@ export default function RepositoryHeader() {
     ],
     [
       pathname,
-      searchParams,
+      tabLink,
       baseUrl,
       dict,
       immutable,
