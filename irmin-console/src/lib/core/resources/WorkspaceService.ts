@@ -2,7 +2,7 @@ import type IrminCore from '@/lib/core';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
-import type { Workspace } from '@/types/core/Workspace';
+import type { Workspace, WorkspaceSummary } from '@/types/core/Workspace';
 import type { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
 /**
@@ -45,6 +45,7 @@ class WorkspaceService {
     this.irminCore = irminCore;
     // Bind methods
     this.fetchWorkspaces = this.fetchWorkspaces.bind(this);
+    this.fetchWorkspaceSummaries = this.fetchWorkspaceSummaries.bind(this);
     this.fetchWorkspace = this.fetchWorkspace.bind(this);
     this.createWorkspace = this.createWorkspace.bind(this);
     this.updateWorkspace = this.updateWorkspace.bind(this);
@@ -67,6 +68,28 @@ class WorkspaceService {
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Fetch workspaces error');
+      throw error;
+    }
+  }
+
+  /**
+   * List workspace summaries with resource counts.
+   *
+   * @returns IrminAPIResponse containing an array of WorkspaceSummary.
+   */
+  async fetchWorkspaceSummaries(): Promise<
+    IrminAPIResponse<WorkspaceSummary[]>
+  > {
+    try {
+      const res = (await this.irminCore.fetchAPI(`/v1/workspaces/summary`, {
+        method: 'GET',
+      })) as IrminAPIResponse<WorkspaceSummary[]>;
+      return res;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Fetch workspace summaries error'
+      );
       throw error;
     }
   }

@@ -1,5 +1,5 @@
 /**
- * Workspace card skeleton component for loading states
+ * Workspace row skeleton component for loading states
  */
 export const WorkspaceCardSkeleton = ({
   className = '',
@@ -9,97 +9,66 @@ export const WorkspaceCardSkeleton = ({
   return (
     <div
       className={`
-        animate-pulse
+        flex animate-pulse items-center gap-4 rounded-xl bg-card px-4 py-3
         ${className}
       `}
     >
+      {/* Icon placeholder */}
       <div
         className={`
-          flex h-full min-h-[140px] flex-col rounded-xl bg-card p-4
-          text-card-foreground
+          size-9 shrink-0 rounded-lg bg-gray-200
+          dark:bg-gray-800
+        `}
+      />
+
+      {/* Name + Description */}
+      <div className='min-w-0 flex-1 space-y-1.5'>
+        <div
+          className={`
+            h-4 w-1/3 rounded bg-gray-200
+            dark:bg-gray-800
+          `}
+        />
+        <div
+          className={`
+            h-3 w-1/2 rounded bg-gray-200
+            dark:bg-gray-800
+          `}
+        />
+      </div>
+
+      {/* Stats placeholders */}
+      <div
+        className={`
+          hidden shrink-0 items-center gap-4
+          md:flex
         `}
       >
-        {/* Header with label and icon */}
-        <div className='flex items-start justify-between'>
-          <div className='flex-1'>
-            {/* Workspace label skeleton */}
+        {Array.from({ length: 4 }, (_, idx) => (
+          <div key={`stat-skeleton-${idx}`} className='flex items-center gap-1'>
             <div
               className={`
-                h-3 w-16 rounded bg-gray-200
+                size-3.5 rounded bg-gray-200
                 dark:bg-gray-800
               `}
             />
-
-            {/* Workspace name skeleton */}
             <div
               className={`
-                mt-1 h-5 w-3/4 rounded bg-gray-200
+                h-3 w-4 rounded bg-gray-200
                 dark:bg-gray-800
               `}
             />
           </div>
-
-          {/* Icon skeleton */}
-          <div
-            className={`
-              ml-2 size-8 rounded-full bg-gray-200
-              dark:bg-gray-800
-            `}
-          />
-        </div>
-
-        {/* Description skeleton */}
-        <div className='mt-2 mb-4 space-y-2'>
-          <div
-            className={`
-              h-3 w-4/5 rounded bg-gray-200
-              dark:bg-gray-800
-            `}
-          />
-          <div
-            className={`
-              h-3 w-1/2 rounded bg-gray-200
-              dark:bg-gray-800
-            `}
-          />
-        </div>
-
-        {/* Grow spacer */}
-        <div className='grow' />
-
-        {/* Users section skeleton */}
-        <div className='mt-auto flex items-center gap-2'>
-          <div className='flex -space-x-2'>
-            {/* User avatars skeleton */}
-            <div
-              className={`
-                size-7 rounded-full bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
-            <div
-              className={`
-                size-7 rounded-full bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
-            <div
-              className={`
-                size-7 rounded-full bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
-          </div>
-
-          {/* Member count skeleton */}
-          <div
-            className={`
-              h-3 w-16 rounded bg-gray-200
-              dark:bg-gray-800
-            `}
-          />
-        </div>
+        ))}
       </div>
+
+      {/* Chevron placeholder */}
+      <div
+        className={`
+          size-4 shrink-0 rounded bg-gray-200
+          dark:bg-gray-800
+        `}
+      />
     </div>
   );
 };

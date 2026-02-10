@@ -4,25 +4,27 @@ import { useRouter } from 'next/navigation';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { workspacesQueryKey } from '@/lib/queryKeys';
+import {
+  workspacesQueryKey,
+  workspaceSummariesQueryKey,
+} from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import type { Workspace } from '@/types/core/Workspace';
+import type { Workspace, WorkspaceSummary } from '@/types/core/Workspace';
 
 import { createMutationHandlers } from './mutations/utils';
 
 type CreateWorkspaceInput = Pick<Workspace, 'description' | 'name'>;
 
+/**
+ * Hook for the full workspaces list query (used by ConsoleWrapper, search, etc.)
+ */
 export function useWorkspaces() {
   const { getCore } = useIrminCore();
-  const { locale } = useLocale();
-  const { irminAlert } = usePopup();
-  const queryClient = useQueryClient();
-  const router = useRouter();
 
   // Query for fetching all workspaces
   const workspacesQuery = useQuery<IrminAPIResponse<Workspace[]>>({
@@ -33,6 +35,24 @@ export function useWorkspaces() {
       return workspaces;
     },
   });
+
+  return {
+    workspacesQuery,
+  };
+}
+
+/**
+ * Hook for workspace create mutation and navigation actions.
+ *
+ * Separated from useWorkspaces so consumers that only need to create or
+ * switch workspaces don't trigger the full workspaces list query.
+ */
+export function useWorkspaceActions() {
+  const { getCore } = useIrminCore();
+  const { locale } = useLocale();
+  const { irminAlert } = usePopup();
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
   // Mutation for creating a workspace
   const createMutation = useMutation<
@@ -66,6 +86,9 @@ export function useWorkspaces() {
           }),
         },
         onSuccess: (res) => {
+          void queryClient.invalidateQueries({
+            queryKey: workspaceSummariesQueryKey,
+          });
           irminAlert(
             'success',
             res.message ?? 'Workspace created successfully'
@@ -95,13 +118,29 @@ export function useWorkspaces() {
   );
 
   return {
-    // Queries
-    workspacesQuery,
-
-    // Mutations
     createMutation,
-
-    // Actions
     switchWorkspace,
   };
+}
+
+/**
+ * Hook for the lightweight workspace summaries query (used by workspace selection page).
+ *
+ * Separated from useWorkspaces to avoid triggering the full workspaces query
+ * when only summaries are needed, and vice versa.
+ */
+export function useWorkspaceSummaries() {
+  const { getCore } = useIrminCore();
+
+  const workspaceSummariesQuery = useQuery<
+    IrminAPIResponse<WorkspaceSummary[]>
+  >({
+    queryKey: workspaceSummariesQueryKey,
+    queryFn: async () => {
+      const core = await getCore();
+      return core.workspaceService.fetchWorkspaceSummaries();
+    },
+  });
+
+  return { workspaceSummariesQuery };
 }

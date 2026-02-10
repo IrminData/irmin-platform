@@ -380,14 +380,14 @@ const fi = {
     addTags: 'Lisää tunnisteet',
     failedToLoadTags: 'Tunnisteiden lataaminen epäonnistui',
     failedToLoadWorkspaces: 'Työtilojen lataaminen epäonnistui',
-    member: 'jäsen',
-    members: 'jäseniä',
-    noMembersYet: 'Ei jäseniä vielä',
+    recentlyUsed: 'Viimeksi käytetty',
   },
 
   workspaceSwitcher: {
     selectWorkspace: 'Valitse työtila',
     createNewWorkspace: 'Luo uusi työtila',
+    createNewWorkspaceDescription:
+      'Luo uusi työtila datasi, työnkulkujesi ja tiimityöskentelyn organisointiin.',
     createFirstWorkspace: 'Luo ensimmäinen työtilasi',
     createFirstWorkspaceDescription:
       'Työtilat auttavat organisoimaan datasi, työnkulkusi ja tiimityöskentelyn. Aloita luomalla ensimmäinen työtilasi.',

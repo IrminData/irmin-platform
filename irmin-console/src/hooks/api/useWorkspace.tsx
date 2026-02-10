@@ -4,7 +4,11 @@ import { useRouter } from 'next/navigation';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { workspaceQueryKey, workspacesQueryKey } from '@/lib/queryKeys';
+import {
+  workspaceQueryKey,
+  workspacesQueryKey,
+  workspaceSummariesQueryKey,
+} from '@/lib/queryKeys';
 
 import WorkspaceDeletionConfirmationModal from '@/components/workspace/WorkspaceDeletionConfirmationModal';
 
@@ -78,6 +82,9 @@ export function useWorkspace(slug: string) {
       },
       singleItemQueryKey: workspaceQueryKey(slug!),
       onSuccess: (res) => {
+        void queryClient.invalidateQueries({
+          queryKey: workspaceSummariesQueryKey,
+        });
         irminAlert('success', res.message ?? 'Workspace updated successfully');
       },
       onError: (error) => {
@@ -101,6 +108,9 @@ export function useWorkspace(slug: string) {
       },
       singleItemQueryKey: workspaceQueryKey(slug!),
       onSuccess: (res) => {
+        void queryClient.invalidateQueries({
+          queryKey: workspaceSummariesQueryKey,
+        });
         irminAlert('success', res.message ?? 'Workspace deleted successfully');
         router.push(`/${locale}/workspace`);
       },
@@ -151,6 +161,9 @@ export function useWorkspace(slug: string) {
       void queryClient.invalidateQueries({
         queryKey: workspaceQueryKey(slug!),
       });
+      void queryClient.invalidateQueries({
+        queryKey: workspaceSummariesQueryKey,
+      });
       irminAlert(
         'success',
         res.message ?? 'Workspace transferred successfully'
@@ -199,6 +212,9 @@ export function useWorkspace(slug: string) {
       });
     },
     onSuccess: (res) => {
+      void queryClient.invalidateQueries({
+        queryKey: workspaceSummariesQueryKey,
+      });
       router.push(`/${locale}/workspace`);
       irminAlert('success', res.message ?? 'You have left the workspace');
     },

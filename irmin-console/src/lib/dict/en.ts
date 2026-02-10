@@ -378,14 +378,14 @@ const en = {
     addTags: 'Add tags',
     failedToLoadTags: 'Failed to load tags',
     failedToLoadWorkspaces: 'Failed to load workspaces',
-    member: 'member',
-    members: 'members',
-    noMembersYet: 'No members yet',
+    recentlyUsed: 'Recently used',
   },
 
   workspaceSwitcher: {
     selectWorkspace: 'Select a workspace',
     createNewWorkspace: 'Create new workspace',
+    createNewWorkspaceDescription:
+      'Set up a new workspace to organize your data, workflows, and team collaboration.',
     createFirstWorkspace: 'Create your first workspace',
     createFirstWorkspaceDescription:
       'Workspaces help you organize your data, workflows, and team collaboration. Get started by creating your first workspace.',

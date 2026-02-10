@@ -12,6 +12,8 @@ import type { SearchFilters } from '@/types/core/Search';
 // Workspace related query keys
 export const workspacesQueryKey = ['workspaces'] as const;
 
+export const workspaceSummariesQueryKey = ['workspace-summaries'] as const;
+
 export const workspaceQueryKey = (slug: string) => ['workspace', slug] as const;
 
 export const workspaceSearchQueryKey = (
