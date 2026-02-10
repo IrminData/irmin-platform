@@ -282,6 +282,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) ListWorkflowRunsWithCursor\(ctx context.Context, workspace, workflowID string, cursor string, limit int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkflowRunsWithCursor>)
   - [func \(c \*Client\) ListWorkflows\(ctx context.Context, workspace string\) \(\[\]irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkflows>)
   - [func \(c \*Client\) ListWorkflowsOfType\(ctx context.Context, workspace, workflowType string\) \(\[\]irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkflowsOfType>)
+  - [func \(c \*Client\) ListWorkspaceSummaries\(ctx context.Context\) \(\[\]irminmodels.WorkspaceSummary, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkspaceSummaries>)
   - [func \(c \*Client\) ListWorkspaceTags\(ctx context.Context, workspace string\) \(\[\]irminmodels.Tag, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkspaceTags>)
   - [func \(c \*Client\) ListWorkspaces\(ctx context.Context\) \(\[\]irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkspaces>)
   - [func \(c \*Client\) MergeRefs\(ctx context.Context, workspace, repository string, req MergeRefsRequest\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.MergeRefs>)
@@ -1819,6 +1820,15 @@ func (c *Client) ListWorkflows(ctx context.Context, workspace string) ([]irminmo
 
 ```go
 func (c *Client) ListWorkflowsOfType(ctx context.Context, workspace, workflowType string) ([]irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+```
+
+
+
+<a name="Client.ListWorkspaceSummaries"></a>
+### func \(\*Client\) ListWorkspaceSummaries
+
+```go
+func (c *Client) ListWorkspaceSummaries(ctx context.Context) ([]irminmodels.WorkspaceSummary, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -3773,6 +3783,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type WorkflowableType](<#WorkflowableType>)
 - [type Workspace](<#Workspace>)
 - [type WorkspaceSearchResultType](<#WorkspaceSearchResultType>)
+- [type WorkspaceSummary](<#WorkspaceSummary>)
 
 
 <a name="AIAppDataSourceUnified"></a>
@@ -4458,6 +4469,8 @@ type EmbeddingFile struct {
     Model       string   `json:"model"                validate:"omitempty,max=100"    example:"text-embedding-3-small"`       // OpenAI model used to generate embeddings
     Dimensions  int      `json:"dimensions"           validate:"omitempty,min=0"      example:"1536"`                         // Vector dimensions
     ChunkCount  int      `json:"chunk_count"          validate:"omitempty,min=0"      example:"42"`                           // Total number of embedding chunks
+    ChunkSize   int      `json:"chunk_size,omitempty" validate:"omitempty,min=0"      example:"1000"`                         // Text chunk size used for splitting documents
+    Overlap     int      `json:"overlap,omitempty"    validate:"omitempty,min=0"      example:"200"`                          // Overlap between consecutive chunks
     SizeBytes   int64    `json:"size_bytes"           validate:"required,min=0"       example:"524288"`                       // File size in bytes
     CreatedAt   string   `json:"created_at,omitempty" validate:"omitempty"            example:"2025-12-01T14:22:30Z"`         // Creation timestamp
     Ref         string   `json:"ref,omitempty"        validate:"omitempty,max=100"    example:"main"`                         // Repository reference (branch/tag/commit)
@@ -5027,6 +5040,8 @@ type PipelineStage struct {
     EmbeddingsQuery      *string                  `json:"embeddings_query,omitempty"       validate:"omitempty"                                                    example:"What is machine learning?"`
     EmbeddingsTopK       *int                     `json:"embeddings_top_k,omitempty"       validate:"omitempty,min=1"                                              example:"10"`
     EmbeddingsFilter     map[string]string        `json:"embeddings_filter,omitempty"      validate:"omitempty"`
+    EmbeddingsMetadata   map[string]string        `json:"embeddings_metadata,omitempty"    validate:"omitempty"`
+    EmbeddingsPriority   *float64                 `json:"embeddings_priority,omitempty"    validate:"omitempty,min=0,max=1"                                        example:"0.8"`
 
     // Patch stage specific
     PatchDirection        *PatchDirection `json:"patch_direction,omitempty"         validate:"omitempty,oneof=to_connection to_repository,required_if=Type patch" example:"to_connection"`
@@ -6307,6 +6322,26 @@ const (
     WorkspaceSearchResultTypeRepositoryObject WorkspaceSearchResultType = "repository_object"
     WorkspaceSearchResultTypeInvite           WorkspaceSearchResultType = "invite"
 )
+```
+
+<a name="WorkspaceSummary"></a>
+## type WorkspaceSummary
+
+WorkspaceSummary is a lightweight workspace representation with resource counts, designed for listing workspaces without loading full user objects.
+
+```go
+type WorkspaceSummary struct {
+    ID              string  `json:"id"                         validate:"required,validsqid=workspaces" example:"ws_5n8k2m7x9q4p"`
+    Name            string  `json:"name"                       validate:"required,max=100"              example:"Data Analytics Team"`
+    Slug            string  `json:"slug"                       validate:"required,validslug"            example:"data-analytics-team"`
+    Description     string  `json:"description"                validate:"max=500"                       example:"Workspace for data analytics"`
+    Owner           User    `json:"owner,omitempty"            validate:"required"`
+    MemberCount     int     `json:"member_count"                                                        example:"12"`
+    RepositoryCount int     `json:"repository_count"                                                    example:"5"`
+    WorkflowCount   int     `json:"workflow_count"                                                      example:"8"`
+    ConnectionCount int     `json:"connection_count"                                                    example:"3"`
+    LastAccessedAt  *string `json:"last_accessed_at,omitempty"                                          example:"2025-01-15T10:30:00Z"`
+}
 ```
 
 # irminsqids

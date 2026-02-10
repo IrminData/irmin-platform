@@ -37,6 +37,20 @@ func (c *Client) ListWorkspaces(ctx context.Context) ([]irminmodels.Workspace, *
 	return workspaces, apiResp, nil
 }
 
+func (c *Client) ListWorkspaceSummaries(
+	ctx context.Context,
+) ([]irminmodels.WorkspaceSummary, *irminmodels.IrminAPIResponse, error) {
+	var summaries []irminmodels.WorkspaceSummary
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: "/v1/workspaces/summary",
+	}, &summaries)
+	if err != nil {
+		return nil, nil, fmt.Errorf("list workspace summaries error: %w", err)
+	}
+	return summaries, apiResp, nil
+}
+
 func (c *Client) GetWorkspace(
 	ctx context.Context,
 	slug string,

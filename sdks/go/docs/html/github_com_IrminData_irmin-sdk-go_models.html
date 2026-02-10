@@ -441,6 +441,8 @@ type EmbeddingFile struct {
 	Model       string   `json:"model"                validate:"omitempty,max=100"    example:"text-embedding-3-small"`       // OpenAI model used to generate embeddings
 	Dimensions  int      `json:"dimensions"           validate:"omitempty,min=0"      example:"1536"`                         // Vector dimensions
 	ChunkCount  int      `json:"chunk_count"          validate:"omitempty,min=0"      example:"42"`                           // Total number of embedding chunks
+	ChunkSize   int      `json:"chunk_size,omitempty" validate:"omitempty,min=0"      example:"1000"`                         // Text chunk size used for splitting documents
+	Overlap     int      `json:"overlap,omitempty"    validate:"omitempty,min=0"      example:"200"`                          // Overlap between consecutive chunks
 	SizeBytes   int64    `json:"size_bytes"           validate:"required,min=0"       example:"524288"`                       // File size in bytes
 	CreatedAt   string   `json:"created_at,omitempty" validate:"omitempty"            example:"2025-12-01T14:22:30Z"`         // Creation timestamp
 	Ref         string   `json:"ref,omitempty"        validate:"omitempty,max=100"    example:"main"`                         // Repository reference (branch/tag/commit)
@@ -817,6 +819,8 @@ type PipelineStage struct {
 	EmbeddingsQuery      *string                  `json:"embeddings_query,omitempty"       validate:"omitempty"                                                    example:"What is machine learning?"`
 	EmbeddingsTopK       *int                     `json:"embeddings_top_k,omitempty"       validate:"omitempty,min=1"                                              example:"10"`
 	EmbeddingsFilter     map[string]string        `json:"embeddings_filter,omitempty"      validate:"omitempty"`
+	EmbeddingsMetadata   map[string]string        `json:"embeddings_metadata,omitempty"    validate:"omitempty"`
+	EmbeddingsPriority   *float64                 `json:"embeddings_priority,omitempty"    validate:"omitempty,min=0,max=1"                                        example:"0.8"`
 
 	// Patch stage specific
 	PatchDirection        *PatchDirection `json:"patch_direction,omitempty"         validate:"omitempty,oneof=to_connection to_repository,required_if=Type patch" example:"to_connection"`
@@ -1592,5 +1596,20 @@ const (
 	WorkspaceSearchResultTypeRepositoryObject WorkspaceSearchResultType = "repository_object"
 	WorkspaceSearchResultTypeInvite           WorkspaceSearchResultType = "invite"
 )
+type WorkspaceSummary struct {
+	ID              string  `json:"id"                         validate:"required,validsqid=workspaces" example:"ws_5n8k2m7x9q4p"`
+	Name            string  `json:"name"                       validate:"required,max=100"              example:"Data Analytics Team"`
+	Slug            string  `json:"slug"                       validate:"required,validslug"            example:"data-analytics-team"`
+	Description     string  `json:"description"                validate:"max=500"                       example:"Workspace for data analytics"`
+	Owner           User    `json:"owner,omitempty"            validate:"required"`
+	MemberCount     int     `json:"member_count"                                                        example:"12"`
+	RepositoryCount int     `json:"repository_count"                                                    example:"5"`
+	WorkflowCount   int     `json:"workflow_count"                                                      example:"8"`
+	ConnectionCount int     `json:"connection_count"                                                    example:"3"`
+	LastAccessedAt  *string `json:"last_accessed_at,omitempty"                                          example:"2025-01-15T10:30:00Z"`
+}
+    WorkspaceSummary is a lightweight workspace representation with resource
+    counts, designed for listing workspaces without loading full user objects.
+
 </pre>
 </body></html>

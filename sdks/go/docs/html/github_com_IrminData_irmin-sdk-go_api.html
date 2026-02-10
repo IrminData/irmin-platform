@@ -919,6 +919,10 @@ func (c *Client) ListWorkflowsOfType(
 	workspace, workflowType string,
 ) ([]irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) ListWorkspaceSummaries(
+	ctx context.Context,
+) ([]irminmodels.WorkspaceSummary, *irminmodels.IrminAPIResponse, error)
+
 func (c *Client) ListWorkspaceTags(
 	ctx context.Context,
 	workspace string,
