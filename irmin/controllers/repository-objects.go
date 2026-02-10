@@ -238,6 +238,9 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 	); invalidationErr != nil {
 		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
 	}
+	if staleErr := api.Services.DB.MarkObjectCacheStale(params.repository.ID, params.objectRef); staleErr != nil {
+		api.Logger.Error("Error marking object cache stale", "error", staleErr)
+	}
 
 	// Return the object from the database.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -270,6 +273,9 @@ func (api *APIControllers) formatAndCacheInvalidateObject(
 		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", params.workspace.Slug, params.repository.Slug),
 	); invalidationErr != nil {
 		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+	if staleErr := api.Services.DB.MarkObjectCacheStale(params.repository.ID, params.objectRef); staleErr != nil {
+		api.Logger.Error("Error marking object cache stale", "error", staleErr)
 	}
 
 	// Return the object from the database.
@@ -458,6 +464,9 @@ func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 	); invalidationErr != nil {
 		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
 	}
+	if staleErr := api.Services.DB.MarkObjectCacheStale(params.repository.ID, params.objectRef); staleErr != nil {
+		api.Logger.Error("Error marking object cache stale", "error", staleErr)
+	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(params.dict, "object_moved"),
@@ -538,6 +547,9 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 	); invalidationErr != nil {
 		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
 	}
+	if staleErr := api.Services.DB.MarkObjectCacheStale(params.repository.ID, params.objectRef); staleErr != nil {
+		api.Logger.Error("Error marking object cache stale", "error", staleErr)
+	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(params.dict, "object_copied"),
@@ -595,6 +607,9 @@ func (api *APIControllers) RepositoryObjectsDestroy(c fiber.Ctx) error {
 		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", params.workspace.Slug, params.repository.Slug),
 	); invalidationErr != nil {
 		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+	if staleErr := api.Services.DB.MarkObjectCacheStale(params.repository.ID, params.objectRef); staleErr != nil {
+		api.Logger.Error("Error marking object cache stale", "error", staleErr)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

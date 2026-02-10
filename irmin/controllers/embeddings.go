@@ -44,6 +44,32 @@ func (api *APIControllers) validateEmbeddingParams(c fiber.Ctx) (*embeddingLocal
 	}, nil
 }
 
+// invalidateEmbeddingCaches invalidates the HTTP response caches for objects and embeddings,
+// and marks the DB object cache stale so the next listing refetches from LakeFS.
+func (api *APIControllers) invalidateEmbeddingCaches(params *embeddingLocalParams, ref string) {
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", params.workspace.Slug, params.repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating objects cache", "error", invalidationErr)
+	}
+
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/embeddings", params.workspace.Slug, params.repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating embeddings cache", "error", invalidationErr)
+	}
+
+	effectiveRef := ref
+	if effectiveRef == "" {
+		effectiveRef = params.repository.DefaultBranch
+	}
+	if staleErr := api.Services.DB.MarkObjectCacheStale(params.repository.ID, effectiveRef); staleErr != nil {
+		api.Logger.Error("Error marking object cache stale", "error", staleErr)
+	}
+}
+
 // VectorizeObjects godoc
 // @Summary Vectorize repository objects
 // @Description Create embeddings from one or more repository objects and store them at the specified path
@@ -60,6 +86,8 @@ func (api *APIControllers) validateEmbeddingParams(c fiber.Ctx) (*embeddingLocal
 // @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/vectorize [post]
+//
+//nolint:dupl // Similar structure to UpsertEmbeddings is intentional for consistency.
 func (api *APIControllers) VectorizeObjects(c fiber.Ctx) error {
 	params, err := api.validateEmbeddingParams(c)
 	if err != nil {
@@ -90,21 +118,7 @@ func (api *APIControllers) VectorizeObjects(c fiber.Ctx) error {
 		return api.handleServiceError(c, "Error vectorizing objects", err, params.dict)
 	}
 
-	// Invalidate objects listing cache for this repository (embeddings are stored as objects)
-	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
-		api.cacheStorage,
-		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", params.workspace.Slug, params.repository.Slug),
-	); invalidationErr != nil {
-		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
-	}
-
-	// Also invalidate embeddings listing cache
-	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
-		api.cacheStorage,
-		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/embeddings", params.workspace.Slug, params.repository.Slug),
-	); invalidationErr != nil {
-		api.Logger.Error("Error invalidating embeddings cache", "error", invalidationErr)
-	}
+	api.invalidateEmbeddingCaches(params, req.Ref)
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(params.dict, "embeddings_created"),
@@ -290,6 +304,8 @@ func (api *APIControllers) GetEmbeddingInfo(c fiber.Ctx) error {
 // @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/embeddings/upsert [post]
+//
+//nolint:dupl // Similar structure to VectorizeObjects is intentional for consistency.
 func (api *APIControllers) UpsertEmbeddings(c fiber.Ctx) error {
 	params, err := api.validateEmbeddingParams(c)
 	if err != nil {
@@ -320,13 +336,7 @@ func (api *APIControllers) UpsertEmbeddings(c fiber.Ctx) error {
 		return api.handleServiceError(c, "Error upserting embeddings", err, params.dict)
 	}
 
-	// Invalidate caches
-	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
-		api.cacheStorage,
-		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/embeddings", params.workspace.Slug, params.repository.Slug),
-	); invalidationErr != nil {
-		api.Logger.Error("Error invalidating embeddings cache", "error", invalidationErr)
-	}
+	api.invalidateEmbeddingCaches(params, req.Ref)
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(params.dict, "embeddings_upserted"),

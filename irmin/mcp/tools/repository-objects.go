@@ -3,6 +3,8 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
 	"net/http"
@@ -524,6 +526,9 @@ func (mcpTools *MCPTools) registerSaveTextRepositoryObjectTool() {
 				return helpers.MCPError("Failed to save text repository object, please try again"), struct{}{}, nil
 			}
 
+			// Invalidate caches
+			mcpTools.invalidateObjectCaches(workspace.Slug, repository.Slug, repository.ID, *branch)
+
 			// Format the object for the response.
 			repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(
 				object,
@@ -601,6 +606,9 @@ func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 				mcpTools.apiServices.Logger.Error("Failed to upload repository object from URL", "error", err)
 				return helpers.MCPError("Failed to upload repository object from URL"), struct{}{}, nil
 			}
+
+			// Invalidate caches
+			mcpTools.invalidateObjectCaches(workspace.Slug, repository.Slug, repository.ID, *branch)
 
 			// Format the object for the response.
 			repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(
@@ -708,6 +716,9 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 				}
 			}
 
+			// Invalidate caches
+			mcpTools.invalidateObjectCaches(workspace.Slug, repository.Slug, repository.ID, *branch)
+
 			// Format the object for the response.
 			repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(
 				object,
@@ -790,6 +801,9 @@ func (mcpTools *MCPTools) registerDeleteRepositoryObjectTool() {
 				return helpers.MCPError("Failed to delete repository object"), struct{}{}, nil
 			}
 
+			// Invalidate caches
+			mcpTools.invalidateObjectCaches(workspace.Slug, repository.Slug, repository.ID, *branch)
+
 			result, err := helpers.MCPSuccess(map[string]string{
 				"message": "Object deleted successfully",
 			})
@@ -799,6 +813,21 @@ func (mcpTools *MCPTools) registerDeleteRepositoryObjectTool() {
 			return result, struct{}{}, nil
 		},
 	)
+}
+
+// invalidateObjectCaches invalidates both HTTP response cache and DB object cache after write operations.
+func (mcpTools *MCPTools) invalidateObjectCaches(workspaceSlug, repositorySlug string, repositoryID uint, ref string) {
+	if mcpTools.apiServices.CacheStorage != nil {
+		if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+			mcpTools.apiServices.CacheStorage,
+			fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", workspaceSlug, repositorySlug),
+		); invalidationErr != nil {
+			mcpTools.apiServices.Logger.Error("Error invalidating objects cache", "error", invalidationErr)
+		}
+	}
+	if staleErr := mcpTools.apiServices.DB.MarkObjectCacheStale(repositoryID, ref); staleErr != nil {
+		mcpTools.apiServices.Logger.Error("Error marking object cache stale", "error", staleErr)
+	}
 }
 
 // registerValidateRepositoryObjectTool registers the irmin_validate_repository_object tool for validating a repository object against a schema

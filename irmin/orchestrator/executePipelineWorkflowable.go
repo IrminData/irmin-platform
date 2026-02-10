@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/embeddings"
 	"irmin-api/engine"
@@ -1703,6 +1704,33 @@ func (o *Orchestrator) handleEmbeddingsVectorize(
 
 	logs = append(logs, fmt.Sprintf("Successfully uploaded embeddings file (%d bytes) to %s",
 		metadata.SizeBytes, *stage.EmbeddingsOutputPath))
+
+	// Invalidate HTTP and DB object caches so the new file appears in listings
+	if o.cacheStorage != nil {
+		objectsPath := fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects",
+			workflow.Workspace.Slug, stage.EmbeddingsRepository.Slug)
+		if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(o.cacheStorage, objectsPath); invalidationErr != nil {
+			o.logger.ErrorContext(
+				ctx,
+				"Error invalidating objects cache after embedding upload",
+				"error",
+				invalidationErr,
+			)
+		}
+		embeddingsPath := fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/embeddings",
+			workflow.Workspace.Slug, stage.EmbeddingsRepository.Slug)
+		if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(o.cacheStorage, embeddingsPath); invalidationErr != nil {
+			o.logger.ErrorContext(
+				ctx,
+				"Error invalidating embeddings cache after embedding upload",
+				"error",
+				invalidationErr,
+			)
+		}
+	}
+	if staleErr := o.db.MarkObjectCacheStale(*stage.EmbeddingsRepositoryID, branch); staleErr != nil {
+		o.logger.ErrorContext(ctx, "Error marking object cache stale after embedding upload", "error", staleErr)
+	}
 
 	// Get the object from LakeFS after upload to save it to the database
 	// This ensures it shows up in the repository object list even without committing

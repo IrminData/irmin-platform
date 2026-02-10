@@ -2,6 +2,7 @@ package db
 
 import (
 	"strings"
+	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"gorm.io/gorm"
@@ -183,6 +184,28 @@ func (d *Database) deleteSingleObjectAndChildren(tx *gorm.DB, object RepositoryO
 
 	// Delete the object itself
 	return tx.Delete(&object).Error
+}
+
+// MarkObjectCacheStale marks the root object entry for a repository+ref as stale
+// by setting updated_at far enough in the past to force ShouldRefreshCache to return true.
+// This should be called after any write operation that creates, modifies, or deletes objects.
+func (d *Database) MarkObjectCacheStale(repositoryID uint, ref string) error {
+	staleTime := time.Now().Add(-2 * time.Hour)
+	return d.Model(&RepositoryObject{}).
+		Where("repository_id = ? AND repository_ref = ? AND path = ?", repositoryID, ref, "").
+		Update("updated_at", staleTime).Error
+}
+
+// MarkObjectCacheStaleBySlug marks the root object entry as stale using workspace and repository slugs.
+// This is a convenience method for callers that don't have the repository ID available (e.g., orchestrator).
+func (d *Database) MarkObjectCacheStaleBySlug(workspaceSlug, repositorySlug, ref string) error {
+	var repo Repository
+	if err := d.Joins("JOIN workspaces ON workspaces.id = repositories.workspace_id").
+		Where("repositories.slug = ? AND workspaces.slug = ?", repositorySlug, workspaceSlug).
+		First(&repo).Error; err != nil {
+		return err
+	}
+	return d.MarkObjectCacheStale(repo.ID, ref)
 }
 
 // deleteChildrenRecursively deletes all children of an object recursively.

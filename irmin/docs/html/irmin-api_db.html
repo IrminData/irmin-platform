@@ -991,6 +991,17 @@ func (d *Database) ListenForNotifications(ctx context.Context, channel string) (
     ListenForNotifications starts listening for notifications on a specific
     channel. It returns a function that can be called to stop listening.
 
+func (d *Database) MarkObjectCacheStale(repositoryID uint, ref string) error
+    MarkObjectCacheStale marks the root object entry for a repository+ref
+    as stale by setting updated_at far enough in the past to force
+    ShouldRefreshCache to return true. This should be called after any write
+    operation that creates, modifies, or deletes objects.
+
+func (d *Database) MarkObjectCacheStaleBySlug(workspaceSlug, repositorySlug, ref string) error
+    MarkObjectCacheStaleBySlug marks the root object entry as stale using
+    workspace and repository slugs. This is a convenience method for callers
+    that don't have the repository ID available (e.g., orchestrator).
+
 func (d *Database) Migrate() error
     Migrate runs the auto migration calls in the correct order. It separates the
     migrations into groups based on model dependencies.

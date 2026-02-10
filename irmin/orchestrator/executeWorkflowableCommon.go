@@ -587,5 +587,10 @@ func (o *Orchestrator) commitWorkflowChanges(
 		}
 	}
 
+	// Mark DB object cache stale so the next listing refetches from LakeFS
+	if staleErr := o.db.MarkObjectCacheStaleBySlug(workspace, repository, branch); staleErr != nil {
+		o.logger.ErrorContext(ctx, "Error marking object cache stale", "error", staleErr)
+	}
+
 	return logs
 }

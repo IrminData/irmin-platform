@@ -2870,6 +2870,8 @@ import "irmin-api/db"
   - [func \(d \*Database\) IsUserInWorkspace\(userID, workspaceID uint\) \(bool, error\)](<#Database.IsUserInWorkspace>)
   - [func \(d \*Database\) IsUserInWorkspaceByEmail\(email string, workspaceID uint\) \(bool, error\)](<#Database.IsUserInWorkspaceByEmail>)
   - [func \(d \*Database\) ListenForNotifications\(ctx context.Context, channel string\) \(func\(\) error, error\)](<#Database.ListenForNotifications>)
+  - [func \(d \*Database\) MarkObjectCacheStale\(repositoryID uint, ref string\) error](<#Database.MarkObjectCacheStale>)
+  - [func \(d \*Database\) MarkObjectCacheStaleBySlug\(workspaceSlug, repositorySlug, ref string\) error](<#Database.MarkObjectCacheStaleBySlug>)
   - [func \(d \*Database\) Migrate\(\) error](<#Database.Migrate>)
   - [func \(d \*Database\) RemoveTagFromAIApplication\(aiApplicationID, tagID uint\) error](<#Database.RemoveTagFromAIApplication>)
   - [func \(d \*Database\) RemoveTagFromConnection\(connectionID, tagID uint\) error](<#Database.RemoveTagFromConnection>)
@@ -4856,6 +4858,24 @@ func (d *Database) ListenForNotifications(ctx context.Context, channel string) (
 ```
 
 ListenForNotifications starts listening for notifications on a specific channel. It returns a function that can be called to stop listening.
+
+<a name="Database.MarkObjectCacheStale"></a>
+### func \(\*Database\) MarkObjectCacheStale
+
+```go
+func (d *Database) MarkObjectCacheStale(repositoryID uint, ref string) error
+```
+
+MarkObjectCacheStale marks the root object entry for a repository\+ref as stale by setting updated\_at far enough in the past to force ShouldRefreshCache to return true. This should be called after any write operation that creates, modifies, or deletes objects.
+
+<a name="Database.MarkObjectCacheStaleBySlug"></a>
+### func \(\*Database\) MarkObjectCacheStaleBySlug
+
+```go
+func (d *Database) MarkObjectCacheStaleBySlug(workspaceSlug, repositorySlug, ref string) error
+```
+
+MarkObjectCacheStaleBySlug marks the root object entry as stale using workspace and repository slugs. This is a convenience method for callers that don't have the repository ID available \(e.g., orchestrator\).
 
 <a name="Database.Migrate"></a>
 ### func \(\*Database\) Migrate
