@@ -15,6 +15,8 @@ type EmbeddingFile struct {
 	Model       string   `json:"model"                validate:"omitempty,max=100"    example:"text-embedding-3-small"`       // OpenAI model used to generate embeddings
 	Dimensions  int      `json:"dimensions"           validate:"omitempty,min=0"      example:"1536"`                         // Vector dimensions
 	ChunkCount  int      `json:"chunk_count"          validate:"omitempty,min=0"      example:"42"`                           // Total number of embedding chunks
+	ChunkSize   int      `json:"chunk_size,omitempty" validate:"omitempty,min=0"      example:"1000"`                         // Text chunk size used for splitting documents
+	Overlap     int      `json:"overlap,omitempty"    validate:"omitempty,min=0"      example:"200"`                          // Overlap between consecutive chunks
 	SizeBytes   int64    `json:"size_bytes"           validate:"required,min=0"       example:"524288"`                       // File size in bytes
 	CreatedAt   string   `json:"created_at,omitempty" validate:"omitempty"            example:"2025-12-01T14:22:30Z"`         // Creation timestamp
 	Ref         string   `json:"ref,omitempty"        validate:"omitempty,max=100"    example:"main"`                         // Repository reference (branch/tag/commit)
