@@ -70,6 +70,12 @@ export default function AIApplicationHeader() {
         icon: <TbActivity size={14} />,
         hidden: !isResourceAllowed('audit_log', 'read'),
       },
+    ],
+    [pathname, baseUrl, dict, isResourceAllowed]
+  );
+
+  const moreTabs = useMemo(
+    () => [
       {
         name: dict.documentation.documentation,
         link: `${baseUrl}/documentation`,
@@ -182,6 +188,8 @@ export default function AIApplicationHeader() {
         }}
         backTooltip={dict.common.back}
         tabs={tabs}
+        moreTabs={moreTabs}
+        moreLabel={dict.common.more}
       />
     </div>
   );

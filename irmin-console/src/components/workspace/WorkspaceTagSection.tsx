@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { TbArrowLeft, TbPencil, TbTrash } from 'react-icons/tb';
@@ -208,7 +209,17 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
                   <TableBody>
                     {assets.queries.map((query) => (
                       <TableRow key={query.id}>
-                        <TableCell className=''>{query.name}</TableCell>
+                        <TableCell>
+                          <Link
+                            href={`${workspaceUrl}/queries?query=${query.id}`}
+                            className={`
+                              text-accent
+                              hover:underline
+                            `}
+                          >
+                            {query.name}
+                          </Link>
+                        </TableCell>
                         <TableCell>{query.description}</TableCell>
                       </TableRow>
                     ))}
@@ -238,7 +249,17 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
                   <TableBody>
                     {assets.scripts.map((script) => (
                       <TableRow key={script.id}>
-                        <TableCell className=''>{script.name}</TableCell>
+                        <TableCell>
+                          <Link
+                            href={`${workspaceUrl}/scripts?script=${script.id}`}
+                            className={`
+                              text-accent
+                              hover:underline
+                            `}
+                          >
+                            {script.name}
+                          </Link>
+                        </TableCell>
                         <TableCell>{script.description}</TableCell>
                       </TableRow>
                     ))}
@@ -268,7 +289,17 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
                   <TableBody>
                     {assets.repositories.map((repo) => (
                       <TableRow key={repo.id}>
-                        <TableCell className=''>{repo.name}</TableCell>
+                        <TableCell>
+                          <Link
+                            href={`${workspaceUrl}/repositories/${repo.slug}`}
+                            className={`
+                              text-accent
+                              hover:underline
+                            `}
+                          >
+                            {repo.name}
+                          </Link>
+                        </TableCell>
                         <TableCell>{repo.description}</TableCell>
                       </TableRow>
                     ))}
@@ -298,7 +329,17 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
                   <TableBody>
                     {assets.workflows.map((workflow) => (
                       <TableRow key={workflow.id}>
-                        <TableCell className=''>{workflow.name}</TableCell>
+                        <TableCell>
+                          <Link
+                            href={`${workspaceUrl}/workflows/${workflow.id}`}
+                            className={`
+                              text-accent
+                              hover:underline
+                            `}
+                          >
+                            {workflow.name}
+                          </Link>
+                        </TableCell>
                         <TableCell>{workflow.description}</TableCell>
                       </TableRow>
                     ))}
@@ -322,13 +363,23 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>{dict.common.name}</TableHead>
-                      <TableHead>Connector</TableHead>
+                      <TableHead>{dict.connectors.connector}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {assets.connections.map((connection) => (
                       <TableRow key={connection.id}>
-                        <TableCell className=''>{connection.name}</TableCell>
+                        <TableCell>
+                          <Link
+                            href={`${workspaceUrl}/connections/${connection.id}`}
+                            className={`
+                              text-accent
+                              hover:underline
+                            `}
+                          >
+                            {connection.name}
+                          </Link>
+                        </TableCell>
                         <TableCell>{connection.connector.name}</TableCell>
                       </TableRow>
                     ))}
@@ -354,13 +405,23 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>{dict.common.name}</TableHead>
-                        <TableHead>Path</TableHead>
+                        <TableHead>{dict.repository.objects.path}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {assets.repository_objects.map((obj) => (
                         <TableRow key={obj.id}>
-                          <TableCell className=''>{obj.name}</TableCell>
+                          <TableCell>
+                            <Link
+                              href={`${workspaceUrl}/repositories/${obj.repository_slug}?path=${encodeURIComponent(obj.path)}&ref=${encodeURIComponent(obj.ref)}`}
+                              className={`
+                                text-accent
+                                hover:underline
+                              `}
+                            >
+                              {obj.name}
+                            </Link>
+                          </TableCell>
                           <TableCell>{obj.path}</TableCell>
                         </TableRow>
                       ))}

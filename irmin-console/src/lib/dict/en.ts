@@ -45,6 +45,7 @@ const en = {
     filters: 'Filters',
     noResults: 'No results',
     loadMore: 'Load more',
+    more: 'More',
     selectAll: 'Select All',
 
     // Status and feedback

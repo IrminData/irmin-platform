@@ -123,6 +123,12 @@ export default function RepositoryHeader() {
         icon: <GoGitCompare size={14} />,
         hidden: !isResourceAllowed('repository_commit', 'read', repository.id),
       },
+    ],
+    [pathname, tabLink, baseUrl, dict, repository, isResourceAllowed]
+  );
+
+  const moreTabs = useMemo(
+    () => [
       {
         name: dict.documentation.documentation,
         link: tabLink(`${baseUrl}/documentation`),
@@ -252,6 +258,8 @@ export default function RepositoryHeader() {
         }}
         backTooltip={dict.common.back}
         tabs={tabs}
+        moreTabs={moreTabs}
+        moreLabel={dict.common.more}
       />
     </div>
   );

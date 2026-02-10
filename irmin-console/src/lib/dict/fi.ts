@@ -45,6 +45,7 @@ const fi = {
     filters: 'Suodattimet',
     noResults: 'Ei tuloksia',
     loadMore: 'Lataa lisää',
+    more: 'Lisää',
     selectAll: 'Valitse kaikki',
 
     // Status and feedback

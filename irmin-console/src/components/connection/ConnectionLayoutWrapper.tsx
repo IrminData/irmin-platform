@@ -97,6 +97,12 @@ export default function ConnectionLayoutWrapper({
         active: pathname === `${baseUrl}/connector`,
         icon: <TbPlug size={14} />,
       },
+    ],
+    [pathname, dict, baseUrl]
+  );
+
+  const moreTabs = useMemo(
+    () => [
       {
         name: dict.documentation.documentation,
         link: `${baseUrl}/documentation`,
@@ -232,6 +238,8 @@ export default function ConnectionLayoutWrapper({
           backHref={`${workspaceUrl}/connections`}
           backTooltip={dict.connections.connections}
           tabs={tabs}
+          moreTabs={moreTabs}
+          moreLabel={dict.common.more}
         />
       </div>
       <div>{children}</div>

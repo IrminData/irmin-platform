@@ -212,6 +212,16 @@ export default function WorkflowLayoutWrapper({
       icon: <TbClockCog size={14} />,
     },
     {
+      name: dict.workflow.tabs.data,
+      link: `${workspaceUrl}/repositories/${repositorySlug}?ref=${repositoryBranch}`,
+      active: false,
+      icon: <TbDatabase size={14} />,
+      hidden: !repositorySlug || !isResourceAllowed('repository', 'read'),
+    },
+  ];
+
+  const moreTabs: TabDetails[] = [
+    {
       name: dict.documentation.documentation,
       link: `${baseUrl}/documentation`,
       active: pathname === `${baseUrl}/documentation`,
@@ -223,13 +233,6 @@ export default function WorkflowLayoutWrapper({
       active: pathname === `${baseUrl}/policies`,
       icon: <TbShield size={14} />,
       hidden: !isResourceAllowed('policy', 'read'),
-    },
-    {
-      name: dict.workflow.tabs.data,
-      link: `${workspaceUrl}/repositories/${repositorySlug}?ref=${repositoryBranch}`,
-      active: false,
-      icon: <TbDatabase size={14} />,
-      hidden: !repositorySlug || !isResourceAllowed('repository', 'read'),
     },
     {
       name: dict.common.logs,
@@ -351,6 +354,8 @@ export default function WorkflowLayoutWrapper({
           backHref={`${workspaceUrl}/workflows`}
           backTooltip={dict.workflow.workflows}
           tabs={tabs}
+          moreTabs={moreTabs}
+          moreLabel={dict.common.more}
         />
       </div>
       <div>{children}</div>
