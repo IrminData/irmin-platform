@@ -232,7 +232,7 @@ export default function ConfigureConnectionStep({
         description: {
           type: 'textarea',
           label: dict.connections.create.connectionDescription,
-          required: true,
+          required: false,
           default: wizardData.description,
           example: dict.connections.create.connectionDescriptionPlaceholder,
         },

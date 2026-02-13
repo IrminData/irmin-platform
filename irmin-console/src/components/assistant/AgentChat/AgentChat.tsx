@@ -563,8 +563,8 @@ const AgentChat = ({
                   <div
                     className={`
                       mt-4 flex items-center gap-2 rounded-md border
-                      border-accent/20 bg-accent/10 p-2 text-xs
-                      text-accent-foreground
+                      border-accent/20 bg-accent/10 p-2 text-xs text-foreground
+                      dark:text-accent-foreground
                     `}
                   >
                     <TbInfoCircle className='size-4 shrink-0' />

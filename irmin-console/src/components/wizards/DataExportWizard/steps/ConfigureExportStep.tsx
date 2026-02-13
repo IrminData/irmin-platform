@@ -77,10 +77,6 @@ export default function ConfigureExportStep({
         return;
       }
 
-      if (!data.description.trim()) {
-        irminAlert('error', dict.wizard.pleaseEnterWorkflowDescription);
-        return;
-      }
 
       if (!data.repository_branch.trim()) {
         irminAlert('error', dict.wizard.pleaseSelectRepositoryBranch);
@@ -150,12 +146,12 @@ export default function ConfigureExportStep({
         {/* Workflow Description */}
         <div className='flex flex-col gap-2'>
           <Label htmlFor='description' className='text-sm font-medium'>
-            {dict.wizard.workflowDescription} *
+            {dict.wizard.workflowDescription} (
+            {dict.common.optional.toLowerCase()})
           </Label>
           <Controller
             name='description'
             control={control}
-            rules={{ required: true }}
             render={({ field }) => (
               <Textarea
                 {...field}

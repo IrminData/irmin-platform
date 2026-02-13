@@ -63,10 +63,6 @@ function ConfigureWorkflowStep({
         return;
       }
 
-      if (!wizardData.description || wizardData.description.trim() === '') {
-        irminAlert('error', 'Please enter a workflow description');
-        return;
-      }
 
       const res = await createWorkflowMutation.mutateAsync({
         type: wizardData.type,
@@ -124,9 +120,10 @@ function ConfigureWorkflowStep({
           />
         </div>
         <div className='flex flex-col gap-2'>
-          <Label>{dict.common.description}</Label>
+          <Label>
+            {dict.common.description} ({dict.common.optional.toLowerCase()})
+          </Label>
           <Input
-            required
             type='text'
             longtext={{
               rows: 3,

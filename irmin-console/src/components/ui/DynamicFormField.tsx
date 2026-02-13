@@ -149,9 +149,7 @@ function DynamicFormField(
             disabled={disabled}
           >
             <SelectTrigger className='w-full'>
-              <SelectValue placeholder={field.label}>
-                {options.find((opt) => opt.value === fieldProps.value)?.label}
-              </SelectValue>
+              <SelectValue placeholder={field.label} />
             </SelectTrigger>
             <SelectContent>
               {options.map((option) => (

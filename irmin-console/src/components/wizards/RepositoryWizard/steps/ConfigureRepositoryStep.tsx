@@ -134,11 +134,12 @@ export default function ConfigureRepositoryStep({
         />
       </div>
       <div className='flex flex-col gap-2'>
-        <Label>{dict.common.description}</Label>
+        <Label>
+          {dict.common.description} ({dict.common.optional.toLowerCase()})
+        </Label>
         <Controller
           name='description'
           control={control}
-          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input
