@@ -113,7 +113,7 @@ func (c *AIAppClient) Request(ctx context.Context, opts AIAppRequestOptions) ([]
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, responseBody)
+		return nil, &APIError{StatusCode: resp.StatusCode, Body: string(responseBody)}
 	}
 
 	return responseBody, nil

@@ -167,6 +167,8 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type AIAppSystemPrompt](<#AIAppSystemPrompt>)
 - [type AIAppWriteFileRequest](<#AIAppWriteFileRequest>)
 - [type AIAppWriteResult](<#AIAppWriteResult>)
+- [type APIError](<#APIError>)
+  - [func \(e \*APIError\) Error\(\) string](<#APIError.Error>)
 - [type Client](<#Client>)
   - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
   - [func NewClientWithSQIDManager\(baseURL, token, locale string, sqidManager \*irminsqids.SQIDManager\) \*Client](<#NewClientWithSQIDManager>)
@@ -753,6 +755,27 @@ type AIAppWriteResult struct {
     RequiresApproval bool    `json:"requires_approval"    example:"false"`
 }
 ```
+
+<a name="APIError"></a>
+## type APIError
+
+APIError is returned when the Irmin API responds with a non\-success HTTP status code. Use errors.As to extract it from wrapped errors.
+
+```go
+type APIError struct {
+    StatusCode int
+    Body       string
+}
+```
+
+<a name="APIError.Error"></a>
+### func \(\*APIError\) Error
+
+```go
+func (e *APIError) Error() string
+```
+
+Error implements the error interface.
 
 <a name="Client"></a>
 ## type Client

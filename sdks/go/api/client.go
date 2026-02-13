@@ -262,10 +262,10 @@ func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, erro
 	// Check response status
 	if len(opts.AllowedStatus) == 0 {
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-			return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, responseBody)
+			return nil, &APIError{StatusCode: resp.StatusCode, Body: string(responseBody)}
 		}
 	} else if !slices.Contains(opts.AllowedStatus, resp.StatusCode) {
-		return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, responseBody)
+		return nil, &APIError{StatusCode: resp.StatusCode, Body: string(responseBody)}
 	}
 
 	return responseBody, nil

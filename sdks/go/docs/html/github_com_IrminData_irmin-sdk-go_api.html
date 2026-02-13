@@ -227,6 +227,16 @@ type AIAppWriteResult struct {
 }
     AIAppWriteResult represents the result of a write operation.
 
+type APIError struct {
+	StatusCode int
+	Body       string
+}
+    APIError is returned when the Irmin API responds with a non-success HTTP
+    status code. Use errors.As to extract it from wrapped errors.
+
+func (e *APIError) Error() string
+    Error implements the error interface.
+
 type Client struct {
 	// BaseURL is your Irmin Core API base: e.g. "https://api.irmin.co/api"
 	BaseURL string
