@@ -51,6 +51,12 @@ go run main.go -seed-tags
 
 # Seed templates from embedded files
 go run main.go -seed-templates
+
+# Run garbage collection (clean up orphans, stale records, temp files, sync LakeFS GC rules)
+go run main.go -gc
+
+# Dry-run garbage collection (log what would be cleaned, no deletions)
+go run main.go -gc-dry-run
 ```
 
 ### Testing
@@ -192,7 +198,14 @@ Core Operations Layer (LakeFS, DuckDB, Database, Connectors)
   4. Default deny (no match)
 - In-memory caching: Owner policies (1 hour), other roles (5 minutes)
 
-**10. Supporting Modules**
+**10. Garbage Collection** (`/gc`)
+- CLI-driven data cleanup invoked via `-gc` / `-gc-dry-run` flags
+- Phases: LakeFS GC rule sync, workflow run/log event retention, orphan record cleanup, soft-delete purge, temp file removal
+- Orphan detection: data-driven rules covering all FK relationships (~50 rules)
+- PostgreSQL advisory lock prevents concurrent runs across instances
+- Batched deletes (1000 per transaction) to avoid long locks
+
+**11. Supporting Modules**
 - `/cache`: Response caching middleware
 - `/locales`: Internationalization support
 - `/lib`: Shared utilities (workflow creation, role assignment, notifications)

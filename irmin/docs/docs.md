@@ -8650,6 +8650,168 @@ func FormatWorkspaceUserResponse(workspaceUser *db.WorkspaceUser, sqidManager *i
 
 FormatWorkspaceUserResponse creates a user response object from a workspace user object.
 
+# gc
+
+```go
+import "irmin-api/gc"
+```
+
+## Index
+
+- [Constants](<#constants>)
+- [type Collector](<#Collector>)
+  - [func NewCollector\(database \*db.Database, lakefsClient \*lakefs.Client, logger \*slog.Logger, env \*utils.CoreAPIEnv\) \*Collector](<#NewCollector>)
+  - [func \(c \*Collector\) Run\(ctx context.Context, dryRun bool\) \*Report](<#Collector.Run>)
+- [type Report](<#Report>)
+  - [func NewReport\(dryRun bool\) \*Report](<#NewReport>)
+  - [func \(r \*Report\) HasErrors\(\) bool](<#Report.HasErrors>)
+
+
+## Constants
+
+<a name="LakeFSDefaultRetentionDays"></a>LakeFS garbage collection defaults applied to all repositories.
+
+```go
+const (
+    // LakeFSDefaultRetentionDays is the default retention period for deleted objects
+    // across all branches in LakeFS.
+    LakeFSDefaultRetentionDays = 30
+
+    // LakeFSDefaultBranchRetentionDays is the retention period for deleted objects
+    // on a repository's default branch (typically "main").
+    LakeFSDefaultBranchRetentionDays = 14
+)
+```
+
+<a name="WorkflowRunRetentionDays"></a>Database retention policies for old records.
+
+```go
+const (
+    // WorkflowRunRetentionDays is the number of days to keep completed, failed,
+    // or cancelled workflow runs before hard-deleting them from the database.
+    WorkflowRunRetentionDays = 90
+
+    // LogEventRetentionDays is the number of days to keep audit log events
+    // before hard-deleting them from the database.
+    LogEventRetentionDays = 180
+
+    // SoftDeleteRetentionDays is the number of days to keep soft-deleted records
+    // (where deleted_at IS NOT NULL) before permanently hard-deleting them.
+    SoftDeleteRetentionDays = 30
+)
+```
+
+<a name="GCBatchSize"></a>GC operational settings.
+
+```go
+const (
+    // GCBatchSize is the maximum number of records to delete in a single
+    // database transaction to avoid holding long locks.
+    GCBatchSize = 1000
+
+    // GCAdvisoryLockKey is the PostgreSQL advisory lock key used to prevent
+    // concurrent GC runs across multiple application instances.
+    GCAdvisoryLockKey = "irmin:gc:global"
+)
+```
+
+<a name="TempFileCleanupThresholdDays"></a>Temp file cleanup.
+
+```go
+const (
+    // TempFileCleanupThresholdDays is the number of days after which orphaned
+    // temporary directories in the compute sandbox are cleaned up.
+    TempFileCleanupThresholdDays = 7
+)
+```
+
+<a name="Collector"></a>
+## type Collector
+
+Collector is the garbage collection service. It cleans up old data across LakeFS repositories, the PostgreSQL database, and the local filesystem.
+
+```go
+type Collector struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewCollector"></a>
+### func NewCollector
+
+```go
+func NewCollector(database *db.Database, lakefsClient *lakefs.Client, logger *slog.Logger, env *utils.CoreAPIEnv) *Collector
+```
+
+NewCollector creates a new GC collector.
+
+<a name="Collector.Run"></a>
+### func \(\*Collector\) Run
+
+```go
+func (c *Collector) Run(ctx context.Context, dryRun bool) *Report
+```
+
+Run executes all garbage collection operations. If dryRun is true, no data is actually deleted; the report shows what would happen.
+
+<a name="Report"></a>
+## type Report
+
+Report contains the results of a garbage collection run.
+
+```go
+type Report struct {
+    StartedAt  time.Time
+    FinishedAt time.Time
+    DryRun     bool
+
+    // LakeFS results.
+    LakeFSReposScanned    int
+    LakeFSReposUpdated    int
+    LakeFSReposDeleted    int
+    LakeFSReposFailed     int
+    LakeFSDBReposOrphaned int
+    LakeFSErrors          []error
+
+    // Workflow run cleanup results.
+    WorkflowRunsDeleted int64
+
+    // Log event cleanup results.
+    LogEventsDeleted int64
+
+    // Orphan record cleanup results (rule name → count affected).
+    OrphanedRecords map[string]int64
+
+    // Soft-deleted records cleanup results (table name → count deleted).
+    SoftDeletedRecords map[string]int64
+
+    // Temp file cleanup results.
+    TempFilesDeleted int
+    TempBytesFreed   int64
+
+    // General errors encountered during GC.
+    Errors []error
+}
+```
+
+<a name="NewReport"></a>
+### func NewReport
+
+```go
+func NewReport(dryRun bool) *Report
+```
+
+NewReport creates a new empty GC report.
+
+<a name="Report.HasErrors"></a>
+### func \(\*Report\) HasErrors
+
+```go
+func (r *Report) HasErrors() bool
+```
+
+HasErrors returns true if any errors were recorded during the GC run.
+
 # lakefs
 
 ```go

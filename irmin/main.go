@@ -26,9 +26,12 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/engine"
+	"irmin-api/gc"
+	"irmin-api/lakefs"
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/orchestrator"
@@ -112,10 +115,11 @@ func setupRolesAndPolicies(d *db.Database, overridePolicies *bool) error {
 }
 
 // setupDatabase initializes and configures the database based on command line flags.
-func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
+// The returned bool is true when a one-shot command (e.g. -gc) was run and the process should exit.
+func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, bool, error) {
 	d, err := db.InitialiseDB(env)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	// Handle command line flags
@@ -124,6 +128,8 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
 	overridePolicies := flag.Bool("override-policies", false, "Override existing policies")
 	seedTags := flag.Bool("seed-tags", false, "Seed default tags for all workspaces")
 	seedTemplates := flag.Bool("seed-templates", false, "Seed templates from embedded files")
+	gcRun := flag.Bool("gc", false, "Run garbage collection operations")
+	gcDryRun := flag.Bool("gc-dry-run", false, "Run garbage collection in dry-run mode (no deletions)")
 	// Keep -migrate flag for backwards compatibility (now a no-op since migrations run by default)
 	_ = flag.Bool("migrate", false, "Run database migrations (deprecated: migrations now run automatically)")
 	flag.Parse()
@@ -131,7 +137,7 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
 	// Empty the database if the reset flag is set
 	if *reset {
 		if dbResetErr := d.Reset(); dbResetErr != nil {
-			return nil, dbResetErr
+			return nil, false, dbResetErr
 		}
 	}
 
@@ -141,12 +147,12 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
 		log.Println("Running database migrations...")
 		// Create database tables, add indexes, or update existing ones
 		if dbMigrateErr := d.Migrate(); dbMigrateErr != nil {
-			return nil, dbMigrateErr
+			return nil, false, dbMigrateErr
 		}
 
 		// Setup roles and policies
 		if setupRolesAndPoliciesErr := setupRolesAndPolicies(d, overridePolicies); setupRolesAndPoliciesErr != nil {
-			return nil, setupRolesAndPoliciesErr
+			return nil, false, setupRolesAndPoliciesErr
 		}
 		log.Println("Database migrations completed")
 	} else {
@@ -156,18 +162,41 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
 	// Seed default tags for all workspaces if the seedTags flag is set
 	if *seedTags {
 		if setupDefaultTagsErr := setupDefaultTags(d); setupDefaultTagsErr != nil {
-			return nil, setupDefaultTagsErr
+			return nil, false, setupDefaultTagsErr
 		}
 	}
 
 	// Seed templates if the seedTemplates flag is set
 	if *seedTemplates {
 		if seedTemplatesErr := templatefiles.SeedTemplates(d, slog.Default()); seedTemplatesErr != nil {
-			return nil, seedTemplatesErr
+			return nil, false, seedTemplatesErr
 		}
 	}
 
-	return d, nil
+	// Run garbage collection if either GC flag is set.
+	// GC is a one-shot command — the process should exit after completion.
+	if *gcRun || *gcDryRun {
+		if gcErr := runGarbageCollection(d, env, *gcDryRun); gcErr != nil {
+			return nil, false, gcErr
+		}
+		return d, true, nil
+	}
+
+	return d, false, nil
+}
+
+// runGarbageCollection creates a GC collector and executes it.
+func runGarbageCollection(d *db.Database, env *utils.CoreAPIEnv, dryRun bool) error {
+	lakefsClient, lakefsErr := lakefs.CreateClient(context.Background(), slog.Default(), env)
+	if lakefsErr != nil {
+		return lakefsErr
+	}
+	collector := gc.NewCollector(d, lakefsClient, slog.Default(), env)
+	report := collector.Run(context.Background(), dryRun)
+	if report.HasErrors() {
+		return fmt.Errorf("garbage collection completed with %d errors", len(report.Errors)+len(report.LakeFSErrors))
+	}
+	return nil
 }
 
 // setupFiberApp creates and configures a new Fiber application.
@@ -324,10 +353,13 @@ func main() {
 		log.Fatalf("failed to load environment variables: %v", err)
 	}
 
-	// Setup database
-	database, err := setupDatabase(env)
+	// Setup database (and run one-shot commands like -gc if requested).
+	database, exitAfterSetup, err := setupDatabase(env)
 	if err != nil {
 		log.Fatalf("failed to setup database: %v", err)
+	}
+	if exitAfterSetup {
+		return
 	}
 
 	// Initialize cache storage and middleware

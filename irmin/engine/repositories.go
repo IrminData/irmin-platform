@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"irmin-api/bucket"
 	"irmin-api/db"
+	"irmin-api/gc"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 	"strings"
@@ -205,28 +206,30 @@ func (c *Client) createRepositoryInternal(
 		c.Logger.Warn("failed to configure repository webhook notifications", "error", err)
 	}
 
-	// Create garbage collection rules.
-	garbageCollectionRules := lakefs.GarbageCollectionRules{}
+	// Create garbage collection rules, falling back to global defaults.
+	retentionDays := gc.LakeFSDefaultRetentionDays
 	if gcDefaultRetentionDays != nil && *gcDefaultRetentionDays > 0 {
-		garbageCollectionRules.DefaultRetentionDays = *gcDefaultRetentionDays
+		retentionDays = *gcDefaultRetentionDays
 	}
+	branchRetentionDays := gc.LakeFSDefaultBranchRetentionDays
 	if gcDefaultBranchRetentionDays != nil && *gcDefaultBranchRetentionDays > 0 {
-		garbageCollectionRules.Branches = []lakefs.BranchGarbageCollectionRules{
+		branchRetentionDays = *gcDefaultBranchRetentionDays
+	}
+	garbageCollectionRules := lakefs.GarbageCollectionRules{
+		DefaultRetentionDays: retentionDays,
+		Branches: []lakefs.BranchGarbageCollectionRules{
 			{
 				BranchID:      defaultBranch,
-				RetentionDays: *gcDefaultBranchRetentionDays,
+				RetentionDays: branchRetentionDays,
 			},
-		}
+		},
 	}
-	if gcDefaultBranchRetentionDays != nil && *gcDefaultBranchRetentionDays > 0 &&
-		gcDefaultRetentionDays != nil && *gcDefaultRetentionDays > 0 {
-		setGCRulesErr := c.LakeFSClient.SetGarbageCollectionRules(
-			lakeFSRepositoryName,
-			garbageCollectionRules,
-		)
-		if setGCRulesErr != nil {
-			return nil, fmt.Errorf("failed to set garbage collection rules: %w", setGCRulesErr)
-		}
+	setGCRulesErr := c.LakeFSClient.SetGarbageCollectionRules(
+		lakeFSRepositoryName,
+		garbageCollectionRules,
+	)
+	if setGCRulesErr != nil {
+		return nil, fmt.Errorf("failed to set garbage collection rules: %w", setGCRulesErr)
 	}
 
 	// Convert LakeFS repository to Irmin repository.
