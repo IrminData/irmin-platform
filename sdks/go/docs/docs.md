@@ -186,6 +186,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) CreatePointer\(ctx context.Context, workspace, repository, path, ref string, req CreatePointerRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreatePointer>)
   - [func \(c \*Client\) CreatePolicy\(ctx context.Context, workspace string, req CreatePolicyRequest\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreatePolicy>)
   - [func \(c \*Client\) CreateRepository\(ctx context.Context, workspace string, req CreateRepositoryRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateRepository>)
+  - [func \(c \*Client\) CreateSignedObjectURL\(ctx context.Context, workspace, repoSlug string, req CreateSignedURLRequest\) \(\*SignedURLResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateSignedObjectURL>)
   - [func \(c \*Client\) CreateStoredQuery\(ctx context.Context, workspace string, req CreateQueryRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateStoredQuery>)
   - [func \(c \*Client\) CreateStoredScript\(ctx context.Context, workspace string, req CreateScriptRequest\) \(\*irminmodels.StoredScript, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateStoredScript>)
   - [func \(c \*Client\) CreateTag\(ctx context.Context, workspace, repository string, req CreateRepositoryTagRequest\) \(\*irminmodels.GitTag, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateTag>)
@@ -356,6 +357,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type CreateRepositoryRequest](<#CreateRepositoryRequest>)
 - [type CreateRepositoryTagRequest](<#CreateRepositoryTagRequest>)
 - [type CreateScriptRequest](<#CreateScriptRequest>)
+- [type CreateSignedURLRequest](<#CreateSignedURLRequest>)
 - [type CreateTagRequest](<#CreateTagRequest>)
 - [type CreateWorkspaceRequest](<#CreateWorkspaceRequest>)
 - [type CustomToolInfo](<#CustomToolInfo>)
@@ -378,6 +380,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type RevertUncommittedChangesRequest](<#RevertUncommittedChangesRequest>)
 - [type SearchEmbeddingsRequest](<#SearchEmbeddingsRequest>)
 - [type SendInviteRequest](<#SendInviteRequest>)
+- [type SignedURLResponse](<#SignedURLResponse>)
 - [type TransferAIApplicationOwnershipRequest](<#TransferAIApplicationOwnershipRequest>)
 - [type TransferConnectionOwnershipRequest](<#TransferConnectionOwnershipRequest>)
 - [type TransferOwnershipRequest](<#TransferOwnershipRequest>)
@@ -946,6 +949,15 @@ func (c *Client) CreateRepository(ctx context.Context, workspace string, req Cre
 ```
 
 
+
+<a name="Client.CreateSignedObjectURL"></a>
+### func \(\*Client\) CreateSignedObjectURL
+
+```go
+func (c *Client) CreateSignedObjectURL(ctx context.Context, workspace, repoSlug string, req CreateSignedURLRequest) (*SignedURLResponse, *irminmodels.IrminAPIResponse, error)
+```
+
+CreateSignedObjectURL creates a time\-limited signed download URL for a repository object. The URL can be shared with external users who do not have Irmin accounts. Permissions are checked at creation time, not at download time.
 
 <a name="Client.CreateStoredQuery"></a>
 ### func \(\*Client\) CreateStoredQuery
@@ -2609,6 +2621,19 @@ type CreateScriptRequest struct {
 }
 ```
 
+<a name="CreateSignedURLRequest"></a>
+## type CreateSignedURLRequest
+
+CreateSignedURLRequest represents the JSON request body for creating a signed download URL.
+
+```go
+type CreateSignedURLRequest struct {
+    Path           string `json:"path"                       validate:"required"                example:"data/file.csv"`
+    Ref            string `json:"ref,omitempty"                                                 example:"main"`
+    ExpiresInHours int    `json:"expires_in_hours,omitempty" validate:"omitempty,min=1,max=168" example:"24"`
+}
+```
+
 <a name="CreateTagRequest"></a>
 ## type CreateTagRequest
 
@@ -2901,6 +2926,18 @@ SendInviteRequest represents the JSON request body for sending an invite.
 type SendInviteRequest struct {
     Email string `json:"email" validate:"required,email"  example:"john.doe@example.com"`
     Role  string `json:"role"  validate:"required,max=50" example:"admin"`
+}
+```
+
+<a name="SignedURLResponse"></a>
+## type SignedURLResponse
+
+SignedURLResponse represents the response from creating a signed download URL.
+
+```go
+type SignedURLResponse struct {
+    URL       string `json:"url"        example:"https://api.irmin.co/api/v1/signed/download?token=..."`
+    ExpiresAt string `json:"expires_at" example:"2024-02-07T12:00:00Z"`
 }
 ```
 

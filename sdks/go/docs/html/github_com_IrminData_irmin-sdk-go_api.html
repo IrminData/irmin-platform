@@ -361,6 +361,16 @@ func (c *Client) CreateRepository(
 	req CreateRepositoryRequest,
 ) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) CreateSignedObjectURL(
+	ctx context.Context,
+	workspace, repoSlug string,
+	req CreateSignedURLRequest,
+) (*SignedURLResponse, *irminmodels.IrminAPIResponse, error)
+    CreateSignedObjectURL creates a time-limited signed download URL for a
+    repository object. The URL can be shared with external users who do not have
+    Irmin accounts. Permissions are checked at creation time, not at download
+    time.
+
 func (c *Client) CreateStoredQuery(
 	ctx context.Context,
 	workspace string,
@@ -1445,6 +1455,14 @@ type CreateScriptRequest struct {
 }
     CreateScriptRequest represents the JSON request body for creating a script.
 
+type CreateSignedURLRequest struct {
+	Path           string `json:"path"                       validate:"required"                example:"data/file.csv"`
+	Ref            string `json:"ref,omitempty"                                                 example:"main"`
+	ExpiresInHours int    `json:"expires_in_hours,omitempty" validate:"omitempty,min=1,max=168" example:"24"`
+}
+    CreateSignedURLRequest represents the JSON request body for creating a
+    signed download URL.
+
 type CreateTagRequest struct {
 	Name        string `json:"name"                  validate:"required,validslug" example:"v1.0.0"`
 	Color       string `json:"color,omitempty"       validate:"iscolor"            example:"#000000"`
@@ -1620,6 +1638,13 @@ type SendInviteRequest struct {
 	Role  string `json:"role"  validate:"required,max=50" example:"admin"`
 }
     SendInviteRequest represents the JSON request body for sending an invite.
+
+type SignedURLResponse struct {
+	URL       string `json:"url"        example:"https://api.irmin.co/api/v1/signed/download?token=..."`
+	ExpiresAt string `json:"expires_at" example:"2024-02-07T12:00:00Z"`
+}
+    SignedURLResponse represents the response from creating a signed download
+    URL.
 
 type TransferAIApplicationOwnershipRequest struct {
 	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`

@@ -48,6 +48,19 @@ type CreatePointerRequest struct {
 	TargetRef string `json:"target_ref"                 validate:"required,max=100"  example:"main"`
 }
 
+// CreateSignedURLRequest represents the JSON request body for creating a signed download URL.
+type CreateSignedURLRequest struct {
+	Path           string `json:"path"                       validate:"required"                example:"data/file.csv"`
+	Ref            string `json:"ref,omitempty"                                                 example:"main"`
+	ExpiresInHours int    `json:"expires_in_hours,omitempty" validate:"omitempty,min=1,max=168" example:"24"`
+}
+
+// SignedURLResponse represents the response from creating a signed download URL.
+type SignedURLResponse struct {
+	URL       string `json:"url"        example:"https://api.irmin.co/api/v1/signed/download?token=..."`
+	ExpiresAt string `json:"expires_at" example:"2024-02-07T12:00:00Z"`
+}
+
 // GetObjectAtPath fetches the object at the given path and ref.
 func (c *Client) GetObjectAtPath(
 	ctx context.Context,
@@ -366,4 +379,29 @@ func (c *Client) CreatePointer(
 		return nil, nil, fmt.Errorf("create pointer error: %w", err)
 	}
 	return &object, apiResp, nil
+}
+
+// CreateSignedObjectURL creates a time-limited signed download URL for a repository object.
+// The URL can be shared with external users who do not have Irmin accounts.
+// Permissions are checked at creation time, not at download time.
+func (c *Client) CreateSignedObjectURL(
+	ctx context.Context,
+	workspace, repoSlug string,
+	req CreateSignedURLRequest,
+) (*SignedURLResponse, *irminmodels.IrminAPIResponse, error) {
+	var response SignedURLResponse
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/signed-url",
+			workspace,
+			repoSlug,
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &response)
+	if err != nil {
+		return nil, nil, fmt.Errorf("create signed object URL error: %w", err)
+	}
+	return &response, apiResp, nil
 }
