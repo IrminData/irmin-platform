@@ -174,6 +174,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func NewClientWithSQIDManager\(baseURL, token, locale string, sqidManager \*irminsqids.SQIDManager\) \*Client](<#NewClientWithSQIDManager>)
   - [func \(c \*Client\) AcceptInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.AcceptInvite>)
   - [func \(c \*Client\) AddTagToEntity\(ctx context.Context, workspace, tagID string, entityType irminmodels.TagEntityType, entityID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.AddTagToEntity>)
+  - [func \(c \*Client\) ApproveAIApplicationPendingWrite\(ctx context.Context, workspace, aiApplicationID, pendingWriteID string\) \(\*irminmodels.AIApplicationPendingWrite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ApproveAIApplicationPendingWrite>)
   - [func \(c \*Client\) CallSystemWebhook\(ctx context.Context, webhookType string, headers map\[string\]string, body any\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CallSystemWebhook>)
   - [func \(c \*Client\) CancelWorkflowRun\(ctx context.Context, workspace, workflowID, runID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.CancelWorkflowRun>)
   - [func \(c \*Client\) CheckPermission\(ctx context.Context, workspace string, resource irminmodels.PolicyResource, action irminmodels.PolicyAction, resourceID \*string\) \(bool, error\)](<#Client.CheckPermission>)
@@ -183,6 +184,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) CreateBranch\(ctx context.Context, workspace, repository string, req CreateBranchRequest\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateBranch>)
   - [func \(c \*Client\) CreateCommit\(ctx context.Context, workspace, repository string, req CreateCommitRequest\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateCommit>)
   - [func \(c \*Client\) CreateConnection\(ctx context.Context, workspace string, req CreateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateConnection>)
+  - [func \(c \*Client\) CreateConnectionSubscription\(ctx context.Context, workspace, connectionID string, req CreateConnectionSubscriptionRequest\) \(\*irminmodels.ConnectionSubscriptionWithToken, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateConnectionSubscription>)
   - [func \(c \*Client\) CreatePointer\(ctx context.Context, workspace, repository, path, ref string, req CreatePointerRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreatePointer>)
   - [func \(c \*Client\) CreatePolicy\(ctx context.Context, workspace string, req CreatePolicyRequest\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreatePolicy>)
   - [func \(c \*Client\) CreateRepository\(ctx context.Context, workspace string, req CreateRepositoryRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateRepository>)
@@ -198,6 +200,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) DeleteAIApplication\(ctx context.Context, workspace, aiApplicationID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteAIApplication>)
   - [func \(c \*Client\) DeleteBranch\(ctx context.Context, workspace, repository, branch string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteBranch>)
   - [func \(c \*Client\) DeleteConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteConnection>)
+  - [func \(c \*Client\) DeleteConnectionSubscription\(ctx context.Context, workspace, connectionID, subscriptionID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteConnectionSubscription>)
   - [func \(c \*Client\) DeleteConnector\(ctx context.Context, connectorID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteConnector>)
   - [func \(c \*Client\) DeleteInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteInvite>)
   - [func \(c \*Client\) DeleteObject\(ctx context.Context, workspace, repository, ref, path string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteObject>)
@@ -230,12 +233,15 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) FetchLogEventsWithCursor\(ctx context.Context, workspace string, filters LogEventFilters, cursor string, limit int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsWithCursor>)
   - [func \(c \*Client\) GenerateFileSchema\(ctx context.Context, fileName string, fileReader io.Reader\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GenerateFileSchema>)
   - [func \(c \*Client\) GetAIApplication\(ctx context.Context, workspace, aiApplicationID string\) \(\*irminmodels.AIApplication, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplication>)
+  - [func \(c \*Client\) GetAIApplicationPendingWrite\(ctx context.Context, workspace, aiApplicationID, pendingWriteID string\) \(\*irminmodels.AIApplicationPendingWrite, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationPendingWrite>)
+  - [func \(c \*Client\) GetAIApplicationPendingWrites\(ctx context.Context, workspace, aiApplicationID string, opts \*GetAIApplicationPendingWritesOptions\) \(\*irminmodels.AIApplicationPendingWritesResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationPendingWrites>)
   - [func \(c \*Client\) GetAIApplicationToolLogStats\(ctx context.Context, workspace, aiApplicationID string\) \(\*irminmodels.AIApplicationToolLogStats, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationToolLogStats>)
   - [func \(c \*Client\) GetAIApplicationToolLogs\(ctx context.Context, workspace, aiApplicationID string, opts \*GetAIApplicationToolLogsOptions\) \(\*irminmodels.AIApplicationToolLogsResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationToolLogs>)
   - [func \(c \*Client\) GetBranch\(ctx context.Context, workspace, repository, branchName string\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetBranch>)
   - [func \(c \*Client\) GetCommit\(ctx context.Context, workspace, repository, hash string\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetCommit>)
   - [func \(c \*Client\) GetConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnection>)
   - [func \(c \*Client\) GetConnectionSchema\(ctx context.Context, workspace, connectionID, operationMethod, path string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnectionSchema>)
+  - [func \(c \*Client\) GetConnectionSubscription\(ctx context.Context, workspace, connectionID, subscriptionID string\) \(\*irminmodels.ConnectionSubscription, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnectionSubscription>)
   - [func \(c \*Client\) GetConnector\(ctx context.Context, connectorID string\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnector>)
   - [func \(c \*Client\) GetEmbeddingInfo\(ctx context.Context, workspace, repository string, req GetEmbeddingInfoRequest\) \(\*irminmodels.EmbeddingFile, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetEmbeddingInfo>)
   - [func \(c \*Client\) GetInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetInvite>)
@@ -266,6 +272,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) ListAllWorkflowRunsWithCursor\(ctx context.Context, workspace string, cursor string, limit int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAllWorkflowRunsWithCursor>)
   - [func \(c \*Client\) ListBranches\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListBranches>)
   - [func \(c \*Client\) ListCommits\(ctx context.Context, workspace, repository, ref, after string, perPage int\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListCommits>)
+  - [func \(c \*Client\) ListConnectionSubscriptions\(ctx context.Context, workspace, connectionID string\) \(\[\]irminmodels.ConnectionSubscription, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnectionSubscriptions>)
   - [func \(c \*Client\) ListConnections\(ctx context.Context, workspace string\) \(\[\]irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnections>)
   - [func \(c \*Client\) ListConnectors\(ctx context.Context\) \(\[\]irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnectors>)
   - [func \(c \*Client\) ListEmbeddings\(ctx context.Context, workspace, repository string, req ListEmbeddingsRequest\) \(\[\]irminmodels.EmbeddingFile, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListEmbeddings>)
@@ -291,7 +298,9 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) MergeRefs\(ctx context.Context, workspace, repository string, req MergeRefsRequest\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.MergeRefs>)
   - [func \(c \*Client\) MoveObject\(ctx context.Context, workspace, repository, path, ref string, req MoveObjectRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.MoveObject>)
   - [func \(c \*Client\) PauseWorkflow\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.PauseWorkflow>)
+  - [func \(c \*Client\) RegenerateConnectionSubscriptionToken\(ctx context.Context, workspace, connectionID, subscriptionID string\) \(\*irminmodels.ConnectionSubscriptionWithToken, \*irminmodels.IrminAPIResponse, error\)](<#Client.RegenerateConnectionSubscriptionToken>)
   - [func \(c \*Client\) RegisterNewConnector\(ctx context.Context, req ConnectorRequest\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.RegisterNewConnector>)
+  - [func \(c \*Client\) RejectAIApplicationPendingWrite\(ctx context.Context, workspace, aiApplicationID, pendingWriteID string\) \(\*irminmodels.AIApplicationPendingWrite, \*irminmodels.IrminAPIResponse, error\)](<#Client.RejectAIApplicationPendingWrite>)
   - [func \(c \*Client\) RemoveTagFromEntity\(ctx context.Context, workspace, tagID string, entityType irminmodels.TagEntityType, entityID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RemoveTagFromEntity>)
   - [func \(c \*Client\) RemoveUser\(ctx context.Context, workspace, userID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RemoveUser>)
   - [func \(c \*Client\) Request\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
@@ -316,6 +325,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) UpdateBranch\(ctx context.Context, workspace, repository, oldName string, req UpdateBranchRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateBranch>)
   - [func \(c \*Client\) UpdateConnection\(ctx context.Context, workspace, connectionID string, req UpdateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateConnection>)
   - [func \(c \*Client\) UpdateConnectionConfiguration\(ctx context.Context, workspace, connectionID string, req UpdateConnectionConfigurationRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateConnectionConfiguration>)
+  - [func \(c \*Client\) UpdateConnectionSubscription\(ctx context.Context, workspace, connectionID, subscriptionID string, req UpdateConnectionSubscriptionRequest\) \(\*irminmodels.ConnectionSubscription, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateConnectionSubscription>)
   - [func \(c \*Client\) UpdateEmbeddingMetadata\(ctx context.Context, workspace, repository string, req UpdateEmbeddingMetadataRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateEmbeddingMetadata>)
   - [func \(c \*Client\) UpdateEmbeddingPriority\(ctx context.Context, workspace, repository string, req UpdateEmbeddingPriorityRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateEmbeddingPriority>)
   - [func \(c \*Client\) UpdateInvite\(ctx context.Context, inviteID string, req UpdateInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateInvite>)
@@ -367,6 +377,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type ExecuteSQLRequest](<#ExecuteSQLRequest>)
 - [type ExecuteScriptRequest](<#ExecuteScriptRequest>)
 - [type FormFile](<#FormFile>)
+- [type GetAIApplicationPendingWritesOptions](<#GetAIApplicationPendingWritesOptions>)
 - [type GetAIApplicationToolLogsOptions](<#GetAIApplicationToolLogsOptions>)
 - [type GetEmbeddingInfoRequest](<#GetEmbeddingInfoRequest>)
 - [type ListEmbeddingsRequest](<#ListEmbeddingsRequest>)
@@ -840,6 +851,15 @@ func (c *Client) AddTagToEntity(ctx context.Context, workspace, tagID string, en
 
 AddTagToEntity adds an entity to a tag using the workspace tag route.
 
+<a name="Client.ApproveAIApplicationPendingWrite"></a>
+### func \(\*Client\) ApproveAIApplicationPendingWrite
+
+```go
+func (c *Client) ApproveAIApplicationPendingWrite(ctx context.Context, workspace, aiApplicationID, pendingWriteID string) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
+```
+
+ApproveAIApplicationPendingWrite approves a pending write operation.
+
 <a name="Client.CallSystemWebhook"></a>
 ### func \(\*Client\) CallSystemWebhook
 
@@ -922,6 +942,15 @@ func (c *Client) CreateConnection(ctx context.Context, workspace string, req Cre
 ```
 
 
+
+<a name="Client.CreateConnectionSubscription"></a>
+### func \(\*Client\) CreateConnectionSubscription
+
+```go
+func (c *Client) CreateConnectionSubscription(ctx context.Context, workspace, connectionID string, req CreateConnectionSubscriptionRequest) (*irminmodels.ConnectionSubscriptionWithToken, *irminmodels.IrminAPIResponse, error)
+```
+
+CreateConnectionSubscription creates a new subscription for a connection.
 
 <a name="Client.CreatePointer"></a>
 ### func \(\*Client\) CreatePointer
@@ -1057,6 +1086,15 @@ func (c *Client) DeleteConnection(ctx context.Context, workspace, connectionID s
 ```
 
 DeleteConnection deletes a connection by its ID.
+
+<a name="Client.DeleteConnectionSubscription"></a>
+### func \(\*Client\) DeleteConnectionSubscription
+
+```go
+func (c *Client) DeleteConnectionSubscription(ctx context.Context, workspace, connectionID, subscriptionID string) (*irminmodels.IrminAPIResponse, error)
+```
+
+DeleteConnectionSubscription deletes a subscription by ID.
 
 <a name="Client.DeleteConnector"></a>
 ### func \(\*Client\) DeleteConnector
@@ -1364,6 +1402,24 @@ func (c *Client) GetAIApplication(ctx context.Context, workspace, aiApplicationI
 
 GetAIApplication retrieves a specific AI application by ID.
 
+<a name="Client.GetAIApplicationPendingWrite"></a>
+### func \(\*Client\) GetAIApplicationPendingWrite
+
+```go
+func (c *Client) GetAIApplicationPendingWrite(ctx context.Context, workspace, aiApplicationID, pendingWriteID string) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
+```
+
+GetAIApplicationPendingWrite retrieves a specific pending write by ID.
+
+<a name="Client.GetAIApplicationPendingWrites"></a>
+### func \(\*Client\) GetAIApplicationPendingWrites
+
+```go
+func (c *Client) GetAIApplicationPendingWrites(ctx context.Context, workspace, aiApplicationID string, opts *GetAIApplicationPendingWritesOptions) (*irminmodels.AIApplicationPendingWritesResponse, *irminmodels.IrminAPIResponse, error)
+```
+
+GetAIApplicationPendingWrites retrieves pending write operations for an AI application.
+
 <a name="Client.GetAIApplicationToolLogStats"></a>
 ### func \(\*Client\) GetAIApplicationToolLogStats
 
@@ -1417,6 +1473,15 @@ func (c *Client) GetConnectionSchema(ctx context.Context, workspace, connectionI
 ```
 
 GetConnectionSchema retrieves the schema for a specific connection and operation method.
+
+<a name="Client.GetConnectionSubscription"></a>
+### func \(\*Client\) GetConnectionSubscription
+
+```go
+func (c *Client) GetConnectionSubscription(ctx context.Context, workspace, connectionID, subscriptionID string) (*irminmodels.ConnectionSubscription, *irminmodels.IrminAPIResponse, error)
+```
+
+GetConnectionSubscription retrieves a specific subscription by ID.
 
 <a name="Client.GetConnector"></a>
 ### func \(\*Client\) GetConnector
@@ -1688,6 +1753,15 @@ func (c *Client) ListCommits(ctx context.Context, workspace, repository, ref, af
 
 
 
+<a name="Client.ListConnectionSubscriptions"></a>
+### func \(\*Client\) ListConnectionSubscriptions
+
+```go
+func (c *Client) ListConnectionSubscriptions(ctx context.Context, workspace, connectionID string) ([]irminmodels.ConnectionSubscription, *irminmodels.IrminAPIResponse, error)
+```
+
+ListConnectionSubscriptions retrieves all subscriptions for a connection.
+
 <a name="Client.ListConnections"></a>
 ### func \(\*Client\) ListConnections
 
@@ -1913,6 +1987,15 @@ func (c *Client) PauseWorkflow(ctx context.Context, workspace, workflowID string
 
 
 
+<a name="Client.RegenerateConnectionSubscriptionToken"></a>
+### func \(\*Client\) RegenerateConnectionSubscriptionToken
+
+```go
+func (c *Client) RegenerateConnectionSubscriptionToken(ctx context.Context, workspace, connectionID, subscriptionID string) (*irminmodels.ConnectionSubscriptionWithToken, *irminmodels.IrminAPIResponse, error)
+```
+
+RegenerateConnectionSubscriptionToken regenerates the webhook token for a subscription. The new token is returned in the response.
+
 <a name="Client.RegisterNewConnector"></a>
 ### func \(\*Client\) RegisterNewConnector
 
@@ -1921,6 +2004,15 @@ func (c *Client) RegisterNewConnector(ctx context.Context, req ConnectorRequest)
 ```
 
 RegisterNewConnector registers a new connector with the system. Requests to this endpoint must be authenticated with a system token.
+
+<a name="Client.RejectAIApplicationPendingWrite"></a>
+### func \(\*Client\) RejectAIApplicationPendingWrite
+
+```go
+func (c *Client) RejectAIApplicationPendingWrite(ctx context.Context, workspace, aiApplicationID, pendingWriteID string) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
+```
+
+RejectAIApplicationPendingWrite rejects a pending write operation.
 
 <a name="Client.RemoveTagFromEntity"></a>
 ### func \(\*Client\) RemoveTagFromEntity
@@ -2137,6 +2229,15 @@ func (c *Client) UpdateConnectionConfiguration(ctx context.Context, workspace, c
 ```
 
 
+
+<a name="Client.UpdateConnectionSubscription"></a>
+### func \(\*Client\) UpdateConnectionSubscription
+
+```go
+func (c *Client) UpdateConnectionSubscription(ctx context.Context, workspace, connectionID, subscriptionID string, req UpdateConnectionSubscriptionRequest) (*irminmodels.ConnectionSubscription, *irminmodels.IrminAPIResponse, error)
+```
+
+UpdateConnectionSubscription updates an existing subscription.
 
 <a name="Client.UpdateEmbeddingMetadata"></a>
 ### func \(\*Client\) UpdateEmbeddingMetadata
@@ -2743,6 +2844,18 @@ type FormFile struct {
     FilePath  string    // Local path to the file on disk
     Reader    io.Reader // Use if you already have a stream (os.Open, bytes.Buffer, etc.)
     FileName  string    // Optional override for the actual filename
+}
+```
+
+<a name="GetAIApplicationPendingWritesOptions"></a>
+## type GetAIApplicationPendingWritesOptions
+
+GetAIApplicationPendingWritesOptions contains optional parameters for fetching pending writes.
+
+```go
+type GetAIApplicationPendingWritesOptions struct {
+    Limit  int
+    Offset int
 }
 ```
 

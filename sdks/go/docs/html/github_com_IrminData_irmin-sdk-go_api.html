@@ -275,6 +275,12 @@ func (c *Client) AddTagToEntity(
 ) (*irminmodels.IrminAPIResponse, error)
     AddTagToEntity adds an entity to a tag using the workspace tag route.
 
+func (c *Client) ApproveAIApplicationPendingWrite(
+	ctx context.Context,
+	workspace, aiApplicationID, pendingWriteID string,
+) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
+    ApproveAIApplicationPendingWrite approves a pending write operation.
+
 func (c *Client) CallSystemWebhook(
 	ctx context.Context,
 	webhookType string,
@@ -338,6 +344,13 @@ func (c *Client) CreateConnection(
 	workspace string,
 	req CreateConnectionRequest,
 ) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CreateConnectionSubscription(
+	ctx context.Context,
+	workspace, connectionID string,
+	req CreateConnectionSubscriptionRequest,
+) (*irminmodels.ConnectionSubscriptionWithToken, *irminmodels.IrminAPIResponse, error)
+    CreateConnectionSubscription creates a new subscription for a connection.
 
 func (c *Client) CreatePointer(
 	ctx context.Context,
@@ -433,6 +446,12 @@ func (c *Client) DeleteConnection(
 	workspace, connectionID string,
 ) (*irminmodels.IrminAPIResponse, error)
     DeleteConnection deletes a connection by its ID.
+
+func (c *Client) DeleteConnectionSubscription(
+	ctx context.Context,
+	workspace, connectionID, subscriptionID string,
+) (*irminmodels.IrminAPIResponse, error)
+    DeleteConnectionSubscription deletes a subscription by ID.
 
 func (c *Client) DeleteConnector(ctx context.Context, connectorID string) (*irminmodels.IrminAPIResponse, error)
     DeleteConnector deletes a connector from the system. Requests to this
@@ -639,6 +658,20 @@ func (c *Client) GetAIApplication(
 ) (*irminmodels.AIApplication, *irminmodels.IrminAPIResponse, error)
     GetAIApplication retrieves a specific AI application by ID.
 
+func (c *Client) GetAIApplicationPendingWrite(
+	ctx context.Context,
+	workspace, aiApplicationID, pendingWriteID string,
+) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
+    GetAIApplicationPendingWrite retrieves a specific pending write by ID.
+
+func (c *Client) GetAIApplicationPendingWrites(
+	ctx context.Context,
+	workspace, aiApplicationID string,
+	opts *GetAIApplicationPendingWritesOptions,
+) (*irminmodels.AIApplicationPendingWritesResponse, *irminmodels.IrminAPIResponse, error)
+    GetAIApplicationPendingWrites retrieves pending write operations for an AI
+    application.
+
 func (c *Client) GetAIApplicationToolLogStats(
 	ctx context.Context,
 	workspace, aiApplicationID string,
@@ -674,6 +707,12 @@ func (c *Client) GetConnectionSchema(
 ) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
     GetConnectionSchema retrieves the schema for a specific connection and
     operation method.
+
+func (c *Client) GetConnectionSubscription(
+	ctx context.Context,
+	workspace, connectionID, subscriptionID string,
+) (*irminmodels.ConnectionSubscription, *irminmodels.IrminAPIResponse, error)
+    GetConnectionSubscription retrieves a specific subscription by ID.
 
 func (c *Client) GetConnector(
 	ctx context.Context,
@@ -844,6 +883,12 @@ func (c *Client) ListCommits(
 	perPage int,
 ) ([]irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) ListConnectionSubscriptions(
+	ctx context.Context,
+	workspace, connectionID string,
+) ([]irminmodels.ConnectionSubscription, *irminmodels.IrminAPIResponse, error)
+    ListConnectionSubscriptions retrieves all subscriptions for a connection.
+
 func (c *Client) ListConnections(
 	ctx context.Context,
 	workspace string,
@@ -969,12 +1014,25 @@ func (c *Client) PauseWorkflow(
 	workspace, workflowID string,
 ) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) RegenerateConnectionSubscriptionToken(
+	ctx context.Context,
+	workspace, connectionID, subscriptionID string,
+) (*irminmodels.ConnectionSubscriptionWithToken, *irminmodels.IrminAPIResponse, error)
+    RegenerateConnectionSubscriptionToken regenerates the webhook token for a
+    subscription. The new token is returned in the response.
+
 func (c *Client) RegisterNewConnector(
 	ctx context.Context,
 	req ConnectorRequest,
 ) (*irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
     RegisterNewConnector registers a new connector with the system. Requests to
     this endpoint must be authenticated with a system token.
+
+func (c *Client) RejectAIApplicationPendingWrite(
+	ctx context.Context,
+	workspace, aiApplicationID, pendingWriteID string,
+) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
+    RejectAIApplicationPendingWrite rejects a pending write operation.
 
 func (c *Client) RemoveTagFromEntity(
 	ctx context.Context,
@@ -1122,6 +1180,13 @@ func (c *Client) UpdateConnectionConfiguration(
 	workspace, connectionID string,
 	req UpdateConnectionConfigurationRequest,
 ) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) UpdateConnectionSubscription(
+	ctx context.Context,
+	workspace, connectionID, subscriptionID string,
+	req UpdateConnectionSubscriptionRequest,
+) (*irminmodels.ConnectionSubscription, *irminmodels.IrminAPIResponse, error)
+    UpdateConnectionSubscription updates an existing subscription.
 
 func (c *Client) UpdateEmbeddingMetadata(
 	ctx context.Context,
@@ -1524,6 +1589,13 @@ type FormFile struct {
 }
     FormFile holds information about a file you want to upload with
     multipart/form-data.
+
+type GetAIApplicationPendingWritesOptions struct {
+	Limit  int
+	Offset int
+}
+    GetAIApplicationPendingWritesOptions contains optional parameters for
+    fetching pending writes.
 
 type GetAIApplicationToolLogsOptions struct {
 	Limit    int
