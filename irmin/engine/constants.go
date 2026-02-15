@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"path"
 	"slices"
 	"strings"
 )
@@ -20,15 +21,25 @@ const (
 	PointerFilePrefix = "_ptr."
 )
 
-// IsSystemPath checks if the given path is a system path that should be hidden.
-func IsSystemPath(path string) bool {
-	// systemPaths contains paths that should be hidden from users.
-	// These paths are used for internal system operations and should not be exposed.
+// IsSystemPath checks if any component of the given path is a system path that should be hidden.
+// The path is normalized first to prevent traversal bypasses (e.g. "foo/../../_lakefs_actions").
+func IsSystemPath(p string) bool {
+	// systemPaths contains directory names that should be hidden from users.
+	// These are used for internal system operations and should not be exposed.
 	var systemPaths = []string{
 		"_lakefs_actions",
 	}
-	// Check if the path is in the systemPaths array.
-	return slices.Contains(systemPaths, path)
+
+	// Normalize to resolve ".." and "." segments, then strip leading/trailing slashes.
+	normalized := strings.Trim(path.Clean("/"+p), "/")
+
+	// Check every component of the path.
+	for _, component := range strings.Split(normalized, "/") {
+		if slices.Contains(systemPaths, component) {
+			return true
+		}
+	}
+	return false
 }
 
 // IsPointerPath checks if the given path or filename represents a pointer file.

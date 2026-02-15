@@ -83,9 +83,10 @@ func IsSchemaValidationError(err error) bool
     IsSchemaValidationError checks if an error is a
     ConnectorSchemaValidationError.
 
-func IsSystemPath(path string) bool
-    IsSystemPath checks if the given path is a system path that should be
-    hidden.
+func IsSystemPath(p string) bool
+    IsSystemPath checks if any component of the given path is a system path that
+    should be hidden. The path is normalized first to prevent traversal bypasses
+    (e.g. "foo/../../_lakefs_actions").
 
 func MaskStringLiterals(sql string) string
     MaskStringLiterals masks the contents of string literals by replacing
@@ -405,6 +406,10 @@ func (c *Client) MergeRefs(
 ) (*irminmodels.Commit, error)
 
 func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*irminmodels.Object, error)
+
+func (c *Client) ObjectExists(workspace, repository, path, ref string) (bool, error)
+    ObjectExists checks whether an object exists at the given path and ref in
+    the repository.
 
 func (c *Client) ProcessTransformations(
 	ctx context.Context,

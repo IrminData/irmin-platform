@@ -141,6 +141,10 @@ func GenerateRandomString() (string, error)
     byte produces two hexadecimal characters. Returns the random string or an
     error if one occurs.
 
+func GenerateSignedToken(secret []byte, payload SignedURLPayload) (string, error)
+    GenerateSignedToken creates a signed token from a payload using HMAC-SHA256.
+    The token format is: base64url(payload).base64url(hmac).
+
 func GetDefaultBranchRetentionDays(branchRules []irminmodels.BranchGarbageCollectionRules, defaultBranch string) *int
     GetDefaultBranchRetentionDays gets the retention days for the default branch
     from existing rules.
@@ -280,6 +284,7 @@ type CoreAPIEnv struct {
 	TestRepository               string // Repository to test with
 	TestBranch                   string // Branch to test with
 	TestTag                      string // Tag to test with
+	SignedURLSecret              string // HMAC secret for signed download URLs
 }
     CoreAPIEnv is a struct that holds the environment variables for the data
     engine.
@@ -444,6 +449,20 @@ type ReplaceFn func(pi *ParsedQueryPlaceholder) (string, error)
     ReplaceFn is the type for a function that computes a replacement string for
     a parsed placeholder. It receives a pointer to ParsedQueryPlaceholder and
     returns a string to be substituted along with any error.
+
+type SignedURLPayload struct {
+	Workspace string `json:"w"`
+	Repo      string `json:"r"`
+	Path      string `json:"p"`
+	Ref       string `json:"ref"`
+	ExpiresAt int64  `json:"exp"`
+}
+    SignedURLPayload contains the parameters encoded in a signed download URL.
+
+func ValidateSignedToken(secret []byte, token string) (*SignedURLPayload, error)
+    ValidateSignedToken verifies the HMAC signature and expiry of a signed
+    token. Returns the decoded payload if valid, or an error if the token is
+    invalid or expired.
 
 </pre>
 </body></html>

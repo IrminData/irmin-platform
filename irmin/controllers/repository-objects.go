@@ -6,14 +6,25 @@ import (
 	"fmt"
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
+	"irmin-api/engine"
 	"irmin-api/formatter"
 	"irmin-api/locales"
 	"irmin-api/services"
 	"irmin-api/utils"
+	"strings"
+	"time"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
+)
+
+const (
+	// signedURLDefaultExpiryHours is the default expiry when none is specified.
+	signedURLDefaultExpiryHours = 24
+	// signedURLNeverExpiryHours is used when expires_in_hours is 0 (never expires ≈ 100 years).
+	signedURLNeverExpiryHours = 876000
 )
 
 type objectLocalParams struct {
@@ -71,6 +82,193 @@ func (api *APIControllers) validateObjectParams(c fiber.Ctx) (
 		objectPath: objectPath,
 		objectRef:  objectRef,
 	}, nil
+}
+
+// RepositoryObjectsCreateSignedURL godoc
+// @Summary Create a signed download URL for a repository object
+// @Description Generate a time-limited signed URL that allows downloading a repository object without authentication.
+// @Description Permissions are checked at URL creation time. The URL can be shared with external users.
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param body body irmincore.CreateSignedURLRequest true "Signed URL request parameters"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irmincore.SignedURLResponse} "Signed URL created successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Object not found at the specified path and ref"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/signed-url [post]
+func (api *APIControllers) RepositoryObjectsCreateSignedURL(c fiber.Ctx) error {
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+
+	if !dictOk || !userOk || !workspaceOk || !repositoryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{"Missing required context"},
+		})
+	}
+
+	// Parse and validate the request body
+	var req irmincore.CreateSignedURLRequest
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
+	}
+
+	// Normalize path once — other object flows trim the leading slash and the rest
+	// of this handler (ObjectExists, token payload, checkObjectPermission) must all
+	// operate on the same canonical value.
+	req.Path = strings.TrimPrefix(req.Path, "/")
+
+	// Block system paths and pointer files before any engine calls
+	if engine.IsSystemPath(req.Path) {
+		return api.handleServiceError(c, "Invalid path", services.ErrInvalidPath, dict)
+	}
+	if engine.IsPointerPath(req.Path) {
+		return api.handleServiceError(
+			c,
+			"Signed downloads of pointer files are not supported",
+			services.ErrInvalidRequest,
+			dict,
+		)
+	}
+
+	// Default ref to repository default branch
+	ref := req.Ref
+	if ref == "" {
+		ref = repository.DefaultBranch
+	}
+
+	// Determine expiry: nil = default 24h, 0 = never expires, >0 = custom
+	expiresInHours := signedURLDefaultExpiryHours
+	if req.ExpiresInHours != nil {
+		if *req.ExpiresInHours == 0 {
+			expiresInHours = signedURLNeverExpiryHours
+		} else if *req.ExpiresInHours > 0 {
+			expiresInHours = *req.ExpiresInHours
+		}
+	}
+
+	// Verify the object exists by looking it up via the data engine
+	dataEngine, engineErr := engine.NewClient(c.Context(), "en", api.Logger, api.Env, api.DB)
+	if engineErr != nil {
+		api.Logger.Error("Error creating data engine client for signed URL", "error", engineErr)
+		return api.handleServiceError(
+			c,
+			"Error creating data engine client",
+			services.NewInternalErrorf("engine client error: %w", engineErr),
+			dict,
+		)
+	}
+
+	exists, existsErr := dataEngine.ObjectExists(workspace.Slug, repository.Slug, req.Path, ref)
+	if existsErr != nil {
+		return api.handleServiceError(
+			c,
+			"Error checking object existence",
+			services.NewInternalErrorf("object existence check error: %w", existsErr),
+			dict,
+		)
+	}
+	if !exists {
+		return api.handleServiceError(c, "Object not found", services.ErrNotFound, dict)
+	}
+
+	// Check object-level permissions against the specific object to enforce deny policies
+	if permErr := api.checkObjectPermission(user, workspace, repository, req.Path, ref); permErr != nil {
+		return api.handleServiceError(c, "Error checking permissions", permErr, dict)
+	}
+
+	// Require a dedicated signing secret — never fall back to ClerkSigningKey
+	// which may be public JWT verification material in asymmetric setups.
+	secret := api.Env.SignedURLSecret
+	if secret == "" {
+		api.Logger.Error("SIGNED_URL_SECRET is not configured, cannot create signed URLs")
+		return api.handleServiceError(
+			c,
+			"Signed URLs are not configured",
+			services.NewInternalErrorf("SIGNED_URL_SECRET not set"),
+			dict,
+		)
+	}
+
+	// Generate signed token
+	expiresAt := time.Now().Add(time.Duration(expiresInHours) * time.Hour).Unix()
+	payload := utils.SignedURLPayload{
+		Workspace: workspace.Slug,
+		Repo:      repository.Slug,
+		Path:      req.Path,
+		Ref:       ref,
+		ExpiresAt: expiresAt,
+	}
+
+	token, tokenErr := utils.GenerateSignedToken([]byte(secret), payload)
+	if tokenErr != nil {
+		api.Logger.Error("Error generating signed token", "error", tokenErr)
+		return api.handleServiceError(
+			c,
+			"Error generating signed URL",
+			services.NewInternalErrorf("token generation error: %w", tokenErr),
+			dict,
+		)
+	}
+
+	// Build the full URL
+	signedURL := fmt.Sprintf("%s/api/v1/signed/download?token=%s", api.Env.URL, token)
+
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: irmincore.SignedURLResponse{
+			URL:       signedURL,
+			ExpiresAt: time.Unix(expiresAt, 0).UTC().Format(time.RFC3339),
+		},
+	})
+}
+
+// checkObjectPermission looks up a repository object by path and verifies the user has read access.
+// Returns nil if the object isn't indexed yet (record not found) or if access is allowed.
+// Returns a service error if the DB lookup fails or if access is denied.
+func (api *APIControllers) checkObjectPermission(
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	rawPath string,
+	ref string,
+) error {
+	objectPath := strings.TrimPrefix(rawPath, "/")
+	objectDB, objectDBErr := api.DB.FindObject(&objectPath, &repository.ID, &ref)
+	if objectDBErr != nil {
+		if errors.Is(objectDBErr, gorm.ErrRecordNotFound) {
+			// Object exists in storage but isn't indexed yet — deny policies can't be
+			// verified, so refuse to issue a signed URL until the object is indexed.
+			return services.ErrNotFound
+		}
+		api.Logger.Error("Error looking up object for permission check", "error", objectDBErr)
+		return services.NewInternalErrorf("object lookup error: %w", objectDBErr)
+	}
+	if objectDB == nil {
+		return services.ErrNotFound
+	}
+
+	isAllowed, permErr := api.Services.PermissionService.IsAllowed(
+		user,
+		workspace,
+		db.PolicyResourceRepositoryObject,
+		&objectDB.ID,
+		db.PolicyActionRead,
+	)
+	if permErr != nil {
+		api.Logger.Error("Error checking object-level permissions for signed URL", "error", permErr)
+		return services.NewInternalErrorf("permission check error: %w", permErr)
+	}
+	if !isAllowed {
+		return services.ErrNotFound // Return not-found to avoid leaking object existence
+	}
+	return nil
 }
 
 // RepositoryObjectsIndex godoc

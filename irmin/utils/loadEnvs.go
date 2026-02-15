@@ -53,6 +53,7 @@ type CoreAPIEnv struct {
 	TestRepository               string // Repository to test with
 	TestBranch                   string // Branch to test with
 	TestTag                      string // Tag to test with
+	SignedURLSecret              string // HMAC secret for signed download URLs
 }
 
 // getEnv retrieves a single environment variable. If required and missing, returns an error.
@@ -310,6 +311,11 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
+	signedURLSecret, err := getEnv("SIGNED_URL_SECRET", false, "")
+	if err != nil {
+		return nil, err
+	}
+
 	skipOptionalDuckDBExtensionsStr, err := getEnv("SKIP_OPTIONAL_DUCKDB_EXTENSIONS", false, "false")
 	if err != nil {
 		return nil, err
@@ -367,5 +373,6 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		TestRepository:               testRepository,
 		TestBranch:                   testBranch,
 		TestTag:                      testTag,
+		SignedURLSecret:              signedURLSecret,
 	}, nil
 }

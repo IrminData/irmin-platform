@@ -1578,6 +1578,28 @@ func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error
     /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/content
     [get]
 
+func (api *APIControllers) RepositoryObjectsCreateSignedURL(c fiber.Ctx) error
+    RepositoryObjectsCreateSignedURL godoc @Summary Create a signed download
+    URL for a repository object @Description Generate a time-limited signed
+    URL that allows downloading a repository object without authentication.
+    @Description Permissions are checked at URL creation time. The URL
+    can be shared with external users. @Tags repository-objects @Security
+    ApiKeyAuth @Accept json @Produce json @Param workspace_slug path
+    string true "Workspace slug" @Param repository_slug path string true
+    "Repository slug" @Param body body irmincore.CreateSignedURLRequest
+    true "Signed URL request parameters" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irmincore.SignedURLResponse}
+    "Signed URL created successfully" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - invalid parameters"
+    @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized
+    - invalid or missing authentication" @Failure 403 {object}
+    irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+    @Failure 404 {object} irminmodels.IrminAPIResponse "Object not
+    found at the specified path and ref" @Failure 500 {object}
+    irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/signed-url
+    [post]
+
 func (api *APIControllers) RepositoryObjectsDestroy(c fiber.Ctx) error
     RepositoryObjectsDestroy godoc @Summary Delete repository object
     @Description Delete an object from a repository at a given reference
@@ -1996,6 +2018,20 @@ func (api *APIControllers) ShowConnectorConfigurationFields(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "Connector not found" @Failure 500
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /connectors/{connector_slug}/config-fields/{type} [post]
+
+func (api *APIControllers) SignedDownload(c fiber.Ctx) error
+    SignedDownload godoc @Summary Download a repository object via signed URL
+    @Description Public endpoint that validates a signed token and streams the
+    file content. @Description No authentication required — the token itself
+    authorizes the download. @Tags signed-urls @Produce application/octet-stream
+    @Param token query string true "Signed download token" @Success 200 {file}
+    file "File content" @Failure 400 {object} irminmodels.IrminAPIResponse
+    "Bad request - missing token or pointer file" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid or expired token"
+    @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - system path
+    access denied" @Failure 404 {object} irminmodels.IrminAPIResponse "Object
+    not found" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
+    server error" @Router /api/v1/signed/download [get]
 
 func (api *APIControllers) StartWorkflow(c fiber.Ctx) error
     StartWorkflow godoc @Summary Start workflow @Description

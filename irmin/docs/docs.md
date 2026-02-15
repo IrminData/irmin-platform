@@ -953,6 +953,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) RepositoryGetUncommittedChanges\(c fiber.Ctx\) error](<#APIControllers.RepositoryGetUncommittedChanges>)
   - [func \(api \*APIControllers\) RepositoryMoveObject\(c fiber.Ctx\) error](<#APIControllers.RepositoryMoveObject>)
   - [func \(api \*APIControllers\) RepositoryObjectsContent\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsContent>)
+  - [func \(api \*APIControllers\) RepositoryObjectsCreateSignedURL\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsCreateSignedURL>)
   - [func \(api \*APIControllers\) RepositoryObjectsDestroy\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsDestroy>)
   - [func \(api \*APIControllers\) RepositoryObjectsDownload\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsDownload>)
   - [func \(api \*APIControllers\) RepositoryObjectsHistory\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsHistory>)
@@ -979,6 +980,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) SearchEmbeddings\(c fiber.Ctx\) error](<#APIControllers.SearchEmbeddings>)
   - [func \(api \*APIControllers\) SendInvite\(c fiber.Ctx\) error](<#APIControllers.SendInvite>)
   - [func \(api \*APIControllers\) ShowConnectorConfigurationFields\(c fiber.Ctx\) error](<#APIControllers.ShowConnectorConfigurationFields>)
+  - [func \(api \*APIControllers\) SignedDownload\(c fiber.Ctx\) error](<#APIControllers.SignedDownload>)
   - [func \(api \*APIControllers\) StartWorkflow\(c fiber.Ctx\) error](<#APIControllers.StartWorkflow>)
   - [func \(api \*APIControllers\) SwaggerJSON\(c fiber.Ctx\) error](<#APIControllers.SwaggerJSON>)
   - [func \(api \*APIControllers\) SwaggerUI\(c fiber.Ctx\) error](<#APIControllers.SwaggerUI>)
@@ -2019,6 +2021,15 @@ func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error
 
 RepositoryObjectsContent godoc @Summary Download repository object content @Description Download the raw content of an object from a repository at a given reference @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce application/octet\-stream @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param path query string true "Object path within the repository" @Param ref query string false "Reference \(branch, tag, or commit\) to download from" default\("main"\) @Success 200 \{file\} file "Object content as file download" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Object not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects/content \[get\]
 
+<a name="APIControllers.RepositoryObjectsCreateSignedURL"></a>
+### func \(\*APIControllers\) RepositoryObjectsCreateSignedURL
+
+```go
+func (api *APIControllers) RepositoryObjectsCreateSignedURL(c fiber.Ctx) error
+```
+
+RepositoryObjectsCreateSignedURL godoc @Summary Create a signed download URL for a repository object @Description Generate a time\-limited signed URL that allows downloading a repository object without authentication. @Description Permissions are checked at URL creation time. The URL can be shared with external users. @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param body body irmincore.CreateSignedURLRequest true "Signed URL request parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irmincore.SignedURLResponse\} "Signed URL created successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Object not found at the specified path and ref" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects/signed\-url \[post\]
+
 <a name="APIControllers.RepositoryObjectsDestroy"></a>
 ### func \(\*APIControllers\) RepositoryObjectsDestroy
 
@@ -2252,6 +2263,15 @@ func (api *APIControllers) ShowConnectorConfigurationFields(c fiber.Ctx) error
 ```
 
 ShowConnectorConfigurationFields godoc @Summary Get connector configuration fields @Description Get the dynamic configuration fields for a specific connector and configuration type @Tags connectors @Security ApiKeyAuth @Accept json @Produce json @Param connector\_slug path string true "Connector slug" @Param type path string true "Configuration type \(details, settings\)" @Param request body irmincore.ConnectorConfigurationRequest true "Current configuration data" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]object\} "Configuration fields retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body or configuration type" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connector not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /connectors/\{connector\_slug\}/config\-fields/\{type\} \[post\]
+
+<a name="APIControllers.SignedDownload"></a>
+### func \(\*APIControllers\) SignedDownload
+
+```go
+func (api *APIControllers) SignedDownload(c fiber.Ctx) error
+```
+
+SignedDownload godoc @Summary Download a repository object via signed URL @Description Public endpoint that validates a signed token and streams the file content. @Description No authentication required — the token itself authorizes the download. @Tags signed\-urls @Produce application/octet\-stream @Param token query string true "Signed download token" @Success 200 \{file\} file "File content" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing token or pointer file" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or expired token" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- system path access denied" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Object not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /api/v1/signed/download \[get\]
 
 <a name="APIControllers.StartWorkflow"></a>
 ### func \(\*APIControllers\) StartWorkflow
@@ -7285,7 +7305,7 @@ import "irmin-api/engine"
 - [func IsPointerPath\(path string\) bool](<#IsPointerPath>)
 - [func IsRowReturningStatement\(stmt string\) bool](<#IsRowReturningStatement>)
 - [func IsSchemaValidationError\(err error\) bool](<#IsSchemaValidationError>)
-- [func IsSystemPath\(path string\) bool](<#IsSystemPath>)
+- [func IsSystemPath\(p string\) bool](<#IsSystemPath>)
 - [func MaskStringLiterals\(sql string\) string](<#MaskStringLiterals>)
 - [func ParseFieldNameAndTypeForTesting\(fieldDef string\) \(string, string\)](<#ParseFieldNameAndTypeForTesting>)
 - [func PrimitiveSchemaForTesting\(duckType string, field SchemaField\) irminmodels.JSONSchema](<#PrimitiveSchemaForTesting>)
@@ -7339,6 +7359,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) ListTags\(workspace, repository string\) \(\[\]irminmodels.GitTag, error\)](<#Client.ListTags>)
   - [func \(c \*Client\) MergeRefs\(workspace, repository, baseRef, compareRef, message, author, strategy string, squash, allowEmpty bool\) \(\*irminmodels.Commit, error\)](<#Client.MergeRefs>)
   - [func \(c \*Client\) MoveObject\(workspace, repository, path, ref, newPath string\) \(\*irminmodels.Object, error\)](<#Client.MoveObject>)
+  - [func \(c \*Client\) ObjectExists\(workspace, repository, path, ref string\) \(bool, error\)](<#Client.ObjectExists>)
   - [func \(c \*Client\) ProcessTransformations\(ctx context.Context, files map\[string\]\[\]byte, config TransformConfig\) \(map\[string\]\[\]byte, error\)](<#Client.ProcessTransformations>)
   - [func \(c \*Client\) PullFilesFromConnector\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string\) \(map\[string\]\[\]byte, \[\]connectorsclient.OperationLog, error\)](<#Client.PullFilesFromConnector>)
   - [func \(c \*Client\) PushFilesToConnector\(ctx context.Context, connection \*db.Connection, connectionPath string, objects \[\]\*irminmodels.Object, files map\[string\]\[\]byte, tx ...\*gorm.DB\) \(\[\]string, \[\]connectorsclient.OperationLog, error\)](<#Client.PushFilesToConnector>)
@@ -7489,10 +7510,10 @@ IsSchemaValidationError checks if an error is a ConnectorSchemaValidationError.
 ## func IsSystemPath
 
 ```go
-func IsSystemPath(path string) bool
+func IsSystemPath(p string) bool
 ```
 
-IsSystemPath checks if the given path is a system path that should be hidden.
+IsSystemPath checks if any component of the given path is a system path that should be hidden. The path is normalized first to prevent traversal bypasses \(e.g. "foo/../../\_lakefs\_actions"\).
 
 <a name="MaskStringLiterals"></a>
 ## func MaskStringLiterals
@@ -8000,6 +8021,15 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 ```
 
 
+
+<a name="Client.ObjectExists"></a>
+### func \(\*Client\) ObjectExists
+
+```go
+func (c *Client) ObjectExists(workspace, repository, path, ref string) (bool, error)
+```
+
+ObjectExists checks whether an object exists at the given path and ref in the repository.
 
 <a name="Client.ProcessTransformations"></a>
 ### func \(\*Client\) ProcessTransformations
@@ -15817,6 +15847,7 @@ import "irmin-api/utils"
 - [func DetermineEditorItemLanguageFromPath\(inputPath string\) \*string](<#DetermineEditorItemLanguageFromPath>)
 - [func FindProjectRoot\(\) \(string, error\)](<#FindProjectRoot>)
 - [func GenerateRandomString\(\) \(string, error\)](<#GenerateRandomString>)
+- [func GenerateSignedToken\(secret \[\]byte, payload SignedURLPayload\) \(string, error\)](<#GenerateSignedToken>)
 - [func GetDefaultBranchRetentionDays\(branchRules \[\]irminmodels.BranchGarbageCollectionRules, defaultBranch string\) \*int](<#GetDefaultBranchRetentionDays>)
 - [func GetSupportedJWTAlgorithms\(\) \[\]string](<#GetSupportedJWTAlgorithms>)
 - [func IsJWTAlgorithmSupported\(algorithm string\) bool](<#IsJWTAlgorithmSupported>)
@@ -15856,6 +15887,8 @@ import "irmin-api/utils"
   - [func ParseIrminQuery\(query string, replaceFn ReplaceFn\) \(ParsedIrminQuery, error\)](<#ParseIrminQuery>)
 - [type ParsedQueryPlaceholder](<#ParsedQueryPlaceholder>)
 - [type ReplaceFn](<#ReplaceFn>)
+- [type SignedURLPayload](<#SignedURLPayload>)
+  - [func ValidateSignedToken\(secret \[\]byte, token string\) \(\*SignedURLPayload, error\)](<#ValidateSignedToken>)
 
 
 ## Constants
@@ -16070,6 +16103,15 @@ func GenerateRandomString() (string, error)
 
 GenerateRandomString generates a random 64\-character string. It does so by generating 32 random bytes and then encoding them in hexadecimal, as each byte produces two hexadecimal characters. Returns the random string or an error if one occurs.
 
+<a name="GenerateSignedToken"></a>
+## func GenerateSignedToken
+
+```go
+func GenerateSignedToken(secret []byte, payload SignedURLPayload) (string, error)
+```
+
+GenerateSignedToken creates a signed token from a payload using HMAC\-SHA256. The token format is: base64url\(payload\).base64url\(hmac\).
+
 <a name="GetDefaultBranchRetentionDays"></a>
 ## func GetDefaultBranchRetentionDays
 
@@ -16275,6 +16317,7 @@ type CoreAPIEnv struct {
     TestRepository               string // Repository to test with
     TestBranch                   string // Branch to test with
     TestTag                      string // Tag to test with
+    SignedURLSecret              string // HMAC secret for signed download URLs
 }
 ```
 
@@ -16556,6 +16599,30 @@ ReplaceFn is the type for a function that computes a replacement string for a pa
 ```go
 type ReplaceFn func(pi *ParsedQueryPlaceholder) (string, error)
 ```
+
+<a name="SignedURLPayload"></a>
+## type SignedURLPayload
+
+SignedURLPayload contains the parameters encoded in a signed download URL.
+
+```go
+type SignedURLPayload struct {
+    Workspace string `json:"w"`
+    Repo      string `json:"r"`
+    Path      string `json:"p"`
+    Ref       string `json:"ref"`
+    ExpiresAt int64  `json:"exp"`
+}
+```
+
+<a name="ValidateSignedToken"></a>
+### func ValidateSignedToken
+
+```go
+func ValidateSignedToken(secret []byte, token string) (*SignedURLPayload, error)
+```
+
+ValidateSignedToken verifies the HMAC signature and expiry of a signed token. Returns the decoded payload if valid, or an error if the token is invalid or expired.
 
 # config
 

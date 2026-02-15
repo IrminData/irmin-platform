@@ -230,6 +230,22 @@ func (c *Client) GetPath(workspace, repository, path, ref string) (*irminmodels.
 	return irminObject, nil
 }
 
+// ObjectExists checks whether an object exists at the given path and ref in the repository.
+func (c *Client) ObjectExists(workspace, repository, path, ref string) (bool, error) {
+	if IsSystemPath(path) {
+		return false, fmt.Errorf("access to system path %s is not allowed", path)
+	}
+
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
+	if err := c.LakeFSClient.CheckObjectExists(lakeFSRepositoryName, ref, path); err != nil {
+		if strings.Contains(err.Error(), "status 404") {
+			return false, nil
+		}
+		return false, fmt.Errorf("object existence check failed: %w", err)
+	}
+	return true, nil
+}
+
 func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]byte, error) {
 	// Check if the object is a system path
 	if IsSystemPath(path) {

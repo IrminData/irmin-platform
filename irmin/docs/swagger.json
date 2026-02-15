@@ -910,6 +910,65 @@
                 }
             }
         },
+        "/api/v1/signed/download": {
+            "get": {
+                "description": "Public endpoint that validates a signed token and streams the file content.\nNo authentication required — the token itself authorizes the download.",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "signed-urls"
+                ],
+                "summary": "Download a repository object via signed URL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Signed download token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File content",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - missing token or pointer file",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or expired token",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - system path access denied",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Object not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/connectors": {
             "get": {
                 "security": [
@@ -10161,6 +10220,101 @@
                 }
             }
         },
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/signed-url": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Generate a time-limited signed URL that allows downloading a repository object without authentication.\nPermissions are checked at URL creation time. The URL can be shared with external users.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repository-objects"
+                ],
+                "summary": "Create a signed download URL for a repository object",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository slug",
+                        "name": "repository_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Signed URL request parameters",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.CreateSignedURLRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Signed URL created successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irmincore.SignedURLResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid parameters",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Object not found at the specified path and ref",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/upload": {
             "post": {
                 "security": [
@@ -14624,6 +14778,27 @@
                 }
             }
         },
+        "irmincore.CreateSignedURLRequest": {
+            "type": "object",
+            "required": [
+                "path"
+            ],
+            "properties": {
+                "expires_in_hours": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "example": 24
+                },
+                "path": {
+                    "type": "string",
+                    "example": "data/file.csv"
+                },
+                "ref": {
+                    "type": "string",
+                    "example": "main"
+                }
+            }
+        },
         "irmincore.CreateTagRequest": {
             "type": "object",
             "required": [
@@ -14851,6 +15026,19 @@
                     "type": "string",
                     "maxLength": 50,
                     "example": "admin"
+                }
+            }
+        },
+        "irmincore.SignedURLResponse": {
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "type": "string",
+                    "example": "2024-02-07T12:00:00Z"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://api.irmin.co/api/v1/signed/download?token=..."
                 }
             }
         },

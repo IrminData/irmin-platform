@@ -408,6 +408,21 @@ definitions:
     required:
     - name
     type: object
+  irmincore.CreateSignedURLRequest:
+    properties:
+      expires_in_hours:
+        example: 24
+        minimum: 0
+        type: integer
+      path:
+        example: data/file.csv
+        type: string
+      ref:
+        example: main
+        type: string
+    required:
+    - path
+    type: object
   irmincore.CreateTagRequest:
     properties:
       color:
@@ -573,6 +588,15 @@ definitions:
     required:
     - email
     - role
+    type: object
+  irmincore.SignedURLResponse:
+    properties:
+      expires_at:
+        example: "2024-02-07T12:00:00Z"
+        type: string
+      url:
+        example: https://api.irmin.co/api/v1/signed/download?token=...
+        type: string
     type: object
   irmincore.TransferAIApplicationOwnershipRequest:
     properties:
@@ -4979,6 +5003,47 @@ paths:
       summary: Write or update a file
       tags:
       - ai-app-api
+  /api/v1/signed/download:
+    get:
+      description: |-
+        Public endpoint that validates a signed token and streams the file content.
+        No authentication required — the token itself authorizes the download.
+      parameters:
+      - description: Signed download token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: File content
+          schema:
+            type: file
+        "400":
+          description: Bad request - missing token or pointer file
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or expired token
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - system path access denied
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Object not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      summary: Download a repository object via signed URL
+      tags:
+      - signed-urls
   /connectors:
     get:
       consumes:
@@ -10761,6 +10826,67 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Get object schema
+      tags:
+      - repository-objects
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/signed-url:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Generate a time-limited signed URL that allows downloading a repository object without authentication.
+        Permissions are checked at URL creation time. The URL can be shared with external users.
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Repository slug
+        in: path
+        name: repository_slug
+        required: true
+        type: string
+      - description: Signed URL request parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.CreateSignedURLRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Signed URL created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irmincore.SignedURLResponse'
+              type: object
+        "400":
+          description: Bad request - invalid parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Object not found at the specified path and ref
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a signed download URL for a repository object
       tags:
       - repository-objects
   /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/upload:

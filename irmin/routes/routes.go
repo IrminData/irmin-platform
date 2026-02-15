@@ -40,6 +40,9 @@ func RegisterAPIRoutes(
 	// Public system routes (no auth required)
 	app.Get("/api/v1/system/sandbox-health", apiControllers.SystemSandboxHealth)
 
+	// Public signed download route (no auth required — token-based authorization)
+	app.Get("/api/v1/signed/download", apiControllers.SignedDownload)
+
 	// Swagger documentation endpoints
 	app.Get("/swagger/swagger.json", apiControllers.SwaggerJSON)
 	app.Get("/swagger", apiControllers.SwaggerUI)
@@ -635,6 +638,13 @@ func RegisterAPIRoutes(
 		"/merge",
 		apiMiddlewares.RepositoryCommitPermissionMiddleware(db.PolicyActionCreate),
 		apiControllers.MergeRefs,
+	)
+
+	// Signed URL creation route (before object group to avoid RepositoryObjectMiddleware)
+	repository.Post(
+		"/objects/signed-url",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryObjectsCreateSignedURL,
 	)
 
 	// Object routes
