@@ -77,7 +77,6 @@ export default function ConfigureExportStep({
         return;
       }
 
-
       if (!data.repository_branch.trim()) {
         irminAlert('error', dict.wizard.pleaseSelectRepositoryBranch);
         return;

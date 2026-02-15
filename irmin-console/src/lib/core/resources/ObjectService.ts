@@ -36,6 +36,14 @@ interface CreatePointerRequest {
 }
 
 /**
+ * Response from creating a signed download URL
+ */
+interface CreateSignedURLResponse {
+  url: string;
+  expires_at: string;
+}
+
+/**
  * Object API service
  *
  * Responsible for all repository object-related API calls.
@@ -65,6 +73,7 @@ class ObjectService {
     this.deleteObject = this.deleteObject.bind(this);
     this.validateObject = this.validateObject.bind(this);
     this.createPointer = this.createPointer.bind(this);
+    this.createSignedObjectURL = this.createSignedObjectURL.bind(this);
   }
 
   /**
@@ -649,6 +658,54 @@ class ObjectService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create pointer error');
+      throw error;
+    }
+  }
+
+  /**
+   * Create a signed download URL for a repository object.
+   *
+   * @param props - The signed URL creation properties.
+   * @param props.workspace - The workspace slug.
+   * @param props.repository - The repository slug.
+   * @param props.path - The path of the object.
+   * @param props.ref - (optional) The ref (branch, tag or commit hash).
+   * @param props.expiresInHours - (optional) How many hours the link is valid (default 24, max 168).
+   * @returns IrminAPIResponse containing the signed URL and expiry.
+   */
+  async createSignedObjectURL({
+    workspace,
+    repository,
+    path,
+    ref,
+    expiresInHours,
+  }: {
+    workspace: string;
+    repository: string;
+    path: string;
+    ref?: string;
+    expiresInHours?: number;
+  }): Promise<IrminAPIResponse<CreateSignedURLResponse>> {
+    try {
+      const requestBody: {
+        path: string;
+        ref?: string;
+        expires_in_hours?: number;
+      } = { path };
+      if (ref) requestBody.ref = ref;
+      if (expiresInHours != null) requestBody.expires_in_hours = expiresInHours;
+
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/signed-url`;
+
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      })) as IrminAPIResponse<CreateSignedURLResponse>;
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Create signed object URL error');
       throw error;
     }
   }

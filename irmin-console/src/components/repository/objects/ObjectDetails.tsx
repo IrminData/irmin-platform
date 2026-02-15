@@ -23,6 +23,14 @@ import {
 } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -122,8 +130,9 @@ export default function ObjectDetails({
     moveObjectMutation,
     uploadObjectMutation,
     validateObjectMutation,
+    createSignedURLMutation,
   } = useRepositoryObject(repository.slug, currentRef, selectedObject?.path);
-  const { irminModal, irminConfirm } = usePopup();
+  const { irminModal, irminConfirm, irminAlert } = usePopup();
   const { dict } = useLocale();
 
   const { downloadObjectAsZipMutation } = useRepositoryObjectContent(
@@ -362,6 +371,57 @@ export default function ObjectDetails({
       setDownloading(false);
     }
   }, [selectedObject, downloadObjectAsZipMutation, currentRef]);
+
+  const [sharePopoverOpen, setSharePopoverOpen] = useState(false);
+  const [shareLinkExpiry, setShareLinkExpiry] = useState('24');
+  const [customHours, setCustomHours] = useState('48');
+  const [generatingShareLink, setGeneratingShareLink] = useState(false);
+
+  const handleShare = useCallback(async () => {
+    if (!selectedObject) return;
+    setGeneratingShareLink(true);
+    try {
+      const expiresInHours =
+        shareLinkExpiry === 'never'
+          ? 0
+          : shareLinkExpiry === 'custom'
+            ? parseInt(customHours, 10) || 24
+            : parseInt(shareLinkExpiry, 10);
+      const result = await createSignedURLMutation.mutateAsync({
+        path: selectedObject.path,
+        ref: currentRef ?? '',
+        expiresInHours,
+      });
+      try {
+        await navigator.clipboard.writeText(result.url);
+        const expiryLabel =
+          shareLinkExpiry === 'custom'
+            ? `${customHours} ${dict.repository.objects.shareLinkCustomHours.toLowerCase()}`
+            : dict.repository.objects.shareLinkExpiryOptions[
+                shareLinkExpiry as keyof typeof dict.repository.objects.shareLinkExpiryOptions
+              ];
+        irminAlert(
+          'success',
+          `${dict.repository.objects.shareLinkCopied} (${expiryLabel})`
+        );
+      } catch {
+        irminAlert('error', dict.repository.objects.shareError);
+      }
+      setSharePopoverOpen(false);
+    } catch (error) {
+      console.error('Error creating share link:', error);
+    } finally {
+      setGeneratingShareLink(false);
+    }
+  }, [
+    selectedObject,
+    createSignedURLMutation,
+    currentRef,
+    shareLinkExpiry,
+    customHours,
+    irminAlert,
+    dict,
+  ]);
 
   const { addTagToEntityMutation, removeTagFromEntityMutation } =
     useWorkspaceTags(workspaceSlug);
@@ -805,6 +865,65 @@ export default function ObjectDetails({
             >
               {dict.common.download}
             </Button>
+          )}
+          {canDownload && selectedObject?.type !== 'group' && (
+            <Popover open={sharePopoverOpen} onOpenChange={setSharePopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  size='sm'
+                  variant='secondary'
+                  className='w-full'
+                  icon={<TbLink />}
+                >
+                  {dict.repository.objects.shareLink}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className='w-72' align='start'>
+                <div className='space-y-3'>
+                  <p className='text-sm font-medium'>
+                    {dict.repository.objects.shareLinkExpiryLabel}
+                  </p>
+                  <RadioGroup
+                    value={shareLinkExpiry}
+                    onValueChange={setShareLinkExpiry}
+                  >
+                    {Object.entries(
+                      dict.repository.objects.shareLinkExpiryOptions
+                    ).map(([value, label]) => (
+                      <div key={value} className='flex items-center gap-2'>
+                        <RadioGroupItem
+                          value={value}
+                          id={`share-expiry-${value}`}
+                        />
+                        <Label htmlFor={`share-expiry-${value}`}>{label}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                  {shareLinkExpiry === 'custom' && (
+                    <div className='flex items-center gap-2'>
+                      <Input
+                        type='number'
+                        min={1}
+                        value={customHours}
+                        onChange={(e) => setCustomHours(e.target.value)}
+                        className='h-8'
+                      />
+                      <span className='text-sm text-muted-foreground'>
+                        {dict.repository.objects.shareLinkCustomHours}
+                      </span>
+                    </div>
+                  )}
+                  <Button
+                    size='sm'
+                    className='w-full'
+                    onClick={handleShare}
+                    loading={generatingShareLink}
+                  >
+                    {dict.repository.objects.shareLinkGenerate}
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
           {canMoveOrRename && (
             <Button

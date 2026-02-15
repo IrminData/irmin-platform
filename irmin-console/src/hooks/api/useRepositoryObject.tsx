@@ -259,6 +259,28 @@ export const useRepositoryObject = (
     },
   });
 
+  const createSignedURLMutation = useMutation<
+    { url: string; expires_at: string },
+    Error,
+    { path: string; ref: string; expiresInHours?: number }
+  >({
+    mutationFn: async ({ path, ref, expiresInHours }) => {
+      const core = await getCore();
+      const response = await core.objectService.createSignedObjectURL({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        path,
+        ref,
+        expiresInHours,
+      });
+      if (!response.data) throw new Error('No signed URL returned');
+      return response.data;
+    },
+    onError: (error) => {
+      irminAlert('error', error.message ?? dict.repository.objects.shareError);
+    },
+  });
+
   return {
     // Queries
     repositoryObjectQuery,
@@ -271,5 +293,6 @@ export const useRepositoryObject = (
     uploadObjectFromURLMutation,
     createPointerMutation,
     validateObjectMutation,
+    createSignedURLMutation,
   };
 };

@@ -63,7 +63,6 @@ function ConfigureWorkflowStep({
         return;
       }
 
-
       const res = await createWorkflowMutation.mutateAsync({
         type: wizardData.type,
         name: wizardData.name,
