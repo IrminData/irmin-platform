@@ -133,7 +133,7 @@ export default function EmbeddingEditSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <div className='flex flex-col gap-6 py-6'>
+        <div className='flex flex-col gap-6 p-4'>
           {/* Read-only Info Section */}
           <div className='flex flex-col gap-4'>
             {/* Content Preview */}
@@ -143,7 +143,7 @@ export default function EmbeddingEditSheet({
               </Label>
               <div
                 className={`
-                  max-h-32 overflow-y-auto rounded-md border bg-muted/30 p-3
+                  max-h-44 overflow-y-auto rounded-md border bg-muted/30 p-3
                   text-sm leading-relaxed text-muted-foreground
                 `}
               >
@@ -217,10 +217,12 @@ export default function EmbeddingEditSheet({
             onChange={setMetadata}
             disabled={isSaving}
           />
+
+          <Separator />
         </div>
 
         {/* Footer Actions */}
-        <div className='flex justify-end gap-2 border-t pt-4'>
+        <div className='flex justify-end gap-2 px-4 pt-4'>
           <Button
             variant='outline'
             onClick={() => onOpenChange(false)}
