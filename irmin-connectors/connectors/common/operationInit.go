@@ -110,6 +110,7 @@ func (cs *Controllers) HandleOperationInit(c fiber.Ctx, provider OperationInitPr
 
 	// Use transaction with Level 1 lock to prevent duplicate operations
 	var operation *db.Operation
+	var isNewOperation bool
 	err = cs.DB.Transaction(func(tx *gorm.DB) error {
 		// Acquire lock based on connector name + config hash
 		if lockErr := db.LockOperationCreation(tx, info.Name, configHash); lockErr != nil {
@@ -148,16 +149,7 @@ func (cs *Controllers) HandleOperationInit(c fiber.Ctx, provider OperationInitPr
 		}
 
 		operation = newOperation
-
-		// Log operation creation
-		LogOperationEvent(
-			cs.DB,
-			cs.Logger,
-			operation.ID,
-			db.LogEventTypeInfo,
-			"Operation created",
-			nil,
-		)
+		isNewOperation = true
 
 		return nil
 	})
@@ -166,6 +158,18 @@ func (cs *Controllers) HandleOperationInit(c fiber.Ctx, provider OperationInitPr
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to create operation: " + err.Error(),
 		})
+	}
+
+	// Log after transaction commit so the operation is visible to all connections
+	if isNewOperation {
+		LogOperationEvent(
+			cs.DB,
+			cs.Logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Operation created",
+			nil,
+		)
 	}
 
 	// Send the response

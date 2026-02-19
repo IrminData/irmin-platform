@@ -104,6 +104,8 @@ import "irmin-connectors/db"
 - [func TryLockOperationExecution\(db \*gorm.DB, operationID uint\) \(bool, error\)](<#TryLockOperationExecution>)
 - [func UnlockKey\(db \*gorm.DB, key string\) error](<#UnlockKey>)
 - [func UnlockOperationExecution\(db \*gorm.DB, operationID uint\) error](<#UnlockOperationExecution>)
+- [func WithOperationExecutionLock\(db \*gorm.DB, operationID uint, fn func\(conn \*gorm.DB\) error\) \(bool, error\)](<#WithOperationExecutionLock>)
+- [func WithSessionLock\(db \*gorm.DB, key string, fn func\(conn \*gorm.DB\) error\) \(bool, error\)](<#WithSessionLock>)
 - [type ConnectorRegistration](<#ConnectorRegistration>)
 - [type Database](<#Database>)
   - [func InitialiseDB\(ctx context.Context, runMigrations bool\) \(\*Database, error\)](<#InitialiseDB>)
@@ -210,6 +212,24 @@ func UnlockOperationExecution(db *gorm.DB, operationID uint) error
 ```
 
 UnlockOperationExecution releases a session\-scoped advisory lock for operation execution.
+
+<a name="WithOperationExecutionLock"></a>
+## func WithOperationExecutionLock
+
+```go
+func WithOperationExecutionLock(db *gorm.DB, operationID uint, fn func(conn *gorm.DB) error) (bool, error)
+```
+
+WithOperationExecutionLock acquires a session\-scoped execution lock for the operation, runs fn, then releases the lock — all on the same pinned database connection. Returns \(true, err\) if the lock was acquired and fn was executed. Returns \(false, nil\) if the operation is already being executed by another session.
+
+<a name="WithSessionLock"></a>
+## func WithSessionLock
+
+```go
+func WithSessionLock(db *gorm.DB, key string, fn func(conn *gorm.DB) error) (bool, error)
+```
+
+WithSessionLock pins a database connection, acquires a session\-scoped advisory lock, runs the provided function, then releases the lock — all on the same session. Returns \(true, err\) if the lock was acquired and fn was executed. Returns \(false, nil\) if the lock is already held by another session.
 
 <a name="ConnectorRegistration"></a>
 ## type ConnectorRegistration

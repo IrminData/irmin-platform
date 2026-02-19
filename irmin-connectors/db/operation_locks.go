@@ -31,3 +31,12 @@ func UnlockOperationExecution(db *gorm.DB, operationID uint) error {
 	lockKey := fmt.Sprintf("operation_exec:%d", operationID)
 	return UnlockKey(db, lockKey)
 }
+
+// WithOperationExecutionLock acquires a session-scoped execution lock for the operation,
+// runs fn, then releases the lock — all on the same pinned database connection.
+// Returns (true, err) if the lock was acquired and fn was executed.
+// Returns (false, nil) if the operation is already being executed by another session.
+func WithOperationExecutionLock(db *gorm.DB, operationID uint, fn func(conn *gorm.DB) error) (bool, error) {
+	lockKey := fmt.Sprintf("operation_exec:%d", operationID)
+	return WithSessionLock(db, lockKey, fn)
+}

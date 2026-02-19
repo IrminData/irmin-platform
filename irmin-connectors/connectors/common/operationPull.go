@@ -9,6 +9,7 @@ import (
 
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 // PullOperationProvider defines the interface for connector-specific pull operation handling.
@@ -42,12 +43,15 @@ func HandleOperationPull(
 		})
 	}
 
-	// Use Level 2 lock to prevent concurrent execution of the same operation
-	locked, err := db.TryLockOperationExecution(dbInstance.DB, operation.ID)
-	if err != nil {
-		logger.Error("failed to acquire operation execution lock", "error", err, "operation_id", operation.ID)
+	// Use a pinned connection for the session-scoped advisory lock to ensure
+	// acquire and release happen on the same database session.
+	locked, lockErr := db.WithOperationExecutionLock(dbInstance.DB, operation.ID, func(_ *gorm.DB) error {
+		return executePullOperation(c, provider, logger, dbInstance, operation)
+	})
+	if lockErr != nil {
+		logger.Error("failed during operation execution", "error", lockErr, "operation_id", operation.ID)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to acquire operation lock",
+			"error": "Failed to execute operation",
 		})
 	}
 	if !locked {
@@ -56,13 +60,17 @@ func HandleOperationPull(
 		})
 	}
 
-	// Ensure lock is released when operation completes
-	defer func() {
-		if unlockErr := db.UnlockOperationExecution(dbInstance.DB, operation.ID); unlockErr != nil {
-			logger.Error("failed to release operation execution lock", "error", unlockErr, "operation_id", operation.ID)
-		}
-	}()
+	return nil
+}
 
+// executePullOperation performs the actual pull operation logic.
+func executePullOperation(
+	c fiber.Ctx,
+	provider PullOperationProvider,
+	logger *slog.Logger,
+	dbInstance *db.Database,
+	operation *db.Operation,
+) error {
 	// Log operation execution start
 	LogOperationEvent(
 		dbInstance,

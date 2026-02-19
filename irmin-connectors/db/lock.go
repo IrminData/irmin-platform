@@ -50,3 +50,33 @@ func UnlockKey(db *gorm.DB, key string) error {
 	}
 	return nil
 }
+
+// WithSessionLock pins a database connection, acquires a session-scoped advisory lock,
+// runs the provided function, then releases the lock — all on the same session.
+// Returns (true, err) if the lock was acquired and fn was executed.
+// Returns (false, nil) if the lock is already held by another session.
+func WithSessionLock(db *gorm.DB, key string, fn func(conn *gorm.DB) error) (bool, error) {
+	var acquired bool
+	err := db.Connection(func(conn *gorm.DB) error {
+		// Try to acquire lock on this pinned connection
+		if lockErr := conn.Raw(
+			"SELECT pg_try_advisory_lock(hashtextextended(?, 0))", key,
+		).Scan(&acquired).Error; lockErr != nil {
+			return lockErr
+		}
+		if !acquired {
+			return nil
+		}
+
+		// Ensure unlock runs on the same pinned connection
+		defer func() {
+			var unlocked bool
+			_ = conn.Raw(
+				"SELECT pg_advisory_unlock(hashtextextended(?, 0))", key,
+			).Scan(&unlocked).Error
+		}()
+
+		return fn(conn)
+	})
+	return acquired, err
+}
