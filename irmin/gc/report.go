@@ -28,10 +28,6 @@ type Report struct {
 	// Soft-deleted records cleanup results (table name → count deleted).
 	SoftDeletedRecords map[string]int64
 
-	// Temp file cleanup results.
-	TempFilesDeleted int
-	TempBytesFreed   int64
-
 	// General errors encountered during GC.
 	Errors []error
 }

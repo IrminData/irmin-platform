@@ -912,7 +912,7 @@ func (c *Client) getParquetColumnInfo(ctx context.Context, parquetPath string) (
 	info := parquetColumnInfo{}
 	for rows.Next() {
 		var colName string
-		var colType, nullFlag, key, defaultVal, extra interface{} // DESCRIBE: column_name, column_type, null, key, default, extra
+		var colType, nullFlag, key, defaultVal, extra any // DESCRIBE: column_name, column_type, null, key, default, extra
 		if scanErr := rows.Scan(&colName, &colType, &nullFlag, &key, &defaultVal, &extra); scanErr != nil {
 			continue
 		}

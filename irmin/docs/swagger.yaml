@@ -5748,26 +5748,6 @@ paths:
       summary: Get Swagger JSON specification
       tags:
       - documentation
-  /system/sandbox-health:
-    get:
-      description: Verify that the compute sandbox is available and functioning
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Sandbox is healthy
-          schema:
-            allOf:
-            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
-            - properties:
-                data:
-                  additionalProperties:
-                    type: string
-                  type: object
-              type: object
-      summary: Check sandbox health
-      tags:
-      - system
   /system/schema-from-file:
     post:
       consumes:

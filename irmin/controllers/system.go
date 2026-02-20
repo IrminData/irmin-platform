@@ -168,20 +168,3 @@ func (api *APIControllers) GenerateFileSchema(c fiber.Ctx) error {
 		Data:    schema,
 	})
 }
-
-// SystemSandboxHealth godoc
-// @Summary Check sandbox health
-// @Description Verify that the compute sandbox is available and functioning
-// @Tags system
-// @Produce json
-// @Success 200 {object} irminmodels.IrminAPIResponse{data=map[string]string} "Sandbox is healthy"
-// @Router /system/sandbox-health [get]
-func (api *APIControllers) SystemSandboxHealth(c fiber.Ctx) error {
-	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: "Sandbox is healthy and available",
-		Data: map[string]string{
-			"status": "healthy",
-			"type":   "direct",
-		},
-	})
-}

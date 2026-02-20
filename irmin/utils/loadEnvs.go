@@ -43,7 +43,8 @@ type CoreAPIEnv struct {
 	S3AccessKeyID                string // Access key ID for the S3-compatible object store
 	S3AccessSecret               string // Secret access key for the S3-compatible object store
 	SkipOptionalDuckDBExtensions bool   // Flag to skip installation of optional DuckDB extensions
-	ComputeSandboxDir            string // Base directory for compute sandbox script execution
+	DaytonaAPIKey                string // API key for Daytona sandbox service
+	DaytonaAPIURL                string // Base URL for Daytona sandbox service API
 	TestConnectorBaseURL         string // Base URL of the connector to test with
 	TestConnectorToken           string // Operation token for the connector to test with
 	TestConnectorPath            string // Path to the test file in the connector
@@ -325,7 +326,11 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
-	computeSandboxDir, err := getEnv("IRMIN_COMPUTE_SANDBOX_DIR", false, "./tmp/sandbox")
+	daytonaAPIKey, err := getEnv("DAYTONA_API_KEY", false, "")
+	if err != nil {
+		return nil, err
+	}
+	daytonaAPIURL, err := getEnv("DAYTONA_API_URL", false, "https://app.daytona.io/api")
 	if err != nil {
 		return nil, err
 	}
@@ -363,7 +368,8 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		S3AccessKeyID:                s3AccessKeyID,
 		S3AccessSecret:               s3AccessSecret,
 		SkipOptionalDuckDBExtensions: skipOptionalDuckDBExtensions,
-		ComputeSandboxDir:            computeSandboxDir,
+		DaytonaAPIKey:                daytonaAPIKey,
+		DaytonaAPIURL:                daytonaAPIURL,
 		TestConnectorBaseURL:         testConnectorBaseURL,
 		TestConnectorToken:           testConnectorToken,
 		TestConnectorPath:            testConnectorPath,

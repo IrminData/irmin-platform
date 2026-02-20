@@ -1,6 +1,7 @@
 package services
 
 import (
+	sandbox "irmin-api/compute-sandbox"
 	"irmin-api/db"
 	"irmin-api/lib"
 	"irmin-api/locales"
@@ -26,6 +27,7 @@ type APIServices struct {
 	CacheStorage       fiber.Storage
 	authCache          *AuthCache
 	schemaCacheManager *lib.SchemaCacheManager
+	computeSandbox     *sandbox.ComputeSandbox
 }
 
 func NewAPIServices(
@@ -52,5 +54,6 @@ func NewAPIServices(
 		CacheStorage:       cacheStorage,
 		authCache:          authCache,
 		schemaCacheManager: schemaCacheManager,
+		computeSandbox:     sandbox.NewComputeSandbox(env, db, logger),
 	}
 }

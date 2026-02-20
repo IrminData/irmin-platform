@@ -307,7 +307,7 @@ func executeQueryToJSON(query string) (string, error) {
 	// Collect results
 	var results []map[string]any
 	for rows.Next() {
-		// Create a slice of interface{} to hold the row values
+		// Create a slice of any to hold the row values
 		values := make([]any, len(columns))
 		valuePtrs := make([]any, len(columns))
 		for i := range values {

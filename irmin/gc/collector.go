@@ -90,9 +90,6 @@ func (c *Collector) Run(ctx context.Context, dryRun bool) *Report {
 	// 7. Hard-delete soft-deleted records past retention.
 	c.cleanupSoftDeletedRecords(ctx, dryRun, report)
 
-	// 8. Clean up orphaned temp files.
-	c.cleanupTempFiles(ctx, dryRun, report)
-
 	report.FinishedAt = time.Now()
 	c.logReport(ctx, report)
 
@@ -115,8 +112,6 @@ func (c *Collector) logReport(ctx context.Context, report *Report) {
 		"log_events_deleted", report.LogEventsDeleted,
 		"orphaned_rules_matched", len(report.OrphanedRecords),
 		"soft_deleted_tables", len(report.SoftDeletedRecords),
-		"temp_files_deleted", report.TempFilesDeleted,
-		"temp_bytes_freed", report.TempBytesFreed,
 		"has_errors", report.HasErrors(),
 	)
 }

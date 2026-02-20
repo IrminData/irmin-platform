@@ -313,31 +313,30 @@ import "irmin-api/compute-sandbox"
 
 ## Constants
 
-<a name="FileDownloadTimeout"></a>
+<a name="DaytonaDefaultCPU"></a>
 
 ```go
 const (
-    FileDownloadTimeout  = 300 * time.Second // 5 minutes for large files
-    FileUploadTimeout    = 180 * time.Second // 3 minutes
-    FileOperationTimeout = 30 * time.Second  // Timeout for general file operations
+    DaytonaDefaultCPU    = 2               // vCPUs per sandbox
+    DaytonaDefaultMemory = 2               // GB per sandbox
+    DaytonaDefaultDisk   = 5               // GB per sandbox
+    DaytonaCreateTimeout = 2 * time.Minute // Maximum time to wait for sandbox creation
 
-    LatestGoVersion     = "1.25.0"
-    LatestNodeVersion   = "24.2.0"
-    LatestPythonVersion = "3.11.12"
+    DockerImageGo     = "golang:1.25"
+    DockerImagePython = "python:3.11"
+    DockerImageNode   = "node:24"
 
-    RuntimeTypePython     = "python"
-    RuntimeTypeGo         = "go"
-    RuntimeTypeNode       = "node"
-    RuntimeTypeTypeScript = "typescript"
+    SandboxWorkDir = "/workspace"
 
-    InterpreterPython     = "/usr/bin/python3"
-    InterpreterGo         = "/usr/local/go/bin/go"
-    InterpreterNode       = "/usr/bin/node"
-    InterpreterTypeScript = "/usr/bin/npx"
+    LatestGoVersion = "1.25.0"
+
+    RuntimeTypePython = "python"
+    RuntimeTypeGo     = "go"
+    RuntimeTypeNode   = "node"
 
     TokenExpiryDuration = 60 * time.Minute // How long API tokens created for sandbox execution should be valid
 
-    MaxConcurrentExecutions = 50 // Maximum concurrent script executions (each in its own temp dir)
+    MaxConcurrentExecutions = 50 // Maximum concurrent sandbox executions
 )
 ```
 
@@ -352,7 +351,7 @@ var ErrScriptAlreadyRunning = errors.New("script is already being executed")
 <a name="ComputeSandbox"></a>
 ## type ComputeSandbox
 
-ComputeSandbox is a struct that contains the environment, database, and logger for the compute sandbox.
+ComputeSandbox provides isolated script execution using Daytona sandboxes.
 
 ```go
 type ComputeSandbox struct {
@@ -367,7 +366,7 @@ type ComputeSandbox struct {
 func NewComputeSandbox(env *utils.CoreAPIEnv, d *db.Database, logger *slog.Logger) *ComputeSandbox
 ```
 
-NewComputeSandbox creates a new ComputeSandbox.
+NewComputeSandbox creates a new ComputeSandbox. Returns an error if the Daytona client cannot be initialized.
 
 <a name="ComputeSandbox.ExecutedStoredScript"></a>
 ### func \(\*ComputeSandbox\) ExecutedStoredScript
@@ -376,12 +375,12 @@ NewComputeSandbox creates a new ComputeSandbox.
 func (s *ComputeSandbox) ExecutedStoredScript(ctx context.Context, inputFiles map[string][]byte, responsibleUser db.User, script *db.StoredScript) (ExecutionResult, error)
 ```
 
-ExecutedStoredScript executes the provided stored script. It creates a temporary directory, writes the script content to a file, executes the code, and returns the execution result.
+ExecutedStoredScript executes the provided stored script in an isolated Daytona sandbox. It acquires an advisory lock to prevent concurrent execution of the same script, creates a temporary API token, and delegates execution to the Daytona sandbox.
 
 <a name="DangerousPattern"></a>
 ## type DangerousPattern
 
-DangerousPattern represents a pattern that might indicate malicious intent.
+DangerousPattern represents a pattern that might indicate malicious intent in script content.
 
 ```go
 type DangerousPattern struct {
@@ -394,15 +393,15 @@ type DangerousPattern struct {
 <a name="ExecutionResult"></a>
 ## type ExecutionResult
 
-ExecutionResult holds the execution logs and metrics collected during execution.
+ExecutionResult holds the execution logs and metrics collected during script execution in a Daytona sandbox.
 
 ```go
 type ExecutionResult struct {
     StartTime            time.Time            `json:"start_time"`             // Start time of the execution
     EndTime              time.Time            `json:"end_time"`               // End time of the execution
-    ContainerID          string               `json:"container_id"`           // Container/execution ID (legacy field, kept for compatibility)
+    ContainerID          string               `json:"container_id"`           // Daytona sandbox ID
     Logs                 string               `json:"logs"`                   // Output logs from execution
-    ResourceUsageMetrics ResourceUsageMetrics `json:"resource_usage_metrics"` // Resource usage metrics (not available with nsjail)
+    ResourceUsageMetrics ResourceUsageMetrics `json:"resource_usage_metrics"` // Resource usage metrics (reserved for future use)
     ResultFiles          map[string][]byte    `json:"result_files"`           // Map of result files and their contents
 }
 ```
@@ -410,16 +409,16 @@ type ExecutionResult struct {
 <a name="ResourceUsageMetrics"></a>
 ## type ResourceUsageMetrics
 
-ResourceUsageMetrics holds average metric values sampled during execution. Note: With nsjail, these metrics are not currently collected \(would require external process monitoring\).
+ResourceUsageMetrics holds average metric values sampled during execution. Note: Metrics are not currently collected from Daytona sandboxes; reserved for future integration.
 
 ```go
 type ResourceUsageMetrics struct {
-    CPU         float64 `json:"cpu"`          // Average CPU usage percentage (not available with nsjail)
-    MemUsage    float64 `json:"mem_usage"`    // Average memory usage in bytes (not available with nsjail)
-    NetInput    float64 `json:"net_input"`    // Average cumulative network input in bytes (not available with nsjail)
-    NetOutput   float64 `json:"net_output"`   // Average cumulative network output in bytes (not available with nsjail)
-    BlockInput  float64 `json:"block_input"`  // Average cumulative block input in bytes (not available with nsjail)
-    BlockOutput float64 `json:"block_output"` // Average cumulative block output in bytes (not available with nsjail)
+    CPU         float64 `json:"cpu"`          // Average CPU usage percentage
+    MemUsage    float64 `json:"mem_usage"`    // Average memory usage in bytes
+    NetInput    float64 `json:"net_input"`    // Average cumulative network input in bytes
+    NetOutput   float64 `json:"net_output"`   // Average cumulative network output in bytes
+    BlockInput  float64 `json:"block_input"`  // Average cumulative block input in bytes
+    BlockOutput float64 `json:"block_output"` // Average cumulative block output in bytes
 }
 ```
 
@@ -984,7 +983,6 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) StartWorkflow\(c fiber.Ctx\) error](<#APIControllers.StartWorkflow>)
   - [func \(api \*APIControllers\) SwaggerJSON\(c fiber.Ctx\) error](<#APIControllers.SwaggerJSON>)
   - [func \(api \*APIControllers\) SwaggerUI\(c fiber.Ctx\) error](<#APIControllers.SwaggerUI>)
-  - [func \(api \*APIControllers\) SystemSandboxHealth\(c fiber.Ctx\) error](<#APIControllers.SystemSandboxHealth>)
   - [func \(api \*APIControllers\) SystemWebhook\(c fiber.Ctx\) error](<#APIControllers.SystemWebhook>)
   - [func \(api \*APIControllers\) TestConnection\(c fiber.Ctx\) error](<#APIControllers.TestConnection>)
   - [func \(api \*APIControllers\) TransferAIApplicationOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferAIApplicationOwnership>)
@@ -2299,15 +2297,6 @@ func (api *APIControllers) SwaggerUI(c fiber.Ctx) error
 ```
 
 SwaggerUI godoc @Summary Swagger UI interface @Description Interactive API documentation interface using Swagger UI @Tags documentation @Accept json @Produce text/html @Success 200 \{string\} string "Swagger UI HTML page" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /swagger \[get\]
-
-<a name="APIControllers.SystemSandboxHealth"></a>
-### func \(\*APIControllers\) SystemSandboxHealth
-
-```go
-func (api *APIControllers) SystemSandboxHealth(c fiber.Ctx) error
-```
-
-SystemSandboxHealth godoc @Summary Check sandbox health @Description Verify that the compute sandbox is available and functioning @Tags system @Produce json @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=map\[string\]string\} "Sandbox is healthy" @Router /system/sandbox\-health \[get\]
 
 <a name="APIControllers.SystemWebhook"></a>
 ### func \(\*APIControllers\) SystemWebhook
@@ -8745,16 +8734,6 @@ const (
 )
 ```
 
-<a name="TempFileCleanupThresholdDays"></a>Temp file cleanup.
-
-```go
-const (
-    // TempFileCleanupThresholdDays is the number of days after which orphaned
-    // temporary directories in the compute sandbox are cleaned up.
-    TempFileCleanupThresholdDays = 7
-)
-```
-
 <a name="Collector"></a>
 ## type Collector
 
@@ -8814,10 +8793,6 @@ type Report struct {
 
     // Soft-deleted records cleanup results (table name → count deleted).
     SoftDeletedRecords map[string]int64
-
-    // Temp file cleanup results.
-    TempFilesDeleted int
-    TempBytesFreed   int64
 
     // General errors encountered during GC.
     Errors []error
@@ -16307,7 +16282,8 @@ type CoreAPIEnv struct {
     S3AccessKeyID                string // Access key ID for the S3-compatible object store
     S3AccessSecret               string // Secret access key for the S3-compatible object store
     SkipOptionalDuckDBExtensions bool   // Flag to skip installation of optional DuckDB extensions
-    ComputeSandboxDir            string // Base directory for compute sandbox script execution
+    DaytonaAPIKey                string // API key for Daytona sandbox service
+    DaytonaAPIURL                string // Base URL for Daytona sandbox service API
     TestConnectorBaseURL         string // Base URL of the connector to test with
     TestConnectorToken           string // Operation token for the connector to test with
     TestConnectorPath            string // Path to the test file in the connector

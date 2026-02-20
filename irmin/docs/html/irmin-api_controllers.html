@@ -2065,13 +2065,6 @@ func (api *APIControllers) SwaggerUI(c fiber.Ctx) error
     @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
     @Router /swagger [get]
 
-func (api *APIControllers) SystemSandboxHealth(c fiber.Ctx) error
-    SystemSandboxHealth godoc @Summary Check sandbox health
-    @Description Verify that the compute sandbox is available and
-    functioning @Tags system @Produce json @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=map[string]string} "Sandbox is healthy"
-    @Router /system/sandbox-health [get]
-
 func (api *APIControllers) SystemWebhook(c fiber.Ctx) error
     SystemWebhook godoc @Summary System webhook endpoint @Description Handle
     webhook events from internal services (LakeFS, orchestrator dispatch

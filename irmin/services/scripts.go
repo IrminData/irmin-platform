@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	sandbox "irmin-api/compute-sandbox"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/lib"
@@ -475,8 +474,7 @@ func (api *APIServices) ExecuteScript(
 	})
 
 	// Execute the script in the compute sandbox
-	computeSandbox := sandbox.NewComputeSandbox(api.Env, api.DB, api.Logger)
-	computeResult, executeScriptErr := computeSandbox.ExecutedStoredScript(
+	computeResult, executeScriptErr := api.computeSandbox.ExecutedStoredScript(
 		c,
 		inputFiles,
 		*user,
@@ -490,6 +488,19 @@ func (api *APIServices) ExecuteScript(
 			UserID:      &user.ID,
 			WorkspaceID: &workspace.ID,
 		})
+
+		// If the script ran but failed (we have logs), return the result with logs
+		// so the user can see what went wrong instead of a generic 500 error.
+		if computeResult.Logs != "" {
+			return &irminmodels.ScriptResult{
+				StartedAt:  computeResult.StartTime,
+				FinishedAt: computeResult.EndTime,
+				Duration:   computeResult.EndTime.Sub(computeResult.StartTime),
+				HasErrors:  true,
+				Logs:       strings.Split(computeResult.Logs, "\n"),
+			}, nil
+		}
+
 		return nil, NewInternalErrorf("error executing script in compute sandbox: %w", executeScriptErr)
 	}
 

@@ -44,13 +44,6 @@ const (
 )
     GC operational settings.
 
-const (
-	// TempFileCleanupThresholdDays is the number of days after which orphaned
-	// temporary directories in the compute sandbox are cleaned up.
-	TempFileCleanupThresholdDays = 7
-)
-    Temp file cleanup.
-
 
 TYPES
 
@@ -96,10 +89,6 @@ type Report struct {
 
 	// Soft-deleted records cleanup results (table name → count deleted).
 	SoftDeletedRecords map[string]int64
-
-	// Temp file cleanup results.
-	TempFilesDeleted int
-	TempBytesFreed   int64
 
 	// General errors encountered during GC.
 	Errors []error

@@ -37,9 +37,6 @@ func RegisterAPIRoutes(
 	app.Get(healthcheck.ReadinessEndpoint, healthcheck.New(healthcheck.Config{}))
 	app.Get(healthcheck.StartupEndpoint, healthcheck.New(healthcheck.Config{}))
 
-	// Public system routes (no auth required)
-	app.Get("/api/v1/system/sandbox-health", apiControllers.SystemSandboxHealth)
-
 	// Public signed download route (no auth required — token-based authorization)
 	app.Get("/api/v1/signed/download", apiControllers.SignedDownload)
 

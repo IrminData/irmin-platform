@@ -26,13 +26,6 @@ const (
 	SoftDeleteRetentionDays = 30
 )
 
-// Temp file cleanup.
-const (
-	// TempFileCleanupThresholdDays is the number of days after which orphaned
-	// temporary directories in the compute sandbox are cleaned up.
-	TempFileCleanupThresholdDays = 7
-)
-
 // GC operational settings.
 const (
 	// GCBatchSize is the maximum number of records to delete in a single
@@ -42,7 +35,4 @@ const (
 	// GCAdvisoryLockKey is the PostgreSQL advisory lock key used to prevent
 	// concurrent GC runs across multiple application instances.
 	GCAdvisoryLockKey = "irmin:gc:global"
-
-	// hoursPerDay converts time.Duration hours to calendar days.
-	hoursPerDay = 24
 )

@@ -274,7 +274,8 @@ type CoreAPIEnv struct {
 	S3AccessKeyID                string // Access key ID for the S3-compatible object store
 	S3AccessSecret               string // Secret access key for the S3-compatible object store
 	SkipOptionalDuckDBExtensions bool   // Flag to skip installation of optional DuckDB extensions
-	ComputeSandboxDir            string // Base directory for compute sandbox script execution
+	DaytonaAPIKey                string // API key for Daytona sandbox service
+	DaytonaAPIURL                string // Base URL for Daytona sandbox service API
 	TestConnectorBaseURL         string // Base URL of the connector to test with
 	TestConnectorToken           string // Operation token for the connector to test with
 	TestConnectorPath            string // Path to the test file in the connector
