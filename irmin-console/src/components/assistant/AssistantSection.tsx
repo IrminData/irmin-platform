@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useParams, usePathname, useSearchParams } from 'next/navigation';
 
@@ -66,7 +66,15 @@ interface AssistantSectionProps {
  *
  * Provides a section to chat with the AI assistant and manage conversations
  */
-export default function AssistantSection({
+export default function AssistantSection(props: AssistantSectionProps) {
+  return (
+    <Suspense>
+      <AssistantSectionContent {...props} />
+    </Suspense>
+  );
+}
+
+function AssistantSectionContent({
   compact = false,
   showContextBanner = true,
   noBorder = false,

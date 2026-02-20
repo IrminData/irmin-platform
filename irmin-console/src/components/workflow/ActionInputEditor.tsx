@@ -34,8 +34,10 @@ interface ActionInputEditorProps {
  * @param props.onChange - Callback to call when input files change
  * @param props.disableSaveButton - Disable the save button and auto-update on change
  */
+const EMPTY_INITIAL_DATA: ActionInputData[] = [];
+
 function ActionInputEditor({
-  initialData = [],
+  initialData = EMPTY_INITIAL_DATA,
   onChange,
   disableSaveButton = false,
 }: ActionInputEditorProps) {
@@ -75,44 +77,65 @@ function ActionInputEditor({
     }
   }, [initialData, disableSaveButton]);
 
-  // Notify parent of changes when save button is disabled
-  useEffect(() => {
-    if (disableSaveButton) {
-      onChangeRef.current(inputFiles);
-    }
-  }, [inputFiles, disableSaveButton]);
+  // Notify parent after state update (deferred to avoid intermediate notifications)
+  const notifyChange = useCallback(
+    (next: ActionInputData[]) => {
+      if (disableSaveButton) {
+        queueMicrotask(() => onChangeRef.current(next));
+      }
+    },
+    [disableSaveButton]
+  );
 
   // Add a new input file
   const addInputFile = useCallback(() => {
-    setInputFiles((prev) => [
-      ...prev,
-      { repository: '', repository_ref: '', repository_path: '' },
-    ]);
-  }, []);
+    setInputFiles((prev) => {
+      const next = [
+        ...prev,
+        { repository: '', repository_ref: '', repository_path: '' },
+      ];
+      notifyChange(next);
+      return next;
+    });
+  }, [notifyChange]);
 
   // Remove an input file
-  const removeInputFile = useCallback((index: number) => {
-    setInputFiles((prev) => prev.filter((_, i) => i !== index));
-  }, []);
+  const removeInputFile = useCallback(
+    (index: number) => {
+      setInputFiles((prev) => {
+        const next = prev.filter((_, i) => i !== index);
+        notifyChange(next);
+        return next;
+      });
+    },
+    [notifyChange]
+  );
 
   // Update a specific field of an input file
   const updateInputFile = useCallback(
     (index: number, field: keyof ActionInputData, value: string) => {
-      setInputFiles((prev) =>
-        prev.map((file, i) =>
+      setInputFiles((prev) => {
+        const next = prev.map((file, i) =>
           i === index ? { ...file, [field]: value } : file
-        )
-      );
+        );
+        notifyChange(next);
+        return next;
+      });
     },
-    []
+    [notifyChange]
   );
 
-  // Handle repository selection
+  // Handle repository selection — updates both fields in a single state update
   const handleRepositoryChange = useCallback(
     (index: number, repositorySlug: string | undefined) => {
       if (!repositorySlug) {
-        updateInputFile(index, 'repository', '');
-        updateInputFile(index, 'repository_ref', '');
+        setInputFiles((prev) => {
+          const next = prev.map((file, i) =>
+            i === index ? { ...file, repository: '', repository_ref: '' } : file
+          );
+          notifyChange(next);
+          return next;
+        });
         return;
       }
 
@@ -120,11 +143,22 @@ function ActionInputEditor({
         (r) => r.slug === repositorySlug
       );
       if (repo) {
-        updateInputFile(index, 'repository', repositorySlug);
-        updateInputFile(index, 'repository_ref', repo.default_branch);
+        setInputFiles((prev) => {
+          const next = prev.map((file, i) =>
+            i === index
+              ? {
+                  ...file,
+                  repository: repositorySlug,
+                  repository_ref: repo.default_branch,
+                }
+              : file
+          );
+          notifyChange(next);
+          return next;
+        });
       }
     },
-    [repositoriesQuery.data?.data, updateInputFile]
+    [repositoriesQuery.data?.data, notifyChange]
   );
 
   // Handle form submission

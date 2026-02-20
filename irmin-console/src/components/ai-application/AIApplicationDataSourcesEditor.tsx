@@ -398,10 +398,9 @@ const AIApplicationDataSourcesEditor = () => {
   }, [aiApplication.data_sources, serverDataKey]);
 
   // Count valid data sources
-  const validCount = useMemo(
-    () => dataSources.filter((ds) => ds.repository && ds.branch).length,
-    [dataSources]
-  );
+  const validCount = dataSources.filter(
+    (ds) => ds.repository && ds.branch
+  ).length;
 
   return (
     <Card>

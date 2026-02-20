@@ -7,11 +7,9 @@ import {
   type UseQueryOptions,
 } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { workflowRunQueryKey, workflowRunsQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -44,8 +42,7 @@ export const useWorkflowRuns = (
     'queryKey' | 'queryFn'
   >
 ) => {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
@@ -55,9 +52,8 @@ export const useWorkflowRuns = (
   const workflowRunsQuery = useQuery<WorkflowRunsResponse, Error>({
     queryKey: workflowRunsQueryKey(workspaceSlug, workflowID, currentPage),
     queryFn: async () => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      return irminCore.workflowRunService.fetchWorkflowRuns({
+      const core = await getCore();
+      return core.workflowRunService.fetchWorkflowRuns({
         workspace: workspaceSlug,
         workflowID,
         perPage: 10,
@@ -73,9 +69,8 @@ export const useWorkflowRuns = (
     void
   >({
     mutationFn: async () => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      const res = await irminCore.workflowRunService.triggerWorkflowRun({
+      const core = await getCore();
+      const res = await core.workflowRunService.triggerWorkflowRun({
         workspace: workspaceSlug,
         workflowID,
       });

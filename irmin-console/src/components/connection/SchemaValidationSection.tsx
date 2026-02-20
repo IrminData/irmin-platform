@@ -556,7 +556,7 @@ function ValidationResultDisplay({
             <div className='max-h-96 space-y-2 overflow-y-auto'>
               {result.errors.map((error, index) => (
                 <ValidationErrorItem
-                  key={`schema-validation-error-${index}`}
+                  key={`schema-validation-error-${error.field_path}-${error.type}-${error.row_index ?? index}`}
                   error={error}
                 />
               ))}
@@ -574,7 +574,7 @@ function ValidationResultDisplay({
             <ul className='list-inside list-disc space-y-1 text-sm'>
               {result.warnings.map((warning, index) => (
                 <li
-                  key={`schema-validation-warning-${index}`}
+                  key={`schema-validation-warning-${index}-${warning}`}
                   className='text-muted-foreground'
                 >
                   {warning}
@@ -661,9 +661,9 @@ function DiffResultDisplay({ result }: { result: SchemaDiff }) {
               {result.breaking_changes.length})
             </h4>
             <div className='space-y-2'>
-              {result.breaking_changes.map((change, index) => (
+              {result.breaking_changes.map((change) => (
                 <FieldDiffItem
-                  key={`schema-diff-breaking-change-${index}`}
+                  key={`schema-diff-breaking-change-${change.field_path}-${change.change_type}`}
                   change={change}
                   isBreaking
                 />
@@ -681,9 +681,9 @@ function DiffResultDisplay({ result }: { result: SchemaDiff }) {
                 {result.non_breaking_changes.length})
               </h4>
               <div className='space-y-2'>
-                {result.non_breaking_changes.map((change, index) => (
+                {result.non_breaking_changes.map((change) => (
                   <FieldDiffItem
-                    key={`schema-diff-non-breaking-change-${index}`}
+                    key={`schema-diff-non-breaking-change-${change.field_path}-${change.change_type}`}
                     change={change}
                     isBreaking={false}
                   />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -129,6 +129,14 @@ const SEARCH_TYPES = [
 ];
 
 export default function SearchPageComponent() {
+  return (
+    <Suspense>
+      <SearchPageComponentContent />
+    </Suspense>
+  );
+}
+
+function SearchPageComponentContent() {
   const { dict, locale } = useLocale();
   const router = useRouter();
   const params = useParams();

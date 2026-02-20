@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import { FaFolderTree } from 'react-icons/fa6';
 import { FiFile, FiFolder } from 'react-icons/fi';
@@ -176,8 +176,6 @@ const ConnectionPathSelector = ({
     formatPath(defaultPath || '', false, groupOnly) || (groupOnly ? '/' : '')
   );
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
-  const [isValidPath, setIsValidPath] = useState<boolean>(true);
-
   const { connectionSchemaQuery } = useConnectionSchema(
     connectionId,
     operationMethod
@@ -187,20 +185,19 @@ const ConnectionPathSelector = ({
 
   const rootSchema = connectionSchemaQuery.data?.data ?? initialRootSchema;
 
-  // Keep input in sync with selected path
-  useEffect(() => {
-    setInputPath(selectedPath);
-  }, [selectedPath]);
+  // Helper to update both selectedPath and inputPath together
+  const setPath = useCallback((formattedPath: string) => {
+    setSelectedPath(formattedPath);
+    setInputPath(formattedPath);
+  }, []);
 
-  // Validate path when input changes
-  useEffect(() => {
+  // Derive validation from current input
+  const isValidPath = useMemo(() => {
     if (existingOnly && rootSchema) {
       const formattedPath = formatPath(inputPath, false, groupOnly);
-      const exists = findObjectByPath(rootSchema, formattedPath) !== undefined;
-      setIsValidPath(exists);
-    } else {
-      setIsValidPath(true);
+      return findObjectByPath(rootSchema, formattedPath) !== undefined;
     }
+    return true;
   }, [inputPath, existingOnly, rootSchema, groupOnly]);
 
   // Handle manual path input
@@ -253,18 +250,19 @@ const ConnectionPathSelector = ({
         toggleFolder(item);
         // For directories, we want to keep the trailing slash
         const formattedPath = formatPath(item.path ?? '', true, groupOnly);
-        setSelectedPath(formattedPath);
+        setPath(formattedPath);
         onPathChange(formattedPath);
       } else {
         // For files, we don't want a trailing slash unless groupOnly is true
         const formattedPath = formatPath(item.path ?? '', false, groupOnly);
-        setSelectedPath(formattedPath);
+        setPath(formattedPath);
         onPathChange(formattedPath);
       }
     },
     [
       onPathChange,
       toggleFolder,
+      setPath,
       groupOnly,
       binaryOnly,
       structuredOnly,

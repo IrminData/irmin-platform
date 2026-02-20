@@ -272,10 +272,13 @@ const en = {
     pendingWritesError: 'Failed to load pending writes',
     noPendingWrites: 'No pending writes to review',
     howToConnect: 'How to Connect',
-    howToConnectMcp:
-      'Use the <strong>MCP Endpoint</strong> to connect with Cursor, Claude Desktop, or other MCP clients.',
-    howToConnectApiKey:
-      'Include your <strong>API Key</strong> as a Bearer token in the Authorization header.',
+    howToConnectMcpPrefix: 'Use the ',
+    howToConnectMcpBold: 'MCP Endpoint',
+    howToConnectMcpSuffix:
+      ' to connect with Cursor, Claude Desktop, or other MCP clients.',
+    howToConnectApiKeyPrefix: 'Include your ',
+    howToConnectApiKeyBold: 'API Key',
+    howToConnectApiKeySuffix: ' as a Bearer token in the Authorization header.',
     howToConnectTools:
       'Enable specific tools below to expose capabilities to your AI agent.',
     apiReference: 'API Reference',

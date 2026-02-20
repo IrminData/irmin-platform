@@ -44,11 +44,14 @@ export function WorkspaceTagModal({
 }: WorkspaceTagModalProps) {
   const { dict } = useLocale();
 
-  const [name, setName] = useState(initialTag?.name || '');
-  const [color, setColor] = useState(initialTag?.color || COLOR_PALETTE[0]);
-  const [description, setDescription] = useState(initialTag?.description || '');
-  const [customColor, setCustomColor] = useState('');
+  const [formState, setFormState] = useState({
+    name: initialTag?.name || '',
+    color: initialTag?.color || COLOR_PALETTE[0],
+    description: initialTag?.description || '',
+    customColor: '',
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { name, color, description, customColor } = formState;
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
@@ -68,10 +71,12 @@ export function WorkspaceTagModal({
 
         // Reset form only if not editing (though usually modal closes)
         if (!initialTag?.id) {
-          setName('');
-          setColor(COLOR_PALETTE[0]);
-          setDescription('');
-          setCustomColor('');
+          setFormState({
+            name: '',
+            color: COLOR_PALETTE[0],
+            description: '',
+            customColor: '',
+          });
         }
       } catch (error) {
         console.error('Error submitting tag:', error);
@@ -89,7 +94,9 @@ export function WorkspaceTagModal({
         <Input
           id='tag-name'
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) =>
+            setFormState((prev) => ({ ...prev, name: e.target.value }))
+          }
           required
           disabled={isSubmitting}
         />
@@ -123,10 +130,13 @@ export function WorkspaceTagModal({
                   `
               )}
               style={{ backgroundColor: paletteColor }}
-              onClick={() => {
-                setColor(paletteColor);
-                setCustomColor('');
-              }}
+              onClick={() =>
+                setFormState((prev) => ({
+                  ...prev,
+                  color: paletteColor,
+                  customColor: '',
+                }))
+              }
             />
           ))}
         </div>
@@ -136,7 +146,12 @@ export function WorkspaceTagModal({
           <input
             type='color'
             value={customColor || color}
-            onChange={(e) => setCustomColor(e.target.value)}
+            onChange={(e) =>
+              setFormState((prev) => ({
+                ...prev,
+                customColor: e.target.value,
+              }))
+            }
             className={`
               size-12 cursor-pointer border-none p-1
               disabled:cursor-not-allowed disabled:opacity-50
@@ -145,7 +160,12 @@ export function WorkspaceTagModal({
           />
           <Input
             value={customColor || color}
-            onChange={(e) => setCustomColor(e.target.value)}
+            onChange={(e) =>
+              setFormState((prev) => ({
+                ...prev,
+                customColor: e.target.value,
+              }))
+            }
             placeholder='#RRGGBB'
             className='h-9 flex-1 font-mono text-sm'
             pattern='^#([A-Fa-f0-9]{6})$'
@@ -162,7 +182,9 @@ export function WorkspaceTagModal({
             rows: 2,
           }}
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={(e) =>
+            setFormState((prev) => ({ ...prev, description: e.target.value }))
+          }
           disabled={isSubmitting}
         />
       </div>

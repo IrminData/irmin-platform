@@ -78,10 +78,9 @@ export default function ConsoleNavigationWorkspaceSwitcher({
     [workspaces, dict]
   );
 
-  const currentValue = useMemo(
-    () => (currentWorkspace ? currentWorkspace.slug : 'select-workspace'),
-    [currentWorkspace]
-  );
+  const currentValue = currentWorkspace
+    ? currentWorkspace.slug
+    : 'select-workspace';
 
   if (!workspaces || workspaces.length === 0) {
     return <></>;

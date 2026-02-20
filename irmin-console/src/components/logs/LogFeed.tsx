@@ -19,10 +19,12 @@ import { useLocale } from '@/context/LocaleContext';
  * @param props.logs - Array of text logs to use if URL is not provided
  * @param props.height - The height of the log feed, defaults to 'auto'
  */
+const EMPTY_LOGS: string[] = [];
+
 const LogFeed = ({
   url,
   stream = false,
-  logs = [],
+  logs = EMPTY_LOGS,
   height = 'auto',
 }: {
   url?: string;

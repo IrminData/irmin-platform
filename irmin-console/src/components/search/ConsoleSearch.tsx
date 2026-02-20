@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 
 import Link from 'next/link';
@@ -59,6 +60,12 @@ import SearchResultsSkeleton from './SearchResultsSkeleton';
  *
  * @returns The console search component with search bar and results
  */
+
+// Stable functions for useSyncExternalStore (must be outside component to avoid re-subscription)
+const noopSubscribe = () => () => {};
+const getIsMac = () => /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
+const getIsMacServer = () => null;
+
 export default function ConsoleSearch() {
   const { dict, locale } = useLocale();
   const router = useRouter();
@@ -86,16 +93,7 @@ export default function ConsoleSearch() {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   // Detect platform for keyboard shortcut display
-  // Initialize to false to match server-side rendering, then update on mount
-  const [isMac, setIsMac] = useState(false);
-  const [isMacLoaded, setIsMacLoaded] = useState(false);
-
-  // Synchronize with external system (browser platform detection) after hydration
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.userAgent));
-    setIsMacLoaded(true);
-  }, []);
+  const isMac = useSyncExternalStore(noopSubscribe, getIsMac, getIsMacServer);
 
   // Get static search items
   const { staticSearchItemsQuery } = useStaticSearchItems(workspaceSlug);
@@ -317,7 +315,7 @@ export default function ConsoleSearch() {
           placeholder={dict.consoleNavigation.searchPlaceholder}
         />
         {/* Keyboard shortcut indicator */}
-        {isMacLoaded && (
+        {isMac !== null && (
           <div
             className={`
               pointer-events-none absolute inset-y-0 end-0 flex items-center

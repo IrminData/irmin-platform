@@ -8,7 +8,6 @@ import { formatDistanceToNow, intervalToDuration } from 'date-fns';
 
 import { TbClock, TbHourglassLow, TbRun } from 'react-icons/tb';
 
-import IrminCore from '@/lib/core';
 import { workflowRunsQueryKey } from '@/lib/queryKeys';
 
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +17,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 
-import { useIAM } from '@/context/IAMContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -55,15 +54,14 @@ export function DashboardWorkflowRunsFeed({
   className,
 }: DashboardWorkflowRunsFeedProps) {
   const { dict, locale } = useLocale();
-  const { getToken } = useIAM();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
 
   const workflowRunsQuery = useQuery<DashboardWorkflowRunsResponse, Error>({
     queryKey: workflowRunsQueryKey(workspaceSlug, 'dashboard', 1),
     queryFn: async () => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      return irminCore.workflowRunService.fetchAllWorkflowRuns({
+      const core = await getCore();
+      return core.workflowRunService.fetchAllWorkflowRuns({
         workspace: workspaceSlug,
         perPage: 8, // Show more items than list cards
         page: 1,

@@ -1,5 +1,7 @@
 'use client';
 
+import { Suspense } from 'react';
+
 import { useParams, useSearchParams } from 'next/navigation';
 
 import LogsSection from '@/components/logs/LogsSection';
@@ -16,6 +18,14 @@ import type { RepositoryObjectLogsLayoutParams } from './layout';
  * Repository Object Audit Logs page
  */
 export default function RepositoryObjectLogsPage() {
+  return (
+    <Suspense fallback={<ListSkeleton />}>
+      <RepositoryObjectLogsPageContent />
+    </Suspense>
+  );
+}
+
+function RepositoryObjectLogsPageContent() {
   const { dict } = useLocale();
   const params = useParams<RepositoryObjectLogsLayoutParams>();
   const searchParams = useSearchParams();

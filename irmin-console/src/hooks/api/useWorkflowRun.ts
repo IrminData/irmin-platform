@@ -1,11 +1,9 @@
 import type { UseQueryOptions } from '@tanstack/react-query';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { workflowRunQueryKey, workflowRunsQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
@@ -30,18 +28,16 @@ export const useWorkflowRun = (
     >
   >
 ) => {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
   const workflowRunQuery = useQuery<IrminAPIResponse<WorkflowRun>, Error>({
     queryKey: workflowRunQueryKey(workspaceSlug, workflowID, runID),
     queryFn: async () => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
+      const core = await getCore();
       const res: IrminAPIResponse<WorkflowRun> =
-        await irminCore.workflowRunService.fetchWorkflowRun({
+        await core.workflowRunService.fetchWorkflowRun({
           workspace: workspaceSlug,
           workflowID,
           runID,

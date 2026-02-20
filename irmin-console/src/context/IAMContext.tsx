@@ -218,8 +218,16 @@ export const IAMProvider = ({ children }: { children: ReactNode }) => {
       console.error('Error fetching profile', err);
       const error =
         err instanceof Error ? err : new Error('Profile fetch failed');
+      // Reset cached state but preserve the auth error so
+      // AuthenticationErrorHandler can redirect to sign-in
+      setProfile(undefined);
+      tokenRef.current = null;
+      expiryRef.current = 0;
+      initSessionRef.current = null;
+      isRefreshingRef.current = false;
+      refreshPromiseRef.current = null;
+      refreshQueueRef.current = [];
       setAuthError(error);
-      resetIAM();
     } finally {
       setIsLoading(false);
     }

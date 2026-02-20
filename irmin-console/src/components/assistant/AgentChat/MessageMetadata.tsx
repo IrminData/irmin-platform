@@ -130,15 +130,9 @@ export const MessageMetadata = ({
     return null;
   }
 
-  const renderThinking = () => {
-    if (
-      !isThinkingStepsArray(metadata.thinkingSteps) ||
-      metadata.thinkingSteps.length === 0
-    ) {
-      return null;
-    }
-
-    return (
+  const thinkingElement =
+    isThinkingStepsArray(metadata.thinkingSteps) &&
+    metadata.thinkingSteps.length > 0 ? (
       <div className='mb-4 space-y-2'>
         {metadata.thinkingSteps.map((step: string, index: number) => (
           <Reasoning
@@ -150,15 +144,10 @@ export const MessageMetadata = ({
           </Reasoning>
         ))}
       </div>
-    );
-  };
+    ) : null;
 
-  const renderToolCalls = () => {
-    if (consolidatedToolCalls.length === 0) {
-      return null;
-    }
-
-    return (
+  const toolCallsElement =
+    consolidatedToolCalls.length === 0 ? null : (
       <div className='mt-4 space-y-2'>
         {consolidatedToolCalls.map((toolCall, index) => {
           // Check if it's a consolidated server tool event
@@ -172,7 +161,7 @@ export const MessageMetadata = ({
             };
             return (
               <Tool
-                key={`tool-${message.data?.id || message.type}-${tc.toolCallId}-${index}`}
+                key={`tool-${message.data?.id || message.type}-${tc.toolCallId}`}
                 defaultOpen={false}
               >
                 <ToolHeader type={`tool-${tc.toolName}`} state={tc.state} />
@@ -214,61 +203,52 @@ export const MessageMetadata = ({
         })}
       </div>
     );
-  };
 
-  const renderIterations = () => {
-    if (!isIterationsNumber(metadata.iterations)) {
-      return null;
-    }
-
-    return (
-      <Task
-        title={`${dict.assistant.iteration} ${metadata.iterations}`}
-        defaultOpen={false}
-      >
-        <TaskTrigger
-          title={`${dict.assistant.iteration} ${metadata.iterations}`}
-        >
-          <div className='flex items-center gap-2'>
-            <div
-              className={`
-                flex size-6 items-center justify-center rounded-full bg-blue-500
-                text-xs font-medium text-white
-              `}
-            >
-              {metadata.iterations}
-            </div>
-            <div className='text-sm font-medium text-blue-900'>
-              {metadata.iterations} {dict.assistant.iteration.toLowerCase()}
-              {metadata.iterations !== 1 ? 's' : ''}
-              {(isStoredToolCallsArray(metadata.toolCalls) ||
-                isServerToolEventsArray(metadata.toolCalls)) &&
-                ` • ${metadata.toolCalls.length} tool call${metadata.toolCalls.length !== 1 ? 's' : ''}`}
-            </div>
+  const iterationsElement = !isIterationsNumber(metadata.iterations) ? null : (
+    <Task
+      title={`${dict.assistant.iteration} ${metadata.iterations}`}
+      defaultOpen={false}
+    >
+      <TaskTrigger title={`${dict.assistant.iteration} ${metadata.iterations}`}>
+        <div className='flex items-center gap-2'>
+          <div
+            className={`
+              flex size-6 items-center justify-center rounded-full bg-blue-500
+              text-xs font-medium text-white
+            `}
+          >
+            {metadata.iterations}
           </div>
-        </TaskTrigger>
-        <TaskContent>
-          <div className='text-sm text-muted-foreground'>
-            {dict.assistant.thisResponseWasGeneratedThrough}{' '}
+          <div className='text-sm font-medium text-blue-900'>
             {metadata.iterations} {dict.assistant.iteration.toLowerCase()}
-            {metadata.iterations !== 1 ? 's' : ''}{' '}
-            {dict.assistant.ofReasoningAndToolUsage}.
+            {metadata.iterations !== 1 ? 's' : ''}
+            {(isStoredToolCallsArray(metadata.toolCalls) ||
+              isServerToolEventsArray(metadata.toolCalls)) &&
+              ` • ${metadata.toolCalls.length} tool call${metadata.toolCalls.length !== 1 ? 's' : ''}`}
           </div>
-        </TaskContent>
-      </Task>
-    );
-  };
+        </div>
+      </TaskTrigger>
+      <TaskContent>
+        <div className='text-sm text-muted-foreground'>
+          {dict.assistant.thisResponseWasGeneratedThrough} {metadata.iterations}{' '}
+          {dict.assistant.iteration.toLowerCase()}
+          {metadata.iterations !== 1 ? 's' : ''}{' '}
+          {dict.assistant.ofReasoningAndToolUsage}.
+        </div>
+      </TaskContent>
+    </Task>
+  );
 
   // Render based on section prop
   if (section === 'thinking') {
-    return renderThinking();
+    return thinkingElement;
   }
 
   if (section === 'tools') {
     return (
       <>
-        {renderToolCalls()}
-        {renderIterations()}
+        {toolCallsElement}
+        {iterationsElement}
       </>
     );
   }
@@ -276,9 +256,9 @@ export const MessageMetadata = ({
   // 'all' - render everything (thinking first, then tools, then iterations)
   return (
     <>
-      {renderThinking()}
-      {renderToolCalls()}
-      {renderIterations()}
+      {thinkingElement}
+      {toolCallsElement}
+      {iterationsElement}
     </>
   );
 };

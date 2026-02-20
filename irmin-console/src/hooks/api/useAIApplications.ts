@@ -1,10 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { aiApplicationQueryKey, aiApplicationsQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -18,8 +16,7 @@ import type {
 import { createMutationHandlers } from './mutations/utils';
 
 export function useAIApplications() {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
@@ -30,8 +27,7 @@ export function useAIApplications() {
   >({
     queryKey: aiApplicationsQueryKey(workspaceSlug),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.aiApplicationService.listAIApplications({
         workspace: workspaceSlug,
       });
@@ -44,8 +40,7 @@ export function useAIApplications() {
     CreateAIApplicationInput
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.aiApplicationService.createAIApplication({
         workspace: workspaceSlug,
         name: data.name,
@@ -121,8 +116,7 @@ export function useAIApplications() {
  * Hook for fetching and managing a single AI Application
  */
 export function useAIApplication(aiApplicationId: string) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
@@ -130,8 +124,7 @@ export function useAIApplication(aiApplicationId: string) {
   const aiApplicationQuery = useQuery<IrminAPIResponse<AIApplication>, Error>({
     queryKey: aiApplicationQueryKey(workspaceSlug, aiApplicationId),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.aiApplicationService.getAIApplication({
         workspace: workspaceSlug,
         aiApplicationId,
@@ -146,8 +139,7 @@ export function useAIApplication(aiApplicationId: string) {
     { previousData: IrminAPIResponse<AIApplication> | undefined }
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.aiApplicationService.updateAIApplication({
         workspace: workspaceSlug,
         aiApplicationId,
@@ -233,8 +225,7 @@ export function useAIApplication(aiApplicationId: string) {
 
   const deleteAIApplicationMutation = useMutation<IrminAPIResponse, Error>({
     mutationFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.aiApplicationService.deleteAIApplication({
         workspace: workspaceSlug,
         aiApplicationId,
@@ -260,8 +251,7 @@ export function useAIApplication(aiApplicationId: string) {
     { newOwnerId: string }
   >({
     mutationFn: async ({ newOwnerId }) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.aiApplicationService.transferAIApplication({
         workspace: workspaceSlug,
         aiApplicationId,

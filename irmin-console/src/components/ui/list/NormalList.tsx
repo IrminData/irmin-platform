@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, memo, useCallback, useMemo, useState } from 'react';
+import { Fragment, memo, useCallback, useState } from 'react';
 
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 
@@ -73,10 +73,7 @@ const NormalList = ({
   const [openDetails, setOpenDetails] = useState<number[]>([]);
 
   // Number of columns = number of headers, plus 1 if we have actions
-  const totalColumns = useMemo(
-    () => (noActions ? headers.length : headers.length + 1),
-    [noActions, headers]
-  );
+  const totalColumns = noActions ? headers.length : headers.length + 1;
 
   // Generate stable keys for rows based on content hash
   const generateRowKey = useCallback((row: GridRow, index: number) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { Suspense, useCallback, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -69,7 +69,11 @@ export default function RepositorySection({
       title='Repository Section Error'
       description='The repository section encountered an error. Please try refreshing the page.'
     >
-      <RepositorySectionContent initialSelectedObject={initialSelectedObject} />
+      <Suspense>
+        <RepositorySectionContent
+          initialSelectedObject={initialSelectedObject}
+        />
+      </Suspense>
     </SafeComponent>
   );
 }

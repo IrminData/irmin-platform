@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { Suspense, useCallback, useMemo } from 'react';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
@@ -34,6 +34,14 @@ import BranchSelector from './branches/BranchSelector';
  * Provides tabs and title for the repository.
  */
 export default function RepositoryHeader() {
+  return (
+    <Suspense>
+      <RepositoryHeaderContent />
+    </Suspense>
+  );
+}
+
+function RepositoryHeaderContent() {
   const { dict } = useLocale();
   const pathname = usePathname();
   const searchParams = useSearchParams();

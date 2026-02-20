@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
@@ -12,7 +12,11 @@ import { QueryError } from '@/components/ui/error/QueryError';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useConnections } from '@/hooks/api';
-import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
+import {
+  useDebouncedValue,
+  useResourceAllowed,
+  useToggleCreateParam,
+} from '@/hooks/utils';
 
 import ConnectionWizardModal from '../wizards/ConnectionWizardModal';
 import ConnectionList from './ConnectionList';
@@ -40,17 +44,7 @@ export default function ConnectionsSection({
   const [isOpen, setIsOpen] = useState(sideModalOpen);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-
-  // Debounce search query
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 300);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchQuery]);
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
 
   // Filter items based on debounced search query
   const filteredItems = useMemo(

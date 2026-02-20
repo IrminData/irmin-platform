@@ -39,7 +39,7 @@ export const Conversation = ({
   useEffect(() => {
     const container = containerRef.current;
     if (container) {
-      container.addEventListener('scroll', checkIfAtBottom);
+      container.addEventListener('scroll', checkIfAtBottom, { passive: true });
       return () => container.removeEventListener('scroll', checkIfAtBottom);
     }
   }, [checkIfAtBottom]);
@@ -125,8 +125,10 @@ export const ConversationScrollButton = ({
   useEffect(() => {
     const container = document.getElementById('conversation-container');
     if (container) {
-      container.addEventListener('scroll', checkIfAtBottom);
-      window.addEventListener('resize', updateButtonPosition);
+      container.addEventListener('scroll', checkIfAtBottom, { passive: true });
+      window.addEventListener('resize', updateButtonPosition, {
+        passive: true,
+      });
       queueMicrotask(() => {
         updateButtonPosition();
       });

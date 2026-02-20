@@ -49,12 +49,14 @@ import type { JSONValue } from '@/types/internal/GenericJSON';
  * @param props.inputFiles - The input files to display
  * @param props.setInputFiles - Function to set the input files
  */
+const EMPTY_INPUT_FILES: ActionInputData[] = [];
+
 const ScriptResults = ({
   result,
   loading,
   onSave,
   onRun,
-  inputFiles = [],
+  inputFiles = EMPTY_INPUT_FILES,
   setInputFiles,
 }: {
   result: ScriptResult | null;
@@ -130,19 +132,11 @@ const ScriptResults = ({
     );
   }, [result?.structured_results]);
 
-  const showMemoryWarning = useMemo(() => {
-    return totalDataSize > MAX_SAFE_JSON_SIZE * 2;
-  }, [totalDataSize]);
+  const showMemoryWarning = totalDataSize > MAX_SAFE_JSON_SIZE * 2;
 
-  const showLoadingOnData = useMemo(
-    () => loading || processingRun,
-    [loading, processingRun]
-  );
+  const showLoadingOnData = loading || processingRun;
 
-  const showLoadingOnLogs = useMemo(
-    () => loading || processingRun,
-    [loading, processingRun]
-  );
+  const showLoadingOnLogs = loading || processingRun;
 
   const logs = useMemo(() => result?.logs ?? [], [result]);
 

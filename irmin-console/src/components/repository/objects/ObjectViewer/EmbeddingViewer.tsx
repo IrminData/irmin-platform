@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import Link from 'next/link';
 
@@ -61,10 +61,7 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
   const embeddingInfo = embeddingInfoQuery.data?.data;
 
   // Derive the current state key from props to track changes
-  const currentStateKey = useMemo(
-    () => `${object.path}@${currentRef ?? ''}`,
-    [object.path, currentRef]
-  );
+  const currentStateKey = `${object.path}@${currentRef ?? ''}`;
 
   // Use ref to track previous state key
   const prevStateKeyRef = useRef(currentStateKey);

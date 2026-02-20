@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -89,20 +89,18 @@ export default function WorkflowLayoutWrapper({
     segmentsAfter: 1,
   });
 
-  // Redirect to the run page after successful workflow run creation
-  useEffect(() => {
-    if (createWorkflowRunMutation.isSuccess && createWorkflowRunMutation.data) {
-      const runID = createWorkflowRunMutation.data.data?.id;
+  // Trigger a workflow run and redirect to the run page on success
+  const handleTriggerRun = useCallback(async () => {
+    try {
+      const result = await createWorkflowRunMutation.mutateAsync();
+      const runID = result.data?.id;
       if (runID) {
         router.push(`${baseUrl}/run/${runID}`);
       }
+    } catch {
+      // Mutation's onError callback handles the alert
     }
-  }, [
-    createWorkflowRunMutation.isSuccess,
-    createWorkflowRunMutation.data,
-    baseUrl,
-    router,
-  ]);
+  }, [createWorkflowRunMutation, baseUrl, router]);
 
   // Make sure the user is allowed to access the workflow
   useEffect(() => {
@@ -336,7 +334,7 @@ export default function WorkflowLayoutWrapper({
           </div>
           <div className='flex min-w-60 flex-col gap-2'>
             <Button
-              onClick={() => createWorkflowRunMutation.mutate()}
+              onClick={handleTriggerRun}
               className='w-full'
               variant='default'
               size='lg'

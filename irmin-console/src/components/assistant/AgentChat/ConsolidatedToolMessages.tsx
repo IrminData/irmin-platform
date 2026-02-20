@@ -187,11 +187,8 @@ export const ConsolidatedToolMessages = ({
   return (
     <>
       {/* Reasoning messages */}
-      {reasoningMessages.map((message, index) => (
-        <div
-          key={`reasoning-${getMessageId(message)}-${index}`}
-          className='mt-4'
-        >
+      {reasoningMessages.map((message) => (
+        <div key={`reasoning-${getMessageId(message)}`} className='mt-4'>
           <Reasoning defaultOpen={false}>
             <ReasoningTrigger />
             <ReasoningContent>{getMessageContent(message)}</ReasoningContent>

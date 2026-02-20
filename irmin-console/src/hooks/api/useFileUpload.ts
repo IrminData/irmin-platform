@@ -2,10 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import IrminCore from '@/lib/core';
-
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 
 import { generateTempId } from '@/utils/generateTempId';
 
@@ -87,8 +84,7 @@ export const useFileUpload = (
   workspaceSlug: string,
   repositorySlug: string
 ): UseFileUploadReturn => {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { invalidateObjectQueries } = useInvalidateObjectQueries(
     workspaceSlug,
     repositorySlug
@@ -128,9 +124,8 @@ export const useFileUpload = (
   const checkFileExists = useCallback(
     async (ref: string, path: string): Promise<boolean> => {
       try {
-        const token = await getToken();
-        const irminCore = new IrminCore(locale, token);
-        const response = await irminCore.objectService.getObjectAtPath({
+        const core = await getCore();
+        const response = await core.objectService.getObjectAtPath({
           workspace: workspaceSlug,
           repository: repositorySlug,
           path,
@@ -143,7 +138,7 @@ export const useFileUpload = (
         return false;
       }
     },
-    [getToken, locale, workspaceSlug, repositorySlug]
+    [getCore, workspaceSlug, repositorySlug]
   );
 
   /**
@@ -151,14 +146,13 @@ export const useFileUpload = (
    */
   const uploadFile = useCallback(
     async (file: File, ref: string, path: string): Promise<void> => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
+      const core = await getCore();
 
       // Create a FileList-like object from the single file
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
 
-      await irminCore.objectService.uploadObject({
+      await core.objectService.uploadObject({
         workspace: workspaceSlug,
         repository: repositorySlug,
         path,
@@ -169,7 +163,7 @@ export const useFileUpload = (
       // Invalidate queries for the uploaded path
       invalidateObjectQueries(path, ref);
     },
-    [getToken, locale, workspaceSlug, repositorySlug, invalidateObjectQueries]
+    [getCore, workspaceSlug, repositorySlug, invalidateObjectQueries]
   );
 
   /**

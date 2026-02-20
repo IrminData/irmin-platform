@@ -3,11 +3,9 @@ import { useCallback, useRef, useState } from 'react';
 import type { UseQueryOptions } from '@tanstack/react-query';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { logEventsQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type {
@@ -51,8 +49,7 @@ export const useLogEvents = (
 ) => {
   const { perPage = 100, logsForType = 'workspace', logsFor = '' } = options;
 
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -61,8 +58,7 @@ export const useLogEvents = (
 
   const fetchLogs = useCallback(
     async (search?: string) => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
+      const irminCore = await getCore();
 
       switch (logsForType) {
         case 'workspace':
@@ -135,15 +131,7 @@ export const useLogEvents = (
           throw new Error(`Unknown logsForType: ${logsForType}`);
       }
     },
-    [
-      locale,
-      workspaceSlug,
-      logsForType,
-      logsFor,
-      perPage,
-      currentPage,
-      getToken,
-    ]
+    [getCore, workspaceSlug, logsForType, logsFor, perPage, currentPage]
   );
 
   const queryOptions: UseQueryOptions<LogEventsResponse, Error> = {

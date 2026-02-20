@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -79,6 +80,18 @@ const ScriptEditorContext = createContext<ScriptEditorContextType | undefined>(
 );
 
 export const ScriptEditorProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  return (
+    <Suspense>
+      <ScriptEditorProviderInner>{children}</ScriptEditorProviderInner>
+    </Suspense>
+  );
+};
+
+const ScriptEditorProviderInner = ({
   children,
 }: {
   children: React.ReactNode;

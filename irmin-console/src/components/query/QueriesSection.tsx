@@ -1,6 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -54,6 +61,14 @@ import UpdateQueryModal from './UpdateQueryModal';
  * Provides a section to edit queries and view query results
  */
 export default function QueriesSection() {
+  return (
+    <Suspense>
+      <QueriesSectionContent />
+    </Suspense>
+  );
+}
+
+function QueriesSectionContent() {
   const { dict } = useLocale();
   const { irminModal, irminConfirm } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();

@@ -223,18 +223,18 @@ const AIApplicationConnectionDetails = () => {
               `}
             >
               <li>
-                <span
-                  dangerouslySetInnerHTML={{
-                    __html: dict.aiApplication.howToConnectMcp,
-                  }}
-                />
+                <span>
+                  {dict.aiApplication.howToConnectMcpPrefix}
+                  <strong>{dict.aiApplication.howToConnectMcpBold}</strong>
+                  {dict.aiApplication.howToConnectMcpSuffix}
+                </span>
               </li>
               <li>
-                <span
-                  dangerouslySetInnerHTML={{
-                    __html: dict.aiApplication.howToConnectApiKey,
-                  }}
-                />
+                <span>
+                  {dict.aiApplication.howToConnectApiKeyPrefix}
+                  <strong>{dict.aiApplication.howToConnectApiKeyBold}</strong>
+                  {dict.aiApplication.howToConnectApiKeySuffix}
+                </span>
               </li>
               <li>{dict.aiApplication.howToConnectTools}</li>
             </ul>

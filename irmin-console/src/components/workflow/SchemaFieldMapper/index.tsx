@@ -16,8 +16,10 @@ import FieldGroup from './FieldGroup';
 import type { Field } from './types';
 import { autoMapIdenticalFields, groupFieldsByFile, hasFields } from './utils';
 
+const EMPTY_MAPPINGS: FieldMapping[] = [];
+
 const SchemaFieldMapper = ({
-  initialMappings = [],
+  initialMappings = EMPTY_MAPPINGS,
   onMappingsChange,
   sourceSchema,
   destinationSchema,
@@ -201,9 +203,9 @@ const SchemaFieldMapper = ({
     dict.schemaFieldMapper.description,
   ]);
 
-  const mappingsCount = useMemo(() => mappings.length, [mappings]);
+  const mappingsCount = mappings.length;
 
-  const hasMappings = useMemo(() => mappings.length > 0, [mappings]);
+  const hasMappings = mappings.length > 0;
 
   const sourceHasFields = useMemo(
     () => hasFields(sourceSchema),

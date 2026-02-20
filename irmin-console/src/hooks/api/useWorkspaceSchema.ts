@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import IrminCore from '@/lib/core';
-
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -16,8 +13,7 @@ import type { ObjectSchema } from '@/types/core/ObjectSchema';
  */
 export function useWorkspaceSchema() {
   const { irminAlert } = usePopup();
-  const { locale } = useLocale();
-  const { getToken } = useIAM();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
 
   const [schema, setSchema] = useState<ObjectSchema | null>(null);
@@ -26,9 +22,8 @@ export function useWorkspaceSchema() {
   const fetchWorkspaceSchema = useCallback(async () => {
     try {
       setLoading(true);
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      const schema = await irminCore.workspaceService.getWorkspaceSchema({
+      const core = await getCore();
+      const schema = await core.workspaceService.getWorkspaceSchema({
         workspaceSlug,
       });
       setSchema(schema.data ?? null);
@@ -41,7 +36,7 @@ export function useWorkspaceSchema() {
     } finally {
       setLoading(false);
     }
-  }, [workspaceSlug, getToken, locale, irminAlert]);
+  }, [workspaceSlug, getCore, irminAlert]);
 
   const fetchedSchemaForWorkspaceRef = useRef('');
   useEffect(() => {

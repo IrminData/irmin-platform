@@ -67,7 +67,6 @@ export default function InlineQueryEditor({
   const [editorContent, setEditorContent] = useState('');
   const [originalContent, setOriginalContent] = useState('');
   const [isNewQuery, setIsNewQuery] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const hasUnsavedChangesRef = useRef(false);
   const isTransitioningFromNewQueryRef = useRef(false);
   const previousNormalizedQueryIdRef = useRef<string | null>(null);
@@ -81,6 +80,18 @@ export default function InlineQueryEditor({
   );
   // Store normalizedQueryId in a ref to avoid dependency issues
   const normalizedQueryIdRef = useRef(normalizedQueryId);
+
+  // Derive hasUnsavedChanges from editor state
+  const hasUnsavedChanges = useMemo(() => {
+    if (normalizedQueryId && !isNewQuery) {
+      return editorContent !== originalContent;
+    }
+    if (!normalizedQueryId || isNewQuery) {
+      return editorContent.trim().length > 0;
+    }
+    return false;
+  }, [editorContent, originalContent, normalizedQueryId, isNewQuery]);
+  hasUnsavedChangesRef.current = hasUnsavedChanges;
 
   // Fetch single query
   const queryQuery = useQuery({
@@ -165,7 +176,7 @@ export default function InlineQueryEditor({
       setEditorContent('');
       setOriginalContent('');
       setIsNewQuery(true);
-      setHasUnsavedChanges(false);
+
       isTransitioningFromNewQueryRef.current = false;
     } else {
       // Query ID exists
@@ -176,7 +187,6 @@ export default function InlineQueryEditor({
         setOriginalContent('');
       }
       setIsNewQuery(false);
-      setHasUnsavedChanges(false);
     }
 
     // Update refs AFTER reset logic completes
@@ -190,24 +200,10 @@ export default function InlineQueryEditor({
       setEditorContent(currentQuery.sql ?? '');
       setOriginalContent(currentQuery.sql ?? '');
       setIsNewQuery(false);
-      setHasUnsavedChanges(false);
+
       isTransitioningFromNewQueryRef.current = false;
     }
   }, [normalizedQueryId, currentQuery, queryQuery.isLoading]);
-
-  // Track content changes
-  useEffect(() => {
-    let newHasUnsavedChanges = false;
-    if (normalizedQueryId && !isNewQuery) {
-      // For existing queries, compare current content with original
-      newHasUnsavedChanges = editorContent !== originalContent;
-    } else if (!normalizedQueryId || isNewQuery) {
-      // For new queries, enable save if there's any content
-      newHasUnsavedChanges = editorContent.trim().length > 0;
-    }
-    setHasUnsavedChanges(newHasUnsavedChanges);
-    hasUnsavedChangesRef.current = newHasUnsavedChanges;
-  }, [editorContent, originalContent, normalizedQueryId, isNewQuery]);
 
   const handleQuerySelect = useCallback(
     async (queryId: string) => {
@@ -245,7 +241,7 @@ export default function InlineQueryEditor({
         setIsNewQuery(true);
         setEditorContent('');
         setOriginalContent('');
-        setHasUnsavedChanges(false);
+
         onQueryIdChangeRef.current('');
       } else {
         // Select existing query
@@ -285,7 +281,7 @@ export default function InlineQueryEditor({
               isTransitioningFromNewQueryRef.current = true;
               setOriginalContent(editorContent);
               setIsNewQuery(false);
-              setHasUnsavedChanges(false);
+
               onQueryIdChangeRef.current(newQueryId);
 
               irminModal.close();
@@ -314,7 +310,7 @@ export default function InlineQueryEditor({
         });
 
         setOriginalContent(editorContent);
-        setHasUnsavedChanges(false);
+
         // Success alert is already shown by updateStoredQueryMutation.onSuccess
       } catch (error) {
         console.error('Error updating query:', error);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
@@ -13,7 +13,11 @@ import RepositoryWizardModal from '@/components/wizards/RepositoryWizardModal';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useRepositories } from '@/hooks/api';
-import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
+import {
+  useDebouncedValue,
+  useResourceAllowed,
+  useToggleCreateParam,
+} from '@/hooks/utils';
 
 import RepositoryList from './RepositoryList';
 
@@ -39,17 +43,7 @@ export default function RepositoriesSection({
   const { repositoriesQuery } = useRepositories();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-
-  // Debounce search query
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 300);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchQuery]);
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
 
   // Filter items based on debounced search query
   const filteredItems = useMemo(

@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef, useCallback, useMemo } from 'react';
+import { forwardRef, useMemo } from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -51,7 +51,7 @@ function DynamicFormField(
   );
 
   // Render the appropriate input type based on the field's type
-  const renderField = useCallback(() => {
+  const fieldElement = useMemo(() => {
     // Handle secret text areas separately to ensure they are rendered as such
     if (field.secret && field.type === 'textarea') {
       return (
@@ -238,7 +238,7 @@ function DynamicFormField(
           {field.required && <span className='ml-2 text-red-500'>*</span>}
         </Label>
       )}
-      {renderField()}
+      {fieldElement}
       {field.help_text && (
         <p className='pl-1 text-xs text-gray-400'>{field.help_text}</p>
       )}

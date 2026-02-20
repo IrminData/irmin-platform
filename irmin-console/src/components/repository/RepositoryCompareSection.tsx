@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -33,6 +33,14 @@ import ImmutableWarning from './ImmutableWarning';
  * Section to display the diffs between branches of a repository and merge them.
  */
 export default function RepositoryCompareSection() {
+  return (
+    <Suspense>
+      <RepositoryCompareSectionContent />
+    </Suspense>
+  );
+}
+
+function RepositoryCompareSectionContent() {
   const { dict } = useLocale();
   const { irminModal } = usePopup();
   const { repository, currentRef, defaultRef } = useRepositoryContext();

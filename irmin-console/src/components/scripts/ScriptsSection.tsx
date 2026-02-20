@@ -1,6 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -42,6 +49,14 @@ import ScriptResults from './ScriptResults';
  * Used to manage and edit scripts in the Workspace
  */
 export default function ScriptsSection() {
+  return (
+    <Suspense>
+      <ScriptsSectionContent />
+    </Suspense>
+  );
+}
+
+function ScriptsSectionContent() {
   const { dict } = useLocale();
   const { irminAlert, irminConfirm } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();

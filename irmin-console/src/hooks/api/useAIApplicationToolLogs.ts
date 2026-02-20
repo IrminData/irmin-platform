@@ -2,15 +2,13 @@ import { useCallback, useState } from 'react';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import {
   aiApplicationToolLogsQueryKey,
   aiApplicationToolLogStatsQueryKey,
 } from '@/lib/queryKeys';
 
 import { useAIApplicationContext } from '@/context/AIApplicationContext';
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type {
@@ -27,8 +25,7 @@ const DEFAULT_LIMIT = 50;
  * @returns Tool logs query, stats query, pagination controls, and filter functions.
  */
 export function useAIApplicationToolLogs() {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
   const { aiApplication } = useAIApplicationContext();
   const queryClient = useQueryClient();
@@ -59,8 +56,7 @@ export function useAIApplicationToolLogs() {
       successFilter
     ),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.aiApplicationService.getToolLogs({
         workspace: workspaceSlug,
         aiApplicationId: aiApplication.id,
@@ -82,8 +78,7 @@ export function useAIApplicationToolLogs() {
       aiApplication.id
     ),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.aiApplicationService.getToolLogStats({
         workspace: workspaceSlug,
         aiApplicationId: aiApplication.id,

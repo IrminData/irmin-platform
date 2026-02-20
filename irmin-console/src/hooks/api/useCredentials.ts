@@ -1,11 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import type { CreateCredentialRequest } from '@/lib/core/resources/CredentialService';
 import { credentialsQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 
 import type { APIToken } from '@/types/core/APIToken';
@@ -17,16 +15,14 @@ import {
 } from './mutations/utils';
 
 export function useCredentials() {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const queryClient = useQueryClient();
 
   const credentialsQuery = useQuery<IrminAPIResponse<APIToken[]>, Error>({
     queryKey: credentialsQueryKey,
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.credentialService.getSystemTokens();
     },
   });
@@ -34,8 +30,7 @@ export function useCredentials() {
   const deleteCredentialMutation = useMutation<IrminAPIResponse, Error, string>(
     {
       mutationFn: async (tokenID) => {
-        const token = await getToken();
-        const core = new IrminCore(locale, token);
+        const core = await getCore();
         return await core.credentialService.revokeSystemToken({
           tokenID,
         });
@@ -64,8 +59,7 @@ export function useCredentials() {
     CreateCredentialRequest
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.credentialService.createSystemToken(data);
     },
     ...createMutationHandlers<APIToken, CreateCredentialRequest>(

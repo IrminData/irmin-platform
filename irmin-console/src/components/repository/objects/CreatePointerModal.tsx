@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
@@ -59,7 +59,6 @@ export default function CreatePointerModal({
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null);
 
   // Filter out the current repository
   const availableRepositories = repositories.filter(
@@ -85,15 +84,13 @@ export default function CreatePointerModal({
   const targetPath = watch('targetPath');
   const targetRef = watch('targetRef');
 
-  // Update selected repo when target repository changes
-  useEffect(() => {
-    if (targetRepository) {
-      const repo = repositories.find((r) => r.slug === targetRepository);
-      setSelectedRepo(repo ?? null);
-    } else {
-      setSelectedRepo(null);
-    }
-  }, [targetRepository, repositories]);
+  const selectedRepo = useMemo(
+    () =>
+      targetRepository
+        ? (repositories.find((r) => r.slug === targetRepository) ?? null)
+        : null,
+    [targetRepository, repositories]
+  );
 
   // Clear targetPath and pointerName when targetRepository or targetRef changes
   useEffect(() => {
@@ -101,17 +98,14 @@ export default function CreatePointerModal({
     setValue('pointerName', '');
   }, [targetRepository, targetRef, setValue]);
 
-  // Auto-generate pointer name from target path
-  useEffect(() => {
-    if (targetPath) {
-      const filename = targetPath.split('/').pop() ?? '';
-      setValue('pointerName', filename);
-    }
-  }, [targetPath, setValue]);
-
   const handleTargetPathChange = useCallback(
     (path: string) => {
       setValue('targetPath', path);
+      // Auto-generate pointer name from target path
+      if (path) {
+        const filename = path.split('/').pop() ?? '';
+        setValue('pointerName', filename);
+      }
     },
     [setValue]
   );

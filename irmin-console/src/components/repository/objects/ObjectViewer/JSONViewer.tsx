@@ -19,10 +19,7 @@ const ReactJsonView = dynamic(() => import('@microlink/react-json-view'), {
 
 const JSONViewer = ({ data, name }: { data: JSONValue; name?: string }) => {
   const { resolvedTheme } = useTheme();
-  const jsonTheme = useMemo(
-    () => (resolvedTheme === 'dark' ? 'google' : 'rjv-default'),
-    [resolvedTheme]
-  );
+  const jsonTheme = resolvedTheme === 'dark' ? 'google' : 'rjv-default';
 
   const isSafe = useMemo(
     () => (data && typeof data === 'object' ? canSafelyRenderJSON(data) : true),

@@ -1,7 +1,7 @@
 'use client';
 
 import type { FormHTMLAttributes } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
@@ -88,7 +88,7 @@ export default function DynamicForm({
     });
   }, [fields]);
 
-  const renderFields = useCallback(() => {
+  const fieldsElement = useMemo(() => {
     return sortedFields().map(([key, field]) => (
       <div key={key}>
         <Controller
@@ -171,7 +171,7 @@ export default function DynamicForm({
       className='my-4 flex flex-col gap-2'
       {...formProps}
     >
-      {renderFields()}
+      {fieldsElement}
       {Object.keys(errors).length > 0 && (
         <p className='w-full text-center text-red-500'>
           {dict.common.pleaseFixErrors}

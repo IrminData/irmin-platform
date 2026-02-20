@@ -57,7 +57,6 @@ export default function InlineScriptEditor({
   const [language, setLanguage] = useState('go');
   const [originalContent, setOriginalContent] = useState('');
   const [isNewScript, setIsNewScript] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const hasUnsavedChangesRef = useRef(false);
   const isTransitioningFromNewScriptRef = useRef(false);
   const previousNormalizedScriptIdRef = useRef<string | null>(null);
@@ -71,6 +70,18 @@ export default function InlineScriptEditor({
   );
   // Store normalizedScriptId in a ref to avoid dependency issues
   const normalizedScriptIdRef = useRef(normalizedScriptId);
+
+  // Derive hasUnsavedChanges from editor state
+  const hasUnsavedChanges = useMemo(() => {
+    if (normalizedScriptId && !isNewScript) {
+      return editorContent !== originalContent;
+    }
+    if (!normalizedScriptId || isNewScript) {
+      return editorContent.trim().length > 0;
+    }
+    return false;
+  }, [editorContent, originalContent, normalizedScriptId, isNewScript]);
+  hasUnsavedChangesRef.current = hasUnsavedChanges;
 
   const { scriptQuery } = useScript(normalizedScriptId ?? undefined);
   const currentScript = scriptQuery.data?.data;
@@ -139,7 +150,7 @@ export default function InlineScriptEditor({
       setOriginalContent('');
       setLanguage('go');
       setIsNewScript(true);
-      setHasUnsavedChanges(false);
+
       isTransitioningFromNewScriptRef.current = false;
     } else {
       // Script ID exists
@@ -151,7 +162,6 @@ export default function InlineScriptEditor({
       }
       setLanguage('go');
       setIsNewScript(false);
-      setHasUnsavedChanges(false);
     }
 
     // Update refs AFTER reset logic completes
@@ -166,24 +176,10 @@ export default function InlineScriptEditor({
       setOriginalContent(currentScript.content ?? '');
       setLanguage(currentScript.language ?? 'go');
       setIsNewScript(false);
-      setHasUnsavedChanges(false);
+
       isTransitioningFromNewScriptRef.current = false;
     }
   }, [normalizedScriptId, currentScript, scriptQuery.isLoading]);
-
-  // Track content changes
-  useEffect(() => {
-    let newHasUnsavedChanges = false;
-    if (normalizedScriptId && !isNewScript) {
-      // For existing scripts, compare current content with original
-      newHasUnsavedChanges = editorContent !== originalContent;
-    } else if (!normalizedScriptId || isNewScript) {
-      // For new scripts, enable save if there's any content
-      newHasUnsavedChanges = editorContent.trim().length > 0;
-    }
-    setHasUnsavedChanges(newHasUnsavedChanges);
-    hasUnsavedChangesRef.current = newHasUnsavedChanges;
-  }, [editorContent, originalContent, normalizedScriptId, isNewScript]);
 
   const handleScriptSelect = useCallback(
     async (scriptId: string) => {
@@ -222,7 +218,7 @@ export default function InlineScriptEditor({
         setEditorContent('');
         setOriginalContent('');
         setLanguage('go');
-        setHasUnsavedChanges(false);
+
         onScriptIdChangeRef.current('');
       } else {
         // Select existing script
@@ -265,7 +261,7 @@ export default function InlineScriptEditor({
               isTransitioningFromNewScriptRef.current = true;
               setOriginalContent(editorContent);
               setIsNewScript(false);
-              setHasUnsavedChanges(false);
+
               onScriptIdChangeRef.current(newScriptId);
 
               irminModal.close();
@@ -293,7 +289,7 @@ export default function InlineScriptEditor({
         });
 
         setOriginalContent(editorContent);
-        setHasUnsavedChanges(false);
+
         // Success alert is already shown by updateScriptMutation.onSuccess
       } catch (error) {
         console.error('Error updating script:', error);

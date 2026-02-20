@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { IoAdd, IoInformationCircle } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
@@ -12,7 +12,11 @@ import WorkflowWizardModal from '@/components/wizards/WorkflowWizardModal';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useWorkflows } from '@/hooks/api';
-import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
+import {
+  useDebouncedValue,
+  useResourceAllowed,
+  useToggleCreateParam,
+} from '@/hooks/utils';
 
 import type { ExportWorkflow } from '@/types/core/Workflow';
 
@@ -41,17 +45,7 @@ export default function ExportWorkflowsSection({
   const { workflowsQuery } = useWorkflows('export');
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-
-  // Debounce search query
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 300);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchQuery]);
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
 
   // Filter items based on debounced search query
   const filteredItems = useMemo(

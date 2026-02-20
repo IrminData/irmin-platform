@@ -1,10 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { storedQueriesQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -29,8 +27,7 @@ type StoredQueryUpdateInput = Pick<
 >;
 
 export function useStoredQueries() {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
@@ -38,8 +35,7 @@ export function useStoredQueries() {
   const storedQueriesQuery = useQuery({
     queryKey: storedQueriesQueryKey(workspaceSlug),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.queryService.listStoredQueries({
         workspace: workspaceSlug,
       });
@@ -48,8 +44,7 @@ export function useStoredQueries() {
 
   const createStoredQueryMutation = useMutation({
     mutationFn: async (query: StoredQueryCreateInput) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.queryService.createStoredQuery({
         workspace: workspaceSlug,
         name: query.name,
@@ -99,8 +94,7 @@ export function useStoredQueries() {
 
   const updateStoredQueryMutation = useMutation({
     mutationFn: async (query: StoredQueryUpdateInput) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.queryService.updateStoredQuery({
         workspace: workspaceSlug,
         queryID: query.id,
@@ -128,8 +122,7 @@ export function useStoredQueries() {
 
   const deleteStoredQueryMutation = useMutation({
     mutationFn: async (queryID: string) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.queryService.deleteStoredQuery({
         workspace: workspaceSlug,
         queryID,
@@ -157,8 +150,7 @@ export function useStoredQueries() {
       queryID: string;
       newOwnerID: string;
     }) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.queryService.transferStoredQuery({
         workspace: workspaceSlug,
         queryID,
@@ -185,8 +177,7 @@ export function useStoredQueries() {
       queryID: string;
       limitResponse?: boolean;
     }) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.queryService.executeStoredQuery({
         workspace: workspaceSlug,
         queryID,

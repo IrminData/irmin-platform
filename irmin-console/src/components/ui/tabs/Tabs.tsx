@@ -56,9 +56,8 @@ export default function Tabs({ tabs }: { tabs: TabDetails[] }) {
     });
   }, [pathname, tabs]);
 
-  const renderTabContent = () => {
-    return tabs.find((tab) => tab.slug === activeTab)?.content ?? null;
-  };
+  const tabContent =
+    tabs.find((tab) => tab.slug === activeTab)?.content ?? null;
 
   if (tabs.length === 0) return <></>;
 
@@ -94,14 +93,14 @@ export default function Tabs({ tabs }: { tabs: TabDetails[] }) {
           </Button>
         ))}
       </div>
-      {renderTabContent() && (
+      {tabContent && (
         <div
           className={`
             px-2
             lg:px-4
           `}
         >
-          {renderTabContent()}
+          {tabContent}
         </div>
       )}
     </>

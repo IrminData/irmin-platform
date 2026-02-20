@@ -215,7 +215,7 @@ export default function EmbeddingWizard({
     upsertEmbeddingsMutation,
   ]);
 
-  const renderStepIndicator = () => (
+  const stepIndicatorElement = (
     <div className='flex items-center justify-center gap-2 pb-4'>
       {STEPS.map((step, index) => {
         const isActive = step === currentStep;
@@ -251,7 +251,7 @@ export default function EmbeddingWizard({
     </div>
   );
 
-  const renderSourceStep = () => (
+  const sourceStepElement = (
     <div className='flex flex-col gap-4'>
       <div className='flex items-center gap-2'>
         <TbFile className='size-5 text-primary' />
@@ -322,7 +322,7 @@ export default function EmbeddingWizard({
     </div>
   );
 
-  const renderChunkingStep = () => (
+  const chunkingStepElement = (
     <div className='flex flex-col gap-4'>
       <div className='flex items-center gap-2'>
         <TbSettings className='size-5 text-primary' />
@@ -437,7 +437,7 @@ export default function EmbeddingWizard({
     </div>
   );
 
-  const renderMetadataStep = () => (
+  const metadataStepElement = (
     <div className='flex flex-col gap-4'>
       <div className='flex items-center gap-2'>
         <TbTag className='size-5 text-primary' />
@@ -473,7 +473,7 @@ export default function EmbeddingWizard({
     </div>
   );
 
-  const renderGenerateStep = () => (
+  const generateStepElement = (
     <div className='flex flex-col gap-4'>
       <div className='flex items-center gap-2'>
         <TbVectorTriangle className='size-5 text-primary' />
@@ -596,26 +596,22 @@ export default function EmbeddingWizard({
     </div>
   );
 
-  const renderCurrentStep = () => {
-    switch (currentStep) {
-      case 'source':
-        return renderSourceStep();
-      case 'chunking':
-        return renderChunkingStep();
-      case 'metadata':
-        return renderMetadataStep();
-      case 'generate':
-        return renderGenerateStep();
-      default:
-        return null;
-    }
-  };
+  const currentStepElement =
+    currentStep === 'source'
+      ? sourceStepElement
+      : currentStep === 'chunking'
+        ? chunkingStepElement
+        : currentStep === 'metadata'
+          ? metadataStepElement
+          : currentStep === 'generate'
+            ? generateStepElement
+            : null;
 
   return (
     <div className='flex flex-col gap-4'>
-      {renderStepIndicator()}
+      {stepIndicatorElement}
       <Separator />
-      {renderCurrentStep()}
+      {currentStepElement}
       <Separator />
 
       {/* Navigation */}

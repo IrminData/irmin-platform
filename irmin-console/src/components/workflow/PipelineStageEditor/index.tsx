@@ -40,8 +40,10 @@ const generateStageId = () => `stage_${Date.now()}_${++stageIdCounter}`;
  *
  * @returns The rendered component.
  */
+const EMPTY_STAGES: PipelineStage[] = [];
+
 function PipelineStageEditor({
-  initialStages = [],
+  initialStages = EMPTY_STAGES,
   onSubmit,
   readOnly = false,
   hideSaveButton = false,

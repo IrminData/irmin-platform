@@ -2,11 +2,9 @@ import { useCallback, useState } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { workflowRunsQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type {
@@ -28,8 +26,7 @@ interface AllWorkflowRunsResponse extends Omit<
  * @returns pagination state and control functions
  */
 export const useAllWorkflowRuns = () => {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,9 +34,8 @@ export const useAllWorkflowRuns = () => {
   const allWorkflowRunsQuery = useQuery<AllWorkflowRunsResponse, Error>({
     queryKey: workflowRunsQueryKey(workspaceSlug, 'all', currentPage),
     queryFn: async () => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      return irminCore.workflowRunService.fetchAllWorkflowRuns({
+      const core = await getCore();
+      return core.workflowRunService.fetchAllWorkflowRuns({
         workspace: workspaceSlug,
         perPage: 10,
         page: currentPage,

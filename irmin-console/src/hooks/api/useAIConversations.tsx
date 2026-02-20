@@ -201,13 +201,13 @@ export function useAIConversations(options: UseAIConversationsOptions = {}) {
   const nextPage = () => {
     const pagination = aiConversationsQuery.data?.pagination;
     if (pagination && currentPage < pagination.totalPages) {
-      setCurrentPage(currentPage + 1);
+      setCurrentPage((prev) => prev + 1);
     }
   };
 
   const previousPage = () => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      setCurrentPage((prev) => prev - 1);
     }
   };
 

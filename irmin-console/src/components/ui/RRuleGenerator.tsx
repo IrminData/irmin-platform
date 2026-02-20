@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { format, parseISO } from 'date-fns';
 import { Frequency, RRule, rrulestr, Weekday } from 'rrule';
@@ -136,7 +136,6 @@ export default function RRuleGenerator({
   const [interval, setInterval] = useState<number>(1);
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [generatedRule, setGeneratedRule] = useState<string>(rule || '');
-  const [nextDates, setNextDates] = useState<Date[]>([]);
   const [copied, setCopied] = useState(false);
 
   const initialised = useRef(false);
@@ -189,11 +188,11 @@ export default function RRuleGenerator({
     onGenerate(ruleStr);
   }, [frequency, interval, selectedWeekdays, startDate, onGenerate]);
 
-  // Calculate next execution dates when rule changes
-  useEffect(() => {
-    const dates = getNextExecutionDates(generatedRule);
-    setNextDates(dates);
-  }, [generatedRule]);
+  // Derive next execution dates from the generated rule
+  const nextDates = useMemo(
+    () => getNextExecutionDates(generatedRule),
+    [generatedRule]
+  );
 
   // Handle preset selection
   const handlePresetChange = useCallback(

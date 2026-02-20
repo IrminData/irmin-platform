@@ -430,7 +430,7 @@ const AIApplicationPendingWritesSectionContent = () => {
                   <Button
                     variant='outline'
                     size='sm'
-                    onClick={() => setPage(page - 1)}
+                    onClick={() => setPage((prev) => prev - 1)}
                     disabled={page === 0}
                   >
                     <TbChevronLeft size={16} />
@@ -438,7 +438,7 @@ const AIApplicationPendingWritesSectionContent = () => {
                   <Button
                     variant='outline'
                     size='sm'
-                    onClick={() => setPage(page + 1)}
+                    onClick={() => setPage((prev) => prev + 1)}
                     disabled={page >= totalPages - 1}
                   >
                     <TbChevronRight size={16} />

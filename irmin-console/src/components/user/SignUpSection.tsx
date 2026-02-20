@@ -1,5 +1,7 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -14,12 +16,17 @@ import { useLocale } from '@/context/LocaleContext';
 
 const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.dev';
 
+const noopSubscribe = () => () => {};
+const getTrue = () => true;
+const getFalse = () => false;
+
 /**
  * Sign Up UI component
  */
 const SignUpSection = () => {
   const { resolvedTheme } = useTheme();
   const { locale } = useLocale();
+  const mounted = useSyncExternalStore(noopSubscribe, getTrue, getFalse);
 
   return (
     <div
@@ -63,13 +70,15 @@ const SignUpSection = () => {
         <LanguageSwitcher />
         <ThemeSwitch />
       </div>
-      <SignUp
-        signInUrl={`/${locale}/sign-in`}
-        appearance={{
-          baseTheme: resolvedTheme === 'dark' ? dark : undefined,
-          variables: { colorPrimary: '#a3c2ac' },
-        }}
-      />
+      {mounted && (
+        <SignUp
+          signInUrl={`/${locale}/sign-in`}
+          appearance={{
+            baseTheme: resolvedTheme === 'dark' ? dark : undefined,
+            variables: { colorPrimary: '#a3c2ac' },
+          }}
+        />
+      )}
     </div>
   );
 };

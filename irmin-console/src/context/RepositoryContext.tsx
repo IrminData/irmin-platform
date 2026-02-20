@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -45,6 +46,22 @@ const RepositoryContext = createContext<RepositoryContextProps | undefined>(
  * @returns Repository context provider
  */
 export const RepositoryProvider = ({
+  children,
+  repository,
+}: {
+  children: React.ReactNode;
+  repository: Repository;
+}) => {
+  return (
+    <Suspense>
+      <RepositoryProviderInner repository={repository}>
+        {children}
+      </RepositoryProviderInner>
+    </Suspense>
+  );
+};
+
+const RepositoryProviderInner = ({
   children,
   repository,
 }: {

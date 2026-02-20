@@ -40,12 +40,14 @@ import type { ActionInputData } from '@/types/core/Workflow';
  * @param props.inputFiles - The input files to display
  * @param props.setInputFiles - Function to set the input files
  */
+const EMPTY_INPUT_FILES: ActionInputData[] = [];
+
 const QueryResults = ({
   title,
   result,
   loading,
   onRun,
-  inputFiles = [],
+  inputFiles = EMPTY_INPUT_FILES,
   setInputFiles,
 }: {
   title: string;
@@ -75,7 +77,6 @@ const QueryResults = ({
     setPrevLoading(loading);
   }
 
-  const showLoadingOnData = useMemo(() => loading, [loading]);
   const logs = useMemo(() => result?.logs ?? [], [result?.logs]);
 
   return (
@@ -185,7 +186,7 @@ const QueryResults = ({
             rowsReturned: result.data.length,
             timeTaken: nsDurationToMs(result.duration ?? 0),
           }}
-          loading={showLoadingOnData}
+          loading={loading}
         />
       )}
       {activeTab === 'data' && !result?.data && (

@@ -1,7 +1,6 @@
 'use client';
 
-import type React from 'react';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { format } from 'date-fns';
 
@@ -76,6 +75,12 @@ const DAYS_OF_WEEK = [
   { value: '5', label: 'Friday' },
   { value: '6', label: 'Saturday' },
 ];
+
+// Default values when switching a cron field from "every" to "specific"
+const FIELD_DEFAULTS = ['0', '0', '1', '1', '1'];
+
+// Default 5-part expression used when the current one is malformed
+const DEFAULT_PARTS = ['*', '0', '*', '*', '*'];
 
 // Simple cron validation function
 const isValidCron = (cron: string): boolean => {
@@ -216,108 +221,39 @@ const CronGenerator = ({
   const { dict } = useLocale();
   const [activeTab, setActiveTab] = useState('presets');
   const [cronExpression, setCronExpression] = useState(expression);
-  const [nextDates, setNextDates] = useState<Date[]>([]);
   const [copied, setCopied] = useState(false);
-  const [isValid, setIsValid] = useState(true);
-
-  // Custom fields state (lazy initialization to avoid object creation on every render)
-  const [minute, setMinute] = useState(() => ({ type: 'every', value: '*' }));
-  const [hour, setHour] = useState(() => ({ type: 'specific', value: '0' }));
-  const [dayOfMonth, setDayOfMonth] = useState(() => ({
-    type: 'every',
-    value: '*',
-  }));
-  const [month, setMonth] = useState(() => ({ type: 'every', value: '*' }));
-  const [dayOfWeek, setDayOfWeek] = useState(() => ({
-    type: 'every',
-    value: '*',
-  }));
 
   // Update cron expression when prop changes
   useEffect(() => {
     setCronExpression(expression);
   }, [expression]);
 
-  // Parse current expression to set custom fields ONLY when switching tabs
-  const prevCronAndTab = useRef({
-    activeTab: '',
-    cronExpression: '',
-    isInitializing: false,
-  });
-  useEffect(() => {
-    // Skip if we're already processing a tab change
-    if (prevCronAndTab.current.isInitializing) return;
-
-    // Skip if nothing has changed
-    if (
-      prevCronAndTab.current.activeTab === activeTab &&
-      prevCronAndTab.current.cronExpression === cronExpression
-    )
-      return;
-
-    // Set flag to prevent recursive updates
-    prevCronAndTab.current.isInitializing = true;
-
-    // Update ref values
-    prevCronAndTab.current.activeTab = activeTab;
-    prevCronAndTab.current.cronExpression = cronExpression;
-
-    if (activeTab === 'custom') {
-      const parts = cronExpression.split(' ');
-      if (parts.length === 5) {
-        setMinute({
-          type: parts[0] === '*' ? 'every' : 'specific',
-          value: parts[0],
-        });
-        setHour({
-          type: parts[1] === '*' ? 'every' : 'specific',
-          value: parts[1],
-        });
-        setDayOfMonth({
-          type: parts[2] === '*' ? 'every' : 'specific',
-          value: parts[2],
-        });
-        setMonth({
-          type: parts[3] === '*' ? 'every' : 'specific',
-          value: parts[3],
-        });
-        setDayOfWeek({
-          type: parts[4] === '*' ? 'every' : 'specific',
-          value: parts[4],
-        });
-      }
-    }
-
-    // Reset flag after state updates
-    setTimeout(() => {
-      prevCronAndTab.current.isInitializing = false;
-    }, 0);
-  }, [activeTab, cronExpression]);
-
-  // Update cron expression when custom fields change
-  useEffect(() => {
-    // Skip if we're initializing from tab change
-    if (prevCronAndTab.current.isInitializing) return;
-
-    if (activeTab === 'custom') {
-      const newExpression = `${minute.value} ${hour.value} ${dayOfMonth.value} ${month.value} ${dayOfWeek.value}`;
-      setCronExpression(newExpression);
-      onSave(newExpression);
-    }
-  }, [minute, hour, dayOfMonth, month, dayOfWeek, activeTab, onSave]);
-
-  // Calculate next execution dates when cron expression changes
-  useEffect(() => {
-    const valid = isValidCron(cronExpression);
-    setIsValid(valid);
-
-    if (valid) {
-      const dates = getNextExecutionDates(cronExpression);
-      setNextDates(dates);
-    } else {
-      setNextDates([]);
-    }
+  // Normalize expression to always have 5 parts, filling missing parts with defaults
+  const normalizedParts = useMemo(() => {
+    const parts = cronExpression.split(' ').filter(Boolean);
+    return Array.from({ length: 5 }, (_, i) => parts[i] ?? DEFAULT_PARTS[i]);
   }, [cronExpression]);
+
+  // Derive field values from normalized parts (single source of truth)
+  const parsedFields = useMemo(() => {
+    return normalizedParts.map((part) => ({
+      type: part === '*' ? 'every' : 'specific',
+      value: part,
+    }));
+  }, [normalizedParts]);
+
+  const minute = parsedFields[0];
+  const hour = parsedFields[1];
+  const dayOfMonth = parsedFields[2];
+  const month = parsedFields[3];
+  const dayOfWeek = parsedFields[4];
+
+  // Derive validation and next dates from cronExpression
+  const isValid = useMemo(() => isValidCron(cronExpression), [cronExpression]);
+  const nextDates = useMemo(
+    () => (isValid ? getNextExecutionDates(cronExpression) : []),
+    [cronExpression, isValid]
+  );
 
   // Handle preset selection
   const handlePresetChange = useCallback(
@@ -346,25 +282,24 @@ const CronGenerator = ({
     setTimeout(() => setCopied(false), 2000);
   }, [cronExpression]);
 
-  // Update field based on type and value
+  // Update a cron field by index and rebuild the expression
   const updateField = useCallback(
-    (
-      field: { type: string; value: string },
-      setField: React.Dispatch<
-        React.SetStateAction<{ type: string; value: string }>
-      >,
-      type: string,
-      value?: string
-    ) => {
+    (fieldIndex: number, type: string, value?: string) => {
+      const parts = [...normalizedParts];
+
       if (type === 'every') {
-        setField({ type, value: '*' });
+        parts[fieldIndex] = '*';
       } else if (type === 'specific' && value) {
-        setField({ type, value });
-      } else {
-        setField({ ...field, type });
+        parts[fieldIndex] = value;
+      } else if (type === 'specific' && parts[fieldIndex] === '*') {
+        parts[fieldIndex] = FIELD_DEFAULTS[fieldIndex];
       }
+
+      const newExpression = parts.join(' ');
+      setCronExpression(newExpression);
+      onSave(newExpression);
     },
-    []
+    [normalizedParts, onSave]
   );
 
   return (
@@ -432,7 +367,7 @@ const CronGenerator = ({
               </div>
               <RadioGroup
                 value={minute.type}
-                onValueChange={(value) => updateField(minute, setMinute, value)}
+                onValueChange={(value) => updateField(0, value)}
                 className='flex flex-col space-y-1'
                 disabled={isDisabled}
               >
@@ -450,9 +385,7 @@ const CronGenerator = ({
                   <Select
                     disabled={minute.type !== 'specific'}
                     value={minute.type === 'specific' ? minute.value : '0'}
-                    onValueChange={(value) =>
-                      updateField(minute, setMinute, 'specific', value)
-                    }
+                    onValueChange={(value) => updateField(0, 'specific', value)}
                   >
                     <SelectTrigger className='w-20'>
                       <SelectValue />
@@ -482,7 +415,7 @@ const CronGenerator = ({
               </div>
               <RadioGroup
                 value={hour.type}
-                onValueChange={(value) => updateField(hour, setHour, value)}
+                onValueChange={(value) => updateField(1, value)}
                 className='flex flex-col space-y-1'
                 disabled={isDisabled}
               >
@@ -500,9 +433,7 @@ const CronGenerator = ({
                   <Select
                     disabled={hour.type !== 'specific'}
                     value={hour.type === 'specific' ? hour.value : '0'}
-                    onValueChange={(value) =>
-                      updateField(hour, setHour, 'specific', value)
-                    }
+                    onValueChange={(value) => updateField(1, 'specific', value)}
                   >
                     <SelectTrigger className='w-20'>
                       <SelectValue />
@@ -532,9 +463,7 @@ const CronGenerator = ({
               </div>
               <RadioGroup
                 value={dayOfMonth.type}
-                onValueChange={(value) =>
-                  updateField(dayOfMonth, setDayOfMonth, value)
-                }
+                onValueChange={(value) => updateField(2, value)}
                 className='flex flex-col space-y-1'
                 disabled={isDisabled}
               >
@@ -554,9 +483,7 @@ const CronGenerator = ({
                     value={
                       dayOfMonth.type === 'specific' ? dayOfMonth.value : '1'
                     }
-                    onValueChange={(value) =>
-                      updateField(dayOfMonth, setDayOfMonth, 'specific', value)
-                    }
+                    onValueChange={(value) => updateField(2, 'specific', value)}
                   >
                     <SelectTrigger className='w-20'>
                       <SelectValue />
@@ -586,7 +513,7 @@ const CronGenerator = ({
               </div>
               <RadioGroup
                 value={month.type}
-                onValueChange={(value) => updateField(month, setMonth, value)}
+                onValueChange={(value) => updateField(3, value)}
                 className='flex flex-col space-y-1'
                 disabled={isDisabled}
               >
@@ -604,9 +531,7 @@ const CronGenerator = ({
                   <Select
                     disabled={month.type !== 'specific'}
                     value={month.type === 'specific' ? month.value : '1'}
-                    onValueChange={(value) =>
-                      updateField(month, setMonth, 'specific', value)
-                    }
+                    onValueChange={(value) => updateField(3, 'specific', value)}
                   >
                     <SelectTrigger className='w-28'>
                       <SelectValue />
@@ -636,9 +561,7 @@ const CronGenerator = ({
               </div>
               <RadioGroup
                 value={dayOfWeek.type}
-                onValueChange={(value) =>
-                  updateField(dayOfWeek, setDayOfWeek, value)
-                }
+                onValueChange={(value) => updateField(4, value)}
                 className='flex flex-col space-y-1'
                 disabled={isDisabled}
               >
@@ -658,9 +581,7 @@ const CronGenerator = ({
                     value={
                       dayOfWeek.type === 'specific' ? dayOfWeek.value : '1'
                     }
-                    onValueChange={(value) =>
-                      updateField(dayOfWeek, setDayOfWeek, 'specific', value)
-                    }
+                    onValueChange={(value) => updateField(4, 'specific', value)}
                   >
                     <SelectTrigger className='w-28'>
                       <SelectValue />

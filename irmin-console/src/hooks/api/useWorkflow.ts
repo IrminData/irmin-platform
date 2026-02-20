@@ -1,10 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { workflowQueryKey, workflowsQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -28,16 +26,14 @@ type UpdateWorkflowInput = {
 };
 
 export function useWorkflow(workflowID: string) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
   const workflowQuery = useQuery<IrminAPIResponse<Workflow>, Error>({
     queryKey: workflowQueryKey(workspaceSlug, workflowID),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const workflow = await core.workflowService.fetchWorkflow({
         workspace: workspaceSlug,
         workflowID,
@@ -60,8 +56,7 @@ export function useWorkflow(workflowID: string) {
 
   const deleteWorkflowMutation = useMutation<IrminAPIResponse, Error, string>({
     mutationFn: async (workflowIdToDelete: string) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const response = await core.workflowService.deleteWorkflow({
         workspace: workspaceSlug,
         workflowID: workflowIdToDelete,
@@ -94,8 +89,7 @@ export function useWorkflow(workflowID: string) {
     UpdateWorkflowInput
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const response = await core.workflowService.updateWorkflow({
         workspace: workspaceSlug,
         workflowID,
@@ -131,8 +125,7 @@ export function useWorkflow(workflowID: string) {
     WorkflowSchedule
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const response = await core.workflowService.updateWorkflowSchedule({
         workspace: workspaceSlug,
         workflowID,
@@ -164,8 +157,7 @@ export function useWorkflow(workflowID: string) {
     Workflowable
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const response = await core.workflowService.updateWorkflowWorkflowable({
         workspace: workspaceSlug,
         workflowID,
@@ -194,8 +186,7 @@ export function useWorkflow(workflowID: string) {
     string
   >({
     mutationFn: async (newOwnerID: string) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const response = await core.workflowService.transferWorkflow({
         workspace: workspaceSlug,
         workflowID,
@@ -220,8 +211,7 @@ export function useWorkflow(workflowID: string) {
 
   const pauseWorkflowMutation = useMutation<IrminAPIResponse<Workflow>, Error>({
     mutationFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       const response = await core.workflowService.pauseWorkflow({
         workspace: workspaceSlug,
         workflowID,
@@ -330,8 +320,7 @@ export function useWorkflow(workflowID: string) {
   const resumeWorkflowMutation = useMutation<IrminAPIResponse<Workflow>, Error>(
     {
       mutationFn: async () => {
-        const token = await getToken();
-        const core = new IrminCore(locale, token);
+        const core = await getCore();
         const response = await core.workflowService.startWorkflow({
           workspace: workspaceSlug,
           workflowID,

@@ -6,8 +6,6 @@ import { usePathname, useRouter } from 'next/navigation';
 
 import { useAuth } from '@clerk/nextjs';
 
-import { usePopup } from '@/context/PopupContext';
-
 import { CommonErrorDisplay } from './CommonErrorDisplay';
 
 interface AuthenticationErrorHandlerProps {
@@ -40,8 +38,6 @@ function AuthenticationErrorHandler({
   const { isSignedIn, isLoaded } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const { irminAlert } = usePopup();
-
   // Check if current route is public (exact matches with optional language prefix)
   const isPublicRoute = PUBLIC_ROUTES.some((route) => {
     // Exact match without language prefix
@@ -81,13 +77,18 @@ function AuthenticationErrorHandler({
         }
       }
 
-      // Show user-friendly error message
-      irminAlert(
-        'error',
-        'Authentication failed. Please sign in again to continue.'
-      );
+      // Auto-redirect to sign-in on auth errors for protected routes
+      if (!isPublicRoute) {
+        router.replace('/sign-in');
+        return;
+      }
     }
-  }, [error, isSignedIn, isLoaded, irminAlert]);
+
+    // Redirect unauthenticated users on protected routes
+    if (isLoaded && !isSignedIn && !isPublicRoute) {
+      router.replace('/sign-in');
+    }
+  }, [error, isSignedIn, isLoaded, isPublicRoute, router]);
 
   // Show loading state while Clerk is initializing
   if (!isLoaded) {
@@ -103,7 +104,7 @@ function AuthenticationErrorHandler({
   }
 
   // Handle authentication errors - only block protected routes
-  if (error || (!isSignedIn && isLoaded && !isPublicRoute)) {
+  if (!isPublicRoute && (error || (!isSignedIn && isLoaded))) {
     const isAuthError =
       error?.message?.toLowerCase().includes('auth') ||
       error?.message?.toLowerCase().includes('sign') ||

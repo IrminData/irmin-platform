@@ -455,9 +455,9 @@ const AgentChat = ({
                 <Message key={`group-${firstMessageId}`} from='assistant'>
                   <MessageContent>
                     {/* Render thinking from all text messages */}
-                    {textMessages.map((msg, idx) => (
+                    {textMessages.map((msg) => (
                       <MessageMetadata
-                        key={`thinking-${getMessageId(msg)}-${idx}`}
+                        key={`thinking-${getMessageId(msg)}`}
                         message={msg}
                         agentId={agentId}
                         section='thinking'
@@ -465,11 +465,11 @@ const AgentChat = ({
                     ))}
 
                     {/* Render all text message content */}
-                    {textMessages.map((msg, idx) => {
+                    {textMessages.map((msg) => {
                       const content = getMessageContent(msg);
                       if (!content.trim()) return null;
                       return (
-                        <div key={`text-${getMessageId(msg)}-${idx}`}>
+                        <div key={`text-${getMessageId(msg)}`}>
                           {renderMessageContent(content, 'text')}
                         </div>
                       );

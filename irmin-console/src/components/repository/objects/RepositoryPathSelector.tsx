@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import { FaFolderTree } from 'react-icons/fa6';
 import { FiFile, FiFolder } from 'react-icons/fi';
@@ -178,8 +178,6 @@ const RepositoryPathSelector = ({
     formatPath(defaultPath || '', false, groupOnly) || (groupOnly ? '/' : '')
   );
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
-  const [isValidPath, setIsValidPath] = useState<boolean>(true);
-
   const { repositoryObjectQuery } = useRepositoryObject(
     repositorySlug,
     repositoryRef,
@@ -194,20 +192,19 @@ const RepositoryPathSelector = ({
     [repositoryObjectQuery.isLoading, loadingProp]
   );
 
-  // Keep input in sync with selected path
-  useEffect(() => {
-    setInputPath(selectedPath);
-  }, [selectedPath]);
+  // Helper to update both selectedPath and inputPath together
+  const setPath = useCallback((formattedPath: string) => {
+    setSelectedPath(formattedPath);
+    setInputPath(formattedPath);
+  }, []);
 
-  // Validate path when input changes
-  useEffect(() => {
+  // Derive validation from current input
+  const isValidPath = useMemo(() => {
     if (existingOnly && rootObject) {
       const formattedPath = formatPath(inputPath, false, groupOnly);
-      const exists = findObjectByPath(rootObject, formattedPath) !== undefined;
-      setIsValidPath(exists);
-    } else {
-      setIsValidPath(true);
+      return findObjectByPath(rootObject, formattedPath) !== undefined;
     }
+    return true;
   }, [inputPath, existingOnly, rootObject, groupOnly]);
 
   // Handle manual path input
@@ -260,18 +257,19 @@ const RepositoryPathSelector = ({
         toggleFolder(item);
         // For directories, we want to keep the trailing slash
         const formattedPath = formatPath(item.path ?? '', true, groupOnly);
-        setSelectedPath(formattedPath);
+        setPath(formattedPath);
         onPathChange(formattedPath);
       } else {
         // For files, we don't want a trailing slash unless groupOnly is true
         const formattedPath = formatPath(item.path ?? '', false, groupOnly);
-        setSelectedPath(formattedPath);
+        setPath(formattedPath);
         onPathChange(formattedPath);
       }
     },
     [
       onPathChange,
       toggleFolder,
+      setPath,
       groupOnly,
       binaryOnly,
       structuredOnly,

@@ -14,3 +14,6 @@ export * from './useIrminSQL';
 
 // Search utilities
 export * from './useStaticSearchItems';
+
+// Debounce utilities
+export * from './useDebouncedValue';

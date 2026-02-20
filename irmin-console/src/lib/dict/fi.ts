@@ -273,10 +273,13 @@ const fi = {
     pendingWritesError: 'Odottavien kirjoitusten lataaminen epäonnistui',
     noPendingWrites: 'Ei odottavia kirjoituksia tarkistettavaksi',
     howToConnect: 'Kuinka yhdistää',
-    howToConnectMcp:
-      'Käytä <strong>MCP-päätepistettä</strong> yhdistääksesi Cursorin, Claude Desktopin tai muiden MCP-asiakkaiden kanssa.',
-    howToConnectApiKey:
-      'Sisällytä <strong>API-avain</strong> Bearer-tunnisteena Authorization-otsikkoon.',
+    howToConnectMcpPrefix: 'Käytä ',
+    howToConnectMcpBold: 'MCP-päätepistettä',
+    howToConnectMcpSuffix:
+      ' yhdistääksesi Cursorin, Claude Desktopin tai muiden MCP-asiakkaiden kanssa.',
+    howToConnectApiKeyPrefix: 'Sisällytä ',
+    howToConnectApiKeyBold: 'API-avain',
+    howToConnectApiKeySuffix: ' Bearer-tunnisteena Authorization-otsikkoon.',
     howToConnectTools:
       'Ota käyttöön tiettyjä työkaluja alta paljastaaksesi ominaisuuksia AI-agentillesi.',
     apiReference: 'API-viite',

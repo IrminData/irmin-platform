@@ -1,10 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { aiApplicationPendingWritesQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -28,8 +26,7 @@ export function useAIApplicationPendingWrites(
   options: UseAIApplicationPendingWritesOptions = {}
 ) {
   const { limit = 10, offset = 0, enabled = true } = options;
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
@@ -44,8 +41,7 @@ export function useAIApplicationPendingWrites(
       offset,
     ],
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.aiApplicationService.getPendingWrites({
         workspace: workspaceSlug,
         aiApplicationId,
@@ -65,8 +61,7 @@ export function useAIApplicationPendingWrites(
     { pendingWriteId: string }
   >({
     mutationFn: async ({ pendingWriteId }) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.aiApplicationService.approvePendingWrite({
         workspace: workspaceSlug,
         aiApplicationId,
@@ -96,8 +91,7 @@ export function useAIApplicationPendingWrites(
     { pendingWriteId: string }
   >({
     mutationFn: async ({ pendingWriteId }) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.aiApplicationService.rejectPendingWrite({
         workspace: workspaceSlug,
         aiApplicationId,

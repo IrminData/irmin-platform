@@ -43,10 +43,7 @@ const CodeMirrorEditor = ({
   const { dict } = useLocale();
   const { resolvedTheme } = useTheme();
 
-  const editorTheme = useMemo(
-    () => (resolvedTheme === 'dark' ? vscodeDark : vscodeLight),
-    [resolvedTheme]
-  );
+  const editorTheme = resolvedTheme === 'dark' ? vscodeDark : vscodeLight;
 
   const initialisedEditorTheme = useMemo(
     () => (resolvedTheme === 'dark' ? vscodeDarkInit() : vscodeLightInit()),

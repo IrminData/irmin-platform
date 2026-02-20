@@ -20,9 +20,11 @@ interface MultiplePathsSelectorProps {
   addButtonText?: string;
 }
 
+const EMPTY_PATHS: string[] = [];
+
 export default function MultiplePathsSelector({
   label,
-  paths = [],
+  paths = EMPTY_PATHS,
   onPathsChange,
   renderPathSelector,
   addButtonText,

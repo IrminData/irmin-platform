@@ -148,9 +148,9 @@ function ObjectSchemaDiffCard({
                 {schemaDiff.diff.breaking_changes?.length})
               </h5>
               <div className='space-y-1'>
-                {schemaDiff.diff.breaking_changes?.map((change, index) => (
+                {schemaDiff.diff.breaking_changes?.map((change) => (
                   <SchemaFieldDiffItem
-                    key={`breaking-${schemaDiff.path}-${index}`}
+                    key={`breaking-${schemaDiff.path}-${change.field_path}-${change.change_type}`}
                     change={change}
                     isBreaking
                   />
@@ -167,9 +167,9 @@ function ObjectSchemaDiffCard({
                 {schemaDiff.diff.non_breaking_changes?.length})
               </h5>
               <div className='space-y-1'>
-                {schemaDiff.diff.non_breaking_changes?.map((change, index) => (
+                {schemaDiff.diff.non_breaking_changes?.map((change) => (
                   <SchemaFieldDiffItem
-                    key={`non-breaking-${schemaDiff.path}-${index}`}
+                    key={`non-breaking-${schemaDiff.path}-${change.field_path}-${change.change_type}`}
                     change={change}
                     isBreaking={false}
                   />

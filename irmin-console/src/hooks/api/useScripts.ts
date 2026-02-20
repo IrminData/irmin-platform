@@ -1,10 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import IrminCore from '@/lib/core';
 import { scriptsQueryKey } from '@/lib/queryKeys';
 
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -44,8 +42,7 @@ type ScriptTransferInput = {
 };
 
 export function useScripts() {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
@@ -53,8 +50,7 @@ export function useScripts() {
   const scriptsQuery = useQuery<IrminAPIResponse<StoredScript[]>, Error>({
     queryKey: scriptsQueryKey(workspaceSlug),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.scriptsService.listScripts({
         workspace: workspaceSlug,
       });
@@ -67,8 +63,7 @@ export function useScripts() {
     ScriptCreateInput
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.scriptsService.createScript({
         workspace: workspaceSlug,
         name: data.name,
@@ -121,8 +116,7 @@ export function useScripts() {
     ScriptUpdateInput
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.scriptsService.updateScript({
         workspace: workspaceSlug,
         scriptId: data.scriptId,
@@ -148,8 +142,7 @@ export function useScripts() {
 
   const deleteScriptMutation = useMutation<IrminAPIResponse, Error, string>({
     mutationFn: async (scriptId: string) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.scriptsService.deleteScript({
         workspace: workspaceSlug,
         scriptId: scriptId,
@@ -176,8 +169,7 @@ export function useScripts() {
     ScriptExecuteInput & { limitResponse?: boolean }
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.scriptsService.executeScript({
         workspace: workspaceSlug,
         scriptId: data.scriptId,
@@ -199,8 +191,7 @@ export function useScripts() {
     ScriptTransferInput
   >({
     mutationFn: async (data) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.scriptsService.transferScript({
         workspace: workspaceSlug,
         scriptId: data.scriptId,
@@ -244,15 +235,13 @@ export function useScripts() {
  * Hook to get a specific script by ID
  */
 export function useScript(scriptId?: string) {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
+  const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
 
   const scriptQuery = useQuery<IrminAPIResponse<StoredScript>, Error>({
     queryKey: scriptsQueryKey(workspaceSlug, scriptId ?? ''),
     queryFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
+      const core = await getCore();
       return await core.scriptsService.getScript({
         workspace: workspaceSlug,
         scriptId: scriptId!,
