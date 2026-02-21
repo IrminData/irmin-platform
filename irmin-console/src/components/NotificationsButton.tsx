@@ -11,6 +11,10 @@ import { useTheme } from 'next-themes';
 import { TbBell } from 'react-icons/tb';
 
 import {
+  handleNotificationPrimaryAction,
+  handleNotificationSecondaryAction,
+} from '@/components/notificationHandlers';
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -53,14 +57,10 @@ const NotificationsButton = ({ profile }: { profile: User }) => {
         </PopoverTrigger>
         <PopoverContent className='h-[600px] w-[400px] p-0'>
           <Notifications
-            onPrimaryActionClick={(_notification) => {
-              // TODO: Implement primary action click handler - should navigate to relevant page or perform action based on notification type
-              // console.log('Primary action clicked', notification);
-            }}
-            onSecondaryActionClick={(_notification) => {
-              // TODO: Implement secondary action click handler - typically for dismissing, marking as read, or alternative action
-              // console.log('Secondary action clicked', notification);
-            }}
+            onPrimaryActionClick={(notification) =>
+              handleNotificationPrimaryAction(notification, router)
+            }
+            onSecondaryActionClick={handleNotificationSecondaryAction}
           />
         </PopoverContent>
       </Popover>

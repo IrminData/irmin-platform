@@ -2,7 +2,11 @@
 
 import { useState } from 'react';
 
+import { useQuery } from '@tanstack/react-query';
+
 import { IoAdd } from 'react-icons/io5';
+
+import { inviteInboxQueryKey } from '@/lib/queryKeys';
 
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -10,12 +14,16 @@ import { QueryError } from '@/components/ui/error/QueryError';
 import SafeComponent from '@/components/ui/error/SafeComponent';
 import { WorkspaceCardSkeleton } from '@/components/ui/loading/WorkspaceCardSkeleton';
 import CreateWorkspaceModal from '@/components/workspace/CreateWorkspaceModal';
+import PendingInviteCard from '@/components/workspace/PendingInviteCard';
 import WorkspaceCard from '@/components/workspace/WorkspaceCard';
 
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useWorkspaceActions, useWorkspaceSummaries } from '@/hooks/api';
 
+import type { Invite } from '@/types/core/Invite';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { WorkspaceSummary } from '@/types/core/Workspace';
 
 /**
@@ -28,9 +36,23 @@ import type { WorkspaceSummary } from '@/types/core/Workspace';
  */
 const ManageWorkspacesSection = () => {
   const { dict } = useLocale();
+  const { getCore } = useIrminCore();
   const { switchWorkspace } = useWorkspaceActions();
   const { workspaceSummariesQuery } = useWorkspaceSummaries();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Fetch invite inbox directly (WorkspaceContext is not available at this route)
+  const inviteInboxQuery = useQuery<IrminAPIResponse<Invite[]>>({
+    queryKey: inviteInboxQueryKey,
+    queryFn: async () => {
+      const core = await getCore();
+      return await core.inviteService.listInviteInbox();
+    },
+  });
+
+  const pendingInvites = (inviteInboxQuery.data?.data ?? []).filter(
+    (invite) => !invite.accepted_at && !invite.declined_at
+  );
 
   if (workspaceSummariesQuery.error) {
     return (
@@ -64,6 +86,23 @@ const ManageWorkspacesSection = () => {
     >
       <div className='pattern-bg h-full'>
         <div className='relative container mx-auto max-w-4xl px-4 py-12'>
+          {/* Pending invites */}
+          {pendingInvites.length > 0 && (
+            <div className='mb-6'>
+              <h2 className='mb-2 text-lg font-semibold'>
+                {dict.invite.pendingInvites}
+              </h2>
+              <p className='mb-3 text-sm text-muted-foreground'>
+                {dict.invite.pendingInvitesDescription}
+              </p>
+              <div className='flex flex-col gap-2'>
+                {pendingInvites.map((invite) => (
+                  <PendingInviteCard key={invite.id} invite={invite} />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Header */}
           <div className='mb-4 flex items-center justify-between'>
             <h2 className='text-lg font-semibold'>

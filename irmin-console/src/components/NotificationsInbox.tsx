@@ -8,6 +8,11 @@ import { Inbox, InboxContent } from '@novu/react';
 import { dark } from '@novu/react/themes';
 import { useTheme } from 'next-themes';
 
+import {
+  handleNotificationPrimaryAction,
+  handleNotificationSecondaryAction,
+} from '@/components/notificationHandlers';
+
 import type { User } from '@/types/core/User';
 
 const novuApplicationIdentifier = process.env.NEXT_PUBLIC_NOVU_APP_ID ?? '';
@@ -41,14 +46,10 @@ const NotificationsInbox = ({ profile }: { profile: User }) => {
       }}
     >
       <InboxContent
-        onPrimaryActionClick={(_notification) => {
-          // TODO: Implement primary action click handler - should navigate to relevant page or perform action based on notification type
-          // console.log('Primary action clicked', notification);
-        }}
-        onSecondaryActionClick={(_notification) => {
-          // TODO: Implement secondary action click handler - typically for dismissing, marking as read, or alternative action
-          // console.log('Secondary action clicked', notification);
-        }}
+        onPrimaryActionClick={(notification) =>
+          handleNotificationPrimaryAction(notification, router)
+        }
+        onSecondaryActionClick={handleNotificationSecondaryAction}
       />
     </Inbox>
   );

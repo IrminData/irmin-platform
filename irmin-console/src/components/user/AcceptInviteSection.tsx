@@ -137,17 +137,27 @@ export default function AcceptInviteSection({
           <Button
             variant='outline'
             onClick={() => declineInviteMutation.mutate(invite.id)}
-            disabled={declineInviteMutation.isPending}
+            disabled={
+              declineInviteMutation.isPending || acceptInviteMutation.isPending
+            }
             className='w-full'
           >
-            <TbX className='mr-2 size-4' /> {dict.invite.declineInvitation}
+            <TbX className='mr-2 size-4' />{' '}
+            {declineInviteMutation.isPending
+              ? dict.invite.declining
+              : dict.invite.declineInvitation}
           </Button>
           <Button
             onClick={() => acceptInviteMutation.mutate(invite.id)}
-            disabled={acceptInviteMutation.isPending}
+            disabled={
+              acceptInviteMutation.isPending || declineInviteMutation.isPending
+            }
             className='w-full'
           >
-            <TbCheck className='mr-2 size-4' /> {dict.invite.acceptInvitation}
+            <TbCheck className='mr-2 size-4' />{' '}
+            {acceptInviteMutation.isPending
+              ? dict.invite.accepting
+              : dict.invite.acceptInvitation}
           </Button>
         </div>
 
@@ -175,10 +185,10 @@ export default function AcceptInviteSection({
           >
             <div className='flex gap-4'>
               <TbX className='size-6 text-red-400' />
-            </div>
-            <div>
-              <p className='font-bold'>{dict.common.ohNo}:</p>
-              <p className='text-sm'>{declineInviteMutation.error.message}</p>
+              <div>
+                <p className='font-bold'>{dict.common.ohNo}:</p>
+                <p className='text-sm'>{declineInviteMutation.error.message}</p>
+              </div>
             </div>
           </div>
         )}

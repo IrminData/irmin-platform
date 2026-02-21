@@ -1530,6 +1530,15 @@ const en = {
     invitedBy: 'Invited by',
     workspace: 'Workspace',
     role: 'Role',
+    pendingInvites: 'Pending Invites',
+    pendingInvitesDescription:
+      'You have been invited to join the following workspaces',
+    expires: 'Expires',
+    accept: 'Accept',
+    decline: 'Decline',
+    accepting: 'Accepting...',
+    declining: 'Declining...',
+    asRole: 'as',
   },
 
   tokens: {

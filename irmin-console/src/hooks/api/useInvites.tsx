@@ -67,6 +67,9 @@ export function useInvites() {
         getItemId: (invite) => invite.id,
       },
       onSuccess: (res) => {
+        void queryClient.invalidateQueries({
+          queryKey: inviteInboxQueryKey,
+        });
         irminAlert('success', res.message ?? 'Invite deleted successfully');
       },
       onError: (error) => {

@@ -2,7 +2,11 @@ import { useRouter } from 'next/navigation';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { inviteInboxQueryKey, inviteQueryKey } from '@/lib/queryKeys';
+import {
+  inviteInboxQueryKey,
+  inviteQueryKey,
+  workspaceSummariesQueryKey,
+} from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -11,7 +15,14 @@ import { usePopup } from '@/context/PopupContext';
 import type { Invite } from '@/types/core/Invite';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
-export function useInvite(inviteID: string) {
+type UseInviteOptions = {
+  /** Skip navigation after decline (useful when already on the workspace list page) */
+  skipDeclineNavigation?: boolean;
+  /** Skip fetching the invite query (useful when only mutations are needed) */
+  skipQuery?: boolean;
+};
+
+export function useInvite(inviteID: string, options?: UseInviteOptions) {
   const { getCore } = useIrminCore();
   const { locale } = useLocale();
   const { irminAlert } = usePopup();
@@ -40,7 +51,7 @@ export function useInvite(inviteID: string) {
           }
         : undefined;
     },
-    enabled: !!inviteID,
+    enabled: !!inviteID && !options?.skipQuery,
   });
 
   // Mutation to accept an invite
@@ -51,6 +62,12 @@ export function useInvite(inviteID: string) {
       return await core.inviteService.acceptInvite({ inviteID });
     },
     onSuccess: (res) => {
+      void queryClient.invalidateQueries({
+        queryKey: inviteInboxQueryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: workspaceSummariesQueryKey,
+      });
       irminAlert('success', res.message ?? 'Invite accepted successfully');
       router.push(`/${locale}/workspace/${res.data?.workspace?.slug}`);
     },
@@ -70,8 +87,13 @@ export function useInvite(inviteID: string) {
       return await core.inviteService.declineInvite({ inviteID });
     },
     onSuccess: (res) => {
+      void queryClient.invalidateQueries({
+        queryKey: inviteInboxQueryKey,
+      });
       irminAlert('success', res.message ?? 'Invite declined successfully');
-      router.push(`/${locale}/workspace`);
+      if (!options?.skipDeclineNavigation) {
+        router.push(`/${locale}/workspace`);
+      }
     },
     onError: (error) => {
       irminAlert(

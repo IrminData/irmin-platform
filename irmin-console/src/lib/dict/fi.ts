@@ -1515,6 +1515,15 @@ const fi = {
     invitedBy: 'Kutsuja',
     workspace: 'Työtila',
     role: 'Rooli',
+    pendingInvites: 'Odottavat kutsut',
+    pendingInvitesDescription:
+      'Sinut on kutsuttu liittymään seuraaviin työtiloihin',
+    expires: 'Vanhenee',
+    accept: 'Hyväksy',
+    decline: 'Hylkää',
+    accepting: 'Hyväksytään...',
+    declining: 'Hylätään...',
+    asRole: 'roolissa',
   },
 
   tokens: {
