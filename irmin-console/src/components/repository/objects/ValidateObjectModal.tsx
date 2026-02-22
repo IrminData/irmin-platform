@@ -105,7 +105,7 @@ export default function ValidateObjectModal({
       <div className='flex flex-col gap-2'>
         <p className='text-xs text-muted-foreground'>
           {dict.repository.objects.validateObjectDescription}{' '}
-          <code className='rounded bg-muted px-1'>{objectPath}</code>
+          <code className='rounded-sm bg-muted px-1'>{objectPath}</code>
         </p>
       </div>
 
@@ -180,7 +180,7 @@ export default function ValidateObjectModal({
               </span>
               <div
                 className={`
-                  max-h-[150px] overflow-y-auto rounded bg-background p-2
+                  max-h-[150px] overflow-y-auto rounded-sm bg-background p-2
                   font-mono
                 `}
               >
@@ -223,7 +223,9 @@ export default function ValidateObjectModal({
 
           {validationResult.error && (
             <div
-              className={`mt-1 flex items-start gap-2 rounded bg-background p-2`}
+              className={`
+                mt-1 flex items-start gap-2 rounded-sm bg-background p-2
+              `}
             >
               <TbAlertCircle
                 className={`

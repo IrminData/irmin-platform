@@ -60,19 +60,19 @@ export default function SelectRepositoryStep({
         <div className='animate-pulse space-y-4'>
           <div
             className={`
-              h-4 w-1/3 rounded bg-gray-200
+              h-4 w-1/3 rounded-sm bg-gray-200
               dark:bg-gray-700
             `}
           />
           <div
             className={`
-              h-3 w-2/3 rounded bg-gray-200
+              h-3 w-2/3 rounded-sm bg-gray-200
               dark:bg-gray-700
             `}
           />
           <div
             className={`
-              h-10 w-full rounded bg-gray-200
+              h-10 w-full rounded-sm bg-gray-200
               dark:bg-gray-700
             `}
           />
@@ -81,7 +81,7 @@ export default function SelectRepositoryStep({
               <div
                 key={`skeleton-${i}`}
                 className={`
-                  h-16 w-full rounded bg-gray-200
+                  h-16 w-full rounded-sm bg-gray-200
                   dark:bg-gray-700
                 `}
               />
@@ -142,7 +142,8 @@ export default function SelectRepositoryStep({
                       : `
                         border-gray-200
                         hover:border-gray-300
-                        dark:border-gray-700 dark:hover:border-gray-600
+                        dark:border-gray-700
+                        dark:hover:border-gray-600
                       `
                   }
                 `}

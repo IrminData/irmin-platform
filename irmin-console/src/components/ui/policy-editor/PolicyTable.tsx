@@ -396,7 +396,7 @@ export default function PolicyTable({
             )}
             {showResourceIdColumn && (
               <TableCell>
-                <code className='rounded bg-muted px-1 py-0.5 text-xs'>
+                <code className='rounded-sm bg-muted px-1 py-0.5 text-xs'>
                   {formatResourceId(policy.resource, policy.resourceId)}
                 </code>
               </TableCell>

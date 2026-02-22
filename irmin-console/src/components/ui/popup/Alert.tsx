@@ -201,7 +201,7 @@ const Alert = ({
         {/* Progress bar for auto-dismiss */}
         <div
           className={`
-            absolute right-0 bottom-0 left-0 h-1 overflow-hidden rounded-b-lg
+            absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-lg
             bg-gray-200
             dark:bg-gray-800
           `}

@@ -72,7 +72,7 @@ export default function APITokenDisplay({ token }: { token: string }) {
           ) : (
             <div
               className={`
-                h-6 w-full animate-pulse rounded bg-gray-300
+                h-6 w-full animate-pulse rounded-sm bg-gray-300
                 dark:bg-gray-600
               `}
             />

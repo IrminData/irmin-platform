@@ -419,7 +419,7 @@ const SchemaValidationSection = () => {
                           {matchInfo?.schemaChild && (
                             <span
                               className={`
-                                rounded bg-green-500/20 px-1.5 py-0.5 text-xs
+                                rounded-sm bg-green-500/20 px-1.5 py-0.5 text-xs
                                 text-green-700
                                 dark:text-green-400
                               `}
@@ -430,8 +430,8 @@ const SchemaValidationSection = () => {
                           {isUnmatched && (
                             <span
                               className={`
-                                rounded bg-yellow-500/20 px-1.5 py-0.5 text-xs
-                                text-yellow-700
+                                rounded-sm bg-yellow-500/20 px-1.5 py-0.5
+                                text-xs text-yellow-700
                                 dark:text-yellow-400
                               `}
                             >
@@ -604,17 +604,17 @@ function ValidationErrorItem({ error }: { error: SchemaValidationError }) {
           )}
           <div className='flex flex-wrap gap-2 text-xs text-muted-foreground'>
             {error.expected_type && (
-              <span className='rounded bg-accent px-1.5 py-0.5'>
+              <span className='rounded-sm bg-accent px-1.5 py-0.5'>
                 Expected: {error.expected_type}
               </span>
             )}
             {error.actual_type && (
-              <span className='rounded bg-accent px-1.5 py-0.5'>
+              <span className='rounded-sm bg-accent px-1.5 py-0.5'>
                 Actual: {error.actual_type}
               </span>
             )}
             {error.row_index !== undefined && (
-              <span className='rounded bg-accent px-1.5 py-0.5'>
+              <span className='rounded-sm bg-accent px-1.5 py-0.5'>
                 Row: {error.row_index}
               </span>
             )}
@@ -719,7 +719,7 @@ function FieldDiffItem({
         <div className='flex flex-wrap gap-2 text-xs'>
           <span
             className={cn(
-              'rounded px-1.5 py-0.5',
+              'rounded-sm px-1.5 py-0.5',
               change.change_type === 'added' &&
                 'bg-green-500/20 text-green-500',
               change.change_type === 'removed' && 'bg-red-500/20 text-red-500',
@@ -737,14 +737,18 @@ function FieldDiffItem({
           </span>
           {change.source_type && (
             <span
-              className={`rounded bg-accent px-1.5 py-0.5 text-muted-foreground`}
+              className={`
+                rounded-sm bg-accent px-1.5 py-0.5 text-muted-foreground
+              `}
             >
               From: {change.source_type}
             </span>
           )}
           {change.target_type && (
             <span
-              className={`rounded bg-accent px-1.5 py-0.5 text-muted-foreground`}
+              className={`
+                rounded-sm bg-accent px-1.5 py-0.5 text-muted-foreground
+              `}
             >
               To: {change.target_type}
             </span>

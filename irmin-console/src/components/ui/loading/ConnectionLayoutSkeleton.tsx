@@ -30,13 +30,13 @@ function ConnectionLayoutSkeleton({ className = '' }: { className?: string }) {
               <div className='flex flex-row items-center gap-2 pr-2'>
                 <div
                   className={`
-                    h-4 w-20 rounded bg-gray-200
+                    h-4 w-20 rounded-sm bg-gray-200
                     dark:bg-gray-800
                   `}
                 />
                 <div
                   className={`
-                    h-5 w-16 rounded bg-gray-200
+                    h-5 w-16 rounded-sm bg-gray-200
                     dark:bg-gray-800
                   `}
                 />
@@ -44,7 +44,7 @@ function ConnectionLayoutSkeleton({ className = '' }: { className?: string }) {
               <div className='px-2'>
                 <div
                   className={`
-                    h-4 w-48 rounded bg-gray-200
+                    h-4 w-48 rounded-sm bg-gray-200
                     dark:bg-gray-800
                   `}
                 />
@@ -54,7 +54,7 @@ function ConnectionLayoutSkeleton({ className = '' }: { className?: string }) {
             {/* Connection title */}
             <div
               className={`
-                h-8 w-1/2 rounded bg-gray-200
+                h-8 w-1/2 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
@@ -62,7 +62,7 @@ function ConnectionLayoutSkeleton({ className = '' }: { className?: string }) {
             {/* Description */}
             <div
               className={`
-                h-4 w-2/3 rounded bg-gray-200
+                h-4 w-2/3 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
@@ -71,19 +71,19 @@ function ConnectionLayoutSkeleton({ className = '' }: { className?: string }) {
             <div className='flex gap-2'>
               <div
                 className={`
-                  h-5 w-12 rounded bg-gray-200
+                  h-5 w-12 rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />
               <div
                 className={`
-                  h-5 w-16 rounded bg-gray-200
+                  h-5 w-16 rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />
               <div
                 className={`
-                  h-5 w-20 rounded bg-gray-200
+                  h-5 w-20 rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />
@@ -103,7 +103,7 @@ function ConnectionLayoutSkeleton({ className = '' }: { className?: string }) {
               <div
                 key={`tab-${i}`}
                 className={`
-                  h-10 w-20 rounded bg-gray-200
+                  h-10 w-20 rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />
@@ -119,7 +119,7 @@ function ConnectionLayoutSkeleton({ className = '' }: { className?: string }) {
             <div key={`content-${i}`} className='space-y-2'>
               <div
                 className={`
-                  h-6 w-1/4 rounded bg-gray-200
+                  h-6 w-1/4 rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />

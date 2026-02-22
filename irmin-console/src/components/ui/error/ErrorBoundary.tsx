@@ -198,7 +198,7 @@ function ErrorBoundaryFallback({
             >
               Error Details (Development)
             </summary>
-            <pre className='mt-2 overflow-auto rounded bg-muted p-2 text-xs'>
+            <pre className='mt-2 overflow-auto rounded-sm bg-muted p-2 text-xs'>
               {error.message}
               {error.stack && `\n\n${error.stack}`}
               {errorInfo?.componentStack &&

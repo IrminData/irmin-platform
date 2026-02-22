@@ -95,13 +95,13 @@ const SkeletonTreeItem = ({ depth = 0 }: { depth?: number }) => (
     <div className='flex items-center gap-2'>
       <div
         className={`
-          size-4 animate-pulse rounded bg-gray-200
+          size-4 animate-pulse rounded-sm bg-gray-200
           dark:bg-gray-800
         `}
       />
       <div
         className={`
-          h-4 w-32 animate-pulse rounded bg-gray-200
+          h-4 w-32 animate-pulse rounded-sm bg-gray-200
           dark:bg-gray-800
         `}
       />
@@ -463,7 +463,7 @@ const ConnectionPathSelector = ({
                 <span className='ml-2'>
                   <div
                     className={`
-                      h-4 w-24 animate-pulse rounded bg-gray-200
+                      h-4 w-24 animate-pulse rounded-sm bg-gray-200
                       dark:bg-gray-800
                     `}
                   />

@@ -129,7 +129,7 @@ export function StructuredItemViewer({
             <div className='mt-2 w-full max-w-full'>
               <div
                 className={`
-                  flex items-center gap-1 rounded bg-gray-100 p-1
+                  flex items-center gap-1 rounded-sm bg-gray-100 p-1
                   dark:bg-gray-800
                 `}
               >

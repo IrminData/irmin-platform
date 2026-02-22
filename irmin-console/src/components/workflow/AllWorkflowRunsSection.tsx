@@ -115,7 +115,7 @@ const AllWorkflowRunsSection = () => {
             <Tooltip.Content
               side='top'
               align='center'
-              className='rounded bg-background p-2'
+              className='rounded-sm bg-background p-2'
             >
               <p
                 className={`

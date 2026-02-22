@@ -14,7 +14,7 @@ export const Message = ({ className, from, ...props }: MessageProps) => (
   <div
     className={cn(
       'group flex w-full items-end justify-end gap-2 py-4',
-      // eslint-disable-next-line better-tailwindcss/no-unregistered-classes
+
       from === 'user' ? 'is-user' : 'is-assistant flex-row-reverse justify-end',
       '[&>div]:max-w-[80%]',
       className
@@ -42,7 +42,7 @@ export const MessageContent = ({
     )}
     {...props}
   >
-    {/* eslint-disable-next-line better-tailwindcss/no-unregistered-classes */}
+    {}
     <div className='is-user:dark'>{children}</div>
   </div>
 );

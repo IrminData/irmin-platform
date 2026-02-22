@@ -200,7 +200,8 @@ export default function SelectDestinationStep({
                         : `
                           border-gray-200
                           hover:border-gray-300
-                          dark:border-gray-700 dark:hover:border-gray-600
+                          dark:border-gray-700
+                          dark:hover:border-gray-600
                         `
                     }
                   `}

@@ -127,7 +127,7 @@ const WorkspaceTagsSection = () => {
         <div className='flex items-center justify-end px-4'>
           <div
             className={`
-              h-10 w-28 animate-pulse rounded bg-gray-200
+              h-10 w-28 animate-pulse rounded-sm bg-gray-200
               dark:bg-gray-800
             `}
           />

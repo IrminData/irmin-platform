@@ -368,8 +368,8 @@ export default function ReviewAndCreateStep({
                   <div className='flex items-center gap-3'>
                     <span
                       className={`
-                        rounded bg-irmin-blue-100 px-2 py-1 text-xs font-medium
-                        text-irmin-blue-700
+                        rounded-sm bg-irmin-blue-100 px-2 py-1 text-xs
+                        font-medium text-irmin-blue-700
                       `}
                     >
                       {mapping.source_field}
@@ -377,8 +377,8 @@ export default function ReviewAndCreateStep({
                     <span className='text-xs text-gray-500'>→</span>
                     <span
                       className={`
-                        rounded bg-irmin-green-100 px-2 py-1 text-xs font-medium
-                        text-irmin-green-700
+                        rounded-sm bg-irmin-green-100 px-2 py-1 text-xs
+                        font-medium text-irmin-green-700
                       `}
                     >
                       {mapping.destination_field}

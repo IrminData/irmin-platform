@@ -106,7 +106,7 @@ export default tseslint.config(
       'better-tailwindcss/enforce-shorthand-classes': 'warn',
       'better-tailwindcss/no-duplicate-classes': 'warn',
       'better-tailwindcss/no-unnecessary-whitespace': 'warn',
-      'better-tailwindcss/no-unregistered-classes': [
+      'better-tailwindcss/no-unknown-classes': [
         'error',
         {
           ignore: [
@@ -118,6 +118,8 @@ export default tseslint.config(
             'content-visibility-auto',
             'content-visibility-auto-lg',
             'content-visibility-auto-message',
+            'is-user',
+            'is-assistant',
           ],
         },
       ],

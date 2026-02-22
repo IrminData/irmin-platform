@@ -41,7 +41,7 @@ const ConnectionSchemaSection = ({
     );
   }
   return (
-    <div className='min-h-96 w-full overflow-y-scroll rounded bg-background'>
+    <div className='min-h-96 w-full overflow-y-scroll rounded-sm bg-background'>
       <SchemaViewer
         schema={connectionSchemaQuery.data.data}
         isExpanded={true}

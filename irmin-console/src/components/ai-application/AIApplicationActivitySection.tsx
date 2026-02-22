@@ -46,20 +46,20 @@ const ToolLogSkeletonRow = () => {
     >
       <div
         className={`
-          size-8 rounded bg-gray-300
+          size-8 rounded-sm bg-gray-300
           dark:bg-gray-700
         `}
       />
       <div className='flex-1'>
         <div
           className={`
-            mb-2 h-4 w-1/3 rounded bg-gray-300
+            mb-2 h-4 w-1/3 rounded-sm bg-gray-300
             dark:bg-gray-700
           `}
         />
         <div
           className={`
-            h-3 w-2/3 rounded bg-gray-300
+            h-3 w-2/3 rounded-sm bg-gray-300
             dark:bg-gray-700
           `}
         />
@@ -67,13 +67,13 @@ const ToolLogSkeletonRow = () => {
       <div className='flex flex-col gap-1'>
         <div
           className={`
-            h-3 w-20 rounded bg-gray-300
+            h-3 w-20 rounded-sm bg-gray-300
             dark:bg-gray-700
           `}
         />
         <div
           className={`
-            h-3 w-16 rounded bg-gray-300
+            h-3 w-16 rounded-sm bg-gray-300
             dark:bg-gray-700
           `}
         />

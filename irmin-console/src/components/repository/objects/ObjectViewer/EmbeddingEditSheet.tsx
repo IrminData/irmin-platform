@@ -144,7 +144,7 @@ export default function EmbeddingEditSheet({
               <div
                 className={`
                   max-h-44 overflow-y-auto rounded-md border bg-muted/30 p-3
-                  text-sm leading-relaxed text-muted-foreground
+                  text-sm/relaxed text-muted-foreground
                 `}
               >
                 {embedding.content}

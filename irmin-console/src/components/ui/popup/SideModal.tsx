@@ -48,7 +48,7 @@ export default function SideModal({
       <div className='relative size-full'>
         <div
           className={`
-            absolute top-0 right-0 bottom-0 size-full max-w-5xl border-l
+            absolute inset-y-0 right-0 size-full max-w-5xl border-l
             bg-background shadow-lg transition-transform duration-200
             dark:border-gray-800
             ${

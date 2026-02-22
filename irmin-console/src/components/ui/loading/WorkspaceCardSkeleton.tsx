@@ -25,13 +25,13 @@ export const WorkspaceCardSkeleton = ({
       <div className='min-w-0 flex-1 space-y-1.5'>
         <div
           className={`
-            h-4 w-1/3 rounded bg-gray-200
+            h-4 w-1/3 rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
         <div
           className={`
-            h-3 w-1/2 rounded bg-gray-200
+            h-3 w-1/2 rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
@@ -48,13 +48,13 @@ export const WorkspaceCardSkeleton = ({
           <div key={`stat-skeleton-${idx}`} className='flex items-center gap-1'>
             <div
               className={`
-                size-3.5 rounded bg-gray-200
+                size-3.5 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
             <div
               className={`
-                h-3 w-4 rounded bg-gray-200
+                h-3 w-4 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
@@ -65,7 +65,7 @@ export const WorkspaceCardSkeleton = ({
       {/* Chevron placeholder */}
       <div
         className={`
-          size-4 shrink-0 rounded bg-gray-200
+          size-4 shrink-0 rounded-sm bg-gray-200
           dark:bg-gray-800
         `}
       />

@@ -485,7 +485,7 @@ export default function SqlHelper({
                         </div>
                         <div
                           className={`
-                            mb-4 rounded bg-muted p-2 font-mono text-xs
+                            mb-4 rounded-sm bg-muted p-2 font-mono text-xs
                             break-all
                           `}
                         >

@@ -150,7 +150,7 @@ function SelectWorkflowTypeStep({
                 </span>
                 <span
                   className={`
-                    text-sm leading-normal transition-colors
+                    text-sm/normal transition-colors
                     ${isSelected ? `text-accent` : `text-accent-foreground`}
                   `}
                 >

@@ -278,7 +278,7 @@ export default function ConsoleSearch() {
       >
         <div
           className={`
-            pointer-events-none absolute inset-y-0 start-0 flex items-center
+            pointer-events-none absolute inset-y-0 inset-s-0 flex items-center
             ps-3
           `}
         >
@@ -318,13 +318,13 @@ export default function ConsoleSearch() {
         {isMac !== null && (
           <div
             className={`
-              pointer-events-none absolute inset-y-0 end-0 flex items-center
+              pointer-events-none absolute inset-y-0 inset-e-0 flex items-center
               pe-3
             `}
           >
             <div
               className={`
-                hidden items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5
+                hidden items-center gap-1 rounded-sm bg-gray-100 px-1.5 py-0.5
                 text-xs text-gray-500
                 md:flex
                 dark:bg-gray-800 dark:text-gray-400
@@ -398,7 +398,8 @@ export default function ConsoleSearch() {
                               rounded-lg p-2 text-sm text-gray-600
                               hover:bg-gray-100
                               lg:text-base
-                              dark:text-gray-300 dark:hover:bg-gray-700
+                              dark:text-gray-300
+                              dark:hover:bg-gray-700
                             `}
                           >
                             <Link

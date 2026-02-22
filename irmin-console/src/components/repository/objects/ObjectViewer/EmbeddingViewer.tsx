@@ -484,7 +484,7 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
                     <TableCell>
                       <p
                         className={`
-                          line-clamp-3 max-w-xs text-sm leading-relaxed
+                          line-clamp-3 max-w-xs text-sm/relaxed
                           text-muted-foreground
                         `}
                       >

@@ -91,7 +91,8 @@ const DropZone = ({ onFilesAdded, disabled = false }: DropZoneProps) => {
             : `
               border-gray-300
               hover:border-gray-400
-              dark:border-gray-600 dark:hover:border-gray-500
+              dark:border-gray-600
+              dark:hover:border-gray-500
             `
         }
         ${disabled ? 'cursor-not-allowed opacity-50' : ''}

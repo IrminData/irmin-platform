@@ -38,7 +38,7 @@ function SchemaFieldDiffItem({
         <div className='flex flex-wrap gap-1 text-xs'>
           <span
             className={cn(
-              'rounded px-1 py-0.5',
+              'rounded-sm px-1 py-0.5',
               change.change_type === 'added' &&
                 'bg-green-500/20 text-green-600',
               change.change_type === 'removed' && 'bg-red-500/20 text-red-600',
@@ -56,14 +56,18 @@ function SchemaFieldDiffItem({
           </span>
           {change.source_type && (
             <span
-              className={`rounded bg-accent px-1 py-0.5 text-muted-foreground`}
+              className={`
+                rounded-sm bg-accent px-1 py-0.5 text-muted-foreground
+              `}
             >
               From: {change.source_type}
             </span>
           )}
           {change.target_type && (
             <span
-              className={`rounded bg-accent px-1 py-0.5 text-muted-foreground`}
+              className={`
+                rounded-sm bg-accent px-1 py-0.5 text-muted-foreground
+              `}
             >
               To: {change.target_type}
             </span>
@@ -119,7 +123,7 @@ function ObjectSchemaDiffCard({
           <span className='font-mono text-sm'>{schemaDiff.path}</span>
           <span
             className={cn(
-              'rounded px-1.5 py-0.5 text-xs',
+              'rounded-sm px-1.5 py-0.5 text-xs',
               hasBreakingChanges
                 ? 'bg-red-500/10 text-red-600'
                 : 'bg-yellow-500/10 text-yellow-600'
@@ -209,7 +213,7 @@ export default function SchemaDiffSection({
         </h4>
         <span
           className={cn(
-            'rounded px-1.5 py-0.5 text-xs',
+            'rounded-sm px-1.5 py-0.5 text-xs',
             hasAnyBreakingChanges
               ? 'bg-red-500/10 text-red-600'
               : 'bg-yellow-500/10 text-yellow-600'

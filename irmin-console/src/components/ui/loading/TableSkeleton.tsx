@@ -40,7 +40,7 @@ export const TableSkeleton = ({
                 <div key={i} className='flex-1 p-4'>
                   <div
                     className={`
-                      h-4 w-3/4 rounded bg-gray-200
+                      h-4 w-3/4 rounded-sm bg-gray-200
                       dark:bg-gray-800
                     `}
                   />
@@ -64,7 +64,7 @@ export const TableSkeleton = ({
                 <div key={colIndex} className='flex-1 p-4'>
                   <div
                     className={`
-                      h-4 w-full rounded bg-gray-200
+                      h-4 w-full rounded-sm bg-gray-200
                       dark:bg-gray-800
                     `}
                   />

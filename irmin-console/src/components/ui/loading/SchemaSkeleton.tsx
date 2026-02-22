@@ -28,9 +28,9 @@ function SchemaSkeleton({
             <div className='mb-10 flex flex-col gap-6'>
               <div className='flex items-center gap-3'>
                 <div className='size-10 rounded-lg bg-muted' />
-                <div className='h-9 w-48 rounded bg-muted' />
+                <div className='h-9 w-48 rounded-sm bg-muted' />
               </div>
-              <div className='h-5 w-2/3 rounded bg-muted' />
+              <div className='h-5 w-2/3 rounded-sm bg-muted' />
               <div
                 className={`
                   relative h-10 w-full max-w-80 rounded-lg bg-muted
@@ -43,7 +43,7 @@ function SchemaSkeleton({
           {/* Stats Section */}
           {showStats && (
             <section className='mb-12 space-y-6'>
-              <div className='h-8 w-48 rounded bg-muted' />
+              <div className='h-8 w-48 rounded-sm bg-muted' />
               <div
                 className={`
                   grid grid-cols-2 gap-4
@@ -52,8 +52,8 @@ function SchemaSkeleton({
               >
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className='rounded-lg border bg-card p-4'>
-                    <div className='mb-2 h-4 w-20 rounded bg-muted' />
-                    <div className='h-6 w-12 rounded bg-muted' />
+                    <div className='mb-2 h-4 w-20 rounded-sm bg-muted' />
+                    <div className='h-6 w-12 rounded-sm bg-muted' />
                   </div>
                 ))}
               </div>
@@ -88,17 +88,17 @@ function SchemaSkeleton({
 
           {/* Main Content */}
           <section className='mb-12 space-y-6'>
-            <div className='h-8 w-48 rounded bg-muted' />
+            <div className='h-8 w-48 rounded-sm bg-muted' />
             <div className='space-y-6'>
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className='rounded-lg border bg-card p-6'>
                   <div className='mb-4 flex flex-wrap items-center gap-3'>
-                    <div className='h-7 w-48 rounded bg-muted' />
+                    <div className='h-7 w-48 rounded-sm bg-muted' />
                     <div className='h-6 w-20 rounded-full bg-muted' />
                     <div className='h-6 w-16 rounded-full bg-muted' />
                   </div>
-                  <div className='mb-4 h-4 w-3/4 rounded bg-muted' />
-                  <div className='mb-2 h-3 w-16 rounded bg-muted' />
+                  <div className='mb-4 h-4 w-3/4 rounded-sm bg-muted' />
+                  <div className='mb-2 h-3 w-16 rounded-sm bg-muted' />
                   <div className='flex flex-wrap items-center gap-2'>
                     {Array.from({ length: 4 }).map((_, j) => (
                       <div key={j} className='h-8 w-32 rounded-md bg-muted' />
@@ -111,7 +111,7 @@ function SchemaSkeleton({
 
           {/* Component Directory */}
           <section className='space-y-6'>
-            <div className='h-8 w-64 rounded bg-muted' />
+            <div className='h-8 w-64 rounded-sm bg-muted' />
             <div
               className={`
                 grid grid-cols-1 gap-6
@@ -121,8 +121,8 @@ function SchemaSkeleton({
               {Array.from({ length: 2 }).map((_, i) => (
                 <div key={i} className='rounded-lg border bg-card p-6'>
                   <div className='mb-4 flex items-center gap-2'>
-                    <div className='size-5 rounded bg-muted' />
-                    <div className='h-6 w-32 rounded bg-muted' />
+                    <div className='size-5 rounded-sm bg-muted' />
+                    <div className='h-6 w-32 rounded-sm bg-muted' />
                   </div>
                   <div className='space-y-4'>
                     {Array.from({ length: 4 }).map((_, j) => (
@@ -133,9 +133,9 @@ function SchemaSkeleton({
                           last:border-b-0 last:pb-0
                         `}
                       >
-                        <div className='h-5 w-3/4 rounded bg-muted' />
-                        <div className='h-3 w-full rounded bg-muted' />
-                        <div className='h-3 w-2/3 rounded bg-muted' />
+                        <div className='h-5 w-3/4 rounded-sm bg-muted' />
+                        <div className='h-3 w-full rounded-sm bg-muted' />
+                        <div className='h-3 w-2/3 rounded-sm bg-muted' />
                       </div>
                     ))}
                   </div>
@@ -148,10 +148,10 @@ function SchemaSkeleton({
           {showVisualization && (
             <div className='mt-12 rounded-lg border bg-card p-6'>
               <div className='mb-4 flex items-center gap-2'>
-                <div className='size-5 rounded bg-muted' />
-                <div className='h-6 w-40 rounded bg-muted' />
+                <div className='size-5 rounded-sm bg-muted' />
+                <div className='h-6 w-40 rounded-sm bg-muted' />
               </div>
-              <div className='h-[400px] rounded bg-muted' />
+              <div className='h-[400px] rounded-sm bg-muted' />
             </div>
           )}
         </div>

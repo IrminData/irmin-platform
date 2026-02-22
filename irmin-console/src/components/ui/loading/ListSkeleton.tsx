@@ -45,13 +45,13 @@ function ListSkeleton({
           <div className='flex-1 space-y-2'>
             <div
               className={`
-                h-4 w-3/4 rounded bg-gray-200
+                h-4 w-3/4 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
             <div
               className={`
-                h-3 w-1/2 rounded bg-gray-200
+                h-3 w-1/2 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
@@ -62,13 +62,13 @@ function ListSkeleton({
             <div className='flex space-x-2'>
               <div
                 className={`
-                  size-8 rounded bg-gray-200
+                  size-8 rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />
               <div
                 className={`
-                  size-8 rounded bg-gray-200
+                  size-8 rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />

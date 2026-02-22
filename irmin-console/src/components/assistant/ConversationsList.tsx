@@ -231,8 +231,8 @@ export default function ConversationsList({
                   type='button'
                   className={cn(
                     `
-                      flex size-5 shrink-0 items-center justify-center rounded
-                      text-muted-foreground/60 transition-all
+                      flex size-5 shrink-0 items-center justify-center
+                      rounded-sm text-muted-foreground/60 transition-all
                       hover:bg-destructive/10 hover:text-destructive
                     `,
                     selectedConversation?.id === conversation.id
@@ -242,7 +242,8 @@ export default function ConversationsList({
                       `
                       : `
                         opacity-0
-                        group-hover:opacity-60 group-hover:hover:opacity-100
+                        group-hover:opacity-60
+                        group-hover:hover:opacity-100
                       `
                   )}
                   onClick={(e) => handleDeleteConversation(e, conversation)}

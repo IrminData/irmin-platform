@@ -117,7 +117,7 @@ export default function SelectConnectorStep({
             className={`
               flex w-max max-w-[50%] cursor-pointer flex-row items-center
               justify-start gap-4 rounded-lg bg-gray-100 px-4 py-2 text-left
-              text-sm text-foreground shadow transition-all
+              text-sm text-foreground shadow-sm transition-all
               hover:opacity-80
               dark:bg-gray-800 dark:text-gray-200
               ${

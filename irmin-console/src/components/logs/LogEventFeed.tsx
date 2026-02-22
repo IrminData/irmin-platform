@@ -20,7 +20,7 @@ const EventSkeletonRow = () => {
       {/* icon placeholder */}
       <div
         className={`
-          size-6 rounded bg-gray-300
+          size-6 rounded-sm bg-gray-300
           dark:bg-gray-700
         `}
       />
@@ -28,7 +28,7 @@ const EventSkeletonRow = () => {
       <div className='flex-1'>
         <div
           className={`
-            h-4 w-3/4 rounded bg-gray-300
+            h-4 w-3/4 rounded-sm bg-gray-300
             dark:bg-gray-700
           `}
         />
@@ -37,13 +37,13 @@ const EventSkeletonRow = () => {
       <div className='ml-auto flex flex-col gap-1'>
         <div
           className={`
-            h-3 w-1/2 rounded bg-gray-300
+            h-3 w-1/2 rounded-sm bg-gray-300
             dark:bg-gray-700
           `}
         />
         <div
           className={`
-            h-3 w-1/3 rounded bg-gray-300
+            h-3 w-1/3 rounded-sm bg-gray-300
             dark:bg-gray-700
           `}
         />

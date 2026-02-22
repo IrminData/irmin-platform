@@ -2,7 +2,7 @@ const TabSkeleton = () => {
   return (
     <div
       className={`
-        h-6 w-16 animate-pulse rounded bg-gray-200
+        h-6 w-16 animate-pulse rounded-sm bg-gray-200
         dark:bg-gray-800
       `}
     />
@@ -15,13 +15,13 @@ const StatCardSkeleton = () => {
       <div className='space-y-2'>
         <div
           className={`
-            h-4 w-16 animate-pulse rounded bg-gray-200
+            h-4 w-16 animate-pulse rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
         <div
           className={`
-            h-8 w-20 animate-pulse rounded bg-gray-200
+            h-8 w-20 animate-pulse rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
@@ -34,7 +34,7 @@ const ContentLineSkeleton = () => {
   return (
     <div
       className={`
-        h-4 animate-pulse rounded bg-gray-200
+        h-4 animate-pulse rounded-sm bg-gray-200
         dark:bg-gray-800
       `}
     />
@@ -58,7 +58,7 @@ const DetailPageSkeleton = () => {
           {/* Title */}
           <div
             className={`
-              mb-2 h-8 w-64 animate-pulse rounded bg-gray-200
+              mb-2 h-8 w-64 animate-pulse rounded-sm bg-gray-200
               lg:h-10 lg:w-80
               dark:bg-gray-800
             `}
@@ -68,13 +68,13 @@ const DetailPageSkeleton = () => {
           <div className='space-y-1'>
             <div
               className={`
-                h-4 w-96 animate-pulse rounded bg-gray-200
+                h-4 w-96 animate-pulse rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
             <div
               className={`
-                h-4 w-48 animate-pulse rounded bg-gray-200
+                h-4 w-48 animate-pulse rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
@@ -85,13 +85,13 @@ const DetailPageSkeleton = () => {
         <div className='flex items-center gap-2'>
           <div
             className={`
-              h-10 w-20 animate-pulse rounded bg-gray-200
+              h-10 w-20 animate-pulse rounded-sm bg-gray-200
               dark:bg-gray-800
             `}
           />
           <div
             className={`
-              h-10 w-24 animate-pulse rounded bg-gray-200
+              h-10 w-24 animate-pulse rounded-sm bg-gray-200
               dark:bg-gray-800
             `}
           />
@@ -134,7 +134,7 @@ const DetailPageSkeleton = () => {
           <div className='space-y-4'>
             <div
               className={`
-                h-6 w-32 animate-pulse rounded bg-gray-200
+                h-6 w-32 animate-pulse rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />

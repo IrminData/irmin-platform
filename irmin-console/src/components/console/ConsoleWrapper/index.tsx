@@ -291,7 +291,8 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                       className={`
                         mb-2 text-left text-gray-500 transition-colors
                         hover:text-gray-700
-                        dark:text-gray-400 dark:hover:text-gray-100
+                        dark:text-gray-400
+                        dark:hover:text-gray-100
                       `}
                       href={link.href ?? ''}
                       onClick={() => setIsMenuOpen(false)}

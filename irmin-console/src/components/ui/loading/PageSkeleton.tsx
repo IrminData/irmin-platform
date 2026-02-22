@@ -39,7 +39,7 @@ function PageSkeleton({
           />
           <div
             className={`
-              h-4 w-2/3 rounded bg-gray-200
+              h-4 w-2/3 rounded-sm bg-gray-200
               dark:bg-gray-800
             `}
           />
@@ -82,7 +82,7 @@ function PageSkeleton({
               <div key={key} className='space-y-2'>
                 <div
                   className={`
-                    h-6 w-1/4 rounded bg-gray-200
+                    h-6 w-1/4 rounded-sm bg-gray-200
                     dark:bg-gray-800
                   `}
                 />

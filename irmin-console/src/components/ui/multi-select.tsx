@@ -187,8 +187,9 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                 focus-visible:ring-ring/50
                 disabled:cursor-not-allowed disabled:opacity-50
                 aria-invalid:border-destructive aria-invalid:ring-destructive/20
-                data-[placeholder]:text-muted-foreground
-                dark:bg-input/30 dark:hover:bg-input/50
+                data-placeholder:text-muted-foreground
+                dark:bg-input/30
+                dark:hover:bg-input/50
                 dark:aria-invalid:ring-destructive/40
                 [&_svg]:pointer-events-none [&_svg]:shrink-0
                 [&_svg:not([class*='size-'])]:size-4
@@ -210,7 +211,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                         key={value}
                         className={cn(
                           `
-                            inline-flex items-center gap-1 rounded border
+                            inline-flex items-center gap-1 rounded-sm border
                             border-transparent bg-secondary px-1.5 py-0.5
                             text-xs font-medium text-secondary-foreground
                           `,
@@ -242,7 +243,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                     <span
                       className={cn(
                         `
-                          inline-flex items-center gap-1 rounded border
+                          inline-flex items-center gap-1 rounded-sm border
                           border-transparent bg-secondary px-1.5 py-0.5 text-xs
                           font-medium text-secondary-foreground
                         `,

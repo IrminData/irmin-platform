@@ -352,7 +352,7 @@ export function CommonErrorDisplay({
                 </div>
                 <div
                   className={`
-                    overflow-x-auto rounded border bg-background/50 p-3
+                    overflow-x-auto rounded-sm border bg-background/50 p-3
                     font-mono text-sm text-foreground
                   `}
                 >

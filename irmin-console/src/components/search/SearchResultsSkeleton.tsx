@@ -39,7 +39,7 @@ export default function SearchResultsSkeleton() {
           >
             <div
               className={`
-                size-5 animate-pulse rounded bg-gray-200
+                size-5 animate-pulse rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />

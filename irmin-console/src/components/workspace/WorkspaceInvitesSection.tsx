@@ -72,7 +72,7 @@ const WorkspaceInvitesSection = () => {
         <div className='mb-4 flex flex-row items-center justify-end px-2'>
           <div
             className={`
-              h-8 w-24 animate-pulse rounded bg-gray-200
+              h-8 w-24 animate-pulse rounded-sm bg-gray-200
               dark:bg-gray-800
             `}
           />

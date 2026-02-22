@@ -308,7 +308,7 @@ const components: Options['components'] = {
     return (
       <code
         className={cn(
-          'rounded bg-muted px-1.5 py-0.5 font-mono text-sm',
+          'rounded-sm bg-muted px-1.5 py-0.5 font-mono text-sm',
           className
         )}
         {...props}
@@ -371,7 +371,8 @@ export const Response = memo(
         className={cn(
           `
             size-full max-w-full overflow-hidden
-            [&>*:first-child]:mt-0 [&>*:last-child]:mb-0
+            [&>*:first-child]:mt-0
+            [&>*:last-child]:mb-0
           `,
           className
         )}

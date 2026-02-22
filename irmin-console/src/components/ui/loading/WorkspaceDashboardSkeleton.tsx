@@ -7,37 +7,37 @@ const NavigationButtonsSkeleton = () => (
   <div className='flex flex-row gap-2'>
     <div
       className={`
-        h-8 w-20 animate-pulse rounded bg-gray-200
+        h-8 w-20 animate-pulse rounded-sm bg-gray-200
         dark:bg-gray-800
       `}
     />
     <div
       className={`
-        h-8 w-16 animate-pulse rounded bg-gray-200
+        h-8 w-16 animate-pulse rounded-sm bg-gray-200
         dark:bg-gray-800
       `}
     />
     <div
       className={`
-        h-8 w-24 animate-pulse rounded bg-gray-200
+        h-8 w-24 animate-pulse rounded-sm bg-gray-200
         dark:bg-gray-800
       `}
     />
     <div
       className={`
-        h-8 w-16 animate-pulse rounded bg-gray-200
+        h-8 w-16 animate-pulse rounded-sm bg-gray-200
         dark:bg-gray-800
       `}
     />
     <div
       className={`
-        h-8 w-24 animate-pulse rounded bg-gray-200
+        h-8 w-24 animate-pulse rounded-sm bg-gray-200
         dark:bg-gray-800
       `}
     />
     <div
       className={`
-        h-8 w-24 animate-pulse rounded bg-gray-200
+        h-8 w-24 animate-pulse rounded-sm bg-gray-200
         dark:bg-gray-800
       `}
     />
@@ -51,13 +51,13 @@ const AssistantSkeleton = () => (
       <div className='mb-4 flex items-center justify-between'>
         <div
           className={`
-            h-5 w-32 animate-pulse rounded bg-gray-200
+            h-5 w-32 animate-pulse rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
         <div
           className={`
-            size-8 animate-pulse rounded bg-gray-200
+            size-8 animate-pulse rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
@@ -65,26 +65,26 @@ const AssistantSkeleton = () => (
       <div className='space-y-3'>
         <div
           className={`
-            h-4 w-full animate-pulse rounded bg-gray-200
+            h-4 w-full animate-pulse rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
         <div
           className={`
-            h-4 w-3/4 animate-pulse rounded bg-gray-200
+            h-4 w-3/4 animate-pulse rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
         <div
           className={`
-            h-4 w-1/2 animate-pulse rounded bg-gray-200
+            h-4 w-1/2 animate-pulse rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
       </div>
       <div
         className={`
-          mt-4 h-10 w-full animate-pulse rounded bg-gray-200
+          mt-4 h-10 w-full animate-pulse rounded-sm bg-gray-200
           dark:bg-gray-800
         `}
       />
@@ -99,13 +99,13 @@ const WorkflowRunsFeedSkeleton = () => (
       <div className='mb-4 flex items-center justify-between'>
         <div
           className={`
-            h-5 w-24 animate-pulse rounded bg-gray-200
+            h-5 w-24 animate-pulse rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
         <div
           className={`
-            h-6 w-16 animate-pulse rounded bg-gray-200
+            h-6 w-16 animate-pulse rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
@@ -119,13 +119,13 @@ const WorkflowRunsFeedSkeleton = () => (
             <div className='mb-1 flex items-center gap-2'>
               <div
                 className={`
-                  h-3 w-20 animate-pulse rounded bg-gray-200
+                  h-3 w-20 animate-pulse rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />
               <div
                 className={`
-                  h-4 w-12 animate-pulse rounded bg-gray-200
+                  h-4 w-12 animate-pulse rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />
@@ -133,13 +133,13 @@ const WorkflowRunsFeedSkeleton = () => (
             <div className='flex items-center gap-2'>
               <div
                 className={`
-                  h-3 w-16 animate-pulse rounded bg-gray-200
+                  h-3 w-16 animate-pulse rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />
               <div
                 className={`
-                  h-3 w-12 animate-pulse rounded bg-gray-200
+                  h-3 w-12 animate-pulse rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />
@@ -158,13 +158,13 @@ const ListCardSkeleton = () => (
       <div className='mb-4 flex items-center justify-between'>
         <div
           className={`
-            h-5 w-24 animate-pulse rounded bg-gray-200
+            h-5 w-24 animate-pulse rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
         <div
           className={`
-            h-6 w-16 animate-pulse rounded bg-gray-200
+            h-6 w-16 animate-pulse rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
@@ -173,25 +173,25 @@ const ListCardSkeleton = () => (
         {Array.from({ length: 4 }, (_, index) => (
           <div
             key={`list-item-skeleton-${index}`}
-            className={`flex items-center justify-between rounded p-2`}
+            className={`flex items-center justify-between rounded-sm p-2`}
           >
             <div className='flex items-center gap-2'>
               <div
                 className={`
-                  size-4 animate-pulse rounded bg-gray-200
+                  size-4 animate-pulse rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />
               <div
                 className={`
-                  h-4 w-20 animate-pulse rounded bg-gray-200
+                  h-4 w-20 animate-pulse rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />
             </div>
             <div
               className={`
-                h-4 w-12 animate-pulse rounded bg-gray-200
+                h-4 w-12 animate-pulse rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />

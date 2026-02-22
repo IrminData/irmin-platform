@@ -28,10 +28,10 @@ function DocumentationSkeleton({
             <div className='mb-10 flex flex-col gap-6'>
               <div className='flex items-center gap-3'>
                 <div className='size-10 rounded-lg bg-muted' />
-                <div className='h-6 w-24 rounded bg-muted' />
+                <div className='h-6 w-24 rounded-sm bg-muted' />
               </div>
-              <div className='h-10 w-3/4 rounded bg-muted' />
-              <div className='h-5 w-1/2 rounded bg-muted' />
+              <div className='h-10 w-3/4 rounded-sm bg-muted' />
+              <div className='h-5 w-1/2 rounded-sm bg-muted' />
               {showControls && (
                 <div className='flex flex-wrap items-center gap-4'>
                   <div className='h-10 w-32 rounded-lg bg-muted' />
@@ -44,9 +44,9 @@ function DocumentationSkeleton({
           {/* Stats Section */}
           {showStats && (
             <section className='mb-12 space-y-6'>
-              <div className='h-8 w-48 rounded bg-muted' />
+              <div className='h-8 w-48 rounded-sm bg-muted' />
               <div className='rounded-lg border bg-card p-6'>
-                <div className='mb-4 h-6 w-32 rounded bg-muted' />
+                <div className='mb-4 h-6 w-32 rounded-sm bg-muted' />
                 <div
                   className={`
                     grid grid-cols-1 gap-4 text-sm
@@ -56,8 +56,8 @@ function DocumentationSkeleton({
                 >
                   {Array.from({ length: 9 }).map((_, i) => (
                     <div key={i} className='space-y-1'>
-                      <div className='h-4 w-24 rounded bg-muted' />
-                      <div className='h-6 w-12 rounded bg-muted' />
+                      <div className='h-4 w-24 rounded-sm bg-muted' />
+                      <div className='h-6 w-12 rounded-sm bg-muted' />
                     </div>
                   ))}
                 </div>
@@ -72,8 +72,8 @@ function DocumentationSkeleton({
                 <div className='flex items-center gap-3'>
                   <div className='size-10 rounded-lg bg-muted' />
                   <div className='space-y-2'>
-                    <div className='h-8 w-48 rounded bg-muted' />
-                    <div className='h-4 w-64 rounded bg-muted' />
+                    <div className='h-8 w-48 rounded-sm bg-muted' />
+                    <div className='h-4 w-64 rounded-sm bg-muted' />
                   </div>
                 </div>
                 <div
@@ -87,13 +87,13 @@ function DocumentationSkeleton({
                       key={cardIndex}
                       className='rounded-lg border bg-card p-6'
                     >
-                      <div className='mb-2 h-6 w-3/4 rounded bg-muted' />
-                      <div className='mb-4 h-4 w-full rounded bg-muted' />
+                      <div className='mb-2 h-6 w-3/4 rounded-sm bg-muted' />
+                      <div className='mb-4 h-4 w-full rounded-sm bg-muted' />
                       <div className='space-y-3'>
                         {Array.from({ length: 3 }).map((_, itemIndex) => (
                           <div key={itemIndex} className='space-y-1'>
-                            <div className='h-3 w-20 rounded bg-muted' />
-                            <div className='h-4 w-32 rounded bg-muted' />
+                            <div className='h-3 w-20 rounded-sm bg-muted' />
+                            <div className='h-4 w-32 rounded-sm bg-muted' />
                           </div>
                         ))}
                       </div>

@@ -332,7 +332,7 @@ const ScriptResults = ({
           {showLoadingOnLogs ? (
             <div
               className={`
-                m-4 h-64 animate-pulse rounded bg-gray-200
+                m-4 h-64 animate-pulse rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />

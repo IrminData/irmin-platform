@@ -17,19 +17,19 @@ function RepositoryLayoutSkeleton({ className = '' }: { className?: string }) {
           <div className='flex items-center gap-2'>
             <div
               className={`
-                h-4 w-16 rounded bg-gray-200
+                h-4 w-16 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
             <div
               className={`
-                h-4 w-2 rounded bg-gray-200
+                h-4 w-2 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
             <div
               className={`
-                h-4 w-24 rounded bg-gray-200
+                h-4 w-24 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
@@ -37,13 +37,13 @@ function RepositoryLayoutSkeleton({ className = '' }: { className?: string }) {
           <div className='flex gap-2'>
             <div
               className={`
-                h-8 w-20 rounded bg-gray-200
+                h-8 w-20 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
             <div
               className={`
-                h-8 w-24 rounded bg-gray-200
+                h-8 w-24 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
@@ -55,45 +55,45 @@ function RepositoryLayoutSkeleton({ className = '' }: { className?: string }) {
           <div className='mb-2 flex items-center gap-2'>
             <div
               className={`
-                h-6 w-32 rounded bg-gray-200
+                h-6 w-32 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
             <div
               className={`
-                h-5 w-16 rounded bg-gray-200
+                h-5 w-16 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
           </div>
           <div
             className={`
-              h-8 w-1/2 rounded bg-gray-200
+              h-8 w-1/2 rounded-sm bg-gray-200
               dark:bg-gray-800
             `}
           />
           <div
             className={`
-              mt-2 h-4 w-2/3 rounded bg-gray-200
+              mt-2 h-4 w-2/3 rounded-sm bg-gray-200
               dark:bg-gray-800
             `}
           />
           <div className='mt-2 flex gap-2'>
             <div
               className={`
-                h-5 w-12 rounded bg-gray-200
+                h-5 w-12 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
             <div
               className={`
-                h-5 w-16 rounded bg-gray-200
+                h-5 w-16 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
             <div
               className={`
-                h-5 w-20 rounded bg-gray-200
+                h-5 w-20 rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
@@ -112,7 +112,7 @@ function RepositoryLayoutSkeleton({ className = '' }: { className?: string }) {
               <div
                 key={`tab-${i}`}
                 className={`
-                  h-10 w-20 rounded bg-gray-200
+                  h-10 w-20 rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />
@@ -128,7 +128,7 @@ function RepositoryLayoutSkeleton({ className = '' }: { className?: string }) {
             <div key={`content-${i}`} className='space-y-2'>
               <div
                 className={`
-                  h-6 w-1/4 rounded bg-gray-200
+                  h-6 w-1/4 rounded-sm bg-gray-200
                   dark:bg-gray-800
                 `}
               />

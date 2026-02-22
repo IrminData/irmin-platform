@@ -246,7 +246,7 @@ const SchemaFieldMapper = ({
   return (
     <div className='mx-auto w-full max-w-7xl space-y-4 py-4'>
       {/* Description Section */}
-      <p className='text-center text-sm leading-relaxed text-foreground/80'>
+      <p className='text-center text-sm/relaxed text-foreground/80'>
         {description}
       </p>
 
@@ -417,7 +417,7 @@ const SchemaFieldMapper = ({
                     <div className='flex items-center gap-3 text-sm'>
                       <span
                         className={`
-                          rounded bg-irmin-blue-100 px-2 py-1 font-medium
+                          rounded-sm bg-irmin-blue-100 px-2 py-1 font-medium
                           text-irmin-blue-700
                         `}
                       >
@@ -426,7 +426,7 @@ const SchemaFieldMapper = ({
                       <TbArrowRight className='size-4 text-primary' />
                       <span
                         className={`
-                          rounded bg-irmin-green-100 px-2 py-1 font-medium
+                          rounded-sm bg-irmin-green-100 px-2 py-1 font-medium
                           text-irmin-green-700
                         `}
                       >

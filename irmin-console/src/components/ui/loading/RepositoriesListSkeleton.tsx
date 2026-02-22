@@ -12,13 +12,13 @@ const TableRowSkeleton = () => {
         <div className='flex-1'>
           <div
             className={`
-              h-4 w-32 animate-pulse rounded bg-gray-200
+              h-4 w-32 animate-pulse rounded-sm bg-gray-200
               dark:bg-gray-800
             `}
           />
           <div
             className={`
-              mt-1 h-3 w-48 animate-pulse rounded bg-gray-200
+              mt-1 h-3 w-48 animate-pulse rounded-sm bg-gray-200
               dark:bg-gray-800
             `}
           />
@@ -27,20 +27,20 @@ const TableRowSkeleton = () => {
           <div className='flex flex-col gap-1'>
             <div
               className={`
-                h-3 w-24 animate-pulse rounded bg-gray-200
+                h-3 w-24 animate-pulse rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
             <div
               className={`
-                h-3 w-20 animate-pulse rounded bg-gray-200
+                h-3 w-20 animate-pulse rounded-sm bg-gray-200
                 dark:bg-gray-800
               `}
             />
           </div>
           <div
             className={`
-              h-8 w-16 animate-pulse rounded bg-gray-200
+              h-8 w-16 animate-pulse rounded-sm bg-gray-200
               dark:bg-gray-800
             `}
           />
@@ -62,20 +62,20 @@ const CardSkeleton = () => {
         <div className='flex-1'>
           <div
             className={`
-              h-4 w-32 animate-pulse rounded bg-gray-200
+              h-4 w-32 animate-pulse rounded-sm bg-gray-200
               dark:bg-gray-800
             `}
           />
           <div
             className={`
-              mt-1 h-3 w-48 animate-pulse rounded bg-gray-200
+              mt-1 h-3 w-48 animate-pulse rounded-sm bg-gray-200
               dark:bg-gray-800
             `}
           />
         </div>
         <div
           className={`
-            h-3 w-16 animate-pulse rounded bg-gray-200
+            h-3 w-16 animate-pulse rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
@@ -83,13 +83,13 @@ const CardSkeleton = () => {
       <div className='mt-4 flex justify-between'>
         <div
           className={`
-            h-8 w-16 animate-pulse rounded bg-gray-200
+            h-8 w-16 animate-pulse rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
         <div
           className={`
-            size-8 animate-pulse rounded bg-gray-200
+            size-8 animate-pulse rounded-sm bg-gray-200
             dark:bg-gray-800
           `}
         />
@@ -107,7 +107,7 @@ const RepositoriesListSkeleton = () => {
       <div className='my-4 flex flex-row items-center justify-between gap-4'>
         <div
           className={`
-            h-10 w-48 animate-pulse rounded bg-gray-200
+            h-10 w-48 animate-pulse rounded-sm bg-gray-200
             sm:h-12 sm:w-64
             lg:h-16 lg:w-80
             dark:bg-gray-800
@@ -115,7 +115,7 @@ const RepositoriesListSkeleton = () => {
         />
         <div
           className={`
-            h-10 w-36 animate-pulse rounded bg-gray-200
+            h-10 w-36 animate-pulse rounded-sm bg-gray-200
             sm:h-12 sm:w-44
             dark:bg-gray-800
           `}
@@ -134,7 +134,7 @@ const RepositoriesListSkeleton = () => {
           <TbSearch className='opacity-50' />
           <div
             className={`
-              h-6 w-32 animate-pulse rounded bg-gray-200
+              h-6 w-32 animate-pulse rounded-sm bg-gray-200
               dark:bg-gray-700
             `}
           />
@@ -163,13 +163,13 @@ const RepositoriesListSkeleton = () => {
               <div className='flex p-2'>
                 <div
                   className={`
-                    h-4 w-20 animate-pulse rounded bg-gray-200
+                    h-4 w-20 animate-pulse rounded-sm bg-gray-200
                     dark:bg-gray-700
                   `}
                 />
                 <div
                   className={`
-                    ml-auto h-4 w-16 animate-pulse rounded bg-gray-200
+                    ml-auto h-4 w-16 animate-pulse rounded-sm bg-gray-200
                     dark:bg-gray-700
                   `}
                 />

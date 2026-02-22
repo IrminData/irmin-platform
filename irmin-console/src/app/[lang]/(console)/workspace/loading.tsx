@@ -22,26 +22,26 @@ export default function WorkspacesLoading() {
                 <div className='rounded-xl bg-card p-6 ring-1 ring-border/20'>
                   <div
                     className={`
-                      mb-6 h-6 w-48 animate-pulse rounded bg-gray-200
+                      mb-6 h-6 w-48 animate-pulse rounded-sm bg-gray-200
                       dark:bg-gray-800
                     `}
                   />
                   <div className='space-y-4'>
                     <div
                       className={`
-                        h-10 w-full animate-pulse rounded bg-gray-200
+                        h-10 w-full animate-pulse rounded-sm bg-gray-200
                         dark:bg-gray-800
                       `}
                     />
                     <div
                       className={`
-                        h-10 w-full animate-pulse rounded bg-gray-200
+                        h-10 w-full animate-pulse rounded-sm bg-gray-200
                         dark:bg-gray-800
                       `}
                     />
                     <div
                       className={`
-                        h-12 w-full animate-pulse rounded bg-gray-200
+                        h-12 w-full animate-pulse rounded-sm bg-gray-200
                         dark:bg-gray-800
                       `}
                     />
@@ -53,7 +53,7 @@ export default function WorkspacesLoading() {
               <div className='min-w-0 flex-1'>
                 <div
                   className={`
-                    mb-6 h-6 w-40 animate-pulse rounded bg-gray-200
+                    mb-6 h-6 w-40 animate-pulse rounded-sm bg-gray-200
                     dark:bg-gray-800
                   `}
                 />
