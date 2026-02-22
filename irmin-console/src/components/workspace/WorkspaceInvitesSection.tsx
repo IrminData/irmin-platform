@@ -58,7 +58,10 @@ const WorkspaceInvitesSection = () => {
       dict.users.inviteUser,
       <WorkspaceSendInviteModalContent
         roles={rolesQuery.data?.data ?? []}
-        handleInvite={sendInviteMutation.mutate}
+        handleInvite={(data) => {
+          sendInviteMutation.mutate(data);
+          irminModal.close();
+        }}
         onClose={() => {
           irminModal.close();
         }}

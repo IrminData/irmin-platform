@@ -11,8 +11,8 @@ function DisplayTitle({
     <h1
       className={cn(
         `
-          font-display text-6xl font-bold tracking-tight text-foreground/90
-          sm:text-6xl
+          font-display text-2xl font-bold tracking-tight text-foreground/90
+          sm:text-4xl
         `,
         className
       )}

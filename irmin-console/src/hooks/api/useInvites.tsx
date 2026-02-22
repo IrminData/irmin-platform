@@ -15,6 +15,7 @@ import {
   createMutationHandlers,
   deleteMutationHandlers,
 } from './mutations/utils';
+import { useRoles } from './useRoles';
 
 type ChangeInviteRoleInput = {
   id: string;
@@ -31,6 +32,7 @@ export function useInvites() {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
   const queryClient = useQueryClient();
+  const { rolesQuery } = useRoles();
 
   // Query for fetching the user's invite inbox
   const inviteInboxQuery = useQuery<IrminAPIResponse<Invite[]>>({
@@ -128,6 +130,7 @@ export function useInvites() {
   });
 
   // Mutation to send an invite
+  const roles = rolesQuery.data?.data;
   const sendInviteHandlers = useMemo(
     () =>
       createMutationHandlers<Invite, InviteWorkspaceUserInput>(
@@ -140,35 +143,38 @@ export function useInvites() {
             createOptimisticItem: (
               input: InviteWorkspaceUserInput,
               tempId: string
-            ) => ({
-              id: tempId,
-              email: input.email,
-              role: {
-                id: input.roleId,
-                role: 'Loading...',
-                description: '',
-                isOwner: false,
-                isDefault: false,
-              },
-              expires_at: new Date(
-                new Date().getTime() + 7 * 24 * 60 * 60 * 1000
-              ).toISOString(),
-              invited_by: {
-                id: 'temp-user',
-                first_name: 'Current',
-                last_name: 'User',
-                email: '',
-                phone: '',
-                company: '',
-                profile_picture: '',
-              },
-              workspace: {
-                id: 'temp-workspace',
-                name: 'Current Workspace',
-                slug: workspaceSlug,
-                description: '',
-              },
-            }),
+            ) => {
+              const matchedRole = roles?.find((r) => r.id === input.roleId);
+              return {
+                id: tempId,
+                email: input.email,
+                role: matchedRole ?? {
+                  id: input.roleId,
+                  role: 'Loading...',
+                  description: '',
+                  isOwner: false,
+                  isDefault: false,
+                },
+                expires_at: new Date(
+                  new Date().getTime() + 7 * 24 * 60 * 60 * 1000
+                ).toISOString(),
+                invited_by: {
+                  id: 'temp-user',
+                  first_name: '',
+                  last_name: '',
+                  email: '',
+                  phone: '',
+                  company: '',
+                  profile_picture: '',
+                },
+                workspace: {
+                  id: 'temp-workspace',
+                  name: '',
+                  slug: workspaceSlug,
+                  description: '',
+                },
+              };
+            },
           },
           onSuccess: (res) => {
             irminAlert('success', res.message ?? 'Invite sent successfully');
@@ -178,7 +184,7 @@ export function useInvites() {
           },
         }
       ),
-    [queryClient, workspaceSlug, irminAlert]
+    [queryClient, workspaceSlug, irminAlert, roles]
   );
 
   const sendInviteMutation = useMutation<

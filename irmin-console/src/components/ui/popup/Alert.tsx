@@ -139,7 +139,7 @@ const Alert = ({
     <div
       id='alert'
       className={`
-        fixed right-4 bottom-4 z-50 duration-300 ease-out
+        fixed right-4 bottom-4 z-60 duration-300 ease-out
         ${
           isExiting
             ? 'animate-out fade-out slide-out-to-bottom'
