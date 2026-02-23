@@ -7,7 +7,6 @@ type User struct {
 	Email            string `json:"email"              validate:"required,email"           example:"john.doe@example.com"`
 	Phone            string `json:"phone"              validate:"validphone"               example:"+1-555-0123"`
 	Company          string `json:"company"            validate:"max=100"                  example:"Acme Corp"`
-	ProfilePicture   string `json:"profile_picture"    validate:"validimageurl"            example:"https://avatars.example.com/john-doe.jpg"`
-	NovuSubscriberID string `json:"novu_subscriber_id"                                     example:"699b79991fbbab56a15c9da1"`
-	Roles            []Role `json:"roles"              validate:"dive"`
+	ProfilePicture string `json:"profile_picture" validate:"validimageurl" example:"https://avatars.example.com/john-doe.jpg"`
+	Roles          []Role `json:"roles"           validate:"dive"`
 }
