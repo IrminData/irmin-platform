@@ -50,9 +50,9 @@ type CreatePointerRequest struct {
 
 // CreateSignedURLRequest represents the JSON request body for creating a signed download URL.
 type CreateSignedURLRequest struct {
-	Path           string `json:"path"                       validate:"required"                example:"data/file.csv"`
-	Ref            string `json:"ref,omitempty"                                                 example:"main"`
-	ExpiresInHours *int   `json:"expires_in_hours,omitempty" validate:"omitempty,min=0"         example:"24"`
+	Path           string `json:"path"                       validate:"required"        example:"data/file.csv"`
+	Ref            string `json:"ref,omitempty"                                         example:"main"`
+	ExpiresInHours *int   `json:"expires_in_hours,omitempty" validate:"omitempty,min=0" example:"24"`
 }
 
 // SignedURLResponse represents the response from creating a signed download URL.
