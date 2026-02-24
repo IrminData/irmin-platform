@@ -146,13 +146,30 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 func (api *APIControllers) InvitesShow(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
-	if !dictOk || !inviteOk {
+	user, userOk := c.Locals("user").(*db.User)
+	if !dictOk || !inviteOk || !userOk {
 		return api.handleServiceError(
 			c,
 			"Error getting locals for InvitesShow",
 			services.NewInternalError("error getting locals"),
 			dict,
 		)
+	}
+
+	// Invitees can view their own invite without workspace policy checks.
+	// For workspace members, enforce the invite-read policy.
+	// Use the workspace preloaded on the invite (the standalone /invites/:invite
+	// route does not set "workspace" in locals).
+	if invite.Email != user.Email {
+		allowed, permErr := api.Services.PermissionService.IsAllowed(
+			user, &invite.Workspace, db.PolicyResourceInvite, nil, db.PolicyActionRead,
+		)
+		if permErr != nil {
+			return api.handleServiceError(c, "Error checking permission", permErr, dict)
+		}
+		if !allowed {
+			return api.handleServiceError(c, "Insufficient permissions", services.ErrAccessDenied, dict)
+		}
 	}
 
 	// Format the invite
@@ -452,9 +469,21 @@ func (api *APIControllers) AcceptInvite(c fiber.Ctx) error {
 		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
 	}
 
+	// Format the invite so the response includes workspace data for navigation
+	inviteResponse, formatErr := formatter.FormatInviteResponse(invite, api.SQIDManager)
+	if formatErr != nil {
+		return api.handleServiceError(
+			c,
+			"Error formatting invite response after accept",
+			services.NewInternalError("error formatting invite response"),
+			dict,
+		)
+	}
+
 	// Return the response
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "invite_accepted"),
+		Data:    inviteResponse,
 	})
 }
 

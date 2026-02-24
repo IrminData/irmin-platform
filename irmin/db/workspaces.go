@@ -72,19 +72,31 @@ type WorkspaceSummaryRow struct {
 }
 
 // GetWorkspaceSummaries retrieves lightweight workspace summaries with resource counts
-// for a given user. Uses subquery counts instead of preloading full objects.
+// for a given user. Uses lateral joins for efficient per-workspace counting.
 func (d *Database) GetWorkspaceSummaries(userID uint) ([]WorkspaceSummaryRow, error) {
 	var summaries []WorkspaceSummaryRow
 
 	err := d.Raw(`
 		SELECT w.*,
-			(SELECT COUNT(*) FROM workspace_users WHERE workspace_id = w.id AND deleted_at IS NULL) as member_count,
-			(SELECT COUNT(*) FROM repositories WHERE workspace_id = w.id AND deleted_at IS NULL) as repository_count,
-			(SELECT COUNT(*) FROM workflows WHERE workspace_id = w.id AND deleted_at IS NULL) as workflow_count,
-			(SELECT COUNT(*) FROM connections WHERE workspace_id = w.id AND deleted_at IS NULL) as connection_count,
+			COALESCE(mc.cnt, 0) as member_count,
+			COALESCE(rc.cnt, 0) as repository_count,
+			COALESCE(wc.cnt, 0) as workflow_count,
+			COALESCE(cc.cnt, 0) as connection_count,
 			wu.last_accessed_at
 		FROM workspaces w
 		JOIN workspace_users wu ON wu.workspace_id = w.id AND wu.user_id = ? AND wu.deleted_at IS NULL
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*) AS cnt FROM workspace_users WHERE workspace_id = w.id AND deleted_at IS NULL
+		) mc ON true
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*) AS cnt FROM repositories WHERE workspace_id = w.id AND deleted_at IS NULL
+		) rc ON true
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*) AS cnt FROM workflows WHERE workspace_id = w.id AND deleted_at IS NULL
+		) wc ON true
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*) AS cnt FROM connections WHERE workspace_id = w.id AND deleted_at IS NULL
+		) cc ON true
 		WHERE w.deleted_at IS NULL
 		ORDER BY wu.last_accessed_at DESC NULLS LAST, w.created_at DESC
 	`, userID).Scan(&summaries).Error

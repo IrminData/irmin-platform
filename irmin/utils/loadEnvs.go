@@ -25,7 +25,6 @@ type CoreAPIEnv struct {
 	OrchestratorEnabled          bool   // Flag to enable the orchestrator
 	SqidAlphabet                 string // Alphabet to use for SQIDs
 	DatabaseConnectionString     string // Postgres DB connection string
-	ResendAPIKey                 string // Resend API Key for emails
 	ConsoleURL                   string // URL of the Irmin Console
 	InviteExpiresInDays          int    // Number of days before an invite expires
 	ClerkPublicKey               string // Clerk Public API Key
@@ -190,11 +189,6 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
-	resendAPIKey, err := getEnv("RESEND_API_KEY", true, "")
-	if err != nil {
-		return nil, err
-	}
-
 	consoleURL, err := getEnv("CONSOLE_URL", false, "https://console.irmin.dev")
 	if err != nil {
 		return nil, err
@@ -235,7 +229,6 @@ func LoadEnv() (*CoreAPIEnv, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	lakefsURL, err := getEnv("LAKE_FS_URL", true, "")
 	if err != nil {
 		return nil, err
@@ -350,7 +343,6 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		OrchestratorEnabled:          orchestratorEnabled,
 		SqidAlphabet:                 sqidAlphabet,
 		DatabaseConnectionString:     databaseConnectionString,
-		ResendAPIKey:                 resendAPIKey,
 		ConsoleURL:                   consoleURL,
 		InviteExpiresInDays:          inviteExpiresInDays,
 		ClerkPublicKey:               clerkPublicKey,

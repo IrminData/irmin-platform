@@ -220,7 +220,6 @@ func (api *APIServices) sendInviteInTransaction(
 	locale string,
 ) (*InviteTransactionResult, error) {
 	var newInvite *db.Invite
-	var clerkInvite *clerk.Invitation
 	var clerkInviteCreated = false
 	var inviteAcceptanceURL string
 
@@ -263,69 +262,34 @@ func (api *APIServices) sendInviteInTransaction(
 		return nil, NewInternalErrorf("error in database transaction: %w", transactionErr)
 	}
 
-	// Try to create the invite in Clerk (outside of database transaction)
-	clerk.SetKey(api.Env.ClerkSecretKey)
-	expiresInDays := int64(api.Env.InviteExpiresInDays)
-	clerkInvite, createClerkInviteErr := invitation.Create(ctx, &invitation.CreateParams{
-		EmailAddress:  req.Email,
-		RedirectURL:   &inviteAcceptanceURL,
-		ExpiresInDays: &expiresInDays,
-	})
-
-	if createClerkInviteErr != nil {
-		api.Logger.WarnContext(ctx, "Clerk invitation creation failed, will use fallback notifications",
-			"error", createClerkInviteErr,
-			"email", req.Email)
-
-		// Don't fail the entire process if Clerk fails
-		clerkInviteCreated = false
-	} else {
-		// Update invite with Clerk ID in a separate transaction
-		updateErr := api.DB.Transaction(func(tx *gorm.DB) error {
-			newInvite.ClerkID = clerkInvite.ID
-			if saveErr := tx.Save(newInvite).Error; saveErr != nil {
-				return NewInternalErrorf("error updating invite with Clerk ID: %w", saveErr)
-			}
-			return nil
-		})
-
-		if updateErr != nil {
-			api.Logger.ErrorContext(ctx, "Error updating invite with Clerk ID", "error", updateErr)
-			// Continue anyway since the invite exists in database
-		} else {
-			clerkInviteCreated = true
-			api.Logger.InfoContext(ctx, "Clerk invitation created successfully", "email", req.Email, "clerk_id", clerkInvite.ID)
-		}
+	// Check if the invitee already has an Irmin account.
+	// Existing users get Novu in-app + email notifications.
+	// New users (no account) get a Clerk invitation to create their account.
+	existingUser, userLookupErr := api.DB.GetUserByEmail(req.Email)
+	if userLookupErr != nil {
+		api.Logger.ErrorContext(ctx, "Error looking up invitee by email, treating as new user",
+			"email", req.Email, "error", userLookupErr)
+	}
+	notificationParams := lib.InviteNotificationParams{
+		Invite:              newInvite,
+		Workspace:           workspace,
+		InvitedBy:           user,
+		Role:                role,
+		InviteAcceptanceURL: inviteAcceptanceURL,
+		Locale:              locale,
 	}
 
-	// If Clerk invitation failed, send fallback notification
 	var notificationResult *lib.InviteNotificationResult
-	if !clerkInviteCreated {
-		// Prepare notification parameters
-		notificationParams := lib.InviteNotificationParams{
-			Invite:              newInvite,
-			Workspace:           workspace,
-			InvitedBy:           user,
-			Role:                role,
-			InviteAcceptanceURL: inviteAcceptanceURL,
-			Locale:              locale,
-		}
-
-		// Send fallback notification
-		notificationResult = lib.SendFallbackInviteNotification(
-			ctx,
-			api.DB,
-			api.SQIDManager,
-			api.Env,
-			api.Logger,
-			notificationParams,
-		)
-
-		api.Logger.InfoContext(ctx, "Fallback notification attempted",
-			"email", req.Email,
-			"method", notificationResult.Method,
-			"success", notificationResult.Success)
+	if existingUser != nil {
+		notificationResult = api.notifyExistingUser(ctx, notificationParams)
+	} else {
+		notificationResult, clerkInviteCreated = api.sendNewUserInvite(ctx, newInvite, inviteAcceptanceURL, notificationParams)
 	}
+
+	// Populate relations so the response formatter has complete data
+	newInvite.Role = *role
+	newInvite.InvitedBy = *user
+	newInvite.Workspace = *workspace
 
 	return &InviteTransactionResult{
 		Invite:             newInvite,
@@ -489,6 +453,7 @@ func (api *APIServices) UpdateInvite(
 
 	// Update the invite
 	invite.RoleID = role.ID
+	invite.Role = *role
 	if updateInviteErr := api.DB.Save(invite).Error; updateInviteErr != nil {
 		api.Logger.ErrorContext(c, "Error updating invite", "error", updateInviteErr)
 		return nil, NewInternalErrorf("error updating invite: %w", updateInviteErr)
@@ -505,30 +470,30 @@ func (api *APIServices) UpdateInvite(
 	return invite, nil
 }
 
-// deleteInviteInTransaction handles the transactional deletion of invites from both Clerk and database.
-func (api *APIServices) deleteInviteInTransaction(
+// deleteInviteWithClerkRevoke revokes the Clerk invite (best-effort) and deletes the invite from the database.
+func (api *APIServices) deleteInviteWithClerkRevoke(
 	ctx context.Context,
 	invite *db.Invite,
 ) error {
-	// Use database transaction to ensure atomicity
-	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		// Revoke the invite in Clerk first (only if it has a ClerkID)
-		if invite.ClerkID != "" {
-			_, revokeErr := invitation.Revoke(ctx, invite.ClerkID)
-			if revokeErr != nil {
-				api.Logger.ErrorContext(ctx, "Error revoking invite in Clerk", "error", revokeErr)
-				return revokeErr
-			}
-		} else {
-			api.Logger.InfoContext(ctx, "Skipping Clerk invite revocation - invite was not created in Clerk", "email", invite.Email)
+	// Revoke the invite in Clerk (best-effort — don't block DB deletion on Clerk failure)
+	if invite.ClerkID != "" {
+		clerk.SetKey(api.Env.ClerkSecretKey)
+		_, revokeErr := invitation.Revoke(ctx, invite.ClerkID)
+		if revokeErr != nil {
+			api.Logger.ErrorContext(ctx, "Error revoking invite in Clerk (proceeding with deletion)",
+				"error", revokeErr, "clerk_id", invite.ClerkID, "email", invite.Email)
 		}
+	} else {
+		api.Logger.InfoContext(ctx, "Skipping Clerk invite revocation - invite was not created in Clerk",
+			"email", invite.Email)
+	}
 
-		// Delete the invite from database
+	// Delete the invite from database
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
 		if deleteErr := tx.Delete(&db.Invite{}, invite.ID).Error; deleteErr != nil {
 			api.Logger.ErrorContext(ctx, "Error deleting invite from database", "error", deleteErr)
 			return deleteErr
 		}
-
 		return nil
 	})
 
@@ -569,7 +534,7 @@ func (api *APIServices) DeleteInvite(c context.Context, user *db.User, invite *d
 	}
 
 	// Use database transaction to ensure atomicity
-	transactionErr := api.deleteInviteInTransaction(c, invite)
+	transactionErr := api.deleteInviteWithClerkRevoke(c, invite)
 	if transactionErr != nil {
 		api.Logger.ErrorContext(c, "Transaction failed for invite deletion", "error", transactionErr)
 		return transactionErr
@@ -586,68 +551,59 @@ func (api *APIServices) DeleteInvite(c context.Context, user *db.User, invite *d
 	return nil
 }
 
-// resendInviteInTransaction handles the transactional resending of invites (revoke old + create new).
-func (api *APIServices) resendInviteInTransaction(
+// resendInviteWithNotification handles resending invites: revokes old Clerk invite, creates new one, and sends notifications.
+func (api *APIServices) resendInviteWithNotification(
 	ctx context.Context,
 	invite *db.Invite,
 	locale string,
 ) error {
-	// Use database transaction to ensure atomicity
-	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		// Create sqid for the invite
-		inviteSqid, err := api.SQIDManager.Encode("invites", uint64(invite.ID))
-		if err != nil {
-			api.Logger.ErrorContext(ctx, "Error encoding invite sqid", "error", err)
-			return err
-		}
+	// Create sqid for the invite
+	inviteSqid, err := api.SQIDManager.Encode("invites", uint64(invite.ID))
+	if err != nil {
+		api.Logger.ErrorContext(ctx, "Error encoding invite sqid", "error", err)
+		return err
+	}
 
-		// Set the API key with your Clerk Secret Key.
-		clerk.SetKey(api.Env.ClerkSecretKey)
+	inviteAcceptanceURL := fmt.Sprintf(
+		"%s/%s/invite/%s",
+		api.Env.ConsoleURL,
+		locale,
+		inviteSqid,
+	)
 
-		// Revoke the existing invite in Clerk first (only if it has a ClerkID)
-		// This must happen before creating a new invite, otherwise Clerk will reject
-		// the new invite because a pending invite already exists for that email.
-		if invite.ClerkID != "" {
-			_, revokeErr := invitation.Revoke(ctx, invite.ClerkID)
-			if revokeErr != nil {
-				api.Logger.ErrorContext(ctx, "Error revoking existing invite in Clerk", "error", revokeErr)
-				return revokeErr
-			}
-		} else {
-			api.Logger.InfoContext(ctx, "Skipping Clerk invite revocation - original invite was not created in Clerk", "email", invite.Email)
-		}
+	// Update the invite expiration before sending notifications so the payload
+	// contains the new date, not the old one.
+	invite.ExpiresAt = time.Now().Add(time.Duration(api.Env.InviteExpiresInDays) * 24 * time.Hour)
+	if saveErr := api.DB.Save(invite).Error; saveErr != nil {
+		api.Logger.ErrorContext(ctx, "Error updating invite on resend", "error", saveErr)
+		return saveErr
+	}
 
-		// Create new invite in Clerk
-		inviteAcceptanceURL := fmt.Sprintf(
-			"%s/%s/invite/%s",
-			api.Env.ConsoleURL,
-			locale,
-			inviteSqid,
-		)
-		expiresInDays := int64(api.Env.InviteExpiresInDays)
-		clerkInvite, createClerkInviteErr := invitation.Create(ctx, &invitation.CreateParams{
-			EmailAddress:  invite.Email,
-			RedirectURL:   &inviteAcceptanceURL,
-			ExpiresInDays: &expiresInDays,
-		})
-		if createClerkInviteErr != nil {
-			api.Logger.ErrorContext(ctx, "Error creating Clerk invite", "error", createClerkInviteErr)
-			return createClerkInviteErr
-		}
+	// Check if the invitee already has an Irmin account
+	existingUser, userLookupErr := api.DB.GetUserByEmail(invite.Email)
+	if userLookupErr != nil {
+		api.Logger.ErrorContext(ctx, "Error looking up invitee by email on resend, treating as new user",
+			"email", invite.Email, "error", userLookupErr)
+	}
+	originalInviter := &invite.InvitedBy
+	notificationParams := lib.InviteNotificationParams{
+		Invite:              invite,
+		Workspace:           &invite.Workspace,
+		InvitedBy:           originalInviter,
+		Role:                &invite.Role,
+		InviteAcceptanceURL: inviteAcceptanceURL,
+		Locale:              locale,
+	}
 
-		// Update the invite with the new Clerk ID and expiration date
-		expiresAt := time.Now().Add(time.Duration(api.Env.InviteExpiresInDays) * 24 * time.Hour)
-		invite.ClerkID = clerkInvite.ID
-		invite.ExpiresAt = expiresAt
-		if updateInviteErr := tx.Save(invite).Error; updateInviteErr != nil {
-			api.Logger.ErrorContext(ctx, "Error updating invite", "error", updateInviteErr)
-			return updateInviteErr
-		}
+	if existingUser != nil {
+		// Existing user: send Novu in-app + email
+		api.notifyExistingUser(ctx, notificationParams)
+	} else {
+		// New user: revoke old Clerk invite and create new one
+		api.revokeAndRecreateClerkInvite(ctx, invite, inviteAcceptanceURL, notificationParams)
+	}
 
-		return nil
-	})
-
-	return transactionErr
+	return nil
 }
 
 func (api *APIServices) ResendInvite(c context.Context, locale string, user *db.User, invite *db.Invite) error {
@@ -687,10 +643,10 @@ func (api *APIServices) ResendInvite(c context.Context, locale string, user *db.
 		return ErrInviteAlreadyAcceptedOrDeclined
 	}
 
-	// Use database transaction to ensure atomicity
-	transactionErr := api.resendInviteInTransaction(c, invite, locale)
+	// Resend the invite via Clerk with fallback
+	transactionErr := api.resendInviteWithNotification(c, invite, locale)
 	if transactionErr != nil {
-		api.Logger.ErrorContext(c, "Transaction failed for invite resend", "error", transactionErr)
+		api.Logger.ErrorContext(c, "Failed to resend invite", "error", transactionErr)
 		return transactionErr
 	}
 
@@ -784,6 +740,15 @@ func (api *APIServices) DeclineInvite(c context.Context, user *db.User, invite *
 		return updateInviteErr
 	}
 
+	// Revoke the Clerk invite if it exists
+	if invite.ClerkID != "" {
+		clerk.SetKey(api.Env.ClerkSecretKey)
+		if _, revokeErr := invitation.Revoke(c, invite.ClerkID); revokeErr != nil {
+			api.Logger.WarnContext(c, "Failed to revoke Clerk invite on decline",
+				"clerk_id", invite.ClerkID, "error", revokeErr)
+		}
+	}
+
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeDelete,
@@ -793,4 +758,123 @@ func (api *APIServices) DeclineInvite(c context.Context, user *db.User, invite *
 	})
 
 	return nil
+}
+
+// notifyExistingUser sends Novu notifications (in-app + email) for an existing user invite.
+// The Novu workflow handles both channels from a single trigger.
+func (api *APIServices) notifyExistingUser(
+	ctx context.Context,
+	params lib.InviteNotificationParams,
+) *lib.InviteNotificationResult {
+	novuResult, err := lib.SendNovuInviteNotification(
+		ctx, api.DB, api.SQIDManager, api.Env, api.Logger, params,
+	)
+	if err != nil {
+		api.Logger.WarnContext(ctx, "Novu notification failed",
+			"email", params.Invite.Email, "error", err)
+	} else if novuResult != nil && novuResult.Success {
+		api.Logger.InfoContext(ctx, "Novu notification sent",
+			"email", params.Invite.Email, "notification_id", novuResult.NotificationID)
+	}
+	return novuResult
+}
+
+// createClerkInviteForNewUser creates a Clerk invitation for a new user who doesn't have an account yet.
+// Returns the Clerk invite ID and whether the invitation was created successfully.
+func (api *APIServices) createClerkInviteForNewUser(
+	ctx context.Context,
+	email string,
+	redirectURL string,
+) (string, bool) {
+	clerk.SetKey(api.Env.ClerkSecretKey)
+	expiresInDays := int64(api.Env.InviteExpiresInDays)
+	clerkInvite, err := invitation.Create(ctx, &invitation.CreateParams{
+		EmailAddress:  email,
+		RedirectURL:   &redirectURL,
+		ExpiresInDays: &expiresInDays,
+	})
+	if err != nil {
+		api.Logger.WarnContext(ctx, "Clerk invitation creation failed",
+			"error", err, "email", email)
+		return "", false
+	}
+	api.Logger.InfoContext(ctx, "Clerk invitation created for new user",
+		"email", email, "clerk_id", clerkInvite.ID)
+	return clerkInvite.ID, true
+}
+
+// sendNewUserInvite attempts to create a Clerk invitation for a new user.
+// If Clerk fails, sends an email via Novu as fallback by creating a temporary subscriber.
+// Returns the notification result (if any) and whether a Clerk invite was created.
+func (api *APIServices) sendNewUserInvite(
+	ctx context.Context,
+	invite *db.Invite,
+	inviteAcceptanceURL string,
+	params lib.InviteNotificationParams,
+) (*lib.InviteNotificationResult, bool) {
+	clerkID, created := api.createClerkInviteForNewUser(ctx, params.Invite.Email, inviteAcceptanceURL)
+	if created {
+		invite.ClerkID = clerkID
+		if saveErr := api.DB.Save(invite).Error; saveErr != nil {
+			api.Logger.ErrorContext(ctx, "Error updating invite with Clerk ID", "error", saveErr)
+			return nil, false
+		}
+		return nil, true
+	}
+
+	// Clerk failed — send email via Novu (creates temporary subscriber)
+	novuResult, novuErr := lib.SendNovuEmailOnlyNotification(ctx, api.Env, api.Logger, params)
+	if novuErr != nil {
+		api.Logger.WarnContext(ctx, "Novu email fallback failed",
+			"email", params.Invite.Email, "error", novuErr)
+	}
+	return novuResult, false
+}
+
+// revokeAndRecreateClerkInvite revokes an existing Clerk invite and creates a new one for resend.
+// Falls back to Novu email if Clerk creation fails.
+func (api *APIServices) revokeAndRecreateClerkInvite(
+	ctx context.Context,
+	invite *db.Invite,
+	inviteAcceptanceURL string,
+	params lib.InviteNotificationParams,
+) {
+	clerk.SetKey(api.Env.ClerkSecretKey)
+
+	// Revoke the existing Clerk invite if present
+	if invite.ClerkID != "" {
+		if _, revokeErr := invitation.Revoke(ctx, invite.ClerkID); revokeErr != nil {
+			api.Logger.WarnContext(ctx, "Error revoking existing invite in Clerk",
+				"error", revokeErr, "clerk_id", invite.ClerkID)
+			// Revocation failed — clear the ID anyway so we can attempt a new invite.
+			// The old Clerk invite may have expired or been invalidated on their side.
+		}
+		invite.ClerkID = ""
+	}
+
+	clerkID, created := api.createClerkInviteForNewUser(ctx, invite.Email, inviteAcceptanceURL)
+	if created {
+		invite.ClerkID = clerkID
+	}
+
+	// Persist the updated ClerkID (cleared after revocation, or set to the new one)
+	if saveErr := api.DB.Save(invite).Error; saveErr != nil {
+		api.Logger.ErrorContext(ctx, "Error saving Clerk ID after resend",
+			"error", saveErr, "email", invite.Email)
+	}
+
+	if created {
+		return
+	}
+
+	// Clerk failed — send email via Novu (creates temporary subscriber)
+	novuResult, novuErr := lib.SendNovuEmailOnlyNotification(ctx, api.Env, api.Logger, params)
+	if novuErr != nil {
+		api.Logger.WarnContext(ctx, "Novu email fallback failed on resend",
+			"email", invite.Email, "error", novuErr)
+	}
+	if novuResult != nil {
+		api.Logger.InfoContext(ctx, "Novu email fallback attempted",
+			"email", invite.Email, "method", novuResult.Method, "success", novuResult.Success)
+	}
 }

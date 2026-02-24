@@ -978,8 +978,8 @@ func (d *Database) GetWorkspaceBySlug(slug string) (*Workspace, error)
 
 func (d *Database) GetWorkspaceSummaries(userID uint) ([]WorkspaceSummaryRow, error)
     GetWorkspaceSummaries retrieves lightweight workspace summaries with
-    resource counts for a given user. Uses subquery counts instead of preloading
-    full objects.
+    resource counts for a given user. Uses lateral joins for efficient
+    per-workspace counting.
 
 func (d *Database) GetWorkspaceUser(workspaceID, userID uint) (*WorkspaceUser, error)
     GetWorkspaceUser retrieves a workspace user record from the database by the

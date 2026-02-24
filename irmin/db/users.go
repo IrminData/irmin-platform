@@ -107,7 +107,7 @@ func (d *Database) IsUserInWorkspace(userID, workspaceID uint) (bool, error) {
 func (d *Database) IsUserInWorkspaceByEmail(email string, workspaceID uint) (bool, error) {
 	// Query the User table for a record that matches the provided email.
 	var user User
-	if err := d.Where(&User{Email: email}).Preload("Workspaces").Preload("Workspaces.Role").First(&user).Error; err != nil {
+	if err := d.Where(&User{Email: email}).Preload("Workspaces").First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// Return false if the user is not found.
 			return false, nil

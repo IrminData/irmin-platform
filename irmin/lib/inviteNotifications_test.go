@@ -7,7 +7,6 @@ import (
 	"irmin-api/utils"
 	"log/slog"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -235,54 +234,17 @@ func createInviteNotificationParams(
 func TestInviteNotificationResult_Struct(t *testing.T) {
 	result := &lib.InviteNotificationResult{
 		Success:        true,
-		Method:         "resend",
-		Message:        "Email sent successfully",
+		Method:         "novu",
+		Message:        "Notification sent via Novu",
 		NotificationID: "test-notification-123",
 		Error:          "",
 	}
 
 	assert.Equal(t, result.Success, true)
-	assert.Equal(t, result.Method, "resend")
-	assert.Equal(t, result.Message, "Email sent successfully")
+	assert.Equal(t, result.Method, "novu")
+	assert.Equal(t, result.Message, "Notification sent via Novu")
 	assert.Equal(t, result.NotificationID, "test-notification-123")
 	assert.Equal(t, result.Error, "")
-}
-
-func TestSendResendInviteNotification_TemplateLoading(t *testing.T) {
-	ts := lib.GetTestSuite()
-	if ts == nil {
-		t.Skip("Test suite not initialized")
-	}
-
-	ctx := t.Context()
-	inviteeEmail := "test-invitee@example.com"
-	params, cleanup := createInviteNotificationParams(t, ts, inviteeEmail)
-	defer cleanupAllTestData(t, ts, cleanup)
-
-	// Test with empty API key to avoid actually sending emails
-	// but verify template loading works
-	envWithoutKey := &utils.CoreAPIEnv{
-		ResendAPIKey: "", // Empty key
-	}
-
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelError,
-	}))
-
-	result, err := lib.SendResendInviteNotification(ctx, envWithoutKey, logger, params)
-
-	// Should fail because of missing API key but template loading should work
-	assert.NotEqual(t, result, nil)
-	assert.Equal(t, result.Success, false)
-	assert.Equal(t, result.Method, "resend")
-
-	// If it's failing on template loading, that would be a different error
-	// If it's failing on API call, the error should be network-related
-	if err != nil && result.Error != "" {
-		// Either template error or network error is acceptable
-		// We can't easily distinguish without more complex test setup
-		t.Logf("Expected failure with empty API key: %s", result.Error)
-	}
 }
 
 func TestSendNovuInviteNotification_UserNotFound(t *testing.T) {
@@ -356,78 +318,6 @@ func TestSendNovuInviteNotification_ExistingUser(t *testing.T) {
 	// but it should not be the "user not found" error
 	if !result.Success {
 		assert.NotEqual(t, result.Message, "User not found in system for Novu notification")
-	}
-}
-
-func TestSendFallbackInviteNotification_NoAPIKeys(t *testing.T) {
-	ts := lib.GetTestSuite()
-	if ts == nil {
-		t.Skip("Test suite not initialized")
-	}
-
-	ctx := t.Context()
-	inviteeEmail := "test-fallback@example.com"
-	params, cleanup := createInviteNotificationParams(t, ts, inviteeEmail)
-	defer cleanupAllTestData(t, ts, cleanup)
-
-	// Create environment with no API keys
-	envWithoutKeys := &utils.CoreAPIEnv{
-		NovuSecretKey: "",
-		ResendAPIKey:  "",
-	}
-
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelError,
-	}))
-
-	// Create SQID manager
-	sqidManager := &irminsqids.SQIDManager{}
-
-	result := lib.SendFallbackInviteNotification(ctx, ts.DB, sqidManager, envWithoutKeys, logger, params)
-
-	assert.NotEqual(t, result, nil)
-	assert.Equal(t, result.Success, false)
-	assert.Equal(t, result.Method, "none")
-	assert.Equal(t, result.Message, "All notification methods failed - invitation created in database only")
-}
-
-func TestSendFallbackInviteNotification_ResendOnly(t *testing.T) {
-	ts := lib.GetTestSuite()
-	if ts == nil {
-		t.Skip("Test suite not initialized")
-	}
-
-	ctx := t.Context()
-	inviteeEmail := "test-resend-only@example.com"
-	params, cleanup := createInviteNotificationParams(t, ts, inviteeEmail)
-	defer cleanupAllTestData(t, ts, cleanup)
-
-	// Create environment with only Resend key (use a fake key to avoid sending real emails)
-	envWithResendOnly := &utils.CoreAPIEnv{
-		NovuSecretKey: "",
-		ResendAPIKey:  "re_fake_key_for_testing",
-	}
-
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelError,
-	}))
-
-	// Create SQID manager
-	sqidManager := &irminsqids.SQIDManager{}
-
-	result := lib.SendFallbackInviteNotification(ctx, ts.DB, sqidManager, envWithResendOnly, logger, params)
-
-	assert.NotEqual(t, result, nil)
-	// Should attempt Resend since Novu is not available
-	// Will likely fail with fake API key, but method should be "resend" if it tried
-	switch result.Method {
-	case "resend":
-		assert.Equal(t, result.Method, "resend")
-		// Likely failed due to fake API key
-		assert.Equal(t, result.Success, false)
-	case "none":
-		// If templates failed to load or other pre-API error occurred
-		assert.Equal(t, result.Success, false)
 	}
 }
 
@@ -528,7 +418,6 @@ func TestSendNovuInviteNotification_NoSecretKey(t *testing.T) {
 	// Create environment without Novu secret key
 	envWithoutNovuKey := &utils.CoreAPIEnv{
 		NovuSecretKey: "", // Empty key
-		ResendAPIKey:  "test-resend-key",
 	}
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -546,40 +435,6 @@ func TestSendNovuInviteNotification_NoSecretKey(t *testing.T) {
 	assert.Equal(t, result.Method, "novu")
 	assert.Equal(t, result.Message, "Novu service not configured")
 	assert.Equal(t, result.Error, "missing Novu secret key")
-}
-
-func TestSendNovuInviteNotification_UserWithoutNovuID(t *testing.T) {
-	ts := lib.GetTestSuite()
-	if ts == nil {
-		t.Skip("Test suite not initialized")
-	}
-
-	ctx := t.Context()
-
-	// Create a test user WITHOUT Novu subscriber ID
-	testEmail := "test-no-novu-id@example.com"
-	testUser := createTestUser(t, ts, testEmail) // This creates user without NovuSubscriberID
-
-	// Create self-contained test data but replace the invite with one for our specific user
-	params, cleanup := createSelfContainedInviteNotificationParams(t, ts, testEmail)
-	cleanup.Users = append(cleanup.Users, testUser) // Add to cleanup
-	defer cleanupAllTestData(t, ts, cleanup)
-
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelError,
-	}))
-
-	sqidManager := &irminsqids.SQIDManager{}
-
-	result, err := lib.SendNovuInviteNotification(ctx, ts.DB, sqidManager, ts.Env, logger, params)
-
-	// Should handle gracefully when user has no Novu subscriber ID
-	assert.Equal(t, err, nil) // No error returned as this is expected
-	assert.NotEqual(t, result, nil)
-	assert.Equal(t, result.Success, false)
-	assert.Equal(t, result.Method, "novu")
-	assert.Equal(t, result.Message, "User not subscribed to notifications")
-	assert.Equal(t, result.Error, "user has no Novu subscriber ID")
 }
 
 func TestSendNovuInviteNotification_UserWithNovuID(t *testing.T) {
@@ -628,140 +483,37 @@ func TestSendNovuInviteNotification_UserWithNovuID(t *testing.T) {
 	} else {
 		// If successful, should not have an error
 		assert.Equal(t, err, nil)
-		// If successful, check that notification ID uses the Novu subscriber ID
-		assert.Equal(t, strings.Contains(result.NotificationID, testUser.NovuSubscriberID), true)
+		// If successful, notification ID should be a real Novu transaction ID (non-empty)
+		assert.NotEqual(t, result.NotificationID, "")
 	}
 }
 
-func TestSendResendInviteNotification_NoAPIKey(t *testing.T) {
-	ts := lib.GetTestSuite()
-	if ts == nil {
-		t.Skip("Test suite not initialized")
-	}
-
+func TestSendNovuEmailOnlyNotification_NoSecretKey(t *testing.T) {
 	ctx := t.Context()
 
-	// Create test data
-	params, cleanup := createSelfContainedInviteNotificationParams(t, ts, "test-no-resend-key@example.com")
-	defer cleanupAllTestData(t, ts, cleanup)
-
-	// Create environment without Resend API key
-	envWithoutResendKey := &utils.CoreAPIEnv{
-		ResendAPIKey: "", // Empty key
-	}
-
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelError,
-	}))
-
-	result, err := lib.SendResendInviteNotification(ctx, envWithoutResendKey, logger, params)
-
-	// Should return error for missing API key
-	assert.NotEqual(t, err, nil)
-	assert.NotEqual(t, result, nil)
-	assert.Equal(t, result.Success, false)
-	assert.Equal(t, result.Method, "resend")
-	assert.Equal(t, result.Message, "Email service not configured")
-	assert.Equal(t, result.Error, "missing Resend API key")
-}
-
-func TestSendResendInviteNotification_InvalidParameters(t *testing.T) {
-	ts := lib.GetTestSuite()
-	if ts == nil {
-		t.Skip("Test suite not initialized")
-	}
-
-	ctx := t.Context()
-
-	env := &utils.CoreAPIEnv{
-		ResendAPIKey: "test-key",
-	}
-
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelError,
-	}))
-
-	// Test with nil invite
-	invalidParams := lib.InviteNotificationParams{
-		Invite:              nil, // Missing invite
+	params := lib.InviteNotificationParams{
+		Invite:              &db.Invite{Email: "test@example.com", ExpiresAt: time.Now().Add(7 * 24 * time.Hour)},
 		Workspace:           &db.Workspace{Name: "Test"},
-		InvitedBy:           &db.User{Email: "test@example.com"},
+		InvitedBy:           &db.User{Email: "inviter@example.com", FirstName: "Test", LastName: "User"},
 		Role:                &db.Role{Role: "Member"},
-		InviteAcceptanceURL: "https://example.com",
+		InviteAcceptanceURL: "https://example.com/invite/test",
 		Locale:              "en",
 	}
 
-	result, err := lib.SendResendInviteNotification(ctx, env, logger, invalidParams)
-
-	assert.NotEqual(t, err, nil)
-	assert.NotEqual(t, result, nil)
-	assert.Equal(t, result.Success, false)
-	assert.Equal(t, result.Method, "resend")
-	assert.Equal(t, result.Message, "Invalid notification parameters")
-	assert.Equal(t, result.Error, "missing required parameters")
-}
-
-func TestSendFallbackInviteNotification_InvalidParameters(t *testing.T) {
-	ts := lib.GetTestSuite()
-	if ts == nil {
-		t.Skip("Test suite not initialized")
-	}
-
-	ctx := t.Context()
-
-	env := &utils.CoreAPIEnv{
-		NovuSecretKey: "test-novu-key",
-		ResendAPIKey:  "test-resend-key",
+	envWithoutKey := &utils.CoreAPIEnv{
+		NovuSecretKey: "",
 	}
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelError,
 	}))
 
-	sqidManager := &irminsqids.SQIDManager{}
+	result, err := lib.SendNovuEmailOnlyNotification(ctx, envWithoutKey, logger, params)
 
-	// Test with nil invite
-	invalidParams := lib.InviteNotificationParams{
-		Invite: nil, // Missing invite
-	}
-
-	result := lib.SendFallbackInviteNotification(ctx, ts.DB, sqidManager, env, logger, invalidParams)
-
+	assert.NotEqual(t, err, nil)
 	assert.NotEqual(t, result, nil)
 	assert.Equal(t, result.Success, false)
-	assert.Equal(t, result.Method, "none")
-	assert.Equal(t, result.Message, "Invalid notification parameters")
-	assert.Equal(t, result.Error, "missing invite parameter")
-}
-
-func TestSendFallbackInviteNotification_DetailedErrorLogging(t *testing.T) {
-	ts := lib.GetTestSuite()
-	if ts == nil {
-		t.Skip("Test suite not initialized")
-	}
-
-	ctx := t.Context()
-	inviteeEmail := "test-detailed-errors@example.com"
-	params, cleanup := createInviteNotificationParams(t, ts, inviteeEmail)
-	defer cleanupAllTestData(t, ts, cleanup)
-
-	// Create environment with invalid keys to test error paths
-	envWithInvalidKeys := &utils.CoreAPIEnv{
-		NovuSecretKey: "invalid-novu-key",
-		ResendAPIKey:  "invalid-resend-key",
-	}
-
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug, // Enable debug logging to see error details
-	}))
-
-	sqidManager := &irminsqids.SQIDManager{}
-
-	result := lib.SendFallbackInviteNotification(ctx, ts.DB, sqidManager, envWithInvalidKeys, logger, params)
-
-	assert.NotEqual(t, result, nil)
-	assert.Equal(t, result.Success, false)
-	assert.Equal(t, result.Method, "none")
-	assert.Equal(t, result.Message, "All notification methods failed - invitation created in database only")
-	assert.Equal(t, result.Error, "no notification services available or all failed")
+	assert.Equal(t, result.Method, "novu")
+	assert.Equal(t, result.Message, "Novu service not configured")
+	assert.Equal(t, result.Error, "missing Novu secret key")
 }

@@ -387,6 +387,9 @@ func main() {
 		cacheStorage,
 	)
 
+	// Ensure Novu workflows exist (non-blocking, logs warnings on failure)
+	lib.EnsureNovuWorkflows(env, slog.Default())
+
 	// Register routes
 	routes.RegisterAPIRoutes(
 		app,

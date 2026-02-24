@@ -11,6 +11,10 @@ const (
 	// ConnectionSchemaCacheMaxAge is the maximum age of a connection schema cache entry.
 	ConnectionSchemaCacheMaxAge = 12 * time.Hour
 )
+const NovuInviteWorkflowID = "workspace-invite"
+    NovuInviteWorkflowID is the workflow identifier for workspace invitation
+    notifications.
+
 const (
 	// ObjectSchemaCacheMaxAge is the maximum age of an object schema cache entry.
 	ObjectSchemaCacheMaxAge = 30 * time.Minute
@@ -124,6 +128,13 @@ func EnsureNovuSubscriber(
 ) (*components.SubscriberResponseDto, error)
     EnsureNovuSubscriber ensures that the user is a subscriber in Novu It
     creates the subscriber if it doesn't exist, or updates it if it does.
+
+func EnsureNovuWorkflows(env *utils.CoreAPIEnv, logger *slog.Logger)
+    EnsureNovuWorkflows checks that all required Novu workflows exist and
+    creates any that are missing. It also updates existing workflows if their
+    step count doesn't match the expected definition. This should be called once
+    at server startup. It logs warnings on failure but does not return errors,
+    since a missing workflow should not prevent the server from starting.
 
 func ExtractPointerTargetExtension(path string) string
     ExtractPointerTargetExtension extracts the file extension from a pointer
@@ -294,7 +305,7 @@ type InviteNotificationParams struct {
 
 type InviteNotificationResult struct {
 	Success        bool   `json:"success"`
-	Method         string `json:"method"` // "clerk", "novu", "resend", "none"
+	Method         string `json:"method"` // "clerk", "novu", "none"
 	Message        string `json:"message"`
 	NotificationID string `json:"notification_id,omitempty"`
 	Error          string `json:"error,omitempty"`
@@ -302,34 +313,43 @@ type InviteNotificationResult struct {
     InviteNotificationResult represents the result of sending an invitation
     notification.
 
-func SendFallbackInviteNotification(
+func SendNovuEmailOnlyNotification(
+	ctx context.Context,
+	env *utils.CoreAPIEnv,
+	logger *slog.Logger,
+	params InviteNotificationParams,
+) (*InviteNotificationResult, error)
+    SendNovuEmailOnlyNotification sends an invite notification via Novu for
+    a user who doesn't have an Irmin account yet. Creates a temporary Novu
+    subscriber with just their email so the email step of the workflow delivers
+    the invite. The in-app step will have no effect since the user has no
+    frontend session.
+
+func SendNovuInviteNotification(
 	ctx context.Context,
 	database *db.Database,
 	sqidManager *irminsqids.SQIDManager,
 	env *utils.CoreAPIEnv,
 	logger *slog.Logger,
 	params InviteNotificationParams,
-) *InviteNotificationResult
-    SendFallbackInviteNotification orchestrates the fallback notification logic.
-
-func SendNovuInviteNotification(
-	ctx context.Context,
-	database *db.Database,
-	_ *irminsqids.SQIDManager,
-	env *utils.CoreAPIEnv,
-	logger *slog.Logger,
-	params InviteNotificationParams,
 ) (*InviteNotificationResult, error)
-    SendNovuInviteNotification sends an invitation notification via Novu.
+    SendNovuInviteNotification sends an invitation notification via Novu (in-app
+    + email). The Novu workflow handles both channels from a single trigger.
 
-func SendResendInviteNotification(
-	ctx context.Context,
-	env *utils.CoreAPIEnv,
-	logger *slog.Logger,
-	params InviteNotificationParams,
-) (*InviteNotificationResult, error)
-    SendResendInviteNotification sends an invitation notification via Resend
-    email.
+type NovuWorkflowDefinition struct {
+	WorkflowID  string
+	Name        string
+	Description string
+	Tags        []string
+	Steps       []components.Steps
+	// UpdateSteps are used when updating an existing workflow (different type from create steps).
+	UpdateSteps []components.UpdateWorkflowDtoSteps
+}
+    NovuWorkflowDefinition defines a Novu workflow to be ensured at startup.
+
+func GetNovuWorkflowDefinitions() []NovuWorkflowDefinition
+    GetNovuWorkflowDefinitions returns all Novu workflow definitions that should
+    exist. Add new workflows here as the notification system grows.
 
 type SchemaCacheManager struct {
 	// Has unexported fields.

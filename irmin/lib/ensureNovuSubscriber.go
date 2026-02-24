@@ -2,6 +2,7 @@ package lib
 
 import (
 	"context"
+	"errors"
 	"irmin-api/db"
 	"irmin-api/utils"
 
@@ -20,6 +21,9 @@ func EnsureNovuSubscriber(
 	user *db.User,
 ) (*components.SubscriberResponseDto, error) {
 	novuSecretKey := env.NovuSecretKey
+	if novuSecretKey == "" {
+		return nil, errors.New("novu secret key not configured")
+	}
 
 	// Create a sqid for the user
 	userSqid, err := sqidManager.Encode("users", uint64(user.ID))

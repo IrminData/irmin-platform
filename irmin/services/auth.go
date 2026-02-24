@@ -274,8 +274,8 @@ func (api *APIServices) SyncUserWithClerkAndNovu(
 		subscriber, novuErr := lib.EnsureNovuSubscriber(novuCtx, api.SQIDManager, api.Env, locale, irminUser)
 		if novuErr != nil {
 			api.Logger.ErrorContext(c, "Error ensuring Novu subscriber", "error", novuErr)
-		} else if subscriber != nil && subscriber.ID != nil {
-			irminUser.NovuSubscriberID = *subscriber.ID
+		} else if subscriber != nil && subscriber.SubscriberID != "" {
+			irminUser.NovuSubscriberID = subscriber.SubscriberID
 		}
 	}
 
@@ -467,8 +467,8 @@ func (api *APIServices) ensureNovuSubscriberAsync(ctx context.Context, user *db.
 	}
 
 	// Update user with Novu subscriber ID if successful
-	if subscriber != nil && subscriber.ID != nil && user.NovuSubscriberID == "" {
-		user.NovuSubscriberID = *subscriber.ID
+	if subscriber != nil && subscriber.SubscriberID != "" && user.NovuSubscriberID == "" {
+		user.NovuSubscriberID = subscriber.SubscriberID
 		if saveErr := api.DB.Save(&user).Error; saveErr != nil {
 			api.Logger.ErrorContext(novuCtx, "Error saving Novu subscriber ID", "error", saveErr, "user_id", user.ID)
 		}

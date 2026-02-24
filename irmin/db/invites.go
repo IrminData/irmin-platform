@@ -26,6 +26,7 @@ func (d *Database) GetActiveInvitesByWorkspace(workspaceID uint) ([]Invite, erro
 	var invites []Invite
 	result := d.Preload("InvitedBy").
 		Preload("Workspace").
+		Preload("Workspace.Owner").
 		Preload("Role").
 		Where("workspace_id = ?", workspaceID).
 		Where("accepted_at IS NULL").
@@ -43,6 +44,7 @@ func (d *Database) GetInvitesByEmail(email string) ([]Invite, error) {
 	var invites []Invite
 	result := d.Preload("InvitedBy").
 		Preload("Workspace").
+		Preload("Workspace.Owner").
 		Preload("Role").
 		Where("email = ?", email).
 		Where("accepted_at IS NULL").
@@ -58,7 +60,7 @@ func (d *Database) GetInvitesByEmail(email string) ([]Invite, error) {
 
 func (d *Database) GetInviteByID(id uint) (*Invite, error) {
 	var invite Invite
-	result := d.Preload("InvitedBy").Preload("Workspace").Preload("Role").First(&invite, id)
+	result := d.Preload("InvitedBy").Preload("Workspace").Preload("Workspace.Owner").Preload("Role").First(&invite, id)
 	if result.Error != nil {
 		return nil, result.Error
 	}

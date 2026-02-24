@@ -256,7 +256,6 @@ type CoreAPIEnv struct {
 	OrchestratorEnabled          bool   // Flag to enable the orchestrator
 	SqidAlphabet                 string // Alphabet to use for SQIDs
 	DatabaseConnectionString     string // Postgres DB connection string
-	ResendAPIKey                 string // Resend API Key for emails
 	ConsoleURL                   string // URL of the Irmin Console
 	InviteExpiresInDays          int    // Number of days before an invite expires
 	ClerkPublicKey               string // Clerk Public API Key
@@ -294,55 +293,6 @@ func LoadEnv() (*CoreAPIEnv, error)
     LoadEnv loads environment variables from the .env file in the project root,
     sets default values for required system variables if not present, and
     returns a CoreAPIEnv struct with the loaded environment variables.
-
-type EmailTemplate struct {
-	HTMLTemplate *template.Template
-	TextTemplate *template.Template
-	Name         string
-}
-    EmailTemplate represents a loaded email template with both HTML and text
-    versions.
-
-func (et *EmailTemplate) RenderHTML(data any) (string, error)
-    RenderHTML renders the HTML version of the template with the provided data.
-
-func (et *EmailTemplate) RenderText(data any) (string, error)
-    RenderText renders the text version of the template with the provided data.
-
-type EmailTemplateData struct {
-	WorkspaceName       string
-	InvitedByName       string
-	InvitedByEmail      string
-	RoleName            string
-	InviteAcceptanceURL string
-	InviteExpiresAt     string
-}
-    EmailTemplateData represents the data structure for email templates.
-
-type EmailTemplateManager struct {
-	// Has unexported fields.
-}
-    EmailTemplateManager handles loading and rendering of email templates.
-
-func NewEmailTemplateManager(templatesPath string) *EmailTemplateManager
-    NewEmailTemplateManager creates a new email template manager.
-
-func (etm *EmailTemplateManager) ClearCache()
-    ClearCache clears the template cache, forcing templates to be reloaded on
-    next access.
-
-func (etm *EmailTemplateManager) GetAvailableTemplates() ([]string, error)
-    GetAvailableTemplates returns a list of available email templates.
-
-func (etm *EmailTemplateManager) GetLoadedTemplates() []string
-    GetLoadedTemplates returns the names of currently loaded templates.
-
-func (etm *EmailTemplateManager) LoadTemplate(templateName string) (*EmailTemplate, error)
-    LoadTemplate loads an email template by name from the templates directory.
-
-func (etm *EmailTemplateManager) PreloadAllTemplates() error
-    PreloadAllTemplates loads all available templates into memory for faster
-    access.
 
 type FilePayload struct {
 	// FileName is the name of the file as it should appear in the form.

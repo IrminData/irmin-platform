@@ -78,6 +78,10 @@ func (d *Database) CreateSearchIndexes() error {
 		"CREATE INDEX IF NOT EXISTS idx_stored_queries_workspace_active ON stored_queries (workspace_id, created_at DESC) WHERE deleted_at IS NULL",
 		"CREATE INDEX IF NOT EXISTS idx_invites_workspace_active ON invites (workspace_id, created_at DESC) WHERE deleted_at IS NULL",
 		"CREATE INDEX IF NOT EXISTS idx_repository_objects_repo_active ON repository_objects (repository_id, created_at DESC) WHERE deleted_at IS NULL",
+
+		// Partial indexes for workspace summary COUNT queries (covering index for count-by-workspace)
+		"CREATE INDEX IF NOT EXISTS idx_workspace_users_workspace_active ON workspace_users (workspace_id) WHERE deleted_at IS NULL",
+		"CREATE INDEX IF NOT EXISTS idx_workspace_users_user_active ON workspace_users (user_id, workspace_id) WHERE deleted_at IS NULL",
 	}
 
 	for _, indexSQL := range indexes {
@@ -147,6 +151,10 @@ func (d *Database) DropSearchIndexes() error {
 		"DROP INDEX IF EXISTS idx_stored_queries_workspace_active",
 		"DROP INDEX IF EXISTS idx_invites_workspace_active",
 		"DROP INDEX IF EXISTS idx_repository_objects_repo_active",
+
+		// Workspace summary count indexes
+		"DROP INDEX IF EXISTS idx_workspace_users_workspace_active",
+		"DROP INDEX IF EXISTS idx_workspace_users_user_active",
 	}
 
 	for _, indexSQL := range indexes {

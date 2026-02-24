@@ -119,19 +119,14 @@ func GetTranslationKeyForError(err error) string {
 	case errors.Is(err, ErrAccessDenied):
 		return "access_denied"
 	case errors.Is(err, ErrContentTooLarge):
-		// Convert "content too large to display" to "content_too_large_to_display"
-		// but check if a simpler key exists first
-		return strings.ReplaceAll(strings.ToLower(err.Error()), " ", "_")
+		return strings.ToLower(err.Error())
 	case errors.Is(err, gorm.ErrRecordNotFound):
 		return "not_found"
 	}
 
-	// For other errors, convert the error message to a translation key format
-	// by replacing spaces with underscores and converting to lowercase
-	errorMsg := err.Error()
-	translationKey := strings.ReplaceAll(strings.ToLower(errorMsg), " ", "_")
-
-	return translationKey
+	// Use the error message directly as the translation key.
+	// Locale JSON files use space-separated keys (e.g. "user already in the workspace").
+	return strings.ToLower(err.Error())
 }
 
 // ErrorHandler provides common error handling functionality for controllers and middlewares.
@@ -184,10 +179,7 @@ func (eh *ErrorHandler) HandleServiceError(
 	// Return response with error message
 	return utils.WriteResponse(c, statusCode, irminmodels.IrminAPIResponse{
 		Message: translatedMessage,
-		Errors: []string{
-			translatedMessage,               // Specific error (if safe) or generic error_occurred
-			eh.lm.T(dict, "error_occurred"), // Fallback
-		},
+		Errors:  []string{translatedMessage},
 	})
 }
 

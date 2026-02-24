@@ -28,6 +28,12 @@ func FormatInviteResponse(invite *db.Invite, sqidManager *irminsqids.SQIDManager
 		return nil, fmt.Errorf("error encoding workspace sqid: %w", err)
 	}
 
+	// Get the sqid of the workspace owner
+	ownerSqid, err := sqidManager.Encode("users", uint64(invite.Workspace.OwnerID))
+	if err != nil {
+		return nil, fmt.Errorf("error encoding workspace owner sqid: %w", err)
+	}
+
 	// Format the role
 	formattedRole, formatRoleErr := FormatRoleResponse(&invite.Role, sqidManager)
 	if formatRoleErr != nil {
@@ -64,6 +70,15 @@ func FormatInviteResponse(invite *db.Invite, sqidManager *irminsqids.SQIDManager
 			Name:        invite.Workspace.Name,
 			Slug:        invite.Workspace.Slug,
 			Description: invite.Workspace.Description,
+			Owner: irminmodels.User{
+				ID:             ownerSqid,
+				FirstName:      invite.Workspace.Owner.FirstName,
+				LastName:       invite.Workspace.Owner.LastName,
+				Email:          invite.Workspace.Owner.Email,
+				Phone:          invite.Workspace.Owner.Phone,
+				Company:        invite.Workspace.Owner.Company,
+				ProfilePicture: invite.Workspace.Owner.ProfilePicture,
+			},
 		},
 	}
 

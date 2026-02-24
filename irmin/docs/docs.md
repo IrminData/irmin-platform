@@ -4851,7 +4851,7 @@ GetWorkspaceBySlug retrieves a workspace by its slug.
 func (d *Database) GetWorkspaceSummaries(userID uint) ([]WorkspaceSummaryRow, error)
 ```
 
-GetWorkspaceSummaries retrieves lightweight workspace summaries with resource counts for a given user. Uses subquery counts instead of preloading full objects.
+GetWorkspaceSummaries retrieves lightweight workspace summaries with resource counts for a given user. Uses lateral joins for efficient per\-workspace counting.
 
 <a name="Database.GetWorkspaceUser"></a>
 ### func \(\*Database\) GetWorkspaceUser
@@ -11060,6 +11060,7 @@ import "irmin-api/lib"
 - [func DownloadFileFromURL\(ctx context.Context, targetURL string, headers map\[string\]string\) \(io.ReadCloser, error\)](<#DownloadFileFromURL>)
 - [func EncodePolicyResourceID\(id uint, resource db.PolicyResource, sqidManager \*irminsqids.SQIDManager\) \(string, error\)](<#EncodePolicyResourceID>)
 - [func EnsureNovuSubscriber\(ctx context.Context, sqidManager \*irminsqids.SQIDManager, env \*utils.CoreAPIEnv, locale string, user \*db.User\) \(\*components.SubscriberResponseDto, error\)](<#EnsureNovuSubscriber>)
+- [func EnsureNovuWorkflows\(env \*utils.CoreAPIEnv, logger \*slog.Logger\)](<#EnsureNovuWorkflows>)
 - [func ExtractPointerTargetExtension\(path string\) string](<#ExtractPointerTargetExtension>)
 - [func GetObject\(ctx context.Context, locale string, d \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, workspace \*db.Workspace, repository \*db.Repository, path, ref string, ignoreCache bool\) \(\*db.RepositoryObject, error\)](<#GetObject>)
 - [func GetPointerDisplayName\(path string\) string](<#GetPointerDisplayName>)
@@ -11081,9 +11082,10 @@ import "irmin-api/lib"
 - [func TeardownTestSuite\(\)](<#TeardownTestSuite>)
 - [type InviteNotificationParams](<#InviteNotificationParams>)
 - [type InviteNotificationResult](<#InviteNotificationResult>)
-  - [func SendFallbackInviteNotification\(ctx context.Context, database \*db.Database, sqidManager \*irminsqids.SQIDManager, env \*utils.CoreAPIEnv, logger \*slog.Logger, params InviteNotificationParams\) \*InviteNotificationResult](<#SendFallbackInviteNotification>)
-  - [func SendNovuInviteNotification\(ctx context.Context, database \*db.Database, \_ \*irminsqids.SQIDManager, env \*utils.CoreAPIEnv, logger \*slog.Logger, params InviteNotificationParams\) \(\*InviteNotificationResult, error\)](<#SendNovuInviteNotification>)
-  - [func SendResendInviteNotification\(ctx context.Context, env \*utils.CoreAPIEnv, logger \*slog.Logger, params InviteNotificationParams\) \(\*InviteNotificationResult, error\)](<#SendResendInviteNotification>)
+  - [func SendNovuEmailOnlyNotification\(ctx context.Context, env \*utils.CoreAPIEnv, logger \*slog.Logger, params InviteNotificationParams\) \(\*InviteNotificationResult, error\)](<#SendNovuEmailOnlyNotification>)
+  - [func SendNovuInviteNotification\(ctx context.Context, database \*db.Database, sqidManager \*irminsqids.SQIDManager, env \*utils.CoreAPIEnv, logger \*slog.Logger, params InviteNotificationParams\) \(\*InviteNotificationResult, error\)](<#SendNovuInviteNotification>)
+- [type NovuWorkflowDefinition](<#NovuWorkflowDefinition>)
+  - [func GetNovuWorkflowDefinitions\(\) \[\]NovuWorkflowDefinition](<#GetNovuWorkflowDefinitions>)
 - [type SchemaCacheManager](<#SchemaCacheManager>)
   - [func NewSchemaCacheManager\(env \*utils.CoreAPIEnv, logger \*slog.Logger, db \*db.Database\) \*SchemaCacheManager](<#NewSchemaCacheManager>)
   - [func \(scm \*SchemaCacheManager\) GetConnectionSchema\(ctx context.Context, connection \*db.Connection, operationMethod, path, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, \[\]connectorsclient.OperationLog, error\)](<#SchemaCacheManager.GetConnectionSchema>)
@@ -11101,6 +11103,12 @@ const (
     // ConnectionSchemaCacheMaxAge is the maximum age of a connection schema cache entry.
     ConnectionSchemaCacheMaxAge = 12 * time.Hour
 )
+```
+
+<a name="NovuInviteWorkflowID"></a>NovuInviteWorkflowID is the workflow identifier for workspace invitation notifications.
+
+```go
+const NovuInviteWorkflowID = "workspace-invite"
 ```
 
 <a name="ObjectSchemaCacheMaxAge"></a>
@@ -11262,6 +11270,15 @@ func EnsureNovuSubscriber(ctx context.Context, sqidManager *irminsqids.SQIDManag
 ```
 
 EnsureNovuSubscriber ensures that the user is a subscriber in Novu It creates the subscriber if it doesn't exist, or updates it if it does.
+
+<a name="EnsureNovuWorkflows"></a>
+## func EnsureNovuWorkflows
+
+```go
+func EnsureNovuWorkflows(env *utils.CoreAPIEnv, logger *slog.Logger)
+```
+
+EnsureNovuWorkflows checks that all required Novu workflows exist and creates any that are missing. It also updates existing workflows if their step count doesn't match the expected definition. This should be called once at server startup. It logs warnings on failure but does not return errors, since a missing workflow should not prevent the server from starting.
 
 <a name="ExtractPointerTargetExtension"></a>
 ## func ExtractPointerTargetExtension
@@ -11481,39 +11498,56 @@ InviteNotificationResult represents the result of sending an invitation notifica
 ```go
 type InviteNotificationResult struct {
     Success        bool   `json:"success"`
-    Method         string `json:"method"` // "clerk", "novu", "resend", "none"
+    Method         string `json:"method"` // "clerk", "novu", "none"
     Message        string `json:"message"`
     NotificationID string `json:"notification_id,omitempty"`
     Error          string `json:"error,omitempty"`
 }
 ```
 
-<a name="SendFallbackInviteNotification"></a>
-### func SendFallbackInviteNotification
+<a name="SendNovuEmailOnlyNotification"></a>
+### func SendNovuEmailOnlyNotification
 
 ```go
-func SendFallbackInviteNotification(ctx context.Context, database *db.Database, sqidManager *irminsqids.SQIDManager, env *utils.CoreAPIEnv, logger *slog.Logger, params InviteNotificationParams) *InviteNotificationResult
+func SendNovuEmailOnlyNotification(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Logger, params InviteNotificationParams) (*InviteNotificationResult, error)
 ```
 
-SendFallbackInviteNotification orchestrates the fallback notification logic.
+SendNovuEmailOnlyNotification sends an invite notification via Novu for a user who doesn't have an Irmin account yet. Creates a temporary Novu subscriber with just their email so the email step of the workflow delivers the invite. The in\-app step will have no effect since the user has no frontend session.
 
 <a name="SendNovuInviteNotification"></a>
 ### func SendNovuInviteNotification
 
 ```go
-func SendNovuInviteNotification(ctx context.Context, database *db.Database, _ *irminsqids.SQIDManager, env *utils.CoreAPIEnv, logger *slog.Logger, params InviteNotificationParams) (*InviteNotificationResult, error)
+func SendNovuInviteNotification(ctx context.Context, database *db.Database, sqidManager *irminsqids.SQIDManager, env *utils.CoreAPIEnv, logger *slog.Logger, params InviteNotificationParams) (*InviteNotificationResult, error)
 ```
 
-SendNovuInviteNotification sends an invitation notification via Novu.
+SendNovuInviteNotification sends an invitation notification via Novu \(in\-app \+ email\). The Novu workflow handles both channels from a single trigger.
 
-<a name="SendResendInviteNotification"></a>
-### func SendResendInviteNotification
+<a name="NovuWorkflowDefinition"></a>
+## type NovuWorkflowDefinition
+
+NovuWorkflowDefinition defines a Novu workflow to be ensured at startup.
 
 ```go
-func SendResendInviteNotification(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Logger, params InviteNotificationParams) (*InviteNotificationResult, error)
+type NovuWorkflowDefinition struct {
+    WorkflowID  string
+    Name        string
+    Description string
+    Tags        []string
+    Steps       []components.Steps
+    // UpdateSteps are used when updating an existing workflow (different type from create steps).
+    UpdateSteps []components.UpdateWorkflowDtoSteps
+}
 ```
 
-SendResendInviteNotification sends an invitation notification via Resend email.
+<a name="GetNovuWorkflowDefinitions"></a>
+### func GetNovuWorkflowDefinitions
+
+```go
+func GetNovuWorkflowDefinitions() []NovuWorkflowDefinition
+```
+
+GetNovuWorkflowDefinitions returns all Novu workflow definitions that should exist. Add new workflows here as the notification system grows.
 
 <a name="SchemaCacheManager"></a>
 ## type SchemaCacheManager
@@ -15786,18 +15820,6 @@ import "irmin-api/templates"
 var SwaggerUIHTML []byte
 ```
 
-<a name="WorkspaceInvitationHTML"></a>
-
-```go
-var WorkspaceInvitationHTML []byte
-```
-
-<a name="WorkspaceInvitationTXT"></a>
-
-```go
-var WorkspaceInvitationTXT []byte
-```
-
 # utils
 
 ```go
@@ -15839,17 +15861,6 @@ import "irmin-api/utils"
 - [type AsyncResult](<#AsyncResult>)
 - [type CoreAPIEnv](<#CoreAPIEnv>)
   - [func LoadEnv\(\) \(\*CoreAPIEnv, error\)](<#LoadEnv>)
-- [type EmailTemplate](<#EmailTemplate>)
-  - [func \(et \*EmailTemplate\) RenderHTML\(data any\) \(string, error\)](<#EmailTemplate.RenderHTML>)
-  - [func \(et \*EmailTemplate\) RenderText\(data any\) \(string, error\)](<#EmailTemplate.RenderText>)
-- [type EmailTemplateData](<#EmailTemplateData>)
-- [type EmailTemplateManager](<#EmailTemplateManager>)
-  - [func NewEmailTemplateManager\(templatesPath string\) \*EmailTemplateManager](<#NewEmailTemplateManager>)
-  - [func \(etm \*EmailTemplateManager\) ClearCache\(\)](<#EmailTemplateManager.ClearCache>)
-  - [func \(etm \*EmailTemplateManager\) GetAvailableTemplates\(\) \(\[\]string, error\)](<#EmailTemplateManager.GetAvailableTemplates>)
-  - [func \(etm \*EmailTemplateManager\) GetLoadedTemplates\(\) \[\]string](<#EmailTemplateManager.GetLoadedTemplates>)
-  - [func \(etm \*EmailTemplateManager\) LoadTemplate\(templateName string\) \(\*EmailTemplate, error\)](<#EmailTemplateManager.LoadTemplate>)
-  - [func \(etm \*EmailTemplateManager\) PreloadAllTemplates\(\) error](<#EmailTemplateManager.PreloadAllTemplates>)
 - [type FilePayload](<#FilePayload>)
 - [type FutureResult](<#FutureResult>)
   - [func Async\[T any\]\(f func\(\) \(T, error\)\) FutureResult\[T\]](<#Async>)
@@ -16264,7 +16275,6 @@ type CoreAPIEnv struct {
     OrchestratorEnabled          bool   // Flag to enable the orchestrator
     SqidAlphabet                 string // Alphabet to use for SQIDs
     DatabaseConnectionString     string // Postgres DB connection string
-    ResendAPIKey                 string // Resend API Key for emails
     ConsoleURL                   string // URL of the Irmin Console
     InviteExpiresInDays          int    // Number of days before an invite expires
     ClerkPublicKey               string // Clerk Public API Key
@@ -16305,118 +16315,6 @@ func LoadEnv() (*CoreAPIEnv, error)
 ```
 
 LoadEnv loads environment variables from the .env file in the project root, sets default values for required system variables if not present, and returns a CoreAPIEnv struct with the loaded environment variables.
-
-<a name="EmailTemplate"></a>
-## type EmailTemplate
-
-EmailTemplate represents a loaded email template with both HTML and text versions.
-
-```go
-type EmailTemplate struct {
-    HTMLTemplate *template.Template
-    TextTemplate *template.Template
-    Name         string
-}
-```
-
-<a name="EmailTemplate.RenderHTML"></a>
-### func \(\*EmailTemplate\) RenderHTML
-
-```go
-func (et *EmailTemplate) RenderHTML(data any) (string, error)
-```
-
-RenderHTML renders the HTML version of the template with the provided data.
-
-<a name="EmailTemplate.RenderText"></a>
-### func \(\*EmailTemplate\) RenderText
-
-```go
-func (et *EmailTemplate) RenderText(data any) (string, error)
-```
-
-RenderText renders the text version of the template with the provided data.
-
-<a name="EmailTemplateData"></a>
-## type EmailTemplateData
-
-EmailTemplateData represents the data structure for email templates.
-
-```go
-type EmailTemplateData struct {
-    WorkspaceName       string
-    InvitedByName       string
-    InvitedByEmail      string
-    RoleName            string
-    InviteAcceptanceURL string
-    InviteExpiresAt     string
-}
-```
-
-<a name="EmailTemplateManager"></a>
-## type EmailTemplateManager
-
-EmailTemplateManager handles loading and rendering of email templates.
-
-```go
-type EmailTemplateManager struct {
-    // contains filtered or unexported fields
-}
-```
-
-<a name="NewEmailTemplateManager"></a>
-### func NewEmailTemplateManager
-
-```go
-func NewEmailTemplateManager(templatesPath string) *EmailTemplateManager
-```
-
-NewEmailTemplateManager creates a new email template manager.
-
-<a name="EmailTemplateManager.ClearCache"></a>
-### func \(\*EmailTemplateManager\) ClearCache
-
-```go
-func (etm *EmailTemplateManager) ClearCache()
-```
-
-ClearCache clears the template cache, forcing templates to be reloaded on next access.
-
-<a name="EmailTemplateManager.GetAvailableTemplates"></a>
-### func \(\*EmailTemplateManager\) GetAvailableTemplates
-
-```go
-func (etm *EmailTemplateManager) GetAvailableTemplates() ([]string, error)
-```
-
-GetAvailableTemplates returns a list of available email templates.
-
-<a name="EmailTemplateManager.GetLoadedTemplates"></a>
-### func \(\*EmailTemplateManager\) GetLoadedTemplates
-
-```go
-func (etm *EmailTemplateManager) GetLoadedTemplates() []string
-```
-
-GetLoadedTemplates returns the names of currently loaded templates.
-
-<a name="EmailTemplateManager.LoadTemplate"></a>
-### func \(\*EmailTemplateManager\) LoadTemplate
-
-```go
-func (etm *EmailTemplateManager) LoadTemplate(templateName string) (*EmailTemplate, error)
-```
-
-LoadTemplate loads an email template by name from the templates directory.
-
-<a name="EmailTemplateManager.PreloadAllTemplates"></a>
-### func \(\*EmailTemplateManager\) PreloadAllTemplates
-
-```go
-func (etm *EmailTemplateManager) PreloadAllTemplates() error
-```
-
-PreloadAllTemplates loads all available templates into memory for faster access.
 
 <a name="FilePayload"></a>
 ## type FilePayload

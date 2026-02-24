@@ -339,7 +339,7 @@ func RegisterAPIRoutes(
 	)
 	v1.Get("/invites", apiControllers.IndexMyInvites)
 	invite := v1.Group("/invites/:invite", apiMiddlewares.InviteMiddleware)
-	invite.Get("/", apiMiddlewares.InvitePermissionMiddleware(db.PolicyActionRead), apiControllers.InvitesShow)
+	invite.Get("/", apiControllers.InvitesShow)
 	invite.Patch(
 		"/",
 		apiMiddlewares.InvitePermissionMiddleware(db.PolicyActionUpdate),
