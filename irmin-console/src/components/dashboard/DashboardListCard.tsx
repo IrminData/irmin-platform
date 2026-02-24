@@ -192,6 +192,7 @@ export function DashboardListCard({
                 title={emptyStateTitle}
                 description={emptyStateDescription}
                 action={emptyStateAction}
+                hideActionButton={hideCreateNewButton}
                 size='sm'
               />
             ) : (

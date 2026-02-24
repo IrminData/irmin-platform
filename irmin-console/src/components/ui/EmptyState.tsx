@@ -33,6 +33,10 @@ interface EmptyStateProps {
    * Size variant
    */
   size?: 'lg' | 'md' | 'sm';
+  /**
+   * Whether to hide the action button
+   */
+  hideActionButton?: boolean;
 }
 
 /**
@@ -47,6 +51,7 @@ export const EmptyState: FC<EmptyStateProps> = ({
   description,
   icon,
   action,
+  hideActionButton = false,
   className = '',
   size = 'md',
 }) => {
@@ -120,7 +125,7 @@ export const EmptyState: FC<EmptyStateProps> = ({
       )}
 
       {/* Action Button */}
-      {action && (
+      {action && !hideActionButton && (
         <Button
           variant={action.variant || 'gradient'}
           onClick={action.onClick}

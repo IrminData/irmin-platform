@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
 import AcceptInviteSection from '@/components/user/AcceptInviteSection';
 
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 type InvitePageParams = {
-  inviteId: string;
+  inviteId: string[];
   lang: string;
 };
 
@@ -21,5 +22,7 @@ export default async function InvitePage(props: {
   params: Promise<InvitePageParams>;
 }) {
   const params = await props.params;
-  return <AcceptInviteSection inviteID={params.inviteId} />;
+  const inviteId = params.inviteId?.[0];
+  if (!inviteId) notFound();
+  return <AcceptInviteSection inviteID={inviteId} />;
 }

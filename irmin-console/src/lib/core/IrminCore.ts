@@ -220,6 +220,16 @@ class IrminCore {
       throw new Error(errorMessage);
     }
 
+    // Handle empty responses (e.g. 204 No Content)
+    if (
+      response.ok &&
+      (response.status === 204 || response.headers.get('content-length') === '0')
+    ) {
+      // Consume the body to release the underlying connection
+      await response.body?.cancel();
+      return { success: true, message: 'Success' } as IrminAPIResponse;
+    }
+
     // Parse the response as JSON
     const data = await response.json();
 

@@ -17,6 +17,7 @@ interface AIApplicationListProps {
     onClick: () => void;
     variant?: 'default' | 'gradient';
   };
+  hideActionButton?: boolean;
 }
 
 /**
@@ -26,6 +27,7 @@ export default function AIApplicationList({
   loading,
   aiApplications,
   emptyStateAction,
+  hideActionButton = false,
 }: AIApplicationListProps) {
   if (loading) {
     return (
@@ -50,6 +52,7 @@ export default function AIApplicationList({
         title='No AI Applications'
         description='Create your first AI Application to enable LLM agents to access your workspace data through MCP and REST APIs.'
         action={emptyStateAction}
+        hideActionButton={hideActionButton}
       />
     );
   }

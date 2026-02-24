@@ -2,7 +2,11 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
+import { SignIn, SignUp, useAuth } from '@clerk/nextjs';
+import { dark } from '@clerk/themes';
+import { useTheme } from 'next-themes';
 import { TbCheck, TbX } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
@@ -22,9 +26,96 @@ export default function AcceptInviteSection({
 }: {
   inviteID: string;
 }) {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
+  const { isLoaded, isSignedIn } = useAuth();
+  const { resolvedTheme } = useTheme();
+  const searchParams = useSearchParams();
   const { inviteQuery, acceptInviteMutation, declineInviteMutation } =
-    useInvite(inviteID);
+    useInvite(inviteID, { skipQuery: !isSignedIn });
+
+  // Determine if user arrived via Clerk sign-up ticket
+  const clerkStatus = searchParams.get('__clerk_status');
+  const isSignUpFlow = clerkStatus === 'sign_up';
+
+  if (!isLoaded) {
+    return (
+      <div className='container mx-auto my-8 max-w-3xl'>
+        <div className='flex items-center justify-center'>
+          <LoadingSkeleton className='h-80 w-full' />
+        </div>
+      </div>
+    );
+  }
+
+  // User is not signed in — show Clerk sign-in/sign-up inline
+  // so the Clerk ticket params are preserved and consumed
+  if (!isSignedIn) {
+    const inviteUrl = `/${locale}/invite/${inviteID}`;
+    const clerkAppearance = {
+      baseTheme: resolvedTheme === 'dark' ? dark : undefined,
+      variables: { colorPrimary: '#a3c2ac' },
+    };
+
+    return (
+      <div
+        id='sign-in-section'
+        className={`
+          mx-auto flex h-full flex-col justify-center gap-8 px-4 py-16
+          md:mb-0 md:py-28
+        `}
+      >
+        <div className='flex w-full flex-row justify-between gap-4 px-4'>
+          <Link
+            href={websiteUrl}
+            className={`
+              transition-all
+              hover:opacity-80
+            `}
+            aria-label='Go to website'
+          >
+            <Image
+              className={`
+                h-9 min-h-5 w-auto
+                dark:hidden
+              `}
+              src='/irmin-logo.svg'
+              alt='Irmin logo'
+              width={200}
+              height={100}
+            />
+            <Image
+              className={`
+                hidden h-9 min-h-5 w-auto
+                dark:block
+              `}
+              src='/irmin-logo-light.svg'
+              alt='Irmin logo'
+              width={200}
+              height={100}
+            />
+          </Link>
+          <div className='ml-auto' />
+          <LanguageSwitcher />
+          <ThemeSwitch />
+        </div>
+        {isSignUpFlow ? (
+          <SignUp
+            routing='hash'
+            signInUrl={inviteUrl}
+            forceRedirectUrl={inviteUrl}
+            appearance={clerkAppearance}
+          />
+        ) : (
+          <SignIn
+            routing='hash'
+            signUpUrl={inviteUrl}
+            forceRedirectUrl={inviteUrl}
+            appearance={clerkAppearance}
+          />
+        )}
+      </div>
+    );
+  }
 
   if (inviteQuery.isLoading) {
     return (

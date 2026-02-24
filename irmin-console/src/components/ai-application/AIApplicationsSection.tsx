@@ -121,6 +121,7 @@ export default function AIApplicationsSection({
             />
           ) : (
             <AIApplicationList
+              hideActionButton={!isResourceAllowed('ai_application', 'create')}
               loading={aiApplicationsQuery.isLoading}
               aiApplications={filteredItems}
               emptyStateAction={

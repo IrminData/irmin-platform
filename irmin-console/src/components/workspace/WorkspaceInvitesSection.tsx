@@ -30,6 +30,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { useInvites, useRoles } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils/useResourceAllowed';
 
 import { WorkspaceSendInviteModalContent } from './WorkspaceSendInviteModalContent';
 
@@ -43,6 +44,7 @@ import { WorkspaceSendInviteModalContent } from './WorkspaceSendInviteModalConte
  */
 const WorkspaceInvitesSection = () => {
   const { dict } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
   const { rolesQuery } = useRoles();
   const { irminModal } = usePopup();
   const {
@@ -130,6 +132,7 @@ const WorkspaceInvitesSection = () => {
             onClick: handleSendInvite,
             variant: 'gradient',
           }}
+          hideActionButton={!isResourceAllowed('invite', 'create')}
           className='py-16'
         />
       ) : (

@@ -14,20 +14,36 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
-import type { WorkspaceSummary } from '@/types/core/Workspace';
+import type { Workspace, WorkspaceSummary } from '@/types/core/Workspace';
+
+/**
+ * Inline skeleton placeholder for a stat value
+ */
+const StatSkeleton = () => (
+  <div
+    className={`
+      h-3 w-4 animate-pulse rounded-sm bg-gray-200
+      dark:bg-gray-800
+    `}
+  />
+);
 
 /**
  * Compact workspace row component
  *
  * Displays a workspace as a slim horizontal row with icon, name/description,
- * resource stats, and a navigation chevron.
+ * resource stats, and a navigation chevron. Accepts either a full
+ * WorkspaceSummary (with stats) or a basic Workspace (stats shown as
+ * skeleton placeholders until summary data loads).
  */
 const WorkspaceCard = ({
   workspace,
+  summary,
   isRecentlyUsed,
   handleClick,
 }: {
-  workspace: WorkspaceSummary;
+  workspace: Workspace | WorkspaceSummary;
+  summary?: WorkspaceSummary;
   isRecentlyUsed?: boolean;
   handleClick: (_slug: string) => void;
 }) => {
@@ -45,6 +61,8 @@ const WorkspaceCard = ({
     },
     [openWorkspace]
   );
+
+  const hasSummary = summary != null;
 
   return (
     <button
@@ -73,17 +91,26 @@ const WorkspaceCard = ({
           <span className='truncate text-sm font-semibold text-foreground'>
             {workspace.name}
           </span>
-          {isRecentlyUsed && (
-            <span
+          {hasSummary ? (
+            isRecentlyUsed && (
+              <span
+                className={`
+                  flex shrink-0 items-center gap-1 rounded-full
+                  bg-irmin-green-500/10 px-1.5 py-0.5 text-[10px] font-medium
+                  text-irmin-green-500
+                `}
+              >
+                <TbClock className='size-2.5' />
+                {dict.workspace.recentlyUsed}
+              </span>
+            )
+          ) : (
+            <div
               className={`
-                flex shrink-0 items-center gap-1 rounded-full
-                bg-irmin-green-500/10 px-1.5 py-0.5 text-[10px] font-medium
-                text-irmin-green-500
+                h-4 w-20 animate-pulse rounded-full bg-gray-200
+                dark:bg-gray-800
               `}
-            >
-              <TbClock className='size-2.5' />
-              {dict.workspace.recentlyUsed}
-            </span>
+            />
           )}
         </div>
         {workspace.description && (
@@ -102,19 +129,31 @@ const WorkspaceCard = ({
       >
         <div className='flex items-center gap-1 text-xs text-muted-foreground'>
           <TbUsers className='size-3.5' />
-          <span>{workspace.member_count}</span>
+          {hasSummary ? <span>{summary.member_count}</span> : <StatSkeleton />}
         </div>
         <div className='flex items-center gap-1 text-xs text-muted-foreground'>
           <TbDatabase className='size-3.5' />
-          <span>{workspace.repository_count}</span>
+          {hasSummary ? (
+            <span>{summary.repository_count}</span>
+          ) : (
+            <StatSkeleton />
+          )}
         </div>
         <div className='flex items-center gap-1 text-xs text-muted-foreground'>
           <TbRun className='size-3.5' />
-          <span>{workspace.workflow_count}</span>
+          {hasSummary ? (
+            <span>{summary.workflow_count}</span>
+          ) : (
+            <StatSkeleton />
+          )}
         </div>
         <div className='flex items-center gap-1 text-xs text-muted-foreground'>
           <TbPlug className='size-3.5' />
-          <span>{workspace.connection_count}</span>
+          {hasSummary ? (
+            <span>{summary.connection_count}</span>
+          ) : (
+            <StatSkeleton />
+          )}
         </div>
       </div>
 

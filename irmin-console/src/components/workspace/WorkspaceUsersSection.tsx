@@ -21,6 +21,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useRoles, useUsers } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils/useResourceAllowed';
 
 /**
  * Workspace users section
@@ -34,6 +35,9 @@ const WorkspaceUsersSection = () => {
   const { usersQuery, deleteUserMutation, changeUserRoleMutation } = useUsers();
   const { workspaceSlug, workspaceQuery, confirmTransferWorkspace } =
     useWorkspaceContext();
+  const { isResourceAllowed } = useResourceAllowed();
+  const canUpdateUsers = isResourceAllowed('user', 'update');
+  const canDeleteUsers = isResourceAllowed('user', 'delete');
 
   if (usersQuery.isLoading || rolesQuery.isLoading) {
     return (
@@ -188,7 +192,7 @@ const WorkspaceUsersSection = () => {
               >
                 {workspaceQuery?.data?.data?.owner?.id === user.id ? (
                   dict.common.owner
-                ) : (
+                ) : canUpdateUsers ? (
                   <MultiSelect
                     options={
                       rolesQuery.data?.data?.map((role) => ({
@@ -208,6 +212,9 @@ const WorkspaceUsersSection = () => {
                     placeholder={dict.users.noRole}
                     className='w-[200px]'
                   />
+                ) : (
+                  (user.roles?.map((role) => role.role).join(', ') ||
+                    dict.users.noRole)
                 )}
               </TableCell>
               <TableCell className='px-4 py-2 text-right'>
@@ -223,25 +230,26 @@ const WorkspaceUsersSection = () => {
                     href={`/${locale}/workspace/${workspaceSlug}/logs/user/${user.id}`}
                     tooltip={dict.common.logs}
                   />
-                  {workspaceQuery?.data?.data?.owner?.id !== user.id && (
-                    <div className='contents'>
-                      <ButtonWithTooltip
-                        size='icon'
-                        variant='secondary'
-                        onClick={() => confirmTransferWorkspace(user.id)}
-                        icon={<IoKey size={14} />}
-                        tooltip={dict.users.transferOwnership}
-                      />
-                      <ButtonWithTooltip
-                        size='icon'
-                        variant='secondary'
-                        aria-label='Remove user from workspace'
-                        onClick={() => deleteUserMutation.mutate(user.id)}
-                        icon={<IoExit size={14} />}
-                        tooltip={dict.users.removeFromWorkspace}
-                      />
-                    </div>
-                  )}
+                  {workspaceQuery?.data?.data?.owner?.id !== user.id &&
+                    canDeleteUsers && (
+                      <div className='contents'>
+                        <ButtonWithTooltip
+                          size='icon'
+                          variant='secondary'
+                          onClick={() => confirmTransferWorkspace(user.id)}
+                          icon={<IoKey size={14} />}
+                          tooltip={dict.users.transferOwnership}
+                        />
+                        <ButtonWithTooltip
+                          size='icon'
+                          variant='secondary'
+                          aria-label='Remove user from workspace'
+                          onClick={() => deleteUserMutation.mutate(user.id)}
+                          icon={<IoExit size={14} />}
+                          tooltip={dict.users.removeFromWorkspace}
+                        />
+                      </div>
+                    )}
                 </div>
               </TableCell>
             </TableRow>

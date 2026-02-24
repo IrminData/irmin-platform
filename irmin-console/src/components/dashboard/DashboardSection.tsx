@@ -83,7 +83,7 @@ const DashboardSection = () => {
           {/* Navigation Buttons */}
           <div className='flex flex-row gap-2'>
             <Button
-              href={`${locale}/profile`}
+              href={`/${locale}/profile`}
               variant='gray'
               size='sm'
               icon={<TbUser className='size-4' />}

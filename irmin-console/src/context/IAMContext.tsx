@@ -189,6 +189,7 @@ export const IAMProvider = ({ children }: { children: ReactNode }) => {
 
   /**
    * Fetch the Irmin profile once per session, and prime the token cache.
+   * Retries automatically when user creation is still in progress (new sign-ups).
    */
   const fetchProfile = useCallback(async () => {
     if (!authLoaded || !userLoaded) return;
@@ -205,31 +206,49 @@ export const IAMProvider = ({ children }: { children: ReactNode }) => {
     initSessionRef.current = sessionId;
     setIsLoading(true);
 
-    try {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      const res = await irminCore.profileService.getProfile();
-      if (res.data) {
-        setProfile(res.data);
-      } else {
+    const maxRetries = 5;
+    const retryDelayMs = 2000;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.profileService.getProfile();
+        if (res.data) {
+          setProfile(res.data);
+          setIsLoading(false);
+          return;
+        }
         resetIAM();
+        setIsLoading(false);
+        return;
+      } catch (err) {
+        const message = (err as Error)?.message ?? '';
+        const isCreationInProgress =
+          message.includes('user creation in progress');
+
+        // Retry if user creation is still in progress on the backend
+        if (isCreationInProgress && attempt < maxRetries) {
+          await new Promise((r) => setTimeout(r, retryDelayMs));
+          continue;
+        }
+
+        console.error('Error fetching profile', err);
+        const error =
+          err instanceof Error ? err : new Error('Profile fetch failed');
+        // Reset cached state but preserve the auth error so
+        // AuthenticationErrorHandler can redirect to sign-in
+        setProfile(undefined);
+        tokenRef.current = null;
+        expiryRef.current = 0;
+        initSessionRef.current = null;
+        isRefreshingRef.current = false;
+        refreshPromiseRef.current = null;
+        refreshQueueRef.current = [];
+        setAuthError(error);
+        setIsLoading(false);
+        return;
       }
-    } catch (err) {
-      console.error('Error fetching profile', err);
-      const error =
-        err instanceof Error ? err : new Error('Profile fetch failed');
-      // Reset cached state but preserve the auth error so
-      // AuthenticationErrorHandler can redirect to sign-in
-      setProfile(undefined);
-      tokenRef.current = null;
-      expiryRef.current = 0;
-      initSessionRef.current = null;
-      isRefreshingRef.current = false;
-      refreshPromiseRef.current = null;
-      refreshQueueRef.current = [];
-      setAuthError(error);
-    } finally {
-      setIsLoading(false);
     }
   }, [
     authLoaded,

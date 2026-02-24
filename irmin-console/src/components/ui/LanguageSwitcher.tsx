@@ -54,7 +54,7 @@ const LanguageSwitcher = () => {
 
   return (
     <Select value={currentLanguage.code} onValueChange={changeHandler}>
-      <SelectTrigger className='w-[140px]'>
+      <SelectTrigger className='w-[140px] bg-background'>
         <SelectValue placeholder={dict.common.selectLanguage} />
       </SelectTrigger>
       <SelectContent>

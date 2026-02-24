@@ -6,6 +6,7 @@ import {
   inviteInboxQueryKey,
   inviteQueryKey,
   workspaceSummariesQueryKey,
+  workspacesQueryKey,
 } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
@@ -68,8 +69,12 @@ export function useInvite(inviteID: string, options?: UseInviteOptions) {
       void queryClient.invalidateQueries({
         queryKey: workspaceSummariesQueryKey,
       });
+      void queryClient.invalidateQueries({
+        queryKey: workspacesQueryKey,
+      });
       irminAlert('success', res.message ?? 'Invite accepted successfully');
-      router.push(`/${locale}/workspace/${res.data?.workspace?.slug}`);
+      const slug = res.data?.workspace?.slug;
+      router.push(slug ? `/${locale}/workspace/${slug}` : `/${locale}/workspace`);
     },
     onError: (error) => {
       irminAlert(

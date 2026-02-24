@@ -13,16 +13,18 @@ interface AuthenticationErrorHandlerProps {
   children: React.ReactNode;
 }
 
-// Public routes that don't require authentication
+// Public routes that don't require authentication (exact match)
 const PUBLIC_ROUTES = [
   '/',
   '/sign-in',
   '/sign-up',
-  '/invite',
   '/forgot-password',
   '/reset-password',
   '/verify-email',
 ];
+
+// Public route prefixes (matches the path and any sub-paths)
+const PUBLIC_ROUTE_PREFIXES = ['/invite'];
 
 /**
  * Authentication error handler for Clerk authentication
@@ -39,18 +41,28 @@ function AuthenticationErrorHandler({
   const router = useRouter();
   const pathname = usePathname();
   // Check if current route is public (exact matches with optional language prefix)
-  const isPublicRoute = PUBLIC_ROUTES.some((route) => {
-    // Exact match without language prefix
-    if (pathname === route || pathname === `${route}/`) {
-      return true;
-    }
+  const isPublicRoute =
+    PUBLIC_ROUTES.some((route) => {
+      // Exact match without language prefix
+      if (pathname === route || pathname === `${route}/`) {
+        return true;
+      }
 
-    // Exact match with language prefix (e.g., /en/sign-in, /es/sign-in/)
-    // Special handling for root route to avoid double slash
-    const routePattern = route === '/' ? '' : route;
-    const langPrefixPattern = new RegExp(`^/[a-z]{2}${routePattern}(?:/)?$`);
-    return langPrefixPattern.test(pathname);
-  });
+      // Exact match with language prefix (e.g., /en/sign-in, /es/sign-in/)
+      // Special handling for root route to avoid double slash
+      const routePattern = route === '/' ? '' : route;
+      const langPrefixPattern = new RegExp(`^/[a-z]{2}${routePattern}(?:/)?$`);
+      return langPrefixPattern.test(pathname);
+    }) ||
+    PUBLIC_ROUTE_PREFIXES.some((prefix) => {
+      // Match prefix and any sub-paths, with optional language prefix
+      // e.g. /invite/abc, /en/invite/abc
+      return (
+        pathname === prefix ||
+        pathname.startsWith(`${prefix}/`) ||
+        new RegExp(`^/[a-z]{2}${prefix}(/.*)?$`).test(pathname)
+      );
+    });
 
   useEffect(() => {
     if (error) {

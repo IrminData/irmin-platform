@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -20,7 +20,11 @@ import WorkspaceCard from '@/components/workspace/WorkspaceCard';
 import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { useWorkspaceActions, useWorkspaceSummaries } from '@/hooks/api';
+import {
+  useWorkspaceActions,
+  useWorkspaces,
+  useWorkspaceSummaries,
+} from '@/hooks/api';
 
 import type { Invite } from '@/types/core/Invite';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
@@ -38,6 +42,7 @@ const ManageWorkspacesSection = () => {
   const { dict } = useLocale();
   const { getCore } = useIrminCore();
   const { switchWorkspace } = useWorkspaceActions();
+  const { workspacesQuery } = useWorkspaces();
   const { workspaceSummariesQuery } = useWorkspaceSummaries();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -54,7 +59,29 @@ const ManageWorkspacesSection = () => {
     (invite) => !invite.accepted_at && !invite.declined_at
   );
 
-  if (workspaceSummariesQuery.error) {
+  // Use the fast workspaces query as primary, fall back to summaries-only
+  const workspaceList = workspacesQuery.data?.data ?? [];
+  const summaryList = workspaceSummariesQuery.data?.data ?? [];
+  const { summaryMap, mostRecentId } = useMemo(() => {
+    const map = new Map<string, WorkspaceSummary>();
+    let recentId: string | null = null;
+    let recentDate: string | null = null;
+    for (const s of summaryList) {
+      map.set(s.id, s);
+      if (s.last_accessed_at && (!recentDate || s.last_accessed_at > recentDate)) {
+        recentDate = s.last_accessed_at;
+        recentId = s.id;
+      }
+    }
+    return { summaryMap: map, mostRecentId: recentId };
+  }, [summaryList]);
+
+  // Only show loading skeleton when both queries are still loading
+  const isLoading = workspacesQuery.isLoading;
+  // Show error only if the fast query also fails
+  const error = workspacesQuery.error;
+
+  if (error) {
     return (
       <SafeComponent
         level='section'
@@ -64,8 +91,8 @@ const ManageWorkspacesSection = () => {
         <div className='pattern-bg h-full'>
           <div className='relative container mx-auto max-w-3xl px-4 py-28'>
             <QueryError
-              error={workspaceSummariesQuery.error}
-              onRetry={() => workspaceSummariesQuery.refetch()}
+              error={error}
+              onRetry={() => workspacesQuery.refetch()}
               title={dict.workspace.failedToLoadWorkspaces}
               className='py-8'
             />
@@ -74,9 +101,6 @@ const ManageWorkspacesSection = () => {
       </SafeComponent>
     );
   }
-
-  const workspaceList = workspaceSummariesQuery.data?.data ?? [];
-  const isLoading = workspaceSummariesQuery.isLoading;
 
   return (
     <SafeComponent
@@ -148,18 +172,20 @@ const ManageWorkspacesSection = () => {
                 flex flex-col gap-2 divide-y divide-border/50 rounded-xl
               `}
             >
-              {workspaceList.map(
-                (workspace: WorkspaceSummary, index: number) => (
+              {workspaceList.map((workspace, index) => {
+                const summary = summaryMap.get(workspace.id);
+                return (
                   <WorkspaceCard
                     key={workspace.id}
                     workspace={workspace}
+                    summary={summary}
                     isRecentlyUsed={
-                      index === 0 && workspace.last_accessed_at != null
+                      mostRecentId != null && workspace.id === mostRecentId
                     }
                     handleClick={switchWorkspace}
                   />
-                )
-              )}
+                );
+              })}
             </div>
           )}
         </div>

@@ -223,8 +223,9 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                           <IconComponent className='size-3 shrink-0' />
                         )}
                         {option?.label}
-                        <button
-                          type='button'
+                        <span
+                          role='button'
+                          tabIndex={0}
                           className={`
                             ml-1 rounded-sm
                             hover:bg-secondary-foreground/20
@@ -233,9 +234,16 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                             event.stopPropagation();
                             toggleOption(value);
                           }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.stopPropagation();
+                              event.preventDefault();
+                              toggleOption(value);
+                            }
+                          }}
                         >
                           <TbX className='size-3' />
-                        </button>
+                        </span>
                       </span>
                     );
                   })}
@@ -252,8 +260,9 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                       style={{ animationDuration: `${animation}s` }}
                     >
                       +{selectedValues.length - maxCount}
-                      <button
-                        type='button'
+                      <span
+                        role='button'
+                        tabIndex={-1}
                         className={`
                           ml-1 rounded-sm
                           hover:bg-secondary-foreground/20
@@ -262,16 +271,24 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                           event.stopPropagation();
                           clearExtraOptions();
                         }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.stopPropagation();
+                            event.preventDefault();
+                            clearExtraOptions();
+                          }
+                        }}
                       >
                         <TbX className='size-3' />
-                      </button>
+                      </span>
                     </span>
                   )}
                 </div>
                 <div className='flex items-center gap-1'>
                   {!loading && (
-                    <button
-                      type='button'
+                    <span
+                      role='button'
+                      tabIndex={-1}
                       className={`
                         rounded-sm p-1
                         hover:bg-accent
@@ -280,9 +297,16 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                         event.stopPropagation();
                         handleClear();
                       }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.stopPropagation();
+                          event.preventDefault();
+                          handleClear();
+                        }
+                      }}
                     >
                       <TbX className='size-3' />
-                    </button>
+                    </span>
                   )}
                   <Separator orientation='vertical' className='h-4' />
                   {loading ? (
