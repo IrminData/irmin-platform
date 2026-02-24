@@ -274,15 +274,9 @@ func (api *APIServices) UpdateConnection(
 	}
 
 	// Only update fields that were provided
-	if req.Name != nil && len(*req.Name) > 0 {
-		connection.Name = *req.Name
-	}
-	if req.Description != nil {
-		connection.Description = *req.Description
-	}
-	if req.Documentation != nil {
-		connection.Documentation = *req.Documentation
-	}
+	applyOptionalField(&connection.Name, req.Name)
+	applyNullableField(&connection.Description, req.Description)
+	applyNullableField(&connection.Documentation, req.Documentation)
 
 	// We ignore updates to the connector ID.
 	// The connection configuration fields are updated via the configuration endpoint.

@@ -64,7 +64,7 @@ func testUpdateProfile(ctx context.Context, client *irmincore.Client, cfg *confi
 
 	// Update profile with a modified first name
 	updatedFirstName := fmt.Sprintf("%s-E2E", profile.FirstName)
-	_, _, err = client.UpdateProfile(ctx, &updatedFirstName, nil, nil, nil, nil, nil)
+	_, _, err = client.UpdateProfile(ctx, &updatedFirstName, nil, nil, nil, nil, nil, nil)
 	if err != nil {
 		return fmt.Errorf("failed to update profile: %w", err)
 	}
@@ -83,7 +83,7 @@ func testUpdateProfile(ctx context.Context, client *irmincore.Client, cfg *confi
 	}
 
 	// Restore original first name
-	_, _, err = client.UpdateProfile(ctx, &originalFirstName, nil, nil, nil, nil, nil)
+	_, _, err = client.UpdateProfile(ctx, &originalFirstName, nil, nil, nil, nil, nil, nil)
 	if err != nil {
 		return fmt.Errorf("failed to restore profile first name: %w", err)
 	}

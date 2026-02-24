@@ -16,6 +16,7 @@ type User struct {
 	Email            string          `json:"email"              gorm:"index"`
 	Phone            string          `json:"phone"`
 	Company          string          `json:"company"`
+	Language         string          `json:"language"`
 	ProfilePicture   string          `json:"profile_picture"`
 	Workspaces       []WorkspaceUser `json:"workspaces"         gorm:"foreignKey:UserID"`
 }

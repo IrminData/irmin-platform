@@ -152,15 +152,9 @@ func (api *APIServices) UpdateWorkflow(
 	}
 
 	// Update workflow fields
-	if req.Name != nil && len(*req.Name) > 0 {
-		workflow.Name = *req.Name
-	}
-	if req.Description != nil {
-		workflow.Description = *req.Description
-	}
-	if req.Documentation != nil {
-		workflow.Documentation = *req.Documentation
-	}
+	applyOptionalField(&workflow.Name, req.Name)
+	applyNullableField(&workflow.Description, req.Description)
+	applyNullableField(&workflow.Documentation, req.Documentation)
 
 	// Save the workflow
 	if saveErr := api.DB.Save(workflow).Error; saveErr != nil {

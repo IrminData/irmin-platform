@@ -185,15 +185,9 @@ func (api *APIServices) UpdateAIApplication(
 		txDB := &db.Database{DB: tx}
 
 		// Update AI application fields
-		if req.Name != nil && len(*req.Name) > 0 {
-			aiApplication.Name = *req.Name
-		}
-		if req.Description != nil {
-			aiApplication.Description = *req.Description
-		}
-		if req.Documentation != nil {
-			aiApplication.Documentation = *req.Documentation
-		}
+		applyOptionalField(&aiApplication.Name, req.Name)
+		applyNullableField(&aiApplication.Description, req.Description)
+		applyNullableField(&aiApplication.Documentation, req.Documentation)
 		if req.AllowedOrigins != nil {
 			aiApplication.AllowedOrigins = req.AllowedOrigins
 		}

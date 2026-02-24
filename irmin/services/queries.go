@@ -283,15 +283,9 @@ func (api *APIServices) UpdateQuery(
 	}
 
 	// Update the stored query in the database
-	if req.Name != nil && len(*req.Name) > 0 {
-		query.Name = *req.Name
-	}
-	if req.Description != nil {
-		query.Description = *req.Description
-	}
-	if req.SQL != nil && len(*req.SQL) > 0 {
-		query.SQL = *req.SQL
-	}
+	applyOptionalField(&query.Name, req.Name)
+	applyNullableField(&query.Description, req.Description)
+	applyOptionalField(&query.SQL, req.SQL)
 	if saveErr := api.DB.Save(&query).Error; saveErr != nil {
 		api.Logger.ErrorContext(c, "Error updating stored query", "error", saveErr)
 		return nil, saveErr

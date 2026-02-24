@@ -35,6 +35,7 @@ func FormatWorkspaceUserResponse(
 		Email:          workspaceUser.User.Email,
 		Phone:          workspaceUser.User.Phone,
 		Company:        workspaceUser.User.Company,
+		Language:       workspaceUser.User.Language,
 		ProfilePicture: workspaceUser.User.ProfilePicture,
 		Roles:          roles,
 	}
@@ -56,6 +57,7 @@ func FormatUserResponse(user *db.User, sqidManager *irminsqids.SQIDManager) (*ir
 		Email:          user.Email,
 		Phone:          user.Phone,
 		Company:        user.Company,
+		Language:       user.Language,
 		ProfilePicture: user.ProfilePicture,
 	}
 	return &userResponse, nil

@@ -4025,6 +4025,10 @@ definitions:
       id:
         example: usr_2k8n9q1m7p3x4z
         type: string
+      language:
+        example: en
+        maxLength: 5
+        type: string
       last_name:
         example: Doe
         maxLength: 50

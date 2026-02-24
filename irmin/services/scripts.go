@@ -232,18 +232,10 @@ func (api *APIServices) UpdateScript(
 	}
 
 	// Update the stored script in the database
-	if req.Name != nil && len(*req.Name) > 0 {
-		script.Name = *req.Name
-	}
-	if req.Description != nil {
-		script.Description = *req.Description
-	}
-	if req.Content != nil {
-		script.Content = *req.Content
-	}
-	if req.Language != nil {
-		script.Language = *req.Language
-	}
+	applyOptionalField(&script.Name, req.Name)
+	applyNullableField(&script.Description, req.Description)
+	applyNullableField(&script.Content, req.Content)
+	applyNullableField(&script.Language, req.Language)
 	if saveErr := api.DB.Save(&script).Error; saveErr != nil {
 		api.Logger.ErrorContext(c, "Error updating stored script", "error", saveErr)
 		return nil, NewInternalErrorf("error updating stored script: %w", saveErr)

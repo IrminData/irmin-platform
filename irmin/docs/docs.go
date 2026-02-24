@@ -19608,6 +19608,11 @@ const docTemplate = `{
                     "type": "string",
                     "example": "usr_2k8n9q1m7p3x4z"
                 },
+                "language": {
+                    "type": "string",
+                    "maxLength": 5,
+                    "example": "en"
+                },
                 "last_name": {
                     "type": "string",
                     "maxLength": 50,

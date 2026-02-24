@@ -26,21 +26,12 @@ func (api *APIServices) UpdateProfile(
 	}
 
 	// Apply provided fields
-	if req.FirstName != nil && len(*req.FirstName) > 0 {
-		au.FirstName = *req.FirstName
-	}
-	if req.LastName != nil && len(*req.LastName) > 0 {
-		au.LastName = *req.LastName
-	}
-	if req.Email != nil && len(*req.Email) > 0 {
-		au.Email = *req.Email
-	}
-	if req.Phone != nil && len(*req.Phone) > 0 {
-		au.Phone = *req.Phone
-	}
-	if req.Company != nil && len(*req.Company) > 0 {
-		au.Company = *req.Company
-	}
+	applyOptionalField(&au.FirstName, req.FirstName)
+	applyOptionalField(&au.LastName, req.LastName)
+	applyOptionalField(&au.Email, req.Email)
+	applyOptionalField(&au.Phone, req.Phone)
+	applyOptionalField(&au.Company, req.Company)
+	applyOptionalField(&au.Language, req.Language)
 
 	// Reflect changes in Clerk (names, primary email/phone) first
 	// Only persist DB changes if Clerk succeeds to avoid inconsistent state
