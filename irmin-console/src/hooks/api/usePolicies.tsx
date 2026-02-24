@@ -148,6 +148,7 @@ export function usePolicies({
                 email: '',
                 phone: '',
                 company: '',
+                language: '',
                 profile_picture: '',
               },
             }),

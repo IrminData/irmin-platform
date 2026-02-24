@@ -61,20 +61,23 @@ const ManageWorkspacesSection = () => {
 
   // Use the fast workspaces query as primary, fall back to summaries-only
   const workspaceList = workspacesQuery.data?.data ?? [];
-  const summaryList = workspaceSummariesQuery.data?.data ?? [];
   const { summaryMap, mostRecentId } = useMemo(() => {
+    const list = workspaceSummariesQuery.data?.data ?? [];
     const map = new Map<string, WorkspaceSummary>();
     let recentId: string | null = null;
     let recentDate: string | null = null;
-    for (const s of summaryList) {
+    for (const s of list) {
       map.set(s.id, s);
-      if (s.last_accessed_at && (!recentDate || s.last_accessed_at > recentDate)) {
+      if (
+        s.last_accessed_at &&
+        (!recentDate || s.last_accessed_at > recentDate)
+      ) {
         recentDate = s.last_accessed_at;
         recentId = s.id;
       }
     }
     return { summaryMap: map, mostRecentId: recentId };
-  }, [summaryList]);
+  }, [workspaceSummariesQuery.data?.data]);
 
   // Only show loading skeleton when both queries are still loading
   const isLoading = workspacesQuery.isLoading;
@@ -172,7 +175,7 @@ const ManageWorkspacesSection = () => {
                 flex flex-col gap-2 divide-y divide-border/50 rounded-xl
               `}
             >
-              {workspaceList.map((workspace, index) => {
+              {workspaceList.map((workspace, _index) => {
                 const summary = summaryMap.get(workspace.id);
                 return (
                   <WorkspaceCard

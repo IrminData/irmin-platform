@@ -16,6 +16,8 @@ export interface User {
   phone: string;
   /** Company associated with the user */
   company: string;
+  /** Preferred language/locale of the user (e.g., "en", "fi") */
+  language: string;
   /** URL of the user's profile picture */
   profile_picture: string;
   /** (optional) Roles assigned to the user */

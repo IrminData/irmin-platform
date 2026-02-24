@@ -83,6 +83,7 @@ export function useRepositories() {
               email: '',
               phone: '',
               company: '',
+              language: '',
               profile_picture: '',
             },
             created_at: new Date().toISOString(),

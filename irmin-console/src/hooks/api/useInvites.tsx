@@ -165,6 +165,7 @@ export function useInvites() {
                   email: '',
                   phone: '',
                   company: '',
+                  language: '',
                   profile_picture: '',
                 },
                 workspace: {

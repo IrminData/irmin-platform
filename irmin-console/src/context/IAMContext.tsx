@@ -16,6 +16,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 
 import IrminCore from '@/lib/core';
+import type { Locale } from '@/lib/dict';
+import { languages } from '@/lib/dict';
 
 import AuthenticationErrorHandler from '@/components/ui/error/AuthenticationErrorHandler';
 
@@ -43,6 +45,7 @@ interface IAMContextValue {
     _email: string,
     _phone: string,
     _company: string,
+    _language: string,
     _profile_picture?: FileList
   ) => Promise<boolean>;
   /** loading state for auth/profile */
@@ -63,7 +66,7 @@ const IAMContext = createContext<IAMContextValue>({
 
 export const IAMProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
-  const { locale } = useLocale();
+  const { locale, switchLocale } = useLocale();
   const { irminAlert } = usePopup();
 
   // clerk hooks
@@ -84,6 +87,7 @@ export const IAMProvider = ({ children }: { children: ReactNode }) => {
   const tokenRef = useRef<string | null>(null);
   const expiryRef = useRef<number>(0);
   const initSessionRef = useRef<string | null>(null);
+  const langAppliedRef = useRef<boolean>(false);
 
   // token refresh state management
   const isRefreshingRef = useRef<boolean>(false);
@@ -104,6 +108,7 @@ export const IAMProvider = ({ children }: { children: ReactNode }) => {
     tokenRef.current = null;
     expiryRef.current = 0;
     initSessionRef.current = null;
+    langAppliedRef.current = false;
     isRefreshingRef.current = false;
     refreshPromiseRef.current = null;
     refreshQueueRef.current = [];
@@ -224,12 +229,13 @@ export const IAMProvider = ({ children }: { children: ReactNode }) => {
         return;
       } catch (err) {
         const message = (err as Error)?.message ?? '';
-        const isCreationInProgress =
-          message.includes('user creation in progress');
+        const isCreationInProgress = message.includes(
+          'user creation in progress'
+        );
 
         // Retry if user creation is still in progress on the backend
         if (isCreationInProgress && attempt < maxRetries) {
-          await new Promise((r) => setTimeout(r, retryDelayMs));
+          await new Promise((_resolve) => setTimeout(_resolve, retryDelayMs));
           continue;
         }
 
@@ -264,6 +270,22 @@ export const IAMProvider = ({ children }: { children: ReactNode }) => {
     void fetchProfile();
   }, [fetchProfile]);
 
+  // Apply stored language preference from profile on initial load only.
+  // Uses a ref guard so manual LanguageSwitcher changes are not reverted.
+  useEffect(() => {
+    if (
+      !langAppliedRef.current &&
+      profile?.language &&
+      profile.language !== locale &&
+      languages.some((l) => l.code === profile.language)
+    ) {
+      langAppliedRef.current = true;
+      switchLocale(profile.language as Locale);
+    } else if (profile?.language) {
+      langAppliedRef.current = true;
+    }
+  }, [profile?.language, locale, switchLocale]);
+
   /**
    * Signs the user out and resets IAM state
    *
@@ -288,6 +310,7 @@ export const IAMProvider = ({ children }: { children: ReactNode }) => {
       email: string,
       phone: string,
       company: string,
+      language: string,
       profile_picture?: FileList
     ): Promise<boolean> => {
       try {
@@ -299,6 +322,7 @@ export const IAMProvider = ({ children }: { children: ReactNode }) => {
           email,
           phone,
           company,
+          language,
           avatar: profile_picture?.[0],
         });
         if (r.data) {

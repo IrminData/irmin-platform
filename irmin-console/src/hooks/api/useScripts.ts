@@ -93,6 +93,7 @@ export function useScripts() {
               email: '',
               phone: '',
               company: '',
+              language: '',
               profile_picture: '',
             },
             tags: [],

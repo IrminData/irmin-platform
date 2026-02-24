@@ -78,6 +78,7 @@ export function useStoredQueries() {
               email: '',
               phone: '',
               company: '',
+              language: '',
               profile_picture: '',
             },
           }),

@@ -12,6 +12,7 @@ interface UpdateProfileRequest {
   email?: string;
   phone?: string;
   company?: string;
+  language?: string;
 }
 
 /**
@@ -69,6 +70,7 @@ class ProfileService {
     email,
     phone,
     company,
+    language,
     avatar,
   }: {
     first_name?: string;
@@ -76,6 +78,7 @@ class ProfileService {
     email?: string;
     phone?: string;
     company?: string;
+    language?: string;
     avatar?: Blob | File;
   }): Promise<IrminAPIResponse<User>> {
     try {
@@ -86,6 +89,7 @@ class ProfileService {
       if (email !== undefined) updateRequest.email = email;
       if (phone !== undefined) updateRequest.phone = phone;
       if (company !== undefined) updateRequest.company = company;
+      if (language !== undefined) updateRequest.language = language;
 
       let response: IrminAPIResponse<User>;
 

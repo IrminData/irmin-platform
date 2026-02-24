@@ -213,8 +213,8 @@ const WorkspaceUsersSection = () => {
                     className='w-[200px]'
                   />
                 ) : (
-                  (user.roles?.map((role) => role.role).join(', ') ||
-                    dict.users.noRole)
+                  user.roles?.map((role) => role.role).join(', ') ||
+                  dict.users.noRole
                 )}
               </TableCell>
               <TableCell className='px-4 py-2 text-right'>

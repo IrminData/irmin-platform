@@ -5,8 +5,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   inviteInboxQueryKey,
   inviteQueryKey,
-  workspaceSummariesQueryKey,
   workspacesQueryKey,
+  workspaceSummariesQueryKey,
 } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
@@ -74,7 +74,9 @@ export function useInvite(inviteID: string, options?: UseInviteOptions) {
       });
       irminAlert('success', res.message ?? 'Invite accepted successfully');
       const slug = res.data?.workspace?.slug;
-      router.push(slug ? `/${locale}/workspace/${slug}` : `/${locale}/workspace`);
+      router.push(
+        slug ? `/${locale}/workspace/${slug}` : `/${locale}/workspace`
+      );
     },
     onError: (error) => {
       irminAlert(

@@ -81,6 +81,7 @@ export function useConnections() {
               email: '',
               phone: '',
               company: '',
+              language: '',
               profile_picture: '',
             },
             connector: {

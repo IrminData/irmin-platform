@@ -223,7 +223,8 @@ class IrminCore {
     // Handle empty responses (e.g. 204 No Content)
     if (
       response.ok &&
-      (response.status === 204 || response.headers.get('content-length') === '0')
+      (response.status === 204 ||
+        response.headers.get('content-length') === '0')
     ) {
       // Consume the body to release the underlying connection
       await response.body?.cancel();

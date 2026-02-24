@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { SignIn, SignUp, useAuth } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
 import { useTheme } from 'next-themes';
+
 import { TbCheck, TbX } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';

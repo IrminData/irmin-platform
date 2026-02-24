@@ -80,6 +80,7 @@ export function useWorkflows(type?: WorkflowableType) {
                 email: '',
                 phone: '',
                 company: '',
+                language: '',
                 profile_picture: '',
               },
               tags: [],

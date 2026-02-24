@@ -29,7 +29,7 @@ type ProfileFormInputs = {
  */
 export default function UserProfileForm() {
   const { profile, updateProfile } = useIAM();
-  const { dict } = useLocale();
+  const { locale, dict } = useLocale();
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     profile?.profile_picture || null
@@ -58,10 +58,11 @@ export default function UserProfileForm() {
         data.email,
         data.phone,
         data.company,
+        locale,
         data.profile_picture ?? undefined
       );
     },
-    [updateProfile]
+    [updateProfile, locale]
   );
 
   return (

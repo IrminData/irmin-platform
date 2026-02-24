@@ -79,6 +79,7 @@ export function useAIApplications() {
                 email: '',
                 phone: '',
                 company: '',
+                language: '',
                 profile_picture: '',
               },
               tags: [],
