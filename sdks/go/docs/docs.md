@@ -330,7 +330,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) UpdateEmbeddingPriority\(ctx context.Context, workspace, repository string, req UpdateEmbeddingPriorityRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateEmbeddingPriority>)
   - [func \(c \*Client\) UpdateInvite\(ctx context.Context, inviteID string, req UpdateInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateInvite>)
   - [func \(c \*Client\) UpdatePolicy\(ctx context.Context, workspace, policyID string, req UpdatePolicyRequest\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdatePolicy>)
-  - [func \(c \*Client\) UpdateProfile\(ctx context.Context, firstName, lastName, email, phone, company \*string, profilePicture \*os.File\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateProfile>)
+  - [func \(c \*Client\) UpdateProfile\(ctx context.Context, firstName, lastName, email, phone, company, language \*string, profilePicture \*os.File\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateProfile>)
   - [func \(c \*Client\) UpdateRegisteredConnector\(ctx context.Context, connectorID string, req ConnectorRequest\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateRegisteredConnector>)
   - [func \(c \*Client\) UpdateRepository\(ctx context.Context, workspace, slug string, req UpdateRepositoryRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateRepository>)
   - [func \(c \*Client\) UpdateStoredQuery\(ctx context.Context, workspace, queryID string, req UpdateQueryRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateStoredQuery>)
@@ -2279,7 +2279,7 @@ UpdatePolicy updates an existing policy.
 ### func \(\*Client\) UpdateProfile
 
 ```go
-func (c *Client) UpdateProfile(ctx context.Context, firstName, lastName, email, phone, company *string, profilePicture *os.File) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateProfile(ctx context.Context, firstName, lastName, email, phone, company, language *string, profilePicture *os.File) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -2729,9 +2729,9 @@ CreateSignedURLRequest represents the JSON request body for creating a signed do
 
 ```go
 type CreateSignedURLRequest struct {
-    Path           string `json:"path"                       validate:"required"                example:"data/file.csv"`
-    Ref            string `json:"ref,omitempty"                                                 example:"main"`
-    ExpiresInHours int    `json:"expires_in_hours,omitempty" validate:"omitempty,min=1,max=168" example:"24"`
+    Path           string `json:"path"                       validate:"required"        example:"data/file.csv"`
+    Ref            string `json:"ref,omitempty"                                         example:"main"`
+    ExpiresInHours *int   `json:"expires_in_hours,omitempty" validate:"omitempty,min=0" example:"24"`
 }
 ```
 
@@ -3293,6 +3293,7 @@ type UpdateProfileRequest struct {
     Email     *string `json:"email,omitempty"      validate:"omitnil,email"      example:"john.doe@example.com"`
     Phone     *string `json:"phone,omitempty"      validate:"omitnil,validphone" example:"+1234567890"`
     Company   *string `json:"company,omitempty"    validate:"omitnil,max=100"    example:"Irmin"`
+    Language  *string `json:"language,omitempty"   validate:"omitnil,max=5"      example:"en"`
 }
 ```
 
@@ -6049,7 +6050,7 @@ type StoredQuery struct {
 type StoredScript struct {
     ID          string    `json:"id"                    validate:"required,validsqid=scripts" example:"scr_8x2m9k4n7p5q"`
     Name        string    `json:"name"                  validate:"required,max=255"           example:"script.py"`
-    Description *string   `json:"description,omitempty" validate:"max=500"                    example:"Data processor for the project"`
+    Description *string   `json:"description,omitempty" validate:"omitempty,max=500"          example:"Data processor for the project"`
     Content     *string   `json:"content,omitempty"                                           example:"This is the content of the file"`
     Language    *string   `json:"language,omitempty"                                          example:"js"` // js, py, go, etc.
     Owner       User      `json:"owner"                 validate:"required"`
@@ -6279,6 +6280,7 @@ type User struct {
     Email          string `json:"email"           validate:"required,email"           example:"john.doe@example.com"`
     Phone          string `json:"phone"           validate:"validphone"               example:"+1-555-0123"`
     Company        string `json:"company"         validate:"max=100"                  example:"Acme Corp"`
+    Language       string `json:"language"        validate:"max=5"                    example:"en"`
     ProfilePicture string `json:"profile_picture" validate:"validimageurl"            example:"https://avatars.example.com/john-doe.jpg"`
     Roles          []Role `json:"roles"           validate:"dive"`
 }

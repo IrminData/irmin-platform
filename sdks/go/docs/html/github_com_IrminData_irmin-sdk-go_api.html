@@ -1217,7 +1217,7 @@ func (c *Client) UpdatePolicy(
 
 func (c *Client) UpdateProfile(
 	ctx context.Context,
-	firstName, lastName, email, phone, company *string,
+	firstName, lastName, email, phone, company, language *string,
 	profilePicture *os.File,
 ) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
 
@@ -1521,9 +1521,9 @@ type CreateScriptRequest struct {
     CreateScriptRequest represents the JSON request body for creating a script.
 
 type CreateSignedURLRequest struct {
-	Path           string `json:"path"                       validate:"required"                example:"data/file.csv"`
-	Ref            string `json:"ref,omitempty"                                                 example:"main"`
-	ExpiresInHours int    `json:"expires_in_hours,omitempty" validate:"omitempty,min=1,max=168" example:"24"`
+	Path           string `json:"path"                       validate:"required"        example:"data/file.csv"`
+	Ref            string `json:"ref,omitempty"                                         example:"main"`
+	ExpiresInHours *int   `json:"expires_in_hours,omitempty" validate:"omitempty,min=0" example:"24"`
 }
     CreateSignedURLRequest represents the JSON request body for creating a
     signed download URL.
@@ -1864,6 +1864,7 @@ type UpdateProfileRequest struct {
 	Email     *string `json:"email,omitempty"      validate:"omitnil,email"      example:"john.doe@example.com"`
 	Phone     *string `json:"phone,omitempty"      validate:"omitnil,validphone" example:"+1234567890"`
 	Company   *string `json:"company,omitempty"    validate:"omitnil,max=100"    example:"Irmin"`
+	Language  *string `json:"language,omitempty"   validate:"omitnil,max=5"      example:"en"`
 }
     UpdateProfileRequest represents the JSON request body for updating profile.
 

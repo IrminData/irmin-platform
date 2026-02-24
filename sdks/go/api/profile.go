@@ -17,6 +17,7 @@ type UpdateProfileRequest struct {
 	Email     *string `json:"email,omitempty"      validate:"omitnil,email"      example:"john.doe@example.com"`
 	Phone     *string `json:"phone,omitempty"      validate:"omitnil,validphone" example:"+1234567890"`
 	Company   *string `json:"company,omitempty"    validate:"omitnil,max=100"    example:"Irmin"`
+	Language  *string `json:"language,omitempty"   validate:"omitnil,max=5"      example:"en"`
 }
 
 func (c *Client) GetProfile(ctx context.Context) (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {
@@ -33,7 +34,7 @@ func (c *Client) GetProfile(ctx context.Context) (*irminmodels.User, *irminmodel
 
 func (c *Client) UpdateProfile(
 	ctx context.Context,
-	firstName, lastName, email, phone, company *string,
+	firstName, lastName, email, phone, company, language *string,
 	profilePicture *os.File,
 ) (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {
 	// Create update request struct with only non-empty fields
@@ -52,6 +53,9 @@ func (c *Client) UpdateProfile(
 	}
 	if company != nil && *company != "" {
 		updateReq.Company = company
+	}
+	if language != nil && *language != "" {
+		updateReq.Language = language
 	}
 
 	var updatedProfile irminmodels.User
