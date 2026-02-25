@@ -31,14 +31,19 @@ export default function UserProfileForm() {
   const { profile, updateProfile } = useIAM();
   const { locale, dict } = useLocale();
 
+  const [savedLocale, setSavedLocale] = useState(profile?.language || locale);
+
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     profile?.profile_picture || null
   );
 
+  const [hasNewProfilePicture, setHasNewProfilePicture] = useState(false);
+
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    reset,
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<ProfileFormInputs>({
     defaultValues: {
       first_name: profile?.first_name || '',
@@ -52,7 +57,7 @@ export default function UserProfileForm() {
 
   const onSubmit: SubmitHandler<ProfileFormInputs> = useCallback(
     async (data) => {
-      await updateProfile(
+      const success = await updateProfile(
         data.first_name,
         data.last_name,
         data.email,
@@ -61,8 +66,20 @@ export default function UserProfileForm() {
         locale,
         data.profile_picture ?? undefined
       );
+      if (success) {
+        reset({
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: data.email,
+          phone: data.phone,
+          company: data.company,
+          profile_picture: null,
+        });
+        setHasNewProfilePicture(false);
+        setSavedLocale(locale);
+      }
     },
-    [updateProfile, locale]
+    [updateProfile, locale, reset]
   );
 
   return (
@@ -101,6 +118,7 @@ export default function UserProfileForm() {
                 const file = e.target.files?.[0];
                 if (file) {
                   setPreviewUrl(URL.createObjectURL(file));
+                  setHasNewProfilePicture(true);
                 }
               }}
               className={`
@@ -195,7 +213,10 @@ export default function UserProfileForm() {
           </div>
           <Button
             type='submit'
-            disabled={isSubmitting}
+            disabled={
+              isSubmitting ||
+              (!isDirty && !hasNewProfilePicture && locale === savedLocale)
+            }
             className='w-full'
             size={'sm'}
             variant={'default'}
