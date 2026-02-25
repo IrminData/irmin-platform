@@ -48,6 +48,21 @@ type CreatePointerRequest struct {
 	TargetRef string `json:"target_ref"                 validate:"required,max=100"  example:"main"`
 }
 
+// PresignedUploadResult represents the response from generating a presigned upload URL.
+type PresignedUploadResult struct {
+	UploadURL       string `json:"upload_url"       example:"https://s3.example.com/upload"`
+	PhysicalAddress string `json:"physical_address" example:"s3://bucket/key"`
+	Expiry          int64  `json:"expiry"           example:"1706270400"`
+}
+
+// AssociatePresignedUploadRequest represents the JSON request body for associating a staged upload.
+type AssociatePresignedUploadRequest struct {
+	PhysicalAddress string `json:"physical_address" validate:"required"  example:"s3://bucket/key"`
+	Checksum        string `json:"checksum"         validate:"omitempty" example:"d41d8cd98f00b204e9800998ecf8427e"`
+	SizeBytes       int64  `json:"size_bytes"       validate:"required"  example:"1048576"`
+	ContentType     string `json:"content_type"     validate:"required"  example:"application/octet-stream"`
+}
+
 // CreateSignedURLRequest represents the JSON request body for creating a signed download URL.
 type CreateSignedURLRequest struct {
 	Path           string `json:"path"                       validate:"required"        example:"data/file.csv"`
@@ -404,4 +419,54 @@ func (c *Client) CreateSignedObjectURL(
 		return nil, nil, fmt.Errorf("create signed object URL error: %w", err)
 	}
 	return &response, apiResp, nil
+}
+
+// GeneratePresignedUploadURL generates a presigned URL for direct-to-storage upload.
+// The client uploads directly to the storage backend using the returned URL,
+// then calls AssociatePresignedUpload to link the object in the repository.
+func (c *Client) GeneratePresignedUploadURL(
+	ctx context.Context,
+	workspace, repository, ref, path string,
+) (*PresignedUploadResult, *irminmodels.IrminAPIResponse, error) {
+	var result PresignedUploadResult
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/upload/presigned?ref=%s&path=%s",
+			workspace,
+			repository,
+			url.QueryEscape(ref),
+			url.QueryEscape(path),
+		),
+	}, &result)
+	if err != nil {
+		return nil, nil, fmt.Errorf("generate presigned upload URL error: %w", err)
+	}
+	return &result, apiResp, nil
+}
+
+// AssociatePresignedUpload links a previously uploaded object (via presigned URL)
+// with a path in the repository.
+func (c *Client) AssociatePresignedUpload(
+	ctx context.Context,
+	workspace, repository, ref, path string,
+	req AssociatePresignedUploadRequest,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
+	var object irminmodels.Object
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/upload/associate?ref=%s&path=%s",
+			workspace,
+			repository,
+			url.QueryEscape(ref),
+			url.QueryEscape(path),
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &object)
+	if err != nil {
+		return nil, nil, fmt.Errorf("associate presigned upload error: %w", err)
+	}
+	return &object, apiResp, nil
 }

@@ -186,6 +186,33 @@ type ActionInputData struct {
 	RepositoryPath string `json:"repository_path" validate:"omitempty" example:"/data/customers.csv"`
 }
 
+type AsyncJob struct {
+	ID           string         `json:"id"                      validate:"required,validsqid=async-jobs"`
+	CreatedAt    time.Time      `json:"created_at"              validate:"required"`
+	UpdatedAt    time.Time      `json:"updated_at"              validate:"required"`
+	Type         AsyncJobType   `json:"type"                    validate:"required"`
+	Status       AsyncJobStatus `json:"status"                  validate:"required"`
+	Progress     int            `json:"progress"`
+	ErrorMessage string         `json:"error_message,omitempty"`
+	ResultExpiry *time.Time     `json:"result_expiry,omitempty"`
+}
+    AsyncJob represents an asynchronous background job response.
+
+type AsyncJobStatus string
+    AsyncJobStatus represents the status of an async job.
+
+const (
+	AsyncJobStatusPending   AsyncJobStatus = "pending"
+	AsyncJobStatusRunning   AsyncJobStatus = "running"
+	AsyncJobStatusCompleted AsyncJobStatus = "completed"
+	AsyncJobStatusFailed    AsyncJobStatus = "failed"
+)
+type AsyncJobType string
+    AsyncJobType represents the type of async job.
+
+const (
+	AsyncJobTypeZipDownload AsyncJobType = "zip_download"
+)
 type Branch struct {
 	// Name of the branch
 	Name string `json:"name"         validate:"required,max=100,validslug" example:"main"`

@@ -237,6 +237,15 @@ type APIError struct {
 func (e *APIError) Error() string
     Error implements the error interface.
 
+type AssociatePresignedUploadRequest struct {
+	PhysicalAddress string `json:"physical_address" validate:"required"  example:"s3://bucket/key"`
+	Checksum        string `json:"checksum"         validate:"omitempty" example:"d41d8cd98f00b204e9800998ecf8427e"`
+	SizeBytes       int64  `json:"size_bytes"       validate:"required"  example:"1048576"`
+	ContentType     string `json:"content_type"     validate:"required"  example:"application/octet-stream"`
+}
+    AssociatePresignedUploadRequest represents the JSON request body for
+    associating a staged upload.
+
 type Client struct {
 	// BaseURL is your Irmin Core API base: e.g. "https://api.irmin.co/api"
 	BaseURL string
@@ -280,6 +289,14 @@ func (c *Client) ApproveAIApplicationPendingWrite(
 	workspace, aiApplicationID, pendingWriteID string,
 ) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
     ApproveAIApplicationPendingWrite approves a pending write operation.
+
+func (c *Client) AssociatePresignedUpload(
+	ctx context.Context,
+	workspace, repository, ref, path string,
+	req AssociatePresignedUploadRequest,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+    AssociatePresignedUpload links a previously uploaded object (via presigned
+    URL) with a path in the repository.
 
 func (c *Client) CallSystemWebhook(
 	ctx context.Context,
@@ -522,6 +539,15 @@ func (c *Client) DiffSchema(
       - Breaking changes (would cause validation failures)
       - Non-breaking changes (additive changes, type widenings)
 
+func (c *Client) DownloadAsyncJobResult(
+	ctx context.Context,
+	workspace, jobID string,
+) ([]byte, error)
+    DownloadAsyncJobResult downloads the result of a completed async job.
+    The API returns a 302 redirect to a presigned S3 URL, which the HTTP client
+    follows automatically. Returns the raw file bytes. The download URL is
+    temporary — check AsyncJob.ResultExpiry before calling.
+
 func (c *Client) DownloadObject(ctx context.Context, workspace, repository, path, ref string) ([]byte, error)
     DownloadObject creates a zip file of the object at the given path and ref
     and returns the binary data.
@@ -652,6 +678,15 @@ func (c *Client) GenerateFileSchema(
 
     Usable only with a system token.
 
+func (c *Client) GeneratePresignedUploadURL(
+	ctx context.Context,
+	workspace, repository, ref, path string,
+) (*PresignedUploadResult, *irminmodels.IrminAPIResponse, error)
+    GeneratePresignedUploadURL generates a presigned URL for direct-to-storage
+    upload. The client uploads directly to the storage backend using the
+    returned URL, then calls AssociatePresignedUpload to link the object in the
+    repository.
+
 func (c *Client) GetAIApplication(
 	ctx context.Context,
 	workspace, aiApplicationID string,
@@ -685,6 +720,18 @@ func (c *Client) GetAIApplicationToolLogs(
 ) (*irminmodels.AIApplicationToolLogsResponse, *irminmodels.IrminAPIResponse, error)
     GetAIApplicationToolLogs retrieves tool call audit logs for an AI
     application.
+
+func (c *Client) GetAsyncJob(
+	ctx context.Context,
+	workspace, jobID string,
+) (*irminmodels.AsyncJob, *irminmodels.IrminAPIResponse, error)
+    GetAsyncJob fetches a specific async job by ID.
+
+func (c *Client) GetAsyncJobDownloadURL(workspace, jobID string) string
+    GetAsyncJobDownloadURL returns the download endpoint URL for a completed
+    async job. The endpoint returns a 302 redirect to a presigned S3 URL.
+    Use DownloadAsyncJobResult to fetch the file content directly. Use this
+    method when you need to construct a download link for external use.
 
 func (c *Client) GetBranch(
 	ctx context.Context,
@@ -871,6 +918,13 @@ func (c *Client) ListAllWorkflowRunsWithCursor(
 ) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
     ListAllWorkflowRunsWithCursor retrieves all workflow runs using cursor-based
     pagination. Pass an empty string for cursor to get the first page.
+
+func (c *Client) ListAsyncJobs(
+	ctx context.Context,
+	workspace string,
+	page, perPage int,
+) ([]irminmodels.AsyncJob, *irminmodels.IrminAPIResponse, error)
+    ListAsyncJobs fetches a paginated list of async jobs for a workspace.
 
 func (c *Client) ListBranches(
 	ctx context.Context,
@@ -1658,6 +1712,14 @@ type MoveObjectRequest struct {
 }
     MoveObjectRequest represents the JSON request body for moving/copying
     repository objects.
+
+type PresignedUploadResult struct {
+	UploadURL       string `json:"upload_url"       example:"https://s3.example.com/upload"`
+	PhysicalAddress string `json:"physical_address" example:"s3://bucket/key"`
+	Expiry          int64  `json:"expiry"           example:"1706270400"`
+}
+    PresignedUploadResult represents the response from generating a presigned
+    upload URL.
 
 type RequestOptions struct {
 	Method        string

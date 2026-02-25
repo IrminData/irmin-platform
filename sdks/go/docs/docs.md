@@ -169,12 +169,14 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type AIAppWriteResult](<#AIAppWriteResult>)
 - [type APIError](<#APIError>)
   - [func \(e \*APIError\) Error\(\) string](<#APIError.Error>)
+- [type AssociatePresignedUploadRequest](<#AssociatePresignedUploadRequest>)
 - [type Client](<#Client>)
   - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
   - [func NewClientWithSQIDManager\(baseURL, token, locale string, sqidManager \*irminsqids.SQIDManager\) \*Client](<#NewClientWithSQIDManager>)
   - [func \(c \*Client\) AcceptInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.AcceptInvite>)
   - [func \(c \*Client\) AddTagToEntity\(ctx context.Context, workspace, tagID string, entityType irminmodels.TagEntityType, entityID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.AddTagToEntity>)
   - [func \(c \*Client\) ApproveAIApplicationPendingWrite\(ctx context.Context, workspace, aiApplicationID, pendingWriteID string\) \(\*irminmodels.AIApplicationPendingWrite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ApproveAIApplicationPendingWrite>)
+  - [func \(c \*Client\) AssociatePresignedUpload\(ctx context.Context, workspace, repository, ref, path string, req AssociatePresignedUploadRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.AssociatePresignedUpload>)
   - [func \(c \*Client\) CallSystemWebhook\(ctx context.Context, webhookType string, headers map\[string\]string, body any\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CallSystemWebhook>)
   - [func \(c \*Client\) CancelWorkflowRun\(ctx context.Context, workspace, workflowID, runID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.CancelWorkflowRun>)
   - [func \(c \*Client\) CheckPermission\(ctx context.Context, workspace string, resource irminmodels.PolicyResource, action irminmodels.PolicyAction, resourceID \*string\) \(bool, error\)](<#Client.CheckPermission>)
@@ -214,6 +216,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) DeleteWorkspace\(ctx context.Context, slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkspace>)
   - [func \(c \*Client\) DeleteWorkspaceTag\(ctx context.Context, workspace, tagID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkspaceTag>)
   - [func \(c \*Client\) DiffSchema\(ctx context.Context, workspace, connectionID, operationMethod, path string, file ValidateSchemaFile\) \(\*irminmodels.SchemaDiff, \*irminmodels.IrminAPIResponse, error\)](<#Client.DiffSchema>)
+  - [func \(c \*Client\) DownloadAsyncJobResult\(ctx context.Context, workspace, jobID string\) \(\[\]byte, error\)](<#Client.DownloadAsyncJobResult>)
   - [func \(c \*Client\) DownloadObject\(ctx context.Context, workspace, repository, path, ref string\) \(\[\]byte, error\)](<#Client.DownloadObject>)
   - [func \(c \*Client\) ExecuteSQL\(ctx context.Context, workspace string, limitResponse bool, req ExecuteSQLRequest\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteSQL>)
   - [func \(c \*Client\) ExecuteStoredQuery\(ctx context.Context, workspace, queryID string, limitResponse bool\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteStoredQuery>)
@@ -232,11 +235,14 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) FetchLogEventsForWorkflow\(ctx context.Context, workspace, workflowID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForWorkflow>)
   - [func \(c \*Client\) FetchLogEventsWithCursor\(ctx context.Context, workspace string, filters LogEventFilters, cursor string, limit int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsWithCursor>)
   - [func \(c \*Client\) GenerateFileSchema\(ctx context.Context, fileName string, fileReader io.Reader\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GenerateFileSchema>)
+  - [func \(c \*Client\) GeneratePresignedUploadURL\(ctx context.Context, workspace, repository, ref, path string\) \(\*PresignedUploadResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.GeneratePresignedUploadURL>)
   - [func \(c \*Client\) GetAIApplication\(ctx context.Context, workspace, aiApplicationID string\) \(\*irminmodels.AIApplication, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplication>)
   - [func \(c \*Client\) GetAIApplicationPendingWrite\(ctx context.Context, workspace, aiApplicationID, pendingWriteID string\) \(\*irminmodels.AIApplicationPendingWrite, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationPendingWrite>)
   - [func \(c \*Client\) GetAIApplicationPendingWrites\(ctx context.Context, workspace, aiApplicationID string, opts \*GetAIApplicationPendingWritesOptions\) \(\*irminmodels.AIApplicationPendingWritesResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationPendingWrites>)
   - [func \(c \*Client\) GetAIApplicationToolLogStats\(ctx context.Context, workspace, aiApplicationID string\) \(\*irminmodels.AIApplicationToolLogStats, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationToolLogStats>)
   - [func \(c \*Client\) GetAIApplicationToolLogs\(ctx context.Context, workspace, aiApplicationID string, opts \*GetAIApplicationToolLogsOptions\) \(\*irminmodels.AIApplicationToolLogsResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationToolLogs>)
+  - [func \(c \*Client\) GetAsyncJob\(ctx context.Context, workspace, jobID string\) \(\*irminmodels.AsyncJob, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAsyncJob>)
+  - [func \(c \*Client\) GetAsyncJobDownloadURL\(workspace, jobID string\) string](<#Client.GetAsyncJobDownloadURL>)
   - [func \(c \*Client\) GetBranch\(ctx context.Context, workspace, repository, branchName string\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetBranch>)
   - [func \(c \*Client\) GetCommit\(ctx context.Context, workspace, repository, hash string\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetCommit>)
   - [func \(c \*Client\) GetConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnection>)
@@ -270,6 +276,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) ListAIApplications\(ctx context.Context, workspace string\) \(\[\]irminmodels.AIApplication, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAIApplications>)
   - [func \(c \*Client\) ListAllWorkflowRuns\(ctx context.Context, workspace string, page, perPage int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAllWorkflowRuns>)
   - [func \(c \*Client\) ListAllWorkflowRunsWithCursor\(ctx context.Context, workspace string, cursor string, limit int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAllWorkflowRunsWithCursor>)
+  - [func \(c \*Client\) ListAsyncJobs\(ctx context.Context, workspace string, page, perPage int\) \(\[\]irminmodels.AsyncJob, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAsyncJobs>)
   - [func \(c \*Client\) ListBranches\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListBranches>)
   - [func \(c \*Client\) ListCommits\(ctx context.Context, workspace, repository, ref, after string, perPage int\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListCommits>)
   - [func \(c \*Client\) ListConnectionSubscriptions\(ctx context.Context, workspace, connectionID string\) \(\[\]irminmodels.ConnectionSubscription, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnectionSubscriptions>)
@@ -385,6 +392,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type LogEventFilters](<#LogEventFilters>)
 - [type MergeRefsRequest](<#MergeRefsRequest>)
 - [type MoveObjectRequest](<#MoveObjectRequest>)
+- [type PresignedUploadResult](<#PresignedUploadResult>)
 - [type RequestOptions](<#RequestOptions>)
 - [type ResetBranchRequest](<#ResetBranchRequest>)
 - [type RevertCommitRequest](<#RevertCommitRequest>)
@@ -791,6 +799,20 @@ func (e *APIError) Error() string
 
 Error implements the error interface.
 
+<a name="AssociatePresignedUploadRequest"></a>
+## type AssociatePresignedUploadRequest
+
+AssociatePresignedUploadRequest represents the JSON request body for associating a staged upload.
+
+```go
+type AssociatePresignedUploadRequest struct {
+    PhysicalAddress string `json:"physical_address" validate:"required"  example:"s3://bucket/key"`
+    Checksum        string `json:"checksum"         validate:"omitempty" example:"d41d8cd98f00b204e9800998ecf8427e"`
+    SizeBytes       int64  `json:"size_bytes"       validate:"required"  example:"1048576"`
+    ContentType     string `json:"content_type"     validate:"required"  example:"application/octet-stream"`
+}
+```
+
 <a name="Client"></a>
 ## type Client
 
@@ -859,6 +881,15 @@ func (c *Client) ApproveAIApplicationPendingWrite(ctx context.Context, workspace
 ```
 
 ApproveAIApplicationPendingWrite approves a pending write operation.
+
+<a name="Client.AssociatePresignedUpload"></a>
+### func \(\*Client\) AssociatePresignedUpload
+
+```go
+func (c *Client) AssociatePresignedUpload(ctx context.Context, workspace, repository, ref, path string, req AssociatePresignedUploadRequest) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+```
+
+AssociatePresignedUpload links a previously uploaded object \(via presigned URL\) with a path in the repository.
 
 <a name="Client.CallSystemWebhook"></a>
 ### func \(\*Client\) CallSystemWebhook
@@ -1229,6 +1260,15 @@ Returns a SchemaDiff containing:
 - Breaking changes \(would cause validation failures\)
 - Non\-breaking changes \(additive changes, type widenings\)
 
+<a name="Client.DownloadAsyncJobResult"></a>
+### func \(\*Client\) DownloadAsyncJobResult
+
+```go
+func (c *Client) DownloadAsyncJobResult(ctx context.Context, workspace, jobID string) ([]byte, error)
+```
+
+DownloadAsyncJobResult downloads the result of a completed async job. The API returns a 302 redirect to a presigned S3 URL, which the HTTP client follows automatically. Returns the raw file bytes. The download URL is temporary — check AsyncJob.ResultExpiry before calling.
+
 <a name="Client.DownloadObject"></a>
 ### func \(\*Client\) DownloadObject
 
@@ -1393,6 +1433,15 @@ GenerateFileSchema generates a schema from a file. The body is expected to be a 
 
 Usable only with a system token.
 
+<a name="Client.GeneratePresignedUploadURL"></a>
+### func \(\*Client\) GeneratePresignedUploadURL
+
+```go
+func (c *Client) GeneratePresignedUploadURL(ctx context.Context, workspace, repository, ref, path string) (*PresignedUploadResult, *irminmodels.IrminAPIResponse, error)
+```
+
+GeneratePresignedUploadURL generates a presigned URL for direct\-to\-storage upload. The client uploads directly to the storage backend using the returned URL, then calls AssociatePresignedUpload to link the object in the repository.
+
 <a name="Client.GetAIApplication"></a>
 ### func \(\*Client\) GetAIApplication
 
@@ -1437,6 +1486,24 @@ func (c *Client) GetAIApplicationToolLogs(ctx context.Context, workspace, aiAppl
 ```
 
 GetAIApplicationToolLogs retrieves tool call audit logs for an AI application.
+
+<a name="Client.GetAsyncJob"></a>
+### func \(\*Client\) GetAsyncJob
+
+```go
+func (c *Client) GetAsyncJob(ctx context.Context, workspace, jobID string) (*irminmodels.AsyncJob, *irminmodels.IrminAPIResponse, error)
+```
+
+GetAsyncJob fetches a specific async job by ID.
+
+<a name="Client.GetAsyncJobDownloadURL"></a>
+### func \(\*Client\) GetAsyncJobDownloadURL
+
+```go
+func (c *Client) GetAsyncJobDownloadURL(workspace, jobID string) string
+```
+
+GetAsyncJobDownloadURL returns the download endpoint URL for a completed async job. The endpoint returns a 302 redirect to a presigned S3 URL. Use DownloadAsyncJobResult to fetch the file content directly. Use this method when you need to construct a download link for external use.
 
 <a name="Client.GetBranch"></a>
 ### func \(\*Client\) GetBranch
@@ -1734,6 +1801,15 @@ func (c *Client) ListAllWorkflowRunsWithCursor(ctx context.Context, workspace st
 ```
 
 ListAllWorkflowRunsWithCursor retrieves all workflow runs using cursor\-based pagination. Pass an empty string for cursor to get the first page.
+
+<a name="Client.ListAsyncJobs"></a>
+### func \(\*Client\) ListAsyncJobs
+
+```go
+func (c *Client) ListAsyncJobs(ctx context.Context, workspace string, page, perPage int) ([]irminmodels.AsyncJob, *irminmodels.IrminAPIResponse, error)
+```
+
+ListAsyncJobs fetches a paginated list of async jobs for a workspace.
 
 <a name="Client.ListBranches"></a>
 ### func \(\*Client\) ListBranches
@@ -2959,6 +3035,19 @@ type MoveObjectRequest struct {
 }
 ```
 
+<a name="PresignedUploadResult"></a>
+## type PresignedUploadResult
+
+PresignedUploadResult represents the response from generating a presigned upload URL.
+
+```go
+type PresignedUploadResult struct {
+    UploadURL       string `json:"upload_url"       example:"https://s3.example.com/upload"`
+    PhysicalAddress string `json:"physical_address" example:"s3://bucket/key"`
+    Expiry          int64  `json:"expiry"           example:"1706270400"`
+}
+```
+
 <a name="RequestOptions"></a>
 ## type RequestOptions
 
@@ -3843,6 +3932,9 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type APIToken](<#APIToken>)
 - [type ActionExecutableType](<#ActionExecutableType>)
 - [type ActionInputData](<#ActionInputData>)
+- [type AsyncJob](<#AsyncJob>)
+- [type AsyncJobStatus](<#AsyncJobStatus>)
+- [type AsyncJobType](<#AsyncJobType>)
 - [type Branch](<#Branch>)
 - [type BranchGarbageCollectionRules](<#BranchGarbageCollectionRules>)
 - [type ChangeItem](<#ChangeItem>)
@@ -4228,6 +4320,61 @@ type ActionInputData struct {
     RepositoryRef  string `json:"repository_ref"  validate:"required"  example:"main"`
     RepositoryPath string `json:"repository_path" validate:"omitempty" example:"/data/customers.csv"`
 }
+```
+
+<a name="AsyncJob"></a>
+## type AsyncJob
+
+AsyncJob represents an asynchronous background job response.
+
+```go
+type AsyncJob struct {
+    ID           string         `json:"id"                      validate:"required,validsqid=async-jobs"`
+    CreatedAt    time.Time      `json:"created_at"              validate:"required"`
+    UpdatedAt    time.Time      `json:"updated_at"              validate:"required"`
+    Type         AsyncJobType   `json:"type"                    validate:"required"`
+    Status       AsyncJobStatus `json:"status"                  validate:"required"`
+    Progress     int            `json:"progress"`
+    ErrorMessage string         `json:"error_message,omitempty"`
+    ResultExpiry *time.Time     `json:"result_expiry,omitempty"`
+}
+```
+
+<a name="AsyncJobStatus"></a>
+## type AsyncJobStatus
+
+AsyncJobStatus represents the status of an async job.
+
+```go
+type AsyncJobStatus string
+```
+
+<a name="AsyncJobStatusPending"></a>
+
+```go
+const (
+    AsyncJobStatusPending   AsyncJobStatus = "pending"
+    AsyncJobStatusRunning   AsyncJobStatus = "running"
+    AsyncJobStatusCompleted AsyncJobStatus = "completed"
+    AsyncJobStatusFailed    AsyncJobStatus = "failed"
+)
+```
+
+<a name="AsyncJobType"></a>
+## type AsyncJobType
+
+AsyncJobType represents the type of async job.
+
+```go
+type AsyncJobType string
+```
+
+<a name="AsyncJobTypeZipDownload"></a>
+
+```go
+const (
+    AsyncJobTypeZipDownload AsyncJobType = "zip_download"
+)
 ```
 
 <a name="Branch"></a>
