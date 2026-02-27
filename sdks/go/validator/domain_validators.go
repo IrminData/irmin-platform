@@ -7,6 +7,12 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// Stage mode constants used across pipeline stage validators.
+const (
+	stageModeAll    = "all"
+	stageModeSingle = "single"
+)
+
 // validateSQID validates SQID format using the SQID manager.
 func (v *Validator) validateSQID(fl validator.FieldLevel) bool {
 	// Skip SQID validation if no SQID manager is available (client-side scenario)
@@ -87,6 +93,8 @@ func (v *Validator) validatePipelineStage(fl validator.FieldLevel) bool {
 		return v.validateTransformPipelineStage(parentStruct)
 	case "embeddings":
 		return v.validateEmbeddingsPipelineStage(parentStruct)
+	case "field_mapping":
+		return v.validateFieldMappingPipelineStage(parentStruct)
 	default:
 		return true // Let oneof validation handle invalid types
 	}
@@ -244,7 +252,7 @@ func (v *Validator) validateValidationPipelineStage(parentStruct reflect.Value) 
 	// ValidationMode must be "single" or "all" if provided
 	if validationModeField.IsValid() && !validationModeField.IsNil() {
 		mode := validationModeField.Elem().String()
-		if mode != "single" && mode != "all" {
+		if mode != stageModeSingle && mode != stageModeAll {
 			return false
 		}
 	}
@@ -278,7 +286,7 @@ func (v *Validator) validateTransformPipelineStage(parentStruct reflect.Value) b
 	// TransformMode must be "single" or "all" if provided
 	if transformModeField.IsValid() && !transformModeField.IsNil() {
 		mode := transformModeField.Elem().String()
-		if mode != "single" && mode != "all" {
+		if mode != stageModeSingle && mode != stageModeAll {
 			return false
 		}
 	}
@@ -519,6 +527,46 @@ func (v *Validator) validateResourceID(resourceIDField reflect.Value, resourceTy
 	// Check if the decoded value is a valid uint64
 	if decoded == 0 {
 		return false
+	}
+
+	return true
+}
+
+// validateFieldMappingPipelineStage validates field_mapping-type pipeline stages.
+func (v *Validator) validateFieldMappingPipelineStage(parentStruct reflect.Value) bool {
+	fieldMappingMappingsField := parentStruct.FieldByName("FieldMappingMappings")
+	fieldMappingModeField := parentStruct.FieldByName("FieldMappingMode")
+	fieldMappingTargetNameField := parentStruct.FieldByName("FieldMappingTargetName")
+
+	// FieldMappingMappings is required and must be non-empty
+	if !fieldMappingMappingsField.IsValid() || fieldMappingMappingsField.Len() == 0 {
+		return false
+	}
+
+	// Validate each mapping has required source_path and destination_path
+	for i := range fieldMappingMappingsField.Len() {
+		mapping := fieldMappingMappingsField.Index(i)
+		sourcePath := mapping.FieldByName("SourcePath").String()
+		destinationPath := mapping.FieldByName("DestinationPath").String()
+		if sourcePath == "" || destinationPath == "" {
+			return false
+		}
+	}
+
+	// FieldMappingMode must be "single" or "all" if provided
+	if fieldMappingModeField.IsValid() && !fieldMappingModeField.IsNil() {
+		mode := fieldMappingModeField.Elem().String()
+		if mode != stageModeSingle && mode != stageModeAll {
+			return false
+		}
+
+		// FieldMappingTargetName is required when mode is "single"
+		if mode == stageModeSingle {
+			if !fieldMappingTargetNameField.IsValid() || fieldMappingTargetNameField.IsNil() ||
+				fieldMappingTargetNameField.Elem().String() == "" {
+				return false
+			}
+		}
 	}
 
 	return true

@@ -216,7 +216,6 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) DeleteWorkspace\(ctx context.Context, slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkspace>)
   - [func \(c \*Client\) DeleteWorkspaceTag\(ctx context.Context, workspace, tagID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkspaceTag>)
   - [func \(c \*Client\) DiffSchema\(ctx context.Context, workspace, connectionID, operationMethod, path string, file ValidateSchemaFile\) \(\*irminmodels.SchemaDiff, \*irminmodels.IrminAPIResponse, error\)](<#Client.DiffSchema>)
-  - [func \(c \*Client\) DownloadAsyncJobResult\(ctx context.Context, workspace, jobID string\) \(\[\]byte, error\)](<#Client.DownloadAsyncJobResult>)
   - [func \(c \*Client\) DownloadObject\(ctx context.Context, workspace, repository, path, ref string\) \(\[\]byte, error\)](<#Client.DownloadObject>)
   - [func \(c \*Client\) ExecuteSQL\(ctx context.Context, workspace string, limitResponse bool, req ExecuteSQLRequest\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteSQL>)
   - [func \(c \*Client\) ExecuteStoredQuery\(ctx context.Context, workspace, queryID string, limitResponse bool\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteStoredQuery>)
@@ -241,8 +240,6 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) GetAIApplicationPendingWrites\(ctx context.Context, workspace, aiApplicationID string, opts \*GetAIApplicationPendingWritesOptions\) \(\*irminmodels.AIApplicationPendingWritesResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationPendingWrites>)
   - [func \(c \*Client\) GetAIApplicationToolLogStats\(ctx context.Context, workspace, aiApplicationID string\) \(\*irminmodels.AIApplicationToolLogStats, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationToolLogStats>)
   - [func \(c \*Client\) GetAIApplicationToolLogs\(ctx context.Context, workspace, aiApplicationID string, opts \*GetAIApplicationToolLogsOptions\) \(\*irminmodels.AIApplicationToolLogsResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationToolLogs>)
-  - [func \(c \*Client\) GetAsyncJob\(ctx context.Context, workspace, jobID string\) \(\*irminmodels.AsyncJob, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAsyncJob>)
-  - [func \(c \*Client\) GetAsyncJobDownloadURL\(workspace, jobID string\) string](<#Client.GetAsyncJobDownloadURL>)
   - [func \(c \*Client\) GetBranch\(ctx context.Context, workspace, repository, branchName string\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetBranch>)
   - [func \(c \*Client\) GetCommit\(ctx context.Context, workspace, repository, hash string\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetCommit>)
   - [func \(c \*Client\) GetConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnection>)
@@ -276,7 +273,6 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) ListAIApplications\(ctx context.Context, workspace string\) \(\[\]irminmodels.AIApplication, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAIApplications>)
   - [func \(c \*Client\) ListAllWorkflowRuns\(ctx context.Context, workspace string, page, perPage int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAllWorkflowRuns>)
   - [func \(c \*Client\) ListAllWorkflowRunsWithCursor\(ctx context.Context, workspace string, cursor string, limit int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAllWorkflowRunsWithCursor>)
-  - [func \(c \*Client\) ListAsyncJobs\(ctx context.Context, workspace string, page, perPage int\) \(\[\]irminmodels.AsyncJob, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAsyncJobs>)
   - [func \(c \*Client\) ListBranches\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListBranches>)
   - [func \(c \*Client\) ListCommits\(ctx context.Context, workspace, repository, ref, after string, perPage int\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListCommits>)
   - [func \(c \*Client\) ListConnectionSubscriptions\(ctx context.Context, workspace, connectionID string\) \(\[\]irminmodels.ConnectionSubscription, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnectionSubscriptions>)
@@ -1260,15 +1256,6 @@ Returns a SchemaDiff containing:
 - Breaking changes \(would cause validation failures\)
 - Non\-breaking changes \(additive changes, type widenings\)
 
-<a name="Client.DownloadAsyncJobResult"></a>
-### func \(\*Client\) DownloadAsyncJobResult
-
-```go
-func (c *Client) DownloadAsyncJobResult(ctx context.Context, workspace, jobID string) ([]byte, error)
-```
-
-DownloadAsyncJobResult downloads the result of a completed async job. The API returns a 302 redirect to a presigned S3 URL, which the HTTP client follows automatically. Returns the raw file bytes. The download URL is temporary — check AsyncJob.ResultExpiry before calling.
-
 <a name="Client.DownloadObject"></a>
 ### func \(\*Client\) DownloadObject
 
@@ -1486,24 +1473,6 @@ func (c *Client) GetAIApplicationToolLogs(ctx context.Context, workspace, aiAppl
 ```
 
 GetAIApplicationToolLogs retrieves tool call audit logs for an AI application.
-
-<a name="Client.GetAsyncJob"></a>
-### func \(\*Client\) GetAsyncJob
-
-```go
-func (c *Client) GetAsyncJob(ctx context.Context, workspace, jobID string) (*irminmodels.AsyncJob, *irminmodels.IrminAPIResponse, error)
-```
-
-GetAsyncJob fetches a specific async job by ID.
-
-<a name="Client.GetAsyncJobDownloadURL"></a>
-### func \(\*Client\) GetAsyncJobDownloadURL
-
-```go
-func (c *Client) GetAsyncJobDownloadURL(workspace, jobID string) string
-```
-
-GetAsyncJobDownloadURL returns the download endpoint URL for a completed async job. The endpoint returns a 302 redirect to a presigned S3 URL. Use DownloadAsyncJobResult to fetch the file content directly. Use this method when you need to construct a download link for external use.
 
 <a name="Client.GetBranch"></a>
 ### func \(\*Client\) GetBranch
@@ -1801,15 +1770,6 @@ func (c *Client) ListAllWorkflowRunsWithCursor(ctx context.Context, workspace st
 ```
 
 ListAllWorkflowRunsWithCursor retrieves all workflow runs using cursor\-based pagination. Pass an empty string for cursor to get the first page.
-
-<a name="Client.ListAsyncJobs"></a>
-### func \(\*Client\) ListAsyncJobs
-
-```go
-func (c *Client) ListAsyncJobs(ctx context.Context, workspace string, page, perPage int) ([]irminmodels.AsyncJob, *irminmodels.IrminAPIResponse, error)
-```
-
-ListAsyncJobs fetches a paginated list of async jobs for a workspace.
 
 <a name="Client.ListBranches"></a>
 ### func \(\*Client\) ListBranches
@@ -3932,9 +3892,6 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type APIToken](<#APIToken>)
 - [type ActionExecutableType](<#ActionExecutableType>)
 - [type ActionInputData](<#ActionInputData>)
-- [type AsyncJob](<#AsyncJob>)
-- [type AsyncJobStatus](<#AsyncJobStatus>)
-- [type AsyncJobType](<#AsyncJobType>)
 - [type Branch](<#Branch>)
 - [type BranchGarbageCollectionRules](<#BranchGarbageCollectionRules>)
 - [type ChangeItem](<#ChangeItem>)
@@ -4320,61 +4277,6 @@ type ActionInputData struct {
     RepositoryRef  string `json:"repository_ref"  validate:"required"  example:"main"`
     RepositoryPath string `json:"repository_path" validate:"omitempty" example:"/data/customers.csv"`
 }
-```
-
-<a name="AsyncJob"></a>
-## type AsyncJob
-
-AsyncJob represents an asynchronous background job response.
-
-```go
-type AsyncJob struct {
-    ID           string         `json:"id"                      validate:"required,validsqid=async-jobs"`
-    CreatedAt    time.Time      `json:"created_at"              validate:"required"`
-    UpdatedAt    time.Time      `json:"updated_at"              validate:"required"`
-    Type         AsyncJobType   `json:"type"                    validate:"required"`
-    Status       AsyncJobStatus `json:"status"                  validate:"required"`
-    Progress     int            `json:"progress"`
-    ErrorMessage string         `json:"error_message,omitempty"`
-    ResultExpiry *time.Time     `json:"result_expiry,omitempty"`
-}
-```
-
-<a name="AsyncJobStatus"></a>
-## type AsyncJobStatus
-
-AsyncJobStatus represents the status of an async job.
-
-```go
-type AsyncJobStatus string
-```
-
-<a name="AsyncJobStatusPending"></a>
-
-```go
-const (
-    AsyncJobStatusPending   AsyncJobStatus = "pending"
-    AsyncJobStatusRunning   AsyncJobStatus = "running"
-    AsyncJobStatusCompleted AsyncJobStatus = "completed"
-    AsyncJobStatusFailed    AsyncJobStatus = "failed"
-)
-```
-
-<a name="AsyncJobType"></a>
-## type AsyncJobType
-
-AsyncJobType represents the type of async job.
-
-```go
-type AsyncJobType string
-```
-
-<a name="AsyncJobTypeZipDownload"></a>
-
-```go
-const (
-    AsyncJobTypeZipDownload AsyncJobType = "zip_download"
-)
 ```
 
 <a name="Branch"></a>
@@ -4856,10 +4758,12 @@ const (
 
 ```go
 type FieldMapping struct {
-    SourcePath       string  `json:"source_path"                 validate:"required" example:"/data/customers.csv"`
-    SourceField      *string `json:"source_field,omitempty"                          example:"email"`
-    DestinationPath  string  `json:"destination_path"            validate:"required" example:"/processed/customers.json"`
-    DestinationField *string `json:"destination_field,omitempty"                     example:"customer_email"`
+    SourcePath       string  `json:"source_path"                 validate:"required"                                                                                                                                      example:"/data/customers.csv"`
+    SourceField      *string `json:"source_field,omitempty"                                                                                                                                                               example:"email"`
+    DestinationPath  string  `json:"destination_path"            validate:"required"                                                                                                                                      example:"/processed/customers.json"`
+    DestinationField *string `json:"destination_field,omitempty"                                                                                                                                                          example:"customer_email"`
+    CastType         *string `json:"cast_type,omitempty"         validate:"omitempty,oneof=VARCHAR TEXT INTEGER INT BIGINT SMALLINT TINYINT HUGEINT DOUBLE FLOAT REAL DECIMAL BOOLEAN BOOL DATE TIMESTAMP TIME BLOB UUID" example:"VARCHAR"`
+    SourceJSONPath   *string `json:"source_json_path,omitempty"                                                                                                                                                           example:"data"`
 }
 ```
 
@@ -5296,11 +5200,11 @@ const (
 
 ```go
 type PipelineStage struct {
-    Description   string            `json:"description"    validate:"required,max=200"                                                                                                                        example:"Process customer data"`
-    Write         bool              `json:"write"                                                                                                                                                             example:"true"`
-    Read          bool              `json:"read"                                                                                                                                                              example:"true"`
-    OrderSequence int               `json:"order_sequence"                                                                                                                                                    example:"1"`
-    Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform embeddings patch,validpipelinestage" example:"repository"`
+    Description   string            `json:"description"    validate:"required,max=200"                                                                                                                                      example:"Process customer data"`
+    Write         bool              `json:"write"                                                                                                                                                                           example:"true"`
+    Read          bool              `json:"read"                                                                                                                                                                            example:"true"`
+    OrderSequence int               `json:"order_sequence"                                                                                                                                                                  example:"1"`
+    Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform embeddings patch field_mapping,validpipelinestage" example:"repository"`
 
     // Action stage specific
     ExecutableType ActionExecutableType `json:"executable_type,omitempty" validate:"omitempty,oneof=script query,required_if=Type action"          example:"script"`
@@ -5370,6 +5274,12 @@ type PipelineStage struct {
     PatchRepository       *string         `json:"patch_repository,omitempty"        validate:"omitempty"                                                          example:"customer-analytics"`
     PatchRepositoryBranch *string         `json:"patch_repository_branch,omitempty" validate:"omitempty"                                                          example:"main"`
     PatchSourceFileName   *string         `json:"patch_source_file_name,omitempty"  validate:"omitempty"                                                          example:"patches.json"`
+
+    // Field mapping stage specific
+    FieldMappingMappings   []FieldMapping `json:"field_mapping_mappings,omitempty"    validate:"dive"`
+    FieldMappingMode       *string        `json:"field_mapping_mode,omitempty"` // "single" or "all"
+    FieldMappingTargetName *string        `json:"field_mapping_target_name,omitempty"                 example:"customers.json"`
+    FieldMappingOutputName *string        `json:"field_mapping_output_name,omitempty"                 example:"customers_renamed.json"`
 }
 ```
 
@@ -5395,6 +5305,7 @@ const (
     PipelineStageTypeTransform        PipelineStageType = "transform"
     PipelineStageTypeEmbeddings       PipelineStageType = "embeddings"
     PipelineStageTypePatch            PipelineStageType = "patch"
+    PipelineStageTypeFieldMapping     PipelineStageType = "field_mapping"
 )
 ```
 

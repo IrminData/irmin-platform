@@ -1,10 +1,12 @@
 package irminmodels
 
 type FieldMapping struct {
-	SourcePath       string  `json:"source_path"                 validate:"required" example:"/data/customers.csv"`
-	SourceField      *string `json:"source_field,omitempty"                          example:"email"`
-	DestinationPath  string  `json:"destination_path"            validate:"required" example:"/processed/customers.json"`
-	DestinationField *string `json:"destination_field,omitempty"                     example:"customer_email"`
+	SourcePath       string  `json:"source_path"                 validate:"required"                                                                                                                                      example:"/data/customers.csv"`
+	SourceField      *string `json:"source_field,omitempty"                                                                                                                                                               example:"email"`
+	DestinationPath  string  `json:"destination_path"            validate:"required"                                                                                                                                      example:"/processed/customers.json"`
+	DestinationField *string `json:"destination_field,omitempty"                                                                                                                                                          example:"customer_email"`
+	CastType         *string `json:"cast_type,omitempty"         validate:"omitempty,oneof=VARCHAR TEXT INTEGER INT BIGINT SMALLINT TINYINT HUGEINT DOUBLE FLOAT REAL DECIMAL BOOLEAN BOOL DATE TIMESTAMP TIME BLOB UUID" example:"VARCHAR"`
+	SourceJSONPath   *string `json:"source_json_path,omitempty"                                                                                                                                                           example:"data"`
 }
 
 type WorkflowableType string
@@ -41,6 +43,7 @@ const (
 	PipelineStageTypeTransform        PipelineStageType = "transform"
 	PipelineStageTypeEmbeddings       PipelineStageType = "embeddings"
 	PipelineStageTypePatch            PipelineStageType = "patch"
+	PipelineStageTypeFieldMapping     PipelineStageType = "field_mapping"
 )
 
 // TransformOperationType represents the type of transformation to apply.
@@ -107,11 +110,11 @@ const (
 )
 
 type PipelineStage struct {
-	Description   string            `json:"description"    validate:"required,max=200"                                                                                                                        example:"Process customer data"`
-	Write         bool              `json:"write"                                                                                                                                                             example:"true"`
-	Read          bool              `json:"read"                                                                                                                                                              example:"true"`
-	OrderSequence int               `json:"order_sequence"                                                                                                                                                    example:"1"`
-	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform embeddings patch,validpipelinestage" example:"repository"`
+	Description   string            `json:"description"    validate:"required,max=200"                                                                                                                                      example:"Process customer data"`
+	Write         bool              `json:"write"                                                                                                                                                                           example:"true"`
+	Read          bool              `json:"read"                                                                                                                                                                            example:"true"`
+	OrderSequence int               `json:"order_sequence"                                                                                                                                                                  example:"1"`
+	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform embeddings patch field_mapping,validpipelinestage" example:"repository"`
 
 	// Action stage specific
 	ExecutableType ActionExecutableType `json:"executable_type,omitempty" validate:"omitempty,oneof=script query,required_if=Type action"          example:"script"`
@@ -181,6 +184,12 @@ type PipelineStage struct {
 	PatchRepository       *string         `json:"patch_repository,omitempty"        validate:"omitempty"                                                          example:"customer-analytics"`
 	PatchRepositoryBranch *string         `json:"patch_repository_branch,omitempty" validate:"omitempty"                                                          example:"main"`
 	PatchSourceFileName   *string         `json:"patch_source_file_name,omitempty"  validate:"omitempty"                                                          example:"patches.json"`
+
+	// Field mapping stage specific
+	FieldMappingMappings   []FieldMapping `json:"field_mapping_mappings,omitempty"    validate:"dive"`
+	FieldMappingMode       *string        `json:"field_mapping_mode,omitempty"` // "single" or "all"
+	FieldMappingTargetName *string        `json:"field_mapping_target_name,omitempty"                 example:"customers.json"`
+	FieldMappingOutputName *string        `json:"field_mapping_output_name,omitempty"                 example:"customers_renamed.json"`
 }
 
 type ActionInputData struct {

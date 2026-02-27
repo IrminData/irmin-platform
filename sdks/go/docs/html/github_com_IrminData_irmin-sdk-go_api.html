@@ -539,15 +539,6 @@ func (c *Client) DiffSchema(
       - Breaking changes (would cause validation failures)
       - Non-breaking changes (additive changes, type widenings)
 
-func (c *Client) DownloadAsyncJobResult(
-	ctx context.Context,
-	workspace, jobID string,
-) ([]byte, error)
-    DownloadAsyncJobResult downloads the result of a completed async job.
-    The API returns a 302 redirect to a presigned S3 URL, which the HTTP client
-    follows automatically. Returns the raw file bytes. The download URL is
-    temporary — check AsyncJob.ResultExpiry before calling.
-
 func (c *Client) DownloadObject(ctx context.Context, workspace, repository, path, ref string) ([]byte, error)
     DownloadObject creates a zip file of the object at the given path and ref
     and returns the binary data.
@@ -720,18 +711,6 @@ func (c *Client) GetAIApplicationToolLogs(
 ) (*irminmodels.AIApplicationToolLogsResponse, *irminmodels.IrminAPIResponse, error)
     GetAIApplicationToolLogs retrieves tool call audit logs for an AI
     application.
-
-func (c *Client) GetAsyncJob(
-	ctx context.Context,
-	workspace, jobID string,
-) (*irminmodels.AsyncJob, *irminmodels.IrminAPIResponse, error)
-    GetAsyncJob fetches a specific async job by ID.
-
-func (c *Client) GetAsyncJobDownloadURL(workspace, jobID string) string
-    GetAsyncJobDownloadURL returns the download endpoint URL for a completed
-    async job. The endpoint returns a 302 redirect to a presigned S3 URL.
-    Use DownloadAsyncJobResult to fetch the file content directly. Use this
-    method when you need to construct a download link for external use.
 
 func (c *Client) GetBranch(
 	ctx context.Context,
@@ -918,13 +897,6 @@ func (c *Client) ListAllWorkflowRunsWithCursor(
 ) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
     ListAllWorkflowRunsWithCursor retrieves all workflow runs using cursor-based
     pagination. Pass an empty string for cursor to get the first page.
-
-func (c *Client) ListAsyncJobs(
-	ctx context.Context,
-	workspace string,
-	page, perPage int,
-) ([]irminmodels.AsyncJob, *irminmodels.IrminAPIResponse, error)
-    ListAsyncJobs fetches a paginated list of async jobs for a workspace.
 
 func (c *Client) ListBranches(
 	ctx context.Context,
