@@ -1,13 +1,13 @@
 package common
 
 import (
+	"archive/zip"
 	"bytes"
 	"errors"
 	"irmin-connectors/db"
 	"irmin-connectors/utils"
 	"log/slog"
 
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -43,13 +43,26 @@ func HandleOperationPull(
 		})
 	}
 
-	// Use a pinned connection for the session-scoped advisory lock to ensure
-	// acquire and release happen on the same database session.
-	locked, lockErr := db.WithOperationExecutionLock(dbInstance.DB, operation.ID, func(_ *gorm.DB) error {
-		return executePullOperation(c, provider, logger, dbInstance, operation)
-	})
+	// Use WithOperationExecutionLock which pins the DB connection so that
+	// acquire and release happen on the same session (required by PostgreSQL
+	// session-scoped advisory locks). The zip is built in a buffer inside the
+	// callback so the lock covers the entire operation; the buffer is sent
+	// after the callback returns.
+	locked, lockErr := db.WithOperationExecutionLock(
+		dbInstance.DB,
+		operation.ID,
+		func(_ *gorm.DB) error {
+			return executePullOperation(
+				c, provider, logger, dbInstance, operation,
+			)
+		},
+	)
 	if lockErr != nil {
-		logger.Error("failed during operation execution", "error", lockErr, "operation_id", operation.ID)
+		logger.Error(
+			"failed during operation execution",
+			"error", lockErr,
+			"operation_id", operation.ID,
+		)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to execute operation",
 		})
@@ -64,6 +77,10 @@ func HandleOperationPull(
 }
 
 // executePullOperation performs the actual pull operation logic.
+// The zip is built in a buffer so the advisory lock callback can complete
+// synchronously — avoiding the deadlock that SendStreamWriter would cause
+// (its callback runs after the handler returns, but the lock callback
+// blocks the handler).
 func executePullOperation(
 	c fiber.Ctx,
 	provider PullOperationProvider,
@@ -170,26 +187,59 @@ func executePullOperation(
 		resultFiles[resultPath] = resultContent
 	}
 
-	// Create a zip archive of the result files
-	zipBytes, err := irminutils.ZipFiles(resultFiles)
-	if err != nil {
-		logger.Error("failed to create zip archive", "error", err)
+	// Build the zip into a buffer. The file contents are already in memory
+	// (from GetAllFiles/GetFileByPath), so buffering the zip adds negligible
+	// overhead and avoids the deadlock that SendStreamWriter would cause.
+	var buf bytes.Buffer
+	zipWriter := zip.NewWriter(&buf)
+
+	for filePath, content := range resultFiles {
+		entry, createErr := zipWriter.Create(filePath)
+		if createErr != nil {
+			LogOperationEvent(
+				dbInstance, logger, operation.ID,
+				db.LogEventTypeError,
+				"Failed to create zip entry during pull operation",
+				map[string]any{
+					"error": createErr.Error(),
+					"path":  filePath,
+				},
+			)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to create zip entry: " + createErr.Error(),
+			})
+		}
+		if _, writeErr := entry.Write(content); writeErr != nil {
+			LogOperationEvent(
+				dbInstance, logger, operation.ID,
+				db.LogEventTypeError,
+				"Failed to write zip entry during pull operation",
+				map[string]any{
+					"error": writeErr.Error(),
+					"path":  filePath,
+				},
+			)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to write zip entry: " + writeErr.Error(),
+			})
+		}
+	}
+
+	if closeErr := zipWriter.Close(); closeErr != nil {
 		LogOperationEvent(
-			dbInstance,
-			logger,
-			operation.ID,
+			dbInstance, logger, operation.ID,
 			db.LogEventTypeError,
-			"Failed to create zip archive for pull operation",
+			"Failed to finalize zip archive during pull operation",
 			map[string]any{
-				"error": err.Error(),
+				"error": closeErr.Error(),
 			},
 		)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create zip archive",
+			"error": "Failed to finalize zip archive: " + closeErr.Error(),
 		})
 	}
 
-	// Log successful completion
+	// Log success after all entries have been written.
 	LogOperationEvent(
 		dbInstance,
 		logger,
@@ -202,10 +252,9 @@ func executePullOperation(
 		},
 	)
 
-	// Return the result files as a zip archive stream
-	c.Response().Header.Set("Content-Type", "application/zip")
-	c.Response().Header.Set("Content-Disposition", "attachment; filename=result.zip")
-	return c.Status(fiber.StatusOK).SendStream(bytes.NewReader(zipBytes))
+	c.Set("Content-Type", "application/zip")
+	c.Set("Content-Disposition", "attachment; filename=result.zip")
+	return c.Status(fiber.StatusOK).Send(buf.Bytes())
 }
 
 // NotSupportedPullProvider provides a default implementation for connectors that don't support pull operations.
@@ -217,7 +266,9 @@ func (p *NotSupportedPullProvider) InitializeClient(
 	_ *slog.Logger,
 	_ *db.Operation,
 ) (any, *string, func(), error) {
-	return nil, nil, func() {}, errors.New("pull operations are not supported by this connector")
+	return nil, nil, func() {}, errors.New(
+		"pull operations are not supported by this connector",
+	)
 }
 
 // GetAllFiles returns an error indicating pull operations are not supported.
@@ -225,7 +276,9 @@ func (p *NotSupportedPullProvider) GetAllFiles(
 	_ fiber.Ctx,
 	_ any,
 ) ([]string, [][]byte, error) {
-	return nil, nil, errors.New("pull operations are not supported by this connector")
+	return nil, nil, errors.New(
+		"pull operations are not supported by this connector",
+	)
 }
 
 // GetFileByPath returns an error indicating pull operations are not supported.
@@ -234,7 +287,9 @@ func (p *NotSupportedPullProvider) GetFileByPath(
 	_ any,
 	_ string,
 ) (string, []byte, error) {
-	return "", nil, errors.New("pull operations are not supported by this connector")
+	return "", nil, errors.New(
+		"pull operations are not supported by this connector",
+	)
 }
 
 // HandleNotSupportedPull provides a common handler for connectors that don't support pull operations.

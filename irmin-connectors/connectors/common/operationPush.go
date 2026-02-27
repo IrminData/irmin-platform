@@ -1,16 +1,44 @@
 package common
 
 import (
+	"archive/zip"
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"irmin-connectors/db"
 	"irmin-connectors/utils"
 	"log/slog"
+	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+	"time"
 
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 )
+
+// presignedDownloadTimeout is the maximum time allowed for downloading a file from a presigned URL.
+const presignedDownloadTimeout = 10 * time.Minute
+
+// dnsLookupTimeout is the maximum time allowed for resolving a hostname during SSRF validation.
+const dnsLookupTimeout = 5 * time.Second
+
+// maxPresignedRedirects is the maximum number of HTTP redirects allowed when downloading from a presigned URL.
+const maxPresignedRedirects = 10
+
+// maxPresignedDownloadBytes is the maximum file size accepted from a presigned URL download (5 GB).
+const maxPresignedDownloadBytes int64 = 5 * 1024 * 1024 * 1024
+
+// maxDecompressedEntryBytes is the maximum decompressed size per zip entry (1 GB).
+// Prevents zip bomb attacks where a small compressed entry expands to exhaust memory.
+const maxDecompressedEntryBytes int64 = 1024 * 1024 * 1024
+
+// maxTotalDecompressedBytes is the maximum total decompressed size across all zip entries (5 GB).
+// Prevents zip bombs with many small entries that collectively exhaust memory.
+const maxTotalDecompressedBytes int64 = 5 * 1024 * 1024 * 1024
 
 // PushOperationProvider defines the interface for connector-specific push operation handling.
 type PushOperationProvider interface {
@@ -111,22 +139,47 @@ func HandleOperationPush(
 	// Pass raw path to provider for connector-specific processing
 	rawPath := fields["path"]
 
-	// Handle uploaded file
-	files, err := handleUploadedFile(c)
-	if err != nil {
-		LogOperationEvent(
-			dbInstance,
-			logger,
-			operation.ID,
-			db.LogEventTypeError,
-			"Failed to handle uploaded file for push operation",
-			map[string]any{
-				"error": err.Error(),
-			},
-		)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+	// Check if a presigned URL was provided instead of a file upload.
+	// This avoids loading the full file into the core API's memory.
+	presignedURL := c.FormValue("presigned_url")
+
+	var files map[string][]byte
+	if presignedURL != "" {
+		var dlErr error
+		files, dlErr = handlePresignedURLFile(presignedURL)
+		if dlErr != nil {
+			LogOperationEvent(
+				dbInstance,
+				logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to download file from presigned URL for push operation",
+				map[string]any{
+					"error": dlErr.Error(),
+				},
+			)
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": dlErr.Error(),
+			})
+		}
+	} else {
+		var uploadErr error
+		files, uploadErr = handleUploadedFile(c)
+		if uploadErr != nil {
+			LogOperationEvent(
+				dbInstance,
+				logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to handle uploaded file for push operation",
+				map[string]any{
+					"error": uploadErr.Error(),
+				},
+			)
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": uploadErr.Error(),
+			})
+		}
 	}
 
 	if len(files) == 0 {
@@ -228,6 +281,205 @@ func (p *NotSupportedPushProvider) ProcessFiles(
 	_ string,
 ) error {
 	return errors.New("push operations are not supported by this connector")
+}
+
+// handlePresignedURLFile downloads a zip from a presigned URL to a temp file,
+// then extracts entries directly from disk. Only individual file contents are held
+// in memory; the full zip is never loaded at once.
+// validatePresignedURL checks that the URL uses an allowed scheme and does not target internal addresses.
+func validatePresignedURL(rawURL string) error {
+	parsed, parseErr := url.Parse(rawURL)
+	if parseErr != nil {
+		return fmt.Errorf("invalid presigned URL: %w", parseErr)
+	}
+	scheme := strings.ToLower(parsed.Scheme)
+	if scheme != "https" && scheme != "http" {
+		return fmt.Errorf("presigned URL must use HTTPS or HTTP scheme, got %q", parsed.Scheme)
+	}
+	host := strings.ToLower(parsed.Hostname())
+	if host == "localhost" {
+		return errors.New("presigned URL must not target internal addresses")
+	}
+	if ip := net.ParseIP(host); ip != nil {
+		// Literal IP address — check directly.
+		if isInternalIP(ip) {
+			return errors.New("presigned URL must not target internal addresses")
+		}
+		return nil
+	}
+	// Hostname — resolve and check every returned IP to prevent SSRF via
+	// hostnames that resolve to internal addresses (e.g. 169.254.169.254.nip.io).
+	ctx, cancel := context.WithTimeout(context.Background(), dnsLookupTimeout)
+	defer cancel()
+	addrs, lookupErr := net.DefaultResolver.LookupHost(ctx, host)
+	if lookupErr != nil {
+		return fmt.Errorf("failed to resolve presigned URL host %q: %w", host, lookupErr)
+	}
+	for _, addr := range addrs {
+		if ip := net.ParseIP(addr); ip != nil && isInternalIP(ip) {
+			return errors.New("presigned URL must not target internal addresses")
+		}
+	}
+	return nil
+}
+
+// isInternalIP returns true if the IP address belongs to a loopback, private,
+// link-local, or otherwise non-public range.
+func isInternalIP(ip net.IP) bool {
+	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() ||
+		ip.IsLinkLocalMulticast() || ip.IsUnspecified()
+}
+
+// ssrfSafeDialContext is a custom dial function that validates the resolved IP
+// address at connect time, closing the TOCTOU gap between DNS pre-validation
+// and the actual TCP connection (DNS rebinding defense).
+func ssrfSafeDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	host, port, splitErr := net.SplitHostPort(addr)
+	if splitErr != nil {
+		return nil, fmt.Errorf("invalid address %q: %w", addr, splitErr)
+	}
+
+	// Resolve the hostname to IPs and validate each one.
+	addrs, lookupErr := net.DefaultResolver.LookupHost(ctx, host)
+	if lookupErr != nil {
+		return nil, fmt.Errorf("failed to resolve host %q: %w", host, lookupErr)
+	}
+
+	var dialer net.Dialer
+	var lastDialErr error
+	allInternal := true
+	for _, resolved := range addrs {
+		if ip := net.ParseIP(resolved); ip != nil && isInternalIP(ip) {
+			continue // skip internal IPs
+		}
+		allInternal = false
+		conn, dialErr := dialer.DialContext(ctx, network, net.JoinHostPort(resolved, port))
+		if dialErr == nil {
+			return conn, nil
+		}
+		lastDialErr = dialErr
+	}
+	if allInternal {
+		return nil, errors.New("presigned URL must not target internal addresses")
+	}
+	return nil, fmt.Errorf("failed to connect to %s: %w", host, lastDialErr)
+}
+
+func handlePresignedURLFile(presignedURL string) (map[string][]byte, error) {
+	if err := validatePresignedURL(presignedURL); err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), presignedDownloadTimeout)
+	defer cancel()
+
+	req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, presignedURL, nil)
+	if reqErr != nil {
+		return nil, fmt.Errorf("failed to create presigned URL request: %w", reqErr)
+	}
+
+	// Use a client with a custom dialer that validates resolved IPs at connect
+	// time, preventing DNS rebinding attacks (TOCTOU between pre-flight DNS
+	// check and the actual HTTP connection).
+	client := &http.Client{
+		Transport: &http.Transport{
+			DialContext: ssrfSafeDialContext,
+		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= maxPresignedRedirects {
+				return fmt.Errorf("presigned URL exceeded maximum of %d redirects", maxPresignedRedirects)
+			}
+			return validatePresignedURL(req.URL.String())
+		},
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download from presigned URL: %w", err)
+	}
+	defer func() {
+		// Drain remaining body so the underlying connection can be reused.
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("presigned URL returned status %d", resp.StatusCode)
+	}
+
+	// Write to temp file — individual entries are read from disk, avoiding
+	// loading the full zip into memory.
+	tempFile, tempErr := os.CreateTemp("", "connector-push-*.zip")
+	if tempErr != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", tempErr)
+	}
+	defer tempFile.Close()
+	defer os.Remove(tempFile.Name())
+
+	// Limit download size to prevent resource exhaustion
+	limited := io.LimitReader(resp.Body, maxPresignedDownloadBytes+1)
+	written, copyErr := io.Copy(tempFile, limited)
+	if copyErr != nil {
+		return nil, fmt.Errorf("failed to write presigned URL response to temp file: %w", copyErr)
+	}
+	if written > maxPresignedDownloadBytes {
+		return nil, fmt.Errorf("presigned URL response exceeds maximum size of %d bytes", maxPresignedDownloadBytes)
+	}
+
+	// Close the file so zip.OpenReader can open it cleanly
+	if closeErr := tempFile.Close(); closeErr != nil {
+		return nil, fmt.Errorf("failed to close temp file: %w", closeErr)
+	}
+
+	// Extract entries directly from disk using zip.OpenReader (seekable, no full read)
+	zipReader, zipErr := zip.OpenReader(tempFile.Name())
+	if zipErr != nil {
+		return nil, fmt.Errorf("failed to open downloaded zip: %w", zipErr)
+	}
+	defer zipReader.Close()
+
+	files := make(map[string][]byte, len(zipReader.File))
+	var totalDecompressed int64
+	for _, f := range zipReader.File {
+		if f.FileInfo().IsDir() {
+			continue
+		}
+		data, readErr := readZipEntry(f)
+		if readErr != nil {
+			return nil, readErr
+		}
+		totalDecompressed += int64(len(data))
+		if totalDecompressed > maxTotalDecompressedBytes {
+			return nil, fmt.Errorf(
+				"total decompressed size exceeds maximum of %d bytes", maxTotalDecompressedBytes,
+			)
+		}
+		files[f.Name] = data
+	}
+
+	return files, nil
+}
+
+// readZipEntry reads a single zip entry with a decompressed size limit.
+// Uses defer to ensure the entry reader is closed even on panic.
+func readZipEntry(f *zip.File) ([]byte, error) {
+	rc, openErr := f.Open()
+	if openErr != nil {
+		return nil, fmt.Errorf("failed to open zip entry %s: %w", f.Name, openErr)
+	}
+	defer rc.Close()
+
+	limited := io.LimitReader(rc, maxDecompressedEntryBytes+1)
+	data, readErr := io.ReadAll(limited)
+	if readErr != nil {
+		return nil, fmt.Errorf("failed to read zip entry %s: %w", f.Name, readErr)
+	}
+	if int64(len(data)) > maxDecompressedEntryBytes {
+		return nil, fmt.Errorf(
+			"zip entry %s exceeds maximum decompressed size of %d bytes",
+			f.Name, maxDecompressedEntryBytes,
+		)
+	}
+	return data, nil
 }
 
 // HandleNotSupportedPush provides a common handler for connectors that don't support push operations.
