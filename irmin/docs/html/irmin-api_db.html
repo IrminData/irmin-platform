@@ -391,6 +391,37 @@ type ActionWorkflowableInput struct {
 	ActionWorkflowableID *uint               `json:"action_workflowable_id"`
 }
 
+type AsyncJob struct {
+	gorm.Model
+	WorkspaceID  uint            `json:"workspace_id"            gorm:"index"`
+	UserID       uint            `json:"user_id"                 gorm:"index"`
+	Type         AsyncJobType    `json:"type"                    gorm:"index"`
+	Status       AsyncJobStatus  `json:"status"                  gorm:"index;default:pending"`
+	Params       json.RawMessage `json:"params"                  gorm:"type:jsonb"`
+	ResultURL    string          `json:"result_url,omitempty"`
+	ResultExpiry *time.Time      `json:"result_expiry,omitempty"`
+	ErrorMessage string          `json:"error_message,omitempty"`
+	Progress     int             `json:"progress"                gorm:"default:0"`
+}
+    AsyncJob represents an asynchronous background job. The table is kept for
+    migration compatibility; job processing infrastructure has been removed (no
+    jobs are currently created).
+
+type AsyncJobStatus string
+    AsyncJobStatus represents the status of an async job.
+
+const (
+	AsyncJobStatusPending   AsyncJobStatus = "pending"
+	AsyncJobStatusRunning   AsyncJobStatus = "running"
+	AsyncJobStatusCompleted AsyncJobStatus = "completed"
+	AsyncJobStatusFailed    AsyncJobStatus = "failed"
+)
+type AsyncJobType string
+    AsyncJobType represents the type of async job.
+
+const (
+	AsyncJobTypeZipDownload AsyncJobType = "zip_download"
+)
 type BatchLoadResult struct {
 	Entities map[uint]any   // Map of entity ID to entity
 	Tags     map[uint][]Tag // Map of entity ID to tags
@@ -651,6 +682,11 @@ func (d *Database) DropSearchIndexes() error
 func (d *Database) EnsureNotificationTrigger(ctx context.Context) error
     EnsureNotificationTrigger ensures that the workflow run notification trigger
     exists in the database.
+
+func (d *Database) FindChildObjects(parentID uint) ([]RepositoryObject, error)
+    FindChildObjects returns the direct children of the given parent object.
+    Use this instead of relying on preloaded Children when traversing nested
+    directories, since GORM's Preload only loads one level of depth.
 
 func (d *Database) FindConnectionSchemaCache(connectionID uint, opMethod string) (*ConnectionSchemaCache, error)
     FindConnectionSchemaCache finds a connection schema cache by connection ID

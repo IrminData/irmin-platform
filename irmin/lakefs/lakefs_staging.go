@@ -23,6 +23,21 @@ type StagingMetadata struct {
 	Force        bool              `json:"force"`
 }
 
+// BuildStagingMetadata constructs a StagingMetadata struct for use with AssociateStaging.
+func (c *Client) BuildStagingMetadata(
+	physicalAddress, checksum string, sizeBytes int64, contentType string,
+) StagingMetadata {
+	return StagingMetadata{
+		Staging: StagingLocation{
+			PhysicalAddress: physicalAddress,
+		},
+		Checksum:    checksum,
+		SizeBytes:   sizeBytes,
+		ContentType: contentType,
+		Force:       false,
+	}
+}
+
 // GenerateStagingLocation generates an address to which the client can upload an object to stage it.
 func (c *Client) GenerateStagingLocation(repositoryID, branchID, path string, presign bool) (*StagingLocation, error) {
 	var stagingLocation StagingLocation

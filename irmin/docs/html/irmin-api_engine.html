@@ -12,6 +12,10 @@ const (
 	// PointerFilePrefix is the prefix used to identify pointer files.
 	PointerFilePrefix = "_ptr."
 )
+const InMemoryMultiplier = 10
+    InMemoryMultiplier is the factor applied to MaxInMemorySizeMB to determine
+    the maximum allowed in-memory size for bulk data operations (pull, export).
+
 
 VARIABLES
 
@@ -368,6 +372,21 @@ func (c *Client) GetObjectChanges(workspace, repository, path, ref string) ([]ir
 
 func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]byte, error)
 
+func (c *Client) GetObjectContentStream(
+	workspace, repository, path, ref string,
+) (io.ReadCloser, int64, error)
+    GetObjectContentStream returns a streaming reader for the object content
+    without loading it into memory. The caller MUST close the returned
+    io.ReadCloser when done. If LakeFS returns a 302 redirect, the redirect is
+    followed and the body is returned as a stream.
+
+func (c *Client) GetObjectPresignedURL(
+	workspace, repository, path, ref string,
+) (string, error)
+    GetObjectPresignedURL returns a presigned download URL for the object using
+    LakeFS metadata API. The returned URL can be used by clients to download the
+    object directly from the storage backend.
+
 func (c *Client) GetPath(workspace, repository, path, ref string) (*irminmodels.Object, error)
 
 func (c *Client) GetRepository(ctx context.Context, workspace, repository string) (*Repository, error)
@@ -428,6 +447,18 @@ func (c *Client) PullFilesFromConnector(
     PullFilesFromConnector pulls files from a connector, unzips them, and
     returns a map of file paths to file contents. It returns a map of file paths
     to file contents and an error if any occurred.
+
+func (c *Client) PullFilesFromConnectorStreaming(
+	ctx context.Context,
+	connection *db.Connection,
+	connectionPaths []string,
+	lakeFSRepo, branch string,
+	pathPrefix string,
+) ([]lakefs.ObjectMetadata, []connectorsclient.OperationLog, error)
+    PullFilesFromConnectorStreaming pulls files from a connector and
+    uploads them directly to LakeFS without loading all files into memory
+    simultaneously. The connector response is streamed to a temporary file on
+    disk, then each file is extracted and uploaded individually.
 
 func (c *Client) PushFilesToConnector(
 	ctx context.Context,

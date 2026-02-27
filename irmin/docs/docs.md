@@ -13,12 +13,10 @@ import "irmin-api"
 
 ## Constants
 
-<a name="MaxRequestBodySize"></a>
+<a name="CachePreflightDuration"></a>
 
 ```go
 const (
-    // MaxRequestBodySize is the maximum size of request body in bytes (5 GB).
-    MaxRequestBodySize = 5 * 1024 * 1024 * 1024
     // CachePreflightDuration is the duration for which preflight requests are cached.
     CachePreflightDuration = 24 * time.Hour
 )
@@ -435,6 +433,7 @@ import "irmin-api/connectors-client"
   - [func \(c \*Client\) CancelOperation\(ctx context.Context, operationID uint\) error](<#Client.CancelOperation>)
   - [func \(c \*Client\) FetchAPI\(ctx context.Context, opts RequestOptions, out any\) error](<#Client.FetchAPI>)
   - [func \(c \*Client\) FetchStreamFiles\(ctx context.Context, opts RequestOptions\) \(\[\]PulledFile, error\)](<#Client.FetchStreamFiles>)
+  - [func \(c \*Client\) FetchStreamFilesReader\(ctx context.Context, opts RequestOptions\) \(io.ReadCloser, error\)](<#Client.FetchStreamFilesReader>)
   - [func \(c \*Client\) GetConfigFields\(ctx context.Context, configType string, details map\[string\]string, settings map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Client.GetConfigFields>)
   - [func \(c \*Client\) GetInfo\(ctx context.Context\) \(\*ConnectorInfo, error\)](<#Client.GetInfo>)
   - [func \(c \*Client\) GetOperationStatus\(ctx context.Context, operationID uint\) \(\*OperationStatus, error\)](<#Client.GetOperationStatus>)
@@ -442,6 +441,7 @@ import "irmin-api/connectors-client"
   - [func \(c \*Client\) InitOperation\(ctx context.Context, details map\[string\]string, settings map\[string\]string\) \(\*Operation, error\)](<#Client.InitOperation>)
   - [func \(c \*Client\) OperationPatch\(ctx context.Context, patchFile FormFile\) \(string, error\)](<#Client.OperationPatch>)
   - [func \(c \*Client\) OperationPull\(ctx context.Context, path string\) \(\[\]PulledFile, error\)](<#Client.OperationPull>)
+  - [func \(c \*Client\) OperationPullStream\(ctx context.Context, path string\) \(io.ReadCloser, error\)](<#Client.OperationPullStream>)
   - [func \(c \*Client\) OperationPush\(ctx context.Context, path string, file FormFile\) \(string, error\)](<#Client.OperationPush>)
   - [func \(c \*Client\) Request\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
   - [func \(c \*Client\) SubscribeToChanges\(ctx context.Context, webhookURL, webhookAccessToken string\) \(\*Subscription, error\)](<#Client.SubscribeToChanges>)
@@ -475,6 +475,7 @@ type Client struct {
 
     // HTTPClient is a customisable HTTP client. You can set timeouts, proxies, etc.
     HTTPClient *http.Client
+    // contains filtered or unexported fields
 }
 ```
 
@@ -519,6 +520,15 @@ func (c *Client) FetchStreamFiles(ctx context.Context, opts RequestOptions) ([]P
 ```
 
 FetchStreamFiles sends a request based on the provided RequestOptions and returns a slice of PulledFile. If the response is multipart, each part is parsed as a separate file. Otherwise, the response is treated as a single file.
+
+<a name="Client.FetchStreamFilesReader"></a>
+### func \(\*Client\) FetchStreamFilesReader
+
+```go
+func (c *Client) FetchStreamFilesReader(ctx context.Context, opts RequestOptions) (io.ReadCloser, error)
+```
+
+FetchStreamFilesReader sends a request and returns a streaming reader for the response body. The caller is responsible for closing the returned reader. This avoids loading the entire response into memory, suitable for large file transfers.
 
 <a name="Client.GetConfigFields"></a>
 ### func \(\*Client\) GetConfigFields
@@ -629,6 +639,15 @@ Returns: \- A slice of PulledFile objects containing the following:
 - String containing the filename extracted from the Content\-Disposition header \(if present\).
 
 \- An error if the request fails.
+
+<a name="Client.OperationPullStream"></a>
+### func \(\*Client\) OperationPullStream
+
+```go
+func (c *Client) OperationPullStream(ctx context.Context, path string) (io.ReadCloser, error)
+```
+
+OperationPullStream sends a POST request to the /operation/pull endpoint and returns a streaming reader for the response body. The caller is responsible for closing the reader. The response is expected to be a zip archive.
 
 <a name="Client.OperationPush"></a>
 ### func \(\*Client\) OperationPush
@@ -951,12 +970,14 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) RepositoryCreatePointer\(c fiber.Ctx\) error](<#APIControllers.RepositoryCreatePointer>)
   - [func \(api \*APIControllers\) RepositoryGetUncommittedChanges\(c fiber.Ctx\) error](<#APIControllers.RepositoryGetUncommittedChanges>)
   - [func \(api \*APIControllers\) RepositoryMoveObject\(c fiber.Ctx\) error](<#APIControllers.RepositoryMoveObject>)
+  - [func \(api \*APIControllers\) RepositoryObjectsAssociateUpload\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsAssociateUpload>)
   - [func \(api \*APIControllers\) RepositoryObjectsContent\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsContent>)
   - [func \(api \*APIControllers\) RepositoryObjectsCreateSignedURL\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsCreateSignedURL>)
   - [func \(api \*APIControllers\) RepositoryObjectsDestroy\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsDestroy>)
   - [func \(api \*APIControllers\) RepositoryObjectsDownload\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsDownload>)
   - [func \(api \*APIControllers\) RepositoryObjectsHistory\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsHistory>)
   - [func \(api \*APIControllers\) RepositoryObjectsIndex\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsIndex>)
+  - [func \(api \*APIControllers\) RepositoryObjectsPresignedUpload\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsPresignedUpload>)
   - [func \(api \*APIControllers\) RepositoryObjectsSchema\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsSchema>)
   - [func \(api \*APIControllers\) RepositoryObjectsStructuredContent\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsStructuredContent>)
   - [func \(api \*APIControllers\) RepositoryObjectsValidate\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsValidate>)
@@ -2010,6 +2031,15 @@ func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error
 
 RepositoryMoveObject godoc @Summary Move repository object @Description Move an object to a new path within the same repository at a given reference @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param ref query string false "Reference \(branch, tag, or commit\) to move in" default\("main"\) @Param path query string true "Current object path within the repository" @Param body body irmincore.MoveObjectRequest true "Move object request with new path" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Object\} "Object moved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid new path or parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Object not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects/move \[patch\]
 
+<a name="APIControllers.RepositoryObjectsAssociateUpload"></a>
+### func \(\*APIControllers\) RepositoryObjectsAssociateUpload
+
+```go
+func (api *APIControllers) RepositoryObjectsAssociateUpload(c fiber.Ctx) error
+```
+
+RepositoryObjectsAssociateUpload godoc @Summary Associate a staged upload @Description Link a previously uploaded object \(via presigned URL\) with a path in the repository. @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param path query string true "Object path within the repository" @Param ref query string true "Branch to associate the upload with" @Param body body associateUploadRequest true "Upload metadata" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Object\} @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects/upload/associate \[post\]
+
 <a name="APIControllers.RepositoryObjectsContent"></a>
 ### func \(\*APIControllers\) RepositoryObjectsContent
 
@@ -2017,7 +2047,7 @@ RepositoryMoveObject godoc @Summary Move repository object @Description Move an 
 func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error
 ```
 
-RepositoryObjectsContent godoc @Summary Download repository object content @Description Download the raw content of an object from a repository at a given reference @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce application/octet\-stream @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param path query string true "Object path within the repository" @Param ref query string false "Reference \(branch, tag, or commit\) to download from" default\("main"\) @Success 200 \{file\} file "Object content as file download" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Object not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects/content \[get\]
+RepositoryObjectsContent godoc @Summary Download repository object content @Description Download the raw content of an object from a repository at a given reference @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce application/octet\-stream @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param path query string true "Object path within the repository" @Param ref query string false "Reference \(branch, tag, or commit\) to download from" default\("main"\) @Success 200 \{file\} file "Object content as file download" @Success 302 "Redirect to presigned URL for large files" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Object not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects/content \[get\]
 
 <a name="APIControllers.RepositoryObjectsCreateSignedURL"></a>
 ### func \(\*APIControllers\) RepositoryObjectsCreateSignedURL
@@ -2063,6 +2093,15 @@ func (api *APIControllers) RepositoryObjectsIndex(c fiber.Ctx) error
 ```
 
 RepositoryObjectsIndex godoc @Summary Get repository object @Description Get details of a specific object or directory in a repository at a given reference @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param path query string true "Object path within the repository" @Param ref query string false "Reference \(branch, tag, or commit\) to get object from" default\("main"\) @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Object\} "Object retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Object not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects \[get\]
+
+<a name="APIControllers.RepositoryObjectsPresignedUpload"></a>
+### func \(\*APIControllers\) RepositoryObjectsPresignedUpload
+
+```go
+func (api *APIControllers) RepositoryObjectsPresignedUpload(c fiber.Ctx) error
+```
+
+RepositoryObjectsPresignedUpload godoc @Summary Generate presigned upload URL @Description Generate a presigned URL for direct\-to\-storage upload. The client uploads directly @Description to the storage backend using the returned URL, then calls the associate endpoint. @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param path query string true "Object path within the repository" @Param ref query string true "Branch to upload to" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=services.PresignedUploadResult\} @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects/upload/presigned \[post\]
 
 <a name="APIControllers.RepositoryObjectsSchema"></a>
 ### func \(\*APIControllers\) RepositoryObjectsSchema
@@ -2756,6 +2795,9 @@ import "irmin-api/db"
 - [type APIToken](<#APIToken>)
 - [type ActionWorkflowable](<#ActionWorkflowable>)
 - [type ActionWorkflowableInput](<#ActionWorkflowableInput>)
+- [type AsyncJob](<#AsyncJob>)
+- [type AsyncJobStatus](<#AsyncJobStatus>)
+- [type AsyncJobType](<#AsyncJobType>)
 - [type BatchLoadResult](<#BatchLoadResult>)
 - [type Connection](<#Connection>)
 - [type ConnectionEventType](<#ConnectionEventType>)
@@ -2800,6 +2842,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) DeleteWorkspace\(id uint, tx \*gorm.DB\) error](<#Database.DeleteWorkspace>)
   - [func \(d \*Database\) DropSearchIndexes\(\) error](<#Database.DropSearchIndexes>)
   - [func \(d \*Database\) EnsureNotificationTrigger\(ctx context.Context\) error](<#Database.EnsureNotificationTrigger>)
+  - [func \(d \*Database\) FindChildObjects\(parentID uint\) \(\[\]RepositoryObject, error\)](<#Database.FindChildObjects>)
   - [func \(d \*Database\) FindConnectionSchemaCache\(connectionID uint, opMethod string\) \(\*ConnectionSchemaCache, error\)](<#Database.FindConnectionSchemaCache>)
   - [func \(d \*Database\) FindObject\(path \*string, repositoryID \*uint, ref \*string\) \(\*RepositoryObject, error\)](<#Database.FindObject>)
   - [func \(d \*Database\) FindRepositorySchemaCache\(repositoryID uint, path, ref string\) \(\*RepositorySchemaCache, error\)](<#Database.FindRepositorySchemaCache>)
@@ -3545,6 +3588,63 @@ type ActionWorkflowableInput struct {
 }
 ```
 
+<a name="AsyncJob"></a>
+## type AsyncJob
+
+AsyncJob represents an asynchronous background job. The table is kept for migration compatibility; job processing infrastructure has been removed \(no jobs are currently created\).
+
+```go
+type AsyncJob struct {
+    gorm.Model
+    WorkspaceID  uint            `json:"workspace_id"            gorm:"index"`
+    UserID       uint            `json:"user_id"                 gorm:"index"`
+    Type         AsyncJobType    `json:"type"                    gorm:"index"`
+    Status       AsyncJobStatus  `json:"status"                  gorm:"index;default:pending"`
+    Params       json.RawMessage `json:"params"                  gorm:"type:jsonb"`
+    ResultURL    string          `json:"result_url,omitempty"`
+    ResultExpiry *time.Time      `json:"result_expiry,omitempty"`
+    ErrorMessage string          `json:"error_message,omitempty"`
+    Progress     int             `json:"progress"                gorm:"default:0"`
+}
+```
+
+<a name="AsyncJobStatus"></a>
+## type AsyncJobStatus
+
+AsyncJobStatus represents the status of an async job.
+
+```go
+type AsyncJobStatus string
+```
+
+<a name="AsyncJobStatusPending"></a>
+
+```go
+const (
+    AsyncJobStatusPending   AsyncJobStatus = "pending"
+    AsyncJobStatusRunning   AsyncJobStatus = "running"
+    AsyncJobStatusCompleted AsyncJobStatus = "completed"
+    AsyncJobStatusFailed    AsyncJobStatus = "failed"
+)
+```
+
+<a name="AsyncJobType"></a>
+## type AsyncJobType
+
+AsyncJobType represents the type of async job.
+
+```go
+type AsyncJobType string
+```
+
+<a name="AsyncJobTypeZipDownload"></a>
+
+```go
+const (
+    AsyncJobTypeZipDownload AsyncJobType = "zip_download"
+)
+```
+
 <a name="BatchLoadResult"></a>
 ## type BatchLoadResult
 
@@ -4074,6 +4174,15 @@ func (d *Database) EnsureNotificationTrigger(ctx context.Context) error
 ```
 
 EnsureNotificationTrigger ensures that the workflow run notification trigger exists in the database.
+
+<a name="Database.FindChildObjects"></a>
+### func \(\*Database\) FindChildObjects
+
+```go
+func (d *Database) FindChildObjects(parentID uint) ([]RepositoryObject, error)
+```
+
+FindChildObjects returns the direct children of the given parent object. Use this instead of relying on preloaded Children when traversing nested directories, since GORM's Preload only loads one level of depth.
 
 <a name="Database.FindConnectionSchemaCache"></a>
 ### func \(\*Database\) FindConnectionSchemaCache
@@ -7338,6 +7447,8 @@ import "irmin-api/engine"
   - [func \(c \*Client\) GetCommitDiff\(workspace, repository, commitHash string\) \(\[\]lakefs.Diff, error\)](<#Client.GetCommitDiff>)
   - [func \(c \*Client\) GetObjectChanges\(workspace, repository, path, ref string\) \(\[\]irminmodels.Commit, error\)](<#Client.GetObjectChanges>)
   - [func \(c \*Client\) GetObjectContent\(workspace, repository, path, ref string\) \(\[\]byte, error\)](<#Client.GetObjectContent>)
+  - [func \(c \*Client\) GetObjectContentStream\(workspace, repository, path, ref string\) \(io.ReadCloser, int64, error\)](<#Client.GetObjectContentStream>)
+  - [func \(c \*Client\) GetObjectPresignedURL\(workspace, repository, path, ref string\) \(string, error\)](<#Client.GetObjectPresignedURL>)
   - [func \(c \*Client\) GetPath\(workspace, repository, path, ref string\) \(\*irminmodels.Object, error\)](<#Client.GetPath>)
   - [func \(c \*Client\) GetRepository\(ctx context.Context, workspace, repository string\) \(\*Repository, error\)](<#Client.GetRepository>)
   - [func \(c \*Client\) GetTag\(workspace, repository, tag string\) \(\*irminmodels.GitTag, error\)](<#Client.GetTag>)
@@ -7352,6 +7463,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) ObjectExists\(workspace, repository, path, ref string\) \(bool, error\)](<#Client.ObjectExists>)
   - [func \(c \*Client\) ProcessTransformations\(ctx context.Context, files map\[string\]\[\]byte, config TransformConfig\) \(map\[string\]\[\]byte, error\)](<#Client.ProcessTransformations>)
   - [func \(c \*Client\) PullFilesFromConnector\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string\) \(map\[string\]\[\]byte, \[\]connectorsclient.OperationLog, error\)](<#Client.PullFilesFromConnector>)
+  - [func \(c \*Client\) PullFilesFromConnectorStreaming\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, lakeFSRepo, branch string, pathPrefix string\) \(\[\]lakefs.ObjectMetadata, \[\]connectorsclient.OperationLog, error\)](<#Client.PullFilesFromConnectorStreaming>)
   - [func \(c \*Client\) PushFilesToConnector\(ctx context.Context, connection \*db.Connection, connectionPath string, objects \[\]\*irminmodels.Object, files map\[string\]\[\]byte, tx ...\*gorm.DB\) \(\[\]string, \[\]connectorsclient.OperationLog, error\)](<#Client.PushFilesToConnector>)
   - [func \(c \*Client\) ResetBranchToCommit\(workspace, repository, branch, commitRef string, force bool\) error](<#Client.ResetBranchToCommit>)
   - [func \(c \*Client\) RevertCommit\(workspace, repository, branch, commitRef string, parentNumber int\) \(\*irminmodels.Commit, error\)](<#Client.RevertCommit>)
@@ -7382,6 +7494,12 @@ import "irmin-api/engine"
 
 
 ## Constants
+
+<a name="InMemoryMultiplier"></a>InMemoryMultiplier is the factor applied to MaxInMemorySizeMB to determine the maximum allowed in\-memory size for bulk data operations \(pull, export\).
+
+```go
+const InMemoryMultiplier = 10
+```
 
 <a name="PointerFilePrefix"></a>
 
@@ -7913,6 +8031,24 @@ func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]by
 
 
 
+<a name="Client.GetObjectContentStream"></a>
+### func \(\*Client\) GetObjectContentStream
+
+```go
+func (c *Client) GetObjectContentStream(workspace, repository, path, ref string) (io.ReadCloser, int64, error)
+```
+
+GetObjectContentStream returns a streaming reader for the object content without loading it into memory. The caller MUST close the returned io.ReadCloser when done. If LakeFS returns a 302 redirect, the redirect is followed and the body is returned as a stream.
+
+<a name="Client.GetObjectPresignedURL"></a>
+### func \(\*Client\) GetObjectPresignedURL
+
+```go
+func (c *Client) GetObjectPresignedURL(workspace, repository, path, ref string) (string, error)
+```
+
+GetObjectPresignedURL returns a presigned download URL for the object using LakeFS metadata API. The returned URL can be used by clients to download the object directly from the storage backend.
+
 <a name="Client.GetPath"></a>
 ### func \(\*Client\) GetPath
 
@@ -8038,6 +8174,15 @@ func (c *Client) PullFilesFromConnector(ctx context.Context, connection *db.Conn
 ```
 
 PullFilesFromConnector pulls files from a connector, unzips them, and returns a map of file paths to file contents. It returns a map of file paths to file contents and an error if any occurred.
+
+<a name="Client.PullFilesFromConnectorStreaming"></a>
+### func \(\*Client\) PullFilesFromConnectorStreaming
+
+```go
+func (c *Client) PullFilesFromConnectorStreaming(ctx context.Context, connection *db.Connection, connectionPaths []string, lakeFSRepo, branch string, pathPrefix string) ([]lakefs.ObjectMetadata, []connectorsclient.OperationLog, error)
+```
+
+PullFilesFromConnectorStreaming pulls files from a connector and uploads them directly to LakeFS without loading all files into memory simultaneously. The connector response is streamed to a temporary file on disk, then each file is extracted and uploaded individually.
 
 <a name="Client.PushFilesToConnector"></a>
 ### func \(\*Client\) PushFilesToConnector
@@ -8846,6 +8991,7 @@ import "irmin-api/lakefs"
   - [func \(c \*Client\) AttachPolicyToGroup\(groupID, policyID string\) error](<#Client.AttachPolicyToGroup>)
   - [func \(c \*Client\) AttachPolicyToUser\(userID, policyID string\) error](<#Client.AttachPolicyToUser>)
   - [func \(c \*Client\) BranchCherryPick\(repositoryID, branchID string, reqData CherryPickRequest\) \(\*Commit, error\)](<#Client.BranchCherryPick>)
+  - [func \(c \*Client\) BuildStagingMetadata\(physicalAddress, checksum string, sizeBytes int64, contentType string\) StagingMetadata](<#Client.BuildStagingMetadata>)
   - [func \(c \*Client\) CheckObjectExists\(repositoryID, ref, objectPath string\) error](<#Client.CheckObjectExists>)
   - [func \(c \*Client\) CopyObject\(repositoryID, branch, destinationPath string, reqData ObjectCopyRequest\) \(\*ObjectMetadata, error\)](<#Client.CopyObject>)
   - [func \(c \*Client\) CreateBranch\(repositoryID string, reqData BranchCreateRequest\) error](<#Client.CreateBranch>)
@@ -8873,6 +9019,7 @@ import "irmin-api/lakefs"
   - [func \(c \*Client\) DetachPolicyFromGroup\(groupID, policyID string\) error](<#Client.DetachPolicyFromGroup>)
   - [func \(c \*Client\) DetachPolicyFromUser\(userID, policyID string\) error](<#Client.DetachPolicyFromUser>)
   - [func \(c \*Client\) FindMergeBase\(repositoryID, sourceRef, destinationBranch string\) \(\*MergeBase, error\)](<#Client.FindMergeBase>)
+  - [func \(c \*Client\) FollowRedirect\(redirectURL string\) \(\*ObjectContentResponse, error\)](<#Client.FollowRedirect>)
   - [func \(c \*Client\) GenerateStagingLocation\(repositoryID, branchID, path string, presign bool\) \(\*StagingLocation, error\)](<#Client.GenerateStagingLocation>)
   - [func \(c \*Client\) GetActionRun\(repositoryID, runID string\) \(\*ActionRun, error\)](<#Client.GetActionRun>)
   - [func \(c \*Client\) GetBranch\(repositoryID, branchID string\) \(\*Branch, error\)](<#Client.GetBranch>)
@@ -9244,6 +9391,15 @@ func (c *Client) BranchCherryPick(repositoryID, branchID string, reqData CherryP
 
 BranchCherryPick allows to replay the changes of a commit on a branch.
 
+<a name="Client.BuildStagingMetadata"></a>
+### func \(\*Client\) BuildStagingMetadata
+
+```go
+func (c *Client) BuildStagingMetadata(physicalAddress, checksum string, sizeBytes int64, contentType string) StagingMetadata
+```
+
+BuildStagingMetadata constructs a StagingMetadata struct for use with AssociateStaging.
+
 <a name="Client.CheckObjectExists"></a>
 ### func \(\*Client\) CheckObjectExists
 
@@ -9486,6 +9642,15 @@ func (c *Client) FindMergeBase(repositoryID, sourceRef, destinationBranch string
 ```
 
 FindMergeBase finds the merge base between two refs in a repository.
+
+<a name="Client.FollowRedirect"></a>
+### func \(\*Client\) FollowRedirect
+
+```go
+func (c *Client) FollowRedirect(redirectURL string) (*ObjectContentResponse, error)
+```
+
+FollowRedirect follows a redirect URL and returns a streaming response without loading content into memory. The caller MUST close the returned ObjectContentResponse.Body.
 
 <a name="Client.GenerateStagingLocation"></a>
 ### func \(\*Client\) GenerateStagingLocation
@@ -11902,6 +12067,7 @@ import "irmin-api/middlewares"
   - [func \(api \*APIMiddlewares\) RepositoryPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.RepositoryPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) RepositoryTagMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.RepositoryTagMiddleware>)
   - [func \(api \*APIMiddlewares\) RepositoryTagPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.RepositoryTagPermissionMiddleware>)
+  - [func \(api \*APIMiddlewares\) ResponseSizeMonitor\(c fiber.Ctx\) error](<#APIMiddlewares.ResponseSizeMonitor>)
   - [func \(api \*APIMiddlewares\) ScriptMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.ScriptMiddleware>)
   - [func \(api \*APIMiddlewares\) ScriptPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.ScriptPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) UserMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.UserMiddleware>)
@@ -12216,6 +12382,15 @@ func (api *APIMiddlewares) RepositoryTagPermissionMiddleware(action db.PolicyAct
 ```
 
 RepositoryTagPermissionMiddleware creates a middleware for tag\-level permissions.
+
+<a name="APIMiddlewares.ResponseSizeMonitor"></a>
+### func \(\*APIMiddlewares\) ResponseSizeMonitor
+
+```go
+func (api *APIMiddlewares) ResponseSizeMonitor(c fiber.Ctx) error
+```
+
+ResponseSizeMonitor logs warnings for large in\-memory responses that may indicate missing streaming or redirect optimizations.
 
 <a name="APIMiddlewares.ScriptMiddleware"></a>
 ### func \(\*APIMiddlewares\) ScriptMiddleware
@@ -13417,6 +13592,7 @@ import "irmin-api/services"
 - [Constants](<#constants>)
 - [Variables](<#variables>)
 - [func BuildUnifiedPath\(repoSlug, ref, pathWithinRepo string\) string](<#BuildUnifiedPath>)
+- [func CalculateObjectTotalSize\(database \*db.Database, object \*db.RepositoryObject\) \(int64, error\)](<#CalculateObjectTotalSize>)
 - [func GetInternalErrorMessage\(err error\) string](<#GetInternalErrorMessage>)
 - [func GetTranslationKeyForError\(err error\) string](<#GetTranslationKeyForError>)
 - [func IsInternalError\(err error\) bool](<#IsInternalError>)
@@ -13455,6 +13631,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) AcceptInvite\(c context.Context, user \*db.User, invite \*db.Invite\) error](<#APIServices.AcceptInvite>)
   - [func \(api \*APIServices\) AddOrRemoveTagFromEntity\(c context.Context, operation TagEntityOperation, user \*db.User, workspace \*db.Workspace, tag \*db.TagWithAssets, entityType string, entityID string\) error](<#APIServices.AddOrRemoveTagFromEntity>)
   - [func \(api \*APIServices\) AddTagToEntity\(c context.Context, user \*db.User, workspace \*db.Workspace, tag \*db.Tag, entityType string, entityID uint\) error](<#APIServices.AddTagToEntity>)
+  - [func \(api \*APIServices\) AssociatePresignedUpload\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, path string, ref string, physicalAddress string, checksum string, sizeBytes int64, contentType string\) \(\*irminmodels.Object, error\)](<#APIServices.AssociatePresignedUpload>)
   - [func \(api \*APIServices\) CancelWorkflowRun\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, runSqid string\) \(\*db.WorkflowRun, error\)](<#APIServices.CancelWorkflowRun>)
   - [func \(api \*APIServices\) CheckPolicyPermission\(c context.Context, user \*db.User, workspace \*db.Workspace, resource db.PolicyResource, resourceID string, action db.PolicyAction\) \(bool, error\)](<#APIServices.CheckPolicyPermission>)
   - [func \(api \*APIServices\) CompareRepositoryRefs\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, baseRef, compareRef string\) \(\*irminmodels.Diff, error\)](<#APIServices.CompareRepositoryRefs>)
@@ -13495,6 +13672,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ExecuteSQL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.ExecuteSQLRequest, limitResponse bool\) \(\*irminmodels.QueryResult, error\)](<#APIServices.ExecuteSQL>)
   - [func \(api \*APIServices\) ExecuteScript\(c context.Context, user \*db.User, workspace \*db.Workspace, script \*db.StoredScript, req irmincore.ExecuteScriptRequest, limitResponse bool\) \(\*irminmodels.ScriptResult, error\)](<#APIServices.ExecuteScript>)
   - [func \(api \*APIServices\) GenerateAIApplicationSystemPrompt\(aiApp \*db.AIApplication\) string](<#APIServices.GenerateAIApplicationSystemPrompt>)
+  - [func \(api \*APIServices\) GeneratePresignedUploadURL\(c context.Context, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, path string, ref string\) \(\*PresignedUploadResult, error\)](<#APIServices.GeneratePresignedUploadURL>)
   - [func \(api \*APIServices\) GenerateSchemaFromUploadedFile\(ctx context.Context, locale string, filename string, fileReader io.Reader\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GenerateSchemaFromUploadedFile>)
   - [func \(api \*APIServices\) GetAIApplication\(c context.Context, user \*db.User, workspace \*db.Workspace, aiApplicationSqid string\) \(\*db.AIApplication, error\)](<#APIServices.GetAIApplication>)
   - [func \(api \*APIServices\) GetConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connectionSqid string\) \(\*db.Connection, error\)](<#APIServices.GetConnection>)
@@ -13516,6 +13694,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) GetRepositoryCommit\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, hash string\) \(\*irminmodels.Commit, error\)](<#APIServices.GetRepositoryCommit>)
   - [func \(api \*APIServices\) GetRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, objectPath string, objectRef string\) \(\*db.RepositoryObject, irminutils.ObjectDetails, string, error\)](<#APIServices.GetRepositoryObject>)
   - [func \(api \*APIServices\) GetRepositoryObjectContent\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, limitResponse bool\) \(\[\]byte, error\)](<#APIServices.GetRepositoryObjectContent>)
+  - [func \(api \*APIServices\) GetRepositoryObjectDownload\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(\*ObjectDownloadResult, error\)](<#APIServices.GetRepositoryObjectDownload>)
   - [func \(api \*APIServices\) GetRepositoryObjectHistory\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(\[\]irminmodels.Commit, error\)](<#APIServices.GetRepositoryObjectHistory>)
   - [func \(api \*APIServices\) GetRepositoryObjectSchema\(ctx context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, ref string\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetRepositoryObjectSchema>)
   - [func \(api \*APIServices\) GetRepositoryObjectStructuredContent\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, limitResponse bool\) \(map\[string\]\[\]map\[string\]any, error\)](<#APIServices.GetRepositoryObjectStructuredContent>)
@@ -13573,6 +13752,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) SearchWorkspace\(c context.Context, user \*db.User, workspace \*db.Workspace, filters db.SearchFilters\) \(\*irminmodels.SearchResponse, error\)](<#APIServices.SearchWorkspace>)
   - [func \(api \*APIServices\) SendInvite\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.SendInviteRequest\) \(\*InviteTransactionResult, error\)](<#APIServices.SendInvite>)
   - [func \(api \*APIServices\) StartWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow\) \(\*db.Workflow, error\)](<#APIServices.StartWorkflow>)
+  - [func \(api \*APIServices\) StreamZipRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, writer io.Writer\) error](<#APIServices.StreamZipRepositoryObject>)
   - [func \(api \*APIServices\) SyncUserWithClerkAndNovu\(c context.Context, irminUser \*db.User, clerkID, locale string\) \(\*db.User, error\)](<#APIServices.SyncUserWithClerkAndNovu>)
   - [func \(api \*APIServices\) TestConnection\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#APIServices.TestConnection>)
   - [func \(api \*APIServices\) TransferAIApplicationOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, aiApplication \*db.AIApplication, req irmincore.TransferAIApplicationOwnershipRequest\) \(\*db.AIApplication, error\)](<#APIServices.TransferAIApplicationOwnership>)
@@ -13620,7 +13800,9 @@ import "irmin-api/services"
   - [func NewErrorHandler\(logger \*slog.Logger, lm \*locales.LocaleManager\) \*ErrorHandler](<#NewErrorHandler>)
   - [func \(eh \*ErrorHandler\) HandleServiceError\(c fiber.Ctx, consoleLogPrefix string, err error, dict locales.Dictionary\) error](<#ErrorHandler.HandleServiceError>)
 - [type InviteTransactionResult](<#InviteTransactionResult>)
+- [type ObjectDownloadResult](<#ObjectDownloadResult>)
 - [type PolicyFilters](<#PolicyFilters>)
+- [type PresignedUploadResult](<#PresignedUploadResult>)
 - [type ResolvedPath](<#ResolvedPath>)
 - [type TagEntityOperation](<#TagEntityOperation>)
 - [type UpdateCustomToolRequest](<#UpdateCustomToolRequest>)
@@ -13790,6 +13972,15 @@ func BuildUnifiedPath(repoSlug, ref, pathWithinRepo string) string
 ```
 
 BuildUnifiedPath constructs a unified path from a repository slug, ref, and path within the repository. The unified path format is: /\{repository\-slug\}/\{ref\}/\{path\-within\-repo\}
+
+<a name="CalculateObjectTotalSize"></a>
+## func CalculateObjectTotalSize
+
+```go
+func CalculateObjectTotalSize(database *db.Database, object *db.RepositoryObject) (int64, error)
+```
+
+CalculateObjectTotalSize recursively calculates the total size of an object and its children. Children are fetched from the database on\-the\-fly to support arbitrarily nested directories.
 
 <a name="GetInternalErrorMessage"></a>
 ## func GetInternalErrorMessage
@@ -14145,6 +14336,15 @@ func (api *APIServices) AddTagToEntity(c context.Context, user *db.User, workspa
 ```
 
 
+
+<a name="APIServices.AssociatePresignedUpload"></a>
+### func \(\*APIServices\) AssociatePresignedUpload
+
+```go
+func (api *APIServices) AssociatePresignedUpload(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, path string, ref string, physicalAddress string, checksum string, sizeBytes int64, contentType string) (*irminmodels.Object, error)
+```
+
+AssociatePresignedUpload links a previously staged upload with a path in LakeFS, creating an uncommitted change. This should be called after the client has uploaded the file directly to the presigned URL.
 
 <a name="APIServices.CancelWorkflowRun"></a>
 ### func \(\*APIServices\) CancelWorkflowRun
@@ -14506,6 +14706,15 @@ func (api *APIServices) GenerateAIApplicationSystemPrompt(aiApp *db.AIApplicatio
 
 GenerateAIApplicationSystemPrompt generates a recommended system prompt for an AI Application. This prompt includes information about the available tools, data sources, and SQL syntax.
 
+<a name="APIServices.GeneratePresignedUploadURL"></a>
+### func \(\*APIServices\) GeneratePresignedUploadURL
+
+```go
+func (api *APIServices) GeneratePresignedUploadURL(c context.Context, user *db.User, workspace *db.Workspace, repository *db.Repository, path string, ref string) (*PresignedUploadResult, error)
+```
+
+GeneratePresignedUploadURL generates a presigned URL for direct\-to\-storage upload using LakeFS staging. The client uploads directly to the storage backend, then calls AssociatePresignedUpload to link the object in LakeFS.
+
 <a name="APIServices.GenerateSchemaFromUploadedFile"></a>
 ### func \(\*APIServices\) GenerateSchemaFromUploadedFile
 
@@ -14694,6 +14903,15 @@ func (api *APIServices) GetRepositoryObjectContent(c context.Context, locale str
 ```
 
 
+
+<a name="APIServices.GetRepositoryObjectDownload"></a>
+### func \(\*APIServices\) GetRepositoryObjectDownload
+
+```go
+func (api *APIServices) GetRepositoryObjectDownload(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, object *db.RepositoryObject) (*ObjectDownloadResult, error)
+```
+
+GetRepositoryObjectDownload determines the best download strategy based on file size and returns the appropriate result. For small files it loads into memory, for medium files it streams, and for large files it returns a presigned URL for redirect.
 
 <a name="APIServices.GetRepositoryObjectHistory"></a>
 ### func \(\*APIServices\) GetRepositoryObjectHistory
@@ -15208,6 +15426,15 @@ func (api *APIServices) StartWorkflow(c context.Context, user *db.User, workspac
 
 
 
+<a name="APIServices.StreamZipRepositoryObject"></a>
+### func \(\*APIServices\) StreamZipRepositoryObject
+
+```go
+func (api *APIServices) StreamZipRepositoryObject(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, object *db.RepositoryObject, writer io.Writer) error
+```
+
+StreamZipRepositoryObject writes a zip archive directly to the provided writer, streaming each file from LakeFS without loading all files into memory at once.
+
 <a name="APIServices.SyncUserWithClerkAndNovu"></a>
 ### func \(\*APIServices\) SyncUserWithClerkAndNovu
 
@@ -15659,6 +15886,22 @@ type InviteTransactionResult struct {
 }
 ```
 
+<a name="ObjectDownloadResult"></a>
+## type ObjectDownloadResult
+
+ObjectDownloadResult holds the result of a size\-tiered download decision.
+
+```go
+type ObjectDownloadResult struct {
+    Tier        utils.FileSizeTier
+    Content     []byte        // Populated for InMemory tier
+    Stream      io.ReadCloser // Populated for Stream tier (caller must close)
+    ContentLen  int64         // Content length for streaming
+    RedirectURL string        // Populated for Redirect tier
+    ContentType string
+}
+```
+
 <a name="PolicyFilters"></a>
 ## type PolicyFilters
 
@@ -15673,6 +15916,19 @@ type PolicyFilters struct {
     Principal  string
     RoleID     string
     UserID     string
+}
+```
+
+<a name="PresignedUploadResult"></a>
+## type PresignedUploadResult
+
+PresignedUploadResult holds the result of a presigned upload URL generation.
+
+```go
+type PresignedUploadResult struct {
+    UploadURL       string `json:"upload_url"`
+    PhysicalAddress string `json:"physical_address"`
+    Expiry          int64  `json:"expiry"`
 }
 ```
 
@@ -15849,20 +16105,26 @@ import "irmin-api/utils"
 - [func GetDefaultBranchRetentionDays\(branchRules \[\]irminmodels.BranchGarbageCollectionRules, defaultBranch string\) \*int](<#GetDefaultBranchRetentionDays>)
 - [func GetSupportedJWTAlgorithms\(\) \[\]string](<#GetSupportedJWTAlgorithms>)
 - [func IsJWTAlgorithmSupported\(algorithm string\) bool](<#IsJWTAlgorithmSupported>)
+- [func MaxRequestBodySizeBytes\(env \*CoreAPIEnv\) int](<#MaxRequestBodySizeBytes>)
+- [func MaxWorkflowInputFileSizeBytes\(env \*CoreAPIEnv\) int64](<#MaxWorkflowInputFileSizeBytes>)
 - [func ParseBytes\(s string\) \(float64, error\)](<#ParseBytes>)
 - [func ParseContentRange\(cr string\) \(int64, int64, int64, error\)](<#ParseContentRange>)
 - [func ParseHeaders\(c fiber.Ctx, required, optional \[\]string\) \(map\[string\]string, error\)](<#ParseHeaders>)
 - [func ParseQueryParams\(c fiber.Ctx, required, optional \[\]string\) \(map\[string\]string, error\)](<#ParseQueryParams>)
+- [func SanitizeZipEntryPath\(entryPath string\) \(string, error\)](<#SanitizeZipEntryPath>)
 - [func Slugify\(s string\) string](<#Slugify>)
 - [func StringPtr\(s string\) \*string](<#StringPtr>)
 - [func ValidateGarbageCollectionSettings\(settings \*GarbageCollectionSettings\) error](<#ValidateGarbageCollectionSettings>)
 - [func ValidateJWT\(tokenString string, signingKey \[\]byte, signingAlg string\) \(\*jwt.Token, error\)](<#ValidateJWT>)
 - [func WriteFileDownloadResponse\(c fiber.Ctx, status int, filename, contentType string, data \[\]byte\) error](<#WriteFileDownloadResponse>)
 - [func WriteResponse\(c fiber.Ctx, status int, response irminmodels.IrminAPIResponse\) error](<#WriteResponse>)
+- [func WriteStreamDownloadResponse\(c fiber.Ctx, status int, filename, contentType string, reader io.Reader, contentLength int64\) error](<#WriteStreamDownloadResponse>)
 - [type AsyncResult](<#AsyncResult>)
 - [type CoreAPIEnv](<#CoreAPIEnv>)
   - [func LoadEnv\(\) \(\*CoreAPIEnv, error\)](<#LoadEnv>)
 - [type FilePayload](<#FilePayload>)
+- [type FileSizeTier](<#FileSizeTier>)
+  - [func DetermineFileSizeTier\(sizeBytes int64, env \*CoreAPIEnv\) FileSizeTier](<#DetermineFileSizeTier>)
 - [type FutureResult](<#FutureResult>)
   - [func Async\[T any\]\(f func\(\) \(T, error\)\) FutureResult\[T\]](<#Async>)
   - [func AsyncWithContext\[T any\]\(ctx context.Context, f func\(\) \(T, error\)\) FutureResult\[T\]](<#AsyncWithContext>)
@@ -16126,6 +16388,24 @@ func IsJWTAlgorithmSupported(algorithm string) bool
 
 IsJWTAlgorithmSupported checks if the given JWT algorithm is supported by our validation.
 
+<a name="MaxRequestBodySizeBytes"></a>
+## func MaxRequestBodySizeBytes
+
+```go
+func MaxRequestBodySizeBytes(env *CoreAPIEnv) int
+```
+
+MaxRequestBodySizeBytes returns the max request body size in bytes from env config.
+
+<a name="MaxWorkflowInputFileSizeBytes"></a>
+## func MaxWorkflowInputFileSizeBytes
+
+```go
+func MaxWorkflowInputFileSizeBytes(env *CoreAPIEnv) int64
+```
+
+MaxWorkflowInputFileSizeBytes returns the max workflow input file size in bytes from env config.
+
 <a name="ParseBytes"></a>
 ## func ParseBytes
 
@@ -16185,6 +16465,15 @@ Returns:
 - A map where the key is the parameter name and the value is the parameter value. The map will include all required parameters and any optional parameters that are present.
 - An error if any required parameters are missing.
 
+<a name="SanitizeZipEntryPath"></a>
+## func SanitizeZipEntryPath
+
+```go
+func SanitizeZipEntryPath(entryPath string) (string, error)
+```
+
+SanitizeZipEntryPath validates and cleans a zip entry path to prevent zip slip attacks. It rejects paths containing ".." components or absolute paths.
+
 <a name="Slugify"></a>
 ## func Slugify
 
@@ -16242,6 +16531,15 @@ func WriteResponse(c fiber.Ctx, status int, response irminmodels.IrminAPIRespons
 ```
 
 
+
+<a name="WriteStreamDownloadResponse"></a>
+## func WriteStreamDownloadResponse
+
+```go
+func WriteStreamDownloadResponse(c fiber.Ctx, status int, filename, contentType string, reader io.Reader, contentLength int64) error
+```
+
+WriteStreamDownloadResponse writes a streaming file download response, piping content directly from the reader to the client without buffering the entire file in memory.
 
 <a name="AsyncResult"></a>
 ## type AsyncResult
@@ -16305,6 +16603,13 @@ type CoreAPIEnv struct {
     TestBranch                   string // Branch to test with
     TestTag                      string // Tag to test with
     SignedURLSecret              string // HMAC secret for signed download URLs
+
+    // File size management thresholds
+    MaxRequestBodySizeMB       int // Maximum request body size in MB (default 100)
+    MaxInMemorySizeMB          int // Max file size to load fully into memory in MB (default 20)
+    MaxStreamSizeMB            int // Max file size for streaming through API in MB (default 500)
+    MaxAsyncJobSizeMB          int // Size above which async jobs are required in MB (default 5000)
+    MaxWorkflowInputFileSizeMB int // Max input file size for workflow actions in MB (default 500)
 }
 ```
 
@@ -16330,6 +16635,39 @@ type FilePayload struct {
     Reader io.Reader
 }
 ```
+
+<a name="FileSizeTier"></a>
+## type FileSizeTier
+
+FileSizeTier determines the download strategy based on file size.
+
+```go
+type FileSizeTier int
+```
+
+<a name="FileSizeTierInMemory"></a>
+
+```go
+const (
+    // FileSizeTierInMemory indicates the file should be loaded fully into memory (small files).
+    FileSizeTierInMemory FileSizeTier = iota
+    // FileSizeTierStream indicates the file should be streamed through the API without buffering.
+    FileSizeTierStream
+    // FileSizeTierRedirect indicates the client should be redirected to a presigned URL.
+    FileSizeTierRedirect
+    // FileSizeTierAsync indicates the operation should be processed asynchronously via a job.
+    FileSizeTierAsync
+)
+```
+
+<a name="DetermineFileSizeTier"></a>
+### func DetermineFileSizeTier
+
+```go
+func DetermineFileSizeTier(sizeBytes int64, env *CoreAPIEnv) FileSizeTier
+```
+
+DetermineFileSizeTier returns the appropriate download strategy tier based on file size and env config.
 
 <a name="FutureResult"></a>
 ## type FutureResult

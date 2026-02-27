@@ -9,6 +9,29 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// resourceWorkspaceID extracts the workspace ID from a resource for ownership verification.
+// Returns the workspace ID and true if the resource type is supported, or 0 and false otherwise.
+func resourceWorkspaceID(resource any) (uint, bool) {
+	switch r := resource.(type) {
+	case *db.Workflow:
+		return r.WorkspaceID, true
+	case *db.Connection:
+		return r.WorkspaceID, true
+	case *db.StoredQuery:
+		return r.WorkspaceID, true
+	case *db.StoredScript:
+		return r.WorkspaceID, true
+	case *db.TagWithAssets:
+		return r.Tag.WorkspaceID, true
+	case *db.AIApplication:
+		return r.WorkspaceID, true
+	case *db.ConnectionSubscription:
+		return r.WorkspaceID, true
+	default:
+		return 0, false
+	}
+}
+
 // resourceMiddleware is a generic middleware that verifies access to a resource.
 func resourceMiddleware[T any](
 	api *APIMiddlewares,
@@ -63,78 +86,8 @@ func resourceMiddleware[T any](
 	}
 
 	// Check if the resource belongs to the workspace.
-	switch r := any(resource).(type) {
-	case *db.Workflow:
-		if r.WorkspaceID != workspace.ID {
-			return api.handleServiceError(
-				c,
-				fmt.Sprintf("%s does not belong to the workspace", resourceType),
-				services.ErrAccessDenied,
-				dict,
-			)
-		}
-		c.Locals(resourceType, r)
-	case *db.Connection:
-		if r.WorkspaceID != workspace.ID {
-			return api.handleServiceError(
-				c,
-				fmt.Sprintf("%s does not belong to the workspace", resourceType),
-				services.ErrAccessDenied,
-				dict,
-			)
-		}
-		c.Locals(resourceType, r)
-	case *db.StoredQuery:
-		if r.WorkspaceID != workspace.ID {
-			return api.handleServiceError(
-				c,
-				fmt.Sprintf("%s does not belong to the workspace", resourceType),
-				services.ErrAccessDenied,
-				dict,
-			)
-		}
-		c.Locals(resourceType, r)
-	case *db.StoredScript:
-		if r.WorkspaceID != workspace.ID {
-			return api.handleServiceError(
-				c,
-				fmt.Sprintf("%s does not belong to the workspace", resourceType),
-				services.ErrAccessDenied,
-				dict,
-			)
-		}
-		c.Locals(resourceType, r)
-	case *db.TagWithAssets:
-		if r.Tag.WorkspaceID != workspace.ID {
-			return api.handleServiceError(
-				c,
-				fmt.Sprintf("%s does not belong to the workspace", resourceType),
-				services.ErrAccessDenied,
-				dict,
-			)
-		}
-		c.Locals(resourceType, r)
-	case *db.AIApplication:
-		if r.WorkspaceID != workspace.ID {
-			return api.handleServiceError(
-				c,
-				fmt.Sprintf("%s does not belong to the workspace", resourceType),
-				services.ErrAccessDenied,
-				dict,
-			)
-		}
-		c.Locals(resourceType, r)
-	case *db.ConnectionSubscription:
-		if r.WorkspaceID != workspace.ID {
-			return api.handleServiceError(
-				c,
-				fmt.Sprintf("%s does not belong to the workspace", resourceType),
-				services.ErrAccessDenied,
-				dict,
-			)
-		}
-		c.Locals(resourceType, r)
-	default:
+	wsID, supported := resourceWorkspaceID(any(resource))
+	if !supported {
 		return api.handleServiceError(
 			c,
 			"Unsupported resource type in resourceMiddleware",
@@ -142,6 +95,17 @@ func resourceMiddleware[T any](
 			dict,
 		)
 	}
+
+	if wsID != workspace.ID {
+		return api.handleServiceError(
+			c,
+			fmt.Sprintf("%s does not belong to the workspace", resourceType),
+			services.ErrAccessDenied,
+			dict,
+		)
+	}
+
+	c.Locals(resourceType, resource)
 
 	return c.Next()
 }

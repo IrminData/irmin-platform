@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -827,6 +828,7 @@ func (api *APIControllers) RepositoryObjectsDestroy(c fiber.Ctx) error {
 // @Param path query string true "Object path within the repository"
 // @Param ref query string false "Reference (branch, tag, or commit) to download from" default("main")
 // @Success 200 {file} file "Object content as file download"
+// @Success 302 "Redirect to presigned URL for large files"
 // @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
 // @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
@@ -846,46 +848,79 @@ func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error {
 		return api.handleServiceError(c, "Object not found", services.ErrNotFound, params.dict)
 	}
 
-	// Check for limit-response query parameter
+	// Check for limit-response query parameter (used for in-browser preview with size limits)
 	limitResponse := c.Query("limit-response") == queryParamValueTrue
 
-	// Get the content of the object in the repository at ref
-	content, getObjectContentErr := api.Services.GetRepositoryObjectContent(
-		c,
-		params.locale,
-		params.user,
-		params.workspace,
-		params.repository,
-		object,
-		limitResponse,
-	)
-	if getObjectContentErr != nil {
-		// Check if error is due to content being too large
-		if errors.Is(getObjectContentErr, services.ErrContentTooLarge) {
-			return utils.WriteResponse(c, fiber.StatusRequestEntityTooLarge, irminmodels.IrminAPIResponse{
-				Errors: []string{fmt.Sprintf(
-					"File too large to display (%.2f MB). Maximum size: %.2f MB. Please download the file instead.",
-					float64(object.SizeBytes)/utils.BytesPerMB,
-					float64(utils.DefaultMaxBinaryResponseSizeBytes)/utils.BytesPerMB,
-				)},
-			})
-		}
-		return api.handleServiceError(
+	// When limit-response is set, use the existing in-memory path with size limits
+	// This is used by the console for inline file preview, not for downloads
+	if limitResponse {
+		content, getObjectContentErr := api.Services.GetRepositoryObjectContent(
 			c,
-			"Error retrieving object content from Data Engine",
-			getObjectContentErr,
-			params.dict,
+			params.locale,
+			params.user,
+			params.workspace,
+			params.repository,
+			object,
+			limitResponse,
+		)
+		if getObjectContentErr != nil {
+			if errors.Is(getObjectContentErr, services.ErrContentTooLarge) {
+				return utils.WriteResponse(c, fiber.StatusRequestEntityTooLarge, irminmodels.IrminAPIResponse{
+					Errors: []string{fmt.Sprintf(
+						"File too large to display (%.2f MB). Maximum size: %.2f MB. Please download the file instead.",
+						float64(object.SizeBytes)/utils.BytesPerMB,
+						float64(utils.DefaultMaxBinaryResponseSizeBytes)/utils.BytesPerMB,
+					)},
+				})
+			}
+			return api.handleServiceError(
+				c,
+				"Error retrieving object content from Data Engine",
+				getObjectContentErr,
+				params.dict,
+			)
+		}
+
+		return utils.WriteFileDownloadResponse(c, fiber.StatusOK, object.Name, object.ContentType, content)
+	}
+
+	// For downloads, use size-tiered routing: in-memory, stream, or presigned URL redirect
+	result, downloadErr := api.Services.GetRepositoryObjectDownload(
+		c, params.locale, params.user, params.workspace, params.repository, object,
+	)
+	if downloadErr != nil {
+		return api.handleServiceError(
+			c, "Error retrieving object content", downloadErr, params.dict,
 		)
 	}
 
-	// Write the file content as a download response
-	return utils.WriteFileDownloadResponse(
-		c,
-		fiber.StatusOK,
-		object.Name,
-		object.ContentType,
-		content,
-	)
+	switch result.Tier {
+	case utils.FileSizeTierInMemory:
+		return utils.WriteFileDownloadResponse(
+			c, fiber.StatusOK, object.Name, result.ContentType, result.Content,
+		)
+
+	case utils.FileSizeTierStream:
+		// Do not defer result.Stream.Close() here — fasthttp reads from the
+		// stream after the handler returns and closes it automatically via
+		// Response.closeBodyStream() for readers that implement io.Closer.
+		return utils.WriteStreamDownloadResponse(
+			c, fiber.StatusOK, object.Name, result.ContentType, result.Stream, result.ContentLen,
+		)
+
+	case utils.FileSizeTierRedirect, utils.FileSizeTierAsync:
+		return c.Redirect().Status(fiber.StatusFound).To(result.RedirectURL)
+	}
+
+	// Defensive close: if a future tier is added and opens a stream without a
+	// matching case above, ensure the connection is not leaked.
+	if result.Stream != nil {
+		_ = result.Stream.Close()
+	}
+
+	return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+		Errors: []string{"unexpected download tier"},
+	})
 }
 
 // RepositoryObjectsStructuredContent godoc
@@ -990,20 +1025,156 @@ func (api *APIControllers) RepositoryObjectsDownload(c fiber.Ctx) error {
 		return api.handleServiceError(c, "Object not found", services.ErrNotFound, params.dict)
 	}
 
-	// Build the zip file of the object
-	zipContent, zipName, err := api.Services.ZipRepositoryObject(
-		c,
-		params.locale,
-		params.user,
-		params.workspace,
-		params.repository,
-		object,
-	)
-	if err != nil {
-		return api.handleServiceError(c, "Error zipping object", err, params.dict)
+	// Determine total size to decide between in-memory and streaming zip.
+	// For single files, use the known size directly (no DB traversal needed).
+	// For directories, recursively calculate the total. On error, fall through
+	// to the streaming path which is safe for any size.
+	maxInMemoryBytes := int64(api.Env.MaxInMemorySizeMB) * int64(utils.BytesPerMB)
+	var totalSize int64
+	var sizeErr error
+	if object.Type == irminmodels.ObjectTypeGroup {
+		totalSize, sizeErr = services.CalculateObjectTotalSize(api.DB, object)
+	} else {
+		totalSize = object.SizeBytes
 	}
 
-	return utils.WriteFileDownloadResponse(c, fiber.StatusOK, zipName, "application/zip", zipContent)
+	// For small objects/directories, use the existing in-memory zip approach.
+	// Note: for directories this traverses children again to fetch content,
+	// but the in-memory path is only taken for small totals so the overhead is bounded.
+	if sizeErr == nil && totalSize <= maxInMemoryBytes {
+		zipContent, zipName, zipErr := api.Services.ZipRepositoryObject(
+			c, params.locale, params.user, params.workspace, params.repository, object,
+		)
+		if zipErr != nil {
+			return api.handleServiceError(c, "Error zipping object", zipErr, params.dict)
+		}
+		return utils.WriteFileDownloadResponse(c, fiber.StatusOK, zipName, "application/zip", zipContent)
+	}
+
+	// For larger directories, stream the zip directly to the response.
+	// Generate zip name here since StreamZipRepositoryObject doesn't return one.
+	timestamp := time.Now().UnixMilli()
+	zipName := fmt.Sprintf(
+		"%s-%s-%s-%s-%d.zip",
+		params.workspace.Slug, params.repository.Slug,
+		object.Name, object.RepositoryRef, timestamp,
+	)
+	c.Set("Content-Type", "application/zip")
+	c.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, zipName))
+	c.Status(fiber.StatusOK)
+
+	return c.SendStreamWriter(func(w *bufio.Writer) {
+		streamErr := api.Services.StreamZipRepositoryObject(
+			c, params.locale, params.user, params.workspace, params.repository, object, w,
+		)
+		if streamErr != nil {
+			api.Logger.Error("Error streaming zip", "error", streamErr)
+		}
+		_ = w.Flush()
+	})
+}
+
+// RepositoryObjectsPresignedUpload godoc
+// @Summary Generate presigned upload URL
+// @Description Generate a presigned URL for direct-to-storage upload. The client uploads directly
+// @Description to the storage backend using the returned URL, then calls the associate endpoint.
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param path query string true "Object path within the repository"
+// @Param ref query string true "Branch to upload to"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=services.PresignedUploadResult}
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/upload/presigned [post]
+func (api *APIControllers) RepositoryObjectsPresignedUpload(c fiber.Ctx) error {
+	params, validateLocalParamsErr := api.validateObjectParams(c)
+	if validateLocalParamsErr != nil {
+		api.Logger.Error("Error validating parameters", "error", validateLocalParamsErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
+
+	result, err := api.Services.GeneratePresignedUploadURL(
+		c, params.user, params.workspace, params.repository,
+		params.objectPath, params.objectRef,
+	)
+	if err != nil {
+		return api.handleServiceError(c, "Error generating presigned upload URL", err, params.dict)
+	}
+
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: result,
+	})
+}
+
+// RepositoryObjectsAssociateUpload godoc
+// @Summary Associate a staged upload
+// @Description Link a previously uploaded object (via presigned URL) with a path in the repository.
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param path query string true "Object path within the repository"
+// @Param ref query string true "Branch to associate the upload with"
+// @Param body body associateUploadRequest true "Upload metadata"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Object}
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/upload/associate [post]
+func (api *APIControllers) RepositoryObjectsAssociateUpload(c fiber.Ctx) error {
+	params, validateLocalParamsErr := api.validateObjectParams(c)
+	if validateLocalParamsErr != nil {
+		api.Logger.Error("Error validating parameters", "error", validateLocalParamsErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
+
+	var reqBody associateUploadRequest
+	if parseErr := c.Bind().JSON(&reqBody); parseErr != nil {
+		return api.handleServiceError(
+			c, "Error parsing request body",
+			fmt.Errorf("%w: %w", services.ErrInvalidRequest, parseErr),
+			params.dict,
+		)
+	}
+
+	if reqBody.PhysicalAddress == "" || reqBody.Checksum == "" || reqBody.SizeBytes <= 0 || reqBody.ContentType == "" {
+		return api.handleServiceError(
+			c, "Missing required fields",
+			fmt.Errorf(
+				"%w: physical_address, checksum, content_type must be non-empty and size_bytes must be positive",
+				services.ErrInvalidRequest,
+			),
+			params.dict,
+		)
+	}
+
+	result, err := api.Services.AssociatePresignedUpload(
+		c, params.locale, params.user, params.workspace, params.repository,
+		params.objectPath, params.objectRef,
+		reqBody.PhysicalAddress, reqBody.Checksum, reqBody.SizeBytes, reqBody.ContentType,
+	)
+	if err != nil {
+		return api.handleServiceError(c, "Error associating upload", err, params.dict)
+	}
+
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: result,
+	})
+}
+
+// associateUploadRequest is the request body for the associate upload endpoint.
+type associateUploadRequest struct {
+	PhysicalAddress string `json:"physical_address"`
+	Checksum        string `json:"checksum"`
+	SizeBytes       int64  `json:"size_bytes"`
+	ContentType     string `json:"content_type"`
 }
 
 // RepositoryObjectsHistory godoc

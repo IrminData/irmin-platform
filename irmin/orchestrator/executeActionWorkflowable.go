@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lib"
+	"irmin-api/utils"
 	"strings"
 	"time"
 
@@ -91,6 +92,20 @@ func (o *Orchestrator) processActionInputs(
 
 		// Trim slashes from the path
 		inputPath := strings.TrimLeft(input.RepositoryPath, "/")
+
+		// Pre-check file size before loading into memory
+		maxInputSize := utils.MaxWorkflowInputFileSizeBytes(o.env)
+		inputObject, findErr := o.db.FindObject(&inputPath, &input.RepositoryID, &input.RepositoryRef)
+		if findErr == nil && inputObject != nil && inputObject.SizeBytes > maxInputSize {
+			errMsg := fmt.Sprintf(
+				"Input file %s exceeds max size (%d MB), skipping",
+				inputPath, o.env.MaxWorkflowInputFileSizeMB,
+			)
+			o.logger.WarnContext(ctx, errMsg, "size_bytes", inputObject.SizeBytes, "max_bytes", maxInputSize)
+			logs = append(logs, errMsg)
+			continue
+		}
+
 		// Get the object content from the data engine
 		content, err := o.dataEngine.GetObjectContent(
 			workflow.Workspace.Slug,

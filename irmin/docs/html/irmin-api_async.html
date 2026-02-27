@@ -1,0 +1,35 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/async</title></head><body>
+<h1>Package irmin-api/async</h1>
+<pre>
+package async // import "irmin-api/async"
+
+
+TYPES
+
+type Worker struct {
+	// Has unexported fields.
+}
+    Worker processes async jobs in the background.
+
+func NewWorker(
+	database *db.Database,
+	env *utils.CoreAPIEnv,
+	logger *slog.Logger,
+	apiServices *services.APIServices,
+) *Worker
+    NewWorker creates a new async job worker.
+
+func (w *Worker) Start(ctx context.Context) error
+    Start begins the worker loop that polls for and processes pending jobs.
+
+type ZipJobParams struct {
+	WorkspaceSlug  string `json:"workspace_slug"`
+	RepositorySlug string `json:"repository_slug"`
+	ObjectPath     string `json:"object_path"`
+	Ref            string `json:"ref"`
+}
+    ZipJobParams represents the parameters for a zip download async job.
+
+</pre>
+</body></html>

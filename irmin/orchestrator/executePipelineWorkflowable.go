@@ -405,6 +405,20 @@ func (o *Orchestrator) handleConnectionRead(
 		)
 	}
 
+	// Check accumulated size to prevent OOM on large pulls
+	var totalSize int64
+	for _, content := range pulledPaths {
+		totalSize += int64(len(content))
+	}
+	maxMB := o.env.MaxInMemorySizeMB * engine.InMemoryMultiplier
+	maxBytes := int64(maxMB) * int64(utils.BytesPerMB)
+	if totalSize > maxBytes {
+		return logs, fmt.Errorf(
+			"pulled data exceeds pipeline memory limit (%d MB)",
+			maxMB,
+		)
+	}
+
 	for fileName, fileContent := range pulledPaths {
 		previousStageResults[fileName] = fileContent
 		logs = append(logs, fmt.Sprintf("Object ('%s') retrieved from connection.", fileName))

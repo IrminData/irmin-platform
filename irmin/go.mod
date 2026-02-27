@@ -3,11 +3,11 @@ module irmin-api
 go 1.25.4
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20260224180354-ef32ccf4f86d
+	github.com/IrminData/irmin-sdk-go v0.0.0-20260225134452-d50038bce8ed
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.1
 	github.com/clerk/clerk-sdk-go/v2 v2.5.1
-	github.com/daytonaio/daytona/libs/sdk-go v0.145.0
-	github.com/gofiber/fiber/v3 v3.0.0
+	github.com/daytonaio/daytona/libs/sdk-go v0.146.0
+	github.com/gofiber/fiber/v3 v3.1.0
 	github.com/gofiber/storage/memory/v2 v2.1.1
 	github.com/gofiber/storage/s3/v2 v2.5.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
@@ -19,11 +19,11 @@ require (
 	github.com/modelcontextprotocol/go-sdk v1.3.1
 	github.com/nguyenthenguyen/docx v0.0.0-20230621112118-9c8e795a11db
 	github.com/novuhq/novu-go v1.5.0
-	github.com/openai/openai-go/v3 v3.23.0
+	github.com/openai/openai-go/v3 v3.24.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/swaggo/swag v1.16.6
 	github.com/teambition/rrule-go v1.8.2
-	github.com/xuri/excelize/v2 v2.10.0
+	github.com/xuri/excelize/v2 v2.10.1
 	github.com/zeebo/assert v1.3.1
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.6.0
@@ -55,8 +55,8 @@ require (
 	github.com/aws/smithy-go v1.24.1 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/daytonaio/daytona/libs/api-client-go v0.145.0 // indirect
-	github.com/daytonaio/daytona/libs/toolbox-api-client-go v0.145.0 // indirect
+	github.com/daytonaio/daytona/libs/api-client-go v0.146.0 // indirect
+	github.com/daytonaio/daytona/libs/toolbox-api-client-go v0.146.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect

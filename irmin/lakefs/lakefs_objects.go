@@ -148,6 +148,40 @@ func (c *Client) GetObjectContentWithRange(
 	}, nil
 }
 
+// FollowRedirect follows a redirect URL and returns a streaming response without loading content into memory.
+// The caller MUST close the returned ObjectContentResponse.Body.
+func (c *Client) FollowRedirect(redirectURL string) (*ObjectContentResponse, error) {
+	req, newRequestErr := http.NewRequestWithContext(c.ctx, http.MethodGet, redirectURL, nil)
+	if newRequestErr != nil {
+		return nil, fmt.Errorf("failed to create request for redirect: %w", newRequestErr)
+	}
+
+	resp, doRequestErr := c.client.Do(req)
+	if doRequestErr != nil {
+		return nil, fmt.Errorf("failed to follow redirect: %w", doRequestErr)
+	}
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+		defer resp.Body.Close()
+		bodyBytes, readAllErr := io.ReadAll(resp.Body)
+		if readAllErr != nil {
+			return nil, fmt.Errorf("failed to read error response body: %w", readAllErr)
+		}
+		return nil, fmt.Errorf(
+			"failed to download from redirect URL %s, status: %d, message: %s",
+			redirectURL, resp.StatusCode, string(bodyBytes),
+		)
+	}
+
+	return &ObjectContentResponse{
+		Body:          resp.Body,
+		ContentLength: resp.ContentLength,
+		LastModified:  resp.Header.Get("Last-Modified"),
+		ETag:          resp.Header.Get("ETag"),
+		ContentRange:  resp.Header.Get("Content-Range"),
+	}, nil
+}
+
 // handleRedirectResponse handles a redirect response by following the redirect URL and returning the content.
 func (c *Client) handleRedirectResponse(redirectURL, rangeHeader string) ([]byte, error) {
 	req, newRequestErr := http.NewRequestWithContext(c.ctx, http.MethodGet, redirectURL, nil)

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -101,6 +102,17 @@ func (d *Database) FindObject(path *string, repositoryID *uint, ref *string) (*R
 	}
 
 	return &object, nil
+}
+
+// FindChildObjects returns the direct children of the given parent object.
+// Use this instead of relying on preloaded Children when traversing nested directories,
+// since GORM's Preload only loads one level of depth.
+func (d *Database) FindChildObjects(parentID uint) ([]RepositoryObject, error) {
+	var children []RepositoryObject
+	if err := d.Where("parent_id = ?", parentID).Find(&children).Error; err != nil {
+		return nil, fmt.Errorf("failed to find child objects for parent %d: %w", parentID, err)
+	}
+	return children, nil
 }
 
 func (d *Database) GetFlatDBObjects(repositoryID uint, ref string) ([]RepositoryObject, error) {

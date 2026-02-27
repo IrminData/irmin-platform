@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/utils"
 	"path/filepath"
@@ -97,33 +98,10 @@ func (api *APIControllers) SignedDownload(c fiber.Ctx) error {
 		})
 	}
 
-	// Create engine client and fetch object content
+	// Create engine client
 	dataEngine, engineErr := engine.NewClient(c.Context(), "en", api.Logger, api.Env, api.DB)
 	if engineErr != nil {
 		api.Logger.Error("Signed download: error creating data engine client", "error", engineErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{"Internal server error"},
-		})
-	}
-
-	content, contentErr := dataEngine.GetObjectContent(
-		workspace.Slug,
-		repo.Slug,
-		payload.Path,
-		payload.Ref,
-	)
-	if contentErr != nil {
-		if strings.Contains(contentErr.Error(), "status 404") {
-			return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-				Errors: []string{"Object not found"},
-			})
-		}
-		api.Logger.Error(
-			"Signed download: error fetching object content",
-			"path", payload.Path,
-			"ref", payload.Ref,
-			"error", contentErr,
-		)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{"Internal server error"},
 		})
@@ -133,7 +111,82 @@ func (api *APIControllers) SignedDownload(c fiber.Ctx) error {
 	filename := filepath.Base(payload.Path)
 	contentType := detectContentType(filename)
 
-	return utils.WriteFileDownloadResponse(c, fiber.StatusOK, filename, contentType, content)
+	return api.serveSignedDownloadByTier(c, dataEngine, workspace, repo, payload, filename, contentType)
+}
+
+// serveSignedDownloadByTier fetches object metadata and routes the download to the appropriate
+// tier (in-memory, streaming, or presigned redirect) based on file size.
+func (api *APIControllers) serveSignedDownloadByTier(
+	c fiber.Ctx,
+	dataEngine *engine.Client,
+	workspace *db.Workspace,
+	repo *db.Repository,
+	payload *utils.SignedURLPayload,
+	filename, contentType string,
+) error {
+	lakeFSRepoName := utils.ConstructLakeFSRepositoryName(workspace.Slug, repo.Slug)
+
+	// Fetch metadata with presign=true so PhysicalAddress is a presigned URL.
+	// This lets the redirect/async tier use it directly without a second metadata call.
+	metadata, metadataErr := dataEngine.LakeFSClient.GetObjectMetadata(
+		lakeFSRepoName, payload.Ref, payload.Path, false, true,
+	)
+	if metadataErr != nil {
+		if strings.Contains(metadataErr.Error(), "status 404") {
+			return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
+				Errors: []string{"Object not found"},
+			})
+		}
+		api.Logger.Error("Signed download: error fetching object metadata",
+			"path", payload.Path, "ref", payload.Ref, "error", metadataErr,
+		)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{"Internal server error"},
+		})
+	}
+
+	tier := utils.DetermineFileSizeTier(metadata.SizeBytes, api.Env)
+
+	switch tier {
+	case utils.FileSizeTierInMemory:
+		content, contentErr := dataEngine.GetObjectContent(
+			workspace.Slug, repo.Slug, payload.Path, payload.Ref,
+		)
+		if contentErr != nil {
+			api.Logger.Error("Signed download: error fetching object content",
+				"path", payload.Path, "ref", payload.Ref, "error", contentErr,
+			)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+				Errors: []string{"Internal server error"},
+			})
+		}
+		return utils.WriteFileDownloadResponse(c, fiber.StatusOK, filename, contentType, content)
+
+	case utils.FileSizeTierStream:
+		stream, contentLen, streamErr := dataEngine.GetObjectContentStream(
+			workspace.Slug, repo.Slug, payload.Path, payload.Ref,
+		)
+		if streamErr != nil {
+			api.Logger.Error("Signed download: error streaming object content",
+				"path", payload.Path, "ref", payload.Ref, "error", streamErr,
+			)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+				Errors: []string{"Internal server error"},
+			})
+		}
+		// Do not defer stream.Close() here — fasthttp reads from the stream
+		// after the handler returns and closes it automatically via
+		// Response.closeBodyStream() for readers that implement io.Closer.
+		return utils.WriteStreamDownloadResponse(c, fiber.StatusOK, filename, contentType, stream, contentLen)
+
+	case utils.FileSizeTierRedirect, utils.FileSizeTierAsync:
+		// PhysicalAddress is already a presigned HTTP URL from the metadata call above.
+		return c.Redirect().Status(fiber.StatusFound).To(metadata.PhysicalAddress)
+	}
+
+	return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+		Errors: []string{"Internal server error"},
+	})
 }
 
 // detectContentType returns a MIME type based on file extension.

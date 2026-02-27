@@ -1560,17 +1560,34 @@ func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error
     /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/move
     [patch]
 
+func (api *APIControllers) RepositoryObjectsAssociateUpload(c fiber.Ctx) error
+    RepositoryObjectsAssociateUpload godoc @Summary Associate a staged
+    upload @Description Link a previously uploaded object (via presigned
+    URL) with a path in the repository. @Tags repository-objects @Security
+    ApiKeyAuth @Accept json @Produce json @Param workspace_slug path string
+    true "Workspace slug" @Param repository_slug path string true "Repository
+    slug" @Param path query string true "Object path within the repository"
+    @Param ref query string true "Branch to associate the upload with"
+    @Param body body associateUploadRequest true "Upload metadata" @Success
+    200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Object}
+    @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request" @Failure
+    403 {object} irminmodels.IrminAPIResponse "Forbidden" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/upload/associate
+    [post]
+
 func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error
     RepositoryObjectsContent godoc @Summary Download repository object content
-    @Description Download the raw content of an object from a repository at a
-    given reference @Tags repository-objects @Security ApiKeyAuth @Accept json
-    @Produce application/octet-stream @Param workspace_slug path string true
-    "Workspace slug" @Param repository_slug path string true "Repository slug"
-    @Param path query string true "Object path within the repository" @Param
-    ref query string false "Reference (branch, tag, or commit) to download
-    from" default("main") @Success 200 {file} file "Object content as file
-    download" @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request
-    - invalid parameters" @Failure 401 {object} irminmodels.IrminAPIResponse
+    @Description Download the raw content of an object from a repository at
+    a given reference @Tags repository-objects @Security ApiKeyAuth @Accept
+    json @Produce application/octet-stream @Param workspace_slug path string
+    true "Workspace slug" @Param repository_slug path string true "Repository
+    slug" @Param path query string true "Object path within the repository"
+    @Param ref query string false "Reference (branch, tag, or commit) to
+    download from" default("main") @Success 200 {file} file "Object content
+    as file download" @Success 302 "Redirect to presigned URL for large
+    files" @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request -
+    invalid parameters" @Failure 401 {object} irminmodels.IrminAPIResponse
     "Unauthorized - invalid or missing authentication" @Failure 403 {object}
     irminmodels.IrminAPIResponse "Forbidden - insufficient permissions" @Failure
     404 {object} irminmodels.IrminAPIResponse "Object not found" @Failure 500
@@ -1674,6 +1691,22 @@ func (api *APIControllers) RepositoryObjectsIndex(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "Object not found" @Failure 500 {object}
     irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/repositories/{repository_slug}/objects [get]
+
+func (api *APIControllers) RepositoryObjectsPresignedUpload(c fiber.Ctx) error
+    RepositoryObjectsPresignedUpload godoc @Summary Generate presigned upload
+    URL @Description Generate a presigned URL for direct-to-storage upload.
+    The client uploads directly @Description to the storage backend using the
+    returned URL, then calls the associate endpoint. @Tags repository-objects
+    @Security ApiKeyAuth @Accept json @Produce json @Param workspace_slug
+    path string true "Workspace slug" @Param repository_slug path string true
+    "Repository slug" @Param path query string true "Object path within the
+    repository" @Param ref query string true "Branch to upload to" @Success 200
+    {object} irminmodels.IrminAPIResponse{data=services.PresignedUploadResult}
+    @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request" @Failure
+    403 {object} irminmodels.IrminAPIResponse "Forbidden" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/upload/presigned
+    [post]
 
 func (api *APIControllers) RepositoryObjectsSchema(c fiber.Ctx) error
     RepositoryObjectsSchema godoc @Summary Get object schema @Description Get

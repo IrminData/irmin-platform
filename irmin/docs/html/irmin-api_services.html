@@ -136,6 +136,11 @@ func BuildUnifiedPath(repoSlug, ref, pathWithinRepo string) string
     ref, and path within the repository. The unified path format is:
     /{repository-slug}/{ref}/{path-within-repo}
 
+func CalculateObjectTotalSize(database *db.Database, object *db.RepositoryObject) (int64, error)
+    CalculateObjectTotalSize recursively calculates the total size of an object
+    and its children. Children are fetched from the database on-the-fly to
+    support arbitrarily nested directories.
+
 func GetInternalErrorMessage(err error) string
     GetInternalErrorMessage strips the internal prefix for logging purposes.
     This allows server-side logs to display the actual error message without the
@@ -383,6 +388,23 @@ func (api *APIServices) AddTagToEntity(
 	entityType string,
 	entityID uint,
 ) error
+
+func (api *APIServices) AssociatePresignedUpload(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	path string,
+	ref string,
+	physicalAddress string,
+	checksum string,
+	sizeBytes int64,
+	contentType string,
+) (*irminmodels.Object, error)
+    AssociatePresignedUpload links a previously staged upload with a path in
+    LakeFS, creating an uncommitted change. This should be called after the
+    client has uploaded the file directly to the presigned URL.
 
 func (api *APIServices) CancelWorkflowRun(
 	c context.Context,
@@ -682,6 +704,18 @@ func (api *APIServices) GenerateAIApplicationSystemPrompt(aiApp *db.AIApplicatio
     for an AI Application. This prompt includes information about the available
     tools, data sources, and SQL syntax.
 
+func (api *APIServices) GeneratePresignedUploadURL(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	path string,
+	ref string,
+) (*PresignedUploadResult, error)
+    GeneratePresignedUploadURL generates a presigned URL for direct-to-storage
+    upload using LakeFS staging. The client uploads directly to the storage
+    backend, then calls AssociatePresignedUpload to link the object in LakeFS.
+
 func (api *APIServices) GenerateSchemaFromUploadedFile(
 	ctx context.Context,
 	locale string,
@@ -851,6 +885,19 @@ func (api *APIServices) GetRepositoryObjectContent(
 	object *db.RepositoryObject,
 	limitResponse bool,
 ) ([]byte, error)
+
+func (api *APIServices) GetRepositoryObjectDownload(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+) (*ObjectDownloadResult, error)
+    GetRepositoryObjectDownload determines the best download strategy based
+    on file size and returns the appropriate result. For small files it loads
+    into memory, for medium files it streams, and for large files it returns a
+    presigned URL for redirect.
 
 func (api *APIServices) GetRepositoryObjectHistory(
 	c context.Context,
@@ -1268,6 +1315,19 @@ func (api *APIServices) StartWorkflow(
 	workflow *db.Workflow,
 ) (*db.Workflow, error)
 
+func (api *APIServices) StreamZipRepositoryObject(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+	writer io.Writer,
+) error
+    StreamZipRepositoryObject writes a zip archive directly to the provided
+    writer, streaming each file from LakeFS without loading all files into
+    memory at once.
+
 func (api *APIServices) SyncUserWithClerkAndNovu(
 	c context.Context,
 	irminUser *db.User,
@@ -1673,6 +1733,16 @@ type InviteTransactionResult struct {
     InviteTransactionResult contains the result of invitation creation including
     notification status.
 
+type ObjectDownloadResult struct {
+	Tier        utils.FileSizeTier
+	Content     []byte        // Populated for InMemory tier
+	Stream      io.ReadCloser // Populated for Stream tier (caller must close)
+	ContentLen  int64         // Content length for streaming
+	RedirectURL string        // Populated for Redirect tier
+	ContentType string
+}
+    ObjectDownloadResult holds the result of a size-tiered download decision.
+
 type PolicyFilters struct {
 	Effect     string
 	Resource   string
@@ -1682,6 +1752,13 @@ type PolicyFilters struct {
 	RoleID     string
 	UserID     string
 }
+
+type PresignedUploadResult struct {
+	UploadURL       string `json:"upload_url"`
+	PhysicalAddress string `json:"physical_address"`
+	Expiry          int64  `json:"expiry"`
+}
+    PresignedUploadResult holds the result of a presigned upload URL generation.
 
 type ResolvedPath struct {
 	Repository *db.Repository

@@ -54,6 +54,13 @@ type CoreAPIEnv struct {
 	TestBranch                   string // Branch to test with
 	TestTag                      string // Tag to test with
 	SignedURLSecret              string // HMAC secret for signed download URLs
+
+	// File size management thresholds
+	MaxRequestBodySizeMB       int // Maximum request body size in MB (default 100)
+	MaxInMemorySizeMB          int // Max file size to load fully into memory in MB (default 20)
+	MaxStreamSizeMB            int // Max file size for streaming through API in MB (default 500)
+	MaxAsyncJobSizeMB          int // Size above which async jobs are required in MB (default 5000)
+	MaxWorkflowInputFileSizeMB int // Max input file size for workflow actions in MB (default 500)
 }
 
 // getEnv retrieves a single environment variable. If required and missing, returns an error.
@@ -310,6 +317,51 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
+	maxRequestBodySizeMBStr, err := getEnv("MAX_REQUEST_BODY_SIZE_MB", false, "100")
+	if err != nil {
+		return nil, err
+	}
+	maxRequestBodySizeMB, err := strconv.Atoi(maxRequestBodySizeMBStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid MAX_REQUEST_BODY_SIZE_MB: %w", err)
+	}
+
+	maxInMemorySizeMBStr, err := getEnv("MAX_IN_MEMORY_SIZE_MB", false, "20")
+	if err != nil {
+		return nil, err
+	}
+	maxInMemorySizeMB, err := strconv.Atoi(maxInMemorySizeMBStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid MAX_IN_MEMORY_SIZE_MB: %w", err)
+	}
+
+	maxStreamSizeMBStr, err := getEnv("MAX_STREAM_SIZE_MB", false, "500")
+	if err != nil {
+		return nil, err
+	}
+	maxStreamSizeMB, err := strconv.Atoi(maxStreamSizeMBStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid MAX_STREAM_SIZE_MB: %w", err)
+	}
+
+	maxAsyncJobSizeMBStr, err := getEnv("MAX_ASYNC_JOB_SIZE_MB", false, "5000")
+	if err != nil {
+		return nil, err
+	}
+	maxAsyncJobSizeMB, err := strconv.Atoi(maxAsyncJobSizeMBStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid MAX_ASYNC_JOB_SIZE_MB: %w", err)
+	}
+
+	maxWorkflowInputFileSizeMBStr, err := getEnv("MAX_WORKFLOW_INPUT_FILE_SIZE_MB", false, "500")
+	if err != nil {
+		return nil, err
+	}
+	maxWorkflowInputFileSizeMB, err := strconv.Atoi(maxWorkflowInputFileSizeMBStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid MAX_WORKFLOW_INPUT_FILE_SIZE_MB: %w", err)
+	}
+
 	skipOptionalDuckDBExtensionsStr, err := getEnv("SKIP_OPTIONAL_DUCKDB_EXTENSIONS", false, "false")
 	if err != nil {
 		return nil, err
@@ -372,5 +424,10 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		TestBranch:                   testBranch,
 		TestTag:                      testTag,
 		SignedURLSecret:              signedURLSecret,
+		MaxRequestBodySizeMB:         maxRequestBodySizeMB,
+		MaxInMemorySizeMB:            maxInMemorySizeMB,
+		MaxStreamSizeMB:              maxStreamSizeMB,
+		MaxAsyncJobSizeMB:            maxAsyncJobSizeMB,
+		MaxWorkflowInputFileSizeMB:   maxWorkflowInputFileSizeMB,
 	}, nil
 }

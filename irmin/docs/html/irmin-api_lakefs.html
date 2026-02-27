@@ -134,6 +134,12 @@ func (c *Client) AttachPolicyToUser(userID, policyID string) error
 func (c *Client) BranchCherryPick(repositoryID, branchID string, reqData CherryPickRequest) (*Commit, error)
     BranchCherryPick allows to replay the changes of a commit on a branch.
 
+func (c *Client) BuildStagingMetadata(
+	physicalAddress, checksum string, sizeBytes int64, contentType string,
+) StagingMetadata
+    BuildStagingMetadata constructs a StagingMetadata struct for use with
+    AssociateStaging.
+
 func (c *Client) CheckObjectExists(repositoryID, ref, objectPath string) error
     CheckObjectExists checks if an object exists in the specified repository and
     ref.
@@ -233,6 +239,11 @@ func (c *Client) DetachPolicyFromUser(userID, policyID string) error
 
 func (c *Client) FindMergeBase(repositoryID, sourceRef, destinationBranch string) (*MergeBase, error)
     FindMergeBase finds the merge base between two refs in a repository.
+
+func (c *Client) FollowRedirect(redirectURL string) (*ObjectContentResponse, error)
+    FollowRedirect follows a redirect URL and returns a streaming response
+    without loading content into memory. The caller MUST close the returned
+    ObjectContentResponse.Body.
 
 func (c *Client) GenerateStagingLocation(repositoryID, branchID, path string, presign bool) (*StagingLocation, error)
     GenerateStagingLocation generates an address to which the client can upload

@@ -273,6 +273,71 @@ func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]by
 	return content, nil
 }
 
+// GetObjectContentStream returns a streaming reader for the object content without loading it into memory.
+// The caller MUST close the returned io.ReadCloser when done.
+// If LakeFS returns a 302 redirect, the redirect is followed and the body is returned as a stream.
+func (c *Client) GetObjectContentStream(
+	workspace, repository, path, ref string,
+) (io.ReadCloser, int64, error) {
+	if IsSystemPath(path) {
+		return nil, 0, fmt.Errorf("access to system path %s is not allowed", path)
+	}
+
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
+
+	if ref == "" {
+		repo, getRepositoryErr := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
+		if getRepositoryErr != nil {
+			return nil, 0, fmt.Errorf("failed to get repository: %w", getRepositoryErr)
+		}
+		ref = repo.DefaultBranch
+	}
+
+	objResp, err := c.LakeFSClient.GetObjectContent(lakeFSRepositoryName, ref, path)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get object content stream: %w", err)
+	}
+
+	// If LakeFS returned a redirect to a presigned URL, follow it and return the stream
+	if objResp.RedirectLocation != "" {
+		_ = objResp.Body.Close()
+		redirectResp, redirectErr := c.LakeFSClient.FollowRedirect(objResp.RedirectLocation)
+		if redirectErr != nil {
+			return nil, 0, fmt.Errorf("failed to follow redirect: %w", redirectErr)
+		}
+		return redirectResp.Body, redirectResp.ContentLength, nil
+	}
+
+	return objResp.Body, objResp.ContentLength, nil
+}
+
+// GetObjectPresignedURL returns a presigned download URL for the object using LakeFS metadata API.
+// The returned URL can be used by clients to download the object directly from the storage backend.
+func (c *Client) GetObjectPresignedURL(
+	workspace, repository, path, ref string,
+) (string, error) {
+	if IsSystemPath(path) {
+		return "", fmt.Errorf("access to system path %s is not allowed", path)
+	}
+
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
+
+	if ref == "" {
+		repo, getRepositoryErr := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
+		if getRepositoryErr != nil {
+			return "", fmt.Errorf("failed to get repository: %w", getRepositoryErr)
+		}
+		ref = repo.DefaultBranch
+	}
+
+	metadata, err := c.LakeFSClient.GetObjectMetadata(lakeFSRepositoryName, ref, path, false, true)
+	if err != nil {
+		return "", fmt.Errorf("failed to get presigned URL: %w", err)
+	}
+
+	return metadata.PhysicalAddress, nil
+}
+
 func (c *Client) UploadObject(workspace, repository, path, ref string, file io.Reader) (*irminmodels.Object, error) {
 	// Check if the object is a system path
 	if IsSystemPath(path) {

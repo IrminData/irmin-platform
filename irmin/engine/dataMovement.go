@@ -1,10 +1,13 @@
 package engine
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"maps"
+	"os"
 	"path"
 	"strings"
 
@@ -19,6 +22,10 @@ import (
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"gorm.io/gorm"
 )
+
+// InMemoryMultiplier is the factor applied to MaxInMemorySizeMB to determine
+// the maximum allowed in-memory size for bulk data operations (pull, export).
+const InMemoryMultiplier = 10
 
 // validateConnectionCapability validates that the connection has the required capability.
 func (c *Client) validateConnectionCapability(
@@ -303,7 +310,21 @@ func (c *Client) dataImportInternal(
 	repositoryPath string,
 	fieldMappings []irminmodels.FieldMapping,
 ) ([]lakefs.ObjectMetadata, []connectorsclient.OperationLog, []error) {
-	// Pull the files from the connector.
+	// When no field mappings are needed, use the streaming path to avoid loading
+	// all files into memory. Files are streamed from the connector to a temp file,
+	// extracted, and uploaded to LakeFS one at a time.
+	if len(fieldMappings) == 0 {
+		lakeFSRepo := utils.ConstructLakeFSRepositoryName(workspace, repository)
+		metadata, operationLogs, streamErr := c.PullFilesFromConnectorStreaming(
+			ctx, connection, connectionPaths, lakeFSRepo, branch, repositoryPath,
+		)
+		if streamErr != nil {
+			return nil, operationLogs, []error{streamErr}
+		}
+		return metadata, operationLogs, nil
+	}
+
+	// With field mappings, files must be loaded into memory for DuckDB transforms.
 	allFiles, operationLogs, err := c.PullFilesFromConnector(ctx, connection, connectionPaths)
 	if err != nil {
 		return nil, operationLogs, []error{err}
@@ -488,6 +509,10 @@ func (c *Client) PullFilesFromConnector(
 
 	// Loop through the pulled files to unzip them and construct a list of all files.
 	allFiles := make(map[string][]byte)
+	var totalSize int64
+	maxMB := c.Env.MaxInMemorySizeMB * InMemoryMultiplier
+	maxBytes := int64(maxMB) * int64(utils.BytesPerMB)
+
 	for _, file := range pulled {
 		// Unzip the file
 		unzipped, unzipFilesErr := irminutils.UnzipFiles(file.Content)
@@ -495,7 +520,18 @@ func (c *Client) PullFilesFromConnector(
 			return nil, nil, fmt.Errorf("failed to unzip file: %w", unzipFilesErr)
 		}
 
-		// Add the unzipped files to the list of all files.
+		// Track accumulated size and fail early before copying into the map
+		for _, content := range unzipped {
+			totalSize += int64(len(content))
+		}
+		if totalSize > maxBytes {
+			return nil, nil, fmt.Errorf(
+				"pulled data exceeds in-memory limit (%d MB);"+
+					" consider removing field mappings to enable streaming import",
+				maxMB,
+			)
+		}
+
 		maps.Copy(allFiles, unzipped)
 	}
 
@@ -508,6 +544,145 @@ func (c *Client) PullFilesFromConnector(
 	return allFiles, operationStatus.Logs, nil
 }
 
+// PullFilesFromConnectorStreaming pulls files from a connector and uploads them directly to LakeFS
+// without loading all files into memory simultaneously. The connector response is streamed to a
+// temporary file on disk, then each file is extracted and uploaded individually.
+func (c *Client) PullFilesFromConnectorStreaming(
+	ctx context.Context,
+	connection *db.Connection,
+	connectionPaths []string,
+	lakeFSRepo, branch string,
+	pathPrefix string,
+) ([]lakefs.ObjectMetadata, []connectorsclient.OperationLog, error) {
+	if err := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPull); err != nil {
+		return nil, nil, err
+	}
+
+	systemClient, opClient, operationID, cancel, err := c.InitializeConnectorOperation(ctx, connection)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to initialize connector operation: %w", err)
+	}
+	defer cancel()
+
+	var uploaded []lakefs.ObjectMetadata
+
+	// Process each connection path
+	paths := connectionPaths
+	if len(paths) == 0 {
+		paths = []string{""}
+	}
+
+	// Multiple connection paths means multiple items overall, which affects
+	// buildTargetPath semantics (append filename vs replace).
+	hasMultipleItems := len(paths) > 1
+
+	for _, connectionPath := range paths {
+		pulled, pullErr := c.pullAndExtractToLakeFS(
+			ctx, opClient, connectionPath, lakeFSRepo, branch, pathPrefix, hasMultipleItems,
+		)
+		if pullErr != nil {
+			return nil, nil, pullErr
+		}
+		uploaded = append(uploaded, pulled...)
+		// Once we've uploaded any files, subsequent uploads must use multi-file
+		// semantics to avoid overwriting earlier uploads.
+		if len(pulled) > 0 {
+			hasMultipleItems = true
+		}
+	}
+
+	// Collect logs
+	operationStatus, getStatusErr := systemClient.GetOperationStatus(ctx, *operationID)
+	if getStatusErr != nil {
+		return nil, nil, fmt.Errorf("failed to get operation status: %w", getStatusErr)
+	}
+
+	return uploaded, operationStatus.Logs, nil
+}
+
+// pullAndExtractToLakeFS streams a single pull from the connector to a temp file,
+// then extracts the zip and uploads each file to LakeFS.
+// callerHasMultipleItems indicates whether the caller is processing multiple paths/files overall,
+// which affects buildTargetPath semantics (append filename vs replace).
+func (c *Client) pullAndExtractToLakeFS(
+	ctx context.Context,
+	opClient *connectorsclient.Client,
+	connectionPath, lakeFSRepo, branch, pathPrefix string,
+	callerHasMultipleItems bool,
+) ([]lakefs.ObjectMetadata, error) {
+	reader, pullErr := opClient.OperationPullStream(ctx, connectionPath)
+	if pullErr != nil {
+		return nil, fmt.Errorf("failed to pull files: %w", pullErr)
+	}
+
+	// Stream to temp file for seekable zip reading
+	tempFile, tempErr := os.CreateTemp("", "connector-pull-*.zip")
+	if tempErr != nil {
+		_ = reader.Close()
+		return nil, fmt.Errorf("failed to create temp file: %w", tempErr)
+	}
+	defer os.Remove(tempFile.Name())
+	defer tempFile.Close()
+
+	if _, copyErr := io.Copy(tempFile, reader); copyErr != nil {
+		_ = reader.Close()
+		return nil, fmt.Errorf("failed to stream connector response: %w", copyErr)
+	}
+	_ = reader.Close()
+
+	fileInfo, statErr := tempFile.Stat()
+	if statErr != nil {
+		return nil, fmt.Errorf("failed to stat temp file: %w", statErr)
+	}
+
+	zipReader, zipErr := zip.NewReader(tempFile, fileInfo.Size())
+	if zipErr != nil {
+		return nil, fmt.Errorf("failed to open zip: %w", zipErr)
+	}
+
+	// Count non-directory entries to match buildTargetPath's single-file vs multi-file behavior.
+	// Use multi-file semantics if either: the caller is processing multiple paths overall,
+	// or this individual zip contains multiple file entries.
+	var fileEntries []*zip.File
+	for _, f := range zipReader.File {
+		if !f.FileInfo().IsDir() {
+			fileEntries = append(fileEntries, f)
+		}
+	}
+	hasMultipleFiles := callerHasMultipleItems || len(fileEntries) > 1
+
+	var uploadedObjects []lakefs.ObjectMetadata
+	for _, f := range fileEntries {
+		rc, openErr := f.Open()
+		if openErr != nil {
+			return nil, fmt.Errorf("failed to open zip entry %s: %w", f.Name, openErr)
+		}
+
+		safeName, sanitizeErr := utils.SanitizeZipEntryPath(f.Name)
+		if sanitizeErr != nil {
+			_ = rc.Close()
+			return nil, fmt.Errorf("unsafe zip entry path %s: %w", f.Name, sanitizeErr)
+		}
+
+		// Use buildTargetPath to match the same path logic as uploadFiles:
+		// single file without trailing "/" uses pathPrefix as-is (replacing the file),
+		// multiple files or trailing "/" appends the filename.
+		uploadPath := c.buildTargetPath(pathPrefix, safeName, hasMultipleFiles)
+
+		meta, uploadErr := c.LakeFSClient.UploadObject(lakeFSRepo, branch, uploadPath, rc, false)
+		_ = rc.Close()
+		if uploadErr != nil {
+			return nil, fmt.Errorf("failed to upload %s to LakeFS: %w", f.Name, uploadErr)
+		}
+
+		if meta != nil {
+			uploadedObjects = append(uploadedObjects, *meta)
+		}
+	}
+
+	return uploadedObjects, nil
+}
+
 // fetchSingleFile fetches the content of a single file from lakeFS.
 func (c *Client) fetchSingleFile(repoName, branch, filePath string) ([]byte, error) {
 	data, err := c.LakeFSClient.GetFullObjectContent(repoName, branch, filePath)
@@ -517,7 +692,16 @@ func (c *Client) fetchSingleFile(repoName, branch, filePath string) ([]byte, err
 	return data, nil
 }
 
+// dirFetchResult holds the result of a single child file fetch.
+type dirFetchResult struct {
+	path    string
+	content []byte
+}
+
 // fetchDirectoryContents fetches all child contents of a directory concurrently.
+// Concurrency is capped at 10 goroutines and total accumulated size is bounded
+// to prevent OOM on very large directories. A context is used to signal early
+// abort so in-flight goroutines don't continue downloading after the limit is hit.
 func (c *Client) fetchDirectoryContents(
 	repoName, branch string,
 	children []irminmodels.Object,
@@ -530,36 +714,96 @@ func (c *Client) fetchDirectoryContents(
 		return files, repositoryPaths, errs
 	}
 
-	// Use buffered channels sized to the number of children
-	ch := make(chan struct {
-		path    string
-		content []byte
-	}, len(children))
-	errCh := make(chan error, len(children))
+	const maxConcurrency = 10
 
-	// Launch concurrent fetches
-	for _, child := range children {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ch := make(chan dirFetchResult, maxConcurrency)
+	errCh := make(chan error, maxConcurrency)
+
+	// launchFetch starts a goroutine to fetch a single child, respecting context cancellation.
+	launchFetch := func(childPath string) {
 		go func() {
-			data, err := c.LakeFSClient.GetFullObjectContent(repoName, branch, child.Path)
-			if err != nil {
-				errCh <- fmt.Errorf("failed to fetch child %q: %w", child.Path, err)
+			if ctx.Err() != nil {
+				errCh <- ctx.Err()
 				return
 			}
-			ch <- struct {
-				path    string
-				content []byte
-			}{path: child.Path, content: data}
+			data, err := c.LakeFSClient.GetFullObjectContent(repoName, branch, childPath)
+			if err != nil {
+				errCh <- fmt.Errorf("failed to fetch child %q: %w", childPath, err)
+				return
+			}
+			ch <- dirFetchResult{path: childPath, content: data}
 		}()
 	}
 
-	// Collect results
-	for range children {
+	// Seed initial batch up to maxConcurrency.
+	pending := 0
+	childIdx := 0
+	for childIdx < len(children) && pending < maxConcurrency {
+		launchFetch(children[childIdx].Path)
+		childIdx++
+		pending++
+	}
+
+	files, repositoryPaths, errs = c.collectFetchResults(
+		ctx, cancel, ch, errCh, children, &childIdx, &pending, launchFetch,
+	)
+	return files, repositoryPaths, errs
+}
+
+// collectFetchResults drains fetch results, enforces the size limit, and launches
+// follow-up fetches as slots free up.
+func (c *Client) collectFetchResults(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	ch <-chan dirFetchResult,
+	errCh <-chan error,
+	children []irminmodels.Object,
+	childIdx *int,
+	pending *int,
+	launchFetch func(string),
+) (map[string][]byte, []string, []error) {
+	files := make(map[string][]byte)
+	var repositoryPaths []string
+	var errs []error
+	var totalSize int64
+	maxMB := c.Env.MaxInMemorySizeMB * InMemoryMultiplier
+	maxBytes := int64(maxMB) * int64(utils.BytesPerMB)
+
+	for *pending > 0 {
 		select {
 		case r := <-ch:
+			*pending--
+			totalSize += int64(len(r.content))
+			if totalSize > maxBytes {
+				cancel()
+				errs = append(errs, fmt.Errorf(
+					"directory contents exceed memory limit (%d MB); consider exporting fewer files",
+					maxMB,
+				))
+				return files, repositoryPaths, errs
+			}
 			files[r.path] = r.content
 			repositoryPaths = append(repositoryPaths, r.path)
+
+			if *childIdx < len(children) {
+				launchFetch(children[*childIdx].Path)
+				*childIdx++
+				*pending++
+			}
 		case e := <-errCh:
-			errs = append(errs, e)
+			*pending--
+			if ctx.Err() == nil {
+				errs = append(errs, e)
+			}
+
+			if *childIdx < len(children) {
+				launchFetch(children[*childIdx].Path)
+				*childIdx++
+				*pending++
+			}
 		}
 	}
 
@@ -761,12 +1005,6 @@ func (c *Client) PushFilesToConnector(
 		}
 	}
 
-	// Zip the files.
-	zip, zipFilesErr := irminutils.ZipFiles(files)
-	if zipFilesErr != nil {
-		return nil, nil, fmt.Errorf("failed to zip files: %w", zipFilesErr)
-	}
-
 	// Initialize connector operation.
 	systemClient, opClient, operationID, cancel, initializeConnectorOperationErr := c.InitializeConnectorOperation(
 		ctx,
@@ -784,14 +1022,10 @@ func (c *Client) PushFilesToConnector(
 	}
 	connPath := c.buildTargetPath(connectionPath, objName, len(files) > 1)
 
-	// Push the zip to the correct path in the connector.
-	_, pushFilesErr := opClient.OperationPush(
-		ctx,
-		connPath,
-		connectorsclient.FormFile{Reader: bytes.NewBuffer(zip)},
-	)
-	if pushFilesErr != nil {
-		return nil, nil, fmt.Errorf("failed to push files: %w", pushFilesErr)
+	// Push files: use presigned URL for large payloads, direct upload for small ones.
+	pushErr := c.pushFilesWithSizeRouting(ctx, opClient, connPath, files)
+	if pushErr != nil {
+		return nil, nil, fmt.Errorf("failed to push files: %w", pushErr)
 	}
 
 	// Collect logs for the operation
@@ -806,4 +1040,99 @@ func (c *Client) PushFilesToConnector(
 		pushedPaths = append(pushedPaths, pushedPath)
 	}
 	return pushedPaths, operationStatus.Logs, nil
+}
+
+// pushFilesWithSizeRouting zips and pushes files to a connector, choosing between
+// direct upload (small payloads) and presigned URL (large payloads) based on total size.
+func (c *Client) pushFilesWithSizeRouting(
+	ctx context.Context,
+	opClient *connectorsclient.Client,
+	connPath string,
+	files map[string][]byte,
+) error {
+	totalSize := int64(0)
+	for _, content := range files {
+		totalSize += int64(len(content))
+	}
+
+	threshold := int64(c.Env.MaxInMemorySizeMB) * int64(utils.BytesPerMB)
+	if totalSize <= threshold {
+		return c.pushFilesDirect(ctx, opClient, connPath, files)
+	}
+	return c.pushFilesViaTempFile(ctx, opClient, connPath, files)
+}
+
+// pushFilesDirect zips files in memory and sends them directly to the connector.
+func (c *Client) pushFilesDirect(
+	ctx context.Context,
+	opClient *connectorsclient.Client,
+	connPath string,
+	files map[string][]byte,
+) error {
+	zipData, zipErr := irminutils.ZipFiles(files)
+	if zipErr != nil {
+		return fmt.Errorf("failed to zip files: %w", zipErr)
+	}
+
+	_, pushErr := opClient.OperationPush(
+		ctx,
+		connPath,
+		connectorsclient.FormFile{Reader: bytes.NewBuffer(zipData), FileName: "export.zip"},
+	)
+	return pushErr
+}
+
+// pushFilesViaTempFile writes the zip to a temp file instead of memory, then
+// sends the zip file to the connector. The zip is built on disk to avoid holding
+// both the raw files and the compressed zip in memory simultaneously. Note that
+// the multipart encoding still buffers the zip in memory during the HTTP upload;
+// the net saving is avoiding the peak where both representations coexist.
+func (c *Client) pushFilesViaTempFile(
+	ctx context.Context,
+	opClient *connectorsclient.Client,
+	connPath string,
+	files map[string][]byte,
+) error {
+	// Create temp file for the zip
+	tempFile, tempErr := os.CreateTemp("", "push-zip-*.zip")
+	if tempErr != nil {
+		return fmt.Errorf("failed to create temp file: %w", tempErr)
+	}
+	defer os.Remove(tempFile.Name())
+	defer tempFile.Close()
+
+	// Write zip to temp file instead of memory
+	zipWriter := zip.NewWriter(tempFile)
+	for filePath, content := range files {
+		safePath, sanitizeErr := utils.SanitizeZipEntryPath(filePath)
+		if sanitizeErr != nil {
+			_ = zipWriter.Close()
+			return fmt.Errorf("unsafe zip entry path: %w", sanitizeErr)
+		}
+		entry, createErr := zipWriter.Create(safePath)
+		if createErr != nil {
+			_ = zipWriter.Close()
+			return fmt.Errorf("failed to create zip entry for %s: %w", safePath, createErr)
+		}
+		if _, writeErr := entry.Write(content); writeErr != nil {
+			_ = zipWriter.Close()
+			return fmt.Errorf("failed to write zip entry for %s: %w", safePath, writeErr)
+		}
+	}
+	if closeErr := zipWriter.Close(); closeErr != nil {
+		return fmt.Errorf("failed to close zip writer: %w", closeErr)
+	}
+
+	// Seek to beginning for reading
+	if _, seekErr := tempFile.Seek(0, io.SeekStart); seekErr != nil {
+		return fmt.Errorf("failed to seek temp file: %w", seekErr)
+	}
+
+	// Stream the temp file to the connector (reads from disk, not memory)
+	_, pushErr := opClient.OperationPush(
+		ctx,
+		connPath,
+		connectorsclient.FormFile{Reader: tempFile, FileName: "export.zip"},
+	)
+	return pushErr
 }

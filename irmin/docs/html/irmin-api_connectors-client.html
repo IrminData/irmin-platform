@@ -19,6 +19,8 @@ type Client struct {
 
 	// HTTPClient is a customisable HTTP client. You can set timeouts, proxies, etc.
 	HTTPClient *http.Client
+
+	// Has unexported fields.
 }
     Client represents the Connector API client.
 
@@ -46,6 +48,12 @@ func (c *Client) FetchStreamFiles(ctx context.Context, opts RequestOptions) ([]P
     returns a slice of PulledFile. If the response is multipart, each part is
     parsed as a separate file. Otherwise, the response is treated as a single
     file.
+
+func (c *Client) FetchStreamFilesReader(ctx context.Context, opts RequestOptions) (io.ReadCloser, error)
+    FetchStreamFilesReader sends a request and returns a streaming reader
+    for the response body. The caller is responsible for closing the returned
+    reader. This avoids loading the entire response into memory, suitable for
+    large file transfers.
 
 func (c *Client) GetConfigFields(
 	ctx context.Context,
@@ -148,6 +156,11 @@ func (c *Client) OperationPull(ctx context.Context, path string) ([]PulledFile, 
         header (if present).
 
     - An error if the request fails.
+
+func (c *Client) OperationPullStream(ctx context.Context, path string) (io.ReadCloser, error)
+    OperationPullStream sends a POST request to the /operation/pull endpoint and
+    returns a streaming reader for the response body. The caller is responsible
+    for closing the reader. The response is expected to be a zip archive.
 
 func (c *Client) OperationPush(ctx context.Context, path string, file FormFile) (string, error)
     OperationPush sends a file to the /operation/push endpoint along with a

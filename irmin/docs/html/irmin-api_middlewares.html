@@ -151,6 +151,10 @@ func (api *APIMiddlewares) RepositoryTagPermissionMiddleware(action db.PolicyAct
     RepositoryTagPermissionMiddleware creates a middleware for tag-level
     permissions.
 
+func (api *APIMiddlewares) ResponseSizeMonitor(c fiber.Ctx) error
+    ResponseSizeMonitor logs warnings for large in-memory responses that may
+    indicate missing streaming or redirect optimizations.
+
 func (api *APIMiddlewares) ScriptMiddleware(c fiber.Ctx) error
     ScriptMiddleware verifies that the user has access to the stored script they
     are trying to access.

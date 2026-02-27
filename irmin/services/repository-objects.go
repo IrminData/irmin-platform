@@ -1,6 +1,7 @@
 package services
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"fmt"
@@ -901,6 +902,108 @@ func (api *APIServices) DeleteRepositoryObject(
 	return nil
 }
 
+// ObjectDownloadResult holds the result of a size-tiered download decision.
+type ObjectDownloadResult struct {
+	Tier        utils.FileSizeTier
+	Content     []byte        // Populated for InMemory tier
+	Stream      io.ReadCloser // Populated for Stream tier (caller must close)
+	ContentLen  int64         // Content length for streaming
+	RedirectURL string        // Populated for Redirect tier
+	ContentType string
+}
+
+// GetRepositoryObjectDownload determines the best download strategy based on file size
+// and returns the appropriate result. For small files it loads into memory, for medium
+// files it streams, and for large files it returns a presigned URL for redirect.
+func (api *APIServices) GetRepositoryObjectDownload(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+) (*ObjectDownloadResult, error) {
+	// Permission checks
+	isAllowed, err := api.PermissionService.IsAllowed(
+		user, workspace, db.PolicyResourceRepositoryObject, &object.ID, db.PolicyActionRead,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error checking permissions for object download", "error", err)
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
+	}
+	if !isAllowed {
+		return nil, ErrAccessDenied
+	}
+
+	// If this is a pointer, resolve the target and fall back to in-memory download
+	if object.IsPointer || lib.IsPointerPath(object.Path) {
+		content, contentErr := api.getPointerTargetContent(c, locale, user, workspace, repository, object, false)
+		if contentErr != nil {
+			return nil, contentErr
+		}
+		return &ObjectDownloadResult{
+			Tier:        utils.FileSizeTierInMemory,
+			Content:     content,
+			ContentType: object.ContentType,
+		}, nil
+	}
+
+	tier := utils.DetermineFileSizeTier(object.SizeBytes, api.Env)
+
+	dataEngine, engineErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	if engineErr != nil {
+		api.Logger.ErrorContext(c, "error creating data engine client", "error", engineErr)
+		return nil, NewInternalErrorf("error creating data engine client: %w", engineErr)
+	}
+
+	switch tier {
+	case utils.FileSizeTierInMemory:
+		content, contentErr := dataEngine.GetObjectContent(
+			workspace.Slug, repository.Slug, object.Path, object.RepositoryRef,
+		)
+		if contentErr != nil {
+			api.Logger.ErrorContext(c, "Error retrieving object content", "error", contentErr)
+			return nil, NewInternalErrorf("error retrieving object content: %w", contentErr)
+		}
+		return &ObjectDownloadResult{
+			Tier:        utils.FileSizeTierInMemory,
+			Content:     content,
+			ContentType: object.ContentType,
+		}, nil
+
+	case utils.FileSizeTierStream:
+		stream, contentLen, streamErr := dataEngine.GetObjectContentStream(
+			workspace.Slug, repository.Slug, object.Path, object.RepositoryRef,
+		)
+		if streamErr != nil {
+			api.Logger.ErrorContext(c, "Error streaming object content", "error", streamErr)
+			return nil, NewInternalErrorf("error streaming object content: %w", streamErr)
+		}
+		return &ObjectDownloadResult{
+			Tier:        utils.FileSizeTierStream,
+			Stream:      stream,
+			ContentLen:  contentLen,
+			ContentType: object.ContentType,
+		}, nil
+
+	case utils.FileSizeTierRedirect, utils.FileSizeTierAsync:
+		presignedURL, presignErr := dataEngine.GetObjectPresignedURL(
+			workspace.Slug, repository.Slug, object.Path, object.RepositoryRef,
+		)
+		if presignErr != nil {
+			api.Logger.ErrorContext(c, "Error generating presigned URL", "error", presignErr)
+			return nil, NewInternalErrorf("error generating presigned URL: %w", presignErr)
+		}
+		return &ObjectDownloadResult{
+			Tier:        tier,
+			RedirectURL: presignedURL,
+			ContentType: object.ContentType,
+		}, nil
+	}
+
+	return nil, NewInternalError("unexpected file size tier")
+}
+
 func (api *APIServices) GetRepositoryObjectContent(
 	c context.Context,
 	locale string,
@@ -1274,6 +1377,8 @@ func (api *APIServices) ZipRepositoryObject(
 }
 
 // processGroupObject recursively processes a group object and its children, storing file contents in the provided map.
+// Children are fetched from the database on-the-fly to support arbitrarily nested directories,
+// since GORM's Preload only loads one level of depth.
 func (api *APIServices) processGroupObjectDownload(
 	group *db.RepositoryObject,
 	workspace *db.Workspace,
@@ -1289,8 +1394,13 @@ func (api *APIServices) processGroupObjectDownload(
 		return fmt.Errorf("object %q is not a group", group.Name)
 	}
 
-	for i := range group.Children {
-		child := &group.Children[i]
+	children, childErr := api.DB.FindChildObjects(group.ID)
+	if childErr != nil {
+		return NewInternalErrorf("error finding children for %s: %w", group.Path, childErr)
+	}
+
+	for i := range children {
+		child := &children[i]
 		if child.Type == irminmodels.ObjectTypeGroup {
 			if err := api.processGroupObjectDownload(child, workspace, repository, objectRef, dataEngine, files); err != nil {
 				return NewInternalErrorf("error processing group object download: %w", err)
@@ -1319,6 +1429,242 @@ func (api *APIServices) processSingleObjectDownload(
 	}
 	files[object.Path] = content
 	return nil
+}
+
+// StreamZipRepositoryObject writes a zip archive directly to the provided writer,
+// streaming each file from LakeFS without loading all files into memory at once.
+func (api *APIServices) StreamZipRepositoryObject(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+	writer io.Writer,
+) error {
+	// Permission checks
+	isAllowed, err := api.PermissionService.IsAllowed(
+		user, workspace, db.PolicyResourceRepositoryObject, &object.ID, db.PolicyActionRead,
+	)
+	if err != nil {
+		return NewInternalErrorf("error checking permissions: %w", err)
+	}
+	if !isAllowed {
+		return ErrAccessDenied
+	}
+
+	dataEngine, engineErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	if engineErr != nil {
+		return NewInternalErrorf("error creating data engine client: %w", engineErr)
+	}
+
+	zipWriter := zip.NewWriter(writer)
+
+	if streamErr := api.streamObjectToZip(
+		object, workspace, repository, object.RepositoryRef, dataEngine, zipWriter,
+	); streamErr != nil {
+		// Do NOT close the zip writer on error — leaving the central directory
+		// unwritten ensures the client receives an obviously corrupt archive
+		// rather than a silently incomplete one with a valid zip trailer.
+		return streamErr
+	}
+
+	return zipWriter.Close()
+}
+
+// streamObjectToZip recursively streams object content into a zip writer.
+// Children are fetched from the database on-the-fly to support arbitrarily nested directories,
+// since GORM's Preload only loads one level of depth.
+func (api *APIServices) streamObjectToZip(
+	object *db.RepositoryObject,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	ref string,
+	dataEngine *engine.Client,
+	zipWriter *zip.Writer,
+) error {
+	if object.Type == irminmodels.ObjectTypeGroup {
+		children, childErr := api.DB.FindChildObjects(object.ID)
+		if childErr != nil {
+			return NewInternalErrorf("error finding children for %s: %w", object.Path, childErr)
+		}
+		for i := range children {
+			if err := api.streamObjectToZip(
+				&children[i], workspace, repository, ref, dataEngine, zipWriter,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	// Sanitize path to prevent zip-slip attacks
+	safePath, sanitizeErr := utils.SanitizeZipEntryPath(object.Path)
+	if sanitizeErr != nil {
+		return NewInternalErrorf("unsafe zip entry path %s: %w", object.Path, sanitizeErr)
+	}
+
+	// Stream file content from LakeFS directly into the zip entry
+	stream, _, streamErr := dataEngine.GetObjectContentStream(
+		workspace.Slug, repository.Slug, object.Path, ref,
+	)
+	if streamErr != nil {
+		return NewInternalErrorf("error streaming object %s: %w", object.Path, streamErr)
+	}
+	defer stream.Close()
+
+	entry, createErr := zipWriter.Create(safePath)
+	if createErr != nil {
+		return NewInternalErrorf("error creating zip entry for %s: %w", object.Path, createErr)
+	}
+
+	if _, copyErr := io.Copy(entry, stream); copyErr != nil {
+		return NewInternalErrorf("error writing object %s to zip: %w", object.Path, copyErr)
+	}
+
+	return nil
+}
+
+// CalculateObjectTotalSize recursively calculates the total size of an object and its children.
+// Children are fetched from the database on-the-fly to support arbitrarily nested directories.
+func CalculateObjectTotalSize(database *db.Database, object *db.RepositoryObject) (int64, error) {
+	if object.Type != irminmodels.ObjectTypeGroup {
+		return object.SizeBytes, nil
+	}
+	children, err := database.FindChildObjects(object.ID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to find children for object %d: %w", object.ID, err)
+	}
+	var total int64
+	for i := range children {
+		childSize, childErr := CalculateObjectTotalSize(database, &children[i])
+		if childErr != nil {
+			return 0, childErr
+		}
+		total += childSize
+	}
+	return total, nil
+}
+
+// PresignedUploadResult holds the result of a presigned upload URL generation.
+type PresignedUploadResult struct {
+	UploadURL       string `json:"upload_url"`
+	PhysicalAddress string `json:"physical_address"`
+	Expiry          int64  `json:"expiry"`
+}
+
+// GeneratePresignedUploadURL generates a presigned URL for direct-to-storage upload
+// using LakeFS staging. The client uploads directly to the storage backend, then
+// calls AssociatePresignedUpload to link the object in LakeFS.
+func (api *APIServices) GeneratePresignedUploadURL(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	path string,
+	ref string,
+) (*PresignedUploadResult, error) {
+	// Permission checks
+	isAllowed, err := api.PermissionService.IsAllowed(
+		user, workspace, db.PolicyResourceRepositoryObject, nil, db.PolicyActionCreate,
+	)
+	if err != nil {
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
+	}
+	if !isAllowed {
+		return nil, ErrAccessDenied
+	}
+
+	dataEngine, engineErr := engine.NewClient(c, "en", api.Logger, api.Env, api.DB)
+	if engineErr != nil {
+		return nil, NewInternalErrorf("error creating data engine client: %w", engineErr)
+	}
+
+	lakeFSRepoName := utils.ConstructLakeFSRepositoryName(workspace.Slug, repository.Slug)
+	staging, stagingErr := dataEngine.LakeFSClient.GenerateStagingLocation(lakeFSRepoName, ref, path, true)
+	if stagingErr != nil {
+		return nil, NewInternalErrorf("error generating staging location: %w", stagingErr)
+	}
+
+	return &PresignedUploadResult{
+		UploadURL:       staging.PresignedURL,
+		PhysicalAddress: staging.PhysicalAddress,
+		Expiry:          staging.PresignedURLExpiry,
+	}, nil
+}
+
+// AssociatePresignedUpload links a previously staged upload with a path in LakeFS,
+// creating an uncommitted change. This should be called after the client has uploaded
+// the file directly to the presigned URL.
+func (api *APIServices) AssociatePresignedUpload(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	path string,
+	ref string,
+	physicalAddress string,
+	checksum string,
+	sizeBytes int64,
+	contentType string,
+) (*irminmodels.Object, error) {
+	// Permission checks
+	isAllowed, err := api.PermissionService.IsAllowed(
+		user, workspace, db.PolicyResourceRepositoryObject, nil, db.PolicyActionCreate,
+	)
+	if err != nil {
+		return nil, NewInternalErrorf("error checking permissions: %w", err)
+	}
+	if !isAllowed {
+		return nil, ErrAccessDenied
+	}
+
+	dataEngine, engineErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	if engineErr != nil {
+		return nil, NewInternalErrorf("error creating data engine client: %w", engineErr)
+	}
+
+	lakeFSRepoName := utils.ConstructLakeFSRepositoryName(workspace.Slug, repository.Slug)
+
+	// Validate that the physical address belongs to this repository's storage namespace.
+	// This prevents a user with write access from associating objects from other repositories
+	// in the same storage backend.
+	repo, repoErr := dataEngine.LakeFSClient.GetRepository(lakeFSRepoName)
+	if repoErr != nil {
+		return nil, NewInternalErrorf("error fetching repository info: %w", repoErr)
+	}
+	if !strings.HasPrefix(physicalAddress, repo.StorageNamespace) {
+		return nil, fmt.Errorf(
+			"%w: physical address does not belong to this repository's storage namespace",
+			ErrInvalidRequest,
+		)
+	}
+
+	stagingMetadata := dataEngine.LakeFSClient.BuildStagingMetadata(
+		physicalAddress, checksum, sizeBytes, contentType,
+	)
+
+	_, associateErr := dataEngine.LakeFSClient.AssociateStaging(
+		lakeFSRepoName, ref, path, stagingMetadata,
+	)
+	if associateErr != nil {
+		return nil, NewInternalErrorf("error associating staging upload: %w", associateErr)
+	}
+
+	// Get the metadata of the associated object to return to the caller
+	objMeta, metaErr := dataEngine.LakeFSClient.GetObjectMetadata(
+		lakeFSRepoName, ref, path, false, false,
+	)
+	if metaErr != nil {
+		return nil, NewInternalErrorf("error getting associated object metadata: %w", metaErr)
+	}
+
+	return &irminmodels.Object{
+		Path:        objMeta.Path,
+		SizeBytes:   objMeta.SizeBytes,
+		ContentType: objMeta.ContentType,
+	}, nil
 }
 
 func (api *APIServices) GetRepositoryObjectHistory(

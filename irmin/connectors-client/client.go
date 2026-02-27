@@ -34,17 +34,32 @@ type Client struct {
 
 	// HTTPClient is a customisable HTTP client. You can set timeouts, proxies, etc.
 	HTTPClient *http.Client
+
+	// streamClient is an HTTP client without a top-level Timeout, used for streaming
+	// requests where the body is read incrementally. It shares the Transport (and thus
+	// connection pool, TLS config, etc.) with HTTPClient.
+	streamClient *http.Client
 }
 
 // NewClient creates a new Connector API client with default settings.
 func NewClient(baseURL, token, locale string) *Client {
+	// Explicitly set the Transport so both clients share the same connection
+	// pool, TLS sessions, and proxy settings. Without this, http.Client leaves
+	// Transport nil and silently falls back to http.DefaultTransport, which
+	// means a later change to HTTPClient.Transport would not propagate.
+	transport := http.DefaultTransport
+	httpClient := &http.Client{
+		Timeout:   irminsdkgo.DefaultConnectorTimeout,
+		Transport: transport,
+	}
 	return &Client{
-		BaseURL: baseURL,
-		Token:   token,
-		Locale:  locale,
-		HTTPClient: &http.Client{
-			Timeout: irminsdkgo.DefaultConnectorTimeout,
-		},
+		BaseURL:    baseURL,
+		Token:      token,
+		Locale:     locale,
+		HTTPClient: httpClient,
+		// Omit the top-level Timeout so streaming body reads are not
+		// interrupted by the request-response timeout.
+		streamClient: &http.Client{Transport: transport},
 	}
 }
 
@@ -90,6 +105,8 @@ func prepareJSONBody(body any, headers map[string]string) (io.Reader, error) {
 }
 
 // prepareMultipartBody prepares a multipart/form-data request body and sets appropriate headers.
+// The body is buffered in a bytes.Buffer so that Go's HTTP client can set
+// Content-Length automatically (required by servers that don't support chunked encoding).
 func prepareMultipartBody(
 	formFields map[string]string,
 	files []FormFile,
@@ -229,8 +246,8 @@ func (c *Client) doRequest(req *http.Request, allowedStatus []int) (*http.Respon
 	}
 
 	// Check if the response status code is allowed
-	isAllowed := len(allowedStatus) == 0 && (resp.StatusCode >= 200 && resp.StatusCode < 300) ||
-		len(allowedStatus) > 0 && slices.Contains(allowedStatus, resp.StatusCode)
+	isAllowed := (len(allowedStatus) == 0 && resp.StatusCode >= 200 && resp.StatusCode < 300) ||
+		(len(allowedStatus) > 0 && slices.Contains(allowedStatus, resp.StatusCode))
 
 	if !isAllowed {
 		return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, bodyBytes)
@@ -434,4 +451,96 @@ func extractFilenameFromResponse(resp *http.Response) string {
 		}
 	}
 	return ""
+}
+
+// doStreamRequest executes an HTTP request and returns the raw response without reading the body.
+// The caller is responsible for closing the response body.
+// Uses the pre-built streamClient (no top-level Timeout) so the timer does not interrupt
+// streaming body reads. Timeouts are controlled by the request's context instead.
+func (c *Client) doStreamRequest(req *http.Request, allowedStatus []int) (*http.Response, error) {
+	resp, err := c.streamClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request to %s failed: %w", req.URL, err)
+	}
+
+	isAllowed := (len(allowedStatus) == 0 && resp.StatusCode >= 200 && resp.StatusCode < 300) ||
+		(len(allowedStatus) > 0 && slices.Contains(allowedStatus, resp.StatusCode))
+
+	if !isAllowed {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, bodyBytes)
+	}
+
+	return resp, nil
+}
+
+// cancelOnCloseReader wraps an io.ReadCloser and calls a cancel function when closed.
+// This ensures context cancellation is tied to the reader's lifecycle rather than the calling function.
+type cancelOnCloseReader struct {
+	io.ReadCloser
+	cancel context.CancelFunc
+}
+
+func (r *cancelOnCloseReader) Close() error {
+	err := r.ReadCloser.Close()
+	r.cancel()
+	return err
+}
+
+// FetchStreamFilesReader sends a request and returns a streaming reader for the response body.
+// The caller is responsible for closing the returned reader.
+// This avoids loading the entire response into memory, suitable for large file transfers.
+func (c *Client) FetchStreamFilesReader(ctx context.Context, opts RequestOptions) (io.ReadCloser, error) {
+	var cancel context.CancelFunc
+	if ctx == nil {
+		// Use a cancellable context without a deadline. DefaultConnectorTimeout is
+		// designed for regular request-response cycles; applying it here would abort
+		// long-running streams mid-transfer. The cancel func is tied to the reader's
+		// Close via cancelOnCloseReader, ensuring cleanup when the caller is done.
+		ctx, cancel = context.WithCancel(context.Background())
+	}
+
+	fullURL := fmt.Sprintf("%s%s", c.BaseURL, opts.Endpoint)
+
+	bodyReader, headers, err := c.prepareBodyAndHeaders(opts)
+	if err != nil {
+		if cancel != nil {
+			cancel()
+		}
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, opts.Method, fullURL, bodyReader)
+	if err != nil {
+		if cancel != nil {
+			cancel()
+		}
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+	req.Header.Set("Accept-Language", c.Locale)
+	if _, exists := headers["Accept"]; !exists {
+		req.Header.Set("Accept", "application/octet-stream")
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := c.doStreamRequest(req, opts.AllowedStatus)
+	if err != nil {
+		if cancel != nil {
+			cancel()
+		}
+		return nil, err
+	}
+
+	// If we created a context with cancel, wrap the reader so cancel is called on Close().
+	// When the caller provides their own context (cancel == nil), they own context
+	// lifecycle and cancellation, so we return the raw body.
+	if cancel != nil {
+		return &cancelOnCloseReader{ReadCloser: resp.Body, cancel: cancel}, nil
+	}
+	return resp.Body, nil
 }

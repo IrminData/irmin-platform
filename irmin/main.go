@@ -61,8 +61,6 @@ import (
 )
 
 const (
-	// MaxRequestBodySize is the maximum size of request body in bytes (5 GB).
-	MaxRequestBodySize = 5 * 1024 * 1024 * 1024
 	// CachePreflightDuration is the duration for which preflight requests are cached.
 	CachePreflightDuration = 24 * time.Hour
 )
@@ -203,7 +201,7 @@ func runGarbageCollection(d *db.Database, env *utils.CoreAPIEnv, dryRun bool) er
 func setupFiberApp(env *utils.CoreAPIEnv, appCacheMiddleware fiber.Handler) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:   "Irmin API",
-		BodyLimit: MaxRequestBodySize,
+		BodyLimit: utils.MaxRequestBodySizeBytes(env),
 		ErrorHandler: func(c fiber.Ctx, err error) error {
 			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 		},

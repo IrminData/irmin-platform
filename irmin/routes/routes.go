@@ -77,7 +77,12 @@ func RegisterAPIRoutes(
 	)
 
 	// Secure API routes
-	v1 := app.Group("/api/v1", apiMiddlewares.LocaleMiddleware, apiMiddlewares.AuthMiddleware)
+	v1 := app.Group(
+		"/api/v1",
+		apiMiddlewares.LocaleMiddleware,
+		apiMiddlewares.AuthMiddleware,
+		apiMiddlewares.ResponseSizeMonitor,
+	)
 
 	// System routes (authenticated)
 	system := v1.Group("/system")
@@ -710,6 +715,16 @@ func RegisterAPIRoutes(
 		"/validate",
 		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.RepositoryObjectsValidate,
+	)
+	objects.Post(
+		"/upload/presigned",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.RepositoryObjectsPresignedUpload,
+	)
+	objects.Post(
+		"/upload/associate",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.RepositoryObjectsAssociateUpload,
 	)
 
 	// Branch routes

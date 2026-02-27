@@ -30,6 +30,48 @@ const (
 	safeRowSizeThreshold = 100
 )
 
+// FileSizeTier determines the download strategy based on file size.
+type FileSizeTier int
+
+const (
+	// FileSizeTierInMemory indicates the file should be loaded fully into memory (small files).
+	FileSizeTierInMemory FileSizeTier = iota
+	// FileSizeTierStream indicates the file should be streamed through the API without buffering.
+	FileSizeTierStream
+	// FileSizeTierRedirect indicates the client should be redirected to a presigned URL.
+	FileSizeTierRedirect
+	// FileSizeTierAsync indicates the operation should be processed asynchronously via a job.
+	FileSizeTierAsync
+)
+
+// DetermineFileSizeTier returns the appropriate download strategy tier based on file size and env config.
+func DetermineFileSizeTier(sizeBytes int64, env *CoreAPIEnv) FileSizeTier {
+	maxInMemoryBytes := int64(env.MaxInMemorySizeMB) * int64(BytesPerMB)
+	maxStreamBytes := int64(env.MaxStreamSizeMB) * int64(BytesPerMB)
+	maxAsyncJobBytes := int64(env.MaxAsyncJobSizeMB) * int64(BytesPerMB)
+
+	switch {
+	case sizeBytes <= maxInMemoryBytes:
+		return FileSizeTierInMemory
+	case sizeBytes <= maxStreamBytes:
+		return FileSizeTierStream
+	case sizeBytes <= maxAsyncJobBytes:
+		return FileSizeTierRedirect
+	default:
+		return FileSizeTierAsync
+	}
+}
+
+// MaxRequestBodySizeBytes returns the max request body size in bytes from env config.
+func MaxRequestBodySizeBytes(env *CoreAPIEnv) int {
+	return env.MaxRequestBodySizeMB * BytesPerMB
+}
+
+// MaxWorkflowInputFileSizeBytes returns the max workflow input file size in bytes from env config.
+func MaxWorkflowInputFileSizeBytes(env *CoreAPIEnv) int64 {
+	return int64(env.MaxWorkflowInputFileSizeMB) * int64(BytesPerMB)
+}
+
 // LimitJSONResponseSizeResult contains the result of limiting JSON response size
 type LimitJSONResponseSizeResult struct {
 	Data       any    // The trimmed data (or original if not trimmed)
