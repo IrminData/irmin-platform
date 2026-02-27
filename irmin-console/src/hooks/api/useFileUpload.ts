@@ -8,6 +8,25 @@ import { generateTempId } from '@/utils/generateTempId';
 
 import { useInvalidateObjectQueries } from './useInvalidateObjectQueries';
 
+/**
+ * File size threshold (in bytes) above which presigned upload is used.
+ * Files larger than this are uploaded directly to storage via a presigned URL
+ * to avoid loading them through the API server.
+ * Matches the backend MaxInMemorySizeMB default (20 MB).
+ */
+const PRESIGNED_UPLOAD_THRESHOLD =
+  parseInt(process.env.NEXT_PUBLIC_PRESIGNED_UPLOAD_THRESHOLD_MB ?? '20', 10) *
+  1024 *
+  1024;
+
+/**
+ * Maximum file size (in bytes) for which a client-side SHA-256 checksum is computed.
+ * Files larger than this skip the checksum to avoid loading the entire file into
+ * memory via arrayBuffer(). The storage backend verifies integrity independently.
+ * 100 MB.
+ */
+const CHECKSUM_SIZE_LIMIT = 100 * 1024 * 1024;
+
 /** Status of a file in the upload queue */
 export type QueuedFileStatus =
   | 'pending'
@@ -142,10 +161,86 @@ export const useFileUpload = (
   );
 
   /**
-   * Upload a single file
+   * Upload a single file using presigned URL (for large files).
+   * Generates a presigned upload URL, uploads directly to storage, then associates.
+   */
+  const uploadFilePresigned = useCallback(
+    async (file: File, ref: string, path: string): Promise<void> => {
+      const core = await getCore();
+
+      // Step 1: Generate presigned upload URL
+      const presignedResult =
+        await core.objectService.generatePresignedUploadURL({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          ref,
+          path,
+        });
+
+      if (!presignedResult.data) {
+        throw new Error('Failed to generate presigned upload URL');
+      }
+
+      const { upload_url, physical_address } = presignedResult.data;
+
+      // Step 2: Compute SHA-256 checksum for integrity verification.
+      // Only for files that fit reasonably in memory; larger files rely on
+      // storage-backend integrity checks (ETag). The checksum field is optional.
+      let checksum: string | undefined;
+      if (file.size <= CHECKSUM_SIZE_LIMIT) {
+        checksum = await (async () => {
+          const buffer = await file.arrayBuffer();
+          const hash = await crypto.subtle.digest('SHA-256', buffer);
+          return Array.from(new Uint8Array(hash))
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('');
+        })();
+      }
+
+      // Step 3: Upload directly to storage via presigned URL.
+      // Uses the File object which streams from disk, not from the ArrayBuffer.
+      const uploadResponse = await fetch(upload_url, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type || 'application/octet-stream',
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(
+          `Direct upload failed with status ${uploadResponse.status}`
+        );
+      }
+
+      // Step 4: Associate the upload with the repository path
+      await core.objectService.associatePresignedUpload({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        ref,
+        path,
+        physicalAddress: physical_address,
+        checksum: checksum ?? '',
+        sizeBytes: file.size,
+        contentType: file.type || 'application/octet-stream',
+      });
+
+      // Invalidate queries for the uploaded path
+      invalidateObjectQueries(path, ref);
+    },
+    [getCore, workspaceSlug, repositorySlug, invalidateObjectQueries]
+  );
+
+  /**
+   * Upload a single file. Uses presigned upload for files larger than 20MB
+   * to avoid loading large files through the API server.
    */
   const uploadFile = useCallback(
     async (file: File, ref: string, path: string): Promise<void> => {
+      if (file.size > PRESIGNED_UPLOAD_THRESHOLD) {
+        return uploadFilePresigned(file, ref, path);
+      }
+
       const core = await getCore();
 
       // Create a FileList-like object from the single file
@@ -163,7 +258,13 @@ export const useFileUpload = (
       // Invalidate queries for the uploaded path
       invalidateObjectQueries(path, ref);
     },
-    [getCore, workspaceSlug, repositorySlug, invalidateObjectQueries]
+    [
+      getCore,
+      workspaceSlug,
+      repositorySlug,
+      invalidateObjectQueries,
+      uploadFilePresigned,
+    ]
   );
 
   /**

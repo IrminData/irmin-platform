@@ -44,6 +44,25 @@ interface CreateSignedURLResponse {
 }
 
 /**
+ * Response from generating a presigned upload URL
+ */
+interface PresignedUploadResult {
+  upload_url: string;
+  physical_address: string;
+  expiry: number;
+}
+
+/**
+ * Request body for associating a presigned upload
+ */
+interface AssociateUploadRequest {
+  physical_address: string;
+  checksum: string;
+  size_bytes: number;
+  content_type: string;
+}
+
+/**
  * Object API service
  *
  * Responsible for all repository object-related API calls.
@@ -74,6 +93,9 @@ class ObjectService {
     this.validateObject = this.validateObject.bind(this);
     this.createPointer = this.createPointer.bind(this);
     this.createSignedObjectURL = this.createSignedObjectURL.bind(this);
+    this.generatePresignedUploadURL =
+      this.generatePresignedUploadURL.bind(this);
+    this.associatePresignedUpload = this.associatePresignedUpload.bind(this);
   }
 
   /**
@@ -166,23 +188,13 @@ class ObjectService {
     path: string;
     ref?: string;
     limitResponse?: boolean;
-  }): Promise<IrminAPIBinaryResponse | null> {
-    try {
-      const urlParams = new URLSearchParams();
-      urlParams.append('path', path);
-      if (ref) urlParams.append('ref', ref);
-      if (limitResponse) urlParams.append('limit-response', 'true');
-      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/content?${urlParams.toString()}`;
-      const response = await this.irminCore.fetchBinary(
-        url,
-        { method: 'GET' },
-        [200]
-      );
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Fetch object content error');
-    }
-    return null;
+  }): Promise<IrminAPIBinaryResponse> {
+    const urlParams = new URLSearchParams();
+    urlParams.append('path', path);
+    if (ref) urlParams.append('ref', ref);
+    if (limitResponse) urlParams.append('limit-response', 'true');
+    const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/content?${urlParams.toString()}`;
+    return await this.irminCore.fetchBinary(url, { method: 'GET' }, [200]);
   }
 
   /**
@@ -706,6 +718,108 @@ class ObjectService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create signed object URL error');
+      throw error;
+    }
+  }
+  /**
+   * Generate a presigned URL for direct-to-storage upload.
+   * The client uploads directly to the storage backend using the returned URL,
+   * then calls associatePresignedUpload to link the object.
+   *
+   * @param props - The presigned upload properties.
+   * @param props.workspace - The workspace slug.
+   * @param props.repository - The repository slug.
+   * @param props.ref - The branch to upload to.
+   * @param props.path - The object path within the repository.
+   * @returns IrminAPIResponse containing the presigned upload URL and metadata.
+   */
+  async generatePresignedUploadURL({
+    workspace,
+    repository,
+    ref,
+    path,
+  }: {
+    workspace: string;
+    repository: string;
+    ref: string;
+    path: string;
+  }): Promise<IrminAPIResponse<PresignedUploadResult>> {
+    try {
+      const params = new URLSearchParams();
+      params.append('ref', ref);
+      params.append('path', path);
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/upload/presigned?${params.toString()}`;
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'POST',
+      })) as IrminAPIResponse<PresignedUploadResult>;
+      return response;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Generate presigned upload URL error'
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Associate a previously staged upload with a path in the repository.
+   * Call this after the client has uploaded the file directly to the presigned URL.
+   *
+   * @param props - The associate upload properties.
+   * @param props.workspace - The workspace slug.
+   * @param props.repository - The repository slug.
+   * @param props.ref - The branch to associate the upload with.
+   * @param props.path - The object path within the repository.
+   * @param props.physicalAddress - The physical address returned from generatePresignedUploadURL.
+   * @param props.checksum - The checksum of the uploaded file.
+   * @param props.sizeBytes - The size of the uploaded file in bytes.
+   * @param props.contentType - The MIME type of the uploaded file.
+   * @returns IrminAPIResponse containing the associated object.
+   */
+  async associatePresignedUpload({
+    workspace,
+    repository,
+    ref,
+    path,
+    physicalAddress,
+    checksum,
+    sizeBytes,
+    contentType,
+  }: {
+    workspace: string;
+    repository: string;
+    ref: string;
+    path: string;
+    physicalAddress: string;
+    checksum: string;
+    sizeBytes: number;
+    contentType: string;
+  }): Promise<IrminAPIResponse<RepositoryObject>> {
+    try {
+      const params = new URLSearchParams();
+      params.append('ref', ref);
+      params.append('path', path);
+
+      const requestBody: AssociateUploadRequest = {
+        physical_address: physicalAddress,
+        checksum,
+        size_bytes: sizeBytes,
+        content_type: contentType,
+      };
+
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/upload/associate?${params.toString()}`;
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      })) as IrminAPIResponse<RepositoryObject>;
+      return response;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Associate presigned upload error'
+      );
       throw error;
     }
   }

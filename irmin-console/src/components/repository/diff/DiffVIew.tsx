@@ -233,11 +233,28 @@ const DiffView = ({
                       dark:border-gray-800
                     `}
                   >
-                    <ContentDiff
-                      item={item}
-                      baseContent={diffContentQuery.data?.base}
-                      compareContent={diffContentQuery.data?.compare}
-                    />
+                    {diffContentQuery.data.baseError ||
+                    diffContentQuery.data.compareError ? (
+                      <div
+                        className={`
+                          px-4 py-8 text-center text-sm text-gray-500
+                          dark:text-gray-400
+                        `}
+                      >
+                        {diffContentQuery.data.baseError && (
+                          <p>{diffContentQuery.data.baseError}</p>
+                        )}
+                        {diffContentQuery.data.compareError && (
+                          <p>{diffContentQuery.data.compareError}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <ContentDiff
+                        item={item}
+                        baseContent={diffContentQuery.data?.base}
+                        compareContent={diffContentQuery.data?.compare}
+                      />
+                    )}
                   </div>
                 )}
               {openItem?.path === item.object.path &&

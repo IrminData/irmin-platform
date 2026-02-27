@@ -546,6 +546,8 @@ const en = {
       view: 'View',
       unsupportedContentType: 'Unsupported content type',
       contentUnavailable: 'Object content unavailable',
+      contentTooLarge:
+        'This file is too large to display. Please download it instead.',
       viewSchema: 'View schema',
       filterObjects: 'Filter objects',
       uploadAndReplace: 'Upload and replace',

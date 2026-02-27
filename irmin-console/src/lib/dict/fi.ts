@@ -545,6 +545,8 @@ const fi = {
       view: 'Näytä',
       unsupportedContentType: 'Sisältötyyppiä ei tueta',
       contentUnavailable: 'Objektin sisältö ei ole saatavilla',
+      contentTooLarge:
+        'Tiedosto on liian suuri näytettäväksi. Lataa se sen sijaan.',
       viewSchema: 'Näytä rakenne',
       filterObjects: 'Suodata objekteja',
       uploadAndReplace: 'Lataa ja korvaa',

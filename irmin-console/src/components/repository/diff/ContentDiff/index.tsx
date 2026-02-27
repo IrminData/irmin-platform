@@ -29,23 +29,26 @@ const ContentDiff = ({
   compareContent,
 }: {
   item: ChangeItem;
-  baseContent: IrminAPIBinaryResponse;
-  compareContent: IrminAPIBinaryResponse;
+  baseContent: IrminAPIBinaryResponse | null;
+  compareContent: IrminAPIBinaryResponse | null;
 }) => {
   const { dict } = useLocale();
 
-  const baseText = useMemo(() => convertToText(baseContent), [baseContent]);
+  const baseText = useMemo(
+    () => (baseContent ? convertToText(baseContent) : null),
+    [baseContent]
+  );
   const compareText = useMemo(
-    () => convertToText(compareContent),
+    () => (compareContent ? convertToText(compareContent) : null),
     [compareContent]
   );
 
   const baseContentType = useMemo(
-    () => getContentType(baseContent),
+    () => (baseContent ? getContentType(baseContent) : ''),
     [baseContent]
   );
   const compareContentType = useMemo(
-    () => getContentType(compareContent),
+    () => (compareContent ? getContentType(compareContent) : ''),
     [compareContent]
   );
 
@@ -56,38 +59,42 @@ const ContentDiff = ({
     [item]
   );
 
-  if (baseText && compareText) {
+  if (baseText !== null || compareText !== null) {
     return (
       <div className='flex flex-col overflow-x-scroll'>
         <div className='flex flex-row items-center gap-2'>
           <div className='flex w-1/2 flex-row items-center gap-2 p-2'>
             <p className='text-sm'>
-              {`${dict.repository.compare.baseContent} (${getContentType(baseContent)})`}
+              {`${dict.repository.compare.baseContent} (${baseContentType})`}
             </p>
-            <Button
-              variant='secondary'
-              size='sm'
-              className='ml-auto'
-              onClick={() => handleDownload(baseText, baseContentType)}
-            >
-              {dict.common.download}
-            </Button>
+            {baseText && (
+              <Button
+                variant='secondary'
+                size='sm'
+                className='ml-auto'
+                onClick={() => handleDownload(baseText, baseContentType)}
+              >
+                {dict.common.download}
+              </Button>
+            )}
           </div>
           <div className='flex w-1/2 flex-row items-center gap-2 p-2'>
             <p className='text-sm'>
-              {`${dict.repository.compare.comparedContent} (${getContentType(compareContent)})`}
+              {`${dict.repository.compare.comparedContent} (${compareContentType})`}
             </p>
-            <Button
-              variant='secondary'
-              size='sm'
-              className='ml-auto'
-              onClick={() => handleDownload(compareText, compareContentType)}
-            >
-              {dict.common.download}
-            </Button>
+            {compareText && (
+              <Button
+                variant='secondary'
+                size='sm'
+                className='ml-auto'
+                onClick={() => handleDownload(compareText, compareContentType)}
+              >
+                {dict.common.download}
+              </Button>
+            )}
           </div>
         </div>
-        <TextDiff base={baseText} compare={compareText} />
+        <TextDiff base={baseText ?? ''} compare={compareText ?? ''} />
       </div>
     );
   }
@@ -108,22 +115,24 @@ const ContentDiff = ({
         >
           <div className='flex w-full flex-row items-center gap-2 p-2'>
             <p className='text-sm'>
-              {`${dict.repository.compare.baseContent} (${getContentType(baseContent)})`}
+              {`${dict.repository.compare.baseContent} (${baseContentType})`}
             </p>
-            <Button
-              variant='secondary'
-              size='sm'
-              className='ml-auto'
-              onClick={() =>
-                handleDownload(baseContent as Blob, baseContentType)
-              }
-            >
-              {dict.common.download}
-            </Button>
+            {baseContent instanceof Blob && (
+              <Button
+                variant='secondary'
+                size='sm'
+                className='ml-auto'
+                onClick={() => handleDownload(baseContent, baseContentType)}
+              >
+                {dict.common.download}
+              </Button>
+            )}
           </div>
-          <div className='max-w-full overflow-x-scroll text-xs'>
-            <ObjectViewer object={item.object} objectContent={baseContent} />
-          </div>
+          {baseContent && (
+            <div className='max-w-full overflow-x-scroll text-xs'>
+              <ObjectViewer object={item.object} objectContent={baseContent} />
+            </div>
+          )}
         </div>
         <div
           className={`
@@ -133,22 +142,29 @@ const ContentDiff = ({
         >
           <div className='flex w-full flex-row items-center gap-2 p-2'>
             <p className='text-sm'>
-              {`${dict.repository.compare.comparedContent} (${getContentType(compareContent)})`}
+              {`${dict.repository.compare.comparedContent} (${compareContentType})`}
             </p>
-            <Button
-              variant='secondary'
-              size='sm'
-              className='ml-auto'
-              onClick={() =>
-                handleDownload(compareContent as Blob, compareContentType)
-              }
-            >
-              {dict.common.download}
-            </Button>
+            {compareContent instanceof Blob && (
+              <Button
+                variant='secondary'
+                size='sm'
+                className='ml-auto'
+                onClick={() =>
+                  handleDownload(compareContent, compareContentType)
+                }
+              >
+                {dict.common.download}
+              </Button>
+            )}
           </div>
-          <div className='max-w-full overflow-x-scroll text-xs'>
-            <ObjectViewer object={item.object} objectContent={compareContent} />
-          </div>
+          {compareContent && (
+            <div className='max-w-full overflow-x-scroll text-xs'>
+              <ObjectViewer
+                object={item.object}
+                objectContent={compareContent}
+              />
+            </div>
+          )}
         </div>
       </div>
     );

@@ -296,11 +296,32 @@ class IrminCore {
 
     // validate allowed statuses
     if (allowedStatusCodes && !allowedStatusCodes.includes(response.status)) {
-      throw new Error(
-        `Unexpected status code: ${response.status} for ${
-          options.method ?? 'GET'
-        } ${url}`
-      );
+      // Try to extract a human-readable error message from the response body,
+      // matching the same extraction logic used by fetchAPI.
+      let message = `Request failed with status ${response.status}`;
+      try {
+        const ct = response.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          const body = await response.json();
+          const uniqueMessages = new Set<string>();
+
+          if (Array.isArray(body?.errors)) {
+            body.errors.forEach((error: string) => {
+              if (error) uniqueMessages.add(error);
+            });
+          }
+          if (body?.message) {
+            uniqueMessages.add(body.message);
+          }
+
+          if (uniqueMessages.size > 0) {
+            message = `[${response.status}] ${Array.from(uniqueMessages).join('\n')}`;
+          }
+        }
+      } catch {
+        // Ignore parse errors, use default message
+      }
+      throw new Error(message);
     }
 
     // inspect content type
