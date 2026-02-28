@@ -5,17 +5,119 @@ import type { FieldMapping } from '@/types/core/Workflow';
 
 import type { Field, FileGroup } from './types';
 
+const MAX_NESTING_DEPTH = 3;
+
 const extractFieldsFromSchema = (schema: ObjectSchema): Field[] => {
   const fields: Field[] = [];
 
+  const processProperties = (
+    properties: Record<
+      string,
+      {
+        type: string;
+        format?: string;
+        description?: string;
+        properties?: Record<string, unknown>;
+        required?: string[];
+        items?: {
+          type?: string;
+          properties?: Record<string, unknown>;
+          required?: string[];
+        };
+      }
+    >,
+    required: string[] | undefined,
+    basePath: string,
+    parentName: string,
+    source: string,
+    depth: number
+  ) => {
+    Object.entries(properties).forEach(([fieldName, fieldSchema]) => {
+      const fieldPath = `${basePath}.${fieldName}`;
+      const qualifiedName = parentName
+        ? `${parentName}.${fieldName}`
+        : fieldName;
+
+      // Recurse into nested objects (up to max depth)
+      if (fieldSchema.type === 'object' && fieldSchema.properties) {
+        // Add the parent object field itself so it can be mapped as a whole
+        const atDepthLimit = depth >= MAX_NESTING_DEPTH;
+        fields.push({
+          path: fieldPath,
+          name: qualifiedName,
+          type: fieldSchema.type,
+          format: fieldSchema.format,
+          source,
+          description: fieldSchema.description,
+          required: required?.includes(fieldName),
+          depth,
+          truncated: atDepthLimit,
+        });
+        if (!atDepthLimit) {
+          processProperties(
+            fieldSchema.properties as typeof properties,
+            fieldSchema.required,
+            fieldPath,
+            qualifiedName,
+            source,
+            depth + 1
+          );
+        }
+        return;
+      }
+
+      // Recurse into array of objects (up to max depth)
+      if (
+        fieldSchema.type === 'array' &&
+        fieldSchema.items?.type === 'object' &&
+        fieldSchema.items.properties
+      ) {
+        // Add the parent array field itself so it can be mapped as a whole
+        const atDepthLimit = depth >= MAX_NESTING_DEPTH;
+        fields.push({
+          path: fieldPath,
+          name: qualifiedName,
+          type: fieldSchema.type,
+          format: fieldSchema.format,
+          source,
+          description: fieldSchema.description,
+          required: required?.includes(fieldName),
+          depth,
+          truncated: atDepthLimit,
+        });
+        if (!atDepthLimit) {
+          processProperties(
+            fieldSchema.items.properties as typeof properties,
+            fieldSchema.items.required,
+            fieldPath,
+            `${qualifiedName}[]`,
+            source,
+            depth + 1
+          );
+        }
+        return;
+      }
+
+      fields.push({
+        path: fieldPath,
+        name: qualifiedName,
+        type: fieldSchema.type,
+        format: fieldSchema.format,
+        source,
+        description: fieldSchema.description,
+        required: required?.includes(fieldName),
+        depth,
+      });
+    });
+  };
+
   const processSchema = (obj: ObjectSchema) => {
     if (obj.type === 'structured' && obj.schema) {
-      let properties: typeof obj.schema.properties;
-      let required: typeof obj.schema.required;
+      let properties: Record<string, unknown> | undefined;
+      let required: string[] | undefined;
 
       // Handle different schema types
       if (obj.schema.type === 'object' && obj.schema.properties) {
-        // Direct object schema
         properties = obj.schema.properties;
         required = obj.schema.required;
       } else if (
@@ -23,23 +125,19 @@ const extractFieldsFromSchema = (schema: ObjectSchema): Field[] => {
         obj.schema.items?.type === 'object' &&
         obj.schema.items.properties
       ) {
-        // Array of objects schema
         properties = obj.schema.items.properties;
         required = obj.schema.items.required;
       }
 
       if (properties) {
-        Object.entries(properties).forEach(([fieldName, fieldSchema]) => {
-          fields.push({
-            path: `${obj.path}.${fieldName}`,
-            name: fieldName,
-            type: fieldSchema.type,
-            format: fieldSchema.format,
-            source: obj.path,
-            description: fieldSchema.description,
-            required: required?.includes(fieldName),
-          });
-        });
+        processProperties(
+          properties as Parameters<typeof processProperties>[0],
+          required,
+          obj.path,
+          '',
+          obj.path,
+          0
+        );
       }
     } else if (obj.type === 'group' && obj.children) {
       obj.children.forEach((child) => processSchema(child));
@@ -454,7 +552,8 @@ export const autoMapIdenticalFields = (
     {} as Record<string, Field[]>
   );
 
-  // Find matching files and auto-map identical field names
+  // Find matching files and auto-map identical field names.
+  // Only files with the exact same base name (without extension) are matched.
   Object.keys(sourceByFile).forEach((sourceFile) => {
     Object.keys(destinationByFile).forEach((destFile) => {
       const sourceFileName =
@@ -468,11 +567,13 @@ export const autoMapIdenticalFields = (
           .pop()
           ?.replace(/\.[^/.]+$/, '') || '';
 
-      if (
-        sourceFileName === destFileName ||
-        sourceFileName.includes(destFileName) ||
-        destFileName.includes(sourceFileName)
-      ) {
+      // Only auto-map between files with identical base names.
+      // Token-based fuzzy matching was removed because it produced
+      // false positives (e.g. "orders" matching "orders_items",
+      // "sales_report" matching "report_data").
+      const filesMatch = sourceFileName === destFileName;
+
+      if (filesMatch) {
         sourceByFile[sourceFile].forEach((sourceField) => {
           destinationByFile[destFile].forEach((destField) => {
             if (sourceField.name === destField.name) {

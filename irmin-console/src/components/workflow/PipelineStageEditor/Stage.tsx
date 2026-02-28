@@ -43,6 +43,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import MultiplePathsSelector from '@/components/workflow/MultiplePathsSelector';
+import SchemaFieldMapper from '@/components/workflow/SchemaFieldMapper';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -329,6 +330,8 @@ function Stage({
         return 'default';
       case 'embeddings':
         return 'secondary';
+      case 'field_mapping':
+        return 'secondary';
       default:
         return 'default';
     }
@@ -375,6 +378,8 @@ function Stage({
               {stage.type === 'transform' && dict.workflow.pipeline.transform}
               {stage.type === 'embeddings' && dict.workflow.pipeline.embeddings}
               {stage.type === 'patch' && dict.workflow.pipeline.patch}
+              {stage.type === 'field_mapping' &&
+                dict.workflow.pipeline.fieldMapping}
             </Badge>
 
             {stage.description && (
@@ -605,6 +610,18 @@ function Stage({
                     read: false,
                     order_sequence: prevStage.order_sequence,
                   }));
+                } else if (value === 'field_mapping') {
+                  setStage((prevStage) => ({
+                    type: 'field_mapping',
+                    field_mapping_mappings: [],
+                    field_mapping_mode: 'all',
+                    field_mapping_target_name: undefined,
+                    field_mapping_output_name: undefined,
+                    description: prevStage.description,
+                    write: false,
+                    read: true,
+                    order_sequence: prevStage.order_sequence,
+                  }));
                 }
               }}
               disabled={readOnly}
@@ -625,6 +642,8 @@ function Stage({
                   {stage.type === 'embeddings' &&
                     dict.workflow.pipeline.embeddings}
                   {stage.type === 'patch' && dict.workflow.pipeline.patch}
+                  {stage.type === 'field_mapping' &&
+                    dict.workflow.pipeline.fieldMapping}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -652,6 +671,9 @@ function Stage({
                 </SelectItem>
                 <SelectItem value='patch'>
                   {dict.workflow.pipeline.patch}
+                </SelectItem>
+                <SelectItem value='field_mapping'>
+                  {dict.workflow.pipeline.fieldMapping}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -2631,6 +2653,108 @@ function Stage({
                   </div>
                 </>
               )}
+            </>
+          )}
+
+          {stage.type === 'field_mapping' && (
+            <>
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`field-mapping-mode-${index}`}>
+                  {dict.workflow.pipeline.fieldMappingMode}
+                </Label>
+                <Select
+                  value={stage.field_mapping_mode ?? 'all'}
+                  onValueChange={(value: 'single' | 'all') => {
+                    setStage((prevStage) => {
+                      if (prevStage.type !== 'field_mapping') return prevStage;
+                      return {
+                        ...prevStage,
+                        field_mapping_mode: value,
+                      };
+                    });
+                  }}
+                  disabled={readOnly}
+                >
+                  <SelectTrigger
+                    id={`field-mapping-mode-${index}`}
+                    className='w-full'
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>
+                      {dict.workflow.pipeline.transformModeAll}
+                    </SelectItem>
+                    <SelectItem value='single'>
+                      {dict.workflow.pipeline.transformModeSingle}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {stage.field_mapping_mode === 'single' && (
+                <div className='flex flex-col gap-2'>
+                  <Label htmlFor={`field-mapping-target-${index}`}>
+                    {dict.workflow.pipeline.fieldMappingTargetName}
+                  </Label>
+                  <Input
+                    id={`field-mapping-target-${index}`}
+                    placeholder='data.json'
+                    value={stage.field_mapping_target_name ?? ''}
+                    onChange={(e) => {
+                      setStage((prevStage) => {
+                        if (prevStage.type !== 'field_mapping')
+                          return prevStage;
+                        return {
+                          ...prevStage,
+                          field_mapping_target_name: e.target.value,
+                        };
+                      });
+                    }}
+                    readOnly={readOnly}
+                  />
+                </div>
+              )}
+
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor={`field-mapping-output-${index}`}>
+                  {dict.workflow.pipeline.fieldMappingOutputName}
+                </Label>
+                <Input
+                  id={`field-mapping-output-${index}`}
+                  placeholder={dict.common.optional}
+                  value={stage.field_mapping_output_name ?? ''}
+                  onChange={(e) => {
+                    setStage((prevStage) => {
+                      if (prevStage.type !== 'field_mapping') return prevStage;
+                      return {
+                        ...prevStage,
+                        field_mapping_output_name: e.target.value || undefined,
+                      };
+                    });
+                  }}
+                  readOnly={readOnly}
+                />
+              </div>
+
+              <Separator />
+
+              <SchemaFieldMapper
+                mode='standalone'
+                sourceSchema={null}
+                destinationSchema={null}
+                readOnly={readOnly}
+                initialMappings={stage.field_mapping_mappings ?? []}
+                onMappingsChange={(mappings) => {
+                  setStage((prevStage) => {
+                    if (prevStage.type !== 'field_mapping') return prevStage;
+                    return {
+                      ...prevStage,
+                      field_mapping_mappings: mappings,
+                    };
+                  });
+                }}
+              />
             </>
           )}
         </div>

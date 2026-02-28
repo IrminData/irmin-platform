@@ -16,6 +16,10 @@ export interface FieldMapping {
   destination_path: string;
   /** Field name in the destination file */
   destination_field?: string;
+  /** DuckDB type to cast the field to (e.g., VARCHAR, INTEGER, BIGINT, DOUBLE, BOOLEAN, TIMESTAMP, DATE) */
+  cast_type?: string;
+  /** JSON dot-notation path for unwrapping nested data (e.g., "data" for { data: [...] }) */
+  source_json_path?: string;
 }
 
 /**
@@ -252,6 +256,7 @@ export type PipelineStage = {
   | PipelineStageTransform
   | PipelineStageEmbeddings
   | PipelineStagePatch
+  | PipelineStageFieldMapping
 );
 
 /**
@@ -386,6 +391,21 @@ interface PipelineStagePatch {
   patch_connection_id?: string;
   /** Target path within the connection (when direction is to_connection) */
   patch_connection_path?: string;
+}
+
+/**
+ * Pipeline Stage that applies field mappings to transform data structure
+ */
+interface PipelineStageFieldMapping {
+  type: 'field_mapping';
+  /** Field mappings to apply */
+  field_mapping_mappings: FieldMapping[];
+  /** Mode: single file or all files. Defaults to 'all' if not specified. */
+  field_mapping_mode?: 'single' | 'all';
+  /** Optional: specific file name to target (for single mode) */
+  field_mapping_target_name?: string;
+  /** Optional: output file name (for file renaming) */
+  field_mapping_output_name?: string;
 }
 
 /**

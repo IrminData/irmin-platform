@@ -189,14 +189,29 @@ const FieldGroup = ({
                             </Badge>
                           )}
                         </div>
-                        {isMapped && (
-                          <div
-                            className={`
-                              size-2 rounded-full bg-green-500
-                              dark:bg-green-400
-                            `}
-                          />
-                        )}
+                        <div className='flex items-center gap-1'>
+                          {field.truncated && (
+                            <span
+                              className={`
+                                text-xs text-amber-600
+                                dark:text-amber-400
+                              `}
+                              title={
+                                dict.schemaFieldMapper.nestedFieldsTruncated
+                              }
+                            >
+                              ...
+                            </span>
+                          )}
+                          {isMapped && (
+                            <div
+                              className={`
+                                size-2 rounded-full bg-green-500
+                                dark:bg-green-400
+                              `}
+                            />
+                          )}
+                        </div>
                       </div>
                       {field.description && (
                         <div

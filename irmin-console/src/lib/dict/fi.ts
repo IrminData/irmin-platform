@@ -1044,7 +1044,13 @@ const fi = {
           'Upotukset-vaiheet luovat dokumenteista vektori esityksiä semanttista hakua varten tai etsivät olemassa olevista upotuksista luonnollisen kielen kyselyillä.',
         patch:
           'Päivitysvaiheet soveltavat inkrementaalisia muutoksia saapuvista tapahtumista arkistoihin tai yhteyksiin, mahdollistaen reaaliaikaisen datasynkronoinnin.',
+        field_mapping:
+          'Kenttämääritysvaiheet soveltavat kenttätason muunnoksia dataan, mukaan lukien kenttien uudelleennimeäminen, tyyppien muuntaminen ja sisäkkäisten JSON-rakenteiden purkaminen.',
       },
+      fieldMapping: 'Kenttämääritys',
+      fieldMappingMode: 'Kohdetila',
+      fieldMappingTargetName: 'Kohdetiedoston nimi',
+      fieldMappingOutputName: 'Tulostiedoston nimi',
       patch: 'Päivitys',
       patchDirection: 'Päivityssuunta',
       patchToRepository: 'Arkistoon',
@@ -1766,6 +1772,13 @@ const fi = {
     destinationEmpty: 'Kohde on tyhjä - mitään ei tarvitse korvata',
     noFieldsToMap:
       'Kenttien yhdistäminen ei ole käytettävissä, koska toisella tai molemmilla puolilla ei ole ennalta määriteltyjä kenttiä. Kentät luodaan automaattisesti työnkulkua suoritettaessa.',
+    jsonPathPlaceholder: 'JSON-polku purkamiseen (esim. data)',
+    noCastType: 'Ei tyyppimuunnosta',
+    unwrapLabel: 'pura',
+    fieldMappingStageDescription:
+      'Käytä kenttien yhdistämistä nimien muuttamiseen, tyyppien vaihtamiseen tai rakenteen muuttamiseen',
+    addFieldPlaceholder: 'Kentän nimi...',
+    nestedFieldsTruncated: 'Syvempiä sisäkkäisiä kenttiä ei näytetä',
   },
 
   dataSizeWarning: {

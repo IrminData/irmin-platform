@@ -1056,7 +1056,13 @@ const en = {
           'Embeddings stages create vector representations of documents for semantic search, or search existing embeddings using natural language queries.',
         patch:
           'Patch stages apply incremental changes from incoming events to repositories or connections, enabling real-time data synchronization.',
+        field_mapping:
+          'Field Mapping stages apply field-level transformations to data, including renaming fields, casting types, and unwrapping nested JSON structures.',
       },
+      fieldMapping: 'Field Mapping',
+      fieldMappingMode: 'Target Mode',
+      fieldMappingTargetName: 'Target File Name',
+      fieldMappingOutputName: 'Output File Name',
       patch: 'Patch',
       patchDirection: 'Patch direction',
       patchToRepository: 'To repository',
@@ -1782,6 +1788,13 @@ const en = {
     destinationEmpty: 'Destination is empty - nothing needs replacement',
     noFieldsToMap:
       'Field mappings are not available because one or both sides do not have predefined fields. Fields will be created automatically during the workflow execution.',
+    jsonPathPlaceholder: 'JSON path to unwrap (e.g., data)',
+    noCastType: 'No type cast',
+    unwrapLabel: 'unwrap',
+    fieldMappingStageDescription:
+      'Apply field mappings to rename, retype, or restructure data',
+    addFieldPlaceholder: 'Field name...',
+    nestedFieldsTruncated: 'Deeper nested fields are not shown',
   },
 
   dataSizeWarning: {
