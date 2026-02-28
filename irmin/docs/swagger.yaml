@@ -2151,6 +2151,29 @@ definitions:
     - EmbeddingsOpSearch
   irminmodels.FieldMapping:
     properties:
+      cast_type:
+        enum:
+        - VARCHAR
+        - TEXT
+        - INTEGER
+        - INT
+        - BIGINT
+        - SMALLINT
+        - TINYINT
+        - HUGEINT
+        - DOUBLE
+        - FLOAT
+        - REAL
+        - DECIMAL
+        - BOOLEAN
+        - BOOL
+        - DATE
+        - TIMESTAMP
+        - TIME
+        - BLOB
+        - UUID
+        example: VARCHAR
+        type: string
       destination_field:
         example: customer_email
         type: string
@@ -2159,6 +2182,9 @@ definitions:
         type: string
       source_field:
         example: email
+        type: string
+      source_json_path:
+        example: data
         type: string
       source_path:
         example: /data/customers.csv
@@ -2767,6 +2793,20 @@ definitions:
         example: script
       fail_on_error:
         type: boolean
+      field_mapping_mappings:
+        description: Field mapping stage specific
+        items:
+          $ref: '#/definitions/irminmodels.FieldMapping'
+        type: array
+      field_mapping_mode:
+        description: '"single" or "all"'
+        type: string
+      field_mapping_output_name:
+        example: customers_renamed.json
+        type: string
+      field_mapping_target_name:
+        example: customers.json
+        type: string
       order_sequence:
         example: 1
         type: integer
@@ -2909,6 +2949,7 @@ definitions:
         - transform
         - embeddings
         - patch
+        - field_mapping
         example: repository
       validation_mode:
         description: '"single" or "all"'
@@ -2937,6 +2978,7 @@ definitions:
     - transform
     - embeddings
     - patch
+    - field_mapping
     type: string
     x-enum-varnames:
     - PipelineStageTypeAction
@@ -2948,6 +2990,7 @@ definitions:
     - PipelineStageTypeTransform
     - PipelineStageTypeEmbeddings
     - PipelineStageTypePatch
+    - PipelineStageTypeFieldMapping
   irminmodels.PointerTarget:
     properties:
       target_path:

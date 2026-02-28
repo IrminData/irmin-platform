@@ -5489,6 +5489,11 @@ type PipelineStage struct {
     PatchRepositoryID     *uint           `json:"patch_repository_id,omitempty"`
     PatchRepositoryBranch *string         `json:"patch_repository_branch,omitempty"` // Branch for repository patches
     PatchSourceFileName   *string         `json:"patch_source_file_name,omitempty"`  // Which file in previousStageResults contains patches (defaults to patches.json)
+
+    FieldMappingMappings   []irminmodels.FieldMapping `json:"field_mapping_mappings,omitempty"    gorm:"type:jsonb;serializer:json"`
+    FieldMappingMode       *string                    `json:"field_mapping_mode,omitempty"`
+    FieldMappingTargetName *string                    `json:"field_mapping_target_name,omitempty"`
+    FieldMappingOutputName *string                    `json:"field_mapping_output_name,omitempty"`
 }
 ```
 
@@ -5514,6 +5519,7 @@ const (
     PipelineStageTypeTransform        PipelineStageType = "transform"
     PipelineStageTypeEmbeddings       PipelineStageType = "embeddings"
     PipelineStageTypePatch            PipelineStageType = "patch"
+    PipelineStageTypeFieldMapping     PipelineStageType = "field_mapping"
 )
 ```
 
@@ -7461,6 +7467,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) MergeRefs\(workspace, repository, baseRef, compareRef, message, author, strategy string, squash, allowEmpty bool\) \(\*irminmodels.Commit, error\)](<#Client.MergeRefs>)
   - [func \(c \*Client\) MoveObject\(workspace, repository, path, ref, newPath string\) \(\*irminmodels.Object, error\)](<#Client.MoveObject>)
   - [func \(c \*Client\) ObjectExists\(workspace, repository, path, ref string\) \(bool, error\)](<#Client.ObjectExists>)
+  - [func \(c \*Client\) ProcessFieldMappings\(ctx context.Context, files map\[string\]\[\]byte, fieldMappings \[\]irminmodels.FieldMapping\) \(map\[string\]\[\]byte, error\)](<#Client.ProcessFieldMappings>)
   - [func \(c \*Client\) ProcessTransformations\(ctx context.Context, files map\[string\]\[\]byte, config TransformConfig\) \(map\[string\]\[\]byte, error\)](<#Client.ProcessTransformations>)
   - [func \(c \*Client\) PullFilesFromConnector\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string\) \(map\[string\]\[\]byte, \[\]connectorsclient.OperationLog, error\)](<#Client.PullFilesFromConnector>)
   - [func \(c \*Client\) PullFilesFromConnectorStreaming\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, lakeFSRepo, branch string, pathPrefix string\) \(\[\]lakefs.ObjectMetadata, \[\]connectorsclient.OperationLog, error\)](<#Client.PullFilesFromConnectorStreaming>)
@@ -8156,6 +8163,15 @@ func (c *Client) ObjectExists(workspace, repository, path, ref string) (bool, er
 ```
 
 ObjectExists checks whether an object exists at the given path and ref in the repository.
+
+<a name="Client.ProcessFieldMappings"></a>
+### func \(\*Client\) ProcessFieldMappings
+
+```go
+func (c *Client) ProcessFieldMappings(ctx context.Context, files map[string][]byte, fieldMappings []irminmodels.FieldMapping) (map[string][]byte, error)
+```
+
+ProcessFieldMappings applies field mappings to a set of files, creating the DuckDB client internally. This is the main entry point for pipeline field\_mapping stages.
 
 <a name="Client.ProcessTransformations"></a>
 ### func \(\*Client\) ProcessTransformations

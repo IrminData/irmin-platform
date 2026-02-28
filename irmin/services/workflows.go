@@ -972,6 +972,8 @@ func (api *APIServices) createImportExportWorkflowable(
 			SourceField:      sourceField,
 			DestinationPath:  strings.TrimPrefix(mapping.DestinationPath, "/"),
 			DestinationField: destinationField,
+			CastType:         mapping.CastType,
+			SourceJSONPath:   mapping.SourceJSONPath,
 		}
 	}
 
@@ -1321,6 +1323,8 @@ func (api *APIServices) processStageByType(
 		return api.processEmbeddingsStage(txDB, newStage, stage, workspace)
 	case irminmodels.PipelineStageTypePatch:
 		return api.processPatchStage(txDB, newStage, stage, workspace)
+	case irminmodels.PipelineStageTypeFieldMapping:
+		return api.processFieldMappingStage(newStage, stage)
 	default:
 		return fmt.Errorf("invalid stage type: %s", stage.Type)
 	}
@@ -1903,6 +1907,65 @@ func (api *APIServices) processPatchStage(
 
 	// Optional source file name
 	newStage.PatchSourceFileName = stage.PatchSourceFileName
+
+	return nil
+}
+
+// processFieldMappingStage processes a field_mapping stage.
+func (api *APIServices) processFieldMappingStage(
+	newStage *db.PipelineStage,
+	stage irminmodels.PipelineStage,
+) error {
+	newStage.Type = db.PipelineStageTypeFieldMapping
+
+	// Field mappings are required
+	if len(stage.FieldMappingMappings) == 0 {
+		return errors.New("field_mapping_mappings is required for field_mapping stage")
+	}
+
+	// Validate and normalize each mapping
+	normalizedMappings := make([]irminmodels.FieldMapping, len(stage.FieldMappingMappings))
+	for i, mapping := range stage.FieldMappingMappings {
+		if mapping.SourcePath == "" {
+			return fmt.Errorf("field_mapping_mappings[%d]: source_path is required", i)
+		}
+		if mapping.DestinationPath == "" {
+			return fmt.Errorf("field_mapping_mappings[%d]: destination_path is required", i)
+		}
+		// Normalize paths consistently with import/export (trim leading slash)
+		normalizedMappings[i] = irminmodels.FieldMapping{
+			SourcePath:       strings.TrimPrefix(mapping.SourcePath, "/"),
+			SourceField:      mapping.SourceField,
+			DestinationPath:  strings.TrimPrefix(mapping.DestinationPath, "/"),
+			DestinationField: mapping.DestinationField,
+			CastType:         mapping.CastType,
+			SourceJSONPath:   mapping.SourceJSONPath,
+		}
+	}
+
+	newStage.FieldMappingMappings = normalizedMappings
+
+	// Set default mode if not provided
+	if stage.FieldMappingMode == nil {
+		newStage.FieldMappingMode = &defaultTransformMode // reuse "all" default
+	} else {
+		newStage.FieldMappingMode = stage.FieldMappingMode
+	}
+
+	// Validate mode is either "single" or "all"
+	if *newStage.FieldMappingMode != modeSingle && *newStage.FieldMappingMode != modeAll {
+		return errors.New("field_mapping_mode must be either 'single' or 'all'")
+	}
+
+	// Validate that target_name is provided when mode is "single"
+	if *newStage.FieldMappingMode == modeSingle {
+		if stage.FieldMappingTargetName == nil || *stage.FieldMappingTargetName == "" {
+			return errors.New("field_mapping_target_name is required when field_mapping_mode is 'single'")
+		}
+	}
+
+	newStage.FieldMappingTargetName = stage.FieldMappingTargetName
+	newStage.FieldMappingOutputName = stage.FieldMappingOutputName
 
 	return nil
 }

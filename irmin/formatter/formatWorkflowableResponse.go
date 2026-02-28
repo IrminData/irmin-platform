@@ -347,6 +347,18 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			PatchRepositoryBranch: stage.PatchRepositoryBranch,
 			PatchSourceFileName:   stage.PatchSourceFileName,
 		}
+	case db.PipelineStageTypeFieldMapping:
+		return irminmodels.PipelineStage{
+			Description:            stage.Description,
+			Write:                  stage.Write,
+			Read:                   stage.Read,
+			OrderSequence:          stage.OrderSequence,
+			Type:                   irminmodels.PipelineStageTypeFieldMapping,
+			FieldMappingMappings:   stage.FieldMappingMappings,
+			FieldMappingMode:       stage.FieldMappingMode,
+			FieldMappingTargetName: stage.FieldMappingTargetName,
+			FieldMappingOutputName: stage.FieldMappingOutputName,
+		}
 	default:
 		return irminmodels.PipelineStage{}
 	}

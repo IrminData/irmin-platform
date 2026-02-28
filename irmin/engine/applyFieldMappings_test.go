@@ -53,7 +53,7 @@ func TestApplyFieldMappingsInputValidation(t *testing.T) {
 	assert.Nil(t, result)
 	assert.Equal(t, "duckDBClient cannot be nil", err.Error())
 
-	// Test empty fileContent
+	// Test empty fileContent — should pass through as-is (no transformation needed)
 	result, err = suite.engineClient.ApplyFieldMappings(
 		t.Context(),
 		suite.DuckDBClient,
@@ -61,9 +61,9 @@ func TestApplyFieldMappingsInputValidation(t *testing.T) {
 		"test.csv",
 		nil,
 	)
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.Equal(t, "fileContent cannot be empty", err.Error())
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, []byte{}, result["test.csv"])
 
 	// Test empty originalFilePath
 	result, err = suite.engineClient.ApplyFieldMappings(
@@ -464,4 +464,416 @@ func TestApplyFieldMappingsPerformance(t *testing.T) {
 	peopleStr := string(peopleContent)
 	assert.True(t, strings.Contains(peopleStr, "User1"))
 	assert.True(t, strings.Contains(peopleStr, "User1000"))
+}
+
+// TestApplyFieldMappingsTypeCast tests TRY_CAST type casting via the cast_type field.
+func TestApplyFieldMappingsTypeCast(t *testing.T) {
+	suite := setupApplyFieldMappingsTestSuite(t)
+
+	// CSV with numeric strings that should be cast to INTEGER
+	fileContent := []byte(`id,name,score
+1,Alice,95
+2,Bob,87
+3,Charlie,92`)
+
+	idField := "id"
+	nameField := "name"
+	scoreField := "score"
+	intType := "INTEGER"
+
+	mappings := []irminmodels.FieldMapping{
+		{
+			SourcePath:       "data.csv",
+			SourceField:      &idField,
+			DestinationPath:  "output.csv",
+			DestinationField: &idField,
+			CastType:         &intType,
+		},
+		{
+			SourcePath:       "data.csv",
+			SourceField:      &nameField,
+			DestinationPath:  "output.csv",
+			DestinationField: &nameField,
+		},
+		{
+			SourcePath:       "data.csv",
+			SourceField:      &scoreField,
+			DestinationPath:  "output.csv",
+			DestinationField: &scoreField,
+			CastType:         &intType,
+		},
+	}
+
+	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
+		suite.DuckDBClient,
+		fileContent,
+		"data.csv",
+		mappings,
+	)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 1, len(result)) // All fields mapped, no remainder
+
+	outputContent, exists := result["output.csv"]
+	assert.True(t, exists)
+	assert.True(t, len(outputContent) > 0)
+
+	outputStr := string(outputContent)
+	assert.True(t, strings.Contains(outputStr, "Alice"))
+	assert.True(t, strings.Contains(outputStr, "95"))
+}
+
+// TestApplyFieldMappingsInvalidCastType tests that an invalid cast type is gracefully ignored.
+func TestApplyFieldMappingsInvalidCastType(t *testing.T) {
+	suite := setupApplyFieldMappingsTestSuite(t)
+
+	fileContent := []byte(`id,name
+1,Alice
+2,Bob`)
+
+	idField := "id"
+	nameField := "name"
+	invalidType := "FAKETYPE"
+
+	mappings := []irminmodels.FieldMapping{
+		{
+			SourcePath:       "data.csv",
+			SourceField:      &idField,
+			DestinationPath:  "output.csv",
+			DestinationField: &idField,
+			CastType:         &invalidType, // Invalid — should be ignored with warning
+		},
+		{
+			SourcePath:       "data.csv",
+			SourceField:      &nameField,
+			DestinationPath:  "output.csv",
+			DestinationField: &nameField,
+		},
+	}
+
+	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
+		suite.DuckDBClient,
+		fileContent,
+		"data.csv",
+		mappings,
+	)
+
+	// Should succeed — invalid cast type is silently ignored (logged as warning)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+
+	outputContent, exists := result["output.csv"]
+	assert.True(t, exists)
+	outputStr := string(outputContent)
+	assert.True(t, strings.Contains(outputStr, "Alice"))
+	assert.True(t, strings.Contains(outputStr, "Bob"))
+}
+
+// TestApplyFieldMappingsAllFieldsMapped tests that no remainder file is produced when every field is mapped.
+func TestApplyFieldMappingsAllFieldsMapped(t *testing.T) {
+	suite := setupApplyFieldMappingsTestSuite(t)
+
+	fileContent := []byte(`city,country
+Berlin,Germany
+Paris,France`)
+
+	cityField := "city"
+	countryField := "country"
+
+	// Map ALL fields to a new destination — no unmapped fields remain
+	mappings := []irminmodels.FieldMapping{
+		{
+			SourcePath:       "locations.csv",
+			SourceField:      &cityField,
+			DestinationPath:  "geo.csv",
+			DestinationField: &cityField,
+		},
+		{
+			SourcePath:       "locations.csv",
+			SourceField:      &countryField,
+			DestinationPath:  "geo.csv",
+			DestinationField: &countryField,
+		},
+	}
+
+	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
+		suite.DuckDBClient,
+		fileContent,
+		"locations.csv",
+		mappings,
+	)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+
+	// Only 1 file: geo.csv. No remainder file because nothing is unmapped.
+	assert.Equal(t, 1, len(result))
+
+	_, geoExists := result["geo.csv"]
+	assert.True(t, geoExists)
+
+	_, remainderExists := result["locations.csv"]
+	assert.That(t, !remainderExists)
+}
+
+// TestApplyFieldMappingsIrrelevantMappings tests that mappings for a different source file are ignored.
+func TestApplyFieldMappingsIrrelevantMappings(t *testing.T) {
+	suite := setupApplyFieldMappingsTestSuite(t)
+
+	fileContent := []byte(`a,b
+1,2
+3,4`)
+
+	aField := "a"
+	bField := "b"
+
+	// These mappings target "other.csv", not "data.csv"
+	mappings := []irminmodels.FieldMapping{
+		{
+			SourcePath:       "other.csv",
+			SourceField:      &aField,
+			DestinationPath:  "dest.csv",
+			DestinationField: &aField,
+		},
+		{
+			SourcePath:       "other.csv",
+			SourceField:      &bField,
+			DestinationPath:  "dest.csv",
+			DestinationField: &bField,
+		},
+	}
+
+	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
+		suite.DuckDBClient,
+		fileContent,
+		"data.csv",
+		mappings,
+	)
+
+	// Should return original file untouched because no mappings match source path
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 1, len(result))
+
+	content, exists := result["data.csv"]
+	assert.True(t, exists)
+	assert.Equal(t, fileContent, content)
+}
+
+// TestApplyFieldMappingsJSONUnwrap tests JSON unwrapping via source_json_path.
+func TestApplyFieldMappingsJSONUnwrap(t *testing.T) {
+	suite := setupApplyFieldMappingsTestSuite(t)
+
+	// JSON with a wrapper object — the actual data is under "data"
+	fileContent := []byte(`{"data": [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]}`)
+
+	idField := "id"
+	nameField := "name"
+	jsonPath := "data"
+
+	mappings := []irminmodels.FieldMapping{
+		{
+			SourcePath:       "wrapped.json",
+			SourceField:      &idField,
+			DestinationPath:  "unwrapped.csv",
+			DestinationField: &idField,
+			SourceJSONPath:   &jsonPath,
+		},
+		{
+			SourcePath:       "wrapped.json",
+			SourceField:      &nameField,
+			DestinationPath:  "unwrapped.csv",
+			DestinationField: &nameField,
+			SourceJSONPath:   &jsonPath,
+		},
+	}
+
+	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
+		suite.DuckDBClient,
+		fileContent,
+		"wrapped.json",
+		mappings,
+	)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+
+	unwrappedContent, exists := result["unwrapped.csv"]
+	assert.True(t, exists)
+	assert.True(t, len(unwrappedContent) > 0)
+
+	unwrappedStr := string(unwrappedContent)
+	assert.True(t, strings.Contains(unwrappedStr, "Alice"))
+	assert.True(t, strings.Contains(unwrappedStr, "Bob"))
+}
+
+// TestApplyFieldMappingsNestedJSONUnwrap tests JSON unwrapping at a nested dot-notation path.
+func TestApplyFieldMappingsNestedJSONUnwrap(t *testing.T) {
+	suite := setupApplyFieldMappingsTestSuite(t)
+
+	// Nested JSON: data is under "response"."items"
+	fileContent := []byte(`{"response": {"items": [{"code": "A1", "value": 10}, {"code": "B2", "value": 20}]}}`)
+
+	codeField := "code"
+	valueField := "value"
+	jsonPath := "response.items"
+
+	mappings := []irminmodels.FieldMapping{
+		{
+			SourcePath:       "api.json",
+			SourceField:      &codeField,
+			DestinationPath:  "flat.csv",
+			DestinationField: &codeField,
+			SourceJSONPath:   &jsonPath,
+		},
+		{
+			SourcePath:       "api.json",
+			SourceField:      &valueField,
+			DestinationPath:  "flat.csv",
+			DestinationField: &valueField,
+			SourceJSONPath:   &jsonPath,
+		},
+	}
+
+	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
+		suite.DuckDBClient,
+		fileContent,
+		"api.json",
+		mappings,
+	)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+
+	flatContent, exists := result["flat.csv"]
+	assert.True(t, exists)
+
+	flatStr := string(flatContent)
+	assert.True(t, strings.Contains(flatStr, "A1"))
+	assert.True(t, strings.Contains(flatStr, "B2"))
+	assert.True(t, strings.Contains(flatStr, "10"))
+	assert.True(t, strings.Contains(flatStr, "20"))
+}
+
+// TestApplyFieldMappingsJSONUnwrapOnNonJSON tests that JSON unwrap fails on non-JSON files.
+func TestApplyFieldMappingsJSONUnwrapOnNonJSON(t *testing.T) {
+	suite := setupApplyFieldMappingsTestSuite(t)
+
+	// CSV file — not JSON
+	fileContent := []byte(`id,name
+1,Alice`)
+
+	idField := "id"
+	jsonPath := "data"
+
+	mappings := []irminmodels.FieldMapping{
+		{
+			SourcePath:       "data.csv",
+			SourceField:      &idField,
+			DestinationPath:  "out.csv",
+			DestinationField: &idField,
+			SourceJSONPath:   &jsonPath, // This should fail — CSV can't be unwrapped
+		},
+	}
+
+	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
+		suite.DuckDBClient,
+		fileContent,
+		"data.csv",
+		mappings,
+	)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.True(t, strings.Contains(err.Error(), "source_json_path is set but file"))
+}
+
+// TestProcessFieldMappingsMultiFile tests the top-level ProcessFieldMappings with multiple files.
+func TestProcessFieldMappingsMultiFile(t *testing.T) {
+	suite := setupApplyFieldMappingsTestSuite(t)
+
+	files := map[string][]byte{
+		"users.csv":    []byte("user_id,name,email\n1,Alice,alice@test.com\n2,Bob,bob@test.com"),
+		"orders.csv":   []byte("order_id,user_id,total\n100,1,50.00\n101,2,75.00"),
+		"metadata.csv": []byte("key,value\nversion,1.0"),
+	}
+
+	userIDField := "user_id"
+	nameField := "name"
+	orderIDField := "order_id"
+	totalField := "total"
+
+	// Map fields from users.csv and orders.csv; metadata.csv has no relevant mappings
+	mappings := []irminmodels.FieldMapping{
+		{
+			SourcePath:       "users.csv",
+			SourceField:      &userIDField,
+			DestinationPath:  "people.csv",
+			DestinationField: &userIDField,
+		},
+		{
+			SourcePath:       "users.csv",
+			SourceField:      &nameField,
+			DestinationPath:  "people.csv",
+			DestinationField: &nameField,
+		},
+		{
+			SourcePath:       "orders.csv",
+			SourceField:      &orderIDField,
+			DestinationPath:  "sales.csv",
+			DestinationField: &orderIDField,
+		},
+		{
+			SourcePath:       "orders.csv",
+			SourceField:      &totalField,
+			DestinationPath:  "sales.csv",
+			DestinationField: &totalField,
+		},
+	}
+
+	result, err := suite.engineClient.ProcessFieldMappings(t.Context(), files, mappings)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+
+	// Should have: people.csv (from users), sales.csv (from orders),
+	// users.csv remainder (email), orders.csv remainder (user_id),
+	// metadata.csv (pass-through — no relevant mappings)
+	_, peopleExists := result["people.csv"]
+	assert.True(t, peopleExists)
+
+	_, salesExists := result["sales.csv"]
+	assert.True(t, salesExists)
+
+	// metadata.csv should pass through unchanged (no mappings target it)
+	metadataContent, metaExists := result["metadata.csv"]
+	assert.True(t, metaExists)
+	assert.True(t, strings.Contains(string(metadataContent), "version"))
+}
+
+// TestProcessFieldMappingsNoMappings tests ProcessFieldMappings with empty mappings returns files as-is.
+func TestProcessFieldMappingsNoMappings(t *testing.T) {
+	suite := setupApplyFieldMappingsTestSuite(t)
+
+	files := map[string][]byte{
+		"a.csv": []byte("x,y\n1,2"),
+	}
+
+	result, err := suite.engineClient.ProcessFieldMappings(t.Context(), files, nil)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 1, len(result))
+
+	content, exists := result["a.csv"]
+	assert.True(t, exists)
+	assert.Equal(t, files["a.csv"], content)
 }

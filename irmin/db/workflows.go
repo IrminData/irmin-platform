@@ -102,6 +102,7 @@ const (
 	PipelineStageTypeTransform        PipelineStageType = "transform"
 	PipelineStageTypeEmbeddings       PipelineStageType = "embeddings"
 	PipelineStageTypePatch            PipelineStageType = "patch"
+	PipelineStageTypeFieldMapping     PipelineStageType = "field_mapping"
 )
 
 // PatchDirection indicates whether to apply patches to a connection or repository
@@ -208,6 +209,13 @@ type PipelineStage struct {
 	PatchRepositoryID     *uint           `json:"patch_repository_id,omitempty"`
 	PatchRepositoryBranch *string         `json:"patch_repository_branch,omitempty"` // Branch for repository patches
 	PatchSourceFileName   *string         `json:"patch_source_file_name,omitempty"`  // Which file in previousStageResults contains patches (defaults to patches.json)
+
+	// Field mapping stage specific - applies field mappings to transform data structure
+
+	FieldMappingMappings   []irminmodels.FieldMapping `json:"field_mapping_mappings,omitempty"    gorm:"type:jsonb;serializer:json"`
+	FieldMappingMode       *string                    `json:"field_mapping_mode,omitempty"`
+	FieldMappingTargetName *string                    `json:"field_mapping_target_name,omitempty"`
+	FieldMappingOutputName *string                    `json:"field_mapping_output_name,omitempty"`
 }
 
 // GetWorkflowsByWorkspaceID retrieves all workflows for a workspace.

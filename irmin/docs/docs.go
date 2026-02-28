@@ -17308,6 +17308,31 @@ const docTemplate = `{
                 "source_path"
             ],
             "properties": {
+                "cast_type": {
+                    "type": "string",
+                    "enum": [
+                        "VARCHAR",
+                        "TEXT",
+                        "INTEGER",
+                        "INT",
+                        "BIGINT",
+                        "SMALLINT",
+                        "TINYINT",
+                        "HUGEINT",
+                        "DOUBLE",
+                        "FLOAT",
+                        "REAL",
+                        "DECIMAL",
+                        "BOOLEAN",
+                        "BOOL",
+                        "DATE",
+                        "TIMESTAMP",
+                        "TIME",
+                        "BLOB",
+                        "UUID"
+                    ],
+                    "example": "VARCHAR"
+                },
                 "destination_field": {
                     "type": "string",
                     "example": "customer_email"
@@ -17319,6 +17344,10 @@ const docTemplate = `{
                 "source_field": {
                     "type": "string",
                     "example": "email"
+                },
+                "source_json_path": {
+                    "type": "string",
+                    "example": "data"
                 },
                 "source_path": {
                     "type": "string",
@@ -18157,6 +18186,25 @@ const docTemplate = `{
                 "fail_on_error": {
                     "type": "boolean"
                 },
+                "field_mapping_mappings": {
+                    "description": "Field mapping stage specific",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.FieldMapping"
+                    }
+                },
+                "field_mapping_mode": {
+                    "description": "\"single\" or \"all\"",
+                    "type": "string"
+                },
+                "field_mapping_output_name": {
+                    "type": "string",
+                    "example": "customers_renamed.json"
+                },
+                "field_mapping_target_name": {
+                    "type": "string",
+                    "example": "customers.json"
+                },
                 "order_sequence": {
                     "type": "integer",
                     "example": 1
@@ -18348,7 +18396,8 @@ const docTemplate = `{
                         "validation",
                         "transform",
                         "embeddings",
-                        "patch"
+                        "patch",
+                        "field_mapping"
                     ],
                     "allOf": [
                         {
@@ -18389,7 +18438,8 @@ const docTemplate = `{
                 "validation",
                 "transform",
                 "embeddings",
-                "patch"
+                "patch",
+                "field_mapping"
             ],
             "x-enum-varnames": [
                 "PipelineStageTypeAction",
@@ -18400,7 +18450,8 @@ const docTemplate = `{
                 "PipelineStageTypeValidation",
                 "PipelineStageTypeTransform",
                 "PipelineStageTypeEmbeddings",
-                "PipelineStageTypePatch"
+                "PipelineStageTypePatch",
+                "PipelineStageTypeFieldMapping"
             ]
         },
         "irminmodels.PointerTarget": {

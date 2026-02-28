@@ -430,6 +430,15 @@ func (c *Client) ObjectExists(workspace, repository, path, ref string) (bool, er
     ObjectExists checks whether an object exists at the given path and ref in
     the repository.
 
+func (c *Client) ProcessFieldMappings(
+	ctx context.Context,
+	files map[string][]byte,
+	fieldMappings []irminmodels.FieldMapping,
+) (map[string][]byte, error)
+    ProcessFieldMappings applies field mappings to a set of files, creating
+    the DuckDB client internally. This is the main entry point for pipeline
+    field_mapping stages.
+
 func (c *Client) ProcessTransformations(
 	ctx context.Context,
 	files map[string][]byte,

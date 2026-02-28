@@ -114,6 +114,7 @@ func quoteIdentifier(s string) string {
 }
 
 // executeTransformation performs the actual data transformation using DuckDB.
+// It builds a read query from the input path and delegates to executeTransformationRaw.
 func (c *Client) executeTransformation(
 	ctx context.Context,
 	duckDBClient *duckdb.QueryClient,
@@ -123,7 +124,20 @@ func (c *Client) executeTransformation(
 	selectClause string,
 	fileName string,
 ) ([]byte, error) {
-	// Create temporary output file
+	readQueryPart := duckdb.BuildReadQuery(tempInputPath, inputReadOpts)
+	return c.executeTransformationRaw(ctx, duckDBClient, readQueryPart, outputReadOpts, selectClause, fileName)
+}
+
+// executeTransformationRaw is like executeTransformation but accepts a pre-built
+// source expression (e.g. a subquery) instead of building one from a file path.
+func (c *Client) executeTransformationRaw(
+	ctx context.Context,
+	duckDBClient *duckdb.QueryClient,
+	sourceExpr string,
+	outputReadOpts *duckdb.ReadOptions,
+	selectClause string,
+	fileName string,
+) ([]byte, error) {
 	tempOutputFile, err := os.CreateTemp("", "duckdb-output-*"+fileName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp output file: %w", err)
@@ -138,15 +152,12 @@ func (c *Client) executeTransformation(
 		}
 	}()
 
-	// Build and execute the transformation query
-	readQueryPart := duckdb.BuildReadQuery(tempInputPath, inputReadOpts)
-	copyQuery := c.buildCopyQuery(selectClause, readQueryPart, tempOutputPath, outputReadOpts)
+	copyQuery := c.buildCopyQuery(selectClause, sourceExpr, tempOutputPath, outputReadOpts)
 
 	if _, execErr := duckDBClient.ExecuteNonQuery(ctx, copyQuery); execErr != nil {
 		return nil, fmt.Errorf("failed to execute transformation query: %w", execErr)
 	}
 
-	// Read and return the transformed data
 	transformedData, readErr := os.ReadFile(tempOutputPath)
 	if readErr != nil {
 		return nil, fmt.Errorf("failed to read transformed data: %w", readErr)

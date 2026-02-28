@@ -83,7 +83,7 @@ func normalizeAndParseType(rawType string) typeInfo {
 	if strings.HasPrefix(info.normalizedType, "DECIMAL(") || strings.HasPrefix(info.normalizedType, "NUMERIC(") {
 		info.precision, info.scale = parseDecimalParameters(info.normalizedType)
 		// Normalize to just DECIMAL (both NUMERIC and DECIMAL become DECIMAL)
-		info.normalizedType = "DECIMAL"
+		info.normalizedType = "DECIMAL" //nolint:goconst // DuckDB type string used independently across files
 		return info
 	}
 

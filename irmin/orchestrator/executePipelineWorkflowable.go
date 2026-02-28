@@ -159,6 +159,12 @@ func (o *Orchestrator) executePipelineWorkflowable(
 				&stage,
 				previousStageResults,
 			)
+		case db.PipelineStageTypeFieldMapping:
+			stageLogs, errResult = o.handleFieldMappingStage(
+				ctx,
+				&stage,
+				previousStageResults,
+			)
 		default:
 			logs = append(logs, fmt.Sprintf("Unknown stage type: %s", stage.Type))
 			continue
