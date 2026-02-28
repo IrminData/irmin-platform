@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"mime"
 	"mime/multipart"
 	"os"
-	"path/filepath"
 	"time"
 )
 
@@ -50,16 +48,7 @@ func (f *File) MultipartFile() multipart.File {
 
 // MimeType returns the MIME type based on the filename extension.
 func (f *File) MimeType() string {
-	return AutoDetectMimeType(f.Filename)
-}
-
-// AutoDetectMimeType detects MIME type from filename extension.
-func AutoDetectMimeType(filename string) string {
-	ext := filepath.Ext(filename)
-	if mimeType := mime.TypeByExtension(ext); mimeType != "" {
-		return mimeType
-	}
-	return "application/octet-stream"
+	return DetectMimeTypeByExtension(f.Filename)
 }
 
 // fileWrapper implements multipart.File interface

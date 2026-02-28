@@ -81,7 +81,7 @@ func ParseObjectDetailsFromPath(inputPath string) ObjectDetails {
 		cleanPath += "/" // Add a trailing slash since groups are bucket object prefixes.
 	} else {
 		// Use hybrid MIME type detection for files
-		contentType = GetContentTypeHybrid(ext)
+		contentType = DetectMimeTypeByExtension("file" + ext)
 
 		// Determine object type based on content type and extension
 		if IsStructuredDataFormat(ext, contentType) {
@@ -99,78 +99,6 @@ func ParseObjectDetailsFromPath(inputPath string) ObjectDetails {
 		Type:        objectType,
 		ContentType: contentType,
 	}
-}
-
-// GetContentTypeHybrid uses a hybrid approach for MIME type detection.
-// It first checks for specialized data analytics formats that aren't typically
-// registered in system MIME databases, then falls back to the system's built-in
-// MIME type detection for standard formats.
-//
-// To maintain backward compatibility with existing tests, this function:
-// - Uses specialized mappings for data analytics formats
-// - Falls back to system MIME types but strips charset parameters
-// - Maintains specific legacy MIME types where expected by existing code
-func GetContentTypeHybrid(ext string) string {
-	// Specialized data analytics and custom formats
-	specializedTypes := map[string]string{
-		// Advanced analytics formats
-		".parquet": "application/vnd.apache.parquet", // Apache Parquet
-		".avro":    "application/vnd.apache.avro",    // Apache Avro
-		".orc":     "application/vnd.apache.orc",     // Apache ORC
-		".delta":   "application/x-delta-lake",       // Delta Lake
-		".iceberg": "application/x-iceberg",          // Apache Iceberg
-
-		// Specialized text formats for data processing
-		".jsonl":  "application/jsonl",         // JSON Lines / Newline-delimited JSON
-		".ndjson": "application/x-ndjson",      // Newline-delimited JSON (alternative)
-		".tsv":    "text/tab-separated-values", // Tab-separated values
-		".tab":    "text/tab-separated-values", // Tab-separated values (alternative)
-		".yaml":   "application/x-yaml",        // YAML (keep consistent for data processing)
-		".yml":    "application/x-yaml",        // YAML alternative extension
-
-		// Excel binary formats (might not be in all systems)
-		".xlsb": "application/vnd.ms-excel.sheet.binary.macroEnabled.12", // Excel binary
-		".xlsm": "application/vnd.ms-excel.sheet.macroEnabled.12",        // Excel with macros
-
-		// Modern image formats that may not be universally recognized
-		".heic": "image/heic", // Apple HEIC format
-		".heif": "image/heif", // Apple HEIF format
-		".avif": "image/avif", // AV1 Image File Format (fallback if not detected)
-		".webp": "image/webp", // WebP (fallback if not detected)
-
-		// Modern audio formats that may not be universally recognized
-		".opus": "audio/opus", // Opus audio codec
-		".flac": "audio/flac", // FLAC lossless audio
-
-		// Font formats that may not be universally recognized
-		".woff":  "font/woff",  // Web Open Font Format
-		".woff2": "font/woff2", // Web Open Font Format 2.0
-		".otf":   "font/otf",   // OpenType Font
-		".ttf":   "font/ttf",   // TrueType Font
-
-		// Legacy overrides for backward compatibility
-		".js": "application/javascript", // Keep legacy JavaScript MIME type for compatibility
-	}
-
-	// Check if it's a specialized format first
-	if mimeType, exists := specializedTypes[ext]; exists {
-		return mimeType
-	}
-
-	// Fall back to system-registered MIME types for standard formats
-	systemMimeType := AutoDetectMimeType("file" + ext)
-
-	// Strip charset and other parameters to maintain backward compatibility
-	return StripMimeTypeParameters(systemMimeType)
-}
-
-// StripMimeTypeParameters removes charset and other parameters from MIME types
-// to maintain backward compatibility with existing test expectations.
-func StripMimeTypeParameters(mimeType string) string {
-	if idx := strings.Index(mimeType, ";"); idx != -1 {
-		return strings.TrimSpace(mimeType[:idx])
-	}
-	return mimeType
 }
 
 // IsStructuredDataFormat determines if a file extension and MIME type represent

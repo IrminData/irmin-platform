@@ -2,9 +2,10 @@ module github.com/IrminData/irmin-sdk-go
 
 go 1.25.0
 
+require github.com/gabriel-vasile/mimetype v1.4.13
+
 require (
 	github.com/apache/arrow-go/v18 v18.5.1 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect

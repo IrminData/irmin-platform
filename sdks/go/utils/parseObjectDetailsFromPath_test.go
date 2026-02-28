@@ -358,7 +358,7 @@ func TestProblematicMimeTypes(t *testing.T) {
 	t.Log("Current MIME type detection results:")
 	for _, tt := range problematicFiles {
 		t.Run(tt.filename, func(t *testing.T) {
-			autoDetected := irminutils.AutoDetectMimeType(tt.filename)
+			autoDetected := irminutils.DetectMimeTypeByExtension(tt.filename)
 			objectDetails := irminutils.ParseObjectDetailsFromPath(tt.filename)
 
 			t.Logf("File: %-12s | AutoDetect: %-30s | ParseObject: %s",

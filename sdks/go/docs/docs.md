@@ -3623,7 +3623,7 @@ EscapeSQLString escapes single quotes in SQL string literals by doubling them. T
 func GetContentTypeFromExtension(extension string) string
 ```
 
-GetContentTypeFromExtension returns the MIME type for a given file extension. It delegates to the SDK's GetContentTypeHybrid which handles both specialized data analytics formats and standard MIME type detection.
+GetContentTypeFromExtension returns the MIME type for a given file extension.
 
 <a name="GetRequiredExtensions"></a>
 ## func GetRequiredExtensions
@@ -6652,13 +6652,16 @@ import "github.com/IrminData/irmin-sdk-go/utils"
 
 ## Index
 
-- [func AutoDetectMimeType\(filename string\) string](<#AutoDetectMimeType>)
 - [func CreateMultipartForm\(file \*File, fieldName string\) \(\*bytes.Buffer, string, error\)](<#CreateMultipartForm>)
 - [func CreateMultipartFormWithFields\(file \*File, fieldName string, textFields map\[string\]string\) \(\*bytes.Buffer, string, error\)](<#CreateMultipartFormWithFields>)
+- [func DetectMimeType\(content \[\]byte, filename string\) string](<#DetectMimeType>)
+- [func DetectMimeTypeByExtension\(filename string\) string](<#DetectMimeTypeByExtension>)
+- [func DetectMimeTypeFromReader\(r io.Reader, filename string\) \(string, error\)](<#DetectMimeTypeFromReader>)
 - [func GetAPIFromFlags\(\) \(string, string, error\)](<#GetAPIFromFlags>)
-- [func GetContentTypeHybrid\(ext string\) string](<#GetContentTypeHybrid>)
 - [func GetInputFile\(filePath string\) \(\[\]byte, error\)](<#GetInputFile>)
+- [func IsBinaryMimeType\(contentType string\) bool](<#IsBinaryMimeType>)
 - [func IsStructuredDataFormat\(ext, contentType string\) bool](<#IsStructuredDataFormat>)
+- [func IsTextMimeType\(mimeType string\) bool](<#IsTextMimeType>)
 - [func ListInputFiles\(\) \(\[\]string, error\)](<#ListInputFiles>)
 - [func SendComputeResult\(data \[\]byte, fileName string\) error](<#SendComputeResult>)
 - [func StripMimeTypeParameters\(mimeType string\) string](<#StripMimeTypeParameters>)
@@ -6673,15 +6676,6 @@ import "github.com/IrminData/irmin-sdk-go/utils"
 - [type ObjectDetails](<#ObjectDetails>)
   - [func ParseObjectDetailsFromPath\(inputPath string\) ObjectDetails](<#ParseObjectDetailsFromPath>)
 
-
-<a name="AutoDetectMimeType"></a>
-## func AutoDetectMimeType
-
-```go
-func AutoDetectMimeType(filename string) string
-```
-
-AutoDetectMimeType detects MIME type from filename extension.
 
 <a name="CreateMultipartForm"></a>
 ## func CreateMultipartForm
@@ -6701,6 +6695,33 @@ func CreateMultipartFormWithFields(file *File, fieldName string, textFields map[
 
 CreateMultipartFormWithFields creates multipart form with additional text fields.
 
+<a name="DetectMimeType"></a>
+## func DetectMimeType
+
+```go
+func DetectMimeType(content []byte, filename string) string
+```
+
+DetectMimeType detects MIME type using both content \(magic bytes\) and filename extension. It checks specialized extension mappings first, then uses the mimetype library for content\-based detection, and falls back to system extension mapping.
+
+<a name="DetectMimeTypeByExtension"></a>
+## func DetectMimeTypeByExtension
+
+```go
+func DetectMimeTypeByExtension(filename string) string
+```
+
+DetectMimeTypeByExtension detects MIME type from filename extension only. It checks specialized data analytics format mappings first, then falls back to the system's built\-in MIME type database.
+
+<a name="DetectMimeTypeFromReader"></a>
+## func DetectMimeTypeFromReader
+
+```go
+func DetectMimeTypeFromReader(r io.Reader, filename string) (string, error)
+```
+
+DetectMimeTypeFromReader detects MIME type from an io.Reader and filename. The mimetype library internally reads only the first 3072 bytes from the reader. Note: the reader will be partially consumed after this call.
+
 <a name="GetAPIFromFlags"></a>
 ## func GetAPIFromFlags
 
@@ -6709,17 +6730,6 @@ func GetAPIFromFlags() (string, string, error)
 ```
 
 GetAPIFromFlags retrieves the API key and the base URL from command line flags.
-
-<a name="GetContentTypeHybrid"></a>
-## func GetContentTypeHybrid
-
-```go
-func GetContentTypeHybrid(ext string) string
-```
-
-GetContentTypeHybrid uses a hybrid approach for MIME type detection. It first checks for specialized data analytics formats that aren't typically registered in system MIME databases, then falls back to the system's built\-in MIME type detection for standard formats.
-
-To maintain backward compatibility with existing tests, this function: \- Uses specialized mappings for data analytics formats \- Falls back to system MIME types but strips charset parameters \- Maintains specific legacy MIME types where expected by existing code
 
 <a name="GetInputFile"></a>
 ## func GetInputFile
@@ -6730,6 +6740,15 @@ func GetInputFile(filePath string) ([]byte, error)
 
 GetInputFile reads a file from the \_input directory. Returns the file content as bytes and any error encountered.
 
+<a name="IsBinaryMimeType"></a>
+## func IsBinaryMimeType
+
+```go
+func IsBinaryMimeType(contentType string) bool
+```
+
+IsBinaryMimeType checks if the given MIME type represents binary data. SVG \(image/svg\+xml\) is excluded since it is a text\-based XML format.
+
 <a name="IsStructuredDataFormat"></a>
 ## func IsStructuredDataFormat
 
@@ -6738,6 +6757,15 @@ func IsStructuredDataFormat(ext, contentType string) bool
 ```
 
 IsStructuredDataFormat determines if a file extension and MIME type represent structured data that can be queried, analyzed, or processed as tabular data.
+
+<a name="IsTextMimeType"></a>
+## func IsTextMimeType
+
+```go
+func IsTextMimeType(mimeType string) bool
+```
+
+IsTextMimeType checks if the given MIME type represents text\-based content suitable for display or processing as text.
 
 <a name="ListInputFiles"></a>
 ## func ListInputFiles
@@ -6764,7 +6792,7 @@ SendComputeResult writes the provided data to a file with the given name in the 
 func StripMimeTypeParameters(mimeType string) string
 ```
 
-StripMimeTypeParameters removes charset and other parameters from MIME types to maintain backward compatibility with existing test expectations.
+StripMimeTypeParameters removes charset and other parameters from MIME types. For example, "text/plain; charset=utf\-8" becomes "text/plain".
 
 <a name="UnzipFiles"></a>
 ## func UnzipFiles
