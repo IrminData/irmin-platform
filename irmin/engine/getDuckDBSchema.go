@@ -12,6 +12,9 @@ import (
 	"strings"
 )
 
+// duckDBTypeDecimal is the normalized DuckDB type name for decimal/numeric columns.
+const duckDBTypeDecimal = "DECIMAL"
+
 // SchemaField represents one column or nested field in the DuckDB schema.
 // Name is the column name or nested field name.
 // Type is the DuckDB data type (e.g. "VARCHAR", "STRUCT", or "ARRAY<STRUCT>").
@@ -83,7 +86,7 @@ func normalizeAndParseType(rawType string) typeInfo {
 	if strings.HasPrefix(info.normalizedType, "DECIMAL(") || strings.HasPrefix(info.normalizedType, "NUMERIC(") {
 		info.precision, info.scale = parseDecimalParameters(info.normalizedType)
 		// Normalize to just DECIMAL (both NUMERIC and DECIMAL become DECIMAL)
-		info.normalizedType = "DECIMAL" //nolint:goconst // DuckDB type string used independently across files
+		info.normalizedType = duckDBTypeDecimal
 		return info
 	}
 

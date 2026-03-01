@@ -6658,7 +6658,7 @@ EscapeSQLString escapes single quotes in SQL string literals by doubling them. T
 func GetContentTypeFromExtension(extension string) string
 ```
 
-GetContentTypeFromExtension returns the MIME type for a given file extension. It delegates to the SDK's GetContentTypeHybrid which handles both specialized data analytics formats and standard MIME type detection.
+GetContentTypeFromExtension returns the MIME type for a given file extension.
 
 <a name="GetRequiredExtensions"></a>
 ## func GetRequiredExtensions

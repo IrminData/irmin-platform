@@ -332,7 +332,7 @@ func primitiveSchema(duckType string, field SchemaField, diag *schemaDiagnostics
 		"VARCHAR": true, "TEXT": true, "BOOLEAN": true,
 		"TINYINT": true, "SMALLINT": true, "INTEGER": true, "BIGINT": true,
 		"UTINYINT": true, "USMALLINT": true, "UINTEGER": true, "UBIGINT": true, "HUGEINT": true,
-		"FLOAT": true, "DOUBLE": true, "REAL": true, "DECIMAL": true,
+		"FLOAT": true, "DOUBLE": true, "REAL": true, duckDBTypeDecimal: true,
 		"TIMESTAMP": true, "TIMESTAMP_LTZ": true, "TIMESTAMP_NTZ": true, "DATETIME": true,
 		"TIMESTAMPTZ": true, "TIMESTAMP WITH TIME ZONE": true,
 		"DATE": true, "TIME": true, "TIME WITH TIME ZONE": true, "TIMETZ": true,
@@ -372,7 +372,7 @@ func primitiveSchema(duckType string, field SchemaField, diag *schemaDiagnostics
 	}
 
 	// Handle decimal types
-	if dt == "DECIMAL" {
+	if dt == duckDBTypeDecimal {
 		return createDecimalSchema(field)
 	}
 

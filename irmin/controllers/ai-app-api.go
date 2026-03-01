@@ -6,11 +6,10 @@ import (
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/services"
-	"net/http"
 	"strconv"
-	"strings"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -240,8 +239,8 @@ func (api *APIControllers) AIAppAPIGetObject(c fiber.Ctx) error {
 	}
 
 	// Detect content type and return appropriately
-	mimeType := http.DetectContentType(content)
-	if strings.HasPrefix(mimeType, "text/") || strings.HasPrefix(mimeType, "application/json") {
+	mimeType := irminutils.DetectMimeType(content, unifiedPath)
+	if irminutils.IsTextMimeType(mimeType) {
 		return c.JSON(irminmodels.IrminAPIResponse{
 			Data: fiber.Map{
 				"content":   string(content),

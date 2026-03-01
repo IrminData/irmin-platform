@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"irmin-api/db"
@@ -14,6 +13,7 @@ import (
 	"irmin-api/services"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 	adaptor "github.com/gofiber/fiber/v3/middleware/adaptor"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -441,7 +441,7 @@ func registerAIAppGetContentTool(server *sdkmcp.Server, aiApp *db.AIApplication,
 			}
 
 			// Detect content type
-			mimeType := http.DetectContentType(content)
+			mimeType := irminutils.DetectMimeType(content, args.Path)
 
 			// Check if this is a format we can transform (binary or tabular text)
 			if IsBinaryFormatSupported(args.Path) || IsTabularTextFormat(args.Path) {
@@ -474,7 +474,7 @@ func registerAIAppGetContentTool(server *sdkmcp.Server, aiApp *db.AIApplication,
 			}
 
 			// For non-binary files, check if text-based
-			if !strings.HasPrefix(mimeType, "text/") && !strings.HasPrefix(mimeType, "application/json") {
+			if !irminutils.IsTextMimeType(mimeType) {
 				result := mcpError("Content is not a supported text format")
 				logToolCall(ctx, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
 				return result, struct{}{}, nil

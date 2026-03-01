@@ -448,17 +448,11 @@ func IsStructuredFormat(extension string) bool {
 }
 
 // GetContentTypeFromExtension returns the MIME type for a given file extension.
-// It delegates to the SDK's GetContentTypeHybrid which handles both specialized
-// data analytics formats and standard MIME type detection.
 func GetContentTypeFromExtension(extension string) string {
-	// Normalize extension to include the dot prefix
 	ext := strings.ToLower(extension)
 	if !strings.HasPrefix(ext, ".") {
 		ext = "." + ext
 	}
 
-	// Use the SDK's hybrid MIME type detection
-	// This handles specialized data analytics formats (parquet, avro, delta, etc.)
-	// and falls back to Go's standard mime.TypeByExtension for common formats
-	return irminutils.GetContentTypeHybrid(ext)
+	return irminutils.DetectMimeTypeByExtension("file" + ext)
 }

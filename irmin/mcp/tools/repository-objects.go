@@ -7,8 +7,6 @@ import (
 	irmincache "irmin-api/cache"
 	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
-	"net/http"
-	"strings"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -253,36 +251,6 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectSchemaTool() {
 	)
 }
 
-// isAllowedTextType checks if the MIME type is a supported text type
-func isAllowedTextType(mimeType string) bool {
-	allowedAppTypes := []string{
-		"application/json",
-		"application/ld+json",
-		"application/xml",
-		"application/xhtml+xml",
-		"application/x-yaml",
-		"application/yaml",
-		"application/csv",
-		"application/sql",
-		"application/graphql",
-		"application/javascript",
-		"application/ecmascript",
-		"application/x-latex",
-		"application/x-sh",
-		"application/x-toml",
-		"application/x-ini",
-	}
-	if strings.HasPrefix(mimeType, "text/") {
-		return true
-	}
-	for _, t := range allowedAppTypes {
-		if strings.HasPrefix(mimeType, t) {
-			return true
-		}
-	}
-	return false
-}
-
 // registerGetRepositoryObjectContentTool registers the irmin_get_repository_object_content tool for getting the content of a repository object in a workspace
 func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 	sdkmcp.AddTool(
@@ -355,10 +323,10 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 			}
 
 			// Detect MIME type
-			mimeType := http.DetectContentType(content)
+			mimeType := irminutils.DetectMimeType(content, object.Name)
 
 			// Allow only text-based formats
-			if isAllowedTextType(mimeType) {
+			if irminutils.IsTextMimeType(mimeType) {
 				return &sdkmcp.CallToolResult{
 					Content: []sdkmcp.Content{
 						&sdkmcp.TextContent{
