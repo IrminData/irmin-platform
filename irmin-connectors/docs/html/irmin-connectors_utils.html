@@ -109,7 +109,8 @@ func HashJSONFields(details, settings []byte) (string, error)
 
 func IsBinaryContentType(contentType *string) bool
     IsBinaryContentType checks if the given content type indicates binary data.
-    Returns true if the content type should be treated as binary.
+    Returns true if the content type should be treated as binary. It delegates
+    to the unified MIME utility in irmin-sdk-go.
 
 func JoinURL(baseURL, path string) string
     JoinURL properly joins a base URL with a path, handling absolute URLs and

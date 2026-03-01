@@ -2,84 +2,19 @@ package utils
 
 import (
 	"encoding/base64"
-	"strings"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
-
-// binaryContentTypes is a list of MIME types that should be treated as binary data.
-//
-//nolint:gochecknoglobals // Package-level lookup table for efficiency
-var binaryContentTypes = map[string]bool{
-	// Images
-	"image/png":     true,
-	"image/jpeg":    true,
-	"image/gif":     true,
-	"image/webp":    true,
-	"image/svg+xml": true,
-	"image/bmp":     true,
-	"image/tiff":    true,
-	"image/x-icon":  true,
-
-	// Documents
-	"application/pdf":    true,
-	"application/msword": true,
-	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": true,
-	"application/vnd.ms-excel": true,
-	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":         true,
-	"application/vnd.ms-powerpoint":                                             true,
-	"application/vnd.openxmlformats-officedocument.presentationml.presentation": true,
-
-	// Archives
-	"application/zip":     true,
-	"application/gzip":    true,
-	"application/x-tar":   true,
-	"application/x-rar":   true,
-	"application/x-7z":    true,
-	"application/x-bzip":  true,
-	"application/x-bzip2": true,
-
-	// Audio/Video
-	"audio/mpeg":      true,
-	"audio/wav":       true,
-	"audio/ogg":       true,
-	"video/mp4":       true,
-	"video/webm":      true,
-	"video/ogg":       true,
-	"video/mpeg":      true,
-	"video/x-msvideo": true,
-
-	// Other binary
-	"application/octet-stream": true,
-	"application/x-binary":     true,
-}
 
 // IsBinaryContentType checks if the given content type indicates binary data.
 // Returns true if the content type should be treated as binary.
+// It delegates to the unified MIME utility in irmin-sdk-go.
 func IsBinaryContentType(contentType *string) bool {
 	if contentType == nil || *contentType == "" {
 		return false
 	}
-
-	// Normalize the content type (remove parameters like charset)
-	ct := strings.ToLower(*contentType)
-	if idx := strings.Index(ct, ";"); idx != -1 {
-		ct = strings.TrimSpace(ct[:idx])
-	}
-
-	// Check exact match
-	if binaryContentTypes[ct] {
-		return true
-	}
-
-	// Check prefix patterns
-	if strings.HasPrefix(ct, "image/") ||
-		strings.HasPrefix(ct, "audio/") ||
-		strings.HasPrefix(ct, "video/") {
-		return true
-	}
-
-	return false
+	return irminutils.IsBinaryMimeType(*contentType)
 }
 
 // DecodePatchValue decodes the value of a patch operation.

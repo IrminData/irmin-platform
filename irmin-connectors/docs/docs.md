@@ -1356,7 +1356,7 @@ HashJSONFields generates a deterministic hash from JSON fields \(Details and Set
 func IsBinaryContentType(contentType *string) bool
 ```
 
-IsBinaryContentType checks if the given content type indicates binary data. Returns true if the content type should be treated as binary.
+IsBinaryContentType checks if the given content type indicates binary data. Returns true if the content type should be treated as binary. It delegates to the unified MIME utility in irmin\-sdk\-go.
 
 <a name="JoinURL"></a>
 ## func JoinURL

@@ -200,7 +200,7 @@ func getExtensionFromContentType(contentType string) string {
 	// Test each extension to see if it matches the content type
 	for _, ext := range commonExtensions {
 		// Use the SDK's content type detection
-		detectedType := irminutils.AutoDetectMimeType("file" + ext)
+		detectedType := irminutils.DetectMimeTypeByExtension("file" + ext)
 		// Strip parameters for comparison
 		baseDetectedType := strings.Split(detectedType, ";")[0]
 		baseContentType := strings.Split(contentType, ";")[0]

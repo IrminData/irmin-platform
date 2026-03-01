@@ -258,8 +258,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 
 // getContentTypeForExtension returns the appropriate Content-Type for a file extension using the SDK.
 func getContentTypeForExtension(ext string) string {
-	// Use the SDK's hybrid content type detection
-	contentType := irminutils.AutoDetectMimeType("file" + ext)
+	contentType := irminutils.DetectMimeTypeByExtension("file" + ext)
 
 	// Strip parameters to get the base content type
 	if idx := strings.Index(contentType, ";"); idx != -1 {
