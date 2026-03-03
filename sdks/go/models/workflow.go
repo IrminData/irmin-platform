@@ -88,6 +88,16 @@ const (
 	PatchDirectionToRepository PatchDirection = "to_repository"
 )
 
+// DataPassMode controls how a pipeline stage's output merges with existing pipeline data.
+type DataPassMode string
+
+const (
+	// DataPassModeMerge adds/overwrites files in the pipeline data (default).
+	DataPassModeMerge DataPassMode = "merge"
+	// DataPassModeReplace clears all previous pipeline data, keeping only this stage's output.
+	DataPassModeReplace DataPassMode = "replace"
+)
+
 // SyncMode represents the synchronization mode for import/export workflows.
 type SyncMode string
 
@@ -110,11 +120,12 @@ const (
 )
 
 type PipelineStage struct {
-	Description   string            `json:"description"    validate:"required,max=200"                                                                                                                                      example:"Process customer data"`
-	Write         bool              `json:"write"                                                                                                                                                                           example:"true"`
-	Read          bool              `json:"read"                                                                                                                                                                            example:"true"`
-	OrderSequence int               `json:"order_sequence"                                                                                                                                                                  example:"1"`
-	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform embeddings patch field_mapping,validpipelinestage" example:"repository"`
+	Description   string            `json:"description"              validate:"required,max=200"                                                                                                                                      example:"Process customer data"`
+	Write         bool              `json:"write"                                                                                                                                                                                     example:"true"`
+	Read          bool              `json:"read"                                                                                                                                                                                      example:"true"`
+	DataPassMode  DataPassMode      `json:"data_pass_mode,omitempty" validate:"omitempty,oneof=merge replace"                                                                                                                         example:"merge"`
+	OrderSequence int               `json:"order_sequence"                                                                                                                                                                            example:"1"`
+	Type          PipelineStageType `json:"type"                     validate:"required,oneof=action connection repository repository_action trigger_workflow validation transform embeddings patch field_mapping,validpipelinestage" example:"repository"`
 
 	// Action stage specific
 	ExecutableType ActionExecutableType `json:"executable_type,omitempty" validate:"omitempty,oneof=script query,required_if=Type action"          example:"script"`
