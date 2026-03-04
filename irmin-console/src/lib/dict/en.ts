@@ -1073,6 +1073,14 @@ const en = {
       patchTargetPath: 'Target path',
       patchStageExplanation:
         'The Patch stage applies incremental changes (JSON patches) from a source file to either a repository or a connection. Use "To repository" to apply incoming patches (e.g., from connection events) to your data. Use "To connection" to push patches (e.g., from repository changes) to an external system.',
+      dataPassMode: 'Data Pass Mode',
+      dataPassModeMerge: 'Merge',
+      dataPassModeReplace: 'Replace',
+      dataPassModeMergeDescription: 'Add/modify files in pipeline data',
+      dataPassModeReplaceDescription:
+        "Replace all pipeline data with this stage's output",
+      outputPreview: 'Expected Output',
+      outputPreviewDynamic: 'Output determined at runtime',
     },
 
     schedule: {

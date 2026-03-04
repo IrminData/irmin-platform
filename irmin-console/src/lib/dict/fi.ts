@@ -1061,6 +1061,15 @@ const fi = {
       patchTargetPath: 'Kohdepolku',
       patchStageExplanation:
         'Päivitysvaihe soveltaa inkrementaalisia muutoksia (JSON-päivityksiä) lähdetiedostosta joko arkistoon tai yhteyteen. Käytä "Arkistoon" soveltaaksesi saapuvia päivityksiä (esim. yhteystapahtumista) dataasi. Käytä "Yhteyteen" lähettääksesi päivityksiä (esim. arkistomuutoksista) ulkoiseen järjestelmään.',
+      dataPassMode: 'Datan välitystapa',
+      dataPassModeMerge: 'Yhdistä',
+      dataPassModeReplace: 'Korvaa',
+      dataPassModeMergeDescription:
+        'Lisää tai muokkaa tiedostoja putken datassa',
+      dataPassModeReplaceDescription:
+        'Korvaa kaikki putken data tämän vaiheen tulosteella',
+      outputPreview: 'Odotettu tuloste',
+      outputPreviewDynamic: 'Tuloste määräytyy suorituksen aikana',
     },
     schedule: {
       workflowSchedule: 'Prosessin aikataulu',

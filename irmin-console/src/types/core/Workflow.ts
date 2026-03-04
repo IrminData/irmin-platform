@@ -244,6 +244,8 @@ export type PipelineStage = {
   write: boolean;
   /** Whether the result of the stage should be passed to the next stage */
   read: boolean;
+  /** How this stage's output interacts with existing pipeline data */
+  data_pass_mode?: 'merge' | 'replace';
   /** The order of the stage in the pipeline */
   order_sequence: number;
 } & (

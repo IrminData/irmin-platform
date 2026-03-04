@@ -99,6 +99,51 @@ const DebouncedInput = ({
 };
 
 /**
+ * Gets a preview of the expected output files for a pipeline stage.
+ *
+ * @param stage - The pipeline stage to get the output preview for.
+ * @returns An array of expected file names, or null if the output is dynamic.
+ */
+function getOutputPreview(stage: PipelineStage): string[] | null {
+  switch (stage.type) {
+    case 'action':
+      return stage.executable_type === 'query' ? ['query_results.csv'] : null;
+    case 'connection':
+      return stage.connection_read_paths?.length
+        ? stage.connection_read_paths.map((p) => p.split('/').pop() ?? p)
+        : null;
+    case 'repository':
+      return stage.repository_read_paths?.length
+        ? stage.repository_read_paths.map((p) => p.split('/').pop() ?? p)
+        : null;
+    case 'validation':
+      return null;
+    case 'transform':
+      if (stage.transform_output_name) return [stage.transform_output_name];
+      if (
+        stage.transform_operation === 'format_convert' &&
+        stage.transform_output_format
+      )
+        return [`*.${stage.transform_output_format}`];
+      return null;
+    case 'embeddings':
+      return stage.embeddings_operation === 'search'
+        ? ['search_results.json']
+        : null;
+    case 'field_mapping':
+      return stage.field_mapping_output_name
+        ? [stage.field_mapping_output_name]
+        : null;
+    case 'patch':
+    case 'repository_action':
+    case 'trigger_workflow':
+      return null;
+    default:
+      return null;
+  }
+}
+
+/**
  * UI component for editing a pipeline stage.
  *
  * @param props - The component props.
@@ -412,6 +457,11 @@ function Stage({
                 {dict.workflow.pipeline.write}
               </Badge>
             )}
+            {stage.read && stage.data_pass_mode === 'replace' && (
+              <Badge variant='destructive' className='text-xs'>
+                {dict.workflow.pipeline.dataPassModeReplace}
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -493,6 +543,7 @@ function Stage({
                       description: prevStage.description,
                       write: prevStage.write,
                       read: prevStage.read,
+                      data_pass_mode: prevStage.data_pass_mode,
                       order_sequence: prevStage.order_sequence,
                     };
                   });
@@ -505,6 +556,7 @@ function Stage({
                     description: prevStage.description,
                     write: prevStage.write,
                     read: prevStage.read,
+                    data_pass_mode: prevStage.data_pass_mode,
                     order_sequence: prevStage.order_sequence,
                   }));
                 } else if (value === 'repository') {
@@ -517,6 +569,7 @@ function Stage({
                     description: prevStage.description,
                     write: prevStage.write,
                     read: prevStage.read,
+                    data_pass_mode: prevStage.data_pass_mode,
                     order_sequence: prevStage.order_sequence,
                   }));
                 } else if (value === 'repository_action') {
@@ -528,6 +581,7 @@ function Stage({
                     description: prevStage.description,
                     write: false,
                     read: false,
+                    data_pass_mode: prevStage.data_pass_mode,
                     order_sequence: prevStage.order_sequence,
                   }));
                 } else if (value === 'trigger_workflow') {
@@ -537,6 +591,7 @@ function Stage({
                     description: prevStage.description,
                     write: false,
                     read: false,
+                    data_pass_mode: prevStage.data_pass_mode,
                     order_sequence: prevStage.order_sequence,
                   }));
                 } else if (value === 'validation') {
@@ -558,6 +613,7 @@ function Stage({
                     description: prevStage.description,
                     write: false,
                     read: false,
+                    data_pass_mode: prevStage.data_pass_mode,
                     order_sequence: prevStage.order_sequence,
                   }));
                 } else if (value === 'transform') {
@@ -571,6 +627,7 @@ function Stage({
                     description: prevStage.description,
                     write: false,
                     read: true,
+                    data_pass_mode: prevStage.data_pass_mode,
                     order_sequence: prevStage.order_sequence,
                   }));
                 } else if (value === 'embeddings') {
@@ -593,6 +650,7 @@ function Stage({
                     description: prevStage.description,
                     write: true,
                     read: true,
+                    data_pass_mode: prevStage.data_pass_mode,
                     order_sequence: prevStage.order_sequence,
                   }));
                 } else if (value === 'patch') {
@@ -608,6 +666,7 @@ function Stage({
                     description: prevStage.description,
                     write: false,
                     read: false,
+                    data_pass_mode: prevStage.data_pass_mode,
                     order_sequence: prevStage.order_sequence,
                   }));
                 } else if (value === 'field_mapping') {
@@ -620,6 +679,7 @@ function Stage({
                     description: prevStage.description,
                     write: false,
                     read: true,
+                    data_pass_mode: prevStage.data_pass_mode,
                     order_sequence: prevStage.order_sequence,
                   }));
                 }
@@ -803,6 +863,79 @@ function Stage({
                   )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {stage.read && (
+            <div className='flex flex-col gap-2'>
+              <Label htmlFor={`data-pass-mode-${index}`}>
+                {dict.workflow.pipeline.dataPassMode}
+              </Label>
+              <Select
+                value={stage.data_pass_mode || 'merge'}
+                onValueChange={(value) => {
+                  setStage((prevStage) => ({
+                    ...prevStage,
+                    data_pass_mode:
+                      value === 'merge' ? undefined : (value as 'replace'),
+                  }));
+                }}
+                disabled={readOnly}
+              >
+                <SelectTrigger
+                  id={`data-pass-mode-${index}`}
+                  className='w-full'
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='merge'>
+                    {dict.workflow.pipeline.dataPassModeMerge}
+                  </SelectItem>
+                  <SelectItem value='replace'>
+                    {dict.workflow.pipeline.dataPassModeReplace}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <span className='text-xs text-muted-foreground'>
+                {(stage.data_pass_mode || 'merge') === 'merge'
+                  ? dict.workflow.pipeline.dataPassModeMergeDescription
+                  : dict.workflow.pipeline.dataPassModeReplaceDescription}
+              </span>
+
+              {(() => {
+                const preview = getOutputPreview(stage);
+                return (
+                  <div
+                    className='
+                      mt-2 rounded-md border border-dashed
+                      border-muted-foreground/30 p-3
+                    '
+                  >
+                    <span className='text-xs font-medium text-muted-foreground'>
+                      {dict.workflow.pipeline.outputPreview}
+                    </span>
+                    {preview ? (
+                      <ul
+                        className='
+                          mt-1 list-inside list-disc text-xs
+                          text-muted-foreground
+                        '
+                      >
+                        {preview.map((file, i) => (
+                          <li key={i} className='font-mono'>
+                            {file}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className='mt-1 text-xs text-muted-foreground italic'>
+                        {dict.workflow.pipeline.outputPreviewDynamic}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
