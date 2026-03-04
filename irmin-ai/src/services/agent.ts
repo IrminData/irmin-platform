@@ -20,10 +20,24 @@ interface AgentOptions {
 
 class AgentService {
   private postgresSaver?: PostgresSaver;
+  private postgresSaverPromise?: Promise<PostgresSaver>;
 
-  async configurePostgresSaver() {
-    this.postgresSaver = PostgresSaver.fromConnString(env.DATABASE_URL);
-    await this.postgresSaver.setup();
+  async configurePostgresSaver(): Promise<PostgresSaver> {
+    // Use a stored promise to prevent duplicate initialization from concurrent calls.
+    // On failure the promise is cleared so that the next call retries instead of
+    // permanently returning the cached rejection (transient DB errors should be recoverable).
+    if (!this.postgresSaverPromise) {
+      this.postgresSaverPromise = (async () => {
+        const saver = PostgresSaver.fromConnString(env.DATABASE_URL);
+        await saver.setup();
+        this.postgresSaver = saver;
+        return saver;
+      })().catch((err) => {
+        this.postgresSaverPromise = undefined;
+        throw err;
+      });
+    }
+    return this.postgresSaverPromise;
   }
 
   async getAgent(options: AgentOptions) {

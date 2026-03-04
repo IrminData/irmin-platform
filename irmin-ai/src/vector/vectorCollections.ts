@@ -5,7 +5,7 @@ import {
   vectorCollections,
 } from '@/database';
 import { randomUUID } from 'crypto';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 // Collection validation schemas
@@ -527,24 +527,24 @@ class CollectionService {
   }
 
   /**
-   * Increment document count for a collection
+   * Atomically increment document count for a collection using SQL arithmetic
    */
   async incrementDocumentCount(
     id: string,
     increment: number = 1
   ): Promise<boolean> {
     try {
-      const collection = await this.getCollectionById(id);
-      if (!collection) {
-        return false;
-      }
+      const result = await db
+        .update(vectorCollections)
+        .set({
+          documentCount: sql`COALESCE(${vectorCollections.documentCount}, 0) + ${increment}`,
+          lastIndexedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(vectorCollections.id, id))
+        .returning();
 
-      await this.updateCollectionStats(id, {
-        documentCount: (collection.documentCount || 0) + increment,
-        lastIndexedAt: new Date(),
-      });
-
-      return true;
+      return result.length > 0;
     } catch (error) {
       console.error('Failed to increment document count:', error);
       return false;
@@ -552,25 +552,24 @@ class CollectionService {
   }
 
   /**
-   * Decrement document count for a collection
+   * Atomically decrement document count for a collection using SQL arithmetic
    */
   async decrementDocumentCount(
     id: string,
     decrement: number = 1
   ): Promise<boolean> {
     try {
-      const collection = await this.getCollectionById(id);
-      if (!collection) {
-        return false;
-      }
+      const result = await db
+        .update(vectorCollections)
+        .set({
+          documentCount: sql`GREATEST(0, COALESCE(${vectorCollections.documentCount}, 0) - ${decrement})`,
+          lastIndexedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(vectorCollections.id, id))
+        .returning();
 
-      const newCount = Math.max(0, (collection.documentCount || 0) - decrement);
-      await this.updateCollectionStats(id, {
-        documentCount: newCount,
-        lastIndexedAt: new Date(),
-      });
-
-      return true;
+      return result.length > 0;
     } catch (error) {
       console.error('Failed to decrement document count:', error);
       return false;

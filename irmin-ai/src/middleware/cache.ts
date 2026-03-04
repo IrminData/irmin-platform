@@ -4,6 +4,7 @@ import type {
 } from '@/types/request-context';
 
 const CACHE_TTL = 30 * 1000; // 30 seconds in milliseconds
+const CACHE_MAX_SIZE = 10000; // Maximum number of entries to prevent unbounded growth
 
 // AuthCacheEntry represents a cached authentication result
 interface AuthCacheEntry {
@@ -44,8 +45,19 @@ class AuthCache {
     return entry.user;
   }
 
-  // Set cached auth result
+  // Set cached auth result, enforcing max size
   set(token: string, user: AuthenticatedUser): void {
+    // Evict expired entries if at capacity
+    if (this.cache.size >= CACHE_MAX_SIZE) {
+      this.cleanupExpiredEntries();
+    }
+    // If still at capacity, remove oldest entry
+    if (this.cache.size >= CACHE_MAX_SIZE) {
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey);
+      }
+    }
     this.cache.set(token, {
       user,
       expiresAt: Date.now() + CACHE_TTL,
@@ -113,12 +125,23 @@ class WorkspaceCache {
     return entry.workspace;
   }
 
-  // Set cached workspace result
+  // Set cached workspace result, enforcing max size
   set(
     workspaceSlug: string,
     userId: string,
     workspace: SelectedWorkspace
   ): void {
+    // Evict expired entries if at capacity
+    if (this.cache.size >= CACHE_MAX_SIZE) {
+      this.cleanupExpiredEntries();
+    }
+    // If still at capacity, remove oldest entry
+    if (this.cache.size >= CACHE_MAX_SIZE) {
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey);
+      }
+    }
     const key = this.getCacheKey(workspaceSlug, userId);
     this.cache.set(key, {
       workspace,

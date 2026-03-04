@@ -145,10 +145,34 @@ class IndexingService {
         isSystemCollection,
       });
 
-      // Create in Qdrant
-      // If Qdrant creation fails, we should technically rollback DB, but soft failure is often acceptable if handled later
-      // For now, we let it throw so the caller knows it failed
-      await qdrantService.createCollection(collectionName, embeddingDimensions);
+      // Create in Qdrant — rollback DB record if this fails
+      try {
+        await qdrantService.createCollection(
+          collectionName,
+          embeddingDimensions
+        );
+      } catch (qdrantError) {
+        // Rollback the database record since Qdrant collection creation failed
+        try {
+          await collectionService.deleteCollection(collection.id);
+        } catch (rollbackError) {
+          analyticsService.logEvent({
+            eventType: 'vector_store_rollback_failed',
+            eventData: {
+              collectionName,
+              originalError:
+                qdrantError instanceof Error
+                  ? qdrantError.message
+                  : 'Unknown error',
+              rollbackError:
+                rollbackError instanceof Error
+                  ? rollbackError.message
+                  : 'Unknown error',
+            },
+          });
+        }
+        throw qdrantError;
+      }
 
       // Log vector operation
       analyticsService.logEvent({

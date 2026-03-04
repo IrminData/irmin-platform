@@ -33,7 +33,6 @@ export async function infoRoutes(fastify: FastifyInstance) {
           UserProfileResponseSchema,
           {
             user: authContext.user,
-            token: authContext.token,
           },
           fastify.log
         );

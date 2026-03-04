@@ -2,9 +2,9 @@ name: Format, Lint & Typecheck
 on:
   workflow_dispatch:
   pull_request:
-    types: [opened, reopened]
+    types: [opened, synchronize, reopened]
 permissions:
-  contents: write
+  contents: read
 jobs:
   workflow:
     runs-on: ubuntu-latest

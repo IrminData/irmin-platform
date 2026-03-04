@@ -6,7 +6,6 @@ import { WorkspaceSchema } from '@/irmin-api/types/workspace';
 // User profile response schema
 export const UserProfileResponseSchema = z.object({
   user: UserSchema,
-  token: z.string().describe('JWT token for authentication'),
 });
 
 // Workspace info response schema

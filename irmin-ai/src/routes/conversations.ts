@@ -30,7 +30,9 @@ interface ConversationParams {
 }
 
 export async function conversationRoutes(fastify: FastifyInstance) {
-  const agentsManager = new AgentsManager();
+  const agentsManager = (
+    fastify as FastifyInstance & { agentsManager: AgentsManager }
+  ).agentsManager;
 
   // GET /api/conversations - List all conversations with pagination
   // Supports both offset-based (page/limit) and cursor-based (cursor/limit) pagination

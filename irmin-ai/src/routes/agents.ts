@@ -16,7 +16,9 @@ import { sendOkResponse } from '@/utils/responses';
 import { applyStreamingHeaders, createDeferredStream } from '@/utils/streaming';
 
 export async function agentRoutes(fastify: FastifyInstance) {
-  const agentsManager = new AgentsManager();
+  const agentsManager = (
+    fastify as FastifyInstance & { agentsManager: AgentsManager }
+  ).agentsManager;
 
   // GET /api/agents - List available agents
   fastify.get(
@@ -45,6 +47,12 @@ export async function agentRoutes(fastify: FastifyInstance) {
     '/agents/:agentId',
     {
       schema: swaggerSchemas.executeAgent,
+      config: {
+        rateLimit: {
+          max: 30,
+          timeWindow: '1 minute',
+        },
+      },
     },
     async (request, reply) => {
       try {
@@ -119,6 +127,12 @@ export async function agentRoutes(fastify: FastifyInstance) {
     '/agents/:agentId/stream',
     {
       schema: swaggerSchemas.executeAgentStream,
+      config: {
+        rateLimit: {
+          max: 30,
+          timeWindow: '1 minute',
+        },
+      },
     },
     async (request, reply) => {
       const timings = {
@@ -283,14 +297,15 @@ export async function agentRoutes(fastify: FastifyInstance) {
             error instanceof Error ? error.message : 'Unknown error';
           fastify.log.error('Agent streaming error: %s', errorMessage);
 
-          // Push error event to the stream
+          // Push sanitized error event to the stream (avoid leaking stack traces or internal details)
+          const isNotFound = errorMessage.includes('not found');
           deferredStream.pushEvent({
             event: 'error',
             data: {
-              message: errorMessage,
-              type: errorMessage.includes('not found')
-                ? 'not_found'
-                : 'internal_error',
+              message: isNotFound
+                ? errorMessage
+                : 'An internal error occurred while processing your request',
+              type: isNotFound ? 'not_found' : 'internal_error',
             },
           });
         } finally {
