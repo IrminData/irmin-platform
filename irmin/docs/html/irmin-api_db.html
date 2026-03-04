@@ -571,6 +571,16 @@ const (
 	// CustomToolTypeEmbeddingSearch searches a specific embedding file.
 	CustomToolTypeEmbeddingSearch CustomToolType = "embedding_search"
 )
+type DataPassMode string
+    DataPassMode controls how a pipeline stage's output merges with existing
+    pipeline data.
+
+const (
+	// DataPassModeMerge adds/overwrites files in the pipeline data (default).
+	DataPassModeMerge DataPassMode = "merge"
+	// DataPassModeReplace clears all previous pipeline data, keeping only this stage's output.
+	DataPassModeReplace DataPassMode = "replace"
+)
 type Database struct {
 	*gorm.DB
 	// Has unexported fields.
@@ -1270,6 +1280,7 @@ type PipelineStage struct {
 	Description   string                `json:"description"`
 	Write         bool                  `json:"write"`
 	Read          bool                  `json:"read"`
+	DataPassMode  DataPassMode          `json:"data_pass_mode" gorm:"type:varchar(20);default:'merge'"`
 	Pipeline      *PipelineWorkflowable `json:"pipeline"       gorm:"foreignKey:PipelineID"`
 	PipelineID    *uint                 `json:"pipeline_id"    gorm:"index"`
 	Type          PipelineStageType     `json:"type"`

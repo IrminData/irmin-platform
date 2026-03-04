@@ -25,6 +25,16 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
+// applyDataPassMode applies the data pass mode to the pipeline stage results.
+// If mode is "replace", it clears the previous results before copying the new ones.
+// Otherwise (merge or empty), it merges the new results into the previous ones.
+func applyDataPassMode(prev map[string][]byte, newData map[string][]byte, mode db.DataPassMode) {
+	if mode == db.DataPassModeReplace {
+		clear(prev)
+	}
+	maps.Copy(prev, newData)
+}
+
 const (
 	// Validation modes
 	validationModeSingle = "single"
@@ -285,8 +295,7 @@ func (o *Orchestrator) handleActionStage(
 	}
 
 	if stage.Read {
-		// Set the results of the previous stage to the compute result
-		maps.Copy(previousStageResults, computeResult.ResultFiles)
+		applyDataPassMode(previousStageResults, computeResult.ResultFiles, stage.DataPassMode)
 	}
 
 	return logs, nil
@@ -425,10 +434,12 @@ func (o *Orchestrator) handleConnectionRead(
 		)
 	}
 
+	pulledFiles := make(map[string][]byte, len(pulledPaths))
 	for fileName, fileContent := range pulledPaths {
-		previousStageResults[fileName] = fileContent
+		pulledFiles[fileName] = fileContent
 		logs = append(logs, fmt.Sprintf("Object ('%s') retrieved from connection.", fileName))
 	}
+	applyDataPassMode(previousStageResults, pulledFiles, stage.DataPassMode)
 	return logs, nil
 }
 
@@ -611,6 +622,14 @@ func (o *Orchestrator) handleRepositoryRead(
 	// Check for context cancellation before reading from repository
 	if ctx.Err() != nil {
 		return logs, fmt.Errorf("workflow execution cancelled before repository read: %w", ctx.Err())
+	}
+
+	// If replace mode, clear previous results before reading new files.
+	// Unlike other stages, repository reads stream files individually into
+	// previousStageResults via helper functions, so we clear upfront rather
+	// than collecting into a temp map.
+	if stage.DataPassMode == db.DataPassModeReplace {
+		clear(previousStageResults)
 	}
 
 	// Process all repository read paths
@@ -1486,11 +1505,11 @@ func (o *Orchestrator) handleTransformStage(
 		return logs, err
 	}
 
-	// Update previous stage results with transformed files
-	// Clear the map first
-	for key := range previousStageResults {
-		delete(previousStageResults, key)
-	}
+	// Update previous stage results with transformed files.
+	// Transform always replaces because ProcessTransformations returns the complete
+	// result set (pass-through files + transformed files). Using merge would leave
+	// stale keys for file_remove and file_rename operations.
+	clear(previousStageResults)
 	maps.Copy(previousStageResults, transformedFiles)
 
 	// Log success
@@ -1953,7 +1972,7 @@ func (o *Orchestrator) handleEmbeddingsSearch(
 	}
 
 	// Store in previousStageResults
-	previousStageResults["search_results.json"] = jsonData
+	applyDataPassMode(previousStageResults, map[string][]byte{"search_results.json": jsonData}, stage.DataPassMode)
 	logs = append(logs, "Search results stored as search_results.json")
 
 	return logs, nil

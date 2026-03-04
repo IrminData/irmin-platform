@@ -17044,6 +17044,17 @@ const docTemplate = `{
                 "CustomToolTypeEmbeddingSearch"
             ]
         },
+        "irminmodels.DataPassMode": {
+            "type": "string",
+            "enum": [
+                "merge",
+                "replace"
+            ],
+            "x-enum-varnames": [
+                "DataPassModeMerge",
+                "DataPassModeReplace"
+            ]
+        },
         "irminmodels.Diff": {
             "type": "object",
             "required": [
@@ -18088,6 +18099,18 @@ const docTemplate = `{
                 "connection_write_path": {
                     "type": "string",
                     "example": "/exports/processed_data.csv"
+                },
+                "data_pass_mode": {
+                    "enum": [
+                        "merge",
+                        "replace"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.DataPassMode"
+                        }
+                    ],
+                    "example": "merge"
                 },
                 "description": {
                     "type": "string",

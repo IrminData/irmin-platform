@@ -74,9 +74,9 @@ func (o *Orchestrator) handleFieldMappingStage(
 	// by reference between stages, so mutating it here propagates results to the
 	// next stage. All intermediate maps (filesToProcess, passThrough, results) are
 	// separate copies, so only this final assignment writes back.
-	for key := range previousStageResults {
-		delete(previousStageResults, key)
-	}
+	// Always replace because the results map contains the complete output
+	// (pass-through files + mapped files).
+	clear(previousStageResults)
 	maps.Copy(previousStageResults, results)
 
 	logs = append(logs, fmt.Sprintf("Field mapping complete: %d file(s) produced", len(results)))

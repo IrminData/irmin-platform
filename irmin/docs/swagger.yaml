@@ -1949,6 +1949,14 @@ definitions:
     - CustomToolTypeStoredQuery
     - CustomToolTypeWorkflow
     - CustomToolTypeEmbeddingSearch
+  irminmodels.DataPassMode:
+    enum:
+    - merge
+    - replace
+    type: string
+    x-enum-varnames:
+    - DataPassModeMerge
+    - DataPassModeReplace
   irminmodels.Diff:
     properties:
       base_ref:
@@ -2723,6 +2731,13 @@ definitions:
       connection_write_path:
         example: /exports/processed_data.csv
         type: string
+      data_pass_mode:
+        allOf:
+        - $ref: '#/definitions/irminmodels.DataPassMode'
+        enum:
+        - merge
+        - replace
+        example: merge
       description:
         example: Process customer data
         maxLength: 200

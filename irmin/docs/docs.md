@@ -2808,6 +2808,7 @@ import "irmin-api/db"
 - [type CursorPagination](<#CursorPagination>)
 - [type CustomFieldValues](<#CustomFieldValues>)
 - [type CustomToolType](<#CustomToolType>)
+- [type DataPassMode](<#DataPassMode>)
 - [type Database](<#Database>)
   - [func InitialiseDB\(env \*utils.CoreAPIEnv\) \(\*Database, error\)](<#InitialiseDB>)
   - [func \(d \*Database\) AddTagToAIApplication\(aiApplicationID, tagID uint\) error](<#Database.AddTagToAIApplication>)
@@ -3863,6 +3864,26 @@ const (
     CustomToolTypeWorkflow CustomToolType = "workflow"
     // CustomToolTypeEmbeddingSearch searches a specific embedding file.
     CustomToolTypeEmbeddingSearch CustomToolType = "embedding_search"
+)
+```
+
+<a name="DataPassMode"></a>
+## type DataPassMode
+
+DataPassMode controls how a pipeline stage's output merges with existing pipeline data.
+
+```go
+type DataPassMode string
+```
+
+<a name="DataPassModeMerge"></a>
+
+```go
+const (
+    // DataPassModeMerge adds/overwrites files in the pipeline data (default).
+    DataPassModeMerge DataPassMode = "merge"
+    // DataPassModeReplace clears all previous pipeline data, keeping only this stage's output.
+    DataPassModeReplace DataPassMode = "replace"
 )
 ```
 
@@ -5417,6 +5438,7 @@ type PipelineStage struct {
     Description   string                `json:"description"`
     Write         bool                  `json:"write"`
     Read          bool                  `json:"read"`
+    DataPassMode  DataPassMode          `json:"data_pass_mode" gorm:"type:varchar(20);default:'merge'"`
     Pipeline      *PipelineWorkflowable `json:"pipeline"       gorm:"foreignKey:PipelineID"`
     PipelineID    *uint                 `json:"pipeline_id"    gorm:"index"`
     Type          PipelineStageType     `json:"type"`

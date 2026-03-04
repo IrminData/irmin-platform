@@ -105,6 +105,16 @@ const (
 	PipelineStageTypeFieldMapping     PipelineStageType = "field_mapping"
 )
 
+// DataPassMode controls how a pipeline stage's output merges with existing pipeline data.
+type DataPassMode string
+
+const (
+	// DataPassModeMerge adds/overwrites files in the pipeline data (default).
+	DataPassModeMerge DataPassMode = "merge"
+	// DataPassModeReplace clears all previous pipeline data, keeping only this stage's output.
+	DataPassModeReplace DataPassMode = "replace"
+)
+
 // PatchDirection indicates whether to apply patches to a connection or repository
 type PatchDirection string
 
@@ -119,6 +129,7 @@ type PipelineStage struct {
 	Description   string                `json:"description"`
 	Write         bool                  `json:"write"`
 	Read          bool                  `json:"read"`
+	DataPassMode  DataPassMode          `json:"data_pass_mode" gorm:"type:varchar(20);default:'merge'"`
 	Pipeline      *PipelineWorkflowable `json:"pipeline"       gorm:"foreignKey:PipelineID"`
 	PipelineID    *uint                 `json:"pipeline_id"    gorm:"index"`
 	Type          PipelineStageType     `json:"type"`

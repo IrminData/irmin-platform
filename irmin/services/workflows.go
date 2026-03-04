@@ -1244,11 +1244,17 @@ func (api *APIServices) createPipelineWorkflowable(
 	// Process stages
 	var stages []db.PipelineStage
 	for orderSequence, stage := range config.Stages {
+		dataPassMode := db.DataPassMode(stage.DataPassMode)
+		if dataPassMode == "" {
+			dataPassMode = db.DataPassModeMerge
+		}
+
 		newStage := db.PipelineStage{
 			OrderSequence: orderSequence,
 			Description:   stage.Description,
 			Write:         stage.Write,
 			Read:          stage.Read,
+			DataPassMode:  dataPassMode,
 		}
 
 		err := api.processStageByType(txDB, &newStage, stage, workspace, workflowID)

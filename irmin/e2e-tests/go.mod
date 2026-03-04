@@ -2,7 +2,7 @@ module github.com/IrminData/irmin-e2e-tests
 
 go 1.25.0
 
-require github.com/IrminData/irmin-sdk-go v0.0.0-20260228152615-a884392d9739
+require github.com/IrminData/irmin-sdk-go v0.0.0-20260303093248-f040e675f369
 
 require (
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
