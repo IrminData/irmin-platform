@@ -122,8 +122,6 @@ func HandleOperationPatch(
 		})
 	}
 	defer file.Close()
-
-	// Read the entire file into memory
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
 		LogOperationEvent(
@@ -159,8 +157,10 @@ func HandleOperationPatch(
 		})
 	}
 
-	// Apply each patch operation to the database
-	for _, op := range operations {
+	// Apply each patch operation to the database.
+	// Operations are applied sequentially; if one fails, previously applied operations
+	// are NOT rolled back. The error response includes the index of the failed operation.
+	for i, op := range operations {
 		// Extract details from the operation path
 		_, tableName, rowIdentifier, columnName := utils.ExtractPathComponents(op.Path)
 
@@ -217,15 +217,17 @@ func HandleOperationPatch(
 				db.LogEventTypeError,
 				"Failed to execute patch operation",
 				map[string]any{
-					"error":     err.Error(),
-					"operation": op.Op,
-					"path":      op.Path,
-					"is_binary": isBinary,
+					"error":            err.Error(),
+					"operation":        op.Op,
+					"path":             op.Path,
+					"is_binary":        isBinary,
+					"operation_index":  i,
+					"total_operations": len(operations),
 				},
 			)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
+			return c.Status(fiber.StatusInternalServerError).JSON(
+				fiber.Map{"error": "Failed to execute patch operation: " + err.Error(), "failed_at_index": i},
+			)
 		}
 	}
 

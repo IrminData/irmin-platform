@@ -29,6 +29,9 @@ const dnsLookupTimeout = 5 * time.Second
 // maxPresignedRedirects is the maximum number of HTTP redirects allowed when downloading from a presigned URL.
 const maxPresignedRedirects = 10
 
+// maxDirectUploadSize is the maximum allowed size for direct file uploads (500 MB).
+const maxDirectUploadSize = 500 * 1024 * 1024
+
 // maxPresignedDownloadBytes is the maximum file size accepted from a presigned URL download (5 GB).
 const maxPresignedDownloadBytes int64 = 5 * 1024 * 1024 * 1024
 
@@ -242,15 +245,23 @@ func handleUploadedFile(c fiber.Ctx) (map[string][]byte, error) {
 		return nil, fmt.Errorf("failed to retrieve form file: %w", err)
 	}
 
+	// Enforce size limit to prevent zip bombs and excessive memory usage
+	if fileHeader.Size > maxDirectUploadSize {
+		return nil, fmt.Errorf("uploaded file exceeds maximum allowed size of %d bytes", maxDirectUploadSize)
+	}
+
 	file, err := fileHeader.Open()
 	if err != nil {
 		return nil, fmt.Errorf("failed to open form file: %w", err)
 	}
 	defer file.Close()
 
-	bytesData, err := io.ReadAll(file)
+	bytesData, err := io.ReadAll(io.LimitReader(file, maxDirectUploadSize+1))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read uploaded file: %w", err)
+	}
+	if int64(len(bytesData)) > maxDirectUploadSize {
+		return nil, fmt.Errorf("uploaded file exceeds maximum allowed size of %d bytes", maxDirectUploadSize)
 	}
 
 	files, err := irminutils.UnzipFiles(bytesData)

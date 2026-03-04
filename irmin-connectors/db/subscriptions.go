@@ -19,6 +19,15 @@ type Subscription struct {
 	Operation               *Operation             `json:"operation,omitempty"             gorm:"foreignKey:OperationID"`
 }
 
+// GetSubscriptionsByOperationID retrieves all Subscription records for a specific operation.
+func (d *Database) GetSubscriptionsByOperationID(operationID uint) ([]Subscription, error) {
+	var subscriptions []Subscription
+	if err := d.Where(&Subscription{OperationID: operationID}).Find(&subscriptions).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch subscriptions by operation ID: %w", err)
+	}
+	return subscriptions, nil
+}
+
 // GetAllSubscriptions retrieves all Subscription records from the database.
 func (d *Database) GetAllSubscriptions() ([]Subscription, error) {
 	var subscriptions []Subscription

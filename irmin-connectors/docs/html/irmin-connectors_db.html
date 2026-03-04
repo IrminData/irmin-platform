@@ -171,6 +171,10 @@ func (d *Database) GetPgxConn(ctx context.Context) (*pgxpool.Conn, error)
 func (d *Database) GetSubscriptionByID(id uint) (*Subscription, error)
     GetSubscriptionByID retrieves a Subscription by its ID.
 
+func (d *Database) GetSubscriptionsByOperationID(operationID uint) ([]Subscription, error)
+    GetSubscriptionsByOperationID retrieves all Subscription records for a
+    specific operation.
+
 func (d *Database) Migrate() error
     Migrate runs the auto migration calls in the correct order. It separates the
     migrations into groups based on model dependencies.

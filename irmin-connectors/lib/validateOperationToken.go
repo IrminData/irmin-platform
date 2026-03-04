@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"crypto/subtle"
 	"errors"
 	"irmin-connectors/db"
 	"log/slog"
@@ -43,11 +44,11 @@ func ValidateOperationToken(
 		return false, nil, nil
 	}
 
-	// Validate the provided token against the active operations
+	// Validate the provided token against the active operations using constant-time comparison
 	var validToken = false
 	var matchedOperation *db.Operation
 	for _, operation := range operations {
-		if token == operation.Token {
+		if subtle.ConstantTimeCompare([]byte(token), []byte(operation.Token)) == 1 {
 			validToken = true
 			matchedOperation = &operation
 			break

@@ -131,6 +131,7 @@ import "irmin-connectors/db"
   - [func \(d \*Database\) GetOperationsByConnectorRegistrationID\(id uint\) \(\[\]Operation, error\)](<#Database.GetOperationsByConnectorRegistrationID>)
   - [func \(d \*Database\) GetPgxConn\(ctx context.Context\) \(\*pgxpool.Conn, error\)](<#Database.GetPgxConn>)
   - [func \(d \*Database\) GetSubscriptionByID\(id uint\) \(\*Subscription, error\)](<#Database.GetSubscriptionByID>)
+  - [func \(d \*Database\) GetSubscriptionsByOperationID\(operationID uint\) \(\[\]Subscription, error\)](<#Database.GetSubscriptionsByOperationID>)
   - [func \(d \*Database\) Migrate\(\) error](<#Database.Migrate>)
   - [func \(d \*Database\) Reset\(\) error](<#Database.Reset>)
   - [func \(d \*Database\) RunRawQuery\(sqlQuery string, args ...any\) error](<#Database.RunRawQuery>)
@@ -464,6 +465,15 @@ func (d *Database) GetSubscriptionByID(id uint) (*Subscription, error)
 ```
 
 GetSubscriptionByID retrieves a Subscription by its ID.
+
+<a name="Database.GetSubscriptionsByOperationID"></a>
+### func \(\*Database\) GetSubscriptionsByOperationID
+
+```go
+func (d *Database) GetSubscriptionsByOperationID(operationID uint) ([]Subscription, error)
+```
+
+GetSubscriptionsByOperationID retrieves all Subscription records for a specific operation.
 
 <a name="Database.Migrate"></a>
 ### func \(\*Database\) Migrate

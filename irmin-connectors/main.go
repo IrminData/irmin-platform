@@ -116,7 +116,8 @@ func setupFiberApp(env *utils.ConnectorsEnv) *fiber.App {
 		BodyLimit:      MaxRequestBodySize,
 		ReadBufferSize: ReadBufferSize, // 10MB for headers to handle large CORS headers
 		ErrorHandler: func(c fiber.Ctx, err error) error {
-			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+			slog.Error("Unhandled request error", "error", err, "path", c.Path(), "method", c.Method())
+			return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
 		},
 	})
 

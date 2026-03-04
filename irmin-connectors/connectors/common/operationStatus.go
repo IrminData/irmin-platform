@@ -148,18 +148,7 @@ func getOperationAndValidate(
 
 // getOperationSubscriptions retrieves subscriptions for the operation.
 func getOperationSubscriptions(operationID uint, app *models.ConnectorsApp) ([]db.Subscription, error) {
-	subscriptions, err := app.DB.GetAllSubscriptions()
-	if err != nil {
-		return nil, err
-	}
-
-	var operationSubscriptions []db.Subscription
-	for _, sub := range subscriptions {
-		if sub.OperationID == operationID {
-			operationSubscriptions = append(operationSubscriptions, sub)
-		}
-	}
-	return operationSubscriptions, nil
+	return app.DB.GetSubscriptionsByOperationID(operationID)
 }
 
 // parseOperationData parses operation details and settings from JSON.
