@@ -232,8 +232,14 @@ func (v *Validator) ValidateDynamic(data any) *ValidationResultError {
 		return v.validateMap(dataValue)
 	}
 
-	// Check if data is just a string, which is valid
-	if dataType.Kind() == reflect.String {
+	// Handle remaining types based on kind
+	switch dataType.Kind() { //nolint:exhaustive // Slice, Array, Map, Ptr already handled above
+	case reflect.Struct:
+		// Structs have validation tags - validate with struct rules
+		return v.ValidateEnhanced(data)
+	default:
+		// Primitive types (string, number, bool) and other types (chan, func, etc.)
+		// are always valid - they have no struct validation tags
 		return &ValidationResultError{
 			IsValid:     true,
 			UserMessage: "",
@@ -241,9 +247,6 @@ func (v *Validator) ValidateDynamic(data any) *ValidationResultError {
 			RawErrors:   nil,
 		}
 	}
-
-	// For single structs, validate directly
-	return v.ValidateEnhanced(data)
 }
 
 // validateArray validates each element in an array or slice.
@@ -258,7 +261,7 @@ func (v *Validator) validateArray(arrayValue reflect.Value) *ValidationResultErr
 
 	for i := range length {
 		element := arrayValue.Index(i).Interface()
-		validationResult := v.ValidateEnhanced(element)
+		validationResult := v.ValidateDynamic(element)
 
 		if validationResult.HasErrors() {
 			hasErrors = true
@@ -317,7 +320,7 @@ func (v *Validator) validateMap(mapValue reflect.Value) *ValidationResultError {
 	// Iterate over map keys
 	for _, key := range mapValue.MapKeys() {
 		value := mapValue.MapIndex(key).Interface()
-		validationResult := v.ValidateEnhanced(value)
+		validationResult := v.ValidateDynamic(value)
 
 		if validationResult.HasErrors() {
 			hasErrors = true
