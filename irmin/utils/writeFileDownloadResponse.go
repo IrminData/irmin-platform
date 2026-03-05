@@ -5,9 +5,34 @@ import (
 	"io"
 	"math"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
+
+// isSafeForInline reports whether the given content type can be rendered inline
+// without risk of script execution. Types not on the safelist (e.g. text/html, SVG)
+// should use Content-Disposition: attachment to prevent stored XSS.
+func isSafeForInline(contentType string) bool {
+	ct := strings.ToLower(contentType)
+	// SVG can contain <script> tags and event handlers — never render inline.
+	if strings.HasPrefix(ct, "image/svg") {
+		return false
+	}
+	for _, safe := range []string{
+		"image/",
+		"video/",
+		"audio/",
+		"application/pdf",
+		"text/plain",
+		"text/csv",
+	} {
+		if strings.HasPrefix(ct, safe) {
+			return true
+		}
+	}
+	return false
+}
 
 // closeIfCloser closes the reader if it implements io.Closer.
 func closeIfCloser(r io.Reader) {
@@ -31,6 +56,21 @@ func WriteFileDownloadResponse(c fiber.Ctx, status int, filename, contentType st
 	// Set the HTTP status code
 	c.Status(status)
 	// Send the file content as the response
+	return c.Send(data)
+}
+
+// WriteFileInlineResponse writes a file response for inline display (not download).
+// For safe content types (images, PDFs, plain text, etc.) it sets Content-Disposition
+// to "inline". For potentially dangerous types (HTML, SVG, XML) it falls back to
+// "attachment" to prevent stored XSS via user-uploaded content.
+func WriteFileInlineResponse(c fiber.Ctx, status int, filename, contentType string, data []byte) error {
+	c.Set("Content-Type", contentType)
+	disposition := "attachment"
+	if isSafeForInline(contentType) {
+		disposition = "inline"
+	}
+	c.Set("Content-Disposition", fmt.Sprintf(`%s; filename="%s"`, disposition, filename))
+	c.Status(status)
 	return c.Send(data)
 }
 

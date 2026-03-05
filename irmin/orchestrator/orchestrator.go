@@ -73,19 +73,35 @@ func NewOrchestrator(
 }
 
 func (o *Orchestrator) AddLakefsEvent(event *lakefs.WebhookEvent) {
-	o.lakefsEventQueue <- event
+	select {
+	case o.lakefsEventQueue <- event:
+	default:
+		o.logger.Warn("LakeFS event queue full, dropping event")
+	}
 }
 
 func (o *Orchestrator) AddDispatchedEvent(event *DispatchEvent) {
-	o.dispatchedEventQueue <- event
+	select {
+	case o.dispatchedEventQueue <- event:
+	default:
+		o.logger.Warn("Dispatched event queue full, dropping event")
+	}
 }
 
 func (o *Orchestrator) AddWorkerEvent(event *WorkerEvent) {
-	o.workerEventQueue <- event
+	select {
+	case o.workerEventQueue <- event:
+	default:
+		o.logger.Warn("Worker event queue full, dropping event")
+	}
 }
 
 func (o *Orchestrator) AddConnectionEvent(event *ConnectionEvent) {
-	o.connectionEventQueue <- event
+	select {
+	case o.connectionEventQueue <- event:
+	default:
+		o.logger.Warn("Connection event queue full, dropping event")
+	}
 }
 
 // RegisterActiveRun registers a workflow run's cancel function for later cancellation.

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"irmin-api/db"
@@ -29,6 +30,9 @@ const (
 
 	// AuthCacheTTL is how long to cache auth results
 	AuthCacheTTL = 5 * time.Minute
+
+	// AuthCacheMaxSize is the maximum number of entries in the auth cache before eviction
+	AuthCacheMaxSize = 10000
 )
 
 // AuthCacheEntry represents a cached authentication result.
@@ -70,9 +74,37 @@ func (api *APIServices) getCachedAuth(token string) *db.User {
 }
 
 // setCachedAuth stores an authentication result in cache.
+// Evicts expired entries and enforces a maximum cache size to prevent unbounded memory growth.
 func (api *APIServices) setCachedAuth(token string, user *db.User) {
 	api.authCache.mu.Lock()
 	defer api.authCache.mu.Unlock()
+
+	// If at capacity, evict expired entries first
+	if len(api.authCache.cache) >= AuthCacheMaxSize {
+		now := time.Now()
+		for k, v := range api.authCache.cache {
+			if now.After(v.ExpiresAt) {
+				delete(api.authCache.cache, k)
+			}
+		}
+	}
+
+	// If still at capacity after eviction, remove oldest entries
+	if len(api.authCache.cache) >= AuthCacheMaxSize {
+		var oldestKey string
+		var oldestTime time.Time
+		first := true
+		for k, v := range api.authCache.cache {
+			if first || v.ExpiresAt.Before(oldestTime) {
+				oldestKey = k
+				oldestTime = v.ExpiresAt
+				first = false
+			}
+		}
+		if oldestKey != "" {
+			delete(api.authCache.cache, oldestKey)
+		}
+	}
 
 	api.authCache.cache[token] = &AuthCacheEntry{
 		User:      user,
@@ -148,9 +180,9 @@ func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale s
 	return newUser, false, nil
 }
 
-// validateSystemToken checks if token equals configured system token
+// validateSystemToken checks if token equals configured system token using constant-time comparison
 func (api *APIServices) validateSystemToken(token string) bool {
-	return token == api.Env.SystemToken
+	return subtle.ConstantTimeCompare([]byte(token), []byte(api.Env.SystemToken)) == 1
 }
 
 // validateCredentialsToken validates a credentials token and returns the associated user and clerk id

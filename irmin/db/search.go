@@ -995,11 +995,20 @@ func (d *Database) buildFieldRelevanceExpressionSecure(fieldRef string, token Se
 	return "CASE WHEN " + condition + " THEN " + relevanceValue + " ELSE 0 END"
 }
 
+// Pre-compiled regexes for hot-path performance in sanitization
+var (
+	htmlTagRegex    = regexp.MustCompile(`(?i)<[^>]*>`)
+	whitespaceRegex = regexp.MustCompile(`\s+`)
+)
+
+// fieldRefRegex validates field references that may start with underscores or digits
+// (e.g. _id, 0_col). This is intentionally more permissive than validFieldRegex which
+// requires a leading letter.
+var fieldRefRegex = regexp.MustCompile(`^[a-zA-Z0-9_.]+$`)
+
 // isValidFieldReference validates that a field reference is safe to use in SQL.
 func isValidFieldReference(fieldRef string) bool {
-	// Allow only alphanumeric characters, dots, and underscores
-	validFieldRegex := regexp.MustCompile(`^[a-zA-Z0-9_.]+$`)
-	return validFieldRegex.MatchString(fieldRef)
+	return fieldRefRegex.MatchString(fieldRef)
 }
 
 // sanitizeForLiteral sanitizes a string for use in SQL literals with comprehensive safety measures.
@@ -1036,10 +1045,10 @@ func sanitizeForLiteral(input string) string {
 	sanitized = strings.ReplaceAll(sanitized, "sp_", "")
 
 	// Remove HTML/script tags
-	sanitized = regexp.MustCompile(`(?i)<[^>]*>`).ReplaceAllString(sanitized, "")
+	sanitized = htmlTagRegex.ReplaceAllString(sanitized, "")
 
 	// Remove excessive whitespace
-	sanitized = regexp.MustCompile(`\s+`).ReplaceAllString(sanitized, " ")
+	sanitized = whitespaceRegex.ReplaceAllString(sanitized, " ")
 	sanitized = strings.TrimSpace(sanitized)
 
 	return sanitized

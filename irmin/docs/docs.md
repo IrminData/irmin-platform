@@ -19,6 +19,9 @@ import "irmin-api"
 const (
     // CachePreflightDuration is the duration for which preflight requests are cached.
     CachePreflightDuration = 24 * time.Hour
+
+    // GracefulShutdownTimeout is the maximum duration to wait for in-flight requests during shutdown.
+    GracefulShutdownTimeout = 30 * time.Second
 )
 ```
 
@@ -36,7 +39,9 @@ import "irmin-api/bucket"
   - [func \(bucket \*Client\) DownloadFolder\(ctx context.Context, folderPrefix, localDir string\) error](<#Client.DownloadFolder>)
   - [func \(bucket \*Client\) DuplicatePath\(ctx context.Context, sourceKey, destKey string, removeOriginal bool, tx ...\*gorm.DB\) error](<#Client.DuplicatePath>)
   - [func \(bucket \*Client\) ListObjects\(ctx context.Context, keyPrefix string\) \(\[\]types.Object, error\)](<#Client.ListObjects>)
+  - [func \(bucket \*Client\) PresignedGetURL\(ctx context.Context, key string, expiry time.Duration\) \(string, error\)](<#Client.PresignedGetURL>)
   - [func \(bucket \*Client\) ReadPath\(ctx context.Context, key string\) \(\*string, error\)](<#Client.ReadPath>)
+  - [func \(bucket \*Client\) UploadReader\(ctx context.Context, key string, body io.Reader\) error](<#Client.UploadReader>)
   - [func \(bucket \*Client\) WritePath\(ctx context.Context, key string, content string, tx ...\*gorm.DB\) error](<#Client.WritePath>)
 
 
@@ -101,6 +106,15 @@ func (bucket *Client) ListObjects(ctx context.Context, keyPrefix string) ([]type
 
 
 
+<a name="Client.PresignedGetURL"></a>
+### func \(\*Client\) PresignedGetURL
+
+```go
+func (bucket *Client) PresignedGetURL(ctx context.Context, key string, expiry time.Duration) (string, error)
+```
+
+PresignedGetURL generates a presigned GET URL for the given S3 key that expires after the given duration.
+
 <a name="Client.ReadPath"></a>
 ### func \(\*Client\) ReadPath
 
@@ -109,6 +123,15 @@ func (bucket *Client) ReadPath(ctx context.Context, key string) (*string, error)
 ```
 
 
+
+<a name="Client.UploadReader"></a>
+### func \(\*Client\) UploadReader
+
+```go
+func (bucket *Client) UploadReader(ctx context.Context, key string, body io.Reader) error
+```
+
+UploadReader uploads the contents of an io.Reader to the given S3 key.
 
 <a name="Client.WritePath"></a>
 ### func \(\*Client\) WritePath
@@ -443,6 +466,7 @@ import "irmin-api/connectors-client"
   - [func \(c \*Client\) OperationPull\(ctx context.Context, path string\) \(\[\]PulledFile, error\)](<#Client.OperationPull>)
   - [func \(c \*Client\) OperationPullStream\(ctx context.Context, path string\) \(io.ReadCloser, error\)](<#Client.OperationPullStream>)
   - [func \(c \*Client\) OperationPush\(ctx context.Context, path string, file FormFile\) \(string, error\)](<#Client.OperationPush>)
+  - [func \(c \*Client\) OperationPushPresigned\(ctx context.Context, path, presignedURL string\) \(string, error\)](<#Client.OperationPushPresigned>)
   - [func \(c \*Client\) Request\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
   - [func \(c \*Client\) SubscribeToChanges\(ctx context.Context, webhookURL, webhookAccessToken string\) \(\*Subscription, error\)](<#Client.SubscribeToChanges>)
   - [func \(c \*Client\) UnsubscribeFromChanges\(ctx context.Context, subscriptionID uint\) error](<#Client.UnsubscribeFromChanges>)
@@ -663,6 +687,15 @@ Note: Operation token is required for this operation.
 Parameters: \- ctx: Context for request cancellation and timeout control. \- path: A form field "path" with the provided path value. \- file: A form file "file" containing the file to push.
 
 Returns: \- A string containing the response message from the push operation. \- An error if the request fails.
+
+<a name="Client.OperationPushPresigned"></a>
+### func \(\*Client\) OperationPushPresigned
+
+```go
+func (c *Client) OperationPushPresigned(ctx context.Context, path, presignedURL string) (string, error)
+```
+
+OperationPushPresigned sends a presigned URL to the /operation/push endpoint instead of uploading the file directly. The connector downloads the file from the presigned URL, avoiding in\-memory buffering of large payloads.
 
 <a name="Client.Request"></a>
 ### func \(\*Client\) Request
@@ -13880,6 +13913,9 @@ const (
 
     // AuthCacheTTL is how long to cache auth results
     AuthCacheTTL = 5 * time.Minute
+
+    // AuthCacheMaxSize is the maximum number of entries in the auth cache before eviction
+    AuthCacheMaxSize = 10000
 )
 ```
 
@@ -16155,6 +16191,7 @@ import "irmin-api/utils"
 - [func ValidateGarbageCollectionSettings\(settings \*GarbageCollectionSettings\) error](<#ValidateGarbageCollectionSettings>)
 - [func ValidateJWT\(tokenString string, signingKey \[\]byte, signingAlg string\) \(\*jwt.Token, error\)](<#ValidateJWT>)
 - [func WriteFileDownloadResponse\(c fiber.Ctx, status int, filename, contentType string, data \[\]byte\) error](<#WriteFileDownloadResponse>)
+- [func WriteFileInlineResponse\(c fiber.Ctx, status int, filename, contentType string, data \[\]byte\) error](<#WriteFileInlineResponse>)
 - [func WriteResponse\(c fiber.Ctx, status int, response irminmodels.IrminAPIResponse\) error](<#WriteResponse>)
 - [func WriteStreamDownloadResponse\(c fiber.Ctx, status int, filename, contentType string, reader io.Reader, contentLength int64\) error](<#WriteStreamDownloadResponse>)
 - [type AsyncResult](<#AsyncResult>)
@@ -16560,6 +16597,15 @@ func WriteFileDownloadResponse(c fiber.Ctx, status int, filename, contentType st
 ```
 
 WriteFileDownloadResponse writes a file download response with the given status and filename. It sets the appropriate headers and sends the file data. Parameters: \- c: the Fibre context. \- status: the HTTP status code. \- filename: the name for the file to be downloaded. \- data: the file content.
+
+<a name="WriteFileInlineResponse"></a>
+## func WriteFileInlineResponse
+
+```go
+func WriteFileInlineResponse(c fiber.Ctx, status int, filename, contentType string, data []byte) error
+```
+
+WriteFileInlineResponse writes a file response for inline display \(not download\). For safe content types \(images, PDFs, plain text, etc.\) it sets Content\-Disposition to "inline". For potentially dangerous types \(HTML, SVG, XML\) it falls back to "attachment" to prevent stored XSS via user\-uploaded content.
 
 <a name="WriteResponse"></a>
 ## func WriteResponse

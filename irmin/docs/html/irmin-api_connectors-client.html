@@ -175,6 +175,11 @@ func (c *Client) OperationPush(ctx context.Context, path string, file FormFile) 
     Returns: - A string containing the response message from the push operation.
     - An error if the request fails.
 
+func (c *Client) OperationPushPresigned(ctx context.Context, path, presignedURL string) (string, error)
+    OperationPushPresigned sends a presigned URL to the /operation/push endpoint
+    instead of uploading the file directly. The connector downloads the file
+    from the presigned URL, avoiding in-memory buffering of large payloads.
+
 func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, error)
     Request sends requests to the REST API of the connector and returns the raw
     response data. It utilises prepareBodyAndHeaders and doRequest to reduce

@@ -39,3 +39,25 @@ func (c *Client) OperationPush(ctx context.Context, path string, file FormFile) 
 	// Return the response message as a string.
 	return string(data), nil
 }
+
+// OperationPushPresigned sends a presigned URL to the /operation/push endpoint
+// instead of uploading the file directly. The connector downloads the file from
+// the presigned URL, avoiding in-memory buffering of large payloads.
+func (c *Client) OperationPushPresigned(ctx context.Context, path, presignedURL string) (string, error) {
+	opts := RequestOptions{
+		Method:      http.MethodPost,
+		Endpoint:    "/operation/push",
+		ContentType: "multipart/form-data",
+		FormFields: map[string]string{
+			"path":          path,
+			"presigned_url": presignedURL,
+		},
+	}
+
+	data, err := c.Request(ctx, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
+}

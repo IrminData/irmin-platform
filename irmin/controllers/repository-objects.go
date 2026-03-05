@@ -881,7 +881,7 @@ func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error {
 			)
 		}
 
-		return utils.WriteFileDownloadResponse(c, fiber.StatusOK, object.Name, object.ContentType, content)
+		return utils.WriteFileInlineResponse(c, fiber.StatusOK, object.Name, object.ContentType, content)
 	}
 
 	// For downloads, use size-tiered routing: in-memory, stream, or presigned URL redirect

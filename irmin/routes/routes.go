@@ -34,7 +34,19 @@ func RegisterAPIRoutes(
 
 	// Health check routes
 	app.Get(healthcheck.LivenessEndpoint, healthcheck.New(healthcheck.Config{}))
-	app.Get(healthcheck.ReadinessEndpoint, healthcheck.New(healthcheck.Config{}))
+	app.Get(healthcheck.ReadinessEndpoint, healthcheck.New(healthcheck.Config{
+		Probe: func(_ fiber.Ctx) bool {
+			// Verify database connectivity
+			sqlDB, err := apiServices.DB.DB.DB()
+			if err != nil {
+				return false
+			}
+			if pingErr := sqlDB.Ping(); pingErr != nil {
+				return false
+			}
+			return true
+		},
+	}))
 	app.Get(healthcheck.StartupEndpoint, healthcheck.New(healthcheck.Config{}))
 
 	// Public signed download route (no auth required — token-based authorization)

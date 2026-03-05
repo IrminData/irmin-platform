@@ -122,7 +122,7 @@ func LoadEnv() (*CoreAPIEnv, error) {
 	if err != nil {
 		return nil, err
 	}
-	token, err := getEnv("TOKEN", false, "token-undefined")
+	token, err := getEnv("TOKEN", true, "")
 	if err != nil {
 		return nil, err
 	}

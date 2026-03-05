@@ -38,7 +38,14 @@ func (bucket *Client) DuplicatePath(
 
 func (bucket *Client) ListObjects(ctx context.Context, keyPrefix string) ([]types.Object, error)
 
+func (bucket *Client) PresignedGetURL(ctx context.Context, key string, expiry time.Duration) (string, error)
+    PresignedGetURL generates a presigned GET URL for the given S3 key that
+    expires after the given duration.
+
 func (bucket *Client) ReadPath(ctx context.Context, key string) (*string, error)
+
+func (bucket *Client) UploadReader(ctx context.Context, key string, body io.Reader) error
+    UploadReader uploads the contents of an io.Reader to the given S3 key.
 
 func (bucket *Client) WritePath(ctx context.Context, key string, content string, tx ...*gorm.DB) error
 

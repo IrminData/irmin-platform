@@ -3,10 +3,10 @@ module irmin-api
 go 1.25.4
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20260303093248-f040e675f369
+	github.com/IrminData/irmin-sdk-go v0.0.0-20260304125252-ef21bae72644
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.3
 	github.com/clerk/clerk-sdk-go/v2 v2.5.1
-	github.com/daytonaio/daytona/libs/sdk-go v0.148.0
+	github.com/daytonaio/daytona/libs/sdk-go v0.149.0
 	github.com/gofiber/fiber/v3 v3.1.0
 	github.com/gofiber/storage/memory/v2 v2.1.1
 	github.com/gofiber/storage/s3/v2 v2.5.0
@@ -33,7 +33,7 @@ require (
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
-	github.com/apache/arrow-go/v18 v18.5.1 // indirect
+	github.com/apache/arrow-go/v18 v18.5.2 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.41.3 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.6 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.32.11 // indirect
@@ -55,8 +55,8 @@ require (
 	github.com/aws/smithy-go v1.24.2 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/daytonaio/daytona/libs/api-client-go v0.148.0 // indirect
-	github.com/daytonaio/daytona/libs/toolbox-api-client-go v0.148.0 // indirect
+	github.com/daytonaio/daytona/libs/api-client-go v0.149.0 // indirect
+	github.com/daytonaio/daytona/libs/toolbox-api-client-go v0.149.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
@@ -129,7 +129,7 @@ require (
 	golang.org/x/oauth2 v0.35.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/telemetry v0.0.0-20260213145524-e0ab670178e1 // indirect
+	golang.org/x/telemetry v0.0.0-20260304144227-18da59047661 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	golang.org/x/tools v0.42.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect

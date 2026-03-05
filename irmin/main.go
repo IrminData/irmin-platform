@@ -42,7 +42,10 @@ import (
 	"irmin-api/utils"
 	"log"
 	"log/slog"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
@@ -63,6 +66,9 @@ import (
 const (
 	// CachePreflightDuration is the duration for which preflight requests are cached.
 	CachePreflightDuration = 24 * time.Hour
+
+	// GracefulShutdownTimeout is the maximum duration to wait for in-flight requests during shutdown.
+	GracefulShutdownTimeout = 30 * time.Second
 )
 
 // setupDefaultTags seeds default tags for all workspaces.
@@ -203,7 +209,8 @@ func setupFiberApp(env *utils.CoreAPIEnv, appCacheMiddleware fiber.Handler) *fib
 		AppName:   "Irmin API",
 		BodyLimit: utils.MaxRequestBodySizeBytes(env),
 		ErrorHandler: func(c fiber.Ctx, err error) error {
-			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+			slog.Error("Unhandled request error", "error", err, "path", c.Path(), "method", c.Method())
+			return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
 		},
 	})
 
@@ -300,12 +307,13 @@ func setupCORS(env *utils.CoreAPIEnv) fiber.Handler {
 
 // setupServices initializes all required services.
 func setupServices(
+	ctx context.Context,
 	env *utils.CoreAPIEnv,
 	database *db.Database,
 	cacheStorage fiber.Storage,
 ) (*orchestrator.Orchestrator, *irminsqids.SQIDManager, *locales.LocaleManager, *permissions.Service, error) {
 	// Initialize data engine
-	dataEngine, err := engine.NewClient(context.Background(), "en", slog.Default(), env, database)
+	dataEngine, err := engine.NewClient(ctx, "en", slog.Default(), env, database)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -314,7 +322,7 @@ func setupServices(
 	orchestrator := orchestrator.NewOrchestrator(database, slog.Default(), env, dataEngine, cacheStorage)
 	if env.OrchestratorEnabled {
 		go func() {
-			if orchestratorStartErr := orchestrator.StartOrchestrator(context.Background()); orchestratorStartErr != nil {
+			if orchestratorStartErr := orchestrator.StartOrchestrator(ctx); orchestratorStartErr != nil {
 				log.Printf("Orchestrator error: %v", orchestratorStartErr)
 			}
 		}()
@@ -367,10 +375,16 @@ func main() {
 	// Setup Fiber app
 	app := setupFiberApp(env, appCacheMiddleware)
 
+	// Create a cancellable context for background services
+	ctx, cancel := context.WithCancel(context.Background())
+
 	// Setup services
-	orchestrator, sqidManager, localeManager, permissionService, err := setupServices(env, database, cacheStorage)
-	if err != nil {
-		log.Fatalf("failed to setup services: %v", err)
+	orchestrator, sqidManager, localeManager, permissionService, setupSvcErr := setupServices(
+		ctx, env, database, cacheStorage,
+	)
+	if setupSvcErr != nil {
+		cancel()
+		log.Fatalf("failed to setup services: %v", setupSvcErr)
 	}
 
 	// Create API services
@@ -403,6 +417,29 @@ func main() {
 	// Start servers
 	startServer(app, env)
 
-	// Keep the main process running
-	select {}
+	// Wait for interrupt signal for graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down server...")
+
+	// Shutdown Fiber first to drain in-flight requests before cancelling the
+	// engine context. Cancelling ctx before shutdown would cause requests still
+	// using engine.Client (LakeFS, data operations) to fail with context-cancelled.
+	if shutdownErr := app.ShutdownWithTimeout(GracefulShutdownTimeout); shutdownErr != nil {
+		log.Printf("Server forced to shutdown: %v", shutdownErr)
+	}
+
+	// Cancel the context to stop orchestrator and background services
+	cancel()
+
+	// Close database connection pool
+	if sqlDB, dbErr := database.DB.DB(); dbErr == nil {
+		if closeErr := sqlDB.Close(); closeErr != nil {
+			log.Printf("Error closing database connection: %v", closeErr)
+		}
+	}
+
+	log.Println("Server gracefully stopped")
 }

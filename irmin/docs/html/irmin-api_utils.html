@@ -243,6 +243,13 @@ func WriteFileDownloadResponse(c fiber.Ctx, status int, filename, contentType st
     data. Parameters: - c: the Fibre context. - status: the HTTP status code. -
     filename: the name for the file to be downloaded. - data: the file content.
 
+func WriteFileInlineResponse(c fiber.Ctx, status int, filename, contentType string, data []byte) error
+    WriteFileInlineResponse writes a file response for inline display (not
+    download). For safe content types (images, PDFs, plain text, etc.) it sets
+    Content-Disposition to "inline". For potentially dangerous types (HTML, SVG,
+    XML) it falls back to "attachment" to prevent stored XSS via user-uploaded
+    content.
+
 func WriteResponse(c fiber.Ctx, status int, response irminmodels.IrminAPIResponse) error
 func WriteStreamDownloadResponse(
 	c fiber.Ctx,

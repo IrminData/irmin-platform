@@ -9,6 +9,9 @@ CONSTANTS
 const (
 	// CachePreflightDuration is the duration for which preflight requests are cached.
 	CachePreflightDuration = 24 * time.Hour
+
+	// GracefulShutdownTimeout is the maximum duration to wait for in-flight requests during shutdown.
+	GracefulShutdownTimeout = 30 * time.Second
 )
 </pre>
 </body></html>

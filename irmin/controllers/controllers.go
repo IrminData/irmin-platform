@@ -90,6 +90,30 @@ func (api *APIControllers) validateAndBindRequestWithResponse(c fiber.Ctx, req a
 	return nil
 }
 
+// validateResponseSnapshot validates a JSON snapshot of a response in the background.
+func (api *APIControllers) validateResponseSnapshot(data []byte) {
+	var responseCopy irminmodels.IrminAPIResponse
+	if unmarshalErr := json.Unmarshal(data, &responseCopy); unmarshalErr != nil {
+		api.Logger.Error("Error unmarshalling response snapshot for validation", "error", unmarshalErr)
+		return
+	}
+
+	// Validate the response data if it exists using dynamic validation
+	if responseCopy.Data != nil {
+		if dataValidationErr := api.validator.ValidateDynamic(responseCopy.Data); dataValidationErr.HasErrors() {
+			api.Logger.Error("Response data validation failed", "errors", dataValidationErr.GetFieldErrors())
+			api.Logger.Info("Invalid response data", "data", string(data))
+			return
+		}
+	}
+
+	// Validate the response object itself
+	if responseValidationErr := api.validator.ValidateEnhanced(responseCopy); responseValidationErr.HasErrors() {
+		api.Logger.Error("Response validation failed", "errors", responseValidationErr.RawErrors)
+		api.Logger.Info("Invalid response", "data", string(data))
+	}
+}
+
 // validateAndWriteResponse validates response data and writes it to the client.
 // This is done only for debugging purposes, even if the response is invalid, it will be written to the client.
 func (api *APIControllers) validateAndWriteResponse(
@@ -97,36 +121,14 @@ func (api *APIControllers) validateAndWriteResponse(
 	statusCode int,
 	response irminmodels.IrminAPIResponse,
 ) error {
-	// Run the validation in a seperate goroutine, since it has no affect on the response
-	go func() {
-		// Validate the response data if it exists using dynamic validation
-		invalidResponse := false
-		if response.Data != nil {
-			if dataValidationErr := api.validator.ValidateDynamic(response.Data); dataValidationErr.HasErrors() {
-				api.Logger.Error("Response data validation failed", "errors", dataValidationErr.GetFieldErrors())
-				// Log the response data as JSON for debugging
-				jsonData, marshalErr := json.Marshal(response.Data)
-				if marshalErr != nil {
-					api.Logger.Error("Error marshalling response data", "error", marshalErr)
-				}
-				api.Logger.Info("Invalid response data", "data", string(jsonData))
-				invalidResponse = true
-			}
-		}
-
-		// Validate the response object itself, if the data is not invalid
-		if !invalidResponse {
-			if responseValidationErr := api.validator.ValidateEnhanced(response); responseValidationErr.HasErrors() {
-				api.Logger.Error("Response validation failed", "errors", responseValidationErr.RawErrors)
-				// Log the response as JSON for debugging
-				jsonData, marshalErr := json.Marshal(response)
-				if marshalErr != nil {
-					api.Logger.Error("Error marshalling response data", "error", marshalErr)
-				}
-				api.Logger.Info("Invalid response", "data", string(jsonData))
-			}
-		}
-	}()
+	// Deep-copy the response before spawning the goroutine to avoid a race condition
+	// with Fiber reusing context buffers after the handler returns.
+	snapshotJSON, marshalErr := json.Marshal(response)
+	if marshalErr != nil {
+		api.Logger.Error("Error marshalling response for validation", "error", marshalErr)
+	} else {
+		go api.validateResponseSnapshot(snapshotJSON)
+	}
 
 	// Write the response even if it is invalid
 	return utils.WriteResponse(c, statusCode, response)

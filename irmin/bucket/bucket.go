@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -150,6 +151,32 @@ func (bucket *Client) ReadPath(ctx context.Context, key string) (*string, error)
 
 	content := string(contentBytes)
 	return &content, nil
+}
+
+// UploadReader uploads the contents of an io.Reader to the given S3 key.
+func (bucket *Client) UploadReader(ctx context.Context, key string, body io.Reader) error {
+	_, err := bucket.Conn().PutObject(ctx, &s3.PutObjectInput{
+		Bucket: &bucket.Bucket,
+		Key:    &key,
+		Body:   body,
+	})
+	if err != nil {
+		return fmt.Errorf("error uploading object to bucket: %w", err)
+	}
+	return nil
+}
+
+// PresignedGetURL generates a presigned GET URL for the given S3 key that expires after the given duration.
+func (bucket *Client) PresignedGetURL(ctx context.Context, key string, expiry time.Duration) (string, error) {
+	presignClient := s3.NewPresignClient(bucket.Conn())
+	req, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket: &bucket.Bucket,
+		Key:    &key,
+	}, s3.WithPresignExpires(expiry))
+	if err != nil {
+		return "", fmt.Errorf("error generating presigned URL: %w", err)
+	}
+	return req.URL, nil
 }
 
 func (bucket *Client) DuplicatePath(

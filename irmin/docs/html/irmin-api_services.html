@@ -32,6 +32,9 @@ const (
 
 	// AuthCacheTTL is how long to cache auth results
 	AuthCacheTTL = 5 * time.Minute
+
+	// AuthCacheMaxSize is the maximum number of entries in the auth cache before eviction
+	AuthCacheMaxSize = 10000
 )
 const (
 	// SearchDefaultLimit is the default number of results to return.

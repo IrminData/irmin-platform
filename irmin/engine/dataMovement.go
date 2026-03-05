@@ -10,7 +10,9 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
+	"irmin-api/bucket"
 	connectorsclient "irmin-api/connectors-client"
 	"irmin-api/db"
 	"irmin-api/duckdb"
@@ -20,6 +22,8 @@ import (
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -1082,11 +1086,15 @@ func (c *Client) pushFilesDirect(
 	return pushErr
 }
 
-// pushFilesViaTempFile writes the zip to a temp file instead of memory, then
-// sends the zip file to the connector. The zip is built on disk to avoid holding
-// both the raw files and the compressed zip in memory simultaneously. Note that
-// the multipart encoding still buffers the zip in memory during the HTTP upload;
-// the net saving is avoiding the peak where both representations coexist.
+// presignedURLExpiry is the duration for which a presigned S3 URL is valid.
+const presignedURLExpiry = 15 * time.Minute
+
+// s3CleanupTimeout is the timeout for best-effort S3 object cleanup after a push.
+const s3CleanupTimeout = 30 * time.Second
+
+// pushFilesViaTempFile writes the zip to a temp file, uploads it to S3, generates
+// a presigned GET URL, and sends that URL to the connector. The connector downloads
+// the zip directly from S3, avoiding in-memory buffering of large payloads.
 func (c *Client) pushFilesViaTempFile(
 	ctx context.Context,
 	opClient *connectorsclient.Client,
@@ -1128,11 +1136,38 @@ func (c *Client) pushFilesViaTempFile(
 		return fmt.Errorf("failed to seek temp file: %w", seekErr)
 	}
 
-	// Stream the temp file to the connector (reads from disk, not memory)
-	_, pushErr := opClient.OperationPush(
-		ctx,
-		connPath,
-		connectorsclient.FormFile{Reader: tempFile, FileName: "export.zip"},
-	)
+	// Upload the temp file to S3
+	s3Client, s3Err := bucket.CreateClient(c.Env, c.Env.IrminS3Bucket, c.DB)
+	if s3Err != nil {
+		return fmt.Errorf("failed to create S3 client: %w", s3Err)
+	}
+
+	s3Key := fmt.Sprintf("tmp/push-%s.zip", uuid.New().String())
+	defer func() {
+		// Safe to delete immediately: the connector's push handler is synchronous —
+		// it downloads, extracts, and processes the zip within the same HTTP call.
+		// OperationPushPresigned blocks until that call returns, so the file is no
+		// longer needed by the time this defer runs. The presigned URL expiry is just
+		// a safety margin for slow downloads, not for async processing.
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), s3CleanupTimeout)
+		defer cleanupCancel()
+		_, _ = s3Client.Conn().DeleteObject(cleanupCtx, &s3.DeleteObjectInput{
+			Bucket: &s3Client.Bucket,
+			Key:    &s3Key,
+		})
+	}()
+
+	if uploadErr := s3Client.UploadReader(ctx, s3Key, tempFile); uploadErr != nil {
+		return fmt.Errorf("failed to upload zip to S3: %w", uploadErr)
+	}
+
+	// Generate a presigned GET URL for the connector to download the zip
+	presignedURL, presignErr := s3Client.PresignedGetURL(ctx, s3Key, presignedURLExpiry)
+	if presignErr != nil {
+		return fmt.Errorf("failed to generate presigned URL: %w", presignErr)
+	}
+
+	// Send the presigned URL to the connector instead of the file itself
+	_, pushErr := opClient.OperationPushPresigned(ctx, connPath, presignedURL)
 	return pushErr
 }
