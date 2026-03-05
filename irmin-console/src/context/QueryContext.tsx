@@ -95,12 +95,12 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 /**
- * Hook to use the Query context
+ * Hook to use the stored Query context (renamed to avoid shadowing TanStack Query's useQuery)
  */
-export const useQuery = () => {
+export const useStoredQuery = () => {
   const context = useContext(QueryContext);
   if (!context) {
-    throw new Error('useQuery must be used within a QueryProvider');
+    throw new Error('useStoredQuery must be used within a QueryProvider');
   }
   return context;
 };

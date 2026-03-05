@@ -292,7 +292,11 @@ class IrminCore {
     };
 
     // perform the request
-    const response = await this._fetch(url, { ...options, headers });
+    const response = await this._fetch(url, {
+      ...options,
+      headers,
+      cache: 'no-store',
+    });
 
     // validate allowed statuses
     if (allowedStatusCodes && !allowedStatusCodes.includes(response.status)) {

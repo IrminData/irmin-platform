@@ -1,4 +1,3 @@
-/* eslint-disable import-x/no-unused-modules */
 import type { NextFetchEvent, NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -7,9 +6,21 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import type { Locale } from '@/lib/dict';
 import { defaultLocale, detectLocaleFromURL, languages } from '@/lib/dict';
 
+import { hmacPassword } from '@/utils/hmac';
+
 // Environment variables for environment authentication
 const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'false';
 const appPassword = process.env.ENV_PASSWORD;
+
+// Cache the HMAC digest — both appPassword and hmacSecret are process-lifetime
+// constants, so the result never changes and there's no need to recompute per request.
+let cachedExpectedHash: string | null = null;
+async function getExpectedHash(): Promise<string> {
+  if (!cachedExpectedHash) {
+    cachedExpectedHash = await hmacPassword(appPassword!);
+  }
+  return cachedExpectedHash;
+}
 
 // Validate that password is set when auth is required
 if (
@@ -139,9 +150,10 @@ const clerkHandler = clerkMiddleware(async (auth, req) => {
       // Allow access when no password is set and auth is not required, or in development
     } else {
       const authorisedDev = cookies.get('authorisedDev');
+      const expectedHash = await getExpectedHash();
       if (
         !authorisedDev ||
-        (authorisedDev.value !== appPassword &&
+        (authorisedDev.value !== expectedHash &&
           authorisedDev.value !== 'no-auth-required')
       ) {
         return NextResponse.redirect(

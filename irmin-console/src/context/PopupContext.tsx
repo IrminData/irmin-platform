@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -147,18 +148,29 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
   const [alertType, setAlertType] = useState<
     'error' | 'info' | 'success' | null
   >(null);
+  const alertTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const irminAlert = useCallback(
     (type: 'error' | 'info' | 'success', message: JSX.Element | string) => {
+      // Clear any existing timeout to prevent stale dismissals
+      if (alertTimeoutRef.current) {
+        clearTimeout(alertTimeoutRef.current);
+      }
       setAlertType(type);
       setAlertMessage(message);
-      setTimeout(() => {
+      alertTimeoutRef.current = setTimeout(() => {
         setAlertType(null);
         setAlertMessage(null);
+        alertTimeoutRef.current = null;
       }, 10000);
     },
     []
   );
   const closeIrminAlert = useCallback(() => {
+    if (alertTimeoutRef.current) {
+      clearTimeout(alertTimeoutRef.current);
+      alertTimeoutRef.current = null;
+    }
+    setAlertType(null);
     setAlertMessage(null);
   }, []);
 

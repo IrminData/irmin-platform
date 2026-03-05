@@ -62,7 +62,7 @@ function makeQueryClient() {
 let browserQueryClient: QueryClient | undefined = undefined;
 
 // Cleanup function to clear the query client
-export function clearQueryClient() {
+function clearQueryClient() {
   if (browserQueryClient) {
     browserQueryClient.clear();
     browserQueryClient = undefined;

@@ -511,7 +511,7 @@ export default function ObjectDetails({
   return (
     <div
       className={`
-        mb-4 flex w-max min-w-80 flex-col overflow-scroll rounded-lg border
+        mb-4 flex w-full min-w-0 flex-col overflow-hidden rounded-lg border
         border-card bg-background text-xs
       `}
     >

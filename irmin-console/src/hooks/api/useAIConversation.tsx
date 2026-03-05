@@ -166,31 +166,11 @@ export function useAIConversation(
     },
   });
 
-  const generateTitleMutation = useMutation<AIConversation, Error, void>({
-    mutationFn: async () => {
-      if (!conversationID) throw new Error('Conversation ID is required');
-      const token = await getToken();
-      // TODO: Implement title generation via Next.js API route
-      // For now, use the old client
-      const client = new IrminAIClient(token, workspaceSlug);
-      const updatedConversation =
-        await client.conversations.getConversation(conversationID);
-      return updatedConversation;
-    },
-    onSuccess: () => {
-      irminAlert('success', 'Title generated successfully');
-    },
-    onError: (error) => {
-      irminAlert('error', error.message ?? 'Error generating title');
-    },
-  });
-
   return {
     aiConversationQuery,
     aiConversationMessagesQuery,
     deleteAIConversationMutation,
     updateAIConversationMutation,
-    generateTitleMutation,
     handleDeleteConversation,
   };
 }

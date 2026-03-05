@@ -189,6 +189,16 @@ export default tseslint.config(
   prettierConfig,
   next.configs.recommended,
   {
+    files: [
+      'src/proxy.ts', // Next.js middleware entry point — exports are consumed by the framework
+      'src/components/schema-builder/index.ts', // Barrel file — re-exports consumed via dynamic imports
+      'src/components/scripts/ScriptSelector.tsx', // Component used via dynamic import
+    ],
+    rules: {
+      'import-x/no-unused-modules': 'off',
+    },
+  },
+  {
     files: ['scripts/**/*.{js,ts}'],
     rules: {
       'no-console': 'off', // Scripts are CLI tools that need console output

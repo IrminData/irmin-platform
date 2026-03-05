@@ -20,7 +20,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useQuery } from '@/context/QueryContext';
+import { useStoredQuery } from '@/context/QueryContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -60,7 +60,11 @@ export default function RepositoryObjectSection({
 
   const effectiveRef = refProp ?? currentRef ?? repository.default_branch;
 
-  const { executeSql, loading: queryLoading, result: queryResult } = useQuery();
+  const {
+    executeSql,
+    loading: queryLoading,
+    result: queryResult,
+  } = useStoredQuery();
   const [queryResultsOpen, setQueryResultsOpen] = useState(false);
   const [customQuery, setCustomQuery] = useState<string | null>(null);
 

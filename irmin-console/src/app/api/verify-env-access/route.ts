@@ -3,9 +3,14 @@ import { NextResponse } from 'next/server';
 
 import { getLocale } from '@/proxy';
 
+import { hmacPassword } from '@/utils/hmac';
+
 const appPassword = process.env.ENV_PASSWORD;
 const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'false';
 const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+
+/** Cookie expiry: 7 days */
+const COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Validate that password is set when auth is required in production environments
 if (
@@ -80,8 +85,8 @@ export async function GET(req: NextRequest) {
   // If auth is not required and no password is set, redirect directly to home
   if (requireAuth !== 'true' && !appPassword) {
     const locale = getLocale(req);
-    const expires = new Date(Date.now() + 60 * 60 * 24 * 12 * 365 * 100);
-    const setCookieHeader = `authorisedDev=no-auth-required; Expires=${expires.toUTCString()}; Path=/; HttpOnly`;
+    const expires = new Date(Date.now() + COOKIE_MAX_AGE_MS);
+    const setCookieHeader = `authorisedDev=no-auth-required; Expires=${expires.toUTCString()}; Path=/; HttpOnly; Secure; SameSite=Lax`;
 
     const headers = new Headers();
     headers.append('Set-Cookie', setCookieHeader);
@@ -124,8 +129,8 @@ export async function POST(req: NextRequest) {
       });
     } else {
       // If auth is not required, allow access without password verification
-      const expires = new Date(Date.now() + 60 * 60 * 24 * 12 * 365 * 100);
-      const setCookieHeader = `authorisedDev=no-auth-required; Expires=${expires.toUTCString()}; Path=/; HttpOnly`;
+      const expires = new Date(Date.now() + COOKIE_MAX_AGE_MS);
+      const setCookieHeader = `authorisedDev=no-auth-required; Expires=${expires.toUTCString()}; Path=/; HttpOnly; Secure; SameSite=Lax`;
 
       const headers = new Headers();
       headers.append('Set-Cookie', setCookieHeader);
@@ -146,9 +151,10 @@ export async function POST(req: NextRequest) {
     return new NextResponse('Wrong password', { status: 403 });
   }
 
-  // Set the cookie
-  const expires = new Date(Date.now() + 60 * 60 * 24 * 12 * 365 * 100);
-  const setCookieHeader = `authorisedDev=${appPassword}; Expires=${expires.toUTCString()}; Path=/; HttpOnly`;
+  // Set the cookie with HMAC of password instead of plaintext
+  const expires = new Date(Date.now() + COOKIE_MAX_AGE_MS);
+  const hashedPassword = await hmacPassword(appPassword);
+  const setCookieHeader = `authorisedDev=${hashedPassword}; Expires=${expires.toUTCString()}; Path=/; HttpOnly; Secure; SameSite=Lax`;
 
   // Redirect to the home page with locale prefix
   const headers = new Headers();

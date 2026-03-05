@@ -36,7 +36,7 @@ import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelecto
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useQuery } from '@/context/QueryContext';
+import { useStoredQuery } from '@/context/QueryContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import {
@@ -90,7 +90,7 @@ function QueriesSectionContent() {
     cleanup,
     loading: queryLoading,
     result: queryResult,
-  } = useQuery();
+  } = useStoredQuery();
 
   const [selectedQuery, setSelectedQuery] = useState<StoredQuery | null>(null);
   const [editorContent, setEditorContent] = useState<string>('');

@@ -9,7 +9,9 @@ import { PostHogProvider as PHProvider, usePostHog } from 'posthog-js/react';
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    posthogClient.init(process.env.NEXT_PUBLIC_POSTHOG_KEY as string, {
+    const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    if (!posthogKey) return;
+    posthogClient.init(posthogKey, {
       api_host:
         process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
       person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well

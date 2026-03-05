@@ -30,7 +30,7 @@ import PageSkeleton from '@/components/ui/loading/PageSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useQuery } from '@/context/QueryContext';
+import { useStoredQuery } from '@/context/QueryContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -95,7 +95,11 @@ function RepositorySectionContent({
 
   const [currentDirectoryPath, setCurrentDirectoryPath] = useState<string>('');
 
-  const { executeSql, loading: queryLoading, result: queryResult } = useQuery();
+  const {
+    executeSql,
+    loading: queryLoading,
+    result: queryResult,
+  } = useStoredQuery();
   const [queryResultsOpen, setQueryResultsOpen] = useState(false);
 
   const { createStoredQueryMutation } = useStoredQueries();
