@@ -186,6 +186,15 @@ type ActionInputData struct {
 	RepositoryPath string `json:"repository_path" validate:"omitempty" example:"/data/customers.csv"`
 }
 
+type BillingInterval string
+    BillingInterval represents the billing interval.
+
+const (
+	// BillingIntervalMonthly represents monthly billing.
+	BillingIntervalMonthly BillingInterval = "monthly"
+	// BillingIntervalAnnual represents annual billing.
+	BillingIntervalAnnual BillingInterval = "annual"
+)
 type Branch struct {
 	// Name of the branch
 	Name string `json:"name"         validate:"required,max=100,validslug" example:"main"`
@@ -863,6 +872,29 @@ const (
 	PipelineStageTypePatch            PipelineStageType = "patch"
 	PipelineStageTypeFieldMapping     PipelineStageType = "field_mapping"
 )
+type PlanInfo struct {
+	Tier            PlanTier           `json:"tier"                 example:"pro"`
+	Status          SubscriptionStatus `json:"status"               example:"active"`
+	BillingInterval BillingInterval    `json:"billing_interval"     example:"monthly"`
+	PeriodStart     *time.Time         `json:"current_period_start" example:"2025-01-01T00:00:00Z"`
+	PeriodEnd       *time.Time         `json:"current_period_end"   example:"2025-02-01T00:00:00Z"`
+	CancelledAt     *time.Time         `json:"cancelled_at"         example:"2025-03-15T12:00:00Z"`
+}
+    PlanInfo holds information about a workspace's current plan.
+
+type PlanTier string
+    PlanTier represents the billing plan tier.
+
+const (
+	// PlanTierHobby represents the hobby plan tier.
+	PlanTierHobby PlanTier = "hobby"
+	// PlanTierPro represents the pro plan tier.
+	PlanTierPro PlanTier = "pro"
+	// PlanTierBusiness represents the business plan tier.
+	PlanTierBusiness PlanTier = "business"
+	// PlanTierEnterprise represents the enterprise plan tier.
+	PlanTierEnterprise PlanTier = "enterprise"
+)
 type PointerTarget struct {
 	// Workspace is the target workspace slug. Empty string means same workspace.
 	Workspace string `json:"target_workspace,omitempty" validate:"omitempty,max=100" example:""`
@@ -1377,6 +1409,21 @@ type StoredScript struct {
 	UpdatedAt   time.Time `json:"updated_at"            validate:"required"                   example:"2025-12-01T14:22:30Z"`
 }
 
+type SubscriptionStatus string
+    SubscriptionStatus represents the status of a subscription.
+
+const (
+	// SubscriptionStatusActive represents an active subscription.
+	SubscriptionStatusActive SubscriptionStatus = "active"
+	// SubscriptionStatusCancelled represents a cancelled subscription.
+	SubscriptionStatusCancelled SubscriptionStatus = "cancelled"
+	// SubscriptionStatusPastDue represents a past due subscription.
+	SubscriptionStatusPastDue SubscriptionStatus = "past_due"
+	// SubscriptionStatusTrialing represents a trialing subscription.
+	SubscriptionStatusTrialing SubscriptionStatus = "trialing"
+	// SubscriptionStatusNone represents no active subscription.
+	SubscriptionStatusNone SubscriptionStatus = "none"
+)
 type SyncMode string
     SyncMode represents the synchronization mode for import/export workflows.
 
@@ -1485,6 +1532,41 @@ type UpsertEmbeddingsResponse struct {
 	Path     string `json:"path"     example:"embeddings/documents.parquet"` // Output path of the embedding file
 }
     UpsertEmbeddingsResponse represents the result of an upsert operation.
+
+type UsageDimension string
+    UsageDimension represents a usage tracking dimension.
+
+const (
+	// UsageDimensionStorage represents storage usage.
+	UsageDimensionStorage UsageDimension = "storage"
+	// UsageDimensionWorkflowRuns represents workflow run usage.
+	UsageDimensionWorkflowRuns UsageDimension = "workflow_runs"
+	// UsageDimensionAIRequests represents AI request usage.
+	UsageDimensionAIRequests UsageDimension = "ai_requests"
+	// UsageDimensionAPIRequests represents API request usage.
+	UsageDimensionAPIRequests UsageDimension = "api_requests"
+	// UsageDimensionDataTransfer represents data transfer usage.
+	UsageDimensionDataTransfer UsageDimension = "data_transfer"
+)
+type UsageDimensionInfo struct {
+	Dimension    UsageDimension `json:"dimension"     example:"api_requests"`
+	CurrentUsage int64          `json:"current_usage" example:"1250"`
+	Limit        *int64         `json:"limit"         example:"10000"`
+	Unit         string         `json:"unit"          example:"requests"`
+	RatePerUnit  float64        `json:"rate_per_unit" example:"0.001"`
+}
+    UsageDimensionInfo holds usage info for a single dimension in the current
+    period.
+
+type UsageHistoryEntry struct {
+	Dimension      UsageDimension `json:"dimension"        example:"api_requests"`
+	TotalQuantity  int64          `json:"total_quantity"   example:"1250"`
+	UsageLimitHard *int64         `json:"usage_limit_hard" example:"10000"`
+	PeriodStart    time.Time      `json:"period_start"     example:"2025-01-01T00:00:00Z"`
+	PeriodEnd      time.Time      `json:"period_end"       example:"2025-02-01T00:00:00Z"`
+}
+    UsageHistoryEntry holds a usage summary for a specific dimension and billing
+    period.
 
 type User struct {
 	ID             string `json:"id"              validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`

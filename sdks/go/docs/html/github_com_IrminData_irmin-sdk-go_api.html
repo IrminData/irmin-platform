@@ -246,6 +246,19 @@ type AssociatePresignedUploadRequest struct {
     AssociatePresignedUploadRequest represents the JSON request body for
     associating a staged upload.
 
+type CheckoutRequest struct {
+	PlanTier  irminmodels.PlanTier `json:"plan_tier"  validate:"required" example:"pro"`
+	ReturnURL string               `json:"return_url" validate:"required" example:"https://app.irmin.io/workspace/my-workspace/settings/billing/success"`
+}
+    CheckoutRequest represents the JSON request body for creating a checkout
+    session or changing a plan.
+
+type CheckoutResponse struct {
+	CheckoutURL string `json:"checkout_url" example:"https://polar.sh/checkout/abc123"`
+}
+    CheckoutResponse represents the response body for checkout and change-plan
+    endpoints.
+
 type Client struct {
 	// BaseURL is your Irmin Core API base: e.g. "https://api.irmin.co/api"
 	BaseURL string
@@ -314,6 +327,13 @@ func (c *Client) CancelWorkflowRun(
 	workspace, workflowID, runID string,
 ) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) ChangePlan(
+	ctx context.Context,
+	workspaceSlug string,
+	req CheckoutRequest,
+) (*CheckoutResponse, *irminmodels.IrminAPIResponse, error)
+    ChangePlan changes the billing plan for a workspace.
+
 func (c *Client) CheckPermission(
 	ctx context.Context,
 	workspace string,
@@ -350,6 +370,13 @@ func (c *Client) CreateBranch(
 ) (*irminmodels.Branch, *irminmodels.IrminAPIResponse, error)
     CreateBranch creates a new branch in the repository.
 
+func (c *Client) CreateCheckout(
+	ctx context.Context,
+	workspaceSlug string,
+	req CheckoutRequest,
+) (*CheckoutResponse, *irminmodels.IrminAPIResponse, error)
+    CreateCheckout creates a Polar checkout session for a workspace.
+
 func (c *Client) CreateCommit(
 	ctx context.Context,
 	workspace, repository string,
@@ -384,6 +411,13 @@ func (c *Client) CreatePolicy(
 	req CreatePolicyRequest,
 ) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
     CreatePolicy creates a new policy for a workspace.
+
+func (c *Client) CreatePortalSession(
+	ctx context.Context,
+	workspaceSlug string,
+) (*PortalResponse, *irminmodels.IrminAPIResponse, error)
+    CreatePortalSession creates a Polar customer portal session and returns its
+    URL.
 
 func (c *Client) CreateRepository(
 	ctx context.Context,
@@ -833,6 +867,12 @@ func (c *Client) GetStoredScript(
 	workspace, scriptID string,
 ) (*irminmodels.StoredScript, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) GetSubscription(
+	ctx context.Context,
+	workspaceSlug string,
+) (*irminmodels.PlanInfo, *irminmodels.IrminAPIResponse, error)
+    GetSubscription retrieves the current billing subscription for a workspace.
+
 func (c *Client) GetTag(
 	ctx context.Context,
 	workspace, repository, tag string,
@@ -843,6 +883,20 @@ func (c *Client) GetUncommittedChanges(
 	workspace, repository, branch string,
 ) (*irminmodels.Diff, *irminmodels.IrminAPIResponse, error)
     GetUncommittedChanges retrieves the list of uncommitted changes in a branch.
+
+func (c *Client) GetUsage(
+	ctx context.Context,
+	workspaceSlug string,
+) ([]irminmodels.UsageDimensionInfo, *irminmodels.IrminAPIResponse, error)
+    GetUsage retrieves current period usage for a workspace.
+
+func (c *Client) GetUsageHistory(
+	ctx context.Context,
+	workspaceSlug string,
+	periods int,
+) ([]irminmodels.UsageHistoryEntry, *irminmodels.IrminAPIResponse, error)
+    GetUsageHistory retrieves usage history for a workspace over multiple
+    billing periods.
 
 func (c *Client) GetUser(
 	ctx context.Context,
@@ -1684,6 +1738,11 @@ type MoveObjectRequest struct {
 }
     MoveObjectRequest represents the JSON request body for moving/copying
     repository objects.
+
+type PortalResponse struct {
+	PortalURL string `json:"portal_url" example:"https://polar.sh/portal/abc123"`
+}
+    PortalResponse represents the response body for the billing portal endpoint.
 
 type PresignedUploadResult struct {
 	UploadURL       string `json:"upload_url"       example:"https://s3.example.com/upload"`
