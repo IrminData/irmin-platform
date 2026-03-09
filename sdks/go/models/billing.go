@@ -10,8 +10,8 @@ const (
 	PlanTierHobby PlanTier = "hobby"
 	// PlanTierPro represents the pro plan tier.
 	PlanTierPro PlanTier = "pro"
-	// PlanTierBusiness represents the business plan tier.
-	PlanTierBusiness PlanTier = "business"
+	// PlanTierTeam represents the team plan tier.
+	PlanTierTeam PlanTier = "team"
 	// PlanTierEnterprise represents the enterprise plan tier.
 	PlanTierEnterprise PlanTier = "enterprise"
 )
