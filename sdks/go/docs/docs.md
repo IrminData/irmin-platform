@@ -5462,12 +5462,13 @@ PlanInfo holds information about a workspace's current plan.
 
 ```go
 type PlanInfo struct {
-    Tier            PlanTier           `json:"tier"                 example:"pro"`
-    Status          SubscriptionStatus `json:"status"               example:"active"`
-    BillingInterval BillingInterval    `json:"billing_interval"     example:"monthly"`
-    PeriodStart     *time.Time         `json:"current_period_start" example:"2025-01-01T00:00:00Z"`
-    PeriodEnd       *time.Time         `json:"current_period_end"   example:"2025-02-01T00:00:00Z"`
-    CancelledAt     *time.Time         `json:"cancelled_at"         example:"2025-03-15T12:00:00Z"`
+    Tier                PlanTier           `json:"tier"                  example:"pro"`
+    Status              SubscriptionStatus `json:"status"                example:"active"`
+    BillingInterval     BillingInterval    `json:"billing_interval"      example:"monthly"`
+    PeriodStart         *time.Time         `json:"current_period_start"  example:"2025-01-01T00:00:00Z"`
+    PeriodEnd           *time.Time         `json:"current_period_end"    example:"2025-02-01T00:00:00Z"`
+    CancelledAt         *time.Time         `json:"cancelled_at"          example:"2025-03-15T12:00:00Z"`
+    IncludedUsageCredit float64            `json:"included_usage_credit" example:"20.00"`
 }
 ```
 
@@ -5488,8 +5489,8 @@ const (
     PlanTierHobby PlanTier = "hobby"
     // PlanTierPro represents the pro plan tier.
     PlanTierPro PlanTier = "pro"
-    // PlanTierBusiness represents the business plan tier.
-    PlanTierBusiness PlanTier = "business"
+    // PlanTierTeam represents the team plan tier.
+    PlanTierTeam PlanTier = "team"
     // PlanTierEnterprise represents the enterprise plan tier.
     PlanTierEnterprise PlanTier = "enterprise"
 )
