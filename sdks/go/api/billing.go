@@ -10,8 +10,9 @@ import (
 
 // CheckoutRequest represents the JSON request body for creating a checkout session or changing a plan.
 type CheckoutRequest struct {
-	PlanTier  irminmodels.PlanTier `json:"plan_tier"  validate:"required" example:"pro"`
-	ReturnURL string               `json:"return_url" validate:"required" example:"https://app.irmin.io/workspace/my-workspace/settings/billing/success"`
+	PlanTier        irminmodels.PlanTier        `json:"plan_tier"         validate:"required" example:"pro"`
+	BillingInterval irminmodels.BillingInterval  `json:"billing_interval" validate:"required" example:"monthly"`
+	ReturnURL       string                       `json:"return_url"       validate:"required" example:"https://app.irmin.io/workspace/my-workspace/settings/billing/success"`
 }
 
 // CheckoutResponse represents the response body for checkout and change-plan endpoints.
