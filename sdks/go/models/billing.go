@@ -58,9 +58,8 @@ type UsageDimensionInfo struct {
 
 // UsageHistoryEntry holds a usage summary for a specific dimension and billing period.
 type UsageHistoryEntry struct {
-	Dimension      UsageDimension `json:"dimension"        example:"api_requests"`
-	TotalQuantity  int64          `json:"total_quantity"   example:"1250"`
-	UsageLimitHard *int64         `json:"usage_limit_hard" example:"10000"`
-	PeriodStart    time.Time      `json:"period_start"     example:"2025-01-01T00:00:00Z"`
-	PeriodEnd      time.Time      `json:"period_end"       example:"2025-02-01T00:00:00Z"`
+	Dimension     UsageDimension `json:"dimension"      example:"api_requests"`
+	TotalQuantity int64          `json:"total_quantity" example:"1250"`
+	PeriodStart   time.Time      `json:"period_start"   example:"2025-01-01T00:00:00Z"`
+	PeriodEnd     time.Time      `json:"period_end"     example:"2025-02-01T00:00:00Z"`
 }
