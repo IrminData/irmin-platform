@@ -247,17 +247,15 @@ type AssociatePresignedUploadRequest struct {
     associating a staged upload.
 
 type CheckoutRequest struct {
-	PlanTier  irminmodels.PlanTier `json:"plan_tier"  validate:"required" example:"pro"`
-	ReturnURL string               `json:"return_url" validate:"required" example:"https://app.irmin.io/workspace/my-workspace/settings/billing/success"`
+	ReturnURL string `json:"return_url" validate:"required" example:"https://app.irmin.io/workspace/my-workspace/settings/billing/success"`
 }
     CheckoutRequest represents the JSON request body for creating a checkout
-    session or changing a plan.
+    session (adding a payment method).
 
 type CheckoutResponse struct {
 	CheckoutURL string `json:"checkout_url" example:"https://polar.sh/checkout/abc123"`
 }
-    CheckoutResponse represents the response body for checkout and change-plan
-    endpoints.
+    CheckoutResponse represents the response body for checkout endpoints.
 
 type Client struct {
 	// BaseURL is your Irmin Core API base: e.g. "https://api.irmin.co/api"
@@ -326,13 +324,6 @@ func (c *Client) CancelWorkflowRun(
 	ctx context.Context,
 	workspace, workflowID, runID string,
 ) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
-
-func (c *Client) ChangePlan(
-	ctx context.Context,
-	workspaceSlug string,
-	req CheckoutRequest,
-) (*CheckoutResponse, *irminmodels.IrminAPIResponse, error)
-    ChangePlan changes the billing plan for a workspace.
 
 func (c *Client) CheckPermission(
 	ctx context.Context,

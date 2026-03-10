@@ -2,30 +2,6 @@ package irminmodels
 
 import "time"
 
-// PlanTier represents the billing plan tier.
-type PlanTier string
-
-const (
-	// PlanTierHobby represents the hobby plan tier.
-	PlanTierHobby PlanTier = "hobby"
-	// PlanTierPro represents the pro plan tier.
-	PlanTierPro PlanTier = "pro"
-	// PlanTierTeam represents the team plan tier.
-	PlanTierTeam PlanTier = "team"
-	// PlanTierEnterprise represents the enterprise plan tier.
-	PlanTierEnterprise PlanTier = "enterprise"
-)
-
-// BillingInterval represents the billing interval.
-type BillingInterval string
-
-const (
-	// BillingIntervalMonthly represents monthly billing.
-	BillingIntervalMonthly BillingInterval = "monthly"
-	// BillingIntervalAnnual represents annual billing.
-	BillingIntervalAnnual BillingInterval = "annual"
-)
-
 // SubscriptionStatus represents the status of a subscription.
 type SubscriptionStatus string
 
@@ -56,17 +32,19 @@ const (
 	UsageDimensionAPIRequests UsageDimension = "api_requests"
 	// UsageDimensionDataTransfer represents data transfer usage.
 	UsageDimensionDataTransfer UsageDimension = "data_transfer"
+	// UsageDimensionSeats represents seat usage.
+	UsageDimensionSeats UsageDimension = "seats"
 )
 
 // PlanInfo holds information about a workspace's current plan.
 type PlanInfo struct {
-	Tier                PlanTier           `json:"tier"                  example:"pro"`
-	Status              SubscriptionStatus `json:"status"                example:"active"`
-	BillingInterval     BillingInterval    `json:"billing_interval"      example:"monthly"`
-	PeriodStart         *time.Time         `json:"current_period_start"  example:"2025-01-01T00:00:00Z"`
-	PeriodEnd           *time.Time         `json:"current_period_end"    example:"2025-02-01T00:00:00Z"`
-	CancelledAt         *time.Time         `json:"cancelled_at"          example:"2025-03-15T12:00:00Z"`
-	IncludedUsageCredit float64            `json:"included_usage_credit" example:"20.00"`
+	Status           SubscriptionStatus `json:"status"               example:"active"`
+	HasPaymentMethod bool               `json:"has_payment_method"   example:"true"`
+	PeriodStart      *time.Time         `json:"current_period_start" example:"2025-01-01T00:00:00Z"`
+	PeriodEnd        *time.Time         `json:"current_period_end"   example:"2025-02-01T00:00:00Z"`
+	CancelledAt      *time.Time         `json:"cancelled_at"         example:"2025-03-15T12:00:00Z"`
+	CreditPerMeter   float64            `json:"credit_per_meter"     example:"2.00"`
+	TotalCredit      float64            `json:"total_credit"         example:"12.00"`
 }
 
 // UsageDimensionInfo holds usage info for a single dimension in the current period.

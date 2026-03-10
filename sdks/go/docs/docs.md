@@ -181,7 +181,6 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) AssociatePresignedUpload\(ctx context.Context, workspace, repository, ref, path string, req AssociatePresignedUploadRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.AssociatePresignedUpload>)
   - [func \(c \*Client\) CallSystemWebhook\(ctx context.Context, webhookType string, headers map\[string\]string, body any\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CallSystemWebhook>)
   - [func \(c \*Client\) CancelWorkflowRun\(ctx context.Context, workspace, workflowID, runID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.CancelWorkflowRun>)
-  - [func \(c \*Client\) ChangePlan\(ctx context.Context, workspaceSlug string, req CheckoutRequest\) \(\*CheckoutResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.ChangePlan>)
   - [func \(c \*Client\) CheckPermission\(ctx context.Context, workspace string, resource irminmodels.PolicyResource, action irminmodels.PolicyAction, resourceID \*string\) \(bool, error\)](<#Client.CheckPermission>)
   - [func \(c \*Client\) CompareRefs\(ctx context.Context, workspace, repository, baseRef, compareRef string\) \(\*irminmodels.Diff, \*irminmodels.IrminAPIResponse, error\)](<#Client.CompareRefs>)
   - [func \(c \*Client\) CopyObject\(ctx context.Context, workspace, repository, path, ref string, req MoveObjectRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.CopyObject>)
@@ -821,19 +820,18 @@ type AssociatePresignedUploadRequest struct {
 <a name="CheckoutRequest"></a>
 ## type CheckoutRequest
 
-CheckoutRequest represents the JSON request body for creating a checkout session or changing a plan.
+CheckoutRequest represents the JSON request body for creating a checkout session \(adding a payment method\).
 
 ```go
 type CheckoutRequest struct {
-    PlanTier  irminmodels.PlanTier `json:"plan_tier"  validate:"required" example:"pro"`
-    ReturnURL string               `json:"return_url" validate:"required" example:"https://app.irmin.io/workspace/my-workspace/settings/billing/success"`
+    ReturnURL string `json:"return_url" validate:"required" example:"https://app.irmin.io/workspace/my-workspace/settings/billing/success"`
 }
 ```
 
 <a name="CheckoutResponse"></a>
 ## type CheckoutResponse
 
-CheckoutResponse represents the response body for checkout and change\-plan endpoints.
+CheckoutResponse represents the response body for checkout endpoints.
 
 ```go
 type CheckoutResponse struct {
@@ -938,15 +936,6 @@ func (c *Client) CancelWorkflowRun(ctx context.Context, workspace, workflowID, r
 ```
 
 
-
-<a name="Client.ChangePlan"></a>
-### func \(\*Client\) ChangePlan
-
-```go
-func (c *Client) ChangePlan(ctx context.Context, workspaceSlug string, req CheckoutRequest) (*CheckoutResponse, *irminmodels.IrminAPIResponse, error)
-```
-
-ChangePlan changes the billing plan for a workspace.
 
 <a name="Client.CheckPermission"></a>
 ### func \(\*Client\) CheckPermission
@@ -3989,7 +3978,6 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type APIToken](<#APIToken>)
 - [type ActionExecutableType](<#ActionExecutableType>)
 - [type ActionInputData](<#ActionInputData>)
-- [type BillingInterval](<#BillingInterval>)
 - [type Branch](<#Branch>)
 - [type BranchGarbageCollectionRules](<#BranchGarbageCollectionRules>)
 - [type ChangeItem](<#ChangeItem>)
@@ -4041,7 +4029,6 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type PipelineStage](<#PipelineStage>)
 - [type PipelineStageType](<#PipelineStageType>)
 - [type PlanInfo](<#PlanInfo>)
-- [type PlanTier](<#PlanTier>)
 - [type PointerTarget](<#PointerTarget>)
 - [type Policy](<#Policy>)
 - [type PolicyAction](<#PolicyAction>)
@@ -4382,26 +4369,6 @@ type ActionInputData struct {
     RepositoryRef  string `json:"repository_ref"  validate:"required"  example:"main"`
     RepositoryPath string `json:"repository_path" validate:"omitempty" example:"/data/customers.csv"`
 }
-```
-
-<a name="BillingInterval"></a>
-## type BillingInterval
-
-BillingInterval represents the billing interval.
-
-```go
-type BillingInterval string
-```
-
-<a name="BillingIntervalMonthly"></a>
-
-```go
-const (
-    // BillingIntervalMonthly represents monthly billing.
-    BillingIntervalMonthly BillingInterval = "monthly"
-    // BillingIntervalAnnual represents annual billing.
-    BillingIntervalAnnual BillingInterval = "annual"
-)
 ```
 
 <a name="Branch"></a>
@@ -5462,38 +5429,14 @@ PlanInfo holds information about a workspace's current plan.
 
 ```go
 type PlanInfo struct {
-    Tier                PlanTier           `json:"tier"                  example:"pro"`
-    Status              SubscriptionStatus `json:"status"                example:"active"`
-    BillingInterval     BillingInterval    `json:"billing_interval"      example:"monthly"`
-    PeriodStart         *time.Time         `json:"current_period_start"  example:"2025-01-01T00:00:00Z"`
-    PeriodEnd           *time.Time         `json:"current_period_end"    example:"2025-02-01T00:00:00Z"`
-    CancelledAt         *time.Time         `json:"cancelled_at"          example:"2025-03-15T12:00:00Z"`
-    IncludedUsageCredit float64            `json:"included_usage_credit" example:"20.00"`
+    Status           SubscriptionStatus `json:"status"               example:"active"`
+    HasPaymentMethod bool               `json:"has_payment_method"   example:"true"`
+    PeriodStart      *time.Time         `json:"current_period_start" example:"2025-01-01T00:00:00Z"`
+    PeriodEnd        *time.Time         `json:"current_period_end"   example:"2025-02-01T00:00:00Z"`
+    CancelledAt      *time.Time         `json:"cancelled_at"         example:"2025-03-15T12:00:00Z"`
+    CreditPerMeter   float64            `json:"credit_per_meter"     example:"2.00"`
+    TotalCredit      float64            `json:"total_credit"         example:"12.00"`
 }
-```
-
-<a name="PlanTier"></a>
-## type PlanTier
-
-PlanTier represents the billing plan tier.
-
-```go
-type PlanTier string
-```
-
-<a name="PlanTierHobby"></a>
-
-```go
-const (
-    // PlanTierHobby represents the hobby plan tier.
-    PlanTierHobby PlanTier = "hobby"
-    // PlanTierPro represents the pro plan tier.
-    PlanTierPro PlanTier = "pro"
-    // PlanTierTeam represents the team plan tier.
-    PlanTierTeam PlanTier = "team"
-    // PlanTierEnterprise represents the enterprise plan tier.
-    PlanTierEnterprise PlanTier = "enterprise"
-)
 ```
 
 <a name="PointerTarget"></a>
@@ -6561,6 +6504,8 @@ const (
     UsageDimensionAPIRequests UsageDimension = "api_requests"
     // UsageDimensionDataTransfer represents data transfer usage.
     UsageDimensionDataTransfer UsageDimension = "data_transfer"
+    // UsageDimensionSeats represents seat usage.
+    UsageDimensionSeats UsageDimension = "seats"
 )
 ```
 

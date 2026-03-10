@@ -8,14 +8,12 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// CheckoutRequest represents the JSON request body for creating a checkout session or changing a plan.
+// CheckoutRequest represents the JSON request body for creating a checkout session (adding a payment method).
 type CheckoutRequest struct {
-	PlanTier        irminmodels.PlanTier        `json:"plan_tier"         validate:"required" example:"pro"`
-	BillingInterval irminmodels.BillingInterval  `json:"billing_interval" validate:"required" example:"monthly"`
-	ReturnURL       string                       `json:"return_url"       validate:"required" example:"https://app.irmin.io/workspace/my-workspace/settings/billing/success"`
+	ReturnURL string `json:"return_url" validate:"required" example:"https://app.irmin.io/workspace/my-workspace/settings/billing/success"`
 }
 
-// CheckoutResponse represents the response body for checkout and change-plan endpoints.
+// CheckoutResponse represents the response body for checkout endpoints.
 type CheckoutResponse struct {
 	CheckoutURL string `json:"checkout_url" example:"https://polar.sh/checkout/abc123"`
 }
@@ -89,25 +87,6 @@ func (c *Client) CreateCheckout(
 	}, &checkout)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create checkout error: %w", err)
-	}
-	return &checkout, apiResp, nil
-}
-
-// ChangePlan changes the billing plan for a workspace.
-func (c *Client) ChangePlan(
-	ctx context.Context,
-	workspaceSlug string,
-	req CheckoutRequest,
-) (*CheckoutResponse, *irminmodels.IrminAPIResponse, error) {
-	var checkout CheckoutResponse
-	apiResp, err := c.FetchAPI(ctx, RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/billing/change-plan", workspaceSlug),
-		ContentType: "application/json",
-		Body:        req,
-	}, &checkout)
-	if err != nil {
-		return nil, nil, fmt.Errorf("change plan error: %w", err)
 	}
 	return &checkout, apiResp, nil
 }
