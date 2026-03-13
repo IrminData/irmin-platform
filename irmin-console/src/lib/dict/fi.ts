@@ -343,8 +343,46 @@ const fi = {
       'Työtilan poistaminen poistaa kaiken siihen liittyvän datan. Tätä toimintoa ei voi peruuttaa.',
     deleteWorkspace: 'Poista työtila',
     billingSettings: 'Laskutuksen asetukset',
-    billingNote:
-      'Voit tällä hetkellä hallita laskutusta vain ottamalla yhteyttä tiimiimme.',
+    billingCurrentPlan: 'Nykyinen tilaus',
+    billingManageBilling: 'Hallitse laskutusta',
+    billingAddPaymentMethod: 'Lisää maksutapa',
+    billingFreeUser: 'Ilmainen — käyttörajoitukset voimassa',
+    billingSubscribed: 'Tilattu — rajoittamaton käyttö',
+    billingCancelled:
+      'Peruutettu — käyttörajoitukset voimaan jakson päättyessä',
+    billingPastDue: 'Maksuongelma — päivitä maksutapasi',
+    billingStatusActive: 'Aktiivinen',
+    billingStatusCancelled: 'Peruutettu',
+    billingStatusPastDue: 'Erääntynyt',
+    billingStatusTrialing: 'Kokeilujakso',
+    billingStatusNone: 'Ei tilausta',
+    billingDimensionStorage: 'Tallennustila',
+    billingDimensionWorkflowRuns: 'Työnkulkuajot',
+    billingDimensionAiRequests: 'AI-pyynnöt',
+    billingDimensionApiRequests: 'API-pyynnöt',
+    billingDimensionDataTransfer: 'Tiedonsiirto',
+    billingDimensionSeats: 'Käyttäjäpaikat',
+    billingRenewsOn: 'Uusiutuu',
+    billingAccessUntil: 'Käyttöoikeus asti',
+    billingCheckoutSuccess: 'Maksu onnistui',
+    billingCheckoutSuccessNote:
+      'Tilaustasi käsitellään. Tämä voi kestää hetken.',
+    billingCheckoutSuccessTimeout:
+      'Käsittely kestää odotettua kauemmin. Tarkista laskutusasetuksesi hetken kuluttua.',
+    billingCheckoutSuccessError:
+      'Tilauksen vahvistamisessa tapahtui virhe. Tarkista laskutusasetuksesi.',
+    billingCheckoutError: 'Maksuprosessia ei voitu aloittaa. Yritä uudelleen.',
+    billingPortalError: 'Laskutusportaalia ei voitu avata. Yritä uudelleen.',
+    // Usage credit
+    billingIncludedCredit: 'Ilmainen krediitti',
+    billingIncluded: 'sisältyy',
+    billingOverage: 'Ylitys',
+    billingCreditPerMeter: 'Krediitti per mittari',
+    billingBannerTitle: 'Ilmaisversio',
+    billingBannerDescription:
+      'Lisää maksutapa avataksesi rajoittamattoman käytön',
+    billingBannerAction: 'Määritä laskutus',
+    billingLimitsResetIn: 'Rajat nollautuvat {n} päivän kuluttua',
     apiMcp: 'API/MCP',
     api: {
       settings: 'API/MCP-asetukset',

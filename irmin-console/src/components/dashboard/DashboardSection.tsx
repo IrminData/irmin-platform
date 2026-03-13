@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { QueryError } from '@/components/ui/error/QueryError';
 import WorkspaceDashboardSkeleton from '@/components/ui/loading/WorkspaceDashboardSkeleton';
 import WizardSelector from '@/components/wizards/WizardSelector';
+import BillingBanner from '@/components/workspace/billing/BillingBanner';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
@@ -130,16 +131,17 @@ const DashboardSection = () => {
                 {dict.workspace.invites}
               </Button>
             )}
-            {isResourceAllowed('billing', 'read') && (
-              <Button
-                href={`${workspaceUrl}/settings/billing`}
-                variant='gray'
-                size='sm'
-                icon={<TbInvoice className='size-4' />}
-              >
-                {dict.workspace.billing}
-              </Button>
-            )}
+            {process.env.NEXT_PUBLIC_BILLING_DISABLED !== 'true' &&
+              isResourceAllowed('billing', 'read') && (
+                <Button
+                  href={`${workspaceUrl}/settings/billing`}
+                  variant='gray'
+                  size='sm'
+                  icon={<TbInvoice className='size-4' />}
+                >
+                  {dict.workspace.billing}
+                </Button>
+              )}
             {isResourceAllowed('audit_log', 'read') && (
               <Button
                 href={`${workspaceUrl}/logs`}
@@ -169,6 +171,7 @@ const DashboardSection = () => {
               {dict.workspace.apiMcp}
             </Button>
           </div>
+          <BillingBanner />
           {/* AI Assistant and Workflow Runs */}
           <div
             className={`

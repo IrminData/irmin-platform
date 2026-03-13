@@ -17,6 +17,7 @@ import {
 import DisplayTitle from '@/components/ui/display-title';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
+import BillingBanner from '@/components/workspace/billing/BillingBanner';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
@@ -55,49 +56,51 @@ export default function WorkspaceSettingsLayoutWrapper({
         link: `${workspaceUrl}/settings`,
         active: pathname === `${workspaceUrl}/settings`,
         icon: <TbSettings size={14} />,
-        hide: !isResourceAllowed('workspace', 'read'),
+        hidden: !isResourceAllowed('workspace', 'read'),
       },
       {
         name: dict.workspace.users,
         link: `${workspaceUrl}/settings/users`,
         active: pathname === `${workspaceUrl}/settings/users`,
         icon: <TbUser size={14} />,
-        hide: !isResourceAllowed('user', 'read'),
+        hidden: !isResourceAllowed('user', 'read'),
       },
       {
         name: dict.workspace.policies,
         link: `${workspaceUrl}/settings/policies`,
         active: pathname === `${workspaceUrl}/settings/policies`,
         icon: <TbShield size={14} />,
-        hide: !isResourceAllowed('policy', 'read'),
+        hidden: !isResourceAllowed('policy', 'read'),
       },
       {
         name: dict.workspace.invites,
         link: `${workspaceUrl}/settings/invites`,
         active: pathname === `${workspaceUrl}/settings/invites`,
         icon: <TbMail size={14} />,
-        hide: !isResourceAllowed('invite', 'read'),
+        hidden: !isResourceAllowed('invite', 'read'),
       },
       {
         name: dict.workspace.tags,
         link: `${workspaceUrl}/settings/tags`,
         active: pathname === `${workspaceUrl}/settings/tags`,
         icon: <TbTag size={14} />,
-        hide: !isResourceAllowed('workspace_tag', 'read'),
+        hidden: !isResourceAllowed('workspace_tag', 'read'),
       },
       {
         name: dict.workspace.billing,
         link: `${workspaceUrl}/settings/billing`,
         active: pathname === `${workspaceUrl}/settings/billing`,
         icon: <TbInvoice size={14} />,
-        hide: !isResourceAllowed('billing', 'read'),
+        hidden:
+          process.env.NEXT_PUBLIC_BILLING_DISABLED === 'true' ||
+          !isResourceAllowed('billing', 'read'),
       },
       {
         name: dict.workspace.apiMcp,
         link: `${workspaceUrl}/settings/api-mcp`,
         active: pathname === `${workspaceUrl}/settings/api-mcp`,
         icon: <TbCode size={14} />,
-        hide: !isResourceAllowed('workspace', 'read'),
+        hidden: !isResourceAllowed('workspace', 'read'),
       },
     ],
     [pathname, dict, workspaceUrl, isResourceAllowed]
@@ -136,6 +139,16 @@ export default function WorkspaceSettingsLayoutWrapper({
           tabs={tabs}
         />
       </div>
+      {!pathname.endsWith('/settings/billing') && (
+        <div
+          className='
+            relative container mx-auto max-w-7xl px-2 pt-4
+            md:px-4
+          '
+        >
+          <BillingBanner />
+        </div>
+      )}
       <div>{children}</div>
     </>
   );

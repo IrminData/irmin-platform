@@ -69,13 +69,13 @@ export default function TokensSection() {
       {/* Explainer section */}
       <div
         className={`
-          mb-4 flex items-start gap-3 rounded-lg border
-          border-accent-foreground/10 bg-accent/10 p-3
+          mb-4 flex items-start gap-3 rounded-lg border border-accent/30
+          bg-accent/10 p-3
           dark:border-accent-foreground dark:bg-accent/10
         `}
       >
         <IoInformationCircle className={`mt-0.5 size-5 shrink-0 text-accent`} />
-        <div className={`flex-1 text-sm text-accent-foreground`}>
+        <div className={`flex-1 text-sm text-foreground`}>
           <p>{dict.tokens.explainer}</p>
           {process.env.NEXT_PUBLIC_API_DOCS_URL && (
             <a

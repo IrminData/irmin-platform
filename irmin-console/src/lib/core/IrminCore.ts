@@ -9,6 +9,7 @@ import type {
 } from '@/types/core/IrminAPIResponse';
 
 import AIApplicationService from './resources/AIApplicationService';
+import BillingService from './resources/BillingService';
 import ConnectionService from './resources/ConnectionService';
 import ConnectionSubscriptionService from './resources/ConnectionSubscriptionService';
 import ConnectorService from './resources/ConnectorService';
@@ -53,6 +54,7 @@ class IrminCore {
   public appBase = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
   public aiApplicationService: AIApplicationService;
+  public billingService: BillingService;
   public scriptsService: ScriptsService;
   public connectionService: ConnectionService;
   public connectionSubscriptionService: ConnectionSubscriptionService;
@@ -102,6 +104,7 @@ class IrminCore {
     // Create a new instance of each service class
     // Pass the current IrminCore instance to each service class
     this.aiApplicationService = new AIApplicationService(this);
+    this.billingService = new BillingService(this);
     this.scriptsService = new ScriptsService(this);
     this.connectionService = new ConnectionService(this);
     this.connectionSubscriptionService = new ConnectionSubscriptionService(

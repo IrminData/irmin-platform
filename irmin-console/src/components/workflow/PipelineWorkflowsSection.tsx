@@ -90,13 +90,13 @@ function PipelineWorkflowsSection({
       </div>
       <div
         className={`
-          my-2 flex items-start gap-3 rounded-lg border
-          border-accent-foreground/10 bg-accent/10 p-3
+          my-2 flex items-start gap-3 rounded-lg border border-accent/30
+          bg-accent/10 p-3
           dark:border-accent-foreground dark:bg-accent/10
         `}
       >
         <IoInformationCircle className={`mt-0.5 size-5 shrink-0 text-accent`} />
-        <p className={`text-sm text-accent-foreground`}>
+        <p className={`text-sm text-foreground`}>
           {dict.workflow.create.typeDescription.pipeline}
         </p>
       </div>

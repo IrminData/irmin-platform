@@ -338,3 +338,10 @@ export const aiApplicationPendingWritesQueryKey = (
   workspaceSlug: string,
   aiApplicationID: string
 ) => ['ai_application_pending_writes', workspaceSlug, aiApplicationID] as const;
+
+// Billing related query keys
+export const billingSubscriptionQueryKey = (workspaceSlug: string) =>
+  ['billing-subscription', workspaceSlug] as const;
+
+export const billingUsageQueryKey = (workspaceSlug: string) =>
+  ['billing-usage', workspaceSlug] as const;
