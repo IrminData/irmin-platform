@@ -255,6 +255,9 @@ Trigger Event → Orchestrator → Dispatcher (HTTP) → Worker
 - S3-compatible object storage (MinIO, DigitalOcean Spaces, AWS S3)
 - Clerk (authentication)
 
+### Optional Services
+- Polar.sh (billing & subscriptions) — set `BILLING_ENABLED=true` and configure `POLAR_*` env vars
+
 ### Configuration
 ```bash
 # Copy example environment file
@@ -265,6 +268,10 @@ cp .env.example .env
 # - LAKE_FS_URL, LAKE_FS_ACCESS_KEY_ID, LAKE_FS_SECRET_ACCESS_KEY
 # - S3_ENDPOINT, S3_ACCESS_KEY_ID, S3_ACCESS_SECRET
 # - CLERK_SECRET_KEY, CLERK_SIGNING_KEY
+
+# Optional (billing):
+# - BILLING_ENABLED, POLAR_API_KEY, POLAR_WEBHOOK_SECRET
+# - POLAR_PRODUCT_ID
 ```
 
 ### Docker Compose

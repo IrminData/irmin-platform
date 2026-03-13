@@ -98,6 +98,7 @@ var (
 	ErrEditorItemDestinationPathRequired      = errors.New("editor item destination path is required")
 	ErrUserAlreadyInWorkspace                 = errors.New("user already in the workspace")
 	ErrUserAlreadyInvitedToWorkspace          = errors.New("user already invited to the workspace")
+	ErrMemberLimitReached                     = errors.New("workspace member limit reached for current plan")
 	ErrInvalidRole                            = errors.New("invalid role")
 	ErrInviteExpired                          = errors.New("invite expired")
 	ErrInviteNotAllowed                       = errors.New("invite not allowed")
@@ -354,6 +355,8 @@ type APIServices struct {
 	PermissionService *permissions.Service
 	Validator         *irminvalidator.Validator
 	CacheStorage      fiber.Storage
+	BillingService    *BillingService
+	UsageTracker      *UsageTracker
 
 	// Has unexported fields.
 }
@@ -367,6 +370,7 @@ func NewAPIServices(
 	localeManager *locales.LocaleManager,
 	permissionService *permissions.Service,
 	cacheStorage fiber.Storage,
+	lakefsClient *lakefs.Client,
 ) *APIServices
 
 func (api *APIServices) AcceptInvite(c context.Context, user *db.User, invite *db.Invite) error
@@ -1006,13 +1010,13 @@ func (api *APIServices) GetWorkspaceUser(
 	workspaceUserSqid string,
 ) (*db.WorkspaceUser, error)
 
-func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale string) (*db.User, bool, error)
+func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale string) (*db.User, TokenType, error)
     IdentifyUserFromToken validates the provided token and returns the
     associated user. It supports system token, credentials token (cred_ prefix),
     and JWT from Clerk. Uses caching to avoid expensive validation and sync
     operations for recently authenticated tokens. External API operations
     (Clerk/Novu sync) happen asynchronously in the background. Returns: user,
-    isSystem, error
+    tokenType, error
 
 func (api *APIServices) LeaveWorkspace(user *db.User, workspace *db.Workspace) error
 
@@ -1657,6 +1661,61 @@ type AuthCacheEntry struct {
 }
     AuthCacheEntry represents a cached authentication result.
 
+type BillingService struct {
+	// Has unexported fields.
+}
+    BillingService handles billing operations with Polar.sh.
+
+func NewBillingService(database *db.Database, env *utils.CoreAPIEnv, logger *slog.Logger) *BillingService
+    NewBillingService creates a new billing service. Returns nil if billing is
+    disabled.
+
+func (s *BillingService) CheckSeatLimit(workspaceID uint) (bool, error)
+    CheckSeatLimit checks if the workspace can add another member. Free users
+    get 1 member (the owner). Subscribers have unlimited seats.
+
+func (s *BillingService) CheckUsageLimit(
+	workspaceID uint,
+	dimension db.UsageDimension,
+	additionalQty int64,
+) (bool, error)
+    CheckUsageLimit checks if the workspace has exceeded its usage limit for a
+    dimension. Returns true if the usage is within limits (request allowed).
+    Users with a payment method have no limits. Users without one are subject to
+    free tier hard limits.
+
+func (s *BillingService) CreateCheckoutSession(
+	polarCustomerID, productID, returnURL string,
+) (string, error)
+    CreateCheckoutSession creates a Polar checkout session and returns the
+    checkout URL.
+
+func (s *BillingService) CreateOrGetCustomer(workspaceSQID, ownerEmail string) (string, error)
+    CreateOrGetCustomer creates or retrieves a Polar customer for the workspace.
+
+func (s *BillingService) GetCurrentPlan(workspaceID uint) (*irminmodels.PlanInfo, error)
+    GetCurrentPlan retrieves the current plan info from the local database.
+    If the local subscription has status "none" but has a PolarCustomerID,
+    it falls back to the Polar API to check for an active subscription (handles
+    missed webhooks). Returns defaults when no subscription exists.
+
+func (s *BillingService) GetCustomerPortalURL(polarCustomerID string) (string, error)
+    GetCustomerPortalURL creates a customer portal session and returns the URL.
+
+func (s *BillingService) GetProductID() string
+    GetProductID returns the single Polar product ID for usage-based billing.
+
+func (s *BillingService) HandleWebhookEvent(eventType string, payload map[string]any) error
+    HandleWebhookEvent processes a Polar webhook event.
+
+func (s *BillingService) IsEnabled() bool
+    IsEnabled returns true if billing is enabled.
+
+func (s *BillingService) ReportUsageBatch(events []map[string]any) error
+    ReportUsageBatch reports usage events to Polar's metering API. Returns an
+    error if any events failed ingestion so callers can avoid marking them as
+    reported.
+
 type ConnectionSubscriptionService struct {
 	// Has unexported fields.
 }
@@ -1778,6 +1837,19 @@ const (
 	TagEntityOperationAdd    TagEntityOperation = "add"
 	TagEntityOperationRemove TagEntityOperation = "remove"
 )
+type TokenType string
+    TokenType represents the type of authentication token used.
+
+const (
+	// TokenTypeClerk indicates a Clerk JWT session token (console users).
+	TokenTypeClerk TokenType = "clerk"
+
+	// TokenTypeCred indicates a credentials API token (cred_ prefix).
+	TokenTypeCred TokenType = "cred"
+
+	// TokenTypeSystem indicates the internal system token.
+	TokenTypeSystem TokenType = "system"
+)
 type UpdateCustomToolRequest struct {
 	ID              *string           `json:"id,omitempty"`
 	Name            string            `json:"name"`
@@ -1792,6 +1864,33 @@ type UpdateCustomToolRequest struct {
 }
     UpdateCustomToolRequest represents the request body for updating a custom
     tool.
+
+type UsageTracker struct {
+	// Has unexported fields.
+}
+    UsageTracker handles async, buffered usage tracking.
+
+func NewUsageTracker(
+	database *db.Database,
+	billingService *BillingService,
+	lakefsClient *lakefs.Client,
+	logger *slog.Logger,
+) *UsageTracker
+    NewUsageTracker creates a new usage tracker. Returns nil if billing is
+    disabled.
+
+func (t *UsageTracker) Start(ctx context.Context) error
+    Start begins the background processing goroutines. Blocks until ctx is
+    cancelled.
+
+func (t *UsageTracker) Track(workspaceID uint, dimension db.UsageDimension, quantity int64)
+    Track records a usage event. Non-blocking — drops events if the channel is
+    full.
+
+func (t *UsageTracker) TrackSeats(workspaceID uint)
+    TrackSeats emits a seat-count usage event for the given workspace.
+    The quantity is (member + pending invite count) - 1, since the first seat is
+    free.
 
 type WriteResult struct {
 	Path             string  `json:"path"`

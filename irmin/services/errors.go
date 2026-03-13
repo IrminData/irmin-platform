@@ -35,6 +35,7 @@ var (
 	ErrEditorItemDestinationPathRequired      = errors.New("editor item destination path is required")
 	ErrUserAlreadyInWorkspace                 = errors.New("user already in the workspace")
 	ErrUserAlreadyInvitedToWorkspace          = errors.New("user already invited to the workspace")
+	ErrMemberLimitReached                     = errors.New("workspace member limit reached for current plan")
 	ErrInvalidRole                            = errors.New("invalid role")
 	ErrInviteExpired                          = errors.New("invite expired")
 	ErrInviteNotAllowed                       = errors.New("invite not allowed")
@@ -229,6 +230,8 @@ func MapErrorToStatusCode(err error) int {
 		return fiber.StatusConflict
 	case errors.Is(err, ErrUserAlreadyInvitedToWorkspace):
 		return fiber.StatusConflict
+	case errors.Is(err, ErrMemberLimitReached):
+		return fiber.StatusForbidden
 	case errors.Is(err, ErrInvalidRole):
 		return fiber.StatusBadRequest
 	case errors.Is(err, ErrInviteExpired):
@@ -263,6 +266,8 @@ func MapErrorToStatusCode(err error) int {
 		return fiber.StatusConflict
 	case errors.Is(err, lib.ErrWorkflowMinIntervalNotMet):
 		return fiber.StatusConflict
+	case errors.Is(err, lib.ErrUsageLimitExceeded):
+		return fiber.StatusTooManyRequests
 	case errors.Is(err, ErrBranchAlreadyExists):
 		return fiber.StatusConflict
 	case errors.Is(err, ErrBranchIsImmutable):

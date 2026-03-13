@@ -50,10 +50,19 @@ func (api *APIServices) CreateWorkflowRun(
 	var run *db.WorkflowRun
 	transactionErr := api.DB.WithContext(c).Transaction(func(tx *gorm.DB) error {
 		var createWorkflowRunErr error
-		run, createWorkflowRunErr = lib.CreateWorkflowRun(tx, workflow, user, nil)
+		var checkUsage lib.UsageCheckFunc
+		if api.BillingService != nil {
+			checkUsage = func(workspaceID uint) (bool, error) {
+				return api.BillingService.CheckUsageLimit(workspaceID, db.UsageDimensionWorkflowRuns, 1)
+			}
+		}
+		run, createWorkflowRunErr = lib.CreateWorkflowRun(tx, workflow, user, nil, checkUsage)
 		if createWorkflowRunErr != nil {
 			// Don't wrap validation errors as internal errors
 			if errors.Is(createWorkflowRunErr, lib.ErrWorkflowMinIntervalNotMet) {
+				return createWorkflowRunErr
+			}
+			if errors.Is(createWorkflowRunErr, lib.ErrUsageLimitExceeded) {
 				return createWorkflowRunErr
 			}
 			return NewInternalErrorf("error creating workflow run: %w", createWorkflowRunErr)
@@ -64,6 +73,11 @@ func (api *APIServices) CreateWorkflowRun(
 		// Don't wrap validation errors as internal errors
 		if errors.Is(transactionErr, lib.ErrWorkflowMinIntervalNotMet) {
 			api.Logger.ErrorContext(c, "Workflow min interval not met", "workflow_id", workflow.ID)
+			return nil, transactionErr
+		}
+		if errors.Is(transactionErr, lib.ErrUsageLimitExceeded) {
+			api.Logger.ErrorContext(c, "Workflow run usage limit exceeded",
+				"workflow_id", workflow.ID, "workspace_id", workspace.ID)
 			return nil, transactionErr
 		}
 		api.Logger.ErrorContext(c, "Error creating workflow run", "error", transactionErr, "workflow_id", workflow.ID)

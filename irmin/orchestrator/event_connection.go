@@ -182,7 +182,7 @@ func (o *Orchestrator) processConnectionTrigger(
 	)
 
 	// Create workflow run with the connection event as payload
-	run, err := lib.CreateWorkflowRunWithPayload(tx, &workflow, nil, t, event)
+	run, err := lib.CreateWorkflowRunWithPayload(tx, &workflow, nil, t, event, o.usageCheckFunc())
 	if err != nil {
 		o.logger.ErrorContext(ctx, "failed to create workflow run from connection event",
 			"error", err,

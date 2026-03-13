@@ -861,7 +861,7 @@ func TestWorkflowStartLog_RepositoryEventTrigger(t *testing.T) {
 	defer ts.DB.Delete(trigger)
 
 	// Create a workflow run with this trigger
-	run, err := lib.CreateWorkflowRun(ts.DB.DB, workflow, nil, trigger)
+	run, err := lib.CreateWorkflowRun(ts.DB.DB, workflow, nil, trigger, nil)
 	if err != nil {
 		t.Fatalf("Failed to create workflow run: %v", err)
 	}
@@ -957,7 +957,7 @@ func TestWorkflowStartLog_WorkflowRunEventTrigger(t *testing.T) {
 	defer ts.DB.Delete(trigger)
 
 	// Create a workflow run with this trigger
-	run, err := lib.CreateWorkflowRun(ts.DB.DB, targetWorkflow, nil, trigger)
+	run, err := lib.CreateWorkflowRun(ts.DB.DB, targetWorkflow, nil, trigger, nil)
 	if err != nil {
 		t.Fatalf("Failed to create workflow run: %v", err)
 	}

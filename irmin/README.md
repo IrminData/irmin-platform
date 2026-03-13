@@ -113,11 +113,13 @@ The project generates three types of documentation:
 ### Quick Start
 
 **Generate all documentation**:
+
 ```bash
 ./generate-docs.sh
 ```
 
 This script will:
+
 - Install required tools (`gomarkdoc` and `swag`) if not present
 - Generate HTML docs for all packages in `docs/html/`
 - Create a combined markdown reference in `docs/docs.md`
@@ -125,6 +127,7 @@ This script will:
 - Ensure proper Go version compatibility
 
 **View documentation**:
+
 - HTML docs: Open `docs/html/index.html` in your browser
 - Markdown: View `docs/docs.md`
 - Swagger UI: `http://localhost:8080/swagger`
@@ -186,12 +189,14 @@ swag init -g main.go --output ./docs --parseDependency --parseInternal
 ```
 
 **Parameter types**:
+
 - `path` - URL path parameter
-- `query` - Query string parameter  
+- `query` - Query string parameter
 - `formData` - Form field
 - `body` - JSON request body (requires `@Accept json`)
 
 **Response types**:
+
 - Single object: `{object} Model`
 - Array: `{object} irminmodels.IrminAPIResponse{data=[]Model}`
 - Composed: `{object} irminmodels.IrminAPIResponse{data=Model}`
@@ -221,6 +226,7 @@ type User struct {
 ```
 
 **Useful struct tags**:
+
 - `json:"field_name"` - JSON field name
 - `example:"value"` - Example value in Swagger UI
 - `validate:"required"` - Mark field as required
@@ -228,6 +234,10 @@ type User struct {
 - `swaggerignore:"true"` - Exclude field from docs
 
 For detailed documentation and advanced features, see [swaggo/swag](https://github.com/swaggo/swag).
+
+## Billing
+
+Optional Polar.sh integration for subscription management, checkout sessions, and usage-based metering. Disabled by default. See [BILLING.md](BILLING.md) for setup instructions, Polar configuration, and architecture details.
 
 ## MCP Server
 
@@ -237,7 +247,7 @@ Run `npx @modelcontextprotocol/inspector` to test and inspect the MCP server.
 
 ## Docker
 
-> For the best Docker experience on macOS, we recommend using [OrbStack](https://orbstack.dev/) instead of Docker Desktop. 
+> For the best Docker experience on macOS, we recommend using [OrbStack](https://orbstack.dev/) instead of Docker Desktop.
 
 ### Docker Compose Setup
 
@@ -245,7 +255,7 @@ The project includes a `docker-compose.yml` file for running the complete Irmin 
 
 - **API Service** (`api`) - The main Irmin Core API
 - **PostgreSQL Database** (`db_api`) - Main application database
-- **LakeFS Database** (`db_lakefs`) - LakeFS metadata database  
+- **LakeFS Database** (`db_lakefs`) - LakeFS metadata database
 - **MinIO** (`minio`) - S3-compatible object storage
 - **LakeFS** (`lakefs`) - Data versioning service
 
@@ -258,6 +268,7 @@ docker compose up -d db_api db_lakefs lakefs minio
 ```
 
 This command runs the services in detached mode (`-d`) and includes:
+
 - PostgreSQL databases on ports 5433 and 5434
 - MinIO on ports 9000 (API) and 9001 (Console)
 - LakeFS on port 8000

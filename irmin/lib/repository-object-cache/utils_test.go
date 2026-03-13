@@ -22,12 +22,12 @@ func TestEnsureParentObjectThroughProcessing(t *testing.T) {
 
 	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
 	if err != nil {
-		t.Fatalf("Failed to get test workspace: %v", err)
+		t.Skipf("Skipping integration test - test workspace not found: %v", err)
 	}
 
 	repository, err := ts.DB.GetRepositoryBySlugAndWorkspaceID(ts.Env.TestRepository, workspace.ID)
 	if err != nil {
-		t.Fatalf("Failed to get test repository: %v", err)
+		t.Skipf("Skipping integration test - test repository not found: %v", err)
 	}
 
 	initialObjectIDs := getObjectIDsFromCache(t, ts.DB, repository.ID, ts.Env.TestBranch)
@@ -149,12 +149,12 @@ func TestSyncCacheWithDataEngineThroughProcessing(t *testing.T) {
 
 	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
 	if err != nil {
-		t.Fatalf("Failed to get test workspace: %v", err)
+		t.Skipf("Skipping integration test - test workspace not found: %v", err)
 	}
 
 	repository, err := ts.DB.GetRepositoryBySlugAndWorkspaceID(ts.Env.TestRepository, workspace.ID)
 	if err != nil {
-		t.Fatalf("Failed to get test repository: %v", err)
+		t.Skipf("Skipping integration test - test repository not found: %v", err)
 	}
 
 	initialObjectIDs := getObjectIDsFromCache(t, ts.DB, repository.ID, ts.Env.TestBranch)
@@ -218,12 +218,12 @@ func TestRefreshObjectFromDataEngine(t *testing.T) {
 
 	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
 	if err != nil {
-		t.Fatalf("Failed to get test workspace: %v", err)
+		t.Skipf("Skipping integration test - test workspace not found: %v", err)
 	}
 
 	repository, err := ts.DB.GetRepositoryBySlugAndWorkspaceID(ts.Env.TestRepository, workspace.ID)
 	if err != nil {
-		t.Fatalf("Failed to get test repository: %v", err)
+		t.Skipf("Skipping integration test - test repository not found: %v", err)
 	}
 
 	initialObjectIDs := getObjectIDsFromCache(t, ts.DB, repository.ID, ts.Env.TestBranch)
@@ -329,12 +329,12 @@ func TestCacheCleanupLogic(t *testing.T) {
 
 	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
 	if err != nil {
-		t.Fatalf("Failed to get test workspace: %v", err)
+		t.Skipf("Skipping integration test - test workspace not found: %v", err)
 	}
 
 	repository, err := ts.DB.GetRepositoryBySlugAndWorkspaceID(ts.Env.TestRepository, workspace.ID)
 	if err != nil {
-		t.Fatalf("Failed to get test repository: %v", err)
+		t.Skipf("Skipping integration test - test repository not found: %v", err)
 	}
 
 	initialObjectIDs := getObjectIDsFromCache(t, ts.DB, repository.ID, ts.Env.TestBranch)
@@ -378,12 +378,12 @@ func TestEdgeCasesAndErrorHandling(t *testing.T) {
 
 	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
 	if err != nil {
-		t.Fatalf("Failed to get test workspace: %v", err)
+		t.Skipf("Skipping integration test - test workspace not found: %v", err)
 	}
 
 	repository, err := ts.DB.GetRepositoryBySlugAndWorkspaceID(ts.Env.TestRepository, workspace.ID)
 	if err != nil {
-		t.Fatalf("Failed to get test repository: %v", err)
+		t.Skipf("Skipping integration test - test repository not found: %v", err)
 	}
 
 	initialObjectIDs := getObjectIDsFromCache(t, ts.DB, repository.ID, ts.Env.TestBranch)

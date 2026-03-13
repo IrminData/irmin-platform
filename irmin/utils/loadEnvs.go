@@ -55,6 +55,13 @@ type CoreAPIEnv struct {
 	TestTag                      string // Tag to test with
 	SignedURLSecret              string // HMAC secret for signed download URLs
 
+	// Billing configuration
+	BillingEnabled     bool   // Flag to enable Polar.sh billing integration
+	PolarAPIKey        string // Polar.sh API key
+	PolarWebhookSecret string // Polar.sh webhook signing secret
+	PolarProductID     string // Polar product ID for the usage-based plan
+	PolarBaseURL       string // Polar API base URL (default: https://api.polar.sh, sandbox: https://sandbox-api.polar.sh)
+
 	// File size management thresholds
 	MaxRequestBodySizeMB       int // Maximum request body size in MB (default 100)
 	MaxInMemorySizeMB          int // Max file size to load fully into memory in MB (default 20)
@@ -380,6 +387,38 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
+	billingEnabledStr, err := getEnv("BILLING_ENABLED", false, "false")
+	if err != nil {
+		return nil, err
+	}
+	billingEnabled, err := strconv.ParseBool(billingEnabledStr)
+	if err != nil {
+		return nil, err
+	}
+	polarAPIKey, err := getEnv("POLAR_API_KEY", false, "")
+	if err != nil {
+		return nil, err
+	}
+	polarWebhookSecret, err := getEnv("POLAR_WEBHOOK_SECRET", false, "")
+	if err != nil {
+		return nil, err
+	}
+	polarProductID, err := getEnv("POLAR_PRODUCT_ID", false, "")
+	if err != nil {
+		return nil, err
+	}
+	polarBaseURL, err := getEnv("POLAR_BASE_URL", false, "https://api.polar.sh")
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate that required Polar env vars are set when billing is enabled
+	if billingEnabled {
+		if billingErr := validateBillingEnvVars(polarAPIKey, polarWebhookSecret, polarProductID); billingErr != nil {
+			return nil, billingErr
+		}
+	}
+
 	return &CoreAPIEnv{
 		Port:                         port,
 		URL:                          url,
@@ -429,5 +468,31 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		MaxStreamSizeMB:              maxStreamSizeMB,
 		MaxAsyncJobSizeMB:            maxAsyncJobSizeMB,
 		MaxWorkflowInputFileSizeMB:   maxWorkflowInputFileSizeMB,
+		BillingEnabled:               billingEnabled,
+		PolarAPIKey:                  polarAPIKey,
+		PolarWebhookSecret:           polarWebhookSecret,
+		PolarProductID:               polarProductID,
+		PolarBaseURL:                 polarBaseURL,
 	}, nil
+}
+
+// validateBillingEnvVars checks that all required Polar env vars are set when billing is enabled.
+func validateBillingEnvVars(apiKey, webhookSecret, productID string) error {
+	required := map[string]string{
+		"POLAR_API_KEY":        apiKey,
+		"POLAR_WEBHOOK_SECRET": webhookSecret,
+		"POLAR_PRODUCT_ID":     productID,
+	}
+
+	var missing []string
+	for name, val := range required {
+		if val == "" {
+			missing = append(missing, name)
+		}
+	}
+
+	if len(missing) > 0 {
+		return fmt.Errorf("billing is enabled but required env vars are missing: %v", missing)
+	}
+	return nil
 }

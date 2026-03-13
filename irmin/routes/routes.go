@@ -57,7 +57,7 @@ func RegisterAPIRoutes(
 	app.Get("/swagger", apiControllers.SwaggerUI)
 
 	// AI Application API routes (authenticated by AI Application API key)
-	aiAppAPI := app.Group("/api/v1/ai-app", apiMiddlewares.AIApplicationAPIKeyAuth)
+	aiAppAPI := app.Group("/api/v1/ai-app", apiMiddlewares.AIApplicationAPIKeyAuth, apiMiddlewares.APIUsageMiddleware)
 	aiAppAPI.Get("/info", apiControllers.AIAppAPIInfo)
 	aiAppAPI.Get("/system-prompt", apiControllers.AIAppAPISystemPrompt)
 	aiAppAPI.Post("/query", apiControllers.AIAppAPIQuery)
@@ -87,6 +87,11 @@ func RegisterAPIRoutes(
 		apiMiddlewares.ConnectorWebhookMiddleware,
 		apiControllers.ConnectorWebhook,
 	)
+	webhooks.Post(
+		"/polar",
+		apiMiddlewares.PolarWebhookMiddleware,
+		apiControllers.PolarWebhook,
+	)
 
 	// Secure API routes
 	v1 := app.Group(
@@ -100,6 +105,7 @@ func RegisterAPIRoutes(
 	system := v1.Group("/system")
 	system.Post("/webhook", apiControllers.SystemWebhook)
 	system.Post("/schema-from-file", apiControllers.GenerateFileSchema)
+	system.Post("/usage/report", apiControllers.ReportUsage)
 
 	// Profile routes
 	v1.Get("/profile", apiControllers.ProfileShow)
@@ -130,7 +136,11 @@ func RegisterAPIRoutes(
 	v1.Get("/workspaces", apiControllers.WorkspacesIndex)
 	v1.Post("/workspaces", apiControllers.WorkspacesStore)
 	v1.Get("/workspaces/summary", apiControllers.WorkspaceSummariesIndex)
-	workspace := v1.Group("/workspaces/:workspace", apiMiddlewares.WorkspaceMiddleware)
+	workspace := v1.Group(
+		"/workspaces/:workspace",
+		apiMiddlewares.WorkspaceMiddleware,
+		apiMiddlewares.APIUsageMiddleware,
+	)
 	workspace.Get("/", apiMiddlewares.WorkspacePermissionMiddleware(db.PolicyActionRead), apiControllers.WorkspacesShow)
 	workspace.Patch(
 		"/",
@@ -606,6 +616,34 @@ func RegisterAPIRoutes(
 		"/pending-writes/:pending_write/reject",
 		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionUpdate),
 		apiControllers.AIApplicationPendingWriteReject,
+	)
+
+	// Billing routes (only active when billing is enabled)
+	billing := workspace.Group("/billing", apiMiddlewares.BillingEnabledMiddleware)
+	billing.Get(
+		"/subscription",
+		apiMiddlewares.BillingPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.BillingSubscriptionShow,
+	)
+	billing.Get(
+		"/usage",
+		apiMiddlewares.BillingPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.BillingUsageShow,
+	)
+	billing.Get(
+		"/usage/history",
+		apiMiddlewares.BillingPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.BillingUsageHistory,
+	)
+	billing.Post(
+		"/checkout",
+		apiMiddlewares.BillingPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.BillingCheckoutCreate,
+	)
+	billing.Post(
+		"/portal",
+		apiMiddlewares.BillingPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.BillingPortalCreate,
 	)
 
 	// Repositories routes

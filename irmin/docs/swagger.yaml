@@ -2,6 +2,16 @@ basePath: /api/v1
 definitions:
   controllers.ConnectorWebhookPayload:
     type: object
+  controllers.UsageReportRequest:
+    properties:
+      dimension:
+        type: string
+      quantity:
+        type: integer
+      workspace_id:
+        description: SQID
+        type: string
+    type: object
   controllers.associateUploadRequest:
     properties:
       checksum:
@@ -12,6 +22,20 @@ definitions:
         type: string
       size_bytes:
         type: integer
+    type: object
+  irmincore.CheckoutRequest:
+    properties:
+      return_url:
+        example: https://app.irmin.io/workspace/my-workspace/settings/billing/success
+        type: string
+    required:
+    - return_url
+    type: object
+  irmincore.CheckoutResponse:
+    properties:
+      checkout_url:
+        example: https://polar.sh/checkout/abc123
+        type: string
     type: object
   irmincore.ConnectorConfigurationRequest:
     properties:
@@ -516,6 +540,12 @@ definitions:
         type: string
     required:
     - new_path
+    type: object
+  irmincore.PortalResponse:
+    properties:
+      portal_url:
+        example: https://polar.sh/portal/abc123
+        type: string
     type: object
   irmincore.ResetBranchRequest:
     properties:
@@ -3006,6 +3036,31 @@ definitions:
     - PipelineStageTypeEmbeddings
     - PipelineStageTypePatch
     - PipelineStageTypeFieldMapping
+  irminmodels.PlanInfo:
+    properties:
+      cancelled_at:
+        example: "2025-03-15T12:00:00Z"
+        type: string
+      credit_per_meter:
+        example: 2
+        type: number
+      current_period_end:
+        example: "2025-02-01T00:00:00Z"
+        type: string
+      current_period_start:
+        example: "2025-01-01T00:00:00Z"
+        type: string
+      has_payment_method:
+        example: true
+        type: boolean
+      status:
+        allOf:
+        - $ref: '#/definitions/irminmodels.SubscriptionStatus'
+        example: active
+      total_credit:
+        example: 12
+        type: number
+    type: object
   irminmodels.PointerTarget:
     properties:
       target_path:
@@ -3865,6 +3920,20 @@ definitions:
     - owner
     - updated_at
     type: object
+  irminmodels.SubscriptionStatus:
+    enum:
+    - active
+    - cancelled
+    - past_due
+    - trialing
+    - none
+    type: string
+    x-enum-varnames:
+    - SubscriptionStatusActive
+    - SubscriptionStatusCancelled
+    - SubscriptionStatusPastDue
+    - SubscriptionStatusTrialing
+    - SubscriptionStatusNone
   irminmodels.SyncMode:
     enum:
     - full
@@ -4076,6 +4145,57 @@ definitions:
       updated:
         description: Number of existing embeddings updated
         example: 2
+        type: integer
+    type: object
+  irminmodels.UsageDimension:
+    enum:
+    - storage
+    - workflow_runs
+    - ai_requests
+    - api_requests
+    - data_transfer
+    - seats
+    type: string
+    x-enum-varnames:
+    - UsageDimensionStorage
+    - UsageDimensionWorkflowRuns
+    - UsageDimensionAIRequests
+    - UsageDimensionAPIRequests
+    - UsageDimensionDataTransfer
+    - UsageDimensionSeats
+  irminmodels.UsageDimensionInfo:
+    properties:
+      current_usage:
+        example: 1250
+        type: integer
+      dimension:
+        allOf:
+        - $ref: '#/definitions/irminmodels.UsageDimension'
+        example: api_requests
+      limit:
+        example: 10000
+        type: integer
+      rate_per_unit:
+        example: 0.001
+        type: number
+      unit:
+        example: requests
+        type: string
+    type: object
+  irminmodels.UsageHistoryEntry:
+    properties:
+      dimension:
+        allOf:
+        - $ref: '#/definitions/irminmodels.UsageDimension'
+        example: api_requests
+      period_end:
+        example: "2025-02-01T00:00:00Z"
+        type: string
+      period_start:
+        example: "2025-01-01T00:00:00Z"
+        type: string
+      total_quantity:
+        example: 1250
         type: integer
     type: object
   irminmodels.User:
@@ -5126,6 +5246,20 @@ paths:
       summary: Download a repository object via signed URL
       tags:
       - signed-urls
+  /api/v1/webhooks/polar:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      summary: Handle Polar webhook events
+      tags:
+      - webhooks
   /connectors:
     get:
       consumes:
@@ -5870,6 +6004,39 @@ paths:
       summary: Generate schema from uploaded file
       tags:
       - schema
+  /system/usage/report:
+    post:
+      consumes:
+      - application/json
+      description: Accept usage reports from internal services (e.g., AI service reporting
+        ai_requests)
+      parameters:
+      - description: Usage report
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.UsageReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usage recorded
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - SystemTokenAuth: []
+      summary: Report usage from internal services
+      tags:
+      - system
   /system/webhook:
     post:
       consumes:
@@ -13539,6 +13706,148 @@ paths:
       summary: List all workflow runs in workspace
       tags:
       - workflow-runs
+  /workspaces/{workspace}/billing/checkout:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: Checkout request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.CheckoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irmincore.CheckoutResponse'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Create a Polar checkout session
+      tags:
+      - billing
+  /workspaces/{workspace}/billing/portal:
+    post:
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irmincore.PortalResponse'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Get Polar customer portal URL
+      tags:
+      - billing
+  /workspaces/{workspace}/billing/subscription:
+    get:
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.PlanInfo'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Get workspace billing subscription
+      tags:
+      - billing
+  /workspaces/{workspace}/billing/usage:
+    get:
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/irminmodels.UsageDimensionInfo'
+                  type: array
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Get current period usage for workspace
+      tags:
+      - billing
+  /workspaces/{workspace}/billing/usage/history:
+    get:
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - default: 6
+        description: Number of periods to retrieve
+        in: query
+        name: periods
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/irminmodels.UsageHistoryEntry'
+                  type: array
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Get usage history for workspace
+      tags:
+      - billing
   /workspaces/summary:
     get:
       consumes:

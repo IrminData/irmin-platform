@@ -8,6 +8,61 @@ package db // import "irmin-api/db"
 CONSTANTS
 
 const (
+	SubscriptionStatusActive    = irminmodels.SubscriptionStatusActive
+	SubscriptionStatusCancelled = irminmodels.SubscriptionStatusCancelled
+	SubscriptionStatusPastDue   = irminmodels.SubscriptionStatusPastDue
+	SubscriptionStatusTrialing  = irminmodels.SubscriptionStatusTrialing
+	SubscriptionStatusNone      = irminmodels.SubscriptionStatusNone
+)
+    Subscription status constants re-exported from SDK for convenience.
+
+const (
+	UsageDimensionStorage      = irminmodels.UsageDimensionStorage
+	UsageDimensionWorkflowRuns = irminmodels.UsageDimensionWorkflowRuns
+	UsageDimensionAIRequests   = irminmodels.UsageDimensionAIRequests
+	UsageDimensionAPIRequests  = irminmodels.UsageDimensionAPIRequests
+	UsageDimensionDataTransfer = irminmodels.UsageDimensionDataTransfer
+	UsageDimensionSeats        = irminmodels.UsageDimensionSeats
+)
+    Usage dimension constants re-exported from SDK for convenience.
+
+const (
+	// CreditPerMeter is the free credit in EUR per meter per month.
+	CreditPerMeter = 2.0
+	// MeterCount is the total number of usage meters.
+	MeterCount = 6
+	// TotalFreeCredit is the total free credit in EUR per month (CreditPerMeter * MeterCount).
+	TotalFreeCredit = 12.0
+	// SeatRate is the cost in EUR per extra seat per month.
+	SeatRate = 5.0
+)
+    Usage-based billing constants.
+
+const (
+	RateStoragePerGB      = 0.02   // 0.02 € / GB
+	RateWorkflowRuns      = 0.01   // 0.01 € / run
+	RateAIRequests        = 0.05   // 0.05 € / request
+	RateAPIRequests       = 0.0005 // 0.50 € / 1K = 0.0005 € / request
+	RateDataTransferPerGB = 0.05   // 0.05 € / GB
+)
+    Usage rate constants (EUR per unit) for billing dimension display. Storage
+    and data transfer rates are per GB. Internal tracking uses bytes but values
+    are converted to GB when reported to Polar and displayed in the UI.
+
+const (
+	FreeStorageBytes      = 5 * 1_000_000_000  // 5 GB in bytes
+	FreeStorageGB         = 5                  // 5 GB (for Polar benefits / display)
+	FreeWorkflowRuns      = 200                // 200 runs
+	FreeAIRequests        = 40                 // 40 requests
+	FreeAPIRequests       = 4000               // 4,000 requests
+	FreeDataTransferBytes = 40 * 1_000_000_000 // 40 GB in bytes
+	FreeDataTransferGB    = 40                 // 40 GB (for Polar benefits / display)
+	FreeExtraSeats        = 0                  // 0 extra seats (1 member free)
+)
+    Free tier hard limit constants for users without a payment method. Storage
+    and data transfer limits are in bytes (used for internal enforcement).
+
+const (
 	LogAssetTypeRepository       = "repository"
 	LogAssetTypeWorkflow         = "workflow"
 	LogAssetTypeUser             = "user"
@@ -100,6 +155,10 @@ const (
 )
     Search-related constants.
 
+const BytesPerGB = 1_000_000_000
+    BytesPerGB is the number of bytes in a gigabyte (decimal, matching storage
+    industry convention).
+
 const (
 	// DefaultWorkflowListLimit is the default limit for workflow listings to improve performance.
 	DefaultWorkflowListLimit = 100
@@ -124,6 +183,16 @@ func GenerateWebhookToken() (string, error)
     GenerateWebhookToken creates a secure random token for webhook
     authentication.
 
+func GetFreeTierDisplayLimits() map[UsageDimension]int64
+    GetFreeTierDisplayLimits returns the hard usage limits in display units
+    (GB for storage/transfer). Used for API responses and Polar benefits
+    configuration.
+
+func GetFreeTierHardLimits() map[UsageDimension]int64
+    GetFreeTierHardLimits returns the hard usage limits for users without a
+    payment method. Storage and data transfer limits are in bytes for precise
+    internal enforcement.
+
 func GetNormalizedQuery(query string) string
     GetNormalizedQuery returns just the normalized version of a query string.
     This is useful for debugging or displaying the processed query to users.
@@ -131,6 +200,10 @@ func GetNormalizedQuery(query string) string
 func GetNormalizedQueryWithOptions(query string, options QueryNormalizationOptions) string
     GetNormalizedQueryWithOptions returns the normalized version with custom
     options.
+
+func IsByteDimension(dim UsageDimension) bool
+    IsByteDimension returns true for dimensions that are tracked in bytes
+    internally and should be converted to GB for display and external reporting.
 
 func IsValidFieldName(fieldName string) bool
     IsValidFieldName validates that a field name is in the allowed whitelist.
@@ -428,6 +501,15 @@ type BatchLoadResult struct {
 }
     BatchLoadResult represents the result of a batch loading operation.
 
+type BillingEvent struct {
+	gorm.Model
+	PolarEventID string    `json:"polar_event_id" gorm:"uniqueIndex"`
+	EventType    string    `json:"event_type"`
+	Payload      string    `json:"payload"        gorm:"type:jsonb"`
+	ProcessedAt  time.Time `json:"processed_at"`
+}
+    BillingEvent represents a webhook event for idempotency and auditing.
+
 type Connection struct {
 	gorm.Model
 
@@ -618,10 +700,20 @@ func (d *Database) AddTagToWorkflow(workflowID, tagID uint) error
 func (d *Database) AddUserToWorkspace(tx *gorm.DB, userID, workspaceID uint, roleIDs []uint) (*WorkspaceUser, error)
     AddUserToWorkspace adds a user to a workspace with the specified roles.
 
+func (d *Database) AggregateUsageSummaries(periodStart, periodEnd time.Time) error
+    AggregateUsageSummaries aggregates usage records into summaries for the
+    given period. Seats and storage use MAX aggregation (gauge — peak value for
+    in-app display). Polar computes the billing average for storage separately
+    from individual snapshot events. All other dimensions use SUM (counter).
+
 func (d *Database) CheckIfRepositoryExists(slug string, workspaceID uint) bool
 
 func (d *Database) Close()
     Close closes the shared database connection pool.
+
+func (d *Database) CountWorkspaceMembersAndInvites(workspaceID uint) (int64, error)
+    CountWorkspaceMembersAndInvites returns the total number of active members
+    and pending invites for a workspace.
 
 func (d *Database) CreateAIApplicationPendingWrite(pw *AIApplicationPendingWrite) error
     CreateAIApplicationPendingWrite creates a new pending write entry.
@@ -629,12 +721,18 @@ func (d *Database) CreateAIApplicationPendingWrite(pw *AIApplicationPendingWrite
 func (d *Database) CreateAIApplicationToolLog(log *AIApplicationToolLog) error
     CreateAIApplicationToolLog creates a new tool audit log entry.
 
+func (d *Database) CreateBillingEvent(event *BillingEvent) error
+    CreateBillingEvent creates a billing event for idempotency.
+
 func (d *Database) CreateConnectionSubscription(subscription *ConnectionSubscription) error
     CreateConnectionSubscription creates a new subscription in the database.
     It automatically generates a webhook token if not provided.
 
 func (d *Database) CreateSearchIndexes() error
     CreateSearchIndexes creates indexes to optimize search performance.
+
+func (d *Database) CreateUsageRecordsBatch(records []*UsageRecord) error
+    CreateUsageRecordsBatch inserts multiple usage records in a single batch.
 
 func (d *Database) CustomToolNameExists(name string, aiApplicationID uint, excludeID *uint) (bool, error)
     CustomToolNameExists checks if a custom tool with the given name exists for
@@ -774,6 +872,9 @@ func (d *Database) GetAllConnectors() ([]Connector, error)
 func (d *Database) GetAllWorkspaces() ([]Workspace, error)
     GetAllWorkspaces retrieves all workspaces from the database.
 
+func (d *Database) GetBillingEventByPolarID(polarEventID string) (*BillingEvent, error)
+    GetBillingEventByPolarID retrieves a billing event by its Polar event ID.
+
 func (d *Database) GetConnectionByID(id uint) (*Connection, error)
     GetConnectionByID finds a connection by its ID.
 
@@ -803,6 +904,10 @@ func (d *Database) GetConnector(id uint) (*Connector, error)
 func (d *Database) GetConnectorByAPIBaseURL(apiBaseURL string) (*Connector, error)
     GetConnectorByAPIBaseURL retrieves a connector from the database by its API
     base URL.
+
+func (d *Database) GetCurrentPeriodUsage(workspaceID uint) ([]UsageSummary, error)
+    GetCurrentPeriodUsage returns usage summaries for the current billing period
+    of a workspace.
 
 func (d *Database) GetCustomToolByID(id uint) (*AIApplicationCustomTool, error)
     GetCustomToolByID retrieves a custom tool by its ID.
@@ -951,6 +1056,15 @@ func (d *Database) GetTemplatesByType(templateType irminmodels.TemplateType) ([]
     GetTemplatesByType retrieves all templates of a specific type from the
     database.
 
+func (d *Database) GetUnreportedUsageRecords(limit int) ([]UsageRecord, error)
+    GetUnreportedUsageRecords returns usage records that haven't been reported
+    to Polar.
+
+func (d *Database) GetUsageHistory(workspaceID uint, periods int) ([]UsageSummary, error)
+    GetUsageHistory returns usage summaries for a workspace over the most recent
+    N billing periods. Uses a subquery on distinct period_starts so the result
+    is correct regardless of how many dimensions each period has.
+
 func (d *Database) GetUser(id uint) (*User, error)
     GetUser retrieves a user from the database by their ID.
 
@@ -1022,6 +1136,9 @@ func (d *Database) GetWorkflowsOfTypeByWorkspaceID(
 func (d *Database) GetWorkspaceBySlug(slug string) (*Workspace, error)
     GetWorkspaceBySlug retrieves a workspace by its slug.
 
+func (d *Database) GetWorkspaceSubscription(workspaceID uint) (*WorkspaceSubscription, error)
+    GetWorkspaceSubscription retrieves the subscription for a workspace.
+
 func (d *Database) GetWorkspaceSummaries(userID uint) ([]WorkspaceSummaryRow, error)
     GetWorkspaceSummaries retrieves lightweight workspace summaries with
     resource counts for a given user. Uses lateral joins for efficient
@@ -1052,6 +1169,9 @@ func (d *Database) MarkObjectCacheStaleBySlug(workspaceSlug, repositorySlug, ref
     MarkObjectCacheStaleBySlug marks the root object entry as stale using
     workspace and repository slugs. This is a convenience method for callers
     that don't have the repository ID available (e.g., orchestrator).
+
+func (d *Database) MarkUsageRecordsReported(ids []uint) error
+    MarkUsageRecordsReported marks usage records as reported to Polar.
 
 func (d *Database) Migrate() error
     Migrate runs the auto migration calls in the correct order. It separates the
@@ -1146,6 +1266,13 @@ func (d *Database) UpdateWorkspaceUserRoles(
 
 func (d *Database) UpsertTemplate(template *Template) error
     UpsertTemplate creates or updates a template based on title and type.
+
+func (d *Database) UpsertWorkspaceSubscription(sub *WorkspaceSubscription) error
+    UpsertWorkspaceSubscription creates or updates a workspace subscription
+    atomically. Only non-zero fields on sub are written, preserving existing
+    values. Uses a transaction with SELECT FOR UPDATE to prevent race conditions
+    between concurrent checkout requests and webhook handlers for the same
+    workspace.
 
 func (d *Database) WaitForNotification(ctx context.Context, channel string) (*pgconn.Notification, error)
     WaitForNotification waits for a notification on the given channel. It uses
@@ -1795,6 +1922,9 @@ type StoredScript struct {
 	Tags        []Tag     `json:"tags,omitempty" gorm:"many2many:script_tags;"`
 }
 
+type SubscriptionStatus = irminmodels.SubscriptionStatus
+    SubscriptionStatus represents the status of a subscription.
+
 type Tag struct {
 	gorm.Model
 	Name        string    `json:"name"`
@@ -1844,6 +1974,30 @@ const (
 	TokenTypeFilter
 	TokenTypeOperator
 )
+type UsageDimension = irminmodels.UsageDimension
+    UsageDimension represents a usage tracking dimension.
+
+type UsageRecord struct {
+	gorm.Model
+	WorkspaceID     uint           `json:"workspace_id"      gorm:"index:idx_usage_record_composite,priority:1"`
+	Dimension       UsageDimension `json:"dimension"         gorm:"index:idx_usage_record_composite,priority:2"`
+	Quantity        int64          `json:"quantity"`
+	PeriodStart     time.Time      `json:"period_start"      gorm:"index:idx_usage_record_composite,priority:3"`
+	PeriodEnd       time.Time      `json:"period_end"`
+	ReportedToPolar bool           `json:"reported_to_polar" gorm:"default:false;index"`
+}
+    UsageRecord represents an individual usage event.
+
+type UsageSummary struct {
+	gorm.Model
+	WorkspaceID   uint           `json:"workspace_id"   gorm:"uniqueIndex:idx_usage_summary_unique,priority:1"`
+	Dimension     UsageDimension `json:"dimension"      gorm:"uniqueIndex:idx_usage_summary_unique,priority:2"`
+	PeriodStart   time.Time      `json:"period_start"   gorm:"uniqueIndex:idx_usage_summary_unique,priority:3"`
+	PeriodEnd     time.Time      `json:"period_end"`
+	TotalQuantity int64          `json:"total_quantity" gorm:"default:0"`
+}
+    UsageSummary represents aggregated usage per workspace/dimension/period.
+
 type User struct {
 	gorm.Model
 	ClerkID          string          `json:"clerk_id"           gorm:"uniqueIndex"`
@@ -1969,6 +2123,24 @@ type Workspace struct {
 	Users       []WorkspaceUser `json:"users"       gorm:"foreignKey:WorkspaceID"`
 	Policies    []Policy        `json:"policies"    gorm:"foreignKey:WorkspaceID"`
 }
+
+type WorkspaceSubscription struct {
+	gorm.Model
+	WorkspaceID         uint               `json:"workspace_id"          gorm:"uniqueIndex"`
+	PolarCustomerID     string             `json:"polar_customer_id"     gorm:"index"`
+	PolarExternalID     string             `json:"polar_external_id"`
+	PolarSubscriptionID string             `json:"polar_subscription_id"`
+	PolarProductID      string             `json:"polar_product_id"`
+	Status              SubscriptionStatus `json:"status"                gorm:"default:none"`
+	CurrentPeriodStart  *time.Time         `json:"current_period_start"`
+	CurrentPeriodEnd    *time.Time         `json:"current_period_end"`
+	CancelledAt         *time.Time         `json:"cancelled_at"`
+
+	// ClearCancelledAt signals that cancelled_at should be set to NULL during upsert.
+	// This is needed because nil pointer fields are otherwise skipped by the update logic.
+	ClearCancelledAt bool `json:"-" gorm:"-"`
+}
+    WorkspaceSubscription represents a workspace's billing subscription.
 
 type WorkspaceSummaryRow struct {
 	Workspace

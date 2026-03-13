@@ -792,6 +792,7 @@ func (api *APIServices) CopyRepositoryObject(
 	if transactionErr != nil {
 		return repositoryObject, NewInternalErrorf("error in database transaction: %w", transactionErr)
 	}
+
 	return repositoryObject, nil
 }
 

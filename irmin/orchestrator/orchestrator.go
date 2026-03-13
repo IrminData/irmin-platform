@@ -44,6 +44,14 @@ type Orchestrator struct {
 	// Active workflow run contexts for cancellation
 	activeRunContexts map[uint]context.CancelFunc
 	activeRunMutex    sync.RWMutex
+
+	// OnWorkflowRunComplete is an optional callback invoked when a workflow run finishes.
+	// Used for billing usage tracking without coupling the orchestrator to the billing service.
+	OnWorkflowRunComplete func(workspaceID uint)
+
+	// CheckWorkflowRunUsage is an optional callback to check if a workspace can create a workflow run.
+	// Returns true if allowed. Used for billing limit enforcement without coupling to billing service.
+	CheckWorkflowRunUsage func(workspaceID uint) (bool, error)
 }
 
 func NewOrchestrator(
@@ -70,6 +78,18 @@ func NewOrchestrator(
 		connectionEventQueue: make(chan *ConnectionEvent, DefaultChannelBufferSize),
 		activeRunContexts:    make(map[uint]context.CancelFunc),
 	}
+}
+
+// usageCheckFunc returns a UsageCheckFunc from the orchestrator's callback, or nil if not set.
+func (o *Orchestrator) usageCheckFunc() lib.UsageCheckFunc {
+	if o.CheckWorkflowRunUsage == nil {
+		return nil
+	}
+	return lib.UsageCheckFunc(o.CheckWorkflowRunUsage)
+}
+
+func (o *Orchestrator) isWorkflowPausedError(err error) bool {
+	return errors.Is(err, lib.ErrWorkflowPaused)
 }
 
 func (o *Orchestrator) AddLakefsEvent(event *lakefs.WebhookEvent) {
@@ -511,8 +531,11 @@ func (o *Orchestrator) createWorkflowRunForTimeTrigger(ctx context.Context, tx *
 	}
 
 	// Create a new workflow run
-	run, createWorkflowRunErr := lib.CreateWorkflowRun(tx, &workflow, nil, t)
+	run, createWorkflowRunErr := lib.CreateWorkflowRun(tx, &workflow, nil, t, o.usageCheckFunc())
 	if createWorkflowRunErr != nil {
+		if o.isWorkflowPausedError(createWorkflowRunErr) {
+			return nil
+		}
 		o.logger.ErrorContext(ctx, "failed to create workflow run", "error", createWorkflowRunErr, "trigger_id", t.ID)
 		return createWorkflowRunErr
 	}
@@ -640,15 +663,18 @@ func (o *Orchestrator) processRepositoryTrigger(
 				"commit_id", *event.CommitID,
 			)
 			// Fall back to creating run without payload
-			run, err = lib.CreateWorkflowRun(tx, &workflow, nil, t)
+			run, err = lib.CreateWorkflowRun(tx, &workflow, nil, t, o.usageCheckFunc())
 		} else {
-			run, err = lib.CreateWorkflowRunWithPayload(tx, &workflow, nil, t, payload)
+			run, err = lib.CreateWorkflowRunWithPayload(tx, &workflow, nil, t, payload, o.usageCheckFunc())
 		}
 	} else {
-		run, err = lib.CreateWorkflowRun(tx, &workflow, nil, t)
+		run, err = lib.CreateWorkflowRun(tx, &workflow, nil, t, o.usageCheckFunc())
 	}
 
 	if err != nil {
+		if o.isWorkflowPausedError(err) {
+			return false, nil
+		}
 		o.logger.ErrorContext(ctx, "failed to create workflow run from repository event",
 			"error", err,
 			"trigger_id", t.ID,
@@ -842,8 +868,11 @@ func (o *Orchestrator) processWorkflowRunTrigger(
 	)
 
 	// Create a new workflow run
-	run, err := lib.CreateWorkflowRun(tx, &workflow, nil, t)
+	run, err := lib.CreateWorkflowRun(tx, &workflow, nil, t, o.usageCheckFunc())
 	if err != nil {
+		if o.isWorkflowPausedError(err) {
+			return false, nil
+		}
 		o.logger.ErrorContext(ctx, "failed to create workflow run from workflow run event",
 			"error", err,
 			"trigger_id", t.ID,

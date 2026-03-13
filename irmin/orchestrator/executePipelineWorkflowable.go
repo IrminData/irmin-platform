@@ -1157,7 +1157,7 @@ func (o *Orchestrator) handleTriggerWorkflowStage(
 	tx := o.db.Begin()
 	defer tx.Rollback()
 
-	workflowRun, createRunErr := lib.CreateWorkflowRun(tx, targetWorkflow, &workflow.Owner, nil)
+	workflowRun, createRunErr := lib.CreateWorkflowRun(tx, targetWorkflow, &workflow.Owner, nil, o.usageCheckFunc())
 	if createRunErr != nil {
 		o.logger.ErrorContext(ctx, "Error creating workflow run", "error", createRunErr)
 		logs = append(logs, fmt.Sprintf("Error triggering workflow: %v", createRunErr))

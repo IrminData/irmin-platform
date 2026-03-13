@@ -969,6 +969,28 @@
                 }
             }
         },
+        "/api/v1/webhooks/polar": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "webhooks"
+                ],
+                "summary": "Handle Polar webhook events",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/connectors": {
             "get": {
                 "security": [
@@ -2169,6 +2191,57 @@
                     },
                     "500": {
                         "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/system/usage/report": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Accept usage reports from internal services (e.g., AI service reporting ai_requests)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "Report usage from internal services",
+                "parameters": [
+                    {
+                        "description": "Usage report",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.UsageReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usage recorded",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -14376,11 +14449,276 @@
                     }
                 }
             }
+        },
+        "/workspaces/{workspace}/billing/checkout": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "billing"
+                ],
+                "summary": "Create a Polar checkout session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Checkout request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.CheckoutRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irmincore.CheckoutResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace}/billing/portal": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "billing"
+                ],
+                "summary": "Get Polar customer portal URL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irmincore.PortalResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace}/billing/subscription": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "billing"
+                ],
+                "summary": "Get workspace billing subscription",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.PlanInfo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace}/billing/usage": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "billing"
+                ],
+                "summary": "Get current period usage for workspace",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/irminmodels.UsageDimensionInfo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace}/billing/usage/history": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "billing"
+                ],
+                "summary": "Get usage history for workspace",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 6,
+                        "description": "Number of periods to retrieve",
+                        "name": "periods",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/irminmodels.UsageHistoryEntry"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
         "controllers.ConnectorWebhookPayload": {
             "type": "object"
+        },
+        "controllers.UsageReportRequest": {
+            "type": "object",
+            "properties": {
+                "dimension": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "integer"
+                },
+                "workspace_id": {
+                    "description": "SQID",
+                    "type": "string"
+                }
+            }
         },
         "controllers.associateUploadRequest": {
             "type": "object",
@@ -14396,6 +14734,27 @@
                 },
                 "size_bytes": {
                     "type": "integer"
+                }
+            }
+        },
+        "irmincore.CheckoutRequest": {
+            "type": "object",
+            "required": [
+                "return_url"
+            ],
+            "properties": {
+                "return_url": {
+                    "type": "string",
+                    "example": "https://app.irmin.io/workspace/my-workspace/settings/billing/success"
+                }
+            }
+        },
+        "irmincore.CheckoutResponse": {
+            "type": "object",
+            "properties": {
+                "checkout_url": {
+                    "type": "string",
+                    "example": "https://polar.sh/checkout/abc123"
                 }
             }
         },
@@ -15082,6 +15441,15 @@
                 "new_path": {
                     "type": "string",
                     "example": "path/to/new/location"
+                }
+            }
+        },
+        "irmincore.PortalResponse": {
+            "type": "object",
+            "properties": {
+                "portal_url": {
+                    "type": "string",
+                    "example": "https://polar.sh/portal/abc123"
                 }
             }
         },
@@ -18474,6 +18842,43 @@
                 "PipelineStageTypeFieldMapping"
             ]
         },
+        "irminmodels.PlanInfo": {
+            "type": "object",
+            "properties": {
+                "cancelled_at": {
+                    "type": "string",
+                    "example": "2025-03-15T12:00:00Z"
+                },
+                "credit_per_meter": {
+                    "type": "number",
+                    "example": 2
+                },
+                "current_period_end": {
+                    "type": "string",
+                    "example": "2025-02-01T00:00:00Z"
+                },
+                "current_period_start": {
+                    "type": "string",
+                    "example": "2025-01-01T00:00:00Z"
+                },
+                "has_payment_method": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.SubscriptionStatus"
+                        }
+                    ],
+                    "example": "active"
+                },
+                "total_credit": {
+                    "type": "number",
+                    "example": 12
+                }
+            }
+        },
         "irminmodels.PointerTarget": {
             "type": "object",
             "required": [
@@ -19564,6 +19969,23 @@
                 }
             }
         },
+        "irminmodels.SubscriptionStatus": {
+            "type": "string",
+            "enum": [
+                "active",
+                "cancelled",
+                "past_due",
+                "trialing",
+                "none"
+            ],
+            "x-enum-varnames": [
+                "SubscriptionStatusActive",
+                "SubscriptionStatusCancelled",
+                "SubscriptionStatusPastDue",
+                "SubscriptionStatusTrialing",
+                "SubscriptionStatusNone"
+            ]
+        },
         "irminmodels.SyncMode": {
             "type": "string",
             "enum": [
@@ -19854,6 +20276,79 @@
                     "description": "Number of existing embeddings updated",
                     "type": "integer",
                     "example": 2
+                }
+            }
+        },
+        "irminmodels.UsageDimension": {
+            "type": "string",
+            "enum": [
+                "storage",
+                "workflow_runs",
+                "ai_requests",
+                "api_requests",
+                "data_transfer",
+                "seats"
+            ],
+            "x-enum-varnames": [
+                "UsageDimensionStorage",
+                "UsageDimensionWorkflowRuns",
+                "UsageDimensionAIRequests",
+                "UsageDimensionAPIRequests",
+                "UsageDimensionDataTransfer",
+                "UsageDimensionSeats"
+            ]
+        },
+        "irminmodels.UsageDimensionInfo": {
+            "type": "object",
+            "properties": {
+                "current_usage": {
+                    "type": "integer",
+                    "example": 1250
+                },
+                "dimension": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.UsageDimension"
+                        }
+                    ],
+                    "example": "api_requests"
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 10000
+                },
+                "rate_per_unit": {
+                    "type": "number",
+                    "example": 0.001
+                },
+                "unit": {
+                    "type": "string",
+                    "example": "requests"
+                }
+            }
+        },
+        "irminmodels.UsageHistoryEntry": {
+            "type": "object",
+            "properties": {
+                "dimension": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.UsageDimension"
+                        }
+                    ],
+                    "example": "api_requests"
+                },
+                "period_end": {
+                    "type": "string",
+                    "example": "2025-02-01T00:00:00Z"
+                },
+                "period_start": {
+                    "type": "string",
+                    "example": "2025-01-01T00:00:00Z"
+                },
+                "total_quantity": {
+                    "type": "integer",
+                    "example": 1250
                 }
             }
         },

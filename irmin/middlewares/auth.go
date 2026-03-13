@@ -44,12 +44,14 @@ func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error {
 
 	// Identify the user from the token
 	// Use context.Background() instead of Fiber context to ensure timeouts work properly
-	irminUser, isSystem, err := api.Services.IdentifyUserFromToken(context.Background(), token, locale)
+	irminUser, tokenType, err := api.Services.IdentifyUserFromToken(context.Background(), token, locale)
 	if err != nil {
 		return api.handleServiceError(c, "Authentication failed", err, dict)
 	}
 
-	// Set the user in the context for subsequent handlers
+	// Set token type and backward-compatible is_system flag
+	isSystem := tokenType == services.TokenTypeSystem
+	c.Locals("token_type", tokenType)
 	c.Locals("is_system", isSystem)
 	if !isSystem && irminUser != nil {
 		c.Locals("user", irminUser)

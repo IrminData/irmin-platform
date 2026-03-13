@@ -408,6 +408,14 @@ func (o *Orchestrator) updateWorkflowRunStatus(
 	// Invalidate cache so clients get fresh status and logs
 	o.InvalidateWorkflowRunCache(run)
 
+	// Notify billing usage tracker of workflow run completion
+	if o.OnWorkflowRunComplete != nil {
+		var wf db.Workflow
+		if lookupErr := o.db.First(&wf, run.WorkflowID).Error; lookupErr == nil {
+			o.OnWorkflowRunComplete(wf.WorkspaceID)
+		}
+	}
+
 	return run, nil
 }
 

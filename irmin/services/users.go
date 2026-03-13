@@ -106,6 +106,11 @@ func (api *APIServices) RemoveUserFromWorkspace(
 		return NewInternalErrorf("error in database transaction: %w", txErr)
 	}
 
+	// Track seat count change
+	if api.UsageTracker != nil {
+		api.UsageTracker.TrackSeats(workspace.ID)
+	}
+
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeDelete,

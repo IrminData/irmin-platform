@@ -311,11 +311,11 @@ func setupServices(
 	env *utils.CoreAPIEnv,
 	database *db.Database,
 	cacheStorage fiber.Storage,
-) (*orchestrator.Orchestrator, *irminsqids.SQIDManager, *locales.LocaleManager, *permissions.Service, error) {
+) (*orchestrator.Orchestrator, *irminsqids.SQIDManager, *locales.LocaleManager, *permissions.Service, *engine.Client, error) {
 	// Initialize data engine
 	dataEngine, err := engine.NewClient(ctx, "en", slog.Default(), env, database)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	// Initialize orchestrator
@@ -334,13 +334,13 @@ func setupServices(
 	// Initialize locale manager
 	localeManager, err := locales.New()
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	// Initialize permission service
 	permissionService := permissions.NewService(database, slog.Default())
 
-	return orchestrator, sqidManager, localeManager, permissionService, nil
+	return orchestrator, sqidManager, localeManager, permissionService, dataEngine, nil
 }
 
 // startServer starts the Fiber server in a goroutine.
@@ -379,7 +379,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Setup services
-	orchestrator, sqidManager, localeManager, permissionService, setupSvcErr := setupServices(
+	orchestrator, sqidManager, localeManager, permissionService, dataEngine, setupSvcErr := setupServices(
 		ctx, env, database, cacheStorage,
 	)
 	if setupSvcErr != nil {
@@ -397,7 +397,33 @@ func main() {
 		localeManager,
 		permissionService,
 		cacheStorage,
+		dataEngine.LakeFSClient,
 	)
+
+	// Wire orchestrator workflow run completion callback for billing usage tracking
+	if apiServices.UsageTracker != nil {
+		tracker := apiServices.UsageTracker
+		orchestrator.OnWorkflowRunComplete = func(workspaceID uint) {
+			tracker.Track(workspaceID, db.UsageDimensionWorkflowRuns, 1)
+		}
+	}
+
+	// Wire orchestrator workflow run usage limit check for billing enforcement
+	if apiServices.BillingService != nil {
+		bs := apiServices.BillingService
+		orchestrator.CheckWorkflowRunUsage = func(workspaceID uint) (bool, error) {
+			return bs.CheckUsageLimit(workspaceID, db.UsageDimensionWorkflowRuns, 1)
+		}
+	}
+
+	// Start usage tracker if billing is enabled
+	if apiServices.UsageTracker != nil {
+		go func() {
+			if usageTrackerErr := apiServices.UsageTracker.Start(ctx); usageTrackerErr != nil {
+				log.Printf("Usage tracker error: %v", usageTrackerErr)
+			}
+		}()
+	}
 
 	// Ensure Novu workflows exist (non-blocking, logs warnings on failure)
 	lib.EnsureNovuWorkflows(env, slog.Default())

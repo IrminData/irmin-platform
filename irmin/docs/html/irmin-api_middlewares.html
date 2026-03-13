@@ -50,12 +50,26 @@ func (api *APIMiddlewares) AIApplicationPermissionMiddleware(action db.PolicyAct
     AIApplicationPermissionMiddleware creates a middleware for AI
     application-level permissions.
 
+func (api *APIMiddlewares) APIUsageMiddleware(c fiber.Ctx) error
+    APIUsageMiddleware tracks API requests and response sizes for billing.
+    Should be placed after WorkspaceMiddleware on the v1 group. Only tracks
+    usage for external API consumers (cred_ tokens); console (Clerk JWT) users
+    are not metered.
+
 func (api *APIMiddlewares) AuditLogPermissionMiddleware() fiber.Handler
     AuditLogPermissionMiddleware creates a middleware for audit log permissions.
 
 func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error
     AuthMiddleware handles the user authentication for the API, tokens and user
     details syncing with Clerk.
+
+func (api *APIMiddlewares) BillingEnabledMiddleware(c fiber.Ctx) error
+    BillingEnabledMiddleware returns 404 if billing is disabled. Applied to all
+    billing routes to ensure they are only accessible when billing is enabled.
+
+func (api *APIMiddlewares) BillingPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    BillingPermissionMiddleware creates a middleware for billing-level
+    permissions.
 
 func (api *APIMiddlewares) ConnectionMiddleware(c fiber.Ctx) error
     ConnectionMiddleware verifies that the user has access to the connection
@@ -99,6 +113,10 @@ func (api *APIMiddlewares) LocaleMiddleware(c fiber.Ctx) error
 func (api *APIMiddlewares) LocaleMiddlewareForWebhooks(c fiber.Ctx) error
     LocaleMiddlewareForWebhooks provides locale detection for webhook endpoints
     that don't have user authentication.
+
+func (api *APIMiddlewares) PolarWebhookMiddleware(c fiber.Ctx) error
+    PolarWebhookMiddleware verifies the Polar webhook signature and checks
+    idempotency.
 
 func (api *APIMiddlewares) PolicyMiddleware(c fiber.Ctx) error
     PolicyMiddleware verifies that the policy exists and belongs to the
@@ -162,6 +180,11 @@ func (api *APIMiddlewares) ScriptMiddleware(c fiber.Ctx) error
 func (api *APIMiddlewares) ScriptPermissionMiddleware(action db.PolicyAction) fiber.Handler
     ScriptPermissionMiddleware creates a middleware for script-level
     permissions.
+
+func (api *APIMiddlewares) UsageLimitMiddleware(dimension db.UsageDimension) fiber.Handler
+    UsageLimitMiddleware checks if the workspace has exceeded its usage limit
+    for the given dimension. Returns 429 if the limit is exceeded. Only enforces
+    hard limits for users without a payment method.
 
 func (api *APIMiddlewares) UserMiddleware(c fiber.Ctx) error
     UserMiddleware parses the user SQID from the request URL and sets the user

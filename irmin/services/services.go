@@ -3,6 +3,7 @@ package services
 import (
 	sandbox "irmin-api/compute-sandbox"
 	"irmin-api/db"
+	"irmin-api/lakefs"
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/orchestrator"
@@ -25,6 +26,8 @@ type APIServices struct {
 	PermissionService  *permissions.Service
 	Validator          *irminvalidator.Validator
 	CacheStorage       fiber.Storage
+	BillingService     *BillingService
+	UsageTracker       *UsageTracker
 	authCache          *AuthCache
 	schemaCacheManager *lib.SchemaCacheManager
 	computeSandbox     *sandbox.ComputeSandbox
@@ -39,9 +42,12 @@ func NewAPIServices(
 	localeManager *locales.LocaleManager,
 	permissionService *permissions.Service,
 	cacheStorage fiber.Storage,
+	lakefsClient *lakefs.Client,
 ) *APIServices {
 	authCache := &AuthCache{cache: make(map[string]*AuthCacheEntry)}
 	schemaCacheManager := lib.NewSchemaCacheManager(env, logger, db)
+	billingService := NewBillingService(db, env, logger)
+	usageTracker := NewUsageTracker(db, billingService, lakefsClient, logger)
 	return &APIServices{
 		DB:                 db,
 		Logger:             logger,
@@ -52,6 +58,8 @@ func NewAPIServices(
 		PermissionService:  permissionService,
 		Validator:          irminvalidator.NewValidator(sqidManager),
 		CacheStorage:       cacheStorage,
+		BillingService:     billingService,
+		UsageTracker:       usageTracker,
 		authCache:          authCache,
 		schemaCacheManager: schemaCacheManager,
 		computeSandbox:     sandbox.NewComputeSandbox(env, db, logger),

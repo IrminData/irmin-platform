@@ -316,6 +316,13 @@ type CoreAPIEnv struct {
 	TestTag                      string // Tag to test with
 	SignedURLSecret              string // HMAC secret for signed download URLs
 
+	// Billing configuration
+	BillingEnabled     bool   // Flag to enable Polar.sh billing integration
+	PolarAPIKey        string // Polar.sh API key
+	PolarWebhookSecret string // Polar.sh webhook signing secret
+	PolarProductID     string // Polar product ID for the usage-based plan
+	PolarBaseURL       string // Polar API base URL (default: https://api.polar.sh, sandbox: https://sandbox-api.polar.sh)
+
 	// File size management thresholds
 	MaxRequestBodySizeMB       int // Maximum request body size in MB (default 100)
 	MaxInMemorySizeMB          int // Max file size to load fully into memory in MB (default 20)

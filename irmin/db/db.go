@@ -240,6 +240,10 @@ func (d *Database) Migrate() error {
 		&AIApplicationPendingWrite{},
 		&Template{},
 		&AsyncJob{},
+		&WorkspaceSubscription{},
+		&UsageRecord{},
+		&UsageSummary{},
+		&BillingEvent{},
 	}
 	if err := d.migrateModels(models...); err != nil {
 		return err
@@ -305,6 +309,10 @@ func (d *Database) Reset() error {
 		&Tag{},
 		&Template{},
 		&AsyncJob{},
+		&BillingEvent{},
+		&UsageSummary{},
+		&UsageRecord{},
+		&WorkspaceSubscription{},
 	); err != nil {
 		return fmt.Errorf("failed to drop tables: %w", err)
 	}

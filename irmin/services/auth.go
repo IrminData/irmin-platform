@@ -15,6 +15,20 @@ import (
 	"github.com/clerk/clerk-sdk-go/v2/user"
 )
 
+// TokenType represents the type of authentication token used.
+type TokenType string
+
+const (
+	// TokenTypeClerk indicates a Clerk JWT session token (console users).
+	TokenTypeClerk TokenType = "clerk"
+
+	// TokenTypeCred indicates a credentials API token (cred_ prefix).
+	TokenTypeCred TokenType = "cred"
+
+	// TokenTypeSystem indicates the internal system token.
+	TokenTypeSystem TokenType = "system"
+)
+
 const (
 	// UserDetailsCacheMaxAge is the maximum age for cached user details before refresh
 	UserDetailsCacheMaxAge = 24 * time.Hour
@@ -123,15 +137,21 @@ func (api *APIServices) invalidateCachedAuth(token string) {
 // It supports system token, credentials token (cred_ prefix), and JWT from Clerk.
 // Uses caching to avoid expensive validation and sync operations for recently authenticated tokens.
 // External API operations (Clerk/Novu sync) happen asynchronously in the background.
-// Returns: user, isSystem, error
-func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale string) (*db.User, bool, error) {
+// Returns: user, tokenType, error
+func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale string) (*db.User, TokenType, error) {
 	if token == "" {
-		return nil, false, errors.New("missing token")
+		return nil, "", errors.New("missing token")
 	}
 
 	// System token
 	if api.validateSystemToken(token) {
-		return nil, true, nil
+		return nil, TokenTypeSystem, nil
+	}
+
+	// Determine token type from prefix
+	tokenType := TokenTypeClerk
+	if len(token) >= 5 && token[:5] == "cred_" {
+		tokenType = TokenTypeCred
 	}
 
 	// Check cache first for performance optimization
@@ -140,7 +160,7 @@ func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale s
 		if api.isUserDataStale(cachedUser) {
 			go api.backgroundUserSync(context.Background(), cachedUser, cachedUser.ClerkID, locale, token)
 		}
-		return cachedUser, false, nil
+		return cachedUser, tokenType, nil
 	}
 
 	// Validate and fetch user information
@@ -148,7 +168,7 @@ func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale s
 	if err != nil {
 		// Remove from cache if it exists since token is invalid
 		api.invalidateCachedAuth(token)
-		return nil, false, err
+		return nil, "", err
 	}
 
 	// If user exists locally, return immediately and sync in background
@@ -161,7 +181,7 @@ func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale s
 			go api.backgroundUserSync(context.Background(), irminUser, clerkID, locale, token)
 		}
 
-		return irminUser, false, nil
+		return irminUser, tokenType, nil
 	}
 
 	// User doesn't exist locally - we need to create them
@@ -171,13 +191,13 @@ func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale s
 	}
 	newUser, syncErr := api.createUserFromClerk(c, clerkID, locale)
 	if syncErr != nil {
-		return nil, false, syncErr
+		return nil, "", syncErr
 	}
 
 	// Cache the newly created user
 	api.setCachedAuth(token, newUser)
 
-	return newUser, false, nil
+	return newUser, tokenType, nil
 }
 
 // validateSystemToken checks if token equals configured system token using constant-time comparison

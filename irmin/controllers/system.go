@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"irmin-api/db"
 	"irmin-api/locales"
 	"irmin-api/services"
 	"irmin-api/utils"
@@ -166,5 +167,79 @@ func (api *APIControllers) GenerateFileSchema(c fiber.Ctx) error {
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "schema_generated"),
 		Data:    schema,
+	})
+}
+
+// UsageReportRequest represents a request to report usage from an internal service.
+type UsageReportRequest struct {
+	WorkspaceID string `json:"workspace_id"` // SQID
+	Dimension   string `json:"dimension"`
+	Quantity    int64  `json:"quantity"`
+}
+
+// ReportUsage godoc
+// @Summary Report usage from internal services
+// @Description Accept usage reports from internal services (e.g., AI service reporting ai_requests)
+// @Tags system
+// @Security SystemTokenAuth
+// @Accept json
+// @Produce json
+// @Param body body UsageReportRequest true "Usage report"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Usage recorded"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized"
+// @Router /system/usage/report [post]
+func (api *APIControllers) ReportUsage(c fiber.Ctx) error {
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	if !dictOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Message: "Internal server error",
+		})
+	}
+
+	// Require system token authentication
+	isSystem, isSystemOk := c.Locals("is_system").(bool)
+	if !isSystemOk {
+		return api.handleServiceError(c, "Error getting locals for ReportUsage",
+			services.NewInternalError("error getting locals"), dict)
+	}
+	if !isSystem {
+		return api.handleServiceError(c, "Access denied", services.ErrAccessDenied, dict)
+	}
+
+	var req UsageReportRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		return api.handleServiceError(c, "Invalid request body", services.ErrInvalidRequest, dict)
+	}
+
+	if req.WorkspaceID == "" || req.Dimension == "" || req.Quantity <= 0 {
+		return api.handleServiceError(c, "Missing required fields", services.ErrInvalidRequest, dict)
+	}
+
+	// Validate the dimension is a known usage dimension
+	dimension := db.UsageDimension(req.Dimension)
+	switch dimension {
+	case db.UsageDimensionStorage, db.UsageDimensionWorkflowRuns, db.UsageDimensionAIRequests,
+		db.UsageDimensionAPIRequests, db.UsageDimensionDataTransfer, db.UsageDimensionSeats:
+		// valid
+	default:
+		return api.handleServiceError(c, "Invalid usage dimension", services.ErrInvalidRequest, dict)
+	}
+
+	// Decode workspace SQID
+	workspaceID, err := api.SQIDManager.Decode("workspaces", req.WorkspaceID)
+	if err != nil {
+		return api.handleServiceError(c, "Invalid workspace ID", services.ErrInvalidRequest, dict)
+	}
+
+	// Track the usage
+	if api.Services.UsageTracker == nil {
+		return api.handleServiceError(c, "Usage tracking is not enabled",
+			services.NewInternalError("billing/usage tracking is disabled"), dict)
+	}
+	api.Services.UsageTracker.Track(uint(workspaceID), dimension, req.Quantity)
+
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Message: "Usage recorded",
 	})
 }

@@ -165,6 +165,14 @@ type ObjectModifiedLog struct {
     ObjectModifiedLog logs an object modification.
 
 type Orchestrator struct {
+
+	// OnWorkflowRunComplete is an optional callback invoked when a workflow run finishes.
+	// Used for billing usage tracking without coupling the orchestrator to the billing service.
+	OnWorkflowRunComplete func(workspaceID uint)
+
+	// CheckWorkflowRunUsage is an optional callback to check if a workspace can create a workflow run.
+	// Returns true if allowed. Used for billing limit enforcement without coupling to billing service.
+	CheckWorkflowRunUsage func(workspaceID uint) (bool, error)
 	// Has unexported fields.
 }
 

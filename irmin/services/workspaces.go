@@ -392,6 +392,11 @@ func (api *APIServices) LeaveWorkspace(user *db.User, workspace *db.Workspace) e
 		return leaveWorkspaceErr
 	}
 
+	// Track seat count change
+	if api.UsageTracker != nil {
+		api.UsageTracker.TrackSeats(workspace.ID)
+	}
+
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeInfo,

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lib"
@@ -13,6 +14,7 @@ import (
 	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/clerk/clerk-sdk-go/v2/invitation"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // GetInviteForMiddleware retrieves an invite by SQID and performs basic access checks.
@@ -104,7 +106,7 @@ func (api *APIServices) GetInviteByID(
 		return nil, ErrNotFound
 	}
 
-	// Make sure the invite was not yet accepted or declined
+	// Make sure the invite is not yet accepted or declined
 	if invite.AcceptedAt != nil || invite.DeclinedAt != nil {
 		return nil, ErrInviteAlreadyAcceptedOrDeclined
 	}
@@ -210,6 +212,53 @@ type InviteTransactionResult struct {
 	NotificationResult *lib.InviteNotificationResult `json:"notification_result,omitempty"`
 }
 
+// checkMemberLimitTx checks the seat limit inside a transaction with a workspace row lock.
+// Returns nil if the invite is allowed, ErrMemberLimitReached if the limit is exceeded.
+// Free users: max 1 member. Subscribers: unlimited.
+func (api *APIServices) checkMemberLimitTx(ctx context.Context, tx *gorm.DB, workspaceID uint) error {
+	if api.BillingService == nil || !api.BillingService.IsEnabled() {
+		return nil
+	}
+
+	// Lock the workspace row to serialize concurrent invite attempts
+	var ws db.Workspace
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("id = ?", workspaceID).First(&ws).Error; err != nil {
+		return NewInternalErrorf("error locking workspace for member limit check: %w", err)
+	}
+
+	plan, err := api.BillingService.GetCurrentPlan(workspaceID)
+	if err != nil {
+		api.Logger.ErrorContext(ctx, "Error getting plan for member limit", "error", err)
+		return nil // fail open
+	}
+
+	// Subscribers have unlimited seats
+	if plan.HasPaymentMethod {
+		return nil
+	}
+
+	// Free users: 1 member (the owner) + FreeExtraSeats additional members allowed.
+	var memberCount, inviteCount int64
+	if countErr := tx.Model(&db.WorkspaceUser{}).
+		Where("workspace_id = ?", workspaceID).
+		Count(&memberCount).Error; countErr != nil {
+		return NewInternalErrorf("error counting workspace members: %w", countErr)
+	}
+	if countErr := tx.Model(&db.Invite{}).
+		Where("workspace_id = ? AND accepted_at IS NULL AND declined_at IS NULL AND expires_at > ?",
+			workspaceID, time.Now()).
+		Count(&inviteCount).Error; countErr != nil {
+		return NewInternalErrorf("error counting pending invites: %w", countErr)
+	}
+
+	maxMembers := int64(1 + db.FreeExtraSeats)
+	if memberCount+inviteCount >= maxMembers {
+		return ErrMemberLimitReached
+	}
+	return nil
+}
+
 // sendInviteInTransaction handles the transactional creation of invites in both database and Clerk.
 func (api *APIServices) sendInviteInTransaction(
 	ctx context.Context,
@@ -225,6 +274,11 @@ func (api *APIServices) sendInviteInTransaction(
 
 	// Use database transaction to ensure atomicity for database operations
 	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Check member limit inside the transaction with a row lock to prevent races
+		if limitErr := api.checkMemberLimitTx(ctx, tx, workspace.ID); limitErr != nil {
+			return limitErr
+		}
+
 		// Create the invite in the database
 		expiresAt := time.Now().Add(time.Duration(api.Env.InviteExpiresInDays) * 24 * time.Hour)
 		newInvite = &db.Invite{
@@ -257,8 +311,13 @@ func (api *APIServices) sendInviteInTransaction(
 		return nil
 	})
 
-	// If database transaction failed, return error
+	// If database transaction failed, return error.
+	// Pass through sentinel errors (e.g., ErrMemberLimitReached) without wrapping
+	// so the error-to-status mapping in errors.go works correctly.
 	if transactionErr != nil {
+		if errors.Is(transactionErr, ErrMemberLimitReached) {
+			return nil, ErrMemberLimitReached
+		}
 		return nil, NewInternalErrorf("error in database transaction: %w", transactionErr)
 	}
 
@@ -373,6 +432,9 @@ func (api *APIServices) SendInvite(
 	// Send the invite.
 	inviteResult, err := api.sendInviteInTransaction(c, req, role, user, workspace, locale)
 	if err != nil {
+		if errors.Is(err, ErrMemberLimitReached) {
+			return nil, ErrMemberLimitReached
+		}
 		return nil, NewInternalErrorf("error sending invite: %w", err)
 	}
 
@@ -699,6 +761,11 @@ func (api *APIServices) AcceptInvite(c context.Context, user *db.User, invite *d
 	if transactionErr != nil {
 		api.Logger.ErrorContext(c, "Transaction failed for invite acceptance", "error", transactionErr)
 		return transactionErr
+	}
+
+	// Track seat count change
+	if api.UsageTracker != nil {
+		api.UsageTracker.TrackSeats(invite.WorkspaceID)
 	}
 
 	// Log the event

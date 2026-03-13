@@ -436,6 +436,43 @@ func (api *APIControllers) AllWorkflowRunsIndex(c fiber.Ctx) error
     500 {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/workflows/runs [get]
 
+func (api *APIControllers) BillingCheckoutCreate(c fiber.Ctx) error
+    BillingCheckoutCreate godoc @Summary Create a Polar checkout session
+    @Tags billing @Security ApiKeyAuth @Accept json @Produce json @Param
+    workspace path string true "Workspace slug" @Param request body
+    irmincore.CheckoutRequest true "Checkout request" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irmincore.CheckoutResponse} @Router
+    /workspaces/{workspace}/billing/checkout [post]
+
+func (api *APIControllers) BillingPortalCreate(c fiber.Ctx) error
+    BillingPortalCreate godoc @Summary Get Polar customer portal
+    URL @Tags billing @Security ApiKeyAuth @Produce json @Param
+    workspace path string true "Workspace slug" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irmincore.PortalResponse} @Router
+    /workspaces/{workspace}/billing/portal [post]
+
+func (api *APIControllers) BillingSubscriptionShow(c fiber.Ctx) error
+    BillingSubscriptionShow godoc @Summary Get workspace billing
+    subscription @Tags billing @Security ApiKeyAuth @Produce json @Param
+    workspace path string true "Workspace slug" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.PlanInfo} @Router
+    /workspaces/{workspace}/billing/subscription [get]
+
+func (api *APIControllers) BillingUsageHistory(c fiber.Ctx) error
+    BillingUsageHistory godoc @Summary Get usage history for workspace
+    @Tags billing @Security ApiKeyAuth @Produce json @Param workspace
+    path string true "Workspace slug" @Param periods query int false
+    "Number of periods to retrieve" default(6) @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=[]irminmodels.UsageHistoryEntry} @Router
+    /workspaces/{workspace}/billing/usage/history [get]
+
+func (api *APIControllers) BillingUsageShow(c fiber.Ctx) error
+    BillingUsageShow godoc @Summary Get current period usage for
+    workspace @Tags billing @Security ApiKeyAuth @Produce json @Param
+    workspace path string true "Workspace slug" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=[]irminmodels.UsageDimensionInfo} @Router
+    /workspaces/{workspace}/billing/usage [get]
+
 func (api *APIControllers) CheckPermission(c fiber.Ctx) error
     CheckPermission godoc @Summary Check user permission @Description Check if
     the current user has permission to perform a specific action on a resource
@@ -1049,6 +1086,11 @@ func (api *APIControllers) PauseWorkflow(c fiber.Ctx) error
     500 {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/workflows/{workflow_slug}/pause [post]
 
+func (api *APIControllers) PolarWebhook(c fiber.Ctx) error
+    PolarWebhook godoc @Summary Handle Polar webhook events @Tags
+    webhooks @Accept json @Produce json @Success 200 {object}
+    irminmodels.IrminAPIResponse @Router /api/v1/webhooks/polar [post]
+
 func (api *APIControllers) PoliciesDestroy(c fiber.Ctx) error
     PoliciesDestroy godoc @Summary Delete policy @Description Delete an existing
     policy from the workspace @Tags policies @Security ApiKeyAuth @Accept json
@@ -1254,6 +1296,16 @@ func (api *APIControllers) QueryTemplatesIndex(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "Workspace not found" @Failure 500
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/queries/templates [get]
+
+func (api *APIControllers) ReportUsage(c fiber.Ctx) error
+    ReportUsage godoc @Summary Report usage from internal services @Description
+    Accept usage reports from internal services (e.g., AI service reporting
+    ai_requests) @Tags system @Security SystemTokenAuth @Accept json @Produce
+    json @Param body body UsageReportRequest true "Usage report" @Success
+    200 {object} irminmodels.IrminAPIResponse "Usage recorded" @Failure 400
+    {object} irminmodels.IrminAPIResponse "Bad request" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized" @Router /system/usage/report
+    [post]
 
 func (api *APIControllers) RepositoriesDestroy(c fiber.Ctx) error
     RepositoriesDestroy godoc @Summary Delete repository @Description
@@ -2801,6 +2853,14 @@ type ConnectorWebhookPayload struct {
     ConnectorWebhookPayload represents the expected payload from connector
     webhooks. This is the data structure that connectors send when data changes
     occur.
+
+type UsageReportRequest struct {
+	WorkspaceID string `json:"workspace_id"` // SQID
+	Dimension   string `json:"dimension"`
+	Quantity    int64  `json:"quantity"`
+}
+    UsageReportRequest represents a request to report usage from an internal
+    service.
 
 </pre>
 </body></html>

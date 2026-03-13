@@ -89,11 +89,11 @@ func validateAuthAndGetUser(cfg *authConfig, authHeader string) (*db.User, error
 		}
 	}()
 
-	user, isSystem, err := cfg.apiServices.IdentifyUserFromToken(ctx, token, "en")
+	user, tokenType, err := cfg.apiServices.IdentifyUserFromToken(ctx, token, "en")
 	if err != nil {
 		return nil, err
 	}
-	if isSystem {
+	if tokenType == services.TokenTypeSystem {
 		return nil, errors.New("system token not permitted for MCP")
 	}
 
@@ -130,11 +130,11 @@ func validateAuthAndGetUserOrAIApp(cfg *authConfig, authHeader string) (*db.User
 		}
 	}()
 
-	user, isSystem, err := cfg.apiServices.IdentifyUserFromToken(ctx, token, "en")
+	user, tokenType, err := cfg.apiServices.IdentifyUserFromToken(ctx, token, "en")
 	if err != nil {
 		return nil, nil, err
 	}
-	if isSystem {
+	if tokenType == services.TokenTypeSystem {
 		return nil, nil, errors.New("system token not permitted for MCP")
 	}
 

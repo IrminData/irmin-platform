@@ -46,9 +46,16 @@ var (
 	// ErrObjectSchemaCacheNotFound is returned when an object schema cache entry is not found.
 	ErrObjectSchemaCacheNotFound = errors.New("object schema cache not found")
 )
+var ErrUsageLimitExceeded = errors.New("workflow run usage limit exceeded")
+    ErrUsageLimitExceeded is returned when the workspace has exceeded its
+    workflow run limit.
+
 var ErrWorkflowMinIntervalNotMet = errors.New("workflow min interval not met")
     ErrWorkflowMinIntervalNotMet is returned when not enough time has passed
     since the last workflow run
+
+var ErrWorkflowPaused = errors.New("workflow is paused")
+    ErrWorkflowPaused is returned when the workflow is paused.
 
 
 FUNCTIONS
@@ -81,6 +88,7 @@ func CreateWorkflowRun(
 	workflow *db.Workflow,
 	user *db.User,
 	trigger *db.WorkflowTrigger,
+	checkUsage UsageCheckFunc,
 ) (*db.WorkflowRun, error)
     CreateWorkflowRun will check if enough time has passed since the last run.
     If so, it will create a new pending workflow run, update the schedule's
@@ -93,6 +101,7 @@ func CreateWorkflowRunWithPayload(
 	user *db.User,
 	trigger *db.WorkflowTrigger,
 	payload any,
+	checkUsage UsageCheckFunc,
 ) (*db.WorkflowRun, error)
     CreateWorkflowRunWithPayload creates a workflow run and attaches trigger
     event data as payload. The payload will be available to pipeline stages as
@@ -392,6 +401,10 @@ type TestSuite struct {
 func GetTestSuite() *TestSuite
     GetTestSuite returns the global test suite instance. This is safe to call
     from any test function.
+
+type UsageCheckFunc func(workspaceID uint) (bool, error)
+    UsageCheckFunc checks if a workflow run is allowed for the given workspace.
+    Returns true if allowed, false if the limit is exceeded.
 
 </pre>
 </body></html>

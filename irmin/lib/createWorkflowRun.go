@@ -14,6 +14,16 @@ import (
 // ErrWorkflowMinIntervalNotMet is returned when not enough time has passed since the last workflow run
 var ErrWorkflowMinIntervalNotMet = errors.New("workflow min interval not met")
 
+// ErrWorkflowPaused is returned when the workflow is paused.
+var ErrWorkflowPaused = errors.New("workflow is paused")
+
+// ErrUsageLimitExceeded is returned when the workspace has exceeded its workflow run limit.
+var ErrUsageLimitExceeded = errors.New("workflow run usage limit exceeded")
+
+// UsageCheckFunc checks if a workflow run is allowed for the given workspace.
+// Returns true if allowed, false if the limit is exceeded.
+type UsageCheckFunc func(workspaceID uint) (bool, error)
+
 // CreateWorkflowRun will check if enough time has passed since the last run.
 // If so, it will create a new pending workflow run, update the schedule's previous run time,
 // and return the new workflow run.
@@ -23,6 +33,7 @@ func CreateWorkflowRun(
 	workflow *db.Workflow,
 	user *db.User,
 	trigger *db.WorkflowTrigger,
+	checkUsage UsageCheckFunc,
 ) (*db.WorkflowRun, error) {
 	// Make sure we have a workflow.
 	if workflow == nil {
@@ -31,7 +42,18 @@ func CreateWorkflowRun(
 
 	// Make sure that the workflow is not paused.
 	if workflow.Paused {
-		return nil, errors.New("workflow is paused")
+		return nil, ErrWorkflowPaused
+	}
+
+	// Check usage limits if a check function is provided.
+	if checkUsage != nil {
+		allowed, checkErr := checkUsage(workflow.WorkspaceID)
+		if checkErr != nil {
+			return nil, fmt.Errorf("usage check failed: %w", checkErr)
+		}
+		if !allowed {
+			return nil, ErrUsageLimitExceeded
+		}
 	}
 
 	// Acquire advisory lock to prevent concurrent workflow run creation for this workflow
@@ -95,9 +117,10 @@ func CreateWorkflowRunWithPayload(
 	user *db.User,
 	trigger *db.WorkflowTrigger,
 	payload any,
+	checkUsage UsageCheckFunc,
 ) (*db.WorkflowRun, error) {
 	// Create the base workflow run using the existing function
-	run, err := CreateWorkflowRun(tx, workflow, user, trigger)
+	run, err := CreateWorkflowRun(tx, workflow, user, trigger, checkUsage)
 	if err != nil {
 		return nil, err
 	}

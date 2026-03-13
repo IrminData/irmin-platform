@@ -146,6 +146,11 @@ func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices) {
 			return
 		}
 
+		// Track API request for billing
+		if apiServices.UsageTracker != nil {
+			apiServices.UsageTracker.Track(aiApp.Workspace.ID, db.UsageDimensionAPIRequests, 1)
+		}
+
 		// Create a new MCP server for this AI Application
 		server := sdkmcp.NewServer(&sdkmcp.Implementation{
 			Name:    AIAppMCPServerName,

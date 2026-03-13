@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"irmin-api/db"
+	"irmin-api/utils"
+	"log/slog"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -37,4 +39,35 @@ var ExportCreatePolicyInTransaction = func(
 	newPolicy *db.Policy,
 ) (bool, error) {
 	return api.createPolicyInTransaction(ctx, workspace, newPolicy)
+}
+
+// ExportMapPolarStatus exports mapPolarStatus for testing.
+var ExportMapPolarStatus = mapPolarStatus
+
+// ExportExtractNestedString exports extractNestedString for testing.
+var ExportExtractNestedString = extractNestedString
+
+// ExportGetMapKeys exports getMapKeys for testing.
+var ExportGetMapKeys = getMapKeys
+
+// UsageEvent is an exported alias of usageEvent for testing.
+type UsageEvent = usageEvent
+
+// ExportEventToRecord exports eventToRecord for testing.
+var ExportEventToRecord = func(t *UsageTracker, evt UsageEvent) *db.UsageRecord {
+	return t.eventToRecord(evt)
+}
+
+// NewBillingServiceWithBaseURL creates a billing service with a custom base URL for testing.
+func NewBillingServiceWithBaseURL(
+	database *db.Database,
+	env *utils.CoreAPIEnv,
+	logger *slog.Logger,
+	baseURL string,
+) *BillingService {
+	s := NewBillingService(database, env, logger)
+	if s != nil {
+		s.baseURL = baseURL
+	}
+	return s
 }

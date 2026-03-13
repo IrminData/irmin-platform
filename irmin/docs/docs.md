@@ -927,6 +927,11 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) AIApplicationsUpdate\(c fiber.Ctx\) error](<#APIControllers.AIApplicationsUpdate>)
   - [func \(api \*APIControllers\) AcceptInvite\(c fiber.Ctx\) error](<#APIControllers.AcceptInvite>)
   - [func \(api \*APIControllers\) AllWorkflowRunsIndex\(c fiber.Ctx\) error](<#APIControllers.AllWorkflowRunsIndex>)
+  - [func \(api \*APIControllers\) BillingCheckoutCreate\(c fiber.Ctx\) error](<#APIControllers.BillingCheckoutCreate>)
+  - [func \(api \*APIControllers\) BillingPortalCreate\(c fiber.Ctx\) error](<#APIControllers.BillingPortalCreate>)
+  - [func \(api \*APIControllers\) BillingSubscriptionShow\(c fiber.Ctx\) error](<#APIControllers.BillingSubscriptionShow>)
+  - [func \(api \*APIControllers\) BillingUsageHistory\(c fiber.Ctx\) error](<#APIControllers.BillingUsageHistory>)
+  - [func \(api \*APIControllers\) BillingUsageShow\(c fiber.Ctx\) error](<#APIControllers.BillingUsageShow>)
   - [func \(api \*APIControllers\) CheckPermission\(c fiber.Ctx\) error](<#APIControllers.CheckPermission>)
   - [func \(api \*APIControllers\) CompareRefs\(c fiber.Ctx\) error](<#APIControllers.CompareRefs>)
   - [func \(api \*APIControllers\) ConnectionSchema\(c fiber.Ctx\) error](<#APIControllers.ConnectionSchema>)
@@ -968,6 +973,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) LogsIndex\(c fiber.Ctx\) error](<#APIControllers.LogsIndex>)
   - [func \(api \*APIControllers\) MergeRefs\(c fiber.Ctx\) error](<#APIControllers.MergeRefs>)
   - [func \(api \*APIControllers\) PauseWorkflow\(c fiber.Ctx\) error](<#APIControllers.PauseWorkflow>)
+  - [func \(api \*APIControllers\) PolarWebhook\(c fiber.Ctx\) error](<#APIControllers.PolarWebhook>)
   - [func \(api \*APIControllers\) PoliciesDestroy\(c fiber.Ctx\) error](<#APIControllers.PoliciesDestroy>)
   - [func \(api \*APIControllers\) PoliciesIndex\(c fiber.Ctx\) error](<#APIControllers.PoliciesIndex>)
   - [func \(api \*APIControllers\) PoliciesMySummary\(c fiber.Ctx\) error](<#APIControllers.PoliciesMySummary>)
@@ -984,6 +990,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) QueriesStore\(c fiber.Ctx\) error](<#APIControllers.QueriesStore>)
   - [func \(api \*APIControllers\) QueriesUpdate\(c fiber.Ctx\) error](<#APIControllers.QueriesUpdate>)
   - [func \(api \*APIControllers\) QueryTemplatesIndex\(c fiber.Ctx\) error](<#APIControllers.QueryTemplatesIndex>)
+  - [func \(api \*APIControllers\) ReportUsage\(c fiber.Ctx\) error](<#APIControllers.ReportUsage>)
   - [func \(api \*APIControllers\) RepositoriesDestroy\(c fiber.Ctx\) error](<#APIControllers.RepositoriesDestroy>)
   - [func \(api \*APIControllers\) RepositoriesIndex\(c fiber.Ctx\) error](<#APIControllers.RepositoriesIndex>)
   - [func \(api \*APIControllers\) RepositoriesShow\(c fiber.Ctx\) error](<#APIControllers.RepositoriesShow>)
@@ -1082,6 +1089,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) WorkspacesStore\(c fiber.Ctx\) error](<#APIControllers.WorkspacesStore>)
   - [func \(api \*APIControllers\) WorkspacesUpdate\(c fiber.Ctx\) error](<#APIControllers.WorkspacesUpdate>)
 - [type ConnectorWebhookPayload](<#ConnectorWebhookPayload>)
+- [type UsageReportRequest](<#UsageReportRequest>)
 
 
 <a name="CollectMultipartFiles"></a>
@@ -1379,6 +1387,51 @@ func (api *APIControllers) AllWorkflowRunsIndex(c fiber.Ctx) error
 ```
 
 AllWorkflowRunsIndex godoc @Summary List all workflow runs in workspace @Description Get all workflow runs for all workflows in the workspace with pagination and permission filtering. @Description Supports both offset\-based \(page/per\_page\) and cursor\-based \(cursor/per\_page\) pagination. @Description Cursor pagination is more efficient for deep pages \- O\(1\) vs O\(n\) for offset. @Tags workflow\-runs @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param page query int false "Page number for pagination" default\(1\) @Param per\_page query int false "Number of items per page" default\(100\) @Param cursor query string false "ISO 8601 datetime cursor for cursor\-based pagination" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.WorkflowRun,pagination=irminmodels.IrminAPIPaginationMetadata\} "All workflow runs retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid pagination parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/workflows/runs \[get\]
+
+<a name="APIControllers.BillingCheckoutCreate"></a>
+### func \(\*APIControllers\) BillingCheckoutCreate
+
+```go
+func (api *APIControllers) BillingCheckoutCreate(c fiber.Ctx) error
+```
+
+BillingCheckoutCreate godoc @Summary Create a Polar checkout session @Tags billing @Security ApiKeyAuth @Accept json @Produce json @Param workspace path string true "Workspace slug" @Param request body irmincore.CheckoutRequest true "Checkout request" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irmincore.CheckoutResponse\} @Router /workspaces/\{workspace\}/billing/checkout \[post\]
+
+<a name="APIControllers.BillingPortalCreate"></a>
+### func \(\*APIControllers\) BillingPortalCreate
+
+```go
+func (api *APIControllers) BillingPortalCreate(c fiber.Ctx) error
+```
+
+BillingPortalCreate godoc @Summary Get Polar customer portal URL @Tags billing @Security ApiKeyAuth @Produce json @Param workspace path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irmincore.PortalResponse\} @Router /workspaces/\{workspace\}/billing/portal \[post\]
+
+<a name="APIControllers.BillingSubscriptionShow"></a>
+### func \(\*APIControllers\) BillingSubscriptionShow
+
+```go
+func (api *APIControllers) BillingSubscriptionShow(c fiber.Ctx) error
+```
+
+BillingSubscriptionShow godoc @Summary Get workspace billing subscription @Tags billing @Security ApiKeyAuth @Produce json @Param workspace path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.PlanInfo\} @Router /workspaces/\{workspace\}/billing/subscription \[get\]
+
+<a name="APIControllers.BillingUsageHistory"></a>
+### func \(\*APIControllers\) BillingUsageHistory
+
+```go
+func (api *APIControllers) BillingUsageHistory(c fiber.Ctx) error
+```
+
+BillingUsageHistory godoc @Summary Get usage history for workspace @Tags billing @Security ApiKeyAuth @Produce json @Param workspace path string true "Workspace slug" @Param periods query int false "Number of periods to retrieve" default\(6\) @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.UsageHistoryEntry\} @Router /workspaces/\{workspace\}/billing/usage/history \[get\]
+
+<a name="APIControllers.BillingUsageShow"></a>
+### func \(\*APIControllers\) BillingUsageShow
+
+```go
+func (api *APIControllers) BillingUsageShow(c fiber.Ctx) error
+```
+
+BillingUsageShow godoc @Summary Get current period usage for workspace @Tags billing @Security ApiKeyAuth @Produce json @Param workspace path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.UsageDimensionInfo\} @Router /workspaces/\{workspace\}/billing/usage \[get\]
 
 <a name="APIControllers.CheckPermission"></a>
 ### func \(\*APIControllers\) CheckPermission
@@ -1749,6 +1802,15 @@ func (api *APIControllers) PauseWorkflow(c fiber.Ctx) error
 
 PauseWorkflow godoc @Summary Pause workflow @Description Pause a workflow to stop scheduled executions \(can be resumed later\) @Tags workflows @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param workflow\_slug path string true "Workflow slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Workflow\} "Workflow paused successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workflow not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/workflows/\{workflow\_slug\}/pause \[post\]
 
+<a name="APIControllers.PolarWebhook"></a>
+### func \(\*APIControllers\) PolarWebhook
+
+```go
+func (api *APIControllers) PolarWebhook(c fiber.Ctx) error
+```
+
+PolarWebhook godoc @Summary Handle Polar webhook events @Tags webhooks @Accept json @Produce json @Success 200 \{object\} irminmodels.IrminAPIResponse @Router /api/v1/webhooks/polar \[post\]
+
 <a name="APIControllers.PoliciesDestroy"></a>
 ### func \(\*APIControllers\) PoliciesDestroy
 
@@ -1892,6 +1954,15 @@ func (api *APIControllers) QueryTemplatesIndex(c fiber.Ctx) error
 ```
 
 QueryTemplatesIndex godoc @Summary List query templates @Description Get all available query templates @Tags queries @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.Template\} "Templates retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/queries/templates \[get\]
+
+<a name="APIControllers.ReportUsage"></a>
+### func \(\*APIControllers\) ReportUsage
+
+```go
+func (api *APIControllers) ReportUsage(c fiber.Ctx) error
+```
+
+ReportUsage godoc @Summary Report usage from internal services @Description Accept usage reports from internal services \(e.g., AI service reporting ai\_requests\) @Tags system @Security SystemTokenAuth @Accept json @Produce json @Param body body UsageReportRequest true "Usage report" @Success 200 \{object\} irminmodels.IrminAPIResponse "Usage recorded" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized" @Router /system/usage/report \[post\]
 
 <a name="APIControllers.RepositoriesDestroy"></a>
 ### func \(\*APIControllers\) RepositoriesDestroy
@@ -2788,6 +2859,19 @@ type ConnectorWebhookPayload struct {
 }
 ```
 
+<a name="UsageReportRequest"></a>
+## type UsageReportRequest
+
+UsageReportRequest represents a request to report usage from an internal service.
+
+```go
+type UsageReportRequest struct {
+    WorkspaceID string `json:"workspace_id"` // SQID
+    Dimension   string `json:"dimension"`
+    Quantity    int64  `json:"quantity"`
+}
+```
+
 # db
 
 ```go
@@ -2801,8 +2885,11 @@ import "irmin-api/db"
 - [func ContainsSQLInjectionPattern\(input string\) bool](<#ContainsSQLInjectionPattern>)
 - [func ContainsSuspiciousPatterns\(input string\) bool](<#ContainsSuspiciousPatterns>)
 - [func GenerateWebhookToken\(\) \(string, error\)](<#GenerateWebhookToken>)
+- [func GetFreeTierDisplayLimits\(\) map\[UsageDimension\]int64](<#GetFreeTierDisplayLimits>)
+- [func GetFreeTierHardLimits\(\) map\[UsageDimension\]int64](<#GetFreeTierHardLimits>)
 - [func GetNormalizedQuery\(query string\) string](<#GetNormalizedQuery>)
 - [func GetNormalizedQueryWithOptions\(query string, options QueryNormalizationOptions\) string](<#GetNormalizedQueryWithOptions>)
+- [func IsByteDimension\(dim UsageDimension\) bool](<#IsByteDimension>)
 - [func IsValidFieldName\(fieldName string\) bool](<#IsValidFieldName>)
 - [func IsValidTableName\(tableName string\) bool](<#IsValidTableName>)
 - [func LockKey\(db \*gorm.DB, key string\) error](<#LockKey>)
@@ -2832,6 +2919,7 @@ import "irmin-api/db"
 - [type AsyncJobStatus](<#AsyncJobStatus>)
 - [type AsyncJobType](<#AsyncJobType>)
 - [type BatchLoadResult](<#BatchLoadResult>)
+- [type BillingEvent](<#BillingEvent>)
 - [type Connection](<#Connection>)
 - [type ConnectionEventType](<#ConnectionEventType>)
 - [type ConnectionSchemaCache](<#ConnectionSchemaCache>)
@@ -2852,12 +2940,16 @@ import "irmin-api/db"
   - [func \(d \*Database\) AddTagToScript\(scriptID, tagID uint\) error](<#Database.AddTagToScript>)
   - [func \(d \*Database\) AddTagToWorkflow\(workflowID, tagID uint\) error](<#Database.AddTagToWorkflow>)
   - [func \(d \*Database\) AddUserToWorkspace\(tx \*gorm.DB, userID, workspaceID uint, roleIDs \[\]uint\) \(\*WorkspaceUser, error\)](<#Database.AddUserToWorkspace>)
+  - [func \(d \*Database\) AggregateUsageSummaries\(periodStart, periodEnd time.Time\) error](<#Database.AggregateUsageSummaries>)
   - [func \(d \*Database\) CheckIfRepositoryExists\(slug string, workspaceID uint\) bool](<#Database.CheckIfRepositoryExists>)
   - [func \(d \*Database\) Close\(\)](<#Database.Close>)
+  - [func \(d \*Database\) CountWorkspaceMembersAndInvites\(workspaceID uint\) \(int64, error\)](<#Database.CountWorkspaceMembersAndInvites>)
   - [func \(d \*Database\) CreateAIApplicationPendingWrite\(pw \*AIApplicationPendingWrite\) error](<#Database.CreateAIApplicationPendingWrite>)
   - [func \(d \*Database\) CreateAIApplicationToolLog\(log \*AIApplicationToolLog\) error](<#Database.CreateAIApplicationToolLog>)
+  - [func \(d \*Database\) CreateBillingEvent\(event \*BillingEvent\) error](<#Database.CreateBillingEvent>)
   - [func \(d \*Database\) CreateConnectionSubscription\(subscription \*ConnectionSubscription\) error](<#Database.CreateConnectionSubscription>)
   - [func \(d \*Database\) CreateSearchIndexes\(\) error](<#Database.CreateSearchIndexes>)
+  - [func \(d \*Database\) CreateUsageRecordsBatch\(records \[\]\*UsageRecord\) error](<#Database.CreateUsageRecordsBatch>)
   - [func \(d \*Database\) CustomToolNameExists\(name string, aiApplicationID uint, excludeID \*uint\) \(bool, error\)](<#Database.CustomToolNameExists>)
   - [func \(d \*Database\) DeleteAIApplication\(tx \*gorm.DB, id uint\) error](<#Database.DeleteAIApplication>)
   - [func \(d \*Database\) DeleteAPIToken\(id uint\) error](<#Database.DeleteAPIToken>)
@@ -2897,6 +2989,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetAllAssetsByTag\(tagID uint\) \(\*TaggedAssets, error\)](<#Database.GetAllAssetsByTag>)
   - [func \(d \*Database\) GetAllConnectors\(\) \(\[\]Connector, error\)](<#Database.GetAllConnectors>)
   - [func \(d \*Database\) GetAllWorkspaces\(\) \(\[\]Workspace, error\)](<#Database.GetAllWorkspaces>)
+  - [func \(d \*Database\) GetBillingEventByPolarID\(polarEventID string\) \(\*BillingEvent, error\)](<#Database.GetBillingEventByPolarID>)
   - [func \(d \*Database\) GetConnectionByID\(id uint\) \(\*Connection, error\)](<#Database.GetConnectionByID>)
   - [func \(d \*Database\) GetConnectionByIDAndWorkspaceID\(id uint, workspaceID uint\) \(\*Connection, error\)](<#Database.GetConnectionByIDAndWorkspaceID>)
   - [func \(d \*Database\) GetConnectionSubscriptionByID\(id uint\) \(\*ConnectionSubscription, error\)](<#Database.GetConnectionSubscriptionByID>)
@@ -2906,6 +2999,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetConnectionsByWorkspaceID\(workspaceID uint\) \(\[\]Connection, error\)](<#Database.GetConnectionsByWorkspaceID>)
   - [func \(d \*Database\) GetConnector\(id uint\) \(\*Connector, error\)](<#Database.GetConnector>)
   - [func \(d \*Database\) GetConnectorByAPIBaseURL\(apiBaseURL string\) \(\*Connector, error\)](<#Database.GetConnectorByAPIBaseURL>)
+  - [func \(d \*Database\) GetCurrentPeriodUsage\(workspaceID uint\) \(\[\]UsageSummary, error\)](<#Database.GetCurrentPeriodUsage>)
   - [func \(d \*Database\) GetCustomToolByID\(id uint\) \(\*AIApplicationCustomTool, error\)](<#Database.GetCustomToolByID>)
   - [func \(d \*Database\) GetCustomToolByNameAndAIApplicationID\(name string, aiApplicationID uint\) \(\*AIApplicationCustomTool, error\)](<#Database.GetCustomToolByNameAndAIApplicationID>)
   - [func \(d \*Database\) GetCustomToolsByAIApplicationID\(aiApplicationID uint\) \(\[\]AIApplicationCustomTool, error\)](<#Database.GetCustomToolsByAIApplicationID>)
@@ -2946,6 +3040,8 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetTaggedAssetsCount\(tagID uint\) \(map\[string\]int, error\)](<#Database.GetTaggedAssetsCount>)
   - [func \(d \*Database\) GetTagsByWorkspace\(workspaceID uint\) \(\[\]Tag, error\)](<#Database.GetTagsByWorkspace>)
   - [func \(d \*Database\) GetTemplatesByType\(templateType irminmodels.TemplateType\) \(\[\]Template, error\)](<#Database.GetTemplatesByType>)
+  - [func \(d \*Database\) GetUnreportedUsageRecords\(limit int\) \(\[\]UsageRecord, error\)](<#Database.GetUnreportedUsageRecords>)
+  - [func \(d \*Database\) GetUsageHistory\(workspaceID uint, periods int\) \(\[\]UsageSummary, error\)](<#Database.GetUsageHistory>)
   - [func \(d \*Database\) GetUser\(id uint\) \(\*User, error\)](<#Database.GetUser>)
   - [func \(d \*Database\) GetUserByClerkID\(clerkID string\) \(\*User, error\)](<#Database.GetUserByClerkID>)
   - [func \(d \*Database\) GetUserByEmail\(email string\) \(\*User, error\)](<#Database.GetUserByEmail>)
@@ -2962,6 +3058,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetWorkflowsByWorkspaceID\(workspaceID uint\) \(\[\]Workflow, error\)](<#Database.GetWorkflowsByWorkspaceID>)
   - [func \(d \*Database\) GetWorkflowsOfTypeByWorkspaceID\(workspaceID uint, workflowType irminmodels.WorkflowableType\) \(\[\]Workflow, error\)](<#Database.GetWorkflowsOfTypeByWorkspaceID>)
   - [func \(d \*Database\) GetWorkspaceBySlug\(slug string\) \(\*Workspace, error\)](<#Database.GetWorkspaceBySlug>)
+  - [func \(d \*Database\) GetWorkspaceSubscription\(workspaceID uint\) \(\*WorkspaceSubscription, error\)](<#Database.GetWorkspaceSubscription>)
   - [func \(d \*Database\) GetWorkspaceSummaries\(userID uint\) \(\[\]WorkspaceSummaryRow, error\)](<#Database.GetWorkspaceSummaries>)
   - [func \(d \*Database\) GetWorkspaceUser\(workspaceID, userID uint\) \(\*WorkspaceUser, error\)](<#Database.GetWorkspaceUser>)
   - [func \(d \*Database\) IsUserInWorkspace\(userID, workspaceID uint\) \(bool, error\)](<#Database.IsUserInWorkspace>)
@@ -2969,6 +3066,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) ListenForNotifications\(ctx context.Context, channel string\) \(func\(\) error, error\)](<#Database.ListenForNotifications>)
   - [func \(d \*Database\) MarkObjectCacheStale\(repositoryID uint, ref string\) error](<#Database.MarkObjectCacheStale>)
   - [func \(d \*Database\) MarkObjectCacheStaleBySlug\(workspaceSlug, repositorySlug, ref string\) error](<#Database.MarkObjectCacheStaleBySlug>)
+  - [func \(d \*Database\) MarkUsageRecordsReported\(ids \[\]uint\) error](<#Database.MarkUsageRecordsReported>)
   - [func \(d \*Database\) Migrate\(\) error](<#Database.Migrate>)
   - [func \(d \*Database\) RemoveTagFromAIApplication\(aiApplicationID, tagID uint\) error](<#Database.RemoveTagFromAIApplication>)
   - [func \(d \*Database\) RemoveTagFromConnection\(connectionID, tagID uint\) error](<#Database.RemoveTagFromConnection>)
@@ -2989,6 +3087,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) UpdatePendingWriteStatusAtomic\(id uint, expectedStatus PendingWriteStatus, newStatus PendingWriteStatus, reviewedByID \*uint\) \(bool, error\)](<#Database.UpdatePendingWriteStatusAtomic>)
   - [func \(d \*Database\) UpdateWorkspaceUserRoles\(tx \*gorm.DB, userID, workspaceID uint, roleIDs \[\]uint\) \(\*WorkspaceUser, error\)](<#Database.UpdateWorkspaceUserRoles>)
   - [func \(d \*Database\) UpsertTemplate\(template \*Template\) error](<#Database.UpsertTemplate>)
+  - [func \(d \*Database\) UpsertWorkspaceSubscription\(sub \*WorkspaceSubscription\) error](<#Database.UpsertWorkspaceSubscription>)
   - [func \(d \*Database\) WaitForNotification\(ctx context.Context, channel string\) \(\*pgconn.Notification, error\)](<#Database.WaitForNotification>)
 - [type EntityLoader](<#EntityLoader>)
   - [func NewEntityLoader\(db \*Database\) \*EntityLoader](<#NewEntityLoader>)
@@ -3048,11 +3147,15 @@ import "irmin-api/db"
 - [type SearchToken](<#SearchToken>)
 - [type StoredQuery](<#StoredQuery>)
 - [type StoredScript](<#StoredScript>)
+- [type SubscriptionStatus](<#SubscriptionStatus>)
 - [type Tag](<#Tag>)
 - [type TagWithAssets](<#TagWithAssets>)
 - [type TaggedAssets](<#TaggedAssets>)
 - [type Template](<#Template>)
 - [type TokenType](<#TokenType>)
+- [type UsageDimension](<#UsageDimension>)
+- [type UsageRecord](<#UsageRecord>)
+- [type UsageSummary](<#UsageSummary>)
 - [type User](<#User>)
 - [type Workflow](<#Workflow>)
 - [type WorkflowRun](<#WorkflowRun>)
@@ -3061,12 +3164,80 @@ import "irmin-api/db"
 - [type WorkflowTrigger](<#WorkflowTrigger>)
 - [type WorkflowTriggerType](<#WorkflowTriggerType>)
 - [type Workspace](<#Workspace>)
+- [type WorkspaceSubscription](<#WorkspaceSubscription>)
 - [type WorkspaceSummaryRow](<#WorkspaceSummaryRow>)
 - [type WorkspaceUser](<#WorkspaceUser>)
 - [type WorkspaceUserRole](<#WorkspaceUserRole>)
 
 
 ## Constants
+
+<a name="SubscriptionStatusActive"></a>Subscription status constants re\-exported from SDK for convenience.
+
+```go
+const (
+    SubscriptionStatusActive    = irminmodels.SubscriptionStatusActive
+    SubscriptionStatusCancelled = irminmodels.SubscriptionStatusCancelled
+    SubscriptionStatusPastDue   = irminmodels.SubscriptionStatusPastDue
+    SubscriptionStatusTrialing  = irminmodels.SubscriptionStatusTrialing
+    SubscriptionStatusNone      = irminmodels.SubscriptionStatusNone
+)
+```
+
+<a name="UsageDimensionStorage"></a>Usage dimension constants re\-exported from SDK for convenience.
+
+```go
+const (
+    UsageDimensionStorage      = irminmodels.UsageDimensionStorage
+    UsageDimensionWorkflowRuns = irminmodels.UsageDimensionWorkflowRuns
+    UsageDimensionAIRequests   = irminmodels.UsageDimensionAIRequests
+    UsageDimensionAPIRequests  = irminmodels.UsageDimensionAPIRequests
+    UsageDimensionDataTransfer = irminmodels.UsageDimensionDataTransfer
+    UsageDimensionSeats        = irminmodels.UsageDimensionSeats
+)
+```
+
+<a name="CreditPerMeter"></a>Usage\-based billing constants.
+
+```go
+const (
+    // CreditPerMeter is the free credit in EUR per meter per month.
+    CreditPerMeter = 2.0
+    // MeterCount is the total number of usage meters.
+    MeterCount = 6
+    // TotalFreeCredit is the total free credit in EUR per month (CreditPerMeter * MeterCount).
+    TotalFreeCredit = 12.0
+    // SeatRate is the cost in EUR per extra seat per month.
+    SeatRate = 5.0
+)
+```
+
+<a name="RateStoragePerGB"></a>Usage rate constants \(EUR per unit\) for billing dimension display. Storage and data transfer rates are per GB. Internal tracking uses bytes but values are converted to GB when reported to Polar and displayed in the UI.
+
+```go
+const (
+    RateStoragePerGB      = 0.02   // 0.02 € / GB
+    RateWorkflowRuns      = 0.01   // 0.01 € / run
+    RateAIRequests        = 0.05   // 0.05 € / request
+    RateAPIRequests       = 0.0005 // 0.50 € / 1K = 0.0005 € / request
+    RateDataTransferPerGB = 0.05   // 0.05 € / GB
+)
+```
+
+<a name="FreeStorageBytes"></a>Free tier hard limit constants for users without a payment method. Storage and data transfer limits are in bytes \(used for internal enforcement\).
+
+```go
+const (
+    FreeStorageBytes      = 5 * 1_000_000_000  // 5 GB in bytes
+    FreeStorageGB         = 5                  // 5 GB (for Polar benefits / display)
+    FreeWorkflowRuns      = 200                // 200 runs
+    FreeAIRequests        = 40                 // 40 requests
+    FreeAPIRequests       = 4000               // 4,000 requests
+    FreeDataTransferBytes = 40 * 1_000_000_000 // 40 GB in bytes
+    FreeDataTransferGB    = 40                 // 40 GB (for Polar benefits / display)
+    FreeExtraSeats        = 0                  // 0 extra seats (1 member free)
+)
+```
 
 <a name="LogAssetTypeRepository"></a>LogAssetType constants for filtering log events by asset type.
 
@@ -3167,6 +3338,12 @@ const (
 )
 ```
 
+<a name="BytesPerGB"></a>BytesPerGB is the number of bytes in a gigabyte \(decimal, matching storage industry convention\).
+
+```go
+const BytesPerGB = 1_000_000_000
+```
+
 <a name="DefaultWorkflowListLimit"></a>
 
 ```go
@@ -3211,6 +3388,24 @@ func GenerateWebhookToken() (string, error)
 
 GenerateWebhookToken creates a secure random token for webhook authentication.
 
+<a name="GetFreeTierDisplayLimits"></a>
+## func GetFreeTierDisplayLimits
+
+```go
+func GetFreeTierDisplayLimits() map[UsageDimension]int64
+```
+
+GetFreeTierDisplayLimits returns the hard usage limits in display units \(GB for storage/transfer\). Used for API responses and Polar benefits configuration.
+
+<a name="GetFreeTierHardLimits"></a>
+## func GetFreeTierHardLimits
+
+```go
+func GetFreeTierHardLimits() map[UsageDimension]int64
+```
+
+GetFreeTierHardLimits returns the hard usage limits for users without a payment method. Storage and data transfer limits are in bytes for precise internal enforcement.
+
 <a name="GetNormalizedQuery"></a>
 ## func GetNormalizedQuery
 
@@ -3228,6 +3423,15 @@ func GetNormalizedQueryWithOptions(query string, options QueryNormalizationOptio
 ```
 
 GetNormalizedQueryWithOptions returns the normalized version with custom options.
+
+<a name="IsByteDimension"></a>
+## func IsByteDimension
+
+```go
+func IsByteDimension(dim UsageDimension) bool
+```
+
+IsByteDimension returns true for dimensions that are tracked in bytes internally and should be converted to GB for display and external reporting.
 
 <a name="IsValidFieldName"></a>
 ## func IsValidFieldName
@@ -3691,6 +3895,21 @@ type BatchLoadResult struct {
 }
 ```
 
+<a name="BillingEvent"></a>
+## type BillingEvent
+
+BillingEvent represents a webhook event for idempotency and auditing.
+
+```go
+type BillingEvent struct {
+    gorm.Model
+    PolarEventID string    `json:"polar_event_id" gorm:"uniqueIndex"`
+    EventType    string    `json:"event_type"`
+    Payload      string    `json:"payload"        gorm:"type:jsonb"`
+    ProcessedAt  time.Time `json:"processed_at"`
+}
+```
+
 <a name="Connection"></a>
 ## type Connection
 
@@ -4013,6 +4232,15 @@ func (d *Database) AddUserToWorkspace(tx *gorm.DB, userID, workspaceID uint, rol
 
 AddUserToWorkspace adds a user to a workspace with the specified roles.
 
+<a name="Database.AggregateUsageSummaries"></a>
+### func \(\*Database\) AggregateUsageSummaries
+
+```go
+func (d *Database) AggregateUsageSummaries(periodStart, periodEnd time.Time) error
+```
+
+AggregateUsageSummaries aggregates usage records into summaries for the given period. Seats and storage use MAX aggregation \(gauge — peak value for in\-app display\). Polar computes the billing average for storage separately from individual snapshot events. All other dimensions use SUM \(counter\).
+
 <a name="Database.CheckIfRepositoryExists"></a>
 ### func \(\*Database\) CheckIfRepositoryExists
 
@@ -4030,6 +4258,15 @@ func (d *Database) Close()
 ```
 
 Close closes the shared database connection pool.
+
+<a name="Database.CountWorkspaceMembersAndInvites"></a>
+### func \(\*Database\) CountWorkspaceMembersAndInvites
+
+```go
+func (d *Database) CountWorkspaceMembersAndInvites(workspaceID uint) (int64, error)
+```
+
+CountWorkspaceMembersAndInvites returns the total number of active members and pending invites for a workspace.
 
 <a name="Database.CreateAIApplicationPendingWrite"></a>
 ### func \(\*Database\) CreateAIApplicationPendingWrite
@@ -4049,6 +4286,15 @@ func (d *Database) CreateAIApplicationToolLog(log *AIApplicationToolLog) error
 
 CreateAIApplicationToolLog creates a new tool audit log entry.
 
+<a name="Database.CreateBillingEvent"></a>
+### func \(\*Database\) CreateBillingEvent
+
+```go
+func (d *Database) CreateBillingEvent(event *BillingEvent) error
+```
+
+CreateBillingEvent creates a billing event for idempotency.
+
 <a name="Database.CreateConnectionSubscription"></a>
 ### func \(\*Database\) CreateConnectionSubscription
 
@@ -4066,6 +4312,15 @@ func (d *Database) CreateSearchIndexes() error
 ```
 
 CreateSearchIndexes creates indexes to optimize search performance.
+
+<a name="Database.CreateUsageRecordsBatch"></a>
+### func \(\*Database\) CreateUsageRecordsBatch
+
+```go
+func (d *Database) CreateUsageRecordsBatch(records []*UsageRecord) error
+```
+
+CreateUsageRecordsBatch inserts multiple usage records in a single batch.
 
 <a name="Database.CustomToolNameExists"></a>
 ### func \(\*Database\) CustomToolNameExists
@@ -4418,6 +4673,15 @@ func (d *Database) GetAllWorkspaces() ([]Workspace, error)
 
 GetAllWorkspaces retrieves all workspaces from the database.
 
+<a name="Database.GetBillingEventByPolarID"></a>
+### func \(\*Database\) GetBillingEventByPolarID
+
+```go
+func (d *Database) GetBillingEventByPolarID(polarEventID string) (*BillingEvent, error)
+```
+
+GetBillingEventByPolarID retrieves a billing event by its Polar event ID.
+
 <a name="Database.GetConnectionByID"></a>
 ### func \(\*Database\) GetConnectionByID
 
@@ -4498,6 +4762,15 @@ func (d *Database) GetConnectorByAPIBaseURL(apiBaseURL string) (*Connector, erro
 ```
 
 GetConnectorByAPIBaseURL retrieves a connector from the database by its API base URL.
+
+<a name="Database.GetCurrentPeriodUsage"></a>
+### func \(\*Database\) GetCurrentPeriodUsage
+
+```go
+func (d *Database) GetCurrentPeriodUsage(workspaceID uint) ([]UsageSummary, error)
+```
+
+GetCurrentPeriodUsage returns usage summaries for the current billing period of a workspace.
 
 <a name="Database.GetCustomToolByID"></a>
 ### func \(\*Database\) GetCustomToolByID
@@ -4863,6 +5136,24 @@ func (d *Database) GetTemplatesByType(templateType irminmodels.TemplateType) ([]
 
 GetTemplatesByType retrieves all templates of a specific type from the database.
 
+<a name="Database.GetUnreportedUsageRecords"></a>
+### func \(\*Database\) GetUnreportedUsageRecords
+
+```go
+func (d *Database) GetUnreportedUsageRecords(limit int) ([]UsageRecord, error)
+```
+
+GetUnreportedUsageRecords returns usage records that haven't been reported to Polar.
+
+<a name="Database.GetUsageHistory"></a>
+### func \(\*Database\) GetUsageHistory
+
+```go
+func (d *Database) GetUsageHistory(workspaceID uint, periods int) ([]UsageSummary, error)
+```
+
+GetUsageHistory returns usage summaries for a workspace over the most recent N billing periods. Uses a subquery on distinct period\_starts so the result is correct regardless of how many dimensions each period has.
+
 <a name="Database.GetUser"></a>
 ### func \(\*Database\) GetUser
 
@@ -5007,6 +5298,15 @@ func (d *Database) GetWorkspaceBySlug(slug string) (*Workspace, error)
 
 GetWorkspaceBySlug retrieves a workspace by its slug.
 
+<a name="Database.GetWorkspaceSubscription"></a>
+### func \(\*Database\) GetWorkspaceSubscription
+
+```go
+func (d *Database) GetWorkspaceSubscription(workspaceID uint) (*WorkspaceSubscription, error)
+```
+
+GetWorkspaceSubscription retrieves the subscription for a workspace.
+
 <a name="Database.GetWorkspaceSummaries"></a>
 ### func \(\*Database\) GetWorkspaceSummaries
 
@@ -5069,6 +5369,15 @@ func (d *Database) MarkObjectCacheStaleBySlug(workspaceSlug, repositorySlug, ref
 ```
 
 MarkObjectCacheStaleBySlug marks the root object entry as stale using workspace and repository slugs. This is a convenience method for callers that don't have the repository ID available \(e.g., orchestrator\).
+
+<a name="Database.MarkUsageRecordsReported"></a>
+### func \(\*Database\) MarkUsageRecordsReported
+
+```go
+func (d *Database) MarkUsageRecordsReported(ids []uint) error
+```
+
+MarkUsageRecordsReported marks usage records as reported to Polar.
 
 <a name="Database.Migrate"></a>
 ### func \(\*Database\) Migrate
@@ -5249,6 +5558,15 @@ func (d *Database) UpsertTemplate(template *Template) error
 ```
 
 UpsertTemplate creates or updates a template based on title and type.
+
+<a name="Database.UpsertWorkspaceSubscription"></a>
+### func \(\*Database\) UpsertWorkspaceSubscription
+
+```go
+func (d *Database) UpsertWorkspaceSubscription(sub *WorkspaceSubscription) error
+```
+
+UpsertWorkspaceSubscription creates or updates a workspace subscription atomically. Only non\-zero fields on sub are written, preserving existing values. Uses a transaction with SELECT FOR UPDATE to prevent race conditions between concurrent checkout requests and webhook handlers for the same workspace.
 
 <a name="Database.WaitForNotification"></a>
 ### func \(\*Database\) WaitForNotification
@@ -6290,6 +6608,15 @@ type StoredScript struct {
 }
 ```
 
+<a name="SubscriptionStatus"></a>
+## type SubscriptionStatus
+
+SubscriptionStatus represents the status of a subscription.
+
+```go
+type SubscriptionStatus = irminmodels.SubscriptionStatus
+```
+
 <a name="Tag"></a>
 ## type Tag
 
@@ -6372,6 +6699,48 @@ const (
     TokenTypeFilter
     TokenTypeOperator
 )
+```
+
+<a name="UsageDimension"></a>
+## type UsageDimension
+
+UsageDimension represents a usage tracking dimension.
+
+```go
+type UsageDimension = irminmodels.UsageDimension
+```
+
+<a name="UsageRecord"></a>
+## type UsageRecord
+
+UsageRecord represents an individual usage event.
+
+```go
+type UsageRecord struct {
+    gorm.Model
+    WorkspaceID     uint           `json:"workspace_id"      gorm:"index:idx_usage_record_composite,priority:1"`
+    Dimension       UsageDimension `json:"dimension"         gorm:"index:idx_usage_record_composite,priority:2"`
+    Quantity        int64          `json:"quantity"`
+    PeriodStart     time.Time      `json:"period_start"      gorm:"index:idx_usage_record_composite,priority:3"`
+    PeriodEnd       time.Time      `json:"period_end"`
+    ReportedToPolar bool           `json:"reported_to_polar" gorm:"default:false;index"`
+}
+```
+
+<a name="UsageSummary"></a>
+## type UsageSummary
+
+UsageSummary represents aggregated usage per workspace/dimension/period.
+
+```go
+type UsageSummary struct {
+    gorm.Model
+    WorkspaceID   uint           `json:"workspace_id"   gorm:"uniqueIndex:idx_usage_summary_unique,priority:1"`
+    Dimension     UsageDimension `json:"dimension"      gorm:"uniqueIndex:idx_usage_summary_unique,priority:2"`
+    PeriodStart   time.Time      `json:"period_start"   gorm:"uniqueIndex:idx_usage_summary_unique,priority:3"`
+    PeriodEnd     time.Time      `json:"period_end"`
+    TotalQuantity int64          `json:"total_quantity" gorm:"default:0"`
+}
 ```
 
 <a name="User"></a>
@@ -6563,6 +6932,30 @@ type Workspace struct {
     OwnerID     uint            `json:"owner_id"    gorm:"index"`
     Users       []WorkspaceUser `json:"users"       gorm:"foreignKey:WorkspaceID"`
     Policies    []Policy        `json:"policies"    gorm:"foreignKey:WorkspaceID"`
+}
+```
+
+<a name="WorkspaceSubscription"></a>
+## type WorkspaceSubscription
+
+WorkspaceSubscription represents a workspace's billing subscription.
+
+```go
+type WorkspaceSubscription struct {
+    gorm.Model
+    WorkspaceID         uint               `json:"workspace_id"          gorm:"uniqueIndex"`
+    PolarCustomerID     string             `json:"polar_customer_id"     gorm:"index"`
+    PolarExternalID     string             `json:"polar_external_id"`
+    PolarSubscriptionID string             `json:"polar_subscription_id"`
+    PolarProductID      string             `json:"polar_product_id"`
+    Status              SubscriptionStatus `json:"status"                gorm:"default:none"`
+    CurrentPeriodStart  *time.Time         `json:"current_period_start"`
+    CurrentPeriodEnd    *time.Time         `json:"current_period_end"`
+    CancelledAt         *time.Time         `json:"cancelled_at"`
+
+    // ClearCancelledAt signals that cancelled_at should be set to NULL during upsert.
+    // This is needed because nil pointer fields are otherwise skipped by the update logic.
+    ClearCancelledAt bool `json:"-" gorm:"-"`
 }
 ```
 
@@ -11291,8 +11684,8 @@ import "irmin-api/lib"
 - [func ConstructSQLSelector\(workspaceSlug, repositorySlug, objectPath, ref, defaultBranch string\) \(string, string, error\)](<#ConstructSQLSelector>)
 - [func CreateAuditLogEventAsync\(d \*db.Database, logger \*slog.Logger, event \*db.LogEvent\)](<#CreateAuditLogEventAsync>)
 - [func CreatePointerContent\(target \*irminmodels.PointerTarget\) \(\[\]byte, error\)](<#CreatePointerContent>)
-- [func CreateWorkflowRun\(tx \*gorm.DB, workflow \*db.Workflow, user \*db.User, trigger \*db.WorkflowTrigger\) \(\*db.WorkflowRun, error\)](<#CreateWorkflowRun>)
-- [func CreateWorkflowRunWithPayload\(tx \*gorm.DB, workflow \*db.Workflow, user \*db.User, trigger \*db.WorkflowTrigger, payload any\) \(\*db.WorkflowRun, error\)](<#CreateWorkflowRunWithPayload>)
+- [func CreateWorkflowRun\(tx \*gorm.DB, workflow \*db.Workflow, user \*db.User, trigger \*db.WorkflowTrigger, checkUsage UsageCheckFunc\) \(\*db.WorkflowRun, error\)](<#CreateWorkflowRun>)
+- [func CreateWorkflowRunWithPayload\(tx \*gorm.DB, workflow \*db.Workflow, user \*db.User, trigger \*db.WorkflowTrigger, payload any, checkUsage UsageCheckFunc\) \(\*db.WorkflowRun, error\)](<#CreateWorkflowRunWithPayload>)
 - [func DecodePolicyResourceID\(sqid string, resource db.PolicyResource, sqidManager \*irminsqids.SQIDManager\) \(\*uint, error\)](<#DecodePolicyResourceID>)
 - [func DownloadFileFromURL\(ctx context.Context, targetURL string, headers map\[string\]string\) \(io.ReadCloser, error\)](<#DownloadFileFromURL>)
 - [func EncodePolicyResourceID\(id uint, resource db.PolicyResource, sqidManager \*irminsqids.SQIDManager\) \(string, error\)](<#EncodePolicyResourceID>)
@@ -11329,6 +11722,7 @@ import "irmin-api/lib"
   - [func \(scm \*SchemaCacheManager\) GetObjectSchema\(ctx context.Context, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, ref, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, error\)](<#SchemaCacheManager.GetObjectSchema>)
 - [type TestSuite](<#TestSuite>)
   - [func GetTestSuite\(\) \*TestSuite](<#GetTestSuite>)
+- [type UsageCheckFunc](<#UsageCheckFunc>)
 
 
 ## Constants
@@ -11403,10 +11797,22 @@ var (
 )
 ```
 
+<a name="ErrUsageLimitExceeded"></a>ErrUsageLimitExceeded is returned when the workspace has exceeded its workflow run limit.
+
+```go
+var ErrUsageLimitExceeded = errors.New("workflow run usage limit exceeded")
+```
+
 <a name="ErrWorkflowMinIntervalNotMet"></a>ErrWorkflowMinIntervalNotMet is returned when not enough time has passed since the last workflow run
 
 ```go
 var ErrWorkflowMinIntervalNotMet = errors.New("workflow min interval not met")
+```
+
+<a name="ErrWorkflowPaused"></a>ErrWorkflowPaused is returned when the workflow is paused.
+
+```go
+var ErrWorkflowPaused = errors.New("workflow is paused")
 ```
 
 <a name="AssignDefaultRolesToUsersWithoutRoles"></a>
@@ -11458,7 +11864,7 @@ CreatePointerContent creates the JSON content for a pointer file.
 ## func CreateWorkflowRun
 
 ```go
-func CreateWorkflowRun(tx *gorm.DB, workflow *db.Workflow, user *db.User, trigger *db.WorkflowTrigger) (*db.WorkflowRun, error)
+func CreateWorkflowRun(tx *gorm.DB, workflow *db.Workflow, user *db.User, trigger *db.WorkflowTrigger, checkUsage UsageCheckFunc) (*db.WorkflowRun, error)
 ```
 
 CreateWorkflowRun will check if enough time has passed since the last run. If so, it will create a new pending workflow run, update the schedule's previous run time, and return the new workflow run. Creating a new workflow run will cause the orchestrator to pick it up and execute it.
@@ -11467,7 +11873,7 @@ CreateWorkflowRun will check if enough time has passed since the last run. If so
 ## func CreateWorkflowRunWithPayload
 
 ```go
-func CreateWorkflowRunWithPayload(tx *gorm.DB, workflow *db.Workflow, user *db.User, trigger *db.WorkflowTrigger, payload any) (*db.WorkflowRun, error)
+func CreateWorkflowRunWithPayload(tx *gorm.DB, workflow *db.Workflow, user *db.User, trigger *db.WorkflowTrigger, payload any, checkUsage UsageCheckFunc) (*db.WorkflowRun, error)
 ```
 
 CreateWorkflowRunWithPayload creates a workflow run and attaches trigger event data as payload. The payload will be available to pipeline stages as trigger\_event.json in previousStageResults. This is used for connection events and repository events with IncludeDiffAsPatch enabled.
@@ -11847,6 +12253,15 @@ func GetTestSuite() *TestSuite
 
 GetTestSuite returns the global test suite instance. This is safe to call from any test function.
 
+<a name="UsageCheckFunc"></a>
+## type UsageCheckFunc
+
+UsageCheckFunc checks if a workflow run is allowed for the given workspace. Returns true if allowed, false if the limit is exceeded.
+
+```go
+type UsageCheckFunc func(workspaceID uint) (bool, error)
+```
+
 # locales
 
 ```go
@@ -12113,8 +12528,11 @@ import "irmin-api/middlewares"
   - [func \(m \*APIMiddlewares\) AIApplicationAPIKeyAuth\(c fiber.Ctx\) error](<#APIMiddlewares.AIApplicationAPIKeyAuth>)
   - [func \(m \*APIMiddlewares\) AIApplicationMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.AIApplicationMiddleware>)
   - [func \(api \*APIMiddlewares\) AIApplicationPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.AIApplicationPermissionMiddleware>)
+  - [func \(api \*APIMiddlewares\) APIUsageMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.APIUsageMiddleware>)
   - [func \(api \*APIMiddlewares\) AuditLogPermissionMiddleware\(\) fiber.Handler](<#APIMiddlewares.AuditLogPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) AuthMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.AuthMiddleware>)
+  - [func \(api \*APIMiddlewares\) BillingEnabledMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.BillingEnabledMiddleware>)
+  - [func \(api \*APIMiddlewares\) BillingPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.BillingPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) ConnectionMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.ConnectionMiddleware>)
   - [func \(api \*APIMiddlewares\) ConnectionPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.ConnectionPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) ConnectionSubscriptionMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.ConnectionSubscriptionMiddleware>)
@@ -12125,6 +12543,7 @@ import "irmin-api/middlewares"
   - [func \(api \*APIMiddlewares\) InvitePermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.InvitePermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) LocaleMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.LocaleMiddleware>)
   - [func \(api \*APIMiddlewares\) LocaleMiddlewareForWebhooks\(c fiber.Ctx\) error](<#APIMiddlewares.LocaleMiddlewareForWebhooks>)
+  - [func \(api \*APIMiddlewares\) PolarWebhookMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.PolarWebhookMiddleware>)
   - [func \(api \*APIMiddlewares\) PolicyMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.PolicyMiddleware>)
   - [func \(api \*APIMiddlewares\) PolicyPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.PolicyPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) QueryMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.QueryMiddleware>)
@@ -12141,6 +12560,7 @@ import "irmin-api/middlewares"
   - [func \(api \*APIMiddlewares\) ResponseSizeMonitor\(c fiber.Ctx\) error](<#APIMiddlewares.ResponseSizeMonitor>)
   - [func \(api \*APIMiddlewares\) ScriptMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.ScriptMiddleware>)
   - [func \(api \*APIMiddlewares\) ScriptPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.ScriptPermissionMiddleware>)
+  - [func \(api \*APIMiddlewares\) UsageLimitMiddleware\(dimension db.UsageDimension\) fiber.Handler](<#APIMiddlewares.UsageLimitMiddleware>)
   - [func \(api \*APIMiddlewares\) UserMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.UserMiddleware>)
   - [func \(api \*APIMiddlewares\) UserPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.UserPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) WorkflowMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.WorkflowMiddleware>)
@@ -12227,6 +12647,15 @@ func (api *APIMiddlewares) AIApplicationPermissionMiddleware(action db.PolicyAct
 
 AIApplicationPermissionMiddleware creates a middleware for AI application\-level permissions.
 
+<a name="APIMiddlewares.APIUsageMiddleware"></a>
+### func \(\*APIMiddlewares\) APIUsageMiddleware
+
+```go
+func (api *APIMiddlewares) APIUsageMiddleware(c fiber.Ctx) error
+```
+
+APIUsageMiddleware tracks API requests and response sizes for billing. Should be placed after WorkspaceMiddleware on the v1 group. Only tracks usage for external API consumers \(cred\_ tokens\); console \(Clerk JWT\) users are not metered.
+
 <a name="APIMiddlewares.AuditLogPermissionMiddleware"></a>
 ### func \(\*APIMiddlewares\) AuditLogPermissionMiddleware
 
@@ -12244,6 +12673,24 @@ func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error
 ```
 
 AuthMiddleware handles the user authentication for the API, tokens and user details syncing with Clerk.
+
+<a name="APIMiddlewares.BillingEnabledMiddleware"></a>
+### func \(\*APIMiddlewares\) BillingEnabledMiddleware
+
+```go
+func (api *APIMiddlewares) BillingEnabledMiddleware(c fiber.Ctx) error
+```
+
+BillingEnabledMiddleware returns 404 if billing is disabled. Applied to all billing routes to ensure they are only accessible when billing is enabled.
+
+<a name="APIMiddlewares.BillingPermissionMiddleware"></a>
+### func \(\*APIMiddlewares\) BillingPermissionMiddleware
+
+```go
+func (api *APIMiddlewares) BillingPermissionMiddleware(action db.PolicyAction) fiber.Handler
+```
+
+BillingPermissionMiddleware creates a middleware for billing\-level permissions.
 
 <a name="APIMiddlewares.ConnectionMiddleware"></a>
 ### func \(\*APIMiddlewares\) ConnectionMiddleware
@@ -12336,6 +12783,15 @@ func (api *APIMiddlewares) LocaleMiddlewareForWebhooks(c fiber.Ctx) error
 ```
 
 LocaleMiddlewareForWebhooks provides locale detection for webhook endpoints that don't have user authentication.
+
+<a name="APIMiddlewares.PolarWebhookMiddleware"></a>
+### func \(\*APIMiddlewares\) PolarWebhookMiddleware
+
+```go
+func (api *APIMiddlewares) PolarWebhookMiddleware(c fiber.Ctx) error
+```
+
+PolarWebhookMiddleware verifies the Polar webhook signature and checks idempotency.
 
 <a name="APIMiddlewares.PolicyMiddleware"></a>
 ### func \(\*APIMiddlewares\) PolicyMiddleware
@@ -12480,6 +12936,15 @@ func (api *APIMiddlewares) ScriptPermissionMiddleware(action db.PolicyAction) fi
 ```
 
 ScriptPermissionMiddleware creates a middleware for script\-level permissions.
+
+<a name="APIMiddlewares.UsageLimitMiddleware"></a>
+### func \(\*APIMiddlewares\) UsageLimitMiddleware
+
+```go
+func (api *APIMiddlewares) UsageLimitMiddleware(dimension db.UsageDimension) fiber.Handler
+```
+
+UsageLimitMiddleware checks if the workspace has exceeded its usage limit for the given dimension. Returns 429 if the limit is exceeded. Only enforces hard limits for users without a payment method.
 
 <a name="APIMiddlewares.UserMiddleware"></a>
 ### func \(\*APIMiddlewares\) UserMiddleware
@@ -12897,6 +13362,14 @@ type ObjectModifiedLog struct {
 
 ```go
 type Orchestrator struct {
+
+    // OnWorkflowRunComplete is an optional callback invoked when a workflow run finishes.
+    // Used for billing usage tracking without coupling the orchestrator to the billing service.
+    OnWorkflowRunComplete func(workspaceID uint)
+
+    // CheckWorkflowRunUsage is an optional callback to check if a workspace can create a workflow run.
+    // Returns true if allowed. Used for billing limit enforcement without coupling to billing service.
+    CheckWorkflowRunUsage func(workspaceID uint) (bool, error)
     // contains filtered or unexported fields
 }
 ```
@@ -13698,7 +14171,7 @@ import "irmin-api/services"
   - [func \(e \*AIAppToolExecutor\) SearchEmbeddingsByPath\(ctx context.Context, query string, topK int, pathFilter string, metadataFilter map\[string\]string, priorityWeight \*float64\) \(\*irminmodels.EmbeddingSearchResponse, error\)](<#AIAppToolExecutor.SearchEmbeddingsByPath>)
   - [func \(e \*AIAppToolExecutor\) WriteFile\(ctx context.Context, unifiedPath string, content \[\]byte, commitMessage string, autoCommit bool\) \(\*WriteResult, error\)](<#AIAppToolExecutor.WriteFile>)
 - [type APIServices](<#APIServices>)
-  - [func NewAPIServices\(db \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, orchestrator \*orchestrator.Orchestrator, sqidManager \*irminsqids.SQIDManager, localeManager \*locales.LocaleManager, permissionService \*permissions.Service, cacheStorage fiber.Storage\) \*APIServices](<#NewAPIServices>)
+  - [func NewAPIServices\(db \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, orchestrator \*orchestrator.Orchestrator, sqidManager \*irminsqids.SQIDManager, localeManager \*locales.LocaleManager, permissionService \*permissions.Service, cacheStorage fiber.Storage, lakefsClient \*lakefs.Client\) \*APIServices](<#NewAPIServices>)
   - [func \(api \*APIServices\) AcceptInvite\(c context.Context, user \*db.User, invite \*db.Invite\) error](<#APIServices.AcceptInvite>)
   - [func \(api \*APIServices\) AddOrRemoveTagFromEntity\(c context.Context, operation TagEntityOperation, user \*db.User, workspace \*db.Workspace, tag \*db.TagWithAssets, entityType string, entityID string\) error](<#APIServices.AddOrRemoveTagFromEntity>)
   - [func \(api \*APIServices\) AddTagToEntity\(c context.Context, user \*db.User, workspace \*db.Workspace, tag \*db.Tag, entityType string, entityID uint\) error](<#APIServices.AddTagToEntity>)
@@ -13779,7 +14252,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) GetWorkspaceTag\(c context.Context, user \*db.User, workspace \*db.Workspace, tagID uint\) \(\*db.TagWithAssets, error\)](<#APIServices.GetWorkspaceTag>)
   - [func \(api \*APIServices\) GetWorkspaceTagWithAssets\(c context.Context, user \*db.User, workspace \*db.Workspace, tag \*db.Tag\) \(\*db.Tag, error\)](<#APIServices.GetWorkspaceTagWithAssets>)
   - [func \(api \*APIServices\) GetWorkspaceUser\(c context.Context, user \*db.User, workspace \*db.Workspace, workspaceUserSqid string\) \(\*db.WorkspaceUser, error\)](<#APIServices.GetWorkspaceUser>)
-  - [func \(api \*APIServices\) IdentifyUserFromToken\(c context.Context, token, locale string\) \(\*db.User, bool, error\)](<#APIServices.IdentifyUserFromToken>)
+  - [func \(api \*APIServices\) IdentifyUserFromToken\(c context.Context, token, locale string\) \(\*db.User, TokenType, error\)](<#APIServices.IdentifyUserFromToken>)
   - [func \(api \*APIServices\) LeaveWorkspace\(user \*db.User, workspace \*db.Workspace\) error](<#APIServices.LeaveWorkspace>)
   - [func \(api \*APIServices\) ListAIApplications\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.AIApplication, error\)](<#APIServices.ListAIApplications>)
   - [func \(api \*APIServices\) ListAPITokens\(c context.Context, user \*db.User\) \(\[\]db.APIToken, error\)](<#APIServices.ListAPITokens>)
@@ -13861,6 +14334,18 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ZipRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(\[\]byte, string, error\)](<#APIServices.ZipRepositoryObject>)
 - [type AuthCache](<#AuthCache>)
 - [type AuthCacheEntry](<#AuthCacheEntry>)
+- [type BillingService](<#BillingService>)
+  - [func NewBillingService\(database \*db.Database, env \*utils.CoreAPIEnv, logger \*slog.Logger\) \*BillingService](<#NewBillingService>)
+  - [func \(s \*BillingService\) CheckSeatLimit\(workspaceID uint\) \(bool, error\)](<#BillingService.CheckSeatLimit>)
+  - [func \(s \*BillingService\) CheckUsageLimit\(workspaceID uint, dimension db.UsageDimension, additionalQty int64\) \(bool, error\)](<#BillingService.CheckUsageLimit>)
+  - [func \(s \*BillingService\) CreateCheckoutSession\(polarCustomerID, productID, returnURL string\) \(string, error\)](<#BillingService.CreateCheckoutSession>)
+  - [func \(s \*BillingService\) CreateOrGetCustomer\(workspaceSQID, ownerEmail string\) \(string, error\)](<#BillingService.CreateOrGetCustomer>)
+  - [func \(s \*BillingService\) GetCurrentPlan\(workspaceID uint\) \(\*irminmodels.PlanInfo, error\)](<#BillingService.GetCurrentPlan>)
+  - [func \(s \*BillingService\) GetCustomerPortalURL\(polarCustomerID string\) \(string, error\)](<#BillingService.GetCustomerPortalURL>)
+  - [func \(s \*BillingService\) GetProductID\(\) string](<#BillingService.GetProductID>)
+  - [func \(s \*BillingService\) HandleWebhookEvent\(eventType string, payload map\[string\]any\) error](<#BillingService.HandleWebhookEvent>)
+  - [func \(s \*BillingService\) IsEnabled\(\) bool](<#BillingService.IsEnabled>)
+  - [func \(s \*BillingService\) ReportUsageBatch\(events \[\]map\[string\]any\) error](<#BillingService.ReportUsageBatch>)
 - [type ConnectionSubscriptionService](<#ConnectionSubscriptionService>)
   - [func NewConnectionSubscriptionService\(database \*db.Database, apiURL string\) \*ConnectionSubscriptionService](<#NewConnectionSubscriptionService>)
   - [func \(s \*ConnectionSubscriptionService\) RegisterSubscriptionWithConnector\(ctx context.Context, connection \*db.Connection, subscription \*db.ConnectionSubscription, connectionSqid string\) \(\*uint, error\)](<#ConnectionSubscriptionService.RegisterSubscriptionWithConnector>)
@@ -13876,7 +14361,13 @@ import "irmin-api/services"
 - [type PresignedUploadResult](<#PresignedUploadResult>)
 - [type ResolvedPath](<#ResolvedPath>)
 - [type TagEntityOperation](<#TagEntityOperation>)
+- [type TokenType](<#TokenType>)
 - [type UpdateCustomToolRequest](<#UpdateCustomToolRequest>)
+- [type UsageTracker](<#UsageTracker>)
+  - [func NewUsageTracker\(database \*db.Database, billingService \*BillingService, lakefsClient \*lakefs.Client, logger \*slog.Logger\) \*UsageTracker](<#NewUsageTracker>)
+  - [func \(t \*UsageTracker\) Start\(ctx context.Context\) error](<#UsageTracker.Start>)
+  - [func \(t \*UsageTracker\) Track\(workspaceID uint, dimension db.UsageDimension, quantity int64\)](<#UsageTracker.Track>)
+  - [func \(t \*UsageTracker\) TrackSeats\(workspaceID uint\)](<#UsageTracker.TrackSeats>)
 - [type WriteResult](<#WriteResult>)
 
 
@@ -14003,6 +14494,7 @@ var (
     ErrEditorItemDestinationPathRequired      = errors.New("editor item destination path is required")
     ErrUserAlreadyInWorkspace                 = errors.New("user already in the workspace")
     ErrUserAlreadyInvitedToWorkspace          = errors.New("user already invited to the workspace")
+    ErrMemberLimitReached                     = errors.New("workspace member limit reached for current plan")
     ErrInvalidRole                            = errors.New("invalid role")
     ErrInviteExpired                          = errors.New("invite expired")
     ErrInviteNotAllowed                       = errors.New("invite not allowed")
@@ -14371,6 +14863,8 @@ type APIServices struct {
     PermissionService *permissions.Service
     Validator         *irminvalidator.Validator
     CacheStorage      fiber.Storage
+    BillingService    *BillingService
+    UsageTracker      *UsageTracker
     // contains filtered or unexported fields
 }
 ```
@@ -14379,7 +14873,7 @@ type APIServices struct {
 ### func NewAPIServices
 
 ```go
-func NewAPIServices(db *db.Database, logger *slog.Logger, env *utils.CoreAPIEnv, orchestrator *orchestrator.Orchestrator, sqidManager *irminsqids.SQIDManager, localeManager *locales.LocaleManager, permissionService *permissions.Service, cacheStorage fiber.Storage) *APIServices
+func NewAPIServices(db *db.Database, logger *slog.Logger, env *utils.CoreAPIEnv, orchestrator *orchestrator.Orchestrator, sqidManager *irminsqids.SQIDManager, localeManager *locales.LocaleManager, permissionService *permissions.Service, cacheStorage fiber.Storage, lakefsClient *lakefs.Client) *APIServices
 ```
 
 
@@ -15108,10 +15602,10 @@ func (api *APIServices) GetWorkspaceUser(c context.Context, user *db.User, works
 ### func \(\*APIServices\) IdentifyUserFromToken
 
 ```go
-func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale string) (*db.User, bool, error)
+func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale string) (*db.User, TokenType, error)
 ```
 
-IdentifyUserFromToken validates the provided token and returns the associated user. It supports system token, credentials token \(cred\_ prefix\), and JWT from Clerk. Uses caching to avoid expensive validation and sync operations for recently authenticated tokens. External API operations \(Clerk/Novu sync\) happen asynchronously in the background. Returns: user, isSystem, error
+IdentifyUserFromToken validates the provided token and returns the associated user. It supports system token, credentials token \(cred\_ prefix\), and JWT from Clerk. Uses caching to avoid expensive validation and sync operations for recently authenticated tokens. External API operations \(Clerk/Novu sync\) happen asynchronously in the background. Returns: user, tokenType, error
 
 <a name="APIServices.LeaveWorkspace"></a>
 ### func \(\*APIServices\) LeaveWorkspace
@@ -15847,6 +16341,116 @@ type AuthCacheEntry struct {
 }
 ```
 
+<a name="BillingService"></a>
+## type BillingService
+
+BillingService handles billing operations with Polar.sh.
+
+```go
+type BillingService struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewBillingService"></a>
+### func NewBillingService
+
+```go
+func NewBillingService(database *db.Database, env *utils.CoreAPIEnv, logger *slog.Logger) *BillingService
+```
+
+NewBillingService creates a new billing service. Returns nil if billing is disabled.
+
+<a name="BillingService.CheckSeatLimit"></a>
+### func \(\*BillingService\) CheckSeatLimit
+
+```go
+func (s *BillingService) CheckSeatLimit(workspaceID uint) (bool, error)
+```
+
+CheckSeatLimit checks if the workspace can add another member. Free users get 1 member \(the owner\). Subscribers have unlimited seats.
+
+<a name="BillingService.CheckUsageLimit"></a>
+### func \(\*BillingService\) CheckUsageLimit
+
+```go
+func (s *BillingService) CheckUsageLimit(workspaceID uint, dimension db.UsageDimension, additionalQty int64) (bool, error)
+```
+
+CheckUsageLimit checks if the workspace has exceeded its usage limit for a dimension. Returns true if the usage is within limits \(request allowed\). Users with a payment method have no limits. Users without one are subject to free tier hard limits.
+
+<a name="BillingService.CreateCheckoutSession"></a>
+### func \(\*BillingService\) CreateCheckoutSession
+
+```go
+func (s *BillingService) CreateCheckoutSession(polarCustomerID, productID, returnURL string) (string, error)
+```
+
+CreateCheckoutSession creates a Polar checkout session and returns the checkout URL.
+
+<a name="BillingService.CreateOrGetCustomer"></a>
+### func \(\*BillingService\) CreateOrGetCustomer
+
+```go
+func (s *BillingService) CreateOrGetCustomer(workspaceSQID, ownerEmail string) (string, error)
+```
+
+CreateOrGetCustomer creates or retrieves a Polar customer for the workspace.
+
+<a name="BillingService.GetCurrentPlan"></a>
+### func \(\*BillingService\) GetCurrentPlan
+
+```go
+func (s *BillingService) GetCurrentPlan(workspaceID uint) (*irminmodels.PlanInfo, error)
+```
+
+GetCurrentPlan retrieves the current plan info from the local database. If the local subscription has status "none" but has a PolarCustomerID, it falls back to the Polar API to check for an active subscription \(handles missed webhooks\). Returns defaults when no subscription exists.
+
+<a name="BillingService.GetCustomerPortalURL"></a>
+### func \(\*BillingService\) GetCustomerPortalURL
+
+```go
+func (s *BillingService) GetCustomerPortalURL(polarCustomerID string) (string, error)
+```
+
+GetCustomerPortalURL creates a customer portal session and returns the URL.
+
+<a name="BillingService.GetProductID"></a>
+### func \(\*BillingService\) GetProductID
+
+```go
+func (s *BillingService) GetProductID() string
+```
+
+GetProductID returns the single Polar product ID for usage\-based billing.
+
+<a name="BillingService.HandleWebhookEvent"></a>
+### func \(\*BillingService\) HandleWebhookEvent
+
+```go
+func (s *BillingService) HandleWebhookEvent(eventType string, payload map[string]any) error
+```
+
+HandleWebhookEvent processes a Polar webhook event.
+
+<a name="BillingService.IsEnabled"></a>
+### func \(\*BillingService\) IsEnabled
+
+```go
+func (s *BillingService) IsEnabled() bool
+```
+
+IsEnabled returns true if billing is enabled.
+
+<a name="BillingService.ReportUsageBatch"></a>
+### func \(\*BillingService\) ReportUsageBatch
+
+```go
+func (s *BillingService) ReportUsageBatch(events []map[string]any) error
+```
+
+ReportUsageBatch reports usage events to Polar's metering API. Returns an error if any events failed ingestion so callers can avoid marking them as reported.
+
 <a name="ConnectionSubscriptionService"></a>
 ## type ConnectionSubscriptionService
 
@@ -16038,6 +16642,30 @@ const (
 )
 ```
 
+<a name="TokenType"></a>
+## type TokenType
+
+TokenType represents the type of authentication token used.
+
+```go
+type TokenType string
+```
+
+<a name="TokenTypeClerk"></a>
+
+```go
+const (
+    // TokenTypeClerk indicates a Clerk JWT session token (console users).
+    TokenTypeClerk TokenType = "clerk"
+
+    // TokenTypeCred indicates a credentials API token (cred_ prefix).
+    TokenTypeCred TokenType = "cred"
+
+    // TokenTypeSystem indicates the internal system token.
+    TokenTypeSystem TokenType = "system"
+)
+```
+
 <a name="UpdateCustomToolRequest"></a>
 ## type UpdateCustomToolRequest
 
@@ -16057,6 +16685,53 @@ type UpdateCustomToolRequest struct {
     EmbeddingFilter map[string]string `json:"embedding_filter,omitempty"`
 }
 ```
+
+<a name="UsageTracker"></a>
+## type UsageTracker
+
+UsageTracker handles async, buffered usage tracking.
+
+```go
+type UsageTracker struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewUsageTracker"></a>
+### func NewUsageTracker
+
+```go
+func NewUsageTracker(database *db.Database, billingService *BillingService, lakefsClient *lakefs.Client, logger *slog.Logger) *UsageTracker
+```
+
+NewUsageTracker creates a new usage tracker. Returns nil if billing is disabled.
+
+<a name="UsageTracker.Start"></a>
+### func \(\*UsageTracker\) Start
+
+```go
+func (t *UsageTracker) Start(ctx context.Context) error
+```
+
+Start begins the background processing goroutines. Blocks until ctx is cancelled.
+
+<a name="UsageTracker.Track"></a>
+### func \(\*UsageTracker\) Track
+
+```go
+func (t *UsageTracker) Track(workspaceID uint, dimension db.UsageDimension, quantity int64)
+```
+
+Track records a usage event. Non\-blocking — drops events if the channel is full.
+
+<a name="UsageTracker.TrackSeats"></a>
+### func \(\*UsageTracker\) TrackSeats
+
+```go
+func (t *UsageTracker) TrackSeats(workspaceID uint)
+```
+
+TrackSeats emits a seat\-count usage event for the given workspace. The quantity is \(member \+ pending invite count\) \- 1, since the first seat is free.
 
 <a name="WriteResult"></a>
 ## type WriteResult
@@ -16687,6 +17362,13 @@ type CoreAPIEnv struct {
     TestBranch                   string // Branch to test with
     TestTag                      string // Tag to test with
     SignedURLSecret              string // HMAC secret for signed download URLs
+
+    // Billing configuration
+    BillingEnabled     bool   // Flag to enable Polar.sh billing integration
+    PolarAPIKey        string // Polar.sh API key
+    PolarWebhookSecret string // Polar.sh webhook signing secret
+    PolarProductID     string // Polar product ID for the usage-based plan
+    PolarBaseURL       string // Polar API base URL (default: https://api.polar.sh, sandbox: https://sandbox-api.polar.sh)
 
     // File size management thresholds
     MaxRequestBodySizeMB       int // Maximum request body size in MB (default 100)
