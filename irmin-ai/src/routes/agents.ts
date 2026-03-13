@@ -1,6 +1,8 @@
 import { AgentsManager } from '@/agents';
 import { FastifyInstance } from 'fastify';
 
+import { reportAIUsage } from '@/services/usageReporter';
+
 import { swaggerSchemas } from '@/config/swagger';
 
 import {
@@ -75,6 +77,9 @@ export async function agentRoutes(fastify: FastifyInstance) {
           workspace: workspaceContext.workspace,
           user: authContext.user,
         });
+
+        // Report AI usage (fire-and-forget)
+        reportAIUsage(workspaceContext.workspace.id).catch(() => undefined);
 
         // Serialize LangChain messages using their toDict method
         const serializedMessages =
@@ -249,6 +254,9 @@ export async function agentRoutes(fastify: FastifyInstance) {
             >['conversation']
           );
           timings.agentReady = Date.now();
+
+          // Report AI usage (fire-and-forget)
+          reportAIUsage(workspaceContext.workspace.id).catch(() => undefined);
 
           fastify.log.info(
             `[Agent Timing] Agent ready: agentExecution=${timings.agentReady - timings.streamStarted}ms, totalToAgent=${timings.agentReady - timings.start}ms`

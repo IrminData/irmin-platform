@@ -36,6 +36,7 @@ const envSchema = z.object({
   IRMIN_API_BASE_URL: z
     .string()
     .default('https://irmin-development.up.railway.app'),
+  IRMIN_SYSTEM_TOKEN: z.string().optional(),
   LANGSMITH_TRACING: z
     .string()
     .default('false')
