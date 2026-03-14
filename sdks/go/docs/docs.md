@@ -244,6 +244,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) GetAIApplicationPendingWrites\(ctx context.Context, workspace, aiApplicationID string, opts \*GetAIApplicationPendingWritesOptions\) \(\*irminmodels.AIApplicationPendingWritesResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationPendingWrites>)
   - [func \(c \*Client\) GetAIApplicationToolLogStats\(ctx context.Context, workspace, aiApplicationID string\) \(\*irminmodels.AIApplicationToolLogStats, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationToolLogStats>)
   - [func \(c \*Client\) GetAIApplicationToolLogs\(ctx context.Context, workspace, aiApplicationID string, opts \*GetAIApplicationToolLogsOptions\) \(\*irminmodels.AIApplicationToolLogsResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAIApplicationToolLogs>)
+  - [func \(c \*Client\) GetBillingInfo\(ctx context.Context, workspaceSlug string\) \(\*irminmodels.BillingInfo, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetBillingInfo>)
   - [func \(c \*Client\) GetBranch\(ctx context.Context, workspace, repository, branchName string\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetBranch>)
   - [func \(c \*Client\) GetCommit\(ctx context.Context, workspace, repository, hash string\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetCommit>)
   - [func \(c \*Client\) GetConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnection>)
@@ -332,6 +333,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) TransferWorkspace\(ctx context.Context, workspaceSlug string, req TransferOwnershipRequest\) \(\*irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferWorkspace>)
   - [func \(c \*Client\) TriggerWorkflowRun\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.TriggerWorkflowRun>)
   - [func \(c \*Client\) UpdateAIApplication\(ctx context.Context, workspace, aiApplicationID string, req UpdateAIApplicationRequest\) \(\*irminmodels.AIApplication, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateAIApplication>)
+  - [func \(c \*Client\) UpdateBillingInfo\(ctx context.Context, workspaceSlug string, req UpdateBillingInfoRequest\) \(\*irminmodels.BillingInfo, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateBillingInfo>)
   - [func \(c \*Client\) UpdateBranch\(ctx context.Context, workspace, repository, oldName string, req UpdateBranchRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateBranch>)
   - [func \(c \*Client\) UpdateConnection\(ctx context.Context, workspace, connectionID string, req UpdateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateConnection>)
   - [func \(c \*Client\) UpdateConnectionConfiguration\(ctx context.Context, workspace, connectionID string, req UpdateConnectionConfigurationRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateConnectionConfiguration>)
@@ -412,6 +414,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type TransferScriptOwnershipRequest](<#TransferScriptOwnershipRequest>)
 - [type TransferWorkflowOwnershipRequest](<#TransferWorkflowOwnershipRequest>)
 - [type UpdateAIApplicationRequest](<#UpdateAIApplicationRequest>)
+- [type UpdateBillingInfoRequest](<#UpdateBillingInfoRequest>)
 - [type UpdateBranchRequest](<#UpdateBranchRequest>)
 - [type UpdateConnectionConfigurationRequest](<#UpdateConnectionConfigurationRequest>)
 - [type UpdateConnectionRequest](<#UpdateConnectionRequest>)
@@ -1522,6 +1525,15 @@ func (c *Client) GetAIApplicationToolLogs(ctx context.Context, workspace, aiAppl
 
 GetAIApplicationToolLogs retrieves tool call audit logs for an AI application.
 
+<a name="Client.GetBillingInfo"></a>
+### func \(\*Client\) GetBillingInfo
+
+```go
+func (c *Client) GetBillingInfo(ctx context.Context, workspaceSlug string) (*irminmodels.BillingInfo, *irminmodels.IrminAPIResponse, error)
+```
+
+GetBillingInfo retrieves billing info for a workspace.
+
 <a name="Client.GetBranch"></a>
 ### func \(\*Client\) GetBranch
 
@@ -2313,6 +2325,15 @@ func (c *Client) UpdateAIApplication(ctx context.Context, workspace, aiApplicati
 ```
 
 UpdateAIApplication updates an existing AI application.
+
+<a name="Client.UpdateBillingInfo"></a>
+### func \(\*Client\) UpdateBillingInfo
+
+```go
+func (c *Client) UpdateBillingInfo(ctx context.Context, workspaceSlug string, req UpdateBillingInfoRequest) (*irminmodels.BillingInfo, *irminmodels.IrminAPIResponse, error)
+```
+
+UpdateBillingInfo updates billing info for a workspace.
 
 <a name="Client.UpdateBranch"></a>
 ### func \(\*Client\) UpdateBranch
@@ -3284,6 +3305,19 @@ type UpdateAIApplicationRequest struct {
 }
 ```
 
+<a name="UpdateBillingInfoRequest"></a>
+## type UpdateBillingInfoRequest
+
+UpdateBillingInfoRequest represents the request body for updating billing info.
+
+```go
+type UpdateBillingInfoRequest struct {
+    Name           *string                      `json:"name,omitempty"            validate:"omitnil,max=256"`
+    BillingAddress *irminmodels.BillingAddress  `json:"billing_address,omitempty"`
+    TaxID          irminmodels.BillingInfoTaxID `json:"tax_id,omitempty"          validate:"omitnil,len=2"`
+}
+```
+
 <a name="UpdateBranchRequest"></a>
 ## type UpdateBranchRequest
 
@@ -3978,6 +4012,9 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type APIToken](<#APIToken>)
 - [type ActionExecutableType](<#ActionExecutableType>)
 - [type ActionInputData](<#ActionInputData>)
+- [type BillingAddress](<#BillingAddress>)
+- [type BillingInfo](<#BillingInfo>)
+- [type BillingInfoTaxID](<#BillingInfoTaxID>)
 - [type Branch](<#Branch>)
 - [type BranchGarbageCollectionRules](<#BranchGarbageCollectionRules>)
 - [type ChangeItem](<#ChangeItem>)
@@ -4369,6 +4406,44 @@ type ActionInputData struct {
     RepositoryRef  string `json:"repository_ref"  validate:"required"  example:"main"`
     RepositoryPath string `json:"repository_path" validate:"omitempty" example:"/data/customers.csv"`
 }
+```
+
+<a name="BillingAddress"></a>
+## type BillingAddress
+
+BillingAddress holds a billing address.
+
+```go
+type BillingAddress struct {
+    Line1      string `json:"line1"       example:"123 Main St"`
+    Line2      string `json:"line2"       example:"Suite 100"`
+    City       string `json:"city"        example:"Helsinki"`
+    State      string `json:"state"       example:"Uusimaa"`
+    PostalCode string `json:"postal_code" example:"00100"`
+    Country    string `json:"country"     example:"FI"`
+}
+```
+
+<a name="BillingInfo"></a>
+## type BillingInfo
+
+BillingInfo holds billing information for a workspace customer.
+
+```go
+type BillingInfo struct {
+    Name           string           `json:"name"            example:"Acme Corp"`
+    BillingAddress *BillingAddress  `json:"billing_address"`
+    TaxID          BillingInfoTaxID `json:"tax_id"`
+}
+```
+
+<a name="BillingInfoTaxID"></a>
+## type BillingInfoTaxID
+
+BillingInfoTaxID is a two\-element array \[value, type\] for tax identification \(e.g. \["FI12345678", "eu\_vat"\]\).
+
+```go
+type BillingInfoTaxID = []string
 ```
 
 <a name="Branch"></a>
@@ -6531,11 +6606,10 @@ UsageHistoryEntry holds a usage summary for a specific dimension and billing per
 
 ```go
 type UsageHistoryEntry struct {
-    Dimension      UsageDimension `json:"dimension"        example:"api_requests"`
-    TotalQuantity  int64          `json:"total_quantity"   example:"1250"`
-    UsageLimitHard *int64         `json:"usage_limit_hard" example:"10000"`
-    PeriodStart    time.Time      `json:"period_start"     example:"2025-01-01T00:00:00Z"`
-    PeriodEnd      time.Time      `json:"period_end"       example:"2025-02-01T00:00:00Z"`
+    Dimension     UsageDimension `json:"dimension"      example:"api_requests"`
+    TotalQuantity int64          `json:"total_quantity" example:"1250"`
+    PeriodStart   time.Time      `json:"period_start"   example:"2025-01-01T00:00:00Z"`
+    PeriodEnd     time.Time      `json:"period_end"     example:"2025-02-01T00:00:00Z"`
 }
 ```
 

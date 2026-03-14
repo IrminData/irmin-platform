@@ -737,6 +737,12 @@ func (c *Client) GetAIApplicationToolLogs(
     GetAIApplicationToolLogs retrieves tool call audit logs for an AI
     application.
 
+func (c *Client) GetBillingInfo(
+	ctx context.Context,
+	workspaceSlug string,
+) (*irminmodels.BillingInfo, *irminmodels.IrminAPIResponse, error)
+    GetBillingInfo retrieves billing info for a workspace.
+
 func (c *Client) GetBranch(
 	ctx context.Context,
 	workspace, repository, branchName string,
@@ -1232,6 +1238,13 @@ func (c *Client) UpdateAIApplication(
 	req UpdateAIApplicationRequest,
 ) (*irminmodels.AIApplication, *irminmodels.IrminAPIResponse, error)
     UpdateAIApplication updates an existing AI application.
+
+func (c *Client) UpdateBillingInfo(
+	ctx context.Context,
+	workspaceSlug string,
+	req UpdateBillingInfoRequest,
+) (*irminmodels.BillingInfo, *irminmodels.IrminAPIResponse, error)
+    UpdateBillingInfo updates billing info for a workspace.
 
 func (c *Client) UpdateBranch(
 	ctx context.Context,
@@ -1856,6 +1869,14 @@ type UpdateAIApplicationRequest struct {
 }
     UpdateAIApplicationRequest represents the JSON request body for updating an
     AI application.
+
+type UpdateBillingInfoRequest struct {
+	Name           *string                      `json:"name,omitempty"            validate:"omitnil,max=256"`
+	BillingAddress *irminmodels.BillingAddress  `json:"billing_address,omitempty"`
+	TaxID          irminmodels.BillingInfoTaxID `json:"tax_id,omitempty"          validate:"omitnil,len=2"`
+}
+    UpdateBillingInfoRequest represents the request body for updating billing
+    info.
 
 type UpdateBranchRequest struct {
 	Name        *string `json:"name,omitempty"         example:"feature/add-customer-data"`

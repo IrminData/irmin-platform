@@ -186,6 +186,27 @@ type ActionInputData struct {
 	RepositoryPath string `json:"repository_path" validate:"omitempty" example:"/data/customers.csv"`
 }
 
+type BillingAddress struct {
+	Line1      string `json:"line1"       example:"123 Main St"`
+	Line2      string `json:"line2"       example:"Suite 100"`
+	City       string `json:"city"        example:"Helsinki"`
+	State      string `json:"state"       example:"Uusimaa"`
+	PostalCode string `json:"postal_code" example:"00100"`
+	Country    string `json:"country"     example:"FI"`
+}
+    BillingAddress holds a billing address.
+
+type BillingInfo struct {
+	Name           string           `json:"name"            example:"Acme Corp"`
+	BillingAddress *BillingAddress  `json:"billing_address"`
+	TaxID          BillingInfoTaxID `json:"tax_id"`
+}
+    BillingInfo holds billing information for a workspace customer.
+
+type BillingInfoTaxID = []string
+    BillingInfoTaxID is a two-element array [value, type] for tax identification
+    (e.g. ["FI12345678", "eu_vat"]).
+
 type Branch struct {
 	// Name of the branch
 	Name string `json:"name"         validate:"required,max=100,validslug" example:"main"`
@@ -1540,11 +1561,10 @@ type UsageDimensionInfo struct {
     period.
 
 type UsageHistoryEntry struct {
-	Dimension      UsageDimension `json:"dimension"        example:"api_requests"`
-	TotalQuantity  int64          `json:"total_quantity"   example:"1250"`
-	UsageLimitHard *int64         `json:"usage_limit_hard" example:"10000"`
-	PeriodStart    time.Time      `json:"period_start"     example:"2025-01-01T00:00:00Z"`
-	PeriodEnd      time.Time      `json:"period_end"       example:"2025-02-01T00:00:00Z"`
+	Dimension     UsageDimension `json:"dimension"      example:"api_requests"`
+	TotalQuantity int64          `json:"total_quantity" example:"1250"`
+	PeriodStart   time.Time      `json:"period_start"   example:"2025-01-01T00:00:00Z"`
+	PeriodEnd     time.Time      `json:"period_end"     example:"2025-02-01T00:00:00Z"`
 }
     UsageHistoryEntry holds a usage summary for a specific dimension and billing
     period.

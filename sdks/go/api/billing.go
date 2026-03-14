@@ -72,6 +72,48 @@ func (c *Client) GetUsageHistory(
 	return history, apiResp, nil
 }
 
+// UpdateBillingInfoRequest represents the request body for updating billing info.
+type UpdateBillingInfoRequest struct {
+	Name           *string                      `json:"name,omitempty"            validate:"omitnil,max=256"`
+	BillingAddress *irminmodels.BillingAddress  `json:"billing_address,omitempty"`
+	TaxID          irminmodels.BillingInfoTaxID `json:"tax_id,omitempty"          validate:"omitnil,len=2"`
+}
+
+// GetBillingInfo retrieves billing info for a workspace.
+func (c *Client) GetBillingInfo(
+	ctx context.Context,
+	workspaceSlug string,
+) (*irminmodels.BillingInfo, *irminmodels.IrminAPIResponse, error) {
+	var info irminmodels.BillingInfo
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/billing/info", workspaceSlug),
+	}, &info)
+	if err != nil {
+		return nil, nil, fmt.Errorf("get billing info error: %w", err)
+	}
+	return &info, apiResp, nil
+}
+
+// UpdateBillingInfo updates billing info for a workspace.
+func (c *Client) UpdateBillingInfo(
+	ctx context.Context,
+	workspaceSlug string,
+	req UpdateBillingInfoRequest,
+) (*irminmodels.BillingInfo, *irminmodels.IrminAPIResponse, error) {
+	var info irminmodels.BillingInfo
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method:      http.MethodPatch,
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/billing/info", workspaceSlug),
+		ContentType: "application/json",
+		Body:        req,
+	}, &info)
+	if err != nil {
+		return nil, nil, fmt.Errorf("update billing info error: %w", err)
+	}
+	return &info, apiResp, nil
+}
+
 // CreateCheckout creates a Polar checkout session for a workspace.
 func (c *Client) CreateCheckout(
 	ctx context.Context,
