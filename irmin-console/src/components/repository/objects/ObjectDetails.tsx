@@ -513,6 +513,7 @@ export default function ObjectDetails({
       className={`
         mb-4 flex w-full min-w-0 flex-col overflow-hidden rounded-lg border
         border-card bg-background text-xs
+        md:max-w-xs
       `}
     >
       <div

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { TbPlus } from 'react-icons/tb';
 
@@ -11,6 +11,9 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useResourceAllowed } from '@/hooks/utils';
 
+import PolicyBulkActions from './PolicyBulkActions';
+import type { PolicyFilterState } from './PolicyFilters';
+import PolicyFilters from './PolicyFilters';
 import PolicyTable from './PolicyTable';
 import type { PolicyEditorProps } from './types';
 import { usePolicyForm } from './usePolicyForm';
@@ -63,6 +66,35 @@ export default function PolicyEditor({
     defaultUserId,
   });
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [filters, setFilters] = useState<PolicyFilterState>({
+    effect: 'all',
+    action: 'all',
+    principal: 'all',
+    resource: 'all',
+  });
+
+  const handleFiltersChange = (newFilters: PolicyFilterState) => {
+    setFilters(newFilters);
+    setSelectedIds(new Set());
+  };
+
+  const filteredPolicies = useMemo(() => {
+    return policies.filter((policy) => {
+      if (filters.effect !== 'all' && policy.effect !== filters.effect)
+        return false;
+      if (filters.action !== 'all' && policy.action !== filters.action)
+        return false;
+      if (filters.principal !== 'all' && policy.principal !== filters.principal)
+        return false;
+      if (filters.resource !== 'all' && policy.resource !== filters.resource)
+        return false;
+      return true;
+    });
+  }, [policies, filters]);
+
+  const showSelectable = allowDelete && canDelete;
+
   if (!canView) {
     return (
       <div className='flex flex-col gap-4 p-4'>
@@ -110,14 +142,32 @@ export default function PolicyEditor({
             </div>
           </div>
         ) : (
-          <PolicyTable
-            policies={policies}
-            showResourceColumn={showResourceColumn}
-            showResourceIdColumn={showResourceIdColumn}
-            allowEdit={allowEdit && canEdit}
-            allowDelete={allowDelete && canDelete}
-            onEditClick={showEditForm}
-          />
+          <>
+            <PolicyFilters
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              showResourceFilter={showResourceColumn}
+            />
+
+            {selectedIds.size > 0 && (
+              <PolicyBulkActions
+                selectedIds={selectedIds}
+                onSelectionChange={setSelectedIds}
+              />
+            )}
+
+            <PolicyTable
+              policies={filteredPolicies}
+              showResourceColumn={showResourceColumn}
+              showResourceIdColumn={showResourceIdColumn}
+              allowEdit={allowEdit && canEdit}
+              allowDelete={allowDelete && canDelete}
+              onEditClick={showEditForm}
+              selectable={showSelectable}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
+            />
+          </>
         )}
       </div>
     </div>

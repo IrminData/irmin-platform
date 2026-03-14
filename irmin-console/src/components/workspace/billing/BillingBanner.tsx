@@ -49,18 +49,22 @@ export default function BillingBanner() {
 
   return (
     <Card>
-      <CardHeader className='flex flex-row items-center justify-between gap-4'>
-        <div className='flex flex-col gap-1'>
-          <CardTitle>{dict.workspace.billingBannerTitle}</CardTitle>
-          <CardDescription>
-            {dict.workspace.billingBannerDescription}
-          </CardDescription>
+      <CardHeader className='flex flex-row items-center justify-between gap-6 py-4'>
+        <div className='flex items-center gap-3'>
+          <TbInvoice className='size-5 shrink-0 text-muted-foreground' />
+          <div className='flex flex-col gap-0.5'>
+            <CardTitle className='text-sm'>
+              {dict.workspace.billingBannerTitle}
+            </CardTitle>
+            <CardDescription className='text-xs'>
+              {dict.workspace.billingBannerDescription}
+            </CardDescription>
+          </div>
         </div>
         <Button
           href={`${workspaceUrl}/settings/billing`}
           variant='gradient'
           size='sm'
-          icon={<TbInvoice className='size-4' />}
         >
           {dict.workspace.billingBannerAction}
         </Button>

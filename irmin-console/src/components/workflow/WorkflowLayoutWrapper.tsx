@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
 import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import WorkflowLayoutSkeleton from '@/components/ui/loading/WorkflowLayoutSkeleton';
+import AssetSharePopover from '@/components/ui/policy-editor/AssetSharePopover';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
@@ -346,6 +347,11 @@ export default function WorkflowLayoutWrapper({
             >
               {dict.workflow.triggerRun}
             </Button>
+            <AssetSharePopover
+              resourceType='workflow'
+              resourceId={workflowID}
+              resourceLabel={workflow.name}
+            />
           </div>
         </div>
         <TabsWithBackButton

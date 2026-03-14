@@ -100,7 +100,10 @@ export default tseslint.config(
     },
     rules: {
       ...eslintPluginBetterTailwindcss.configs.recommended.rules,
-      'better-tailwindcss/enforce-consistent-line-wrapping': 'warn',
+      'better-tailwindcss/enforce-consistent-line-wrapping': [
+        'warn',
+        { strictness: 'loose' },
+      ],
       'better-tailwindcss/enforce-consistent-class-order': 'warn',
       'better-tailwindcss/enforce-consistent-variable-syntax': 'warn',
       'better-tailwindcss/enforce-shorthand-classes': 'warn',

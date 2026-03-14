@@ -234,6 +234,9 @@ export const policySummaryQueryKey = (workspaceSlug: string) =>
 export const policyResourceOptionsQueryKey = (workspaceSlug: string) =>
   ['policy-resource-options', workspaceSlug] as const;
 
+export const rolePolicySummaryQueryKey = (workspaceSlug: string) =>
+  ['role-policy-summary', workspaceSlug] as const;
+
 // User related query keys
 export const usersQueryKey = (workspaceSlug: string) =>
   ['users', workspaceSlug] as const;

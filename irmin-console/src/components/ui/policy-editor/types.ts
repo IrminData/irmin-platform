@@ -65,6 +65,22 @@ export interface PolicyTableProps {
   allowEdit?: boolean;
   allowDelete?: boolean;
   onEditClick: (_policy: Policy) => void;
+  /** Whether to show selection checkboxes */
+  selectable?: boolean;
+  /** Currently selected policy IDs */
+  selectedIds?: Set<string>;
+  /** Callback when selection changes */
+  onSelectionChange?: (_selectedIds: Set<string>) => void;
+}
+
+export interface PolicyBatchFormData {
+  effect: PolicyEffect;
+  actions: PolicyAction[];
+  resources: PolicyResource[];
+  principal: PolicyPrincipal;
+  resourceId?: string;
+  roleId?: string;
+  userId?: string;
 }
 
 export interface PolicyFormProps {
@@ -86,6 +102,8 @@ export interface PolicyFormProps {
   users: User[];
   /** The policy resource options */
   policyResourceOptions: PolicyResourceOptions;
+  /** Callback for batch creation (create mode only, uses multi-select for actions/resources) */
+  onBatchSubmit?: (_formData: PolicyBatchFormData) => void;
 }
 
 export interface PolicyFormData {

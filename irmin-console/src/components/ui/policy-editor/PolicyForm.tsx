@@ -8,6 +8,7 @@ import { TbInfoCircle } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import { MultiSelect } from '@/components/ui/multi-select';
 import {
   Select,
   SelectContent,
@@ -31,8 +32,20 @@ import type {
   PolicyResource,
 } from '@/types/core/Policy';
 
+import { POLICY_ACTIONS, POLICY_RESOURCES } from './constants';
 import type { PolicyFormProps } from './types';
-import { formatResourceName } from './utils';
+import { formatActionName, formatResourceName } from './utils';
+
+function getValidSelectItemValue(
+  value: string | undefined | null
+): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
 
 export default function PolicyForm({
   isEditMode = false,
@@ -44,9 +57,16 @@ export default function PolicyForm({
   roles,
   users,
   policyResourceOptions,
+  onBatchSubmit,
 }: PolicyFormProps) {
   const { dict } = useLocale();
   const [formData, setFormData] = useState(initialValues);
+  const [selectedActions, setSelectedActions] = useState<string[]>([
+    initialValues.action,
+  ]);
+  const [selectedResources, setSelectedResources] = useState<string[]>([
+    initialValues.resource,
+  ]);
 
   if (isLoading) {
     return <LoadingSkeleton className='h-80 w-full' />;
@@ -54,8 +74,44 @@ export default function PolicyForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (!isEditMode && onBatchSubmit) {
+      // Only include resourceId when a single resource type is selected,
+      // since a resourceId is scoped to one resource type
+      const batchResourceId =
+        selectedResources.length === 1 ? formData.resourceId : undefined;
+      onBatchSubmit({
+        effect: formData.effect,
+        actions: selectedActions as PolicyAction[],
+        resources: selectedResources as PolicyResource[],
+        principal: formData.principal,
+        resourceId: batchResourceId,
+        roleId: formData.roleId,
+        userId: formData.userId,
+      });
+    } else {
+      onSubmit(formData);
+    }
   };
+
+  const isBatchMode = !isEditMode && !!onBatchSubmit;
+
+  // In batch mode, derive the effective resource type for the resource ID dropdown.
+  // Only show the dropdown when exactly one resource type is selected.
+  const effectiveResource = isBatchMode
+    ? selectedResources.length === 1
+      ? (selectedResources[0] as PolicyResource)
+      : null
+    : formData.resource;
+
+  const actionOptions = POLICY_ACTIONS.map((action) => ({
+    label: formatActionName(dict, action),
+    value: action,
+  }));
+
+  const resourceOptions = POLICY_RESOURCES.map((resource) => ({
+    label: formatResourceName(resource),
+    value: resource,
+  }));
 
   return (
     <form className='flex flex-col gap-4 pb-8' onSubmit={handleSubmit}>
@@ -105,25 +161,36 @@ export default function PolicyForm({
               <TooltipContent>{dict.policy.tooltips.action}</TooltipContent>
             </Tooltip>
           </div>
-          <Select
-            value={formData.action}
-            onValueChange={(value) =>
-              setFormData((prev) => ({
-                ...prev,
-                action: value as PolicyAction,
-              }))
-            }
-          >
-            <SelectTrigger className='w-full'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={'create'}>{dict.common.create}</SelectItem>
-              <SelectItem value={'read'}>{dict.policy.actionRead}</SelectItem>
-              <SelectItem value={'update'}>{dict.common.update}</SelectItem>
-              <SelectItem value={'delete'}>{dict.common.delete}</SelectItem>
-            </SelectContent>
-          </Select>
+          {isBatchMode ? (
+            <MultiSelect
+              options={actionOptions}
+              defaultValue={selectedActions}
+              onValueChange={setSelectedActions}
+              placeholder={dict.policy.action}
+              maxCount={4}
+            />
+          ) : (
+            <Select
+              value={formData.action}
+              onValueChange={(value) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  action: value as PolicyAction,
+                }))
+              }
+            >
+              <SelectTrigger className='w-full'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {POLICY_ACTIONS.map((action) => (
+                  <SelectItem key={action} value={action}>
+                    {formatActionName(dict, action)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <div className='flex flex-col gap-2'>
@@ -139,147 +206,154 @@ export default function PolicyForm({
               <TooltipContent>{dict.policy.tooltips.resource}</TooltipContent>
             </Tooltip>
           </div>
-          <Select
-            value={formData.resource}
-            onValueChange={(value) =>
-              setFormData((prev) => ({
-                ...prev,
-                resource: value as PolicyResource,
-              }))
-            }
-          >
-            <SelectTrigger className='w-full'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={'workspace'}>
-                {String(formatResourceName('workspace'))}
-              </SelectItem>
-              <SelectItem value={'script'}>
-                {String(formatResourceName('script'))}
-              </SelectItem>
-              <SelectItem value={'query'}>
-                {String(formatResourceName('query'))}
-              </SelectItem>
-              <SelectItem value={'workflow'}>
-                {String(formatResourceName('workflow'))}
-              </SelectItem>
-              <SelectItem value={'workflow_run'}>
-                {String(formatResourceName('workflow_run'))}
-              </SelectItem>
-              <SelectItem value={'connection'}>
-                {String(formatResourceName('connection'))}
-              </SelectItem>
-              <SelectItem value={'repository'}>
-                {String(formatResourceName('repository'))}
-              </SelectItem>
-              <SelectItem value={'repository_branch'}>
-                {String(formatResourceName('repository_branch'))}
-              </SelectItem>
-              <SelectItem value={'repository_tag'}>
-                {String(formatResourceName('repository_tag'))}
-              </SelectItem>
-              <SelectItem value={'repository_commit'}>
-                {String(formatResourceName('repository_commit'))}
-              </SelectItem>
-              <SelectItem value={'repository_object'}>
-                {String(formatResourceName('repository_object'))}
-              </SelectItem>
-              <SelectItem value={'workspace_tag'}>
-                {String(formatResourceName('workspace_tag'))}
-              </SelectItem>
-              <SelectItem value={'user'}>
-                {String(formatResourceName('user'))}
-              </SelectItem>
-              <SelectItem value={'policy'}>
-                {String(formatResourceName('policy'))}
-              </SelectItem>
-              <SelectItem value={'invite'}>
-                {String(formatResourceName('invite'))}
-              </SelectItem>
-              <SelectItem value={'audit_log'}>
-                {String(formatResourceName('audit_log'))}
-              </SelectItem>
-              <SelectItem value={'documentation'}>
-                {String(formatResourceName('documentation'))}
-              </SelectItem>
-              <SelectItem value={'billing'}>
-                {String(formatResourceName('billing'))}
-              </SelectItem>
-              <SelectItem value={'ai_application'}>
-                {formatResourceName('ai_application')}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          {isBatchMode ? (
+            <MultiSelect
+              options={resourceOptions}
+              defaultValue={selectedResources}
+              onValueChange={(values) => {
+                setSelectedResources(values);
+                setFormData((prev) => ({ ...prev, resourceId: undefined }));
+              }}
+              placeholder={dict.policy.resource}
+              maxCount={3}
+            />
+          ) : (
+            <Select
+              value={formData.resource}
+              onValueChange={(value) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  resource: value as PolicyResource,
+                }))
+              }
+            >
+              <SelectTrigger className='w-full'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {POLICY_RESOURCES.map((resource) => (
+                  <SelectItem key={resource} value={resource}>
+                    {formatResourceName(resource)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
-        <div className='flex flex-col gap-2'>
-          <div className='flex items-center gap-2'>
-            <Label htmlFor='resourceId'>{dict.policy.resourceId}</Label>
-            <Tooltip>
-              <TooltipTrigger>
-                <TbInfoCircle
-                  className='cursor-help text-muted-foreground'
-                  size={16}
-                />
-              </TooltipTrigger>
-              <TooltipContent>{dict.policy.tooltips.resourceId}</TooltipContent>
-            </Tooltip>
+        {effectiveResource && (
+          <div className='flex flex-col gap-2'>
+            <div className='flex items-center gap-2'>
+              <Label htmlFor='resourceId'>{dict.policy.resourceId}</Label>
+              <Tooltip>
+                <TooltipTrigger>
+                  <TbInfoCircle
+                    className='cursor-help text-muted-foreground'
+                    size={16}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {dict.policy.tooltips.resourceId}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <Select
+              value={formData.resourceId}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, resourceId: value }))
+              }
+            >
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder={dict.common.all} />
+              </SelectTrigger>
+              <SelectContent>
+                {effectiveResource === 'script' &&
+                  policyResourceOptions.scripts.map((script) => {
+                    const optionValue = getValidSelectItemValue(script.id);
+                    if (!optionValue) {
+                      return null;
+                    }
+
+                    return (
+                      <SelectItem key={optionValue} value={optionValue}>
+                        {script.label}
+                      </SelectItem>
+                    );
+                  })}
+                {effectiveResource === 'query' &&
+                  policyResourceOptions.queries.map((query) => {
+                    const optionValue = getValidSelectItemValue(query.id);
+                    if (!optionValue) {
+                      return null;
+                    }
+
+                    return (
+                      <SelectItem key={optionValue} value={optionValue}>
+                        {query.label}
+                      </SelectItem>
+                    );
+                  })}
+                {(effectiveResource === 'workflow' ||
+                  effectiveResource === 'workflow_run') &&
+                  policyResourceOptions.workflows.map((workflow) => {
+                    const optionValue = getValidSelectItemValue(workflow.id);
+                    if (!optionValue) {
+                      return null;
+                    }
+
+                    return (
+                      <SelectItem key={optionValue} value={optionValue}>
+                        {workflow.label}
+                      </SelectItem>
+                    );
+                  })}
+                {effectiveResource === 'connection' &&
+                  policyResourceOptions.connections.map((connection) => {
+                    const optionValue = getValidSelectItemValue(connection.id);
+                    if (!optionValue) {
+                      return null;
+                    }
+
+                    return (
+                      <SelectItem key={optionValue} value={optionValue}>
+                        {connection.label}
+                      </SelectItem>
+                    );
+                  })}
+                {(effectiveResource === 'repository' ||
+                  effectiveResource === 'repository_branch' ||
+                  effectiveResource === 'repository_tag' ||
+                  effectiveResource === 'repository_commit' ||
+                  effectiveResource === 'repository_object') &&
+                  policyResourceOptions.repositories.map((repository) => {
+                    const optionValue = getValidSelectItemValue(repository.id);
+                    if (!optionValue) {
+                      return null;
+                    }
+
+                    return (
+                      <SelectItem key={optionValue} value={optionValue}>
+                        {repository.label}
+                      </SelectItem>
+                    );
+                  })}
+                {effectiveResource === 'user' &&
+                  policyResourceOptions.users.map((user) => {
+                    const optionValue = getValidSelectItemValue(user.id);
+                    if (!optionValue) {
+                      return null;
+                    }
+
+                    return (
+                      <SelectItem key={optionValue} value={optionValue}>
+                        {user.label}
+                      </SelectItem>
+                    );
+                  })}
+              </SelectContent>
+            </Select>
           </div>
-          <Select
-            value={formData.resourceId}
-            onValueChange={(value) =>
-              setFormData((prev) => ({ ...prev, resourceId: value }))
-            }
-          >
-            <SelectTrigger className='w-full'>
-              <SelectValue placeholder={dict.common.all} />
-            </SelectTrigger>
-            <SelectContent>
-              {formData.resource === 'script' &&
-                policyResourceOptions.scripts.map((script) => (
-                  <SelectItem key={script.id} value={script.id}>
-                    {script.label}
-                  </SelectItem>
-                ))}
-              {formData.resource === 'query' &&
-                policyResourceOptions.queries.map((query) => (
-                  <SelectItem key={query.id} value={query.id}>
-                    {query.label}
-                  </SelectItem>
-                ))}
-              {(formData.resource === 'workflow' ||
-                formData.resource === 'workflow_run') &&
-                policyResourceOptions.workflows.map((workflow) => (
-                  <SelectItem key={workflow.id} value={workflow.id}>
-                    {workflow.label}
-                  </SelectItem>
-                ))}
-              {formData.resource === 'connection' &&
-                policyResourceOptions.connections.map((connection) => (
-                  <SelectItem key={connection.id} value={connection.id}>
-                    {connection.label}
-                  </SelectItem>
-                ))}
-              {(formData.resource === 'repository' ||
-                formData.resource === 'repository_branch' ||
-                formData.resource === 'repository_tag' ||
-                formData.resource === 'repository_commit' ||
-                formData.resource === 'repository_object') &&
-                policyResourceOptions.repositories.map((repository) => (
-                  <SelectItem key={repository.id} value={repository.id}>
-                    {repository.label}
-                  </SelectItem>
-                ))}
-              {formData.resource === 'user' &&
-                policyResourceOptions.users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.label}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        </div>
+        )}
 
         <div className='flex flex-col gap-2'>
           <div className='flex items-center gap-2'>
@@ -336,11 +410,20 @@ export default function PolicyForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {roles.map((role) => (
-                  <SelectItem key={role.id} value={role.id}>
-                    {role.role}
-                  </SelectItem>
-                ))}
+                {roles
+                  .filter((role) => !role.isOwner)
+                  .map((role) => {
+                    const optionValue = getValidSelectItemValue(role.id);
+                    if (!optionValue) {
+                      return null;
+                    }
+
+                    return (
+                      <SelectItem key={optionValue} value={optionValue}>
+                        {role.role}
+                      </SelectItem>
+                    );
+                  })}
               </SelectContent>
             </Select>
           </div>
@@ -359,11 +442,18 @@ export default function PolicyForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.email}
-                  </SelectItem>
-                ))}
+                {users.map((user) => {
+                  const optionValue = getValidSelectItemValue(user.id);
+                  if (!optionValue) {
+                    return null;
+                  }
+
+                  return (
+                    <SelectItem key={optionValue} value={optionValue}>
+                      {user.email}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

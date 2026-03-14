@@ -17,6 +17,7 @@ import {
 
 import { Badge } from '@/components/ui/badge';
 import DisplayTitle from '@/components/ui/display-title';
+import AssetSharePopover from '@/components/ui/policy-editor/AssetSharePopover';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
@@ -258,6 +259,11 @@ function RepositoryHeaderContent() {
                 />
               </>
             )}
+          <AssetSharePopover
+            resourceType='repository'
+            resourceId={repository.id}
+            resourceLabel={repository.name}
+          />
         </div>
       </div>
       <TabsWithBackButton

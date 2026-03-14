@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   TbChevronDown,
@@ -10,6 +10,7 @@ import {
 } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -107,6 +108,9 @@ export default function PolicyTable({
   allowEdit = true,
   allowDelete = true,
   onEditClick,
+  selectable = false,
+  selectedIds,
+  onSelectionChange,
 }: PolicyTableProps) {
   const { dict } = useLocale();
 
@@ -116,6 +120,51 @@ export default function PolicyTable({
     column: null,
     direction: null,
   });
+
+  const selectablePolicies = useMemo(
+    () => policies.filter((p) => !p.role?.isOwner),
+    [policies]
+  );
+  const selectablePolicyIds = useMemo(
+    () => new Set(selectablePolicies.map((p) => p.id)),
+    [selectablePolicies]
+  );
+  const selectedVisibleCount = useMemo(() => {
+    if (!selectedIds) return 0;
+    let count = 0;
+    for (const id of selectedIds) {
+      if (selectablePolicyIds.has(id)) count++;
+    }
+    return count;
+  }, [selectedIds, selectablePolicyIds]);
+  const allSelected =
+    selectable &&
+    selectablePolicies.length > 0 &&
+    selectedVisibleCount === selectablePolicies.length;
+  const someSelected = selectable && selectedVisibleCount > 0 && !allSelected;
+
+  const handleSelectAll = useCallback(() => {
+    if (!onSelectionChange) return;
+    if (allSelected) {
+      onSelectionChange(new Set());
+    } else {
+      onSelectionChange(new Set(selectablePolicies.map((p) => p.id)));
+    }
+  }, [allSelected, onSelectionChange, selectablePolicies]);
+
+  const handleSelectOne = useCallback(
+    (policyId: string) => {
+      if (!onSelectionChange || !selectedIds) return;
+      const next = new Set(selectedIds);
+      if (next.has(policyId)) {
+        next.delete(policyId);
+      } else {
+        next.add(policyId);
+      }
+      onSelectionChange(next);
+    },
+    [onSelectionChange, selectedIds]
+  );
 
   const handleSort = (column: SortableColumn) => {
     setSortState((prevState) => {
@@ -240,6 +289,17 @@ export default function PolicyTable({
     <Table>
       <TableHeader>
         <TableRow>
+          {selectable && (
+            <TableHead className='w-[40px]'>
+              <Checkbox
+                checked={
+                  allSelected ? true : someSelected ? 'indeterminate' : false
+                }
+                disabled={selectablePolicies.length === 0}
+                onCheckedChange={handleSelectAll}
+              />
+            </TableHead>
+          )}
           <TableHead className='max-w-[80]'>
             <SortableHeader
               column='effect'
@@ -371,7 +431,24 @@ export default function PolicyTable({
       </TableHeader>
       <TableBody>
         {sortedPolicies.map((policy) => (
-          <TableRow key={policy.id}>
+          <TableRow
+            key={policy.id}
+            className={
+              policy.effect === 'deny'
+                ? 'border-l-2 border-l-destructive bg-destructive/5'
+                : undefined
+            }
+          >
+            {selectable && (
+              <TableCell className='w-[40px]'>
+                {policy.role?.isOwner ? null : (
+                  <Checkbox
+                    checked={selectedIds?.has(policy.id) ?? false}
+                    onCheckedChange={() => handleSelectOne(policy.id)}
+                  />
+                )}
+              </TableCell>
+            )}
             <TableCell className='max-w-[80px]'>
               <div className='flex items-center gap-2'>
                 <PolicyEffectBadge effect={policy.effect} />
@@ -403,18 +480,35 @@ export default function PolicyTable({
             )}
             {(allowEdit || allowDelete) && (
               <TableCell>
-                <div className='flex items-center justify-end gap-1'>
-                  {allowEdit && (
-                    <Button
-                      variant='ghost'
-                      size='icon'
-                      onClick={() => onEditClick(policy)}
-                    >
-                      <TbEdit className='size-4' />
-                    </Button>
-                  )}
-                  {allowDelete && <PolicyDeleteButton policyId={policy.id} />}
-                </div>
+                {policy.role?.isOwner ? (
+                  <div className='flex items-center justify-end'>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className='text-xs text-muted-foreground'>
+                            {dict.policy.ownerRoleProtected}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {dict.policy.ownerRoleProtected}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                ) : (
+                  <div className='flex items-center justify-end gap-1'>
+                    {allowEdit && (
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        onClick={() => onEditClick(policy)}
+                      >
+                        <TbEdit className='size-4' />
+                      </Button>
+                    )}
+                    {allowDelete && <PolicyDeleteButton policyId={policy.id} />}
+                  </div>
+                )}
               </TableCell>
             )}
           </TableRow>

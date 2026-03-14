@@ -1657,6 +1657,79 @@ const en = {
         'Who this policy applies to (specific user, role, or everyone)',
       resourceId:
         'Optional specific resource ID. Leave empty to apply to all resources of this type',
+      denyExplanation:
+        'Deny policies override role defaults and explicitly revoke access',
+    },
+
+    // Bulk actions
+    bulkDelete: 'Delete Selected',
+    bulkDeleteConfirm:
+      'Are you sure you want to delete the selected policies? This action cannot be undone.',
+    policiesSelected: 'policies selected',
+    clearSelection: 'Clear Selection',
+
+    // Filters
+    filterByEffect: 'Filter by effect',
+    filterByAction: 'Filter by action',
+    filterByPrincipal: 'Filter by principal',
+    filterByResource: 'Filter by resource',
+    allEffects: 'All Effects',
+    allActions: 'All Actions',
+    allPrincipals: 'All Principals',
+    allResources: 'All Resources',
+
+    // Batch creation
+    createdPolicies: 'Created policies',
+    failedCount: 'failed',
+    alreadyExisted: 'already existed',
+    batchNoSelections:
+      'Please select at least one action and one resource to create policies.',
+
+    // Bulk delete results
+    bulkDeleteSuccess: 'Deleted policies',
+
+    // Share
+    share: {
+      title: 'Share',
+      shareThis: 'Share this',
+      currentAccess: 'Current Access',
+      addAccess: 'Add Access',
+      readOnly: 'Read Only',
+      readWrite: 'Read & Write',
+      fullAccess: 'Full Access',
+      custom: 'Custom',
+      removeAccessConfirm:
+        'Are you sure you want to remove access? This will delete all policies for this user/role on this resource.',
+      noOneHasAccess: 'No one has been granted specific access yet',
+      accessGranted: 'Access granted successfully',
+      grantAccessPartial:
+        'Some permissions were granted, but others failed. Please check and try again.',
+      grantAccessFailed: 'Failed to grant access. Please try again.',
+      changeLevelDeleteFailed:
+        'Failed to update permission level. Could not remove existing policies.',
+      changeLevelDeletePartial:
+        'Failed to update permission level. Some existing policies were removed but others could not be deleted. Please check permissions manually.',
+      changeLevelCreateFailed:
+        'Old permissions were removed but new ones could not be created. Please re-grant access manually.',
+      changeLevelSuccess: 'Permission level updated successfully.',
+      accessRemoved: 'Access removed successfully',
+      removeAccessFailed: 'Failed to remove access. Please try again.',
+      grantAccess: 'Grant Access',
+    },
+
+    ownerRoleProtected: 'Owner role always has full access',
+
+    // Permission overview
+    permissionOverview: {
+      rolePermissions: 'Role Permissions',
+      userPermissions: 'User Permissions',
+      inheritedFromRole: 'Inherited from role',
+      directPermission: 'Direct permission',
+      fullAccess: 'Full Access',
+      partialAccess: 'Partial Access',
+      noAccess: 'No Access',
+      denied: 'Denied',
+      additionalPolicies: 'additional policies',
     },
   },
 

@@ -14,6 +14,7 @@ import {
 } from 'react-icons/tb';
 
 import DisplayTitle from '@/components/ui/display-title';
+import AssetSharePopover from '@/components/ui/policy-editor/AssetSharePopover';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
@@ -180,6 +181,13 @@ export default function AIApplicationHeader() {
               />
             </div>
           )}
+        </div>
+        <div className='flex items-center gap-2'>
+          <AssetSharePopover
+            resourceType='ai_application'
+            resourceId={aiApplication.id}
+            resourceLabel={aiApplication.name}
+          />
         </div>
       </div>
       <TabsWithBackButton

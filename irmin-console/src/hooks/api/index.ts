@@ -42,6 +42,7 @@ export * from './usePolicies';
 export * from './usePolicy';
 export * from './usePolicyResourceOptions';
 export * from './usePolicySummary';
+export * from './useRolePolicySummary';
 
 // User hooks
 export * from './useUser';

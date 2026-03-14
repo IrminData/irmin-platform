@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
 import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import ConnectionLayoutSkeleton from '@/components/ui/loading/ConnectionLayoutSkeleton';
+import AssetSharePopover from '@/components/ui/policy-editor/AssetSharePopover';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
@@ -232,6 +233,11 @@ export default function ConnectionLayoutWrapper({
             >
               {dict.connections.testConnection}
             </Button>
+            <AssetSharePopover
+              resourceType='connection'
+              resourceId={connection.id}
+              resourceLabel={connection.name}
+            />
           </div>
         </div>
         <TabsWithBackButton

@@ -49,6 +49,8 @@ export function usePolicies({
   principal,
   roleId,
   userId,
+  silent = false,
+  mutationsOnly = false,
 }: {
   effect?: PolicyEffect;
   action?: PolicyAction;
@@ -57,6 +59,10 @@ export function usePolicies({
   principal?: PolicyPrincipal;
   roleId?: string;
   userId?: string;
+  /** When true, suppresses per-mutation alerts. Use for batch operations that show their own summary. */
+  silent?: boolean;
+  /** When true, disables the policies query. Use when only mutations are needed. */
+  mutationsOnly?: boolean;
 }) {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
@@ -87,6 +93,7 @@ export function usePolicies({
         userId,
       });
     },
+    enabled: !mutationsOnly,
   });
 
   const createPolicyMutation = useMutation<
@@ -155,14 +162,18 @@ export function usePolicies({
           }),
         },
         onSuccess: (res) => {
-          irminAlert('success', res.message ?? 'Policy created successfully');
+          if (!silent) {
+            irminAlert('success', res.message ?? 'Policy created successfully');
+          }
           // Invalidate all policy queries to ensure filtered views are consistent
           queryClient.invalidateQueries({
             queryKey: ['policies', workspaceSlug],
           });
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Error creating policy');
+          if (!silent) {
+            irminAlert('error', error.message ?? 'Error creating policy');
+          }
         },
       }
     ),
@@ -193,14 +204,18 @@ export function usePolicies({
       },
 
       onSuccess: (res) => {
-        irminAlert('success', res.message ?? 'Policy deleted successfully');
+        if (!silent) {
+          irminAlert('success', res.message ?? 'Policy deleted successfully');
+        }
         // Invalidate all policy queries to ensure filtered views are consistent
         queryClient.invalidateQueries({
           queryKey: ['policies', workspaceSlug],
         });
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Error deleting policy');
+        if (!silent) {
+          irminAlert('error', error.message ?? 'Error deleting policy');
+        }
       },
     }),
   });

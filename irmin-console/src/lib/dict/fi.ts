@@ -1644,6 +1644,79 @@ const fi = {
         'Kenelle käyttöoikeus koskee (tietty käyttäjä, rooli tai kaikki)',
       resourceId:
         'Valinnainen tietyn resurssin tunniste. Jätä tyhjäksi koskemaan kaikkia tämän tyyppisiä resursseja',
+      denyExplanation:
+        'Estävät käyttöoikeudet ohittavat roolien oletukset ja peruuttavat pääsyn',
+    },
+
+    // Bulk actions
+    bulkDelete: 'Poista valitut',
+    bulkDeleteConfirm:
+      'Haluatko varmasti poistaa valitut käyttöoikeudet? Tätä toimintoa ei voi peruuttaa.',
+    policiesSelected: 'käyttöoikeutta valittu',
+    clearSelection: 'Tyhjennä valinta',
+
+    // Filters
+    filterByEffect: 'Suodata vaikutuksen mukaan',
+    filterByAction: 'Suodata toiminnon mukaan',
+    filterByPrincipal: 'Suodata kohteen mukaan',
+    filterByResource: 'Suodata resurssin mukaan',
+    allEffects: 'Kaikki vaikutukset',
+    allActions: 'Kaikki toiminnot',
+    allPrincipals: 'Kaikki kohteet',
+    allResources: 'Kaikki resurssit',
+
+    // Batch creation
+    createdPolicies: 'Luodut käyttöoikeudet',
+    failedCount: 'epäonnistui',
+    alreadyExisted: 'oli jo olemassa',
+    batchNoSelections:
+      'Valitse vähintään yksi toiminto ja yksi resurssi luodaksesi käytäntöjä.',
+
+    // Bulk delete results
+    bulkDeleteSuccess: 'Poistetut käyttöoikeudet',
+
+    // Share
+    share: {
+      title: 'Jaa',
+      shareThis: 'Jaa tämä',
+      currentAccess: 'Nykyinen pääsy',
+      addAccess: 'Lisää pääsy',
+      readOnly: 'Vain luku',
+      readWrite: 'Luku ja kirjoitus',
+      fullAccess: 'Täysi pääsy',
+      custom: 'Mukautettu',
+      removeAccessConfirm:
+        'Haluatko varmasti poistaa pääsyn? Tämä poistaa kaikki käyttöoikeudet tälle käyttäjälle/roolille tässä resurssissa.',
+      noOneHasAccess: 'Kenellekään ei ole myönnetty erityistä pääsyä',
+      accessGranted: 'Pääsy myönnetty onnistuneesti',
+      grantAccessPartial:
+        'Osa oikeuksista myönnettiin, mutta osa epäonnistui. Tarkista ja yritä uudelleen.',
+      grantAccessFailed: 'Pääsyn myöntäminen epäonnistui. Yritä uudelleen.',
+      changeLevelDeleteFailed:
+        'Käyttöoikeustason päivitys epäonnistui. Olemassa olevia käyttöoikeuksia ei voitu poistaa.',
+      changeLevelDeletePartial:
+        'Käyttöoikeustason päivitys epäonnistui. Osa olemassa olevista käyttöoikeuksista poistettiin, mutta kaikkia ei voitu poistaa. Tarkista käyttöoikeudet manuaalisesti.',
+      changeLevelCreateFailed:
+        'Vanhat käyttöoikeudet poistettiin, mutta uusia ei voitu luoda. Myönnä pääsy uudelleen manuaalisesti.',
+      changeLevelSuccess: 'Käyttöoikeustaso päivitetty onnistuneesti.',
+      accessRemoved: 'Pääsy poistettu onnistuneesti',
+      removeAccessFailed: 'Pääsyn poistaminen epäonnistui. Yritä uudelleen.',
+      grantAccess: 'Myönnä pääsy',
+    },
+
+    ownerRoleProtected: 'Omistaja-roolilla on aina täysi pääsy',
+
+    // Permission overview
+    permissionOverview: {
+      rolePermissions: 'Roolien käyttöoikeudet',
+      userPermissions: 'Käyttäjien käyttöoikeudet',
+      inheritedFromRole: 'Peritty roolilta',
+      directPermission: 'Suora käyttöoikeus',
+      fullAccess: 'Täysi pääsy',
+      partialAccess: 'Osittainen pääsy',
+      noAccess: 'Ei pääsyä',
+      denied: 'Estetty',
+      additionalPolicies: 'lisäkäyttöoikeutta',
     },
   },
 
