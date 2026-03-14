@@ -58,20 +58,17 @@ export class ScriptingAgent extends BaseAgent {
     }
 
     const fallbackLLM = llmService.createLLM({
-      provider: 'openai',
-      model: 'gpt-5.1',
+      // Keep fallback on Anthropic so conversation history with Anthropic
+      // thinking blocks remains provider-compatible.
+      provider: 'anthropic',
+      model: 'claude-haiku-4-5-20251001',
       maxTokens: 1000,
       streaming: false,
-      openai: {
-        reasoning: {
-          effort: 'high',
-        },
-      },
     });
 
     const cheaperLLM = llmService.createLLM({
-      provider: 'openai',
-      model: 'gpt-5-mini',
+      provider: 'groq',
+      model: 'llama-3.1-8b-instant',
       streaming: false,
     });
 

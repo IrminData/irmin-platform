@@ -52,15 +52,12 @@ export class QueryAgent extends BaseAgent {
     }
 
     const fallbackLLM = llmService.createLLM({
-      provider: 'openai',
-      model: 'gpt-5.1',
+      // Keep fallback on Anthropic so conversation history with Anthropic
+      // thinking blocks remains provider-compatible.
+      provider: 'anthropic',
+      model: 'claude-haiku-4-5-20251001',
       maxTokens: 2048,
       streaming: false,
-      openai: {
-        reasoning: {
-          effort: 'high',
-        },
-      },
     });
 
     return {
