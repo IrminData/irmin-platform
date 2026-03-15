@@ -348,3 +348,6 @@ export const billingSubscriptionQueryKey = (workspaceSlug: string) =>
 
 export const billingUsageQueryKey = (workspaceSlug: string) =>
   ['billing-usage', workspaceSlug] as const;
+
+export const billingInfoQueryKey = (workspaceSlug: string) =>
+  ['billing-info', workspaceSlug] as const;

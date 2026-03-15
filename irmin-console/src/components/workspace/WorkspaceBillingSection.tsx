@@ -8,6 +8,7 @@ import { usePopup } from '@/context/PopupContext';
 
 import { useBilling } from '@/hooks/api/useBilling';
 
+import BillingInfoCard from './billing/BillingInfoCard';
 import BillingPlanCard from './billing/BillingPlanCard';
 import BillingUsageDashboard from './billing/BillingUsageDashboard';
 
@@ -92,6 +93,8 @@ const WorkspaceBillingSection = () => {
           usage={usage ?? undefined}
           plan={subscription ?? undefined}
         />
+
+        <BillingInfoCard />
       </div>
     </ContentWrapper>
   );

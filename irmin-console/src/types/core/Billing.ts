@@ -36,6 +36,36 @@ export interface UsageDimensionSummary {
 }
 
 /**
+ * Billing address for invoices.
+ */
+interface BillingAddress {
+  /** Street address line 1 */
+  line1: string;
+  /** Street address line 2 */
+  line2: string;
+  /** City */
+  city: string;
+  /** State or region */
+  state: string;
+  /** Postal/ZIP code */
+  postal_code: string;
+  /** Two-letter country code */
+  country: string;
+}
+
+/**
+ * Billing info for a workspace customer.
+ */
+export interface BillingInfo {
+  /** Company/business name for billing */
+  name: string;
+  /** Billing address */
+  billing_address: BillingAddress | null;
+  /** Tax ID as [value, type] tuple, e.g. ["FI12345678", "eu_vat"] */
+  tax_id: [string, string] | null;
+}
+
+/**
  * Plan information returned from the billing API.
  */
 export interface PlanInfo {
