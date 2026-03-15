@@ -49,10 +49,11 @@ func (s *BillingService) IsEnabled() bool {
 }
 
 // CreateOrGetCustomer creates or retrieves a Polar customer for the workspace.
-func (s *BillingService) CreateOrGetCustomer(workspaceSQID, ownerEmail string) (string, error) {
+func (s *BillingService) CreateOrGetCustomer(workspaceSQID, ownerEmail, name string) (string, error) {
 	body := map[string]any{
 		"email":       ownerEmail,
 		"external_id": workspaceSQID,
+		"name":        name,
 	}
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
@@ -567,6 +568,93 @@ func (s *BillingService) polarPost(ctx context.Context, path string, body []byte
 			resp.StatusCode,
 			string(respBody),
 		)
+	}
+
+	return resp, nil
+}
+
+// parseBillingInfoResponse unmarshals a Polar customer response body into BillingInfo.
+func parseBillingInfoResponse(body []byte) (*irminmodels.BillingInfo, error) {
+	var result struct {
+		Name           string                       `json:"name"`
+		BillingAddress *irminmodels.BillingAddress  `json:"billing_address"`
+		TaxID          irminmodels.BillingInfoTaxID `json:"tax_id"`
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("failed to decode customer response: %w", err)
+	}
+	return &irminmodels.BillingInfo{
+		Name:           result.Name,
+		BillingAddress: result.BillingAddress,
+		TaxID:          result.TaxID,
+	}, nil
+}
+
+// GetCustomerBillingInfo retrieves billing info (name, address, tax ID) from Polar.
+func (s *BillingService) GetCustomerBillingInfo(polarCustomerID string) (*irminmodels.BillingInfo, error) {
+	resp, err := s.polarGet(context.Background(), "/v1/customers/"+polarCustomerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get customer billing info: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, readErr := io.ReadAll(resp.Body)
+	if readErr != nil {
+		return nil, fmt.Errorf("failed to read customer response: %w", readErr)
+	}
+
+	return parseBillingInfoResponse(respBody)
+}
+
+// UpdateCustomerBillingInfo updates billing info on the Polar customer.
+func (s *BillingService) UpdateCustomerBillingInfo(
+	polarCustomerID string,
+	info map[string]any,
+) (*irminmodels.BillingInfo, error) {
+	jsonBody, err := json.Marshal(info)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal billing info update: %w", err)
+	}
+
+	resp, err := s.polarPatch(context.Background(), "/v1/customers/"+polarCustomerID, jsonBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update customer billing info: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, readErr := io.ReadAll(resp.Body)
+	if readErr != nil {
+		return nil, fmt.Errorf("failed to read update response: %w", readErr)
+	}
+
+	return parseBillingInfoResponse(respBody)
+}
+
+// polarPatch makes an authenticated PATCH request to the Polar API.
+func (s *BillingService) polarPatch(ctx context.Context, path string, body []byte) (*http.Response, error) {
+	var bodyReader io.Reader
+	if body != nil {
+		bodyReader = bytes.NewReader(body)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, s.baseURL+path, bodyReader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+s.env.PolarAPIKey)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		respBody, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		return nil, fmt.Errorf("polar API PATCH %s returned status %d: %s", path, resp.StatusCode, string(respBody))
 	}
 
 	return resp, nil

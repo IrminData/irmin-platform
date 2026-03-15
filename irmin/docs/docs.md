@@ -41,6 +41,7 @@ import "irmin-api/bucket"
   - [func \(bucket \*Client\) ListObjects\(ctx context.Context, keyPrefix string\) \(\[\]types.Object, error\)](<#Client.ListObjects>)
   - [func \(bucket \*Client\) PresignedGetURL\(ctx context.Context, key string, expiry time.Duration\) \(string, error\)](<#Client.PresignedGetURL>)
   - [func \(bucket \*Client\) ReadPath\(ctx context.Context, key string\) \(\*string, error\)](<#Client.ReadPath>)
+  - [func \(bucket \*Client\) TotalSize\(ctx context.Context, keyPrefix string\) \(int64, error\)](<#Client.TotalSize>)
   - [func \(bucket \*Client\) UploadReader\(ctx context.Context, key string, body io.Reader\) error](<#Client.UploadReader>)
   - [func \(bucket \*Client\) WritePath\(ctx context.Context, key string, content string, tx ...\*gorm.DB\) error](<#Client.WritePath>)
 
@@ -123,6 +124,15 @@ func (bucket *Client) ReadPath(ctx context.Context, key string) (*string, error)
 ```
 
 
+
+<a name="Client.TotalSize"></a>
+### func \(\*Client\) TotalSize
+
+```go
+func (bucket *Client) TotalSize(ctx context.Context, keyPrefix string) (int64, error)
+```
+
+TotalSize returns the total size in bytes of all objects under the given prefix. Uses paginated listing to handle prefixes with more than 1000 objects.
 
 <a name="Client.UploadReader"></a>
 ### func \(\*Client\) UploadReader
@@ -928,6 +938,8 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) AcceptInvite\(c fiber.Ctx\) error](<#APIControllers.AcceptInvite>)
   - [func \(api \*APIControllers\) AllWorkflowRunsIndex\(c fiber.Ctx\) error](<#APIControllers.AllWorkflowRunsIndex>)
   - [func \(api \*APIControllers\) BillingCheckoutCreate\(c fiber.Ctx\) error](<#APIControllers.BillingCheckoutCreate>)
+  - [func \(api \*APIControllers\) BillingInfoShow\(c fiber.Ctx\) error](<#APIControllers.BillingInfoShow>)
+  - [func \(api \*APIControllers\) BillingInfoUpdate\(c fiber.Ctx\) error](<#APIControllers.BillingInfoUpdate>)
   - [func \(api \*APIControllers\) BillingPortalCreate\(c fiber.Ctx\) error](<#APIControllers.BillingPortalCreate>)
   - [func \(api \*APIControllers\) BillingSubscriptionShow\(c fiber.Ctx\) error](<#APIControllers.BillingSubscriptionShow>)
   - [func \(api \*APIControllers\) BillingUsageHistory\(c fiber.Ctx\) error](<#APIControllers.BillingUsageHistory>)
@@ -1396,6 +1408,24 @@ func (api *APIControllers) BillingCheckoutCreate(c fiber.Ctx) error
 ```
 
 BillingCheckoutCreate godoc @Summary Create a Polar checkout session @Tags billing @Security ApiKeyAuth @Accept json @Produce json @Param workspace path string true "Workspace slug" @Param request body irmincore.CheckoutRequest true "Checkout request" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irmincore.CheckoutResponse\} @Router /workspaces/\{workspace\}/billing/checkout \[post\]
+
+<a name="APIControllers.BillingInfoShow"></a>
+### func \(\*APIControllers\) BillingInfoShow
+
+```go
+func (api *APIControllers) BillingInfoShow(c fiber.Ctx) error
+```
+
+BillingInfoShow godoc @Summary Get workspace billing info @Tags billing @Security ApiKeyAuth @Produce json @Param workspace path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.BillingInfo\} @Router /workspaces/\{workspace\}/billing/info \[get\]
+
+<a name="APIControllers.BillingInfoUpdate"></a>
+### func \(\*APIControllers\) BillingInfoUpdate
+
+```go
+func (api *APIControllers) BillingInfoUpdate(c fiber.Ctx) error
+```
+
+BillingInfoUpdate godoc @Summary Update workspace billing info @Tags billing @Security ApiKeyAuth @Accept json @Produce json @Param workspace path string true "Workspace slug" @Param request body irmincore.UpdateBillingInfoRequest true "Billing info update" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.BillingInfo\} @Router /workspaces/\{workspace\}/billing/info \[patch\]
 
 <a name="APIControllers.BillingPortalCreate"></a>
 ### func \(\*APIControllers\) BillingPortalCreate
@@ -14339,13 +14369,15 @@ import "irmin-api/services"
   - [func \(s \*BillingService\) CheckSeatLimit\(workspaceID uint\) \(bool, error\)](<#BillingService.CheckSeatLimit>)
   - [func \(s \*BillingService\) CheckUsageLimit\(workspaceID uint, dimension db.UsageDimension, additionalQty int64\) \(bool, error\)](<#BillingService.CheckUsageLimit>)
   - [func \(s \*BillingService\) CreateCheckoutSession\(polarCustomerID, productID, returnURL string\) \(string, error\)](<#BillingService.CreateCheckoutSession>)
-  - [func \(s \*BillingService\) CreateOrGetCustomer\(workspaceSQID, ownerEmail string\) \(string, error\)](<#BillingService.CreateOrGetCustomer>)
+  - [func \(s \*BillingService\) CreateOrGetCustomer\(workspaceSQID, ownerEmail, name string\) \(string, error\)](<#BillingService.CreateOrGetCustomer>)
   - [func \(s \*BillingService\) GetCurrentPlan\(workspaceID uint\) \(\*irminmodels.PlanInfo, error\)](<#BillingService.GetCurrentPlan>)
+  - [func \(s \*BillingService\) GetCustomerBillingInfo\(polarCustomerID string\) \(\*irminmodels.BillingInfo, error\)](<#BillingService.GetCustomerBillingInfo>)
   - [func \(s \*BillingService\) GetCustomerPortalURL\(polarCustomerID string\) \(string, error\)](<#BillingService.GetCustomerPortalURL>)
   - [func \(s \*BillingService\) GetProductID\(\) string](<#BillingService.GetProductID>)
   - [func \(s \*BillingService\) HandleWebhookEvent\(eventType string, payload map\[string\]any\) error](<#BillingService.HandleWebhookEvent>)
   - [func \(s \*BillingService\) IsEnabled\(\) bool](<#BillingService.IsEnabled>)
   - [func \(s \*BillingService\) ReportUsageBatch\(events \[\]map\[string\]any\) error](<#BillingService.ReportUsageBatch>)
+  - [func \(s \*BillingService\) UpdateCustomerBillingInfo\(polarCustomerID string, info map\[string\]any\) \(\*irminmodels.BillingInfo, error\)](<#BillingService.UpdateCustomerBillingInfo>)
 - [type ConnectionSubscriptionService](<#ConnectionSubscriptionService>)
   - [func NewConnectionSubscriptionService\(database \*db.Database, apiURL string\) \*ConnectionSubscriptionService](<#NewConnectionSubscriptionService>)
   - [func \(s \*ConnectionSubscriptionService\) RegisterSubscriptionWithConnector\(ctx context.Context, connection \*db.Connection, subscription \*db.ConnectionSubscription, connectionSqid string\) \(\*uint, error\)](<#ConnectionSubscriptionService.RegisterSubscriptionWithConnector>)
@@ -14364,7 +14396,7 @@ import "irmin-api/services"
 - [type TokenType](<#TokenType>)
 - [type UpdateCustomToolRequest](<#UpdateCustomToolRequest>)
 - [type UsageTracker](<#UsageTracker>)
-  - [func NewUsageTracker\(database \*db.Database, billingService \*BillingService, lakefsClient \*lakefs.Client, logger \*slog.Logger\) \*UsageTracker](<#NewUsageTracker>)
+  - [func NewUsageTracker\(database \*db.Database, billingService \*BillingService, lakefsClient \*lakefs.Client, env \*utils.CoreAPIEnv, logger \*slog.Logger\) \*UsageTracker](<#NewUsageTracker>)
   - [func \(t \*UsageTracker\) Start\(ctx context.Context\) error](<#UsageTracker.Start>)
   - [func \(t \*UsageTracker\) Track\(workspaceID uint, dimension db.UsageDimension, quantity int64\)](<#UsageTracker.Track>)
   - [func \(t \*UsageTracker\) TrackSeats\(workspaceID uint\)](<#UsageTracker.TrackSeats>)
@@ -16392,7 +16424,7 @@ CreateCheckoutSession creates a Polar checkout session and returns the checkout 
 ### func \(\*BillingService\) CreateOrGetCustomer
 
 ```go
-func (s *BillingService) CreateOrGetCustomer(workspaceSQID, ownerEmail string) (string, error)
+func (s *BillingService) CreateOrGetCustomer(workspaceSQID, ownerEmail, name string) (string, error)
 ```
 
 CreateOrGetCustomer creates or retrieves a Polar customer for the workspace.
@@ -16405,6 +16437,15 @@ func (s *BillingService) GetCurrentPlan(workspaceID uint) (*irminmodels.PlanInfo
 ```
 
 GetCurrentPlan retrieves the current plan info from the local database. If the local subscription has status "none" but has a PolarCustomerID, it falls back to the Polar API to check for an active subscription \(handles missed webhooks\). Returns defaults when no subscription exists.
+
+<a name="BillingService.GetCustomerBillingInfo"></a>
+### func \(\*BillingService\) GetCustomerBillingInfo
+
+```go
+func (s *BillingService) GetCustomerBillingInfo(polarCustomerID string) (*irminmodels.BillingInfo, error)
+```
+
+GetCustomerBillingInfo retrieves billing info \(name, address, tax ID\) from Polar.
 
 <a name="BillingService.GetCustomerPortalURL"></a>
 ### func \(\*BillingService\) GetCustomerPortalURL
@@ -16450,6 +16491,15 @@ func (s *BillingService) ReportUsageBatch(events []map[string]any) error
 ```
 
 ReportUsageBatch reports usage events to Polar's metering API. Returns an error if any events failed ingestion so callers can avoid marking them as reported.
+
+<a name="BillingService.UpdateCustomerBillingInfo"></a>
+### func \(\*BillingService\) UpdateCustomerBillingInfo
+
+```go
+func (s *BillingService) UpdateCustomerBillingInfo(polarCustomerID string, info map[string]any) (*irminmodels.BillingInfo, error)
+```
+
+UpdateCustomerBillingInfo updates billing info on the Polar customer.
 
 <a name="ConnectionSubscriptionService"></a>
 ## type ConnectionSubscriptionService
@@ -16701,7 +16751,7 @@ type UsageTracker struct {
 ### func NewUsageTracker
 
 ```go
-func NewUsageTracker(database *db.Database, billingService *BillingService, lakefsClient *lakefs.Client, logger *slog.Logger) *UsageTracker
+func NewUsageTracker(database *db.Database, billingService *BillingService, lakefsClient *lakefs.Client, env *utils.CoreAPIEnv, logger *slog.Logger) *UsageTracker
 ```
 
 NewUsageTracker creates a new usage tracker. Returns nil if billing is disabled.

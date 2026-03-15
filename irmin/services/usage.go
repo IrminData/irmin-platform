@@ -2,9 +2,12 @@ package services
 
 import (
 	"context"
+	"irmin-api/bucket"
 	"irmin-api/db"
 	"irmin-api/lakefs"
+	"irmin-api/utils"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 )
@@ -32,6 +35,7 @@ type UsageTracker struct {
 	db             *db.Database
 	billingService *BillingService
 	lakefsClient   *lakefs.Client
+	lakefsBucket   *bucket.Client
 	logger         *slog.Logger
 	events         chan usageEvent
 }
@@ -41,15 +45,29 @@ func NewUsageTracker(
 	database *db.Database,
 	billingService *BillingService,
 	lakefsClient *lakefs.Client,
+	env *utils.CoreAPIEnv,
 	logger *slog.Logger,
 ) *UsageTracker {
 	if billingService == nil {
 		return nil
 	}
+
+	// Create a bucket client for the LakeFS S3 bucket so we can measure actual storage.
+	var lakefsBucketClient *bucket.Client
+	if env != nil && env.LakeFSS3Bucket != "" {
+		client, err := bucket.CreateClient(env, env.LakeFSS3Bucket, database)
+		if err != nil {
+			logger.Error("Failed to create LakeFS bucket client for storage metering", "error", err)
+		} else {
+			lakefsBucketClient = client
+		}
+	}
+
 	return &UsageTracker{
 		db:             database,
 		billingService: billingService,
 		lakefsClient:   lakefsClient,
+		lakefsBucket:   lakefsBucketClient,
 		logger:         logger,
 		events:         make(chan usageEvent, usageChannelCapacity),
 	}
@@ -224,8 +242,8 @@ func (t *UsageTracker) resolveExternalID(workspaceID uint, cache map[uint]string
 
 // flushToPolar sends unreported usage records to Polar's metering API.
 // Storage records are reported individually as gauge snapshots (for Polar Average aggregation).
-// Other byte-based dimensions (data transfer) are aggregated per workspace before
-// converting to GB to avoid losing sub-GB records to integer division.
+// Other byte-based dimensions (data transfer) are aggregated per workspace before converting to GB.
+// All byte-based dimensions report as fractional GB (float) so sub-GB usage is visible.
 func (t *UsageTracker) flushToPolar() {
 	records, err := t.db.GetUnreportedUsageRecords(usagePolarBatchLimit)
 	if err != nil {
@@ -257,18 +275,15 @@ func (t *UsageTracker) flushToPolar() {
 		}
 
 		// Storage is a gauge — report each snapshot individually so Polar can compute the average.
-		// Only mark as reported when ≥1 GB; sub-GB snapshots stay unreported so the latest
-		// snapshot is retried on the next flush (they're absolute values, not accumulating deltas).
+		// Report as fractional GB so sub-GB usage is visible (e.g. 0.5 for 500 MB).
 		if r.Dimension == db.UsageDimensionStorage {
-			gbQuantity := r.Quantity / db.BytesPerGB
-			if gbQuantity > 0 {
-				events = append(events, map[string]any{
-					"name":                 string(r.Dimension),
-					"external_customer_id": externalID,
-					"metadata":             map[string]any{"quantity": gbQuantity},
-				})
-				reportableIDs = append(reportableIDs, r.ID)
-			}
+			gbQuantity := float64(r.Quantity) / float64(db.BytesPerGB)
+			events = append(events, map[string]any{
+				"name":                 string(r.Dimension),
+				"external_customer_id": externalID,
+				"metadata":             map[string]any{"quantity": gbQuantity},
+			})
+			reportableIDs = append(reportableIDs, r.ID)
 			continue
 		}
 
@@ -313,9 +328,8 @@ func (t *UsageTracker) flushToPolar() {
 	}
 }
 
-// convertByteAggregations converts aggregated byte totals to GB events for Polar.
-// Only produces events when the total reaches ≥1 GB; sub-GB records stay unreported
-// and accumulate across future flushes.
+// convertByteAggregations converts aggregated byte totals to fractional GB events for Polar.
+// Reports as float so sub-GB usage (e.g. 0.1 GB) is visible rather than rounding to 0.
 func (t *UsageTracker) convertByteAggregations(
 	byteAgg map[polarAggKey]int64,
 	byteRecordIDs map[polarAggKey][]uint,
@@ -324,15 +338,13 @@ func (t *UsageTracker) convertByteAggregations(
 	var events []map[string]any
 	var reportableIDs []uint
 	for key, totalBytes := range byteAgg {
-		gbQuantity := totalBytes / db.BytesPerGB
-		if gbQuantity > 0 {
-			events = append(events, map[string]any{
-				"name":                 string(key.Dimension),
-				"external_customer_id": externalIDCache[key.WorkspaceID],
-				"metadata":             map[string]any{"quantity": gbQuantity},
-			})
-			reportableIDs = append(reportableIDs, byteRecordIDs[key]...)
-		}
+		gbQuantity := float64(totalBytes) / float64(db.BytesPerGB)
+		events = append(events, map[string]any{
+			"name":                 string(key.Dimension),
+			"external_customer_id": externalIDCache[key.WorkspaceID],
+			"metadata":             map[string]any{"quantity": gbQuantity},
+		})
+		reportableIDs = append(reportableIDs, byteRecordIDs[key]...)
 	}
 	return events, reportableIDs
 }
@@ -359,12 +371,14 @@ func (t *UsageTracker) storageReporter(ctx context.Context) {
 	}
 }
 
-// trackWorkspaceStorage measures total storage for a workspace by listing all objects
-// across all repositories in LakeFS and emits an absolute byte count as a usage event.
+// trackWorkspaceStorage measures total storage for a workspace and emits an absolute byte count.
+// Prefers S3-level measurement (includes LakeFS metadata and all branches) when a LakeFS bucket
+// client is available. Falls back to LakeFS API (default branch only) otherwise.
 func (t *UsageTracker) trackWorkspaceStorage(workspaceID uint) {
-	if t == nil || t.lakefsClient == nil {
+	if t == nil {
 		return
 	}
+
 	repos, err := t.db.GetRepositoriesInWorkspace(workspaceID)
 	if err != nil {
 		t.logger.Error("Failed to get repos for storage tracking", "error", err, "workspace_id", workspaceID)
@@ -372,6 +386,31 @@ func (t *UsageTracker) trackWorkspaceStorage(workspaceID uint) {
 	}
 
 	var totalBytes int64
+
+	// Prefer S3-level measurement: lists actual objects in the LakeFS S3 bucket
+	// which includes metadata files, all branches, and deduplication overhead.
+	if t.lakefsBucket != nil {
+		for _, repo := range repos {
+			prefix := extractS3Prefix(repo.StorageNamespace)
+			if prefix == "" {
+				continue
+			}
+			size, sizeErr := t.lakefsBucket.TotalSize(context.Background(), prefix)
+			if sizeErr != nil {
+				t.logger.Error("Failed to measure S3 storage",
+					"error", sizeErr, "workspace_id", workspaceID, "repo", repo.LakeFSRepoID)
+				continue
+			}
+			totalBytes += size
+		}
+		t.Track(workspaceID, db.UsageDimensionStorage, totalBytes)
+		return
+	}
+
+	// Fallback: use LakeFS API (only counts logical objects on default branch).
+	if t.lakefsClient == nil {
+		return
+	}
 	for _, repo := range repos {
 		objects, listErr := t.lakefsClient.ListAllObjects(
 			repo.LakeFSRepoID, repo.DefaultBranch,
@@ -386,8 +425,29 @@ func (t *UsageTracker) trackWorkspaceStorage(workspaceID uint) {
 			totalBytes += obj.SizeBytes
 		}
 	}
-
 	t.Track(workspaceID, db.UsageDimensionStorage, totalBytes)
+}
+
+// extractS3Prefix strips the "s3://{bucket}/" prefix from a storage namespace,
+// returning just the key prefix for S3 listing. The returned prefix always ends with "/"
+// to prevent over-matching repos with overlapping name prefixes (e.g. "data" vs "data-pipeline").
+// Returns empty string if the format is unexpected.
+func extractS3Prefix(storageNamespace string) string {
+	// StorageNamespace looks like "s3://bucket/workspace/repo/"
+	trimmed := strings.TrimPrefix(storageNamespace, "s3://")
+	if trimmed == storageNamespace {
+		return "" // no s3:// prefix
+	}
+	// Skip the bucket name (first path segment)
+	idx := strings.Index(trimmed, "/")
+	if idx < 0 {
+		return ""
+	}
+	prefix := trimmed[idx+1:]
+	if !strings.HasSuffix(prefix, "/") {
+		prefix += "/"
+	}
+	return prefix
 }
 
 // seatReporter periodically emits seat-count events for all workspaces.

@@ -47,7 +47,7 @@ func NewAPIServices(
 	authCache := &AuthCache{cache: make(map[string]*AuthCacheEntry)}
 	schemaCacheManager := lib.NewSchemaCacheManager(env, logger, db)
 	billingService := NewBillingService(db, env, logger)
-	usageTracker := NewUsageTracker(db, billingService, lakefsClient, logger)
+	usageTracker := NewUsageTracker(db, billingService, lakefsClient, env, logger)
 	return &APIServices{
 		DB:                 db,
 		Logger:             logger,

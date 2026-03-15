@@ -444,6 +444,21 @@ func (api *APIControllers) BillingCheckoutCreate(c fiber.Ctx) error
     irminmodels.IrminAPIResponse{data=irmincore.CheckoutResponse} @Router
     /workspaces/{workspace}/billing/checkout [post]
 
+func (api *APIControllers) BillingInfoShow(c fiber.Ctx) error
+    BillingInfoShow godoc @Summary Get workspace billing info @Tags
+    billing @Security ApiKeyAuth @Produce json @Param workspace
+    path string true "Workspace slug" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.BillingInfo} @Router
+    /workspaces/{workspace}/billing/info [get]
+
+func (api *APIControllers) BillingInfoUpdate(c fiber.Ctx) error
+    BillingInfoUpdate godoc @Summary Update workspace billing info @Tags
+    billing @Security ApiKeyAuth @Accept json @Produce json @Param
+    workspace path string true "Workspace slug" @Param request body
+    irmincore.UpdateBillingInfoRequest true "Billing info update" @Success 200
+    {object} irminmodels.IrminAPIResponse{data=irminmodels.BillingInfo} @Router
+    /workspaces/{workspace}/billing/info [patch]
+
 func (api *APIControllers) BillingPortalCreate(c fiber.Ctx) error
     BillingPortalCreate godoc @Summary Get Polar customer portal
     URL @Tags billing @Security ApiKeyAuth @Produce json @Param

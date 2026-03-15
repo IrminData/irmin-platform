@@ -645,6 +645,16 @@ func RegisterAPIRoutes(
 		apiMiddlewares.BillingPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.BillingPortalCreate,
 	)
+	billing.Get(
+		"/info",
+		apiMiddlewares.BillingPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.BillingInfoShow,
+	)
+	billing.Patch(
+		"/info",
+		apiMiddlewares.BillingPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.BillingInfoUpdate,
+	)
 
 	// Repositories routes
 	repositories := workspace.Group("/repositories")

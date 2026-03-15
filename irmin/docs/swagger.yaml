@@ -727,6 +727,18 @@ definitions:
       tools:
         $ref: '#/definitions/irminmodels.AIApplicationToolConfig'
     type: object
+  irmincore.UpdateBillingInfoRequest:
+    properties:
+      billing_address:
+        $ref: '#/definitions/irminmodels.BillingAddress'
+      name:
+        maxLength: 256
+        type: string
+      tax_id:
+        items:
+          type: string
+        type: array
+    type: object
   irmincore.UpdateBranchRequest:
     properties:
       is_immutable:
@@ -1522,6 +1534,39 @@ definitions:
     required:
     - repository
     - repository_ref
+    type: object
+  irminmodels.BillingAddress:
+    properties:
+      city:
+        example: Helsinki
+        type: string
+      country:
+        example: FI
+        type: string
+      line1:
+        example: 123 Main St
+        type: string
+      line2:
+        example: Suite 100
+        type: string
+      postal_code:
+        example: "00100"
+        type: string
+      state:
+        example: Uusimaa
+        type: string
+    type: object
+  irminmodels.BillingInfo:
+    properties:
+      billing_address:
+        $ref: '#/definitions/irminmodels.BillingAddress'
+      name:
+        example: Acme Corp
+        type: string
+      tax_id:
+        items:
+          type: string
+        type: array
     type: object
   irminmodels.Branch:
     properties:
@@ -13737,6 +13782,63 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Create a Polar checkout session
+      tags:
+      - billing
+  /workspaces/{workspace}/billing/info:
+    get:
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.BillingInfo'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Get workspace billing info
+      tags:
+      - billing
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: Billing info update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.UpdateBillingInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.BillingInfo'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Update workspace billing info
       tags:
       - billing
   /workspaces/{workspace}/billing/portal:

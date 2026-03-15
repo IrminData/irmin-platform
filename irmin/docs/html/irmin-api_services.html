@@ -1690,7 +1690,7 @@ func (s *BillingService) CreateCheckoutSession(
     CreateCheckoutSession creates a Polar checkout session and returns the
     checkout URL.
 
-func (s *BillingService) CreateOrGetCustomer(workspaceSQID, ownerEmail string) (string, error)
+func (s *BillingService) CreateOrGetCustomer(workspaceSQID, ownerEmail, name string) (string, error)
     CreateOrGetCustomer creates or retrieves a Polar customer for the workspace.
 
 func (s *BillingService) GetCurrentPlan(workspaceID uint) (*irminmodels.PlanInfo, error)
@@ -1698,6 +1698,10 @@ func (s *BillingService) GetCurrentPlan(workspaceID uint) (*irminmodels.PlanInfo
     If the local subscription has status "none" but has a PolarCustomerID,
     it falls back to the Polar API to check for an active subscription (handles
     missed webhooks). Returns defaults when no subscription exists.
+
+func (s *BillingService) GetCustomerBillingInfo(polarCustomerID string) (*irminmodels.BillingInfo, error)
+    GetCustomerBillingInfo retrieves billing info (name, address, tax ID) from
+    Polar.
 
 func (s *BillingService) GetCustomerPortalURL(polarCustomerID string) (string, error)
     GetCustomerPortalURL creates a customer portal session and returns the URL.
@@ -1715,6 +1719,12 @@ func (s *BillingService) ReportUsageBatch(events []map[string]any) error
     ReportUsageBatch reports usage events to Polar's metering API. Returns an
     error if any events failed ingestion so callers can avoid marking them as
     reported.
+
+func (s *BillingService) UpdateCustomerBillingInfo(
+	polarCustomerID string,
+	info map[string]any,
+) (*irminmodels.BillingInfo, error)
+    UpdateCustomerBillingInfo updates billing info on the Polar customer.
 
 type ConnectionSubscriptionService struct {
 	// Has unexported fields.
@@ -1874,6 +1884,7 @@ func NewUsageTracker(
 	database *db.Database,
 	billingService *BillingService,
 	lakefsClient *lakefs.Client,
+	env *utils.CoreAPIEnv,
 	logger *slog.Logger,
 ) *UsageTracker
     NewUsageTracker creates a new usage tracker. Returns nil if billing is

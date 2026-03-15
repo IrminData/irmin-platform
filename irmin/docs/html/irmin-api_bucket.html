@@ -44,6 +44,11 @@ func (bucket *Client) PresignedGetURL(ctx context.Context, key string, expiry ti
 
 func (bucket *Client) ReadPath(ctx context.Context, key string) (*string, error)
 
+func (bucket *Client) TotalSize(ctx context.Context, keyPrefix string) (int64, error)
+    TotalSize returns the total size in bytes of all objects under the given
+    prefix. Uses paginated listing to handle prefixes with more than 1000
+    objects.
+
 func (bucket *Client) UploadReader(ctx context.Context, key string, body io.Reader) error
     UploadReader uploads the contents of an io.Reader to the given S3 key.
 

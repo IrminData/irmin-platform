@@ -16,7 +16,7 @@ import (
 
 // TestNewUsageTracker_NilBilling tests that a nil billing service returns nil tracker.
 func TestNewUsageTracker_NilBilling(t *testing.T) {
-	tracker := services.NewUsageTracker(nil, nil, nil, nil)
+	tracker := services.NewUsageTracker(nil, nil, nil, nil, nil)
 	assert.Nil(t, tracker)
 }
 
@@ -25,7 +25,7 @@ func TestNewUsageTracker_Valid(t *testing.T) {
 	env := &utils.CoreAPIEnv{BillingEnabled: true}
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	bs := services.NewBillingService(nil, env, logger)
-	tracker := services.NewUsageTracker(nil, bs, nil, logger)
+	tracker := services.NewUsageTracker(nil, bs, nil, env, logger)
 	assert.NotNil(t, tracker)
 }
 
@@ -41,7 +41,7 @@ func TestTrack_SendsEvent(t *testing.T) {
 	env := &utils.CoreAPIEnv{BillingEnabled: true}
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	bs := services.NewBillingService(nil, env, logger)
-	tracker := services.NewUsageTracker(nil, bs, nil, logger)
+	tracker := services.NewUsageTracker(nil, bs, nil, env, logger)
 
 	// Track an event — it goes to internal channel. We verify by starting and cancelling.
 	tracker.Track(42, db.UsageDimensionAPIRequests, 5)
@@ -53,7 +53,7 @@ func TestEventToRecord(t *testing.T) {
 	env := &utils.CoreAPIEnv{BillingEnabled: true}
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	bs := services.NewBillingService(nil, env, logger)
-	tracker := services.NewUsageTracker(nil, bs, nil, logger)
+	tracker := services.NewUsageTracker(nil, bs, nil, env, logger)
 
 	evt := services.UsageEvent{
 		WorkspaceID: 42,
@@ -83,7 +83,7 @@ func TestEventToRecord_MonthBoundaries(t *testing.T) {
 	env := &utils.CoreAPIEnv{BillingEnabled: true}
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	bs := services.NewBillingService(nil, env, logger)
-	tracker := services.NewUsageTracker(nil, bs, nil, logger)
+	tracker := services.NewUsageTracker(nil, bs, nil, env, logger)
 
 	tests := []struct {
 		name        string
@@ -133,7 +133,7 @@ func TestStart_Lifecycle(t *testing.T) {
 	env := &utils.CoreAPIEnv{BillingEnabled: true}
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	bs := services.NewBillingService(nil, env, logger)
-	tracker := services.NewUsageTracker(nil, bs, nil, logger)
+	tracker := services.NewUsageTracker(nil, bs, nil, env, logger)
 
 	ctx, cancel := context.WithCancel(context.Background())
 

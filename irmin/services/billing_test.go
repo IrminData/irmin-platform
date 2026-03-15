@@ -136,7 +136,7 @@ func TestCreateOrGetCustomer(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	s := services.NewBillingServiceWithBaseURL(nil, env, logger, server.URL)
 
-	customerID, err := s.CreateOrGetCustomer("ws_abc", "test@example.com")
+	customerID, err := s.CreateOrGetCustomer("ws_abc", "test@example.com", "My Workspace")
 	assert.NoError(t, err)
 	assert.Equal(t, "cust_123", customerID)
 }
@@ -153,7 +153,7 @@ func TestCreateOrGetCustomer_APIError(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	s := services.NewBillingServiceWithBaseURL(nil, env, logger, server.URL)
 
-	_, err := s.CreateOrGetCustomer("ws_abc", "test@example.com")
+	_, err := s.CreateOrGetCustomer("ws_abc", "test@example.com", "My Workspace")
 	assert.Error(t, err)
 }
 

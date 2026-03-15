@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"irmin-api/db"
 	"irmin-api/locales"
 	"irmin-api/services"
@@ -195,7 +196,7 @@ func (api *APIControllers) BillingCheckoutCreate(c fiber.Ctx) error {
 		customerID = sub.PolarCustomerID
 	} else {
 		var createErr error
-		customerID, createErr = api.Services.BillingService.CreateOrGetCustomer(workspaceSQID, workspace.Owner.Email)
+		customerID, createErr = api.Services.BillingService.CreateOrGetCustomer(workspaceSQID, workspace.Owner.Email, workspace.Name)
 		if createErr != nil {
 			return api.handleServiceError(c, "Error creating customer", createErr, dict)
 		}
@@ -259,6 +260,108 @@ func (api *APIControllers) BillingPortalCreate(c fiber.Ctx) error {
 		Data: irmincore.PortalResponse{
 			PortalURL: portalURL,
 		},
+	})
+}
+
+// BillingInfoShow godoc
+// @Summary Get workspace billing info
+// @Tags billing
+// @Security ApiKeyAuth
+// @Produce json
+// @Param workspace path string true "Workspace slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.BillingInfo}
+// @Router /workspaces/{workspace}/billing/info [get]
+func (api *APIControllers) BillingInfoShow(c fiber.Ctx) error {
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+
+	if !dictOk || !workspaceOk {
+		return api.handleServiceError(c, "Error getting locals for BillingInfoShow",
+			services.NewInternalError("error getting locals"), dict)
+	}
+
+	sub, err := api.DB.GetWorkspaceSubscription(workspace.ID)
+	if err != nil || sub.PolarCustomerID == "" {
+		// No Polar customer yet — return empty billing info
+		return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+			Data: &irminmodels.BillingInfo{},
+		})
+	}
+
+	info, err := api.Services.BillingService.GetCustomerBillingInfo(sub.PolarCustomerID)
+	if err != nil {
+		return api.handleServiceError(c, "Error getting billing info", err, dict)
+	}
+
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: info,
+	})
+}
+
+// BillingInfoUpdate godoc
+// @Summary Update workspace billing info
+// @Tags billing
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace path string true "Workspace slug"
+// @Param request body irmincore.UpdateBillingInfoRequest true "Billing info update"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.BillingInfo}
+// @Router /workspaces/{workspace}/billing/info [patch]
+func (api *APIControllers) BillingInfoUpdate(c fiber.Ctx) error {
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+
+	if !dictOk || !workspaceOk {
+		return api.handleServiceError(c, "Error getting locals for BillingInfoUpdate",
+			services.NewInternalError("error getting locals"), dict)
+	}
+
+	var req irmincore.UpdateBillingInfoRequest
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
+	}
+
+	sub, err := api.DB.GetWorkspaceSubscription(workspace.ID)
+	if err != nil || sub.PolarCustomerID == "" {
+		return api.handleServiceError(c, "No billing customer exists",
+			services.ErrNotFound, dict)
+	}
+
+	// Parse raw body to detect which fields were explicitly sent (including null values).
+	// Go's json.Unmarshal cannot distinguish "field absent" from "field: null" for slices,
+	// so we check the raw JSON keys to support clearing tax_id / billing_address.
+	var rawFields map[string]json.RawMessage
+	_ = json.Unmarshal(c.Body(), &rawFields)
+
+	// Build update payload for Polar — only include fields present in the request
+	updateBody := make(map[string]any)
+	if req.Name != nil {
+		updateBody["name"] = *req.Name
+	}
+	if _, hasBillingAddress := rawFields["billing_address"]; hasBillingAddress {
+		updateBody["billing_address"] = req.BillingAddress // nil → JSON null (clears on Polar)
+	}
+	const taxIDPairLen = 2
+	if _, hasTaxID := rawFields["tax_id"]; hasTaxID {
+		switch {
+		case req.TaxID == nil:
+			updateBody["tax_id"] = nil // explicit null to clear
+		case len(req.TaxID) == taxIDPairLen:
+			updateBody["tax_id"] = req.TaxID
+		default:
+			return api.handleServiceError(c, "Invalid tax_id: must be a [value, type] pair",
+				services.ErrInvalidRequest, dict)
+		}
+	}
+
+	info, err := api.Services.BillingService.UpdateCustomerBillingInfo(sub.PolarCustomerID, updateBody)
+	if err != nil {
+		return api.handleServiceError(c, "Error updating billing info", err, dict)
+	}
+
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: info,
 	})
 }
 

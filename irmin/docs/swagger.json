@@ -14507,6 +14507,106 @@
                 }
             }
         },
+        "/workspaces/{workspace}/billing/info": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "billing"
+                ],
+                "summary": "Get workspace billing info",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.BillingInfo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "billing"
+                ],
+                "summary": "Update workspace billing info",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Billing info update",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.UpdateBillingInfoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.BillingInfo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace}/billing/portal": {
             "post": {
                 "security": [
@@ -15710,6 +15810,24 @@
                 }
             }
         },
+        "irmincore.UpdateBillingInfoRequest": {
+            "type": "object",
+            "properties": {
+                "billing_address": {
+                    "$ref": "#/definitions/irminmodels.BillingAddress"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 256
+                },
+                "tax_id": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "irmincore.UpdateBranchRequest": {
             "type": "object",
             "properties": {
@@ -16820,6 +16938,53 @@
                 "repository_ref": {
                     "type": "string",
                     "example": "main"
+                }
+            }
+        },
+        "irminmodels.BillingAddress": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string",
+                    "example": "Helsinki"
+                },
+                "country": {
+                    "type": "string",
+                    "example": "FI"
+                },
+                "line1": {
+                    "type": "string",
+                    "example": "123 Main St"
+                },
+                "line2": {
+                    "type": "string",
+                    "example": "Suite 100"
+                },
+                "postal_code": {
+                    "type": "string",
+                    "example": "00100"
+                },
+                "state": {
+                    "type": "string",
+                    "example": "Uusimaa"
+                }
+            }
+        },
+        "irminmodels.BillingInfo": {
+            "type": "object",
+            "properties": {
+                "billing_address": {
+                    "$ref": "#/definitions/irminmodels.BillingAddress"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Acme Corp"
+                },
+                "tax_id": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

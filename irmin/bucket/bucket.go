@@ -66,6 +66,35 @@ func (bucket *Client) ListObjects(ctx context.Context, keyPrefix string) ([]type
 	return objects.Contents, nil
 }
 
+// TotalSize returns the total size in bytes of all objects under the given prefix.
+// Uses paginated listing to handle prefixes with more than 1000 objects.
+func (bucket *Client) TotalSize(ctx context.Context, keyPrefix string) (int64, error) {
+	var totalBytes int64
+	var continuationToken *string
+
+	for {
+		input := &s3.ListObjectsV2Input{
+			Bucket:            &bucket.Bucket,
+			Prefix:            &keyPrefix,
+			ContinuationToken: continuationToken,
+		}
+		resp, err := bucket.Conn().ListObjectsV2(ctx, input)
+		if err != nil {
+			return 0, fmt.Errorf("error listing objects for size: %w", err)
+		}
+		for _, obj := range resp.Contents {
+			if obj.Size != nil {
+				totalBytes += *obj.Size
+			}
+		}
+		if resp.IsTruncated == nil || !*resp.IsTruncated {
+			break
+		}
+		continuationToken = resp.NextContinuationToken
+	}
+	return totalBytes, nil
+}
+
 func (bucket *Client) WritePath(ctx context.Context, key string, content string, tx ...*gorm.DB) error {
 	// If a transaction is provided, acquire advisory lock within that transaction
 	if len(tx) > 0 && tx[0] != nil {
