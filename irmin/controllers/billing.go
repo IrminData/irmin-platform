@@ -348,7 +348,9 @@ func (api *APIControllers) BillingInfoUpdate(c fiber.Ctx) error {
 		case req.TaxID == nil:
 			updateBody["tax_id"] = nil // explicit null to clear
 		case len(req.TaxID) == taxIDPairLen:
-			updateBody["tax_id"] = req.TaxID
+			// Polar API expects tax_id as a plain string (the value only).
+			// The type (e.g. "eu_vat") is auto-detected by Polar from the value format.
+			updateBody["tax_id"] = req.TaxID[0]
 		default:
 			return api.handleServiceError(c, "Invalid tax_id: must be a [value, type] pair",
 				services.ErrInvalidRequest, dict)

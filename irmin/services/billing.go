@@ -11,6 +11,7 @@ import (
 	"irmin-api/utils"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -574,20 +575,39 @@ func (s *BillingService) polarPost(ctx context.Context, path string, body []byte
 }
 
 // parseBillingInfoResponse unmarshals a Polar customer response body into BillingInfo.
+// Handles both array format ["value", "type"] and plain string format for tax_id,
+// since the Polar API may return either depending on the endpoint/version.
 func parseBillingInfoResponse(body []byte) (*irminmodels.BillingInfo, error) {
 	var result struct {
-		Name           string                       `json:"name"`
-		BillingAddress *irminmodels.BillingAddress  `json:"billing_address"`
-		TaxID          irminmodels.BillingInfoTaxID `json:"tax_id"`
+		Name           string                      `json:"name"`
+		BillingAddress *irminmodels.BillingAddress `json:"billing_address"`
+		TaxID          json.RawMessage             `json:"tax_id"`
 	}
 	if err := json.Unmarshal(body, &result); err != nil {
 		return nil, fmt.Errorf("failed to decode customer response: %w", err)
 	}
-	return &irminmodels.BillingInfo{
+
+	info := &irminmodels.BillingInfo{
 		Name:           result.Name,
 		BillingAddress: result.BillingAddress,
-		TaxID:          result.TaxID,
-	}, nil
+	}
+
+	// Parse tax_id: may be an array ["value", "type"], a plain string, or null
+	if result.TaxID != nil && string(result.TaxID) != "null" {
+		var taxIDArray []string
+		if err := json.Unmarshal(result.TaxID, &taxIDArray); err == nil {
+			info.TaxID = taxIDArray
+		} else {
+			// Fall back to plain string (Polar may return just the value).
+			// Pad to 2 elements so the [value, type] contract is preserved for round-trips.
+			var taxIDString string
+			if strErr := json.Unmarshal(result.TaxID, &taxIDString); strErr == nil && taxIDString != "" {
+				info.TaxID = []string{taxIDString, ""}
+			}
+		}
+	}
+
+	return info, nil
 }
 
 // GetCustomerBillingInfo retrieves billing info (name, address, tax ID) from Polar.
@@ -654,6 +674,14 @@ func (s *BillingService) polarPatch(ctx context.Context, path string, body []byt
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		respBody, _ := io.ReadAll(resp.Body)
 		_ = resp.Body.Close()
+
+		// For 422 validation errors, extract user-friendly messages from Polar's response
+		if resp.StatusCode == http.StatusUnprocessableEntity {
+			if msg := parsePolarValidationError(respBody); msg != "" {
+				return nil, fmt.Errorf("%w: %s", ErrInvalidRequest, msg)
+			}
+		}
+
 		return nil, fmt.Errorf("polar API PATCH %s returned status %d: %s", path, resp.StatusCode, string(respBody))
 	}
 
@@ -689,4 +717,36 @@ func getMapKeys(m map[string]any) []string {
 		keys = append(keys, k)
 	}
 	return keys
+}
+
+// parsePolarValidationError extracts a user-friendly message from a Polar 422 response.
+// Polar returns pydantic-style errors: {"error":"RequestValidationError","detail":[{"loc":[...],"msg":"..."}]}
+func parsePolarValidationError(body []byte) string {
+	var parsed struct {
+		Detail []struct {
+			Loc []any  `json:"loc"`
+			Msg string `json:"msg"`
+		} `json:"detail"`
+	}
+	if err := json.Unmarshal(body, &parsed); err != nil || len(parsed.Detail) == 0 {
+		return ""
+	}
+
+	// Build a readable message from all validation errors
+	messages := make([]string, 0, len(parsed.Detail))
+	for _, detail := range parsed.Detail {
+		field := ""
+		for _, loc := range detail.Loc {
+			if s, ok := loc.(string); ok && s != "body" {
+				field = s
+			}
+		}
+		if field != "" && detail.Msg != "" {
+			messages = append(messages, fmt.Sprintf("%s: %s", field, detail.Msg))
+		} else if detail.Msg != "" {
+			messages = append(messages, detail.Msg)
+		}
+	}
+
+	return strings.Join(messages, "; ")
 }
