@@ -281,6 +281,27 @@ export const useRepositoryObject = (
     },
   });
 
+  const createSignedZipURLMutation = useMutation<
+    { url: string; expires_at: string },
+    Error,
+    { ref: string; expiresInHours?: number }
+  >({
+    mutationFn: async ({ ref, expiresInHours }) => {
+      const core = await getCore();
+      const response = await core.objectService.createSignedRepositoryZipURL({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        ref,
+        expiresInHours,
+      });
+      if (!response.data) throw new Error('No signed URL returned');
+      return response.data;
+    },
+    onError: (error) => {
+      irminAlert('error', error.message ?? dict.repository.shareZipError);
+    },
+  });
+
   return {
     // Queries
     repositoryObjectQuery,
@@ -294,5 +315,6 @@ export const useRepositoryObject = (
     createPointerMutation,
     validateObjectMutation,
     createSignedURLMutation,
+    createSignedZipURLMutation,
   };
 };

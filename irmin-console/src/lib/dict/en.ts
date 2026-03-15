@@ -457,6 +457,9 @@ const en = {
     immutableWarning: 'Immutable repository or branch',
     immutableWarningDescription:
       'Current repository or selected branch are immutable and cannot be edited.',
+    shareZipLink: 'Share as zip',
+    shareZipLinkCopied: 'Zip link copied to clipboard',
+    shareZipError: 'Failed to create zip share link',
 
     branches: {
       branches: 'Branches',

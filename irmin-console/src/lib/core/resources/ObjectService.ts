@@ -93,6 +93,8 @@ class ObjectService {
     this.validateObject = this.validateObject.bind(this);
     this.createPointer = this.createPointer.bind(this);
     this.createSignedObjectURL = this.createSignedObjectURL.bind(this);
+    this.createSignedRepositoryZipURL =
+      this.createSignedRepositoryZipURL.bind(this);
     this.generatePresignedUploadURL =
       this.generatePresignedUploadURL.bind(this);
     this.associatePresignedUpload = this.associatePresignedUpload.bind(this);
@@ -721,6 +723,54 @@ class ObjectService {
       throw error;
     }
   }
+
+  /**
+   * Create a signed download URL for an entire repository as a zip file.
+   *
+   * @param props - The signed zip URL creation properties.
+   * @param props.workspace - The workspace slug.
+   * @param props.repository - The repository slug.
+   * @param props.ref - (optional) The ref (branch, tag or commit hash).
+   * @param props.expiresInHours - (optional) How many hours the link is valid (default 24, max 168).
+   * @returns IrminAPIResponse containing the signed URL and expiry.
+   */
+  async createSignedRepositoryZipURL({
+    workspace,
+    repository,
+    ref,
+    expiresInHours,
+  }: {
+    workspace: string;
+    repository: string;
+    ref?: string;
+    expiresInHours?: number;
+  }): Promise<IrminAPIResponse<CreateSignedURLResponse>> {
+    try {
+      const requestBody: {
+        ref?: string;
+        expires_in_hours?: number;
+      } = {};
+      if (ref) requestBody.ref = ref;
+      if (expiresInHours != null) requestBody.expires_in_hours = expiresInHours;
+
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/signed-zip-url`;
+
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      })) as IrminAPIResponse<CreateSignedURLResponse>;
+
+      return response;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Create signed repository zip URL error'
+      );
+      throw error;
+    }
+  }
+
   /**
    * Generate a presigned URL for direct-to-storage upload.
    * The client uploads directly to the storage backend using the returned URL,

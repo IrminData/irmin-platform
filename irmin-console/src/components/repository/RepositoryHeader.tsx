@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useMemo } from 'react';
+import { Suspense, useCallback, useMemo, useState } from 'react';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
@@ -9,6 +9,7 @@ import {
   TbBook,
   TbDatabase,
   TbFileText,
+  TbLink,
   TbSchema,
   TbSettings,
   TbShield,
@@ -16,16 +17,26 @@ import {
 } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import AssetSharePopover from '@/components/ui/policy-editor/AssetSharePopover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
 import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import { useRepositoryBranches } from '@/hooks/api';
+import { useRepositoryBranches, useRepositoryObject } from '@/hooks/api';
 import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 import BranchSelector from './branches/BranchSelector';
@@ -47,6 +58,7 @@ function RepositoryHeaderContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isResourceAllowed } = useResourceAllowed();
+  const { irminAlert } = usePopup();
 
   const router = useRouter();
 
@@ -54,6 +66,7 @@ function RepositoryHeaderContent() {
     useRepositoryContext();
 
   const { repositoryBranchesQuery } = useRepositoryBranches(repository.slug);
+  const { createSignedZipURLMutation } = useRepositoryObject(repository.slug);
 
   /** The base URL for the repository, eg. /en/workspace/workspace-slug/repositories/repository-slug */
   const baseUrl = useBaseUrl({
@@ -183,6 +196,55 @@ function RepositoryHeaderContent() {
     [isResourceAllowed, repository.id]
   );
 
+  // Share zip link state
+  const [zipSharePopoverOpen, setZipSharePopoverOpen] = useState(false);
+  const [zipShareExpiry, setZipShareExpiry] = useState('24');
+  const [zipCustomHours, setZipCustomHours] = useState('48');
+  const [generatingZipLink, setGeneratingZipLink] = useState(false);
+
+  const handleShareZip = useCallback(async () => {
+    setGeneratingZipLink(true);
+    try {
+      const expiresInHours =
+        zipShareExpiry === 'never'
+          ? 0
+          : zipShareExpiry === 'custom'
+            ? parseInt(zipCustomHours, 10) || 24
+            : parseInt(zipShareExpiry, 10);
+      const result = await createSignedZipURLMutation.mutateAsync({
+        ref: currentRef ?? '',
+        expiresInHours,
+      });
+      try {
+        await navigator.clipboard.writeText(result.url);
+        const expiryLabel =
+          zipShareExpiry === 'custom'
+            ? `${zipCustomHours} ${dict.repository.objects.shareLinkCustomHours.toLowerCase()}`
+            : dict.repository.objects.shareLinkExpiryOptions[
+                zipShareExpiry as keyof typeof dict.repository.objects.shareLinkExpiryOptions
+              ];
+        irminAlert(
+          'success',
+          `${dict.repository.shareZipLinkCopied} (${expiryLabel})`
+        );
+      } catch {
+        irminAlert('error', dict.repository.shareZipError);
+      }
+      setZipSharePopoverOpen(false);
+    } catch (error) {
+      console.error('Error creating zip share link:', error);
+    } finally {
+      setGeneratingZipLink(false);
+    }
+  }, [
+    createSignedZipURLMutation,
+    currentRef,
+    zipShareExpiry,
+    zipCustomHours,
+    irminAlert,
+    dict,
+  ]);
+
   return (
     <div
       className='relative container mx-auto max-w-7xl'
@@ -264,6 +326,68 @@ function RepositoryHeaderContent() {
             resourceId={repository.id}
             resourceLabel={repository.name}
           />
+          <Popover
+            open={zipSharePopoverOpen}
+            onOpenChange={setZipSharePopoverOpen}
+          >
+            <PopoverTrigger asChild>
+              <Button
+                size='sm'
+                variant='secondary'
+                className='w-full'
+                icon={<TbLink />}
+              >
+                {dict.repository.shareZipLink}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className='w-72' align='start'>
+              <div className='space-y-3'>
+                <p className='text-sm font-medium'>
+                  {dict.repository.objects.shareLinkExpiryLabel}
+                </p>
+                <RadioGroup
+                  value={zipShareExpiry}
+                  onValueChange={setZipShareExpiry}
+                >
+                  {Object.entries(
+                    dict.repository.objects.shareLinkExpiryOptions
+                  ).map(([value, label]) => (
+                    <div key={value} className='flex items-center gap-2'>
+                      <RadioGroupItem
+                        value={value}
+                        id={`zip-share-expiry-${value}`}
+                      />
+                      <Label htmlFor={`zip-share-expiry-${value}`}>
+                        {label}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+                {zipShareExpiry === 'custom' && (
+                  <div className='flex items-center gap-2'>
+                    <Input
+                      type='number'
+                      min={1}
+                      value={zipCustomHours}
+                      onChange={(e) => setZipCustomHours(e.target.value)}
+                      className='h-8'
+                    />
+                    <span className='text-sm text-muted-foreground'>
+                      {dict.repository.objects.shareLinkCustomHours}
+                    </span>
+                  </div>
+                )}
+                <Button
+                  size='sm'
+                  className='w-full'
+                  onClick={handleShareZip}
+                  loading={generatingZipLink}
+                >
+                  {dict.repository.objects.shareLinkGenerate}
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
       <TabsWithBackButton

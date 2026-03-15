@@ -461,6 +461,9 @@ const fi = {
     immutableWarning: 'Muuttumaton data-arkisto tai haara',
     immutableWarningDescription:
       'Tämä data-arkisto tai valittu haara on muuttumaton, eikä sitä voi muokata.',
+    shareZipLink: 'Jaa zip-tiedostona',
+    shareZipLinkCopied: 'Zip-linkki kopioitu leikepöydälle',
+    shareZipError: 'Zip-jakolinkin luominen epäonnistui',
     branches: {
       branches: 'Haarat',
       currentBranch: 'Nykyinen',
