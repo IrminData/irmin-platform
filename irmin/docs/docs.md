@@ -3087,6 +3087,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetWorkflowsByTag\(tagID uint\) \(\[\]Workflow, error\)](<#Database.GetWorkflowsByTag>)
   - [func \(d \*Database\) GetWorkflowsByWorkspaceID\(workspaceID uint\) \(\[\]Workflow, error\)](<#Database.GetWorkflowsByWorkspaceID>)
   - [func \(d \*Database\) GetWorkflowsOfTypeByWorkspaceID\(workspaceID uint, workflowType irminmodels.WorkflowableType\) \(\[\]Workflow, error\)](<#Database.GetWorkflowsOfTypeByWorkspaceID>)
+  - [func \(d \*Database\) GetWorkspaceByID\(id uint\) \(\*Workspace, error\)](<#Database.GetWorkspaceByID>)
   - [func \(d \*Database\) GetWorkspaceBySlug\(slug string\) \(\*Workspace, error\)](<#Database.GetWorkspaceBySlug>)
   - [func \(d \*Database\) GetWorkspaceSubscription\(workspaceID uint\) \(\*WorkspaceSubscription, error\)](<#Database.GetWorkspaceSubscription>)
   - [func \(d \*Database\) GetWorkspaceSummaries\(userID uint\) \(\[\]WorkspaceSummaryRow, error\)](<#Database.GetWorkspaceSummaries>)
@@ -5318,6 +5319,15 @@ func (d *Database) GetWorkflowsOfTypeByWorkspaceID(workspaceID uint, workflowTyp
 ```
 
 GetWorkflowsOfTypeByWorkspaceID retrieves all workflows of a specific type for a workspace. Optimized for listing \- minimal preloads, reasonable limit.
+
+<a name="Database.GetWorkspaceByID"></a>
+### func \(\*Database\) GetWorkspaceByID
+
+```go
+func (d *Database) GetWorkspaceByID(id uint) (*Workspace, error)
+```
+
+GetWorkspaceByID retrieves a workspace by its ID.
 
 <a name="Database.GetWorkspaceBySlug"></a>
 ### func \(\*Database\) GetWorkspaceBySlug

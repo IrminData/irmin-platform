@@ -36,6 +36,15 @@ func (d *Database) GetWorkspaceBySlug(slug string) (*Workspace, error) {
 	return &w, nil
 }
 
+// GetWorkspaceByID retrieves a workspace by its ID.
+func (d *Database) GetWorkspaceByID(id uint) (*Workspace, error) {
+	var w Workspace
+	if err := d.First(&w, id).Error; err != nil {
+		return nil, err
+	}
+	return &w, nil
+}
+
 // DeleteWorkspace deletes a workspace and the related records.
 func (d *Database) DeleteWorkspace(id uint, tx *gorm.DB) error {
 	// Delete the workspace.

@@ -372,82 +372,97 @@ func (t *UsageTracker) storageReporter(ctx context.Context) {
 }
 
 // trackWorkspaceStorage measures total storage for a workspace and emits an absolute byte count.
-// Prefers S3-level measurement (includes LakeFS metadata and all branches) when a LakeFS bucket
-// client is available. Falls back to LakeFS API (default branch only) otherwise.
+// Prefers S3 workspace-prefix measurement; falls back to LakeFS API measurement when unavailable.
 func (t *UsageTracker) trackWorkspaceStorage(workspaceID uint) {
 	if t == nil {
 		return
 	}
 
-	repos, err := t.db.GetRepositoriesInWorkspace(workspaceID)
+	workspace, err := t.db.GetWorkspaceByID(workspaceID)
 	if err != nil {
-		t.logger.Error("Failed to get repos for storage tracking", "error", err, "workspace_id", workspaceID)
+		t.logger.Error("Failed to get workspace for storage tracking", "error", err, "workspace_id", workspaceID)
+		return
+	}
+
+	workspacePrefix := workspaceStoragePrefix(workspace.Slug)
+	if workspacePrefix == "" {
+		t.logger.Warn("Skipping storage tracking due to empty workspace prefix",
+			"workspace_id", workspaceID,
+			"workspace_slug", workspace.Slug,
+		)
+		return
+	}
+
+	if t.lakefsBucket != nil {
+		totalBytes, sizeErr := t.lakefsBucket.TotalSize(context.Background(), workspacePrefix)
+		if sizeErr != nil {
+			t.logger.Error("Failed to measure workspace S3 storage, falling back to LakeFS API",
+				"error", sizeErr,
+				"workspace_id", workspaceID,
+				"workspace_slug", workspace.Slug,
+				"workspace_prefix", workspacePrefix,
+			)
+		} else {
+			t.Track(workspaceID, db.UsageDimensionStorage, totalBytes)
+			return
+		}
+	} else {
+		t.logger.Warn("LakeFS bucket client unavailable, falling back to LakeFS API for storage tracking",
+			"workspace_id", workspaceID,
+			"workspace_slug", workspace.Slug,
+			"workspace_prefix", workspacePrefix,
+		)
+	}
+
+	// Fallback is an approximation: LakeFS object listing excludes some underlying
+	// storage metadata and physical overhead visible in raw S3 bucket size.
+	if t.lakefsClient == nil {
+		t.logger.Warn("Skipping storage tracking because both S3 and LakeFS fallback clients are unavailable",
+			"workspace_id", workspaceID,
+			"workspace_slug", workspace.Slug,
+		)
+		return
+	}
+
+	repos, reposErr := t.db.GetRepositoriesInWorkspace(workspaceID)
+	if reposErr != nil {
+		t.logger.Error("Failed to get repositories for LakeFS fallback storage tracking",
+			"error", reposErr,
+			"workspace_id", workspaceID,
+		)
 		return
 	}
 
 	var totalBytes int64
-
-	// Prefer S3-level measurement: lists actual objects in the LakeFS S3 bucket
-	// which includes metadata files, all branches, and deduplication overhead.
-	if t.lakefsBucket != nil {
-		for _, repo := range repos {
-			prefix := extractS3Prefix(repo.StorageNamespace)
-			if prefix == "" {
-				continue
-			}
-			size, sizeErr := t.lakefsBucket.TotalSize(context.Background(), prefix)
-			if sizeErr != nil {
-				t.logger.Error("Failed to measure S3 storage",
-					"error", sizeErr, "workspace_id", workspaceID, "repo", repo.LakeFSRepoID)
-				continue
-			}
-			totalBytes += size
-		}
-		t.Track(workspaceID, db.UsageDimensionStorage, totalBytes)
-		return
-	}
-
-	// Fallback: use LakeFS API (only counts logical objects on default branch).
-	if t.lakefsClient == nil {
-		return
-	}
 	for _, repo := range repos {
 		objects, listErr := t.lakefsClient.ListAllObjects(
 			repo.LakeFSRepoID, repo.DefaultBranch,
 			"", "", "", false, false,
 		)
 		if listErr != nil {
-			t.logger.Error("Failed to list objects for storage",
-				"error", listErr, "workspace_id", workspaceID, "repo", repo.LakeFSRepoID)
+			t.logger.Error("Failed to list LakeFS objects for fallback storage tracking",
+				"error", listErr,
+				"workspace_id", workspaceID,
+				"repository", repo.LakeFSRepoID,
+				"default_branch", repo.DefaultBranch,
+			)
 			continue
 		}
 		for _, obj := range objects {
 			totalBytes += obj.SizeBytes
 		}
 	}
+
 	t.Track(workspaceID, db.UsageDimensionStorage, totalBytes)
 }
 
-// extractS3Prefix strips the "s3://{bucket}/" prefix from a storage namespace,
-// returning just the key prefix for S3 listing. The returned prefix always ends with "/"
-// to prevent over-matching repos with overlapping name prefixes (e.g. "data" vs "data-pipeline").
-// Returns empty string if the format is unexpected.
-func extractS3Prefix(storageNamespace string) string {
-	// StorageNamespace looks like "s3://bucket/workspace/repo/"
-	trimmed := strings.TrimPrefix(storageNamespace, "s3://")
-	if trimmed == storageNamespace {
-		return "" // no s3:// prefix
-	}
-	// Skip the bucket name (first path segment)
-	idx := strings.Index(trimmed, "/")
-	if idx < 0 {
+// workspaceStoragePrefix normalizes a workspace slug into a safe S3 prefix.
+func workspaceStoragePrefix(workspaceSlug string) string {
+	trimmed := strings.Trim(strings.TrimSpace(workspaceSlug), "/")
+	if trimmed == "" {
 		return ""
 	}
-	prefix := trimmed[idx+1:]
-	if !strings.HasSuffix(prefix, "/") {
-		prefix += "/"
-	}
-	return prefix
+	return trimmed + "/"
 }
 
 // seatReporter periodically emits seat-count events for all workspaces.

@@ -1133,6 +1133,9 @@ func (d *Database) GetWorkflowsOfTypeByWorkspaceID(
     GetWorkflowsOfTypeByWorkspaceID retrieves all workflows of a specific type
     for a workspace. Optimized for listing - minimal preloads, reasonable limit.
 
+func (d *Database) GetWorkspaceByID(id uint) (*Workspace, error)
+    GetWorkspaceByID retrieves a workspace by its ID.
+
 func (d *Database) GetWorkspaceBySlug(slug string) (*Workspace, error)
     GetWorkspaceBySlug retrieves a workspace by its slug.
 

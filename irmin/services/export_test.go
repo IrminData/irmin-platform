@@ -58,6 +58,9 @@ var ExportEventToRecord = func(t *UsageTracker, evt UsageEvent) *db.UsageRecord 
 	return t.eventToRecord(evt)
 }
 
+// ExportWorkspaceStoragePrefix exports workspaceStoragePrefix for testing.
+var ExportWorkspaceStoragePrefix = workspaceStoragePrefix
+
 // NewBillingServiceWithBaseURL creates a billing service with a custom base URL for testing.
 func NewBillingServiceWithBaseURL(
 	database *db.Database,

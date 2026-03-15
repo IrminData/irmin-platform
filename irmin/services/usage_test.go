@@ -155,3 +155,27 @@ func TestStart_Lifecycle(t *testing.T) {
 		t.Fatal("Start did not return after context cancellation")
 	}
 }
+
+// TestWorkspaceStoragePrefix verifies workspace slug normalization for S3 prefix measurement.
+func TestWorkspaceStoragePrefix(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{name: "plain slug", in: "tims-office", want: "tims-office/"},
+		{name: "leading slash", in: "/tims-office", want: "tims-office/"},
+		{name: "trailing slash", in: "tims-office/", want: "tims-office/"},
+		{name: "wrapped slashes", in: "/tims-office/", want: "tims-office/"},
+		{name: "surrounding spaces", in: "  tims-office  ", want: "tims-office/"},
+		{name: "empty", in: "", want: ""},
+		{name: "only slashes and spaces", in: " / ", want: ""},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := services.ExportWorkspaceStoragePrefix(tc.in)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
