@@ -145,6 +145,20 @@ func CalculateObjectTotalSize(database *db.Database, object *db.RepositoryObject
     and its children. Children are fetched from the database on-the-fly to
     support arbitrarily nested directories.
 
+func CollectObjectFiles(
+	database *db.Database,
+	dataEngine *engine.Client,
+	object *db.RepositoryObject,
+	workspace *db.Workspace,
+	repo *db.Repository,
+	ref string,
+	files map[string][]byte,
+) error
+    CollectObjectFiles recursively collects all file contents from an object
+    tree into a map. Paths are sanitized to prevent zip-slip attacks. This is
+    the shared implementation used by both authenticated (service) and public
+    signed-URL (controller) download paths.
+
 func GetInternalErrorMessage(err error) string
     GetInternalErrorMessage strips the internal prefix for logging purposes.
     This allows server-side logs to display the actual error message without the
@@ -177,6 +191,21 @@ func NewInternalErrorf(format string, args ...any) error
     NewInternalErrorf creates a formatted internal error that should not be
     exposed to clients. The error message will be logged server-side but clients
     will receive a generic error.
+
+func StreamObjectsToZip(
+	database *db.Database,
+	dataEngine *engine.Client,
+	object *db.RepositoryObject,
+	workspace *db.Workspace,
+	repo *db.Repository,
+	ref string,
+	writer io.Writer,
+) error
+    StreamObjectsToZip recursively streams object content from an object tree
+    into a zip writer without loading all files into memory at once. Paths are
+    sanitized to prevent zip-slip attacks. This is the shared implementation
+    used by both authenticated (service) and public signed-URL (controller)
+    download paths.
 
 
 TYPES

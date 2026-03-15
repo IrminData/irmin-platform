@@ -10937,6 +10937,95 @@
                 }
             }
         },
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/signed-zip-url": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Generate a time-limited signed URL that allows downloading an entire repository as a ZIP without authentication.\nPermissions are checked at URL creation time. The URL can be shared with external users.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repository-objects"
+                ],
+                "summary": "Create a signed download URL for a repository zip",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository slug",
+                        "name": "repository_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Signed zip URL request parameters",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.CreateSignedZipURLRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Signed URL created successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irmincore.SignedURLResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid parameters",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/repositories/{repository_slug}/tags": {
             "get": {
                 "security": [
@@ -15421,6 +15510,20 @@
                 "path": {
                     "type": "string",
                     "example": "data/file.csv"
+                },
+                "ref": {
+                    "type": "string",
+                    "example": "main"
+                }
+            }
+        },
+        "irmincore.CreateSignedZipURLRequest": {
+            "type": "object",
+            "properties": {
+                "expires_in_hours": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "example": 24
                 },
                 "ref": {
                     "type": "string",

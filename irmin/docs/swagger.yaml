@@ -458,6 +458,16 @@ definitions:
     required:
     - path
     type: object
+  irmincore.CreateSignedZipURLRequest:
+    properties:
+      expires_in_hours:
+        example: 24
+        minimum: 0
+        type: integer
+      ref:
+        example: main
+        type: string
+    type: object
   irmincore.CreateTagRequest:
     properties:
       color:
@@ -11537,6 +11547,63 @@ paths:
       summary: Revert uncommitted changes
       tags:
       - repository-commits
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/signed-zip-url:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Generate a time-limited signed URL that allows downloading an entire repository as a ZIP without authentication.
+        Permissions are checked at URL creation time. The URL can be shared with external users.
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Repository slug
+        in: path
+        name: repository_slug
+        required: true
+        type: string
+      - description: Signed zip URL request parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.CreateSignedZipURLRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Signed URL created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irmincore.SignedURLResponse'
+              type: object
+        "400":
+          description: Bad request - invalid parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a signed download URL for a repository zip
+      tags:
+      - repository-objects
   /workspaces/{workspace_slug}/repositories/{repository_slug}/tags:
     get:
       consumes:

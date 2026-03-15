@@ -702,11 +702,16 @@ func RegisterAPIRoutes(
 		apiControllers.MergeRefs,
 	)
 
-	// Signed URL creation route (before object group to avoid RepositoryObjectMiddleware)
+	// Signed URL creation routes (before object group to avoid RepositoryObjectMiddleware)
 	repository.Post(
 		"/objects/signed-url",
 		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.RepositoryObjectsCreateSignedURL,
+	)
+	repository.Post(
+		"/signed-zip-url",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryCreateSignedZipURL,
 	)
 
 	// Object routes

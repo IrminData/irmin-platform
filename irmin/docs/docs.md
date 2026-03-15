@@ -1020,6 +1020,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) RepositoryCommitsStore\(c fiber.Ctx\) error](<#APIControllers.RepositoryCommitsStore>)
   - [func \(api \*APIControllers\) RepositoryCopyObject\(c fiber.Ctx\) error](<#APIControllers.RepositoryCopyObject>)
   - [func \(api \*APIControllers\) RepositoryCreatePointer\(c fiber.Ctx\) error](<#APIControllers.RepositoryCreatePointer>)
+  - [func \(api \*APIControllers\) RepositoryCreateSignedZipURL\(c fiber.Ctx\) error](<#APIControllers.RepositoryCreateSignedZipURL>)
   - [func \(api \*APIControllers\) RepositoryGetUncommittedChanges\(c fiber.Ctx\) error](<#APIControllers.RepositoryGetUncommittedChanges>)
   - [func \(api \*APIControllers\) RepositoryMoveObject\(c fiber.Ctx\) error](<#APIControllers.RepositoryMoveObject>)
   - [func \(api \*APIControllers\) RepositoryObjectsAssociateUpload\(c fiber.Ctx\) error](<#APIControllers.RepositoryObjectsAssociateUpload>)
@@ -2146,6 +2147,15 @@ func (api *APIControllers) RepositoryCreatePointer(c fiber.Ctx) error
 ```
 
 RepositoryCreatePointer godoc @Summary Create pointer to object in another repository @Description Create a pointer file that references an object in another repository within the same workspace @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param ref query string false "Reference \(branch\) to create pointer in" default\("main"\) @Param path query string true "Path for the pointer file \(will be prefixed with \_ptr. if not already\)" @Param body body irmincore.CreatePointerRequest true "Pointer target information" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Object\} "Pointer created successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Target repository or object not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/objects/pointer \[post\]
+
+<a name="APIControllers.RepositoryCreateSignedZipURL"></a>
+### func \(\*APIControllers\) RepositoryCreateSignedZipURL
+
+```go
+func (api *APIControllers) RepositoryCreateSignedZipURL(c fiber.Ctx) error
+```
+
+RepositoryCreateSignedZipURL godoc @Summary Create a signed download URL for a repository zip @Description Generate a time\-limited signed URL that allows downloading an entire repository as a ZIP without authentication. @Description Permissions are checked at URL creation time. The URL can be shared with external users. @Tags repository\-objects @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param body body irmincore.CreateSignedZipURLRequest true "Signed zip URL request parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irmincore.SignedURLResponse\} "Signed URL created successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/signed\-zip\-url \[post\]
 
 <a name="APIControllers.RepositoryGetUncommittedChanges"></a>
 ### func \(\*APIControllers\) RepositoryGetUncommittedChanges
@@ -14177,6 +14187,7 @@ import "irmin-api/services"
 - [Variables](<#variables>)
 - [func BuildUnifiedPath\(repoSlug, ref, pathWithinRepo string\) string](<#BuildUnifiedPath>)
 - [func CalculateObjectTotalSize\(database \*db.Database, object \*db.RepositoryObject\) \(int64, error\)](<#CalculateObjectTotalSize>)
+- [func CollectObjectFiles\(database \*db.Database, dataEngine \*engine.Client, object \*db.RepositoryObject, workspace \*db.Workspace, repo \*db.Repository, ref string, files map\[string\]\[\]byte\) error](<#CollectObjectFiles>)
 - [func GetInternalErrorMessage\(err error\) string](<#GetInternalErrorMessage>)
 - [func GetTranslationKeyForError\(err error\) string](<#GetTranslationKeyForError>)
 - [func IsInternalError\(err error\) bool](<#IsInternalError>)
@@ -14184,6 +14195,7 @@ import "irmin-api/services"
 - [func MapErrorToStatusCode\(err error\) int](<#MapErrorToStatusCode>)
 - [func NewInternalError\(msg string\) error](<#NewInternalError>)
 - [func NewInternalErrorf\(format string, args ...any\) error](<#NewInternalErrorf>)
+- [func StreamObjectsToZip\(database \*db.Database, dataEngine \*engine.Client, object \*db.RepositoryObject, workspace \*db.Workspace, repo \*db.Repository, ref string, writer io.Writer\) error](<#StreamObjectsToZip>)
 - [type AIAppToolExecutor](<#AIAppToolExecutor>)
   - [func NewAIAppToolExecutor\(aiApp \*db.AIApplication, apiServices \*APIServices\) \*AIAppToolExecutor](<#NewAIAppToolExecutor>)
   - [func \(e \*AIAppToolExecutor\) CommitStagedChanges\(ctx context.Context, repoSlug, ref, message string\) \(\*irminmodels.Commit, error\)](<#AIAppToolExecutor.CommitStagedChanges>)
@@ -14590,6 +14602,15 @@ func CalculateObjectTotalSize(database *db.Database, object *db.RepositoryObject
 
 CalculateObjectTotalSize recursively calculates the total size of an object and its children. Children are fetched from the database on\-the\-fly to support arbitrarily nested directories.
 
+<a name="CollectObjectFiles"></a>
+## func CollectObjectFiles
+
+```go
+func CollectObjectFiles(database *db.Database, dataEngine *engine.Client, object *db.RepositoryObject, workspace *db.Workspace, repo *db.Repository, ref string, files map[string][]byte) error
+```
+
+CollectObjectFiles recursively collects all file contents from an object tree into a map. Paths are sanitized to prevent zip\-slip attacks. This is the shared implementation used by both authenticated \(service\) and public signed\-URL \(controller\) download paths.
+
 <a name="GetInternalErrorMessage"></a>
 ## func GetInternalErrorMessage
 
@@ -14652,6 +14673,15 @@ func NewInternalErrorf(format string, args ...any) error
 ```
 
 NewInternalErrorf creates a formatted internal error that should not be exposed to clients. The error message will be logged server\-side but clients will receive a generic error.
+
+<a name="StreamObjectsToZip"></a>
+## func StreamObjectsToZip
+
+```go
+func StreamObjectsToZip(database *db.Database, dataEngine *engine.Client, object *db.RepositoryObject, workspace *db.Workspace, repo *db.Repository, ref string, writer io.Writer) error
+```
+
+StreamObjectsToZip recursively streams object content from an object tree into a zip writer without loading all files into memory at once. Paths are sanitized to prevent zip\-slip attacks. This is the shared implementation used by both authenticated \(service\) and public signed\-URL \(controller\) download paths.
 
 <a name="AIAppToolExecutor"></a>
 ## type AIAppToolExecutor
@@ -17651,6 +17681,7 @@ type SignedURLPayload struct {
     Path      string `json:"p"`
     Ref       string `json:"ref"`
     ExpiresAt int64  `json:"exp"`
+    Type      string `json:"t,omitempty"` // "" = single object (default), "zip" = repository zip
 }
 ```
 

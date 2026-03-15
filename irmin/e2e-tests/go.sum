@@ -1,5 +1,5 @@
-github.com/IrminData/irmin-sdk-go v0.0.0-20260314192009-1e1711f79583 h1:6a2QZAnmMEKyMiYrBONpufWmBVh9IPQNvEp2GD0Yu2I=
-github.com/IrminData/irmin-sdk-go v0.0.0-20260314192009-1e1711f79583/go.mod h1:pizVTSLzFLwpeP9l5LlHyLQ4USvVNAIrCT9WOk4vX3c=
+github.com/IrminData/irmin-sdk-go v0.0.0-20260315052906-c7484805aefb h1:P2b+Muw2dMrVc3jQUEws+MnTy56PnYtFfy0MM/y1EpA=
+github.com/IrminData/irmin-sdk-go v0.0.0-20260315052906-c7484805aefb/go.mod h1:pizVTSLzFLwpeP9l5LlHyLQ4USvVNAIrCT9WOk4vX3c=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/gabriel-vasile/mimetype v1.4.13 h1:46nXokslUBsAJE/wMsp5gtO500a4F3Nkz9Ufpk2AcUM=

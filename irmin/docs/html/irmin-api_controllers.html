@@ -1591,6 +1591,26 @@ func (api *APIControllers) RepositoryCreatePointer(c fiber.Ctx) error
     /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/pointer
     [post]
 
+func (api *APIControllers) RepositoryCreateSignedZipURL(c fiber.Ctx) error
+    RepositoryCreateSignedZipURL godoc @Summary Create a signed download
+    URL for a repository zip @Description Generate a time-limited signed
+    URL that allows downloading an entire repository as a ZIP without
+    authentication. @Description Permissions are checked at URL creation time.
+    The URL can be shared with external users. @Tags repository-objects
+    @Security ApiKeyAuth @Accept json @Produce json @Param workspace_slug
+    path string true "Workspace slug" @Param repository_slug path string true
+    "Repository slug" @Param body body irmincore.CreateSignedZipURLRequest
+    true "Signed zip URL request parameters" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irmincore.SignedURLResponse} "Signed URL
+    created successfully" @Failure 400 {object} irminmodels.IrminAPIResponse
+    "Bad request - invalid parameters" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 403 {object} irminmodels.IrminAPIResponse
+    "Forbidden - insufficient permissions" @Failure 500 {object}
+    irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/repositories/{repository_slug}/signed-zip-url
+    [post]
+
 func (api *APIControllers) RepositoryGetUncommittedChanges(c fiber.Ctx) error
     RepositoryGetUncommittedChanges godoc @Summary Get uncommitted
     changes @Description Get all uncommitted changes in a specific

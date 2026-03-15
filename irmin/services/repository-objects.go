@@ -1,7 +1,6 @@
 package services
 
 import (
-	"archive/zip"
 	"bytes"
 	"context"
 	"fmt"
@@ -1331,26 +1330,11 @@ func (api *APIServices) ZipRepositoryObject(
 		return nil, "", err
 	}
 
-	// Initialize the files map
+	// Collect all files recursively
 	files := make(map[string][]byte)
-
-	// Process the object
-	var processErr error
-	if object.Type == irminmodels.ObjectTypeGroup {
-		processErr = api.processGroupObjectDownload(
-			object,
-			workspace,
-			repository,
-			object.RepositoryRef,
-			dataEngine,
-			files,
-		)
-	} else {
-		processErr = api.processSingleObjectDownload(object, workspace, repository, object.RepositoryRef, dataEngine, files)
-	}
-
-	// If there is an error, return it
-	if processErr != nil {
+	if processErr := CollectObjectFiles(
+		api.DB, dataEngine, object, workspace, repository, object.RepositoryRef, files,
+	); processErr != nil {
 		api.Logger.ErrorContext(c, "Error processing object download", "error", processErr)
 		return nil, "", processErr
 	}
@@ -1375,61 +1359,6 @@ func (api *APIServices) ZipRepositoryObject(
 
 	// Return the zip file
 	return zipContent, zipName, nil
-}
-
-// processGroupObject recursively processes a group object and its children, storing file contents in the provided map.
-// Children are fetched from the database on-the-fly to support arbitrarily nested directories,
-// since GORM's Preload only loads one level of depth.
-func (api *APIServices) processGroupObjectDownload(
-	group *db.RepositoryObject,
-	workspace *db.Workspace,
-	repository *db.Repository,
-	objectRef string,
-	dataEngine *engine.Client,
-	files map[string][]byte,
-) error {
-	if group == nil {
-		return NewInternalError("group object is nil")
-	}
-	if group.Type != irminmodels.ObjectTypeGroup {
-		return fmt.Errorf("object %q is not a group", group.Name)
-	}
-
-	children, childErr := api.DB.FindChildObjects(group.ID)
-	if childErr != nil {
-		return NewInternalErrorf("error finding children for %s: %w", group.Path, childErr)
-	}
-
-	for i := range children {
-		child := &children[i]
-		if child.Type == irminmodels.ObjectTypeGroup {
-			if err := api.processGroupObjectDownload(child, workspace, repository, objectRef, dataEngine, files); err != nil {
-				return NewInternalErrorf("error processing group object download: %w", err)
-			}
-		} else {
-			if err := api.processSingleObjectDownload(child, workspace, repository, objectRef, dataEngine, files); err != nil {
-				return NewInternalErrorf("error processing single object download: %w", err)
-			}
-		}
-	}
-	return nil
-}
-
-// processSingleObject fetches and stores the content of a single object.
-func (api *APIServices) processSingleObjectDownload(
-	object *db.RepositoryObject,
-	workspace *db.Workspace,
-	repository *db.Repository,
-	objectRef string,
-	dataEngine *engine.Client,
-	files map[string][]byte,
-) error {
-	content, err := dataEngine.GetObjectContent(workspace.Slug, repository.Slug, object.Path, objectRef)
-	if err != nil {
-		return NewInternalErrorf("error getting object content from data engine: %w", err)
-	}
-	files[object.Path] = content
-	return nil
 }
 
 // StreamZipRepositoryObject writes a zip archive directly to the provided writer,
@@ -1459,71 +1388,9 @@ func (api *APIServices) StreamZipRepositoryObject(
 		return NewInternalErrorf("error creating data engine client: %w", engineErr)
 	}
 
-	zipWriter := zip.NewWriter(writer)
-
-	if streamErr := api.streamObjectToZip(
-		object, workspace, repository, object.RepositoryRef, dataEngine, zipWriter,
-	); streamErr != nil {
-		// Do NOT close the zip writer on error — leaving the central directory
-		// unwritten ensures the client receives an obviously corrupt archive
-		// rather than a silently incomplete one with a valid zip trailer.
-		return streamErr
-	}
-
-	return zipWriter.Close()
-}
-
-// streamObjectToZip recursively streams object content into a zip writer.
-// Children are fetched from the database on-the-fly to support arbitrarily nested directories,
-// since GORM's Preload only loads one level of depth.
-func (api *APIServices) streamObjectToZip(
-	object *db.RepositoryObject,
-	workspace *db.Workspace,
-	repository *db.Repository,
-	ref string,
-	dataEngine *engine.Client,
-	zipWriter *zip.Writer,
-) error {
-	if object.Type == irminmodels.ObjectTypeGroup {
-		children, childErr := api.DB.FindChildObjects(object.ID)
-		if childErr != nil {
-			return NewInternalErrorf("error finding children for %s: %w", object.Path, childErr)
-		}
-		for i := range children {
-			if err := api.streamObjectToZip(
-				&children[i], workspace, repository, ref, dataEngine, zipWriter,
-			); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
-	// Sanitize path to prevent zip-slip attacks
-	safePath, sanitizeErr := utils.SanitizeZipEntryPath(object.Path)
-	if sanitizeErr != nil {
-		return NewInternalErrorf("unsafe zip entry path %s: %w", object.Path, sanitizeErr)
-	}
-
-	// Stream file content from LakeFS directly into the zip entry
-	stream, _, streamErr := dataEngine.GetObjectContentStream(
-		workspace.Slug, repository.Slug, object.Path, ref,
+	return StreamObjectsToZip(
+		api.DB, dataEngine, object, workspace, repository, object.RepositoryRef, writer,
 	)
-	if streamErr != nil {
-		return NewInternalErrorf("error streaming object %s: %w", object.Path, streamErr)
-	}
-	defer stream.Close()
-
-	entry, createErr := zipWriter.Create(safePath)
-	if createErr != nil {
-		return NewInternalErrorf("error creating zip entry for %s: %w", object.Path, createErr)
-	}
-
-	if _, copyErr := io.Copy(entry, stream); copyErr != nil {
-		return NewInternalErrorf("error writing object %s to zip: %w", object.Path, copyErr)
-	}
-
-	return nil
 }
 
 // CalculateObjectTotalSize recursively calculates the total size of an object and its children.

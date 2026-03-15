@@ -1,14 +1,20 @@
 package controllers
 
 import (
+	"bufio"
 	"errors"
-	"irmin-api/db"
-	"irmin-api/engine"
-	"irmin-api/utils"
+	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"irmin-api/db"
+	"irmin-api/engine"
+	"irmin-api/services"
+	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -86,6 +92,11 @@ func (api *APIControllers) SignedDownload(c fiber.Ctx) error {
 		})
 	}
 
+	// Handle repository zip downloads
+	if payload.Type == "zip" {
+		return api.serveSignedZipDownload(c, workspace, repo, payload)
+	}
+
 	// Block access to system paths and pointer files
 	if engine.IsSystemPath(payload.Path) {
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
@@ -112,6 +123,95 @@ func (api *APIControllers) SignedDownload(c fiber.Ctx) error {
 	contentType := detectContentType(filename)
 
 	return api.serveSignedDownloadByTier(c, dataEngine, workspace, repo, payload, filename, contentType)
+}
+
+// serveSignedZipDownload streams a zip archive of the entire repository at the given ref.
+func (api *APIControllers) serveSignedZipDownload(
+	c fiber.Ctx,
+	workspace *db.Workspace,
+	repo *db.Repository,
+	payload *utils.SignedURLPayload,
+) error {
+	// Look up the root object from the database
+	rootPath := ""
+	object, objectErr := api.DB.FindObject(&rootPath, &repo.ID, &payload.Ref)
+	if objectErr != nil {
+		if errors.Is(objectErr, gorm.ErrRecordNotFound) {
+			return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
+				Errors: []string{"Repository has no objects at the specified ref"},
+			})
+		}
+		api.Logger.Error("Signed zip download: error finding root object",
+			"workspace", workspace.Slug, "repo", repo.Slug, "ref", payload.Ref, "error", objectErr,
+		)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{"Internal server error"},
+		})
+	}
+
+	// Determine total size to decide between in-memory and streaming zip
+	maxInMemoryBytes := int64(api.Env.MaxInMemorySizeMB) * int64(utils.BytesPerMB)
+	var totalSize int64
+	var sizeErr error
+	if object.Type == irminmodels.ObjectTypeGroup {
+		totalSize, sizeErr = services.CalculateObjectTotalSize(api.DB, object)
+		if sizeErr != nil {
+			api.Logger.Warn("Signed zip download: size calculation failed, falling back to streaming",
+				"workspace", workspace.Slug, "repo", repo.Slug, "ref", payload.Ref, "error", sizeErr,
+			)
+		}
+	} else {
+		totalSize = object.SizeBytes
+	}
+
+	dataEngine, engineErr := engine.NewClient(c.Context(), "en", api.Logger, api.Env, api.DB)
+	if engineErr != nil {
+		api.Logger.Error("Signed zip download: error creating data engine client", "error", engineErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{"Internal server error"},
+		})
+	}
+
+	timestamp := time.Now().UnixMilli()
+	zipName := fmt.Sprintf("%s-%s-%s-%d.zip", workspace.Slug, repo.Slug, payload.Ref, timestamp)
+
+	// For small repositories, use in-memory zip
+	if sizeErr == nil && totalSize <= maxInMemoryBytes {
+		files := make(map[string][]byte)
+		if processErr := services.CollectObjectFiles(
+			api.DB, dataEngine, object, workspace, repo, payload.Ref, files,
+		); processErr != nil {
+			api.Logger.Error("Signed zip download: error collecting files", "error", processErr)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+				Errors: []string{"Internal server error"},
+			})
+		}
+
+		zipContent, zipErr := irminutils.ZipFiles(files)
+		if zipErr != nil {
+			api.Logger.Error("Signed zip download: error creating zip", "error", zipErr)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+				Errors: []string{"Internal server error"},
+			})
+		}
+
+		return utils.WriteFileDownloadResponse(c, fiber.StatusOK, zipName, "application/zip", zipContent)
+	}
+
+	// For larger repositories, stream the zip directly to the response
+	c.Set("Content-Type", "application/zip")
+	c.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, zipName))
+	c.Status(fiber.StatusOK)
+
+	return c.SendStreamWriter(func(w *bufio.Writer) {
+		streamErr := services.StreamObjectsToZip(
+			api.DB, dataEngine, object, workspace, repo, payload.Ref, w,
+		)
+		if streamErr != nil {
+			api.Logger.Error("Signed zip download: error streaming zip", "error", streamErr)
+		}
+		_ = w.Flush()
+	})
 }
 
 // serveSignedDownloadByTier fetches object metadata and routes the download to the appropriate

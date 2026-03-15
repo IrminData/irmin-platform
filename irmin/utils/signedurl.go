@@ -21,6 +21,7 @@ type SignedURLPayload struct {
 	Path      string `json:"p"`
 	Ref       string `json:"ref"`
 	ExpiresAt int64  `json:"exp"`
+	Type      string `json:"t,omitempty"` // "" = single object (default), "zip" = repository zip
 }
 
 // GenerateSignedToken creates a signed token from a payload using HMAC-SHA256.

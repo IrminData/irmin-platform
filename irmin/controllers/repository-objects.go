@@ -230,6 +230,122 @@ func (api *APIControllers) RepositoryObjectsCreateSignedURL(c fiber.Ctx) error {
 	})
 }
 
+// RepositoryCreateSignedZipURL godoc
+// @Summary Create a signed download URL for a repository zip
+// @Description Generate a time-limited signed URL that allows downloading an entire repository as a ZIP without authentication.
+// @Description Permissions are checked at URL creation time. The URL can be shared with external users.
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param body body irmincore.CreateSignedZipURLRequest true "Signed zip URL request parameters"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irmincore.SignedURLResponse} "Signed URL created successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/signed-zip-url [post]
+func (api *APIControllers) RepositoryCreateSignedZipURL(c fiber.Ctx) error {
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+
+	if !dictOk || !userOk || !workspaceOk || !repositoryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{"Missing required context"},
+		})
+	}
+
+	// Parse and validate the request body
+	var req irmincore.CreateSignedZipURLRequest
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
+	}
+
+	// Default ref to repository default branch
+	ref := req.Ref
+	if ref == "" {
+		ref = repository.DefaultBranch
+	}
+
+	// Determine expiry: nil = default 24h, 0 = never expires, >0 = custom
+	expiresInHours := signedURLDefaultExpiryHours
+	if req.ExpiresInHours != nil {
+		if *req.ExpiresInHours == 0 {
+			expiresInHours = signedURLNeverExpiryHours
+		} else if *req.ExpiresInHours > 0 {
+			expiresInHours = *req.ExpiresInHours
+		}
+	}
+
+	// Check per-object deny policies: walk the object tree at the given ref and verify
+	// the user has read access to every object. This prevents bypassing deny policies
+	// on specific objects by downloading the entire repository as a zip.
+	rootPath := ""
+	rootObject, rootErr := api.DB.FindObject(&rootPath, &repository.ID, &ref)
+	if rootErr != nil {
+		if errors.Is(rootErr, gorm.ErrRecordNotFound) {
+			return api.handleServiceError(c, "Repository has no objects", services.ErrNotFound, dict)
+		}
+		return api.handleServiceError(
+			c,
+			"Error looking up repository objects",
+			services.NewInternalErrorf("root object lookup error: %w", rootErr),
+			dict,
+		)
+	}
+	if permErr := api.checkObjectTreePermissions(user, workspace, rootObject); permErr != nil {
+		return api.handleServiceError(c, "Error checking permissions", permErr, dict)
+	}
+
+	// Require a dedicated signing secret
+	secret := api.Env.SignedURLSecret
+	if secret == "" {
+		api.Logger.Error("SIGNED_URL_SECRET is not configured, cannot create signed URLs")
+		return api.handleServiceError(
+			c,
+			"Signed URLs are not configured",
+			services.NewInternalErrorf("SIGNED_URL_SECRET not set"),
+			dict,
+		)
+	}
+
+	// Generate signed token with zip type
+	expiresAt := time.Now().Add(time.Duration(expiresInHours) * time.Hour).Unix()
+	payload := utils.SignedURLPayload{
+		Workspace: workspace.Slug,
+		Repo:      repository.Slug,
+		Path:      "",
+		Ref:       ref,
+		ExpiresAt: expiresAt,
+		Type:      "zip",
+	}
+
+	token, tokenErr := utils.GenerateSignedToken([]byte(secret), payload)
+	if tokenErr != nil {
+		api.Logger.Error("Error generating signed zip token", "error", tokenErr)
+		return api.handleServiceError(
+			c,
+			"Error generating signed URL",
+			services.NewInternalErrorf("token generation error: %w", tokenErr),
+			dict,
+		)
+	}
+
+	// Build the full URL
+	signedURL := fmt.Sprintf("%s/api/v1/signed/download?token=%s", api.Env.URL, token)
+
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: irmincore.SignedURLResponse{
+			URL:       signedURL,
+			ExpiresAt: time.Unix(expiresAt, 0).UTC().Format(time.RFC3339),
+		},
+	})
+}
+
 // checkObjectPermission looks up a repository object by path and verifies the user has read access.
 // Returns nil if the object isn't indexed yet (record not found) or if access is allowed.
 // Returns a service error if the DB lookup fails or if access is denied.
@@ -269,6 +385,46 @@ func (api *APIControllers) checkObjectPermission(
 	if !isAllowed {
 		return services.ErrNotFound // Return not-found to avoid leaking object existence
 	}
+	return nil
+}
+
+// checkObjectTreePermissions recursively walks an object tree and verifies the user
+// has read access to every object. This is used by the signed zip URL endpoint to
+// enforce per-object deny policies before issuing a token that downloads everything.
+func (api *APIControllers) checkObjectTreePermissions(
+	user *db.User,
+	workspace *db.Workspace,
+	object *db.RepositoryObject,
+) error {
+	// Check permission on this object — return not-found to avoid leaking object existence
+	isAllowed, permErr := api.Services.PermissionService.IsAllowed(
+		user,
+		workspace,
+		db.PolicyResourceRepositoryObject,
+		&object.ID,
+		db.PolicyActionRead,
+	)
+	if permErr != nil {
+		api.Logger.Error("Error checking object-level permissions for zip", "error", permErr)
+		return services.NewInternalErrorf("permission check error: %w", permErr)
+	}
+	if !isAllowed {
+		return services.ErrNotFound
+	}
+
+	// If this is a group, recursively check children
+	if object.Type == irminmodels.ObjectTypeGroup {
+		children, childErr := api.DB.FindChildObjects(object.ID)
+		if childErr != nil {
+			return services.NewInternalErrorf("error finding children for %s: %w", object.Path, childErr)
+		}
+		for i := range children {
+			if err := api.checkObjectTreePermissions(user, workspace, &children[i]); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
