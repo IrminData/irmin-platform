@@ -195,6 +195,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) CreatePortalSession\(ctx context.Context, workspaceSlug string\) \(\*PortalResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreatePortalSession>)
   - [func \(c \*Client\) CreateRepository\(ctx context.Context, workspace string, req CreateRepositoryRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateRepository>)
   - [func \(c \*Client\) CreateSignedObjectURL\(ctx context.Context, workspace, repoSlug string, req CreateSignedURLRequest\) \(\*SignedURLResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateSignedObjectURL>)
+  - [func \(c \*Client\) CreateSignedRepositoryZipURL\(ctx context.Context, workspace, repoSlug string, req CreateSignedZipURLRequest\) \(\*SignedURLResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateSignedRepositoryZipURL>)
   - [func \(c \*Client\) CreateStoredQuery\(ctx context.Context, workspace string, req CreateQueryRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateStoredQuery>)
   - [func \(c \*Client\) CreateStoredScript\(ctx context.Context, workspace string, req CreateScriptRequest\) \(\*irminmodels.StoredScript, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateStoredScript>)
   - [func \(c \*Client\) CreateTag\(ctx context.Context, workspace, repository string, req CreateRepositoryTagRequest\) \(\*irminmodels.GitTag, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateTag>)
@@ -380,6 +381,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type CreateRepositoryTagRequest](<#CreateRepositoryTagRequest>)
 - [type CreateScriptRequest](<#CreateScriptRequest>)
 - [type CreateSignedURLRequest](<#CreateSignedURLRequest>)
+- [type CreateSignedZipURLRequest](<#CreateSignedZipURLRequest>)
 - [type CreateTagRequest](<#CreateTagRequest>)
 - [type CreateWorkspaceRequest](<#CreateWorkspaceRequest>)
 - [type CustomToolInfo](<#CustomToolInfo>)
@@ -1065,6 +1067,15 @@ func (c *Client) CreateSignedObjectURL(ctx context.Context, workspace, repoSlug 
 ```
 
 CreateSignedObjectURL creates a time\-limited signed download URL for a repository object. The URL can be shared with external users who do not have Irmin accounts. Permissions are checked at creation time, not at download time.
+
+<a name="Client.CreateSignedRepositoryZipURL"></a>
+### func \(\*Client\) CreateSignedRepositoryZipURL
+
+```go
+func (c *Client) CreateSignedRepositoryZipURL(ctx context.Context, workspace, repoSlug string, req CreateSignedZipURLRequest) (*SignedURLResponse, *irminmodels.IrminAPIResponse, error)
+```
+
+CreateSignedRepositoryZipURL creates a time\-limited signed download URL for an entire repository as a ZIP. The URL can be shared with external users who do not have Irmin accounts. Permissions are checked at creation time, not at download time.
 
 <a name="Client.CreateStoredQuery"></a>
 ### func \(\*Client\) CreateStoredQuery
@@ -2864,6 +2875,18 @@ type CreateSignedURLRequest struct {
     Path           string `json:"path"                       validate:"required"        example:"data/file.csv"`
     Ref            string `json:"ref,omitempty"                                         example:"main"`
     ExpiresInHours *int   `json:"expires_in_hours,omitempty" validate:"omitempty,min=0" example:"24"`
+}
+```
+
+<a name="CreateSignedZipURLRequest"></a>
+## type CreateSignedZipURLRequest
+
+CreateSignedZipURLRequest represents the JSON request body for creating a signed repository zip download URL.
+
+```go
+type CreateSignedZipURLRequest struct {
+    Ref            string `json:"ref,omitempty"              example:"main"`
+    ExpiresInHours *int   `json:"expires_in_hours,omitempty" example:"24"   validate:"omitempty,min=0"`
 }
 ```
 

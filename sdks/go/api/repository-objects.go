@@ -70,6 +70,12 @@ type CreateSignedURLRequest struct {
 	ExpiresInHours *int   `json:"expires_in_hours,omitempty" validate:"omitempty,min=0" example:"24"`
 }
 
+// CreateSignedZipURLRequest represents the JSON request body for creating a signed repository zip download URL.
+type CreateSignedZipURLRequest struct {
+	Ref            string `json:"ref,omitempty"              example:"main"`
+	ExpiresInHours *int   `json:"expires_in_hours,omitempty" example:"24"   validate:"omitempty,min=0"`
+}
+
 // SignedURLResponse represents the response from creating a signed download URL.
 type SignedURLResponse struct {
 	URL       string `json:"url"        example:"https://api.irmin.co/api/v1/signed/download?token=..."`
@@ -417,6 +423,31 @@ func (c *Client) CreateSignedObjectURL(
 	}, &response)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create signed object URL error: %w", err)
+	}
+	return &response, apiResp, nil
+}
+
+// CreateSignedRepositoryZipURL creates a time-limited signed download URL for an entire repository as a ZIP.
+// The URL can be shared with external users who do not have Irmin accounts.
+// Permissions are checked at creation time, not at download time.
+func (c *Client) CreateSignedRepositoryZipURL(
+	ctx context.Context,
+	workspace, repoSlug string,
+	req CreateSignedZipURLRequest,
+) (*SignedURLResponse, *irminmodels.IrminAPIResponse, error) {
+	var response SignedURLResponse
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/signed-zip-url",
+			workspace,
+			repoSlug,
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &response)
+	if err != nil {
+		return nil, nil, fmt.Errorf("create signed repository zip URL error: %w", err)
 	}
 	return &response, apiResp, nil
 }
