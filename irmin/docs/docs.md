@@ -11744,8 +11744,8 @@ import "irmin-api/lib"
 - [func ConstructSQLSelector\(workspaceSlug, repositorySlug, objectPath, ref, defaultBranch string\) \(string, string, error\)](<#ConstructSQLSelector>)
 - [func CreateAuditLogEventAsync\(d \*db.Database, logger \*slog.Logger, event \*db.LogEvent\)](<#CreateAuditLogEventAsync>)
 - [func CreatePointerContent\(target \*irminmodels.PointerTarget\) \(\[\]byte, error\)](<#CreatePointerContent>)
-- [func CreateWorkflowRun\(tx \*gorm.DB, workflow \*db.Workflow, user \*db.User, trigger \*db.WorkflowTrigger, checkUsage UsageCheckFunc\) \(\*db.WorkflowRun, error\)](<#CreateWorkflowRun>)
-- [func CreateWorkflowRunWithPayload\(tx \*gorm.DB, workflow \*db.Workflow, user \*db.User, trigger \*db.WorkflowTrigger, payload any, checkUsage UsageCheckFunc\) \(\*db.WorkflowRun, error\)](<#CreateWorkflowRunWithPayload>)
+- [func CreateWorkflowRun\(tx \*gorm.DB, workflow \*db.Workflow, user \*db.User, trigger \*db.WorkflowTrigger, checkUsage UsageCheckFunc, manual bool\) \(\*db.WorkflowRun, error\)](<#CreateWorkflowRun>)
+- [func CreateWorkflowRunWithPayload\(tx \*gorm.DB, workflow \*db.Workflow, user \*db.User, trigger \*db.WorkflowTrigger, payload any, checkUsage UsageCheckFunc, manual bool\) \(\*db.WorkflowRun, error\)](<#CreateWorkflowRunWithPayload>)
 - [func DecodePolicyResourceID\(sqid string, resource db.PolicyResource, sqidManager \*irminsqids.SQIDManager\) \(\*uint, error\)](<#DecodePolicyResourceID>)
 - [func DownloadFileFromURL\(ctx context.Context, targetURL string, headers map\[string\]string\) \(io.ReadCloser, error\)](<#DownloadFileFromURL>)
 - [func EncodePolicyResourceID\(id uint, resource db.PolicyResource, sqidManager \*irminsqids.SQIDManager\) \(string, error\)](<#EncodePolicyResourceID>)
@@ -11924,7 +11924,7 @@ CreatePointerContent creates the JSON content for a pointer file.
 ## func CreateWorkflowRun
 
 ```go
-func CreateWorkflowRun(tx *gorm.DB, workflow *db.Workflow, user *db.User, trigger *db.WorkflowTrigger, checkUsage UsageCheckFunc) (*db.WorkflowRun, error)
+func CreateWorkflowRun(tx *gorm.DB, workflow *db.Workflow, user *db.User, trigger *db.WorkflowTrigger, checkUsage UsageCheckFunc, manual bool) (*db.WorkflowRun, error)
 ```
 
 CreateWorkflowRun will check if enough time has passed since the last run. If so, it will create a new pending workflow run, update the schedule's previous run time, and return the new workflow run. Creating a new workflow run will cause the orchestrator to pick it up and execute it.
@@ -11933,7 +11933,7 @@ CreateWorkflowRun will check if enough time has passed since the last run. If so
 ## func CreateWorkflowRunWithPayload
 
 ```go
-func CreateWorkflowRunWithPayload(tx *gorm.DB, workflow *db.Workflow, user *db.User, trigger *db.WorkflowTrigger, payload any, checkUsage UsageCheckFunc) (*db.WorkflowRun, error)
+func CreateWorkflowRunWithPayload(tx *gorm.DB, workflow *db.Workflow, user *db.User, trigger *db.WorkflowTrigger, payload any, checkUsage UsageCheckFunc, manual bool) (*db.WorkflowRun, error)
 ```
 
 CreateWorkflowRunWithPayload creates a workflow run and attaches trigger event data as payload. The payload will be available to pipeline stages as trigger\_event.json in previousStageResults. This is used for connection events and repository events with IncludeDiffAsPatch enabled.

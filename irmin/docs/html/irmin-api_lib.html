@@ -89,6 +89,7 @@ func CreateWorkflowRun(
 	user *db.User,
 	trigger *db.WorkflowTrigger,
 	checkUsage UsageCheckFunc,
+	manual bool,
 ) (*db.WorkflowRun, error)
     CreateWorkflowRun will check if enough time has passed since the last run.
     If so, it will create a new pending workflow run, update the schedule's
@@ -102,6 +103,7 @@ func CreateWorkflowRunWithPayload(
 	trigger *db.WorkflowTrigger,
 	payload any,
 	checkUsage UsageCheckFunc,
+	manual bool,
 ) (*db.WorkflowRun, error)
     CreateWorkflowRunWithPayload creates a workflow run and attaches trigger
     event data as payload. The payload will be available to pipeline stages as

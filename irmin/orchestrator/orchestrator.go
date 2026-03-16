@@ -543,7 +543,7 @@ func (o *Orchestrator) createWorkflowRunForTimeTrigger(ctx context.Context, tx *
 	}
 
 	// Create a new workflow run
-	run, createWorkflowRunErr := lib.CreateWorkflowRun(tx, &workflow, nil, t, o.usageCheckFunc())
+	run, createWorkflowRunErr := lib.CreateWorkflowRun(tx, &workflow, nil, t, o.usageCheckFunc(), false)
 	if createWorkflowRunErr != nil {
 		if o.isWorkflowPausedError(createWorkflowRunErr) {
 			return nil
@@ -675,12 +675,12 @@ func (o *Orchestrator) processRepositoryTrigger(
 				"commit_id", *event.CommitID,
 			)
 			// Fall back to creating run without payload
-			run, err = lib.CreateWorkflowRun(tx, &workflow, nil, t, o.usageCheckFunc())
+			run, err = lib.CreateWorkflowRun(tx, &workflow, nil, t, o.usageCheckFunc(), false)
 		} else {
-			run, err = lib.CreateWorkflowRunWithPayload(tx, &workflow, nil, t, payload, o.usageCheckFunc())
+			run, err = lib.CreateWorkflowRunWithPayload(tx, &workflow, nil, t, payload, o.usageCheckFunc(), false)
 		}
 	} else {
-		run, err = lib.CreateWorkflowRun(tx, &workflow, nil, t, o.usageCheckFunc())
+		run, err = lib.CreateWorkflowRun(tx, &workflow, nil, t, o.usageCheckFunc(), false)
 	}
 
 	if err != nil {
@@ -880,7 +880,7 @@ func (o *Orchestrator) processWorkflowRunTrigger(
 	)
 
 	// Create a new workflow run
-	run, err := lib.CreateWorkflowRun(tx, &workflow, nil, t, o.usageCheckFunc())
+	run, err := lib.CreateWorkflowRun(tx, &workflow, nil, t, o.usageCheckFunc(), false)
 	if err != nil {
 		if o.isWorkflowPausedError(err) {
 			return false, nil

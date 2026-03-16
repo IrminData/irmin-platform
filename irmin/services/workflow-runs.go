@@ -56,7 +56,7 @@ func (api *APIServices) CreateWorkflowRun(
 				return api.BillingService.CheckUsageLimit(workspaceID, db.UsageDimensionWorkflowRuns, 1)
 			}
 		}
-		run, createWorkflowRunErr = lib.CreateWorkflowRun(tx, workflow, user, nil, checkUsage)
+		run, createWorkflowRunErr = lib.CreateWorkflowRun(tx, workflow, user, nil, checkUsage, true)
 		if createWorkflowRunErr != nil {
 			// Don't wrap validation errors as internal errors
 			if errors.Is(createWorkflowRunErr, lib.ErrWorkflowMinIntervalNotMet) {

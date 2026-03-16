@@ -41,7 +41,7 @@ func TestCreateWorkflowRun(t *testing.T) {
 	defer tx.Rollback()
 
 	// Create a workflow run
-	workflowRun, createWorkflowRunErr := lib.CreateWorkflowRun(tx, &workflow, user, &trigger, nil)
+	workflowRun, createWorkflowRunErr := lib.CreateWorkflowRun(tx, &workflow, user, &trigger, nil, false)
 	if createWorkflowRunErr != nil {
 		t.Fatalf("Failed to create workflow run: %v", createWorkflowRunErr)
 	}

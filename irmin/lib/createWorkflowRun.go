@@ -34,14 +34,15 @@ func CreateWorkflowRun(
 	user *db.User,
 	trigger *db.WorkflowTrigger,
 	checkUsage UsageCheckFunc,
+	manual bool,
 ) (*db.WorkflowRun, error) {
 	// Make sure we have a workflow.
 	if workflow == nil {
 		return nil, errors.New("workflow is nil")
 	}
 
-	// Make sure that the workflow is not paused.
-	if workflow.Paused {
+	// Make sure that the workflow is not paused (skip for manual triggers).
+	if workflow.Paused && !manual {
 		return nil, ErrWorkflowPaused
 	}
 
@@ -118,9 +119,10 @@ func CreateWorkflowRunWithPayload(
 	trigger *db.WorkflowTrigger,
 	payload any,
 	checkUsage UsageCheckFunc,
+	manual bool,
 ) (*db.WorkflowRun, error) {
 	// Create the base workflow run using the existing function
-	run, err := CreateWorkflowRun(tx, workflow, user, trigger, checkUsage)
+	run, err := CreateWorkflowRun(tx, workflow, user, trigger, checkUsage, manual)
 	if err != nil {
 		return nil, err
 	}

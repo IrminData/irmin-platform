@@ -113,7 +113,7 @@ func TestWorkflowExecution_EndToEnd(t *testing.T) {
 	defer database.Delete(trigger)
 
 	// For this test, manually create a workflow run to simulate what the trigger would do
-	run, err := lib.CreateWorkflowRun(database.DB, workflow, user, trigger, nil)
+	run, err := lib.CreateWorkflowRun(database.DB, workflow, user, trigger, nil, false)
 	assert.Equal(t, err, nil)
 	assert.NotEqual(t, run, nil)
 
@@ -258,7 +258,7 @@ func TestWorkflowRunCreationAndExecution(t *testing.T) {
 	defer database.Delete(trigger)
 
 	// Create a workflow run manually
-	run, err := lib.CreateWorkflowRun(database.DB, workflow, user, trigger, nil)
+	run, err := lib.CreateWorkflowRun(database.DB, workflow, user, trigger, nil, false)
 	if err != nil {
 		t.Fatalf("Failed to create workflow run: %v", err)
 	}
