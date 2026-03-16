@@ -884,7 +884,7 @@ func (c *Client) DataExport(
 	requestedRepositoryPaths []string,
 	fieldMappings []irminmodels.FieldMapping,
 	tx ...*gorm.DB,
-) ([]string, []connectorsclient.OperationLog, []error) {
+) ([]string, int64, []connectorsclient.OperationLog, []error) {
 	// Note: No locking needed here - workflow execution is already locked per run,
 	// and each workflow run creates its own independent connector operation
 
@@ -892,7 +892,7 @@ func (c *Client) DataExport(
 	if len(tx) > 0 && tx[0] != nil {
 		// Use provided transaction
 		// Process the data export
-		result, operationLogs, processErr := c.dataExportInternal(
+		result, finalFiles, operationLogs, processErr := c.dataExportInternal(
 			ctx,
 			connection,
 			connectionPath,
@@ -903,17 +903,23 @@ func (c *Client) DataExport(
 			fieldMappings,
 			tx[0],
 		)
-		return result, operationLogs, processErr
+		totalBytes := int64(0)
+		if len(processErr) == 0 {
+			totalBytes = SumFileMapBytes(finalFiles)
+		}
+		return result, totalBytes, operationLogs, processErr
 	}
 
 	// Create new transaction
 	var result []string
+	var totalBytes int64
 	var operationLogs []connectorsclient.OperationLog
 	var resultErrors []error
 	transactionErr := c.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Process the data export
 		var processErr []error
-		result, operationLogs, processErr = c.dataExportInternal(
+		var finalFiles map[string][]byte
+		result, finalFiles, operationLogs, processErr = c.dataExportInternal(
 			ctx,
 			connection,
 			connectionPath,
@@ -923,6 +929,11 @@ func (c *Client) DataExport(
 			requestedRepositoryPaths,
 			fieldMappings,
 		)
+		if len(processErr) == 0 {
+			totalBytes = SumFileMapBytes(finalFiles)
+		} else {
+			totalBytes = 0
+		}
 		resultErrors = processErr
 		// Don't fail the transaction based on process errors - let them be collected
 		return nil
@@ -932,10 +943,10 @@ func (c *Client) DataExport(
 		// Combine transaction error with any existing process errors
 		allErrors := []error{transactionErr}
 		allErrors = append(allErrors, resultErrors...)
-		return nil, operationLogs, allErrors
+		return nil, 0, operationLogs, allErrors
 	}
 
-	return result, operationLogs, resultErrors
+	return result, totalBytes, operationLogs, resultErrors
 }
 
 // dataExportInternal contains the core data export logic, separated for clarity.
@@ -949,28 +960,40 @@ func (c *Client) dataExportInternal(
 	requestedRepositoryPaths []string,
 	fieldMappings []irminmodels.FieldMapping,
 	tx ...*gorm.DB,
-) ([]string, []connectorsclient.OperationLog, []error) {
+) ([]string, map[string][]byte, []connectorsclient.OperationLog, []error) {
 	repoName := utils.ConstructLakeFSRepositoryName(workspaceSlug, repositorySlug)
 
 	// Fetch all objects and their contents
 	objects, files, repositoryPaths, fetchErrors := c.fetchObjectsFromPaths(repoName, branch, requestedRepositoryPaths)
 	if len(fetchErrors) > 0 {
-		return repositoryPaths, nil, fetchErrors
+		return repositoryPaths, nil, nil, fetchErrors
 	}
 
 	// Process field mappings (or return files as-is if no mappings)
 	finalFiles, processingErrors := c.processFieldMappings(ctx, files, fieldMappings)
 	if len(processingErrors) > 0 {
-		return repositoryPaths, nil, processingErrors
+		return repositoryPaths, nil, nil, processingErrors
 	}
 
 	// Push the files to the connection path
 	_, operationLogs, pushErr := c.PushFilesToConnector(ctx, connection, connectionPath, objects, finalFiles, tx...)
 	if pushErr != nil {
-		return repositoryPaths, operationLogs, []error{pushErr}
+		return repositoryPaths, nil, operationLogs, []error{pushErr}
 	}
 
-	return repositoryPaths, operationLogs, nil
+	return repositoryPaths, finalFiles, operationLogs, nil
+}
+
+// SumFileMapBytes returns the total byte count across all values in a file map.
+func SumFileMapBytes(files map[string][]byte) int64 {
+	if len(files) == 0 {
+		return 0
+	}
+	var totalBytes int64
+	for _, content := range files {
+		totalBytes += int64(len(content))
+	}
+	return totalBytes
 }
 
 // PushFilesToConnector pushes files to a connector.

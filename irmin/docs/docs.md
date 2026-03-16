@@ -7917,6 +7917,7 @@ import "irmin-api/engine"
 - [func SanitizeQueryError\(err error, logger \*slog.Logger, ctx context.Context\) error](<#SanitizeQueryError>)
 - [func SplitSQLStatements\(sql string\) \[\]string](<#SplitSQLStatements>)
 - [func SplitTopLevelCommaForTesting\(s string\) \[\]string](<#SplitTopLevelCommaForTesting>)
+- [func SumFileMapBytes\(files map\[string\]\[\]byte\) int64](<#SumFileMapBytes>)
 - [func ValidateQuerySecurity\(query string\) error](<#ValidateQuerySecurity>)
 - [type BranchProtectionManager](<#BranchProtectionManager>)
   - [func NewBranchProtectionManager\(client \*lakefs.Client\) \*BranchProtectionManager](<#NewBranchProtectionManager>)
@@ -7935,7 +7936,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) CreateBranch\(workspace, repository, name, from string, isImmutable bool\) \(\*irminmodels.Branch, error\)](<#Client.CreateBranch>)
   - [func \(c \*Client\) CreateRepository\(workspace, name, defaultBranch string, isImmutable bool, gcDefaultRetentionDays, gcDefaultBranchRetentionDays \*int\) \(\*Repository, error\)](<#Client.CreateRepository>)
   - [func \(c \*Client\) CreateTag\(workspace, repository, name, ref string\) \(\*irminmodels.GitTag, error\)](<#Client.CreateTag>)
-  - [func \(c \*Client\) DataExport\(ctx context.Context, connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]string, \[\]connectorsclient.OperationLog, \[\]error\)](<#Client.DataExport>)
+  - [func \(c \*Client\) DataExport\(ctx context.Context, connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]string, int64, \[\]connectorsclient.OperationLog, \[\]error\)](<#Client.DataExport>)
   - [func \(c \*Client\) DataImport\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, workspace string, repository string, branch string, repositoryPath string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]lakefs.ObjectMetadata, \[\]connectorsclient.OperationLog, \[\]error\)](<#Client.DataImport>)
   - [func \(c \*Client\) DataMovementSchema\(ctx context.Context, connection \*db.Connection, method, path string, tx ...\*gorm.DB\) \(\*irminmodels.ObjectSchema, \[\]connectorsclient.OperationLog, error\)](<#Client.DataMovementSchema>)
   - [func \(c \*Client\) DeleteBranch\(workspace, repository, branch string\) error](<#Client.DeleteBranch>)
@@ -8202,6 +8203,15 @@ func SplitTopLevelCommaForTesting(s string) []string
 
 SplitTopLevelCommaForTesting exposes splitTopLevelComma for testing
 
+<a name="SumFileMapBytes"></a>
+## func SumFileMapBytes
+
+```go
+func SumFileMapBytes(files map[string][]byte) int64
+```
+
+SumFileMapBytes returns the total byte count across all values in a file map.
+
 <a name="ValidateQuerySecurity"></a>
 ## func ValidateQuerySecurity
 
@@ -8396,7 +8406,7 @@ func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminmodel
 ### func \(\*Client\) DataExport
 
 ```go
-func (c *Client) DataExport(ctx context.Context, connection *db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths []string, fieldMappings []irminmodels.FieldMapping, tx ...*gorm.DB) ([]string, []connectorsclient.OperationLog, []error)
+func (c *Client) DataExport(ctx context.Context, connection *db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths []string, fieldMappings []irminmodels.FieldMapping, tx ...*gorm.DB) ([]string, int64, []connectorsclient.OperationLog, []error)
 ```
 
 DataExport exports data from a lakeFS repository to an external connector. It applies field mappings to route and transform data, merges files that map to the same destination, and pushes the results to the connector. Returns the paths of the files that were pushed and any errors that occurred. If tx is provided, it will be used instead of creating a new transaction.
@@ -13420,6 +13430,10 @@ type Orchestrator struct {
     // CheckWorkflowRunUsage is an optional callback to check if a workspace can create a workflow run.
     // Returns true if allowed. Used for billing limit enforcement without coupling to billing service.
     CheckWorkflowRunUsage func(workspaceID uint) (bool, error)
+
+    // OnDataTransfer is an optional callback invoked when connector operations transfer bytes.
+    // Used for billing data transfer usage tracking without coupling the orchestrator to the billing service.
+    OnDataTransfer func(workspaceID uint, bytes int64)
     // contains filtered or unexported fields
 }
 ```

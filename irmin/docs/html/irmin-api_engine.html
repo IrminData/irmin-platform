@@ -139,6 +139,10 @@ func SplitSQLStatements(sql string) []string
 func SplitTopLevelCommaForTesting(s string) []string
     SplitTopLevelCommaForTesting exposes splitTopLevelComma for testing
 
+func SumFileMapBytes(files map[string][]byte) int64
+    SumFileMapBytes returns the total byte count across all values in a file
+    map.
+
 func ValidateQuerySecurity(query string) error
     ValidateQuerySecurity checks if query contains blacklisted commands that
     could compromise security or stability. Returns generic error to prevent
@@ -284,7 +288,7 @@ func (c *Client) DataExport(
 	requestedRepositoryPaths []string,
 	fieldMappings []irminmodels.FieldMapping,
 	tx ...*gorm.DB,
-) ([]string, []connectorsclient.OperationLog, []error)
+) ([]string, int64, []connectorsclient.OperationLog, []error)
     DataExport exports data from a lakeFS repository to an external connector.
     It applies field mappings to route and transform data, merges files that map
     to the same destination, and pushes the results to the connector. Returns

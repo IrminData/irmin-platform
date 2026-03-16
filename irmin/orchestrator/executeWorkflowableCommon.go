@@ -24,10 +24,11 @@ const (
 
 // operationResult holds the results of an import or export operation.
 type operationResult struct {
-	importedObjects []lakefs.ObjectMetadata
-	exportedPaths   []string
-	operationLogs   []connectorsclient.OperationLog
-	errors          []error
+	importedObjects  []lakefs.ObjectMetadata
+	exportedPaths    []string
+	transferredBytes int64
+	operationLogs    []connectorsclient.OperationLog
+	errors           []error
 }
 
 // trimPaths removes leading slashes from path slices.
@@ -67,9 +68,10 @@ func (o *Orchestrator) performImportOperation(
 	)
 
 	return operationResult{
-		importedObjects: importedObjects,
-		operationLogs:   operationLogs,
-		errors:          errors,
+		importedObjects:  importedObjects,
+		transferredBytes: sumImportedObjectBytes(importedObjects),
+		operationLogs:    operationLogs,
+		errors:           errors,
 	}
 }
 
@@ -89,7 +91,7 @@ func (o *Orchestrator) performExportOperation(
 		connectionPath = connectionPaths[0]
 	}
 
-	exportedPaths, operationLogs, errors := o.dataEngine.DataExport(
+	exportedPaths, transferredBytes, operationLogs, errors := o.dataEngine.DataExport(
 		ctx,
 		connection,
 		connectionPath,
@@ -101,10 +103,19 @@ func (o *Orchestrator) performExportOperation(
 	)
 
 	return operationResult{
-		exportedPaths: exportedPaths,
-		operationLogs: operationLogs,
-		errors:        errors,
+		exportedPaths:    exportedPaths,
+		transferredBytes: transferredBytes,
+		operationLogs:    operationLogs,
+		errors:           errors,
 	}
+}
+
+func sumImportedObjectBytes(importedObjects []lakefs.ObjectMetadata) int64 {
+	var totalBytes int64
+	for _, obj := range importedObjects {
+		totalBytes += obj.SizeBytes
+	}
+	return totalBytes
 }
 
 // operationContext holds context information for logging import/export operations.
@@ -431,6 +442,9 @@ func (o *Orchestrator) executeWorkflowableCommon(
 
 	// Process operation results
 	logs = append(logs, o.processOperationResults(ctx, result, operation, opCtx)...)
+
+	// Track connector import/export bytes for data transfer billing.
+	o.trackDataTransfer(workspace.ID, result.transferredBytes)
 
 	// Save directory object for import operations
 	if operation == operationImport && len(trimmedRepositoryPaths) > 0 {

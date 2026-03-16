@@ -52,6 +52,10 @@ type Orchestrator struct {
 	// CheckWorkflowRunUsage is an optional callback to check if a workspace can create a workflow run.
 	// Returns true if allowed. Used for billing limit enforcement without coupling to billing service.
 	CheckWorkflowRunUsage func(workspaceID uint) (bool, error)
+
+	// OnDataTransfer is an optional callback invoked when connector operations transfer bytes.
+	// Used for billing data transfer usage tracking without coupling the orchestrator to the billing service.
+	OnDataTransfer func(workspaceID uint, bytes int64)
 }
 
 func NewOrchestrator(
@@ -86,6 +90,14 @@ func (o *Orchestrator) usageCheckFunc() lib.UsageCheckFunc {
 		return nil
 	}
 	return lib.UsageCheckFunc(o.CheckWorkflowRunUsage)
+}
+
+// trackDataTransfer reports connector data transfer to the billing usage tracker, if configured.
+func (o *Orchestrator) trackDataTransfer(workspaceID uint, bytes int64) {
+	if o == nil || o.OnDataTransfer == nil || bytes <= 0 {
+		return
+	}
+	o.OnDataTransfer(workspaceID, bytes)
 }
 
 func (o *Orchestrator) isWorkflowPausedError(err error) bool {

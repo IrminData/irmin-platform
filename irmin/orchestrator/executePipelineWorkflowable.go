@@ -381,6 +381,9 @@ func (o *Orchestrator) handleConnectionWrite(
 	for _, pushedPath := range pushedPaths {
 		logs = append(logs, fmt.Sprintf("Object ('%s') pushed to connector.", pushedPath))
 	}
+
+	// Count outbound bytes pushed to the connector for data transfer billing.
+	o.trackDataTransfer(connection.WorkspaceID, engine.SumFileMapBytes(previousStageResults))
 	return logs, nil
 }
 
@@ -440,6 +443,9 @@ func (o *Orchestrator) handleConnectionRead(
 		logs = append(logs, fmt.Sprintf("Object ('%s') retrieved from connection.", fileName))
 	}
 	applyDataPassMode(previousStageResults, pulledFiles, stage.DataPassMode)
+
+	// Count inbound bytes pulled from the connector for data transfer billing.
+	o.trackDataTransfer(connection.WorkspaceID, engine.SumFileMapBytes(pulledPaths))
 	return logs, nil
 }
 

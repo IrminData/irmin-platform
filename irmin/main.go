@@ -406,6 +406,9 @@ func main() {
 		orchestrator.OnWorkflowRunComplete = func(workspaceID uint) {
 			tracker.Track(workspaceID, db.UsageDimensionWorkflowRuns, 1)
 		}
+		orchestrator.OnDataTransfer = func(workspaceID uint, bytes int64) {
+			tracker.Track(workspaceID, db.UsageDimensionDataTransfer, bytes)
+		}
 	}
 
 	// Wire orchestrator workflow run usage limit check for billing enforcement
