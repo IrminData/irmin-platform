@@ -34,6 +34,10 @@ const (
 	UsageDimensionDataTransfer UsageDimension = "data_transfer"
 	// UsageDimensionSeats represents seat usage.
 	UsageDimensionSeats UsageDimension = "seats"
+	// UsageDimensionComputeInvocations represents compute sandbox invocation usage.
+	UsageDimensionComputeInvocations UsageDimension = "compute_invocations"
+	// UsageDimensionVectorizations represents document vectorization usage.
+	UsageDimensionVectorizations UsageDimension = "vectorizations"
 )
 
 // PlanInfo holds information about a workspace's current plan.
