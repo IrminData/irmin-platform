@@ -362,6 +362,8 @@ const fi = {
     billingDimensionApiRequests: 'API-pyynnöt',
     billingDimensionDataTransfer: 'Tiedonsiirto',
     billingDimensionSeats: 'Käyttäjäpaikat',
+    billingDimensionComputeInvocations: 'Laskentakutsut',
+    billingDimensionVectorizations: 'Vektorisaatiot',
     billingRenewsOn: 'Uusiutuu',
     billingAccessUntil: 'Käyttöoikeus asti',
     billingCheckoutSuccess: 'Maksu onnistui',

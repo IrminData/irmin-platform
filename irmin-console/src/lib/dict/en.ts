@@ -359,6 +359,8 @@ const en = {
     billingDimensionApiRequests: 'API Requests',
     billingDimensionDataTransfer: 'Data Transfer',
     billingDimensionSeats: 'Seats',
+    billingDimensionComputeInvocations: 'Compute Invocations',
+    billingDimensionVectorizations: 'Vectorizations',
     billingRenewsOn: 'Renews on',
     billingAccessUntil: 'Access until',
     billingCheckoutSuccess: 'Checkout Successful',

@@ -17,7 +17,9 @@ export type UsageDimension =
   | 'ai_requests'
   | 'api_requests'
   | 'data_transfer'
-  | 'seats';
+  | 'seats'
+  | 'compute_invocations'
+  | 'vectorizations';
 
 /**
  * Usage information for a single dimension.

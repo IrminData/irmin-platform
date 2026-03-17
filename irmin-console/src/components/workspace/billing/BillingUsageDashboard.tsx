@@ -34,6 +34,8 @@ const BillingUsageDashboard = ({
     api_requests: dict.workspace.billingDimensionApiRequests,
     data_transfer: dict.workspace.billingDimensionDataTransfer,
     seats: dict.workspace.billingDimensionSeats,
+    compute_invocations: dict.workspace.billingDimensionComputeInvocations,
+    vectorizations: dict.workspace.billingDimensionVectorizations,
   };
 
   if (!usage || usage.length === 0) {
