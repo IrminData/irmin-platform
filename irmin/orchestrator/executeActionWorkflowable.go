@@ -242,12 +242,21 @@ func (o *Orchestrator) executeScriptWorkflowable(
 		return sandbox.ExecutionResult{}, logs, errors.New("script is not set for script executable type")
 	}
 
+	// Check compute invocation usage limit before execution
+	if limitErr := o.checkComputeInvocationLimit(workflow.WorkspaceID); limitErr != nil {
+		logs = append(logs, "Compute invocation usage limit exceeded")
+		return sandbox.ExecutionResult{}, logs, limitErr
+	}
+
 	computeResult, err := o.computeSandbox.ExecutedStoredScript(
 		ctx,
 		inputFiles,
 		workflow.Owner,
 		workflowable.Script,
 	)
+
+	// Track compute sandbox invocation for billing (regardless of success/failure)
+	o.trackComputeInvocation(workflow.WorkspaceID)
 
 	// Always append script execution logs to workflow logs
 	logs = append(logs, computeResult.Logs)

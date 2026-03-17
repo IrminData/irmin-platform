@@ -4210,6 +4210,8 @@ definitions:
     - api_requests
     - data_transfer
     - seats
+    - compute_invocations
+    - vectorizations
     type: string
     x-enum-varnames:
     - UsageDimensionStorage
@@ -4218,6 +4220,8 @@ definitions:
     - UsageDimensionAPIRequests
     - UsageDimensionDataTransfer
     - UsageDimensionSeats
+    - UsageDimensionComputeInvocations
+    - UsageDimensionVectorizations
   irminmodels.UsageDimensionInfo:
     properties:
       current_usage:

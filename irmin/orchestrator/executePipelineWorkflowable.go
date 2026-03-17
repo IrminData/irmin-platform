@@ -239,43 +239,13 @@ func (o *Orchestrator) handleActionStage(
 		computeInputFiles = previousStageResults
 	}
 
+	// Execute based on executable type
 	var computeResult sandbox.ExecutionResult
 	var err error
-
-	// Execute based on executable type
 	if stage.ExecutableType == irminmodels.ActionExecutableTypeQuery {
-		// Execute query
-		if stage.Query == nil {
-			logs = append(logs, "Query is not set for query executable type")
-			return logs, errors.New("query is not set for query executable type")
-		}
-
-		queryResult := o.dataEngine.ExecuteQueryWithInputs(
-			ctx,
-			&workflow.Owner,
-			&workflow.Workspace,
-			stage.Query.SQL,
-			computeInputFiles,
-		)
-
-		// Convert QueryResult to ExecutionResult
-		computeResult = convertQueryResultToExecutionResult(queryResult)
-		if queryResult.HasErrors {
-			err = fmt.Errorf("query execution failed: %v", queryResult.Logs)
-		}
+		computeResult, logs, err = o.executePipelineQuery(ctx, workflow, stage, computeInputFiles, logs)
 	} else {
-		// Execute script (default behavior)
-		if stage.Script == nil {
-			logs = append(logs, "Script is not set for script executable type")
-			return logs, errors.New("script is not set for script executable type")
-		}
-
-		computeResult, err = o.computeSandbox.ExecutedStoredScript(
-			ctx,
-			computeInputFiles,
-			workflow.Owner,
-			stage.Script,
-		)
+		computeResult, logs, err = o.executePipelineScript(ctx, workflow, stage, computeInputFiles, logs)
 	}
 
 	// Always append the logs from the compute result to the workflow run logs
@@ -283,7 +253,6 @@ func (o *Orchestrator) handleActionStage(
 
 	if err != nil {
 		if ctx.Err() != nil {
-			// If cancelled, append cancellation message but keep all logs
 			logs = append(
 				logs,
 				fmt.Sprintf("Workflow execution cancelled during action execution: %v", ctx.Err()),
@@ -299,6 +268,67 @@ func (o *Orchestrator) handleActionStage(
 	}
 
 	return logs, nil
+}
+
+// executePipelineQuery executes a query for a pipeline action stage.
+func (o *Orchestrator) executePipelineQuery(
+	ctx context.Context,
+	workflow *db.Workflow,
+	stage *db.PipelineStage,
+	inputFiles map[string][]byte,
+	logs []string,
+) (sandbox.ExecutionResult, []string, error) {
+	if stage.Query == nil {
+		logs = append(logs, "Query is not set for query executable type")
+		return sandbox.ExecutionResult{}, logs, errors.New("query is not set for query executable type")
+	}
+
+	queryResult := o.dataEngine.ExecuteQueryWithInputs(
+		ctx,
+		&workflow.Owner,
+		&workflow.Workspace,
+		stage.Query.SQL,
+		inputFiles,
+	)
+
+	computeResult := convertQueryResultToExecutionResult(queryResult)
+	if queryResult.HasErrors {
+		return computeResult, logs, fmt.Errorf("query execution failed: %v", queryResult.Logs)
+	}
+
+	return computeResult, logs, nil
+}
+
+// executePipelineScript executes a script for a pipeline action stage.
+func (o *Orchestrator) executePipelineScript(
+	ctx context.Context,
+	workflow *db.Workflow,
+	stage *db.PipelineStage,
+	inputFiles map[string][]byte,
+	logs []string,
+) (sandbox.ExecutionResult, []string, error) {
+	if stage.Script == nil {
+		logs = append(logs, "Script is not set for script executable type")
+		return sandbox.ExecutionResult{}, logs, errors.New("script is not set for script executable type")
+	}
+
+	// Check compute invocation usage limit before execution
+	if limitErr := o.checkComputeInvocationLimit(workflow.WorkspaceID); limitErr != nil {
+		logs = append(logs, "Compute invocation usage limit exceeded")
+		return sandbox.ExecutionResult{}, logs, limitErr
+	}
+
+	computeResult, err := o.computeSandbox.ExecutedStoredScript(
+		ctx,
+		inputFiles,
+		workflow.Owner,
+		stage.Script,
+	)
+
+	// Track compute sandbox invocation for billing (regardless of success/failure)
+	o.trackComputeInvocation(workflow.WorkspaceID)
+
+	return computeResult, logs, err
 }
 
 // handleConnectionStage handles the execution of a connection stage.
@@ -1616,6 +1646,16 @@ func (o *Orchestrator) handleEmbeddingsStage(
 	// Route to appropriate handler based on operation type
 	switch *stage.EmbeddingsOperation {
 	case irminmodels.EmbeddingsOpVectorize:
+		// Check vectorization usage limit before processing
+		if o.CheckVectorizationUsage != nil {
+			allowed, checkErr := o.CheckVectorizationUsage(workflow.WorkspaceID, int64(len(previousStageResults)))
+			if checkErr != nil {
+				o.logger.ErrorContext(ctx, "Error checking vectorization usage limit", "error", checkErr)
+			} else if !allowed {
+				logs = append(logs, "Vectorization usage limit exceeded")
+				return logs, lib.ErrUsageLimitExceeded
+			}
+		}
 		return o.handleEmbeddingsVectorize(ctx, workflow, stage, previousStageResults, logs)
 	case irminmodels.EmbeddingsOpSearch:
 		return o.handleEmbeddingsSearch(ctx, workflow, stage, previousStageResults, logs)
@@ -1756,6 +1796,9 @@ func (o *Orchestrator) handleEmbeddingsVectorize(
 
 	logs = append(logs, fmt.Sprintf("Successfully uploaded embeddings file (%d bytes) to %s",
 		metadata.SizeBytes, *stage.EmbeddingsOutputPath))
+
+	// Track vectorization usage for billing (number of input documents vectorized)
+	o.trackVectorization(workflow.WorkspaceID, int64(len(previousStageResults)))
 
 	// Invalidate HTTP and DB object caches so the new file appears in listings
 	if o.cacheStorage != nil {

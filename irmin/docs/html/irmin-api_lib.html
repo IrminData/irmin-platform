@@ -46,9 +46,9 @@ var (
 	// ErrObjectSchemaCacheNotFound is returned when an object schema cache entry is not found.
 	ErrObjectSchemaCacheNotFound = errors.New("object schema cache not found")
 )
-var ErrUsageLimitExceeded = errors.New("workflow run usage limit exceeded")
-    ErrUsageLimitExceeded is returned when the workspace has exceeded its
-    workflow run limit.
+var ErrUsageLimitExceeded = errors.New("usage limit exceeded")
+    ErrUsageLimitExceeded is returned when the workspace has exceeded a usage
+    limit (workflow runs, compute invocations, etc).
 
 var ErrWorkflowMinIntervalNotMet = errors.New("workflow min interval not met")
     ErrWorkflowMinIntervalNotMet is returned when not enough time has passed

@@ -177,6 +177,22 @@ type Orchestrator struct {
 	// OnDataTransfer is an optional callback invoked when connector operations transfer bytes.
 	// Used for billing data transfer usage tracking without coupling the orchestrator to the billing service.
 	OnDataTransfer func(workspaceID uint, bytes int64)
+
+	// OnComputeInvocation is an optional callback invoked when a compute sandbox execution completes.
+	// Used for billing compute invocation usage tracking.
+	OnComputeInvocation func(workspaceID uint)
+
+	// CheckComputeInvocationUsage is an optional callback to check if a workspace can run a compute invocation.
+	// Returns true if allowed. Used for billing limit enforcement.
+	CheckComputeInvocationUsage func(workspaceID uint) (bool, error)
+
+	// OnVectorization is an optional callback invoked when documents are vectorized.
+	// Used for billing vectorization usage tracking.
+	OnVectorization func(workspaceID uint, documentCount int64)
+
+	// CheckVectorizationUsage is an optional callback to check if a workspace can vectorize documents.
+	// Returns true if allowed. Used for billing limit enforcement.
+	CheckVectorizationUsage func(workspaceID uint, documentCount int64) (bool, error)
 	// Has unexported fields.
 }
 

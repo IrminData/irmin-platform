@@ -56,6 +56,22 @@ type Orchestrator struct {
 	// OnDataTransfer is an optional callback invoked when connector operations transfer bytes.
 	// Used for billing data transfer usage tracking without coupling the orchestrator to the billing service.
 	OnDataTransfer func(workspaceID uint, bytes int64)
+
+	// OnComputeInvocation is an optional callback invoked when a compute sandbox execution completes.
+	// Used for billing compute invocation usage tracking.
+	OnComputeInvocation func(workspaceID uint)
+
+	// CheckComputeInvocationUsage is an optional callback to check if a workspace can run a compute invocation.
+	// Returns true if allowed. Used for billing limit enforcement.
+	CheckComputeInvocationUsage func(workspaceID uint) (bool, error)
+
+	// OnVectorization is an optional callback invoked when documents are vectorized.
+	// Used for billing vectorization usage tracking.
+	OnVectorization func(workspaceID uint, documentCount int64)
+
+	// CheckVectorizationUsage is an optional callback to check if a workspace can vectorize documents.
+	// Returns true if allowed. Used for billing limit enforcement.
+	CheckVectorizationUsage func(workspaceID uint, documentCount int64) (bool, error)
 }
 
 func NewOrchestrator(
@@ -85,6 +101,8 @@ func NewOrchestrator(
 }
 
 // usageCheckFunc returns a UsageCheckFunc from the orchestrator's callback, or nil if not set.
+// Only checks workflow run limits; compute invocation limits are enforced at execution time
+// to avoid blocking query-only, import, export, and connection workflows that don't use compute.
 func (o *Orchestrator) usageCheckFunc() lib.UsageCheckFunc {
 	if o.CheckWorkflowRunUsage == nil {
 		return nil
@@ -98,6 +116,39 @@ func (o *Orchestrator) trackDataTransfer(workspaceID uint, bytes int64) {
 		return
 	}
 	o.OnDataTransfer(workspaceID, bytes)
+}
+
+// trackComputeInvocation reports a compute sandbox invocation to the billing usage tracker, if configured.
+func (o *Orchestrator) trackComputeInvocation(workspaceID uint) {
+	if o == nil || o.OnComputeInvocation == nil {
+		return
+	}
+	o.OnComputeInvocation(workspaceID)
+}
+
+// trackVectorization reports document vectorization to the billing usage tracker, if configured.
+func (o *Orchestrator) trackVectorization(workspaceID uint, documentCount int64) {
+	if o == nil || o.OnVectorization == nil || documentCount <= 0 {
+		return
+	}
+	o.OnVectorization(workspaceID, documentCount)
+}
+
+// checkComputeInvocationLimit returns an error if the workspace has exceeded its compute invocation limit.
+// Returns nil if no limit check is configured or if the workspace is within limits.
+func (o *Orchestrator) checkComputeInvocationLimit(workspaceID uint) error {
+	if o.CheckComputeInvocationUsage == nil {
+		return nil
+	}
+	allowed, err := o.CheckComputeInvocationUsage(workspaceID)
+	if err != nil {
+		o.logger.Error("Error checking compute invocation usage limit", "error", err)
+		return nil
+	}
+	if !allowed {
+		return lib.ErrUsageLimitExceeded
+	}
+	return nil
 }
 
 func (o *Orchestrator) isWorkflowPausedError(err error) bool {

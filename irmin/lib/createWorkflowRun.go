@@ -17,8 +17,8 @@ var ErrWorkflowMinIntervalNotMet = errors.New("workflow min interval not met")
 // ErrWorkflowPaused is returned when the workflow is paused.
 var ErrWorkflowPaused = errors.New("workflow is paused")
 
-// ErrUsageLimitExceeded is returned when the workspace has exceeded its workflow run limit.
-var ErrUsageLimitExceeded = errors.New("workflow run usage limit exceeded")
+// ErrUsageLimitExceeded is returned when the workspace has exceeded a usage limit (workflow runs, compute invocations, etc).
+var ErrUsageLimitExceeded = errors.New("usage limit exceeded")
 
 // UsageCheckFunc checks if a workflow run is allowed for the given workspace.
 // Returns true if allowed, false if the limit is exceeded.

@@ -20558,7 +20558,9 @@ const docTemplate = `{
                 "ai_requests",
                 "api_requests",
                 "data_transfer",
-                "seats"
+                "seats",
+                "compute_invocations",
+                "vectorizations"
             ],
             "x-enum-varnames": [
                 "UsageDimensionStorage",
@@ -20566,7 +20568,9 @@ const docTemplate = `{
                 "UsageDimensionAIRequests",
                 "UsageDimensionAPIRequests",
                 "UsageDimensionDataTransfer",
-                "UsageDimensionSeats"
+                "UsageDimensionSeats",
+                "UsageDimensionComputeInvocations",
+                "UsageDimensionVectorizations"
             ]
         },
         "irminmodels.UsageDimensionInfo": {

@@ -30,20 +30,22 @@ Console (Next.js)  ──►  Core API (Go/Fiber)  ──►  Polar.sh API
 
 There is a **single usage-based plan** — no tiers. Every workspace starts free with usage-based limits. Adding a payment method (via Polar checkout) unlocks unlimited usage with pay-as-you-go billing.
 
-### 6 Meters
+### 8 Meters
 
-| Meter         | Rate         | Unit     | Free Limit     |
-| ------------- | ------------ | -------- | -------------- |
-| Storage       | 0.02 €/GB    | GB       | 5 GB           |
-| Workflow Runs | 0.01 €/run   | runs     | 200 runs       |
-| AI Requests   | 0.05 €/req   | requests | 40 requests    |
-| API Requests  | 0.0005 €/req | requests | 4,000 requests |
-| Data Transfer | 0.05 €/GB    | GB       | 40 GB          |
-| Seats         | 5 €/seat     | seats    | 0 extra seats  |
+| Meter                 | Rate              | Unit        | Free Limit          |
+| --------------------- | ----------------- | ----------- | ------------------- |
+| Storage               | 0.02 €/GB         | GB          | 5 GB                |
+| Workflow Runs         | 0.01 €/run        | runs        | 200 runs            |
+| AI Requests           | 0.05 €/req        | requests    | 40 requests         |
+| API Requests          | 0.0005 €/req      | requests    | 4,000 requests      |
+| Data Transfer         | 0.05 €/GB         | GB          | 40 GB               |
+| Seats                 | 5 €/seat          | seats       | 0 extra seats       |
+| Compute Invocations   | 0.01 €/invocation | invocations | 100 invocations     |
+| Vectorizations        | 0.001 €/document  | documents   | 1,000 documents     |
 
 ### Free Credit
 
-Each meter gets **2€ free credit per month** (12€ total) for display purposes. However, free tier hard limits are set explicitly per dimension (not derived from credit/rate) — see `db/billing.go` constants.
+Each meter gets **2€ free credit per month** (16€ total) for display purposes. However, free tier hard limits are set explicitly per dimension (not derived from credit/rate) — see `db/billing.go` constants.
 
 ### Hard Limits
 
@@ -53,14 +55,16 @@ Limits are defined in `db.GetFreeTierHardLimits()` — explicit per-dimension co
 
 #### Enforcement by Dimension
 
-| Dimension     | Enforcement           | Location                         | Notes                                                                                                                                                            |
-| ------------- | --------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Workflow Runs | Hard limit            | `lib.CreateWorkflowRun()`        | Covers all 7 creation paths (manual API, time triggers, repo events, connection events, workflow run events, pipeline stages, MCP) via `UsageCheckFunc` callback |
-| Seats         | Hard limit            | Invite flow (`CheckSeatLimit()`) | Checked when inviting new members                                                                                                                                |
-| Storage       | No hard limit         | —                                | Includes metadata, LakeFS data, workflow-generated data — not just user uploads                                                                                  |
-| API Requests  | No hard limit         | —                                | Adding a DB query per request is too expensive                                                                                                                   |
-| Data Transfer | No hard limit         | —                                | Same concern as API requests                                                                                                                                     |
-| AI Requests   | Tracked by `irmin-ai` | AI service                       | Out of scope for core API                                                                                                                                        |
+| Dimension             | Enforcement           | Location                                              | Notes                                                                                                                                                            |
+| --------------------- | --------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Workflow Runs         | Hard limit            | `lib.CreateWorkflowRun()`                             | Covers all 7 creation paths (manual API, time triggers, repo events, connection events, workflow run events, pipeline stages, MCP) via `UsageCheckFunc` callback |
+| Seats                 | Hard limit            | Invite flow (`CheckSeatLimit()`)                      | Checked when inviting new members                                                                                                                                |
+| Compute Invocations   | Hard limit            | Orchestrator + `UsageLimitMiddleware` on script route | Checked before each sandbox `ExecutedStoredScript` call in action/pipeline stages and on the manual script execute API endpoint                                  |
+| Vectorizations        | Hard limit            | Orchestrator pipeline vectorize stage                 | Checked before `handleEmbeddingsVectorize` in pipeline stages                                                                                                    |
+| Storage               | No hard limit         | —                                                     | Includes metadata, LakeFS data, workflow-generated data — not just user uploads                                                                                  |
+| API Requests          | No hard limit         | —                                                     | Adding a DB query per request is too expensive                                                                                                                   |
+| Data Transfer         | No hard limit         | —                                                     | Same concern as API requests                                                                                                                                     |
+| AI Requests           | Tracked by `irmin-ai` | AI service                                            | Out of scope for core API                                                                                                                                        |
 
 ### Seats
 
@@ -94,7 +98,7 @@ Before the billing integration will work, complete these manual steps in the [Po
 
 1. [ ] Create 1 product with usage-based pricing — see §1
 2. [ ] Configure a webhook pointing to your API with 4 event types — see §2
-3. [ ] Create 6 usage meters (storage, workflow_runs, ai_requests, api_requests, data_transfer, seats) — see §3
+3. [ ] Create 8 usage meters (storage, workflow_runs, ai_requests, api_requests, data_transfer, seats, compute_invocations, vectorizations) — see §3
 4. [ ] Set per-meter pricing on the product — see §4
 5. [ ] Add included usage as benefits on the product — see §5
 6. [ ] Generate an API key — see §6
@@ -129,14 +133,16 @@ The webhook uses [Standard Webhooks](https://www.standardwebhooks.com/) for sign
 
 In Polar dashboard under Products > Meters, create one meter per usage dimension:
 
-| Meter Name    | Filter: Name equals | Aggregation | Property            |
-| ------------- | ------------------- | ----------- | ------------------- |
-| Storage       | `storage`           | Sum         | `metadata.quantity` |
-| Workflow Runs | `workflow_runs`     | Sum         | `metadata.quantity` |
-| AI Requests   | `ai_requests`       | Sum         | `metadata.quantity` |
-| API Requests  | `api_requests`      | Sum         | `metadata.quantity` |
-| Data Transfer | `data_transfer`     | Sum         | `metadata.quantity` |
-| Seats         | `seats`             | Maximum     | `metadata.quantity` |
+| Meter Name            | Filter: Name equals    | Aggregation | Property            |
+| --------------------- | ---------------------- | ----------- | ------------------- |
+| Storage               | `storage`              | Sum         | `metadata.quantity` |
+| Workflow Runs         | `workflow_runs`        | Sum         | `metadata.quantity` |
+| AI Requests           | `ai_requests`          | Sum         | `metadata.quantity` |
+| API Requests          | `api_requests`         | Sum         | `metadata.quantity` |
+| Data Transfer         | `data_transfer`        | Sum         | `metadata.quantity` |
+| Seats                 | `seats`                | Maximum     | `metadata.quantity` |
+| Compute Invocations   | `compute_invocations`  | Sum         | `metadata.quantity` |
+| Vectorizations        | `vectorizations`       | Sum         | `metadata.quantity` |
 
 Use **Sum** for event-based meters and **Maximum** for the seats gauge meter (bills on peak seat count in the period).
 
@@ -144,14 +150,16 @@ Use **Sum** for event-based meters and **Maximum** for the seats gauge meter (bi
 
 On the product, add a **metered price** for each meter:
 
-| Meter         | Amount per unit (EUR) | Unit    | Rate               |
-| ------------- | --------------------- | ------- | ------------------ |
-| Storage       | 0.02                  | GB      | 0.02 €/GB          |
-| Workflow Runs | 0.01                  | run     | 0.01 €/run         |
-| AI Requests   | 0.05                  | request | 0.05 €/request     |
-| API Requests  | 0.0005                | request | 0.50 €/1K requests |
-| Data Transfer | 0.05                  | GB      | 0.05 €/GB          |
-| Seats         | 5.00                  | seat    | 5.00 €/seat        |
+| Meter                 | Amount per unit (EUR) | Unit       | Rate               |
+| --------------------- | --------------------- | ---------- | ------------------ |
+| Storage               | 0.02                  | GB         | 0.02 €/GB          |
+| Workflow Runs         | 0.01                  | run        | 0.01 €/run         |
+| AI Requests           | 0.05                  | request    | 0.05 €/request     |
+| API Requests          | 0.0005                | request    | 0.50 €/1K requests |
+| Data Transfer         | 0.05                  | GB         | 0.05 €/GB          |
+| Seats                 | 5.00                  | seat       | 5.00 €/seat        |
+| Compute Invocations   | 0.01                  | invocation | 0.01 €/invocation  |
+| Vectorizations        | 0.001                 | document   | 0.001 €/document   |
 
 These match the rate constants in `db/billing.go`. Storage and data transfer use GB as the billing unit — the API converts internal byte values to GB when reporting to Polar.
 
@@ -159,14 +167,16 @@ These match the rate constants in `db/billing.go`. Storage and data transfer use
 
 On the product, add a **benefit** for each meter to grant subscribers free included usage. Polar deducts these included units before billing overage, so subscribers only pay for usage above these thresholds.
 
-| Meter         | Included units | Human-readable        |
-| ------------- | -------------- | --------------------- |
-| Storage       | 5              | 5 GB                  |
-| Workflow Runs | 200            | 200 runs              |
-| AI Requests   | 40             | 40 requests           |
-| API Requests  | 4,000          | 4,000 requests        |
-| Data Transfer | 40             | 40 GB                 |
-| Seats         | 0              | 0 (first member free) |
+| Meter                 | Included units | Human-readable          |
+| --------------------- | -------------- | ----------------------- |
+| Storage               | 5              | 5 GB                    |
+| Workflow Runs         | 200            | 200 runs                |
+| AI Requests           | 40             | 40 requests             |
+| API Requests          | 4,000          | 4,000 requests          |
+| Data Transfer         | 40             | 40 GB                   |
+| Seats                 | 0              | 0 (first member free)   |
+| Compute Invocations   | 100            | 100 invocations         |
+| Vectorizations        | 1,000          | 1,000 documents         |
 
 These match the free tier hard limit constants in `db/billing.go`. The included usage ensures subscribers get the same free allowance — they are only billed for usage above these amounts.
 
@@ -206,26 +216,30 @@ All endpoints require workspace-level authentication and the `billing:read` or `
 
 Usage dimensions are defined in `irmin-sdk-go/models/billing.go` and re-exported in `db/billing.go`.
 
-| Dimension       | Constant                     | Internal unit | Polar/display unit      | Description             |
-| --------------- | ---------------------------- | ------------- | ----------------------- | ----------------------- |
-| `storage`       | `UsageDimensionStorage`      | bytes         | GB                      | Object storage consumed |
-| `workflow_runs` | `UsageDimensionWorkflowRuns` | runs          | runs                    | Workflow executions     |
-| `ai_requests`   | `UsageDimensionAIRequests`   | requests      | requests                | AI/LLM API calls        |
-| `api_requests`  | `UsageDimensionAPIRequests`  | requests      | requests                | Core API calls          |
-| `data_transfer` | `UsageDimensionDataTransfer` | bytes         | GB                      | Data egress             |
-| `seats`         | `UsageDimensionSeats`        | seats         | Extra workspace members |                         |
+| Dimension              | Constant                              | Internal unit | Polar/display unit      | Description                        |
+| ---------------------- | ------------------------------------- | ------------- | ----------------------- | ---------------------------------- |
+| `storage`              | `UsageDimensionStorage`               | bytes         | GB                      | Object storage consumed            |
+| `workflow_runs`        | `UsageDimensionWorkflowRuns`          | runs          | runs                    | Workflow executions                |
+| `ai_requests`          | `UsageDimensionAIRequests`            | requests      | requests                | AI/LLM API calls                   |
+| `api_requests`         | `UsageDimensionAPIRequests`           | requests      | requests                | Core API calls                     |
+| `data_transfer`        | `UsageDimensionDataTransfer`          | bytes         | GB                      | Data egress                        |
+| `seats`                | `UsageDimensionSeats`                 | seats         | seats                   | Extra workspace members            |
+| `compute_invocations`  | `UsageDimensionComputeInvocations`    | invocations   | invocations             | Sandbox code executions            |
+| `vectorizations`       | `UsageDimensionVectorizations`        | documents     | documents               | Document embedding/vectorization   |
 
 ### Pricing Constants
 
 Rate constants are defined in `db/billing.go`:
 
 ```go
-RateStoragePerGB      = 0.02   // 0.02 € / GB
-RateWorkflowRuns      = 0.01   // 0.01 € / run
-RateAIRequests        = 0.05   // 0.05 € / request
-RateAPIRequests       = 0.0005 // 0.50 € / 1K = 0.0005 € / request
-RateDataTransferPerGB = 0.05   // 0.05 € / GB
-SeatRate              = 5.0    // 5.00 € / seat
+RateStoragePerGB       = 0.02   // 0.02 € / GB
+RateWorkflowRuns       = 0.01   // 0.01 € / run
+RateAIRequests         = 0.05   // 0.05 € / request
+RateAPIRequests        = 0.0005 // 0.50 € / 1K = 0.0005 € / request
+RateDataTransferPerGB  = 0.05   // 0.05 € / GB
+SeatRate               = 5.0    // 5.00 € / seat
+RateComputeInvocations = 0.01   // 0.01 € / invocation
+RateVectorizations     = 0.001  // 0.001 € / document vectorized
 ```
 
 ### How It Works

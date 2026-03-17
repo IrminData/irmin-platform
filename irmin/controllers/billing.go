@@ -434,6 +434,8 @@ func getOrderedDimensions() []dimensionConfig {
 		{Dimension: db.UsageDimensionAPIRequests, Unit: "requests", RatePerUnit: db.RateAPIRequests},
 		{Dimension: db.UsageDimensionDataTransfer, Unit: "GB", RatePerUnit: db.RateDataTransferPerGB},
 		{Dimension: db.UsageDimensionSeats, Unit: "seats", RatePerUnit: db.SeatRate},
+		{Dimension: db.UsageDimensionComputeInvocations, Unit: "invocations", RatePerUnit: db.RateComputeInvocations},
+		{Dimension: db.UsageDimensionVectorizations, Unit: "documents", RatePerUnit: db.RateVectorizations},
 	}
 }
 

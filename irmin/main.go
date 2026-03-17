@@ -343,6 +343,38 @@ func setupServices(
 	return orchestrator, sqidManager, localeManager, permissionService, dataEngine, nil
 }
 
+// wireBillingCallbacks connects the orchestrator to the billing system for usage tracking and limit enforcement.
+func wireBillingCallbacks(o *orchestrator.Orchestrator, apiServices *services.APIServices) {
+	if apiServices.UsageTracker != nil {
+		tracker := apiServices.UsageTracker
+		o.OnWorkflowRunComplete = func(workspaceID uint) {
+			tracker.Track(workspaceID, db.UsageDimensionWorkflowRuns, 1)
+		}
+		o.OnDataTransfer = func(workspaceID uint, bytes int64) {
+			tracker.Track(workspaceID, db.UsageDimensionDataTransfer, bytes)
+		}
+		o.OnComputeInvocation = func(workspaceID uint) {
+			tracker.Track(workspaceID, db.UsageDimensionComputeInvocations, 1)
+		}
+		o.OnVectorization = func(workspaceID uint, documentCount int64) {
+			tracker.Track(workspaceID, db.UsageDimensionVectorizations, documentCount)
+		}
+	}
+
+	if apiServices.BillingService != nil {
+		bs := apiServices.BillingService
+		o.CheckWorkflowRunUsage = func(workspaceID uint) (bool, error) {
+			return bs.CheckUsageLimit(workspaceID, db.UsageDimensionWorkflowRuns, 1)
+		}
+		o.CheckComputeInvocationUsage = func(workspaceID uint) (bool, error) {
+			return bs.CheckUsageLimit(workspaceID, db.UsageDimensionComputeInvocations, 1)
+		}
+		o.CheckVectorizationUsage = func(workspaceID uint, docCount int64) (bool, error) {
+			return bs.CheckUsageLimit(workspaceID, db.UsageDimensionVectorizations, docCount)
+		}
+	}
+}
+
 // startServer starts the Fiber server in a goroutine.
 func startServer(app *fiber.App, env *utils.CoreAPIEnv) {
 	go func() {
@@ -400,24 +432,8 @@ func main() {
 		dataEngine.LakeFSClient,
 	)
 
-	// Wire orchestrator workflow run completion callback for billing usage tracking
-	if apiServices.UsageTracker != nil {
-		tracker := apiServices.UsageTracker
-		orchestrator.OnWorkflowRunComplete = func(workspaceID uint) {
-			tracker.Track(workspaceID, db.UsageDimensionWorkflowRuns, 1)
-		}
-		orchestrator.OnDataTransfer = func(workspaceID uint, bytes int64) {
-			tracker.Track(workspaceID, db.UsageDimensionDataTransfer, bytes)
-		}
-	}
-
-	// Wire orchestrator workflow run usage limit check for billing enforcement
-	if apiServices.BillingService != nil {
-		bs := apiServices.BillingService
-		orchestrator.CheckWorkflowRunUsage = func(workspaceID uint) (bool, error) {
-			return bs.CheckUsageLimit(workspaceID, db.UsageDimensionWorkflowRuns, 1)
-		}
-	}
+	// Wire orchestrator billing callbacks (usage tracking + limit enforcement)
+	wireBillingCallbacks(orchestrator, apiServices)
 
 	// Start usage tracker if billing is enabled
 	if apiServices.UsageTracker != nil {

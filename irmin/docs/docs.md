@@ -3229,12 +3229,14 @@ const (
 
 ```go
 const (
-    UsageDimensionStorage      = irminmodels.UsageDimensionStorage
-    UsageDimensionWorkflowRuns = irminmodels.UsageDimensionWorkflowRuns
-    UsageDimensionAIRequests   = irminmodels.UsageDimensionAIRequests
-    UsageDimensionAPIRequests  = irminmodels.UsageDimensionAPIRequests
-    UsageDimensionDataTransfer = irminmodels.UsageDimensionDataTransfer
-    UsageDimensionSeats        = irminmodels.UsageDimensionSeats
+    UsageDimensionStorage            = irminmodels.UsageDimensionStorage
+    UsageDimensionWorkflowRuns       = irminmodels.UsageDimensionWorkflowRuns
+    UsageDimensionAIRequests         = irminmodels.UsageDimensionAIRequests
+    UsageDimensionAPIRequests        = irminmodels.UsageDimensionAPIRequests
+    UsageDimensionDataTransfer       = irminmodels.UsageDimensionDataTransfer
+    UsageDimensionSeats              = irminmodels.UsageDimensionSeats
+    UsageDimensionComputeInvocations = irminmodels.UsageDimensionComputeInvocations
+    UsageDimensionVectorizations     = irminmodels.UsageDimensionVectorizations
 )
 ```
 
@@ -3245,9 +3247,9 @@ const (
     // CreditPerMeter is the free credit in EUR per meter per month.
     CreditPerMeter = 2.0
     // MeterCount is the total number of usage meters.
-    MeterCount = 6
+    MeterCount = 8
     // TotalFreeCredit is the total free credit in EUR per month (CreditPerMeter * MeterCount).
-    TotalFreeCredit = 12.0
+    TotalFreeCredit = 16.0
     // SeatRate is the cost in EUR per extra seat per month.
     SeatRate = 5.0
 )
@@ -3257,11 +3259,13 @@ const (
 
 ```go
 const (
-    RateStoragePerGB      = 0.02   // 0.02 € / GB
-    RateWorkflowRuns      = 0.01   // 0.01 € / run
-    RateAIRequests        = 0.05   // 0.05 € / request
-    RateAPIRequests       = 0.0005 // 0.50 € / 1K = 0.0005 € / request
-    RateDataTransferPerGB = 0.05   // 0.05 € / GB
+    RateStoragePerGB       = 0.02   // 0.02 € / GB
+    RateWorkflowRuns       = 0.01   // 0.01 € / run
+    RateAIRequests         = 0.05   // 0.05 € / request
+    RateAPIRequests        = 0.0005 // 0.50 € / 1K = 0.0005 € / request
+    RateDataTransferPerGB  = 0.05   // 0.05 € / GB
+    RateComputeInvocations = 0.01   // 0.01 € / invocation
+    RateVectorizations     = 0.001  // 0.001 € / document vectorized
 )
 ```
 
@@ -3269,14 +3273,16 @@ const (
 
 ```go
 const (
-    FreeStorageBytes      = 5 * 1_000_000_000  // 5 GB in bytes
-    FreeStorageGB         = 5                  // 5 GB (for Polar benefits / display)
-    FreeWorkflowRuns      = 200                // 200 runs
-    FreeAIRequests        = 40                 // 40 requests
-    FreeAPIRequests       = 4000               // 4,000 requests
-    FreeDataTransferBytes = 40 * 1_000_000_000 // 40 GB in bytes
-    FreeDataTransferGB    = 40                 // 40 GB (for Polar benefits / display)
-    FreeExtraSeats        = 0                  // 0 extra seats (1 member free)
+    FreeStorageBytes       = 5 * 1_000_000_000  // 5 GB in bytes
+    FreeStorageGB          = 5                  // 5 GB (for Polar benefits / display)
+    FreeWorkflowRuns       = 200                // 200 runs
+    FreeAIRequests         = 40                 // 40 requests
+    FreeAPIRequests        = 4000               // 4,000 requests
+    FreeDataTransferBytes  = 40 * 1_000_000_000 // 40 GB in bytes
+    FreeDataTransferGB     = 40                 // 40 GB (for Polar benefits / display)
+    FreeExtraSeats         = 0                  // 0 extra seats (1 member free)
+    FreeComputeInvocations = 100                // 100 invocations
+    FreeVectorizations     = 1000               // 1000 documents
 )
 ```
 
@@ -11857,10 +11863,10 @@ var (
 )
 ```
 
-<a name="ErrUsageLimitExceeded"></a>ErrUsageLimitExceeded is returned when the workspace has exceeded its workflow run limit.
+<a name="ErrUsageLimitExceeded"></a>ErrUsageLimitExceeded is returned when the workspace has exceeded a usage limit \(workflow runs, compute invocations, etc\).
 
 ```go
-var ErrUsageLimitExceeded = errors.New("workflow run usage limit exceeded")
+var ErrUsageLimitExceeded = errors.New("usage limit exceeded")
 ```
 
 <a name="ErrWorkflowMinIntervalNotMet"></a>ErrWorkflowMinIntervalNotMet is returned when not enough time has passed since the last workflow run
@@ -13434,6 +13440,22 @@ type Orchestrator struct {
     // OnDataTransfer is an optional callback invoked when connector operations transfer bytes.
     // Used for billing data transfer usage tracking without coupling the orchestrator to the billing service.
     OnDataTransfer func(workspaceID uint, bytes int64)
+
+    // OnComputeInvocation is an optional callback invoked when a compute sandbox execution completes.
+    // Used for billing compute invocation usage tracking.
+    OnComputeInvocation func(workspaceID uint)
+
+    // CheckComputeInvocationUsage is an optional callback to check if a workspace can run a compute invocation.
+    // Returns true if allowed. Used for billing limit enforcement.
+    CheckComputeInvocationUsage func(workspaceID uint) (bool, error)
+
+    // OnVectorization is an optional callback invoked when documents are vectorized.
+    // Used for billing vectorization usage tracking.
+    OnVectorization func(workspaceID uint, documentCount int64)
+
+    // CheckVectorizationUsage is an optional callback to check if a workspace can vectorize documents.
+    // Returns true if allowed. Used for billing limit enforcement.
+    CheckVectorizationUsage func(workspaceID uint, documentCount int64) (bool, error)
     // contains filtered or unexported fields
 }
 ```

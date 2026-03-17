@@ -28,12 +28,14 @@ const (
 
 // Usage dimension constants re-exported from SDK for convenience.
 const (
-	UsageDimensionStorage      = irminmodels.UsageDimensionStorage
-	UsageDimensionWorkflowRuns = irminmodels.UsageDimensionWorkflowRuns
-	UsageDimensionAIRequests   = irminmodels.UsageDimensionAIRequests
-	UsageDimensionAPIRequests  = irminmodels.UsageDimensionAPIRequests
-	UsageDimensionDataTransfer = irminmodels.UsageDimensionDataTransfer
-	UsageDimensionSeats        = irminmodels.UsageDimensionSeats
+	UsageDimensionStorage            = irminmodels.UsageDimensionStorage
+	UsageDimensionWorkflowRuns       = irminmodels.UsageDimensionWorkflowRuns
+	UsageDimensionAIRequests         = irminmodels.UsageDimensionAIRequests
+	UsageDimensionAPIRequests        = irminmodels.UsageDimensionAPIRequests
+	UsageDimensionDataTransfer       = irminmodels.UsageDimensionDataTransfer
+	UsageDimensionSeats              = irminmodels.UsageDimensionSeats
+	UsageDimensionComputeInvocations = irminmodels.UsageDimensionComputeInvocations
+	UsageDimensionVectorizations     = irminmodels.UsageDimensionVectorizations
 )
 
 // Usage-based billing constants.
@@ -41,9 +43,9 @@ const (
 	// CreditPerMeter is the free credit in EUR per meter per month.
 	CreditPerMeter = 2.0
 	// MeterCount is the total number of usage meters.
-	MeterCount = 6
+	MeterCount = 8
 	// TotalFreeCredit is the total free credit in EUR per month (CreditPerMeter * MeterCount).
-	TotalFreeCredit = 12.0
+	TotalFreeCredit = 16.0
 	// SeatRate is the cost in EUR per extra seat per month.
 	SeatRate = 5.0
 )
@@ -52,24 +54,28 @@ const (
 // Storage and data transfer rates are per GB. Internal tracking uses bytes
 // but values are converted to GB when reported to Polar and displayed in the UI.
 const (
-	RateStoragePerGB      = 0.02   // 0.02 € / GB
-	RateWorkflowRuns      = 0.01   // 0.01 € / run
-	RateAIRequests        = 0.05   // 0.05 € / request
-	RateAPIRequests       = 0.0005 // 0.50 € / 1K = 0.0005 € / request
-	RateDataTransferPerGB = 0.05   // 0.05 € / GB
+	RateStoragePerGB       = 0.02   // 0.02 € / GB
+	RateWorkflowRuns       = 0.01   // 0.01 € / run
+	RateAIRequests         = 0.05   // 0.05 € / request
+	RateAPIRequests        = 0.0005 // 0.50 € / 1K = 0.0005 € / request
+	RateDataTransferPerGB  = 0.05   // 0.05 € / GB
+	RateComputeInvocations = 0.01   // 0.01 € / invocation
+	RateVectorizations     = 0.001  // 0.001 € / document vectorized
 )
 
 // Free tier hard limit constants for users without a payment method.
 // Storage and data transfer limits are in bytes (used for internal enforcement).
 const (
-	FreeStorageBytes      = 5 * 1_000_000_000  // 5 GB in bytes
-	FreeStorageGB         = 5                  // 5 GB (for Polar benefits / display)
-	FreeWorkflowRuns      = 200                // 200 runs
-	FreeAIRequests        = 40                 // 40 requests
-	FreeAPIRequests       = 4000               // 4,000 requests
-	FreeDataTransferBytes = 40 * 1_000_000_000 // 40 GB in bytes
-	FreeDataTransferGB    = 40                 // 40 GB (for Polar benefits / display)
-	FreeExtraSeats        = 0                  // 0 extra seats (1 member free)
+	FreeStorageBytes       = 5 * 1_000_000_000  // 5 GB in bytes
+	FreeStorageGB          = 5                  // 5 GB (for Polar benefits / display)
+	FreeWorkflowRuns       = 200                // 200 runs
+	FreeAIRequests         = 40                 // 40 requests
+	FreeAPIRequests        = 4000               // 4,000 requests
+	FreeDataTransferBytes  = 40 * 1_000_000_000 // 40 GB in bytes
+	FreeDataTransferGB     = 40                 // 40 GB (for Polar benefits / display)
+	FreeExtraSeats         = 0                  // 0 extra seats (1 member free)
+	FreeComputeInvocations = 100                // 100 invocations
+	FreeVectorizations     = 1000               // 1000 documents
 )
 
 // BytesPerGB is the number of bytes in a gigabyte (decimal, matching storage industry convention).
@@ -85,12 +91,14 @@ func IsByteDimension(dim UsageDimension) bool {
 // Storage and data transfer limits are in bytes for precise internal enforcement.
 func GetFreeTierHardLimits() map[UsageDimension]int64 {
 	return map[UsageDimension]int64{
-		UsageDimensionStorage:      FreeStorageBytes,
-		UsageDimensionWorkflowRuns: FreeWorkflowRuns,
-		UsageDimensionAIRequests:   FreeAIRequests,
-		UsageDimensionAPIRequests:  FreeAPIRequests,
-		UsageDimensionDataTransfer: FreeDataTransferBytes,
-		UsageDimensionSeats:        FreeExtraSeats,
+		UsageDimensionStorage:            FreeStorageBytes,
+		UsageDimensionWorkflowRuns:       FreeWorkflowRuns,
+		UsageDimensionAIRequests:         FreeAIRequests,
+		UsageDimensionAPIRequests:        FreeAPIRequests,
+		UsageDimensionDataTransfer:       FreeDataTransferBytes,
+		UsageDimensionSeats:              FreeExtraSeats,
+		UsageDimensionComputeInvocations: FreeComputeInvocations,
+		UsageDimensionVectorizations:     FreeVectorizations,
 	}
 }
 
@@ -98,12 +106,14 @@ func GetFreeTierHardLimits() map[UsageDimension]int64 {
 // Used for API responses and Polar benefits configuration.
 func GetFreeTierDisplayLimits() map[UsageDimension]int64 {
 	return map[UsageDimension]int64{
-		UsageDimensionStorage:      FreeStorageGB,
-		UsageDimensionWorkflowRuns: FreeWorkflowRuns,
-		UsageDimensionAIRequests:   FreeAIRequests,
-		UsageDimensionAPIRequests:  FreeAPIRequests,
-		UsageDimensionDataTransfer: FreeDataTransferGB,
-		UsageDimensionSeats:        FreeExtraSeats,
+		UsageDimensionStorage:            FreeStorageGB,
+		UsageDimensionWorkflowRuns:       FreeWorkflowRuns,
+		UsageDimensionAIRequests:         FreeAIRequests,
+		UsageDimensionAPIRequests:        FreeAPIRequests,
+		UsageDimensionDataTransfer:       FreeDataTransferGB,
+		UsageDimensionSeats:              FreeExtraSeats,
+		UsageDimensionComputeInvocations: FreeComputeInvocations,
+		UsageDimensionVectorizations:     FreeVectorizations,
 	}
 }
 

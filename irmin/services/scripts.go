@@ -472,6 +472,12 @@ func (api *APIServices) ExecuteScript(
 		*user,
 		script,
 	)
+
+	// Track compute sandbox invocation for billing (regardless of success/failure)
+	if api.UsageTracker != nil {
+		api.UsageTracker.Track(workspace.ID, db.UsageDimensionComputeInvocations, 1)
+	}
+
 	if executeScriptErr != nil {
 		api.Logger.ErrorContext(c, "Error executing script in the compute sandbox", "error", executeScriptErr)
 		lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{

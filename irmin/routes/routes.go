@@ -329,6 +329,7 @@ func RegisterAPIRoutes(
 	script.Post(
 		"/execute",
 		apiMiddlewares.ScriptPermissionMiddleware(db.PolicyActionCreate),
+		apiMiddlewares.UsageLimitMiddleware(db.UsageDimensionComputeInvocations),
 		apiControllers.ExecuteScript,
 	)
 	script.Post(
