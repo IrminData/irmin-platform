@@ -1829,6 +1829,18 @@ const en = {
     directoryConnectionsEmpty: 'No connections defined.',
     referencedBy: 'Referenced by',
     unknownConnector: 'Unknown connector',
+    branches: 'Branches',
+    gitTags: 'Git tags',
+    defaultBranch: 'Default branch',
+    schemaObjects: 'Schema objects',
+    expandDetails: 'Show details',
+    collapseDetails: 'Hide details',
+    noBranches: 'No branches found.',
+    noGitTags: 'No git tags found.',
+    noObjects: 'No objects found.',
+    loadingDetails: 'Loading details...',
+    andMoreObjects: 'and {count} more...',
+    relatedWorkflows: 'Related workflows',
   },
 
   // === LIST COMPONENTS ===

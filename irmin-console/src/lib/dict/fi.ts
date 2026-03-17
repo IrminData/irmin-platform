@@ -1816,6 +1816,18 @@ const fi = {
     directoryConnectionsEmpty: 'Yhteyksiä ei ole määritetty.',
     referencedBy: 'Käytössä',
     unknownConnector: 'Tuntematon liitin',
+    branches: 'Haarat',
+    gitTags: 'Git-tagit',
+    defaultBranch: 'Oletushaara',
+    schemaObjects: 'Skeemaobjektit',
+    expandDetails: 'Näytä tiedot',
+    collapseDetails: 'Piilota tiedot',
+    noBranches: 'Haaroja ei löytynyt.',
+    noGitTags: 'Git-tageja ei löytynyt.',
+    noObjects: 'Objekteja ei löytynyt.',
+    loadingDetails: 'Ladataan tietoja...',
+    andMoreObjects: 'ja {count} lisää...',
+    relatedWorkflows: 'Liittyvät työnkulut',
   },
 
   // === LIST COMPONENTS ===

@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
+import Link from 'next/link';
 
 import { usePDF } from 'react-to-pdf';
 
@@ -40,52 +41,8 @@ import {
 import { useScripts } from '@/hooks/api/useScripts';
 
 import MDXViewer from './MDXViewer';
-
-function ownerSummary(owner?: {
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  company?: string;
-}) {
-  if (!owner) return null;
-  const name = [owner.first_name, owner.last_name].filter(Boolean).join(' ');
-  const company = owner.company ? ` (${owner.company})` : '';
-  return {
-    name: `${name}${company}`.trim(),
-    email: owner.email ?? '',
-  };
-}
-
-function renderTags(tags?: unknown[]) {
-  if (!Array.isArray(tags) || tags.length === 0) {
-    return null;
-  }
-
-  const tagLabels = tags
-    .map((tag) => {
-      if (typeof tag === 'string') return tag;
-      if (tag && typeof tag === 'object' && 'name' in tag) {
-        const value = (tag as { name?: string }).name;
-        return typeof value === 'string' ? value : null;
-      }
-      return null;
-    })
-    .filter((tag): tag is string => Boolean(tag));
-
-  if (tagLabels.length === 0) return null;
-
-  return (
-    <ul className='flex flex-wrap gap-2'>
-      {tagLabels.map((tag) => (
-        <li key={tag}>
-          <Badge variant='outline' className='text-xs'>
-            {tag}
-          </Badge>
-        </li>
-      ))}
-    </ul>
-  );
-}
+import RepositoryDocumentationCard from './RepositoryDocumentationCard';
+import { ownerSummary, renderTags } from './utils';
 
 function renderDocumentation(content: string | undefined, heading: string) {
   if (!content || content.length === 0) return null;
@@ -230,6 +187,26 @@ export default function DocumentationSection() {
     );
   }, [repositories]);
 
+  const repositoryWorkflows = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; type: string }[]>();
+    for (const workflow of workflows) {
+      if (
+        (workflow.type === 'import' || workflow.type === 'export') &&
+        workflow.workflowable?.repository
+      ) {
+        const slug = workflow.workflowable.repository;
+        const list = map.get(slug) ?? [];
+        list.push({
+          id: workflow.id.toString(),
+          name: workflow.name,
+          type: workflow.type,
+        });
+        map.set(slug, list);
+      }
+    }
+    return map;
+  }, [workflows]);
+
   const pdfHeaderRef = useRef<HTMLDivElement | null>(null);
   const pdfVariableOverrides = useMemo(
     () =>
@@ -269,16 +246,54 @@ export default function DocumentationSection() {
     const previousColor = container.style.color;
     container.style.backgroundColor = '#ffffff';
     container.style.color = '#111827';
+
+    // html2canvas 1.x cannot parse modern CSS color functions (lab, oklch,
+    // oklab, lch) emitted by Tailwind CSS 4. Monkey-patch getComputedStyle
+    // so that any value containing these functions is replaced with
+    // "transparent" before html2canvas's tokenizer sees it.
+    const nativeGetComputedStyle = window.getComputedStyle;
+    const unsupportedColorRe = /(?:ok)?(?:lab|lch)\([^)]*\)/gi;
+    const sanitize = (v: unknown) =>
+      typeof v === 'string' && unsupportedColorRe.test(v)
+        ? v.replace(unsupportedColorRe, 'transparent')
+        : v;
+    window.getComputedStyle = function (
+      elt: Element,
+      pseudoElt?: string | null
+    ) {
+      const cs = nativeGetComputedStyle.call(window, elt, pseudoElt);
+      return new Proxy(cs, {
+        get(target, prop) {
+          // CSSStyleDeclaration props must be read with the original object
+          // as `this`, otherwise browsers throw "Illegal invocation".
+          const raw = target[prop as keyof CSSStyleDeclaration];
+          if (typeof raw === 'function') {
+            return (...args: unknown[]) =>
+              sanitize(
+                (raw as (...a: unknown[]) => unknown).apply(target, args)
+              );
+          }
+          return sanitize(raw);
+        },
+      });
+    } as typeof window.getComputedStyle;
+
     try {
       await toPDF({
         overrides: {
           canvas: {
             backgroundColor: '#ffffff',
             logging: false,
+            onclone: (clonedDoc: Document) => {
+              clonedDoc
+                .querySelectorAll('[data-slot="collapsible"]')
+                .forEach((el) => el.remove());
+            },
           },
         },
       });
     } finally {
+      window.getComputedStyle = nativeGetComputedStyle;
       container.removeAttribute('data-pdf-export');
       previousVariables.forEach(([property, value]) => {
         if (value) {
@@ -636,73 +651,16 @@ export default function DocumentationSection() {
                     lg:grid-cols-2
                   `}
                 >
-                  {filteredRepositories.map((repository) => {
-                    const owner = ownerSummary(repository.owner);
-                    const repositoryTags = renderTags(repository.tags);
-                    const repositoryNotes = renderDocumentation(
-                      repository.documentation,
-                      dict.documentation.notesHeading
-                    );
-                    return (
-                      <Card key={`repository-${repository.id}`}>
-                        <CardHeader>
-                          <CardTitle>{repository.name}</CardTitle>
-                          {repository.description && (
-                            <CardDescription>
-                              {repository.description}
-                            </CardDescription>
-                          )}
-                        </CardHeader>
-                        <CardContent>
-                          <dl className='space-y-3 text-sm'>
-                            {owner && (
-                              <div className='flex flex-col gap-1'>
-                                <dt
-                                  className={`
-                                    flex items-center gap-2
-                                    text-muted-foreground
-                                  `}
-                                >
-                                  <BsPerson className='size-4' />
-                                  {dict.common.owner}
-                                </dt>
-                                <dd className='text-foreground'>
-                                  {owner.name}
-                                  {owner.email ? ` • ${owner.email}` : ''}
-                                </dd>
-                              </div>
-                            )}
-                            <div className='flex flex-col gap-1'>
-                              <dt className={`text-muted-foreground`}>
-                                {dict.documentation.visibilityLabel}
-                              </dt>
-                              <dd>
-                                <StatusBadge
-                                  status='private'
-                                  label={dict.documentation.visibilityPrivate}
-                                />
-                              </dd>
-                            </div>
-                            {repositoryTags && (
-                              <div className='flex flex-col gap-1'>
-                                <dt
-                                  className={`
-                                    flex items-center gap-2
-                                    text-muted-foreground
-                                  `}
-                                >
-                                  <BsTag className='size-4' />
-                                  {dict.repository.tags.tags}
-                                </dt>
-                                <dd>{repositoryTags}</dd>
-                              </div>
-                            )}
-                          </dl>
-                          {repositoryNotes}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                  {filteredRepositories.map((repository) => (
+                    <RepositoryDocumentationCard
+                      key={`repository-${repository.id}`}
+                      repository={repository}
+                      showNotes={true}
+                      relatedWorkflows={repositoryWorkflows.get(
+                        repository.slug
+                      )}
+                    />
+                  ))}
                 </div>
               )}
             </section>
@@ -753,7 +711,14 @@ export default function DocumentationSection() {
                     return (
                       <Card key={`connection-${connection.id}`}>
                         <CardHeader>
-                          <CardTitle>{connection.name}</CardTitle>
+                          <CardTitle>
+                            <Link
+                              href={`/${locale}/workspace/${workspaceSlug}/connections/${connection.id}`}
+                              className='hover:underline'
+                            >
+                              {connection.name}
+                            </Link>
+                          </CardTitle>
                           {connection.description && (
                             <CardDescription>
                               {connection.description}
@@ -800,7 +765,9 @@ export default function DocumentationSection() {
                                   <BsTag className='size-4' />
                                   {dict.repository.tags.tags}
                                 </dt>
-                                <dd>{connectionTags}</dd>
+                                <dd className='flex flex-wrap gap-2'>
+                                  {connectionTags}
+                                </dd>
                               </div>
                             )}
                           </dl>
@@ -891,7 +858,14 @@ export default function DocumentationSection() {
                     return (
                       <Card key={`workflow-${workflow.id}`}>
                         <CardHeader>
-                          <CardTitle>{workflow.name}</CardTitle>
+                          <CardTitle>
+                            <Link
+                              href={`/${locale}/workspace/${workspaceSlug}/workflows/${workflow.id}`}
+                              className='hover:underline'
+                            >
+                              {workflow.name}
+                            </Link>
+                          </CardTitle>
                           {workflow.description && (
                             <CardDescription>
                               {workflow.description}
@@ -1002,7 +976,9 @@ export default function DocumentationSection() {
                                   <BsTag className='size-4' />
                                   {dict.repository.tags.tags}
                                 </dt>
-                                <dd>{workflowTags}</dd>
+                                <dd className='flex flex-wrap gap-2'>
+                                  {workflowTags}
+                                </dd>
                               </div>
                             )}
                           </dl>
@@ -1055,7 +1031,14 @@ export default function DocumentationSection() {
                     return (
                       <Card key={`script-${script.id}`}>
                         <CardHeader>
-                          <CardTitle>{script.name}</CardTitle>
+                          <CardTitle>
+                            <Link
+                              href={`/${locale}/workspace/${workspaceSlug}/scripts/${script.id}`}
+                              className='hover:underline'
+                            >
+                              {script.name}
+                            </Link>
+                          </CardTitle>
                           {script.description && (
                             <CardDescription>
                               {script.description}
@@ -1098,7 +1081,9 @@ export default function DocumentationSection() {
                                   <BsTag className='size-4' />
                                   {dict.repository.tags.tags}
                                 </dt>
-                                <dd>{scriptTags}</dd>
+                                <dd className='flex flex-wrap gap-2'>
+                                  {scriptTags}
+                                </dd>
                               </div>
                             )}
                           </dl>
@@ -1150,7 +1135,14 @@ export default function DocumentationSection() {
                     return (
                       <Card key={`query-${query.id}`}>
                         <CardHeader>
-                          <CardTitle>{query.name}</CardTitle>
+                          <CardTitle>
+                            <Link
+                              href={`/${locale}/workspace/${workspaceSlug}/queries/${query.id}`}
+                              className='hover:underline'
+                            >
+                              {query.name}
+                            </Link>
+                          </CardTitle>
                           {query.description && (
                             <CardDescription>
                               {query.description}
@@ -1187,7 +1179,9 @@ export default function DocumentationSection() {
                                   <BsTag className='size-4' />
                                   {dict.repository.tags.tags}
                                 </dt>
-                                <dd>{queryTags}</dd>
+                                <dd className='flex flex-wrap gap-2'>
+                                  {queryTags}
+                                </dd>
                               </div>
                             )}
                           </dl>

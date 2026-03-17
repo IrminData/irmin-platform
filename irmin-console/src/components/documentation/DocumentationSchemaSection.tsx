@@ -23,6 +23,8 @@ import { useConnections, useRepositories, useWorkflows } from '@/hooks/api';
 
 import type { WorkflowStatus } from '@/types/core/Workflow';
 
+import RepositoryDocumentationCard from './RepositoryDocumentationCard';
+
 type FlowNodeType = 'connector' | 'connection' | 'workflow' | 'repository';
 
 type FlowNode = {
@@ -400,7 +402,14 @@ export default function DocumentationSchemaSection() {
                   <Card key={path.id}>
                     <CardHeader className='space-y-2'>
                       <div className='flex flex-wrap items-center gap-3'>
-                        <CardTitle className='text-xl'>{path.name}</CardTitle>
+                        <CardTitle className='text-xl'>
+                          <Link
+                            href={`/${locale}/workspace/${workspaceSlug}/workflows/${path.id}`}
+                            className='hover:underline'
+                          >
+                            {path.name}
+                          </Link>
+                        </CardTitle>
                         <Badge variant='outline' className='capitalize'>
                           {path.type}
                         </Badge>
@@ -490,66 +499,32 @@ export default function DocumentationSchemaSection() {
           <div
             className={`
               grid grid-cols-1 gap-6
-              md:grid-cols-2
+              lg:grid-cols-2
             `}
           >
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2 text-lg'>
-                  <TbDatabase className='size-5 text-muted-foreground' />
-                  {dict.repository.repositories}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4 text-sm'>
-                {repositories.length === 0 ? (
-                  <p className='text-muted-foreground'>
+            {repositories.length === 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className='flex items-center gap-2 text-lg'>
+                    <TbDatabase className='size-5 text-muted-foreground' />
+                    {dict.repository.repositories}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className='text-sm text-muted-foreground'>
                     {dict.documentation.directoryRepositoriesEmpty}
                   </p>
-                ) : (
-                  repositories.map((repository) => {
-                    const owner = ownerLabel(repository.owner);
-                    const usage = repositoryUsage.get(repository.slug) ?? 0;
-                    const usageLabel = (
-                      usage === 1
-                        ? dict.workflow.workflow
-                        : dict.workflow.workflows
-                    ).toLocaleLowerCase(locale);
-                    return (
-                      <div
-                        key={repository.id}
-                        className={`
-                          space-y-1 border-b pb-3
-                          last:border-b-0 last:pb-0
-                        `}
-                      >
-                        <Link
-                          href={`/${locale}/workspace/${workspaceSlug}/repositories/${repository.slug}`}
-                          className={`
-                            text-foreground
-                            hover:underline
-                          `}
-                        >
-                          {repository.name}
-                        </Link>
-                        {repository.description && (
-                          <p className='text-xs text-muted-foreground'>
-                            {repository.description}
-                          </p>
-                        )}
-                        {owner && (
-                          <p className='text-xs text-muted-foreground'>
-                            {dict.common.owner}: {owner}
-                          </p>
-                        )}
-                        <p className='text-xs text-muted-foreground'>
-                          {dict.documentation.referencedBy} {usage} {usageLabel}
-                        </p>
-                      </div>
-                    );
-                  })
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ) : (
+              repositories.map((repository) => (
+                <RepositoryDocumentationCard
+                  key={repository.id}
+                  repository={repository}
+                  workflowUsageCount={repositoryUsage.get(repository.slug) ?? 0}
+                />
+              ))
+            )}
 
             <Card>
               <CardHeader>
