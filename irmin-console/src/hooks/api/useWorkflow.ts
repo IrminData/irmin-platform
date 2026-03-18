@@ -73,7 +73,7 @@ export function useWorkflow(workflowID: string) {
       onSuccess: (res) => {
         irminAlert('success', res.message ?? 'Workflow deleted successfully');
         // Invalidate workflow queries to ensure consistency
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: ['workflows', workspaceSlug],
         });
       },
@@ -109,7 +109,7 @@ export function useWorkflow(workflowID: string) {
       onSuccess: (res) => {
         irminAlert('success', res.message ?? 'Workflow updated successfully');
         // Invalidate workflow queries to ensure consistency
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: ['workflows', workspaceSlug],
         });
       },

@@ -159,7 +159,7 @@ export const useEmbeddings = (
       });
     },
     onSuccess: (res, variables) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['embeddings', workspaceSlug, repositorySlug],
       });
       const effectiveRef = variables.ref ?? ref ?? '';
@@ -199,7 +199,7 @@ export const useEmbeddings = (
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['embeddings', workspaceSlug, repositorySlug],
       });
       irminAlert('success', res.message ?? 'Metadata updated successfully');
@@ -232,7 +232,7 @@ export const useEmbeddings = (
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['embeddings', workspaceSlug, repositorySlug],
       });
       irminAlert('success', res.message ?? 'Priority updated successfully');

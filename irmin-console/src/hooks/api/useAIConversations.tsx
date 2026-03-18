@@ -9,6 +9,8 @@ import { useIAM } from '@/context/IAMContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { generateTempId } from '@/utils/generateTempId';
+
 import type { AIConversation } from '@/types/ai/base';
 import type { AICreateConversationRequest } from '@/types/ai/requests';
 import type { AIConversationsListResponse } from '@/types/ai/responses';
@@ -107,7 +109,7 @@ export function useAIConversations(options: UseAIConversationsOptions = {}) {
 
       // Optimistically update the cache
       const optimisticConversation: AIConversation = {
-        id: `temp-${Date.now()}`,
+        id: generateTempId('conversation'),
         title: input.title || title,
         workspaceSlug: workspaceSlug,
         userId: 'temp-user-id',

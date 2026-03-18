@@ -58,7 +58,7 @@ export function useConnectionSubscriptions(
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: connectionSubscriptionsQueryKey(workspaceSlug, connectionID),
       });
     },
@@ -80,7 +80,7 @@ export function useConnectionSubscriptions(
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: connectionSubscriptionsQueryKey(workspaceSlug, connectionID),
       });
     },
@@ -101,7 +101,7 @@ export function useConnectionSubscriptions(
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: connectionSubscriptionsQueryKey(workspaceSlug, connectionID),
       });
     },
@@ -122,7 +122,7 @@ export function useConnectionSubscriptions(
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: connectionSubscriptionsQueryKey(workspaceSlug, connectionID),
       });
     },

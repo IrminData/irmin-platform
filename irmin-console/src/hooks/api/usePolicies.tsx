@@ -166,7 +166,7 @@ export function usePolicies({
             irminAlert('success', res.message ?? 'Policy created successfully');
           }
           // Invalidate all policy queries to ensure filtered views are consistent
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({
             queryKey: ['policies', workspaceSlug],
           });
         },
@@ -208,7 +208,7 @@ export function usePolicies({
           irminAlert('success', res.message ?? 'Policy deleted successfully');
         }
         // Invalidate all policy queries to ensure filtered views are consistent
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: ['policies', workspaceSlug],
         });
       },

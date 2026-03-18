@@ -223,7 +223,9 @@ function formatPeriodDate(iso: string, locale: string): string {
  * @returns Number of days remaining (minimum 0).
  */
 function daysUntil(iso: string): number {
-  const ms = new Date(iso).getTime() - Date.now();
+  const time = new Date(iso).getTime();
+  if (Number.isNaN(time)) return 0;
+  const ms = time - Date.now();
   return Math.max(0, Math.ceil(ms / 86_400_000));
 }
 

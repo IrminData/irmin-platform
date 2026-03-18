@@ -32,11 +32,13 @@ function DynamicFormField(
     field,
     disabled = false,
     fieldProps,
+    hasError = false,
   }: {
     field: DynamicField;
     disabled?: boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fieldProps?: any;
+    hasError?: boolean;
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ref: React.Ref<any>
@@ -231,16 +233,30 @@ function DynamicFormField(
   }, [field, fieldProps, options, disabled, ref]);
 
   return (
-    <div id='dynamic-form-field' className='mb-2 flex flex-col gap-2'>
+    <div
+      id='dynamic-form-field'
+      className={`
+        mb-2 flex flex-col gap-2
+        ${
+          hasError
+            ? `
+              [&_button[role=combobox]]:border-destructive
+              [&_input]:border-destructive
+              [&_textarea]:border-destructive
+            `
+            : ''
+        }
+      `}
+    >
       {field.type !== 'checkbox' && (
         <Label>
           {field.label}
-          {field.required && <span className='ml-2 text-red-500'>*</span>}
+          {field.required && <span className='ml-2 text-destructive'>*</span>}
         </Label>
       )}
       {fieldElement}
       {field.help_text && (
-        <p className='pl-1 text-xs text-gray-400'>{field.help_text}</p>
+        <p className='pl-1 text-xs text-muted-foreground'>{field.help_text}</p>
       )}
     </div>
   );

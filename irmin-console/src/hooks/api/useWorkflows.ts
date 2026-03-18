@@ -104,7 +104,7 @@ export function useWorkflows(type?: WorkflowableType) {
             );
           }
           // Invalidate all workflow queries to ensure consistency
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({
             queryKey: ['workflows', workspaceSlug],
           });
         },

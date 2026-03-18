@@ -150,11 +150,11 @@ export default function SettingsForm<T extends FieldValues>({
                     </Select>
                   ) : null}
                   {errors[field.name] && (
-                    <p className='mt-1 text-xs text-red-600'>
-                      {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        (errors[field.name] as any)?.message
-                      }
+                    <p className='mt-1 text-xs text-destructive'>
+                      {String(
+                        (errors[field.name] as { message?: string } | undefined)
+                          ?.message ?? ''
+                      )}
                     </p>
                   )}
                 </>

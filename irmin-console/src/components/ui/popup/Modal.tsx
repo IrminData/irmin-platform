@@ -1,5 +1,5 @@
 import type React from 'react';
-import { memo } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 
 import { IoClose } from 'react-icons/io5';
 
@@ -37,11 +37,30 @@ const Modal = ({
   onClose: () => void;
 }) => {
   const { dict } = useLocale();
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, handleKeyDown]);
+
   if (!isOpen) return null;
 
   return (
     <div
       id='irmin-modal'
+      role='dialog'
+      aria-modal='true'
+      aria-label={title}
       className={`
         fixed inset-0 z-50 flex animate-in items-center justify-center
         bg-background/30 backdrop-blur-[2px] fade-in

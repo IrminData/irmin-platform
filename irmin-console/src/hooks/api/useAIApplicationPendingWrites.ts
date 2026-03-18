@@ -73,7 +73,7 @@ export function useAIApplicationPendingWrites(
         'success',
         res.message ?? 'Pending write approved and executed'
       );
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: aiApplicationPendingWritesQueryKey(
           workspaceSlug,
           aiApplicationId
@@ -100,7 +100,7 @@ export function useAIApplicationPendingWrites(
     },
     onSuccess: (res) => {
       irminAlert('success', res.message ?? 'Pending write rejected');
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: aiApplicationPendingWritesQueryKey(
           workspaceSlug,
           aiApplicationId

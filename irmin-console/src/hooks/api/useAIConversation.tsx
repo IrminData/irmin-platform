@@ -112,7 +112,7 @@ export function useAIConversation(
     },
     onSuccess: () => {
       // Invalidate the conversations list so it refreshes
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: aiConversationsQueryKey(workspaceSlug),
       });
       irminAlert('success', 'Conversation deleted successfully');

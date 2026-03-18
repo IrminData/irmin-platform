@@ -465,7 +465,7 @@ const AIApplicationActivitySectionContent = () => {
           >
             <SelectTrigger className='w-40'>
               <TbFilter size={14} className='mr-1' />
-              <SelectValue placeholder='All tools' />
+              <SelectValue placeholder={dict.common.all} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value='all'>{dict.common.all}</SelectItem>

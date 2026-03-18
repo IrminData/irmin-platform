@@ -338,11 +338,9 @@ const fi = {
       'Oletko varma, että haluat poistaa tämän työtilan? Tätä toimintoa ei voi peruuttaa ja se poistaa kaiken tähän työtilaan liittyvän datan.',
     workspaceName: 'Työtilan nimi',
     workspaceDescription: 'Työtilan kuvaus',
-    noWorkspaceDescription: 'Ei työtilan kuvausta',
     deletionNote:
       'Työtilan poistaminen poistaa kaiken siihen liittyvän datan. Tätä toimintoa ei voi peruuttaa.',
     deleteWorkspace: 'Poista työtila',
-    billingSettings: 'Laskutuksen asetukset',
     billingCurrentPlan: 'Nykyinen tilaus',
     billingManageBilling: 'Hallitse laskutusta',
     billingAddPaymentMethod: 'Lisää maksutapa',
@@ -373,6 +371,8 @@ const fi = {
       'Käsittely kestää odotettua kauemmin. Tarkista laskutusasetuksesi hetken kuluttua.',
     billingCheckoutSuccessError:
       'Tilauksen vahvistamisessa tapahtui virhe. Tarkista laskutusasetuksesi.',
+    billingCheckoutSuccessPaymentIssue:
+      'Maksua ei voitu käsitellä. Tarkista maksutapasi ja yritä uudelleen.',
     billingCheckoutError: 'Maksuprosessia ei voitu aloittaa. Yritä uudelleen.',
     billingPortalError: 'Laskutusportaalia ei voitu avata. Yritä uudelleen.',
     // Usage credit
@@ -757,7 +757,7 @@ const fi = {
       confirmConnectorSelection: 'Vahvista yhdistimen valinta ja jatka',
       selectedConnector: 'Valittu yhdistin',
       connectionName: 'Yhteyden nimi',
-      connectionNamePlaceholder: 'esim. Minun Google Analytics -yhteys',
+      connectionNamePlaceholder: 'esim. oma Google Analytics -yhteys',
       connectionDescription: 'Yhteyden kuvaus',
       connectionDescriptionPlaceholder:
         'Kirjoita kuvaus yhteydelle, jotta muut tietävät, mihin sitä käytetään',
@@ -1489,7 +1489,6 @@ const fi = {
 
     // Additional missing translations
     pleaseEnterWorkflowName: 'Anna prosessin nimi',
-    pleaseEnterWorkflowDescription: 'Anna prosessin kuvaus',
     pleaseSelectRepositoryBranch: 'Valitse data-arkiston haara',
     pleaseSelectRepositoryPaths: 'Valitse data-arkiston polut',
     pleaseSelectConnectionPath: 'Valitse yhteyden polku',
@@ -1526,13 +1525,6 @@ const fi = {
     searchConversations: 'Hae keskusteluja...',
     noSearchResults: 'Keskusteluja ei löytynyt',
 
-    // Conversation Details
-    created: 'Luotu',
-    lastUpdated: 'Viimeksi päivitetty',
-    totalMessages: 'Viestit yhteensä',
-    estimatedTokens: 'Arvioitu määrä tokeneita',
-    deleteConversation: 'Poista keskustelu',
-
     // Assistant Chat
     askMeAnything:
       'Kysy minulta mitä tahansa - ohjelmointia, liiketoimintaa, kirjoittamista tai yleisiä kysymyksiä...',
@@ -1550,11 +1542,7 @@ const fi = {
     copyFailed: 'Viestin kopiointi epäonnistui',
 
     // Tool and Reasoning Elements
-    toolCalls: 'Työkalukutsut',
-    thinkingSteps: 'Ajatteluvaiheet',
     iteration: 'Iteraatio',
-    systemMessage: 'Järjestelmäviesti',
-    streamCompleted: 'Virta valmis',
     error: 'Virhe',
     likeThisResponse: 'Tykkää tästä vastauksesta',
     dislikeThisResponse: 'Älä tykkää tästä vastauksesta',

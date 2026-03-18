@@ -6,6 +6,8 @@ import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { generateTempId } from '@/utils/generateTempId';
+
 import type { AIApplication } from '@/types/core/AIApplication';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type {
@@ -93,7 +95,7 @@ export function useAIApplications() {
             res.message ?? 'AI Application created successfully'
           );
           // Invalidate all AI application queries to ensure consistency
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({
             queryKey: ['ai_applications', workspaceSlug],
           });
         },
@@ -177,9 +179,9 @@ export function useAIApplication(aiApplicationId: string) {
               ...newDataWithoutTags,
               // For custom_tools, generate temporary IDs for new tools
               custom_tools: newData.custom_tools
-                ? newData.custom_tools.map((tool, index) => ({
+                ? newData.custom_tools.map((tool) => ({
                     ...tool,
-                    id: tool.id ?? `temp-${Date.now()}-${index}`,
+                    id: tool.id ?? generateTempId('custom-tool'),
                   }))
                 : previousData.data.custom_tools,
               // Keep existing tags for optimistic update (server will update with full Tag objects)
@@ -201,7 +203,7 @@ export function useAIApplication(aiApplicationId: string) {
         aiApplicationQueryKey(workspaceSlug, aiApplicationId),
         res
       );
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: aiApplicationsQueryKey(workspaceSlug),
       });
     },
@@ -215,10 +217,10 @@ export function useAIApplication(aiApplicationId: string) {
         );
       }
       // Invalidate queries to ensure UI reflects the actual server state
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: aiApplicationQueryKey(workspaceSlug, aiApplicationId),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: aiApplicationsQueryKey(workspaceSlug),
       });
     },
@@ -237,7 +239,7 @@ export function useAIApplication(aiApplicationId: string) {
         'success',
         res.message ?? 'AI Application deleted successfully'
       );
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: aiApplicationsQueryKey(workspaceSlug),
       });
     },
@@ -264,10 +266,10 @@ export function useAIApplication(aiApplicationId: string) {
         'success',
         res.message ?? 'Ownership transferred successfully'
       );
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: aiApplicationQueryKey(workspaceSlug, aiApplicationId),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: aiApplicationsQueryKey(workspaceSlug),
       });
     },

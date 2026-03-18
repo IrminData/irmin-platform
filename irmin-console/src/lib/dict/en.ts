@@ -336,11 +336,9 @@ const en = {
       'Are you sure you want to delete this workspace? This action cannot be undone and will remove all data associated with this workspace.',
     workspaceName: 'Workspace Name',
     workspaceDescription: 'Workspace Description',
-    noWorkspaceDescription: 'No description provided',
     deletionNote:
       'Deleting your workspace will remove all data associated with it. This action is irreversible.',
     deleteWorkspace: 'Delete Workspace',
-    billingSettings: 'Billing Settings',
     billingCurrentPlan: 'Current Plan',
     billingManageBilling: 'Manage Billing',
     billingAddPaymentMethod: 'Add Payment Method',
@@ -370,6 +368,8 @@ const en = {
       'Processing is taking longer than expected. Please check your billing settings shortly.',
     billingCheckoutSuccessError:
       'Something went wrong while verifying your subscription. Please check your billing settings.',
+    billingCheckoutSuccessPaymentIssue:
+      'Your payment could not be processed. Please check your payment method and try again.',
     billingCheckoutError:
       'Could not start the checkout process. Please try again.',
     billingPortalError: 'Could not open the billing portal. Please try again.',
@@ -416,7 +416,7 @@ const en = {
       apiExampleCurl:
         'curl -X GET "<API_URL>/api/v1/workspaces" \\\n  -H "Authorization: Bearer <your-api-token>" \\\n  -H "Content-Type: application/json"',
       apiExampleNote:
-        'Replace <your-api-token> above with your personalAPI token from the tokens page.',
+        'Replace <your-api-token> above with your personal API token from the tokens page.',
       mcpUsageNote:
         'To use the MCP server, you need an API token. Create one in your profile settings.',
       mcpAuthHeader: 'Authorization: Bearer <your-api-token>',
@@ -763,7 +763,7 @@ const en = {
       confirmConnectorSelection: 'Confirm connector selection and continue',
       selectedConnector: 'Selected connector',
       connectionName: 'Connection name',
-      connectionNamePlaceholder: 'eg. My Google Analytics connection',
+      connectionNamePlaceholder: 'e.g., My Google Analytics connection',
       connectionDescription: 'Connection description',
       connectionDescriptionPlaceholder:
         'Enter a description for the connection, so you can remember what it is used for',
@@ -1503,7 +1503,6 @@ const en = {
 
     // Additional missing translations
     pleaseEnterWorkflowName: 'Please enter a workflow name',
-    pleaseEnterWorkflowDescription: 'Please enter a workflow description',
     pleaseSelectRepositoryBranch: 'Please select a repository branch',
     pleaseSelectRepositoryPaths: 'Please select repository paths',
     pleaseSelectConnectionPath: 'Please select a connection path',
@@ -1539,13 +1538,6 @@ const en = {
     searchConversations: 'Search conversations...',
     noSearchResults: 'No conversations found',
 
-    // Conversation Details
-    created: 'Created',
-    lastUpdated: 'Last updated',
-    totalMessages: 'Total Messages',
-    estimatedTokens: 'Estimated Tokens',
-    deleteConversation: 'Delete Conversation',
-
     // Assistant Chat
     askMeAnything:
       'Ask me anything - coding, business, writing, or general questions...',
@@ -1563,11 +1555,7 @@ const en = {
     copyFailed: 'Failed to copy message',
 
     // Tool and Reasoning Elements
-    toolCalls: 'Tool Calls',
-    thinkingSteps: 'Thinking Steps',
     iteration: 'Iteration',
-    systemMessage: 'System Message',
-    streamCompleted: 'Stream completed',
     error: 'Error',
     likeThisResponse: 'Like this response',
     dislikeThisResponse: 'Dislike this response',

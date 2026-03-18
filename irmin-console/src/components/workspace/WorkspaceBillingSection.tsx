@@ -40,7 +40,10 @@ const WorkspaceBillingSection = () => {
         onSuccess: (res) => {
           const url = res.data?.checkout_url;
           if (url) {
-            window.open(url, '_blank');
+            const opened = window.open(url, '_blank');
+            if (!opened) {
+              window.location.href = url;
+            }
           } else {
             irminAlert('error', dict.workspace.billingCheckoutError);
           }
@@ -54,7 +57,10 @@ const WorkspaceBillingSection = () => {
       onSuccess: (res) => {
         const url = res.data?.portal_url;
         if (url) {
-          window.open(url, '_blank');
+          const opened = window.open(url, '_blank');
+          if (!opened) {
+            window.location.href = url;
+          }
         } else {
           irminAlert('error', dict.workspace.billingPortalError);
         }

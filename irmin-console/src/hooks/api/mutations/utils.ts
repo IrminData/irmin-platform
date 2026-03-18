@@ -330,7 +330,7 @@ function createOnSuccess<TData, TInput>(
       );
     } else {
       // Fallback: invalidate if we couldn't update with real data
-      queryClient.invalidateQueries({ queryKey: config.primaryQueryKey });
+      void queryClient.invalidateQueries({ queryKey: config.primaryQueryKey });
     }
 
     customHandler?.(response, input);
@@ -378,9 +378,9 @@ function updateOnSuccess<TData, TInput>(
       }
     } else {
       // Fallback: invalidate if we couldn't update with real data
-      queryClient.invalidateQueries({ queryKey: config.primaryQueryKey });
+      void queryClient.invalidateQueries({ queryKey: config.primaryQueryKey });
       if (singleItemQueryKey) {
-        queryClient.invalidateQueries({ queryKey: singleItemQueryKey });
+        void queryClient.invalidateQueries({ queryKey: singleItemQueryKey });
       }
     }
 

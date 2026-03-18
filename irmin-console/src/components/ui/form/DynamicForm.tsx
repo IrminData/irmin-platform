@@ -151,9 +151,13 @@ export default function DynamicForm({
           }}
           render={({ field: fieldProps, fieldState }) => (
             <>
-              <DynamicFormField field={field} fieldProps={fieldProps} />
+              <DynamicFormField
+                field={field}
+                fieldProps={fieldProps}
+                hasError={!!fieldState.error}
+              />
               {fieldState.error && (
-                <p className='mt-1 pl-1 text-xs text-red-500'>
+                <p className='mt-1 pl-1 text-xs text-destructive'>
                   {fieldState.error.message}
                 </p>
               )}
@@ -173,7 +177,7 @@ export default function DynamicForm({
     >
       {fieldsElement}
       {Object.keys(errors).length > 0 && (
-        <p className='w-full text-center text-red-500'>
+        <p className='w-full text-center text-destructive'>
           {dict.common.pleaseFixErrors}
         </p>
       )}
