@@ -137,7 +137,7 @@ export default function SetupRepositoryStep({
           <div
             className={
               'flex items-center space-x-2' +
-              (!isResourceAllowed('repository', 'create') ? 'opacity-50' : '')
+              (!isResourceAllowed('repository', 'create') ? ' opacity-50' : '')
             }
           >
             <RadioGroupItem

@@ -134,8 +134,8 @@ export default function ConfigureFieldMappingsStep({
             `}
           >
             {wizardData.createNewConnection || wizardData.createNewRepository
-              ? 'Field mappings are not available when creating new connections or repositories. You can configure field mappings after the workflow is created.'
-              : 'Field mappings are not available at this time.'}
+              ? dict.wizard.fieldMappingsNotAvailableNewResources
+              : dict.wizard.fieldMappingsNotAvailable}
           </p>
         </div>
 

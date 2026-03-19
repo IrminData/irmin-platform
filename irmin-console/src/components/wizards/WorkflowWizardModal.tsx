@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import SideModal from '@/components/ui/popup/SideModal';
 
@@ -28,8 +28,30 @@ export default function WorkflowWizardModal({
   const { isResourceAllowed } = useResourceAllowed();
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedType, setSelectedType] = useState<
+    WorkflowableType | undefined
+  >(workflowType);
 
-  // Generate steps dynamically based on workflow type and whether type is pre-selected
+  // Track open count to reset wizard state when modal reopens
+  const [openCount, setOpenCount] = useState(0);
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (isOpen && !wasOpen) {
+    setCurrentStep(1);
+    setSelectedType(workflowType);
+    setOpenCount((c) => c + 1);
+  }
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
+  }
+
+  const handleTypeChange = useCallback((type: WorkflowableType) => {
+    setSelectedType(type);
+  }, []);
+
+  // Determine effective type for step indicator
+  const effectiveType = workflowType ?? selectedType;
+
+  // Generate steps dynamically based on the currently selected type
   const steps = useMemo(() => {
     const stepArray = [];
 
@@ -42,7 +64,7 @@ export default function WorkflowWizardModal({
     stepArray.push(dict.workflow.create.configureWorkflow);
 
     // Add field mappings step only for import/export workflows
-    if (workflowType === 'import' || workflowType === 'export') {
+    if (effectiveType === 'import' || effectiveType === 'export') {
       stepArray.push(dict.workflow.create.configureFieldMappings);
     }
 
@@ -50,7 +72,7 @@ export default function WorkflowWizardModal({
     stepArray.push(dict.workflow.create.confirmAndCreate);
 
     return stepArray;
-  }, [workflowType, dict.workflow.create]);
+  }, [workflowType, effectiveType, dict.workflow.create]);
 
   if (!isResourceAllowed('workflow', 'create')) {
     return null;
@@ -65,9 +87,11 @@ export default function WorkflowWizardModal({
       title={dict.workflow.create.createNewWorkflow}
     >
       <WorkflowWizard
+        key={openCount}
         closeModal={closeModal}
         currentStep={currentStep}
         setCurrentStep={setCurrentStep}
+        onTypeChange={handleTypeChange}
         initialWorkflowData={{
           type: workflowType,
           name: '',

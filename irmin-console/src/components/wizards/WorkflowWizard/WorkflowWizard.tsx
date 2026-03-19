@@ -78,6 +78,7 @@ export default function WorkflowWizard({
   embedded = false,
   onComplete,
   onCancel,
+  onTypeChange,
 }: {
   closeModal: () => void;
   currentStep: number;
@@ -86,6 +87,7 @@ export default function WorkflowWizard({
   embedded?: boolean;
   onComplete?: (workflow: Workflow) => void;
   onCancel?: () => void;
+  onTypeChange?: (type: WorkflowableType) => void;
 }) {
   const { dict } = useLocale();
 
@@ -121,13 +123,17 @@ export default function WorkflowWizard({
     }
   }, [currentStep, setCurrentStep, wizardData.type, initialWorkflowData.type]);
 
+  const minStep = 1;
+
   // Function to go back to the previous step
   const goBack = useCallback(() => {
-    const minStep = initialWorkflowData.type ? 2 : 1;
     if (currentStep > minStep) {
       setCurrentStep((prev) => prev - 1);
     }
-  }, [currentStep, setCurrentStep, initialWorkflowData]);
+  }, [currentStep, setCurrentStep, minStep]);
+
+  // Whether back navigation is possible from the current step
+  const canGoBack = currentStep > minStep;
 
   // Function to update wizard data
   // Automatically initializes workflowable when type changes
@@ -136,19 +142,20 @@ export default function WorkflowWizard({
       setWizardData((prev) => {
         const newData = { ...prev, ...updates };
 
-        // If type changed and workflowable is missing, initialize it
-        if (
-          updates.type &&
-          updates.type !== prev.type &&
-          !newData.workflowable
-        ) {
+        // If type changed, always reset workflowable to match new type
+        if (updates.type && updates.type !== prev.type) {
           newData.workflowable = createDefaultWorkflowable(updates.type);
         }
 
         return newData;
       });
+
+      // Notify parent of type change outside the state updater
+      if (updates.type) {
+        onTypeChange?.(updates.type);
+      }
     },
-    []
+    [onTypeChange]
   );
 
   const hasFieldMappings = useMemo(
@@ -194,7 +201,7 @@ export default function WorkflowWizard({
           wizardData={wizardData}
           updateWizardData={updateWizardData}
           goNext={goNext}
-          goBack={goBack}
+          goBack={canGoBack ? goBack : undefined}
         />
       )}
       {currentStep === (initialWorkflowData.type ? 2 : 3) &&

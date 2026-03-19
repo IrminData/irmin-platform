@@ -181,10 +181,7 @@ export default function SelectConnectorStep({
           variant='secondary'
           size='sm'
           onClick={() => {
-            irminAlert(
-              'info',
-              'This feature is not available yet. To build and use custom connectors, please contact support.'
-            );
+            irminAlert('info', dict.connectors.customConnectorNotAvailable);
           }}
           aria-label='Add custom connector'
         >

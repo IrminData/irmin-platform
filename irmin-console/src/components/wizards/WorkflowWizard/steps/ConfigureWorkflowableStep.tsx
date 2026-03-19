@@ -149,10 +149,38 @@ function ConfigureWorkflowableStep({
           );
           return false;
         }
+        // If results repository is set, branch and path are required
+        if (actionWorkflowable.results_repository) {
+          if (!actionWorkflowable.results_repository_branch) {
+            irminAlert(
+              'error',
+              dict.workflow.create.validation
+                .pleaseSpecifyResultsRepositoryBranch
+            );
+            return false;
+          }
+          if (!actionWorkflowable.results_repository_path) {
+            irminAlert(
+              'error',
+              dict.workflow.create.validation.pleaseSpecifyResultsRepositoryPath
+            );
+            return false;
+          }
+        }
         break;
       }
       case 'pipeline': {
-        // Pipeline validation can be added here if needed
+        const pipelineWorkflowable = currentWorkflowable as Pipeline;
+        if (
+          !pipelineWorkflowable.stages ||
+          pipelineWorkflowable.stages.length === 0
+        ) {
+          irminAlert(
+            'error',
+            dict.workflow.create.validation.pleaseAddAtLeastOnePipelineStage
+          );
+          return false;
+        }
         break;
       }
       default:
@@ -210,9 +238,20 @@ function ConfigureWorkflowableStep({
 
   const workflowable = wizardData.workflowable;
 
-  // Early return if workflowable is not defined
+  // Early return if workflowable is not defined - go back to type selection
   if (!workflowable) {
-    return <></>;
+    return (
+      <div className='flex w-full flex-col items-center justify-center px-4 py-12'>
+        <p className='mb-4 text-sm text-muted-foreground'>
+          {dict.workflow.create.validation.workflowableConfigurationMissing}
+        </p>
+        {goBack && (
+          <Button variant='secondary' onClick={goBack}>
+            {dict.workflow.create.goBack}
+          </Button>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -258,14 +297,16 @@ function ConfigureWorkflowableStep({
         >
           {dict.workflow.create.confirmAndContinue}
         </Button>
-        <Button
-          className='mb-6 inline-block w-full'
-          variant='link'
-          size='sm'
-          onClick={goBack}
-        >
-          {dict.workflow.create.goBack}
-        </Button>
+        {goBack && (
+          <Button
+            className='mb-6 inline-block w-full'
+            variant='link'
+            size='sm'
+            onClick={goBack}
+          >
+            {dict.workflow.create.goBack}
+          </Button>
+        )}
       </div>
     </div>
   );

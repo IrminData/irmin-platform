@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { workflowsQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -14,6 +15,7 @@ import { createMutationHandlers } from './mutations/utils';
 
 export function useWorkflows(type?: WorkflowableType) {
   const { getCore } = useIrminCore();
+  const { dict } = useLocale();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
@@ -89,7 +91,10 @@ export function useWorkflows(type?: WorkflowableType) {
             }) as Workflow,
         },
         onSuccess: (res, input) => {
-          irminAlert('success', res.message ?? 'Workflow created successfully');
+          irminAlert(
+            'success',
+            res.message ?? dict.workflow.create.workflowCreatedSuccessfully
+          );
           // Update typed workflows cache if applicable
           if (type && input.type === type && res.data) {
             queryClient.setQueryData<IrminAPIResponse<Workflow[]>>(
@@ -109,7 +114,10 @@ export function useWorkflows(type?: WorkflowableType) {
           });
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Error creating workflow');
+          irminAlert(
+            'error',
+            error.message ?? dict.workflow.create.failedToCreateWorkflow
+          );
         },
       }
     ),

@@ -868,6 +868,8 @@ const en = {
       patch_event: 'Can emit patch events when data changes',
     },
     locales: 'Locales',
+    customConnectorNotAvailable:
+      'This feature is not available yet. To build and use custom connectors, please contact support.',
   },
 
   // === WORKFLOWS ===
@@ -995,7 +997,16 @@ const en = {
           'Please add at least one source path from repository',
         pleaseSelectExecutableScript: 'Please select an executable script',
         pleaseSelectExecutableQuery: 'Please select an executable query',
+        pleaseEnterWorkflowName: 'Please enter a workflow name',
+        pleaseAddAtLeastOnePipelineStage:
+          'Please add at least one pipeline stage',
+        pleaseSpecifyResultsRepositoryBranch:
+          'Please specify a branch for the results repository',
+        pleaseSpecifyResultsRepositoryPath:
+          'Please specify a path for the results repository',
       },
+      failedToCreateWorkflow: 'Failed to create workflow',
+      workflowCreatedSuccessfully: 'Workflow created successfully',
     },
 
     pipeline: {
@@ -1514,6 +1525,9 @@ const en = {
     connection: 'Connection',
     repository: 'Repository',
     documentation: 'Documentation',
+    fieldMappingsNotAvailableNewResources:
+      'Field mappings are not available when creating new connections or repositories. You can configure field mappings after the workflow is created.',
+    fieldMappingsNotAvailable: 'Field mappings are not available at this time.',
   },
 
   // === ASSISTANT ===

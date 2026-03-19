@@ -94,11 +94,17 @@ export default function ExportWorkflow({
             <SelectValue placeholder={dict.workflow.selectConnection} />
           </SelectTrigger>
           <SelectContent>
-            {getConnectionsWithCapability('push').map((conn) => (
-              <SelectItem key={conn.id} value={conn.id}>
-                {conn.name}
-              </SelectItem>
-            ))}
+            {getConnectionsWithCapability('push').length === 0 ? (
+              <p className='px-2 py-4 text-center text-sm text-muted-foreground'>
+                {dict.wizard.noConnectionsAvailable}
+              </p>
+            ) : (
+              getConnectionsWithCapability('push').map((conn) => (
+                <SelectItem key={conn.id} value={conn.id}>
+                  {conn.name}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
         {workflowable.connection_id && (
@@ -198,7 +204,7 @@ export default function ExportWorkflow({
         <Input
           required
           type='text'
-          defaultValue={workflowable.repository_branch ?? ''}
+          value={workflowable.repository_branch ?? ''}
           onChange={(e) =>
             setWorkflowData((prev) => ({
               ...prev,

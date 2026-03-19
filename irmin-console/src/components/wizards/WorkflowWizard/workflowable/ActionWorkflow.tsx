@@ -225,7 +225,7 @@ export default function ActionWorkflow({
         <Input
           required
           type='text'
-          defaultValue={workflowable.results_repository_branch ?? ''}
+          value={workflowable.results_repository_branch ?? ''}
           onChange={(e) =>
             setWorkflowData((prev) => ({
               ...prev,

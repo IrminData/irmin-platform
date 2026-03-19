@@ -303,6 +303,7 @@ export default function ReviewAndCreateStep({
             variant='default'
             onClick={handleCreate}
             disabled={isCreating}
+            loading={isCreating}
           >
             {isCreating
               ? dict.wizard.creatingExportWorkflow

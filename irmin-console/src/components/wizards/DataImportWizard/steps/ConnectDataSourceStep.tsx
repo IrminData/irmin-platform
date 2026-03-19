@@ -142,7 +142,7 @@ export default function ConnectDataSourceStep({
           <div
             className={
               'flex items-center space-x-2' +
-              (!isResourceAllowed('connection', 'create') ? 'opacity-50' : '')
+              (!isResourceAllowed('connection', 'create') ? ' opacity-50' : '')
             }
           >
             <RadioGroupItem
@@ -283,10 +283,7 @@ export default function ConnectDataSourceStep({
               variant='secondary'
               size='sm'
               onClick={() => {
-                irminAlert(
-                  'info',
-                  'This feature is not available yet. To build and use custom connectors, please contact support.'
-                );
+                irminAlert('info', dict.connectors.customConnectorNotAvailable);
               }}
               aria-label={dict.connections.create.addCustomConnector}
             >

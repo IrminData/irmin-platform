@@ -862,6 +862,8 @@ const fi = {
       patch_event: 'Voi lähettää muutostapahtumia',
     },
     locales: 'Kielet',
+    customConnectorNotAvailable:
+      'Tämä ominaisuus ei ole vielä käytettävissä. Ota yhteyttä tukeen rakentaaksesi ja käyttääksesi omia yhdistimiä.',
   },
 
   // === WORKFLOWS ===
@@ -983,7 +985,16 @@ const fi = {
           'Lisää vähintään yksi lähdepolku data-arkistosta',
         pleaseSelectExecutableScript: 'Valitse suoritettava skripti',
         pleaseSelectExecutableQuery: 'Valitse suoritettava kysely',
+        pleaseEnterWorkflowName: 'Anna prosessin nimi',
+        pleaseAddAtLeastOnePipelineStage:
+          'Lisää vähintään yksi dataputken vaihe',
+        pleaseSpecifyResultsRepositoryBranch:
+          'Määritä haara tulosten data-arkistolle',
+        pleaseSpecifyResultsRepositoryPath:
+          'Määritä polku tulosten data-arkistolle',
       },
+      failedToCreateWorkflow: 'Prosessin luominen epäonnistui',
+      workflowCreatedSuccessfully: 'Prosessi luotiin onnistuneesti',
     },
     pipeline: {
       pipeline: 'Dataputki',
@@ -1500,6 +1511,10 @@ const fi = {
     connection: 'Yhteys',
     repository: 'Data-arkisto',
     documentation: 'Dokumentaatio',
+    fieldMappingsNotAvailableNewResources:
+      'Kenttien kartoitus ei ole käytettävissä uusia yhteyksiä tai data-arkistoja luotaessa. Voit määrittää kenttien kartoituksen prosessin luomisen jälkeen.',
+    fieldMappingsNotAvailable:
+      'Kenttien kartoitus ei ole käytettävissä tällä hetkellä.',
   },
 
   // === ASSISTANT ===

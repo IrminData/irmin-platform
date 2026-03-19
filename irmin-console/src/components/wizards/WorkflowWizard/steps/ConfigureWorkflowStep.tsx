@@ -59,7 +59,10 @@ function ConfigureWorkflowStep({
 
       // Validate required fields
       if (!wizardData.name || wizardData.name.trim() === '') {
-        irminAlert('error', 'Please enter a workflow name');
+        irminAlert(
+          'error',
+          dict.workflow.create.validation.pleaseEnterWorkflowName
+        );
         return;
       }
 
@@ -74,10 +77,10 @@ function ConfigureWorkflowStep({
       });
 
       if (!res.data) {
-        throw new Error(res.message ?? 'Failed to create workflow');
+        throw new Error(
+          res.message ?? dict.workflow.create.failedToCreateWorkflow
+        );
       }
-
-      irminAlert('success', res.message ?? 'Workflow created successfully');
 
       // Handle completion based on mode
       if (embedded && onComplete) {
@@ -89,7 +92,7 @@ function ConfigureWorkflowStep({
       console.error('Failed to create workflow:', error);
       irminAlert(
         'error',
-        (error as Error)?.message ?? 'Failed to create workflow'
+        (error as Error)?.message ?? dict.workflow.create.failedToCreateWorkflow
       );
     }
   }, [
@@ -99,6 +102,8 @@ function ConfigureWorkflowStep({
     embedded,
     onComplete,
     irminAlert,
+    dict.workflow.create.validation.pleaseEnterWorkflowName,
+    dict.workflow.create.failedToCreateWorkflow,
   ]);
 
   return (
@@ -110,7 +115,7 @@ function ConfigureWorkflowStep({
             required
             type='text'
             disabled={createWorkflowMutation.isPending}
-            defaultValue={wizardData.name}
+            value={wizardData.name}
             onChange={(e) =>
               updateWizardData({
                 name: e.target.value,
@@ -128,7 +133,7 @@ function ConfigureWorkflowStep({
               rows: 3,
             }}
             disabled={createWorkflowMutation.isPending}
-            defaultValue={wizardData.description}
+            value={wizardData.description}
             onChange={(e) =>
               updateWizardData({
                 description: e.target.value,
