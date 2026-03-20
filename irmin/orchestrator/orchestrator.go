@@ -44,6 +44,7 @@ type Orchestrator struct {
 	// Active workflow run contexts for cancellation
 	activeRunContexts map[uint]context.CancelFunc
 	activeRunMutex    sync.RWMutex
+	activeRunWg       sync.WaitGroup
 
 	// OnWorkflowRunComplete is an optional callback invoked when a workflow run finishes.
 	// Used for billing usage tracking without coupling the orchestrator to the billing service.
@@ -337,7 +338,26 @@ func (o *Orchestrator) StartOrchestrator(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			o.logger.InfoContext(ctx, "orchestrator shutting down")
+			o.logger.InfoContext(ctx, "orchestrator shutting down, waiting for active workflows")
+			// Cancel all active workflow runs
+			o.activeRunMutex.RLock()
+			for runID, cancel := range o.activeRunContexts {
+				o.logger.InfoContext(ctx, "cancelling active workflow run during shutdown", "run_id", runID)
+				cancel()
+			}
+			o.activeRunMutex.RUnlock()
+			// Wait for active workflows with a timeout
+			shutdownDone := make(chan struct{})
+			go func() {
+				o.activeRunWg.Wait()
+				close(shutdownDone)
+			}()
+			select {
+			case <-shutdownDone:
+				o.logger.InfoContext(ctx, "all active workflows finished")
+			case <-time.After(GracefulShutdownTimeout):
+				o.logger.WarnContext(ctx, "timed out waiting for active workflows to finish")
+			}
 			return ctx.Err()
 
 		case err := <-dispatcherErrChan:

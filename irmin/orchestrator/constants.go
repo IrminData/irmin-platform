@@ -15,6 +15,9 @@ const (
 	// DefaultMaxWorkflowRuntime is the default maximum runtime for a workflow in seconds.
 	DefaultMaxWorkflowRuntime = 120
 
+	// GracefulShutdownTimeout is the maximum time to wait for active workflows during shutdown.
+	GracefulShutdownTimeout = 30 * time.Second
+
 	// syncModeFull always performs a full data sync.
 	syncModeFull = "full"
 	// syncModePatch only accepts patch-based events.

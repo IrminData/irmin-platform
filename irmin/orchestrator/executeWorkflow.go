@@ -123,7 +123,7 @@ func (o *Orchestrator) ExecuteWorkflow(
 		"error", err)
 
 	// Check if context was cancelled or timed out
-	if err != nil && errors.Is(err, context.Canceled) {
+	if err != nil && (errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)) {
 		// Context was cancelled - handle based on the type of cancellation
 		if timeoutCtx.Err() == context.DeadlineExceeded {
 			// Timeout

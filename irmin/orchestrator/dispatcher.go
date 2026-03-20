@@ -321,11 +321,14 @@ func (o *Orchestrator) processWorkflowRun(ctx context.Context, notification *db.
 	if run.ID != 0 {
 		if dispatchRunErr := o.dispatchRun(ctx, &run); dispatchRunErr != nil {
 			// If dispatch fails, we should mark the run as failed
+			now := time.Now()
 			run.Status = irminmodels.WorkflowStatusError
-			run.UpdatedAt = time.Now()
+			run.FinishedAt = &now
+			run.UpdatedAt = now
 			if err := o.db.WithContext(ctx).Save(&run).Error; err != nil {
 				o.logger.ErrorContext(ctx, "failed to update run status after dispatch error",
-					"error", dispatchRunErr,
+					"save_error", err,
+					"dispatch_error", dispatchRunErr,
 					"run_id", run.ID)
 			}
 			return fmt.Errorf("failed to dispatch run: %w", dispatchRunErr)
