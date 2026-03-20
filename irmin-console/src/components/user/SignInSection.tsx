@@ -73,6 +73,7 @@ const SignInSection = () => {
       {mounted && (
         <SignIn
           signUpUrl={`/${locale}/sign-up`}
+          fallbackRedirectUrl={`/${locale}/workspace`}
           appearance={{
             baseTheme: resolvedTheme === 'dark' ? dark : undefined,
             variables: { colorPrimary: '#a3c2ac' },

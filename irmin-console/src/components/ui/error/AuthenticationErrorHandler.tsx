@@ -6,6 +6,8 @@ import { usePathname, useRouter } from 'next/navigation';
 
 import { useAuth } from '@clerk/nextjs';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { CommonErrorDisplay } from './CommonErrorDisplay';
 
 interface AuthenticationErrorHandlerProps {
@@ -40,6 +42,7 @@ function AuthenticationErrorHandler({
   const { isSignedIn, isLoaded } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { locale } = useLocale();
   // Check if current route is public (exact matches with optional language prefix)
   const isPublicRoute =
     PUBLIC_ROUTES.some((route) => {
@@ -89,18 +92,20 @@ function AuthenticationErrorHandler({
         }
       }
 
-      // Auto-redirect to sign-in on auth errors for protected routes
-      if (!isPublicRoute) {
-        router.replace('/sign-in');
+      // Only redirect to sign-in if the user is actually not signed in.
+      // If signed in but API is down, redirecting creates a loop since
+      // Clerk auto-redirects signed-in users away from sign-in.
+      if (!isPublicRoute && isLoaded && !isSignedIn) {
+        router.replace(`/${locale}/sign-in`);
         return;
       }
     }
 
     // Redirect unauthenticated users on protected routes
     if (isLoaded && !isSignedIn && !isPublicRoute) {
-      router.replace('/sign-in');
+      router.replace(`/${locale}/sign-in`);
     }
-  }, [error, isSignedIn, isLoaded, isPublicRoute, router]);
+  }, [error, isSignedIn, isLoaded, isPublicRoute, router, locale]);
 
   // Show loading state while Clerk is initializing
   if (!isLoaded) {
@@ -117,6 +122,27 @@ function AuthenticationErrorHandler({
 
   // Handle authentication errors - only block protected routes
   if (!isPublicRoute && (error || (!isSignedIn && isLoaded))) {
+    // Signed in but error (e.g. API unreachable) — show service unavailable
+    // instead of redirecting to sign-in, which would cause a redirect loop
+    if (isSignedIn && error) {
+      return (
+        <CommonErrorDisplay
+          error={error}
+          title='Service Unavailable'
+          description='The service is temporarily unavailable. Please try again in a moment.'
+          variant='section'
+          showDetails={!!error}
+          showReload={true}
+          showHome={false}
+          showReport={true}
+          onRetry={() => {
+            window.location.reload();
+          }}
+          className='min-h-[300px]'
+        />
+      );
+    }
+
     const isAuthError =
       error?.message?.toLowerCase().includes('auth') ||
       error?.message?.toLowerCase().includes('sign') ||
@@ -135,7 +161,7 @@ function AuthenticationErrorHandler({
           showHome={false}
           showReport={false}
           onRetry={() => {
-            router.push('/sign-in');
+            router.push(`/${locale}/sign-in`);
           }}
           className='min-h-[300px]'
         />
