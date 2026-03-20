@@ -2,17 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { TbCheck, TbCopy, TbSend, TbTrash } from 'react-icons/tb';
+import { TbSend, TbTrash } from 'react-icons/tb';
 
 import { getMessageContent } from '@/components/assistant/AgentChat/storedMessageHelpers';
+import { Response } from '@/components/ui/ai-elements/response';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
-
-import { isSQL } from '@/utils/isSQL';
 
 import type { AIAgentExecuteRequest } from '@/types/ai/requests';
 import type { AIAgentExecuteResponse } from '@/types/ai/responses';
@@ -47,7 +46,6 @@ export function SqlGenerationChat({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -188,16 +186,6 @@ export function SqlGenerationChat({
     setError(null);
   }, [onReset]);
 
-  const handleCopy = useCallback(async (text: string, messageId: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedMessageId(messageId);
-      setTimeout(() => setCopiedMessageId(null), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  }, []);
-
   return (
     <div className='flex h-full flex-col'>
       {/* Messages */}
@@ -229,78 +217,7 @@ export function SqlGenerationChat({
               `}
             >
               {message.role === 'assistant' ? (
-                (() => {
-                  const contentIsSQL = isSQL(message.content);
-                  return contentIsSQL ? (
-                    <div className='space-y-2'>
-                      <div className='flex items-center justify-between gap-2'>
-                        <span
-                          className={`
-                            text-xs font-semibold text-muted-foreground
-                          `}
-                        >
-                          {dict.queryHelper.sqlGeneration.generatedSql}
-                        </span>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          className='h-6 gap-1 px-2 text-xs'
-                          onClick={() =>
-                            handleCopy(message.content, message.id)
-                          }
-                        >
-                          {copiedMessageId === message.id ? (
-                            <TbCheck size={14} />
-                          ) : (
-                            <TbCopy size={14} />
-                          )}
-                          {copiedMessageId === message.id
-                            ? dict.common.copied
-                            : dict.queryHelper.sqlGeneration.copySql}
-                        </Button>
-                      </div>
-                      <pre
-                        className={`
-                          overflow-x-auto font-mono text-xs whitespace-pre-wrap
-                        `}
-                      >
-                        {message.content}
-                      </pre>
-                    </div>
-                  ) : (
-                    <div className='space-y-2'>
-                      <div className='flex items-center justify-between gap-2'>
-                        <span
-                          className={`
-                            text-xs font-semibold text-muted-foreground
-                          `}
-                        >
-                          {dict.queryHelper.sqlGeneration.response}
-                        </span>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          className='h-6 gap-1 px-2 text-xs'
-                          onClick={() =>
-                            handleCopy(message.content, message.id)
-                          }
-                        >
-                          {copiedMessageId === message.id ? (
-                            <TbCheck size={14} />
-                          ) : (
-                            <TbCopy size={14} />
-                          )}
-                          {copiedMessageId === message.id
-                            ? dict.common.copied
-                            : dict.common.copy}
-                        </Button>
-                      </div>
-                      <p className='text-sm wrap-break-word whitespace-pre-wrap'>
-                        {message.content}
-                      </p>
-                    </div>
-                  );
-                })()
+                <Response className='text-sm'>{message.content}</Response>
               ) : (
                 <p>{message.content}</p>
               )}

@@ -56,12 +56,12 @@ export const CodeBlock = ({
             dark:hidden
           `}
           codeTagProps={{
-            className: 'font-mono text-sm',
+            className: 'font-mono text-xs',
           }}
           customStyle={{
             margin: 0,
-            padding: '1rem',
-            fontSize: '0.875rem',
+            padding: '0.75rem',
+            fontSize: '0.75rem',
             background: 'hsl(var(--background))',
             color: 'hsl(var(--foreground))',
           }}
@@ -82,12 +82,12 @@ export const CodeBlock = ({
             dark:block
           `}
           codeTagProps={{
-            className: 'font-mono text-sm',
+            className: 'font-mono text-xs',
           }}
           customStyle={{
             margin: 0,
-            padding: '1rem',
-            fontSize: '0.875rem',
+            padding: '0.75rem',
+            fontSize: '0.75rem',
             background: 'hsl(var(--background))',
             color: 'hsl(var(--foreground))',
           }}
