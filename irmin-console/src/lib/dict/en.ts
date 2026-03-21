@@ -1301,6 +1301,7 @@ const en = {
     searchQueries: 'Search queries...',
     failedToCreateQuery: 'Failed to create query',
     failedToUpdateQuery: 'Failed to update query',
+    saveAs: 'Save as',
   },
 
   queryHelper: {

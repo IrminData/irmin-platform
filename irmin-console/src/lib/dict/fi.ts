@@ -1288,6 +1288,7 @@ const fi = {
     searchQueries: 'Hae kyselyjä...',
     failedToCreateQuery: 'Kyselyn luominen epäonnistui',
     failedToUpdateQuery: 'Kyselyn päivitys epäonnistui',
+    saveAs: 'Tallenna nimellä',
   },
 
   queryHelper: {

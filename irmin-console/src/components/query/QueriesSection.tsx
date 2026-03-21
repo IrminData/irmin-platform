@@ -95,6 +95,7 @@ function QueriesSectionContent() {
   const [selectedQuery, setSelectedQuery] = useState<StoredQuery | null>(null);
   const [editorContent, setEditorContent] = useState<string>('');
   const [edited, setEdited] = useState<boolean>(false);
+  const [isDraftQuery, setIsDraftQuery] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [queryInputFiles, setQueryInputFiles] = useState<ActionInputData[]>([]);
   const [editorHeight, setEditorHeight] = useState('300px');
@@ -249,53 +250,85 @@ function QueriesSectionContent() {
   });
 
   /**
-   * Hook to create a new query by showing a modal to input the query name and description
-   * and then creating the query.
+   * Enter draft mode for a new query — opens a clean editor without showing a modal.
+   * The user can start writing SQL immediately and save later via "Save As".
    */
-  const handleCreateQuery = useMemo(
-    () => async (initialContent?: string) => {
-      const contentToUse =
-        typeof initialContent === 'string' ? initialContent : editorContent;
-      irminModal.show(
-        dict.query.newQuery,
-        <CreateSavedQueryModal
-          workspaceSlug={workspaceSlug}
-          createQuery={async (
-            queryName: string,
-            queryDescription: string,
-            tags?: Tag[]
-          ) => {
-            const res = await createStoredQueryMutation.mutateAsync({
-              name: queryName,
-              description: queryDescription,
-              sql: contentToUse,
-              tags: tags?.map((tag) => tag.id),
-            });
-            if (!res.data) return;
-            irminModal.close();
-            setSelectedQuery(res.data);
-            setEdited(false);
-            if (typeof initialContent === 'string') {
-              setEditorContent(initialContent);
-            }
-          }}
-        />,
-        () => irminModal.close()
+  const handleCreateQuery = useCallback(
+    async (initialContent?: string) => {
+      // If there are unsaved edits, confirm before discarding
+      if (
+        (edited || (isDraftQuery && editorContent.trim())) &&
+        !initialContent
+      ) {
+        const confirmed = await irminConfirm(
+          'warning',
+          dict.scripts.unsavedChangesDiscard
+        );
+        if (!confirmed) return;
+      }
+      setSelectedQuery(null);
+      queryContentId.current = null;
+      setEditorContent(
+        typeof initialContent === 'string' ? initialContent : ''
       );
+      setEdited(false);
+      setIsDraftQuery(true);
+      cleanup();
     },
-    [irminModal, dict, editorContent, createStoredQueryMutation, workspaceSlug]
+    [edited, isDraftQuery, editorContent, irminConfirm, dict, cleanup]
   );
+
+  /**
+   * Save the current draft query by opening the create modal with current editor content.
+   */
+  const handleSaveAsQuery = useCallback(() => {
+    irminModal.show(
+      dict.query.newQuery,
+      <CreateSavedQueryModal
+        workspaceSlug={workspaceSlug}
+        createQuery={async (
+          queryName: string,
+          queryDescription: string,
+          tags?: Tag[]
+        ) => {
+          const res = await createStoredQueryMutation.mutateAsync({
+            name: queryName,
+            description: queryDescription,
+            sql: editorContent,
+            tags: tags?.map((tag) => tag.id),
+          });
+          if (!res.data) return;
+          irminModal.close();
+          setSelectedQuery(res.data);
+          setIsDraftQuery(false);
+          setEdited(false);
+        }}
+      />,
+      () => irminModal.close()
+    );
+  }, [
+    irminModal,
+    dict,
+    editorContent,
+    createStoredQueryMutation,
+    workspaceSlug,
+  ]);
 
   const handleTemplateSelect = useCallback(
     (content: string, createNew: boolean) => {
       if (createNew) {
-        handleCreateQuery(content);
+        setSelectedQuery(null);
+        queryContentId.current = null;
+        setEditorContent(content);
+        setEdited(false);
+        setIsDraftQuery(true);
+        cleanup();
       } else {
         setEditorContent(content);
         setEdited(true);
       }
     },
-    [handleCreateQuery]
+    [cleanup]
   );
 
   /**
@@ -374,6 +407,24 @@ function QueriesSectionContent() {
       setEdited(false);
     },
     [selectedQuery, deleteStoredQueryMutation, dict, irminConfirm]
+  );
+
+  /**
+   * Select a query from the sidebar, confirming if there are unsaved draft changes.
+   */
+  const handleSelectQuery = useCallback(
+    async (query: StoredQuery) => {
+      if (isDraftQuery && editorContent.trim()) {
+        const confirmed = await irminConfirm(
+          'warning',
+          dict.scripts.unsavedChangesDiscard
+        );
+        if (!confirmed) return;
+      }
+      setIsDraftQuery(false);
+      setSelectedQuery(query);
+    },
+    [isDraftQuery, editorContent, irminConfirm, dict]
   );
 
   /**
@@ -494,12 +545,12 @@ function QueriesSectionContent() {
                   hover:bg-card
                   ${selectedQuery?.id === query.id ? `bg-card` : ''}
                 `}
-                onClick={() => setSelectedQuery(query)}
+                onClick={() => handleSelectQuery(query)}
                 role='button'
                 tabIndex={0}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
-                    setSelectedQuery(query);
+                    handleSelectQuery(query);
                   }
                 }}
               >
@@ -538,13 +589,28 @@ function QueriesSectionContent() {
             >
               <h3 className='text-sm font-medium'>
                 {dict.query.editor}{' '}
-                {selectedQuery ? `(${selectedQuery.name})` : ''}
+                {selectedQuery
+                  ? `(${selectedQuery.name})`
+                  : isDraftQuery
+                    ? `(${dict.query.newQuery})`
+                    : ''}
               </h3>
               <div className='flex items-center gap-2'>
                 <SqlHelper
                   schema={workspaceSchema.schema || undefined}
                   currentSql={editorContent}
                 />
+                {isDraftQuery && !selectedQuery && (
+                  <Button
+                    variant='default'
+                    size='sm'
+                    icon={<TbFile />}
+                    onClick={handleSaveAsQuery}
+                    disabled={!editorContent.trim()}
+                  >
+                    {dict.query.saveAs}
+                  </Button>
+                )}
                 {selectedQuery && (
                   <Button
                     variant='default'
