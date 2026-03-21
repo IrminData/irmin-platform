@@ -601,6 +601,8 @@ const en = {
       view: 'View',
       unsupportedContentType: 'Unsupported content type',
       contentUnavailable: 'Object content unavailable',
+      viewRendered: 'Rendered',
+      viewSource: 'Source',
       contentTooLarge:
         'This file is too large to display. Please download it instead.',
       viewSchema: 'View schema',

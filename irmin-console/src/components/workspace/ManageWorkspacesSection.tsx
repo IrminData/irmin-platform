@@ -59,8 +59,6 @@ const ManageWorkspacesSection = () => {
     (invite) => !invite.accepted_at && !invite.declined_at
   );
 
-  // Use the fast workspaces query as primary, fall back to summaries-only
-  const workspaceListRaw = workspacesQuery.data?.data ?? [];
   const { summaryMap, mostRecentId } = useMemo(() => {
     const list = workspaceSummariesQuery.data?.data ?? [];
     const map = new Map<string, WorkspaceSummary>();
@@ -81,13 +79,14 @@ const ManageWorkspacesSection = () => {
 
   // Sort workspaces so recently used appears first
   const workspaceList = useMemo(() => {
+    const workspaceListRaw = workspacesQuery.data?.data ?? [];
     if (!mostRecentId) return workspaceListRaw;
     return [...workspaceListRaw].sort((a, b) => {
       if (a.id === mostRecentId) return -1;
       if (b.id === mostRecentId) return 1;
       return 0;
     });
-  }, [workspaceListRaw, mostRecentId]);
+  }, [workspacesQuery.data?.data, mostRecentId]);
 
   // Only show loading skeleton when both queries are still loading
   const isLoading = workspacesQuery.isLoading;

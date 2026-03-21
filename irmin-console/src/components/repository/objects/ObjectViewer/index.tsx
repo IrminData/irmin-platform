@@ -3,6 +3,7 @@
 import { useLocale } from '@/context/LocaleContext';
 
 import { checkIfSimpleArrayOfObjects } from '@/utils/checkIfSimpleArrayOfObjects';
+import { MAX_SAFE_BLOB_SIZE } from '@/utils/dataSizeUtils';
 
 import type { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 import type { RepositoryObject } from '@/types/core/RepositoryObject';
@@ -11,6 +12,7 @@ import type { JSONValue } from '@/types/internal/GenericJSON';
 import BlobViewer from './BlobViewer';
 import EmbeddingViewer from './EmbeddingViewer';
 import JSONViewer from './JSONViewer';
+import MarkdownViewer from './MarkdownViewer';
 import TableViewer from './TableViewer';
 
 /**
@@ -20,6 +22,12 @@ import TableViewer from './TableViewer';
 const isEmbeddingFile = (obj: RepositoryObject): boolean =>
   obj.path.endsWith('.parquet') &&
   obj.metadata?.['irmin-file-type'] === 'embeddings';
+
+/**
+ * Checks if a repository object is a markdown file.
+ */
+const isMarkdownFile = (obj: RepositoryObject): boolean =>
+  obj.content_type === 'text/markdown' || obj.path.endsWith('.md');
 
 /**
  * Component to display the content of an object
@@ -63,6 +71,9 @@ const ObjectViewer = ({
     );
   }
   if (objectContent instanceof Blob) {
+    if (isMarkdownFile(object) && objectContent.size <= MAX_SAFE_BLOB_SIZE) {
+      return <MarkdownViewer blob={objectContent} />;
+    }
     return <BlobViewer blob={objectContent} object={object} />;
   } else if (
     Array.isArray(objectContent) ||
