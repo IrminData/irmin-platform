@@ -73,22 +73,23 @@ const WorkflowWorkflowableSection = ({
 
       if (typeof updater === 'function') {
         setCurrentWorkflowable((prev) => {
-          if (!prev || !workflow) return prev;
+          const effectivePrev = prev ?? workflow?.workflowable ?? null;
+          if (!effectivePrev || !workflow) return prev;
           // Create a mock WorkflowRequest with all required properties
           const mockWorkflowData: WorkflowRequest = {
             type: workflow.type,
             name: workflow.name,
             description: workflow.description,
             documentation: workflow.documentation,
-            workflowable: prev,
+            workflowable: effectivePrev,
             schedule: workflow.schedule,
             tags: workflow.tags?.map((tag) => tag.id),
           };
           const updated = updater(mockWorkflowData);
-          // Allow falsy values if explicitly set, but fall back to prev if undefined
+          // Allow falsy values if explicitly set, but fall back to effectivePrev if undefined
           return updated.workflowable !== undefined
             ? (updated.workflowable ?? null)
-            : prev;
+            : effectivePrev;
         });
       } else {
         // Direct value update - extract workflowable from WorkflowRequest
