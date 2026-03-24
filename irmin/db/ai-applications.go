@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -177,8 +178,14 @@ func (d *Database) DeleteAIApplication(tx *gorm.DB, id uint) error {
 // GetAIApplicationByAPIKey retrieves an AI application by its API key.
 // This is used for authenticating AI Application API requests.
 func (d *Database) GetAIApplicationByAPIKey(apiKey string) (*AIApplication, error) {
+	return d.GetAIApplicationByAPIKeyWithContext(context.Background(), apiKey)
+}
+
+// GetAIApplicationByAPIKeyWithContext retrieves an AI application by its API key with a context for timeout control.
+func (d *Database) GetAIApplicationByAPIKeyWithContext(ctx context.Context, apiKey string) (*AIApplication, error) {
 	var aiApplication AIApplication
-	if err := d.Preload("Workspace").
+	if err := d.WithContext(ctx).
+		Preload("Workspace").
 		Preload("Owner").
 		Preload("DataSources").
 		Preload("DataSources.Repository").

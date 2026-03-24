@@ -27,9 +27,56 @@ type WriteAuditInfo struct {
 	PendingWriteID *uint  // Link to pending write if approval required
 }
 
+// auditLogEntry is sent to the audit log worker for durable, non-blocking writes.
+type auditLogEntry struct {
+	log         *db.AIApplicationToolLog
+	apiServices *services.APIServices
+}
+
+// auditLogBufferSize is the capacity of the buffered audit log channel.
+const auditLogBufferSize = 1000
+
+// AuditLogger buffers tool call audit logs and writes them via a background worker.
+type AuditLogger struct {
+	ch chan auditLogEntry
+}
+
+// NewAuditLogger creates an AuditLogger and starts the background drain worker.
+func NewAuditLogger() *AuditLogger {
+	al := &AuditLogger{ch: make(chan auditLogEntry, auditLogBufferSize)}
+	go al.worker()
+	return al
+}
+
+// Send enqueues an audit log entry. If the buffer is full the entry is dropped and an error is logged.
+func (al *AuditLogger) Send(entry auditLogEntry) {
+	select {
+	case al.ch <- entry:
+	default:
+		entry.apiServices.Logger.ErrorContext(
+			context.Background(),
+			"Audit log buffer full, dropping entry",
+			"tool_name", entry.log.ToolName,
+			"ai_app_id", entry.log.AIApplicationID,
+		)
+	}
+}
+
+func (al *AuditLogger) worker() {
+	for entry := range al.ch {
+		if err := entry.apiServices.DB.CreateAIApplicationToolLog(entry.log); err != nil {
+			entry.apiServices.Logger.Error("Failed to create AI app tool audit log",
+				"error", err,
+				"tool_name", entry.log.ToolName,
+				"ai_app_id", entry.log.AIApplicationID)
+		}
+	}
+}
+
 // logToolCall creates an audit log entry for a tool call.
 func logToolCall(
 	ctx context.Context,
+	al *AuditLogger,
 	apiServices *services.APIServices,
 	aiApp *db.AIApplication,
 	toolName string,
@@ -38,12 +85,13 @@ func logToolCall(
 	startTime time.Time,
 	result *sdkmcp.CallToolResult,
 ) {
-	logToolCallWithWriteInfo(ctx, apiServices, aiApp, toolName, toolType, inputs, startTime, result, nil)
+	logToolCallWithWriteInfo(ctx, al, apiServices, aiApp, toolName, toolType, inputs, startTime, result, nil)
 }
 
 // logToolCallWithWriteInfo creates an audit log entry for a tool call with optional write audit info.
 func logToolCallWithWriteInfo(
 	ctx context.Context,
+	al *AuditLogger,
 	apiServices *services.APIServices,
 	aiApp *db.AIApplication,
 	toolName string,
@@ -103,15 +151,8 @@ func logToolCallWithWriteInfo(
 		log.PendingWriteID = writeInfo.PendingWriteID
 	}
 
-	// Create log entry asynchronously to not block the response
-	go func() {
-		if err := apiServices.DB.CreateAIApplicationToolLog(log); err != nil {
-			apiServices.Logger.Error("Failed to create AI app tool audit log",
-				"error", err,
-				"tool_name", toolName,
-				"ai_app_id", aiApp.ID)
-		}
-	}()
+	// Send to the buffered audit log worker instead of fire-and-forget goroutine
+	al.Send(auditLogEntry{log: log, apiServices: apiServices})
 }
 
 const (
@@ -127,28 +168,21 @@ const (
 // This endpoint is authenticated by AI Application API keys instead of user tokens.
 func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices) {
 	cfg := &authConfig{apiServices: apiServices}
+	al := NewAuditLogger()
 
 	// Mount at /api/v1/ai-app/mcp
 	path := "/api/v1/ai-app/mcp"
 
-	// Create a dynamic handler that creates a server per-request based on the AI Application config
-	dynamicHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Create a timeout context for the entire request
-		ctx, cancel := context.WithTimeout(r.Context(), MCPAttachTimeout)
-		defer cancel()
-
-		// Authenticate and get AI Application
-		authHeader := r.Header.Get("Authorization")
-		_, aiApp, err := validateAuthAndGetUserOrAIApp(cfg, authHeader)
-		if err != nil || aiApp == nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			_, _ = w.Write([]byte("Unauthorized - valid AI Application API key required"))
-			return
-		}
-
-		// Track API request for billing
-		if apiServices.UsageTracker != nil {
-			apiServices.UsageTracker.Track(aiApp.Workspace.ID, db.UsageDimensionAPIRequests, 1)
+	// Create a single long-lived StreamableHTTPHandler so sessions persist across requests.
+	// The per-request callback reads the cached auth result from context (set by dynamicHandler)
+	// to avoid a redundant second database lookup.
+	handler := sdkmcp.NewStreamableHTTPHandler(func(r *http.Request) *sdkmcp.Server {
+		// Read cached auth from context (set by dynamicHandler before calling handler.ServeHTTP)
+		aiApp, ok := aiAppAuthCacheFromContext(r.Context())
+		if !ok || aiApp == nil {
+			// This should never happen since dynamicHandler pre-validates auth.
+			apiServices.Logger.Error("AI App MCP callback: no cached auth in context — this is a bug")
+			return nil
 		}
 
 		// Create a new MCP server for this AI Application
@@ -159,15 +193,40 @@ func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices) {
 		}, nil)
 
 		// Register tools based on AI Application config
-		registerAIAppTools(server, aiApp, apiServices)
+		registerAIAppTools(server, aiApp, apiServices, al)
 
-		// Create the streamable HTTP handler
-		handler := sdkmcp.NewStreamableHTTPHandler(func(*http.Request) *sdkmcp.Server { return server }, nil)
+		return server
+	}, nil)
 
-		// Add AI Application and request metadata to context
-		aiAppCtx := withAIAppInContext(ctx, aiApp)
+	// Wrap with auth validation, context enrichment, billing, and timeout
+	dynamicHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Create a timeout context for the entire request
+		ctx, cancel := context.WithTimeout(r.Context(), MCPAttachTimeout)
+		defer cancel()
+
+		// Authenticate and validate — this is the single auth call per request
+		authHeader := r.Header.Get("Authorization")
+		_, aiApp, err := validateAuthAndGetUserOrAIApp(cfg, authHeader)
+		if err != nil || aiApp == nil {
+			apiServices.Logger.Warn("AI App MCP auth failed",
+				"error", err,
+				"path", r.URL.Path,
+				"method", r.Method)
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte("Unauthorized - valid AI Application API key required"))
+			return
+		}
+
+		// Track API request for billing (per-request, not per-session)
+		if apiServices.UsageTracker != nil {
+			apiServices.UsageTracker.Track(aiApp.Workspace.ID, db.UsageDimensionAPIRequests, 1)
+		}
+
+		// Enrich context with auth cache, AI app, and request metadata
+		enrichedCtx := withAIAppAuthCache(ctx, aiApp)
+		enrichedCtx = withAIAppInContext(enrichedCtx, aiApp)
 		reqMetadata := ExtractRequestMetadata(r)
-		aiAppCtx = withRequestMetadataInContext(aiAppCtx, reqMetadata)
+		enrichedCtx = withRequestMetadataInContext(enrichedCtx, reqMetadata)
 
 		apiServices.Logger.Debug("AI App MCP request",
 			"path", r.URL.Path,
@@ -175,7 +234,7 @@ func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices) {
 			"ai_app_id", aiApp.ID,
 			"ai_app_name", aiApp.Name)
 
-		handler.ServeHTTP(w, r.WithContext(aiAppCtx))
+		handler.ServeHTTP(w, r.WithContext(enrichedCtx))
 	})
 
 	// Mount both the main path and the attach endpoint
@@ -192,48 +251,53 @@ func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices) {
 }
 
 // registerAIAppTools registers MCP tools based on the AI Application's tool configuration.
-func registerAIAppTools(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+func registerAIAppTools(
+	server *sdkmcp.Server,
+	aiApp *db.AIApplication,
+	apiServices *services.APIServices,
+	al *AuditLogger,
+) {
 	config := aiApp.ParseToolConfig()
 
 	if config.QueryEnabled {
-		registerAIAppQueryTool(server, aiApp, apiServices)
+		registerAIAppQueryTool(server, aiApp, apiServices, al)
 	}
 	if config.SchemaEnabled {
-		registerAIAppSchemaTool(server, aiApp, apiServices)
+		registerAIAppSchemaTool(server, aiApp, apiServices, al)
 	}
 	if config.ListObjectsEnabled {
-		registerAIAppListObjectsTool(server, aiApp, apiServices)
+		registerAIAppListObjectsTool(server, aiApp, apiServices, al)
 	}
 	if config.GetContentEnabled {
-		registerAIAppGetContentTool(server, aiApp, apiServices)
+		registerAIAppGetContentTool(server, aiApp, apiServices, al)
 	}
 	if config.VectorSearchEnabled {
-		registerAIAppEmbeddingSearchTool(server, aiApp, apiServices)
+		registerAIAppEmbeddingSearchTool(server, aiApp, apiServices, al)
 	}
 	if config.DocsEnabled {
-		registerAIAppDocsTool(server, aiApp, apiServices)
+		registerAIAppDocsTool(server, aiApp, apiServices, al)
 	}
 
 	// Register write tools if enabled
 	if config.WriteEnabled && config.WriteConfig != nil {
 		writeConfig := config.WriteConfig
 		if writeConfig.FileUploadEnabled || writeConfig.FileUpdateEnabled {
-			registerAIAppWriteFileTool(server, aiApp, apiServices)
+			registerAIAppWriteFileTool(server, aiApp, apiServices, al)
 		}
 		if writeConfig.PatchEnabled {
-			registerAIAppPatchFileTool(server, aiApp, apiServices)
+			registerAIAppPatchFileTool(server, aiApp, apiServices, al)
 		}
 		// Register commit tool if not using auto-commit
 		if !writeConfig.AutoCommit {
-			registerAIAppCommitTool(server, aiApp, apiServices)
+			registerAIAppCommitTool(server, aiApp, apiServices, al)
 		}
 	}
 
 	// Register custom tools
-	registerAIAppCustomTools(server, aiApp, apiServices)
+	registerAIAppCustomTools(server, aiApp, apiServices, al)
 
 	// Always register the info tool
-	registerAIAppInfoTool(server, aiApp, apiServices)
+	registerAIAppInfoTool(server, aiApp, apiServices, al)
 }
 
 // Tool argument structs - Simplified with unified paths (format: /repo-slug/ref/path)
@@ -284,7 +348,10 @@ type aiAppCommitArgs struct {
 }
 
 // registerAIAppInfoTool registers a tool to get info about the AI Application.
-func registerAIAppInfoTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+func registerAIAppInfoTool(
+	server *sdkmcp.Server, aiApp *db.AIApplication,
+	apiServices *services.APIServices, al *AuditLogger,
+) {
 	sdkmcp.AddTool(
 		server,
 		&sdkmcp.Tool{
@@ -315,14 +382,19 @@ func registerAIAppInfoTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiSe
 				},
 			}
 
-			logToolCall(ctx, apiServices, aiApp, "irmin_ai_app_info", "builtin", args, startTime, result)
+			logToolCall(ctx, al, apiServices, aiApp, "irmin_ai_app_info", "builtin", args, startTime, result)
 			return result, struct{}{}, nil
 		},
 	)
 }
 
 // registerAIAppQueryTool registers the SQL query tool.
-func registerAIAppQueryTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+func registerAIAppQueryTool(
+	server *sdkmcp.Server,
+	aiApp *db.AIApplication,
+	apiServices *services.APIServices,
+	al *AuditLogger,
+) {
 	sdkmcp.AddTool(
 		server,
 		&sdkmcp.Tool{
@@ -336,7 +408,7 @@ func registerAIAppQueryTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiS
 			queryResult, err := executor.ExecuteSQL(ctx, args.SQL, true)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, apiServices, aiApp, "irmin_execute_sql", "builtin", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, "irmin_execute_sql", "builtin", args, startTime, result)
 				return result, struct{}{}, nil
 			}
 
@@ -347,14 +419,19 @@ func registerAIAppQueryTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiS
 				},
 			}
 
-			logToolCall(ctx, apiServices, aiApp, "irmin_execute_sql", "builtin", args, startTime, result)
+			logToolCall(ctx, al, apiServices, aiApp, "irmin_execute_sql", "builtin", args, startTime, result)
 			return result, struct{}{}, nil
 		},
 	)
 }
 
 // registerAIAppSchemaTool registers the object schema tool.
-func registerAIAppSchemaTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+func registerAIAppSchemaTool(
+	server *sdkmcp.Server,
+	aiApp *db.AIApplication,
+	apiServices *services.APIServices,
+	al *AuditLogger,
+) {
 	sdkmcp.AddTool(
 		server,
 		&sdkmcp.Tool{
@@ -368,7 +445,7 @@ func registerAIAppSchemaTool(server *sdkmcp.Server, aiApp *db.AIApplication, api
 			schema, err := executor.GetSchemaByPath(ctx, args.Path)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, apiServices, aiApp, "irmin_get_object_schema", "builtin", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, "irmin_get_object_schema", "builtin", args, startTime, result)
 				return result, struct{}{}, nil
 			}
 
@@ -379,14 +456,19 @@ func registerAIAppSchemaTool(server *sdkmcp.Server, aiApp *db.AIApplication, api
 				},
 			}
 
-			logToolCall(ctx, apiServices, aiApp, "irmin_get_object_schema", "builtin", args, startTime, result)
+			logToolCall(ctx, al, apiServices, aiApp, "irmin_get_object_schema", "builtin", args, startTime, result)
 			return result, struct{}{}, nil
 		},
 	)
 }
 
 // registerAIAppListObjectsTool registers the list objects tool.
-func registerAIAppListObjectsTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+func registerAIAppListObjectsTool(
+	server *sdkmcp.Server,
+	aiApp *db.AIApplication,
+	apiServices *services.APIServices,
+	al *AuditLogger,
+) {
 	sdkmcp.AddTool(
 		server,
 		&sdkmcp.Tool{
@@ -400,7 +482,7 @@ func registerAIAppListObjectsTool(server *sdkmcp.Server, aiApp *db.AIApplication
 			object, err := executor.ListObjectsByPath(ctx, args.Path)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, apiServices, aiApp, "irmin_list_objects", "builtin", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, "irmin_list_objects", "builtin", args, startTime, result)
 				return result, struct{}{}, nil
 			}
 
@@ -408,7 +490,7 @@ func registerAIAppListObjectsTool(server *sdkmcp.Server, aiApp *db.AIApplication
 			formatted, formatErr := formatter.FormatRepositoryObjectResponse(object, apiServices.SQIDManager)
 			if formatErr != nil {
 				result := mcpError("Failed to format response")
-				logToolCall(ctx, apiServices, aiApp, "irmin_list_objects", "builtin", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, "irmin_list_objects", "builtin", args, startTime, result)
 				//nolint:nilerr // Error is communicated via mcpError result with IsError: true
 				return result, struct{}{}, nil
 			}
@@ -420,14 +502,19 @@ func registerAIAppListObjectsTool(server *sdkmcp.Server, aiApp *db.AIApplication
 				},
 			}
 
-			logToolCall(ctx, apiServices, aiApp, "irmin_list_objects", "builtin", args, startTime, result)
+			logToolCall(ctx, al, apiServices, aiApp, "irmin_list_objects", "builtin", args, startTime, result)
 			return result, struct{}{}, nil
 		},
 	)
 }
 
 // registerAIAppGetContentTool registers the get content tool.
-func registerAIAppGetContentTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+func registerAIAppGetContentTool(
+	server *sdkmcp.Server,
+	aiApp *db.AIApplication,
+	apiServices *services.APIServices,
+	al *AuditLogger,
+) {
 	sdkmcp.AddTool(
 		server,
 		&sdkmcp.Tool{
@@ -441,7 +528,7 @@ func registerAIAppGetContentTool(server *sdkmcp.Server, aiApp *db.AIApplication,
 			content, err := executor.GetContentByPath(ctx, args.Path, true)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
 				return result, struct{}{}, nil
 			}
 
@@ -456,7 +543,17 @@ func registerAIAppGetContentTool(server *sdkmcp.Server, aiApp *db.AIApplication,
 						"path", args.Path,
 						"error", transformErr)
 					result := mcpError(fmt.Sprintf("Failed to transform content: %v", transformErr))
-					logToolCall(ctx, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
+					logToolCall(
+						ctx,
+						al,
+						apiServices,
+						aiApp,
+						"irmin_get_object_content",
+						"builtin",
+						args,
+						startTime,
+						result,
+					)
 					return result, struct{}{}, nil
 				}
 
@@ -474,14 +571,14 @@ func registerAIAppGetContentTool(server *sdkmcp.Server, aiApp *db.AIApplication,
 					},
 				}
 
-				logToolCall(ctx, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
 				return result, struct{}{}, nil
 			}
 
 			// For non-binary files, check if text-based
 			if !irminutils.IsTextMimeType(mimeType) {
 				result := mcpError("Content is not a supported text format")
-				logToolCall(ctx, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
 				return result, struct{}{}, nil
 			}
 
@@ -497,7 +594,7 @@ func registerAIAppGetContentTool(server *sdkmcp.Server, aiApp *db.AIApplication,
 				},
 			}
 
-			logToolCall(ctx, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
+			logToolCall(ctx, al, apiServices, aiApp, "irmin_get_object_content", "builtin", args, startTime, result)
 			return result, struct{}{}, nil
 		},
 	)
@@ -508,6 +605,7 @@ func registerAIAppEmbeddingSearchTool(
 	server *sdkmcp.Server,
 	aiApp *db.AIApplication,
 	apiServices *services.APIServices,
+	al *AuditLogger,
 ) {
 	sdkmcp.AddTool(
 		server,
@@ -550,7 +648,7 @@ Results include priority and metadata fields for each embedding chunk.`,
 			)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, apiServices, aiApp, "irmin_search_embeddings", "builtin", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, "irmin_search_embeddings", "builtin", args, startTime, result)
 				return result, struct{}{}, nil
 			}
 
@@ -561,14 +659,19 @@ Results include priority and metadata fields for each embedding chunk.`,
 				},
 			}
 
-			logToolCall(ctx, apiServices, aiApp, "irmin_search_embeddings", "builtin", args, startTime, result)
+			logToolCall(ctx, al, apiServices, aiApp, "irmin_search_embeddings", "builtin", args, startTime, result)
 			return result, struct{}{}, nil
 		},
 	)
 }
 
 // registerAIAppDocsTool registers the documentation tool.
-func registerAIAppDocsTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+func registerAIAppDocsTool(
+	server *sdkmcp.Server,
+	aiApp *db.AIApplication,
+	apiServices *services.APIServices,
+	al *AuditLogger,
+) {
 	sdkmcp.AddTool(
 		server,
 		&sdkmcp.Tool{
@@ -595,14 +698,19 @@ func registerAIAppDocsTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiSe
 				},
 			}
 
-			logToolCall(ctx, apiServices, aiApp, "irmin_get_documentation", "builtin", args, startTime, result)
+			logToolCall(ctx, al, apiServices, aiApp, "irmin_get_documentation", "builtin", args, startTime, result)
 			return result, struct{}{}, nil
 		},
 	)
 }
 
 // registerAIAppWriteFileTool registers the write file tool.
-func registerAIAppWriteFileTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+func registerAIAppWriteFileTool(
+	server *sdkmcp.Server,
+	aiApp *db.AIApplication,
+	apiServices *services.APIServices,
+	al *AuditLogger,
+) {
 	sdkmcp.AddTool(
 		server,
 		&sdkmcp.Tool{
@@ -620,7 +728,7 @@ func registerAIAppWriteFileTool(server *sdkmcp.Server, aiApp *db.AIApplication, 
 				decoded, err := base64.StdEncoding.DecodeString(args.Content)
 				if err != nil {
 					result := mcpError(fmt.Sprintf("Invalid base64 content: %v", err))
-					logToolCall(ctx, apiServices, aiApp, "irmin_write_file", "builtin", args, startTime, result)
+					logToolCall(ctx, al, apiServices, aiApp, "irmin_write_file", "builtin", args, startTime, result)
 					return result, struct{}{}, nil
 				}
 				content = decoded
@@ -631,7 +739,7 @@ func registerAIAppWriteFileTool(server *sdkmcp.Server, aiApp *db.AIApplication, 
 			writeResult, err := executor.WriteFile(ctx, args.Path, content, args.CommitMessage, false)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, apiServices, aiApp, "irmin_write_file", "builtin", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, "irmin_write_file", "builtin", args, startTime, result)
 				return result, struct{}{}, nil
 			}
 
@@ -660,6 +768,7 @@ func registerAIAppWriteFileTool(server *sdkmcp.Server, aiApp *db.AIApplication, 
 
 			logToolCallWithWriteInfo(
 				ctx,
+				al,
 				apiServices,
 				aiApp,
 				"irmin_write_file",
@@ -675,7 +784,12 @@ func registerAIAppWriteFileTool(server *sdkmcp.Server, aiApp *db.AIApplication, 
 }
 
 // registerAIAppPatchFileTool registers the patch file tool.
-func registerAIAppPatchFileTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+func registerAIAppPatchFileTool(
+	server *sdkmcp.Server,
+	aiApp *db.AIApplication,
+	apiServices *services.APIServices,
+	al *AuditLogger,
+) {
 	sdkmcp.AddTool(
 		server,
 		&sdkmcp.Tool{
@@ -689,7 +803,7 @@ func registerAIAppPatchFileTool(server *sdkmcp.Server, aiApp *db.AIApplication, 
 			var operations []irminmodels.PatchOperation
 			if err := json.Unmarshal([]byte(args.Operations), &operations); err != nil {
 				result := mcpError(fmt.Sprintf("Invalid operations JSON: %v", err))
-				logToolCall(ctx, apiServices, aiApp, "irmin_patch_file", "builtin", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, "irmin_patch_file", "builtin", args, startTime, result)
 				return result, struct{}{}, nil
 			}
 
@@ -698,7 +812,7 @@ func registerAIAppPatchFileTool(server *sdkmcp.Server, aiApp *db.AIApplication, 
 			writeResult, err := executor.PatchFile(ctx, args.Path, operations, args.CommitMessage, false)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, apiServices, aiApp, "irmin_patch_file", "builtin", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, "irmin_patch_file", "builtin", args, startTime, result)
 				return result, struct{}{}, nil
 			}
 
@@ -726,6 +840,7 @@ func registerAIAppPatchFileTool(server *sdkmcp.Server, aiApp *db.AIApplication, 
 
 			logToolCallWithWriteInfo(
 				ctx,
+				al,
 				apiServices,
 				aiApp,
 				"irmin_patch_file",
@@ -741,7 +856,12 @@ func registerAIAppPatchFileTool(server *sdkmcp.Server, aiApp *db.AIApplication, 
 }
 
 // registerAIAppCommitTool registers the commit tool.
-func registerAIAppCommitTool(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+func registerAIAppCommitTool(
+	server *sdkmcp.Server,
+	aiApp *db.AIApplication,
+	apiServices *services.APIServices,
+	al *AuditLogger,
+) {
 	sdkmcp.AddTool(
 		server,
 		&sdkmcp.Tool{
@@ -759,7 +879,7 @@ func registerAIAppCommitTool(server *sdkmcp.Server, aiApp *db.AIApplication, api
 				resolved, err := executor.ResolvePath(args.Path)
 				if err != nil {
 					result := mcpError(err.Error())
-					logToolCall(ctx, apiServices, aiApp, "irmin_commit", "builtin", args, startTime, result)
+					logToolCall(ctx, al, apiServices, aiApp, "irmin_commit", "builtin", args, startTime, result)
 					return result, struct{}{}, nil
 				}
 				repoSlug = resolved.Repository.Slug
@@ -769,13 +889,13 @@ func registerAIAppCommitTool(server *sdkmcp.Server, aiApp *db.AIApplication, api
 				dataSources := executor.ListDataSourcesUnified()
 				if len(dataSources) == 0 {
 					result := mcpError("No data sources configured")
-					logToolCall(ctx, apiServices, aiApp, "irmin_commit", "builtin", args, startTime, result)
+					logToolCall(ctx, al, apiServices, aiApp, "irmin_commit", "builtin", args, startTime, result)
 					return result, struct{}{}, nil
 				}
 				resolved, err := executor.ResolvePath(dataSources[0].Path)
 				if err != nil {
 					result := mcpError(err.Error())
-					logToolCall(ctx, apiServices, aiApp, "irmin_commit", "builtin", args, startTime, result)
+					logToolCall(ctx, al, apiServices, aiApp, "irmin_commit", "builtin", args, startTime, result)
 					return result, struct{}{}, nil
 				}
 				repoSlug = resolved.Repository.Slug
@@ -785,7 +905,7 @@ func registerAIAppCommitTool(server *sdkmcp.Server, aiApp *db.AIApplication, api
 			commit, err := executor.CommitStagedChanges(ctx, repoSlug, ref, args.Message)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, apiServices, aiApp, "irmin_commit", "builtin", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, "irmin_commit", "builtin", args, startTime, result)
 				return result, struct{}{}, nil
 			}
 
@@ -812,6 +932,7 @@ func registerAIAppCommitTool(server *sdkmcp.Server, aiApp *db.AIApplication, api
 
 			logToolCallWithWriteInfo(
 				ctx,
+				al,
 				apiServices,
 				aiApp,
 				"irmin_commit",
@@ -837,12 +958,17 @@ func mcpError(message string) *sdkmcp.CallToolResult {
 }
 
 // registerAIAppCustomTools registers all enabled custom tools for the AI Application.
-func registerAIAppCustomTools(server *sdkmcp.Server, aiApp *db.AIApplication, apiServices *services.APIServices) {
+func registerAIAppCustomTools(
+	server *sdkmcp.Server,
+	aiApp *db.AIApplication,
+	apiServices *services.APIServices,
+	al *AuditLogger,
+) {
 	executor := services.NewAIAppToolExecutor(aiApp, apiServices)
 	customTools := executor.GetEnabledCustomTools()
 
 	for _, tool := range customTools {
-		registerSingleCustomTool(server, aiApp, apiServices, tool)
+		registerSingleCustomTool(server, aiApp, apiServices, tool, al)
 	}
 }
 
@@ -852,6 +978,7 @@ func registerSingleCustomTool(
 	aiApp *db.AIApplication,
 	apiServices *services.APIServices,
 	tool db.AIApplicationCustomTool,
+	al *AuditLogger,
 ) {
 	// Create tool name with prefix to avoid conflicts
 	toolName := "irmin_custom_" + tool.Name
@@ -859,7 +986,7 @@ func registerSingleCustomTool(
 	switch tool.Type {
 	case db.CustomToolTypeStoredQuery:
 		registerCustomNoArgsTool(server, aiApp, apiServices, tool, toolName,
-			"Execute a predefined SQL query and return the results.")
+			"Execute a predefined SQL query and return the results.", al)
 	case db.CustomToolTypeWorkflow:
 		registerCustomNoArgsTool(
 			server,
@@ -868,9 +995,10 @@ func registerSingleCustomTool(
 			tool,
 			toolName,
 			"Trigger a workflow execution and wait for completion. Returns workflow run logs, status, and execution details. May timeout for long-running workflows.",
+			al,
 		)
 	case db.CustomToolTypeEmbeddingSearch:
-		registerCustomEmbeddingSearchTool(server, aiApp, apiServices, tool, toolName)
+		registerCustomEmbeddingSearchTool(server, aiApp, apiServices, tool, toolName, al)
 	}
 }
 
@@ -882,6 +1010,7 @@ func registerCustomNoArgsTool(
 	tool db.AIApplicationCustomTool,
 	toolName string,
 	defaultDescription string,
+	al *AuditLogger,
 ) {
 	description := tool.Description
 	if description == "" {
@@ -904,7 +1033,7 @@ func registerCustomNoArgsTool(
 			execResult, err := executor.ExecuteCustomTool(ctx, capturedToolName, "")
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, apiServices, aiApp, toolName, "custom", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, toolName, "custom", args, startTime, result)
 				return result, struct{}{}, nil
 			}
 
@@ -915,7 +1044,7 @@ func registerCustomNoArgsTool(
 				},
 			}
 
-			logToolCall(ctx, apiServices, aiApp, toolName, "custom", args, startTime, result)
+			logToolCall(ctx, al, apiServices, aiApp, toolName, "custom", args, startTime, result)
 			return result, struct{}{}, nil
 		},
 	)
@@ -934,6 +1063,7 @@ func registerCustomEmbeddingSearchTool(
 	apiServices *services.APIServices,
 	tool db.AIApplicationCustomTool,
 	toolName string,
+	al *AuditLogger,
 ) {
 	description := tool.Description
 	if description == "" {
@@ -954,7 +1084,7 @@ func registerCustomEmbeddingSearchTool(
 
 			if args.Query == "" {
 				result := mcpError("Query is required")
-				logToolCall(ctx, apiServices, aiApp, toolName, "custom", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, toolName, "custom", args, startTime, result)
 				return result, struct{}{}, nil
 			}
 
@@ -962,7 +1092,7 @@ func registerCustomEmbeddingSearchTool(
 			execResult, err := executor.ExecuteCustomTool(ctx, capturedToolName, args.Query)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, apiServices, aiApp, toolName, "custom", args, startTime, result)
+				logToolCall(ctx, al, apiServices, aiApp, toolName, "custom", args, startTime, result)
 				return result, struct{}{}, nil
 			}
 
@@ -973,7 +1103,7 @@ func registerCustomEmbeddingSearchTool(
 				},
 			}
 
-			logToolCall(ctx, apiServices, aiApp, toolName, "custom", args, startTime, result)
+			logToolCall(ctx, al, apiServices, aiApp, toolName, "custom", args, startTime, result)
 			return result, struct{}{}, nil
 		},
 	)

@@ -14,6 +14,14 @@ type userCtxKey struct{}
 type aiAppCtxKey struct{}
 type requestMetadataCtxKey struct{}
 
+// cachedAIAppAuthResult caches the result of AI app authentication so
+// the StreamableHTTPHandler callback can reuse it without a second DB call.
+type cachedAIAppAuthResult struct {
+	aiApp *db.AIApplication
+}
+
+type aiAppAuthCacheCtxKey struct{}
+
 // RequestMetadata contains HTTP request information for audit logging.
 type RequestMetadata struct {
 	IP          string
@@ -29,6 +37,18 @@ func withRequestMetadataInContext(ctx context.Context, metadata *RequestMetadata
 func requestMetadataFromContext(ctx context.Context) (*RequestMetadata, bool) {
 	m, ok := ctx.Value(requestMetadataCtxKey{}).(*RequestMetadata)
 	return m, ok && m != nil
+}
+
+func withAIAppAuthCache(ctx context.Context, aiApp *db.AIApplication) context.Context {
+	return context.WithValue(ctx, aiAppAuthCacheCtxKey{}, &cachedAIAppAuthResult{aiApp: aiApp})
+}
+
+func aiAppAuthCacheFromContext(ctx context.Context) (*db.AIApplication, bool) {
+	cached, ok := ctx.Value(aiAppAuthCacheCtxKey{}).(*cachedAIAppAuthResult)
+	if !ok || cached == nil {
+		return nil, false
+	}
+	return cached.aiApp, cached.aiApp != nil
 }
 
 // ExtractRequestMetadata extracts request metadata from an HTTP request for audit logging.
@@ -81,16 +101,11 @@ func validateAuthAndGetUser(cfg *authConfig, authHeader string) (*db.User, error
 	ctx, cancel := context.WithTimeout(context.Background(), MCPAuthTimeout)
 	defer cancel()
 
-	// Monitor for auth timeout
-	go func() {
-		<-ctx.Done()
+	user, tokenType, err := cfg.apiServices.IdentifyUserFromToken(ctx, token, "en")
+	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			cfg.apiServices.Logger.Error("MCP auth: IdentifyUserFromToken timed out")
 		}
-	}()
-
-	user, tokenType, err := cfg.apiServices.IdentifyUserFromToken(ctx, token, "en")
-	if err != nil {
 		return nil, err
 	}
 	if tokenType == services.TokenTypeSystem {
@@ -110,7 +125,11 @@ func validateAuthAndGetUserOrAIApp(cfg *authConfig, authHeader string) (*db.User
 
 	// Check if this is an AI Application API key
 	if strings.HasPrefix(token, "ai_") {
-		aiApp, err := cfg.apiServices.DB.GetAIApplicationByAPIKey(token)
+		// Use a timeout context for the database lookup
+		ctx, cancel := context.WithTimeout(context.Background(), MCPAuthTimeout)
+		defer cancel()
+
+		aiApp, err := cfg.apiServices.DB.GetAIApplicationByAPIKeyWithContext(ctx, token)
 		if err != nil {
 			cfg.apiServices.Logger.Error("Invalid AI Application API key", "error", err)
 			return nil, nil, errors.New("invalid AI Application API key")
@@ -122,16 +141,11 @@ func validateAuthAndGetUserOrAIApp(cfg *authConfig, authHeader string) (*db.User
 	ctx, cancel := context.WithTimeout(context.Background(), MCPAuthTimeout)
 	defer cancel()
 
-	// Monitor for auth timeout
-	go func() {
-		<-ctx.Done()
+	user, tokenType, err := cfg.apiServices.IdentifyUserFromToken(ctx, token, "en")
+	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			cfg.apiServices.Logger.Error("MCP auth: IdentifyUserFromToken timed out")
 		}
-	}()
-
-	user, tokenType, err := cfg.apiServices.IdentifyUserFromToken(ctx, token, "en")
-	if err != nil {
 		return nil, nil, err
 	}
 	if tokenType == services.TokenTypeSystem {

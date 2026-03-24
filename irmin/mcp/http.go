@@ -53,12 +53,16 @@ func wrapWithHTTPAuth(base http.Handler, cfg *authConfig) http.Handler {
 		authHeader := r.Header.Get("Authorization")
 		user, err := validateAuthAndGetUser(cfg, authHeader)
 		if err != nil {
+			cfg.apiServices.Logger.Warn("MCP auth failed",
+				"error", err,
+				"path", r.URL.Path,
+				"method", r.Method)
 			w.WriteHeader(http.StatusUnauthorized)
 			_, _ = w.Write([]byte("Unauthorized"))
 			return
 		}
 
-		// Add user to context and serve with timeout
+		// Enrich context with user
 		userCtx := withUserInContext(ctx, user)
 
 		// Only log MCP requests for debugging (can be removed in production)
@@ -66,22 +70,6 @@ func wrapWithHTTPAuth(base http.Handler, cfg *authConfig) http.Handler {
 			"path", r.URL.Path,
 			"method", r.Method,
 			"user_id", user.ID)
-
-		// Monitor for context cancellation
-		go func() {
-			<-ctx.Done()
-			if ctx.Err() == context.DeadlineExceeded {
-				cfg.apiServices.Logger.Error(
-					"MCP HTTP request timed out",
-					"path",
-					r.URL.Path,
-					"method",
-					r.Method,
-					"user_id",
-					user.ID,
-				)
-			}
-		}()
 
 		// Create a wrapper to monitor response
 		responseWrapper := &responseMonitor{

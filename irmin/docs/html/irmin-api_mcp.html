@@ -79,6 +79,20 @@ func RegisterFiber(app *fiber.App, apiServices *services.APIServices)
 
 TYPES
 
+type AuditLogger struct {
+	// Has unexported fields.
+}
+    AuditLogger buffers tool call audit logs and writes them via a background
+    worker.
+
+func NewAuditLogger() *AuditLogger
+    NewAuditLogger creates an AuditLogger and starts the background drain
+    worker.
+
+func (al *AuditLogger) Send(entry auditLogEntry)
+    Send enqueues an audit log entry. If the buffer is full the entry is dropped
+    and an error is logged.
+
 type ContentTransformResult struct {
 	Content  string
 	MimeType string

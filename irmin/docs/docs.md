@@ -3014,6 +3014,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) FindRepositorySchemaCache\(repositoryID uint, path, ref string\) \(\*RepositorySchemaCache, error\)](<#Database.FindRepositorySchemaCache>)
   - [func \(d \*Database\) GenerateAllPossiblePolicies\(workspaceID uint, principal PolicyPrincipal, principalID \*uint, opts ...PolicyGenerationOptions\) \[\]Policy](<#Database.GenerateAllPossiblePolicies>)
   - [func \(d \*Database\) GetAIApplicationByAPIKey\(apiKey string\) \(\*AIApplication, error\)](<#Database.GetAIApplicationByAPIKey>)
+  - [func \(d \*Database\) GetAIApplicationByAPIKeyWithContext\(ctx context.Context, apiKey string\) \(\*AIApplication, error\)](<#Database.GetAIApplicationByAPIKeyWithContext>)
   - [func \(d \*Database\) GetAIApplicationByID\(id uint\) \(\*AIApplication, error\)](<#Database.GetAIApplicationByID>)
   - [func \(d \*Database\) GetAIApplicationPendingWriteByID\(id uint\) \(\*AIApplicationPendingWrite, error\)](<#Database.GetAIApplicationPendingWriteByID>)
   - [func \(d \*Database\) GetAIApplicationTags\(aiApplicationID uint\) \(\[\]Tag, error\)](<#Database.GetAIApplicationTags>)
@@ -4584,6 +4585,15 @@ func (d *Database) GetAIApplicationByAPIKey(apiKey string) (*AIApplication, erro
 ```
 
 GetAIApplicationByAPIKey retrieves an AI application by its API key. This is used for authenticating AI Application API requests.
+
+<a name="Database.GetAIApplicationByAPIKeyWithContext"></a>
+### func \(\*Database\) GetAIApplicationByAPIKeyWithContext
+
+```go
+func (d *Database) GetAIApplicationByAPIKeyWithContext(ctx context.Context, apiKey string) (*AIApplication, error)
+```
+
+GetAIApplicationByAPIKeyWithContext retrieves an AI application by its API key with a context for timeout control.
 
 <a name="Database.GetAIApplicationByID"></a>
 ### func \(\*Database\) GetAIApplicationByID
@@ -12404,6 +12414,9 @@ import "irmin-api/mcp"
 - [func IsTabularTextFormat\(path string\) bool](<#IsTabularTextFormat>)
 - [func RegisterAIAppMCP\(app \*fiber.App, apiServices \*services.APIServices\)](<#RegisterAIAppMCP>)
 - [func RegisterFiber\(app \*fiber.App, apiServices \*services.APIServices\)](<#RegisterFiber>)
+- [type AuditLogger](<#AuditLogger>)
+  - [func NewAuditLogger\(\) \*AuditLogger](<#NewAuditLogger>)
+  - [func \(al \*AuditLogger\) Send\(entry auditLogEntry\)](<#AuditLogger.Send>)
 - [type ContentTransformResult](<#ContentTransformResult>)
   - [func TransformContentForLLM\(content \[\]byte, path string\) \(\*ContentTransformResult, error\)](<#TransformContentForLLM>)
 - [type RequestMetadata](<#RequestMetadata>)
@@ -12519,6 +12532,35 @@ func RegisterFiber(app *fiber.App, apiServices *services.APIServices)
 ```
 
 RegisterFiber mounts the existing MCP HTTP endpoint and the new HTTP\-only attach endpoint.
+
+<a name="AuditLogger"></a>
+## type AuditLogger
+
+AuditLogger buffers tool call audit logs and writes them via a background worker.
+
+```go
+type AuditLogger struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewAuditLogger"></a>
+### func NewAuditLogger
+
+```go
+func NewAuditLogger() *AuditLogger
+```
+
+NewAuditLogger creates an AuditLogger and starts the background drain worker.
+
+<a name="AuditLogger.Send"></a>
+### func \(\*AuditLogger\) Send
+
+```go
+func (al *AuditLogger) Send(entry auditLogEntry)
+```
+
+Send enqueues an audit log entry. If the buffer is full the entry is dropped and an error is logged.
 
 <a name="ContentTransformResult"></a>
 ## type ContentTransformResult
