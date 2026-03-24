@@ -447,17 +447,16 @@ func main() {
 	// Ensure Novu workflows exist (non-blocking, logs warnings on failure)
 	lib.EnsureNovuWorkflows(env, slog.Default())
 
+	// Mount MCP handlers before API routes so they are matched first
+	// (the /api/v1 group's AuthMiddleware would otherwise intercept /api/v1/ai-app/mcp)
+	mcpserver.RegisterFiber(app, apiServices)
+	mcpserver.RegisterAIAppMCP(app, apiServices)
+
 	// Register routes
 	routes.RegisterAPIRoutes(
 		app,
 		apiServices,
 	)
-
-	// Mount MCP streamable HTTP handler inside the main app
-	mcpserver.RegisterFiber(app, apiServices)
-
-	// Mount AI Application MCP handler
-	mcpserver.RegisterAIAppMCP(app, apiServices)
 
 	// Start servers
 	startServer(app, env)
