@@ -424,8 +424,12 @@ const en = {
       mcpClaudeDesktopTitle: 'Add to Claude Desktop',
       mcpClaudeDesktopDescription:
         'Add this configuration to your Claude Desktop config file:',
-      mcpClaudeDesktopConfig:
+      mcpStreamableHttpTab: 'Streamable HTTP',
+      mcpRemoteTab: 'mcp-remote',
+      mcpStreamableHttpConfig:
         '{\n  "mcpServers": {\n    "irmin": {\n      "url": "<MCP_URL>",\n      "headers": {\n        "Authorization": "Bearer <your-api-token>"\n      }\n    }\n  }\n}',
+      mcpRemoteConfig:
+        '{\n  "mcpServers": {\n    "irmin": {\n      "command": "npx",\n      "args": [\n        "-y",\n        "mcp-remote@latest",\n        "<MCP_URL>",\n        "--header",\n        "Authorization: Bearer ${AUTH_TOKEN}"\n      ],\n      "env": {\n        "AUTH_TOKEN": "<your-api-token>"\n      }\n    }\n  }\n}',
       mcpConfigNote:
         'Replace <MCP_URL> with the MCP Server URL above and <your-api-token> with your API token from the tokens page.',
       viewMcpDocs: 'View MCP Documentation',

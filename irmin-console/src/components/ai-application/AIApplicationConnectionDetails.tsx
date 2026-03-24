@@ -21,6 +21,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { useAIApplicationContext } from '@/context/AIApplicationContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -38,30 +39,42 @@ const AIApplicationConnectionDetails = () => {
   const [configCopied, setConfigCopied] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
 
-  const mcpConfig = {
+  const streamableHttpConfig = {
+    mcpServers: {
+      irmin: {
+        url: `${
+          process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev/api'
+        }/v1/ai-app/mcp`,
+        headers: {
+          Authorization: `Bearer ${aiApplication.api_key || '<YOUR_API_KEY>'}`,
+        },
+      },
+    },
+  };
+
+  const mcpRemoteConfig = {
     mcpServers: {
       irmin: {
         command: 'npx',
         args: [
           '-y',
-          '@irmin-data/mcp-server',
-          'connect',
-          '--api-key',
-          aiApplication.api_key || '<YOUR_API_KEY>',
-          '--endpoint',
+          'mcp-remote@latest',
           `${
-            process.env.NEXT_PUBLIC_API_URL?.replace('/api', '/mcp') ??
-            'https://api.irmin.dev/mcp'
-          }/ai-app`,
+            process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev/api'
+          }/v1/ai-app/mcp`,
+          '--header',
+          'Authorization: Bearer ${AUTH_TOKEN}',
         ],
+        env: {
+          AUTH_TOKEN: aiApplication.api_key || '<YOUR_API_KEY>',
+        },
       },
     },
   };
 
   const mcpEndpoint = `${
-    process.env.NEXT_PUBLIC_API_URL?.replace('/api', '/mcp') ??
-    'https://api.irmin.dev/mcp'
-  }/ai-app`;
+    process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev/api'
+  }/v1/ai-app/mcp`;
 
   const restApiEndpoint = `${
     process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev/api'
@@ -264,38 +277,60 @@ const AIApplicationConnectionDetails = () => {
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className='mt-2'>
-                <div
-                  className={`
-                    relative rounded-md bg-muted/50 p-3 font-mono text-xs
-                  `}
-                >
-                  <pre
-                    className={`overflow-x-auto break-all whitespace-pre-wrap`}
-                  >
-                    {JSON.stringify(mcpConfig, null, 2)}
-                  </pre>
-                  <Button
-                    size='icon'
-                    variant='ghost'
-                    className={`
-                      absolute top-2 right-2 size-6 text-muted-foreground
-                      hover:bg-background hover:text-foreground
-                    `}
-                    onClick={() => {
-                      navigator.clipboard.writeText(
-                        JSON.stringify(mcpConfig, null, 2)
-                      );
-                      setConfigCopied(true);
-                      setTimeout(() => setConfigCopied(false), 2000);
-                    }}
-                  >
-                    {configCopied ? (
-                      <TbCheck size={14} />
-                    ) : (
-                      <TbCopy size={14} />
-                    )}
-                  </Button>
-                </div>
+                <Tabs defaultValue='streamable-http'>
+                  <TabsList>
+                    <TabsTrigger value='streamable-http'>
+                      Streamable HTTP
+                    </TabsTrigger>
+                    <TabsTrigger value='mcp-remote'>mcp-remote</TabsTrigger>
+                  </TabsList>
+                  {(['streamable-http', 'mcp-remote'] as const).map((tab) => {
+                    const config =
+                      tab === 'streamable-http'
+                        ? streamableHttpConfig
+                        : mcpRemoteConfig;
+                    return (
+                      <TabsContent key={tab} value={tab}>
+                        <div
+                          className={`
+                            relative rounded-md bg-muted/50 p-3 font-mono
+                            text-xs
+                          `}
+                        >
+                          <pre
+                            className={`
+                              overflow-x-auto break-all whitespace-pre-wrap
+                            `}
+                          >
+                            {JSON.stringify(config, null, 2)}
+                          </pre>
+                          <Button
+                            size='icon'
+                            variant='ghost'
+                            className={`
+                              absolute top-2 right-2 size-6
+                              text-muted-foreground
+                              hover:bg-background hover:text-foreground
+                            `}
+                            onClick={() => {
+                              navigator.clipboard.writeText(
+                                JSON.stringify(config, null, 2)
+                              );
+                              setConfigCopied(true);
+                              setTimeout(() => setConfigCopied(false), 2000);
+                            }}
+                          >
+                            {configCopied ? (
+                              <TbCheck size={14} />
+                            ) : (
+                              <TbCopy size={14} />
+                            )}
+                          </Button>
+                        </div>
+                      </TabsContent>
+                    );
+                  })}
+                </Tabs>
               </CollapsibleContent>
             </Collapsible>
           </div>

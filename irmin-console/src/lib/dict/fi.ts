@@ -427,8 +427,12 @@ const fi = {
       mcpClaudeDesktopTitle: 'Lisää Claude Desktopiin',
       mcpClaudeDesktopDescription:
         'Lisää tämä konfiguraatio Claude Desktop -konfiguraatiotiedostoosi:',
-      mcpClaudeDesktopConfig:
+      mcpStreamableHttpTab: 'Streamable HTTP',
+      mcpRemoteTab: 'mcp-remote',
+      mcpStreamableHttpConfig:
         '{\n  "mcpServers": {\n    "irmin": {\n      "url": "<MCP_URL>",\n      "headers": {\n        "Authorization": "Bearer <api-avain>"\n      }\n    }\n  }\n}',
+      mcpRemoteConfig:
+        '{\n  "mcpServers": {\n    "irmin": {\n      "command": "npx",\n      "args": [\n        "-y",\n        "mcp-remote@latest",\n        "<MCP_URL>",\n        "--header",\n        "Authorization: Bearer ${AUTH_TOKEN}"\n      ],\n      "env": {\n        "AUTH_TOKEN": "<api-avain>"\n      }\n    }\n  }\n}',
       mcpConfigNote:
         'Korvaa <MCP_URL> yllä olevalla MCP-palvelimen osoitteella ja <api-avain> API-avaimella avainten sivulta.',
       viewMcpDocs: 'Näytä MCP-dokumentaatio',

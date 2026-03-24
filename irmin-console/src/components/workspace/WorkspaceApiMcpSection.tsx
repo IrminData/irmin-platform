@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/ai-elements/code-block';
 import { Button } from '@/components/ui/button';
 import { ContentWrapper } from '@/components/ui/ContentWrapper';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -38,10 +39,15 @@ const WorkspaceApiMcpSection = () => {
 
   const tokensPageUrl = `/${locale}/profile/tokens`;
 
-  const claudeDesktopConfig = useMemo(() => {
-    return dict.workspace.api.mcpClaudeDesktopConfig
-      .replace('<MCP_URL>', mcpUrl)
-      .replace('<your-api-token>', '<your-api-token>');
+  const streamableHttpConfig = useMemo(() => {
+    return dict.workspace.api.mcpStreamableHttpConfig.replace(
+      '<MCP_URL>',
+      mcpUrl
+    );
+  }, [dict, mcpUrl]);
+
+  const mcpRemoteConfig = useMemo(() => {
+    return dict.workspace.api.mcpRemoteConfig.replace('<MCP_URL>', mcpUrl);
   }, [dict, mcpUrl]);
 
   const apiExampleCurl = useMemo(() => {
@@ -224,11 +230,26 @@ const WorkspaceApiMcpSection = () => {
           >
             {dict.workspace.api.mcpClaudeDesktopDescription}
           </p>
-          <div className='relative'>
-            <CodeBlock code={claudeDesktopConfig} language='json'>
-              <CodeBlockCopyButton />
-            </CodeBlock>
-          </div>
+          <Tabs defaultValue='streamable-http'>
+            <TabsList>
+              <TabsTrigger value='streamable-http'>
+                {dict.workspace.api.mcpStreamableHttpTab}
+              </TabsTrigger>
+              <TabsTrigger value='mcp-remote'>
+                {dict.workspace.api.mcpRemoteTab}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value='streamable-http'>
+              <CodeBlock code={streamableHttpConfig} language='json'>
+                <CodeBlockCopyButton />
+              </CodeBlock>
+            </TabsContent>
+            <TabsContent value='mcp-remote'>
+              <CodeBlock code={mcpRemoteConfig} language='json'>
+                <CodeBlockCopyButton />
+              </CodeBlock>
+            </TabsContent>
+          </Tabs>
           <p
             className={`
               mt-2 text-xs text-gray-500
