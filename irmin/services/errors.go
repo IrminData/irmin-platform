@@ -6,6 +6,7 @@ import (
 	"irmin-api/engine"
 	"irmin-api/lib"
 	"irmin-api/locales"
+	sentryutil "irmin-api/sentry"
 	"irmin-api/utils"
 	"log/slog"
 	"strings"
@@ -176,6 +177,11 @@ func (eh *ErrorHandler) HandleServiceError(
 
 	// Map error to HTTP status code
 	statusCode := MapErrorToStatusCode(err)
+
+	// Capture 5xx errors to Sentry (skip 4xx to avoid noise)
+	if statusCode >= fiber.StatusInternalServerError {
+		sentryutil.GetHubFromFiber(c).CaptureException(err)
+	}
 
 	// Return response with error message
 	return utils.WriteResponse(c, statusCode, irminmodels.IrminAPIResponse{

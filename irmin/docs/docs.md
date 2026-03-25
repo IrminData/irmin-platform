@@ -14256,6 +14256,87 @@ func RegisterAPIRoutes(app *fiber.App, apiServices *services.APIServices)
 
 RegisterAPIRoutes registers all API routes for the application.
 
+# sentryutil
+
+```go
+import "irmin-api/sentry"
+```
+
+Package sentryutil provides Sentry error tracking utilities for the Irmin Core API.
+
+## Index
+
+- [Constants](<#constants>)
+- [func CaptureError\(err error\)](<#CaptureError>)
+- [func FiberMiddleware\(\) fiber.Handler](<#FiberMiddleware>)
+- [func Flush\(timeout time.Duration\)](<#Flush>)
+- [func GetHubFromFiber\(c fiber.Ctx\) \*sentry.Hub](<#GetHubFromFiber>)
+- [func Init\(logger \*slog.Logger, env \*utils.CoreAPIEnv\)](<#Init>)
+- [func RecoverAndCapture\(logger \*slog.Logger, component string\)](<#RecoverAndCapture>)
+
+
+## Constants
+
+<a name="FlushTimeout"></a>FlushTimeout is the default timeout for flushing buffered Sentry events.
+
+```go
+const FlushTimeout = 2 * time.Second
+```
+
+<a name="CaptureError"></a>
+## func CaptureError
+
+```go
+func CaptureError(err error)
+```
+
+CaptureError reports an error to Sentry.
+
+<a name="FiberMiddleware"></a>
+## func FiberMiddleware
+
+```go
+func FiberMiddleware() fiber.Handler
+```
+
+FiberMiddleware returns a Fiber middleware that clones the Sentry hub per request, sets request metadata, stores the hub in c.Locals, and manages a Sentry transaction.
+
+<a name="Flush"></a>
+## func Flush
+
+```go
+func Flush(timeout time.Duration)
+```
+
+Flush waits for buffered events to be sent to Sentry, up to the given timeout.
+
+<a name="GetHubFromFiber"></a>
+## func GetHubFromFiber
+
+```go
+func GetHubFromFiber(c fiber.Ctx) *sentry.Hub
+```
+
+GetHubFromFiber retrieves the Sentry hub from Fiber context locals. Falls back to sentry.CurrentHub\(\) if not found.
+
+<a name="Init"></a>
+## func Init
+
+```go
+func Init(logger *slog.Logger, env *utils.CoreAPIEnv)
+```
+
+Init initializes the Sentry SDK using the provided environment configuration. Returns early if Sentry is disabled or no DSN is configured.
+
+<a name="RecoverAndCapture"></a>
+## func RecoverAndCapture
+
+```go
+func RecoverAndCapture(logger *slog.Logger, component string)
+```
+
+RecoverAndCapture is a deferred function for goroutines that recovers from panics, captures the panic as a Sentry event, and logs it.
+
 # services
 
 ```go
@@ -17540,6 +17621,12 @@ type CoreAPIEnv struct {
     PolarWebhookSecret string // Polar.sh webhook signing secret
     PolarProductID     string // Polar product ID for the usage-based plan
     PolarBaseURL       string // Polar API base URL (default: https://api.polar.sh, sandbox: https://sandbox-api.polar.sh)
+
+    // Sentry error tracking configuration
+    SentryEnabled          bool    // Flag to enable Sentry error tracking
+    SentryDSN              string  // Sentry DSN for error reporting
+    SentryEnvironment      string  // Sentry environment name (default "development")
+    SentryTracesSampleRate float64 // Sentry traces sample rate (default 0.1)
 
     // File size management thresholds
     MaxRequestBodySizeMB       int // Maximum request body size in MB (default 100)

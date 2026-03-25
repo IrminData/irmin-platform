@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.97.1
 	github.com/clerk/clerk-sdk-go/v2 v2.5.1
 	github.com/daytonaio/daytona/libs/sdk-go v0.151.0
+	github.com/getsentry/sentry-go v0.44.1
 	github.com/gofiber/fiber/v3 v3.1.0
 	github.com/gofiber/storage/memory/v2 v2.1.1
 	github.com/gofiber/storage/s3/v2 v2.5.0

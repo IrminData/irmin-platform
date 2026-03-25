@@ -37,6 +37,7 @@ import (
 	"irmin-api/orchestrator"
 	"irmin-api/permissions"
 	"irmin-api/routes"
+	sentryutil "irmin-api/sentry"
 	"irmin-api/services"
 	"irmin-api/templatefiles"
 	"irmin-api/utils"
@@ -210,6 +211,7 @@ func setupFiberApp(env *utils.CoreAPIEnv, appCacheMiddleware fiber.Handler) *fib
 		BodyLimit: utils.MaxRequestBodySizeBytes(env),
 		ErrorHandler: func(c fiber.Ctx, err error) error {
 			slog.Error("Unhandled request error", "error", err, "path", c.Path(), "method", c.Method())
+			sentryutil.GetHubFromFiber(c).CaptureException(err)
 			return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
 		},
 	})
@@ -242,6 +244,10 @@ func setupFiberApp(env *utils.CoreAPIEnv, appCacheMiddleware fiber.Handler) *fib
 		c.Set("X-Request-ID", requestID)
 		return c.Next()
 	})
+
+	// 3.5. Sentry: Clones the Sentry hub per request for isolated error tracking
+	// and starts a transaction span for performance monitoring.
+	app.Use(sentryutil.FiberMiddleware())
 
 	// 4. Logger: Logs information about the request. It benefits from the
 	// request ID being set and can log the final status of the request
@@ -322,6 +328,7 @@ func setupServices(
 	orchestrator := orchestrator.NewOrchestrator(database, slog.Default(), env, dataEngine, cacheStorage)
 	if env.OrchestratorEnabled {
 		go func() {
+			defer sentryutil.RecoverAndCapture(slog.Default(), "orchestrator")
 			if orchestratorStartErr := orchestrator.StartOrchestrator(ctx); orchestratorStartErr != nil {
 				log.Printf("Orchestrator error: %v", orchestratorStartErr)
 			}
@@ -391,12 +398,18 @@ func main() {
 		log.Fatalf("failed to load environment variables: %v", err)
 	}
 
+	// Initialize Sentry error tracking
+	sentryutil.Init(slog.Default(), env)
+
 	// Setup database (and run one-shot commands like -gc if requested).
 	database, exitAfterSetup, err := setupDatabase(env)
 	if err != nil {
+		sentryutil.CaptureError(err)
+		sentryutil.Flush(sentryutil.FlushTimeout)
 		log.Fatalf("failed to setup database: %v", err)
 	}
 	if exitAfterSetup {
+		sentryutil.Flush(sentryutil.FlushTimeout)
 		return
 	}
 
@@ -416,6 +429,8 @@ func main() {
 	)
 	if setupSvcErr != nil {
 		cancel()
+		sentryutil.CaptureError(setupSvcErr)
+		sentryutil.Flush(sentryutil.FlushTimeout)
 		log.Fatalf("failed to setup services: %v", setupSvcErr)
 	}
 
@@ -438,6 +453,7 @@ func main() {
 	// Start usage tracker if billing is enabled
 	if apiServices.UsageTracker != nil {
 		go func() {
+			defer sentryutil.RecoverAndCapture(slog.Default(), "usage-tracker")
 			if usageTrackerErr := apiServices.UsageTracker.Start(ctx); usageTrackerErr != nil {
 				log.Printf("Usage tracker error: %v", usageTrackerErr)
 			}
@@ -484,6 +500,9 @@ func main() {
 			log.Printf("Error closing database connection: %v", closeErr)
 		}
 	}
+
+	// Flush buffered Sentry events before exiting
+	sentryutil.Flush(sentryutil.FlushTimeout)
 
 	log.Println("Server gracefully stopped")
 }

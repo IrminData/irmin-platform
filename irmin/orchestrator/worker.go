@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/db"
+	sentryutil "irmin-api/sentry"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -123,6 +124,8 @@ func (o *Orchestrator) executeWorkflowRunEvent(ctx context.Context, event *Dispa
 // runWorkflowAsync runs a workflow in its own context, registering it for cancellation
 // and notifying the orchestrator of pre/post execution events.
 func (o *Orchestrator) runWorkflowAsync(workflow *db.Workflow, workflowRun *db.WorkflowRun) {
+	defer sentryutil.RecoverAndCapture(o.logger, "orchestrator-workflow-execution")
+
 	// Create a cancellable context that won't be cancelled when the parent returns
 	workflowCtx, cancelWorkflow := context.WithCancel(context.Background())
 	defer cancelWorkflow()
@@ -151,6 +154,7 @@ func (o *Orchestrator) runWorkflowAsync(workflow *db.Workflow, workflowRun *db.W
 	_, executeErr := o.ExecuteWorkflow(workflowCtx, workflow, workflowRun)
 	if executeErr != nil {
 		o.logger.ErrorContext(workflowCtx, "error executing workflow", "error", executeErr)
+		sentryutil.CaptureError(executeErr)
 	}
 
 	o.logger.InfoContext(workflowCtx, "finished workflow execution",

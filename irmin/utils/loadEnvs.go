@@ -62,6 +62,12 @@ type CoreAPIEnv struct {
 	PolarProductID     string // Polar product ID for the usage-based plan
 	PolarBaseURL       string // Polar API base URL (default: https://api.polar.sh, sandbox: https://sandbox-api.polar.sh)
 
+	// Sentry error tracking configuration
+	SentryEnabled          bool    // Flag to enable Sentry error tracking
+	SentryDSN              string  // Sentry DSN for error reporting
+	SentryEnvironment      string  // Sentry environment name (default "development")
+	SentryTracesSampleRate float64 // Sentry traces sample rate (default 0.1)
+
 	// File size management thresholds
 	MaxRequestBodySizeMB       int // Maximum request body size in MB (default 100)
 	MaxInMemorySizeMB          int // Max file size to load fully into memory in MB (default 20)
@@ -387,6 +393,31 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
+	sentryEnabledStr, err := getEnv("SENTRY_ENABLED", false, "false")
+	if err != nil {
+		return nil, err
+	}
+	sentryEnabled, err := strconv.ParseBool(sentryEnabledStr)
+	if err != nil {
+		return nil, err
+	}
+	sentryDSN, err := getEnv("SENTRY_DSN", false, "")
+	if err != nil {
+		return nil, err
+	}
+	sentryEnvironment, err := getEnv("SENTRY_ENVIRONMENT", false, "development")
+	if err != nil {
+		return nil, err
+	}
+	sentryTracesSampleRateStr, err := getEnv("SENTRY_TRACES_SAMPLE_RATE", false, "0.1")
+	if err != nil {
+		return nil, err
+	}
+	sentryTracesSampleRate, err := strconv.ParseFloat(sentryTracesSampleRateStr, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid SENTRY_TRACES_SAMPLE_RATE: %w", err)
+	}
+
 	billingEnabledStr, err := getEnv("BILLING_ENABLED", false, "false")
 	if err != nil {
 		return nil, err
@@ -468,6 +499,10 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		MaxStreamSizeMB:              maxStreamSizeMB,
 		MaxAsyncJobSizeMB:            maxAsyncJobSizeMB,
 		MaxWorkflowInputFileSizeMB:   maxWorkflowInputFileSizeMB,
+		SentryEnabled:                sentryEnabled,
+		SentryDSN:                    sentryDSN,
+		SentryEnvironment:            sentryEnvironment,
+		SentryTracesSampleRate:       sentryTracesSampleRate,
 		BillingEnabled:               billingEnabled,
 		PolarAPIKey:                  polarAPIKey,
 		PolarWebhookSecret:           polarWebhookSecret,

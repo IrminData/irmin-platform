@@ -2,8 +2,11 @@ package mcp
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v3"
 	adaptor "github.com/gofiber/fiber/v3/middleware/adaptor"
 )
@@ -28,6 +31,18 @@ func (rm *responseMonitor) WriteHeader(statusCode int) {
 			"method", rm.method,
 			"user_id", rm.userID,
 			"status", statusCode)
+	}
+	// Capture 5xx errors to Sentry with error level
+	if statusCode >= http.StatusInternalServerError {
+		sentry.WithScope(func(scope *sentry.Scope) {
+			scope.SetLevel(sentry.LevelError)
+			scope.SetTag("http.status_code", strconv.Itoa(statusCode))
+			scope.SetTag("http.method", rm.method)
+			scope.SetTag("http.path", rm.path)
+			sentry.CaptureMessage(fmt.Sprintf(
+				"MCP handler 5xx: %d %s %s", statusCode, rm.method, rm.path,
+			))
+		})
 	}
 	rm.ResponseWriter.WriteHeader(statusCode)
 }

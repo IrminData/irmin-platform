@@ -10,6 +10,7 @@ import (
 	"irmin-api/engine"
 	"irmin-api/lakefs"
 	"irmin-api/lib"
+	sentryutil "irmin-api/sentry"
 	"irmin-api/utils"
 	"log/slog"
 	"strings"
@@ -17,6 +18,7 @@ import (
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v3"
 	"github.com/robfig/cron/v3"
 	"github.com/teambition/rrule-go"
@@ -322,6 +324,18 @@ func (o *Orchestrator) StartOrchestrator(ctx context.Context) error {
 
 	// Start the dispatcher in a goroutine
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				o.logger.Error("Panic recovered", "component", "orchestrator-dispatcher", "panic", r)
+				sentry.CurrentHub().Recover(r)
+				sentry.Flush(sentryutil.FlushTimeout)
+				// Notify the orchestrator so it shuts down instead of running without a dispatcher
+				select {
+				case dispatcherErrChan <- fmt.Errorf("dispatcher panicked: %v", r):
+				default:
+				}
+			}
+		}()
 		if err := o.StartDispatcher(ctx); err != nil {
 			o.logger.ErrorContext(ctx, "dispatcher failed", "error", err)
 			select {
@@ -384,6 +398,7 @@ func (o *Orchestrator) StartOrchestrator(ctx context.Context) error {
 			// Process lakefs events asynchronously to avoid blocking the main loop
 			// These events trigger workflows based on repository events (commits, merges, etc.)
 			go func(evt *lakefs.WebhookEvent) {
+				defer sentryutil.RecoverAndCapture(o.logger, "orchestrator-lakefs-event")
 				// Create a dedicated context for this lakefs event derived from the parent context
 				// This ensures the goroutine is cancelled when the orchestrator shuts down
 				lakefsCtx, cancelLakefs := context.WithCancel(ctx)
@@ -401,6 +416,7 @@ func (o *Orchestrator) StartOrchestrator(ctx context.Context) error {
 			// Process worker events asynchronously to avoid blocking the main loop
 			// Worker events are used to trigger other workflows based on workflow run completion
 			go func(evt *WorkerEvent) {
+				defer sentryutil.RecoverAndCapture(o.logger, "orchestrator-worker-event")
 				// Create a dedicated context for this worker event derived from the parent context
 				// This ensures the goroutine is cancelled when the orchestrator shuts down
 				workerCtx, cancelWorker := context.WithCancel(ctx)
@@ -418,6 +434,7 @@ func (o *Orchestrator) StartOrchestrator(ctx context.Context) error {
 			// Process connection events asynchronously to avoid blocking the main loop
 			// Connection events trigger workflows based on connector data changes
 			go func(evt *ConnectionEvent) {
+				defer sentryutil.RecoverAndCapture(o.logger, "orchestrator-connection-event")
 				// Create a dedicated context for this connection event derived from the parent context
 				// This ensures the goroutine is cancelled when the orchestrator shuts down
 				connectionCtx, cancelConnection := context.WithCancel(ctx)
