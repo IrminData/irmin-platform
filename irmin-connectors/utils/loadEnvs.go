@@ -11,15 +11,19 @@ import (
 
 // ConnectorsEnv is a struct that holds the environment variables for the connectors server.
 type ConnectorsEnv struct {
-	Port                     string // Port to run the connectors server on
-	URL                      string // URL of the connectors server
-	HelmetEnabled            bool   // Whether helmet is enabled
-	CorsEnabled              bool   // Whether CORS is enabled
-	CorsOrigins              string // Origins allowed to access the connectors server
-	UniversalConnectorAPIKey string // Universal API Key for all connectors.
-	APIBaseURL               string // Base URL of the Irmin Core API
-	APIToken                 string // Token to authenticate system requests to the Irmin Core API
-	DatabaseConnectionString string // Connection string for the database
+	Port                     string  // Port to run the connectors server on
+	URL                      string  // URL of the connectors server
+	HelmetEnabled            bool    // Whether helmet is enabled
+	CorsEnabled              bool    // Whether CORS is enabled
+	CorsOrigins              string  // Origins allowed to access the connectors server
+	UniversalConnectorAPIKey string  // Universal API Key for all connectors.
+	APIBaseURL               string  // Base URL of the Irmin Core API
+	APIToken                 string  // Token to authenticate system requests to the Irmin Core API
+	DatabaseConnectionString string  // Connection string for the database
+	SentryEnabled            bool    // Flag to enable Sentry error tracking
+	SentryDSN                string  // Sentry DSN for error reporting
+	SentryEnvironment        string  // Sentry environment name (default "development")
+	SentryTracesSampleRate   float64 // Sentry traces sample rate (default 0.1)
 }
 
 // getEnv retrieves a single environment variable. If required and missing, returns an error.
@@ -53,6 +57,8 @@ func loadRootEnv() {
 // LoadEnv loads environment variables from the .env file in the project root,
 // sets default values for required system variables if not present, and returns
 // a ConnectorsEnv struct with the loaded environment variables.
+//
+//nolint:funlen // We are just loading and checking every single env var, nothing complex here
 func LoadEnv() (*ConnectorsEnv, error) {
 	// Load environment variables from .env file
 	loadRootEnv()
@@ -101,6 +107,31 @@ func LoadEnv() (*ConnectorsEnv, error) {
 		return nil, err
 	}
 
+	sentryEnabledStr, err := getEnv("SENTRY_ENABLED", false, "false")
+	if err != nil {
+		return nil, err
+	}
+	sentryEnabled, err := strconv.ParseBool(sentryEnabledStr)
+	if err != nil {
+		return nil, err
+	}
+	sentryDSN, err := getEnv("SENTRY_DSN", false, "")
+	if err != nil {
+		return nil, err
+	}
+	sentryEnvironment, err := getEnv("SENTRY_ENVIRONMENT", false, "development")
+	if err != nil {
+		return nil, err
+	}
+	sentryTracesSampleRateStr, err := getEnv("SENTRY_TRACES_SAMPLE_RATE", false, "0.1")
+	if err != nil {
+		return nil, err
+	}
+	sentryTracesSampleRate, err := strconv.ParseFloat(sentryTracesSampleRateStr, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid SENTRY_TRACES_SAMPLE_RATE: %w", err)
+	}
+
 	dbConnStr, err := getEnv("DATABASE_CONNECTION_STRING", true, "")
 	if err != nil {
 		return nil, err
@@ -116,5 +147,9 @@ func LoadEnv() (*ConnectorsEnv, error) {
 		APIBaseURL:               apiBaseURL,
 		APIToken:                 apiToken,
 		DatabaseConnectionString: dbConnStr,
+		SentryEnabled:            sentryEnabled,
+		SentryDSN:                sentryDSN,
+		SentryEnvironment:        sentryEnvironment,
+		SentryTracesSampleRate:   sentryTracesSampleRate,
 	}, nil
 }

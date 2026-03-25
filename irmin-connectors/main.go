@@ -31,6 +31,7 @@ import (
 	"irmin-connectors/connectors"
 	"irmin-connectors/db"
 	"irmin-connectors/models"
+	sentryutil "irmin-connectors/sentry"
 	"irmin-connectors/swagger"
 	"irmin-connectors/utils"
 	"log"
@@ -117,6 +118,7 @@ func setupFiberApp(env *utils.ConnectorsEnv) *fiber.App {
 		ReadBufferSize: ReadBufferSize, // 10MB for headers to handle large CORS headers
 		ErrorHandler: func(c fiber.Ctx, err error) error {
 			slog.Error("Unhandled request error", "error", err, "path", c.Path(), "method", c.Method())
+			sentryutil.GetHubFromFiber(c).CaptureException(err)
 			return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
 		},
 	})
@@ -153,6 +155,10 @@ func setupFiberApp(env *utils.ConnectorsEnv) *fiber.App {
 		c.Set("X-Request-ID", requestID)
 		return c.Next()
 	})
+
+	// 3.5. Sentry: Clones the Sentry hub per request for isolated error tracking
+	// and starts a transaction span for performance monitoring.
+	app.Use(sentryutil.FiberMiddleware())
 
 	// 4. Logger: Logs information about the request. It benefits from the
 	// request ID being set and can log the final status of the request
@@ -473,10 +479,15 @@ func main() {
 		log.Fatalf("failed to load environment variables: %v", err)
 	}
 
+	// Initialize Sentry error tracking
+	sentryutil.Init(slog.Default(), env)
+
 	// Setup database (migrations run by default unless explicitly skipped)
 	databaseContext := context.Background()
 	database, err := setupDatabase(databaseContext, !*skipMigrate)
 	if err != nil {
+		sentryutil.CaptureError(err)
+		sentryutil.Flush(sentryutil.FlushTimeout)
 		log.Fatalf("failed to setup database: %v", err)
 	}
 
@@ -574,6 +585,7 @@ func main() {
 		case appListenErr := <-serverErr:
 			// Server encountered a runtime error or was shut down
 			if appListenErr != nil {
+				sentryutil.CaptureError(appListenErr)
 				log.Printf("Server error: %v", appListenErr)
 			}
 		case <-quit:
@@ -590,5 +602,8 @@ func main() {
 
 			log.Println("Server gracefully stopped")
 		}
+
+		// Flush buffered Sentry events before exiting
+		sentryutil.Flush(sentryutil.FlushTimeout)
 	}
 }

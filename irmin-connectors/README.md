@@ -81,6 +81,12 @@ IRMIN_API_BASE_URL=https://api.irmin.dev
 IRMIN_API_TOKEN=your_api_token_here
 
 DATABASE_CONNECTION_STRING=postgres://user:password@localhost:5432/database
+
+# Sentry (optional)
+SENTRY_ENABLED=false
+SENTRY_DSN=https://your-sentry-dsn.ingest.de.sentry.io/0123456789
+SENTRY_ENVIRONMENT=development
+SENTRY_TRACES_SAMPLE_RATE=0.1
 ```
 
 ### Running the Application

@@ -981,6 +981,87 @@ func (g *Generator) SupportsStructuredAnalysis(filename string) bool
 
 SupportsStructuredAnalysis checks if the file format supports structured data analysis.
 
+# sentryutil
+
+```go
+import "irmin-connectors/sentry"
+```
+
+Package sentryutil provides Sentry error tracking utilities for Irmin Connectors.
+
+## Index
+
+- [Constants](<#constants>)
+- [func CaptureError\(err error\)](<#CaptureError>)
+- [func FiberMiddleware\(\) fiber.Handler](<#FiberMiddleware>)
+- [func Flush\(timeout time.Duration\)](<#Flush>)
+- [func GetHubFromFiber\(c fiber.Ctx\) \*sentry.Hub](<#GetHubFromFiber>)
+- [func Init\(logger \*slog.Logger, env \*utils.ConnectorsEnv\)](<#Init>)
+- [func RecoverAndCapture\(logger \*slog.Logger, component string\)](<#RecoverAndCapture>)
+
+
+## Constants
+
+<a name="FlushTimeout"></a>FlushTimeout is the default timeout for flushing buffered Sentry events.
+
+```go
+const FlushTimeout = 2 * time.Second
+```
+
+<a name="CaptureError"></a>
+## func CaptureError
+
+```go
+func CaptureError(err error)
+```
+
+CaptureError reports an error to Sentry.
+
+<a name="FiberMiddleware"></a>
+## func FiberMiddleware
+
+```go
+func FiberMiddleware() fiber.Handler
+```
+
+FiberMiddleware returns a Fiber middleware that clones the Sentry hub per request, sets request metadata, stores the hub in c.Locals, and manages a Sentry transaction.
+
+<a name="Flush"></a>
+## func Flush
+
+```go
+func Flush(timeout time.Duration)
+```
+
+Flush waits for buffered events to be sent to Sentry, up to the given timeout.
+
+<a name="GetHubFromFiber"></a>
+## func GetHubFromFiber
+
+```go
+func GetHubFromFiber(c fiber.Ctx) *sentry.Hub
+```
+
+GetHubFromFiber retrieves the Sentry hub from Fiber context locals. Falls back to sentry.CurrentHub\(\) if not found.
+
+<a name="Init"></a>
+## func Init
+
+```go
+func Init(logger *slog.Logger, env *utils.ConnectorsEnv)
+```
+
+Init initializes the Sentry SDK using the provided environment configuration. Returns early if Sentry is disabled or no DSN is configured.
+
+<a name="RecoverAndCapture"></a>
+## func RecoverAndCapture
+
+```go
+func RecoverAndCapture(logger *slog.Logger, component string)
+```
+
+RecoverAndCapture is a deferred function for goroutines that recovers from panics, captures the panic as a Sentry event, and logs it.
+
 # swagger
 
 ```go
@@ -1432,15 +1513,19 @@ ConnectorsEnv is a struct that holds the environment variables for the connector
 
 ```go
 type ConnectorsEnv struct {
-    Port                     string // Port to run the connectors server on
-    URL                      string // URL of the connectors server
-    HelmetEnabled            bool   // Whether helmet is enabled
-    CorsEnabled              bool   // Whether CORS is enabled
-    CorsOrigins              string // Origins allowed to access the connectors server
-    UniversalConnectorAPIKey string // Universal API Key for all connectors.
-    APIBaseURL               string // Base URL of the Irmin Core API
-    APIToken                 string // Token to authenticate system requests to the Irmin Core API
-    DatabaseConnectionString string // Connection string for the database
+    Port                     string  // Port to run the connectors server on
+    URL                      string  // URL of the connectors server
+    HelmetEnabled            bool    // Whether helmet is enabled
+    CorsEnabled              bool    // Whether CORS is enabled
+    CorsOrigins              string  // Origins allowed to access the connectors server
+    UniversalConnectorAPIKey string  // Universal API Key for all connectors.
+    APIBaseURL               string  // Base URL of the Irmin Core API
+    APIToken                 string  // Token to authenticate system requests to the Irmin Core API
+    DatabaseConnectionString string  // Connection string for the database
+    SentryEnabled            bool    // Flag to enable Sentry error tracking
+    SentryDSN                string  // Sentry DSN for error reporting
+    SentryEnvironment        string  // Sentry environment name (default "development")
+    SentryTracesSampleRate   float64 // Sentry traces sample rate (default 0.1)
 }
 ```
 
