@@ -1,8 +1,8 @@
 import * as Sentry from '@sentry/nextjs';
 
-export async function register() {
-  const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === 'production';
 
+export async function register() {
   if (!isProduction) {
     return;
   }
@@ -16,4 +16,6 @@ export async function register() {
   }
 }
 
-export const onRequestError = Sentry.captureRequestError;
+export const onRequestError = isProduction
+  ? Sentry.captureRequestError
+  : undefined;
