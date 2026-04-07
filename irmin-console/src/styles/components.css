@@ -19,8 +19,6 @@
 }
 .dark .pattern-bg {
   background-image: url('/ui-assets/elements/pattern-dark.svg');
-  background-color: hsl(197 94% 4%);
-  background-blend-mode: darken;
 }
 
 /* ============================================================================

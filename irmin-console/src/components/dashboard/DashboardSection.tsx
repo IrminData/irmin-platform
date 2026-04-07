@@ -56,7 +56,7 @@ const DashboardSection = () => {
 
   if (workspaceQuery?.isError) {
     return (
-      <div className='pattern-bg h-full py-12'>
+      <div className='pattern-bg min-h-full py-12'>
         <div className='relative container mx-auto max-w-6xl px-4'>
           <QueryError
             error={workspaceQuery.error}
@@ -73,7 +73,7 @@ const DashboardSection = () => {
   }
 
   return (
-    <div className='pattern-bg h-full py-4'>
+    <div className='pattern-bg min-h-full py-4'>
       <div
         className={`
           relative container mx-auto w-full max-w-7xl

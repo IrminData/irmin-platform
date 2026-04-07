@@ -1,8 +1,8 @@
 <svg width="1440" height="992" viewBox="0 0 1440 992" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g clip-path="url(#clip0_628_19126)">
-<rect width="1440" height="992" fill="#01161e"/>
+<rect width="1440" height="992" fill="#000e13"/>
 <g opacity="0.4">
-<rect width="1440" height="1320" fill="#01161e"/>
+<rect width="1440" height="1320" fill="#000e13"/>
 <line x1="1464" y1="672.5" x2="-24" y2="672.5" stroke="#04597b"/>
 <line x1="1464" y1="696.5" x2="-24" y2="696.5" stroke="#04597b"/>
 <line x1="1464" y1="720.5" x2="-24" y2="720.5" stroke="#04597b"/>
@@ -171,11 +171,11 @@
 </g>
 <defs>
 <radialGradient id="paint0_radial_628_19126" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(720 496) rotate(90) scale(496 720)">
-<stop stop-color="#01161e" stop-opacity="0"/>
-<stop offset="1" stop-color="#01161e"/>
+<stop stop-color="#000e13" stop-opacity="0"/>
+<stop offset="1" stop-color="#000e13"/>
 </radialGradient>
 <clipPath id="clip0_628_19126">
-<rect width="1440" height="992" fill="#01161e"/>
+<rect width="1440" height="992" fill="#000e13"/>
 </clipPath>
 </defs>
 </svg>
