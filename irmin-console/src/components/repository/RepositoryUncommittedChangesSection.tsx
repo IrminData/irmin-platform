@@ -150,6 +150,7 @@ function RepositoryUncommittedChangesSectionContent() {
             onClick={() => uncommittedChangesQuery.refetch()}
             tooltip={dict.common.refresh}
             disabled={uncommittedChangesQuery.isLoading}
+            aria-label={dict.common.refresh}
           />
           <ButtonWithTooltip
             size='icon'
@@ -157,6 +158,7 @@ function RepositoryUncommittedChangesSectionContent() {
             onClick={handleRevertChanges}
             disabled={uncommittedChangesQuery.isLoading}
             tooltip={dict.repository.commit.revertChanges}
+            aria-label={dict.repository.commit.revertChanges}
           />
           <Button
             variant='default'

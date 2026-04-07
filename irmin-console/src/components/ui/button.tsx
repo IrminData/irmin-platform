@@ -12,7 +12,8 @@ import { cn } from '@/utils/tw';
 const buttonVariants = cva(
   `
     inline-flex cursor-pointer appearance-none items-center justify-center
-    rounded-md border-none text-sm font-normal whitespace-nowrap transition-all
+    rounded-md border-none text-sm font-normal whitespace-nowrap
+    transition-[color,background-color,border-color,opacity]
     focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden
     disabled:pointer-events-none disabled:opacity-50
   `,

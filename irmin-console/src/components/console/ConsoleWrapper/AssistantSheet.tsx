@@ -60,7 +60,7 @@ export default function AssistantSheet({
           variant='gradient'
           tooltip={dict.assistant.title}
           className={`
-            size-12 rounded-full shadow-lg transition-all duration-200
+            size-12 rounded-full shadow-lg transition-shadow duration-200
             hover:shadow-xl
           `}
           aria-label={dict.assistant.title}

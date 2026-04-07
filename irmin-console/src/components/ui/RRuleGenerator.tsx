@@ -398,6 +398,7 @@ export default function RRuleGenerator({
                     size='icon'
                     onClick={handleCopy}
                     disabled={isDisabled}
+                    aria-label='Copy rule'
                   >
                     <TbCopy
                       className={cn('size-4', copied ? 'text-accent' : '')}
@@ -418,7 +419,12 @@ export default function RRuleGenerator({
             </TooltipProvider>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant='ghost' size='icon' className='size-6'>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='size-6'
+                  aria-label='Syntax help'
+                >
                   <TbInfoCircle className='size-4' />
                   <span className='sr-only'>
                     {dict.workflow.schedule.rrule.rruleSyntaxHelp}

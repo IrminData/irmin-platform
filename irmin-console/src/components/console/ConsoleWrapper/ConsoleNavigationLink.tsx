@@ -39,7 +39,7 @@ export default function ConsoleNavigationLink({
             flex items-center justify-between rounded-md p-3 py-3
             hover:bg-primary/20
             ${link.active ? 'bg-primary/10' : ''}
-            overflow-hidden transition-all
+            overflow-hidden transition-[width,background-color]
             ${isMenuFolded ? 'w-12' : 'w-full'}
           `}
           href={link.href}
@@ -61,7 +61,7 @@ export default function ConsoleNavigationLink({
             flex items-center justify-between rounded-md p-3 py-3
             hover:bg-primary/20
             ${link.active ? 'bg-primary/10' : ''}
-            overflow-hidden transition-all
+            overflow-hidden transition-[width,background-color]
             ${isMenuFolded ? 'w-12' : 'w-full'}
           `}
           onClick={() => {

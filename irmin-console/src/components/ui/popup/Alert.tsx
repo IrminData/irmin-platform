@@ -208,7 +208,7 @@ const Alert = ({
         >
           <div
             className={`
-              h-full transition-all duration-100 ease-linear
+              h-full transition-[width] duration-100 ease-linear
               ${styles.progressColor}
             `}
             style={{

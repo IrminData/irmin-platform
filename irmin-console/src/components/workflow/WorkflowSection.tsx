@@ -340,7 +340,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                     href={`${workspaceUrl}/scripts?script=${workflow.workflowable.script_id}`}
                     target='_blank'
                     className={`
-                      transition-all
+                      transition-opacity
                       hover:underline hover:opacity-40
                     `}
                   >
@@ -362,7 +362,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                     href={`${workspaceUrl}/queries?query=${workflow.workflowable.query_id}`}
                     target='_blank'
                     className={`
-                      transition-all
+                      transition-opacity
                       hover:underline hover:opacity-40
                     `}
                   >
@@ -382,7 +382,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                   </p>
                   <Link
                     className={`
-                      transition-all duration-200
+                      transition-colors duration-200
                       hover:underline
                     `}
                     target='_blank'
@@ -430,7 +430,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                     <Link
                       key={`${input.repository}/${input.repository_path}@${input.repository_ref}`}
                       className={`
-                        transition-all duration-200
+                        transition-colors duration-200
                         hover:underline
                       `}
                       target='_blank'
@@ -450,7 +450,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                 </p>
                 <Link
                   className={`
-                    transition-all duration-200
+                    transition-colors duration-200
                     hover:underline
                   `}
                   href={`${workspaceUrl}/connections/${workflow.workflowable.connection_id}`}
@@ -482,7 +482,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                 </p>
                 <Link
                   className={`
-                    transition-all duration-200
+                    transition-colors duration-200
                     hover:underline
                   `}
                   href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.repository_branch}`}
@@ -522,7 +522,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                 </p>
                 <Link
                   className={`
-                    transition-all duration-200
+                    transition-colors duration-200
                     hover:underline
                   `}
                   href={`${workspaceUrl}/connections/${workflow.workflowable.connection_id}`}
@@ -552,7 +552,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                 </p>
                 <Link
                   className={`
-                    transition-all duration-200
+                    transition-colors duration-200
                     hover:underline
                   `}
                   href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.repository_branch}`}

@@ -126,6 +126,11 @@ const AIApplicationConnectionDetails = () => {
                         ? dict.aiApplication.hideApiKey
                         : dict.aiApplication.showApiKey
                     }
+                    aria-label={
+                      showApiKey
+                        ? dict.aiApplication.hideApiKey
+                        : dict.aiApplication.showApiKey
+                    }
                   >
                     {showApiKey ? <TbEyeOff size={14} /> : <TbEye size={14} />}
                   </Button>
@@ -135,6 +140,7 @@ const AIApplicationConnectionDetails = () => {
                     className='size-7'
                     onClick={handleCopyApiKey}
                     title={dict.aiApplication.copyApiKey}
+                    aria-label={dict.aiApplication.copyApiKey}
                   >
                     {apiKeyCopied ? (
                       <TbCheck size={14} className='text-green-500' />
@@ -176,6 +182,7 @@ const AIApplicationConnectionDetails = () => {
                   size='icon'
                   className='absolute right-1 size-7'
                   onClick={() => handleCopy(mcpEndpoint)}
+                  aria-label='Copy MCP endpoint'
                 >
                   <TbCopy size={14} />
                 </Button>
@@ -201,6 +208,7 @@ const AIApplicationConnectionDetails = () => {
                   size='icon'
                   className='absolute right-1 size-7'
                   onClick={() => handleCopy(restApiEndpoint)}
+                  aria-label='Copy REST API endpoint'
                 >
                   <TbCopy size={14} />
                 </Button>
@@ -312,6 +320,7 @@ const AIApplicationConnectionDetails = () => {
                               text-muted-foreground
                               hover:bg-background hover:text-foreground
                             `}
+                            aria-label='Copy configuration'
                             onClick={() => {
                               navigator.clipboard.writeText(
                                 JSON.stringify(config, null, 2)

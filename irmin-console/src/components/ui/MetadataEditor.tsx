@@ -213,6 +213,7 @@ export function MetadataEditor({
                 size='icon'
                 onClick={() => handleRemoveField(key)}
                 disabled={disabled}
+                aria-label='Remove entry'
                 className={`
                   text-destructive
                   hover:text-destructive
@@ -263,6 +264,7 @@ export function MetadataEditor({
             size='icon'
             onClick={handleAddField}
             disabled={disabled || !newKey.trim()}
+            aria-label='Add entry'
           >
             <TbPlus className='size-4' />
           </Button>

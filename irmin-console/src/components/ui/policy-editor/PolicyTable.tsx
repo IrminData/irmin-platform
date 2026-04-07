@@ -502,6 +502,7 @@ export default function PolicyTable({
                         variant='ghost'
                         size='icon'
                         onClick={() => onEditClick(policy)}
+                        aria-label='Edit policy'
                       >
                         <TbEdit className='size-4' />
                       </Button>

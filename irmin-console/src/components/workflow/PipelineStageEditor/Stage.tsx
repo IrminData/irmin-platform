@@ -386,7 +386,7 @@ function Stage({
     <div
       className={`
         relative z-10 rounded-lg border border-foreground/20 bg-card shadow-xs
-        transition-all
+        transition-shadow
         hover:shadow-md
       `}
     >

@@ -165,6 +165,7 @@ export const ConversationScrollButton = ({
         size='icon'
         type='button'
         variant='gray'
+        aria-label='Scroll to bottom'
         {...props}
       >
         <TbArrowDown className='size-3' />

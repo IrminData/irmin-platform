@@ -194,7 +194,7 @@ export function TemplateLibraryModal({
                       key={template.id}
                       className={`
                         cursor-pointer rounded-lg border bg-card p-4
-                        transition-all
+                        transition-[border-color,background-color]
                         hover:border-primary/50 hover:bg-accent/5
                         ${
                           selectedTemplate?.id === template.id

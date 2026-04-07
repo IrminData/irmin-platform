@@ -92,7 +92,8 @@ function SelectWorkflowTypeStep({
               onClick={() => handleTypeSelect(option.type)}
               className={`
                 group relative flex w-full items-start gap-4 rounded-xl border
-                p-4 text-left transition-all
+                p-4 text-left
+                transition-[border-color,background-color,box-shadow]
                 hover:border-accent hover:bg-accent/10
                 dark:hover:border-accent dark:hover:bg-accent/20
                 ${

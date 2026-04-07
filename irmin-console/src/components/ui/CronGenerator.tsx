@@ -612,6 +612,7 @@ const CronGenerator = ({
                       size='icon'
                       onClick={handleCopy}
                       disabled={isDisabled}
+                      aria-label='Copy expression'
                     >
                       <TbCopy
                         className={cn('size-4', copied ? 'text-accent' : '')}
@@ -632,7 +633,12 @@ const CronGenerator = ({
               </TooltipProvider>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant='ghost' size='icon' className='size-6'>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    className='size-6'
+                    aria-label='Syntax help'
+                  >
                     <TbInfoCircle className='size-4' />
                     <span className='sr-only'>
                       {dict.workflow.schedule.cron.cronSyntaxHelp}

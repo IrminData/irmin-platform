@@ -232,7 +232,7 @@ export default function ConversationsList({
                   className={cn(
                     `
                       flex size-5 shrink-0 items-center justify-center
-                      rounded-sm text-muted-foreground/60 transition-all
+                      rounded-sm text-muted-foreground/60 transition-[color,background-color,opacity]
                       hover:bg-destructive/10 hover:text-destructive
                     `,
                     selectedConversation?.id === conversation.id

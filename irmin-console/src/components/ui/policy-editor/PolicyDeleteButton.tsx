@@ -27,7 +27,12 @@ function PolicyDeleteButton({ policyId }: { policyId: string }) {
   };
 
   return (
-    <Button variant='ghost' size='icon' onClick={handleDelete}>
+    <Button
+      variant='ghost'
+      size='icon'
+      onClick={handleDelete}
+      aria-label='Delete policy'
+    >
       <TbTrash className='size-4' />
     </Button>
   );

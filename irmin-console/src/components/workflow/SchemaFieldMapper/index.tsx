@@ -867,8 +867,8 @@ const SchemaFieldMapper = ({
                     key={`${mapping.destination_path}-${mapping.destination_field ?? idx}`}
                     className={`
                       group relative rounded-lg border border-border
-                      bg-linear-to-r from-card to-background p-4 transition-all
-                      duration-200
+                      bg-linear-to-r from-card to-background p-4
+                      transition-opacity duration-200
                     `}
                   >
                     {!readOnly && (

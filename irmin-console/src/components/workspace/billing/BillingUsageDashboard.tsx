@@ -82,7 +82,7 @@ const BillingUsageDashboard = ({
           </CardHeader>
           <CardContent>
             <div className='flex items-baseline gap-1'>
-              <span className='text-2xl font-bold'>
+              <span className='text-2xl font-bold tabular-nums'>
                 {estimatedCost.toFixed(2)} €
               </span>
               <span className='text-sm text-muted-foreground'>
@@ -100,7 +100,7 @@ const BillingUsageDashboard = ({
             >
               <div
                 className={`
-                  h-full rounded-full transition-all
+                  h-full rounded-full transition-[width]
                   ${isOverCredit ? 'bg-destructive' : 'bg-primary'}
                 `}
                 style={{ width: `${creditPercentage}%` }}
@@ -164,7 +164,7 @@ const BillingUsageDashboard = ({
                     >
                       <div
                         className={`
-                          h-full rounded-full transition-all
+                          h-full rounded-full transition-[width]
                           ${colorClass}
                         `}
                         style={{ width: `${percentage}%` }}

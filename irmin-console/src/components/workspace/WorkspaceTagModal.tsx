@@ -114,7 +114,8 @@ export function WorkspaceTagModal({
               disabled={isSubmitting}
               className={cn(
                 `
-                  h-12 w-full rounded-md border-2 transition-all
+                  h-12 w-full rounded-md border-2
+                  transition-[transform,border-color,box-shadow]
                   hover:scale-110
                 `,
                 (customColor || color) === paletteColor

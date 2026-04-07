@@ -541,7 +541,7 @@ function QueriesSectionContent() {
                 key={`query-${query.id}`}
                 className={`
                   flex cursor-pointer flex-row items-center justify-between
-                  gap-2 border-b border-border p-4 transition-all
+                  gap-2 border-b border-border p-4 transition-colors
                   hover:bg-card
                   ${selectedQuery?.id === query.id ? `bg-card` : ''}
                 `}

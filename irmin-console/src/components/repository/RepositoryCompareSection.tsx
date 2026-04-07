@@ -291,6 +291,7 @@ function RepositoryCompareSectionContent() {
                 });
               }}
               tooltip={dict.repository.compare.switchDirection}
+              aria-label={dict.repository.compare.switchDirection}
             />
             <div className='min-w-60'>
               <RefSelector
@@ -329,6 +330,7 @@ function RepositoryCompareSectionContent() {
                 diffQuery.refetch();
               }}
               tooltip={dict.common.refresh}
+              aria-label={dict.common.refresh}
               disabled={diffQuery.isLoading}
             />
             <Button

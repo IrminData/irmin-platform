@@ -62,7 +62,7 @@ export default function TagBadge({
       className={cn(
         `
           inline-flex items-center rounded-full border border-gray-200
-          bg-gray-50 font-medium transition-all
+          bg-gray-50 font-medium transition-colors
           dark:border-gray-700 dark:bg-gray-800
         `,
         sizeConfig.container,

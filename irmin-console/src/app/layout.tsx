@@ -44,6 +44,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
   },
+  other: {
+    'theme-color': '#ffffff',
+  },
 };
 
 /**
@@ -74,6 +77,16 @@ export default async function RootLayout(props: {
           antialiased
         `}
       >
+        <a
+          href='#console-content'
+          className='
+            sr-only
+            focus:not-sr-only focus:absolute focus:z-50 focus:rounded-md
+            focus:bg-background focus:p-4 focus:text-foreground
+          '
+        >
+          Skip to main content
+        </a>
         <PostHogProvider>
           <ClerkProvider dynamic>
             <ReactQueryProvider>

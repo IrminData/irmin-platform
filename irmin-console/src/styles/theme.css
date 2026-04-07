@@ -11,6 +11,7 @@
 
 /* Base theme variables */
 :root {
+  color-scheme: light;
   /* Additional theme variables for light mode */
   --background: 0 0% 100%;
   --foreground: 193.33 69.23% 2.55%;
@@ -28,23 +29,23 @@
   --secondary-foreground: 0 0% 0%;
 
   --muted: 200 24.32% 92.75%;
-  --muted-foreground: 0 0% 40%;
+  --muted-foreground: 197 10% 40%;
 
-  --accent: 137 20% 60%;
+  --accent: 137 35% 42%;
   --accent-foreground: 140 3% 95%;
 
   --destructive: 0 84.2% 66.1%;
   --destructive-foreground: 210 40% 98%;
 
-  --border: 197 13% 96%;
+  --border: 197 15% 91%;
   --input: 200 10.91% 78.43%;
   --ring: 196.96 66.67% 27.06%;
 
-  --chart-1: 137.42 20.26% 70%;
-  --chart-2: 136.15 20% 74.51%;
-  --chart-3: 138 20% 80.39%;
-  --chart-4: 137.65 20% 83.33%;
-  --chart-5: 137.14 20.59% 86.67%;
+  --chart-1: 197 67% 55%;
+  --chart-2: 137 35% 55%;
+  --chart-3: 32 80% 58%;
+  --chart-4: 280 40% 60%;
+  --chart-5: 197 30% 45%;
 
   /* Additional theme variables */
   --radius: 0.5rem;
@@ -52,8 +53,9 @@
 
 /* Dark mode theme variables */
 .dark {
+  color-scheme: dark;
   /* Shadcn UI theme variables in dark mode */
-  --background: 197 94% 6%;
+  --background: 197 94% 4%;
   --foreground: 197.14 25% 89.02%;
 
   --primary: 196.96 66.67% 27.06%;
@@ -68,10 +70,10 @@
   --secondary: 196.88 66.67% 9.41%;
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 0 0% 9.8%;
-  --muted-foreground: 0 0% 50.2%;
+  --muted: 197 30% 11%;
+  --muted-foreground: 197 15% 52%;
 
-  --accent: 137 20% 60%;
+  --accent: 137 35% 42%;
   --accent-foreground: 140 3% 95%;
 
   --destructive: 0 84.2% 36.9%;
@@ -81,11 +83,11 @@
   --input: 200 9.89% 17.84%;
   --ring: 196.96 66.67% 27.06%;
 
-  --chart-1: 137.42 20.26% 70%;
-  --chart-2: 136.15 12.62% 59.61%;
-  --chart-3: 138 8.62% 45.49%;
-  --chart-4: 137.65 8.63% 38.63%;
-  --chart-5: 137.14 8.75% 31.37%;
+  --chart-1: 197 60% 50%;
+  --chart-2: 137 30% 50%;
+  --chart-3: 32 70% 52%;
+  --chart-4: 280 35% 55%;
+  --chart-5: 197 25% 40%;
 }
 
 /* Tailwind v4 Theme Configuration */
@@ -129,13 +131,13 @@
 
   --color-irmin-green-100: hsla(137 20% 94%);
   --color-irmin-green-200: hsla(137 20% 88%);
-  --color-irmin-green-300: hsla(137 20% 82%);
-  --color-irmin-green-400: hsla(137 20% 76%);
-  --color-irmin-green-500: hsla(137 20% 70%); /* DEFAULT */
-  --color-irmin-green-600: hsla(137 20% 60%);
-  --color-irmin-green-700: hsla(137 20% 45%);
-  --color-irmin-green-800: hsla(137 20% 35%);
-  --color-irmin-green-900: hsla(137 20% 20%);
+  --color-irmin-green-300: hsla(137 22% 82%);
+  --color-irmin-green-400: hsla(137 25% 76%);
+  --color-irmin-green-500: hsla(137 35% 50%); /* DEFAULT - boosted saturation */
+  --color-irmin-green-600: hsla(137 35% 42%); /* boosted */
+  --color-irmin-green-700: hsla(137 35% 34%); /* boosted */
+  --color-irmin-green-800: hsla(137 25% 26%);
+  --color-irmin-green-900: hsla(137 25% 18%);
 
   /* Shadcn UI theme variables */
   --color-background: hsla(var(--background));

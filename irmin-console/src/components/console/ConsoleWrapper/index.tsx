@@ -84,7 +84,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
           id='console-sidebar-wrapper'
           className={`
             scrollbar-hide h-screen overflow-x-hidden overflow-y-scroll border-r
-            bg-background transition-all duration-300
+            bg-background transition-[width] duration-300
             dark:border-gray-800
             ${
               isMenuOpen
@@ -119,7 +119,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
               >
                 <div
                   className={`
-                    block pt-2 transition-all duration-300
+                    block pt-2 transition-opacity duration-300
                     ${foldMenu ? `hidden opacity-0` : `opacity-100`}
                   `}
                 >
@@ -180,7 +180,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
               <div
                 id='console-sidebar-workspace-switcher'
                 className={`
-                  transition-all
+                  transition-[width]
                   ${foldMenu ? 'hidden w-0' : `block w-full`}
                 `}
               >
@@ -201,7 +201,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                   <p
                     className={`
                       mb-2 w-max pl-8 text-xs font-medium text-accent uppercase
-                      transition-all duration-300
+                      transition-opacity duration-300
                       ${foldMenu ? 'hidden opacity-0' : 'opacity-100'}
                     `}
                   >
@@ -233,7 +233,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                   <p
                     className={`
                       mb-2 w-max pl-8 text-xs font-medium text-accent uppercase
-                      transition-all duration-300
+                      transition-opacity duration-300
                       ${foldMenu ? 'hidden opacity-0' : 'opacity-100'}
                     `}
                   >
@@ -265,7 +265,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
             <div
               id='console-sidebar-footer'
               className={`
-                mt-auto transition-all
+                mt-auto transition-[gap]
                 ${foldMenu ? `mt-24 gap-0` : `gap-6`}
               `}
             >
@@ -279,7 +279,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                 <p
                   className={`
                     w-max pl-7 text-xs font-medium text-accent uppercase
-                    transition-all duration-300
+                    transition-opacity duration-300
                   `}
                 >
                   {dict.consoleNavigation.usefulLinks}
@@ -314,7 +314,8 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
         <div
           id='console-content-wrapper'
           className={`
-            flex h-screen flex-1 flex-col gap-0 transition-all duration-300
+            flex h-screen flex-1 flex-col gap-0 transition-[margin,width,filter]
+            duration-300
             ${
               isMenuOpen
                 ? `
@@ -380,7 +381,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
               </div>
               <div
                 className={`
-                  ml-auto w-full max-w-24 transition-all
+                  ml-auto w-full max-w-24 transition-[max-width]
                   focus-within:max-w-full
                   md:max-w-sm
                   lg:max-w-md

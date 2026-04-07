@@ -457,7 +457,7 @@ function RepositorySectionContent({
               >
                 <Link
                   className={`
-                    transition-all
+                    transition-colors
                     hover:text-gray-800 hover:underline
                     dark:hover:text-gray-200
                   `}
@@ -468,7 +468,7 @@ function RepositorySectionContent({
                 {' / '}
                 <Link
                   className={`
-                    transition-all
+                    transition-colors
                     hover:text-gray-800 hover:underline
                     dark:hover:text-gray-200
                   `}
@@ -486,6 +486,7 @@ function RepositorySectionContent({
                   tooltip={dict.common.refresh}
                   disabled={repositoryObjectQuery.isLoading}
                   onClick={() => repositoryObjectQuery.refetch()}
+                  aria-label={dict.common.refresh}
                 />
                 {!immutable && (
                   <Button

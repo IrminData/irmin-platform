@@ -26,8 +26,8 @@
    ============================================================================ */
 .data-sheet-grid {
   font-size: 12px;
-  --dsg-border-color: #e5e7eb;
-  --dsg-selection-border-color: #aec3b0;
+  --dsg-border-color: #d9e1e6;
+  --dsg-selection-border-color: #5fa671;
   --dsg-header-text-color: #444d51;
   --dsg-header-active-text-color: #124559;
   --dsg-cell-background-color: white;

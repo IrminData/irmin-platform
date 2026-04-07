@@ -69,7 +69,7 @@ export default function AcceptInviteSection({
           <Link
             href={websiteUrl}
             className={`
-              transition-all
+              transition-opacity
               hover:opacity-80
             `}
             aria-label='Go to website'
@@ -166,7 +166,7 @@ export default function AcceptInviteSection({
         <Link
           href={websiteUrl}
           className={`
-            transition-all
+            transition-opacity
             hover:opacity-80
           `}
           aria-label='Go to website'

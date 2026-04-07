@@ -151,6 +151,7 @@ const DataSourceRow = ({
               hover:text-destructive
             `}
             title={dict.common.remove}
+            aria-label={dict.common.remove}
           >
             <TbTrash className='size-4' />
           </Button>

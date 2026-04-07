@@ -32,7 +32,7 @@ const LinkCard = ({
       className={`
         flex w-96 max-w-full cursor-pointer flex-col items-center justify-center
         gap-4 rounded-lg border-2 border-transparent bg-card p-4 text-center
-        text-card-foreground transition-all
+        text-card-foreground transition-colors
         hover:border-accent
         md:p-6 md:py-8
       `}

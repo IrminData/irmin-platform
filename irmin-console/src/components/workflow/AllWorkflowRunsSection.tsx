@@ -62,7 +62,7 @@ const AllWorkflowRunsSection = () => {
               <Link
                 href={`${workspaceUrl}/workflows/${run.workflow_id}`}
                 className={`
-                  transition-all duration-200
+                  transition-opacity duration-200
                   hover:underline hover:opacity-40
                 `}
               >

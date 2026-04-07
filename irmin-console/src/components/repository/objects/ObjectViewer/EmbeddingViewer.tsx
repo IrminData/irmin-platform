@@ -567,6 +567,7 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
                           })
                         }
                         title={dict.common.edit}
+                        aria-label={dict.common.edit}
                       >
                         <TbEdit className='size-4' />
                       </Button>

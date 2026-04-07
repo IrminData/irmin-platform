@@ -378,6 +378,7 @@ export default function AssetSharePopover({
                         className='size-7'
                         disabled={changingLevelKey !== null}
                         onClick={() => handleRemoveAccess(group)}
+                        aria-label='Remove access'
                       >
                         <TbTrash className='size-3.5' />
                       </Button>

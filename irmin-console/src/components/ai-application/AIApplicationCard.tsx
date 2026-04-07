@@ -37,7 +37,7 @@ export default function AIApplicationCard({
     >
       <Card
         className={`
-          h-full cursor-pointer transition-all
+          h-full cursor-pointer transition-shadow
           hover:shadow-lg
         `}
       >

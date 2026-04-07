@@ -361,6 +361,7 @@ const AIApplicationCustomToolsEditor = () => {
                         size='icon'
                         className='size-8'
                         onClick={() => handleOpenDialog(tool)}
+                        aria-label='Edit tool code'
                       >
                         <TbCode size={14} />
                       </Button>
@@ -373,6 +374,7 @@ const AIApplicationCustomToolsEditor = () => {
                         `}
                         onClick={() => handleDeleteTool(tool.id!)}
                         disabled={updateAIApplicationMutation.isPending}
+                        aria-label='Delete tool'
                       >
                         <TbTrash size={14} />
                       </Button>

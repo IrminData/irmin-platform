@@ -134,7 +134,7 @@ const FieldGroup = ({
                         }
                       }}
                       className={`
-                        rounded-md border p-2 transition-all
+                        rounded-md border p-2 transition-colors
                         ${
                           isSelected
                             ? `

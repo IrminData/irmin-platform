@@ -292,6 +292,7 @@ function AssistantSectionContent({
                   onClick={handleNewConversation}
                   disabled={!selectedConversationId}
                   tooltip={dict.assistant.newConversation}
+                  aria-label={dict.assistant.newConversation}
                 />
                 <ButtonWithTooltip
                   href={assistantUrl}
@@ -299,6 +300,7 @@ function AssistantSectionContent({
                   size='icon'
                   icon={<TbExternalLink size={16} />}
                   tooltip={dict.assistant.openInFullPage}
+                  aria-label={dict.assistant.openInFullPage}
                 />
                 {onClose && (
                   <ButtonWithTooltip
@@ -307,6 +309,7 @@ function AssistantSectionContent({
                     size='icon'
                     onClick={onClose}
                     tooltip={dict.common.close}
+                    aria-label={dict.common.close}
                   />
                 )}
               </div>

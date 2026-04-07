@@ -273,6 +273,7 @@ const ConnectionSubscriptionsSection = () => {
                               ? dict.common.copied
                               : dict.subscriptions.copyWebhookUrl
                           }
+                          aria-label={dict.subscriptions.copyWebhookUrl}
                         >
                           {copiedKey === `url-${subscription.id}` ? (
                             <TbCheck className='size-4 text-green-500' />
@@ -285,6 +286,7 @@ const ConnectionSubscriptionsSection = () => {
                           size='icon'
                           onClick={() => handleOpenEditModal(subscription)}
                           title={dict.common.edit}
+                          aria-label={dict.common.edit}
                         >
                           <TbPencil className='size-4' />
                         </Button>
@@ -294,6 +296,7 @@ const ConnectionSubscriptionsSection = () => {
                           onClick={() => handleRegenerateToken(subscription.id)}
                           disabled={regeneratingSubscriptionId !== null}
                           title={dict.subscriptions.regenerateToken}
+                          aria-label={dict.subscriptions.regenerateToken}
                         >
                           <TbRefresh
                             className={`
