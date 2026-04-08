@@ -321,3 +321,7 @@ docker buildx build --platform linux/amd64/v2,linux/arm64/v8 \
   -t YOUR_DOCKER_USERNAME/irmin-ai:latest --push .
 docker run -p 3001:3000 --env-file .env irmin-ai
 ```
+
+## License
+
+This project is licensed under the [Elastic License 2.0 (ELv2)](LICENSE).
