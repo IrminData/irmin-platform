@@ -415,4 +415,4 @@ The SDK is organized into focused packages:
 
 ## License
 
-This project is licensed under the [Elastic License 2.0 (ELv2)](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
