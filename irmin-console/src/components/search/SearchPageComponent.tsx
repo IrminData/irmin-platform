@@ -69,7 +69,8 @@ function TagSelection({
           }}
           onClick={() => onTagToggle(tag.id)}
           className={`
-            cursor-pointer transition-[color,background-color,border-color,transform]
+            cursor-pointer
+            transition-[color,background-color,border-color,transform]
             hover:scale-105
           `}
         >

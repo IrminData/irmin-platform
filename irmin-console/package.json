@@ -28,7 +28,8 @@
     "knip:fix": "knip --fix",
     "dict:validate": "tsx scripts/dict-validate.ts",
     "dict:fix": "tsx scripts/dict-validate.ts --fix",
-    "dict:report": "tsx scripts/dict-validate.ts --json"
+    "dict:report": "tsx scripts/dict-validate.ts --json",
+    "prepare": "husky"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.38.1",
@@ -62,6 +63,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
+    "@react-pdf/renderer": "^4.4.0",
     "@sentry/nextjs": "^10.39.0",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-query-devtools": "^5.91.3",
@@ -90,7 +92,6 @@
     "react-markdown": "^10.1.0",
     "react-responsive": "^10.0.1",
     "react-syntax-highlighter": "^16.1.0",
-    "react-to-pdf": "^3.2.1",
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
@@ -132,6 +133,7 @@
     "eslint-plugin-react-compiler": "19.1.0-rc.2",
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.3.0",
+    "husky": "^9.1.7",
     "import-in-the-middle": "1.14.4",
     "knip": "^5.85.0",
     "postcss": "^8.5.6",

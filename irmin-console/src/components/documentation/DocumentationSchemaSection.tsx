@@ -1,14 +1,15 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 
-import { BsLayers, BsPerson, BsSearch } from 'react-icons/bs';
+import { BsFilePdf, BsLayers, BsPerson, BsSearch } from 'react-icons/bs';
 import { GoWorkflow } from 'react-icons/go';
 import { TbClipboardX, TbDatabase } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { QueryError } from '@/components/ui/error/QueryError';
@@ -16,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import SchemaSkeleton from '@/components/ui/loading/SchemaSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -24,6 +26,7 @@ import { useConnections, useRepositories, useWorkflows } from '@/hooks/api';
 import type { WorkflowStatus } from '@/types/core/Workflow';
 
 import RepositoryDocumentationCard from './RepositoryDocumentationCard';
+import { downloadSchemaPDF } from './usePDFExport';
 
 type FlowNodeType = 'connector' | 'connection' | 'workflow' | 'repository';
 
@@ -97,6 +100,7 @@ function matchSearch(term: string, value: string | undefined) {
 export default function DocumentationSchemaSection() {
   const { locale, dict } = useLocale();
   const { workspaceSlug, workspaceQuery } = useWorkspaceContext();
+  const { profile } = useIAM();
   const { repositoriesQuery } = useRepositories();
   const { workflowsQuery } = useWorkflows();
   const { connectionsQuery } = useConnections();
@@ -257,6 +261,36 @@ export default function DocumentationSchemaSection() {
     };
   }, [workflows, connectionById, repositoryBySlug, locale, workspaceSlug]);
 
+  const handleDownloadPDF = useCallback(async () => {
+    if (!workspace) return;
+    try {
+      await downloadSchemaPDF({
+        filename: `${workspaceSlug}-schema-${new Date().toISOString()}.pdf`,
+        workspace: { name: workspace.name, slug: workspace.slug },
+        profile: profile ?? null,
+        locale: locale ?? 'en',
+        workflows,
+        connections,
+        repositories,
+        connectionById,
+        repositoryBySlug,
+        baseUrl: typeof window !== 'undefined' ? window.location.origin : '',
+      });
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+    }
+  }, [
+    workspace,
+    workspaceSlug,
+    profile,
+    locale,
+    workflows,
+    connections,
+    repositories,
+    connectionById,
+    repositoryBySlug,
+  ]);
+
   if (
     repositoriesQuery.isLoading ||
     workflowsQuery.isLoading ||
@@ -360,236 +394,255 @@ export default function DocumentationSchemaSection() {
           <p className='max-w-3xl text-sm text-muted-foreground'>
             {dict.documentation.schemaIntro}
           </p>
-          <div
-            className={`
-              relative w-full
-              sm:w-80
-            `}
-          >
-            <BsSearch
+          <div className='flex flex-wrap items-center gap-4'>
+            <div
               className={`
-                pointer-events-none absolute top-1/2 left-3 size-4
-                -translate-y-1/2 text-muted-foreground
+                relative w-full
+                sm:w-80
               `}
-            />
-            <Input
-              className='pl-10'
-              placeholder={dict.documentation.schemaSearchPlaceholder}
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
+            >
+              <BsSearch
+                className={`
+                  pointer-events-none absolute top-1/2 left-3 size-4
+                  -translate-y-1/2 text-muted-foreground
+                `}
+              />
+              <Input
+                className='pl-10'
+                placeholder={dict.documentation.schemaSearchPlaceholder}
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </div>
+            <Button
+              variant='default'
+              icon={<BsFilePdf size={18} />}
+              onClick={handleDownloadPDF}
+            >
+              {dict.documentation.downloadPdf}
+            </Button>
           </div>
         </div>
 
-        <section className='mb-12 space-y-6'>
-          <h2 className='text-2xl'>{dict.documentation.dataFlowsTitle}</h2>
-          {filteredWorkflowPaths.length === 0 ? (
-            <EmptyState
-              icon={<TbClipboardX className='size-full' />}
-              title={dict.documentation.workflowSearchEmptyTitle}
-              description={
-                dict.documentation.workflowRelationshipsEmptyDescription
-              }
-              size='md'
-            />
-          ) : (
-            <div className='space-y-6'>
-              {filteredWorkflowPaths.map((path) => {
-                const owner = ownerLabel(path.owner);
-                const scheduled =
-                  path.status && path.status.length > 0 ? path.status : null;
-                return (
-                  <Card key={path.id}>
-                    <CardHeader className='space-y-2'>
-                      <div className='flex flex-wrap items-center gap-3'>
-                        <CardTitle className='text-xl'>
-                          <Link
-                            href={`/${locale}/workspace/${workspaceSlug}/workflows/${path.id}`}
-                            className='hover:underline'
-                          >
-                            {path.name}
-                          </Link>
-                        </CardTitle>
-                        <Badge variant='outline' className='capitalize'>
-                          {path.type}
-                        </Badge>
-                        {scheduled && (
-                          <StatusBadge
-                            status={path.status ?? 'default'}
-                            label={scheduled}
-                          />
-                        )}
-                      </div>
-                      {path.description && (
-                        <p className='text-sm text-muted-foreground'>
-                          {path.description}
-                        </p>
-                      )}
-                      {owner && (
-                        <p
-                          className={`
-                            flex items-center gap-2 text-xs
-                            text-muted-foreground
-                          `}
-                        >
-                          <BsPerson className='size-3' />
-                          {owner}
-                        </p>
-                      )}
-                      {tagBadges(path.tags)}
-                    </CardHeader>
-                    <CardContent>
-                      <ul className='flex flex-wrap items-center gap-2 text-sm'>
-                        {path.nodes.map((node, index) => (
-                          <li key={node.id} className='flex items-center gap-2'>
-                            {node.href ? (
-                              <Link
-                                href={node.href}
-                                className={`
-                                  rounded-md border px-3 py-1 text-sm
-                                  transition-colors
-                                  hover:bg-muted
-                                `}
-                              >
-                                {node.label}
-                                {node.subLabel ? (
-                                  <span
-                                    className={`
-                                      ml-2 text-xs text-muted-foreground
-                                    `}
-                                  >
-                                    {node.subLabel}
-                                  </span>
-                                ) : null}
-                              </Link>
-                            ) : (
-                              <span
-                                className={`rounded-md border px-3 py-1 text-sm`}
-                              >
-                                {node.label}
-                                {node.subLabel ? (
-                                  <span
-                                    className={`
-                                      ml-2 text-xs text-muted-foreground
-                                    `}
-                                  >
-                                    {node.subLabel}
-                                  </span>
-                                ) : null}
-                              </span>
-                            )}
-                            {index < path.nodes.length - 1 && (
-                              <span className='text-muted-foreground'>→</span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        <section className='space-y-6'>
-          <h2 className='text-2xl'>
-            {dict.documentation.componentDirectoryTitle}
-          </h2>
-          <div
-            className={`
-              grid grid-cols-1 gap-6
-              lg:grid-cols-2
-            `}
-          >
-            {repositories.length === 0 ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2 text-lg'>
-                    <TbDatabase className='size-5 text-muted-foreground' />
-                    {dict.repository.repositories}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className='text-sm text-muted-foreground'>
-                    {dict.documentation.directoryRepositoriesEmpty}
-                  </p>
-                </CardContent>
-              </Card>
+        <div className='space-y-12'>
+          <section className='mb-12 space-y-6'>
+            <h2 className='text-2xl'>{dict.documentation.dataFlowsTitle}</h2>
+            {filteredWorkflowPaths.length === 0 ? (
+              <EmptyState
+                icon={<TbClipboardX className='size-full' />}
+                title={dict.documentation.workflowSearchEmptyTitle}
+                description={
+                  dict.documentation.workflowRelationshipsEmptyDescription
+                }
+                size='md'
+              />
             ) : (
-              repositories.map((repository) => (
-                <RepositoryDocumentationCard
-                  key={repository.id}
-                  repository={repository}
-                  workflowUsageCount={repositoryUsage.get(repository.slug) ?? 0}
-                />
-              ))
-            )}
-
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2 text-lg'>
-                  <GoWorkflow className='size-5 text-muted-foreground' />
-                  {dict.connections.connections}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4 text-sm'>
-                {connections.length === 0 ? (
-                  <p className='text-muted-foreground'>
-                    {dict.documentation.directoryConnectionsEmpty}
-                  </p>
-                ) : (
-                  connections.map((connection) => {
-                    const owner = ownerLabel(connection.owner);
-                    const usage = connectionUsage.get(connection.id) ?? 0;
-                    const usageLabel = (
-                      usage === 1
-                        ? dict.workflow.workflow
-                        : dict.workflow.workflows
-                    ).toLocaleLowerCase(locale);
-                    return (
-                      <div
-                        key={connection.id}
-                        className={`
-                          space-y-1 border-b pb-3
-                          last:border-b-0 last:pb-0
-                        `}
-                      >
-                        <Link
-                          href={`/${locale}/workspace/${workspaceSlug}/connections/${connection.id}`}
-                          className={`
-                            text-foreground
-                            hover:underline
-                          `}
-                        >
-                          {connection.name}
-                        </Link>
-                        <p className='text-xs text-muted-foreground'>
-                          {dict.connectors.connector}:{' '}
-                          {connection.connector?.name ??
-                            dict.documentation.unknownConnector}
-                        </p>
-                        {connection.description && (
-                          <p className='text-xs text-muted-foreground'>
-                            {connection.description}
+              <div className='space-y-6'>
+                {filteredWorkflowPaths.map((path) => {
+                  const owner = ownerLabel(path.owner);
+                  const scheduled =
+                    path.status && path.status.length > 0 ? path.status : null;
+                  return (
+                    <Card key={path.id}>
+                      <CardHeader className='space-y-2'>
+                        <div className='flex flex-wrap items-center gap-3'>
+                          <CardTitle className='text-xl'>
+                            <Link
+                              href={`/${locale}/workspace/${workspaceSlug}/workflows/${path.id}`}
+                              className='hover:underline'
+                            >
+                              {path.name}
+                            </Link>
+                          </CardTitle>
+                          <Badge variant='outline' className='capitalize'>
+                            {path.type}
+                          </Badge>
+                          {scheduled && (
+                            <StatusBadge
+                              status={path.status ?? 'default'}
+                              label={scheduled}
+                            />
+                          )}
+                        </div>
+                        {path.description && (
+                          <p className='text-sm text-muted-foreground'>
+                            {path.description}
                           </p>
                         )}
                         {owner && (
-                          <p className='text-xs text-muted-foreground'>
-                            {dict.common.owner}: {owner}
+                          <p
+                            className={`
+                              flex items-center gap-2 text-xs
+                              text-muted-foreground
+                            `}
+                          >
+                            <BsPerson className='size-3' />
+                            {owner}
                           </p>
                         )}
-                        <p className='text-xs text-muted-foreground'>
-                          {dict.documentation.referencedBy} {usage} {usageLabel}
-                        </p>
-                      </div>
-                    );
-                  })
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </section>
+                        {tagBadges(path.tags)}
+                      </CardHeader>
+                      <CardContent>
+                        <ul className='flex flex-wrap items-center gap-2 text-sm'>
+                          {path.nodes.map((node, index) => (
+                            <li
+                              key={node.id}
+                              className='flex items-center gap-2'
+                            >
+                              {node.href ? (
+                                <Link
+                                  href={node.href}
+                                  className={`
+                                    rounded-md border px-3 py-1 text-sm
+                                    transition-colors
+                                    hover:bg-muted
+                                  `}
+                                >
+                                  {node.label}
+                                  {node.subLabel ? (
+                                    <span
+                                      className={`
+                                        ml-2 text-xs text-muted-foreground
+                                      `}
+                                    >
+                                      {node.subLabel}
+                                    </span>
+                                  ) : null}
+                                </Link>
+                              ) : (
+                                <span
+                                  className={`
+                                    rounded-md border px-3 py-1 text-sm
+                                  `}
+                                >
+                                  {node.label}
+                                  {node.subLabel ? (
+                                    <span
+                                      className={`
+                                        ml-2 text-xs text-muted-foreground
+                                      `}
+                                    >
+                                      {node.subLabel}
+                                    </span>
+                                  ) : null}
+                                </span>
+                              )}
+                              {index < path.nodes.length - 1 && (
+                                <span className='text-muted-foreground'>→</span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          <section className='space-y-6'>
+            <h2 className='text-2xl'>
+              {dict.documentation.componentDirectoryTitle}
+            </h2>
+            <div
+              className={`
+                grid grid-cols-1 gap-6
+                lg:grid-cols-2
+              `}
+            >
+              {repositories.length === 0 ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className='flex items-center gap-2 text-lg'>
+                      <TbDatabase className='size-5 text-muted-foreground' />
+                      {dict.repository.repositories}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className='text-sm text-muted-foreground'>
+                      {dict.documentation.directoryRepositoriesEmpty}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                repositories.map((repository) => (
+                  <RepositoryDocumentationCard
+                    key={repository.id}
+                    repository={repository}
+                    workflowUsageCount={
+                      repositoryUsage.get(repository.slug) ?? 0
+                    }
+                  />
+                ))
+              )}
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className='flex items-center gap-2 text-lg'>
+                    <GoWorkflow className='size-5 text-muted-foreground' />
+                    {dict.connections.connections}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-4 text-sm'>
+                  {connections.length === 0 ? (
+                    <p className='text-muted-foreground'>
+                      {dict.documentation.directoryConnectionsEmpty}
+                    </p>
+                  ) : (
+                    connections.map((connection) => {
+                      const owner = ownerLabel(connection.owner);
+                      const usage = connectionUsage.get(connection.id) ?? 0;
+                      const usageLabel = (
+                        usage === 1
+                          ? dict.workflow.workflow
+                          : dict.workflow.workflows
+                      ).toLocaleLowerCase(locale);
+                      return (
+                        <div
+                          key={connection.id}
+                          className={`
+                            space-y-1 border-b pb-3
+                            last:border-b-0 last:pb-0
+                          `}
+                        >
+                          <Link
+                            href={`/${locale}/workspace/${workspaceSlug}/connections/${connection.id}`}
+                            className={`
+                              text-foreground
+                              hover:underline
+                            `}
+                          >
+                            {connection.name}
+                          </Link>
+                          <p className='text-xs text-muted-foreground'>
+                            {dict.connectors.connector}:{' '}
+                            {connection.connector?.name ??
+                              dict.documentation.unknownConnector}
+                          </p>
+                          {connection.description && (
+                            <p className='text-xs text-muted-foreground'>
+                              {connection.description}
+                            </p>
+                          )}
+                          {owner && (
+                            <p className='text-xs text-muted-foreground'>
+                              {dict.common.owner}: {owner}
+                            </p>
+                          )}
+                          <p className='text-xs text-muted-foreground'>
+                            {dict.documentation.referencedBy} {usage}{' '}
+                            {usageLabel}
+                          </p>
+                        </div>
+                      );
+                    })
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );

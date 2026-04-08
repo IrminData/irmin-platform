@@ -22,18 +22,6 @@
     display: auto;
   }
 
-  [data-pdf-export] {
-    background-color: #ffffff !important;
-    color: #1f2933 !important;
-  }
-
-  [data-pdf-export] * {
-    background-color: transparent !important;
-    background-image: none !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-  }
-
   /* --- Content Visibility Optimization for Long Lists --- */
   /* Apply to list items in scrollable containers to skip rendering off-screen content */
   .content-visibility-auto {

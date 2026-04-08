@@ -68,6 +68,7 @@ const en = {
     description: 'Description',
     email: 'Email',
     overview: 'Overview',
+    resources: 'Resources',
     actions: 'Actions',
     logs: 'Logs',
     timestamp: 'Timestamp',
@@ -1779,12 +1780,12 @@ const en = {
 
   // === DOCUMENTATION ===
   documentation: {
-    documentation: 'Documentation',
+    documentation: 'Workspace Overview',
     workspaceDocumentation: 'Workspace documentation',
     downloadPdf: 'Download PDF',
     startTypingDocumentation:
       'Start typing your documentation and notes here...',
-    schema: 'Schema',
+    schema: 'Data Flows',
     workspace: 'Workspace',
     createdBy: 'Created by',
     searchPlaceholder: 'Search documentation...',
@@ -1826,7 +1827,7 @@ const en = {
     workspaceEmptyDescription:
       'Start by creating your first repository, connection, or workflow to generate documentation.',
     goToWorkspace: 'Go to workspace',
-    schemaTitle: 'Workspace schema',
+    schemaTitle: 'Data flows',
     schemaIntro:
       'Visual overview of how connections, workflows, and repositories relate to each other.',
     schemaSearchPlaceholder: 'Search workflows or components...',

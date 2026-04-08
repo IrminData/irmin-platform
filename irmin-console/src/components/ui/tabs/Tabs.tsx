@@ -65,9 +65,8 @@ export default function Tabs({ tabs }: { tabs: TabDetails[] }) {
     <>
       <div
         className={`
-          my-4 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2
+          my-4 flex w-full flex-wrap justify-start gap-2 border-border px-2
           md:border-b
-          dark:border-gray-800
         `}
       >
         {tabs.map((tab) => (

@@ -92,8 +92,39 @@
   background-color: hsl(var(--card));
   border-radius: 0;
 }
-.dark .mdxeditor .mdxeditor-toolbar * {
-  filter: invert(0.98) !important;
+.dark .mdxeditor .mdxeditor-toolbar {
+  color: hsl(var(--foreground));
+}
+.dark .mdxeditor .mdxeditor-toolbar button {
+  color: hsl(var(--foreground));
+}
+.dark .mdxeditor .mdxeditor-toolbar button:hover {
+  background-color: hsl(var(--muted));
+}
+.dark .mdxeditor .mdxeditor-toolbar svg {
+  filter: invert(0.9);
+}
+.dark .mdxeditor .mdxeditor-toolbar select {
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--card));
+}
+.dark .mdxeditor [role='tooltip'],
+.dark .mdxeditor .mdxeditor-toolbar [data-state] {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+.dark .mdxeditor .mdxeditor-select-content,
+.dark .mdxeditor [role='listbox'],
+.dark .mdxeditor [role='menu'],
+.dark .mdxeditor [data-radix-popper-content-wrapper] div {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+.dark .mdxeditor [role='option']:hover,
+.dark .mdxeditor [role='menuitem']:hover {
+  background-color: hsl(var(--muted)) !important;
 }
 
 /* --- MDX Viewer Specific --- */

@@ -1,11 +1,8 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
-
-import { usePDF } from 'react-to-pdf';
 
 import { BsFilePdf, BsPerson, BsSearch, BsTag } from 'react-icons/bs';
 import { GoWorkflow } from 'react-icons/go';
@@ -42,6 +39,7 @@ import { useScripts } from '@/hooks/api/useScripts';
 
 import MDXViewer from './MDXViewer';
 import RepositoryDocumentationCard from './RepositoryDocumentationCard';
+import { downloadDocumentationPDF } from './usePDFExport';
 import { ownerSummary, renderTags } from './utils';
 
 function renderDocumentation(content: string | undefined, heading: string) {
@@ -146,11 +144,6 @@ export default function DocumentationSection() {
   const { workspaceSlug, workspaceQuery } = useWorkspaceContext();
   const { profile } = useIAM();
   const { dict, locale } = useLocale();
-  const { toPDF, targetRef } = usePDF({
-    filename: `${workspaceSlug}-documentation-${new Date().toISOString()}.pdf`,
-    page: { margin: 24 },
-  });
-
   const [searchTerm, setSearchTerm] = useState('');
 
   const workspace = workspaceQuery.data?.data;
@@ -207,114 +200,54 @@ export default function DocumentationSection() {
     return map;
   }, [workflows]);
 
-  const pdfHeaderRef = useRef<HTMLDivElement | null>(null);
-  const pdfVariableOverrides = useMemo(
-    () =>
-      ({
-        '--background': '#ffffff',
-        '--foreground': '#111827',
-        '--muted': '#f3f4f6',
-        '--muted-foreground': '#4b5563',
-        '--card': '#ffffff',
-        '--card-foreground': '#111827',
-        '--primary': '#0f172a',
-        '--primary-foreground': '#f8fafc',
-        '--secondary': '#e5e7eb',
-        '--secondary-foreground': '#111827',
-        '--accent': '#f1f5f9',
-        '--accent-foreground': '#111827',
-        '--border': '#e5e7eb',
-        '--input': '#e5e7eb',
-        '--ring': '#0f172a',
-      }) as Record<string, string>,
-    []
+  const stats = useMemo(
+    () => ({
+      repositories: repositories.length,
+      connections: connections.length,
+      workflows: workflows.length,
+      scripts: scripts.length,
+      queries: queries.length,
+      importWorkflows: workflows.filter((w) => w.type === 'import').length,
+      exportWorkflows: workflows.filter((w) => w.type === 'export').length,
+      actionWorkflows: workflows.filter((w) => w.type === 'action').length,
+      pipelineWorkflows: workflows.filter((w) => w.type === 'pipeline').length,
+    }),
+    [repositories, connections, workflows, scripts, queries]
   );
 
-  const downloadPDF = useCallback(async () => {
-    if (!targetRef.current) return;
-    const container = targetRef.current;
-    pdfHeaderRef.current?.classList.remove('sr-only');
-    container.setAttribute('data-pdf-export', 'true');
-    const previousVariables = Object.entries(pdfVariableOverrides).map(
-      ([property, value]) => {
-        const existing = container.style.getPropertyValue(property);
-        container.style.setProperty(property, value);
-        return [property, existing] as [string, string];
-      }
-    );
-    const previousBackground = container.style.backgroundColor;
-    const previousColor = container.style.color;
-    container.style.backgroundColor = '#ffffff';
-    container.style.color = '#111827';
-
-    // html2canvas 1.x cannot parse modern CSS color functions (lab, oklch,
-    // oklab, lch) emitted by Tailwind CSS 4. Monkey-patch getComputedStyle
-    // so that any value containing these functions is replaced with
-    // "transparent" before html2canvas's tokenizer sees it.
-    const nativeGetComputedStyle = window.getComputedStyle;
-    const unsupportedColorRe = /(?:ok)?(?:lab|lch)\([^)]*\)/gi;
-    const sanitize = (v: unknown) =>
-      typeof v === 'string' && unsupportedColorRe.test(v)
-        ? v.replace(unsupportedColorRe, 'transparent')
-        : v;
-    window.getComputedStyle = function (
-      elt: Element,
-      pseudoElt?: string | null
-    ) {
-      const cs = nativeGetComputedStyle.call(window, elt, pseudoElt);
-      return new Proxy(cs, {
-        get(target, prop) {
-          // CSSStyleDeclaration props must be read with the original object
-          // as `this`, otherwise browsers throw "Illegal invocation".
-          const raw = target[prop as keyof CSSStyleDeclaration];
-          if (typeof raw === 'function') {
-            return (...args: unknown[]) =>
-              sanitize(
-                (raw as (...a: unknown[]) => unknown).apply(target, args)
-              );
-          }
-          return sanitize(raw);
-        },
-      });
-    } as typeof window.getComputedStyle;
-
+  const handleDownloadPDF = useCallback(async () => {
+    if (!workspace) return;
     try {
-      await toPDF({
-        overrides: {
-          canvas: {
-            backgroundColor: '#ffffff',
-            logging: false,
-            onclone: (clonedDoc: Document) => {
-              clonedDoc
-                .querySelectorAll('[data-slot="collapsible"]')
-                .forEach((el) => el.remove());
-            },
-          },
-        },
+      await downloadDocumentationPDF({
+        filename: `${workspaceSlug}-documentation-${new Date().toISOString()}.pdf`,
+        workspace: { name: workspace.name, slug: workspace.slug },
+        profile: profile ?? null,
+        locale: locale ?? 'en',
+        stats,
+        repositories,
+        connections,
+        workflows,
+        scripts,
+        queries,
+        repositoryWorkflows,
+        baseUrl: typeof window !== 'undefined' ? window.location.origin : '',
       });
-    } finally {
-      window.getComputedStyle = nativeGetComputedStyle;
-      container.removeAttribute('data-pdf-export');
-      previousVariables.forEach(([property, value]) => {
-        if (value) {
-          container.style.setProperty(property, value);
-        } else {
-          container.style.removeProperty(property);
-        }
-      });
-      if (previousBackground) {
-        container.style.backgroundColor = previousBackground;
-      } else {
-        container.style.removeProperty('background-color');
-      }
-      if (previousColor) {
-        container.style.color = previousColor;
-      } else {
-        container.style.removeProperty('color');
-      }
-      pdfHeaderRef.current?.classList.add('sr-only');
+    } catch (error) {
+      console.error('PDF generation failed:', error);
     }
-  }, [pdfVariableOverrides, toPDF, targetRef]);
+  }, [
+    workspace,
+    workspaceSlug,
+    profile,
+    locale,
+    stats,
+    repositories,
+    connections,
+    workflows,
+    scripts,
+    queries,
+    repositoryWorkflows,
+  ]);
 
   if (
     workspaceQuery.isLoading ||
@@ -363,21 +296,6 @@ export default function DocumentationSection() {
       </div>
     );
   }
-
-  const stats = {
-    repositories: repositories.length,
-    connections: connections.length,
-    workflows: workflows.length,
-    scripts: scripts.length,
-    queries: queries.length,
-    importWorkflows: workflows.filter((w) => w.type === 'import').length,
-    exportWorkflows: workflows.filter((w) => w.type === 'export').length,
-    actionWorkflows: workflows.filter((w) => w.type === 'action').length,
-    pipelineWorkflows: workflows.filter((w) => w.type === 'pipeline').length,
-    scheduledWorkflows: workflows.filter(
-      (w) => w.schedule?.triggers && w.schedule.triggers.length > 0
-    ).length,
-  };
 
   const filteredRepositories = matchSearch(repositories, searchTerm);
   const filteredConnections = matchSearch(connections, searchTerm);
@@ -451,7 +369,7 @@ export default function DocumentationSection() {
             <Button
               variant='default'
               icon={<BsFilePdf size={18} />}
-              onClick={downloadPDF}
+              onClick={handleDownloadPDF}
             >
               {dict.documentation.downloadPdf}
             </Button>
@@ -472,146 +390,131 @@ export default function DocumentationSection() {
           </div>
         </div>
 
-        <div ref={targetRef} className='space-y-12'>
-          <div ref={pdfHeaderRef} className='sr-only'>
-            <div className='mb-6 flex items-center justify-between'>
-              <Image
-                src='/irmin-logo.svg'
-                alt='Irmin logo'
-                width={120}
-                height={32}
-                className={`
-                  block h-8 w-auto
-                  dark:hidden
-                `}
-              />
-              <Image
-                src='/irmin-logo-light.svg'
-                alt='Irmin logo'
-                width={120}
-                height={32}
-                className={`
-                  hidden h-8 w-auto
-                  dark:block
-                `}
-              />
-            </div>
-            <div className='space-y-2 text-sm text-muted-foreground'>
-              {profile && (
-                <p>
-                  <span className=''>{dict.documentation.createdBy}: </span>
-                  {`${profile.first_name} ${profile.last_name}`}
-                  {profile.company ? ` (${profile.company})` : ''}
-                  {profile.email ? ` • ${profile.email}` : ''}
-                </p>
-              )}
-              <p>
-                <span className=''>{dict.common.timestamp}: </span>
-                {new Date().toLocaleString(locale ?? 'en')}
-              </p>
-            </div>
-          </div>
-
+        <div className='space-y-12'>
           <section className='space-y-6'>
             <h2 className='text-2xl'>{dict.documentation.summaryTitle}</h2>
             <Card>
               <CardHeader>
-                <CardTitle>{dict.common.overview}</CardTitle>
+                <CardTitle>
+                  {workspace.name}{' '}
+                  <span className='font-normal text-muted-foreground'>
+                    ({workspace.slug})
+                  </span>
+                </CardTitle>
                 <CardDescription>
                   {dict.documentation.summaryDescription}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <dl
-                  className={`
-                    grid grid-cols-1 gap-4 text-sm
-                    sm:grid-cols-2
-                    lg:grid-cols-3
-                  `}
-                >
-                  <div>
-                    <dt className='text-muted-foreground'>
-                      {dict.repository.repositories}
-                    </dt>
-                    <dd className='text-base font-medium'>
-                      {stats.repositories}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className='text-muted-foreground'>
-                      {dict.connections.connections}
-                    </dt>
-                    <dd className='text-base font-medium'>
-                      {stats.connections}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className='text-muted-foreground'>
-                      {dict.workflow.workflows}
-                    </dt>
-                    <dd className='text-base font-medium'>{stats.workflows}</dd>
-                  </div>
-                  <div>
-                    <dt className='text-muted-foreground'>
-                      {dict.consoleNavigation.scripts}
-                    </dt>
-                    <dd className='text-base font-medium'>{stats.scripts}</dd>
-                  </div>
-                  <div>
-                    <dt className='text-muted-foreground'>
-                      {dict.query.queries}
-                    </dt>
-                    <dd className='text-base font-medium'>{stats.queries}</dd>
-                  </div>
-                  <div>
-                    <dt className='text-muted-foreground'>
-                      {dict.workflow.importWorkflows}
-                    </dt>
-                    <dd className='text-base font-medium'>
-                      {stats.importWorkflows}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className='text-muted-foreground'>
-                      {dict.workflow.exportWorkflows}
-                    </dt>
-                    <dd className='text-base font-medium'>
-                      {stats.exportWorkflows}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className='text-muted-foreground'>
-                      {dict.workflow.actionWorkflows}
-                    </dt>
-                    <dd className='text-base font-medium'>
-                      {stats.actionWorkflows}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className='text-muted-foreground'>
-                      {dict.workflow.pipelineWorkflows}
-                    </dt>
-                    <dd className='text-base font-medium'>
-                      {stats.pipelineWorkflows}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className='text-muted-foreground'>
-                      {dict.workflow.scheduledWorkflows}
-                    </dt>
-                    <dd className='text-base font-medium'>
-                      {stats.scheduledWorkflows}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className='text-muted-foreground'>
-                      {dict.documentation.workspaceIdentifier}
-                    </dt>
-                    <dd className='text-base font-medium'>
-                      {workspace.name} ({workspace.slug})
-                    </dd>
-                  </div>
-                </dl>
+              <CardContent className='space-y-6'>
+                {/* Resources */}
+                <div>
+                  <h4
+                    className='
+                      mb-3 text-xs font-medium tracking-wider
+                      text-muted-foreground uppercase
+                    '
+                  >
+                    {dict.common.resources}
+                  </h4>
+                  <dl
+                    className={`
+                      grid grid-cols-2 gap-3 text-sm
+                      sm:grid-cols-3
+                      lg:grid-cols-5
+                    `}
+                  >
+                    <div className='rounded-md border p-3'>
+                      <dd className='text-lg font-semibold tabular-nums'>
+                        {stats.repositories}
+                      </dd>
+                      <dt className='text-xs text-muted-foreground'>
+                        {dict.repository.repositories}
+                      </dt>
+                    </div>
+                    <div className='rounded-md border p-3'>
+                      <dd className='text-lg font-semibold tabular-nums'>
+                        {stats.connections}
+                      </dd>
+                      <dt className='text-xs text-muted-foreground'>
+                        {dict.connections.connections}
+                      </dt>
+                    </div>
+                    <div className='rounded-md border p-3'>
+                      <dd className='text-lg font-semibold tabular-nums'>
+                        {stats.workflows}
+                      </dd>
+                      <dt className='text-xs text-muted-foreground'>
+                        {dict.workflow.workflows}
+                      </dt>
+                    </div>
+                    <div className='rounded-md border p-3'>
+                      <dd className='text-lg font-semibold tabular-nums'>
+                        {stats.scripts}
+                      </dd>
+                      <dt className='text-xs text-muted-foreground'>
+                        {dict.consoleNavigation.scripts}
+                      </dt>
+                    </div>
+                    <div className='rounded-md border p-3'>
+                      <dd className='text-lg font-semibold tabular-nums'>
+                        {stats.queries}
+                      </dd>
+                      <dt className='text-xs text-muted-foreground'>
+                        {dict.query.queries}
+                      </dt>
+                    </div>
+                  </dl>
+                </div>
+                {/* Workflow breakdown */}
+                <div>
+                  <h4
+                    className='
+                      mb-3 text-xs font-medium tracking-wider
+                      text-muted-foreground uppercase
+                    '
+                  >
+                    {dict.workflow.workflows}
+                  </h4>
+                  <dl
+                    className={`
+                      grid grid-cols-2 gap-3 text-sm
+                      sm:grid-cols-4
+                    `}
+                  >
+                    <div className='rounded-md border p-3'>
+                      <dd className='text-lg font-semibold tabular-nums'>
+                        {stats.importWorkflows}
+                      </dd>
+                      <dt className='text-xs text-muted-foreground'>
+                        {dict.workflow.importWorkflows}
+                      </dt>
+                    </div>
+                    <div className='rounded-md border p-3'>
+                      <dd className='text-lg font-semibold tabular-nums'>
+                        {stats.exportWorkflows}
+                      </dd>
+                      <dt className='text-xs text-muted-foreground'>
+                        {dict.workflow.exportWorkflows}
+                      </dt>
+                    </div>
+                    <div className='rounded-md border p-3'>
+                      <dd className='text-lg font-semibold tabular-nums'>
+                        {stats.actionWorkflows}
+                      </dd>
+                      <dt className='text-xs text-muted-foreground'>
+                        {dict.workflow.actionWorkflows}
+                      </dt>
+                    </div>
+                    <div className='rounded-md border p-3'>
+                      <dd className='text-lg font-semibold tabular-nums'>
+                        {stats.pipelineWorkflows}
+                      </dd>
+                      <dt className='text-xs text-muted-foreground'>
+                        {dict.workflow.pipelineWorkflows}
+                      </dt>
+                    </div>
+                  </dl>
+                </div>
               </CardContent>
             </Card>
           </section>

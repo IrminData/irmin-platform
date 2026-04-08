@@ -68,6 +68,7 @@ const fi = {
     description: 'Kuvaus',
     email: 'Sähköposti',
     overview: 'Yleiskatsaus',
+    resources: 'Resurssit',
     actions: 'Toiminnot',
     logs: 'Lokit',
     timestamp: 'Aikaleima',
@@ -1767,12 +1768,12 @@ const fi = {
 
   // === DOCUMENTATION ===
   documentation: {
-    documentation: 'Dokumentaatio',
+    documentation: 'Työtilan yleiskatsaus',
     workspaceDocumentation: 'Työtilan dokumentaatio',
     downloadPdf: 'Lataa PDF',
     startTypingDocumentation:
       'Aloita dokumentaation ja muistiinpanojen kirjoittaminen...',
-    schema: 'Skeema',
+    schema: 'Tietovirrat',
     workspace: 'Työtila',
     createdBy: 'Luonut',
     searchPlaceholder: 'Hae dokumentaatiosta...',
@@ -1814,7 +1815,7 @@ const fi = {
     workspaceEmptyDescription:
       'Luo ensimmäinen arkisto, yhteys tai työnkulku dokumentaation muodostamiseksi.',
     goToWorkspace: 'Siirry työtilaan',
-    schemaTitle: 'Työtilan kaavio',
+    schemaTitle: 'Tietovirrat',
     schemaIntro:
       'Visuaalinen näkymä työtilan yhteyksien, työnkulkujen ja arkistojen suhteista.',
     schemaSearchPlaceholder: 'Hae työnkulkuja tai komponentteja...',
