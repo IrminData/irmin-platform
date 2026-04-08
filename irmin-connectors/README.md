@@ -360,3 +360,7 @@ type User struct {
 - `swaggerignore:"true"` - Exclude field from docs
 
 For detailed documentation and advanced features, see [swaggo/swag](https://github.com/swaggo/swag).
+
+## License
+
+This project is licensed under the [Elastic License 2.0 (ELv2)](LICENSE).
