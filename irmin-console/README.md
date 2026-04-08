@@ -121,3 +121,7 @@ To generate test code, use the following commands:
 pnpm e2e:codegen # Generate test code for desktop
 pnpm e2e:codegen-mobile # Generate test code for mobile
 ```
+
+## License
+
+This project is licensed under the [Elastic License 2.0 (ELv2)](LICENSE).
