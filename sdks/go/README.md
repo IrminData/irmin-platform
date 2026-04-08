@@ -412,3 +412,7 @@ The SDK is organized into focused packages:
 - `connector/` - Connector client
 - `duckdb/` - In-memory data processing and analytics
 - `utils/` - Utility functions
+
+## License
+
+This project is licensed under the [Elastic License 2.0 (ELv2)](LICENSE).
