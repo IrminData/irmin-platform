@@ -351,3 +351,7 @@ S3_ENDPOINT=http://localhost:9000
 ```
 
 **Why?** In docker-compose, containers use Docker's internal network where service names (like `lakefs`, `minio`) resolve to container IPs. From your host machine, you use `localhost` to access exposed ports.
+
+## License
+
+This project is licensed under the [Elastic License 2.0 (ELv2)](LICENSE).
