@@ -12,6 +12,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -82,9 +83,9 @@ func NewKeyring(entries []Key) (*Keyring, error) {
 		if strings.ContainsAny(e.ID, ":") {
 			return nil, fmt.Errorf("key id %q must not contain ':'", e.ID)
 		}
-		raw, err := base64.StdEncoding.DecodeString(e.KeyB64)
+		raw, err := decodeKeyMaterial(e.KeyB64)
 		if err != nil {
-			return nil, fmt.Errorf("key %q: base64 decode: %w", e.ID, err)
+			return nil, fmt.Errorf("key %q: decode key material: %w", e.ID, err)
 		}
 		if len(raw) != aesKeyLen {
 			return nil, fmt.Errorf("key %q: expected %d-byte AES-256 key, got %d", e.ID, aesKeyLen, len(raw))
@@ -186,6 +187,92 @@ func (k *Keyring) Decrypt(s string) (string, error) {
 		return "", fmt.Errorf("decrypt: %w", err)
 	}
 	return string(plain), nil
+}
+
+// decodeKeyMaterial tolerates the key-material formats that operators
+// realistically produce:
+//
+//   - standard base64 (with or without padding) — e.g., `openssl rand -base64 32`
+//     which also appends a trailing newline
+//   - URL-safe base64 (with or without padding) — some key-management tools
+//     emit `-` and `_` instead of `+` and `/`
+//   - hex — a legitimate 64-char representation of a 32-byte key
+//
+// Surrounding whitespace (including trailing newlines) is always trimmed.
+// This forgiveness matters because a mis-encoded key blocks service boot in
+// production; the security posture is unaffected because the decoded bytes
+// are validated downstream (length + cipher construction).
+//
+// Hex and base64 alphabets overlap — a 64-char hex string like
+// "aabbccdd..." is also valid base64 (decoding to 48 bytes of junk). We
+// prefer hex when the input is syntactically unambiguous (even length,
+// all hex digits); otherwise we try the base64 variants in order and
+// accept the first that yields a candidate of the expected length.
+func decodeKeyMaterial(s string) ([]byte, error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil, errors.New("empty key material")
+	}
+	if looksLikeHex(s) {
+		raw, err := hex.DecodeString(s)
+		if err == nil && len(raw) == aesKeyLen {
+			return raw, nil
+		}
+	}
+	decoders := []func(string) ([]byte, error){
+		base64.StdEncoding.DecodeString,
+		base64.RawStdEncoding.DecodeString,
+		base64.URLEncoding.DecodeString,
+		base64.RawURLEncoding.DecodeString,
+	}
+	var firstErr error
+	var wrongLen []byte
+	for _, dec := range decoders {
+		raw, err := dec(s)
+		if err != nil {
+			if firstErr == nil {
+				firstErr = err
+			}
+			continue
+		}
+		if len(raw) == aesKeyLen {
+			return raw, nil
+		}
+		wrongLen = raw
+	}
+	// If a decoder succeeded but produced the wrong length, surface a
+	// length error — it's the operator's clue that the key is the wrong size
+	// rather than the wrong encoding.
+	if wrongLen != nil {
+		return nil, fmt.Errorf(
+			"decoded to %d bytes; expected %d (generate with `openssl rand -base64 %d`)",
+			len(wrongLen),
+			aesKeyLen,
+			aesKeyLen,
+		)
+	}
+	return nil, fmt.Errorf(
+		"not valid base64 (std or URL-safe, padded or raw) or hex: %w",
+		firstErr,
+	)
+}
+
+// looksLikeHex reports whether s is syntactically unambiguous hex: even
+// length and every character is a hex digit.
+func looksLikeHex(s string) bool {
+	if len(s) == 0 || len(s)%2 != 0 {
+		return false
+	}
+	for i := range len(s) {
+		c := s[i]
+		isDigit := c >= '0' && c <= '9'
+		isLower := c >= 'a' && c <= 'f'
+		isUpper := c >= 'A' && c <= 'F'
+		if !isDigit && !isLower && !isUpper {
+			return false
+		}
+	}
+	return true
 }
 
 // GenerateKey produces a base64-encoded random 32-byte AES-256 key, intended

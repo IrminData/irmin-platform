@@ -2,6 +2,7 @@ package crypto_test
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -224,6 +225,51 @@ func TestPassthroughKeyring(t *testing.T) {
 	ct, _ := live.Encrypt("secret")
 	if _, decErr := kr.Decrypt(ct); decErr == nil {
 		t.Fatalf("passthrough must reject real ciphertext")
+	}
+}
+
+func TestKeyMaterialAcceptsVariants(t *testing.T) {
+	// The same 32-byte key encoded five different ways that operators
+	// realistically paste into env vars.
+	raw := make([]byte, 32)
+	for i := range raw {
+		raw[i] = byte(i * 7)
+	}
+	variants := map[string]string{
+		"std base64 padded":           base64.StdEncoding.EncodeToString(raw),
+		"std base64 raw":              base64.RawStdEncoding.EncodeToString(raw),
+		"URL base64 padded":           base64.URLEncoding.EncodeToString(raw),
+		"URL base64 raw":              base64.RawURLEncoding.EncodeToString(raw),
+		"hex":                         hex.EncodeToString(raw),
+		"std base64 trailing newline": base64.StdEncoding.EncodeToString(raw) + "\n",
+		"std base64 leading spaces":   "  " + base64.StdEncoding.EncodeToString(raw),
+		"std base64 tabs and newline": "\t" + base64.StdEncoding.EncodeToString(raw) + "\r\n",
+	}
+	for name, encoded := range variants {
+		t.Run(name, func(t *testing.T) {
+			kr, err := crypto.NewKeyring([]crypto.Key{{ID: "k1", KeyB64: encoded}})
+			if err != nil {
+				t.Fatalf("NewKeyring rejected %s variant: %v", name, err)
+			}
+			ct, err := kr.Encrypt("hello")
+			if err != nil {
+				t.Fatalf("Encrypt: %v", err)
+			}
+			got, err := kr.Decrypt(ct)
+			if err != nil {
+				t.Fatalf("Decrypt: %v", err)
+			}
+			if got != "hello" {
+				t.Fatalf("roundtrip mismatch for %s: %q", name, got)
+			}
+		})
+	}
+}
+
+func TestKeyMaterialRejectsGarbage(t *testing.T) {
+	key := crypto.Key{ID: "k1", KeyB64: "not base64 or hex!!"}
+	if _, err := crypto.NewKeyring([]crypto.Key{key}); err == nil {
+		t.Fatalf("expected error for garbage key material")
 	}
 }
 
