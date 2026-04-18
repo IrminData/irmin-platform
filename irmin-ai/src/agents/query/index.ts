@@ -12,6 +12,8 @@ import { toolsService } from '@/services/tools';
 import { BaseAgent } from '@/agents/base';
 import type { AgentInput } from '@/agents/types';
 
+import { ANTHROPIC_FALLBACK_CHAIN } from '@/config/models';
+
 import { agentConfig } from './config';
 
 export class QueryAgent extends BaseAgent {
@@ -51,19 +53,21 @@ export class QueryAgent extends BaseAgent {
       tools.push(...filteredTools);
     }
 
-    const fallbackLLM = llmService.createLLM({
-      // Keep fallback on Anthropic so conversation history with Anthropic
-      // thinking blocks remains provider-compatible.
-      provider: 'anthropic',
-      model: 'claude-haiku-4-5-20251001',
-      maxTokens: 2048,
-      streaming: false,
-    });
+    // Fallbacks must stay on Anthropic because the primary emits thinking
+    // blocks — switching providers mid-conversation corrupts message history.
+    const fallbackLLMs = ANTHROPIC_FALLBACK_CHAIN.map((model) =>
+      llmService.createLLM({
+        provider: 'anthropic',
+        model,
+        maxTokens: 2048,
+        streaming: false,
+      })
+    );
 
     return {
       llmOptions: {
         provider: 'anthropic' as const,
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-6',
         temperature: 0.9,
         maxTokens: 2048,
         streaming: false,
@@ -75,7 +79,7 @@ export class QueryAgent extends BaseAgent {
         },
       },
       tools,
-      middleware: [modelFallbackMiddleware(fallbackLLM)],
+      middleware: [modelFallbackMiddleware(...fallbackLLMs)],
     };
   }
 

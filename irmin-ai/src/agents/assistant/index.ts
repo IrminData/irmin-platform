@@ -21,6 +21,8 @@ import {
 } from '@/agents/tools/lazyContextTool';
 import type { AgentInput, AgentResponse } from '@/agents/types';
 
+import { ANTHROPIC_FALLBACK_CHAIN } from '@/config/models';
+
 import { agentConfig } from './config';
 
 export class AssistantAgent extends BaseAgent {
@@ -119,14 +121,18 @@ export class AssistantAgent extends BaseAgent {
       tools.push(createBatchContextTool(input.authToken, input.workspace.slug));
     }
 
-    const fallbackLLM = llmService.createLLM({
-      // Keep fallback on Anthropic so conversation history with Anthropic
-      // thinking blocks remains provider-compatible.
-      provider: 'anthropic',
-      model: 'claude-haiku-4-5-20251001',
-      maxTokens: 1000,
-      streaming: false,
-    });
+    // Fallbacks must stay on Anthropic because the primary emits thinking
+    // blocks — switching providers mid-conversation corrupts message history.
+    // Order: cheaper+faster first (Haiku), then a stable older Sonnet as a
+    // last resort if Haiku also fails.
+    const fallbackLLMs = ANTHROPIC_FALLBACK_CHAIN.map((model) =>
+      llmService.createLLM({
+        provider: 'anthropic',
+        model,
+        maxTokens: 1000,
+        streaming: false,
+      })
+    );
 
     const cheaperLLM = llmService.createLLM({
       provider: 'groq',
@@ -160,7 +166,7 @@ export class AssistantAgent extends BaseAgent {
       console.log('[Agent Timing] Skipping tool selector (docsOnly mode)');
     }
 
-    middleware.push(modelFallbackMiddleware(fallbackLLM));
+    middleware.push(modelFallbackMiddleware(...fallbackLLMs));
 
     console.log(
       `[Agent Timing] getAgentOptions total: ${Date.now() - optionsStart}ms (tools=${tools.length}, middleware=${middleware.length})`
@@ -169,7 +175,7 @@ export class AssistantAgent extends BaseAgent {
     return {
       llmOptions: {
         provider: 'anthropic' as const,
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-6',
         temperature: 0.8,
         maxTokens: 4096,
         streaming: true,
