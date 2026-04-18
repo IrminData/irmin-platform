@@ -40,3 +40,11 @@ go.work
 
 # Mac OS X Finder directory files
 .DS_Store
+
+# Claude Code
+.claude/
+
+# AI tool local config (may contain secrets / MCP tokens)
+.cursor/mcp.json
+.vscode/mcp.json
+.aider*
