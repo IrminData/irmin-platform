@@ -17,15 +17,15 @@
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
 
     "paths": {
-      "@/*": ["src/*"],
-      "@/config/*": ["src/config/*"],
-      "@/database/*": ["src/database/*"],
-      "@/routes/*": ["src/routes/*"],
-      "@/types/*": ["src/types/*"],
-      "@/utils/*": ["src/utils/*"]
+      "@/*": ["./src/*"],
+      "@/config/*": ["./src/config/*"],
+      "@/database/*": ["./src/database/*"],
+      "@/routes/*": ["./src/routes/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/utils/*": ["./src/utils/*"]
     },
 
     "typeRoots": ["./node_modules/@types"],

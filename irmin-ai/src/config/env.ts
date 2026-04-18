@@ -6,6 +6,8 @@ config();
 // Skip validation during static analysis (knip, etc.)
 const isStaticAnalysis =
   process.env.npm_lifecycle_event === 'knip' ||
+  process.env.npm_lifecycle_event === 'knip:fix' ||
+  process.env.npm_lifecycle_event === 'validate' ||
   process.env.KNIP === 'true' ||
   process.env.STATIC_ANALYSIS === 'true';
 
