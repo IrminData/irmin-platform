@@ -316,6 +316,10 @@ type CoreAPIEnv struct {
 	TestTag                      string // Tag to test with
 	SignedURLSecret              string // HMAC secret for signed download URLs
 
+	// Credential encryption
+	CredentialEncryptionKeys string // JSON array of {id, key_b64} entries; first key is active
+	RequireEncryptionAtRest  bool   // When true, boot fails if CredentialEncryptionKeys is missing or invalid
+
 	// Billing configuration
 	BillingEnabled     bool   // Flag to enable Polar.sh billing integration
 	PolarAPIKey        string // Polar.sh API key

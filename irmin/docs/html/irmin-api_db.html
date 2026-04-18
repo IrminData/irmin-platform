@@ -522,7 +522,7 @@ type Connection struct {
 	Name          string                  `json:"name,omitempty"`
 	Description   string                  `json:"description,omitempty"`
 	Documentation string                  `json:"documentation,omitempty"`
-	Details       CustomFieldValues       `json:"details,omitempty"       gorm:"type:jsonb;serializer:json"`
+	Details       CustomFieldValues       `json:"details,omitempty"       gorm:"type:jsonb;serializer:encrypted_json"`
 	Settings      CustomFieldValues       `json:"settings,omitempty"      gorm:"type:jsonb;serializer:json"`
 	OwnerID       uint                    `json:"owner_id,omitempty"`
 	Owner         User                    `json:"owner"                   gorm:"foreignKey:OwnerID"`
@@ -676,9 +676,11 @@ type Database struct {
     Database represents a database connection and its operations. It now shares
     a single underlying pgxpool for both GORM and direct pgx access.
 
-func InitialiseDB(env *utils.CoreAPIEnv) (*Database, error)
+func InitialiseDB(env *utils.CoreAPIEnv, keyring *crypto.Keyring) (*Database, error)
     InitialiseDB establishes a Postgres database connection, performs any
-    necessary migrations, and returns an error if something goes wrong.
+    necessary migrations, and returns an error if something goes wrong. The
+    keyring is used to register the "encrypted_json" GORM serializer for fields
+    (e.g., Connection.Details) that store sensitive values at rest.
 
 func (d *Database) AddTagToAIApplication(aiApplicationID, tagID uint) error
     AddTagToAIApplication adds a tag to an AI application.
@@ -1189,6 +1191,17 @@ func (d *Database) MarkUsageRecordsReported(ids []uint) error
 func (d *Database) Migrate() error
     Migrate runs the auto migration calls in the correct order. It separates the
     migrations into groups based on model dependencies.
+
+func (d *Database) ReencryptConnectionDetails(ctx context.Context, logger *slog.Logger) (int, error)
+    ReencryptConnectionDetails walks every Connection and re-saves its Details
+    field so the encrypted_json serializer rewrites each row using the active
+    key. The operation is idempotent: the serializer decrypts on read and
+    re-encrypts on write, so running this repeatedly is safe. Legacy plaintext
+    rows are upgraded on their first pass; already-encrypted rows get a fresh
+    nonce (and, after a rotation, the new key ID).
+
+    Returns the number of rows touched and any error encountered. Errors on a
+    single row are logged and skipped so one bad row doesn't block the rest.
 
 func (d *Database) RemoveTagFromAIApplication(aiApplicationID, tagID uint) error
     RemoveTagFromAIApplication removes a tag from an AI application.

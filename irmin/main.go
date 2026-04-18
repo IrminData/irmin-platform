@@ -25,6 +25,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"irmin-api/cache"
@@ -33,6 +34,7 @@ import (
 	"irmin-api/gc"
 	"irmin-api/lakefs"
 	"irmin-api/lib"
+	"irmin-api/lib/crypto"
 	"irmin-api/locales"
 	"irmin-api/orchestrator"
 	"irmin-api/permissions"
@@ -71,6 +73,31 @@ const (
 	// GracefulShutdownTimeout is the maximum duration to wait for in-flight requests during shutdown.
 	GracefulShutdownTimeout = 30 * time.Second
 )
+
+// buildKeyring constructs the credential-encryption keyring from configuration.
+// If the env var is unset and encryption is not required, it returns a
+// passthrough keyring and logs a warning so operators see it in boot logs.
+// Boot-time logging uses the stdlib log package to match the rest of main.go.
+func buildKeyring(env *utils.CoreAPIEnv) (*crypto.Keyring, error) {
+	if env.CredentialEncryptionKeys == "" {
+		if env.RequireEncryptionAtRest {
+			return nil, errors.New(
+				"CREDENTIAL_ENCRYPTION_KEYS is required (REQUIRE_ENCRYPTION_AT_REST=true)",
+			)
+		}
+		log.Println(
+			"WARNING: credential encryption is disabled (CREDENTIAL_ENCRYPTION_KEYS is unset); " +
+				"connection secrets will be stored as plaintext",
+		)
+		return crypto.NewPassthroughKeyring(), nil
+	}
+	keyring, err := crypto.NewKeyringFromJSON(env.CredentialEncryptionKeys)
+	if err != nil {
+		return nil, fmt.Errorf("parse CREDENTIAL_ENCRYPTION_KEYS: %w", err)
+	}
+	log.Printf("Credential encryption enabled (active key id: %s)", keyring.ActiveKeyID())
+	return keyring, nil
+}
 
 // setupDefaultTags seeds default tags for all workspaces.
 func setupDefaultTags(d *db.Database) error {
@@ -122,7 +149,12 @@ func setupRolesAndPolicies(d *db.Database, overridePolicies *bool) error {
 // setupDatabase initializes and configures the database based on command line flags.
 // The returned bool is true when a one-shot command (e.g. -gc) was run and the process should exit.
 func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, bool, error) {
-	d, err := db.InitialiseDB(env)
+	keyring, err := buildKeyring(env)
+	if err != nil {
+		return nil, false, err
+	}
+
+	d, err := db.InitialiseDB(env, keyring)
 	if err != nil {
 		return nil, false, err
 	}
@@ -135,6 +167,11 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, bool, error) {
 	seedTemplates := flag.Bool("seed-templates", false, "Seed templates from embedded files")
 	gcRun := flag.Bool("gc", false, "Run garbage collection operations")
 	gcDryRun := flag.Bool("gc-dry-run", false, "Run garbage collection in dry-run mode (no deletions)")
+	reencrypt := flag.Bool(
+		"reencrypt-secrets",
+		false,
+		"Re-encrypt all connection secrets with the active key (idempotent, safe to repeat)",
+	)
 	// Keep -migrate flag for backwards compatibility (now a no-op since migrations run by default)
 	_ = flag.Bool("migrate", false, "Run database migrations (deprecated: migrations now run automatically)")
 	flag.Parse()
@@ -146,22 +183,18 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, bool, error) {
 		}
 	}
 
-	// Run database migrations on startup (unless explicitly skipped)
-	// This ensures the database schema is always up-to-date for Railway, Docker, etc.
-	if !*skipMigrate {
-		log.Println("Running database migrations...")
-		// Create database tables, add indexes, or update existing ones
-		if dbMigrateErr := d.Migrate(); dbMigrateErr != nil {
-			return nil, false, dbMigrateErr
-		}
+	// Run database migrations on startup (unless explicitly skipped).
+	if runMigrateErr := runMigrations(d, overridePolicies, *skipMigrate); runMigrateErr != nil {
+		return nil, false, runMigrateErr
+	}
 
-		// Setup roles and policies
-		if setupRolesAndPoliciesErr := setupRolesAndPolicies(d, overridePolicies); setupRolesAndPoliciesErr != nil {
-			return nil, false, setupRolesAndPoliciesErr
+	// Re-encrypt connection secrets when explicitly requested. This is a
+	// one-shot operation — process exits after it completes.
+	if *reencrypt {
+		if reencryptErr := runReencryption(d); reencryptErr != nil {
+			return nil, false, reencryptErr
 		}
-		log.Println("Database migrations completed")
-	} else {
-		log.Println("Database migrations skipped (-skip-migrate flag set)")
+		return d, true, nil
 	}
 
 	// Seed default tags for all workspaces if the seedTags flag is set
@@ -188,6 +221,35 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, bool, error) {
 	}
 
 	return d, false, nil
+}
+
+// runMigrations runs schema migrations and role/policy setup unless skipped.
+// This ensures the database schema is always up-to-date for Railway, Docker, etc.
+func runMigrations(d *db.Database, overridePolicies *bool, skip bool) error {
+	if skip {
+		log.Println("Database migrations skipped (-skip-migrate flag set)")
+		return nil
+	}
+	log.Println("Running database migrations...")
+	if err := d.Migrate(); err != nil {
+		return err
+	}
+	if err := setupRolesAndPolicies(d, overridePolicies); err != nil {
+		return err
+	}
+	log.Println("Database migrations completed")
+	return nil
+}
+
+// runReencryption re-encrypts all connection secrets using the currently
+// active keyring entry. Safe to run repeatedly.
+func runReencryption(d *db.Database) error {
+	touched, err := d.ReencryptConnectionDetails(context.Background(), slog.Default())
+	if err != nil {
+		return fmt.Errorf("re-encrypt connection secrets: %w", err)
+	}
+	log.Printf("Re-encrypted %d connection records", touched)
+	return nil
 }
 
 // runGarbageCollection creates a GC collector and executes it.

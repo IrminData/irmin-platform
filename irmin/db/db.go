@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"irmin-api/lib/crypto"
 	"irmin-api/utils"
 	"sync"
 	"time"
@@ -48,8 +49,14 @@ const (
 )
 
 // InitialiseDB establishes a Postgres database connection, performs any necessary migrations,
-// and returns an error if something goes wrong.
-func InitialiseDB(env *utils.CoreAPIEnv) (*Database, error) {
+// and returns an error if something goes wrong. The keyring is used to register the
+// "encrypted_json" GORM serializer for fields (e.g., Connection.Details) that store
+// sensitive values at rest.
+func InitialiseDB(env *utils.CoreAPIEnv, keyring *crypto.Keyring) (*Database, error) {
+	// Register the encrypted_json serializer before GORM inspects any schemas.
+	// Safe to call more than once — later registrations overwrite prior ones.
+	crypto.EncryptedJSONSerializer{Keyring: keyring}.Register()
+
 	// 1. Create a single, shared pool configuration
 	poolConfig, err := pgxpool.ParseConfig(env.DatabaseConnectionString)
 	if err != nil {

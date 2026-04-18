@@ -4,6 +4,7 @@ import (
 	"context"
 	"irmin-api/db"
 	"irmin-api/duckdb"
+	"irmin-api/lib/crypto"
 	"irmin-api/utils"
 	"log/slog"
 	"os"
@@ -60,7 +61,7 @@ func SetupTestSuite(t *testing.T) error {
 	}))
 
 	// Create database connection
-	testDB, err := db.InitialiseDB(testEnv)
+	testDB, err := db.InitialiseDB(testEnv, crypto.NewPassthroughKeyring())
 	if err != nil {
 		if t != nil {
 			t.Fatalf("Failed to create test database: %v", err)

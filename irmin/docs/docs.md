@@ -2971,7 +2971,7 @@ import "irmin-api/db"
 - [type CustomToolType](<#CustomToolType>)
 - [type DataPassMode](<#DataPassMode>)
 - [type Database](<#Database>)
-  - [func InitialiseDB\(env \*utils.CoreAPIEnv\) \(\*Database, error\)](<#InitialiseDB>)
+  - [func InitialiseDB\(env \*utils.CoreAPIEnv, keyring \*crypto.Keyring\) \(\*Database, error\)](<#InitialiseDB>)
   - [func \(d \*Database\) AddTagToAIApplication\(aiApplicationID, tagID uint\) error](<#Database.AddTagToAIApplication>)
   - [func \(d \*Database\) AddTagToConnection\(connectionID, tagID uint\) error](<#Database.AddTagToConnection>)
   - [func \(d \*Database\) AddTagToQuery\(queryID, tagID uint\) error](<#Database.AddTagToQuery>)
@@ -3110,6 +3110,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) MarkObjectCacheStaleBySlug\(workspaceSlug, repositorySlug, ref string\) error](<#Database.MarkObjectCacheStaleBySlug>)
   - [func \(d \*Database\) MarkUsageRecordsReported\(ids \[\]uint\) error](<#Database.MarkUsageRecordsReported>)
   - [func \(d \*Database\) Migrate\(\) error](<#Database.Migrate>)
+  - [func \(d \*Database\) ReencryptConnectionDetails\(ctx context.Context, logger \*slog.Logger\) \(int, error\)](<#Database.ReencryptConnectionDetails>)
   - [func \(d \*Database\) RemoveTagFromAIApplication\(aiApplicationID, tagID uint\) error](<#Database.RemoveTagFromAIApplication>)
   - [func \(d \*Database\) RemoveTagFromConnection\(connectionID, tagID uint\) error](<#Database.RemoveTagFromConnection>)
   - [func \(d \*Database\) RemoveTagFromQuery\(queryID, tagID uint\) error](<#Database.RemoveTagFromQuery>)
@@ -3970,7 +3971,7 @@ type Connection struct {
     Name          string                  `json:"name,omitempty"`
     Description   string                  `json:"description,omitempty"`
     Documentation string                  `json:"documentation,omitempty"`
-    Details       CustomFieldValues       `json:"details,omitempty"       gorm:"type:jsonb;serializer:json"`
+    Details       CustomFieldValues       `json:"details,omitempty"       gorm:"type:jsonb;serializer:encrypted_json"`
     Settings      CustomFieldValues       `json:"settings,omitempty"      gorm:"type:jsonb;serializer:json"`
     OwnerID       uint                    `json:"owner_id,omitempty"`
     Owner         User                    `json:"owner"                   gorm:"foreignKey:OwnerID"`
@@ -4203,10 +4204,10 @@ type Database struct {
 ### func InitialiseDB
 
 ```go
-func InitialiseDB(env *utils.CoreAPIEnv) (*Database, error)
+func InitialiseDB(env *utils.CoreAPIEnv, keyring *crypto.Keyring) (*Database, error)
 ```
 
-InitialiseDB establishes a Postgres database connection, performs any necessary migrations, and returns an error if something goes wrong.
+InitialiseDB establishes a Postgres database connection, performs any necessary migrations, and returns an error if something goes wrong. The keyring is used to register the "encrypted\_json" GORM serializer for fields \(e.g., Connection.Details\) that store sensitive values at rest.
 
 <a name="Database.AddTagToAIApplication"></a>
 ### func \(\*Database\) AddTagToAIApplication
@@ -5453,6 +5454,17 @@ func (d *Database) Migrate() error
 ```
 
 Migrate runs the auto migration calls in the correct order. It separates the migrations into groups based on model dependencies.
+
+<a name="Database.ReencryptConnectionDetails"></a>
+### func \(\*Database\) ReencryptConnectionDetails
+
+```go
+func (d *Database) ReencryptConnectionDetails(ctx context.Context, logger *slog.Logger) (int, error)
+```
+
+ReencryptConnectionDetails walks every Connection and re\-saves its Details field so the encrypted\_json serializer rewrites each row using the active key. The operation is idempotent: the serializer decrypts on read and re\-encrypts on write, so running this repeatedly is safe. Legacy plaintext rows are upgraded on their first pass; already\-encrypted rows get a fresh nonce \(and, after a rotation, the new key ID\).
+
+Returns the number of rows touched and any error encountered. Errors on a single row are logged and skipped so one bad row doesn't block the rest.
 
 <a name="Database.RemoveTagFromAIApplication"></a>
 ### func \(\*Database\) RemoveTagFromAIApplication
@@ -17615,6 +17627,10 @@ type CoreAPIEnv struct {
     TestTag                      string // Tag to test with
     SignedURLSecret              string // HMAC secret for signed download URLs
 
+    // Credential encryption
+    CredentialEncryptionKeys string // JSON array of {id, key_b64} entries; first key is active
+    RequireEncryptionAtRest  bool   // When true, boot fails if CredentialEncryptionKeys is missing or invalid
+
     // Billing configuration
     BillingEnabled     bool   // Flag to enable Polar.sh billing integration
     PolarAPIKey        string // Polar.sh API key
@@ -18610,6 +18626,212 @@ func ValidateFiles(ctx context.Context, files map[string][]byte, schema *ObjectS
 ```
 
 ValidateFiles validates multiple files against an ObjectSchema. This is the main entry point for validating data before push operations.
+
+# crypto
+
+```go
+import "irmin-api/lib/crypto"
+```
+
+Package crypto provides envelope encryption for sensitive values stored in the Core database — connection credentials today, OAuth refresh tokens tomorrow.
+
+It lives under lib/ alongside the other domain\-agnostic helpers. Callers construct a Keyring from configuration at boot and pass it into GORM serializers or services that need to wrap/unwrap values.
+
+## Index
+
+- [Constants](<#constants>)
+- [func GenerateKey\(\) \(string, error\)](<#GenerateKey>)
+- [type EncryptedJSONSerializer](<#EncryptedJSONSerializer>)
+  - [func \(s EncryptedJSONSerializer\) DecryptStringMap\(m map\[string\]string\) error](<#EncryptedJSONSerializer.DecryptStringMap>)
+  - [func \(s EncryptedJSONSerializer\) EncryptStringMap\(m map\[string\]string\) \(map\[string\]string, error\)](<#EncryptedJSONSerializer.EncryptStringMap>)
+  - [func \(s EncryptedJSONSerializer\) Register\(\)](<#EncryptedJSONSerializer.Register>)
+  - [func \(s EncryptedJSONSerializer\) Scan\(ctx context.Context, field \*schema.Field, dst reflect.Value, dbValue any\) error](<#EncryptedJSONSerializer.Scan>)
+  - [func \(s EncryptedJSONSerializer\) Value\(\_ context.Context, \_ \*schema.Field, \_ reflect.Value, fieldValue any\) \(any, error\)](<#EncryptedJSONSerializer.Value>)
+- [type Key](<#Key>)
+- [type Keyring](<#Keyring>)
+  - [func NewKeyring\(entries \[\]Key\) \(\*Keyring, error\)](<#NewKeyring>)
+  - [func NewKeyringFromJSON\(raw string\) \(\*Keyring, error\)](<#NewKeyringFromJSON>)
+  - [func NewPassthroughKeyring\(\) \*Keyring](<#NewPassthroughKeyring>)
+  - [func \(k \*Keyring\) ActiveKeyID\(\) string](<#Keyring.ActiveKeyID>)
+  - [func \(k \*Keyring\) Decrypt\(s string\) \(string, error\)](<#Keyring.Decrypt>)
+  - [func \(k \*Keyring\) Encrypt\(plaintext string\) \(string, error\)](<#Keyring.Encrypt>)
+  - [func \(k \*Keyring\) IsPassthrough\(\) bool](<#Keyring.IsPassthrough>)
+
+
+## Constants
+
+<a name="CiphertextPrefix"></a>CiphertextPrefix marks a string that was produced by this package. The full on\-wire format is: CiphertextPrefix \+ keyID \+ ":" \+ base64\(nonce || ciphertext\).
+
+The prefix is deliberately distinctive \("irmin\-enc\-v1:"\) so the Decrypt passthrough path can treat any value lacking the prefix as legacy plaintext without realistic risk of a user\-supplied secret colliding by accident. Keep this constant stable — rotating it would invalidate every row already encrypted under the old value.
+
+```go
+const CiphertextPrefix = "irmin-enc-v1:"
+```
+
+<a name="EncryptedJSONSerializerName"></a>EncryptedJSONSerializerName is the name used when registering the serializer with GORM \(i.e. the value of the \`serializer:\` gorm tag\).
+
+```go
+const EncryptedJSONSerializerName = "encrypted_json"
+```
+
+<a name="GenerateKey"></a>
+## func GenerateKey
+
+```go
+func GenerateKey() (string, error)
+```
+
+GenerateKey produces a base64\-encoded random 32\-byte AES\-256 key, intended for bootstrapping a new deployment's CREDENTIAL\_ENCRYPTION\_KEYS env var.
+
+<a name="EncryptedJSONSerializer"></a>
+## type EncryptedJSONSerializer
+
+EncryptedJSONSerializer implements gorm.io/gorm/schema.SerializerInterface.
+
+For fields typed as map\[string\]string it JSON\-encodes the map where each value has been passed through the keyring. Other shapes fall back to plain JSON, so the serializer is safe to attach to structurally different fields even though the Connection.Details case is the primary target.
+
+Scan tolerates legacy rows: any string value that does not carry the ciphertext prefix is returned as\-is. This lets encryption roll out without a blocking migration step.
+
+```go
+type EncryptedJSONSerializer struct {
+    Keyring *Keyring
+}
+```
+
+<a name="EncryptedJSONSerializer.DecryptStringMap"></a>
+### func \(EncryptedJSONSerializer\) DecryptStringMap
+
+```go
+func (s EncryptedJSONSerializer) DecryptStringMap(m map[string]string) error
+```
+
+DecryptStringMap decrypts every value of m in place. Values without the ciphertext prefix pass through unchanged — this is the legacy\-row path.
+
+<a name="EncryptedJSONSerializer.EncryptStringMap"></a>
+### func \(EncryptedJSONSerializer\) EncryptStringMap
+
+```go
+func (s EncryptedJSONSerializer) EncryptStringMap(m map[string]string) (map[string]string, error)
+```
+
+EncryptStringMap returns a new map with every value encrypted via the keyring.
+
+Invariant: callers pass plaintext. The Scan path always decrypts before returning values to application code, so any value flowing into Value\(\) \(and therefore into this helper\) is plaintext by construction. We do not try to detect "already encrypted" inputs here — doing so would silently lose data when a legitimate plaintext secret happens to match the on\-wire prefix.
+
+<a name="EncryptedJSONSerializer.Register"></a>
+### func \(EncryptedJSONSerializer\) Register
+
+```go
+func (s EncryptedJSONSerializer) Register()
+```
+
+Register installs the serializer into GORM's global registry under EncryptedJSONSerializerName. Call once at startup.
+
+<a name="EncryptedJSONSerializer.Scan"></a>
+### func \(EncryptedJSONSerializer\) Scan
+
+```go
+func (s EncryptedJSONSerializer) Scan(ctx context.Context, field *schema.Field, dst reflect.Value, dbValue any) error
+```
+
+Scan reads a jsonb value from the DB and populates dst, decrypting map\[string\]string values along the way.
+
+<a name="EncryptedJSONSerializer.Value"></a>
+### func \(EncryptedJSONSerializer\) Value
+
+```go
+func (s EncryptedJSONSerializer) Value(_ context.Context, _ *schema.Field, _ reflect.Value, fieldValue any) (any, error)
+```
+
+Value encrypts map\[string\]string entries, then JSON\-encodes for DB storage. A nil input \(untyped nil, nil pointer, or typed nil map\) is encoded as JSON null to match the behavior of GORM's default JSON serializer and avoid silently rewriting SQL NULL columns as "\{\}" during the backfill.
+
+<a name="Key"></a>
+## type Key
+
+Key is a single entry in the keyring as it appears in configuration. KeyB64 is the standard base64 encoding of a 32\-byte AES\-256 key.
+
+```go
+type Key struct {
+    ID     string `json:"id"`
+    KeyB64 string `json:"key_b64"`
+}
+```
+
+<a name="Keyring"></a>
+## type Keyring
+
+Keyring holds one or more AES\-256\-GCM keys. The first key in the input ordering is the active key used for new encryptions; all keys remain valid for decryption so older rows keep working across a key rotation.
+
+A Keyring constructed via NewPassthroughKeyring performs no encryption and exists to let non\-production deployments run without a configured keyring.
+
+```go
+type Keyring struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewKeyring"></a>
+### func NewKeyring
+
+```go
+func NewKeyring(entries []Key) (*Keyring, error)
+```
+
+NewKeyring builds a Keyring from parsed entries.
+
+<a name="NewKeyringFromJSON"></a>
+### func NewKeyringFromJSON
+
+```go
+func NewKeyringFromJSON(raw string) (*Keyring, error)
+```
+
+NewKeyringFromJSON parses a JSON array of \{id, key\_b64\} entries.
+
+<a name="NewPassthroughKeyring"></a>
+### func NewPassthroughKeyring
+
+```go
+func NewPassthroughKeyring() *Keyring
+```
+
+NewPassthroughKeyring returns a keyring that does not encrypt or decrypt. It exists so callers have a uniform type to hand to serializers; real encryption kicks in once a keyring is configured via environment.
+
+<a name="Keyring.ActiveKeyID"></a>
+### func \(\*Keyring\) ActiveKeyID
+
+```go
+func (k *Keyring) ActiveKeyID() string
+```
+
+ActiveKeyID returns the ID of the key currently used for new encryptions, or "" for a passthrough keyring.
+
+<a name="Keyring.Decrypt"></a>
+### func \(\*Keyring\) Decrypt
+
+```go
+func (k *Keyring) Decrypt(s string) (string, error)
+```
+
+Decrypt inverts Encrypt. Values that do not carry CiphertextPrefix are returned as\-is — this is the backward\-compatibility path for rows written before encryption was enabled.
+
+<a name="Keyring.Encrypt"></a>
+### func \(\*Keyring\) Encrypt
+
+```go
+func (k *Keyring) Encrypt(plaintext string) (string, error)
+```
+
+Encrypt wraps plaintext. Empty input is returned as empty \(empty strings are not secrets and we keep them empty on disk to avoid storing noise\). Passthrough keyrings return input unchanged.
+
+<a name="Keyring.IsPassthrough"></a>
+### func \(\*Keyring\) IsPassthrough
+
+```go
+func (k *Keyring) IsPassthrough() bool
+```
+
+IsPassthrough reports whether this keyring performs real encryption.
 
 # repositoryobjectcache
 

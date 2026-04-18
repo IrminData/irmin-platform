@@ -1,0 +1,139 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/lib/crypto</title></head><body>
+<h1>Package irmin-api/lib/crypto</h1>
+<pre>
+package crypto // import "irmin-api/lib/crypto"
+
+Package crypto provides envelope encryption for sensitive values stored in the
+Core database — connection credentials today, OAuth refresh tokens tomorrow.
+
+It lives under lib/ alongside the other domain-agnostic helpers. Callers
+construct a Keyring from configuration at boot and pass it into GORM serializers
+or services that need to wrap/unwrap values.
+
+CONSTANTS
+
+const CiphertextPrefix = "irmin-enc-v1:"
+    CiphertextPrefix marks a string that was produced by this package.
+    The full on-wire format is: CiphertextPrefix + keyID + ":" + base64(nonce ||
+    ciphertext).
+
+    The prefix is deliberately distinctive ("irmin-enc-v1:") so the Decrypt
+    passthrough path can treat any value lacking the prefix as legacy plaintext
+    without realistic risk of a user-supplied secret colliding by accident.
+    Keep this constant stable — rotating it would invalidate every row already
+    encrypted under the old value.
+
+const EncryptedJSONSerializerName = "encrypted_json"
+    EncryptedJSONSerializerName is the name used when registering the serializer
+    with GORM (i.e. the value of the `serializer:` gorm tag).
+
+
+FUNCTIONS
+
+func GenerateKey() (string, error)
+    GenerateKey produces a base64-encoded random 32-byte AES-256 key, intended
+    for bootstrapping a new deployment's CREDENTIAL_ENCRYPTION_KEYS env var.
+
+
+TYPES
+
+type EncryptedJSONSerializer struct {
+	Keyring *Keyring
+}
+    EncryptedJSONSerializer implements gorm.io/gorm/schema.SerializerInterface.
+
+    For fields typed as map[string]string it JSON-encodes the map where each
+    value has been passed through the keyring. Other shapes fall back to plain
+    JSON, so the serializer is safe to attach to structurally different fields
+    even though the Connection.Details case is the primary target.
+
+    Scan tolerates legacy rows: any string value that does not carry the
+    ciphertext prefix is returned as-is. This lets encryption roll out without a
+    blocking migration step.
+
+func (s EncryptedJSONSerializer) DecryptStringMap(m map[string]string) error
+    DecryptStringMap decrypts every value of m in place. Values without the
+    ciphertext prefix pass through unchanged — this is the legacy-row path.
+
+func (s EncryptedJSONSerializer) EncryptStringMap(m map[string]string) (map[string]string, error)
+    EncryptStringMap returns a new map with every value encrypted via the
+    keyring.
+
+    Invariant: callers pass plaintext. The Scan path always decrypts before
+    returning values to application code, so any value flowing into Value() (and
+    therefore into this helper) is plaintext by construction. We do not try to
+    detect "already encrypted" inputs here — doing so would silently lose data
+    when a legitimate plaintext secret happens to match the on-wire prefix.
+
+func (s EncryptedJSONSerializer) Register()
+    Register installs the serializer into GORM's global registry under
+    EncryptedJSONSerializerName. Call once at startup.
+
+func (s EncryptedJSONSerializer) Scan(
+	ctx context.Context,
+	field *schema.Field,
+	dst reflect.Value,
+	dbValue any,
+) error
+    Scan reads a jsonb value from the DB and populates dst, decrypting
+    map[string]string values along the way.
+
+func (s EncryptedJSONSerializer) Value(
+	_ context.Context,
+	_ *schema.Field,
+	_ reflect.Value,
+	fieldValue any,
+) (any, error)
+    Value encrypts map[string]string entries, then JSON-encodes for DB storage.
+    A nil input (untyped nil, nil pointer, or typed nil map) is encoded as
+    JSON null to match the behavior of GORM's default JSON serializer and avoid
+    silently rewriting SQL NULL columns as "{}" during the backfill.
+
+type Key struct {
+	ID     string `json:"id"`
+	KeyB64 string `json:"key_b64"`
+}
+    Key is a single entry in the keyring as it appears in configuration.
+    KeyB64 is the standard base64 encoding of a 32-byte AES-256 key.
+
+type Keyring struct {
+	// Has unexported fields.
+}
+    Keyring holds one or more AES-256-GCM keys. The first key in the input
+    ordering is the active key used for new encryptions; all keys remain valid
+    for decryption so older rows keep working across a key rotation.
+
+    A Keyring constructed via NewPassthroughKeyring performs no encryption and
+    exists to let non-production deployments run without a configured keyring.
+
+func NewKeyring(entries []Key) (*Keyring, error)
+    NewKeyring builds a Keyring from parsed entries.
+
+func NewKeyringFromJSON(raw string) (*Keyring, error)
+    NewKeyringFromJSON parses a JSON array of {id, key_b64} entries.
+
+func NewPassthroughKeyring() *Keyring
+    NewPassthroughKeyring returns a keyring that does not encrypt or decrypt.
+    It exists so callers have a uniform type to hand to serializers; real
+    encryption kicks in once a keyring is configured via environment.
+
+func (k *Keyring) ActiveKeyID() string
+    ActiveKeyID returns the ID of the key currently used for new encryptions,
+    or "" for a passthrough keyring.
+
+func (k *Keyring) Decrypt(s string) (string, error)
+    Decrypt inverts Encrypt. Values that do not carry CiphertextPrefix are
+    returned as-is — this is the backward-compatibility path for rows written
+    before encryption was enabled.
+
+func (k *Keyring) Encrypt(plaintext string) (string, error)
+    Encrypt wraps plaintext. Empty input is returned as empty (empty strings
+    are not secrets and we keep them empty on disk to avoid storing noise).
+    Passthrough keyrings return input unchanged.
+
+func (k *Keyring) IsPassthrough() bool
+    IsPassthrough reports whether this keyring performs real encryption.
+
+</pre>
+</body></html>

@@ -22,7 +22,7 @@ type Connection struct {
 	Name          string                  `json:"name,omitempty"`
 	Description   string                  `json:"description,omitempty"`
 	Documentation string                  `json:"documentation,omitempty"`
-	Details       CustomFieldValues       `json:"details,omitempty"       gorm:"type:jsonb;serializer:json"`
+	Details       CustomFieldValues       `json:"details,omitempty"       gorm:"type:jsonb;serializer:encrypted_json"`
 	Settings      CustomFieldValues       `json:"settings,omitempty"      gorm:"type:jsonb;serializer:json"`
 	OwnerID       uint                    `json:"owner_id,omitempty"`
 	Owner         User                    `json:"owner"                   gorm:"foreignKey:OwnerID"`

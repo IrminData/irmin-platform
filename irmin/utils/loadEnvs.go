@@ -55,6 +55,10 @@ type CoreAPIEnv struct {
 	TestTag                      string // Tag to test with
 	SignedURLSecret              string // HMAC secret for signed download URLs
 
+	// Credential encryption
+	CredentialEncryptionKeys string // JSON array of {id, key_b64} entries; first key is active
+	RequireEncryptionAtRest  bool   // When true, boot fails if CredentialEncryptionKeys is missing or invalid
+
 	// Billing configuration
 	BillingEnabled     bool   // Flag to enable Polar.sh billing integration
 	PolarAPIKey        string // Polar.sh API key
@@ -330,6 +334,19 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
+	credentialEncryptionKeys, err := getEnv("CREDENTIAL_ENCRYPTION_KEYS", false, "")
+	if err != nil {
+		return nil, err
+	}
+	requireEncryptionAtRestStr, err := getEnv("REQUIRE_ENCRYPTION_AT_REST", false, "false")
+	if err != nil {
+		return nil, err
+	}
+	requireEncryptionAtRest, err := strconv.ParseBool(requireEncryptionAtRestStr)
+	if err != nil {
+		return nil, err
+	}
+
 	maxRequestBodySizeMBStr, err := getEnv("MAX_REQUEST_BODY_SIZE_MB", false, "100")
 	if err != nil {
 		return nil, err
@@ -494,6 +511,8 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		TestBranch:                   testBranch,
 		TestTag:                      testTag,
 		SignedURLSecret:              signedURLSecret,
+		CredentialEncryptionKeys:     credentialEncryptionKeys,
+		RequireEncryptionAtRest:      requireEncryptionAtRest,
 		MaxRequestBodySizeMB:         maxRequestBodySizeMB,
 		MaxInMemorySizeMB:            maxInMemorySizeMB,
 		MaxStreamSizeMB:              maxStreamSizeMB,
