@@ -140,6 +140,7 @@ function QueriesSectionContent() {
     const query = queries.find((q) => q.id === queryId);
     if (query) {
       handledQueryIdRef.current = queryId;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- selecting from async-loaded list once per URL query change; ref-guarded to be idempotent
       setSelectedQuery(query);
     }
   }, [
@@ -174,6 +175,7 @@ function QueriesSectionContent() {
   // Update selected tags when query changes
   useEffect(() => {
     const tags = selectedQuery?.tags ?? [];
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form draft state from canonical prop; ref tracking must stay coupled
     setSelectedTags(tags);
     currentTagsRef.current = tags;
     previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags

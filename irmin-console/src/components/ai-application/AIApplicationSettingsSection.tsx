@@ -146,6 +146,7 @@ const AIApplicationSettingsSectionContent = () => {
   // Sync selectedTags with aiApplication data changes
   useEffect(() => {
     const tags = aiApplication.tags ?? [];
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form draft state from canonical prop; ref tracking must stay coupled
     setSelectedTags(tags);
     currentTagsRef.current = tags;
     previousTags.current = '';

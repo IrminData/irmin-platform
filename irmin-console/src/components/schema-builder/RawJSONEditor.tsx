@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -21,29 +21,26 @@ export default function RawJSONEditor({
   const [jsonString, setJsonString] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Sync jsonString when value prop changes from parent
-    // Only update if the content actually differs to avoid reformatting during user typing
+  // Sync jsonString when value prop changes from parent during render.
+  // Only update if the content actually differs to avoid reformatting during user typing.
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     if (value) {
       const formatted = JSON.stringify(value, null, 2);
       try {
         const currentParsed = JSON.parse(jsonString);
         const newParsed = JSON.parse(formatted);
-
-        // Only update if the parsed objects are different
         if (JSON.stringify(currentParsed) !== JSON.stringify(newParsed)) {
           setJsonString(formatted);
         }
       } catch {
-        // If current jsonString is invalid, update it
         setJsonString(formatted);
       }
-    } else {
-      if (jsonString !== '{}') {
-        setJsonString('{}');
-      }
+    } else if (jsonString !== '{}') {
+      setJsonString('{}');
     }
-  }, [value, jsonString]);
+  }
 
   const handleChange = (newValue: string) => {
     setJsonString(newValue);

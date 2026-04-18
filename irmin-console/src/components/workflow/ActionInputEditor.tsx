@@ -70,8 +70,6 @@ function ActionInputEditor({
 
       if (hasChanged) {
         prevInitialDataRef.current = initialData;
-        // Sync props to state in controlled mode - this is a valid use case
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setInputFiles(initialData);
       }
     }

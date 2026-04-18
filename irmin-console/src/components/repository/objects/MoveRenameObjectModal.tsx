@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,7 +45,6 @@ export default function MoveRenameObjectModal({
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
   } = useForm<MoveRenameFormValues>({
     defaultValues: {
       path: selectedObject.path,
@@ -54,8 +53,8 @@ export default function MoveRenameObjectModal({
   });
 
   // Keep track of current field values
-  const nameValue = watch('name');
-  const pathValue = watch('path');
+  const nameValue = useWatch({ control, name: 'name' });
+  const pathValue = useWatch({ control, name: 'path' });
 
   // Sync name ↔ path, based on which was edited last
   const lastChanged = useRef<'name' | 'path' | null>(null);

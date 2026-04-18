@@ -91,6 +91,7 @@ const ScriptResults = ({
         Object.keys(result.structured_results).length === 0;
 
       if (hasErrors || hasNoData) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- redirecting to logs tab on loading-finished edge; needs effect timing
         setActiveTab('logs');
       }
     }
@@ -107,14 +108,17 @@ const ScriptResults = ({
     [isResourceAllowed]
   );
 
-  useEffect(() => {
+  // Reset current data file when result changes during render
+  const [prevResultForDataFile, setPrevResultForDataFile] = useState(result);
+  if (result !== prevResultForDataFile) {
+    setPrevResultForDataFile(result);
     if (result?.structured_results) {
       const keys = Object.keys(result.structured_results);
       if (keys.length > 0) {
         setCurrentDataFile(keys[0]);
       }
     }
-  }, [result]);
+  }
 
   const currentDataFileContent = useMemo(() => {
     if (currentDataFile && result?.structured_results) {
@@ -130,7 +134,7 @@ const ScriptResults = ({
       (sum, data) => sum + estimateDataSize(data),
       0
     );
-  }, [result?.structured_results]);
+  }, [result]);
 
   const showMemoryWarning = totalDataSize > MAX_SAFE_JSON_SIZE * 2;
 

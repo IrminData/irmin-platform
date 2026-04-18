@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,7 +62,6 @@ export default function UploadObjectModal({
     handleSubmit,
     setValue,
     formState: { errors },
-    watch,
   } = useForm<UploadFormValues>({
     defaultValues: {
       repository: currentRepository,
@@ -75,8 +74,8 @@ export default function UploadObjectModal({
   });
 
   // Keep track of current field values
-  const nameValue = watch('name');
-  const pathValue = watch('path');
+  const nameValue = useWatch({ control, name: 'name' });
+  const pathValue = useWatch({ control, name: 'path' });
 
   // Sync name ↔ path, based on which was edited last
   const lastChanged = useRef<'name' | 'path' | null>(null);

@@ -136,6 +136,25 @@ export default tseslint.config(
     },
   },
   tanstackQuery.configs['flat/recommended'],
+  {
+    // Hooks under src/hooks/api/ and a few colocated callers all consume the
+    // memoised `getCore` callback from IrminCoreContext inside their queryFn.
+    // It's a stable ref (re-created only when locale or auth session changes)
+    // and the underlying IrminCore instance is cached, so adding it to every
+    // queryKey is a no-op semantically — functions are stripped by React
+    // Query's JSON-based hashKey. The rule flags a real concern for arbitrary
+    // closures, but it's a false positive against our memoised context API.
+    files: [
+      'src/hooks/api/**/*.{ts,tsx}',
+      'src/components/dashboard/DashboardWorkflowRunsFeed.tsx',
+      'src/components/query/InlineQueryEditor.tsx',
+      'src/components/workspace/ManageWorkspacesSection.tsx',
+      'src/context/ScriptEditorContext.tsx',
+    ],
+    rules: {
+      '@tanstack/query/exhaustive-deps': 'off',
+    },
+  },
   reactPlugin.configs.flat.recommended,
   jsxA11Y.flatConfigs.recommended,
   promisePlugin.configs['flat/recommended'],

@@ -267,6 +267,7 @@ export const IAMProvider = ({ children }: { children: ReactNode }) => {
   ]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetchProfile is a data-loader that updates profile/auth state; the textbook fetch-on-mount pattern
     void fetchProfile();
   }, [fetchProfile]);
 

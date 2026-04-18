@@ -75,10 +75,11 @@ const DebouncedInput = ({
   onChange: (_value: string) => void;
 }) => {
   const [localValue, setLocalValue] = useState(value);
-
-  useEffect(() => {
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     setLocalValue(value);
-  }, [value]);
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -198,10 +199,13 @@ function Stage({
   const prevStageRef = useRef<PipelineStage>(stage);
   const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync collapsed state when defaultCollapsed changes
-  useEffect(() => {
+  // Sync collapsed state when defaultCollapsed changes during render
+  const [prevDefaultCollapsed, setPrevDefaultCollapsed] =
+    useState(defaultCollapsed);
+  if (defaultCollapsed !== prevDefaultCollapsed) {
+    setPrevDefaultCollapsed(defaultCollapsed);
     setIsCollapsed(defaultCollapsed);
-  }, [defaultCollapsed]);
+  }
 
   // Debounced update function
   const debouncedUpdate = useCallback(
@@ -258,6 +262,7 @@ function Stage({
       };
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing internal stage from prop; ref baseline must update in same effect
     setStage(newStage);
     // Update prevStageRef immediately for external prop changes to:
     // 1. Prevent echoing changes back to parent via updateStage callback

@@ -172,11 +172,13 @@ function ScriptsSectionContent() {
     const currentScript = scripts.find((s) => s.id === selectedScript.id);
     if (currentScript) {
       const tags = currentScript.tags ?? [];
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form draft state from canonical prop; ref tracking must stay coupled
       setSelectedTags(tags);
       currentTagsRef.current = tags;
       previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags
     } else {
       // Script no longer exists in the list (e.g., deleted externally)
+
       setSelectedScript(null);
       setSelectedTags([]);
       currentTagsRef.current = [];

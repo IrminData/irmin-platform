@@ -175,15 +175,10 @@ const AgentChat = ({
     return groups;
   }, [localMessages]);
 
-  // Update local messages when initial messages are loaded
-  useEffect(() => {
-    if (initialMessages.length > 0 && localMessages.length === 0) {
-      setLocalMessages(initialMessages);
-    }
-  }, [initialMessages, localMessages.length]);
-
-  // Reset local messages when conversation changes
-  useEffect(() => {
+  // Sync conversation switches and initial-message hydration during render
+  const [prevConversationID, setPrevConversationID] = useState(conversationID);
+  if (conversationID !== prevConversationID) {
+    setPrevConversationID(conversationID);
     if (conversationID !== currentConversationId) {
       // Only clear messages if we're switching between two different non-null conversation IDs
       if (
@@ -195,7 +190,15 @@ const AgentChat = ({
       }
       setCurrentConversationId(conversationID || null);
     }
-  }, [conversationID, currentConversationId]);
+  }
+  const [prevInitialMessages, setPrevInitialMessages] =
+    useState(initialMessages);
+  if (initialMessages !== prevInitialMessages) {
+    setPrevInitialMessages(initialMessages);
+    if (initialMessages.length > 0 && localMessages.length === 0) {
+      setLocalMessages(initialMessages);
+    }
+  }
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {

@@ -70,11 +70,7 @@ const ConnectionSettingsSection = () => {
         setSubmitting(false);
       }
     },
-    [
-      connectionQuery.data?.data,
-      transferConnectionMutation,
-      updateConnectionMutation,
-    ]
+    [connectionQuery.data, transferConnectionMutation, updateConnectionMutation]
   );
 
   const handleDeleteConnection = useCallback(async () => {
@@ -123,6 +119,7 @@ const ConnectionSettingsSection = () => {
   // Sync selectedTags with connection data changes
   useEffect(() => {
     const tags = connectionQuery.data?.data?.tags ?? [];
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form draft state from canonical prop; ref tracking must stay coupled
     setSelectedTags(tags);
     currentTagsRef.current = tags;
     previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags

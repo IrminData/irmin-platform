@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import {
   TbChevronDown,
@@ -51,11 +51,12 @@ function PropertyEditor({
 
   // Local state for name to allow typing intermediate invalid states
   const [localName, setLocalName] = useState(name);
-
+  const [prevName, setPrevName] = useState(name);
   // Sync local state when prop changes (e.g. from parent re-render or initial load)
-  useEffect(() => {
+  if (name !== prevName) {
+    setPrevName(name);
     setLocalName(name);
-  }, [name]);
+  }
 
   const handleNameBlur = () => {
     if (localName !== name) {

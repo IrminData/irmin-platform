@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { TbAlertCircle, TbCheck, TbX } from 'react-icons/tb';
 
@@ -55,12 +55,16 @@ export default function ValidateObjectModal({
     },
   });
 
-  // Preload schema if available
-  useEffect(() => {
+  // Preload schema when it becomes available
+  const [prevSchemaData, setPrevSchemaData] = useState(
+    repositoryObjectSchemaQuery.data?.data
+  );
+  if (repositoryObjectSchemaQuery.data?.data !== prevSchemaData) {
+    setPrevSchemaData(repositoryObjectSchemaQuery.data?.data);
     if (repositoryObjectSchemaQuery.data?.data) {
       setSchema(repositoryObjectSchemaQuery.data.data);
     }
-  }, [repositoryObjectSchemaQuery.data?.data]);
+  }
 
   const [validating, setValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<{
@@ -77,7 +81,7 @@ export default function ValidateObjectModal({
       id: `${idx}-${log}`,
       message: log,
     }));
-  }, [validationResult?.logs]);
+  }, [validationResult]);
 
   const handleValidate = async () => {
     setValidating(true);

@@ -81,7 +81,9 @@ export default function InlineScriptEditor({
     }
     return false;
   }, [editorContent, originalContent, normalizedScriptId, isNewScript]);
-  hasUnsavedChangesRef.current = hasUnsavedChanges;
+  useEffect(() => {
+    hasUnsavedChangesRef.current = hasUnsavedChanges;
+  }, [hasUnsavedChanges]);
 
   const { scriptQuery } = useScript(normalizedScriptId ?? undefined);
   const currentScript = scriptQuery.data?.data;
@@ -146,6 +148,7 @@ export default function InlineScriptEditor({
 
     if (!normalizedScriptId) {
       // No script selected - show blank editor
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- multi-step orchestration with refs; compare-during-render rewrite would obscure the intent
       setEditorContent('');
       setOriginalContent('');
       setLanguage('go');
@@ -172,6 +175,7 @@ export default function InlineScriptEditor({
   // Load script content when it becomes available
   useEffect(() => {
     if (normalizedScriptId && currentScript && !scriptQuery.isLoading) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating editor from async query; depends on settled query state
       setEditorContent(currentScript.content ?? '');
       setOriginalContent(currentScript.content ?? '');
       setLanguage(currentScript.language ?? 'go');

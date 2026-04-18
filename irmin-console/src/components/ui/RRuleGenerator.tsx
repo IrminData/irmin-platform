@@ -141,13 +141,14 @@ export default function RRuleGenerator({
   const initialised = useRef(false);
   const previousRule = useRef(rule);
 
-  // Update the initial state if the rule changes
+  // Initialise form fields from rule prop on first render only
   useEffect(() => {
     if (initialised.current) return;
     try {
       if (!rule || rule.length === 0) return;
 
       const rrule = rrulestr(rule);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot initialisation gated by initialised ref; rule parsing must happen after mount
       setGeneratedRule(rule);
       setFrequency(rrule.options.freq);
       setInterval(rrule.options.interval || 1);

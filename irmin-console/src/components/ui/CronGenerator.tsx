@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import { format } from 'date-fns';
 
@@ -223,10 +223,12 @@ const CronGenerator = ({
   const [cronExpression, setCronExpression] = useState(expression);
   const [copied, setCopied] = useState(false);
 
-  // Update cron expression when prop changes
-  useEffect(() => {
+  // Update cron expression when prop changes during render
+  const [prevExpression, setPrevExpression] = useState(expression);
+  if (expression !== prevExpression) {
+    setPrevExpression(expression);
     setCronExpression(expression);
-  }, [expression]);
+  }
 
   // Normalize expression to always have 5 parts, filling missing parts with defaults
   const normalizedParts = useMemo(() => {

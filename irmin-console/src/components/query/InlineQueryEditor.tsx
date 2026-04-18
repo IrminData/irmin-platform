@@ -91,7 +91,9 @@ export default function InlineQueryEditor({
     }
     return false;
   }, [editorContent, originalContent, normalizedQueryId, isNewQuery]);
-  hasUnsavedChangesRef.current = hasUnsavedChanges;
+  useEffect(() => {
+    hasUnsavedChangesRef.current = hasUnsavedChanges;
+  }, [hasUnsavedChanges]);
 
   // Fetch single query
   const queryQuery = useQuery({
@@ -173,6 +175,7 @@ export default function InlineQueryEditor({
 
     if (!normalizedQueryId) {
       // No query selected - show blank editor
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- multi-step orchestration with refs; compare-during-render rewrite would obscure the intent
       setEditorContent('');
       setOriginalContent('');
       setIsNewQuery(true);
@@ -197,6 +200,7 @@ export default function InlineQueryEditor({
   // Load query content when it becomes available
   useEffect(() => {
     if (normalizedQueryId && currentQuery && !queryQuery.isLoading) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating editor from async query; depends on settled query state
       setEditorContent(currentQuery.sql ?? '');
       setOriginalContent(currentQuery.sql ?? '');
       setIsNewQuery(false);

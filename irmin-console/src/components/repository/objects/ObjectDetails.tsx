@@ -435,6 +435,7 @@ export default function ObjectDetails({
   // Synchronize selectedTags with selectedObject.tags when selectedObject changes
   useEffect(() => {
     const tags = selectedObject?.tags ?? [];
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form draft state from canonical prop; ref tracking must stay coupled
     setSelectedTags(tags);
     currentTagsRef.current = tags;
     previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags

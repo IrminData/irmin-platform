@@ -73,6 +73,7 @@ export function SqlGenerationChat({
     if (prevRepositoryKey && prevRepositoryKey !== repositoryKey) {
       // Repository context changed, reset conversation and clear error
       onReset();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- effect synchronizes with sessionStorage; the setError is part of the external-state reset
       setError(null);
     }
 

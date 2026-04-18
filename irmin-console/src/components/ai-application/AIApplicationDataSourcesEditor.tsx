@@ -70,11 +70,13 @@ const DataSourceRow = ({
 
   const [localDataSource, setLocalDataSource] =
     useState<AIApplicationDataSource>(dataSource);
-
-  // Sync local state with prop changes
-  useEffect(() => {
+  const [prevDataSource, setPrevDataSource] =
+    useState<AIApplicationDataSource>(dataSource);
+  // Sync local state with prop changes during render to avoid set-state-in-effect cascades
+  if (dataSource !== prevDataSource) {
+    setPrevDataSource(dataSource);
     setLocalDataSource(dataSource);
-  }, [dataSource]);
+  }
 
   // Debounce path changes
   const [debouncedBranch, setDebouncedBranch] = useState(

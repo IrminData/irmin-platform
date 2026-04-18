@@ -25,7 +25,6 @@
     "src/types/ai/responses.ts"
   ],
   "ignoreDependencies": [
-    "@clerk/types",
     "@sentry/types",
     "@types/eslint",
     "sharp",

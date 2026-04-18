@@ -133,6 +133,7 @@ const RepositorySettingsSectionContent = () => {
   // Sync selectedTags with repository data changes
   useEffect(() => {
     const tags = repository.tags ?? [];
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form draft state from canonical prop; ref tracking must stay coupled
     setSelectedTags(tags);
     currentTagsRef.current = tags;
     previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags

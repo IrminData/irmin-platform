@@ -130,6 +130,7 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
   // Sync selectedTags with workflow data changes
   useEffect(() => {
     const tags = workflowQuery.data?.data?.tags ?? [];
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form draft state from canonical prop; ref tracking must stay coupled
     setSelectedTags(tags);
     currentTagsRef.current = tags;
     previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags
@@ -205,8 +206,7 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
     [
       addTagToEntityMutation,
       removeTagFromEntityMutation,
-      workflowQuery.data?.data?.id,
-      workflowQuery.data?.data?.tags,
+      workflowQuery.data,
       queryClient,
       workspaceSlug,
     ]

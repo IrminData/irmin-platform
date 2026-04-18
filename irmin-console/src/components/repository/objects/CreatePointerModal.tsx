@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { TbLink } from 'react-icons/tb';
 
@@ -69,7 +69,6 @@ export default function CreatePointerModal({
     control,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<CreatePointerFormValues>({
     defaultValues: {
@@ -80,9 +79,10 @@ export default function CreatePointerModal({
     },
   });
 
-  const targetRepository = watch('targetRepository');
-  const targetPath = watch('targetPath');
-  const targetRef = watch('targetRef');
+  const targetRepository = useWatch({ control, name: 'targetRepository' });
+  const targetPath = useWatch({ control, name: 'targetPath' });
+  const targetRef = useWatch({ control, name: 'targetRef' });
+  const pointerName = useWatch({ control, name: 'pointerName' });
 
   const selectedRepo = useMemo(
     () =>
@@ -254,7 +254,7 @@ export default function CreatePointerModal({
                 key={`${targetRepository}-${targetRef}`}
                 repositorySlug={selectedRepo.slug}
                 repositoryRef={
-                  watch('targetRef') ?? selectedRepo.default_branch ?? 'main'
+                  targetRef ?? selectedRepo.default_branch ?? 'main'
                 }
                 defaultPath=''
                 onPathChange={handleTargetPathChange}
@@ -307,7 +307,7 @@ export default function CreatePointerModal({
             className='w-full'
             loading={loading}
             type='submit'
-            disabled={!targetRepository || !targetPath || !watch('pointerName')}
+            disabled={!targetRepository || !targetPath || !pointerName}
           >
             {dict.repository.objects.createPointer}
           </Button>
