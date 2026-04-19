@@ -9,6 +9,7 @@ import { TbArrowLeft, TbRefresh } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
+import { QueryError } from '@/components/ui/error/QueryError';
 import SafeComponent from '@/components/ui/error/SafeComponent';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
@@ -349,30 +350,13 @@ function RepositoryCompareSectionContent() {
         </div>
         {diffQuery.isLoading && <LoadingSkeleton className='h-96' />}
         {!diffQuery.isLoading && diffQuery.isError && (
-          <div
-            className={`
-              w-full rounded-lg border border-red-200 bg-red-50 px-4 py-8
-              dark:border-red-900 dark:bg-red-950/20
-            `}
-          >
-            <p
-              className={`
-                mx-auto mb-2 max-w-lg text-center text-lg text-red-700
-                lg:text-xl
-                dark:text-red-400
-              `}
-            >
-              {dict.repository.compare.failedToLoadDiff}
-            </p>
-            <p
-              className={`
-                mx-auto max-w-lg text-center text-sm text-red-600
-                dark:text-red-500
-              `}
-            >
-              {dict.repository.compare.failedToLoadDiffSubtitle}
-            </p>
-          </div>
+          <QueryError
+            error={diffQuery.error}
+            onRetry={() => diffQuery.refetch()}
+            title={dict.common.errors.failedToLoadDiff}
+            description={dict.common.errors.failedToLoadDiffDescription}
+            size='lg'
+          />
         )}
         {!diffQuery.isLoading && !diffQuery.isError && diffQuery.data?.data && (
           <>

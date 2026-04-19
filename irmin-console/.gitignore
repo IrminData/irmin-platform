@@ -64,6 +64,9 @@ package-lock.json
 # Million Lint
 .millio
 
+# gstack artifacts
+.gstack/
+
 # Claude Code
 .claude/
 

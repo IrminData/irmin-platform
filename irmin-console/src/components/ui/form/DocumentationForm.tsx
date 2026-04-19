@@ -55,7 +55,7 @@ const DocumentationForm = ({
         control={control}
         render={({ field }) => (
           <MDXEditor
-            placeholder={dict.documentation.startTypingDocumentation}
+            placeholder={dict.catalog.startTypingDocumentation}
             markdown={field.value || ''}
             onChange={field.onChange}
           >

@@ -257,14 +257,7 @@ export default function DocumentationSection() {
     scriptsQuery.isLoading ||
     storedQueriesQuery.isLoading
   ) {
-    return (
-      <DocumentationSkeleton
-        showHero={true}
-        showStats={true}
-        showControls={false}
-        contentSections={3}
-      />
-    );
+    return <DocumentationSkeleton />;
   }
 
   const errors = [
@@ -290,7 +283,8 @@ export default function DocumentationSection() {
               if (scriptsQuery.error) scriptsQuery.refetch();
               if (storedQueriesQuery.error) storedQueriesQuery.refetch();
             }}
-            title={dict.common.somethingWentWrong}
+            title={dict.common.errors.failedToLoadDocumentation}
+            description={dict.common.errors.failedToLoadAgain}
           />
         </div>
       </div>
@@ -321,22 +315,21 @@ export default function DocumentationSection() {
               <div className='rounded-lg bg-muted p-2'>
                 <HiOutlineDocumentText className='size-6 text-muted-foreground' />
               </div>
-              <Badge variant='secondary'>{dict.documentation.workspace}</Badge>
+              <Badge variant='secondary'>{dict.catalog.workspace}</Badge>
             </div>
             <DisplayTitle className='text-4xl text-foreground'>
-              {workspace.name ?? dict.documentation.workspaceDocumentation}
+              {workspace.name ?? dict.catalog.workspaceDocumentation}
             </DisplayTitle>
             <p className='max-w-2xl text-base text-muted-foreground'>
-              {workspace.description ||
-                dict.documentation.workspaceEmptyDescription}
+              {workspace.description || dict.catalog.workspaceEmptyDescription}
             </p>
             <EmptyState
               icon={<TbClipboardX className='size-full' />}
-              title={dict.documentation.workspaceEmptyTitle}
-              description={dict.documentation.workspaceEmptyDescription}
+              title={dict.catalog.workspaceEmptyTitle}
+              description={dict.catalog.workspaceEmptyDescription}
               size='lg'
               action={{
-                label: dict.documentation.goToWorkspace,
+                label: dict.catalog.goToWorkspace,
                 href: `/${locale}/workspace/${workspaceSlug}`,
                 variant: 'default',
               }}
@@ -355,10 +348,10 @@ export default function DocumentationSection() {
             <div className='rounded-lg bg-muted p-2'>
               <HiOutlineDocumentText className='size-6 text-muted-foreground' />
             </div>
-            <Badge variant='secondary'>{dict.documentation.workspace}</Badge>
+            <Badge variant='secondary'>{dict.catalog.workspace}</Badge>
           </div>
           <DisplayTitle className='text-4xl'>
-            {workspace.name ?? dict.documentation.workspaceDocumentation}
+            {workspace.name ?? dict.catalog.workspaceDocumentation}
           </DisplayTitle>
           {workspace.description && (
             <p className='max-w-2xl text-base text-muted-foreground'>
@@ -371,7 +364,7 @@ export default function DocumentationSection() {
               icon={<BsFilePdf size={18} />}
               onClick={handleDownloadPDF}
             >
-              {dict.documentation.downloadPdf}
+              {dict.catalog.downloadPdf}
             </Button>
             <div className='relative'>
               <BsSearch
@@ -382,7 +375,7 @@ export default function DocumentationSection() {
               />
               <Input
                 className='w-72 pl-9'
-                placeholder={dict.documentation.searchPlaceholder}
+                placeholder={dict.catalog.searchPlaceholder}
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
@@ -392,7 +385,7 @@ export default function DocumentationSection() {
 
         <div className='space-y-12'>
           <section className='space-y-6'>
-            <h2 className='text-2xl'>{dict.documentation.summaryTitle}</h2>
+            <h2 className='text-2xl'>{dict.catalog.summaryTitle}</h2>
             <Card>
               <CardHeader>
                 <CardTitle>
@@ -402,7 +395,7 @@ export default function DocumentationSection() {
                   </span>
                 </CardTitle>
                 <CardDescription>
-                  {dict.documentation.summaryDescription}
+                  {dict.catalog.summaryDescription}
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-6'>
@@ -528,7 +521,7 @@ export default function DocumentationSection() {
                 <div>
                   <h2 className='text-2xl'>{dict.repository.repositories}</h2>
                   <p className='text-sm text-muted-foreground'>
-                    {dict.documentation.repositorySectionDescription}
+                    {dict.catalog.repositorySectionDescription}
                   </p>
                 </div>
               </div>
@@ -536,13 +529,11 @@ export default function DocumentationSection() {
               {filteredRepositories.length === 0 ? (
                 <EmptyState
                   icon={<TbClipboardX className='size-full' />}
-                  title={dict.documentation.repositorySearchEmptyTitle}
-                  description={
-                    dict.documentation.repositorySearchEmptyDescription
-                  }
+                  title={dict.catalog.repositorySearchEmptyTitle}
+                  description={dict.catalog.repositorySearchEmptyDescription}
                   size='md'
                   action={{
-                    label: dict.documentation.clearSearch,
+                    label: dict.catalog.clearSearch,
                     onClick: () => setSearchTerm(''),
                     variant: 'outline',
                   }}
@@ -578,7 +569,7 @@ export default function DocumentationSection() {
                 <div>
                   <h2 className='text-2xl'>{dict.connections.connections}</h2>
                   <p className='text-sm text-muted-foreground'>
-                    {dict.documentation.connectionSectionDescription}
+                    {dict.catalog.connectionSectionDescription}
                   </p>
                 </div>
               </div>
@@ -586,13 +577,11 @@ export default function DocumentationSection() {
               {filteredConnections.length === 0 ? (
                 <EmptyState
                   icon={<TbClipboardX className='size-full' />}
-                  title={dict.documentation.connectionSearchEmptyTitle}
-                  description={
-                    dict.documentation.connectionSearchEmptyDescription
-                  }
+                  title={dict.catalog.connectionSearchEmptyTitle}
+                  description={dict.catalog.connectionSearchEmptyDescription}
                   size='md'
                   action={{
-                    label: dict.documentation.clearSearch,
+                    label: dict.catalog.clearSearch,
                     onClick: () => setSearchTerm(''),
                     variant: 'outline',
                   }}
@@ -609,7 +598,7 @@ export default function DocumentationSection() {
                     const connectionTags = renderTags(connection.tags);
                     const connectionNotes = renderDocumentation(
                       connection.documentation,
-                      dict.documentation.notesHeading
+                      dict.catalog.notesHeading
                     );
                     return (
                       <Card key={`connection-${connection.id}`}>
@@ -693,7 +682,7 @@ export default function DocumentationSection() {
                 <div>
                   <h2 className='text-2xl'>{dict.workflow.workflows}</h2>
                   <p className='text-sm text-muted-foreground'>
-                    {dict.documentation.workflowSectionDescription}
+                    {dict.catalog.workflowSectionDescription}
                   </p>
                 </div>
               </div>
@@ -701,13 +690,11 @@ export default function DocumentationSection() {
               {filteredWorkflows.length === 0 ? (
                 <EmptyState
                   icon={<TbClipboardX className='size-full' />}
-                  title={dict.documentation.workflowSearchEmptyTitle}
-                  description={
-                    dict.documentation.workflowSearchEmptyDescription
-                  }
+                  title={dict.catalog.workflowSearchEmptyTitle}
+                  description={dict.catalog.workflowSearchEmptyDescription}
                   size='md'
                   action={{
-                    label: dict.documentation.clearSearch,
+                    label: dict.catalog.clearSearch,
                     onClick: () => setSearchTerm(''),
                     variant: 'outline',
                   }}
@@ -755,7 +742,7 @@ export default function DocumentationSection() {
                     const workflowTags = renderTags(workflow.tags);
                     const workflowNotes = renderDocumentation(
                       workflow.documentation,
-                      dict.documentation.notesHeading
+                      dict.catalog.notesHeading
                     );
 
                     return (
@@ -818,7 +805,7 @@ export default function DocumentationSection() {
                             )}
                             <div className='flex flex-col gap-1'>
                               <dt className={`text-muted-foreground`}>
-                                {dict.documentation.scheduleLabel}
+                                {dict.catalog.scheduleLabel}
                               </dt>
                               <dd>
                                 {scheduled
@@ -904,7 +891,7 @@ export default function DocumentationSection() {
                 <div>
                   <h2 className='text-2xl'>{dict.consoleNavigation.scripts}</h2>
                   <p className='text-sm text-muted-foreground'>
-                    {dict.documentation.scriptSectionDescription}
+                    {dict.catalog.scriptSectionDescription}
                   </p>
                 </div>
               </div>
@@ -912,11 +899,11 @@ export default function DocumentationSection() {
               {filteredScripts.length === 0 ? (
                 <EmptyState
                   icon={<TbClipboardX className='size-full' />}
-                  title={dict.documentation.scriptSearchEmptyTitle}
-                  description={dict.documentation.scriptSearchEmptyDescription}
+                  title={dict.catalog.scriptSearchEmptyTitle}
+                  description={dict.catalog.scriptSearchEmptyDescription}
                   size='md'
                   action={{
-                    label: dict.documentation.clearSearch,
+                    label: dict.catalog.clearSearch,
                     onClick: () => setSearchTerm(''),
                     variant: 'outline',
                   }}
@@ -1008,7 +995,7 @@ export default function DocumentationSection() {
                 <div>
                   <h2 className='text-2xl'>{dict.query.queries}</h2>
                   <p className='text-sm text-muted-foreground'>
-                    {dict.documentation.querySectionDescription}
+                    {dict.catalog.querySectionDescription}
                   </p>
                 </div>
               </div>
@@ -1016,11 +1003,11 @@ export default function DocumentationSection() {
               {filteredQueries.length === 0 ? (
                 <EmptyState
                   icon={<TbClipboardX className='size-full' />}
-                  title={dict.documentation.querySearchEmptyTitle}
-                  description={dict.documentation.querySearchEmptyDescription}
+                  title={dict.catalog.querySearchEmptyTitle}
+                  description={dict.catalog.querySearchEmptyDescription}
                   size='md'
                   action={{
-                    label: dict.documentation.clearSearch,
+                    label: dict.catalog.clearSearch,
                     onClick: () => setSearchTerm(''),
                     variant: 'outline',
                   }}

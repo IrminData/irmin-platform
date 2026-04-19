@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import type { Locale } from '@/lib/dict';
+import { getServerDict } from '@/lib/dict/server';
 
 import WorkflowRunLogsSection from '@/components/workflow/WorkflowRunLogsSection';
 
@@ -19,17 +20,15 @@ export type WorkflowRunLogsLayoutParams = {
   run: string;
 };
 
-/**
- * SEO metadata for the Workflow Logs layout
- */
 export async function generateMetadata(props: {
   params: Promise<WorkflowRunLogsLayoutParams>;
 }): Promise<Metadata> {
-  const params = await props.params;
-  const formattedWorkspace = params.workspace.replace(/-/g, ' ');
-  return {
-    title: `Run logs | ${formattedWorkspace} | IRMIN Console`,
-  };
+  const { lang, run } = await props.params;
+  const dict = getServerDict(lang);
+  // Truncate run id — a raw 36-char UUID in the tab title blows past the
+  // 60-char budget before the workflow + workspace suffix is even added.
+  const runShort = run.slice(0, 8);
+  return { title: `${dict.metadata.resource.run} ${runShort}` };
 }
 
 /**

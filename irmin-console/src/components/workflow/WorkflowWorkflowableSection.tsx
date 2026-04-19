@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { QueryError } from '@/components/ui/error/QueryError';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -124,9 +125,12 @@ const WorkflowWorkflowableSection = ({
 
   if (workflowQuery.isError) {
     return (
-      <div>
-        {dict.common.error}: {workflowQuery.error.message}
-      </div>
+      <QueryError
+        error={workflowQuery.error}
+        onRetry={() => workflowQuery.refetch()}
+        title={dict.common.errors.failedToLoadWorkflow}
+        description={dict.common.errors.failedToLoadAgain}
+      />
     );
   }
 

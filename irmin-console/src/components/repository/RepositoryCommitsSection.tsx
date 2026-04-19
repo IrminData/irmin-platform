@@ -73,7 +73,8 @@ function RepositoryCommitsSectionContent() {
         <QueryError
           error={commitsQuery.error}
           onRetry={() => commitsQuery.refetch()}
-          title={dict.common.somethingWentWrong}
+          title={dict.common.errors.failedToLoadCommits}
+          description={dict.common.errors.failedToLoadAgain}
         />
       </div>
     );

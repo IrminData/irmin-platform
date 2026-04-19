@@ -115,8 +115,8 @@ const ConnectionSection = () => {
   return (
     <SafeComponent
       level='section'
-      title={dict.common.error}
-      description={dict.common.weEncounteredError}
+      titleKey='connectionTitle'
+      descriptionKey='connectionDescription'
     >
       <div className='relative container mx-auto max-w-7xl'>
         <div className='flex flex-col gap-4 px-4 pb-4'>

@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { workflowQueryKey } from '@/lib/queryKeys';
 
+import { QueryError } from '@/components/ui/error/QueryError';
 import type { FieldConfig } from '@/components/ui/form/SettingsForm';
 import SettingsForm from '@/components/ui/form/SettingsForm';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -254,9 +255,12 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
 
   if (workflowQuery.isError) {
     return (
-      <div>
-        {dict.common.error}: {workflowQuery.error.message}
-      </div>
+      <QueryError
+        error={workflowQuery.error}
+        onRetry={() => workflowQuery.refetch()}
+        title={dict.common.errors.failedToLoadWorkflow}
+        description={dict.common.errors.failedToLoadAgain}
+      />
     );
   }
 

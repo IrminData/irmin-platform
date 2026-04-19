@@ -295,7 +295,10 @@ export const useRepositoryObject = (
       return response.data;
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? dict.repository.objects.shareError);
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.createShareLinkFailed
+      );
     },
   });
 
@@ -316,7 +319,10 @@ export const useRepositoryObject = (
       return response.data;
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? dict.repository.shareZipError);
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.createZipShareLinkFailed
+      );
     },
   });
 

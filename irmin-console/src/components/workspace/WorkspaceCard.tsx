@@ -1,6 +1,8 @@
 'use client';
 
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
+
+import Link from 'next/link';
 
 import {
   TbBuilding,
@@ -16,17 +18,7 @@ import { useLocale } from '@/context/LocaleContext';
 
 import type { Workspace, WorkspaceSummary } from '@/types/core/Workspace';
 
-/**
- * Inline skeleton placeholder for a stat value
- */
-const StatSkeleton = () => (
-  <div
-    className={`
-      h-3 w-4 animate-pulse rounded-sm bg-gray-200
-      dark:bg-gray-800
-    `}
-  />
-);
+import WorkspaceStat from './WorkspaceStat';
 
 /**
  * Compact workspace row component
@@ -34,46 +26,37 @@ const StatSkeleton = () => (
  * Displays a workspace as a slim horizontal row with icon, name/description,
  * resource stats, and a navigation chevron. Accepts either a full
  * WorkspaceSummary (with stats) or a basic Workspace (stats shown as
- * skeleton placeholders until summary data loads).
+ * skeleton placeholders until summary data loads). Renders as a Link so
+ * Cmd/Ctrl+click and middle-click open the workspace in a new tab as
+ * expected.
  */
 const WorkspaceCard = ({
   workspace,
   summary,
   isRecentlyUsed,
-  handleClick,
 }: {
   workspace: Workspace | WorkspaceSummary;
   summary?: WorkspaceSummary;
   isRecentlyUsed?: boolean;
-  handleClick: (_slug: string) => void;
 }) => {
-  const { dict } = useLocale();
-  const openWorkspace = useCallback(() => {
-    handleClick(workspace.slug);
-  }, [workspace.slug, handleClick]);
-
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        openWorkspace();
-      }
-    },
-    [openWorkspace]
-  );
+  const { dict, locale } = useLocale();
 
   const hasSummary = summary != null;
 
   return (
-    <button
+    <Link
+      href={`/${locale}/workspace/${workspace.slug}`}
       className={`
-        group flex w-full cursor-pointer items-center gap-4 rounded-xl border-0
-        bg-card px-4 py-3 text-left transition-colors duration-150
-        hover:bg-card/80
+        group flex w-full items-center gap-4 rounded-xl border border-border
+        bg-card px-4 py-3 text-left shadow-xs
+        transition-[background-color,border-color,box-shadow] duration-150
+        hover:border-irmin-green-500/40 hover:bg-card/80 hover:shadow-sm
+        focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none
       `}
-      onClick={openWorkspace}
-      onKeyDown={handleKeyDown}
-      aria-label={`Go to ${workspace.name} workspace`}
+      aria-label={dict.workspace.goToWorkspaceAriaLabel.replace(
+        '{name}',
+        workspace.name
+      )}
     >
       {/* Icon */}
       <div
@@ -82,7 +65,7 @@ const WorkspaceCard = ({
           bg-irmin-green-500/10 text-irmin-green-500
         `}
       >
-        <TbBuilding className='size-4' />
+        <TbBuilding className='size-4' aria-hidden='true' />
       </div>
 
       {/* Name + Description */}
@@ -96,21 +79,16 @@ const WorkspaceCard = ({
               <span
                 className={`
                   flex shrink-0 items-center gap-1 rounded-full
-                  bg-irmin-green-500/10 px-1.5 py-0.5 text-[10px] font-medium
+                  bg-irmin-green-500/10 px-1.5 py-0.5 text-[11px] font-medium
                   text-irmin-green-500
                 `}
               >
-                <TbClock className='size-2.5' />
+                <TbClock className='size-2.5' aria-hidden='true' />
                 {dict.workspace.recentlyUsed}
               </span>
             )
           ) : (
-            <div
-              className={`
-                h-4 w-20 animate-pulse rounded-full bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
+            <div className={`h-4 w-20 animate-pulse rounded-full bg-muted`} />
           )}
         </div>
         {workspace.description && (
@@ -127,45 +105,38 @@ const WorkspaceCard = ({
           md:flex
         `}
       >
-        <div className='flex items-center gap-1 text-xs text-muted-foreground'>
-          <TbUsers className='size-3.5' />
-          {hasSummary ? <span>{summary.member_count}</span> : <StatSkeleton />}
-        </div>
-        <div className='flex items-center gap-1 text-xs text-muted-foreground'>
-          <TbDatabase className='size-3.5' />
-          {hasSummary ? (
-            <span>{summary.repository_count}</span>
-          ) : (
-            <StatSkeleton />
-          )}
-        </div>
-        <div className='flex items-center gap-1 text-xs text-muted-foreground'>
-          <TbRun className='size-3.5' />
-          {hasSummary ? (
-            <span>{summary.workflow_count}</span>
-          ) : (
-            <StatSkeleton />
-          )}
-        </div>
-        <div className='flex items-center gap-1 text-xs text-muted-foreground'>
-          <TbPlug className='size-3.5' />
-          {hasSummary ? (
-            <span>{summary.connection_count}</span>
-          ) : (
-            <StatSkeleton />
-          )}
-        </div>
+        <WorkspaceStat
+          Icon={TbUsers}
+          count={summary?.member_count}
+          label={dict.workspace.stats.members}
+        />
+        <WorkspaceStat
+          Icon={TbDatabase}
+          count={summary?.repository_count}
+          label={dict.workspace.stats.repositories}
+        />
+        <WorkspaceStat
+          Icon={TbRun}
+          count={summary?.workflow_count}
+          label={dict.workspace.stats.workflows}
+        />
+        <WorkspaceStat
+          Icon={TbPlug}
+          count={summary?.connection_count}
+          label={dict.workspace.stats.connections}
+        />
       </div>
 
       {/* Chevron */}
       <TbChevronRight
+        aria-hidden='true'
         className={`
           size-4 shrink-0 text-muted-foreground transition-transform
-          duration-150
+          duration-150 ease-out
           group-hover:translate-x-0.5
         `}
       />
-    </button>
+    </Link>
   );
 };
 

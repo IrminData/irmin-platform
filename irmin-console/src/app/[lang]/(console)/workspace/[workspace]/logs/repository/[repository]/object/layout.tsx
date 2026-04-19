@@ -1,13 +1,11 @@
 import type { Metadata } from 'next';
 
+import { fetchRepositoryMeta } from '@/lib/core/serverFetchers';
 import type { Locale } from '@/lib/dict';
+import { getServerDict } from '@/lib/dict/server';
 
 /**
  * URL parameters for the Repository Object Logs layout
- *
- * @param lang - The language of the user
- * @param workspace - The slug of the current workspace
- * @param repository - The slug of the repository to show logs for
  */
 export type RepositoryObjectLogsLayoutParams = {
   lang: Locale;
@@ -15,17 +13,14 @@ export type RepositoryObjectLogsLayoutParams = {
   repository: string;
 };
 
-/**
- * SEO metadata for the Repository Object Logs layout
- */
 export async function generateMetadata(props: {
   params: Promise<RepositoryObjectLogsLayoutParams>;
 }): Promise<Metadata> {
-  const params = await props.params;
-  const formattedWorkspace = params.workspace.replace(/-/g, ' ');
-  return {
-    title: `Repository object logs | ${formattedWorkspace} | IRMIN Console`,
-  };
+  const { lang, workspace, repository } = await props.params;
+  const dict = getServerDict(lang);
+  const repo = await fetchRepositoryMeta(lang, workspace, repository);
+  const repoName = repo?.name ?? `${repository}…`;
+  return { title: `${dict.metadata.resource.object} – ${repoName}` };
 }
 
 /**

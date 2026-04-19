@@ -117,7 +117,8 @@ export default function AIApplicationsSection({
             <QueryError
               error={aiApplicationsQuery.error}
               onRetry={() => aiApplicationsQuery.refetch()}
-              title={dict.common.somethingWentWrong}
+              title={dict.common.errors.failedToLoadAIApplications}
+              description={dict.common.errors.failedToLoadAgain}
             />
           ) : (
             <AIApplicationList

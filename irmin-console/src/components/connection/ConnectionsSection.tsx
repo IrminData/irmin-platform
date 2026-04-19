@@ -114,7 +114,8 @@ export default function ConnectionsSection({
           <QueryError
             error={connectionsQuery.error}
             onRetry={() => connectionsQuery.refetch()}
-            title={dict.common.somethingWentWrong}
+            title={dict.common.errors.failedToLoadConnections}
+            description={dict.common.errors.failedToLoadAgain}
           />
         ) : (
           <ConnectionList

@@ -1,5 +1,5 @@
-import DetailPageSkeleton from '@/components/ui/loading/DetailPageSkeleton';
+import EditorLayoutSkeleton from '@/components/ui/loading/EditorLayoutSkeleton';
 
 export default function QueriesLoading() {
-  return <DetailPageSkeleton />;
+  return <EditorLayoutSkeleton />;
 }

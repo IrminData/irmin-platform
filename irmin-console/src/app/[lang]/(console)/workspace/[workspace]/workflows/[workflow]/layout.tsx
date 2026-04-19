@@ -1,15 +1,20 @@
 import type { Metadata } from 'next';
 
+import {
+  fetchWorkflowMeta,
+  fetchWorkspaceMeta,
+} from '@/lib/core/serverFetchers';
 import type { Locale } from '@/lib/dict';
+import {
+  buildTitle,
+  buildTitleTemplate,
+  clampDescription,
+} from '@/lib/metadata';
 
 import WorkflowLayoutWrapper from '@/components/workflow/WorkflowLayoutWrapper';
 
 /**
  * URL parameters for the single Workflow pages layout
- *
- * @param lang - The language of the user
- * @param workspace - The slug of the current workspace
- * @param workflow - The ID of the workflow to show
  */
 export type SingleWorkflowLayoutParams = {
   lang: Locale;
@@ -18,15 +23,27 @@ export type SingleWorkflowLayoutParams = {
 };
 
 /**
- * SEO metadata for the single Worflow pages layout
+ * Workflow layer metadata. Fetches the real workflow name so subpages
+ * (documentation, schedule, policies, …) compose against it.
  */
 export async function generateMetadata(props: {
   params: Promise<SingleWorkflowLayoutParams>;
 }): Promise<Metadata> {
-  const params = await props.params;
-  const formattedWorkspace = params.workspace.replace(/-/g, ' ');
+  const { lang, workspace, workflow } = await props.params;
+  const [ws, wf] = await Promise.all([
+    fetchWorkspaceMeta(lang, workspace),
+    fetchWorkflowMeta(lang, workspace, workflow),
+  ]);
+  // Match the workspace layout's ellipsis fallback so composed titles stay
+  // visually consistent when either fetch fails.
+  const wsName = ws?.name ?? `${workspace}…`;
+  const wfName = wf?.name ?? `${workflow.slice(0, 8)}…`;
   return {
-    title: `Workflow | ${formattedWorkspace} | IRMIN Console`,
+    title: {
+      default: buildTitle([wfName, wsName]),
+      template: buildTitleTemplate([wfName, wsName]),
+    },
+    description: clampDescription(wf?.description, `Workflow in ${wsName}`),
   };
 }
 

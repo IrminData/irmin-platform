@@ -4,13 +4,20 @@ import { redirect } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
 
-export const metadata: Metadata = {
-  title: 'Irmin',
-  description: 'Irmin Data Platform',
-};
+import { getServerDict } from '@/lib/dict/server';
+
+type AuthRootParams = { lang: string };
+
+export async function generateMetadata(props: {
+  params: Promise<AuthRootParams>;
+}): Promise<Metadata> {
+  const { lang } = await props.params;
+  const dict = getServerDict(lang);
+  return { title: dict.metadata.auth.resolving };
+}
 
 /**
- * This page doesn't really exit. It will be redirected to /sign-in or /workspace based on the user's authentication status.
+ * Routing stub — redirects to /sign-in or /workspace based on auth state.
  */
 const ConsoleHome = async () => {
   const { userId } = await auth();

@@ -1,100 +1,37 @@
-const SkeletonField = () => (
-  <div className='space-y-2'>
-    <div
-      className={`
-        h-4 w-20 animate-pulse rounded-sm bg-gray-200
-        dark:bg-gray-800
-      `}
-    />
-    <div
-      className={`
-        h-10 w-full animate-pulse rounded-sm bg-gray-200
-        dark:bg-gray-800
-      `}
-    />
-  </div>
-);
-const SkeletonCheckbox = () => (
-  <div className='flex items-center gap-3'>
-    <div
-      className={`
-        size-5 animate-pulse rounded-sm bg-gray-200
-        dark:bg-gray-800
-      `}
-    />
-    <div
-      className={`
-        h-4 w-40 animate-pulse rounded-sm bg-gray-200
-        dark:bg-gray-800
-      `}
-    />
-  </div>
-);
-const SkeletonButton = () => (
-  <div className='pt-4'>
-    <div
-      className={`
-        h-12 w-full animate-pulse rounded-sm bg-gray-200
-        dark:bg-gray-800
-      `}
-    />
-  </div>
-);
-const SkeletonSecondaryAction = () => (
-  <div className='flex justify-center space-x-4'>
-    <div
-      className={`
-        h-4 w-24 animate-pulse rounded-sm bg-gray-200
-        dark:bg-gray-800
-      `}
-    />
-    <div
-      className={`
-        h-4 w-20 animate-pulse rounded-sm bg-gray-200
-        dark:bg-gray-800
-      `}
-    />
-  </div>
-);
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 /**
- * Skeleton for form pages (authentication, settings, etc.)
+ * Skeleton for centered auth-style form pages (sign-in, sign-up,
+ * invite acceptance).
  */
 const FormPageSkeleton = () => {
   return (
     <div className='relative container mx-auto max-w-lg px-4 py-24'>
-      <div className='rounded-lg border bg-card p-4 shadow-sm'>
-        {/* Form title */}
-        <div className='mb-8 text-center'>
-          <div
-            className={`
-              mx-auto mb-4 h-8 w-48 animate-pulse rounded-sm bg-gray-200
-              dark:bg-gray-800
-            `}
-          />
-          <div
-            className={`
-              mx-auto h-4 w-64 animate-pulse rounded-sm bg-gray-200
-              dark:bg-gray-800
-            `}
-          />
+      <div className='rounded-lg border border-border bg-card p-4 shadow-xs'>
+        <div className='mb-8 flex flex-col items-center gap-4 text-center'>
+          <LoadingSkeleton className='h-8 w-48' />
+          <LoadingSkeleton className='h-4 w-64 max-w-full' />
         </div>
 
-        {/* Form fields */}
-        <div className='space-y-6'>
-          <SkeletonField />
-          <SkeletonField />
-          <SkeletonField />
-          <SkeletonField />
+        <div className='flex flex-col gap-6'>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={`field-${i}`} className='flex flex-col gap-2'>
+              <LoadingSkeleton className='h-4 w-20' />
+              <LoadingSkeleton className='h-10 w-full rounded-md' />
+            </div>
+          ))}
 
-          {/* Checkbox/toggle field */}
-          <SkeletonCheckbox />
+          <div className='flex items-center gap-3'>
+            <LoadingSkeleton className='size-5 rounded-sm' />
+            <LoadingSkeleton className='h-4 w-40' />
+          </div>
 
-          {/* Submit button */}
-          <SkeletonButton />
+          <LoadingSkeleton className='h-12 w-full rounded-md' />
 
-          {/* Secondary actions */}
-          <SkeletonSecondaryAction />
+          <div className='flex justify-center gap-4'>
+            <LoadingSkeleton className='h-4 w-24' />
+            <LoadingSkeleton className='h-4 w-20' />
+          </div>
         </div>
       </div>
     </div>

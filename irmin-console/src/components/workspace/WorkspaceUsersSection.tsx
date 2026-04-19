@@ -53,7 +53,8 @@ const WorkspaceUsersSection = () => {
         <QueryError
           error={usersQuery.error}
           onRetry={() => usersQuery.refetch()}
-          title={dict.common.somethingWentWrong}
+          title={dict.common.errors.failedToLoadUsers}
+          description={dict.common.errors.failedToLoadAgain}
         />
       </ContentWrapper>
     );
@@ -65,7 +66,8 @@ const WorkspaceUsersSection = () => {
         <QueryError
           error={rolesQuery.error}
           onRetry={() => rolesQuery.refetch()}
-          title={dict.common.somethingWentWrong}
+          title={dict.common.errors.failedToLoadUsers}
+          description={dict.common.errors.failedToLoadAgain}
         />
       </ContentWrapper>
     );

@@ -24,8 +24,8 @@ function ConsoleErrorSection({
     >
       <LocalizedErrorDisplay
         error={error}
-        title={dict.common.somethingWentWrong}
-        description={dict.common.weEncounteredError}
+        title={dict.common.errors.consoleTitle}
+        description={dict.common.errors.consoleDescription}
         variant='page'
         showDetails={true}
         showReload={true}

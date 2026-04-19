@@ -174,6 +174,9 @@ const fi = {
       consoleTitle: 'Jotain meni pieleen',
       consoleDescription:
         'Konsolin lataaminen epäonnistui. Yritä päivittää sivu — jos ongelma jatkuu, ota yhteyttä tukeen.',
+      connectionTitle: 'Yhteyden näyttäminen epäonnistui',
+      connectionDescription:
+        'Jotain meni pieleen yhteyden näyttämisessä. Yritä päivittää sivu.',
 
       // Query failure (network / server error) — shown with a Retry button
       failedToLoadRepository: 'Arkiston lataaminen epäonnistui',
@@ -186,6 +189,35 @@ const fi = {
       failedToLoadStoredQueries:
         'Tallennettujen kyselyiden lataaminen epäonnistui',
       failedToLoadUser: 'Käyttäjän lataaminen epäonnistui',
+      failedToLoadPolicy: 'Käyttöoikeuskäytännön lataaminen epäonnistui',
+      failedToLoadConnector: 'Liittimen asetusten lataaminen epäonnistui',
+      failedToLoadQuery: 'Tallennetun kyselyn lataaminen epäonnistui',
+      failedToLoadScript: 'Skriptin lataaminen epäonnistui',
+      failedToLoadBillingSubscription: 'Tilauksesi lataaminen epäonnistui',
+      failedToLoadEmbedding: 'Upotustietojen lataaminen epäonnistui',
+      failedToLoadPendingWrites:
+        'Odottavien kirjoitusten lataaminen epäonnistui',
+      failedToLoadTag: 'Tunnisteen lataaminen epäonnistui',
+      failedToLoadWorkspace: 'Työtilan lataaminen epäonnistui',
+      failedToLoadDiff: 'Vertailun lataaminen epäonnistui',
+      failedToLoadDiffDescription:
+        'Näiden viittausten välistä eroa ei voitu ladata. Kokeile toista haaraa tai päivitä sivu.',
+      // Collection-level failures
+      failedToLoadAIApplications: 'AI-sovellusten lataaminen epäonnistui',
+      failedToLoadRepositories: 'Arkistojen lataaminen epäonnistui',
+      failedToLoadConnections: 'Yhteyksien lataaminen epäonnistui',
+      failedToLoadWorkflows: 'Työnkulkujen lataaminen epäonnistui',
+      failedToLoadScripts: 'Skriptien lataaminen epäonnistui',
+      failedToLoadBranches: 'Haarojen lataaminen epäonnistui',
+      failedToLoadCommits: 'Toimitushistorian lataaminen epäonnistui',
+      failedToLoadObjects: 'Objektien lataaminen epäonnistui',
+      failedToLoadInvites: 'Kutsujen lataaminen epäonnistui',
+      failedToLoadUsers: 'Käyttäjien lataaminen epäonnistui',
+      failedToLoadLogs: 'Lokien lataaminen epäonnistui',
+      failedToLoadSchema: 'Skeeman lataaminen epäonnistui',
+      failedToLoadDocumentation: 'Dokumentaation lataaminen epäonnistui',
+      failedToLoadSearchResults: 'Hakutulosten lataaminen epäonnistui',
+      failedToLoadActivity: 'Toiminnan lataaminen epäonnistui',
       failedToLoadAgain:
         'Palvelimeen ei saatu yhteyttä. Tarkista verkkoyhteys ja yritä uudelleen.',
 
@@ -208,6 +240,12 @@ const fi = {
       userNotFound: 'Käyttäjää ei löytynyt',
       userNotFoundDescription:
         'Käyttäjää ei ehkä ole olemassa, tai hän ei kuulu tähän työtilaan.',
+      policyNotFound: 'Käyttöoikeuskäytäntöä ei löytynyt',
+      policyNotFoundDescription:
+        'Käyttöoikeuskäytäntö on saatettu poistaa, tai sinulla ei ole siihen käyttöoikeutta.',
+      tagNotFound: 'Tunnistetta ei löytynyt',
+      tagNotFoundDescription:
+        'Tunniste on saatettu poistaa, tai sinulla ei ole siihen käyttöoikeutta.',
 
       // Permissions
       noPermissionsToViewRepository:
@@ -336,6 +374,9 @@ const fi = {
         updateBillingFailed: 'Laskutustietojen päivittäminen epäonnistui',
         deleteCredentialFailed: 'Tunnistetietojen poistaminen epäonnistui',
         createCredentialFailed: 'Tunnistetietojen luominen epäonnistui',
+        // Sharing
+        createShareLinkFailed: 'Jakolinkin luominen epäonnistui',
+        createZipShareLinkFailed: 'Zip-jakolinkin luominen epäonnistui',
       },
     },
   },
@@ -387,13 +428,22 @@ const fi = {
     guides: 'Oppaat',
     contactSupport: 'Ota yhteyttä tukeen',
     developerDocs: 'Dokumentaatio kehittäjille',
+    workspaceNavigationAriaLabel: 'Työtilan navigointi',
+    openMenu: 'Avaa navigointivalikko',
+    closeMenu: 'Sulje navigointivalikko',
+    expandSidebar: 'Laajenna sivupalkki',
+    foldSidebar: 'Pienennä sivupalkki',
+    searchShortcutHint: 'Paina {mod} K kohdistaaksesi haun',
+    searchResults: 'Hakutulokset',
+    resultsCountOne: '{n} tulos',
+    resultsCountOther: '{n} tulosta',
 
     staticSearchItems: {
       guides: 'Irmin Oppaat',
       documentation: 'Irmin Dokumentaatio',
       termsAndPrivacy: 'Käyttöehdot & Tietosuojakäytäntö',
       createWorkspace: 'Luo uusi työtila',
-      workspaceDocumentation: 'Työtilan Dokumentaatio',
+      workspaceDocumentation: 'Työtilan katalogi',
       myProfile: 'Oma Profiili',
       manageWorkspaces: 'Hallitse Työtiloja',
       workspaceSettings: 'Työtilan asetukset',
@@ -409,7 +459,7 @@ const fi = {
         termsAndPrivacy: 'Lue käyttöehdot ja tietosuojakäytäntö',
         createWorkspace: 'Luo uusi Irmin työtila ja aloita työskentely',
         logs: 'Näytä nykyisen työtilan lokit',
-        workspaceDocumentation: 'Näytä työtilan dokumentaatio',
+        workspaceDocumentation: 'Katso työtilan katalogi ja datavirrat',
         myProfile: 'Näytä ja muokkaa profiiliasi',
         manageWorkspaces: 'Hallitse työtilojasi',
         scripts: 'Kirjoita ja suorita skriptejä',
@@ -434,6 +484,7 @@ const fi = {
   aiApplication: {
     aiApplication: 'AI-sovellus',
     createAIApplication: 'Luo AI-sovellus',
+    noDescription: 'Ei kuvausta',
     dataSources: 'tietolähdettä',
     dataSource: 'tietolähde',
     toolsEnabled: 'työkalua käytössä',
@@ -484,7 +535,6 @@ const fi = {
     pendingWritesTitle: 'Odottavat kirjoitukset',
     pendingWritesDescription:
       'Tarkista ja hyväksy AI-agenttien kirjoitusoperaatiot',
-    pendingWritesError: 'Odottavien kirjoitusten lataaminen epäonnistui',
     noPendingWrites: 'Ei odottavia kirjoituksia tarkistettavaksi',
     howToConnect: 'Kuinka yhdistää',
     howToConnectMcpPrefix: 'Käytä ',
@@ -655,6 +705,23 @@ const fi = {
     failedToLoadTags: 'Tunnisteiden lataaminen epäonnistui',
     failedToLoadWorkspaces: 'Työtilojen lataaminen epäonnistui',
     recentlyUsed: 'Viimeksi käytetty',
+    goToWorkspaceAriaLabel: 'Siirry työtilaan {name}',
+    stats: {
+      members: 'jäsentä',
+      repositories: 'data-arkistoa',
+      workflows: 'työnkulkua',
+      connections: 'yhteyttä',
+    },
+    dashboardTooltips: {
+      profile: 'Henkilökohtaiset asetukset ja API-avaimet.',
+      settings: 'Työtilan asetukset ja oletukset.',
+      tags: 'Hallinnoi tunnisteita työtilan resursseille.',
+      users: 'Työtilan jäsenet ja roolit.',
+      invites: 'Odottavat kutsut tähän työtilaan.',
+      billing: 'Tilaus, käyttö ja laskut.',
+      logs: 'Työtilassa tehtyjen toimintojen audit-loki.',
+      apiMcp: 'API-avaimet, MCP-asetukset ja SDK-viitteet.',
+    },
   },
 
   workspaceSwitcher: {
@@ -669,6 +736,8 @@ const fi = {
     leaveWorkspace: 'Poistu työtilasta',
     leaveWorkspaceConfirm:
       'Oletko varma, että haluat poistua tästä työtilasta?',
+    workspaceCountOne: '{n} työtila. Valitse jatkaaksesi tai luo uusi.',
+    workspaceCountOther: '{n} työtilaa. Valitse jatkaaksesi tai luo uusi.',
   },
 
   // === DATA MANAGEMENT ===
@@ -683,7 +752,6 @@ const fi = {
       'Tämä data-arkisto tai valittu haara on muuttumaton, eikä sitä voi muokata.',
     shareZipLink: 'Jaa zip-tiedostona',
     shareZipLinkCopied: 'Zip-linkki kopioitu leikepöydälle',
-    shareZipError: 'Zip-jakolinkin luominen epäonnistui',
     branches: {
       branches: 'Haarat',
       currentBranch: 'Nykyinen',
@@ -759,9 +827,6 @@ const fi = {
       mergeStrategy: 'Sulautusstrategia',
       squashCommits: 'Yhdistä commitit',
       mergeCommitDescription: 'Sulautuscommitin kuvaus',
-      failedToLoadDiff: 'Vertailun lataaminen epäonnistui',
-      failedToLoadDiffSubtitle:
-        'Valittuja viittauksia ei voitu vertailla. Tarkista, että molemmat viittaukset ovat olemassa ja yritä uudelleen.',
       defaultStrategy: 'Oletus',
       destWinsStrategy: 'Kohde voittaa',
       sourceWinsStrategy: 'Lähde voittaa',
@@ -830,7 +895,6 @@ const fi = {
       changeHistory: 'Muutoshistoria',
       shareLink: 'Jaa linkki',
       shareLinkCopied: 'Linkki kopioitu leikepöydälle',
-      shareError: 'Jakolinkin luominen epäonnistui',
       shareLinkExpiryLabel: 'Linkki vanhenee',
       shareLinkGenerate: 'Kopioi linkki',
       shareLinkCustomHours: 'Tuntia',
@@ -1980,14 +2044,19 @@ const fi = {
     waitingForResults: 'Odotetaan tuloksia...',
   },
 
-  // === DOCUMENTATION ===
-  documentation: {
-    documentation: 'Työtilan yleiskatsaus',
-    workspaceDocumentation: 'Työtilan dokumentaatio',
+  // === CATALOG & LINEAGE (workspace documentation view) ===
+  catalog: {
+    documentation: 'Katalogi',
+    catalogAndLineage: 'Katalogi ja datavirrat',
+    catalogAndLineageTooltip:
+      'Selaa työtilan resursseja ja datan kulkua niiden välillä.',
+    readme: 'README',
+    readmeTooltip:
+      'Muistiinpanot ja dokumentaatio tälle resurssille. Näkyy työtilan katalogissa.',
+    workspaceDocumentation: 'Työtilan katalogi',
     downloadPdf: 'Lataa PDF',
-    startTypingDocumentation:
-      'Aloita dokumentaation ja muistiinpanojen kirjoittaminen...',
-    schema: 'Tietovirrat',
+    startTypingDocumentation: 'Aloita muistiinpanojen kirjoittaminen...',
+    schema: 'Datavirrat',
     workspace: 'Työtila',
     createdBy: 'Luonut',
     searchPlaceholder: 'Hae dokumentaatiosta...',
@@ -2255,6 +2324,81 @@ const fi = {
     errors: {
       invalidRegex: 'Virheellinen säännöllinen lauseke',
       nameRequired: 'Ominaisuuden nimi on pakollinen',
+    },
+  },
+
+  // === BROWSER-TAB / SOCIAL-SHARE METADATA ===
+  metadata: {
+    app: {
+      description: 'Datanhallinta-alusta insinööritiimeille.',
+    },
+    auth: {
+      signIn: 'Kirjaudu sisään',
+      signUp: 'Luo tili',
+      invite: 'Hyväksy kutsu',
+      resolving: 'Kirjaudutaan',
+    },
+    error: {
+      notFoundTitle: 'Sivua ei löydy',
+    },
+    workspace: {
+      select: 'Valitse työtila',
+      dashboard: 'Kojelauta',
+      search: 'Haku',
+      profile: 'Profiili',
+      profileTokens: 'API-tunnukset',
+    },
+    sections: {
+      repositories: 'Tietovarastot',
+      connections: 'Yhteydet',
+      workflows: 'Työnkulut',
+      workflowsActions: 'Toiminnot',
+      workflowsExports: 'Viennit',
+      workflowsImports: 'Tuonnit',
+      workflowsPipelines: 'Putket',
+      workflowsRuns: 'Ajot',
+      queries: 'Kyselyt',
+      aiApplications: 'Tekoälysovellukset',
+      catalog: 'Katalogi',
+      lineage: 'Tietopolut',
+      assistant: 'Avustaja',
+      settings: 'Asetukset',
+      scripts: 'Skriptit',
+      logs: 'Lokit',
+    },
+    resource: {
+      branches: 'Haarat',
+      commits: 'Commitit',
+      compare: 'Vertailu',
+      documentation: 'Dokumentaatio',
+      object: 'Objekti',
+      objectHistory: 'Objektin historia',
+      policies: 'Käytännöt',
+      policiesBranches: 'Haarakäytännöt',
+      policiesCommits: 'Commit-käytännöt',
+      policiesObjects: 'Objektikäytännöt',
+      policiesTags: 'Tunnistekäytännöt',
+      policiesRuns: 'Ajokäytännöt',
+      schema: 'Skeema',
+      tags: 'Tunnisteet',
+      settings: 'Asetukset',
+      uncommittedChanges: 'Tallentamattomat muutokset',
+      run: 'Ajo',
+      schedule: 'Aikataulu',
+      fieldMapper: 'Kenttäkartoitus',
+      activity: 'Aktiivisuus',
+      workflowable: 'Lähde',
+    },
+    settingsSection: {
+      apiMcp: 'API ja MCP',
+      billing: 'Laskutus',
+      billingSuccess: 'Laskutus · Onnistui',
+      invites: 'Kutsut',
+      tags: 'Tunnisteet',
+      users: 'Käyttäjät',
+    },
+    fallback: {
+      tag: 'Tunniste',
     },
   },
 };

@@ -1,5 +1,9 @@
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+
 /**
- * List skeleton component for loading states
+ * Generic list skeleton — N rounded rows with optional avatar and
+ * trailing action buttons. Used for sidebars and small lists; for
+ * full list pages prefer `ListPageSkeleton` or `ListShellSkeleton`.
  */
 function ListSkeleton({
   items = 5,
@@ -12,66 +16,31 @@ function ListSkeleton({
   showActions?: boolean;
   className?: string;
 }) {
-  const itemKeys = Array.from(
-    { length: items },
-    (_, i) => `list-skeleton-item-${i}`
-  );
   return (
     <div
       className={`
-        animate-pulse space-y-3
+        flex flex-col gap-3
         ${className}
       `}
     >
-      {itemKeys.map((key) => (
+      {Array.from({ length: items }).map((_, i) => (
         <div
-          key={key}
+          key={`list-item-${i}`}
           className={`
-            flex items-center space-x-4 rounded-lg border border-border bg-card
-            p-4
+            flex items-center gap-4 rounded-lg border border-border bg-card p-4
           `}
         >
-          {/* Avatar */}
           {showAvatar && (
-            <div
-              className={`
-                size-10 shrink-0 rounded-full bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
+            <LoadingSkeleton className='size-10 shrink-0 rounded-full' />
           )}
-
-          {/* Content */}
-          <div className='flex-1 space-y-2'>
-            <div
-              className={`
-                h-4 w-3/4 rounded-sm bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
-            <div
-              className={`
-                h-3 w-1/2 rounded-sm bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
+          <div className='flex flex-1 flex-col gap-2'>
+            <LoadingSkeleton className='h-4 w-3/4' />
+            <LoadingSkeleton className='h-3 w-1/2' />
           </div>
-
-          {/* Actions */}
           {showActions && (
-            <div className='flex space-x-2'>
-              <div
-                className={`
-                  size-8 rounded-sm bg-gray-200
-                  dark:bg-gray-800
-                `}
-              />
-              <div
-                className={`
-                  size-8 rounded-sm bg-gray-200
-                  dark:bg-gray-800
-                `}
-              />
+            <div className='flex gap-2'>
+              <LoadingSkeleton className='size-8 rounded-md' />
+              <LoadingSkeleton className='size-8 rounded-md' />
             </div>
           )}
         </div>

@@ -1,5 +1,8 @@
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+
 /**
- * Page-level skeleton component for loading states
+ * Generic page skeleton — header + content rows, with optional sidebar.
+ * Prefer a fit-for-purpose skeleton where one exists.
  */
 function PageSkeleton({
   showHeader = true,
@@ -12,37 +15,12 @@ function PageSkeleton({
   contentRows?: number;
   className?: string;
 }) {
-  const sidebarKeys = Array.from(
-    { length: 5 },
-    (_, i) => `page-skeleton-sidebar-${i}`
-  );
-  const contentKeys = Array.from(
-    { length: contentRows },
-    (_, i) => `page-skeleton-content-${i}`
-  );
-
   return (
-    <div
-      className={`
-        animate-pulse
-        ${className}
-      `}
-    >
-      {/* Header */}
+    <div className={className}>
       {showHeader && (
         <div className='mb-6'>
-          <div
-            className={`
-              mb-4 h-8 w-1/3 rounded-lg bg-gray-200
-              dark:bg-gray-800
-            `}
-          />
-          <div
-            className={`
-              h-4 w-2/3 rounded-sm bg-gray-200
-              dark:bg-gray-800
-            `}
-          />
+          <LoadingSkeleton className='mb-4 h-8 w-1/3 max-w-sm rounded-md' />
+          <LoadingSkeleton className='h-4 w-2/3 max-w-md' />
         </div>
       )}
 
@@ -52,46 +30,26 @@ function PageSkeleton({
           ${showSidebar ? 'flex-row' : 'flex-col'}
         `}
       >
-        {/* Sidebar */}
         {showSidebar && (
           <div className='w-80 shrink-0'>
-            <div className='space-y-3'>
-              <div
-                className={`
-                  h-10 rounded-lg bg-gray-200
-                  dark:bg-gray-800
-                `}
-              />
-              {sidebarKeys.map((key) => (
-                <div
-                  key={key}
-                  className={`
-                    h-16 rounded-lg bg-gray-200
-                    dark:bg-gray-800
-                  `}
+            <div className='flex flex-col gap-3'>
+              <LoadingSkeleton className='h-10 w-full rounded-md' />
+              {Array.from({ length: 5 }).map((_, i) => (
+                <LoadingSkeleton
+                  key={`side-${i}`}
+                  className='h-16 w-full rounded-md'
                 />
               ))}
             </div>
           </div>
         )}
 
-        {/* Main content */}
         <div className='flex-1'>
-          <div className='space-y-4'>
-            {contentKeys.map((key) => (
-              <div key={key} className='space-y-2'>
-                <div
-                  className={`
-                    h-6 w-1/4 rounded-sm bg-gray-200
-                    dark:bg-gray-800
-                  `}
-                />
-                <div
-                  className={`
-                    h-20 rounded-lg bg-gray-200
-                    dark:bg-gray-800
-                  `}
-                />
+          <div className='flex flex-col gap-4'>
+            {Array.from({ length: contentRows }).map((_, i) => (
+              <div key={`content-${i}`} className='flex flex-col gap-2'>
+                <LoadingSkeleton className='h-6 w-1/4' />
+                <LoadingSkeleton className='h-20 w-full rounded-md' />
               </div>
             ))}
           </div>

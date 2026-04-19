@@ -1,14 +1,18 @@
 import type { Metadata } from 'next';
 
 import type { Locale } from '@/lib/dict';
+import { ROBOTS_CONSOLE } from '@/lib/metadata';
 
 import ConsoleWrapper from '@/components/console/ConsoleWrapper';
 
 /**
- * Default layout level metadata for SEO on the console
+ * Console shell metadata. The shell intentionally does not set a title —
+ * descendant layouts (workspace, resource, …) own title composition and
+ * compose their template against the root `%s · Irmin`. The shell only
+ * asserts the robots policy so every in-app route inherits `noindex,nofollow`.
  */
 export const metadata: Metadata = {
-  title: 'Console | IRMIN Console',
+  robots: ROBOTS_CONSOLE,
 };
 
 /**

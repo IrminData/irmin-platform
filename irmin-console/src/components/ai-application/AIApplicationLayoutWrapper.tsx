@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
-import PageSkeleton from '@/components/ui/loading/PageSkeleton';
+import AIApplicationLayoutSkeleton from '@/components/ui/loading/AIApplicationLayoutSkeleton';
 
 import { AIApplicationProvider } from '@/context/AIApplicationContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -72,16 +72,7 @@ export default function AIApplicationLayoutWrapper({
   ]);
 
   if (aiApplicationQuery.isLoading || isResourceAllowedLoading)
-    return (
-      <div
-        className={`
-          relative container mx-auto max-w-7xl px-2
-          md:px-4
-        `}
-      >
-        <PageSkeleton showHeader={true} contentRows={3} className='py-4' />
-      </div>
-    );
+    return <AIApplicationLayoutSkeleton />;
 
   if (aiApplicationQuery.isError) {
     return (

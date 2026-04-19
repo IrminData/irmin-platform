@@ -1,20 +1,29 @@
 import type { Metadata } from 'next';
 
+import { getServerDict } from '@/lib/dict/server';
+import { SITE_NAME } from '@/lib/metadata';
+
 import ManageWorkspacesSection from '@/components/workspace/ManageWorkspacesSection';
 
-/**
- * SEO metadata for the Manage Workspaces pages
- */
-export async function generateMetadata(): Promise<Metadata> {
+type ManageWorkspacesParams = { lang: string };
+
+export async function generateMetadata(props: {
+  params: Promise<ManageWorkspacesParams>;
+}): Promise<Metadata> {
+  const { lang } = await props.params;
+  const dict = getServerDict(lang);
   return {
-    title: `Manage workspaces | IRMIN Console`,
+    // Sits above the [workspace] layer, so there's no workspace suffix to
+    // splice in — the full title is spelled out here rather than composed
+    // through the root `%s · Irmin` template.
+    title: {
+      absolute: `${dict.metadata.workspace.select} · ${SITE_NAME}`,
+    },
   };
 }
 
 /**
- * Console home page
- *
- * It uses the {@link ManageWorkspacesSection} component to display the workspace management UI.
+ * Workspace selector landing page.
  */
 const ManageWorkspacesPage = async () => {
   return <ManageWorkspacesSection />;

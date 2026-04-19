@@ -159,7 +159,7 @@ function generateStaticSearchItems({
         description:
           dict.consoleNavigation.staticSearchItems.description
             .workspaceDocumentation,
-        link: `/${locale}/workspace/${workspace}/documentation`,
+        link: `/${locale}/workspace/${workspace}/catalog`,
         type: 'irmin',
       },
       {

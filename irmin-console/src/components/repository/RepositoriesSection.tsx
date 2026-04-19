@@ -113,7 +113,8 @@ export default function RepositoriesSection({
           <QueryError
             error={repositoriesQuery.error}
             onRetry={() => repositoriesQuery.refetch()}
-            title={dict.common.somethingWentWrong}
+            title={dict.common.errors.failedToLoadRepositories}
+            description={dict.common.errors.failedToLoadAgain}
           />
         ) : (
           <RepositoryList

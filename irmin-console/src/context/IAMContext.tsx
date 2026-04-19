@@ -19,8 +19,6 @@ import IrminCore from '@/lib/core';
 import type { Locale } from '@/lib/dict';
 import { languages } from '@/lib/dict';
 
-import AuthenticationErrorHandler from '@/components/ui/error/AuthenticationErrorHandler';
-
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -52,6 +50,13 @@ interface IAMContextValue {
   isLoading: boolean;
   /** sign the user out */
   signOut: () => Promise<boolean>;
+  /**
+   * Non-recoverable auth/profile error from the current session. Surfaced
+   * via context so consumers (AuthenticationErrorHandler inside the console
+   * shell) can render the error UI at the right level of the tree without
+   * wiping sidebar/nav.
+   */
+  authError: Error | undefined;
 }
 
 const IAMContext = createContext<IAMContextValue>({
@@ -62,6 +67,7 @@ const IAMContext = createContext<IAMContextValue>({
   updateProfile: async () => false,
   isLoading: false,
   signOut: async () => false,
+  authError: undefined,
 });
 
 export const IAMProvider = ({ children }: { children: ReactNode }) => {
@@ -352,17 +358,12 @@ export const IAMProvider = ({ children }: { children: ReactNode }) => {
       updateProfile,
       isLoading,
       signOut,
+      authError,
     }),
-    [getToken, profile, updateProfile, isLoading, signOut]
+    [getToken, profile, updateProfile, isLoading, signOut, authError]
   );
 
-  return (
-    <IAMContext.Provider value={value}>
-      <AuthenticationErrorHandler error={authError}>
-        {children}
-      </AuthenticationErrorHandler>
-    </IAMContext.Provider>
-  );
+  return <IAMContext.Provider value={value}>{children}</IAMContext.Provider>;
 };
 
 /**

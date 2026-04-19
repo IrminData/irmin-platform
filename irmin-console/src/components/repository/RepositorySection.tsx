@@ -367,7 +367,8 @@ function RepositorySectionContent({
         <QueryError
           error={repositoryObjectQuery.error}
           onRetry={() => repositoryObjectQuery.refetch()}
-          title={dict.common.somethingWentWrong}
+          title={dict.common.errors.failedToLoadObjects}
+          description={dict.common.errors.failedToLoadAgain}
           className='py-8'
         />
       </div>

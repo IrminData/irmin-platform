@@ -17,6 +17,7 @@ import {
 import EmbeddingEditSheet from '@/components/repository/objects/ObjectViewer/EmbeddingEditSheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { QueryError } from '@/components/ui/error/QueryError';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -303,7 +304,13 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
             <span>{dict.common.loading}</span>
           </div>
         ) : embeddingInfoQuery.isError ? (
-          <div className='text-sm text-destructive'>{dict.common.error}</div>
+          <QueryError
+            error={embeddingInfoQuery.error}
+            onRetry={() => embeddingInfoQuery.refetch()}
+            title={dict.common.errors.failedToLoadEmbedding}
+            description={dict.common.errors.failedToLoadAgain}
+            size='sm'
+          />
         ) : embeddingInfo ? (
           <div className='flex flex-wrap gap-x-12 gap-y-4 text-sm'>
             <div>

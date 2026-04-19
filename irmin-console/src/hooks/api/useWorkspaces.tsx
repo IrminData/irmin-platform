@@ -1,7 +1,3 @@
-import { useCallback } from 'react';
-
-import { useRouter } from 'next/navigation';
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -42,17 +38,16 @@ export function useWorkspaces() {
 }
 
 /**
- * Hook for workspace create mutation and navigation actions.
+ * Hook for the workspace create mutation.
  *
- * Separated from useWorkspaces so consumers that only need to create or
- * switch workspaces don't trigger the full workspaces list query.
+ * Separated from useWorkspaces so consumers that only need to create a
+ * workspace don't trigger the full workspaces list query.
  */
 export function useWorkspaceActions() {
   const { getCore } = useIrminCore();
-  const { locale, dict } = useLocale();
+  const { dict } = useLocale();
   const { irminAlert } = usePopup();
   const queryClient = useQueryClient();
-  const router = useRouter();
 
   // Mutation for creating a workspace
   const createMutation = useMutation<
@@ -104,26 +99,8 @@ export function useWorkspaceActions() {
     ),
   });
 
-  // Function to switch workspaces
-  const switchWorkspace = useCallback(
-    async (newSlug: string) => {
-      try {
-        router.push(`/${locale}/workspace/${newSlug}`);
-      } catch (error) {
-        console.error('Failed to switch workspace: ', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ??
-            dict.common.errors.mutations.switchWorkspaceFailed
-        );
-      }
-    },
-    [locale, router, irminAlert, dict]
-  );
-
   return {
     createMutation,
-    switchWorkspace,
   };
 }
 

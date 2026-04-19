@@ -502,7 +502,8 @@ function QueriesSectionContent() {
               <QueryError
                 error={storedQueriesQuery.error}
                 onRetry={() => storedQueriesQuery.refetch()}
-                title={dict.common.somethingWentWrong}
+                title={dict.common.errors.failedToLoadStoredQueries}
+                description={dict.common.errors.failedToLoadAgain}
                 size='sm'
                 className='m-4'
               />

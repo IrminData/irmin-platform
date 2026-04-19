@@ -1,159 +1,112 @@
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+
 /**
- * Schema-specific skeleton component for loading states
+ * Mirror skeleton for `DocumentationSchemaSection`.
+ *
+ * Hero (icon + title + description + search + PDF button),
+ * "Data Flows" section (list of workflow cards — badge, status,
+ * owner row, tags row, node flow), "Component Directory" section
+ * (grid of repository cards + connections card).
  */
 function SchemaSkeleton({
   showHeader = true,
-  showStats = false,
-  showControls = false,
-  showVisualization = false,
+  showControls = true,
+  dataFlowCount = 3,
   className = '',
 }: {
   showHeader?: boolean;
-  showStats?: boolean;
   showControls?: boolean;
-  showVisualization?: boolean;
+  dataFlowCount?: number;
   className?: string;
 }) {
   return (
-    <div
-      className={`
-        animate-pulse
-        ${className}
-      `}
-    >
+    <div className={className}>
       <div className='min-h-screen bg-background text-foreground'>
         <div className='container mx-auto max-w-6xl px-4 py-12'>
-          {/* Header Section */}
           {showHeader && (
             <div className='mb-10 flex flex-col gap-6'>
               <div className='flex items-center gap-3'>
-                <div className='size-10 rounded-lg bg-muted' />
-                <div className='h-9 w-48 rounded-sm bg-muted' />
+                <LoadingSkeleton className='size-10 rounded-lg' />
+                <LoadingSkeleton className='h-9 w-48' />
               </div>
-              <div className='h-5 w-2/3 rounded-sm bg-muted' />
-              <div
-                className={`
-                  relative h-10 w-full max-w-80 rounded-lg bg-muted
-                  sm:w-80
-                `}
-              />
+              <LoadingSkeleton className='h-4 w-2/3 max-w-3xl' />
+              {showControls && (
+                <div className='flex flex-wrap items-center gap-4'>
+                  <LoadingSkeleton className='h-10 w-80 max-w-full rounded-md' />
+                  <LoadingSkeleton className='h-10 w-32 rounded-md' />
+                </div>
+              )}
             </div>
           )}
 
-          {/* Stats Section */}
-          {showStats && (
+          <div className='space-y-12'>
+            {/* Data Flows */}
             <section className='mb-12 space-y-6'>
-              <div className='h-8 w-48 rounded-sm bg-muted' />
-              <div
-                className={`
-                  grid grid-cols-2 gap-4
-                  md:grid-cols-4
-                `}
-              >
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className='rounded-lg border bg-card p-4'>
-                    <div className='mb-2 h-4 w-20 rounded-sm bg-muted' />
-                    <div className='h-6 w-12 rounded-sm bg-muted' />
+              <LoadingSkeleton className='h-8 w-48' />
+              <div className='space-y-6'>
+                {Array.from({ length: dataFlowCount }).map((_, i) => (
+                  <div
+                    key={`flow-${i}`}
+                    className='rounded-lg border border-border bg-card p-6'
+                  >
+                    <div className='mb-4 flex flex-wrap items-center gap-3'>
+                      <LoadingSkeleton className='h-7 w-56' />
+                      <LoadingSkeleton className='h-6 w-20 rounded-full' />
+                      <LoadingSkeleton className='h-6 w-16 rounded-full' />
+                    </div>
+                    <LoadingSkeleton className='mb-4 h-4 w-3/4' />
+                    <LoadingSkeleton className='mb-2 h-3 w-16' />
+                    <div className='flex flex-wrap items-center gap-2'>
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <LoadingSkeleton
+                          key={`flow-${i}-node-${j}`}
+                          className='h-8 w-32 rounded-md'
+                        />
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
             </section>
-          )}
 
-          {/* Controls Section */}
-          {showControls && (
-            <div className='mb-8 rounded-lg border bg-card p-6'>
+            {/* Component Directory */}
+            <section className='space-y-6'>
+              <LoadingSkeleton className='h-8 w-64' />
               <div
                 className={`
-                  flex flex-col gap-6
-                  lg:flex-row lg:items-center lg:justify-between
+                  grid grid-cols-1 gap-6
+                  lg:grid-cols-2
                 `}
               >
-                <div className='flex gap-2'>
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className='h-8 w-28 rounded-lg bg-muted' />
-                  ))}
-                </div>
-                <div className='flex items-center gap-4'>
-                  <div className='h-10 w-64 rounded-lg bg-muted' />
-                  <div className='flex gap-2'>
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <div key={i} className='h-8 w-20 rounded-lg bg-muted' />
-                    ))}
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div
+                    key={`component-${i}`}
+                    className='rounded-lg border border-border bg-card p-6'
+                  >
+                    <div className='mb-4 flex items-center gap-2'>
+                      <LoadingSkeleton className='size-5' />
+                      <LoadingSkeleton className='h-6 w-32' />
+                    </div>
+                    <div className='space-y-4'>
+                      {Array.from({ length: 4 }).map((_, j) => (
+                        <div
+                          key={`component-${i}-item-${j}`}
+                          className={`
+                            space-y-1 border-b border-border pb-3
+                            last:border-b-0 last:pb-0
+                          `}
+                        >
+                          <LoadingSkeleton className='h-5 w-3/4' />
+                          <LoadingSkeleton className='h-3 w-full' />
+                          <LoadingSkeleton className='h-3 w-2/3' />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-            </div>
-          )}
-
-          {/* Main Content */}
-          <section className='mb-12 space-y-6'>
-            <div className='h-8 w-48 rounded-sm bg-muted' />
-            <div className='space-y-6'>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className='rounded-lg border bg-card p-6'>
-                  <div className='mb-4 flex flex-wrap items-center gap-3'>
-                    <div className='h-7 w-48 rounded-sm bg-muted' />
-                    <div className='h-6 w-20 rounded-full bg-muted' />
-                    <div className='h-6 w-16 rounded-full bg-muted' />
-                  </div>
-                  <div className='mb-4 h-4 w-3/4 rounded-sm bg-muted' />
-                  <div className='mb-2 h-3 w-16 rounded-sm bg-muted' />
-                  <div className='flex flex-wrap items-center gap-2'>
-                    {Array.from({ length: 4 }).map((_, j) => (
-                      <div key={j} className='h-8 w-32 rounded-md bg-muted' />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Component Directory */}
-          <section className='space-y-6'>
-            <div className='h-8 w-64 rounded-sm bg-muted' />
-            <div
-              className={`
-                grid grid-cols-1 gap-6
-                md:grid-cols-2
-              `}
-            >
-              {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className='rounded-lg border bg-card p-6'>
-                  <div className='mb-4 flex items-center gap-2'>
-                    <div className='size-5 rounded-sm bg-muted' />
-                    <div className='h-6 w-32 rounded-sm bg-muted' />
-                  </div>
-                  <div className='space-y-4'>
-                    {Array.from({ length: 4 }).map((_, j) => (
-                      <div
-                        key={j}
-                        className={`
-                          space-y-1 border-b pb-3
-                          last:border-b-0 last:pb-0
-                        `}
-                      >
-                        <div className='h-5 w-3/4 rounded-sm bg-muted' />
-                        <div className='h-3 w-full rounded-sm bg-muted' />
-                        <div className='h-3 w-2/3 rounded-sm bg-muted' />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Visualization Area */}
-          {showVisualization && (
-            <div className='mt-12 rounded-lg border bg-card p-6'>
-              <div className='mb-4 flex items-center gap-2'>
-                <div className='size-5 rounded-sm bg-muted' />
-                <div className='h-6 w-40 rounded-sm bg-muted' />
-              </div>
-              <div className='h-[400px] rounded-sm bg-muted' />
-            </div>
-          )}
+            </section>
+          </div>
         </div>
       </div>
     </div>

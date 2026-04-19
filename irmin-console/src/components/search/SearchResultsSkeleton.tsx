@@ -37,12 +37,7 @@ export default function SearchResultsSkeleton() {
               lg:mb-2
             `}
           >
-            <div
-              className={`
-                size-5 animate-pulse rounded-sm bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
+            <div className='size-5 animate-pulse rounded-sm bg-muted' />
             <LoadingSkeleton className='ml-2 h-4 w-24' />
           </div>
 

@@ -1,5 +1,5 @@
-import EditorSkeleton from '@/components/ui/loading/EditorSkeleton';
+import EditorLayoutSkeleton from '@/components/ui/loading/EditorLayoutSkeleton';
 
 export default function EditorLoading() {
-  return <EditorSkeleton />;
+  return <EditorLayoutSkeleton />;
 }

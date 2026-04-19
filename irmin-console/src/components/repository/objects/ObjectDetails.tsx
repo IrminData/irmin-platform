@@ -405,7 +405,7 @@ export default function ObjectDetails({
           `${dict.repository.objects.shareLinkCopied} (${expiryLabel})`
         );
       } catch {
-        irminAlert('error', dict.repository.objects.shareError);
+        irminAlert('error', dict.common.errors.mutations.createShareLinkFailed);
       }
       setSharePopoverOpen(false);
     } catch (error) {

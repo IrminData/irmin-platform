@@ -718,7 +718,8 @@ function SearchPageComponentContent() {
             onRetry={() => {
               if (workspaceSearchQuery.error) workspaceSearchQuery.refetch();
             }}
-            title={dict.common.somethingWentWrong}
+            title={dict.common.errors.failedToLoadSearchResults}
+            description={dict.common.errors.failedToLoadAgain}
           />
         )}
 

@@ -1,9 +1,28 @@
+import type { Metadata } from 'next';
+
+import { getServerDict } from '@/lib/dict/server';
+import { buildTitle, buildTitleTemplate } from '@/lib/metadata';
+
 import ProfileLayoutWrapper from '@/components/user/ProfileLayoutWrapper';
+
+type ProfileLayoutParams = { lang: string };
+
+export async function generateMetadata(props: {
+  params: Promise<ProfileLayoutParams>;
+}): Promise<Metadata> {
+  const { lang } = await props.params;
+  const dict = getServerDict(lang);
+  const profile = dict.metadata.workspace.profile;
+  return {
+    title: {
+      default: buildTitle([profile]),
+      template: buildTitleTemplate([profile]),
+    },
+  };
+}
 
 /**
  * Layout for the User profile settings pages in the Console
- * @param props0 - The layout properties
- * @param props0.children - The children to render
  */
 export default function ProfilePagesLayout({
   children,

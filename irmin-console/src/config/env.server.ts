@@ -45,13 +45,23 @@ const serverSchema = z.object({
   TEST_USER_REPOSITORY_SLUG: z.string().optional(),
 });
 
-// Skip strict parsing during static analysis (knip, lint-only runs).
+// Skip strict parsing during static analysis (knip, lint-only runs) and
+// during `next build` page-data collection. Railway doesn't pass every
+// server secret to the Docker builder (they're runtime-only in the
+// preview env), and even where they exist, cross-service template refs
+// often haven't been substituted yet. At real runtime Next.js sets
+// `NEXT_PHASE=phase-production-server`, this module re-evaluates with
+// resolved values, and strict validation runs — so genuinely missing
+// secrets still surface on the deployed pod. The escape hatch ONLY
+// softens the build phase and does not require any user-side env var.
+const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
 const isStaticAnalysis =
   process.env.npm_lifecycle_event === 'knip' ||
   process.env.npm_lifecycle_event === 'knip:fix' ||
   process.env.npm_lifecycle_event === 'validate' ||
   process.env.KNIP === 'true' ||
-  process.env.STATIC_ANALYSIS === 'true';
+  process.env.STATIC_ANALYSIS === 'true' ||
+  isBuildPhase;
 
 const envToParse = isStaticAnalysis
   ? {
@@ -66,11 +76,19 @@ if (!result.success) {
   console.error('Server env validation failed:');
 
   console.error(z.prettifyError(result.error));
-  throw new Error('Invalid server environment variables');
+
+  if (!isStaticAnalysis) {
+    throw new Error('Invalid server environment variables');
+  }
 }
 
-// ENV_PASSWORD is required when env auth is on in production.
+// ENV_PASSWORD is required when env auth is on in production. This check
+// is skipped during the build phase for the same reason as the schema
+// escape hatch above: Railway runtime secrets aren't all available to the
+// Docker builder, but they are at real runtime.
 if (
+  result.success &&
+  !isStaticAnalysis &&
   result.data.REQUIRE_ENV_AUTH &&
   result.data.NODE_ENV === 'production' &&
   !result.data.ENV_PASSWORD
@@ -80,7 +98,13 @@ if (
   );
 }
 
+// In static-analysis / build mode we fall back to the envToParse values
+// (with the mocked CLERK_SECRET_KEY) so types still align with the
+// schema's output shape. At real runtime the strict check above runs
+// again with resolved env and throws on genuinely missing secrets.
 export const env = {
   ...clientEnv,
-  ...result.data,
-};
+  ...(result.success
+    ? result.data
+    : (envToParse as unknown as z.infer<typeof serverSchema>)),
+} as typeof clientEnv & z.infer<typeof serverSchema>;

@@ -89,7 +89,7 @@ export default function RepositoryDocumentationCard({
           )}
           <div className='flex flex-col gap-1'>
             <dt className='text-muted-foreground'>
-              {dict.documentation.defaultBranch}
+              {dict.catalog.defaultBranch}
             </dt>
             <dd>
               <Badge variant='secondary'>{repository.default_branch}</Badge>
@@ -97,12 +97,12 @@ export default function RepositoryDocumentationCard({
           </div>
           <div className='flex flex-col gap-1'>
             <dt className='text-muted-foreground'>
-              {dict.documentation.visibilityLabel}
+              {dict.catalog.visibilityLabel}
             </dt>
             <dd>
               <StatusBadge
                 status='private'
-                label={dict.documentation.visibilityPrivate}
+                label={dict.catalog.visibilityPrivate}
               />
             </dd>
           </div>
@@ -118,7 +118,7 @@ export default function RepositoryDocumentationCard({
           {relatedWorkflows && relatedWorkflows.length > 0 && (
             <div className='flex flex-col gap-1'>
               <dt className='text-muted-foreground'>
-                {dict.documentation.relatedWorkflows}
+                {dict.catalog.relatedWorkflows}
               </dt>
               <dd className='flex flex-wrap gap-2'>
                 {relatedWorkflows.map((wf) => (
@@ -136,7 +136,7 @@ export default function RepositoryDocumentationCard({
           {typeof workflowUsageCount === 'number' && (
             <div className='flex flex-col gap-1'>
               <dt className='text-muted-foreground'>
-                {dict.documentation.referencedBy}
+                {dict.catalog.referencedBy}
               </dt>
               <dd>
                 {workflowUsageCount}{' '}
@@ -154,7 +154,7 @@ export default function RepositoryDocumentationCard({
           repository.documentation.length > 0 && (
             <div className='mt-4 space-y-4 border-t pt-4'>
               <h4 className='text-sm text-muted-foreground'>
-                {dict.documentation.notesHeading}
+                {dict.catalog.notesHeading}
               </h4>
               <MDXViewer content={repository.documentation} />
             </div>
@@ -168,8 +168,8 @@ export default function RepositoryDocumentationCard({
               className='mt-4 w-full justify-between'
             >
               {isOpen
-                ? dict.documentation.collapseDetails
-                : dict.documentation.expandDetails}
+                ? dict.catalog.collapseDetails
+                : dict.catalog.expandDetails}
               {isOpen ? (
                 <BsChevronUp className='size-4' />
               ) : (

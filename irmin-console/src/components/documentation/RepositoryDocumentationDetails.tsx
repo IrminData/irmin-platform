@@ -64,7 +64,7 @@ export default function RepositoryDocumentationDetails({
     return (
       <div className='mt-4 border-t pt-4'>
         <p className='animate-pulse text-sm text-muted-foreground'>
-          {dict.documentation.loadingDetails}
+          {dict.catalog.loadingDetails}
         </p>
       </div>
     );
@@ -74,10 +74,10 @@ export default function RepositoryDocumentationDetails({
     <div className='mt-4 space-y-4 border-t pt-4 text-sm'>
       {/* Branches */}
       <div className='space-y-2'>
-        <h4 className='text-muted-foreground'>{dict.documentation.branches}</h4>
+        <h4 className='text-muted-foreground'>{dict.catalog.branches}</h4>
         {branches.length === 0 ? (
           <p className='text-xs text-muted-foreground'>
-            {dict.documentation.noBranches}
+            {dict.catalog.noBranches}
           </p>
         ) : (
           <ul className='flex flex-wrap gap-2'>
@@ -102,10 +102,10 @@ export default function RepositoryDocumentationDetails({
 
       {/* Git Tags */}
       <div className='space-y-2'>
-        <h4 className='text-muted-foreground'>{dict.documentation.gitTags}</h4>
+        <h4 className='text-muted-foreground'>{dict.catalog.gitTags}</h4>
         {gitTags.length === 0 ? (
           <p className='text-xs text-muted-foreground'>
-            {dict.documentation.noGitTags}
+            {dict.catalog.noGitTags}
           </p>
         ) : (
           <ul className='flex flex-wrap gap-2'>
@@ -127,12 +127,10 @@ export default function RepositoryDocumentationDetails({
 
       {/* Schema Objects */}
       <div className='space-y-2'>
-        <h4 className='text-muted-foreground'>
-          {dict.documentation.schemaObjects}
-        </h4>
+        <h4 className='text-muted-foreground'>{dict.catalog.schemaObjects}</h4>
         {objects.length === 0 ? (
           <p className='text-xs text-muted-foreground'>
-            {dict.documentation.noObjects}
+            {dict.catalog.noObjects}
           </p>
         ) : (
           <>
@@ -160,7 +158,7 @@ export default function RepositoryDocumentationDetails({
                   hover:underline
                 '
               >
-                {dict.documentation.andMoreObjects.replace(
+                {dict.catalog.andMoreObjects.replace(
                   '{count}',
                   String(objects.length - MAX_OBJECTS)
                 )}

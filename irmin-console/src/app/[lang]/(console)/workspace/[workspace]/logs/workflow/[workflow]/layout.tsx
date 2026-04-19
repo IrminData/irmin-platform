@@ -1,13 +1,10 @@
 import type { Metadata } from 'next';
 
+import { fetchWorkflowMeta } from '@/lib/core/serverFetchers';
 import type { Locale } from '@/lib/dict';
 
 /**
  * URL parameters for the Workflow Logs layout
- *
- * @param lang - The language of the user
- * @param workspace - The slug of the current workspace
- * @param workflow - The ID of the workflow to show logs for
  */
 export type WorkflowLogsLayoutParams = {
   lang: Locale;
@@ -15,17 +12,12 @@ export type WorkflowLogsLayoutParams = {
   workflow: string;
 };
 
-/**
- * SEO metadata for the Workflow Logs layout
- */
 export async function generateMetadata(props: {
   params: Promise<WorkflowLogsLayoutParams>;
 }): Promise<Metadata> {
-  const params = await props.params;
-  const formattedWorkspace = params.workspace.replace(/-/g, ' ');
-  return {
-    title: `Workflow logs | ${formattedWorkspace} | IRMIN Console`,
-  };
+  const { lang, workspace, workflow } = await props.params;
+  const wf = await fetchWorkflowMeta(lang, workspace, workflow);
+  return { title: wf?.name ?? `${workflow.slice(0, 8)}…` };
 }
 
 /**

@@ -157,7 +157,8 @@
   "pnpm": {
     "overrides": {
       "require-in-the-middle": "7.5.2",
-      "import-in-the-middle": "1.14.4"
+      "import-in-the-middle": "1.14.4",
+      "@codemirror/state": "6.6.0"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",

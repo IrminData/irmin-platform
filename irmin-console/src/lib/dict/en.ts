@@ -172,6 +172,9 @@ const en = {
       consoleTitle: 'Something went wrong',
       consoleDescription:
         "The console couldn't load. Try refreshing the page — if it keeps happening, contact support.",
+      connectionTitle: "Couldn't display the connection",
+      connectionDescription:
+        'Something went wrong while rendering the connection. Try refreshing the page.',
 
       // Query failure (network / server error) — shown with a Retry button
       failedToLoadRepository: "Couldn't load the repository",
@@ -183,6 +186,34 @@ const en = {
       failedToLoadConversation: "Couldn't load this conversation",
       failedToLoadStoredQueries: "Couldn't load saved queries",
       failedToLoadUser: "Couldn't load the user",
+      failedToLoadPolicy: "Couldn't load the access policy",
+      failedToLoadConnector: "Couldn't load the connector configuration",
+      failedToLoadQuery: "Couldn't load the saved query",
+      failedToLoadScript: "Couldn't load the script",
+      failedToLoadBillingSubscription: "Couldn't load your subscription",
+      failedToLoadEmbedding: "Couldn't load embedding info",
+      failedToLoadPendingWrites: "Couldn't load pending writes",
+      failedToLoadTag: "Couldn't load the tag",
+      failedToLoadWorkspace: "Couldn't load the workspace",
+      failedToLoadDiff: "Couldn't load the comparison",
+      failedToLoadDiffDescription:
+        "We couldn't load the diff between these refs. Try a different branch or refresh.",
+      // Collection-level failures
+      failedToLoadAIApplications: "Couldn't load AI applications",
+      failedToLoadRepositories: "Couldn't load repositories",
+      failedToLoadConnections: "Couldn't load connections",
+      failedToLoadWorkflows: "Couldn't load workflows",
+      failedToLoadScripts: "Couldn't load scripts",
+      failedToLoadBranches: "Couldn't load branches",
+      failedToLoadCommits: "Couldn't load the commit history",
+      failedToLoadObjects: "Couldn't load objects",
+      failedToLoadInvites: "Couldn't load invites",
+      failedToLoadUsers: "Couldn't load users",
+      failedToLoadLogs: "Couldn't load logs",
+      failedToLoadSchema: "Couldn't load the schema",
+      failedToLoadDocumentation: "Couldn't load the documentation",
+      failedToLoadSearchResults: "Couldn't load search results",
+      failedToLoadActivity: "Couldn't load activity",
       failedToLoadAgain:
         "We couldn't reach the server. Check your connection and try again.",
 
@@ -205,6 +236,12 @@ const en = {
       userNotFound: 'User not found',
       userNotFoundDescription:
         "This user may not exist, or isn't part of this workspace.",
+      policyNotFound: 'Access policy not found',
+      policyNotFoundDescription:
+        'This access policy may have been deleted, or you may not have access to it.',
+      tagNotFound: 'Tag not found',
+      tagNotFoundDescription:
+        'This tag may have been deleted, or you may not have access to it.',
 
       // Permissions
       noPermissionsToViewRepository:
@@ -332,6 +369,9 @@ const en = {
         updateBillingFailed: "Couldn't update billing info",
         deleteCredentialFailed: "Couldn't delete the credential",
         createCredentialFailed: "Couldn't create the credential",
+        // Sharing
+        createShareLinkFailed: "Couldn't create the share link",
+        createZipShareLinkFailed: "Couldn't create the zip share link",
       },
     },
   },
@@ -383,13 +423,22 @@ const en = {
     guides: 'Guides',
     contactSupport: 'Contact our team',
     developerDocs: 'Developer Docs',
+    workspaceNavigationAriaLabel: 'Workspace navigation',
+    openMenu: 'Open navigation menu',
+    closeMenu: 'Close navigation menu',
+    expandSidebar: 'Expand the side navigation',
+    foldSidebar: 'Fold the side navigation',
+    searchShortcutHint: 'Press {mod} K to focus search',
+    searchResults: 'Search results',
+    resultsCountOne: '{n} result',
+    resultsCountOther: '{n} results',
 
     staticSearchItems: {
       guides: 'Irmin Guides',
       documentation: 'Irmin Documentation',
       termsAndPrivacy: 'Terms of Use & Privacy Policy',
       createWorkspace: 'Create new workspace',
-      workspaceDocumentation: 'Workspace Documentation',
+      workspaceDocumentation: 'Workspace Catalog',
       myProfile: 'My Profile',
       manageWorkspaces: 'Manage Workspaces',
       workspaceSettings: 'Workspace settings',
@@ -405,7 +454,7 @@ const en = {
         termsAndPrivacy: 'Read the terms and privacy policy',
         createWorkspace: 'Create a new workspace on Irmin',
         logs: 'View logs of your current workspace',
-        workspaceDocumentation: 'View workspace documentation',
+        workspaceDocumentation: 'View the workspace catalog and data lineage',
         myProfile: 'View and edit your profile',
         manageWorkspaces: 'Manage your workspaces',
         scripts: 'Write and run scripts',
@@ -430,6 +479,7 @@ const en = {
   aiApplication: {
     aiApplication: 'AI Application',
     createAIApplication: 'Create AI Application',
+    noDescription: 'No description',
     dataSources: 'data sources',
     dataSource: 'data source',
     toolsEnabled: 'tools enabled',
@@ -480,7 +530,6 @@ const en = {
     pendingWritesTitle: 'Pending Writes',
     pendingWritesDescription:
       'Review and approve write operations from AI agents',
-    pendingWritesError: 'Failed to load pending writes',
     noPendingWrites: 'No pending writes to review',
     howToConnect: 'How to Connect',
     howToConnectMcpPrefix: 'Use the ',
@@ -649,6 +698,23 @@ const en = {
     failedToLoadTags: 'Failed to load tags',
     failedToLoadWorkspaces: 'Failed to load workspaces',
     recentlyUsed: 'Recently used',
+    goToWorkspaceAriaLabel: 'Go to {name} workspace',
+    stats: {
+      members: 'members',
+      repositories: 'repositories',
+      workflows: 'workflows',
+      connections: 'connections',
+    },
+    dashboardTooltips: {
+      profile: 'Your personal settings and API tokens.',
+      settings: 'Workspace configuration and defaults.',
+      tags: 'Manage tags used to label resources in this workspace.',
+      users: 'Members and their roles in this workspace.',
+      invites: 'Pending invitations to this workspace.',
+      billing: 'Subscription, usage, and invoices.',
+      logs: 'Audit log of actions taken in this workspace.',
+      apiMcp: 'API tokens, MCP configuration, and SDK references.',
+    },
   },
 
   workspaceSwitcher: {
@@ -662,6 +728,10 @@ const en = {
     workspace: 'Workspace',
     leaveWorkspace: 'Leave workspace',
     leaveWorkspaceConfirm: 'Are you sure you want to leave this workspace?',
+    workspaceCountOne:
+      '{n} workspace. Pick one to continue, or spin up a new one.',
+    workspaceCountOther:
+      '{n} workspaces. Pick one to continue, or spin up a new one.',
   },
 
   // === DATA MANAGEMENT ===
@@ -676,7 +746,6 @@ const en = {
       'Current repository or selected branch are immutable and cannot be edited.',
     shareZipLink: 'Share as zip',
     shareZipLinkCopied: 'Zip link copied to clipboard',
-    shareZipError: 'Failed to create zip share link',
 
     branches: {
       branches: 'Branches',
@@ -755,9 +824,6 @@ const en = {
       mergeStrategy: 'Merge strategy',
       squashCommits: 'Squash commits',
       mergeCommitDescription: 'Merge commit description',
-      failedToLoadDiff: 'Failed to load comparison',
-      failedToLoadDiffSubtitle:
-        'Unable to compare the selected refs. Please check that both refs exist and try again.',
       defaultStrategy: 'Default',
       destWinsStrategy: 'Destination wins',
       sourceWinsStrategy: 'Source wins',
@@ -827,7 +893,6 @@ const en = {
       changeHistory: 'Change history',
       shareLink: 'Share link',
       shareLinkCopied: 'Link copied to clipboard',
-      shareError: 'Failed to create share link',
       shareLinkExpiryLabel: 'Link expires after',
       shareLinkGenerate: 'Copy link',
       shareLinkCustomHours: 'Hours',
@@ -1989,14 +2054,19 @@ const en = {
     waitingForResults: 'Waiting for results...',
   },
 
-  // === DOCUMENTATION ===
-  documentation: {
-    documentation: 'Workspace Overview',
-    workspaceDocumentation: 'Workspace documentation',
+  // === CATALOG & LINEAGE (workspace documentation view) ===
+  catalog: {
+    documentation: 'Catalog',
+    catalogAndLineage: 'Catalog & Lineage',
+    catalogAndLineageTooltip:
+      'Browse every resource in this workspace and the data lineage that connects them.',
+    readme: 'README',
+    readmeTooltip:
+      'Notes and documentation for this resource. Shows up in the workspace catalog.',
+    workspaceDocumentation: 'Workspace catalog',
     downloadPdf: 'Download PDF',
-    startTypingDocumentation:
-      'Start typing your documentation and notes here...',
-    schema: 'Data Flows',
+    startTypingDocumentation: 'Start typing your notes here...',
+    schema: 'Lineage',
     workspace: 'Workspace',
     createdBy: 'Created by',
     searchPlaceholder: 'Search documentation...',
@@ -2264,6 +2334,84 @@ const en = {
     errors: {
       invalidRegex: 'Invalid regular expression',
       nameRequired: 'Property name is required',
+    },
+  },
+
+  // === BROWSER-TAB / SOCIAL-SHARE METADATA ===
+  // Short noun phrases used as page titles across the console. They compose
+  // with `title.template` in each layout to produce strings like
+  // "Schema – demo-data – Tim's Office · Irmin". See `src/lib/metadata.ts`.
+  metadata: {
+    app: {
+      description: 'The data platform for engineering teams.',
+    },
+    auth: {
+      signIn: 'Sign in',
+      signUp: 'Sign up',
+      invite: 'Accept invitation',
+      resolving: 'Signing in',
+    },
+    error: {
+      notFoundTitle: 'Page not found',
+    },
+    workspace: {
+      select: 'Select a workspace',
+      dashboard: 'Dashboard',
+      search: 'Search',
+      profile: 'Profile',
+      profileTokens: 'API tokens',
+    },
+    sections: {
+      repositories: 'Repositories',
+      connections: 'Connections',
+      workflows: 'Workflows',
+      workflowsActions: 'Actions',
+      workflowsExports: 'Exports',
+      workflowsImports: 'Imports',
+      workflowsPipelines: 'Pipelines',
+      workflowsRuns: 'Runs',
+      queries: 'Queries',
+      aiApplications: 'AI applications',
+      catalog: 'Catalog',
+      lineage: 'Lineage',
+      assistant: 'Assistant',
+      settings: 'Settings',
+      scripts: 'Scripts',
+      logs: 'Logs',
+    },
+    resource: {
+      branches: 'Branches',
+      commits: 'Commits',
+      compare: 'Compare',
+      documentation: 'Documentation',
+      object: 'Object',
+      objectHistory: 'Object history',
+      policies: 'Policies',
+      policiesBranches: 'Branch policies',
+      policiesCommits: 'Commit policies',
+      policiesObjects: 'Object policies',
+      policiesTags: 'Tag policies',
+      policiesRuns: 'Run policies',
+      schema: 'Schema',
+      tags: 'Tags',
+      settings: 'Settings',
+      uncommittedChanges: 'Uncommitted changes',
+      run: 'Run',
+      schedule: 'Schedule',
+      fieldMapper: 'Field mapper',
+      activity: 'Activity',
+      workflowable: 'Source',
+    },
+    settingsSection: {
+      apiMcp: 'API & MCP',
+      billing: 'Billing',
+      billingSuccess: 'Billing · Success',
+      invites: 'Invites',
+      tags: 'Tags',
+      users: 'Users',
+    },
+    fallback: {
+      tag: 'Tag',
     },
   },
 };

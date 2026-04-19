@@ -2,19 +2,15 @@ import type { Metadata } from 'next';
 
 import type { WorkspaceLayoutParams } from '@/app/[lang]/(console)/workspace/[workspace]/layout';
 
+import { getServerDict } from '@/lib/dict/server';
+
 import WorkflowsLayoutWrapper from '@/components/workflow/WorkflowsLayoutWrapper';
 
-/**
- * SEO metadata for the Workflows pages
- */
 export async function generateMetadata(props: {
   params: Promise<WorkspaceLayoutParams>;
 }): Promise<Metadata> {
-  const params = await props.params;
-  const formattedWorkspace = params.workspace.replace(/-/g, ' ');
-  return {
-    title: `Workflows | ${formattedWorkspace} | IRMIN Console`,
-  };
+  const { lang } = await props.params;
+  return { title: getServerDict(lang).metadata.sections.workflows };
 }
 
 /**

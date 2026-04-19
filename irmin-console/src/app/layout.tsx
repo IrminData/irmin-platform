@@ -1,11 +1,17 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
 import localFont from 'next/font/local';
 
 import { ClerkProvider } from '@clerk/nextjs';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
-import { defaultLocale, findLocale } from '@/lib/dict';
+import { defaultLocale, findLocale, getDictionary } from '@/lib/dict';
+import {
+  DEFAULT_OPEN_GRAPH,
+  DEFAULT_TWITTER,
+  SITE_NAME,
+  SITE_URL,
+} from '@/lib/metadata';
 
 import { IAMProvider } from '@/context/IAMContext';
 import { IrminCoreProvider } from '@/context/IrminCoreContext';
@@ -25,28 +31,57 @@ const geistMono = localFont({
   src: '../../public/fonts/Geist_Mono/GeistMono-VariableFont_wght.ttf',
   variable: '--geist-mono',
 });
-const bigShouldersDisplay = localFont({
-  src: '../../public/fonts/Big_Shoulders/BigShoulders-VariableFont_opsz,wght.ttf',
-  variable: '--big-shoulders-display',
-});
 const loraSerif = localFont({
   src: '../../public/fonts/Lora/Lora-VariableFont_wght.ttf',
   variable: '--lora-serif',
+  // Editorial serif — only rendered in <blockquote>. Skip preload.
+  preload: false,
 });
 
 /**
- * SEO metadata for the root layout of the application
+ * Root SEO metadata for the Irmin Console.
+ *
+ * - `metadataBase` anchors relative OG/canonical URLs to the production
+ *   origin so previews render the same on every deploy.
+ * - `title.template` is the console-wide suffix. Descendant layouts with an
+ *   entity name (workspace, repo, workflow, …) declare their own template
+ *   that includes that name; leaf pages then just set a single-segment
+ *   `title` and the nearest template composes the rest.
+ * - Shared brand OG / Twitter cards come from `src/app/opengraph-image.tsx`
+ *   and `src/app/twitter-image.tsx` via Next.js file conventions — each
+ *   in-app route inherits them unless it opts out explicitly.
+ * - `description` is pulled from the dictionary (locale-aware via the
+ *   `[lang]` param forwarded to root layout by Next.js).
  */
-export const metadata: Metadata = {
-  title: 'Just like GitHub for Data, made for developers | IRMIN',
-  description:
-    'Tired of scattered data? Sync, analyse & manage your data with AI in minutes. Use connectors, marketplace & run actions.',
-  openGraph: {
-    type: 'website',
-  },
-  other: {
-    'theme-color': '#ffffff',
-  },
+export async function generateMetadata(props: {
+  params: Promise<{ lang?: string }>;
+}): Promise<Metadata> {
+  const { lang } = await props.params;
+  const dict = getDictionary(lang ?? defaultLocale);
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: SITE_NAME,
+      template: `%s · ${SITE_NAME}`,
+    },
+    description: dict.metadata.app.description,
+    applicationName: SITE_NAME,
+    openGraph: DEFAULT_OPEN_GRAPH,
+    twitter: DEFAULT_TWITTER,
+  };
+}
+
+/**
+ * Viewport configuration. Theme-color lives here, not on `metadata` — Next.js
+ * 13.3+ deprecated `metadata.themeColor` and Next 16 silently drops it. The
+ * dark hex matches --background in src/styles/theme.css .dark, which is
+ * HSL(197 94% 4%) ≈ rgb(1, 14, 20) = #010e14.
+ */
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#010e14' },
+  ],
 };
 
 /**
@@ -70,7 +105,6 @@ export default async function RootLayout(props: {
       <body
         className={`
           ${geistSans.variable}
-          ${bigShouldersDisplay.variable}
           ${geistMono.variable}
           ${loraSerif.variable}
           scrollbar-hide overscroll-none bg-background text-foreground

@@ -12,7 +12,16 @@ import Tabs from '@/components/ui/tabs/Tabs';
 import { useLocale } from '@/context/LocaleContext';
 
 /**
- * Layout wrapper UI for the Documentations pages in the Console
+ * Layout wrapper UI for the Catalog & Lineage pages.
+ *
+ * Naming note: the component and the enclosing folder (`src/components/
+ * documentation/`) still say "Documentation" because the core API, DB
+ * schema, and SDK all use that term. The UI was renamed (tab labels
+ * become "Catalog" + "Lineage", route became `/catalog/*`, dashboard
+ * button became "Catalog & Lineage") but the internal naming was kept
+ * deliberately to preserve cross-repo consistency with `irmin`,
+ * `irmin-sdk-go`, and `irmin-core`. Don't rename the component or folder
+ * to match the URL unless you're doing a coordinated backend rename.
  */
 export default function DocumentationLayoutWrapper({
   params,
@@ -26,15 +35,15 @@ export default function DocumentationLayoutWrapper({
     () => [
       {
         icon: <IoDocumentText />,
-        name: dict.documentation.documentation,
-        slug: 'documentation',
-        link: `/${params.lang}/workspace/${params.workspace}/documentation`,
+        name: dict.catalog.documentation,
+        slug: 'catalog',
+        link: `/${params.lang}/workspace/${params.workspace}/catalog`,
       },
       {
         icon: <TbSchema />,
-        name: dict.documentation.schema,
-        slug: 'schemas',
-        link: `/${params.lang}/workspace/${params.workspace}/documentation/schema`,
+        name: dict.catalog.schema,
+        slug: 'lineage',
+        link: `/${params.lang}/workspace/${params.workspace}/catalog/lineage`,
       },
     ],
     [dict, params.lang, params.workspace]

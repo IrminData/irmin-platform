@@ -1,8 +1,8 @@
-import RepositoriesListSkeleton from '@/components/ui/loading/RepositoriesListSkeleton';
+import ListPageSkeleton from '@/components/ui/loading/ListPageSkeleton';
 
 /**
  * Workflows loading UI
  */
 export default function WorkflowsLoading() {
-  return <RepositoriesListSkeleton />;
+  return <ListPageSkeleton columnCount={3} />;
 }

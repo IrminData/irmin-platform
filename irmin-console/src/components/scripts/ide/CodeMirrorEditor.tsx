@@ -11,12 +11,7 @@ import { json } from '@codemirror/lang-json';
 import { markdown } from '@codemirror/lang-markdown';
 import { python } from '@codemirror/lang-python';
 import { PostgreSQL, sql } from '@codemirror/lang-sql';
-import {
-  vscodeDark,
-  vscodeDarkInit,
-  vscodeLight,
-  vscodeLightInit,
-} from '@uiw/codemirror-theme-vscode';
+import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
 import type { ReactCodeMirrorProps } from '@uiw/react-codemirror';
 import { useTheme } from 'next-themes';
 
@@ -43,12 +38,14 @@ const CodeMirrorEditor = ({
   const { dict } = useLocale();
   const { resolvedTheme } = useTheme();
 
+  // Pass the theme ONLY via the `theme` prop — not also as an extension.
+  // Prior to #822's @uiw/react-codemirror 4.25.3 → 4.25.9 bump both paths
+  // happened to coexist; after the bump they install conflicting
+  // HighlightStyle instances and the editor ends up with no active
+  // syntax highlighting (everything renders as plain foreground text).
+  // Canonical usage per the package's own README is theme prop + language
+  // extensions only.
   const editorTheme = resolvedTheme === 'dark' ? vscodeDark : vscodeLight;
-
-  const initialisedEditorTheme = useMemo(
-    () => (resolvedTheme === 'dark' ? vscodeDarkInit() : vscodeLightInit()),
-    [resolvedTheme]
-  );
 
   const placeholder = useMemo(() => {
     if (language === 'js') return dict.scripts.writeYourJS;
@@ -61,16 +58,15 @@ const CodeMirrorEditor = ({
   }, [language, dict]);
 
   const extensions = useMemo(() => {
-    if (!editorTheme) return [];
     if (language === 'js')
-      return [editorTheme, javascript({ jsx: false, typescript: false })];
-    if (language === 'go') return [editorTheme, go()];
-    if (language === 'py') return [editorTheme, python()];
-    if (language === 'md') return [editorTheme, markdown()];
-    if (language === 'sql') return [editorTheme, sql({ dialect: PostgreSQL })];
-    if (language === 'json') return [editorTheme, json()];
-    return [editorTheme];
-  }, [language, editorTheme]);
+      return [javascript({ jsx: false, typescript: false })];
+    if (language === 'go') return [go()];
+    if (language === 'py') return [python()];
+    if (language === 'md') return [markdown()];
+    if (language === 'sql') return [sql({ dialect: PostgreSQL })];
+    if (language === 'json') return [json()];
+    return [];
+  }, [language]);
 
   return (
     <div
@@ -89,7 +85,7 @@ const CodeMirrorEditor = ({
         extensions={extensions}
         placeholder={placeholder}
         onChange={(value) => updateEditorContent(value)}
-        theme={initialisedEditorTheme}
+        theme={editorTheme}
         {...editorProps}
       />
     </div>

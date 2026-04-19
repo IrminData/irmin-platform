@@ -1,8 +1,19 @@
+import type { Metadata } from 'next';
+
+import { getServerDict } from '@/lib/dict/server';
+
 import RepositoryObjectSection from '@/components/repository/RepositoryObjectSection';
 
 import type { PageSearchParams } from '@/types/internal/PageSearchParams';
 
 import type { RepositoryRouteParams } from '../layout';
+
+export async function generateMetadata(props: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await props.params;
+  return { title: getServerDict(lang).metadata.resource.object };
+}
 
 /**
  * Page to view a repository object from a specific path at a specific ref.

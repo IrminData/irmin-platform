@@ -18,4 +18,11 @@ export interface TabDetails {
   hidden?: boolean;
   /** Whether the tab is active */
   active?: boolean;
+  /**
+   * Optional tooltip shown on hover/focus. Use for tab labels that aren't
+   * self-evident (jargon, industry terms, abbreviations) or where the tab
+   * content differs from what the label suggests. Rendered via the Tooltip
+   * primitive when the Tabs component detects it.
+   */
+  tooltip?: string;
 }

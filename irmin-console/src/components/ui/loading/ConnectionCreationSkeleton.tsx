@@ -1,42 +1,14 @@
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+
 const SkeletonConnectorInfo = () => (
-  <div
-    className={`
-      flex flex-col justify-center border-b pb-4
-      dark:border-gray-800
-    `}
-  >
-    <div
-      className={`
-        mb-2 h-4 w-32 animate-pulse rounded-sm bg-gray-200
-        dark:bg-gray-800
-      `}
-    />
-    <div className='flex items-center space-x-4'>
-      <div
-        className={`
-          size-16 animate-pulse rounded-sm bg-gray-200
-          dark:bg-gray-800
-        `}
-      />
+  <div className='flex flex-col justify-center border-b border-border pb-4'>
+    <LoadingSkeleton className='mb-2 h-4 w-32' />
+    <div className='flex items-center gap-4'>
+      <LoadingSkeleton className='size-16 rounded-md' />
       <div className='flex flex-col gap-1'>
-        <div
-          className={`
-            h-6 w-24 animate-pulse rounded-sm bg-gray-200
-            dark:bg-gray-800
-          `}
-        />
-        <div
-          className={`
-            h-5 w-32 animate-pulse rounded-sm bg-gray-200
-            dark:bg-gray-800
-          `}
-        />
-        <div
-          className={`
-            h-4 w-48 animate-pulse rounded-sm bg-gray-200
-            dark:bg-gray-800
-          `}
-        />
+        <LoadingSkeleton className='h-6 w-24' />
+        <LoadingSkeleton className='h-5 w-32' />
+        <LoadingSkeleton className='h-4 w-48' />
       </div>
     </div>
   </div>
@@ -47,36 +19,18 @@ const SkeletonFormField = ({
 }: {
   withHelpText?: boolean;
 }) => (
-  <div className='space-y-2'>
-    <div
-      className={`
-        h-4 w-24 animate-pulse rounded-sm bg-gray-200
-        dark:bg-gray-800
-      `}
-    />
-    <div
-      className={`
-        h-10 w-full animate-pulse rounded-sm bg-gray-200
-        dark:bg-gray-800
-      `}
-    />
-    {withHelpText && (
-      <div
-        className={`
-          h-3 w-40 animate-pulse rounded-sm bg-gray-200
-          dark:bg-gray-800
-        `}
-      />
-    )}
+  <div className='flex flex-col gap-2'>
+    <LoadingSkeleton className='h-4 w-24' />
+    <LoadingSkeleton className='h-10 w-full rounded-md' />
+    {withHelpText && <LoadingSkeleton className='h-3 w-40' />}
   </div>
 );
 
 const SkeletonButton = ({ fullWidth = true }: { fullWidth?: boolean }) => (
-  <div
+  <LoadingSkeleton
     className={`
-      h-12 animate-pulse rounded-sm bg-gray-200
-      dark:bg-gray-800
-      ${fullWidth ? `w-full` : `w-32`}
+      h-12 rounded-md
+      ${fullWidth ? 'w-full' : 'w-32'}
     `}
   />
 );
@@ -85,35 +39,19 @@ const SkeletonConnectorCard = () => (
   <div
     className={`
       flex w-max max-w-[50%] flex-row items-center justify-start gap-4
-      rounded-lg bg-gray-100 px-4 py-2
-      dark:bg-gray-800
+      rounded-lg bg-muted/40 px-4 py-2
     `}
   >
-    <div
-      className={`
-        size-12 animate-pulse rounded-sm bg-gray-200
-        dark:bg-gray-800
-      `}
-    />
-    <div className='flex flex-col justify-start gap-1'>
-      <div
-        className={`
-          h-5 w-16 animate-pulse rounded-sm bg-gray-200
-          dark:bg-gray-800
-        `}
-      />
-      <div
-        className={`
-          h-4 w-24 animate-pulse rounded-sm bg-gray-200
-          dark:bg-gray-800
-        `}
-      />
+    <LoadingSkeleton className='size-12 rounded-md' />
+    <div className='flex flex-col gap-1'>
+      <LoadingSkeleton className='h-5 w-16' />
+      <LoadingSkeleton className='h-4 w-24' />
     </div>
   </div>
 );
 
 /**
- * Skeleton component for connection creation loading states
+ * Skeleton component for connection creation loading states.
  */
 export const ConnectionCreationSkeleton = ({
   variant = 'form',
@@ -122,43 +60,23 @@ export const ConnectionCreationSkeleton = ({
 }) => {
   if (variant === 'connectors') {
     return (
-      <div className='flex w-full flex-col space-y-6'>
-        {/* Category Filter Skeleton */}
-        <div
-          className={`
-            flex w-full flex-wrap gap-2 border-b pb-4
-            dark:border-gray-800
-          `}
-        >
-          {Array.from({ length: 4 }, (_, i) => (
-            <div
-              key={`category-filter-${i}`}
-              className={`
-                h-8 w-20 animate-pulse rounded-sm bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
+      <div className='flex w-full flex-col gap-6'>
+        <div className='flex w-full flex-wrap gap-2 border-b border-border pb-4'>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <LoadingSkeleton key={`cat-${i}`} className='h-8 w-20 rounded-md' />
           ))}
         </div>
 
-        {/* Connectors Grid Skeleton */}
         <div className='flex flex-wrap gap-2'>
-          {Array.from({ length: 6 }, (_, i) => (
-            <SkeletonConnectorCard key={`connector-card-${i}`} />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonConnectorCard key={`card-${i}`} />
           ))}
         </div>
 
-        {/* Action Button Skeleton */}
-        <div
-          className={`
-            border-t pt-4
-            dark:border-gray-800
-          `}
-        >
+        <div className='border-t border-border pt-4'>
           <SkeletonButton />
         </div>
 
-        {/* Secondary Actions */}
         <div className='flex items-center justify-between'>
           <SkeletonButton fullWidth={false} />
           <SkeletonButton fullWidth={false} />
@@ -169,43 +87,27 @@ export const ConnectionCreationSkeleton = ({
 
   if (variant === 'category-filter') {
     return (
-      <div
-        className={`
-          flex w-full flex-wrap gap-2 border-b pb-4
-          dark:border-gray-800
-        `}
-      >
-        {Array.from({ length: 5 }, (_, i) => (
-          <div
-            key={`category-filter-alt-${i}`}
-            className={`
-              h-8 w-16 animate-pulse rounded-sm bg-gray-200
-              dark:bg-gray-800
-            `}
+      <div className='flex w-full flex-wrap gap-2 border-b border-border pb-4'>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <LoadingSkeleton
+            key={`cat-alt-${i}`}
+            className='h-8 w-16 rounded-md'
           />
         ))}
       </div>
     );
   }
 
-  // Default form variant
   return (
-    <div className='space-y-6'>
-      {/* Connector Info Skeleton */}
+    <div className='flex flex-col gap-6'>
       <SkeletonConnectorInfo />
-
-      {/* Form Fields Skeleton */}
       <div className='flex flex-col gap-4'>
         <SkeletonFormField />
         <SkeletonFormField withHelpText />
         <SkeletonFormField />
         <SkeletonFormField withHelpText />
       </div>
-
-      {/* Submit Button Skeleton */}
       <SkeletonButton />
-
-      {/* Go Back Button Skeleton */}
       <SkeletonButton />
     </div>
   );

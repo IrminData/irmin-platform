@@ -340,7 +340,8 @@ function ScriptsSectionContent() {
               <QueryError
                 error={scriptsError}
                 onRetry={() => refetchScripts()}
-                title={dict.common.somethingWentWrong}
+                title={dict.common.errors.failedToLoadScripts}
+                description={dict.common.errors.failedToLoadAgain}
                 size='sm'
                 className='m-4'
               />

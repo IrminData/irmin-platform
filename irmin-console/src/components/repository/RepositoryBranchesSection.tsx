@@ -151,7 +151,8 @@ function RepositoryBranchesSectionContent() {
         <QueryError
           error={repositoryBranchesQuery.error}
           onRetry={() => repositoryBranchesQuery.refetch()}
-          title={dict.common.somethingWentWrong}
+          title={dict.common.errors.failedToLoadBranches}
+          description={dict.common.errors.failedToLoadAgain}
         />
       </div>
     );

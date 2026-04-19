@@ -23,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { QueryError } from '@/components/ui/error/QueryError';
 import SafeComponent from '@/components/ui/error/SafeComponent';
 
 import { useAIApplicationContext } from '@/context/AIApplicationContext';
@@ -385,14 +386,13 @@ const AIApplicationPendingWritesSectionContent = () => {
             ))}
           </div>
         ) : isError ? (
-          <div
-            className={`
-              flex items-center justify-center py-8 text-muted-foreground
-            `}
-          >
-            <TbAlertCircle className='mr-2' />
-            {dict.aiApplication.pendingWritesError}
-          </div>
+          <QueryError
+            error={pendingWritesQuery.error}
+            onRetry={() => refetch()}
+            title={dict.common.errors.failedToLoadPendingWrites}
+            description={dict.common.errors.failedToLoadAgain}
+            size='sm'
+          />
         ) : pendingWrites.length === 0 ? (
           <div
             className={`

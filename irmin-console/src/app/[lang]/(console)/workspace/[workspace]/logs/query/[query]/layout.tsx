@@ -1,13 +1,10 @@
 import type { Metadata } from 'next';
 
+import { fetchQueryMeta } from '@/lib/core/serverFetchers';
 import type { Locale } from '@/lib/dict';
 
 /**
  * URL parameters for the Query Logs layout
- *
- * @param lang - The language of the user
- * @param workspace - The slug of the current workspace
- * @param query - The ID of the query to show logs for
  */
 export type QueryLogsLayoutParams = {
   lang: Locale;
@@ -15,17 +12,12 @@ export type QueryLogsLayoutParams = {
   query: string;
 };
 
-/**
- * SEO metadata for the Query Logs layout
- */
 export async function generateMetadata(props: {
   params: Promise<QueryLogsLayoutParams>;
 }): Promise<Metadata> {
-  const params = await props.params;
-  const formattedWorkspace = params.workspace.replace(/-/g, ' ');
-  return {
-    title: `Query logs | ${formattedWorkspace} | IRMIN Console`,
-  };
+  const { lang, workspace, query } = await props.params;
+  const q = await fetchQueryMeta(lang, workspace, query);
+  return { title: q?.name ?? `${query.slice(0, 8)}…` };
 }
 
 /**

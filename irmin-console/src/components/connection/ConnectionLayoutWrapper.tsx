@@ -105,7 +105,11 @@ export default function ConnectionLayoutWrapper({
   const moreTabs = useMemo(
     () => [
       {
-        name: dict.documentation.documentation,
+        // UI label "README"; route + data field stay "documentation" to
+        // match API / DB / core SDK naming. Tooltip explains the tie-in
+        // to the workspace catalog for non-technical users.
+        name: dict.catalog.readme,
+        tooltip: dict.catalog.readmeTooltip,
         link: `${baseUrl}/documentation`,
         active: pathname === `${baseUrl}/documentation`,
         icon: <TbFileText size={14} />,

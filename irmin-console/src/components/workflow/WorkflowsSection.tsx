@@ -121,7 +121,8 @@ export default function WorkflowsSection({
             <QueryError
               error={workflowsQuery.error}
               onRetry={() => workflowsQuery.refetch()}
-              title={dict.common.somethingWentWrong}
+              title={dict.common.errors.failedToLoadWorkflows}
+              description={dict.common.errors.failedToLoadAgain}
             />
           ) : (
             <WorkflowList

@@ -93,7 +93,8 @@ const WorkspaceInvitesSection = () => {
         <QueryError
           error={invitesQuery.error}
           onRetry={() => invitesQuery.refetch()}
-          title={dict.common.somethingWentWrong}
+          title={dict.common.errors.failedToLoadInvites}
+          description={dict.common.errors.failedToLoadAgain}
         />
       </ContentWrapper>
     );
@@ -105,7 +106,8 @@ const WorkspaceInvitesSection = () => {
         <QueryError
           error={rolesQuery.error}
           onRetry={() => rolesQuery.refetch()}
-          title={dict.common.somethingWentWrong}
+          title={dict.common.errors.failedToLoadInvites}
+          description={dict.common.errors.failedToLoadAgain}
         />
       </ContentWrapper>
     );

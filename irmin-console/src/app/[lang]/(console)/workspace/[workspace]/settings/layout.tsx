@@ -1,26 +1,37 @@
 import type { Metadata } from 'next';
 
+import { fetchWorkspaceMeta } from '@/lib/core/serverFetchers';
+import { getServerDict } from '@/lib/dict/server';
+import { buildTitle, buildTitleTemplate } from '@/lib/metadata';
+
 import WorkspaceSettingsLayoutWrapper from '@/components/workspace/WorkspaceSettingsLayoutWrapper';
 
 import type { WorkspaceLayoutParams } from '../layout';
 
 /**
- * SEO metadata for the Workspace Settings layout
+ * Settings layer metadata. Injects the literal "Settings" segment between
+ * the leaf page title and the workspace suffix so subpages
+ * (billing, users, …) compose to e.g. "Billing – Settings – Tim's Office".
  */
 export async function generateMetadata(props: {
   params: Promise<WorkspaceLayoutParams>;
 }): Promise<Metadata> {
-  const params = await props.params;
-  const formattedWorkspace = params.workspace.replace(/-/g, ' ');
+  const { lang, workspace } = await props.params;
+  const dict = getServerDict(lang);
+  const ws = await fetchWorkspaceMeta(lang, workspace);
+  // Match the workspace layout's ellipsis fallback on fetch failure.
+  const wsName = ws?.name ?? `${workspace}…`;
+  const settings = dict.metadata.sections.settings;
   return {
-    title: `Workspace Settings | ${formattedWorkspace} | IRMIN Console`,
+    title: {
+      default: buildTitle([settings, wsName]),
+      template: buildTitleTemplate([settings, wsName]),
+    },
   };
 }
 
 /**
  * Layout for the Workspace settings pages in the Console
- * @param props0 - The layout properties
- * @param props0.children - The children to render
  */
 export default function WorkspaceSettingsLayout({
   children,

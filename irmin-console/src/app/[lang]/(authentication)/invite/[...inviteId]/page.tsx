@@ -2,19 +2,22 @@ import type { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import AcceptInviteSection from '@/components/user/AcceptInviteSection';
+import { getServerDict } from '@/lib/dict/server';
 
-/**
- * Page metadata for SEO on the sign in page
- */
-export const metadata: Metadata = {
-  title: 'You have been invited to join a workspace | IRMIN',
-};
+import AcceptInviteSection from '@/components/user/AcceptInviteSection';
 
 type InvitePageParams = {
   inviteId: string[];
   lang: string;
 };
+
+export async function generateMetadata(props: {
+  params: Promise<InvitePageParams>;
+}): Promise<Metadata> {
+  const { lang } = await props.params;
+  const dict = getServerDict(lang);
+  return { title: dict.metadata.auth.invite };
+}
 
 /**
  * Invite acceptance page

@@ -131,7 +131,8 @@ const WorkflowFieldMapperSection = ({ workflowID }: { workflowID: string }) => {
       <QueryError
         error={workflowQuery.error}
         onRetry={() => workflowQuery.refetch()}
-        title={dict.common.error}
+        title={dict.common.errors.failedToLoadWorkflow}
+        description={dict.common.errors.failedToLoadAgain}
       />
     );
   }

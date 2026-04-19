@@ -47,7 +47,8 @@ function RepositoryObjectLogsPageContent() {
       <QueryError
         error={repositoryQuery.error}
         onRetry={() => repositoryQuery.refetch()}
-        title={dict.common.error}
+        title={dict.common.errors.failedToLoadRepository}
+        description={dict.common.errors.failedToLoadAgain}
       />
     );
   }
@@ -56,7 +57,8 @@ function RepositoryObjectLogsPageContent() {
       <QueryError
         error={repositoryObjectQuery.error}
         onRetry={() => repositoryObjectQuery.refetch()}
-        title={dict.common.error}
+        title={dict.common.errors.failedToLoadObjects}
+        description={dict.common.errors.failedToLoadAgain}
       />
     );
   }

@@ -1,5 +1,5 @@
-import DetailPageSkeleton from '@/components/ui/loading/DetailPageSkeleton';
+import AssistantSkeleton from '@/components/ui/loading/AssistantSkeleton';
 
 export default function AssistantLoading() {
-  return <DetailPageSkeleton />;
+  return <AssistantSkeleton />;
 }

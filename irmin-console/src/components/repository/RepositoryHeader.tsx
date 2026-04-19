@@ -152,7 +152,12 @@ function RepositoryHeaderContent() {
   const moreTabs = useMemo(
     () => [
       {
-        name: dict.documentation.documentation,
+        // UI label is "README"; route path, data field (repository.documentation),
+        // and permission key all keep the internal "documentation" name to
+        // match API / DB / core SDK. Tooltip explains the connection to the
+        // workspace catalog for non-technical users.
+        name: dict.catalog.readme,
+        tooltip: dict.catalog.readmeTooltip,
         link: tabLink(`${baseUrl}/documentation`),
         active: pathname === `${baseUrl}/documentation`,
         icon: <TbFileText size={14} />,
@@ -228,7 +233,10 @@ function RepositoryHeaderContent() {
           `${dict.repository.shareZipLinkCopied} (${expiryLabel})`
         );
       } catch {
-        irminAlert('error', dict.repository.shareZipError);
+        irminAlert(
+          'error',
+          dict.common.errors.mutations.createZipShareLinkFailed
+        );
       }
       setZipSharePopoverOpen(false);
     } catch (error) {

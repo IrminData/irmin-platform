@@ -1,13 +1,10 @@
 import type { Metadata } from 'next';
 
+import { fetchUserMeta, userDisplayName } from '@/lib/core/serverFetchers';
 import type { Locale } from '@/lib/dict';
 
 /**
  * URL parameters for the User Logs layout
- *
- * @param lang - The language of the user
- * @param workspace - The slug of the current workspace
- * @param user - The ID of the workspace user to show audit logs for
  */
 export type UserLogsLayoutParams = {
   lang: Locale;
@@ -15,17 +12,12 @@ export type UserLogsLayoutParams = {
   user: string;
 };
 
-/**
- * SEO metadata for the User Logs layout
- */
 export async function generateMetadata(props: {
   params: Promise<UserLogsLayoutParams>;
 }): Promise<Metadata> {
-  const params = await props.params;
-  const formattedWorkspace = params.workspace.replace(/-/g, ' ');
-  return {
-    title: `User logs | ${formattedWorkspace} | IRMIN Console`,
-  };
+  const { lang, workspace, user } = await props.params;
+  const u = await fetchUserMeta(lang, workspace, user);
+  return { title: u ? userDisplayName(u) : `${user.slice(0, 8)}…` };
 }
 
 /**

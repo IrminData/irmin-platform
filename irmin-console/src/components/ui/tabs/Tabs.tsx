@@ -5,6 +5,12 @@ import { startTransition, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 import type { TabDetails } from '@/types/internal/Tabs';
 
@@ -63,35 +69,46 @@ export default function Tabs({ tabs }: { tabs: TabDetails[] }) {
 
   return (
     <>
-      <div
-        className={`
-          my-4 flex w-full flex-wrap justify-start gap-2 border-border px-2
-          md:border-b
-        `}
-      >
-        {tabs.map((tab) => (
-          <Button
-            key={tab.name}
-            className={`
-              border-0 border-accent shadow-none
-              hover:no-underline
-              ${activeTab === tab.slug ? `rounded-b-none border-b-2` : ''}
-            `}
-            size='sm'
-            variant={'outline'}
-            aria-label={`Switch to ${tab.name} tab`}
-            onClick={() => {
-              startTransition(() => {
-                setActiveTab(tab.slug ?? tab.name);
-              });
-              if (tab.link) router.push(tab.link);
-            }}
-            icon={tab.icon && tab.icon}
-          >
-            {tab.name}
-          </Button>
-        ))}
-      </div>
+      <TooltipProvider delayDuration={300}>
+        <div
+          className={`
+            my-4 flex w-full flex-wrap justify-start gap-2 border-border px-2
+            md:border-b
+          `}
+        >
+          {tabs.map((tab) => {
+            const button = (
+              <Button
+                key={tab.name}
+                className={`
+                  border-0 border-accent shadow-none
+                  hover:no-underline
+                  ${activeTab === tab.slug ? `rounded-b-none border-b-2` : ''}
+                `}
+                size='sm'
+                variant={'outline'}
+                aria-label={`Switch to ${tab.name} tab`}
+                onClick={() => {
+                  startTransition(() => {
+                    setActiveTab(tab.slug ?? tab.name);
+                  });
+                  if (tab.link) router.push(tab.link);
+                }}
+                icon={tab.icon && tab.icon}
+              >
+                {tab.name}
+              </Button>
+            );
+            if (!tab.tooltip) return button;
+            return (
+              <Tooltip key={tab.name}>
+                <TooltipTrigger asChild>{button}</TooltipTrigger>
+                <TooltipContent side='bottom'>{tab.tooltip}</TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
+      </TooltipProvider>
       {tabContent && (
         <div
           className={`

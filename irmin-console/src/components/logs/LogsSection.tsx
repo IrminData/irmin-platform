@@ -240,7 +240,8 @@ export default function LogsSection({
           <QueryError
             error={error}
             onRetry={() => refetch()}
-            title={dict.common.somethingWentWrong}
+            title={dict.common.errors.failedToLoadLogs}
+            description={dict.common.errors.failedToLoadAgain}
           />
         ) : (
           <LogEventFeed events={logEvents} loading={loading} />

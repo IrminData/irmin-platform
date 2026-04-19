@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import { clientEnv } from '@/config/env.client';
 
 import {
@@ -18,6 +20,12 @@ import AssistantSection from '@/components/assistant/AssistantSection';
 import { Button } from '@/components/ui/button';
 import { QueryError } from '@/components/ui/error/QueryError';
 import WorkspaceDashboardSkeleton from '@/components/ui/loading/WorkspaceDashboardSkeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import WizardSelector from '@/components/wizards/WizardSelector';
 import BillingBanner from '@/components/workspace/billing/BillingBanner';
 
@@ -32,6 +40,35 @@ import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 import { DashboardListCard } from './DashboardListCard';
 import { DashboardWorkflowRunsFeed } from './DashboardWorkflowRunsFeed';
+
+/**
+ * Wraps a dashboard nav button with a tooltip that explains what it opens.
+ * Tooltips are short and specific — "Workspace configuration and defaults."
+ * is more useful than the label "Settings" alone, especially for the
+ * Catalog & Lineage button whose name doesn't self-explain.
+ */
+function NavButtonWithTooltip({
+  href,
+  icon,
+  label,
+  tooltip,
+}: {
+  href: string;
+  icon: ReactNode;
+  label: string;
+  tooltip: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button href={href} variant='gray' size='sm' icon={icon}>
+          {label}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side='bottom'>{tooltip}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 /**
  * Dashboard section for the workspace.
@@ -63,7 +100,8 @@ const DashboardSection = () => {
           <QueryError
             error={workspaceQuery.error}
             onRetry={() => workspaceQuery.refetch()}
-            title={dict.common.somethingWentWrong}
+            title={dict.common.errors.failedToLoadWorkspace}
+            description={dict.common.errors.failedToLoadAgain}
           />
         </div>
       </div>
@@ -83,96 +121,89 @@ const DashboardSection = () => {
         `}
       >
         <div className='flex flex-col gap-4 px-4 pb-12'>
-          {/* Navigation Buttons */}
-          <div className='flex flex-row gap-2'>
-            <Button
-              href={`/${locale}/profile`}
-              variant='gray'
-              size='sm'
-              icon={<TbUser className='size-4' />}
-            >
-              {dict.consoleNavigation.myProfile}
-            </Button>
-            {isResourceAllowed('workspace', 'read') && (
-              <Button
-                href={`${workspaceUrl}/settings`}
-                variant='gray'
-                size='sm'
-                icon={<TbSettings className='size-4' />}
-              >
-                {dict.consoleNavigation.settings}
-              </Button>
-            )}
-            {isResourceAllowed('workspace_tag', 'read') && (
-              <Button
-                href={`${workspaceUrl}/settings/tags`}
-                variant='gray'
-                size='sm'
-                icon={<TbTag className='size-4' />}
-              >
-                {dict.workspace.tags}
-              </Button>
-            )}
-            {isResourceAllowed('user', 'read') && (
-              <Button
-                href={`${workspaceUrl}/settings/users`}
-                variant='gray'
-                size='sm'
-                icon={<TbUsersGroup className='size-4' />}
-              >
-                {dict.workspace.users}
-              </Button>
-            )}
-            {isResourceAllowed('invite', 'read') && (
-              <Button
-                href={`${workspaceUrl}/settings/invites`}
-                variant='gray'
-                size='sm'
-                icon={<TbMail className='size-4' />}
-              >
-                {dict.workspace.invites}
-              </Button>
-            )}
-            {!clientEnv.NEXT_PUBLIC_BILLING_DISABLED &&
-              isResourceAllowed('billing', 'read') && (
-                <Button
-                  href={`${workspaceUrl}/settings/billing`}
-                  variant='gray'
-                  size='sm'
-                  icon={<TbInvoice className='size-4' />}
-                >
-                  {dict.workspace.billing}
-                </Button>
+          {/* Navigation Buttons. Every button gets an explanatory tooltip —
+              Catalog & Lineage alone needs one (the label is industry-
+              jargon), and giving just that button a tooltip would read as
+              inconsistent. So all buttons have them. */}
+          <TooltipProvider delayDuration={300}>
+            <div className='flex flex-row flex-wrap gap-2'>
+              <NavButtonWithTooltip
+                href={`/${locale}/profile`}
+                icon={<TbUser className='size-4' />}
+                label={dict.consoleNavigation.myProfile}
+                tooltip={dict.workspace.dashboardTooltips.profile}
+              />
+              {isResourceAllowed('workspace', 'read') && (
+                <NavButtonWithTooltip
+                  href={`${workspaceUrl}/settings`}
+                  icon={<TbSettings className='size-4' />}
+                  label={dict.consoleNavigation.settings}
+                  tooltip={dict.workspace.dashboardTooltips.settings}
+                />
               )}
-            {isResourceAllowed('audit_log', 'read') && (
-              <Button
-                href={`${workspaceUrl}/logs`}
-                variant='gray'
-                size='sm'
-                icon={<TbLogs className='size-4' />}
-              >
-                {dict.common.logs}
-              </Button>
-            )}
-            {isResourceAllowed('documentation', 'read') && (
-              <Button
-                href={`${workspaceUrl}/documentation`}
-                variant='gray'
-                size='sm'
-                icon={<TbSchema className='size-4' />}
-              >
-                {dict.documentation.documentation}
-              </Button>
-            )}
-            <Button
-              href={`${workspaceUrl}/settings/api-mcp`}
-              variant='gray'
-              size='sm'
-              icon={<TbCode className='size-4' />}
-            >
-              {dict.workspace.apiMcp}
-            </Button>
-          </div>
+              {isResourceAllowed('workspace_tag', 'read') && (
+                <NavButtonWithTooltip
+                  href={`${workspaceUrl}/settings/tags`}
+                  icon={<TbTag className='size-4' />}
+                  label={dict.workspace.tags}
+                  tooltip={dict.workspace.dashboardTooltips.tags}
+                />
+              )}
+              {isResourceAllowed('user', 'read') && (
+                <NavButtonWithTooltip
+                  href={`${workspaceUrl}/settings/users`}
+                  icon={<TbUsersGroup className='size-4' />}
+                  label={dict.workspace.users}
+                  tooltip={dict.workspace.dashboardTooltips.users}
+                />
+              )}
+              {isResourceAllowed('invite', 'read') && (
+                <NavButtonWithTooltip
+                  href={`${workspaceUrl}/settings/invites`}
+                  icon={<TbMail className='size-4' />}
+                  label={dict.workspace.invites}
+                  tooltip={dict.workspace.dashboardTooltips.invites}
+                />
+              )}
+              {!clientEnv.NEXT_PUBLIC_BILLING_DISABLED &&
+                isResourceAllowed('billing', 'read') && (
+                  <NavButtonWithTooltip
+                    href={`${workspaceUrl}/settings/billing`}
+                    icon={<TbInvoice className='size-4' />}
+                    label={dict.workspace.billing}
+                    tooltip={dict.workspace.dashboardTooltips.billing}
+                  />
+                )}
+              {isResourceAllowed('audit_log', 'read') && (
+                <NavButtonWithTooltip
+                  href={`${workspaceUrl}/logs`}
+                  icon={<TbLogs className='size-4' />}
+                  label={dict.common.logs}
+                  tooltip={dict.workspace.dashboardTooltips.logs}
+                />
+              )}
+              {/* Catalog & Lineage — the /catalog route renders the
+                  DocumentationSection (internal naming stays "documentation"
+                  in API, DB, and src/components/documentation/*; only the
+                  UI-facing label and route path were renamed). The
+                  isResourceAllowed check uses the internal permission key
+                  'documentation' intentionally. */}
+              {isResourceAllowed('documentation', 'read') && (
+                <NavButtonWithTooltip
+                  href={`${workspaceUrl}/catalog`}
+                  icon={<TbSchema className='size-4' />}
+                  label={dict.catalog.catalogAndLineage}
+                  tooltip={dict.catalog.catalogAndLineageTooltip}
+                />
+              )}
+              <NavButtonWithTooltip
+                href={`${workspaceUrl}/settings/api-mcp`}
+                icon={<TbCode className='size-4' />}
+                label={dict.workspace.apiMcp}
+                tooltip={dict.workspace.dashboardTooltips.apiMcp}
+              />
+            </div>
+          </TooltipProvider>
           <BillingBanner />
           {/* AI Assistant and Workflow Runs */}
           <div

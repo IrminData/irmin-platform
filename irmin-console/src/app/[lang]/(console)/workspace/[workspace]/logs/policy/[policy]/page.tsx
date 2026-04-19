@@ -3,6 +3,8 @@
 import { useParams } from 'next/navigation';
 
 import LogsSection from '@/components/logs/LogsSection';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { QueryError } from '@/components/ui/error/QueryError';
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -21,13 +23,26 @@ export default function PolicyLogsPage() {
   const { policyQuery } = usePolicy(params.policy);
 
   if (policyQuery.isLoading) return <LoadingSpinner />;
-  if (policyQuery.isError)
+  if (policyQuery.isError) {
     return (
-      <div>
-        {dict.common.error}: {policyQuery.error.message}
-      </div>
+      <QueryError
+        error={policyQuery.error}
+        onRetry={() => policyQuery.refetch()}
+        title={dict.common.errors.failedToLoadPolicy}
+        description={dict.common.errors.failedToLoadAgain}
+      />
     );
-  if (!policyQuery.data?.data) return <div>{dict.common.error}</div>;
+  }
+  if (!policyQuery.data?.data) {
+    return (
+      <LocalizedErrorDisplay
+        variant='page'
+        showHome={true}
+        title={dict.common.errors.policyNotFound}
+        description={dict.common.errors.policyNotFoundDescription}
+      />
+    );
+  }
 
   return (
     <LogsSection

@@ -1,22 +1,19 @@
 import type { Metadata } from 'next';
 
+import { getServerDict } from '@/lib/dict/server';
+
 import SignUpSection from '@/components/user/SignUpSection';
 
-/**
- * Page metadata for SEO on the sign up page
- */
-export const metadata: Metadata = {
-  title: 'Create new account | IRMIN',
-  description: 'Create a new account to access IRMIN.',
+type SignUpParams = { lang: string };
 
-  openGraph: {
-    type: 'website',
-  },
-};
+export async function generateMetadata(props: {
+  params: Promise<SignUpParams>;
+}): Promise<Metadata> {
+  const { lang } = await props.params;
+  const dict = getServerDict(lang);
+  return { title: dict.metadata.auth.signUp };
+}
 
-/**
- * Sign up page (Website)
- */
 export default function SignUpPage() {
   return <SignUpSection />;
 }

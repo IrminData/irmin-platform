@@ -9,6 +9,7 @@ import SqlHelper from '@/components/query/helper/SqlHelper';
 import CodeMirrorEditor from '@/components/scripts/ide/CodeMirrorEditor';
 import CreateScriptModal from '@/components/scripts/modals/CreateScriptModal';
 import { Button } from '@/components/ui/button';
+import { QueryError } from '@/components/ui/error/QueryError';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -445,12 +446,15 @@ export default function InlineScriptEditor({
           </div>
         ) : scriptQuery.isError && normalizedScriptId ? (
           <div
-            className={`
-              flex h-full flex-col items-center justify-center gap-2
-              text-muted-foreground
-            `}
+            className={`flex h-full flex-col items-center justify-center gap-4`}
           >
-            <p>{dict.common.somethingWentWrong}</p>
+            <QueryError
+              error={scriptQuery.error}
+              onRetry={() => scriptQuery.refetch()}
+              title={dict.common.errors.failedToLoadScript}
+              description={dict.common.errors.failedToLoadAgain}
+              size='sm'
+            />
             <Button
               variant='secondary'
               size='sm'

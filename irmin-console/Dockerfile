@@ -10,19 +10,35 @@ WORKDIR /app
 ENV GENERATE_SOURCEMAP=false
 ENV NODE_OPTIONS=--max-old-space-size=8192
 
-# Set environment variable placeholders (variable name = variable name)
-ENV NEXT_PUBLIC_BASE_URL=NEXT_PUBLIC_BASE_URL
-ENV NEXT_PUBLIC_WEBSITE_URL=NEXT_PUBLIC_WEBSITE_URL
-ENV NEXT_PUBLIC_REVALIDATE=NEXT_PUBLIC_REVALIDATE
-ENV NEXT_PUBLIC_API_URL=NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_AI_API_URL=NEXT_PUBLIC_AI_API_URL
-ENV NEXT_PUBLIC_SENTRY_DSN=NEXT_PUBLIC_SENTRY_DSN
-ENV NEXT_PUBLIC_POSTHOG_KEY=NEXT_PUBLIC_POSTHOG_KEY
-ENV NEXT_PUBLIC_POSTHOG_HOST=NEXT_PUBLIC_POSTHOG_HOST
-ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-ENV NEXT_PUBLIC_NOVU_APP_ID=NEXT_PUBLIC_NOVU_APP_ID
-ENV NEXT_PUBLIC_BILLING_DISABLED=NEXT_PUBLIC_BILLING_DISABLED
-ENV NEXT_PUBLIC_API_DOCS_URL=NEXT_PUBLIC_API_DOCS_URL
+# Set environment variable placeholders.
+#
+# Values are unique marker tokens (wrapped in `__RAILWAY_ENV_..._ENV__`)
+# rather than the bare variable name. Next.js inlines `process.env.X` at
+# build time with whatever the placeholder value is, so these tokens end
+# up in the built JS. At container startup, entrypoint.sh's sed replaces
+# the tokens with the real runtime values injected by Railway.
+#
+# The token shape matters: earlier we used the variable name as its own
+# placeholder value (ENV X=X), which meant the raw string "NEXT_PUBLIC_X"
+# appeared in the bundle both as string values AND as object-literal
+# property keys (see src/config/env.client.ts). sed's find-and-replace
+# matched both, rewriting bare identifiers into invalid JS like
+# `{ https://host.com: "https://host.com" }` and crashing chunk load at
+# runtime with `SyntaxError: Unexpected token ':'`. Tokens with the
+# `__RAILWAY_ENV_..._ENV__` shape cannot appear as JS identifiers, so sed
+# only touches the intended string values.
+ENV NEXT_PUBLIC_BASE_URL=__RAILWAY_ENV_NEXT_PUBLIC_BASE_URL_ENV__
+ENV NEXT_PUBLIC_WEBSITE_URL=__RAILWAY_ENV_NEXT_PUBLIC_WEBSITE_URL_ENV__
+ENV NEXT_PUBLIC_REVALIDATE=__RAILWAY_ENV_NEXT_PUBLIC_REVALIDATE_ENV__
+ENV NEXT_PUBLIC_API_URL=__RAILWAY_ENV_NEXT_PUBLIC_API_URL_ENV__
+ENV NEXT_PUBLIC_AI_API_URL=__RAILWAY_ENV_NEXT_PUBLIC_AI_API_URL_ENV__
+ENV NEXT_PUBLIC_SENTRY_DSN=__RAILWAY_ENV_NEXT_PUBLIC_SENTRY_DSN_ENV__
+ENV NEXT_PUBLIC_POSTHOG_KEY=__RAILWAY_ENV_NEXT_PUBLIC_POSTHOG_KEY_ENV__
+ENV NEXT_PUBLIC_POSTHOG_HOST=__RAILWAY_ENV_NEXT_PUBLIC_POSTHOG_HOST_ENV__
+ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=__RAILWAY_ENV_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY_ENV__
+ENV NEXT_PUBLIC_NOVU_APP_ID=__RAILWAY_ENV_NEXT_PUBLIC_NOVU_APP_ID_ENV__
+ENV NEXT_PUBLIC_BILLING_DISABLED=__RAILWAY_ENV_NEXT_PUBLIC_BILLING_DISABLED_ENV__
+ENV NEXT_PUBLIC_API_DOCS_URL=__RAILWAY_ENV_NEXT_PUBLIC_API_DOCS_URL_ENV__
 
 # Install dependencies based on the preferred package manager
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./

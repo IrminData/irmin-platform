@@ -1,22 +1,19 @@
 import type { Metadata } from 'next';
 
+import { getServerDict } from '@/lib/dict/server';
+
 import SignInSection from '@/components/user/SignInSection';
 
-/**
- * Page metadata for SEO on the sign in page
- */
-export const metadata: Metadata = {
-  title: 'Sign in | IRMIN',
-  description: 'Sign in to access IRMIN.',
+type SignInParams = { lang: string };
 
-  openGraph: {
-    type: 'website',
-  },
-};
+export async function generateMetadata(props: {
+  params: Promise<SignInParams>;
+}): Promise<Metadata> {
+  const { lang } = await props.params;
+  const dict = getServerDict(lang);
+  return { title: dict.metadata.auth.signIn };
+}
 
-/**
- * Sign in page (Website)
- */
 export default function SignInPage() {
   return <SignInSection />;
 }

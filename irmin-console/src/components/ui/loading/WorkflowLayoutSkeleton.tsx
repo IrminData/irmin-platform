@@ -1,155 +1,37 @@
+import DetailHeaderSkeleton from '@/components/ui/loading/DetailHeaderSkeleton';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import TabsWithBackButtonSkeleton from '@/components/ui/loading/TabsWithBackButtonSkeleton';
+
 /**
- * Workflow layout skeleton component
- * Matches the structure of WorkflowLayoutWrapper with header, actions, and tabs
+ * Mirror skeleton for `WorkflowLayoutWrapper`.
+ *
+ * Header with metadata (owner + status badge + tags), title,
+ * description on the left (`flex-1`), and a vertical stack on the
+ * right (`min-w-60 flex-col gap-2`): `size='lg'` Trigger Run CTA +
+ * AssetSharePopover. Then `TabsWithBackButton` with 5 primary tabs
+ * (Overview, Configure, Field Mapper, Schedule, Data) + "More"
+ * dropdown.
  */
 function WorkflowLayoutSkeleton({ className = '' }: { className?: string }) {
   return (
-    <div
-      className={`
-        animate-pulse
-        ${className}
-      `}
-    >
-      {/* Workflow Header Skeleton */}
+    <div className={className}>
       <div className='relative container mx-auto max-w-7xl'>
-        <div
-          className={`
-            mx-auto my-4 flex w-full flex-col px-2
-            md:px-4
-            lg:flex-row lg:items-center
-          `}
-        >
-          <div className='flex flex-1 flex-col gap-2 py-4'>
-            {/* Workflow metadata */}
-            <div
-              className={`
-                flex flex-row items-center divide-x divide-gray-300
-                dark:divide-gray-700
-              `}
-            >
-              <div className='flex flex-row items-center gap-2 pr-2'>
-                <div
-                  className={`
-                    h-4 w-20 rounded-sm bg-gray-200
-                    dark:bg-gray-800
-                  `}
-                />
-                <div
-                  className={`
-                    h-5 w-16 rounded-sm bg-gray-200
-                    dark:bg-gray-800
-                  `}
-                />
-              </div>
-              <div className='px-2'>
-                <div
-                  className={`
-                    h-4 w-48 rounded-sm bg-gray-200
-                    dark:bg-gray-800
-                  `}
-                />
-              </div>
-              <div className='px-2'>
-                <div
-                  className={`
-                    h-5 w-12 rounded-sm bg-gray-200
-                    dark:bg-gray-800
-                  `}
-                />
-              </div>
+        <DetailHeaderSkeleton
+          metadataItems={3}
+          leftFill
+          rightSlot={
+            <div className='flex min-w-60 flex-col gap-2'>
+              {/* Trigger Run (size='lg' → h-11) */}
+              <LoadingSkeleton className='h-11 w-full rounded-md' />
+              {/* AssetSharePopover trigger (size='sm' → h-9) */}
+              <LoadingSkeleton className='h-9 w-full rounded-md' />
             </div>
-
-            {/* Workflow title */}
-            <div
-              className={`
-                h-8 w-1/2 rounded-sm bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
-
-            {/* Description */}
-            <div
-              className={`
-                h-4 w-2/3 rounded-sm bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
-
-            {/* Tags */}
-            <div className='flex gap-2'>
-              <div
-                className={`
-                  h-5 w-12 rounded-sm bg-gray-200
-                  dark:bg-gray-800
-                `}
-              />
-              <div
-                className={`
-                  h-5 w-16 rounded-sm bg-gray-200
-                  dark:bg-gray-800
-                `}
-              />
-              <div
-                className={`
-                  h-5 w-20 rounded-sm bg-gray-200
-                  dark:bg-gray-800
-                `}
-              />
-            </div>
-          </div>
-
-          {/* Action button skeleton */}
-          <div className='flex min-w-60 flex-col gap-2'>
-            <div
-              className={`
-                h-10 w-full rounded-sm bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
-          </div>
-        </div>
-
-        {/* Tabs skeleton */}
-        <div
-          className={`
-            border-b border-gray-200
-            dark:border-gray-700
-          `}
-        >
-          <div className='flex gap-6'>
-            {Array.from({ length: 7 }, (_, i) => (
-              <div
-                key={`tab-${i}`}
-                className={`
-                  h-10 w-20 rounded-sm bg-gray-200
-                  dark:bg-gray-800
-                `}
-              />
-            ))}
-          </div>
-        </div>
+          }
+        />
+        <TabsWithBackButtonSkeleton tabCount={5} showMore />
       </div>
-
-      {/* Content skeleton */}
-      <div className='mx-auto max-w-7xl px-4 py-6'>
-        <div className='space-y-4'>
-          {Array.from({ length: 4 }, (_, i) => (
-            <div key={`content-${i}`} className='space-y-2'>
-              <div
-                className={`
-                  h-6 w-1/4 rounded-sm bg-gray-200
-                  dark:bg-gray-800
-                `}
-              />
-              <div
-                className={`
-                  h-24 rounded-lg bg-gray-200
-                  dark:bg-gray-800
-                `}
-              />
-            </div>
-          ))}
-        </div>
+      <div className='relative container mx-auto max-w-7xl px-4'>
+        <LoadingSkeleton className='h-80 w-full rounded-lg' />
       </div>
     </div>
   );

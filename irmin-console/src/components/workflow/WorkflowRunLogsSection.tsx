@@ -75,8 +75,8 @@ export default function WorkflowRunLogsSection({
         <QueryError
           error={workflowRunQuery.error}
           onRetry={() => workflowRunQuery.refetch()}
-          title={dict.common.somethingWentWrong}
-          description={dict.common.somethingWentWrong}
+          title={dict.common.errors.failedToLoadWorkflowRuns}
+          description={dict.common.errors.failedToLoadAgain}
         />
       </div>
     );

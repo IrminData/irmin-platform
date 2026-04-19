@@ -1,13 +1,22 @@
+import type { Metadata } from 'next';
+
+import { getServerDict } from '@/lib/dict/server';
+
 import AIApplicationsSection from '@/components/ai-application/AIApplicationsSection';
 
 import type { PageSearchParams } from '@/types/internal/PageSearchParams';
 
 import type { WorkspaceLayoutParams } from '../layout';
 
+export async function generateMetadata(props: {
+  params: Promise<WorkspaceLayoutParams>;
+}): Promise<Metadata> {
+  const { lang } = await props.params;
+  return { title: getServerDict(lang).metadata.sections.aiApplications };
+}
+
 /**
  * AI Applications page in the workspace
- *
- * Uses {@link AIApplicationsSection} to provide UI to list AI applications
  */
 export default async function AIApplicationsPage(props: {
   params: Promise<WorkspaceLayoutParams>;

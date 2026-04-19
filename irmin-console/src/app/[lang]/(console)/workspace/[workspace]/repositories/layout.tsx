@@ -2,17 +2,14 @@ import type { Metadata } from 'next';
 
 import type { WorkspaceLayoutParams } from '@/app/[lang]/(console)/workspace/[workspace]/layout';
 
-/**
- * SEO metadata for the Repositories pages
- */
+import { getServerDict } from '@/lib/dict/server';
+
 export async function generateMetadata(props: {
   params: Promise<WorkspaceLayoutParams>;
 }): Promise<Metadata> {
-  const params = await props.params;
-  const formattedWorkspace = params.workspace.replace(/-/g, ' ');
-  return {
-    title: `Repositories | ${formattedWorkspace} | IRMIN Console`,
-  };
+  const { lang } = await props.params;
+  const dict = getServerDict(lang);
+  return { title: dict.metadata.sections.repositories };
 }
 
 /**

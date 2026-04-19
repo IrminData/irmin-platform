@@ -1,13 +1,10 @@
 import type { Metadata } from 'next';
 
+import { fetchConnectionMeta } from '@/lib/core/serverFetchers';
 import type { Locale } from '@/lib/dict';
 
 /**
  * URL parameters for the Connection Logs layout
- *
- * @param lang - The language of the user
- * @param workspace - The slug of the current workspace
- * @param connection - The ID of the connection to show logs for
  */
 export type ConnectionLogsLayoutParams = {
   lang: Locale;
@@ -15,17 +12,14 @@ export type ConnectionLogsLayoutParams = {
   connection: string;
 };
 
-/**
- * SEO metadata for the Connection Logs layout
- */
 export async function generateMetadata(props: {
   params: Promise<ConnectionLogsLayoutParams>;
 }): Promise<Metadata> {
-  const params = await props.params;
-  const formattedWorkspace = params.workspace.replace(/-/g, ' ');
-  return {
-    title: `Connection logs | ${formattedWorkspace} | IRMIN Console`,
-  };
+  const { lang, workspace, connection } = await props.params;
+  const conn = await fetchConnectionMeta(lang, workspace, connection);
+  // Truncate the slug fallback to 8 chars to match every other ID-based
+  // log layout (workflow, query, user, policy). Connection IDs are UUIDs.
+  return { title: conn?.name ?? `${connection.slice(0, 8)}…` };
 }
 
 /**

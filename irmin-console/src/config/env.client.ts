@@ -85,16 +85,50 @@ const raw = {
     process.env.NEXT_PUBLIC_SENTRY_REPLAYS_ERROR_SAMPLE_RATE,
 };
 
+// Skip strict parsing during static analysis (knip, lint-only runs) and
+// during `next build` page-data collection. At build time, Railway-style
+// templated refs like `https://${{service.RAILWAY_PUBLIC_DOMAIN}}` often
+// haven't been substituted yet (cross-service domain refs are unavailable
+// to the Docker builder in PR preview envs, where the referenced service
+// isn't attached to the preview environment). Railway resolves those refs
+// when the deployed pod actually starts.
+//
+// At real runtime Next.js sets `NEXT_PHASE=phase-production-server`, this
+// module re-evaluates with resolved values, and validation runs strictly —
+// so genuinely broken env still surfaces the first time a page renders on
+// the deployed pod. This escape hatch ONLY softens the build phase and does
+// not require any user-side env var.
+const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+const isStaticAnalysis =
+  process.env.npm_lifecycle_event === 'knip' ||
+  process.env.npm_lifecycle_event === 'knip:fix' ||
+  process.env.npm_lifecycle_event === 'validate' ||
+  process.env.KNIP === 'true' ||
+  process.env.STATIC_ANALYSIS === 'true' ||
+  isBuildPhase;
+
 const result = clientSchema.safeParse(raw);
 
 if (!result.success) {
   console.error('Client env validation failed:');
 
   console.error(z.prettifyError(result.error));
-  throw new Error('Invalid client environment variables');
+
+  if (!isStaticAnalysis) {
+    throw new Error('Invalid client environment variables');
+  }
 }
 
 // NODE_ENV is intentionally not modelled here: Next.js hard-codes it at build
 // time on both runtimes, so client consumers can keep reading
 // `process.env.NODE_ENV` directly.
-export const clientEnv = result.data;
+//
+// In static-analysis / build mode we fall back to the *raw* values so types
+// still match the schema's output shape where defaults aren't strings.
+// That's fine because at real runtime the strict check above runs again and
+// throws on genuinely invalid vars.
+export const clientEnv = (
+  result.success
+    ? result.data
+    : (raw as unknown as z.infer<typeof clientSchema>)
+) as z.infer<typeof clientSchema>;

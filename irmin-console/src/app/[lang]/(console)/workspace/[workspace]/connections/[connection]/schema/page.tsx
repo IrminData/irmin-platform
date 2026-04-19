@@ -1,4 +1,8 @@
+import type { Metadata } from 'next';
+
 import { notFound } from 'next/navigation';
+
+import { getServerDict } from '@/lib/dict/server';
 
 import ConnectionSchemaPageContent from '@/components/connection/ConnectionSchemaPageContent';
 
@@ -9,6 +13,13 @@ import type { PageSearchParams } from '@/types/internal/PageSearchParams';
 import type { SingleConnectionLayoutParams } from '../layout';
 
 type SchemaTab = 'view' | 'validate';
+
+export async function generateMetadata(props: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await props.params;
+  return { title: getServerDict(lang).metadata.resource.schema };
+}
 
 /**
  * Page for the Connection Schema

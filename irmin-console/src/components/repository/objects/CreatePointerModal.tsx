@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
@@ -92,11 +92,10 @@ export default function CreatePointerModal({
     [targetRepository, repositories]
   );
 
-  // Clear targetPath and pointerName when targetRepository or targetRef changes
-  useEffect(() => {
+  const clearPathAndName = useCallback(() => {
     setValue('targetPath', '');
     setValue('pointerName', '');
-  }, [targetRepository, targetRef, setValue]);
+  }, [setValue]);
 
   const handleTargetPathChange = useCallback(
     (path: string) => {
@@ -194,7 +193,10 @@ export default function CreatePointerModal({
               <>
                 <Select
                   value={field.value}
-                  onValueChange={field.onChange}
+                  onValueChange={(v) => {
+                    field.onChange(v);
+                    clearPathAndName();
+                  }}
                   disabled={loading}
                 >
                   <SelectTrigger className='w-full'>
@@ -237,6 +239,10 @@ export default function CreatePointerModal({
                       placeholder={selectedRepo.default_branch ?? 'main'}
                       disabled={loading}
                       {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        clearPathAndName();
+                      }}
                     />
                     {errors.targetRef && (
                       <p className='mt-1 text-xs text-red-600'>

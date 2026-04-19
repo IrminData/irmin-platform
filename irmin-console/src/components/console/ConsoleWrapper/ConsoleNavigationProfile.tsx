@@ -43,12 +43,7 @@ export default function ConsoleNavigationProfile({
         <IrminUserButton />
       </div>
       <div className='w-auto overflow-hidden p-1'>
-        <p
-          className={`
-            text-xs font-normal text-foreground
-            dark:text-gray-200
-          `}
-        >
+        <p className='truncate text-xs font-normal text-foreground'>
           {`${profile.first_name} ${profile.last_name}`}
         </p>
       </div>

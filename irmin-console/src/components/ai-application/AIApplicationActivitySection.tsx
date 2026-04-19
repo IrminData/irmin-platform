@@ -387,8 +387,8 @@ const AIApplicationActivitySectionContent = () => {
       <ContentWrapper className='mt-4'>
         <QueryError
           error={error}
-          title={dict.aiApplication.activity}
-          description={dict.common.somethingWentWrong}
+          title={dict.common.errors.failedToLoadActivity}
+          description={dict.common.errors.failedToLoadAgain}
           onRetry={refresh}
         />
       </ContentWrapper>

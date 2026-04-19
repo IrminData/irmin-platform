@@ -96,7 +96,6 @@
   --font-main: var(--geist-sans);
   --font-mono: var(--geist-mono);
   --font-serif: var(--lora-serif);
-  --font-display: var(--big-shoulders-display);
 
   /* Custom Irmin Color Palette */
   --color-irmin-black-100: hsla(197 90% 83%);

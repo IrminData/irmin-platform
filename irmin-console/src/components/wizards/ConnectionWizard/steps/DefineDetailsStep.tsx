@@ -6,6 +6,7 @@ import IrminCore from '@/lib/core';
 
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import { Button } from '@/components/ui/button';
+import { QueryError } from '@/components/ui/error/QueryError';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 import { ConnectionCreationSkeleton } from '@/components/ui/loading/ConnectionCreationSkeleton';
 
@@ -178,9 +179,13 @@ export default function DefineDetailsStep({
 
   if (connectionConfigurationQuery.isError) {
     return (
-      <div>
-        {dict.common.error}: {connectionConfigurationQuery.error.message}
-      </div>
+      <QueryError
+        error={connectionConfigurationQuery.error}
+        onRetry={() => connectionConfigurationQuery.refetch()}
+        title={dict.common.errors.failedToLoadConnector}
+        description={dict.common.errors.failedToLoadAgain}
+        size='sm'
+      />
     );
   }
 

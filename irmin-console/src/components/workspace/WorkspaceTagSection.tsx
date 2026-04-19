@@ -9,6 +9,8 @@ import { TbArrowLeft, TbPencil, TbTrash } from 'react-icons/tb';
 
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import { ContentWrapper } from '@/components/ui/ContentWrapper';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { QueryError } from '@/components/ui/error/QueryError';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import {
   Table,
@@ -114,22 +116,29 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
     );
   }
 
-  if (workspaceTagQuery.isError || !tag) {
+  if (workspaceTagQuery.isError) {
     return (
-      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
-        <div className='flex items-center justify-center py-8'>
-          <div className='text-center'>
-            <p
-              className={`
-                text-red-600
-                dark:text-red-400
-              `}
-            >
-              {dict.common.error}
-            </p>
-          </div>
-        </div>
-      </div>
+      <ContentWrapper wrapperClassName='max-w-7xl py-4'>
+        <QueryError
+          error={workspaceTagQuery.error}
+          onRetry={() => workspaceTagQuery.refetch()}
+          title={dict.common.errors.failedToLoadTag}
+          description={dict.common.errors.failedToLoadAgain}
+        />
+      </ContentWrapper>
+    );
+  }
+
+  if (!tag) {
+    return (
+      <ContentWrapper wrapperClassName='max-w-7xl py-4'>
+        <LocalizedErrorDisplay
+          variant='section'
+          showHome={true}
+          title={dict.common.errors.tagNotFound}
+          description={dict.common.errors.tagNotFoundDescription}
+        />
+      </ContentWrapper>
     );
   }
 

@@ -1,5 +1,5 @@
-import RepositoriesListSkeleton from '@/components/ui/loading/RepositoriesListSkeleton';
+import ListPageSkeleton from '@/components/ui/loading/ListPageSkeleton';
 
 export default function RepositoriesLoading() {
-  return <RepositoriesListSkeleton />;
+  return <ListPageSkeleton columnCount={3} />;
 }

@@ -1,53 +1,14 @@
-const TabSkeleton = () => {
-  return (
-    <div
-      className={`
-        h-6 w-16 animate-pulse rounded-sm bg-gray-200
-        dark:bg-gray-800
-      `}
-    />
-  );
-};
-
-const StatCardSkeleton = () => {
-  return (
-    <div className='rounded-lg border bg-card p-4'>
-      <div className='space-y-2'>
-        <div
-          className={`
-            h-4 w-16 animate-pulse rounded-sm bg-gray-200
-            dark:bg-gray-800
-          `}
-        />
-        <div
-          className={`
-            h-8 w-20 animate-pulse rounded-sm bg-gray-200
-            dark:bg-gray-800
-          `}
-        />
-      </div>
-    </div>
-  );
-};
-
-const ContentLineSkeleton = () => {
-  return (
-    <div
-      className={`
-        h-4 animate-pulse rounded-sm bg-gray-200
-        dark:bg-gray-800
-      `}
-    />
-  );
-};
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 /**
- * Skeleton for detail pages (repository, workflow, etc.)
+ * Generic detail-page skeleton — kept as a backwards-compat fallback
+ * for older callers. Prefer a fit-for-purpose skeleton (e.g.
+ * `ConnectionLayoutSkeleton`, `AssistantSkeleton`, `EditorLayoutSkeleton`)
+ * over this one.
  */
 const DetailPageSkeleton = () => {
   return (
     <div className='relative container mx-auto max-w-7xl px-4 py-8'>
-      {/* Header section */}
       <div
         className={`
           mb-8 flex flex-col gap-4
@@ -55,67 +16,33 @@ const DetailPageSkeleton = () => {
         `}
       >
         <div className='flex-1'>
-          {/* Title */}
-          <div
-            className={`
-              mb-2 h-8 w-64 animate-pulse rounded-sm bg-gray-200
+          <LoadingSkeleton
+            className='
+              mb-2 h-8 w-64
               lg:h-10 lg:w-80
-              dark:bg-gray-800
-            `}
+            '
           />
-
-          {/* Subtitle/description */}
           <div className='space-y-1'>
-            <div
-              className={`
-                h-4 w-96 animate-pulse rounded-sm bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
-            <div
-              className={`
-                h-4 w-48 animate-pulse rounded-sm bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
+            <LoadingSkeleton className='h-4 w-96 max-w-full' />
+            <LoadingSkeleton className='h-4 w-48' />
           </div>
         </div>
-
-        {/* Action buttons */}
         <div className='flex items-center gap-2'>
-          <div
-            className={`
-              h-10 w-20 animate-pulse rounded-sm bg-gray-200
-              dark:bg-gray-800
-            `}
-          />
-          <div
-            className={`
-              h-10 w-24 animate-pulse rounded-sm bg-gray-200
-              dark:bg-gray-800
-            `}
-          />
+          <LoadingSkeleton className='h-10 w-20 rounded-md' />
+          <LoadingSkeleton className='h-10 w-24 rounded-md' />
         </div>
       </div>
 
-      {/* Navigation tabs */}
-      <div
-        className={`
-          mb-6 border-b border-gray-200
-          dark:border-gray-800
-        `}
-      >
+      <div className='mb-6 border-b border-border'>
         <div className='flex gap-6'>
-          <TabSkeleton />
-          <TabSkeleton />
-          <TabSkeleton />
-          <TabSkeleton />
+          <LoadingSkeleton className='h-6 w-16' />
+          <LoadingSkeleton className='h-6 w-16' />
+          <LoadingSkeleton className='h-6 w-16' />
+          <LoadingSkeleton className='h-6 w-16' />
         </div>
       </div>
 
-      {/* Main content area */}
       <div className='space-y-6'>
-        {/* Stats/info cards */}
         <div
           className={`
             grid grid-cols-1 gap-4
@@ -123,29 +50,25 @@ const DetailPageSkeleton = () => {
             lg:grid-cols-4
           `}
         >
-          <StatCardSkeleton />
-          <StatCardSkeleton />
-          <StatCardSkeleton />
-          <StatCardSkeleton />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={`stat-${i}`}
+              className='rounded-lg border border-border bg-card p-4'
+            >
+              <div className='space-y-2'>
+                <LoadingSkeleton className='h-4 w-16' />
+                <LoadingSkeleton className='h-8 w-20' />
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Main content block */}
-        <div className='rounded-lg border bg-card p-6'>
-          <div className='space-y-4'>
-            <div
-              className={`
-                h-6 w-32 animate-pulse rounded-sm bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
-            <div className='space-y-2'>
-              <ContentLineSkeleton />
-              <ContentLineSkeleton />
-              <ContentLineSkeleton />
-              <ContentLineSkeleton />
-              <ContentLineSkeleton />
-              <ContentLineSkeleton />
-            </div>
+        <div className='rounded-lg border border-border bg-card p-6'>
+          <LoadingSkeleton className='mb-4 h-6 w-32' />
+          <div className='space-y-2'>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <LoadingSkeleton key={`line-${i}`} className='h-4 w-full' />
+            ))}
           </div>
         </div>
       </div>

@@ -297,14 +297,7 @@ export default function DocumentationSchemaSection() {
     connectionsQuery.isLoading ||
     workspaceQuery.isLoading
   ) {
-    return (
-      <SchemaSkeleton
-        showHeader={true}
-        showStats={false}
-        showControls={false}
-        showVisualization={false}
-      />
-    );
+    return <SchemaSkeleton />;
   }
 
   const errors = [
@@ -326,7 +319,8 @@ export default function DocumentationSchemaSection() {
               if (workflowsQuery.error) workflowsQuery.refetch();
               if (connectionsQuery.error) connectionsQuery.refetch();
             }}
-            title={dict.common.somethingWentWrong}
+            title={dict.common.errors.failedToLoadSchema}
+            description={dict.common.errors.failedToLoadAgain}
           />
         </div>
       </div>
@@ -366,13 +360,13 @@ export default function DocumentationSchemaSection() {
                 <BsLayers className='size-6 text-muted-foreground' />
               </div>
               <h1 className='text-3xl font-semibold text-foreground capitalize'>
-                {dict.documentation.schemaTitle}
+                {dict.catalog.schemaTitle}
               </h1>
             </div>
             <EmptyState
               icon={<TbClipboardX className='size-full' />}
-              title={dict.documentation.workspaceEmptyTitle}
-              description={dict.documentation.workspaceEmptyDescription}
+              title={dict.catalog.workspaceEmptyTitle}
+              description={dict.catalog.workspaceEmptyDescription}
               size='lg'
             />
           </div>
@@ -389,10 +383,10 @@ export default function DocumentationSchemaSection() {
             <div className='rounded-lg bg-muted p-2'>
               <BsLayers className='size-6 text-muted-foreground' />
             </div>
-            <h1 className='text-3xl'>{dict.documentation.schemaTitle}</h1>
+            <h1 className='text-3xl'>{dict.catalog.schemaTitle}</h1>
           </div>
           <p className='max-w-3xl text-sm text-muted-foreground'>
-            {dict.documentation.schemaIntro}
+            {dict.catalog.schemaIntro}
           </p>
           <div className='flex flex-wrap items-center gap-4'>
             <div
@@ -409,7 +403,7 @@ export default function DocumentationSchemaSection() {
               />
               <Input
                 className='pl-10'
-                placeholder={dict.documentation.schemaSearchPlaceholder}
+                placeholder={dict.catalog.schemaSearchPlaceholder}
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
@@ -419,21 +413,19 @@ export default function DocumentationSchemaSection() {
               icon={<BsFilePdf size={18} />}
               onClick={handleDownloadPDF}
             >
-              {dict.documentation.downloadPdf}
+              {dict.catalog.downloadPdf}
             </Button>
           </div>
         </div>
 
         <div className='space-y-12'>
           <section className='mb-12 space-y-6'>
-            <h2 className='text-2xl'>{dict.documentation.dataFlowsTitle}</h2>
+            <h2 className='text-2xl'>{dict.catalog.dataFlowsTitle}</h2>
             {filteredWorkflowPaths.length === 0 ? (
               <EmptyState
                 icon={<TbClipboardX className='size-full' />}
-                title={dict.documentation.workflowSearchEmptyTitle}
-                description={
-                  dict.documentation.workflowRelationshipsEmptyDescription
-                }
+                title={dict.catalog.workflowSearchEmptyTitle}
+                description={dict.catalog.workflowRelationshipsEmptyDescription}
                 size='md'
               />
             ) : (
@@ -542,9 +534,7 @@ export default function DocumentationSchemaSection() {
           </section>
 
           <section className='space-y-6'>
-            <h2 className='text-2xl'>
-              {dict.documentation.componentDirectoryTitle}
-            </h2>
+            <h2 className='text-2xl'>{dict.catalog.componentDirectoryTitle}</h2>
             <div
               className={`
                 grid grid-cols-1 gap-6
@@ -561,7 +551,7 @@ export default function DocumentationSchemaSection() {
                   </CardHeader>
                   <CardContent>
                     <p className='text-sm text-muted-foreground'>
-                      {dict.documentation.directoryRepositoriesEmpty}
+                      {dict.catalog.directoryRepositoriesEmpty}
                     </p>
                   </CardContent>
                 </Card>
@@ -587,7 +577,7 @@ export default function DocumentationSchemaSection() {
                 <CardContent className='space-y-4 text-sm'>
                   {connections.length === 0 ? (
                     <p className='text-muted-foreground'>
-                      {dict.documentation.directoryConnectionsEmpty}
+                      {dict.catalog.directoryConnectionsEmpty}
                     </p>
                   ) : (
                     connections.map((connection) => {
@@ -618,7 +608,7 @@ export default function DocumentationSchemaSection() {
                           <p className='text-xs text-muted-foreground'>
                             {dict.connectors.connector}:{' '}
                             {connection.connector?.name ??
-                              dict.documentation.unknownConnector}
+                              dict.catalog.unknownConnector}
                           </p>
                           {connection.description && (
                             <p className='text-xs text-muted-foreground'>
@@ -631,8 +621,7 @@ export default function DocumentationSchemaSection() {
                             </p>
                           )}
                           <p className='text-xs text-muted-foreground'>
-                            {dict.documentation.referencedBy} {usage}{' '}
-                            {usageLabel}
+                            {dict.catalog.referencedBy} {usage} {usageLabel}
                           </p>
                         </div>
                       );

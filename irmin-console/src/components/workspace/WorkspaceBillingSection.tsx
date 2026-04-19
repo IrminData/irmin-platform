@@ -1,6 +1,7 @@
 'use client';
 
 import { ContentWrapper } from '@/components/ui/ContentWrapper';
+import { QueryError } from '@/components/ui/error/QueryError';
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -79,7 +80,12 @@ const WorkspaceBillingSection = () => {
   if (isError) {
     return (
       <ContentWrapper wrapperClassName='py-8'>
-        <p className='text-destructive'>{dict.common.error}</p>
+        <QueryError
+          error={subscriptionQuery.error}
+          onRetry={() => subscriptionQuery.refetch()}
+          title={dict.common.errors.failedToLoadBillingSubscription}
+          description={dict.common.errors.failedToLoadAgain}
+        />
       </ContentWrapper>
     );
   }

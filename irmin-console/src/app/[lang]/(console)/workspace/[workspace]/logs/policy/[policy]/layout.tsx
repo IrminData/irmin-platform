@@ -4,10 +4,6 @@ import type { Locale } from '@/lib/dict';
 
 /**
  * URL parameters for the Policy Logs layout
- *
- * @param lang - The language of the user
- * @param workspace - The slug of the current workspace
- * @param policy - The ID of the policy to show logs for
  */
 export type PolicyLogsLayoutParams = {
   lang: Locale;
@@ -15,17 +11,14 @@ export type PolicyLogsLayoutParams = {
   policy: string;
 };
 
-/**
- * SEO metadata for the Policy Logs layout
- */
 export async function generateMetadata(props: {
   params: Promise<PolicyLogsLayoutParams>;
 }): Promise<Metadata> {
-  const params = await props.params;
-  const formattedWorkspace = params.workspace.replace(/-/g, ' ');
-  return {
-    title: `Policy logs | ${formattedWorkspace} | IRMIN Console`,
-  };
+  const { policy } = await props.params;
+  // Policies have no human-readable `name` field — they're identified by
+  // {effect, action, resource}. Using a slug fallback keeps the tab title
+  // informative without hitting the API for a tuple we can't render briefly.
+  return { title: `${policy.slice(0, 8)}…` };
 }
 
 /**

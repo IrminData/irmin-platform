@@ -70,7 +70,7 @@ export const useRepositoryObjectContent = (
         // Alert the user
         irminAlert('success', dict.common.downloadSuccess);
       } else {
-        irminAlert('error', dict.common.somethingWentWrong);
+        irminAlert('error', dict.common.errors.mutations.downloadObjectFailed);
       }
     },
     onError: (error) => {

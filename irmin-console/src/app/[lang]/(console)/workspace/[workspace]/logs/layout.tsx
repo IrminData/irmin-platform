@@ -2,16 +2,30 @@ import type { Metadata } from 'next';
 
 import type { WorkspaceLayoutParams } from '@/app/[lang]/(console)/workspace/[workspace]/layout';
 
+import { fetchWorkspaceMeta } from '@/lib/core/serverFetchers';
+import { getServerDict } from '@/lib/dict/server';
+import { buildTitle, buildTitleTemplate } from '@/lib/metadata';
+
 /**
- * SEO metadata for the Logs pages
+ * Logs layer metadata. Injects "Logs" as a middle segment between the leaf
+ * entity's name (set by a nested layout, e.g. repository/[repository]) and
+ * the workspace suffix, yielding titles like
+ * "demo-data – Logs – Tim's Office · Irmin".
  */
 export async function generateMetadata(props: {
   params: Promise<WorkspaceLayoutParams>;
 }): Promise<Metadata> {
-  const params = await props.params;
-  const formattedWorkspace = params.workspace.replace(/-/g, ' ');
+  const { lang, workspace } = await props.params;
+  const dict = getServerDict(lang);
+  const ws = await fetchWorkspaceMeta(lang, workspace);
+  // Match the workspace layout's ellipsis fallback on fetch failure.
+  const wsName = ws?.name ?? `${workspace}…`;
+  const logs = dict.metadata.sections.logs;
   return {
-    title: `Logs | ${formattedWorkspace} | IRMIN Console`,
+    title: {
+      default: buildTitle([logs, wsName]),
+      template: buildTitleTemplate([logs, wsName]),
+    },
   };
 }
 

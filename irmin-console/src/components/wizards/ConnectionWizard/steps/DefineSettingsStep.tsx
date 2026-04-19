@@ -126,7 +126,8 @@ export default function DefineSettingsStep({
       <QueryError
         error={connectionConfigurationQuery.error}
         onRetry={() => connectionConfigurationQuery.refetch()}
-        title={dict.common.error}
+        title={dict.common.errors.failedToLoadConnector}
+        description={dict.common.errors.failedToLoadAgain}
       />
     );
   }

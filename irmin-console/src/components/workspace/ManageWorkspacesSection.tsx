@@ -9,6 +9,7 @@ import { IoAdd } from 'react-icons/io5';
 import { inviteInboxQueryKey } from '@/lib/queryKeys';
 
 import { Button } from '@/components/ui/button';
+import DisplayTitle from '@/components/ui/display-title';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { QueryError } from '@/components/ui/error/QueryError';
 import SafeComponent from '@/components/ui/error/SafeComponent';
@@ -20,11 +21,7 @@ import WorkspaceCard from '@/components/workspace/WorkspaceCard';
 import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import {
-  useWorkspaceActions,
-  useWorkspaces,
-  useWorkspaceSummaries,
-} from '@/hooks/api';
+import { useWorkspaces, useWorkspaceSummaries } from '@/hooks/api';
 
 import type { Invite } from '@/types/core/Invite';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
@@ -41,7 +38,6 @@ import type { WorkspaceSummary } from '@/types/core/Workspace';
 const ManageWorkspacesSection = () => {
   const { dict } = useLocale();
   const { getCore } = useIrminCore();
-  const { switchWorkspace } = useWorkspaceActions();
   const { workspacesQuery } = useWorkspaces();
   const { workspaceSummariesQuery } = useWorkspaceSummaries();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -121,14 +117,18 @@ const ManageWorkspacesSection = () => {
       description='Failed to load workspace management interface'
     >
       <div className='pattern-bg h-full'>
-        <div className='relative container mx-auto max-w-4xl px-4 py-12'>
+        <div className='relative container mx-auto max-w-4xl px-4 py-16'>
           {/* Pending invites */}
           {pendingInvites.length > 0 && (
-            <div className='mb-6'>
-              <h2 className='mb-2 text-lg font-semibold'>
+            <section className='mb-10'>
+              <h2
+                className={`
+                  mb-1 text-lg font-semibold tracking-tight text-foreground
+                `}
+              >
                 {dict.invite.pendingInvites}
               </h2>
-              <p className='mb-3 text-sm text-muted-foreground'>
+              <p className='mb-4 text-sm text-muted-foreground'>
                 {dict.invite.pendingInvitesDescription}
               </p>
               <div className='flex flex-col gap-2'>
@@ -136,31 +136,46 @@ const ManageWorkspacesSection = () => {
                   <PendingInviteCard key={invite.id} invite={invite} />
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
           {/* Header */}
-          <div className='mb-4 flex items-center justify-between'>
-            <h2 className='text-lg font-semibold'>
-              {dict.workspaceSwitcher.selectWorkspace}
-            </h2>
+          <div
+            className={`
+              mb-6 flex flex-col gap-4
+              sm:flex-row sm:items-end sm:justify-between
+            `}
+          >
+            <div className='min-w-0'>
+              <DisplayTitle>
+                {dict.workspaceSwitcher.selectWorkspace}
+              </DisplayTitle>
+              <p className='mt-2 max-w-lg text-sm text-muted-foreground'>
+                {workspaceList.length > 0
+                  ? (workspaceList.length === 1
+                      ? dict.workspaceSwitcher.workspaceCountOne
+                      : dict.workspaceSwitcher.workspaceCountOther
+                    ).replace('{n}', String(workspaceList.length))
+                  : dict.workspaceSwitcher.createFirstWorkspaceDescription}
+              </p>
+            </div>
             <Button
               variant='gradient'
               size='sm'
               onClick={() => setIsCreateModalOpen(true)}
+              className='
+                shrink-0 self-start
+                sm:self-end
+              '
             >
-              <IoAdd className='size-4' />
+              <IoAdd className='size-4' aria-hidden='true' />
               {dict.workspaceSwitcher.createNewWorkspace}
             </Button>
           </div>
 
           {/* Workspace list */}
           {isLoading ? (
-            <div
-              className={`
-                flex flex-col gap-2 divide-y divide-border/50 rounded-xl
-              `}
-            >
+            <div className='flex flex-col gap-2'>
               {Array.from({ length: 6 }, (_, idx) => (
                 <WorkspaceCardSkeleton key={`workspace-skeleton-${idx}`} />
               ))}
@@ -179,11 +194,7 @@ const ManageWorkspacesSection = () => {
               />
             </div>
           ) : (
-            <div
-              className={`
-                flex flex-col gap-2 divide-y divide-border/50 rounded-xl
-              `}
-            >
+            <div className='flex flex-col gap-2'>
               {workspaceList.map((workspace, _index) => {
                 const summary = summaryMap.get(workspace.id);
                 return (
@@ -194,7 +205,6 @@ const ManageWorkspacesSection = () => {
                     isRecentlyUsed={
                       mostRecentId != null && workspace.id === mostRecentId
                     }
-                    handleClick={switchWorkspace}
                   />
                 );
               })}

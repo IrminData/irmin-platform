@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { connectionQueryKey } from '@/lib/queryKeys';
 
+import { QueryError } from '@/components/ui/error/QueryError';
 import type { FieldConfig } from '@/components/ui/form/SettingsForm';
 import SettingsForm from '@/components/ui/form/SettingsForm';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -244,9 +245,12 @@ const ConnectionSettingsSection = () => {
 
   if (connectionQuery.isError) {
     return (
-      <div>
-        {dict.common.error}: {connectionQuery.error.message}
-      </div>
+      <QueryError
+        error={connectionQuery.error}
+        onRetry={() => connectionQuery.refetch()}
+        title={dict.common.errors.failedToLoadConnection}
+        description={dict.common.errors.failedToLoadAgain}
+      />
     );
   }
 

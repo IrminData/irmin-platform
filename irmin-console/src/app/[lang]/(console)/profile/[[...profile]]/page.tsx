@@ -1,18 +1,8 @@
-import type { Metadata } from 'next';
-
 import ProfileSection from '@/components/user/ProfileSection';
 
-/**
- * Page metadata for SEO on the profile page
- */
-export const metadata: Metadata = {
-  title: 'My profile | IRMIN',
-  description: 'Edit your profile settings and preferences on IRMIN.',
-};
+// Title falls through to the profile layout's `title.default` ("Profile · Irmin").
+// Setting one here would compose the layout template and yield "Profile – Profile · Irmin".
 
-/**
- * User profile settings page
- */
 export default function ProfilePage() {
   return <ProfileSection />;
 }

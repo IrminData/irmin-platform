@@ -3,6 +3,7 @@
 import { useCallback } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { QueryError } from '@/components/ui/error/QueryError';
 import type { DocumentationFormValues } from '@/components/ui/form/DocumentationForm';
 import DocumentationForm from '@/components/ui/form/DocumentationForm';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -45,9 +46,12 @@ const WorkflowDocumentationSection = ({
 
   if (workflowQuery.isError) {
     return (
-      <div>
-        {dict.common.error}: {workflowQuery.error.message}
-      </div>
+      <QueryError
+        error={workflowQuery.error}
+        onRetry={() => workflowQuery.refetch()}
+        title={dict.common.errors.failedToLoadWorkflow}
+        description={dict.common.errors.failedToLoadAgain}
+      />
     );
   }
 

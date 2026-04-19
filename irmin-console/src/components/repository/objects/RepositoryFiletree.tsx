@@ -367,7 +367,8 @@ const RepositoryFiletree = ({
           <QueryError
             error={repositoryObjectQuery.error}
             onRetry={() => repositoryObjectQuery.refetch()}
-            title={dict.common.somethingWentWrong}
+            title={dict.common.errors.failedToLoadObjects}
+            description={dict.common.errors.failedToLoadAgain}
             size='sm'
           />
         </div>

@@ -11,9 +11,11 @@ import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 
 import ConsoleSearch from '@/components/search/ConsoleSearch';
 import { Button } from '@/components/ui/button';
-import { ErrorBoundary } from '@/components/ui/error/ErrorBoundary';
+import AuthenticationErrorHandler from '@/components/ui/error/AuthenticationErrorHandler';
+import SafeComponent from '@/components/ui/error/SafeComponent';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useWorkspaces } from '@/hooks/api';
@@ -45,22 +47,38 @@ export default function ConsoleWrapper({
   children: React.ReactNode;
 }) {
   return (
-    <ErrorBoundary
+    <SafeComponent
       level='page'
       titleKey='consoleTitle'
       descriptionKey='consoleDescription'
     >
       <ConsoleWrapperContent>{children}</ConsoleWrapperContent>
-    </ErrorBoundary>
+    </SafeComponent>
   );
 }
 
 function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
   const { dict } = useLocale();
+  const { authError } = useIAM();
   const params = useParams<{ workspace?: string }>();
   const { loadingPermissions, ...links } = useConsoleNavigationLinks();
 
-  const isLargeScreen = useBreakpoint('@lg');
+  // Detect "large screen" = viewport >= 1024px, which is exactly when the
+  // sidebar's `lg:hidden` / `lg:relative` classes flip from mobile-overlay
+  // mode to persistent-desktop mode. Two gotchas this call has to avoid:
+  //
+  // 1. useBreakpoint returns `{ 'is@5xl': boolean }` (keyed by capitalized
+  //    breakpoint). Without destructuring, the bound value is a truthy
+  //    object, which silently breaks every downstream `isLargeScreen ? ...
+  //    : ...` and every `!isLargeScreen` check.
+  //
+  // 2. The custom breakpoint scale in src/utils/tw.ts is container-query
+  //    style: `@lg` is 512px (!), `@5xl` is 1024px. Tailwind v4's default
+  //    screen `lg:` is 1024px. So to match the CSS, we need `@5xl`, not
+  //    `@lg` — using `@lg` would flip isLargeScreen to true at 512px while
+  //    the sidebar is still rendering as a mobile overlay, which disables
+  //    inert on tablets (512-1023px) and lets focus escape the drawer.
+  const { 'is@5xl': isLargeScreen } = useBreakpoint('@5xl');
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuFolded, setIsMenuFolded] = useState(false);
@@ -77,15 +95,41 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className='contents' id='console-wrapper'>
+      {/* Mobile drawer backdrop — clickable to close, blocks pointer events.
+          aria-hidden + tabIndex=-1 because the real close affordance is the
+          hamburger toggle; we don't want AT to announce this button too.
+          Gated on !isLargeScreen so the element isn't in the DOM on
+          desktop (≥1024px) where the sidebar is always visible and the
+          backdrop would be inert chrome. */}
+      {isMenuOpen && !isLargeScreen && (
+        <button
+          type='button'
+          aria-hidden='true'
+          tabIndex={-1}
+          onClick={() => setIsMenuOpen(false)}
+          className={`
+            fixed inset-0 z-5 block bg-foreground/20 backdrop-blur-xs
+            lg:hidden
+          `}
+        >
+          <span className='sr-only'>{dict.consoleNavigation.closeMenu}</span>
+        </button>
+      )}
       {/* Console wrapper structure */}
       <div className='flex w-screen flex-row items-start justify-start gap-0'>
-        {/* Console navigation sidebar */}
-        <div
+        {/* Console navigation sidebar. We intentionally do NOT claim
+            role='dialog'/aria-modal on mobile — that would advertise an
+            ARIA modal dialog pattern we haven't implemented (no focus
+            trap, no Escape-to-close, no focus return on close). The
+            sidebar is a plain disclosure region; the backdrop handles
+            dismissal and inert on content-wrapper confines interaction. */}
+        <aside
           id='console-sidebar-wrapper'
+          aria-label={dict.consoleNavigation.workspaceNavigationAriaLabel}
           className={`
-            scrollbar-hide h-screen overflow-x-hidden overflow-y-scroll border-r
-            bg-background transition-[width] duration-300
-            dark:border-gray-800
+            scrollbar-hide h-screen overflow-x-hidden overflow-y-scroll
+            overscroll-contain border-r border-border bg-background
+            transition-[width] duration-150 ease-in-out
             ${
               isMenuOpen
                 ? 'absolute z-10 block'
@@ -119,7 +163,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
               >
                 <div
                   className={`
-                    block pt-2 transition-opacity duration-300
+                    block pt-2 transition-opacity duration-150
                     ${foldMenu ? `hidden opacity-0` : `opacity-100`}
                   `}
                 >
@@ -152,15 +196,27 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                     lg:block
                     ${!foldMenu ? 'right-0' : 'left-7'}
                   `}
-                  aria-label='Fold the side navigation'
+                  aria-label={
+                    foldMenu
+                      ? dict.consoleNavigation.expandSidebar
+                      : dict.consoleNavigation.foldSidebar
+                  }
+                  aria-expanded={!foldMenu}
+                  aria-controls='console-sidebar-wrapper'
                   onClick={() => setIsMenuFolded(!foldMenu)}
                   size={'icon'}
                   variant={'link'}
                 >
                   {foldMenu ? (
-                    <TbChevronRight className='size-6 opacity-60' />
+                    <TbChevronRight
+                      className='size-6 opacity-60'
+                      aria-hidden='true'
+                    />
                   ) : (
-                    <TbChevronLeft className='size-6 opacity-60' />
+                    <TbChevronLeft
+                      className='size-6 opacity-60'
+                      aria-hidden='true'
+                    />
                   )}
                 </Button>
               </div>
@@ -180,7 +236,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
               <div
                 id='console-sidebar-workspace-switcher'
                 className={`
-                  transition-[width]
+                  transition-[width] duration-150 ease-in-out
                   ${foldMenu ? 'hidden w-0' : `block w-full`}
                 `}
               >
@@ -197,11 +253,15 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
 
               {/* No workspace links */}
               {!currentWorkspace && (
-                <div id='console-sidebar-links-no-workspace'>
+                <nav
+                  id='console-sidebar-links-no-workspace'
+                  aria-label={dict.consoleNavigation.irminConsole}
+                >
                   <p
                     className={`
-                      mb-2 w-max pl-8 text-xs font-medium text-accent uppercase
-                      transition-opacity duration-300
+                      mb-2 w-max pl-8 text-[11px] font-medium tracking-wider
+                      text-muted-foreground uppercase transition-opacity
+                      duration-150
                       ${foldMenu ? 'hidden opacity-0' : 'opacity-100'}
                     `}
                   >
@@ -218,7 +278,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                       />
                     ))}
                   </ul>
-                </div>
+                </nav>
               )}
 
               {/* Workspace links */}
@@ -229,11 +289,15 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                 </div>
               )}
               {currentWorkspace && (
-                <div id='console-sidebar-links-workspace'>
+                <nav
+                  id='console-sidebar-links-workspace'
+                  aria-label={dict.consoleNavigation.workspace}
+                >
                   <p
                     className={`
-                      mb-2 w-max pl-8 text-xs font-medium text-accent uppercase
-                      transition-opacity duration-300
+                      mb-2 w-max pl-8 text-[11px] font-medium tracking-wider
+                      text-muted-foreground uppercase transition-opacity
+                      duration-150
                       ${foldMenu ? 'hidden opacity-0' : 'opacity-100'}
                     `}
                   >
@@ -258,7 +322,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                       />
                     ))}
                   </ul>
-                </div>
+                </nav>
               )}
             </div>
             <div className='grow' />
@@ -269,7 +333,8 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                 ${foldMenu ? `mt-24 gap-0` : `gap-6`}
               `}
             >
-              <div
+              <nav
+                aria-label={dict.consoleNavigation.usefulLinks}
                 className={`
                   w-full min-w-64 pt-8
                   ${foldMenu ? `hidden w-0 opacity-0` : `block opacity-100`}
@@ -278,8 +343,9 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
               >
                 <p
                   className={`
-                    w-max pl-7 text-xs font-medium text-accent uppercase
-                    transition-opacity duration-300
+                    w-max pl-7 text-[11px] font-medium tracking-wider
+                    text-muted-foreground uppercase transition-opacity
+                    duration-150
                   `}
                 >
                   {dict.consoleNavigation.usefulLinks}
@@ -289,50 +355,47 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                     <Link
                       key={`console-nav-useful-${link.title}`}
                       className={`
-                        mb-2 text-left text-gray-500 transition-colors
-                        hover:text-gray-700
-                        dark:text-gray-400
-                        dark:hover:text-gray-100
+                        -mx-2 flex min-h-9 items-center gap-2 rounded-md px-2
+                        text-left text-sm text-muted-foreground
+                        transition-colors
+                        hover:bg-accent/10 hover:text-foreground
+                        focus-visible:ring-1 focus-visible:ring-ring
+                        focus-visible:outline-none
                       `}
                       href={link.href ?? ''}
                       onClick={() => setIsMenuOpen(false)}
                       aria-label={link.title}
                       {...(link.props as ComponentPropsWithoutRef<'a'>)}
                     >
-                      <div className={`flex w-full items-center justify-start`}>
-                        <div className={'mr-1 text-base'}>{link.icon}</div>
-                        <p className={'text-xs font-normal'}>{link.title}</p>
-                      </div>
+                      <span className='text-base' aria-hidden='true'>
+                        {link.icon}
+                      </span>
+                      <span className='font-normal'>{link.title}</span>
                     </Link>
                   ))}
                 </div>
-              </div>
+              </nav>
             </div>
           </div>
-        </div>
-        {/* Console content to the right of the sidebar */}
+        </aside>
+        {/* Console content to the right of the sidebar.
+            On mobile when the drawer is open we mark this region inert so
+            keyboard focus, screen-reader navigation and pointer events are
+            confined to the drawer (the backdrop above blocks pointer events
+            visually; inert blocks them programmatically). */}
         <div
           id='console-content-wrapper'
+          inert={isMenuOpen && !isLargeScreen}
           className={`
-            flex h-screen flex-1 flex-col gap-0 transition-[margin,width,filter]
-            duration-300
-            ${
-              isMenuOpen
-                ? `
-                  w-screen blur-xs
-                  lg:blur-none
-                `
-                : ''
-            }
-            max-w-full overflow-scroll
+            flex h-screen max-w-full flex-1 flex-col gap-0 overflow-scroll
+            transition-[margin,width] duration-150 ease-in-out
           `}
         >
           {/* Top menu bar */}
           <div
             id='console-top-bar'
             className={`
-              z-20 w-full border-b bg-background
-              dark:border-gray-800
+              z-20 w-full border-b border-border bg-background
               ${
                 isMenuOpen
                   ? `pl-0`
@@ -391,54 +454,68 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </div>
-          {/* Console content */}
-          <div
+          {/* Console content.
+              AuthenticationErrorHandler is scoped to the content area only —
+              auth/profile errors surface here without wiping sidebar, nav,
+              search, workspace switcher, or theme toggle. Signed-out users
+              on protected routes still get redirected to /sign-in (the
+              handler's useEffect). */}
+          <main
             id='console-content'
             className={`
               relative min-h-[calc(100vh-4rem)] overflow-y-scroll bg-background
             `}
           >
-            {children}
-          </div>
+            <AuthenticationErrorHandler error={authError}>
+              {children}
+            </AuthenticationErrorHandler>
+          </main>
         </div>
       </div>
       {/* Console navigation toggle on mobile */}
       <div
         id='console-navigation-toggle-mobile'
         className={`
-          fixed top-[8px] left-4 z-50 block
+          fixed top-1 left-2 z-50 block
           lg:hidden
         `}
       >
         <Button
-          className='relative aspect-square size-10'
+          className='relative aspect-square size-11'
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           size='icon'
           variant='link'
+          aria-label={
+            isMenuOpen
+              ? dict.consoleNavigation.closeMenu
+              : dict.consoleNavigation.openMenu
+          }
+          aria-expanded={isMenuOpen}
+          aria-controls='console-sidebar-wrapper'
         >
           <div
             className={`
-              absolute top-1/2 left-4 block w-5 -translate-1/2 transform
+              absolute top-1/2 left-1/2 block w-5 -translate-1/2 transform
             `}
           >
             <span
               className={`
-                absolute block h-0.5 w-7 transform bg-current transition
-                duration-500 ease-in-out
+                absolute block h-0.5 w-7 transform bg-current
+                transition-[transform,opacity] duration-200 ease-in-out
                 ${isMenuOpen ? 'rotate-45' : '-translate-y-1.5'}
               `}
             />
             <span
               className={`
-                absolute block h-0.5 w-5 transform bg-current transition
-                duration-500 ease-in-out
+                absolute block h-0.5 w-5 transform bg-current
+                transition-[transform,opacity] duration-200 ease-in-out
                 ${isMenuOpen ? 'opacity-0' : ''}
               `}
             />
             <span
               className={`
-                absolute block h-0.5 w-7 transform bg-current transition
-                duration-500 ease-in-out
+                absolute block h-0.5 w-7 transform bg-current
+                transition-[transform,opacity] duration-200 ease-in-out
                 ${isMenuOpen ? '-rotate-45' : 'translate-y-1.5'}
               `}
             />
