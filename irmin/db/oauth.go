@@ -147,6 +147,19 @@ type ConnectionOAuthToken struct {
 	LastRefreshAt *time.Time `json:"last_refresh_at,omitempty"`
 }
 
+// TableName overrides GORM's default pluralizer for the three OAuth tables.
+//
+// GORM's namer splits on uppercase boundaries, so `ConnectionOAuthClient`
+// would become `connection_o_auth_clients` (note the spurious `o_auth`).
+// Every other reference in this project — the handbook, the partial unique
+// index DDL in db.go, the roadmap doc — uses the human-readable
+// `connection_oauth_*`. Forcing the name here keeps those call sites
+// working and prevents a silent schema drift between AutoMigrate and the
+// raw SQL that follows it.
+func (ConnectionOAuthClient) TableName() string  { return "connection_oauth_clients" }
+func (ConnectionOAuthSession) TableName() string { return "connection_oauth_sessions" }
+func (ConnectionOAuthToken) TableName() string   { return "connection_oauth_tokens" }
+
 // Sentinel errors returned from the lookup helpers so callers can distinguish
 // "no such row" from transport/DB errors without reaching into GORM.
 var (

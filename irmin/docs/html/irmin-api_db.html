@@ -606,6 +606,16 @@ type ConnectionOAuthClient struct {
     Irmin-owned HubSpot or Stripe app). A non-nil `WorkspaceID` came from RFC
     7591 Dynamic Client Registration against the vendor's MCP server.
 
+func (ConnectionOAuthClient) TableName() string
+    TableName overrides GORM's default pluralizer for the three OAuth tables.
+
+    GORM's namer splits on uppercase boundaries, so `ConnectionOAuthClient`
+    would become `connection_o_auth_clients` (note the spurious `o_auth`). Every
+    other reference in this project — the handbook, the partial unique index DDL
+    in db.go, the roadmap doc — uses the human-readable `connection_oauth_*`.
+    Forcing the name here keeps those call sites working and prevents a silent
+    schema drift between AutoMigrate and the raw SQL that follows it.
+
 type ConnectionOAuthSession struct {
 	ConnectionID uint       `json:"connection_id" gorm:"index;not null"`
 	Connection   Connection `json:"connection"    gorm:"foreignKey:ConnectionID"`
@@ -643,6 +653,8 @@ type ConnectionOAuthSession struct {
     are short-lived (10 min TTL) and single-use — deleted after the callback
     successfully exchanges the code for tokens, and swept by cron otherwise.
 
+func (ConnectionOAuthSession) TableName() string
+
 type ConnectionOAuthToken struct {
 
 	// ConnectionID is the owner of the token set. UniqueIndex ensures one
@@ -675,6 +687,8 @@ type ConnectionOAuthToken struct {
     or the Connection itself is deleted. Kept in a separate table from
     Connection.Details so the existing secret-mask/merge logic doesn't need to
     know about OAuth tokens.
+
+func (ConnectionOAuthToken) TableName() string
 
 type ConnectionSchemaCache struct {
 	gorm.Model

@@ -3056,8 +3056,11 @@ import "irmin-api/db"
 - [type Connection](<#Connection>)
 - [type ConnectionEventType](<#ConnectionEventType>)
 - [type ConnectionOAuthClient](<#ConnectionOAuthClient>)
+  - [func \(ConnectionOAuthClient\) TableName\(\) string](<#ConnectionOAuthClient.TableName>)
 - [type ConnectionOAuthSession](<#ConnectionOAuthSession>)
+  - [func \(ConnectionOAuthSession\) TableName\(\) string](<#ConnectionOAuthSession.TableName>)
 - [type ConnectionOAuthToken](<#ConnectionOAuthToken>)
+  - [func \(ConnectionOAuthToken\) TableName\(\) string](<#ConnectionOAuthToken.TableName>)
 - [type ConnectionSchemaCache](<#ConnectionSchemaCache>)
 - [type ConnectionSubscription](<#ConnectionSubscription>)
 - [type ConnectionTag](<#ConnectionTag>)
@@ -4175,6 +4178,17 @@ type ConnectionOAuthClient struct {
 }
 ```
 
+<a name="ConnectionOAuthClient.TableName"></a>
+### func \(ConnectionOAuthClient\) TableName
+
+```go
+func (ConnectionOAuthClient) TableName() string
+```
+
+TableName overrides GORM's default pluralizer for the three OAuth tables.
+
+GORM's namer splits on uppercase boundaries, so \`ConnectionOAuthClient\` would become \`connection\_o\_auth\_clients\` \(note the spurious \`o\_auth\`\). Every other reference in this project — the handbook, the partial unique index DDL in db.go, the roadmap doc — uses the human\-readable \`connection\_oauth\_\*\`. Forcing the name here keeps those call sites working and prevents a silent schema drift between AutoMigrate and the raw SQL that follows it.
+
 <a name="ConnectionOAuthSession"></a>
 ## type ConnectionOAuthSession
 
@@ -4216,6 +4230,15 @@ type ConnectionOAuthSession struct {
 }
 ```
 
+<a name="ConnectionOAuthSession.TableName"></a>
+### func \(ConnectionOAuthSession\) TableName
+
+```go
+func (ConnectionOAuthSession) TableName() string
+```
+
+
+
 <a name="ConnectionOAuthToken"></a>
 ## type ConnectionOAuthToken
 
@@ -4250,6 +4273,15 @@ type ConnectionOAuthToken struct {
     // contains filtered or unexported fields
 }
 ```
+
+<a name="ConnectionOAuthToken.TableName"></a>
+### func \(ConnectionOAuthToken\) TableName
+
+```go
+func (ConnectionOAuthToken) TableName() string
+```
+
+
 
 <a name="ConnectionSchemaCache"></a>
 ## type ConnectionSchemaCache
