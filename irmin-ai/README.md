@@ -139,7 +139,18 @@ Copy the template and fill in the values you need:
 cp .env.example .env
 ```
 
-All variables, their defaults, and inline descriptions live in [`.env.example`](.env.example) — that is the single source of truth. Everything the service reads is runtime configuration (loaded at process startup via dotenv); there are no build-time variables.
+[`.env.example`](.env.example) is the single source of truth — every var is loaded once at startup via dotenv and validated by Zod. Everything is runtime config; there are no build-time vars.
+
+### Accessing env vars in code
+
+Don't read `process.env.*` directly. Import the typed `env` object from [`src/config/env.ts`](src/config/env.ts):
+
+```ts
+import { env } from '@/config/env';
+const dsn = env.SENTRY_DSN;
+```
+
+Adding a new var: update `.env.example` and the Zod schema in `src/config/env.ts`.
 
 ## Commands
 
