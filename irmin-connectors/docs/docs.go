@@ -5195,6 +5195,74 @@ const docTemplate = `{
                 }
             }
         },
+        "irminmodels.ConnectionOAuthConfig": {
+            "type": "object",
+            "required": [
+                "authorization_url",
+                "provider",
+                "scopes",
+                "token_url"
+            ],
+            "properties": {
+                "authorization_url": {
+                    "description": "AuthorizationURL is the user-agent-facing endpoint where the end\nuser approves the connection. Absolute https:// URL.",
+                    "type": "string",
+                    "example": "https://app.hubspot.com/oauth/authorize"
+                },
+                "dcr_endpoint": {
+                    "description": "DCREndpoint is optional (RFC 7591). When set, the Core can\ndynamically register an OAuth client per workspace on first use,\nskipping the need for an admin-configured app. MCP-compatible\nvendors (Intercom, Linear, Sentry, ...) typically provide this.",
+                    "type": "string",
+                    "example": "https://api.example.com/oauth/register"
+                },
+                "extra_params": {
+                    "description": "ExtraParams are vendor-specific parameters appended to the\nauthorization request (e.g., access_type=offline, prompt=consent).\nKeys that would override security-critical OAuth params are\nsilently dropped by the Core.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "access_type": "offline"
+                    }
+                },
+                "pkce": {
+                    "description": "PKCE must be true for new connectors. The Core refuses to run a\nflow when this is false. Retained as a field (rather than an\nalways-true default) so the contract is explicit on the wire.",
+                    "type": "boolean",
+                    "example": true
+                },
+                "provider": {
+                    "description": "Provider is a short canonical identifier for the vendor, e.g.\n\"hubspot\", \"stripe\", \"intercom\". Used in logs + error messages.",
+                    "type": "string",
+                    "maxLength": 64,
+                    "example": "hubspot"
+                },
+                "revocation_url": {
+                    "description": "RevocationURL is optional (RFC 7009). When set, the Core POSTs the\ntoken here on disconnect so the vendor drops the grant immediately.",
+                    "type": "string",
+                    "example": "https://api.example.com/oauth/revoke"
+                },
+                "scopes": {
+                    "description": "Scopes is the set of OAuth scopes the connector declares it needs.\nRead-only by default; connectors should follow least-privilege.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "crm.objects.contacts.read",
+                        "crm.objects.deals.read"
+                    ]
+                },
+                "token_url": {
+                    "description": "TokenURL is the token endpoint (RFC 6749 §3.2). Absolute https:// URL.",
+                    "type": "string",
+                    "example": "https://api.hubapi.com/oauth/v1/token"
+                },
+                "userinfo_url": {
+                    "description": "UserinfoURL is optional. When set, the Core may call it after a\nsuccessful exchange to populate a friendly \"connected as \u003cwho\u003e\"\nlabel in the UI. Not used in the Phase 2 wiring; reserved.",
+                    "type": "string",
+                    "example": "https://api.example.com/oauth/userinfo"
+                }
+            }
+        },
         "irminmodels.ConnectorCapability": {
             "type": "string",
             "enum": [
@@ -5843,6 +5911,14 @@ const docTemplate = `{
                         "iot",
                         "monitoring",
                         "other"
+                    ]
+                },
+                "connection_oauth_config": {
+                    "description": "ConnectionOAuthConfig is optional. When set, the connector declares\nit uses OAuth 2.0 (authorization code + PKCE) for authenticating a\nConnection, and Irmin Core runs the flow on the user's behalf. Nil\nmeans the connector uses the legacy DynamicField form path\n(password / API key / etc.). See OAUTH-CONNECTORS.md for the flow\n+ patterns + which vendors are planned.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.ConnectionOAuthConfig"
+                        }
                     ]
                 },
                 "description": {

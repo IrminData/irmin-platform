@@ -637,12 +637,87 @@ import "irmin-connectors/e2e-tests"
 import "irmin-connectors/lib"
 ```
 
+Package lib contains server\-side helpers shared across every connector implementation. oauth\_token\_client.go holds the HTTP client an OAuth\-backed connector uses to fetch a fresh vendor access token from Irmin Core's internal /api/v1/system/oauth/access\-token endpoint.
+
+The design principle is that the connectors service never persists vendor tokens — Core is the single source of truth and serialises refresh via row locks. On every vendor\-bound request the connector calls FetchVendorAccessToken\(ctx, connectionID\), which returns a currently\-valid bearer token. The cost is negligible: Core's fast path returns the cached token without hitting the vendor, and refresh only fires when the token is within the configured skew window.
+
+Wire contract:
+
+1. The connector reads the X\-Irmin\-Connection\-Id header on inbound operation requests; that identifies which Connection this operation belongs to. The header name is exported as connectorsclient.HeaderConnectionID in irmin/ for the Core side; connectors\-side it's the literal string below.
+2. The connector calls Core at POST \{IRMIN\_API\_BASE\_URL\}/api/v1/system/oauth/access\-token with Authorization: Bearer \{IRMIN\_API\_TOKEN\} and the JSON body \{"connection\_id": \<uint\>\}.
+3. Core responds 200 with \{"data": \{"access\_token": "...", "token\_type": "...", "expires\_at": "...", "scope": "..."\}\}.
+
+Failure modes are translated to sentinel errors so callers can surface the right UX:
+
+- ErrNotConnected: the Connection has no OAuth token row. The user must \(re\)connect through the console.
+- ErrRefreshRejected: Core's refresh call to the vendor failed \(user likely revoked the app\). Same UX: prompt reconnect.
+- ErrCoreUnavailable: Core is unreachable or returned 5xx — transient, retry later.
+
+All other non\-2xx responses collapse to a wrapped fmt\-error so callers can decide between bubbling up or logging and continuing.
+
 ## Index
 
+- [Constants](<#constants>)
+- [Variables](<#variables>)
+- [func ConnectionIDFromRequestHeader\(getHeader func\(string\) string\) \(uint, error\)](<#ConnectionIDFromRequestHeader>)
 - [func UpdateConnectorInDB\(d \*db.Database, logger \*slog.Logger, irminID, token, connectorName string\) error](<#UpdateConnectorInDB>)
 - [func ValidateConnectorSystemToken\(d \*db.Database, env \*utils.ConnectorsEnv, logger \*slog.Logger, c fiber.Ctx, connectorName string\) \(bool, \*db.ConnectorRegistration\)](<#ValidateConnectorSystemToken>)
 - [func ValidateOperationToken\(d \*db.Database, logger \*slog.Logger, c fiber.Ctx, connectorName string\) \(bool, \*db.ConnectorRegistration, \*db.Operation\)](<#ValidateOperationToken>)
+- [type OAuthTokenClient](<#OAuthTokenClient>)
+  - [func NewOAuthTokenClient\(coreBaseURL, systemToken string\) \*OAuthTokenClient](<#NewOAuthTokenClient>)
+  - [func \(c \*OAuthTokenClient\) FetchVendorAccessToken\(ctx context.Context, connectionID uint\) \(\*VendorAccessToken, error\)](<#OAuthTokenClient.FetchVendorAccessToken>)
+- [type VendorAccessToken](<#VendorAccessToken>)
+  - [func \(t \*VendorAccessToken\) AuthorizationHeader\(\) string](<#VendorAccessToken.AuthorizationHeader>)
 
+
+## Constants
+
+<a name="HeaderConnectionID"></a>HeaderConnectionID is the header Core stamps on every outbound connector request to identify the Connection this operation is for. Exported so handler code can read it with c.Get\(lib.HeaderConnectionID\).
+
+The canonical form matches Go's http.Header canonicalisation rules; do not rename without updating irmin/connectors\-client/client.go in lockstep — it's the cross\-service wire contract.
+
+```go
+const HeaderConnectionID = "X-Irmin-Connection-Id"
+```
+
+## Variables
+
+<a name="ErrNotConnected"></a>Sentinel errors for the small set of failure modes connector handlers need to distinguish. Anything else is returned as a wrapped error.
+
+```go
+var (
+    // ErrNotConnected means the Connection has never completed OAuth, or
+    // its token was revoked. Connector handlers should surface a
+    // "reconnect required" response so the UI can guide the user.
+    ErrNotConnected = errors.New("oauth: connection has no access token")
+
+    // ErrRefreshRejected means the vendor rejected Core's refresh
+    // attempt. Usually indicates the user revoked the app at the vendor.
+    // Same UX as ErrNotConnected: prompt reconnect.
+    ErrRefreshRejected = errors.New("oauth: vendor rejected refresh token")
+
+    // ErrCoreUnavailable means Core itself is unreachable or unhealthy.
+    // Callers should treat this as transient and retry with backoff.
+    ErrCoreUnavailable = errors.New("oauth: irmin core is unavailable")
+
+    // ErrMissingConnectionHeader is returned by ConnectionIDFromRequest
+    // when the inbound request lacks X-Irmin-Connection-Id. OAuth-backed
+    // connectors should 400 the caller in this case — Core must always
+    // stamp the header for OAuth connectors.
+    ErrMissingConnectionHeader = errors.New(
+        "oauth: " + HeaderConnectionID + " header missing or invalid",
+    )
+)
+```
+
+<a name="ConnectionIDFromRequestHeader"></a>
+## func ConnectionIDFromRequestHeader
+
+```go
+func ConnectionIDFromRequestHeader(getHeader func(string) string) (uint, error)
+```
+
+ConnectionIDFromRequestHeader reads the X\-Irmin\-Connection\-Id header from the given getter and returns the numeric Connection ID. The getter is any fiber.Ctx.Get\-shaped function, so this helper works for both the fiber.Ctx and http.Request paths without forcing a direct Fiber dependency in every connector.
 
 <a name="UpdateConnectorInDB"></a>
 ## func UpdateConnectorInDB
@@ -670,6 +745,75 @@ func ValidateOperationToken(d *db.Database, logger *slog.Logger, c fiber.Ctx, co
 ```
 
 ValidateOperationToken validates the provided token against the operation token of the connector registration instance.
+
+<a name="OAuthTokenClient"></a>
+## type OAuthTokenClient
+
+OAuthTokenClient talks to Core's internal access\-token endpoint. One instance per connector process; safe for concurrent use.
+
+Construction is intentionally minimal — CoreBaseURL \+ SystemToken are the only required pieces and both live in the existing IRMIN\_API\_BASE\_URL / IRMIN\_API\_TOKEN env vars.
+
+```go
+type OAuthTokenClient struct {
+    // CoreBaseURL is the full base URL of Core, e.g.
+    // "https://api.irmin.dev" (no trailing slash, no /api/v1 prefix —
+    // the path is appended below).
+    CoreBaseURL string
+
+    // SystemToken is the connector registration's system token that Core
+    // recognises as a trusted internal caller. Same value the connector
+    // uses for all other system-authenticated calls back to Core.
+    SystemToken string
+
+    // HTTPClient is the underlying transport. When nil, a client with a
+    // 30-second timeout is used. Tests inject their own to stub the
+    // endpoint via httptest.
+    HTTPClient *http.Client
+}
+```
+
+<a name="NewOAuthTokenClient"></a>
+### func NewOAuthTokenClient
+
+```go
+func NewOAuthTokenClient(coreBaseURL, systemToken string) *OAuthTokenClient
+```
+
+NewOAuthTokenClient returns a client wired with a sensible default timeout. Callers that need custom retries, TLS config, or proxy handling can assign .HTTPClient after construction.
+
+<a name="OAuthTokenClient.FetchVendorAccessToken"></a>
+### func \(\*OAuthTokenClient\) FetchVendorAccessToken
+
+```go
+func (c *OAuthTokenClient) FetchVendorAccessToken(ctx context.Context, connectionID uint) (*VendorAccessToken, error)
+```
+
+FetchVendorAccessToken asks Core for a currently\-valid vendor token for the given Connection. Core transparently refreshes if the stored token is inside its expiry skew window.
+
+Idempotent and safe to call on every vendor\-bound request; the fast path is a single small HTTPS round\-trip to Core with no vendor I/O.
+
+<a name="VendorAccessToken"></a>
+## type VendorAccessToken
+
+VendorAccessToken is the subset of fields a connector actually uses when authenticating against a vendor API. Mirrors Core's systemAccessTokenResponse so the JSON unmarshal is a direct map.
+
+```go
+type VendorAccessToken struct {
+    Value     string     `json:"access_token"`
+    TokenType string     `json:"token_type"`
+    ExpiresAt *time.Time `json:"expires_at,omitempty"`
+    Scope     string     `json:"scope,omitempty"`
+}
+```
+
+<a name="VendorAccessToken.AuthorizationHeader"></a>
+### func \(\*VendorAccessToken\) AuthorizationHeader
+
+```go
+func (t *VendorAccessToken) AuthorizationHeader() string
+```
+
+AuthorizationHeader returns the exact value a connector should set on outbound vendor requests, e.g. "Bearer ya29...". Uses "Bearer" when the vendor omitted token\_type, matching OAuth 2.0 §5.1 convention.
 
 # listeners
 
@@ -819,6 +963,14 @@ type ConnectorDetails struct {
     Categories       []irminmodels.ConnectorCategory   `json:"categories"        example:"database,crm,erp,warehouse,marketing,analytics,storage,messaging,payment,social,calendar,project_management,ecommerce,iot,monitoring,other"`
     AuthorEmail      string                            `json:"author_email"      example:"hello@irmin.co"`
     ReadMoreURL      string                            `json:"read_more_url"     example:"https://docs.irmin.co/connectors/mysql"`
+
+    // ConnectionOAuthConfig is optional. When set, the connector declares
+    // it uses OAuth 2.0 (authorization code + PKCE) for authenticating a
+    // Connection, and Irmin Core runs the flow on the user's behalf. Nil
+    // means the connector uses the legacy DynamicField form path
+    // (password / API key / etc.). See OAUTH-CONNECTORS.md for the flow
+    // + patterns + which vendors are planned.
+    ConnectionOAuthConfig *irminmodels.ConnectionOAuthConfig `json:"connection_oauth_config,omitempty"`
 }
 ```
 
@@ -1513,19 +1665,22 @@ ConnectorsEnv is a struct that holds the environment variables for the connector
 
 ```go
 type ConnectorsEnv struct {
-    Port                     string  // Port to run the connectors server on
-    URL                      string  // URL of the connectors server
-    HelmetEnabled            bool    // Whether helmet is enabled
-    CorsEnabled              bool    // Whether CORS is enabled
-    CorsOrigins              string  // Origins allowed to access the connectors server
-    UniversalConnectorAPIKey string  // Universal API Key for all connectors.
-    APIBaseURL               string  // Base URL of the Irmin Core API
-    APIToken                 string  // Token to authenticate system requests to the Irmin Core API
-    DatabaseConnectionString string  // Connection string for the database
-    SentryEnabled            bool    // Flag to enable Sentry error tracking
-    SentryDSN                string  // Sentry DSN for error reporting
-    SentryEnvironment        string  // Sentry environment name (default "development")
-    SentryTracesSampleRate   float64 // Sentry traces sample rate (default 0.1)
+    Port                     string // Port to run the connectors server on
+    URL                      string // URL of the connectors server
+    HelmetEnabled            bool   // Whether helmet is enabled
+    CorsEnabled              bool   // Whether CORS is enabled
+    CorsOrigins              string // Origins allowed to access the connectors server
+    UniversalConnectorAPIKey string // Universal API Key for all connectors.
+    APIBaseURL               string // Base URL of the Irmin Core API
+    APIToken                 string // Token to authenticate system requests to the Irmin Core API
+    DatabaseConnectionString string // Connection string for the database
+    // Sentry — SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN are read
+    // directly from the environment by release tagging / CI scripts, not by
+    // the running service, so they are intentionally not loaded here.
+    SentryEnabled          bool    // Flag to enable Sentry error tracking
+    SentryDSN              string  // Sentry DSN for error reporting
+    SentryEnvironment      string  // Sentry environment name (default "development")
+    SentryTracesSampleRate float64 // Sentry traces sample rate (default 0.1)
 }
 ```
 

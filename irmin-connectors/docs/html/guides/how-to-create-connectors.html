@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>How to Create Connectors · irmin-connectors</title>
+<style>
+  body{font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+       max-width:820px;margin:2rem auto;padding:0 1rem;color:#1f2937}
+  h1,h2,h3{margin-top:2em}
+  pre{background:#f3f4f6;padding:1rem;border-radius:6px;overflow-x:auto}
+  code{background:#f3f4f6;padding:2px 4px;border-radius:3px}
+  pre code{background:transparent;padding:0}
+  a{color:#0369a1}
+  table{border-collapse:collapse;margin:1em 0}
+  th,td{border:1px solid #e5e7eb;padding:6px 10px;text-align:left}
+  th{background:#f3f4f6}
+  nav{font-size:13px;color:#6b7280;margin-bottom:2rem}
+  nav a{color:#6b7280;text-decoration:underline}
+</style>
+</head><body>
+<nav><a href="../index.html">← Documentation index</a></nav>
+<script id="source" type="text/markdown">
+# How to Create Connectors
+
+This guide explains how to add a new connector to the Irmin Connectors repository.
+
+## Overview
+
+Connectors define the interfaces that allow Irmin to interact with external systems in a simple, standardized, stateless and safe fashion. Each connector implements a set of standard endpoints that handle authentication, configuration, and data operations.
+
+### Read this first
+
+- **New to how connectors work?** Read `connector-architecture.md`
+  before this file. It explains the conceptual model — who talks to
+  whom, what authenticates what, what an operation is — so the
+  mechanical steps below make sense.
+- **Concepts and lifecycle:** `concepts-and-processes.md` has the
+  end-to-end view including Core-side pieces.
+- **Building an OAuth-backed connector?** The generic "Adding a New
+  Connector" steps below apply to you; the OAuth-specific
+  additions/deltas are in the dedicated **"OAuth-Backed Connectors"**
+  section at the bottom of this file.
+- **Shared base class (work in progress):** the long-term goal is a
+  `connectors/common/` base that absorbs the lifecycle + auth + OAuth
+  glue so new connectors are ~300–500 lines of vendor-specific code.
+  Until that refactor lands, both the legacy per-connector-controller
+  shape documented below and the shared-base shape will be valid; new
+  OAuth connectors should wait for the base if they can.
+
+## Adding a New Connector
+
+### 1. Create the Connector Directory Structure
+
+Create a new directory in the `connectors/` folder with your connector name:
+
+```
+connectors/
+└── your-connector/
+    ├── models/
+    │   ├── connectionSettings.go
+    │   └── connectionDetails.go
+    ├── controllers/
+    │   └── controllers.go
+    ├── client/
+    │   └── client.go
+    ├── config/
+    │   └── config.go
+    ├── routes.go
+    └── listener.go (if your connector supports subscriptions)
+```
+
+### 2. Files That Need to be Edited
+
+When adding a new connector, you must edit these files:
+
+1. **`connectors/connectors.go`** - Add your connector to:
+   - `SetupConnectorRoutes()` function
+   - `StartConnectorSubscriptionListener()` function (if supporting subscriptions)
+   - `RegisterAllConnectors()` function
+
+2. **`public/`** directory - Add your connector's logo and any public assets
+
+### 3. Standard Connector Endpoints
+
+Every connector must implement these endpoints:
+
+#### System Token Authenticated Endpoints
+
+These endpoints are called by the Irmin API and require a system token for authentication:
+
+- **`GET /{connector-slug}/info`** - Returns connector information and capabilities
+- **`POST /{connector-slug}/configuration/{key}/fields`** - Returns dynamic configuration fields
+- **`POST /{connector-slug}/configuration/validate`** - Validates connection configuration
+- **`POST /{connector-slug}/operation/init`** - Initializes a new operation
+- **`POST /{connector-slug}/operation/cancel`** - Cancels a running operation
+- **`POST /{connector-slug}/operation/status`** - Returns operation status
+
+#### Operation Token Authenticated Endpoints
+
+These endpoints are called during active operations and require an operation token:
+
+- **`POST /{connector-slug}/operation/schema/{operation}`** - Returns schema for the operation
+- **`POST /{connector-slug}/operation/push`** - Pushes data to the external system
+- **`POST /{connector-slug}/operation/patch`** - Updates data in the external system
+- **`POST /{connector-slug}/operation/pull`** - Pulls data from the external system
+- **`POST /{connector-slug}/operation/subscribe`** - Subscribes to changes (optional)
+
+#### Public Endpoints
+
+- **`GET /{connector-slug}/details`** - Public information about the connector (uses HTML templates)
+
+### 4. Authentication
+
+#### System Tokens
+- Used for connector management operations
+- Generated during connector registration
+- Validated against the database
+- Required for configuration and operation lifecycle endpoints
+
+#### Operation Tokens
+- Used for data operations within a specific workflow
+- Generated when an operation is initialized
+- Have limited lifetime and scope
+- Required for data push/pull/patch operations
+
+### 5. Data Structures
+
+#### Required Models
+
+**ConnectionSettings** - Connector-specific configuration:
+```go
+type ConnectionSettings struct {
+    // Add your connector's required settings
+    Host     string `json:"host"`
+    Port     int    `json:"port"`
+    Database string `json:"database"`
+    // ... other fields
+}
+```
+
+**ConnectionDetails** - User credentials and sensitive data:
+```go
+type ConnectionDetails struct {
+    Username string `json:"username"`
+    Password string `json:"password"`
+    // ... other sensitive fields
+}
+```
+
+### 6. What Connectors Should Accept and Return
+
+#### Input Expectations
+- **Configuration**: JSON objects containing connection settings and details
+- **Data Operations**: Structured data in JSON format
+- **Authentication**: Bearer tokens in headers
+
+#### Output Requirements
+- **Data**: Return data as files in ZIP format
+- **Errors**: Structured error responses with meaningful messages
+- **Status**: Clear operation status indicators
+- **Schema**: Detailed schema information for data validation
+
+### 7. "Everything is a File" Concept
+
+Connectors should treat all data as files:
+- Database tables → CSV files
+- API responses → JSON files
+- Documents → Original format files
+- Images/Media → Binary files
+
+This provides a consistent interface regardless of the underlying data source.
+
+### 8. Connector Detail Pages and Templates
+
+Each connector should provide a public details page that explains its capabilities and configuration. These pages use a templating system for consistency and maintainability.
+
+#### Template System
+
+The connector project uses embedded HTML templates located in the `templates/` directory:
+
+```
+templates/
+├── connector-details/
+│   ├── mysql.html
+│   ├── postgres.html
+│   └── sftp.html
+├── embedded.go
+└── templates.go
+```
+
+#### Adding a Details Page Template
+
+1. **Create the HTML template:**
+   ```html
+   <!-- templates/connector-details/your-connector.html -->
+   <!DOCTYPE html>
+   <html lang="en">
+   <head>
+       <title>{{.Title}}</title>
+       <!-- Include inline CSS for styling -->
+   </head>
+   <body>
+       <img src="{{.LogoPath}}" alt="{{.LogoAlt}}">
+       <h1>{{.Title}}</h1>
+       <p>{{.Description}}</p>
+       <!-- Additional content -->
+   </body>
+   </html>
+   ```
+
+2. **Add to embedded.go:**
+   ```go
+   //go:embed connector-details/your-connector.html
+   var YourConnectorDetailsHTML []byte
+   ```
+
+3. **Update the template manager** in `templates/templates.go` to include your connector:
+   ```go
+   case "your-connector":
+       htmlContent = YourConnectorDetailsHTML
+   ```
+
+4. **Implement the details page controller:**
+   ```go
+   func (cs *Controllers) DetailsPage(c fiber.Ctx) error {
+       templateManager := templates.NewConnectorTemplateManager()
+       template, err := templateManager.LoadTemplate("your-connector")
+       if err != nil {
+           return c.Status(fiber.StatusInternalServerError).SendString("Error loading template")
+       }
+
+       data := templates.ConnectorDetailsData{
+           Title:       "IRMIN Your Connector - Details",
+           Description: "Description of your connector's capabilities...",
+           LogoPath:    "/public/your-connector.png",
+           LogoAlt:     "Your Connector Logo",
+           EventListeningDescription: "Description of event capabilities...",
+           DocsPath:    "/your-connector/docs",
+       }
+
+       htmlContent, err := template.RenderHTML(data)
+       if err != nil {
+           return c.Status(fiber.StatusInternalServerError).SendString("Error rendering template")
+       }
+
+       c.Set("Content-Type", "text/html")
+       return c.Status(fiber.StatusOK).SendString(htmlContent)
+   }
+   ```
+
+#### Template Data Structure
+
+All templates use the `ConnectorDetailsData` structure:
+
+```go
+type ConnectorDetailsData struct {
+    Title                    string  // Page title
+    Description              string  // Connector description
+    LogoPath                 string  // Path to connector logo
+    LogoAlt                  string  // Alt text for logo
+    EventListeningDescription string  // Event capabilities description
+    DocsPath                 string  // Link to documentation
+}
+```
+
+### 9. Implementation Steps
+
+1. **Copy an existing connector** (e.g., postgres) as a template
+2. **Modify the models** to match your external system's requirements
+3. **Implement the controllers** for each required endpoint
+4. **Create the client** to interface with your external system
+5. **Add configuration logic** for dynamic field generation
+6. **Implement data operations** (push, pull, patch)
+7. **Add your connector to connectors.go** in all required functions
+8. **Test thoroughly** with various configurations and data types
+
+### 10. Best Practices
+
+- **Security**: Never store credentials permanently, only during operations
+- **Error Handling**: Provide clear, actionable error messages
+- **Validation**: Validate all inputs thoroughly
+- **Performance**: Implement efficient data transfer mechanisms
+- **Logging**: Add comprehensive logging for debugging and monitoring
+- **Documentation**: Document all configuration fields and their purposes
+
+### 11. Example Implementation Pattern
+
+```go
+// routes.go
+func SetupRoutes(app *models.ConnectorsApp) {
+    controller := controllers.NewControllers(app)
+    routes := app.App.Group("/your-connector")
+    
+    // System token endpoints
+    routes.Get("/info", controller.Info, controller.ValidateSystemTokenMiddleware)
+    routes.Post("/configuration/:key/fields", controller.ConfigFields, controller.ValidateSystemTokenMiddleware)
+    // ... other endpoints
+    
+    // Operation token endpoints
+    routes.Post("/operation/pull", controller.OperationPull, controller.ValidateOperationTokenMiddleware)
+    // ... other endpoints
+}
+```
+
+### 12. Testing Your Connector
+
+Before submitting:
+1. Test connector registration with Irmin API
+2. Verify all endpoints respond correctly
+3. Test data operations with sample data
+4. Validate error handling scenarios
+5. Check authentication mechanisms work properly
+
+## OAuth-Backed Connectors
+
+Most SaaS vendors (HubSpot, Stripe, Intercom, Linear, Sentry, ...) use
+OAuth 2.0 rather than static credentials. Building an OAuth-backed
+connector swaps a few steps from the guide above; the rest — operation
+endpoints, schema discovery, pull/push/patch logic — is identical to
+any other connector.
+
+For the full OAuth concept background (flow diagram, static-client vs
+DCR, security invariants), see `oauth-connectors.md` in this directory.
+
+### What changes vs. a static-credential connector
+
+| Step | Static credential connector | OAuth-backed connector |
+|---|---|---|
+| `ConnectionDetails` model | Fields like username/password | Empty, or only non-credential fields |
+| `details` DynamicField form | Renders the password inputs | Empty — browser OAuth flow replaces it |
+| `/info` response | No OAuth block | Declares `ConnectionOAuthConfig` |
+| Vendor auth in handlers | Reads creds from `connection.Details` | Calls `lib.OAuthTokenClient` to fetch a fresh token |
+| Operator setup | None | Register OAuth app in vendor portal + seed `connection_oauth_clients` (static-client only; DCR handles this automatically) |
+
+### Step-by-step: adding OAuth to a connector
+
+#### 1. Declare `ConnectionOAuthConfig` on `/info`
+
+In your connector's Info handler, populate the optional
+`ConnectionOAuthConfig` field with the vendor's OAuth metadata:
+
+```go
+// connectors/your-connector/info.go
+import irminmodels "github.com/IrminData/irmin-sdk-go/models"
+
+func getConnectorInfo() models.ConnectorDetails {
+    return models.ConnectorDetails{
+        Name:        "HubSpot",
+        Description: "Connect to HubSpot CRM",
+        // ... existing required fields ...
+        ConnectionOAuthConfig: &irminmodels.ConnectionOAuthConfig{
+            Provider:         "hubspot",
+            AuthorizationURL: "https://app.hubspot.com/oauth/authorize",
+            TokenURL:         "https://api.hubapi.com/oauth/v1/token",
+            Scopes:           []string{"crm.objects.contacts.read"},
+            PKCE:             true,
+            // DCREndpoint: ""  // HubSpot is static-client — leave empty
+            // RevocationURL, UserinfoURL, ExtraParams: optional
+        },
+    }
+}
+```
+
+**Field semantics** (full definitions in `irmin-sdk-go/models/oauth_config.go`):
+
+- `Provider`: short canonical identifier, e.g. `"hubspot"`. Used in
+  logs and error messages.
+- `AuthorizationURL`: user-agent-facing endpoint where the user
+  approves the connection. Absolute `https://` URL.
+- `TokenURL`: token exchange endpoint (RFC 6749 §3.2). Absolute
+  `https://` URL.
+- `Scopes`: least-privilege list. Adding a scope later forces users to
+  re-authorize, so start small.
+- `PKCE`: must be `true`. Core refuses to run a flow when false.
+- `DCREndpoint`: optional RFC 7591 endpoint. Setting this makes the
+  connector auto-register per workspace on first use.
+- `RevocationURL` (optional, RFC 7009): Core POSTs here on disconnect.
+- `UserinfoURL` (optional): reserved for future "connected as X" UI.
+- `ExtraParams`: vendor-specific params like `access_type=offline`
+  appended to the authorization URL. Security-critical OAuth params
+  (`state`, `client_id`, etc.) cannot be overridden and are dropped.
+
+#### 2. Leave the `details` schema empty
+
+OAuth connectors collect credentials via the browser flow; the
+`details` DynamicField form should not render password inputs. Return
+an empty map from your `ConfigFields("details", ...)` handler, or drop
+`details` entirely if your connector doesn't have non-credential
+connection-time fields.
+
+`settings` is unchanged — project/database/workspace selection still
+belongs there.
+
+#### 3. Fetch vendor tokens via `lib.OAuthTokenClient`
+
+In operation handlers (init, pull, push, patch, subscribe), read the
+`X-Irmin-Connection-Id` header Core stamps on every inbound request
+and call Core to get a currently-valid vendor access token:
+
+```go
+import (
+    "errors"
+    "irmin-connectors/lib"
+
+    "github.com/gofiber/fiber/v3"
+)
+
+// Create once per process (the client is safe for concurrent use).
+var oauthClient = lib.NewOAuthTokenClient(env.APIBaseURL, env.APIToken)
+
+func (ctl *Controller) OperationPull(c fiber.Ctx) error {
+    connectionID, err := lib.ConnectionIDFromRequestHeader(c.Get)
+    if err != nil {
+        return fiber.NewError(fiber.StatusBadRequest, err.Error())
+    }
+    token, err := oauthClient.FetchVendorAccessToken(c.Context(), connectionID)
+    if err != nil {
+        switch {
+        case errors.Is(err, lib.ErrNotConnected),
+             errors.Is(err, lib.ErrRefreshRejected):
+            // User must reconnect through the console.
+            return fiber.NewError(fiber.StatusUnauthorized,
+                "reconnect required")
+        case errors.Is(err, lib.ErrCoreUnavailable):
+            return fiber.NewError(fiber.StatusServiceUnavailable,
+                "core temporarily unavailable")
+        }
+        return err // unexpected
+    }
+
+    // token.AuthorizationHeader() is "Bearer ya29..." (or whatever
+    // token_type the vendor returned).
+    req, _ := http.NewRequestWithContext(c.Context(), "GET",
+        "https://api.hubapi.com/crm/v3/objects/contacts", nil)
+    req.Header.Set("Authorization", token.AuthorizationHeader())
+    // ... call vendor ...
+}
+```
+
+The fast path on `FetchVendorAccessToken` is a single small HTTPS
+round-trip to Core; Core returns the cached token without calling the
+vendor. Refresh only fires when the stored token is within the
+configured skew window, and Core serializes concurrent refreshes per
+connection.
+
+#### 4. Map sentinel errors to HTTP responses
+
+The connector helper exposes three sentinels:
+
+- `lib.ErrNotConnected` — Connection has never completed OAuth.
+  Return **401** so the console shows a Connect CTA.
+- `lib.ErrRefreshRejected` — vendor rejected Core's refresh (user
+  likely revoked the app). Return **401** — same UX as the above.
+- `lib.ErrCoreUnavailable` — Core is unreachable or returned 5xx.
+  Return **503** so the console treats it as transient.
+- Any other error — **500**; log for debugging.
+
+The console drives Connect / Reconnect / Disconnect UI from Core's
+`GET /workspaces/:w/connections/:c/oauth/status`, so connectors do
+**not** need their own status endpoint.
+
+#### 5. Operator setup (static-client vendors only)
+
+For static-client vendors like HubSpot and Stripe, an admin registers
+one OAuth app in the vendor's developer portal per Irmin environment:
+
+1. Create the app in the vendor's portal.
+2. Set the redirect URI to `{IRMIN_API_BASE_URL}/api/v1/oauth/callback`.
+3. Request the scopes declared in `ConnectionOAuthConfig.Scopes`.
+4. Copy the issued `client_id` + `client_secret`.
+5. Insert a row in Core's `connection_oauth_clients` table with
+   `workspace_id = NULL` (global client), pointing at the connector,
+   with the encrypted `client_secret`.
+
+For DCR-capable vendors (Intercom, Linear, Sentry, ...), the operator
+setup is **empty** — Core registers a per-workspace client on first
+use.
+
+#### 6. Everything else is the same
+
+Schema discovery, pull/push/patch, subscribe, error recovery,
+templates for the details page — all work identically whether the
+connector is static-credential or OAuth-backed. The only new
+dependency is `lib.OAuthTokenClient`.
+
+### See Also
+
+- `concepts-and-processes.md` — the end-to-end OAuth flow and key
+  invariants
+- `oauth-connectors.md` — planned OAuth connectors (Stripe, Linear,
+  Google Drive) and concept-level pattern library
+
+
+</script>
+<div id="content"></div>
+<script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
+<script>
+  var src = document.getElementById('source').textContent;
+  document.getElementById('content').innerHTML = marked.parse(src);
+  // Rewrite relative .md links so they resolve against the
+  // rendered HTML siblings instead of 404ing.
+  document.querySelectorAll('#content a[href$=".md"], #content a[href*=".md#"]').forEach(function(a){
+    a.href = a.getAttribute('href').replace(/\.md(#.*)?$/, '.html$1');
+  });
+</script>
+</body></html>

@@ -6,6 +6,25 @@ This guide explains how to add a new connector to the Irmin Connectors repositor
 
 Connectors define the interfaces that allow Irmin to interact with external systems in a simple, standardized, stateless and safe fashion. Each connector implements a set of standard endpoints that handle authentication, configuration, and data operations.
 
+### Read this first
+
+- **New to how connectors work?** Read `connector-architecture.md`
+  before this file. It explains the conceptual model — who talks to
+  whom, what authenticates what, what an operation is — so the
+  mechanical steps below make sense.
+- **Concepts and lifecycle:** `concepts-and-processes.md` has the
+  end-to-end view including Core-side pieces.
+- **Building an OAuth-backed connector?** The generic "Adding a New
+  Connector" steps below apply to you; the OAuth-specific
+  additions/deltas are in the dedicated **"OAuth-Backed Connectors"**
+  section at the bottom of this file.
+- **Shared base class (work in progress):** the long-term goal is a
+  `connectors/common/` base that absorbs the lifecycle + auth + OAuth
+  glue so new connectors are ~300–500 lines of vendor-specific code.
+  Until that refactor lands, both the legacy per-connector-controller
+  shape documented below and the shared-base shape will be valid; new
+  OAuth connectors should wait for the base if they can.
+
 ## Adding a New Connector
 
 ### 1. Create the Connector Directory Structure
@@ -269,4 +288,183 @@ Before submitting:
 3. Test data operations with sample data
 4. Validate error handling scenarios
 5. Check authentication mechanisms work properly
+
+## OAuth-Backed Connectors
+
+Most SaaS vendors (HubSpot, Stripe, Intercom, Linear, Sentry, ...) use
+OAuth 2.0 rather than static credentials. Building an OAuth-backed
+connector swaps a few steps from the guide above; the rest — operation
+endpoints, schema discovery, pull/push/patch logic — is identical to
+any other connector.
+
+For the full OAuth concept background (flow diagram, static-client vs
+DCR, security invariants), see `oauth-connectors.md` in this directory.
+
+### What changes vs. a static-credential connector
+
+| Step | Static credential connector | OAuth-backed connector |
+|---|---|---|
+| `ConnectionDetails` model | Fields like username/password | Empty, or only non-credential fields |
+| `details` DynamicField form | Renders the password inputs | Empty — browser OAuth flow replaces it |
+| `/info` response | No OAuth block | Declares `ConnectionOAuthConfig` |
+| Vendor auth in handlers | Reads creds from `connection.Details` | Calls `lib.OAuthTokenClient` to fetch a fresh token |
+| Operator setup | None | Register OAuth app in vendor portal + seed `connection_oauth_clients` (static-client only; DCR handles this automatically) |
+
+### Step-by-step: adding OAuth to a connector
+
+#### 1. Declare `ConnectionOAuthConfig` on `/info`
+
+In your connector's Info handler, populate the optional
+`ConnectionOAuthConfig` field with the vendor's OAuth metadata:
+
+```go
+// connectors/your-connector/info.go
+import irminmodels "github.com/IrminData/irmin-sdk-go/models"
+
+func getConnectorInfo() models.ConnectorDetails {
+    return models.ConnectorDetails{
+        Name:        "HubSpot",
+        Description: "Connect to HubSpot CRM",
+        // ... existing required fields ...
+        ConnectionOAuthConfig: &irminmodels.ConnectionOAuthConfig{
+            Provider:         "hubspot",
+            AuthorizationURL: "https://app.hubspot.com/oauth/authorize",
+            TokenURL:         "https://api.hubapi.com/oauth/v1/token",
+            Scopes:           []string{"crm.objects.contacts.read"},
+            PKCE:             true,
+            // DCREndpoint: ""  // HubSpot is static-client — leave empty
+            // RevocationURL, UserinfoURL, ExtraParams: optional
+        },
+    }
+}
+```
+
+**Field semantics** (full definitions in `irmin-sdk-go/models/oauth_config.go`):
+
+- `Provider`: short canonical identifier, e.g. `"hubspot"`. Used in
+  logs and error messages.
+- `AuthorizationURL`: user-agent-facing endpoint where the user
+  approves the connection. Absolute `https://` URL.
+- `TokenURL`: token exchange endpoint (RFC 6749 §3.2). Absolute
+  `https://` URL.
+- `Scopes`: least-privilege list. Adding a scope later forces users to
+  re-authorize, so start small.
+- `PKCE`: must be `true`. Core refuses to run a flow when false.
+- `DCREndpoint`: optional RFC 7591 endpoint. Setting this makes the
+  connector auto-register per workspace on first use.
+- `RevocationURL` (optional, RFC 7009): Core POSTs here on disconnect.
+- `UserinfoURL` (optional): reserved for future "connected as X" UI.
+- `ExtraParams`: vendor-specific params like `access_type=offline`
+  appended to the authorization URL. Security-critical OAuth params
+  (`state`, `client_id`, etc.) cannot be overridden and are dropped.
+
+#### 2. Leave the `details` schema empty
+
+OAuth connectors collect credentials via the browser flow; the
+`details` DynamicField form should not render password inputs. Return
+an empty map from your `ConfigFields("details", ...)` handler, or drop
+`details` entirely if your connector doesn't have non-credential
+connection-time fields.
+
+`settings` is unchanged — project/database/workspace selection still
+belongs there.
+
+#### 3. Fetch vendor tokens via `lib.OAuthTokenClient`
+
+In operation handlers (init, pull, push, patch, subscribe), read the
+`X-Irmin-Connection-Id` header Core stamps on every inbound request
+and call Core to get a currently-valid vendor access token:
+
+```go
+import (
+    "errors"
+    "irmin-connectors/lib"
+
+    "github.com/gofiber/fiber/v3"
+)
+
+// Create once per process (the client is safe for concurrent use).
+var oauthClient = lib.NewOAuthTokenClient(env.APIBaseURL, env.APIToken)
+
+func (ctl *Controller) OperationPull(c fiber.Ctx) error {
+    connectionID, err := lib.ConnectionIDFromRequestHeader(c.Get)
+    if err != nil {
+        return fiber.NewError(fiber.StatusBadRequest, err.Error())
+    }
+    token, err := oauthClient.FetchVendorAccessToken(c.Context(), connectionID)
+    if err != nil {
+        switch {
+        case errors.Is(err, lib.ErrNotConnected),
+             errors.Is(err, lib.ErrRefreshRejected):
+            // User must reconnect through the console.
+            return fiber.NewError(fiber.StatusUnauthorized,
+                "reconnect required")
+        case errors.Is(err, lib.ErrCoreUnavailable):
+            return fiber.NewError(fiber.StatusServiceUnavailable,
+                "core temporarily unavailable")
+        }
+        return err // unexpected
+    }
+
+    // token.AuthorizationHeader() is "Bearer ya29..." (or whatever
+    // token_type the vendor returned).
+    req, _ := http.NewRequestWithContext(c.Context(), "GET",
+        "https://api.hubapi.com/crm/v3/objects/contacts", nil)
+    req.Header.Set("Authorization", token.AuthorizationHeader())
+    // ... call vendor ...
+}
+```
+
+The fast path on `FetchVendorAccessToken` is a single small HTTPS
+round-trip to Core; Core returns the cached token without calling the
+vendor. Refresh only fires when the stored token is within the
+configured skew window, and Core serializes concurrent refreshes per
+connection.
+
+#### 4. Map sentinel errors to HTTP responses
+
+The connector helper exposes three sentinels:
+
+- `lib.ErrNotConnected` — Connection has never completed OAuth.
+  Return **401** so the console shows a Connect CTA.
+- `lib.ErrRefreshRejected` — vendor rejected Core's refresh (user
+  likely revoked the app). Return **401** — same UX as the above.
+- `lib.ErrCoreUnavailable` — Core is unreachable or returned 5xx.
+  Return **503** so the console treats it as transient.
+- Any other error — **500**; log for debugging.
+
+The console drives Connect / Reconnect / Disconnect UI from Core's
+`GET /workspaces/:w/connections/:c/oauth/status`, so connectors do
+**not** need their own status endpoint.
+
+#### 5. Operator setup (static-client vendors only)
+
+For static-client vendors like HubSpot and Stripe, an admin registers
+one OAuth app in the vendor's developer portal per Irmin environment:
+
+1. Create the app in the vendor's portal.
+2. Set the redirect URI to `{IRMIN_API_BASE_URL}/api/v1/oauth/callback`.
+3. Request the scopes declared in `ConnectionOAuthConfig.Scopes`.
+4. Copy the issued `client_id` + `client_secret`.
+5. Insert a row in Core's `connection_oauth_clients` table with
+   `workspace_id = NULL` (global client), pointing at the connector,
+   with the encrypted `client_secret`.
+
+For DCR-capable vendors (Intercom, Linear, Sentry, ...), the operator
+setup is **empty** — Core registers a per-workspace client on first
+use.
+
+#### 6. Everything else is the same
+
+Schema discovery, pull/push/patch, subscribe, error recovery,
+templates for the details page — all work identically whether the
+connector is static-credential or OAuth-backed. The only new
+dependency is `lib.OAuthTokenClient`.
+
+### See Also
+
+- `concepts-and-processes.md` — the end-to-end OAuth flow and key
+  invariants
+- `oauth-connectors.md` — planned OAuth connectors (Stripe, Linear,
+  Google Drive) and concept-level pattern library
 

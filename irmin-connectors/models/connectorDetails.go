@@ -16,4 +16,12 @@ type ConnectorDetails struct {
 	Categories       []irminmodels.ConnectorCategory   `json:"categories"        example:"database,crm,erp,warehouse,marketing,analytics,storage,messaging,payment,social,calendar,project_management,ecommerce,iot,monitoring,other"`
 	AuthorEmail      string                            `json:"author_email"      example:"hello@irmin.co"`
 	ReadMoreURL      string                            `json:"read_more_url"     example:"https://docs.irmin.co/connectors/mysql"`
+
+	// ConnectionOAuthConfig is optional. When set, the connector declares
+	// it uses OAuth 2.0 (authorization code + PKCE) for authenticating a
+	// Connection, and Irmin Core runs the flow on the user's behalf. Nil
+	// means the connector uses the legacy DynamicField form path
+	// (password / API key / etc.). See OAUTH-CONNECTORS.md for the flow
+	// + patterns + which vendors are planned.
+	ConnectionOAuthConfig *irminmodels.ConnectionOAuthConfig `json:"connection_oauth_config,omitempty"`
 }

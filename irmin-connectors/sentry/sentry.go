@@ -25,6 +25,14 @@ func Init(logger *slog.Logger, env *utils.ConnectorsEnv) {
 		Environment:      env.SentryEnvironment,
 		TracesSampleRate: env.SentryTracesSampleRate,
 		EnableTracing:    true,
+		AttachStacktrace: true,
+		EnableLogs:       true,
+		// SendDefaultPII stays OFF: connector requests carry the Irmin Core API
+		// token in Authorization headers and per-connector credentials in the
+		// body. Enabling PII would forward those verbatim to Sentry. Request
+		// context is attached explicitly by the Fiber middleware in
+		// sentry/middleware.go (request ID, method, URL, user agent only).
+		SendDefaultPII: false,
 	})
 	if err != nil {
 		logger.Error("Failed to initialize Sentry", "error", err)

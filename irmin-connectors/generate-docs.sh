@@ -16,6 +16,13 @@ MD_FILE="${DOCS_DIR}/docs.md"
 INDEX_FILE="${HTML_DIR}/index.html"
 SWAGGER_DIR="${DOCS_DIR}"
 
+# Guides are hand-written long-form docs in guides/*.md. They get
+# rendered into the HTML output alongside the go-doc package pages so
+# readers have a single starting point for both "how does it work" and
+# "what does package X export".
+GUIDES_DIR="${GUIDES_DIR:-guides}"
+GUIDES_OUT_DIR="${HTML_DIR}/guides"
+
 # Resolve module path for nicer titles (optional)
 MOD_PATH="$(go list -m -f '{{.Path}}' 2>/dev/null || echo "")"
 
@@ -116,14 +123,108 @@ for pkg in "${PKGS[@]}"; do
   HTML_ENTRIES+=("${pkg}|${out}")
 done
 
+echo "Rendering guides from ${GUIDES_DIR}/ into ${GUIDES_OUT_DIR}/ ..."
+# Guides are Markdown files that turn into interactive HTML via a
+# CDN-loaded Marked renderer. Keeping the markdown embedded as a
+# <script type="text/markdown"> block preserves source fidelity
+# (readers can View Source → copy the raw Markdown) while the browser
+# renders a nicely-styled page. No build-time Go/Node tool needed.
+GUIDE_ENTRIES=()
+if [[ -d "${GUIDES_DIR}" ]]; then
+  mkdir -p "${GUIDES_OUT_DIR}"
+  # Process every .md in guides/ except a top-level README, which we
+  # treat as the guide index and surface separately.
+  while IFS= read -r md; do
+    [[ -z "${md}" ]] && continue
+    case "$(basename "${md}")" in
+      README.md|readme.md) continue ;;
+    esac
+    base="$(basename "${md}" .md)"
+    out="${GUIDES_OUT_DIR}/${base}.html"
+    # Prefer the first `# heading` from the markdown (author-controlled
+    # casing like "OAuth Connectors" is better than a sed-mangled
+    # "Oauth Connectors"). Fall back to a slug-derived title otherwise.
+    title="$(grep -m1 '^# ' "${md}" | sed 's/^# //' || true)"
+    if [[ -z "${title}" ]]; then
+      title="$(echo "${base}" | tr '-' ' ' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)}1')"
+    fi
+    echo " - ${md} -> ${out}"
+    {
+      echo "<!doctype html>"
+      echo "<html lang=\"en\"><head>"
+      echo "<meta charset=\"utf-8\"/>"
+      echo "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/>"
+      echo "<title>${title} · irmin-connectors</title>"
+      echo "<style>"
+      echo "  body{font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"
+      echo "       max-width:820px;margin:2rem auto;padding:0 1rem;color:#1f2937}"
+      echo "  h1,h2,h3{margin-top:2em}"
+      echo "  pre{background:#f3f4f6;padding:1rem;border-radius:6px;overflow-x:auto}"
+      echo "  code{background:#f3f4f6;padding:2px 4px;border-radius:3px}"
+      echo "  pre code{background:transparent;padding:0}"
+      echo "  a{color:#0369a1}"
+      echo "  table{border-collapse:collapse;margin:1em 0}"
+      echo "  th,td{border:1px solid #e5e7eb;padding:6px 10px;text-align:left}"
+      echo "  th{background:#f3f4f6}"
+      echo "  nav{font-size:13px;color:#6b7280;margin-bottom:2rem}"
+      echo "  nav a{color:#6b7280;text-decoration:underline}"
+      echo "</style>"
+      echo "</head><body>"
+      echo "<nav><a href=\"../index.html\">← Documentation index</a></nav>"
+      # Embed raw markdown so it's visible via View Source and rendered
+      # client-side by marked. Escaping </script> keeps browsers from
+      # breaking out of the script block.
+      echo "<script id=\"source\" type=\"text/markdown\">"
+      sed 's#</[sS][cC][rR][iI][pP][tT]>#<\\/script>#g' "${md}"
+      echo ""
+      echo "</script>"
+      echo "<div id=\"content\"></div>"
+      echo "<script src=\"https://cdn.jsdelivr.net/npm/marked@15/marked.min.js\"></script>"
+      echo "<script>"
+      echo "  var src = document.getElementById('source').textContent;"
+      echo "  document.getElementById('content').innerHTML = marked.parse(src);"
+      echo "  // Rewrite relative .md links so they resolve against the"
+      echo "  // rendered HTML siblings instead of 404ing."
+      echo "  document.querySelectorAll('#content a[href\$=\".md\"], #content a[href*=\".md#\"]').forEach(function(a){"
+      echo "    a.href = a.getAttribute('href').replace(/\\.md(#.*)?\$/, '.html\$1');"
+      echo "  });"
+      echo "</script>"
+      echo "</body></html>"
+    } > "${out}"
+    GUIDE_ENTRIES+=("${base}|${out}|${title}")
+  done < <(ls "${GUIDES_DIR}"/*.md 2>/dev/null | sort)
+fi
+
 echo "Writing index: ${INDEX_FILE}"
 {
   echo "<!doctype html>"
   echo "<meta charset=\"utf-8\"/>"
   title="${MOD_PATH:-Go} documentation"
   echo "<title>${title}</title>"
+  echo "<style>"
+  echo "  body{font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"
+  echo "       max-width:820px;margin:2rem auto;padding:0 1rem;color:#1f2937}"
+  echo "  h1,h2{margin-top:1.5em}"
+  echo "  ul{padding-left:1.2em}"
+  echo "  li{margin:4px 0}"
+  echo "  a{color:#0369a1}"
+  echo "</style>"
   echo "<h1>${title}</h1>"
   echo "<p>Generated on $(date -u '+%Y-%m-%d %H:%M UTC')</p>"
+  if [[ "${#GUIDE_ENTRIES[@]}" -gt 0 ]]; then
+    echo "<h2>Guides</h2>"
+    echo "<p>Hand-written explainers and how-tos — read these first.</p>"
+    echo "<ul>"
+    for entry in "${GUIDE_ENTRIES[@]}"; do
+      # entry format: base|file|title (see guide-render loop above)
+      IFS='|' read -r _ file label <<<"${entry}"
+      rel="guides/$(basename "${file}")"
+      echo "<li><a href=\"${rel}\">${label}</a></li>"
+    done
+    echo "</ul>"
+  fi
+  echo "<h2>Go Packages</h2>"
+  echo "<p>Auto-generated API reference for every non-test package in this module.</p>"
   echo "<ul>"
   for entry in "${HTML_ENTRIES[@]}"; do
     pkg="${entry%%|*}"
@@ -144,5 +245,6 @@ go mod tidy
 
 echo "Done."
 echo "HTML index: ${INDEX_FILE}"
-echo "Markdown: ${MD_FILE}"
+echo "Guides:     ${GUIDES_OUT_DIR}/"
+echo "Markdown:   ${MD_FILE}"
 echo "Swagger docs: ${SWAGGER_DIR}/swagger.json, ${SWAGGER_DIR}/swagger.yaml, ${SWAGGER_DIR}/docs.go"

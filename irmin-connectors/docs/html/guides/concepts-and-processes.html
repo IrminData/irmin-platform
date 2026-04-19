@@ -1,3 +1,25 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Concepts and Processes · irmin-connectors</title>
+<style>
+  body{font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+       max-width:820px;margin:2rem auto;padding:0 1rem;color:#1f2937}
+  h1,h2,h3{margin-top:2em}
+  pre{background:#f3f4f6;padding:1rem;border-radius:6px;overflow-x:auto}
+  code{background:#f3f4f6;padding:2px 4px;border-radius:3px}
+  pre code{background:transparent;padding:0}
+  a{color:#0369a1}
+  table{border-collapse:collapse;margin:1em 0}
+  th,td{border:1px solid #e5e7eb;padding:6px 10px;text-align:left}
+  th{background:#f3f4f6}
+  nav{font-size:13px;color:#6b7280;margin-bottom:2rem}
+  nav a{color:#6b7280;text-decoration:underline}
+</style>
+</head><body>
+<nav><a href="../index.html">← Documentation index</a></nav>
+<script id="source" type="text/markdown">
 # Concepts and Processes
 
 This document explains the core concepts, architecture, and processes behind the Irmin Connectors system.
@@ -217,7 +239,132 @@ All connectors implement standard endpoints:
 
 1. **System Authentication**: Connector-to-Irmin API communication
 2. **Operation Authentication**: Specific operation authorization
-3. **External Authentication**: Credentials for external system access
+3. **External Authentication**: Credentials for external system access. Two
+   flavors exist side-by-side:
+   - **Static credentials** collected via DynamicField forms (username +
+     password, API key, TLS cert…). This is the legacy path used by
+     Postgres, MySQL, SFTP, HTTP, etc.
+   - **OAuth 2.0 (authorization code + PKCE)** when the vendor offers it.
+     Irmin Core runs the browser flow, persists tokens encrypted at rest,
+     and refreshes them transparently. The connector never sees or stores
+     the refresh token. See the dedicated `oauth-connectors.md` guide.
+
+## OAuth-Backed Connectors
+
+OAuth is the preferred auth method for SaaS vendors that support it
+(HubSpot, Stripe, Intercom, Linear, Sentry, ...). The connector declares
+the vendor's OAuth metadata on `/info`; Irmin Core runs the flow and
+holds the tokens; the connector asks Core for a fresh access token on
+every vendor-bound request.
+
+### End-to-End Flow
+
+```
+User clicks "Connect with X" in the console
+  │
+  ▼
+Console calls Core: POST /workspaces/:w/connections/:c/oauth/start
+  │
+  ├─ Core fetches connector /info → reads ConnectionOAuthConfig
+  ├─ Core looks up ConnectionOAuthClient row (or DCR-registers one
+  │   lazily if ConnectionOAuthConfig.DCREndpoint is set)
+  ├─ Core persists a ConnectionOAuthSession (10 min TTL) with a
+  │   256-bit random state + PKCE S256 verifier/challenge
+  └─ Core returns the vendor's authorization URL
+  │
+  ▼
+Console opens it in a popup; the user approves at the vendor
+  │
+  ▼
+Vendor redirects to Core: GET /api/v1/oauth/callback?state=...&code=...
+  │
+  ├─ Core validates state (single-use, not expired)
+  ├─ Core POSTs vendor token endpoint with code + PKCE verifier
+  ├─ Core persists ConnectionOAuthToken (access + refresh encrypted)
+  ├─ Core deletes the session row (same transaction)
+  └─ Core renders popup HTML that postMessage()s the console
+  │
+  ▼
+Later, every operation (init/pull/push/patch/...) that needs vendor I/O:
+  │
+Core → connector: operation request
+  with header  X-Irmin-Connection-Id: <connection_id>
+  │
+  ▼
+Connector → Core: POST /api/v1/system/oauth/access-token
+  with Authorization: Bearer {IRMIN_API_TOKEN}
+  and body {"connection_id": N}
+  │
+  ├─ Core returns the cached access token, OR refreshes it if inside
+  │   the expiry skew window (row-locked so concurrent calls serialize)
+  └─ Response: {"data":{"access_token":"...", "token_type":"Bearer",
+     "expires_at":"...", "scope":"..."}}
+  │
+  ▼
+Connector calls vendor API with Authorization: Bearer <access_token>
+```
+
+### Key Invariants
+
+- **Tokens never leave Core.** The connector never persists vendor access
+  or refresh tokens. It asks Core on every vendor-bound request.
+- **Refresh is serialized per connection.** Core row-locks the token
+  during refresh so concurrent operations on the same Connection don't
+  race the vendor into refresh-token rotation failures.
+- **PKCE S256 is mandatory.** A connector that declares `PKCE: false` is
+  refused at flow start. No silent downgrades.
+- **State is single-use.** A successful callback deletes the session row
+  inside the same transaction that persists the token, so a replayed
+  `state` cannot complete a second exchange.
+- **Callback rejects expired sessions.** Sessions past their `ExpiresAt`
+  fail with `ErrStateInvalid` even if the row is still present.
+
+### Static Client vs Dynamic Client Registration
+
+OAuth vendors fall into two camps. The connector picks one by setting
+`ConnectionOAuthConfig.DCREndpoint`:
+
+| Type | Who registers | Operator setup | Vendors |
+|---|---|---|---|
+| **Static client** | Admin, once per environment, in the vendor's developer portal | Enter `client_id` + `client_secret` into `connection_oauth_clients` with `workspace_id=NULL` | HubSpot, Stripe, most traditional OAuth providers |
+| **Dynamic Client Registration (RFC 7591)** | Core, automatically on first use in each workspace | None | Intercom, Linear, Sentry, and most MCP-compatible services |
+
+Static clients are shared across all workspaces; DCR clients are per
+workspace (each tenant gets its own registration at the vendor).
+
+### Cross-Service Wire Contract
+
+The `X-Irmin-Connection-Id` header is stamped by Core on every outbound
+request to a Connection-scoped operation. The canonical form is
+`X-Irmin-Connection-Id`, defined as:
+
+- `connectorsclient.HeaderConnectionID` on the Core side
+- `lib.HeaderConnectionID` on the connectors side
+
+Both constants must hold the same string. Tests on both sides lock in
+the value; the `Id` (not `ID`) casing matches Go's canonical HTTP header
+form so `net/http`'s internal canonicalization doesn't rewrite it at
+send time.
+
+### Relationship to DynamicField Forms
+
+OAuth and the legacy DynamicField form path coexist. An OAuth-backed
+connector should:
+
+- Declare `ConnectionOAuthConfig` on `/info`
+- Omit credential fields from its `details` DynamicField schema (the
+  browser flow collects them)
+- Keep workspace-scoped selection fields (project, database, etc.) on
+  its `settings` DynamicField schema as usual
+
+Existing static-credential connectors continue to work unchanged.
+
+### See Also
+
+- `how-to-create-connectors.md` — step-by-step build guide including
+  OAuth specifics
+- `oauth-connectors.md` — planned OAuth connectors, static-vs-DCR
+  comparison, 6-step recipe for new OAuth connectors
 
 ## Repository Structure
 
@@ -323,3 +470,16 @@ connectors/{connector-name}/
 - **Performance Trends**: Analyze performance over time
 
 This document provides the foundational understanding needed to work with and extend the Irmin Connectors system.
+</script>
+<div id="content"></div>
+<script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
+<script>
+  var src = document.getElementById('source').textContent;
+  document.getElementById('content').innerHTML = marked.parse(src);
+  // Rewrite relative .md links so they resolve against the
+  // rendered HTML siblings instead of 404ing.
+  document.querySelectorAll('#content a[href$=".md"], #content a[href*=".md#"]').forEach(function(a){
+    a.href = a.getAttribute('href').replace(/\.md(#.*)?$/, '.html$1');
+  });
+</script>
+</body></html>

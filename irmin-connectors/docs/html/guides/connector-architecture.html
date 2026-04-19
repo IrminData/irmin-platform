@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Connector Architecture (connector perspective) · irmin-connectors</title>
+<style>
+  body{font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+       max-width:820px;margin:2rem auto;padding:0 1rem;color:#1f2937}
+  h1,h2,h3{margin-top:2em}
+  pre{background:#f3f4f6;padding:1rem;border-radius:6px;overflow-x:auto}
+  code{background:#f3f4f6;padding:2px 4px;border-radius:3px}
+  pre code{background:transparent;padding:0}
+  a{color:#0369a1}
+  table{border-collapse:collapse;margin:1em 0}
+  th,td{border:1px solid #e5e7eb;padding:6px 10px;text-align:left}
+  th{background:#f3f4f6}
+  nav{font-size:13px;color:#6b7280;margin-bottom:2rem}
+  nav a{color:#6b7280;text-decoration:underline}
+</style>
+</head><body>
+<nav><a href="../index.html">← Documentation index</a></nav>
+<script id="source" type="text/markdown">
+# Connector Architecture (connector perspective)
+
+This document describes what a connector is *from its own perspective* —
+what requests it receives, from whom, how they're authenticated, what it
+must return, and what state it holds. It is deliberately complementary
+to the Core-side handbook at `irmin/handbook/connector-architecture.md`,
+which covers the same topic viewed from Irmin Core.
+
+If you are building a new connector, read this before
+`how-to-create-connectors.md`. If you're debugging an integration issue,
+this is the mental model for "what should I have seen on the wire."
+
+## What is a connector?
+
+A connector is an HTTP service that sits between Irmin Core and a
+specific external system (Postgres, Stripe, HubSpot, a REST API, an
+SFTP server, ...). Its job is three things:
+
+1. **Describe itself** — declare its name, capabilities, required
+   configuration fields, and authentication style via `/info` and
+   `/configuration/{type}/fields`.
+2. **Validate configurations** — when the user fills in a connection
+   form, tell Core whether the settings are viable.
+3. **Execute operations** — given a configured connection, pull/push/
+   patch data between the external system and Irmin.
+
+Connectors are deliberately small and focused. One connector per
+external system. Stateless between operations (see "What state a
+connector holds" below for the narrow exceptions).
+
+## Who talks to a connector
+
+**Only Irmin Core.** Every inbound request to a connector comes from the
+Core service at `{IRMIN_API_BASE_URL}`. Connectors don't expose APIs to
+end users, to the console, or to other connectors. This means:
+
+- The only authentication method we need to support is system-token +
+  operation-token (see below).
+- CORS doesn't apply — requests are service-to-service.
+- Rate-limiting, caching, and observability are all from Core's
+  perspective; connectors focus on correctness.
+
+External systems (Postgres, Stripe, ...) are *outbound* from the
+connector's perspective — the connector calls them, never the reverse.
+(Exception: webhooks, below.)
+
+## Inbound request types
+
+Every operation a connector handles falls into one of these buckets:
+
+### Describing the connector
+
+| Endpoint | Method | Auth | Called when |
+|---|---|---|---|
+| `/{connector}/info` | GET | System token | Connector startup (registration), console loads the connector list, flow-start fetches OAuth config |
+| `/{connector}/details` | GET | *public* | Console's "details" page for the connector |
+| `/{connector}/configuration/details/fields` | POST | System token | Console renders the connection-create form |
+| `/{connector}/configuration/settings/fields` | POST | System token | Console renders the settings step of the form |
+
+The `fields` endpoints take the current partial form state as input so
+a connector can return conditional fields (e.g., "you picked database
+`postgres`, now choose a schema").
+
+### Validating configuration
+
+| Endpoint | Method | Auth | Input | Output |
+|---|---|---|---|---|
+| `/{connector}/configuration/validate` | POST | System token | `{details, settings}` | `{ok, can_connect, connection_details_valid, connection_settings_valid, errors}` |
+
+Called when the user clicks "Test Connection" and when Core wants to
+re-verify a stored connection. Should actually attempt a connection to
+the external system — `can_connect: false` is a real signal.
+
+### Operation lifecycle
+
+An "operation" is a scoped unit of work on a connection. Core creates
+an operation, then issues one or more calls against it, then cancels
+it. The connector holds per-operation state (file downloads, buffers,
+in-flight auth) only for the duration.
+
+| Endpoint | Method | Auth | Purpose |
+|---|---|---|---|
+| `/{connector}/operation/init` | POST | System token | Create an operation. Input: details+settings. Output: `{id, token}` — the operation ID and a short-lived operation token. |
+| `/{connector}/operation/cancel` | POST | System token | Tear down an operation and any in-flight work. |
+| `/{connector}/operation/status` | POST | System token | Read operation state + accumulated logs. |
+| `/{connector}/operation/schema/{method}` | POST | Operation token | Return the schema for what `method` would produce/consume. |
+| `/{connector}/operation/pull` | POST | Operation token | Stream data out of the external system. |
+| `/{connector}/operation/push` | POST | Operation token | Apply bulk data into the external system. |
+| `/{connector}/operation/patch` | POST | Operation token | Apply JSON-Patch operations to the external system. |
+| `/{connector}/operation/subscribe` | POST | Operation token | Register a webhook; connector will POST back to Core when the external system changes. |
+| `/{connector}/operation/unsubscribe` | POST | Operation token | Tear down a subscription. |
+
+Only endpoints corresponding to declared capabilities are exposed.
+
+## Authentication, in layers
+
+A connector sees four different auth contexts depending on who's
+calling and what's being done. Keep them distinct.
+
+### System token (Core → connector)
+
+- **Who holds it**: Core, stored in the `connectors` table as
+  `system_token`. One system token per connector *registration*, not
+  per connection.
+- **Where it's sent**: `Authorization: Bearer {system_token}` on every
+  inbound request to lifecycle endpoints.
+- **What it authorises**: "this caller is authorised to create
+  operations on this connector." It does *not* imply permission to
+  operate on any specific connection — that's operation-token scope.
+- **Rotation**: connectors can regenerate their system token by
+  re-registering with Core; old tokens invalidate immediately.
+
+### Operation token (Core → connector)
+
+- **Who holds it**: Core generates it during `/operation/init`; lives
+  only on Core and is re-sent on every subsequent call to that operation.
+- **Where it's sent**: `Authorization: Bearer {operation_token}` on
+  every operation-phase endpoint (pull/push/patch/subscribe).
+- **What it authorises**: "this caller is authorised to execute
+  operation N." Short-lived; the connector revokes it on `cancel` or
+  when the operation finishes.
+- **Scope**: one operation token → one specific operation on one
+  specific connection. Never reuse across operations.
+
+### Connection credentials (external auth, static-credential path)
+
+- **Who holds them**: Core, inside `connection.details` (encrypted at
+  rest). They arrive at the connector in the `details` field of
+  `/operation/init`.
+- **What they authorise**: the *external* system to trust the call
+  coming from this connector. Connector holds them only in memory for
+  the duration of the operation.
+- **Form**: whatever shape `/configuration/details/fields` declares
+  (username+password, API key, TLS cert, etc.).
+
+### OAuth access token (external auth, OAuth path)
+
+- **Who holds it**: Core. Never leaves Core's database row.
+- **How the connector gets one**: the connector reads the
+  `X-Irmin-Connection-Id` header from the inbound request, then POSTs
+  to `{IRMIN_API_BASE_URL}/api/v1/system/oauth/access-token` with its
+  own system token and the connection ID. Response is a short-lived
+  bearer token to use against the external system.
+- **Why this indirection**: Core is the single point of token refresh
+  with row-locking. Connectors never cache, store, or refresh tokens
+  themselves.
+- **Implementation**: use `lib.OAuthTokenClient` — don't roll your own.
+
+## Operations in detail
+
+### What an operation is
+
+An operation is a stateful handle on one specific action against one
+specific connection. Typically:
+
+```
+Core: POST /operation/init {details, settings}
+  → connector: create operation state, return {id, token}
+
+Core: POST /operation/pull + Authorization: Bearer <operation_token>
+  → connector: call external system using details+token, return ZIP
+
+Core: POST /operation/status
+  → connector: return logs, current state
+
+Core: POST /operation/cancel
+  → connector: tear everything down
+```
+
+The operation lifetime is bounded by Core — the connector doesn't
+time it out on its own, though it can reject operations that have
+been open unreasonably long (>24h).
+
+### Operation types
+
+| Type | Direction | Data format | Triggers |
+|---|---|---|---|
+| `pull` | External → Irmin | ZIP archive containing files (CSV, JSON, Parquet, raw files) | Workflow, manual import, schedule |
+| `push` | Irmin → External | ZIP archive containing files | Workflow, manual export, schedule |
+| `patch` | Irmin → External, incremental | JSON Patch (RFC 6902) applied to a target | Workflow reacting to a commit |
+| `patch_event` | External → Irmin, incremental | Connector emits JSON Patches via webhook | External system change |
+| `subscribe` / `unsubscribe` | Setup/teardown of the above | — | `patch_event` lifecycle |
+
+Connectors declare capabilities via `/info`; Core only calls the
+endpoints corresponding to declared capabilities.
+
+### "Everything is a File"
+
+Connectors normalise diverse external data into files. This is the
+philosophy that lets LakeFS version anything:
+
+| External shape | File representation |
+|---|---|
+| Database table | CSV file in a ZIP archive |
+| REST JSON response | JSON file |
+| Vendor document (PDF, image, etc.) | Original binary file |
+| Spreadsheet row/column | CSV |
+| GraphQL query result | JSON |
+| Vendor webhook event | JSON Patch entries |
+
+Connectors never return "rows" or "records" — they return files. The
+file *contents* can represent rows/records, but the transport unit is
+always the file. This keeps LakeFS versioning consistent regardless of
+the source.
+
+## Connection settings vs details
+
+These two concepts look similar and mean different things:
+
+### Connection details
+
+- **What**: external-system credentials and connection-target information
+  (host, port, API key, database name).
+- **Who fills them in**: the end user, at connection-creation time, via
+  the form rendered from `/configuration/details/fields`.
+- **Who sees them**: Core (encrypted at rest) and the connector (in
+  memory during operations). **Never** shown in the console after the
+  initial form — they're masked as "SECRET" in all API responses.
+- **When**: part of `/operation/init`'s input.
+- **For OAuth-backed connectors**: this field is typically empty or
+  absent — OAuth handles external auth via a separate channel.
+
+### Connection settings
+
+- **What**: workspace-level choices that scope what data gets
+  pulled/pushed (which project, which schema, which folder).
+- **Who fills them in**: the end user, at connection-creation time, via
+  the form rendered from `/configuration/settings/fields`.
+- **Who sees them**: Core (plaintext) and the connector. **Visible** in
+  the console; editable after creation.
+- **When**: part of `/operation/init`'s input.
+
+Rule of thumb: if revealing this value would be a security issue, it's
+a **detail**. Otherwise it's a **setting**.
+
+## Schema discovery
+
+Every operation has a schema — a typed description of the files the
+operation produces or consumes. Connectors return this via
+`/operation/schema/{method}`.
+
+Schema shape: `irminmodels.ObjectSchema` (defined in the SDK) —
+hierarchical, supports nested objects and arrays, each field typed as
+one of the primitive types (string, integer, float, boolean, date,
+datetime, bytes) or a nested schema.
+
+Schema is how DuckDB (on the Core side) knows how to parse the data,
+how the console renders tables, how field-mapping transforms work, and
+how Irmin's versioned diffs compute structural changes.
+
+A connector that can't derive a schema statically (e.g., HTTP connector
+with a user-specified endpoint) is expected to introspect the
+external system at `/schema/...` time and return what it finds.
+
+## Webhooks (patch events)
+
+Connectors with the `patch_event` capability can subscribe to changes
+in the external system and emit JSON Patches back to Irmin.
+
+Flow:
+
+1. Core calls `/operation/subscribe` with a webhook URL (at Core) and
+   a webhook token.
+2. The connector subscribes to the external system's change feed
+   (e.g., Postgres logical replication slot, Stripe webhook
+   registration, Slack event subscription).
+3. When a change arrives, the connector translates it into a JSON
+   Patch and POSTs to the Core webhook URL with
+   `Authorization: Bearer {webhook_token}`.
+4. Core ingests the patch event into the workflow queue.
+5. On `/operation/unsubscribe`, the connector tears down its external
+   subscription.
+
+Webhook requests are signed with the webhook token, which Core
+generated and gave to the connector — a different token from the
+system/operation tokens. Don't confuse them.
+
+## What state a connector holds
+
+Connectors aim to be stateless between operations. The minimum state
+they must keep is:
+
+- **Connector registrations table**: the mapping from a running
+  connector instance to its Core-issued `system_token`. One row per
+  registration.
+- **Operations table**: active and recently-completed operations + their
+  operation tokens. Rows age out after operation completion +
+  retention.
+- **Subscriptions table**: active `patch_event` subscriptions so the
+  connector can map inbound external events back to their webhook
+  config.
+
+That's it. **No credentials, no user data, no cached schemas** — all
+of those are per-operation in-memory state.
+
+## What connectors return
+
+### On success (JSON endpoints)
+
+Wrapped in the common `IrminAPIResponse` envelope:
+
+```json
+{
+  "data": { ... },
+  "message": "optional"
+}
+```
+
+### On success (file streams)
+
+Raw ZIP bytes with `Content-Type: application/zip` and
+`Content-Disposition: attachment; filename="..."`. Schema information
+for the contents was already returned by a prior `/schema` call.
+
+### On failure
+
+Structured error response:
+
+```json
+{
+  "errors": ["error message 1", "error message 2"],
+  "message": "user-facing summary"
+}
+```
+
+HTTP status code matches the failure category:
+
+- **400** — invalid request, bad config
+- **401** — auth token invalid (system or operation)
+- **404** — operation or resource not found
+- **409** — conflict (e.g., subscription already exists)
+- **500** — unexpected failure
+
+## Further reading
+
+- `how-to-create-connectors.md` — step-by-step guide to adding a new
+  connector, including OAuth
+- `concepts-and-processes.md` — lifecycle, registration, "Everything is
+  a File"
+- `oauth-connectors.md` — OAuth specifics + vendor list + flow diagram
+- `irmin/handbook/connector-architecture.md` — the same topics from the
+  Core-side perspective (request/auth from Irmin Core's angle)
+
+</script>
+<div id="content"></div>
+<script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
+<script>
+  var src = document.getElementById('source').textContent;
+  document.getElementById('content').innerHTML = marked.parse(src);
+  // Rewrite relative .md links so they resolve against the
+  // rendered HTML siblings instead of 404ing.
+  document.querySelectorAll('#content a[href$=".md"], #content a[href*=".md#"]').forEach(function(a){
+    a.href = a.getAttribute('href').replace(/\.md(#.*)?$/, '.html$1');
+  });
+</script>
+</body></html>

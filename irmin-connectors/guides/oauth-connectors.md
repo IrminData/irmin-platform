@@ -1,0 +1,300 @@
+# OAuth Connectors
+
+This document describes how OAuth-backed connectors work in Irmin, which
+vendors are planned, and how to build a new one. It is companion to
+`how-to-create-connectors.md` — that file covers the general connector
+contract (details/settings fields, operation init, pull/push/patch); this
+one focuses specifically on the OAuth path.
+
+If you are building a connector that authenticates with a username +
+password, API key, or any other static credential, use the existing
+DynamicField form path and skip this document entirely.
+
+## Planned connectors
+
+The launch slate is **Stripe → Linear → Google Drive**, in that order:
+
+| # | Connector | Auth style | Use case | Source of client credentials |
+|---|---|---|---|---|
+| 1 | **Stripe** | OAuth 2.0 + PKCE via Stripe Connect, static client | Revenue, subscriptions, invoices, payouts | Pre-configured Stripe Connect platform per environment |
+| 2 | **Linear** | OAuth 2.0 + PKCE, RFC 7591 DCR via Linear's MCP server | Engineering issue data | DCR (per workspace, on first use) |
+| 3 | **Google Drive** | OAuth 2.0 + PKCE, static client | Files + metadata, byte-blob contents | Pre-registered Google Cloud OAuth app per environment |
+
+**Why Stripe first:** Stripe Connect exercises the most demanding edge
+of the OAuth infrastructure — the OAuth flow is used for merchant
+onboarding (not user auth), the `client_secret` lives on an
+Irmin-operated Connect platform, and refresh-token rotation semantics
+differ per account type (Standard vs Express vs Custom). If Stripe
+works, the rest fit the same mould with less to validate.
+
+**Why Linear second:** first vendor to exercise RFC 7591 DCR end to
+end, which Stripe skips. By the end of Linear we've validated both
+OAuth client models (static admin-configured + DCR) on live vendors.
+
+**Why Google Drive third:** first OAuth connector to pull non-JSON
+**byte-blob** contents (alongside file metadata). Drive also covers
+the nontrivial scope axis — `drive.readonly` vs `drive.file` vs
+`drive` — and Google's short-lived test-mode refresh tokens, which
+are a useful stress test for the refresh path.
+
+Nothing beyond these three is committed. Earlier drafts of the plan
+listed HubSpot / Intercom alongside Stripe; they were dropped because
+there were no test accounts available and "we ship what we can test."
+The infrastructure is vendor-agnostic, so they're cheap to pick up
+later if a real need materialises.
+
+### Expansion candidates (uncommitted)
+
+A representative list of what the infrastructure unlocks, to help scope
+future prioritisation:
+
+- **Code/issues**: GitHub, GitLab, Sentry, Linear, Jira, Asana, Monday.com
+- **CRM / sales**: HubSpot, Salesforce, Pipedrive, Close
+- **Support**: Intercom, Zendesk, Freshdesk
+- **Files**: Google Drive, Dropbox, Box, OneDrive
+- **Finance**: Stripe, Plaid, QuickBooks, Xero
+- **Marketing**: Mailchimp, Klaviyo, HubSpot Marketing, Customer.io
+
+No commitment; this list exists so nobody spends cycles speculating about
+what's possible.
+
+## Shared base class architecture
+
+OAuth and non-OAuth connectors share about 80% of their code — operation
+lifecycle, token/secret handling, schema discovery scaffolding, audit
+hooks, HTTP boilerplate, error mapping. The design goal is to push all of
+this into a **shared base** (implemented as embeddable Go structs in
+`connectors/common/` plus framework-level middleware) so that a new
+connector ships as:
+
+```
+connectors/<vendor>/
+├── config.go       # Just the ConnectionOAuthConfig block + any
+│                   #   settings-level DynamicFields
+├── client.go       # Vendor-specific HTTP calls, typed for the vendor's
+│                   #   domain model
+├── operation.go    # Pull/Push/Patch implementations that call
+│                   #   client.go; glue code only
+└── connector.go    # Registers the connector and wires operation.go's
+                    #   handlers into the shared base
+```
+
+Target: roughly 300–500 lines per new OAuth connector, of which almost
+everything is domain translation (vendor response → Irmin schema). Zero
+lines should be about "how to exchange a code for a token" or "how to
+refresh when expired" — that's Core.
+
+Existing static-credential connectors (Postgres, MySQL, SFTP, HTTP,
+Firecrawl, Pinecone) also benefit — once the base class is factored
+out, they can migrate onto it incrementally.
+
+### What lives in the shared base
+
+On the connectors side (this repo):
+
+- `lib.OAuthTokenClient` — already shipped. One instance per process,
+  fetches vendor tokens from Core on every vendor-bound request.
+- `lib.ConnectionIDFromRequestHeader` — parses `X-Irmin-Connection-Id`
+  into a typed `uint` with proper error handling.
+- `lib.HeaderConnectionID` — canonical header name constant.
+- `lib.Err{NotConnected,RefreshRejected,CoreUnavailable}` — sentinels
+  every connector maps to HTTP responses the same way.
+- (Planned) `connectors/common/oauthconnector.go` — an embeddable base
+  that exposes standard lifecycle methods with the OAuth token fetch
+  wired into every outbound request. Concrete connectors embed it and
+  override only the vendor-specific bits.
+
+On the Core side (`irmin/`):
+
+- Everything to do with tokens: flow orchestration, session/token storage,
+  refresh, revoke, DCR. Connectors don't see any of this code.
+- The `/api/v1/system/oauth/access-token` endpoint is the single seam.
+
+### What lives in the connector
+
+Only three things should be connector-specific:
+
+1. **The `ConnectionOAuthConfig` block** — URLs, scopes, DCR endpoint.
+2. **Vendor HTTP client** — typed request/response structs and endpoint
+   URLs. Pure vendor code, could live in a Go library outside Irmin.
+3. **Schema + data mapping** — "what does a HubSpot contact look like
+   when exported as CSV/JSON/Parquet." Pure translation logic.
+
+If you find yourself writing OAuth logic inside a connector
+(token refresh, state handling, client-secret management, DCR), it
+belongs in the shared base instead.
+
+## How the flow works end-to-end
+
+```
+User clicks "Connect with X" in the console
+        │
+        ▼
+Console ─── POST ───▶ Core: /workspaces/:w/connections/:c/oauth/start
+        │                │
+        │                ├─ resolveConnectorOAuth:
+        │                │   • fetch connector's /info → ConnectionOAuthConfig
+        │                │   • look up ConnectionOAuthClient
+        │                │     (or lazy-DCR if config declares DCREndpoint)
+        │                │
+        │                ├─ generate 256-bit state + PKCE S256 verifier/challenge
+        │                ├─ persist ConnectionOAuthSession (10 min TTL)
+        │                └─ return authorization_url
+        │
+        ▼
+Console opens popup to vendor authorization URL
+        │
+        ▼
+Vendor redirects to Core: /api/v1/oauth/callback?state=...&code=...
+        │
+        ├─ Core validates state (single-use, not expired, matches session)
+        ├─ Core POSTs to vendor token endpoint with code + PKCE verifier
+        ├─ Core persists ConnectionOAuthToken (access + refresh encrypted)
+        ├─ Core deletes the session row
+        └─ Core renders popup HTML that postMessage()s the console
+        │
+        ▼
+Later, for every operation that needs to call the vendor:
+        │
+Core ─── operation init/pull/... ───▶ Connector
+        │  (X-Irmin-Connection-Id header)
+        │
+        ▼
+Connector uses lib.OAuthTokenClient to call back to Core:
+        │
+Connector ── POST /api/v1/system/oauth/access-token ──▶ Core
+        │  Bearer {IRMIN_API_TOKEN}                       │
+        │  body: {"connection_id": N}                     │
+        │                                                  │
+        │  Core: refresh if stale, return fresh token      │
+        │                                                  │
+        ◀────────── {"data":{"access_token":"..."}} ──────┘
+        │
+        ▼
+Connector calls vendor API with Authorization: Bearer <token>
+```
+
+Key invariants:
+- **Tokens never leave Core.** The connector never persists a vendor
+  access or refresh token. It asks Core on every vendor-bound request.
+- **Refresh is serialised per-connection.** Core row-locks the token
+  during refresh, so concurrent operations on the same Connection don't
+  race the vendor into rotating-refresh-token failures.
+- **PKCE S256 is mandatory.** A connector that sets `PKCE: false` in
+  its config will have its flow refused by Core.
+- **State is single-use.** Successful callback deletes the session row
+  inside the same transaction that persists the token.
+- **Uniqueness is DB-enforced.** Partial unique indexes on
+  `connection_oauth_clients` guarantee at most one client row per
+  (connector, workspace) pair, making concurrent DCR resolve cleanly
+  instead of leaving duplicate rows.
+
+## Static client vs DCR
+
+OAuth vendors fall into two camps, and your connector picks one via the
+`ConnectionOAuthConfig.DCREndpoint` field.
+
+### Static client (Stripe, HubSpot, most traditional OAuth providers)
+
+The vendor expects Irmin to register **one app** in their developer
+portal and use the resulting `client_id` + `client_secret` for every
+Irmin workspace that connects.
+
+Setup steps (operator, once per environment):
+1. Create the app in the vendor's developer portal.
+2. Set the redirect URI to `{IRMIN_API_BASE_URL}/api/v1/oauth/callback`.
+3. Save the `client_id` and `client_secret`.
+4. Insert a `connection_oauth_clients` row in Core's DB with
+   `workspace_id = NULL` (this is a global/admin-configured client),
+   `connector_id` pointing at the connector registration, `client_id`
+   and the encrypted `client_secret`.
+
+The connector declares **no** `DCREndpoint`. At flow time, Core finds the
+global row and uses it for every workspace.
+
+### Dynamic Client Registration (Intercom, Linear, most MCP-compatible services)
+
+The vendor implements RFC 7591. Irmin registers a fresh app per workspace
+on first use — no operator setup.
+
+Setup steps (operator): **none**.
+
+The connector declares a `DCREndpoint`. At flow time, Core finds no
+`connection_oauth_clients` row for the (connector, workspace) pair and
+POSTs an RFC 7591 registration request to the declared endpoint. The
+response's `client_id` + `client_secret` are persisted as a
+workspace-scoped client row and reused for all subsequent flows in that
+workspace.
+
+Partial unique indexes on `(connector_id, workspace_id)` plus a
+conflict-swallowing re-fetch in `registerClientViaDCR` mean that if two
+first-time flows start simultaneously, the second one finds the winning
+row and proceeds; no orphan client rows accumulate on our side.
+(One orphan vendor-side registration may linger — background cleanup
+concern, not flow-blocking.)
+
+## How to build a new OAuth connector
+
+Once the shared base class lands (see roadmap), a new OAuth connector is
+a ~300–500 line change. Until then, follow the current pattern documented
+in `how-to-create-connectors.md` under "OAuth-Backed Connectors".
+
+Core steps, summarised:
+
+1. **Scaffold the package** under `connectors/<vendor>/`.
+2. **Declare `ConnectionOAuthConfig` on `/info`** — authorization URL,
+   token URL, scopes, `PKCE: true`. Optionally `DCREndpoint`,
+   `RevocationURL`, `UserinfoURL`, `ExtraParams`.
+3. **Leave the `details` DynamicField schema empty** (or near-empty) —
+   the browser flow replaces it. Keep `settings` for workspace/project
+   selection.
+4. **Use `lib.OAuthTokenClient` in operation handlers** to fetch vendor
+   tokens per request. Don't cache them locally.
+5. **Map sentinel errors to HTTP responses** — `ErrNotConnected` /
+   `ErrRefreshRejected` → 401, `ErrCoreUnavailable` → 503, others → 500.
+6. **Declare least-privilege scopes.** Users re-authorise when scopes
+   change; ship small, grow on demand.
+
+For static-client vendors, also:
+
+7. **Runbook the operator-setup** step: the vendor portal registration,
+   redirect-URI requirement, `client_id`/`client_secret` insertion into
+   `connection_oauth_clients`.
+
+For DCR vendors, nothing further — lazy registration handles it.
+
+## What this PR ships vs. what it doesn't
+
+This PR is infrastructure only. It lands:
+
+- The `ConnectionOAuthConfig` type in the SDK
+- The optional `ConnectionOAuthConfig` field on connector `/info` responses
+- `lib.OAuthTokenClient` in this repo for calling Core's
+  `/api/v1/system/oauth/access-token`
+- The `lib.HeaderConnectionID` constant matching Core's outbound header
+- Sentinel errors for the three failure modes callers need to distinguish
+- Unit tests covering all of the above
+- Partial unique indexes on `connection_oauth_clients`
+- Periodic session sweep in the orchestrator maintenance loop
+
+It does **not** ship:
+
+- Any Stripe, Linear, or Google Drive connector code
+- Changes to the existing Postgres/MySQL/SFTP/HTTP/Firecrawl/Pinecone
+  connectors (they continue to use static-credential forms)
+- The shared base class refactor (planned follow-up; keeps vendor
+  connectors small)
+
+Each vendor-specific connector and the base-class refactor land in
+their own PRs, built on top of this infrastructure.
+
+## Further reading
+
+- `how-to-create-connectors.md` — generic connector authoring guide
+- `concepts-and-processes.md` — connector lifecycle + operation flow
+- `connector-architecture.md` — connector-side request/auth/operation
+  topics, topic-by-topic
+- `irmin/services/oauth/` — Core-side flow implementation
+- `irmin/controllers/oauth.go` — HTTP surface
+  (start/callback/disconnect/status/access-token)
+- `irmin/db/oauth.go` — persistence model

@@ -166,19 +166,22 @@ func ParseQueryParams(r *http.Request, required, optional []string) (map[string]
 TYPES
 
 type ConnectorsEnv struct {
-	Port                     string  // Port to run the connectors server on
-	URL                      string  // URL of the connectors server
-	HelmetEnabled            bool    // Whether helmet is enabled
-	CorsEnabled              bool    // Whether CORS is enabled
-	CorsOrigins              string  // Origins allowed to access the connectors server
-	UniversalConnectorAPIKey string  // Universal API Key for all connectors.
-	APIBaseURL               string  // Base URL of the Irmin Core API
-	APIToken                 string  // Token to authenticate system requests to the Irmin Core API
-	DatabaseConnectionString string  // Connection string for the database
-	SentryEnabled            bool    // Flag to enable Sentry error tracking
-	SentryDSN                string  // Sentry DSN for error reporting
-	SentryEnvironment        string  // Sentry environment name (default "development")
-	SentryTracesSampleRate   float64 // Sentry traces sample rate (default 0.1)
+	Port                     string // Port to run the connectors server on
+	URL                      string // URL of the connectors server
+	HelmetEnabled            bool   // Whether helmet is enabled
+	CorsEnabled              bool   // Whether CORS is enabled
+	CorsOrigins              string // Origins allowed to access the connectors server
+	UniversalConnectorAPIKey string // Universal API Key for all connectors.
+	APIBaseURL               string // Base URL of the Irmin Core API
+	APIToken                 string // Token to authenticate system requests to the Irmin Core API
+	DatabaseConnectionString string // Connection string for the database
+	// Sentry — SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN are read
+	// directly from the environment by release tagging / CI scripts, not by
+	// the running service, so they are intentionally not loaded here.
+	SentryEnabled          bool    // Flag to enable Sentry error tracking
+	SentryDSN              string  // Sentry DSN for error reporting
+	SentryEnvironment      string  // Sentry environment name (default "development")
+	SentryTracesSampleRate float64 // Sentry traces sample rate (default 0.1)
 }
     ConnectorsEnv is a struct that holds the environment variables for the
     connectors server.
