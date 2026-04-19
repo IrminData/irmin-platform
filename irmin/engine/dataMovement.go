@@ -90,7 +90,7 @@ func (c *Client) initializeConnectorOperationInternal(
 	systemClient := connectorsclient.NewClient(
 		connection.Connector.APIBaseURL,
 		connection.Connector.SystemToken,
-		c.Locale)
+		c.Locale).WithConnectionID(connection.ID)
 
 	// Initialize a new operation.
 	op, err := systemClient.InitOperation(ctx, connection.Details, connection.Settings)
@@ -116,7 +116,7 @@ func (c *Client) initializeConnectorOperationInternal(
 		connection.Connector.APIBaseURL,
 		op.Token,
 		"en",
-	)
+	).WithConnectionID(connection.ID)
 
 	return systemClient, opClient, &op.ID, cancel, nil
 }

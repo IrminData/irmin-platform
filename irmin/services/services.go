@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	sandbox "irmin-api/compute-sandbox"
 	"irmin-api/db"
 	"irmin-api/lakefs"
@@ -8,6 +9,7 @@ import (
 	"irmin-api/locales"
 	"irmin-api/orchestrator"
 	"irmin-api/permissions"
+	"irmin-api/services/oauth"
 	"irmin-api/utils"
 	"log/slog"
 
@@ -28,6 +30,7 @@ type APIServices struct {
 	CacheStorage       fiber.Storage
 	BillingService     *BillingService
 	UsageTracker       *UsageTracker
+	OAuthService       *oauth.Service
 	authCache          *AuthCache
 	schemaCacheManager *lib.SchemaCacheManager
 	computeSandbox     *sandbox.ComputeSandbox
@@ -48,6 +51,7 @@ func NewAPIServices(
 	schemaCacheManager := lib.NewSchemaCacheManager(env, logger, db)
 	billingService := NewBillingService(db, env, logger)
 	usageTracker := NewUsageTracker(db, billingService, lakefsClient, env, logger)
+	oauthService := buildOAuthService(db, env, logger)
 	return &APIServices{
 		DB:                 db,
 		Logger:             logger,
@@ -60,8 +64,28 @@ func NewAPIServices(
 		CacheStorage:       cacheStorage,
 		BillingService:     billingService,
 		UsageTracker:       usageTracker,
+		OAuthService:       oauthService,
 		authCache:          authCache,
 		schemaCacheManager: schemaCacheManager,
 		computeSandbox:     sandbox.NewComputeSandbox(env, db, logger),
 	}
+}
+
+// buildOAuthService constructs the OAuth service with production wiring.
+// Uses lib.NewSafeHTTPClient for SSRF protection on vendor calls and the
+// stub ConfigProvider until the SDK extension lands. Returns nil if the
+// constructor fails — caller code guards against nil before use.
+func buildOAuthService(d *db.Database, env *utils.CoreAPIEnv, logger *slog.Logger) *oauth.Service {
+	svc, err := oauth.NewService(oauth.Options{
+		DB:          d,
+		Provider:    newConnectorsClientOAuthConfigProvider(),
+		HTTPClient:  lib.NewSafeHTTPClient(context.Background()),
+		Logger:      logger,
+		RedirectURI: env.URL + "/api/v1/oauth/callback",
+	})
+	if err != nil {
+		logger.Error("oauth service unavailable", "error", err)
+		return nil
+	}
+	return svc
 }

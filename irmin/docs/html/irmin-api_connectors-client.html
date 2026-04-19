@@ -5,6 +5,23 @@
 package connectorsclient // import "irmin-api/connectors-client"
 
 
+CONSTANTS
+
+const HeaderConnectionID = "X-Irmin-Connection-Id"
+    HeaderConnectionID is sent on every outbound connector request so the
+    receiving service can identify which Connection the operation belongs to.
+    The connectors service uses it to call back to Core's internal OAuth
+    access-token endpoint when it needs to authenticate with a vendor API.
+
+    The value uses Go's canonical HTTP header form (capitalized first letter of
+    each hyphen-separated word) so net/http's internal canonicalization doesn't
+    rewrite it at send time. HTTP headers are case-insensitive on the wire,
+    but this avoids linter churn and keeps reads consistent.
+
+    Exported as a constant so the server-side helper in irmin-connectors can
+    import the exact same string without drift.
+
+
 TYPES
 
 type Client struct {
@@ -20,6 +37,12 @@ type Client struct {
 	// HTTPClient is a customisable HTTP client. You can set timeouts, proxies, etc.
 	HTTPClient *http.Client
 
+	// ConnectionID is the Irmin Connection ID this client is operating on
+	// behalf of. When non-zero it is sent as HeaderConnectionID on every
+	// outbound request so OAuth-backed connectors can fetch the right
+	// access token via Core's internal endpoint. Leave zero for calls that
+	// are not connection-scoped (e.g., connector registration, info).
+	ConnectionID uint
 	// Has unexported fields.
 }
     Client represents the Connector API client.
@@ -226,6 +249,15 @@ func (c *Client) ValidateConfigFields(
     Returns: - A validation result from the connector if the request is
     successful. - An error if there is a problem with the request.
 
+func (c *Client) WithConnectionID(id uint) *Client
+    WithConnectionID returns the receiver after setting ConnectionID, for
+    call-site-friendly chaining:
+
+        client := connectorsclient.NewClient(url, tok, "en").WithConnectionID(conn.ID)
+
+    Mutates and returns the same pointer; Client is a plain struct so the caller
+    owns its sharing story. Passing 0 clears the connection context.
+
 type ConnectorInfo struct {
 	Name             string                            `json:"name"              example:"My Connector"`
 	Description      string                            `json:"description"       example:"My Connector Description"`
@@ -241,6 +273,13 @@ type ConnectorInfo struct {
 	AuthorEmail      string                            `json:"author_email"      example:"john.doe@example.com"`
 	Documentation    string                            `json:"documentation"     example:"https://example.com/documentation"`
 	ReadMoreURL      string                            `json:"read_more_url"     example:"https://example.com/read-more"`
+
+	// ConnectionOAuthConfig is optional. When present, the connector
+	// declares it uses OAuth 2.0 (authorization code + PKCE) for
+	// authenticating a Connection, and Core runs the flow on the user's
+	// behalf. Nil/absent means the connector uses the legacy
+	// DynamicField form path (password / API key / etc.).
+	ConnectionOAuthConfig *irminmodels.ConnectionOAuthConfig `json:"connection_oauth_config,omitempty"`
 }
     ConnectorInfo holds metadata about a connector returned from the connector's
     /info endpoint.

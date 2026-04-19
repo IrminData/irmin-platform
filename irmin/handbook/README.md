@@ -9,6 +9,9 @@ For auto-generated API reference — Go package docs, Swagger/OpenAPI — run `.
 | Guide | Topic |
 | --- | --- |
 | [Billing Architecture](./billing-architecture.md) | How the optional Polar.sh billing integration is wired through Core, Console, and the usage tracker |
+| [Connector Architecture](./connector-architecture.md) | Core-side view of connectors: lifecycle, auth layers, OAuth flow, details/settings split, encryption at rest, schemas, workflows |
+| [Connecting Irmin to Your Tools](./connecting-to-irmin.md) | End-user guide for creating connections. Covers concepts (details vs. settings, OAuth, testing, operation types, "Everything is a File", schemas, workflows) plus walkthroughs for Postgres, HTTP, Stripe, Pinecone, Firecrawl |
+| [OAuth Roadmap](./oauth-roadmap.md) | **Temporary** — phased implementation plan for OAuth-backed connectors (Stripe, Linear, Google Drive). Removed once implementation is complete |
 
 ## Package documentation
 

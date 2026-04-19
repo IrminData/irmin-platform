@@ -60,7 +60,7 @@ func (s *ConnectionSubscriptionService) RegisterSubscriptionWithConnector(
 		connection.Connector.APIBaseURL,
 		connection.Connector.SystemToken,
 		"en",
-	)
+	).WithConnectionID(connection.ID)
 
 	// Initialize operation with connection details
 	operation, err := systemClient.InitOperation(ctx, connection.Details, connection.Settings)
@@ -73,7 +73,7 @@ func (s *ConnectionSubscriptionService) RegisterSubscriptionWithConnector(
 		connection.Connector.APIBaseURL,
 		operation.Token,
 		"en",
-	)
+	).WithConnectionID(connection.ID)
 
 	// Build webhook URL for this connection
 	// Format: {API_URL}/api/v1/webhooks/connectors/{connectionSqid}
@@ -107,7 +107,7 @@ func (s *ConnectionSubscriptionService) UnregisterSubscriptionFromConnector(
 		connection.Connector.APIBaseURL,
 		connection.Connector.SystemToken,
 		"en",
-	)
+	).WithConnectionID(connection.ID)
 
 	// Initialize operation to get operation token
 	operation, err := systemClient.InitOperation(ctx, connection.Details, connection.Settings)
@@ -120,7 +120,7 @@ func (s *ConnectionSubscriptionService) UnregisterSubscriptionFromConnector(
 		connection.Connector.APIBaseURL,
 		operation.Token,
 		"en",
-	)
+	).WithConnectionID(connection.ID)
 
 	// Unsubscribe from changes
 	if unsubErr := opClient.UnsubscribeFromChanges(ctx, connectorSubscriptionID); unsubErr != nil {

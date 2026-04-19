@@ -14,6 +14,13 @@ const (
 	// TriggerScanInterval represents the interval for scanning triggers.
 	TriggerScanInterval = 10 * time.Second
 
+	// MaintenanceTickInterval is how often the orchestrator runs
+	// lightweight periodic maintenance jobs that don't belong in the
+	// heavyweight -gc command (which is admin-invoked and batch-style).
+	// 10 minutes is comfortably under every retention window we care
+	// about while keeping DB pressure negligible.
+	MaintenanceTickInterval = 10 * time.Minute
+
 	// ListenForStatusChangesTimeout is the timeout for listening for status changes.
 	ListenForStatusChangesTimeout = 90 * time.Second
 

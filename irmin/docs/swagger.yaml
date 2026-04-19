@@ -23,6 +23,22 @@ definitions:
       size_bytes:
         type: integer
     type: object
+  controllers.systemAccessTokenRequest:
+    properties:
+      connection_id:
+        type: integer
+    type: object
+  controllers.systemAccessTokenResponse:
+    properties:
+      access_token:
+        type: string
+      expires_at:
+        type: string
+      scope:
+        type: string
+      token_type:
+        type: string
+    type: object
   irmincore.CheckoutRequest:
     properties:
       return_url:
@@ -4652,6 +4668,26 @@ definitions:
     - owner
     - slug
     type: object
+  oauth.ConnectionStatus:
+    properties:
+      connected:
+        type: boolean
+      expires_at:
+        type: string
+      last_refresh_at:
+        type: string
+      needs_refresh:
+        description: |-
+          NeedsRefresh flags that the current access token is inside the
+          refresh skew window and the next GetAccessToken will trigger a
+          refresh. Useful for UIs that want to hint "reconnecting..." before
+          the user initiates an action.
+        type: boolean
+      scope:
+        type: string
+      token_type:
+        type: string
+    type: object
   services.PresignedUploadResult:
     properties:
       expiry:
@@ -5863,6 +5899,38 @@ paths:
       summary: List my invites
       tags:
       - invites
+  /oauth/callback:
+    get:
+      description: Vendor redirects here after user approval. Exchanges the code for
+        tokens and posts a message to the opener window.
+      parameters:
+      - description: Opaque session state
+        in: query
+        name: state
+        required: true
+        type: string
+      - description: Authorization code
+        in: query
+        name: code
+        type: string
+      - description: Vendor-reported error code
+        in: query
+        name: error
+        type: string
+      - description: Vendor-reported error message
+        in: query
+        name: error_description
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML with postMessage script
+          schema:
+            type: string
+      summary: OAuth authorization callback (public)
+      tags:
+      - oauth
   /profile:
     get:
       consumes:
@@ -6023,6 +6091,44 @@ paths:
       summary: Get Swagger JSON specification
       tags:
       - documentation
+  /system/oauth/access-token:
+    post:
+      consumes:
+      - application/json
+      description: Returns a non-expired access token for a connection, refreshing
+        transparently if needed. Called by irmin-connectors.
+      parameters:
+      - description: connection_id
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.systemAccessTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/controllers.systemAccessTokenResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - SystemTokenAuth: []
+      summary: Fetch a fresh access token (system token only)
+      tags:
+      - oauth
   /system/schema-from-file:
     post:
       consumes:
@@ -14021,6 +14127,114 @@ paths:
       summary: Get usage history for workspace
       tags:
       - billing
+  /workspaces/{workspace}/connections/{connection}/oauth/disconnect:
+    post:
+      description: Revokes the vendor token (best effort) and removes the stored credentials.
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: Connection SQID
+        in: path
+        name: connection
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Disconnect the OAuth connection
+      tags:
+      - oauth
+  /workspaces/{workspace}/connections/{connection}/oauth/start:
+    post:
+      description: Creates a session and returns the vendor authorization URL to open
+        in a popup.
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: Connection SQID
+        in: path
+        name: connection
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Authorization URL returned
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "400":
+          description: OAuth not available for this connector
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Start an OAuth connection flow
+      tags:
+      - oauth
+  /workspaces/{workspace}/connections/{connection}/oauth/status:
+    get:
+      description: Returns whether the connection currently has an OAuth token and,
+        if so, its expiry, scope, and refresh status. Safe to poll from the console
+        to drive Connect/Reconnect/Disconnect UI.
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: Connection SQID
+        in: path
+        name: connection
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/oauth.ConnectionStatus'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Read the OAuth status of a connection
+      tags:
+      - oauth
   /workspaces/summary:
     get:
       consumes:

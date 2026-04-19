@@ -77,6 +77,16 @@ func (d *Database) DeleteConnection(tx *gorm.DB, id uint) error {
 	if err := tx.Where(&ConnectionSubscription{ConnectionID: id}).Delete(&ConnectionSubscription{}).Error; err != nil {
 		return err
 	}
+	// Delete OAuth artifacts via the same helpers the disconnect path uses,
+	// so the two "wipe this connection's OAuth state" call sites stay in
+	// lockstep. A stale session left behind after delete could be abused
+	// by a late callback to re-create tokens against an orphan connection.
+	if err := d.DeleteConnectionOAuthTokenByConnectionID(tx, id); err != nil {
+		return err
+	}
+	if err := d.DeleteConnectionOAuthSessionsByConnectionID(tx, id); err != nil {
+		return err
+	}
 	// Then delete the connection
 	if err := tx.Delete(&Connection{}, id).Error; err != nil {
 		return err

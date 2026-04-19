@@ -77,6 +77,10 @@ func RegisterAPIRoutes(
 	aiAppAPI.Post("/pending-writes/:id/approve", apiControllers.AIAppAPIApprovePendingWrite)
 	aiAppAPI.Post("/pending-writes/:id/reject", apiControllers.AIAppAPIRejectPendingWrite)
 
+	// OAuth callback (public — vendor redirects here after user approval).
+	// No auth middleware: the `state` parameter self-authenticates the flow.
+	app.Get("/api/v1/oauth/callback", apiControllers.OAuthCallback)
+
 	// Connector webhook routes (authenticated by webhook token, not user auth)
 	// These endpoints receive events from external connectors when data changes
 	webhooks := app.Group("/api/v1/webhooks",
@@ -106,6 +110,10 @@ func RegisterAPIRoutes(
 	system.Post("/webhook", apiControllers.SystemWebhook)
 	system.Post("/schema-from-file", apiControllers.GenerateFileSchema)
 	system.Post("/usage/report", apiControllers.ReportUsage)
+	// Internal OAuth access-token endpoint: called by irmin-connectors to
+	// obtain a fresh (possibly refreshed) access token for a connection.
+	// The handler itself enforces that the caller holds a system token.
+	system.Post("/oauth/access-token", apiControllers.SystemOAuthAccessToken)
 
 	// Profile routes
 	v1.Get("/profile", apiControllers.ProfileShow)
@@ -443,6 +451,25 @@ func RegisterAPIRoutes(
 		"/schema/diff",
 		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.ConnectionSchemaDiff,
+	)
+	// OAuth lifecycle endpoints. Update permission gates both start (user
+	// is changing auth material) and disconnect (removing credentials).
+	// Status is a read — anyone who can read the connection can see its
+	// connect/reconnect/disconnect UI hint.
+	connection.Get(
+		"/oauth/status",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.GetConnectionOAuthStatus,
+	)
+	connection.Post(
+		"/oauth/start",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.StartConnectionOAuth,
+	)
+	connection.Post(
+		"/oauth/disconnect",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.DisconnectConnectionOAuth,
 	)
 
 	// Connection subscription routes

@@ -461,6 +461,7 @@ import "irmin-api/connectors-client"
 
 ## Index
 
+- [Constants](<#constants>)
 - [type Client](<#Client>)
   - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
   - [func \(c \*Client\) CancelOperation\(ctx context.Context, operationID uint\) error](<#Client.CancelOperation>)
@@ -481,6 +482,7 @@ import "irmin-api/connectors-client"
   - [func \(c \*Client\) SubscribeToChanges\(ctx context.Context, webhookURL, webhookAccessToken string\) \(\*Subscription, error\)](<#Client.SubscribeToChanges>)
   - [func \(c \*Client\) UnsubscribeFromChanges\(ctx context.Context, subscriptionID uint\) error](<#Client.UnsubscribeFromChanges>)
   - [func \(c \*Client\) ValidateConfigFields\(ctx context.Context, details map\[string\]string, settings map\[string\]string\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#Client.ValidateConfigFields>)
+  - [func \(c \*Client\) WithConnectionID\(id uint\) \*Client](<#Client.WithConnectionID>)
 - [type ConnectorInfo](<#ConnectorInfo>)
 - [type FormFile](<#FormFile>)
 - [type Operation](<#Operation>)
@@ -490,6 +492,18 @@ import "irmin-api/connectors-client"
 - [type RequestOptions](<#RequestOptions>)
 - [type Subscription](<#Subscription>)
 
+
+## Constants
+
+<a name="HeaderConnectionID"></a>HeaderConnectionID is sent on every outbound connector request so the receiving service can identify which Connection the operation belongs to. The connectors service uses it to call back to Core's internal OAuth access\-token endpoint when it needs to authenticate with a vendor API.
+
+The value uses Go's canonical HTTP header form \(capitalized first letter of each hyphen\-separated word\) so net/http's internal canonicalization doesn't rewrite it at send time. HTTP headers are case\-insensitive on the wire, but this avoids linter churn and keeps reads consistent.
+
+Exported as a constant so the server\-side helper in irmin\-connectors can import the exact same string without drift.
+
+```go
+const HeaderConnectionID = "X-Irmin-Connection-Id"
+```
 
 <a name="Client"></a>
 ## type Client
@@ -509,6 +523,13 @@ type Client struct {
 
     // HTTPClient is a customisable HTTP client. You can set timeouts, proxies, etc.
     HTTPClient *http.Client
+
+    // ConnectionID is the Irmin Connection ID this client is operating on
+    // behalf of. When non-zero it is sent as HeaderConnectionID on every
+    // outbound request so OAuth-backed connectors can fetch the right
+    // access token via Core's internal endpoint. Leave zero for calls that
+    // are not connection-scoped (e.g., connector registration, info).
+    ConnectionID uint
     // contains filtered or unexported fields
 }
 ```
@@ -761,6 +782,21 @@ Parameters: \- ctx: Context for request cancellation and timeout control. \- det
 
 Returns: \- A validation result from the connector if the request is successful. \- An error if there is a problem with the request.
 
+<a name="Client.WithConnectionID"></a>
+### func \(\*Client\) WithConnectionID
+
+```go
+func (c *Client) WithConnectionID(id uint) *Client
+```
+
+WithConnectionID returns the receiver after setting ConnectionID, for call\-site\-friendly chaining:
+
+```
+client := connectorsclient.NewClient(url, tok, "en").WithConnectionID(conn.ID)
+```
+
+Mutates and returns the same pointer; Client is a plain struct so the caller owns its sharing story. Passing 0 clears the connection context.
+
 <a name="ConnectorInfo"></a>
 ## type ConnectorInfo
 
@@ -782,6 +818,13 @@ type ConnectorInfo struct {
     AuthorEmail      string                            `json:"author_email"      example:"john.doe@example.com"`
     Documentation    string                            `json:"documentation"     example:"https://example.com/documentation"`
     ReadMoreURL      string                            `json:"read_more_url"     example:"https://example.com/read-more"`
+
+    // ConnectionOAuthConfig is optional. When present, the connector
+    // declares it uses OAuth 2.0 (authorization code + PKCE) for
+    // authenticating a Connection, and Core runs the flow on the user's
+    // behalf. Nil/absent means the connector uses the legacy
+    // DynamicField form path (password / API key / etc.).
+    ConnectionOAuthConfig *irminmodels.ConnectionOAuthConfig `json:"connection_oauth_config,omitempty"`
 }
 ```
 
@@ -971,10 +1014,12 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) CredentialsIndex\(c fiber.Ctx\) error](<#APIControllers.CredentialsIndex>)
   - [func \(api \*APIControllers\) CredentialsStore\(c fiber.Ctx\) error](<#APIControllers.CredentialsStore>)
   - [func \(api \*APIControllers\) DeclineInvite\(c fiber.Ctx\) error](<#APIControllers.DeclineInvite>)
+  - [func \(api \*APIControllers\) DisconnectConnectionOAuth\(c fiber.Ctx\) error](<#APIControllers.DisconnectConnectionOAuth>)
   - [func \(api \*APIControllers\) ExecuteQuery\(c fiber.Ctx\) error](<#APIControllers.ExecuteQuery>)
   - [func \(api \*APIControllers\) ExecuteSQL\(c fiber.Ctx\) error](<#APIControllers.ExecuteSQL>)
   - [func \(api \*APIControllers\) ExecuteScript\(c fiber.Ctx\) error](<#APIControllers.ExecuteScript>)
   - [func \(api \*APIControllers\) GenerateFileSchema\(c fiber.Ctx\) error](<#APIControllers.GenerateFileSchema>)
+  - [func \(api \*APIControllers\) GetConnectionOAuthStatus\(c fiber.Ctx\) error](<#APIControllers.GetConnectionOAuthStatus>)
   - [func \(api \*APIControllers\) GetEmbeddingInfo\(c fiber.Ctx\) error](<#APIControllers.GetEmbeddingInfo>)
   - [func \(api \*APIControllers\) IndexMyInvites\(c fiber.Ctx\) error](<#APIControllers.IndexMyInvites>)
   - [func \(api \*APIControllers\) InvitesDestroy\(c fiber.Ctx\) error](<#APIControllers.InvitesDestroy>)
@@ -984,6 +1029,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) ListEmbeddings\(c fiber.Ctx\) error](<#APIControllers.ListEmbeddings>)
   - [func \(api \*APIControllers\) LogsIndex\(c fiber.Ctx\) error](<#APIControllers.LogsIndex>)
   - [func \(api \*APIControllers\) MergeRefs\(c fiber.Ctx\) error](<#APIControllers.MergeRefs>)
+  - [func \(api \*APIControllers\) OAuthCallback\(c fiber.Ctx\) error](<#APIControllers.OAuthCallback>)
   - [func \(api \*APIControllers\) PauseWorkflow\(c fiber.Ctx\) error](<#APIControllers.PauseWorkflow>)
   - [func \(api \*APIControllers\) PolarWebhook\(c fiber.Ctx\) error](<#APIControllers.PolarWebhook>)
   - [func \(api \*APIControllers\) PoliciesDestroy\(c fiber.Ctx\) error](<#APIControllers.PoliciesDestroy>)
@@ -1054,9 +1100,11 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) SendInvite\(c fiber.Ctx\) error](<#APIControllers.SendInvite>)
   - [func \(api \*APIControllers\) ShowConnectorConfigurationFields\(c fiber.Ctx\) error](<#APIControllers.ShowConnectorConfigurationFields>)
   - [func \(api \*APIControllers\) SignedDownload\(c fiber.Ctx\) error](<#APIControllers.SignedDownload>)
+  - [func \(api \*APIControllers\) StartConnectionOAuth\(c fiber.Ctx\) error](<#APIControllers.StartConnectionOAuth>)
   - [func \(api \*APIControllers\) StartWorkflow\(c fiber.Ctx\) error](<#APIControllers.StartWorkflow>)
   - [func \(api \*APIControllers\) SwaggerJSON\(c fiber.Ctx\) error](<#APIControllers.SwaggerJSON>)
   - [func \(api \*APIControllers\) SwaggerUI\(c fiber.Ctx\) error](<#APIControllers.SwaggerUI>)
+  - [func \(api \*APIControllers\) SystemOAuthAccessToken\(c fiber.Ctx\) error](<#APIControllers.SystemOAuthAccessToken>)
   - [func \(api \*APIControllers\) SystemWebhook\(c fiber.Ctx\) error](<#APIControllers.SystemWebhook>)
   - [func \(api \*APIControllers\) TestConnection\(c fiber.Ctx\) error](<#APIControllers.TestConnection>)
   - [func \(api \*APIControllers\) TransferAIApplicationOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferAIApplicationOwnership>)
@@ -1707,6 +1755,15 @@ func (api *APIControllers) DeclineInvite(c fiber.Ctx) error
 
 DeclineInvite godoc @Summary Decline invite @Description Decline an invite to join a workspace @Tags invites @Security ApiKeyAuth @Accept json @Produce json @Param invite\_id path string true "Invite ID \(SQID\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Invite declined successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- user not allowed to decline this invite" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Invite not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /invites/\{invite\_id\}/decline \[post\]
 
+<a name="APIControllers.DisconnectConnectionOAuth"></a>
+### func \(\*APIControllers\) DisconnectConnectionOAuth
+
+```go
+func (api *APIControllers) DisconnectConnectionOAuth(c fiber.Ctx) error
+```
+
+DisconnectConnectionOAuth godoc @Summary Disconnect the OAuth connection @Description Revokes the vendor token \(best effort\) and removes the stored credentials. @Tags oauth @Security ApiKeyAuth @Param workspace path string true "Workspace slug" @Param connection path string true "Connection SQID" @Success 200 \{object\} irminmodels.IrminAPIResponse @Failure 401 \{object\} irminmodels.IrminAPIResponse @Failure 403 \{object\} irminmodels.IrminAPIResponse @Router /workspaces/\{workspace\}/connections/\{connection\}/oauth/disconnect \[post\]
+
 <a name="APIControllers.ExecuteQuery"></a>
 ### func \(\*APIControllers\) ExecuteQuery
 
@@ -1742,6 +1799,15 @@ func (api *APIControllers) GenerateFileSchema(c fiber.Ctx) error
 ```
 
 GenerateFileSchema godoc @Summary Generate schema from uploaded file @Description Upload a file \(CSV, JSON, Parquet, etc.\) and get its schema structure @Tags schema @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param file formData file true "File to analyze \(CSV, JSON, Parquet, Excel, Avro, ORC, etc.\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ObjectSchema\} "File schema generated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid file or missing file" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid system authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /system/schema\-from\-file \[post\]
+
+<a name="APIControllers.GetConnectionOAuthStatus"></a>
+### func \(\*APIControllers\) GetConnectionOAuthStatus
+
+```go
+func (api *APIControllers) GetConnectionOAuthStatus(c fiber.Ctx) error
+```
+
+GetConnectionOAuthStatus godoc @Summary Read the OAuth status of a connection @Description Returns whether the connection currently has an OAuth token and, if so, its expiry, scope, and refresh status. Safe to poll from the console to drive Connect/Reconnect/Disconnect UI. @Tags oauth @Security ApiKeyAuth @Param workspace path string true "Workspace slug" @Param connection path string true "Connection SQID" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=oauth.ConnectionStatus\} @Failure 401 \{object\} irminmodels.IrminAPIResponse @Failure 403 \{object\} irminmodels.IrminAPIResponse @Router /workspaces/\{workspace\}/connections/\{connection\}/oauth/status \[get\]
 
 <a name="APIControllers.GetEmbeddingInfo"></a>
 ### func \(\*APIControllers\) GetEmbeddingInfo
@@ -1823,6 +1889,15 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error
 ```
 
 MergeRefs godoc @Summary Merge two repository references @Description Merge a compare reference into a base reference in a repository @Tags compare @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param request body irmincore.MergeRefsRequest true "Merge request parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Commit\} "Merge completed successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/merge \[post\]
+
+<a name="APIControllers.OAuthCallback"></a>
+### func \(\*APIControllers\) OAuthCallback
+
+```go
+func (api *APIControllers) OAuthCallback(c fiber.Ctx) error
+```
+
+OAuthCallback godoc @Summary OAuth authorization callback \(public\) @Description Vendor redirects here after user approval. Exchanges the code for tokens and posts a message to the opener window. @Tags oauth @Produce html @Param state query string true "Opaque session state" @Param code query string false "Authorization code" @Param error query string false "Vendor\-reported error code" @Param error\_description query string false "Vendor\-reported error message" @Success 200 \{string\} string "HTML with postMessage script" @Router /oauth/callback \[get\]
 
 <a name="APIControllers.PauseWorkflow"></a>
 ### func \(\*APIControllers\) PauseWorkflow
@@ -2454,6 +2529,15 @@ func (api *APIControllers) SignedDownload(c fiber.Ctx) error
 
 SignedDownload godoc @Summary Download a repository object via signed URL @Description Public endpoint that validates a signed token and streams the file content. @Description No authentication required — the token itself authorizes the download. @Tags signed\-urls @Produce application/octet\-stream @Param token query string true "Signed download token" @Success 200 \{file\} file "File content" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing token or pointer file" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or expired token" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- system path access denied" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Object not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /api/v1/signed/download \[get\]
 
+<a name="APIControllers.StartConnectionOAuth"></a>
+### func \(\*APIControllers\) StartConnectionOAuth
+
+```go
+func (api *APIControllers) StartConnectionOAuth(c fiber.Ctx) error
+```
+
+StartConnectionOAuth godoc @Summary Start an OAuth connection flow @Description Creates a session and returns the vendor authorization URL to open in a popup. @Tags oauth @Security ApiKeyAuth @Param workspace path string true "Workspace slug" @Param connection path string true "Connection SQID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Authorization URL returned" @Failure 400 \{object\} irminmodels.IrminAPIResponse "OAuth not available for this connector" @Failure 401 \{object\} irminmodels.IrminAPIResponse @Failure 403 \{object\} irminmodels.IrminAPIResponse @Router /workspaces/\{workspace\}/connections/\{connection\}/oauth/start \[post\]
+
 <a name="APIControllers.StartWorkflow"></a>
 ### func \(\*APIControllers\) StartWorkflow
 
@@ -2480,6 +2564,15 @@ func (api *APIControllers) SwaggerUI(c fiber.Ctx) error
 ```
 
 SwaggerUI godoc @Summary Swagger UI interface @Description Interactive API documentation interface using Swagger UI @Tags documentation @Accept json @Produce text/html @Success 200 \{string\} string "Swagger UI HTML page" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /swagger \[get\]
+
+<a name="APIControllers.SystemOAuthAccessToken"></a>
+### func \(\*APIControllers\) SystemOAuthAccessToken
+
+```go
+func (api *APIControllers) SystemOAuthAccessToken(c fiber.Ctx) error
+```
+
+SystemOAuthAccessToken godoc @Summary Fetch a fresh access token \(system token only\) @Description Returns a non\-expired access token for a connection, refreshing transparently if needed. Called by irmin\-connectors. @Tags oauth @Security SystemTokenAuth @Accept json @Produce json @Param request body systemAccessTokenRequest true "connection\_id" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=systemAccessTokenResponse\} @Failure 401 \{object\} irminmodels.IrminAPIResponse @Failure 403 \{object\} irminmodels.IrminAPIResponse @Router /system/oauth/access\-token \[post\]
 
 <a name="APIControllers.SystemWebhook"></a>
 ### func \(\*APIControllers\) SystemWebhook
@@ -2962,6 +3055,9 @@ import "irmin-api/db"
 - [type BillingEvent](<#BillingEvent>)
 - [type Connection](<#Connection>)
 - [type ConnectionEventType](<#ConnectionEventType>)
+- [type ConnectionOAuthClient](<#ConnectionOAuthClient>)
+- [type ConnectionOAuthSession](<#ConnectionOAuthSession>)
+- [type ConnectionOAuthToken](<#ConnectionOAuthToken>)
 - [type ConnectionSchemaCache](<#ConnectionSchemaCache>)
 - [type ConnectionSubscription](<#ConnectionSubscription>)
 - [type ConnectionTag](<#ConnectionTag>)
@@ -2987,6 +3083,8 @@ import "irmin-api/db"
   - [func \(d \*Database\) CreateAIApplicationPendingWrite\(pw \*AIApplicationPendingWrite\) error](<#Database.CreateAIApplicationPendingWrite>)
   - [func \(d \*Database\) CreateAIApplicationToolLog\(log \*AIApplicationToolLog\) error](<#Database.CreateAIApplicationToolLog>)
   - [func \(d \*Database\) CreateBillingEvent\(event \*BillingEvent\) error](<#Database.CreateBillingEvent>)
+  - [func \(d \*Database\) CreateConnectionOAuthClient\(tx \*gorm.DB, client \*ConnectionOAuthClient\) error](<#Database.CreateConnectionOAuthClient>)
+  - [func \(d \*Database\) CreateConnectionOAuthSession\(tx \*gorm.DB, session \*ConnectionOAuthSession\) error](<#Database.CreateConnectionOAuthSession>)
   - [func \(d \*Database\) CreateConnectionSubscription\(subscription \*ConnectionSubscription\) error](<#Database.CreateConnectionSubscription>)
   - [func \(d \*Database\) CreateSearchIndexes\(\) error](<#Database.CreateSearchIndexes>)
   - [func \(d \*Database\) CreateUsageRecordsBatch\(records \[\]\*UsageRecord\) error](<#Database.CreateUsageRecordsBatch>)
@@ -2994,9 +3092,13 @@ import "irmin-api/db"
   - [func \(d \*Database\) DeleteAIApplication\(tx \*gorm.DB, id uint\) error](<#Database.DeleteAIApplication>)
   - [func \(d \*Database\) DeleteAPIToken\(id uint\) error](<#Database.DeleteAPIToken>)
   - [func \(d \*Database\) DeleteConnection\(tx \*gorm.DB, id uint\) error](<#Database.DeleteConnection>)
+  - [func \(d \*Database\) DeleteConnectionOAuthSession\(tx \*gorm.DB, sessionID uint\) error](<#Database.DeleteConnectionOAuthSession>)
+  - [func \(d \*Database\) DeleteConnectionOAuthSessionsByConnectionID\(tx \*gorm.DB, connectionID uint\) error](<#Database.DeleteConnectionOAuthSessionsByConnectionID>)
+  - [func \(d \*Database\) DeleteConnectionOAuthTokenByConnectionID\(tx \*gorm.DB, connectionID uint\) error](<#Database.DeleteConnectionOAuthTokenByConnectionID>)
   - [func \(d \*Database\) DeleteConnectionSubscription\(id uint\) error](<#Database.DeleteConnectionSubscription>)
   - [func \(d \*Database\) DeleteConnectionSubscriptionsByConnectionID\(connectionID uint\) error](<#Database.DeleteConnectionSubscriptionsByConnectionID>)
   - [func \(d \*Database\) DeleteConnector\(tx \*gorm.DB, id uint\) error](<#Database.DeleteConnector>)
+  - [func \(d \*Database\) DeleteExpiredConnectionOAuthSessions\(now time.Time\) \(int64, error\)](<#Database.DeleteExpiredConnectionOAuthSessions>)
   - [func \(d \*Database\) DeleteInvite\(id uint\) error](<#Database.DeleteInvite>)
   - [func \(d \*Database\) DeleteObjects\(tx \*gorm.DB, path \*string, repositoryID \*uint, ref \*string\) error](<#Database.DeleteObjects>)
   - [func \(d \*Database\) DeletePendingWritesByAIApplicationID\(tx \*gorm.DB, aiApplicationID uint\) error](<#Database.DeletePendingWritesByAIApplicationID>)
@@ -3033,6 +3135,9 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetBillingEventByPolarID\(polarEventID string\) \(\*BillingEvent, error\)](<#Database.GetBillingEventByPolarID>)
   - [func \(d \*Database\) GetConnectionByID\(id uint\) \(\*Connection, error\)](<#Database.GetConnectionByID>)
   - [func \(d \*Database\) GetConnectionByIDAndWorkspaceID\(id uint, workspaceID uint\) \(\*Connection, error\)](<#Database.GetConnectionByIDAndWorkspaceID>)
+  - [func \(d \*Database\) GetConnectionOAuthClientForConnector\(connectorID uint, workspaceID uint\) \(\*ConnectionOAuthClient, error\)](<#Database.GetConnectionOAuthClientForConnector>)
+  - [func \(d \*Database\) GetConnectionOAuthSessionByStateHMAC\(stateHMAC string\) \(\*ConnectionOAuthSession, error\)](<#Database.GetConnectionOAuthSessionByStateHMAC>)
+  - [func \(d \*Database\) GetConnectionOAuthTokenByConnectionID\(connectionID uint\) \(\*ConnectionOAuthToken, error\)](<#Database.GetConnectionOAuthTokenByConnectionID>)
   - [func \(d \*Database\) GetConnectionSubscriptionByID\(id uint\) \(\*ConnectionSubscription, error\)](<#Database.GetConnectionSubscriptionByID>)
   - [func \(d \*Database\) GetConnectionSubscriptionsByConnectionID\(connectionID uint\) \(\[\]ConnectionSubscription, error\)](<#Database.GetConnectionSubscriptionsByConnectionID>)
   - [func \(d \*Database\) GetConnectionTags\(connectionID uint\) \(\[\]Tag, error\)](<#Database.GetConnectionTags>)
@@ -3129,6 +3234,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) UpdatePendingWriteStatus\(id uint, status PendingWriteStatus, reviewedByID \*uint\) error](<#Database.UpdatePendingWriteStatus>)
   - [func \(d \*Database\) UpdatePendingWriteStatusAtomic\(id uint, expectedStatus PendingWriteStatus, newStatus PendingWriteStatus, reviewedByID \*uint\) \(bool, error\)](<#Database.UpdatePendingWriteStatusAtomic>)
   - [func \(d \*Database\) UpdateWorkspaceUserRoles\(tx \*gorm.DB, userID, workspaceID uint, roleIDs \[\]uint\) \(\*WorkspaceUser, error\)](<#Database.UpdateWorkspaceUserRoles>)
+  - [func \(d \*Database\) UpsertConnectionOAuthToken\(tx \*gorm.DB, token \*ConnectionOAuthToken\) error](<#Database.UpsertConnectionOAuthToken>)
   - [func \(d \*Database\) UpsertTemplate\(template \*Template\) error](<#Database.UpsertTemplate>)
   - [func \(d \*Database\) UpsertWorkspaceSubscription\(sub \*WorkspaceSubscription\) error](<#Database.UpsertWorkspaceSubscription>)
   - [func \(d \*Database\) WaitForNotification\(ctx context.Context, channel string\) \(\*pgconn.Notification, error\)](<#Database.WaitForNotification>)
@@ -3303,6 +3409,24 @@ const (
 )
 ```
 
+<a name="ConnectionOAuthSecretKeyClientSecret"></a>Secret\-map keys used by the ConnectionOAuth\* tables. Values live in the \`Secrets\` column of the respective model, which is encrypted at rest via the encrypted\_json GORM serializer. Constants keep key strings from drifting across the services/oauth package and the DB layer.
+
+These constants are map keys, not credentials themselves — gosec's G101 pattern match on names like "token"/"secret" is a false positive here.
+
+```go
+const (
+    ConnectionOAuthSecretKeyClientSecret = "client_secret"
+    ConnectionOAuthSecretKeyAccessToken  = "access_token"
+    ConnectionOAuthSecretKeyRefreshToken = "refresh_token"
+    ConnectionOAuthSecretKeyPKCEVerifier = "pkce_verifier"
+    // ConnectionOAuthSecretKeyRegistrationToken is the RFC 7592 bearer
+    // token returned by a DCR endpoint so a client can later read, update,
+    // or delete its own registration. Stored alongside the client secret
+    // because it confers comparable authority.
+    ConnectionOAuthSecretKeyRegistrationToken = "registration_access_token"
+)
+```
+
 <a name="MinRelevanceThreshold"></a>Search\-related constants.
 
 ```go
@@ -3403,6 +3527,16 @@ const (
 ```
 
 ## Variables
+
+<a name="ErrConnectionOAuthTokenNotFound"></a>Sentinel errors returned from the lookup helpers so callers can distinguish "no such row" from transport/DB errors without reaching into GORM.
+
+```go
+var (
+    ErrConnectionOAuthTokenNotFound   = errors.New("connection oauth token not found")
+    ErrConnectionOAuthClientNotFound  = errors.New("connection oauth client not found")
+    ErrConnectionOAuthSessionNotFound = errors.New("connection oauth session not found")
+)
+```
 
 <a name="ErrLockNotHeld"></a>ErrLockNotHeld is returned when attempting to unlock an advisory lock that is not held by the current session.
 
@@ -4005,6 +4139,118 @@ const (
 )
 ```
 
+<a name="ConnectionOAuthClient"></a>
+## type ConnectionOAuthClient
+
+ConnectionOAuthClient is a registered OAuth application for a \(connector, workspace\) pair — either DCR\-registered for a single workspace, or an admin\-configured app shared across all workspaces connecting to the same vendor.
+
+\`WorkspaceID == nil\` flags a global client \(admin\-configured, e.g. the Irmin\-owned HubSpot or Stripe app\). A non\-nil \`WorkspaceID\` came from RFC 7591 Dynamic Client Registration against the vendor's MCP server.
+
+```go
+type ConnectionOAuthClient struct {
+    ConnectorID uint      `json:"connector_id" gorm:"index;not null"`
+    Connector   Connector `json:"connector"    gorm:"foreignKey:ConnectorID"`
+
+    // WorkspaceID nil = global/admin-configured client. Non-nil = DCR-registered
+    // for that workspace only. GORM encodes nullable fk as *uint.
+    WorkspaceID *uint      `json:"workspace_id,omitempty" gorm:"index"`
+    Workspace   *Workspace `json:"workspace,omitempty"    gorm:"foreignKey:WorkspaceID"`
+
+    // ClientID is the public identifier issued by the vendor. Stored in the
+    // clear because it is not a secret and we often need to include it in
+    // diagnostic logs.
+    ClientID string `json:"client_id" gorm:"not null"`
+
+    // RedirectURI is the exact URI registered with the vendor. Stored per
+    // row so it can vary between admin-configured and DCR-registered clients.
+    RedirectURI string `json:"redirect_uri" gorm:"not null"`
+
+    // Secrets holds encrypted values. Only key: ConnectionOAuthSecretKeyClientSecret.
+    Secrets CustomFieldValues `json:"-" gorm:"type:jsonb;serializer:encrypted_json"`
+
+    // RegistrationMetadata is the non-sensitive DCR response payload (issuer,
+    // token_endpoint_auth_method, etc.). Nil for admin-configured clients.
+    RegistrationMetadata CustomFieldValues `json:"registration_metadata,omitempty" gorm:"type:jsonb;serializer:json"`
+    // contains filtered or unexported fields
+}
+```
+
+<a name="ConnectionOAuthSession"></a>
+## type ConnectionOAuthSession
+
+ConnectionOAuthSession tracks one in\-flight authorization code flow. Rows are short\-lived \(10 min TTL\) and single\-use — deleted after the callback successfully exchanges the code for tokens, and swept by cron otherwise.
+
+```go
+type ConnectionOAuthSession struct {
+    ConnectionID uint       `json:"connection_id" gorm:"index;not null"`
+    Connection   Connection `json:"connection"    gorm:"foreignKey:ConnectionID"`
+
+    // InitiatingUserID records which user clicked "Connect" to start this
+    // flow. The callback is public (no user in context), so we persist the
+    // initiator at StartFlow time and credit the audit event on completion
+    // back to them instead of the connection owner. Nullable because older
+    // rows (pre-hardening) and server-initiated flows may not have a user.
+    InitiatingUserID *uint `json:"initiating_user_id,omitempty" gorm:"index"`
+    InitiatingUser   *User `json:"initiating_user,omitempty"    gorm:"foreignKey:InitiatingUserID"`
+
+    // StateHMAC is what we send to the vendor as the `state` parameter.
+    //
+    // Implementation note: the column name reads as "HMAC" for historical
+    // schema reasons, but the value stored here is a 256-bit cryptographic
+    // random string produced by the services/oauth package — not an HMAC.
+    // The callback looks up the session by exact-match on this column, so
+    // any unguessable, unique-per-session value works. The uniqueIndex
+    // converts a replayed state into a DB-level collision at session create
+    // time and makes callback lookups O(1).
+    StateHMAC string `json:"state_hmac" gorm:"uniqueIndex;not null"`
+
+    // Secrets holds the PKCE code verifier under ConnectionOAuthSecretKeyPKCEVerifier.
+    // Encrypted at rest so a DB snapshot alone cannot complete an in-flight
+    // flow against an attacker-known authorization code.
+    Secrets CustomFieldValues `json:"-" gorm:"type:jsonb;serializer:encrypted_json"`
+
+    // ExpiresAt is when this session stops being valid. 10-minute TTL by
+    // default; the callback handler rejects sessions past this time.
+    ExpiresAt time.Time `json:"expires_at" gorm:"index;not null"`
+    // contains filtered or unexported fields
+}
+```
+
+<a name="ConnectionOAuthToken"></a>
+## type ConnectionOAuthToken
+
+ConnectionOAuthToken holds the persistent bearer\-token material for a Connection. One row per connection; deleted when the user disconnects or the Connection itself is deleted. Kept in a separate table from Connection.Details so the existing secret\-mask/merge logic doesn't need to know about OAuth tokens.
+
+```go
+type ConnectionOAuthToken struct {
+
+    // ConnectionID is the owner of the token set. UniqueIndex ensures one
+    // row per Connection — a Connection either uses OAuth or doesn't.
+    ConnectionID uint       `json:"connection_id" gorm:"uniqueIndex;not null"`
+    Connection   Connection `json:"connection"    gorm:"foreignKey:ConnectionID"`
+
+    // Secrets holds the encrypted token material. Expected keys:
+    // ConnectionOAuthSecretKeyAccessToken, ConnectionOAuthSecretKeyRefreshToken.
+    Secrets CustomFieldValues `json:"-" gorm:"type:jsonb;serializer:encrypted_json"`
+
+    // ExpiresAt is the absolute expiry of the current access token. Nil
+    // means "never expires" (rare but valid for some vendors).
+    ExpiresAt *time.Time `json:"expires_at,omitempty" gorm:"index"`
+
+    // Scope is the space-separated scope string granted by the vendor.
+    // Useful for UI display and for detecting scope downgrades.
+    Scope string `json:"scope"`
+
+    // TokenType is the `token_type` from the vendor, e.g. "Bearer".
+    TokenType string `json:"token_type"`
+
+    // LastRefreshAt records the most recent successful refresh, for
+    // diagnostics. nil = never refreshed (original issuance still current).
+    LastRefreshAt *time.Time `json:"last_refresh_at,omitempty"`
+    // contains filtered or unexported fields
+}
+```
+
 <a name="ConnectionSchemaCache"></a>
 ## type ConnectionSchemaCache
 
@@ -4344,6 +4590,24 @@ func (d *Database) CreateBillingEvent(event *BillingEvent) error
 
 CreateBillingEvent creates a billing event for idempotency.
 
+<a name="Database.CreateConnectionOAuthClient"></a>
+### func \(\*Database\) CreateConnectionOAuthClient
+
+```go
+func (d *Database) CreateConnectionOAuthClient(tx *gorm.DB, client *ConnectionOAuthClient) error
+```
+
+CreateConnectionOAuthClient inserts a new client row. Callers are expected to have checked that one doesn't already exist for the same \(connector, workspace\).
+
+<a name="Database.CreateConnectionOAuthSession"></a>
+### func \(\*Database\) CreateConnectionOAuthSession
+
+```go
+func (d *Database) CreateConnectionOAuthSession(tx *gorm.DB, session *ConnectionOAuthSession) error
+```
+
+CreateConnectionOAuthSession inserts a new session row.
+
 <a name="Database.CreateConnectionSubscription"></a>
 ### func \(\*Database\) CreateConnectionSubscription
 
@@ -4407,6 +4671,33 @@ func (d *Database) DeleteConnection(tx *gorm.DB, id uint) error
 
 DeleteConnection deletes a connection and its associated data from the database.
 
+<a name="Database.DeleteConnectionOAuthSession"></a>
+### func \(\*Database\) DeleteConnectionOAuthSession
+
+```go
+func (d *Database) DeleteConnectionOAuthSession(tx *gorm.DB, sessionID uint) error
+```
+
+DeleteConnectionOAuthSession removes a session row by ID. Called after a successful callback to enforce the single\-use property of the state parameter.
+
+<a name="Database.DeleteConnectionOAuthSessionsByConnectionID"></a>
+### func \(\*Database\) DeleteConnectionOAuthSessionsByConnectionID
+
+```go
+func (d *Database) DeleteConnectionOAuthSessionsByConnectionID(tx *gorm.DB, connectionID uint) error
+```
+
+DeleteConnectionOAuthSessionsByConnectionID removes every pending session belonging to the given connection. Used by the disconnect path and by the connection\-delete cascade — both need to evict in\-flight flows so a stray callback can't re\-create tokens after the user has said "stop". Rejects zero connectionID to prevent a wildcard\-delete footgun.
+
+<a name="Database.DeleteConnectionOAuthTokenByConnectionID"></a>
+### func \(\*Database\) DeleteConnectionOAuthTokenByConnectionID
+
+```go
+func (d *Database) DeleteConnectionOAuthTokenByConnectionID(tx *gorm.DB, connectionID uint) error
+```
+
+DeleteConnectionOAuthTokenByConnectionID removes the token row for a connection. No\-op if the row doesn't exist. Rejects connectionID == 0 to prevent a wildcard\-delete footgun.
+
 <a name="Database.DeleteConnectionSubscription"></a>
 ### func \(\*Database\) DeleteConnectionSubscription
 
@@ -4433,6 +4724,15 @@ func (d *Database) DeleteConnector(tx *gorm.DB, id uint) error
 ```
 
 DeleteConnector deletes a connector record and its associated connections from the database by its ID.
+
+<a name="Database.DeleteExpiredConnectionOAuthSessions"></a>
+### func \(\*Database\) DeleteExpiredConnectionOAuthSessions
+
+```go
+func (d *Database) DeleteExpiredConnectionOAuthSessions(now time.Time) (int64, error)
+```
+
+DeleteExpiredConnectionOAuthSessions sweeps rows whose ExpiresAt is in the past. Intended for a periodic job; returns the number removed.
 
 <a name="Database.DeleteInvite"></a>
 ### func \(\*Database\) DeleteInvite
@@ -4757,6 +5057,35 @@ func (d *Database) GetConnectionByIDAndWorkspaceID(id uint, workspaceID uint) (*
 ```
 
 GetConnectionByIDAndWorkspaceID finds a connection by its ID and verifies it belongs to the given workspace.
+
+<a name="Database.GetConnectionOAuthClientForConnector"></a>
+### func \(\*Database\) GetConnectionOAuthClientForConnector
+
+```go
+func (d *Database) GetConnectionOAuthClientForConnector(connectorID uint, workspaceID uint) (*ConnectionOAuthClient, error)
+```
+
+GetConnectionOAuthClientForConnector looks up the client row for a \(connector, workspace\) pair. Falls back to the global \(workspace\_id NULL\) row when no workspace\-scoped client is registered — the common case for admin\-configured apps like HubSpot/Stripe.
+
+<a name="Database.GetConnectionOAuthSessionByStateHMAC"></a>
+### func \(\*Database\) GetConnectionOAuthSessionByStateHMAC
+
+```go
+func (d *Database) GetConnectionOAuthSessionByStateHMAC(stateHMAC string) (*ConnectionOAuthSession, error)
+```
+
+GetConnectionOAuthSessionByStateHMAC looks up a session by the state parameter the vendor sent us back. Returns ErrConnectionOAuthSessionNotFound if no match — the service layer treats that as "state expired, replayed, or forged" and 400s the callback.
+
+<a name="Database.GetConnectionOAuthTokenByConnectionID"></a>
+### func \(\*Database\) GetConnectionOAuthTokenByConnectionID
+
+```go
+func (d *Database) GetConnectionOAuthTokenByConnectionID(connectionID uint) (*ConnectionOAuthToken, error)
+```
+
+GetConnectionOAuthTokenByConnectionID returns the token row for a connection, or ErrConnectionOAuthTokenNotFound.
+
+Rejects connectionID == 0 up front so a buggy caller can't accidentally match an arbitrary row via GORM's zero\-value Where semantics.
 
 <a name="Database.GetConnectionSubscriptionByID"></a>
 ### func \(\*Database\) GetConnectionSubscriptionByID
@@ -5627,6 +5956,15 @@ func (d *Database) UpdateWorkspaceUserRoles(tx *gorm.DB, userID, workspaceID uin
 ```
 
 UpdateWorkspaceUserRoles updates the roles for a user in a workspace.
+
+<a name="Database.UpsertConnectionOAuthToken"></a>
+### func \(\*Database\) UpsertConnectionOAuthToken
+
+```go
+func (d *Database) UpsertConnectionOAuthToken(tx *gorm.DB, token *ConnectionOAuthToken) error
+```
+
+UpsertConnectionOAuthToken writes the given token, replacing any existing row for the same connection atomically via ON CONFLICT DO UPDATE. Used by the callback handler \(new connection\) and the refresh flow \(rotated access \+ refresh tokens\). Safe under concurrent callers: the unique index on connection\_id converts races into a single well\-defined upsert.
 
 <a name="Database.UpsertTemplate"></a>
 ### func \(\*Database\) UpsertTemplate
@@ -13244,6 +13582,13 @@ const (
     // TriggerScanInterval represents the interval for scanning triggers.
     TriggerScanInterval = 10 * time.Second
 
+    // MaintenanceTickInterval is how often the orchestrator runs
+    // lightweight periodic maintenance jobs that don't belong in the
+    // heavyweight -gc command (which is admin-invoked and batch-style).
+    // 10 minutes is comfortably under every retention window we care
+    // about while keeping DB pressure negligible.
+    MaintenanceTickInterval = 10 * time.Minute
+
     // ListenForStatusChangesTimeout is the timeout for listening for status changes.
     ListenForStatusChangesTimeout = 90 * time.Second
 
@@ -15111,6 +15456,7 @@ type APIServices struct {
     CacheStorage      fiber.Storage
     BillingService    *BillingService
     UsageTracker      *UsageTracker
+    OAuthService      *oauth.Service
     // contains filtered or unexported fields
 }
 ```
@@ -19193,5 +19539,352 @@ type RetrieveContextRequest struct {
     Reason      string   `json:"reason,omitempty"`  // Optional debugging context explaining why search is needed
 }
 ```
+
+# oauth
+
+```go
+import "irmin-api/services/oauth"
+```
+
+Package oauth implements the authorization\-code \+ PKCE OAuth 2.0 flow that users go through when connecting Irmin to an external SaaS vendor.
+
+The package owns five responsibilities:
+
+1. StartFlow: build an authorization URL, persisting per\-attempt state \(opaque state value \+ PKCE verifier\) in a short\-lived session row.
+2. HandleCallback: exchange the returned authorization code for access \+ refresh tokens, store them encrypted, and delete the session.
+3. GetAccessToken: return a fresh access token for a Connection, refreshing transparently if the current one is expiring.
+4. RefreshToken: explicit refresh entry point, used by GetAccessToken and by any future background\-refresh sweeper. Serializes concurrent refreshes per connection via SELECT ... FOR UPDATE.
+5. Revoke: hit the vendor's revocation endpoint \(best\-effort\) and delete the stored token row.
+
+The package does not know how to talk to irmin\-connectors. The vendor's OAuth metadata \(auth URL, token URL, scopes, PKCE requirement, ...\) is injected via a ConfigProvider so tests can supply a fake. In production wiring, the provider calls through to irmin\-connectors via the connectors client, reading the OAuthConfig block the connector declares.
+
+All stored secrets go through the encrypted\_json GORM serializer; this package only sees plaintext values in memory.
+
+## Index
+
+- [Variables](<#variables>)
+- [type AccessToken](<#AccessToken>)
+- [type CallbackResult](<#CallbackResult>)
+- [type Clock](<#Clock>)
+- [type Config](<#Config>)
+- [type ConfigProvider](<#ConfigProvider>)
+- [type ConnectionStatus](<#ConnectionStatus>)
+- [type Options](<#Options>)
+- [type Service](<#Service>)
+  - [func NewService\(opts Options\) \(\*Service, error\)](<#NewService>)
+  - [func \(s \*Service\) GetAccessToken\(ctx context.Context, connectionID uint\) \(\*AccessToken, error\)](<#Service.GetAccessToken>)
+  - [func \(s \*Service\) GetConnectionOAuthStatus\(\_ context.Context, connectionID uint\) \(\*ConnectionStatus, error\)](<#Service.GetConnectionOAuthStatus>)
+  - [func \(s \*Service\) HandleCallback\(ctx context.Context, state, code string\) \(\*CallbackResult, error\)](<#Service.HandleCallback>)
+  - [func \(s \*Service\) RefreshToken\(ctx context.Context, connectionID uint\) \(\*db.ConnectionOAuthToken, error\)](<#Service.RefreshToken>)
+  - [func \(s \*Service\) Revoke\(ctx context.Context, connectionID uint\) error](<#Service.Revoke>)
+  - [func \(s \*Service\) StartFlow\(ctx context.Context, connection \*db.Connection, initiatingUserID uint\) \(string, error\)](<#Service.StartFlow>)
+- [type VendorError](<#VendorError>)
+  - [func \(e \*VendorError\) Error\(\) string](<#VendorError.Error>)
+
+
+## Variables
+
+<a name="ErrConfigUnavailable"></a>Sentinel errors callers \(controllers, connectors service\) use to map failure modes onto HTTP responses without importing gorm or inspecting wrapped error text.
+
+```go
+var (
+    // ErrConfigUnavailable means the ConfigProvider returned no OAuth
+    // metadata for the connector — either the connector does not support
+    // OAuth, or the provider failed to reach it.
+    ErrConfigUnavailable = errors.New("oauth: vendor config unavailable")
+
+    // ErrPKCERequired is returned when a Config has PKCE=false. New
+    // connectors must use PKCE; we do not fall back.
+    ErrPKCERequired = errors.New("oauth: PKCE is required but the config disables it")
+
+    // ErrClientUnconfigured means no OAuth client row exists for the
+    // (connector, workspace) pair. For DCR-capable vendors the caller
+    // should run the DCR flow; for static clients the admin must
+    // configure one.
+    ErrClientUnconfigured = errors.New("oauth: no client registered for connector+workspace")
+
+    // ErrStateInvalid covers every "the vendor's reply doesn't match a
+    // valid session" case — expired, missing, replayed, or forged state.
+    // We use a single sentinel so the callback never reveals which.
+    ErrStateInvalid = errors.New("oauth: state is invalid or expired")
+
+    // ErrNotConnected means the connection has no token row yet — the
+    // user never completed OAuth, or the row was revoked.
+    ErrNotConnected = errors.New("oauth: connection has no oauth token")
+
+    // ErrRefreshRejected indicates the vendor rejected a refresh attempt.
+    // Usually means the user revoked the app on the vendor side; the
+    // caller should surface a "reconnect" CTA.
+    ErrRefreshRejected = errors.New("oauth: vendor rejected refresh token")
+)
+```
+
+<a name="ErrDCRUnavailable"></a>ErrDCRUnavailable is returned when DCR is attempted but the Config's DCREndpoint is empty. Callers should surface a "please ask your admin to configure an OAuth client" message — this is the non\-DCR\-capable path.
+
+```go
+var ErrDCRUnavailable = errors.New("oauth: dynamic client registration is not supported by this connector")
+```
+
+<a name="AccessToken"></a>
+## type AccessToken
+
+AccessToken is the minimal view of a token that downstream callers need. Returned by GetAccessToken so callers don't have to know how the DB row is shaped or refresh it themselves.
+
+```go
+type AccessToken struct {
+    Value     string
+    TokenType string
+    ExpiresAt *time.Time
+    Scope     string
+}
+```
+
+<a name="CallbackResult"></a>
+## type CallbackResult
+
+CallbackResult bundles what a successful callback produces: the Connection the vendor was linked to, and the user who originally clicked "Connect" \(pulled off the session row\). Controllers use InitiatingUserID to credit the audit event back to the actual clicker, since the callback itself runs on a public endpoint with no user context.
+
+```go
+type CallbackResult struct {
+    Connection       *db.Connection
+    InitiatingUserID *uint
+}
+```
+
+<a name="Clock"></a>
+## type Clock
+
+Clock is injected for testability. Production wiring uses realClock\{\}.
+
+```go
+type Clock interface {
+    Now() time.Time
+}
+```
+
+<a name="Config"></a>
+## type Config
+
+Config is the vendor\-side OAuth metadata needed to run a flow. All URLs are expected to be absolute https:// URLs; scopes are space\-joined on the wire but kept as a slice here for legibility and lint\-friendliness.
+
+This mirrors the OAuthConfig shape we will later declare in the SDK. We define a local copy so this package can be built independently of the SDK extension.
+
+```go
+type Config struct {
+    // Provider is a short canonical identifier for the vendor: "hubspot",
+    // "stripe", "intercom", etc. Used in audit logs and error messages.
+    Provider string
+
+    // AuthorizationURL is the user-agent-facing endpoint where the user
+    // approves the connection.
+    AuthorizationURL string
+
+    // TokenURL exchanges authorization codes and refresh tokens for
+    // access tokens.
+    TokenURL string
+
+    // RevocationURL is optional. When non-empty, Revoke POSTs the token
+    // here so the vendor drops the grant immediately.
+    RevocationURL string
+
+    // DCREndpoint is optional (RFC 7591). When set, the DCR helper can
+    // dynamically register a client per workspace. Unused in Phase 2b.
+    DCREndpoint string
+
+    // Scopes is the set of OAuth scopes the connector declares it needs.
+    // Read-only by default; connectors should follow least-privilege.
+    Scopes []string
+
+    // PKCE should always be true for new connectors. Flow code refuses
+    // to start a flow when false — there is no reason to run without it.
+    PKCE bool
+
+    // UserinfoURL is optional. If set, the service can populate a friendly
+    // "connected as <who>" label in the UI after a successful exchange.
+    // Not used in Phase 2b wiring; reserved for future work.
+    UserinfoURL string
+
+    // ExtraParams are vendor-specific parameters appended to the
+    // authorization request (e.g., access_type=offline, prompt=consent).
+    ExtraParams map[string]string
+}
+```
+
+<a name="ConfigProvider"></a>
+## type ConfigProvider
+
+ConfigProvider returns the OAuth metadata for a given connector. The real implementation calls irmin\-connectors through the connectors client; tests inject a stub.
+
+```go
+type ConfigProvider interface {
+    GetOAuthConfig(ctx context.Context, connector *db.Connector) (*Config, error)
+}
+```
+
+<a name="ConnectionStatus"></a>
+## type ConnectionStatus
+
+ConnectionStatus is the small shape consoles need to render a Connect / Reconnect / Disconnect UI without having to reason about encrypted rows or sentinel errors.
+
+Connected = false means the Connection has no token row yet \(ErrNotConnected when fetching\). The remaining fields apply when Connected = true.
+
+ExpiresAt is nil for non\-expiring tokens; Scope is the space\-separated string the vendor returned; TokenType is usually "Bearer". LastRefreshAt is nil if the original issuance is still current.
+
+```go
+type ConnectionStatus struct {
+    Connected     bool       `json:"connected"`
+    ExpiresAt     *time.Time `json:"expires_at,omitempty"`
+    Scope         string     `json:"scope,omitempty"`
+    TokenType     string     `json:"token_type,omitempty"`
+    LastRefreshAt *time.Time `json:"last_refresh_at,omitempty"`
+    // NeedsRefresh flags that the current access token is inside the
+    // refresh skew window and the next GetAccessToken will trigger a
+    // refresh. Useful for UIs that want to hint "reconnecting..." before
+    // the user initiates an action.
+    NeedsRefresh bool `json:"needs_refresh"`
+}
+```
+
+<a name="Options"></a>
+## type Options
+
+Options configures the Service at construction.
+
+```go
+type Options struct {
+    DB          *db.Database
+    Provider    ConfigProvider
+    HTTPClient  *http.Client // required; pass lib.NewSafeHTTPClient(ctx) in production
+    Logger      *slog.Logger
+    Clock       Clock // optional; defaults to realClock{}
+    RedirectURI string
+    SessionTTL  time.Duration // optional; defaults to 10m
+    RefreshSkew time.Duration // optional; defaults to 60s
+}
+```
+
+<a name="Service"></a>
+## type Service
+
+Service orchestrates OAuth flows for connections. It is safe for use by multiple goroutines; the only mutable state is the HTTP client \(concurrency\-safe by design\).
+
+```go
+type Service struct {
+
+    // RedirectURI is the exact callback URL registered with every vendor
+    // (e.g. "https://api.irmin.dev/api/v1/oauth/callback"). Kept as a
+    // service-level constant because the URI is part of the token exchange
+    // and must match byte-for-byte what the vendor has on file.
+    RedirectURI string
+
+    // SessionTTL bounds how long an in-flight authorization flow can stay
+    // open. 10 minutes is plenty — the user is interactively clicking
+    // through consent pages.
+    SessionTTL time.Duration
+
+    // RefreshSkew is the safety margin before token expiry at which
+    // GetAccessToken proactively refreshes. Prevents downstream calls
+    // that land right at the expiry instant.
+    RefreshSkew time.Duration
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewService"></a>
+### func NewService
+
+```go
+func NewService(opts Options) (*Service, error)
+```
+
+NewService builds a Service. All required fields are validated; missing optional fields fall back to safe defaults.
+
+<a name="Service.GetAccessToken"></a>
+### func \(\*Service\) GetAccessToken
+
+```go
+func (s *Service) GetAccessToken(ctx context.Context, connectionID uint) (*AccessToken, error)
+```
+
+GetAccessToken returns a fresh access token for the connection. If the current token is expired — or within RefreshSkew of expiring — the refresh flow runs transparently before returning.
+
+Returns ErrNotConnected when the connection has no token row. Returns ErrRefreshRejected if the vendor rejects the refresh \(the user has likely revoked the app on the vendor side; the caller should prompt for reconnection\). Other vendor errors bubble up as \*VendorError.
+
+<a name="Service.GetConnectionOAuthStatus"></a>
+### func \(\*Service\) GetConnectionOAuthStatus
+
+```go
+func (s *Service) GetConnectionOAuthStatus(_ context.Context, connectionID uint) (*ConnectionStatus, error)
+```
+
+GetConnectionOAuthStatus returns a read\-only snapshot of the OAuth status for a connection. Intended for console UIs that render the Connect/Reconnect/Disconnect button. Never refreshes tokens.
+
+Returns \(status\{Connected:false\}, nil\) when the connection has no token row — that's a normal "not connected yet" state, not an error.
+
+<a name="Service.HandleCallback"></a>
+### func \(\*Service\) HandleCallback
+
+```go
+func (s *Service) HandleCallback(ctx context.Context, state, code string) (*CallbackResult, error)
+```
+
+HandleCallback consumes the authorization code the vendor returned via the redirect. On success: tokens are stored encrypted, the session row is deleted \(single\-use\), and a CallbackResult is returned so the caller can emit an audit event or redirect the browser.
+
+Failure modes are translated to the package sentinels: ErrStateInvalid for anything session\-related \(forged, expired, replayed\) and \*VendorError when the token endpoint itself returns non\-2xx.
+
+<a name="Service.RefreshToken"></a>
+### func \(\*Service\) RefreshToken
+
+```go
+func (s *Service) RefreshToken(ctx context.Context, connectionID uint) (*db.ConnectionOAuthToken, error)
+```
+
+RefreshToken rotates the stored access token using the refresh token. Runs inside a transaction with SELECT ... FOR UPDATE on the token row, so concurrent callers \(two connector requests, or a scheduled sweep plus a user\-triggered call\) serialize cleanly — the second caller observes the first caller's freshly\-written token and skips the network round\-trip when still valid.
+
+Returns the \(possibly untouched\) up\-to\-date row. Returns ErrNotConnected if no token row exists. Returns ErrRefreshRejected when the vendor responds 400/401 to the refresh request \(commonly "user revoked"\).
+
+<a name="Service.Revoke"></a>
+### func \(\*Service\) Revoke
+
+```go
+func (s *Service) Revoke(ctx context.Context, connectionID uint) error
+```
+
+Revoke calls the vendor's revocation endpoint \(if one is configured\) and removes the stored token row. A vendor\-side revoke is best\-effort: we always delete our local state, even if the vendor returns an error, because the user's intent is clear and failing to delete locally would leave them unable to reconnect without admin help.
+
+<a name="Service.StartFlow"></a>
+### func \(\*Service\) StartFlow
+
+```go
+func (s *Service) StartFlow(ctx context.Context, connection *db.Connection, initiatingUserID uint) (string, error)
+```
+
+StartFlow creates a short\-lived OAuthSession row for the connection and returns the URL the user's browser should be redirected to. The caller is responsible for opening the URL in a popup and watching for the callback completion signal.
+
+initiatingUserID identifies the user who clicked "Connect" and is persisted on the session row. The callback is a public endpoint, so the audit log uses this ID to credit completion to the actual clicker rather than the connection owner. Pass 0 for server\-initiated flows.
+
+<a name="VendorError"></a>
+## type VendorError
+
+VendorError wraps a non\-2xx response from a vendor endpoint. Embeds the status code and a truncated, ASCII\-safe body snippet for server\-side debugging without leaking secrets back to end users.
+
+Stage names currently emitted: "token\_exchange" \(authorization\-code exchange\), "refresh" \(refresh\-token exchange\), "dcr" \(RFC 7591 dynamic client registration\). Revoke failures are logged but never returned as VendorError — they are best\-effort from the caller's perspective.
+
+```go
+type VendorError struct {
+    Stage      string
+    StatusCode int
+    Snippet    string // first 500 bytes of body, ascii-safe
+}
+```
+
+<a name="VendorError.Error"></a>
+### func \(\*VendorError\) Error
+
+```go
+func (e *VendorError) Error() string
+```
+
+
 
 Generated by [gomarkdoc](<https://github.com/princjef/gomarkdoc>)

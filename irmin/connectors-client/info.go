@@ -23,6 +23,13 @@ type ConnectorInfo struct {
 	AuthorEmail      string                            `json:"author_email"      example:"john.doe@example.com"`
 	Documentation    string                            `json:"documentation"     example:"https://example.com/documentation"`
 	ReadMoreURL      string                            `json:"read_more_url"     example:"https://example.com/read-more"`
+
+	// ConnectionOAuthConfig is optional. When present, the connector
+	// declares it uses OAuth 2.0 (authorization code + PKCE) for
+	// authenticating a Connection, and Core runs the flow on the user's
+	// behalf. Nil/absent means the connector uses the legacy
+	// DynamicField form path (password / API key / etc.).
+	ConnectionOAuthConfig *irminmodels.ConnectionOAuthConfig `json:"connection_oauth_config,omitempty"`
 }
 
 // GetInfo fetches the connector's information from the /info endpoint.

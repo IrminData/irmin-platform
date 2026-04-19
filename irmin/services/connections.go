@@ -364,8 +364,11 @@ func (api *APIServices) UpdateConnectionConfiguration(
 		return nil, err
 	}
 
-	// Create a connector client scoped to the user's locale for localized validation errors
-	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
+	// Create a connector client scoped to the user's locale for localized validation errors.
+	// Stamp the connection ID on outbound calls so OAuth-backed connectors can fetch
+	// the right access token from Core during validation that hits vendor APIs.
+	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale).
+		WithConnectionID(fullConnection.ID)
 
 	// Validate the connection using the new configuration
 	validationResult, err := client.ValidateConfigFields(c, newDetails, newSettings)
@@ -784,8 +787,11 @@ func (api *APIServices) TestConnection(
 		return nil, NewInternalErrorf("error getting connector: %w", err)
 	}
 
-	// Create a connector client
-	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
+	// Create a connector client. Stamp the connection ID so OAuth-backed
+	// connectors can resolve the right access token from Core while the
+	// test call exercises vendor endpoints.
+	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale).
+		WithConnectionID(fullConnection.ID)
 
 	// Validate the connection using the stored credentials
 	validationResult, err := client.ValidateConfigFields(c, fullConnection.Details, fullConnection.Settings)

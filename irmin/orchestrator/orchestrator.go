@@ -345,6 +345,21 @@ func (o *Orchestrator) StartOrchestrator(ctx context.Context) error {
 		}
 	}()
 
+	// Periodic maintenance loop (OAuth session sweep, future small
+	// cleanup jobs). Runs in its own goroutine at a much slower cadence
+	// than the trigger scan so its DB work never crowds out workflow
+	// scheduling.
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				o.logger.Error("Panic recovered", "component", "orchestrator-maintenance", "panic", r)
+				sentry.CurrentHub().Recover(r)
+				sentry.Flush(sentryutil.FlushTimeout)
+			}
+		}()
+		o.runMaintenanceLoop(ctx)
+	}()
+
 	// tick every 10 seconds
 	ticker := time.NewTicker(TriggerScanInterval)
 	defer ticker.Stop()

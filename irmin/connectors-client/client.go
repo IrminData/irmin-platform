@@ -14,10 +14,25 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	irminsdkgo "github.com/IrminData/irmin-sdk-go"
 )
+
+// HeaderConnectionID is sent on every outbound connector request so the
+// receiving service can identify which Connection the operation belongs to.
+// The connectors service uses it to call back to Core's internal OAuth
+// access-token endpoint when it needs to authenticate with a vendor API.
+//
+// The value uses Go's canonical HTTP header form (capitalized first letter
+// of each hyphen-separated word) so net/http's internal canonicalization
+// doesn't rewrite it at send time. HTTP headers are case-insensitive on
+// the wire, but this avoids linter churn and keeps reads consistent.
+//
+// Exported as a constant so the server-side helper in irmin-connectors can
+// import the exact same string without drift.
+const HeaderConnectionID = "X-Irmin-Connection-Id"
 
 // Timeout constants are now defined in the root constants.go file
 
@@ -39,6 +54,13 @@ type Client struct {
 	// requests where the body is read incrementally. It shares the Transport (and thus
 	// connection pool, TLS config, etc.) with HTTPClient.
 	streamClient *http.Client
+
+	// ConnectionID is the Irmin Connection ID this client is operating on
+	// behalf of. When non-zero it is sent as HeaderConnectionID on every
+	// outbound request so OAuth-backed connectors can fetch the right
+	// access token via Core's internal endpoint. Leave zero for calls that
+	// are not connection-scoped (e.g., connector registration, info).
+	ConnectionID uint
 }
 
 // NewClient creates a new Connector API client with default settings.
@@ -61,6 +83,30 @@ func NewClient(baseURL, token, locale string) *Client {
 		// interrupted by the request-response timeout.
 		streamClient: &http.Client{Transport: transport},
 	}
+}
+
+// WithConnectionID returns the receiver after setting ConnectionID, for
+// call-site-friendly chaining:
+//
+//	client := connectorsclient.NewClient(url, tok, "en").WithConnectionID(conn.ID)
+//
+// Mutates and returns the same pointer; Client is a plain struct so the
+// caller owns its sharing story. Passing 0 clears the connection context.
+func (c *Client) WithConnectionID(id uint) *Client {
+	c.ConnectionID = id
+	return c
+}
+
+// setConnectionHeader stamps HeaderConnectionID on the request when a
+// non-zero ConnectionID is configured. Called from every outbound request
+// path (regular + streaming) so the connector service always sees the
+// connection context, including when the caller routes through the
+// streaming client for large payloads.
+func (c *Client) setConnectionHeader(req *http.Request) {
+	if c == nil || c.ConnectionID == 0 {
+		return
+	}
+	req.Header.Set(HeaderConnectionID, strconv.FormatUint(uint64(c.ConnectionID), 10))
 }
 
 // RequestOptions allows you to specify how you'd like to send data in the request.
@@ -287,6 +333,7 @@ func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, erro
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
 	req.Header.Set("Accept-Language", c.Locale)
 	req.Header.Set("Accept", "application/json")
+	c.setConnectionHeader(req)
 
 	// Add any extra headers.
 	for k, v := range headers {
@@ -359,6 +406,7 @@ func (c *Client) FetchStreamFiles(ctx context.Context, opts RequestOptions) ([]P
 	if _, exists := headers["Accept"]; !exists {
 		req.Header.Set("Accept", "application/octet-stream")
 	}
+	c.setConnectionHeader(req)
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
@@ -524,6 +572,7 @@ func (c *Client) FetchStreamFilesReader(ctx context.Context, opts RequestOptions
 	if _, exists := headers["Accept"]; !exists {
 		req.Header.Set("Accept", "application/octet-stream")
 	}
+	c.setConnectionHeader(req)
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}

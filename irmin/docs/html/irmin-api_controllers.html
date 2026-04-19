@@ -897,6 +897,16 @@ func (api *APIControllers) DeclineInvite(c fiber.Ctx) error
     found" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server
     error" @Router /invites/{invite_id}/decline [post]
 
+func (api *APIControllers) DisconnectConnectionOAuth(c fiber.Ctx) error
+    DisconnectConnectionOAuth godoc @Summary Disconnect the OAuth connection
+    @Description Revokes the vendor token (best effort) and removes the
+    stored credentials. @Tags oauth @Security ApiKeyAuth @Param workspace
+    path string true "Workspace slug" @Param connection path string true
+    "Connection SQID" @Success 200 {object} irminmodels.IrminAPIResponse
+    @Failure 401 {object} irminmodels.IrminAPIResponse
+    @Failure 403 {object} irminmodels.IrminAPIResponse @Router
+    /workspaces/{workspace}/connections/{connection}/oauth/disconnect [post]
+
 func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error
     ExecuteQuery godoc @Summary Execute stored query @Description
     Execute a specific stored query and return the results @Tags queries
@@ -952,6 +962,18 @@ func (api *APIControllers) GenerateFileSchema(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "Unauthorized - invalid system authentication"
     @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
     @Router /system/schema-from-file [post]
+
+func (api *APIControllers) GetConnectionOAuthStatus(c fiber.Ctx) error
+    GetConnectionOAuthStatus godoc @Summary Read the OAuth status of a
+    connection @Description Returns whether the connection currently has an
+    OAuth token and, if so, its expiry, scope, and refresh status. Safe to
+    poll from the console to drive Connect/Reconnect/Disconnect UI. @Tags
+    oauth @Security ApiKeyAuth @Param workspace path string true "Workspace
+    slug" @Param connection path string true "Connection SQID" @Success
+    200 {object} irminmodels.IrminAPIResponse{data=oauth.ConnectionStatus}
+    @Failure 401 {object} irminmodels.IrminAPIResponse
+    @Failure 403 {object} irminmodels.IrminAPIResponse @Router
+    /workspaces/{workspace}/connections/{connection}/oauth/status [get]
 
 func (api *APIControllers) GetEmbeddingInfo(c fiber.Ctx) error
     GetEmbeddingInfo godoc @Summary Get embedding file info @Description
@@ -1086,6 +1108,16 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error
     - invalid or missing authentication" @Failure 500 {object}
     irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/repositories/{repository_slug}/merge [post]
+
+func (api *APIControllers) OAuthCallback(c fiber.Ctx) error
+    OAuthCallback godoc @Summary OAuth authorization callback (public)
+    @Description Vendor redirects here after user approval. Exchanges the code
+    for tokens and posts a message to the opener window. @Tags oauth @Produce
+    html @Param state query string true "Opaque session state" @Param code
+    query string false "Authorization code" @Param error query string false
+    "Vendor-reported error code" @Param error_description query string false
+    "Vendor-reported error message" @Success 200 {string} string "HTML with
+    postMessage script" @Router /oauth/callback [get]
 
 func (api *APIControllers) PauseWorkflow(c fiber.Ctx) error
     PauseWorkflow godoc @Summary Pause workflow @Description Pause
@@ -2153,6 +2185,18 @@ func (api *APIControllers) SignedDownload(c fiber.Ctx) error
     not found" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
     server error" @Router /api/v1/signed/download [get]
 
+func (api *APIControllers) StartConnectionOAuth(c fiber.Ctx) error
+    StartConnectionOAuth godoc @Summary Start an OAuth connection flow
+    @Description Creates a session and returns the vendor authorization
+    URL to open in a popup. @Tags oauth @Security ApiKeyAuth @Param
+    workspace path string true "Workspace slug" @Param connection
+    path string true "Connection SQID" @Success 200 {object}
+    irminmodels.IrminAPIResponse "Authorization URL returned" @Failure
+    400 {object} irminmodels.IrminAPIResponse "OAuth not available for
+    this connector" @Failure 401 {object} irminmodels.IrminAPIResponse
+    @Failure 403 {object} irminmodels.IrminAPIResponse @Router
+    /workspaces/{workspace}/connections/{connection}/oauth/start [post]
+
 func (api *APIControllers) StartWorkflow(c fiber.Ctx) error
     StartWorkflow godoc @Summary Start workflow @Description
     Start/resume a paused workflow to enable scheduled executions
@@ -2184,6 +2228,16 @@ func (api *APIControllers) SwaggerUI(c fiber.Ctx) error
     @Produce text/html @Success 200 {string} string "Swagger UI HTML page"
     @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
     @Router /swagger [get]
+
+func (api *APIControllers) SystemOAuthAccessToken(c fiber.Ctx) error
+    SystemOAuthAccessToken godoc @Summary Fetch a fresh access token (system
+    token only) @Description Returns a non-expired access token for a
+    connection, refreshing transparently if needed. Called by irmin-connectors.
+    @Tags oauth @Security SystemTokenAuth @Accept json @Produce json @Param
+    request body systemAccessTokenRequest true "connection_id" @Success 200
+    {object} irminmodels.IrminAPIResponse{data=systemAccessTokenResponse}
+    @Failure 401 {object} irminmodels.IrminAPIResponse @Failure 403 {object}
+    irminmodels.IrminAPIResponse @Router /system/oauth/access-token [post]
 
 func (api *APIControllers) SystemWebhook(c fiber.Ctx) error
     SystemWebhook godoc @Summary System webhook endpoint @Description Handle

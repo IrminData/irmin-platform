@@ -251,6 +251,9 @@ func (d *Database) Migrate() error {
 		&UsageRecord{},
 		&UsageSummary{},
 		&BillingEvent{},
+		&ConnectionOAuthClient{},
+		&ConnectionOAuthSession{},
+		&ConnectionOAuthToken{},
 	}
 	if err := d.migrateModels(models...); err != nil {
 		return err
@@ -266,6 +269,51 @@ func (d *Database) Migrate() error {
 		return fmt.Errorf("failed to ensure notification trigger: %w", err)
 	}
 
+	// Partial unique indexes that AutoMigrate can't express.
+	if err := d.ensureConnectionOAuthClientIndexes(); err != nil {
+		return fmt.Errorf("failed to ensure oauth client indexes: %w", err)
+	}
+
+	return nil
+}
+
+// ensureConnectionOAuthClientIndexes creates the two partial UNIQUE
+// indexes on connection_oauth_clients that encode the invariant "at most
+// one client row per (connector, workspace) pair" while treating global
+// (workspace_id IS NULL) and workspace-scoped rows as separate keyspaces.
+//
+// Why partial indexes: ConnectionOAuthClient.WorkspaceID is nullable.
+// Postgres's default UNIQUE treats NULL as distinct, so a plain
+// `UNIQUE (connector_id, workspace_id)` would allow multiple global
+// (NULL) rows for the same connector — which breaks the DCR race
+// mitigation described in guides/oauth-connectors.md.
+//
+// GORM's AutoMigrate does not support WHERE-clause index predicates, so
+// we issue the DDL ourselves. IF NOT EXISTS makes it idempotent across
+// restarts; name-guarded uniqueness check handles older installations
+// that may have been bootstrapped before this method existed.
+func (d *Database) ensureConnectionOAuthClientIndexes() error {
+	// Workspace-scoped rows (DCR-registered clients): one per
+	// (connector, workspace).
+	perWorkspace := `
+		CREATE UNIQUE INDEX IF NOT EXISTS
+			idx_oauth_clients_connector_workspace
+		ON connection_oauth_clients (connector_id, workspace_id)
+		WHERE workspace_id IS NOT NULL
+	`
+	if err := d.Exec(perWorkspace).Error; err != nil {
+		return fmt.Errorf("create workspace-scoped oauth client unique index: %w", err)
+	}
+	// Global rows (admin-configured clients): one per connector.
+	global := `
+		CREATE UNIQUE INDEX IF NOT EXISTS
+			idx_oauth_clients_connector_global
+		ON connection_oauth_clients (connector_id)
+		WHERE workspace_id IS NULL
+	`
+	if err := d.Exec(global).Error; err != nil {
+		return fmt.Errorf("create global oauth client unique index: %w", err)
+	}
 	return nil
 }
 
@@ -320,6 +368,9 @@ func (d *Database) Reset() error {
 		&UsageSummary{},
 		&UsageRecord{},
 		&WorkspaceSubscription{},
+		&ConnectionOAuthToken{},
+		&ConnectionOAuthSession{},
+		&ConnectionOAuthClient{},
 	); err != nil {
 		return fmt.Errorf("failed to drop tables: %w", err)
 	}

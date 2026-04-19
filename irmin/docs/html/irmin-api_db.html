@@ -81,6 +81,25 @@ const (
     LogAssetType constants for filtering log events by asset type.
 
 const (
+	ConnectionOAuthSecretKeyClientSecret = "client_secret"
+	ConnectionOAuthSecretKeyAccessToken  = "access_token"
+	ConnectionOAuthSecretKeyRefreshToken = "refresh_token"
+	ConnectionOAuthSecretKeyPKCEVerifier = "pkce_verifier"
+	// ConnectionOAuthSecretKeyRegistrationToken is the RFC 7592 bearer
+	// token returned by a DCR endpoint so a client can later read, update,
+	// or delete its own registration. Stored alongside the client secret
+	// because it confers comparable authority.
+	ConnectionOAuthSecretKeyRegistrationToken = "registration_access_token"
+)
+    Secret-map keys used by the ConnectionOAuth* tables. Values live in the
+    `Secrets` column of the respective model, which is encrypted at rest via the
+    encrypted_json GORM serializer. Constants keep key strings from drifting
+    across the services/oauth package and the DB layer.
+
+    These constants are map keys, not credentials themselves — gosec's G101
+    pattern match on names like "token"/"secret" is a false positive here.
+
+const (
 	// Minimum relevance threshold for filtering search results.
 	MinRelevanceThreshold = 0.1
 
@@ -171,6 +190,14 @@ const (
 )
 
 VARIABLES
+
+var (
+	ErrConnectionOAuthTokenNotFound   = errors.New("connection oauth token not found")
+	ErrConnectionOAuthClientNotFound  = errors.New("connection oauth client not found")
+	ErrConnectionOAuthSessionNotFound = errors.New("connection oauth session not found")
+)
+    Sentinel errors returned from the lookup helpers so callers can distinguish
+    "no such row" from transport/DB errors without reaching into GORM.
 
 var ErrLockNotHeld = errors.New("advisory lock not held by current session")
     ErrLockNotHeld is returned when attempting to unlock an advisory lock that
@@ -544,6 +571,111 @@ const (
 	ConnectionEventUpsert ConnectionEventType = "upsert"
 	ConnectionEventBatch  ConnectionEventType = "batch"
 )
+type ConnectionOAuthClient struct {
+	ConnectorID uint      `json:"connector_id" gorm:"index;not null"`
+	Connector   Connector `json:"connector"    gorm:"foreignKey:ConnectorID"`
+
+	// WorkspaceID nil = global/admin-configured client. Non-nil = DCR-registered
+	// for that workspace only. GORM encodes nullable fk as *uint.
+	WorkspaceID *uint      `json:"workspace_id,omitempty" gorm:"index"`
+	Workspace   *Workspace `json:"workspace,omitempty"    gorm:"foreignKey:WorkspaceID"`
+
+	// ClientID is the public identifier issued by the vendor. Stored in the
+	// clear because it is not a secret and we often need to include it in
+	// diagnostic logs.
+	ClientID string `json:"client_id" gorm:"not null"`
+
+	// RedirectURI is the exact URI registered with the vendor. Stored per
+	// row so it can vary between admin-configured and DCR-registered clients.
+	RedirectURI string `json:"redirect_uri" gorm:"not null"`
+
+	// Secrets holds encrypted values. Only key: ConnectionOAuthSecretKeyClientSecret.
+	Secrets CustomFieldValues `json:"-" gorm:"type:jsonb;serializer:encrypted_json"`
+
+	// RegistrationMetadata is the non-sensitive DCR response payload (issuer,
+	// token_endpoint_auth_method, etc.). Nil for admin-configured clients.
+	RegistrationMetadata CustomFieldValues `json:"registration_metadata,omitempty" gorm:"type:jsonb;serializer:json"`
+	// Has unexported fields.
+}
+    ConnectionOAuthClient is a registered OAuth application for a (connector,
+    workspace) pair — either DCR-registered for a single workspace, or an
+    admin-configured app shared across all workspaces connecting to the same
+    vendor.
+
+    `WorkspaceID == nil` flags a global client (admin-configured, e.g. the
+    Irmin-owned HubSpot or Stripe app). A non-nil `WorkspaceID` came from RFC
+    7591 Dynamic Client Registration against the vendor's MCP server.
+
+type ConnectionOAuthSession struct {
+	ConnectionID uint       `json:"connection_id" gorm:"index;not null"`
+	Connection   Connection `json:"connection"    gorm:"foreignKey:ConnectionID"`
+
+	// InitiatingUserID records which user clicked "Connect" to start this
+	// flow. The callback is public (no user in context), so we persist the
+	// initiator at StartFlow time and credit the audit event on completion
+	// back to them instead of the connection owner. Nullable because older
+	// rows (pre-hardening) and server-initiated flows may not have a user.
+	InitiatingUserID *uint `json:"initiating_user_id,omitempty" gorm:"index"`
+	InitiatingUser   *User `json:"initiating_user,omitempty"    gorm:"foreignKey:InitiatingUserID"`
+
+	// StateHMAC is what we send to the vendor as the `state` parameter.
+	//
+	// Implementation note: the column name reads as "HMAC" for historical
+	// schema reasons, but the value stored here is a 256-bit cryptographic
+	// random string produced by the services/oauth package — not an HMAC.
+	// The callback looks up the session by exact-match on this column, so
+	// any unguessable, unique-per-session value works. The uniqueIndex
+	// converts a replayed state into a DB-level collision at session create
+	// time and makes callback lookups O(1).
+	StateHMAC string `json:"state_hmac" gorm:"uniqueIndex;not null"`
+
+	// Secrets holds the PKCE code verifier under ConnectionOAuthSecretKeyPKCEVerifier.
+	// Encrypted at rest so a DB snapshot alone cannot complete an in-flight
+	// flow against an attacker-known authorization code.
+	Secrets CustomFieldValues `json:"-" gorm:"type:jsonb;serializer:encrypted_json"`
+
+	// ExpiresAt is when this session stops being valid. 10-minute TTL by
+	// default; the callback handler rejects sessions past this time.
+	ExpiresAt time.Time `json:"expires_at" gorm:"index;not null"`
+	// Has unexported fields.
+}
+    ConnectionOAuthSession tracks one in-flight authorization code flow. Rows
+    are short-lived (10 min TTL) and single-use — deleted after the callback
+    successfully exchanges the code for tokens, and swept by cron otherwise.
+
+type ConnectionOAuthToken struct {
+
+	// ConnectionID is the owner of the token set. UniqueIndex ensures one
+	// row per Connection — a Connection either uses OAuth or doesn't.
+	ConnectionID uint       `json:"connection_id" gorm:"uniqueIndex;not null"`
+	Connection   Connection `json:"connection"    gorm:"foreignKey:ConnectionID"`
+
+	// Secrets holds the encrypted token material. Expected keys:
+	// ConnectionOAuthSecretKeyAccessToken, ConnectionOAuthSecretKeyRefreshToken.
+	Secrets CustomFieldValues `json:"-" gorm:"type:jsonb;serializer:encrypted_json"`
+
+	// ExpiresAt is the absolute expiry of the current access token. Nil
+	// means "never expires" (rare but valid for some vendors).
+	ExpiresAt *time.Time `json:"expires_at,omitempty" gorm:"index"`
+
+	// Scope is the space-separated scope string granted by the vendor.
+	// Useful for UI display and for detecting scope downgrades.
+	Scope string `json:"scope"`
+
+	// TokenType is the `token_type` from the vendor, e.g. "Bearer".
+	TokenType string `json:"token_type"`
+
+	// LastRefreshAt records the most recent successful refresh, for
+	// diagnostics. nil = never refreshed (original issuance still current).
+	LastRefreshAt *time.Time `json:"last_refresh_at,omitempty"`
+	// Has unexported fields.
+}
+    ConnectionOAuthToken holds the persistent bearer-token material for a
+    Connection. One row per connection; deleted when the user disconnects
+    or the Connection itself is deleted. Kept in a separate table from
+    Connection.Details so the existing secret-mask/merge logic doesn't need to
+    know about OAuth tokens.
+
 type ConnectionSchemaCache struct {
 	gorm.Model
 
@@ -732,6 +864,14 @@ func (d *Database) CreateAIApplicationToolLog(log *AIApplicationToolLog) error
 func (d *Database) CreateBillingEvent(event *BillingEvent) error
     CreateBillingEvent creates a billing event for idempotency.
 
+func (d *Database) CreateConnectionOAuthClient(tx *gorm.DB, client *ConnectionOAuthClient) error
+    CreateConnectionOAuthClient inserts a new client row. Callers are expected
+    to have checked that one doesn't already exist for the same (connector,
+    workspace).
+
+func (d *Database) CreateConnectionOAuthSession(tx *gorm.DB, session *ConnectionOAuthSession) error
+    CreateConnectionOAuthSession inserts a new session row.
+
 func (d *Database) CreateConnectionSubscription(subscription *ConnectionSubscription) error
     CreateConnectionSubscription creates a new subscription in the database.
     It automatically generates a webhook token if not provided.
@@ -756,6 +896,23 @@ func (d *Database) DeleteConnection(tx *gorm.DB, id uint) error
     DeleteConnection deletes a connection and its associated data from the
     database.
 
+func (d *Database) DeleteConnectionOAuthSession(tx *gorm.DB, sessionID uint) error
+    DeleteConnectionOAuthSession removes a session row by ID. Called after
+    a successful callback to enforce the single-use property of the state
+    parameter.
+
+func (d *Database) DeleteConnectionOAuthSessionsByConnectionID(tx *gorm.DB, connectionID uint) error
+    DeleteConnectionOAuthSessionsByConnectionID removes every pending session
+    belonging to the given connection. Used by the disconnect path and by the
+    connection-delete cascade — both need to evict in-flight flows so a stray
+    callback can't re-create tokens after the user has said "stop". Rejects zero
+    connectionID to prevent a wildcard-delete footgun.
+
+func (d *Database) DeleteConnectionOAuthTokenByConnectionID(tx *gorm.DB, connectionID uint) error
+    DeleteConnectionOAuthTokenByConnectionID removes the token row for a
+    connection. No-op if the row doesn't exist. Rejects connectionID == 0 to
+    prevent a wildcard-delete footgun.
+
 func (d *Database) DeleteConnectionSubscription(id uint) error
     DeleteConnectionSubscription deletes a subscription by ID.
 
@@ -766,6 +923,10 @@ func (d *Database) DeleteConnectionSubscriptionsByConnectionID(connectionID uint
 func (d *Database) DeleteConnector(tx *gorm.DB, id uint) error
     DeleteConnector deletes a connector record and its associated connections
     from the database by its ID.
+
+func (d *Database) DeleteExpiredConnectionOAuthSessions(now time.Time) (int64, error)
+    DeleteExpiredConnectionOAuthSessions sweeps rows whose ExpiresAt is in the
+    past. Intended for a periodic job; returns the number removed.
 
 func (d *Database) DeleteInvite(id uint) error
 
@@ -893,6 +1054,28 @@ func (d *Database) GetConnectionByID(id uint) (*Connection, error)
 func (d *Database) GetConnectionByIDAndWorkspaceID(id uint, workspaceID uint) (*Connection, error)
     GetConnectionByIDAndWorkspaceID finds a connection by its ID and verifies it
     belongs to the given workspace.
+
+func (d *Database) GetConnectionOAuthClientForConnector(
+	connectorID uint,
+	workspaceID uint,
+) (*ConnectionOAuthClient, error)
+    GetConnectionOAuthClientForConnector looks up the client row for a
+    (connector, workspace) pair. Falls back to the global (workspace_id NULL)
+    row when no workspace-scoped client is registered — the common case for
+    admin-configured apps like HubSpot/Stripe.
+
+func (d *Database) GetConnectionOAuthSessionByStateHMAC(stateHMAC string) (*ConnectionOAuthSession, error)
+    GetConnectionOAuthSessionByStateHMAC looks up a session by the state
+    parameter the vendor sent us back. Returns ErrConnectionOAuthSessionNotFound
+    if no match — the service layer treats that as "state expired, replayed,
+    or forged" and 400s the callback.
+
+func (d *Database) GetConnectionOAuthTokenByConnectionID(connectionID uint) (*ConnectionOAuthToken, error)
+    GetConnectionOAuthTokenByConnectionID returns the token row for a
+    connection, or ErrConnectionOAuthTokenNotFound.
+
+    Rejects connectionID == 0 up front so a buggy caller can't accidentally
+    match an arbitrary row via GORM's zero-value Where semantics.
 
 func (d *Database) GetConnectionSubscriptionByID(id uint) (*ConnectionSubscription, error)
     GetConnectionSubscriptionByID retrieves a subscription by its ID.
@@ -1289,6 +1472,13 @@ func (d *Database) UpdateWorkspaceUserRoles(
 	roleIDs []uint,
 ) (*WorkspaceUser, error)
     UpdateWorkspaceUserRoles updates the roles for a user in a workspace.
+
+func (d *Database) UpsertConnectionOAuthToken(tx *gorm.DB, token *ConnectionOAuthToken) error
+    UpsertConnectionOAuthToken writes the given token, replacing any existing
+    row for the same connection atomically via ON CONFLICT DO UPDATE.
+    Used by the callback handler (new connection) and the refresh flow (rotated
+    access + refresh tokens). Safe under concurrent callers: the unique index on
+    connection_id converts races into a single well-defined upsert.
 
 func (d *Database) UpsertTemplate(template *Template) error
     UpsertTemplate creates or updates a template based on title and type.
