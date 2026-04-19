@@ -63,31 +63,21 @@ go mod tidy && go get -u ./...
 
 **Environment Configuration**
 
-Create a `.env` file with the following variables:
-
-> Universal API Key (UNIVERSAL_CONNECTOR_API_KEY, optional) can be used for all connectors. Used for manual testing, to bypass the connector registration flow, and the connector specific API key it creates. Key is optional. Removing it will disable the universal API key feature. Make sure to never use this in production environments.
+Copy the template and fill in the values you need:
 
 ```bash
-PORT=8080
-URL=http://localhost:8080
-
-HELMET_ENABLED=true
-CORS_ENABLED=true
-CORS_ORIGINS=https://api.irmin.dev
-
-UNIVERSAL_CONNECTOR_API_KEY=random_api_key_here
-
-IRMIN_API_BASE_URL=https://api.irmin.dev
-IRMIN_API_TOKEN=your_api_token_here
-
-DATABASE_CONNECTION_STRING=postgres://user:password@localhost:5432/database
-
-# Sentry (optional)
-SENTRY_ENABLED=false
-SENTRY_DSN=https://your-sentry-dsn.ingest.de.sentry.io/0123456789
-SENTRY_ENVIRONMENT=development
-SENTRY_TRACES_SAMPLE_RATE=0.1
+cp .env.example .env
 ```
+
+[`.env.example`](.env.example) is the single source of truth for every variable the service reads, with defaults and inline descriptions. All vars are runtime configuration (loaded at process startup via `godotenv`) — there are no build-time vars.
+
+> **UNIVERSAL_CONNECTOR_API_KEY** (optional) is a shared API key for all connectors, used for manual testing to bypass per-connector registration. Never set this in production.
+
+### Accessing env vars in code
+
+Don't call `os.Getenv` directly. All vars are loaded and validated once at startup in [`utils/loadEnvs.go`](utils/loadEnvs.go) into the typed `ConnectorsEnv` struct, which is threaded through the app as `ConnectorsApp.Env`.
+
+Adding a new var: update `.env.example`, add a field to `ConnectorsEnv`, load it with `getEnv(...)` in `LoadEnv`, and read it from `app.Env.YourField` at the call site.
 
 ### Running the Application
 
