@@ -11,6 +11,22 @@ const isStaticAnalysis =
   process.env.KNIP === 'true' ||
   process.env.STATIC_ANALYSIS === 'true';
 
+/**
+ * Parse a numeric sample rate env var with safe fallback + clamping to [0, 1].
+ * Any malformed or out-of-range value falls back rather than silently
+ * disabling (0) or over-sampling. Used by Sentry sample-rate fields below.
+ */
+const sampleRate = (fallback: number) =>
+  z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val) return fallback;
+      const n = Number(val);
+      if (!Number.isFinite(n) || n < 0 || n > 1) return fallback;
+      return n;
+    });
+
 const envSchema = z.object({
   PORT: z.string().default('3000').transform(Number),
   HOST: z.string().default('0.0.0.0'),
@@ -64,8 +80,18 @@ const envSchema = z.object({
     .default('true')
     .transform((val) => val === 'true'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  SENTRY_ENABLED: z
+    .string()
+    .default('false')
+    .transform((val) => val === 'true'),
   SENTRY_DSN: z.string().optional(),
+  SENTRY_ENVIRONMENT: z.string().optional(),
+  SENTRY_ORG: z.string().optional(),
+  SENTRY_PROJECT: z.string().optional(),
+  SENTRY_URL: z.string().optional(),
   SENTRY_AUTH_TOKEN: z.string().optional(),
+  SENTRY_TRACES_SAMPLE_RATE: sampleRate(0.1),
+  SENTRY_PROFILE_SESSION_SAMPLE_RATE: sampleRate(0.1),
   TEST_IRMIN_AUTH_TOKEN: z.string().optional(),
   TEST_WORKSPACE_SLUG: z.string().optional(),
 });

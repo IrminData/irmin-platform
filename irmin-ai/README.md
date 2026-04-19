@@ -19,6 +19,20 @@ LangChain-powered (Fastify, TypeScript) AI agents API for Irmin with Anthropic r
 
 This project integrates with [Sentry](https://sentry.io) for error tracking and performance monitoring, and [LangSmith](https://smith.langchain.com/) for LLM observability and debugging. These tools provide comprehensive insights into application performance, error tracking, and LLM chain execution for better debugging and optimization.
 
+### Sentry configuration
+
+Sentry is disabled by default in dev so local errors don't reach the
+shared project. Set `SENTRY_ENABLED=true` and `SENTRY_DSN` to enable.
+Source map upload (via `pnpm run sentry:sourcemaps`) is also opt-in —
+it no-ops unless `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, and `SENTRY_PROJECT`
+are all set, so it's safe to wire into CI without blocking local builds.
+Set `SENTRY_URL` to point at a self-hosted / EU / private-cloud Sentry.
+
+See `.env.example` for the full list of Sentry env vars:
+`SENTRY_ENABLED`, `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_ORG`,
+`SENTRY_PROJECT`, `SENTRY_URL`, `SENTRY_AUTH_TOKEN`,
+`SENTRY_TRACES_SAMPLE_RATE`, `SENTRY_PROFILE_SESSION_SAMPLE_RATE`.
+
 ## Prerequisites
 
 Ensure you have the following installed:
@@ -35,11 +49,8 @@ pnpm install
 2. **Set environment variables:**
 ```bash
 cp .env.example .env
-# Add your API keys and update other variables as required:
-# GROQ_API_KEY=your_groq_key
-# OPENAI_API_KEY=your_openai_key
-   # ANTHROPIC_API_KEY=your_anthropic_key
 ```
+Open `.env` and fill in the values you need. See [`.env.example`](.env.example) for the full list of variables, defaults, and descriptions. All variables are read at process startup (runtime).
 3. **Run:**
 ```bash
    pnpm dev               # Development
@@ -122,12 +133,13 @@ Use `/api/agents/:agentId/stream` for real-time output. Non-streaming endpoints 
 
 ## Environment Variables
 
-See [.env.example](.env.example) for the full list. Important keys include:
-- `DATABASE_URL` – Postgres connection used by Fastify and LangGraph checkpointer
-- `QDRANT_URL` / `QDRANT_API_KEY` – Vector database connection
-- `OPENAI_API_KEY`, `GROQ_API_KEY`, `ANTHROPIC_API_KEY` – Provider credentials
-- `IRMIN_API_BASE_URL` – Base URL for MCP tool requests
-- `TEST_IRMIN_AUTH_TOKEN`, `TEST_WORKSPACE_SLUG` – Integration test credentials
+Copy the template and fill in the values you need:
+
+```bash
+cp .env.example .env
+```
+
+All variables, their defaults, and inline descriptions live in [`.env.example`](.env.example) — that is the single source of truth. Everything the service reads is runtime configuration (loaded at process startup via dotenv); there are no build-time variables.
 
 ## Commands
 

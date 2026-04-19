@@ -20,7 +20,7 @@
     "clean": "rimraf dist",
     "knip": "knip",
     "knip:fix": "knip --fix",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org irmin-dw --project irmin-ai ./dist && sentry-cli sourcemaps upload --org irmin-dw --project irmin-ai ./dist",
+    "sentry:sourcemaps": "node scripts/upload-sourcemaps.mjs",
     "prepare": "husky"
   },
   "author": "Tim Borovkov / Irmin",
@@ -40,6 +40,7 @@
     "@qdrant/js-client-rest": "^1.17.0",
     "@sentry/cli": "^3.3.5",
     "@sentry/node": "^10.49.0",
+    "@sentry/profiling-node": "^10.49.0",
     "cheerio": "^1.2.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",

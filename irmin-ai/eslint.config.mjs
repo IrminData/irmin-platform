@@ -72,6 +72,30 @@ export default tseslint.config(
   {
     files: ['**/*.mjs', '**/*.js'],
     ...tseslint.configs.disableTypeChecked,
+    languageOptions: {
+      // Preserve parserOptions from disableTypeChecked (program: null,
+      // project: false, projectService: false) — these are what actually turn
+      // off type-aware linting for non-TS files. Dropping them would make the
+      // parser try to attach .mjs/.js files to the TS project and fail.
+      ...tseslint.configs.disableTypeChecked.languageOptions,
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...tseslint.configs.disableTypeChecked.languageOptions?.globals,
+        process: 'readonly',
+        console: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        global: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        setImmediate: 'readonly',
+        clearImmediate: 'readonly',
+      },
+    },
   },
   prettierConfig,
   {

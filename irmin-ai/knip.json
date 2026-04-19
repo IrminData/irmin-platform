@@ -3,5 +3,6 @@
   "entry": ["src/scripts/**/*.ts"],
   "project": ["src/**/*.ts"],
   "ignore": ["src/tests/**"],
-  "ignoreExportsUsedInFile": true
+  "ignoreExportsUsedInFile": true,
+  "ignoreDependencies": ["@sentry/cli"]
 }
