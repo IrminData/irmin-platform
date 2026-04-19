@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { aiApplicationPendingWritesQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -28,6 +29,7 @@ export function useAIApplicationPendingWrites(
   const { limit = 10, offset = 0, enabled = true } = options;
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -81,7 +83,10 @@ export function useAIApplicationPendingWrites(
       });
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to approve pending write');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.approveWriteFailed
+      );
     },
   });
 
@@ -108,7 +113,10 @@ export function useAIApplicationPendingWrites(
       });
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to reject pending write');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.rejectWriteFailed
+      );
     },
   });
 

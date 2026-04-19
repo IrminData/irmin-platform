@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { repositoriesQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -25,6 +26,7 @@ type RepositoryCreateInput = {
 export function useRepositories() {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -97,7 +99,10 @@ export function useRepositories() {
           );
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Error creating repository');
+          irminAlert(
+            'error',
+            error.message ?? dict.common.errors.mutations.createRepositoryFailed
+          );
         },
       }
     ),

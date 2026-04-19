@@ -1,6 +1,6 @@
 'use client';
 
-import { CommonErrorDisplay } from './CommonErrorDisplay';
+import { LocalizedErrorDisplay } from './CommonErrorDisplay';
 
 interface QueryErrorProps {
   error: Error | null;
@@ -29,7 +29,7 @@ export const QueryError = ({
     size === 'sm' ? 'component' : size === 'lg' ? 'section' : 'component';
 
   return (
-    <CommonErrorDisplay
+    <LocalizedErrorDisplay
       error={error}
       title={title}
       description={description}

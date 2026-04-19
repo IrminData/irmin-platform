@@ -90,7 +90,10 @@ export function useConnection(connectionID: string) {
           );
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Error deleting the connection');
+          irminAlert(
+            'error',
+            error.message ?? dict.common.errors.mutations.deleteConnectionFailed
+          );
         },
       }),
     }
@@ -143,7 +146,10 @@ export function useConnection(connectionID: string) {
         irminAlert('success', res.message ?? 'Connection updated successfully');
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Error updating the connection');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.updateConnectionFailed
+        );
       },
     }),
   });
@@ -237,7 +243,10 @@ export function useConnection(connectionID: string) {
           context.previousConnections
         );
       }
-      irminAlert('error', error.message ?? 'Error updating the connection');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.updateConnectionFailed
+      );
     },
     onSuccess: (
       res: IrminAPIResponse<Connection>,
@@ -297,7 +306,10 @@ export function useConnection(connectionID: string) {
       );
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error transferring the connection');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.transferConnectionFailed
+      );
     },
   });
 
@@ -324,7 +336,10 @@ export function useConnection(connectionID: string) {
       }
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error testing connection');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.testConnectionFailed
+      );
     },
   });
 

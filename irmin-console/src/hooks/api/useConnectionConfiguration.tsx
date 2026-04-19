@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { connectorConfigurationQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import type { ConnectionFieldValues } from '@/types/core/Connection';
@@ -24,6 +25,7 @@ export function useConnectionConfiguration(
   const { getCore } = useIrminCore();
   const queryClient = useQueryClient();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
 
   const connectionConfigurationQuery = useQuery<
     IrminAPIResponse<DynamicFields>,
@@ -84,7 +86,8 @@ export function useConnectionConfiguration(
     onError: (error) => {
       irminAlert(
         'error',
-        error.message ?? 'Error validating connector configuration'
+        error.message ??
+          dict.common.errors.mutations.validateConnectorConfigurationFailed
       );
     },
     onSettled: () => {

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { policiesQueryKey, policyQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -66,6 +67,7 @@ export function usePolicies({
 }) {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -172,7 +174,10 @@ export function usePolicies({
         },
         onError: (error) => {
           if (!silent) {
-            irminAlert('error', error.message ?? 'Error creating policy');
+            irminAlert(
+              'error',
+              error.message ?? dict.common.errors.mutations.createPolicyFailed
+            );
           }
         },
       }
@@ -214,7 +219,10 @@ export function usePolicies({
       },
       onError: (error) => {
         if (!silent) {
-          irminAlert('error', error.message ?? 'Error deleting policy');
+          irminAlert(
+            'error',
+            error.message ?? dict.common.errors.mutations.deletePolicyFailed
+          );
         }
       },
     }),
@@ -249,7 +257,10 @@ export function usePolicies({
       irminAlert('success', res.message ?? 'Policy updated successfully');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error updating policy');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.updatePolicyFailed
+      );
     },
   });
 

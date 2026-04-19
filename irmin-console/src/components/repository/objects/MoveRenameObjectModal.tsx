@@ -88,12 +88,15 @@ export default function MoveRenameObjectModal({
         irminModal.close();
       } catch (error) {
         console.error('Failed to move/rename object:', error);
-        setError((error as Error)?.message ?? 'Could not move/rename object');
+        setError(
+          (error as Error)?.message ??
+            dict.common.errors.mutations.moveObjectFailed
+        );
       } finally {
         setLoading(false);
       }
     },
-    [moveObject, selectedObject, irminModal]
+    [moveObject, selectedObject, irminModal, dict]
   );
 
   return (

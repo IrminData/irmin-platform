@@ -1,8 +1,10 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 
 import { ErrorBoundary } from './ErrorBoundary';
+
+type ErrorBoundaryProps = ComponentProps<typeof ErrorBoundary>;
 
 interface SafeComponentProps {
   children: ReactNode;
@@ -10,6 +12,8 @@ interface SafeComponentProps {
   level?: 'component' | 'page' | 'section';
   title?: string;
   description?: string;
+  titleKey?: ErrorBoundaryProps['titleKey'];
+  descriptionKey?: ErrorBoundaryProps['descriptionKey'];
   className?: string;
   onError?: (error: Error) => void;
 }
@@ -27,6 +31,8 @@ export default function SafeComponent({
   level = 'component',
   title,
   description,
+  titleKey,
+  descriptionKey,
   className = '',
   onError,
 }: SafeComponentProps) {
@@ -35,6 +41,8 @@ export default function SafeComponent({
       level={level}
       title={title}
       description={description}
+      titleKey={titleKey}
+      descriptionKey={descriptionKey}
       className={className}
       fallback={fallback}
       onError={onError ? (error, _errorInfo) => onError(error) : undefined}

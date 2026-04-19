@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import RepositoryLayoutSkeleton from '@/components/ui/loading/RepositoryLayoutSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -68,24 +68,24 @@ export default function RepositoryLayoutWrapper({
 
   if (repositoryQuery.isError) {
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         error={repositoryQuery.error}
         variant='page'
         showReload={true}
         onRetry={() => repositoryQuery.refetch()}
-        title={dict.common.error}
-        description={dict.common.weEncounteredError}
+        title={dict.common.errors.failedToLoadRepository}
+        description={dict.common.errors.failedToLoadAgain}
       />
     );
   }
 
   if (!repositoryQuery.data?.data) {
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         variant='page'
         showHome={true}
-        title={`${dict.repository.repository} ${dict.common.pageNotFound.toLowerCase()}`}
-        description={dict.common.tryAgainOrContactSupport}
+        title={dict.common.errors.repositoryNotFound}
+        description={dict.common.errors.repositoryNotFoundDescription}
       />
     );
   }

@@ -5,6 +5,21 @@ import { Component } from 'react';
 
 import * as Sentry from '@sentry/nextjs';
 
+import type { Dictionary } from '@/lib/dict';
+
+import { useLocale } from '@/context/LocaleContext';
+
+/**
+ * Keys under `dict.common.errors` whose values are plain strings — i.e.
+ * the translation keys that can be used as `titleKey` / `descriptionKey`
+ * on {@link ErrorBoundary}.
+ */
+type ErrorDictStringKey = {
+  [K in keyof Dictionary['common']['errors']]: Dictionary['common']['errors'][K] extends string
+    ? K
+    : never;
+}[keyof Dictionary['common']['errors']];
+
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
@@ -15,8 +30,23 @@ interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
   level?: 'component' | 'page' | 'section';
+  /**
+   * Resolved title string. Evaluated in the parent component's render —
+   * keep it cheap; an expensive or throwing expression here will prevent
+   * the boundary from mounting. Prefer {@link titleKey} for translated
+   * fallbacks so the dict lookup only happens on the error path.
+   */
   title?: string;
+  /** See {@link title}. */
   description?: string;
+  /**
+   * Translation key under `dict.common.errors.*`. Resolved lazily inside
+   * the fallback (only on error), so the wrapper component stays pure
+   * and the boundary always mounts even if the locale dict is misshapen.
+   */
+  titleKey?: ErrorDictStringKey;
+  /** See {@link titleKey}. */
+  descriptionKey?: ErrorDictStringKey;
   className?: string;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
@@ -99,6 +129,8 @@ export class ErrorBoundary extends Component<
           level={this.props.level}
           title={this.props.title}
           description={this.props.description}
+          titleKey={this.props.titleKey}
+          descriptionKey={this.props.descriptionKey}
           className={this.props.className}
         />
       );
@@ -116,6 +148,8 @@ function ErrorBoundaryFallback({
   level = 'component',
   title,
   description,
+  titleKey,
+  descriptionKey,
   className = '',
 }: {
   error: Error | null;
@@ -124,29 +158,42 @@ function ErrorBoundaryFallback({
   level?: 'component' | 'page' | 'section';
   title?: string;
   description?: string;
+  titleKey?: ErrorDictStringKey;
+  descriptionKey?: ErrorDictStringKey;
   className?: string;
 }) {
+  // Lazy dict lookup — only runs when the boundary has already caught an
+  // error, so a throw here can't prevent the boundary from mounting.
+  // Guarded with optional chaining in case the consumer renders the
+  // boundary outside a LocaleProvider (context default is `{}`).
+  const { dict } = useLocale();
+  const resolvedTitle =
+    title ?? (titleKey ? dict.common?.errors?.[titleKey] : undefined);
+  const resolvedDescription =
+    description ??
+    (descriptionKey ? dict.common?.errors?.[descriptionKey] : undefined);
+
   const getDefaultTitle = () => {
     switch (level) {
       case 'page':
-        return 'Page Error';
+        return 'Something went wrong';
       case 'section':
-        return 'Section Error';
+        return "Couldn't load this section";
       case 'component':
       default:
-        return 'Component Error';
+        return "Couldn't load";
     }
   };
 
   const getDefaultDescription = () => {
     switch (level) {
       case 'page':
-        return 'This page encountered an error. Please try refreshing or contact support if the problem persists.';
+        return "We couldn't load this page. Try refreshing — if it keeps happening, contact support.";
       case 'section':
-        return 'This section encountered an error. Please try refreshing.';
+        return 'Something went wrong while loading. Try refreshing the page.';
       case 'component':
       default:
-        return 'This component encountered an error.';
+        return 'Something went wrong while loading.';
     }
   };
 
@@ -173,10 +220,10 @@ function ErrorBoundaryFallback({
       <div className='mx-auto max-w-md space-y-4 p-6 text-center'>
         <div className='mb-4 text-4xl text-red-500'>⚠️</div>
         <h2 className='text-xl font-semibold text-foreground'>
-          {title || getDefaultTitle()}
+          {resolvedTitle || getDefaultTitle()}
         </h2>
         <p className='text-muted-foreground'>
-          {description || getDefaultDescription()}
+          {resolvedDescription || getDefaultDescription()}
         </p>
         <button
           onClick={onReset}
@@ -186,7 +233,7 @@ function ErrorBoundaryFallback({
             hover:bg-primary/90
           `}
         >
-          Try Again
+          {dict.common?.tryAgain ?? 'Try again'}
         </button>
         {process.env.NODE_ENV === 'development' && error && (
           <details className='mt-4 text-left text-sm'>

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import ConnectorInfoModal from '@/components/connector/ConnectorInfoModal';
-import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import { QueryError } from '@/components/ui/error/QueryError';
 import FormPageSkeleton from '@/components/ui/loading/FormPageSkeleton';
 
@@ -40,16 +40,16 @@ export default function ConnectionConnectorPage() {
       <QueryError
         error={connectionQuery.error}
         onRetry={() => connectionQuery.refetch()}
-        title={dict.common.error}
+        title={dict.common.errors.failedToLoadConnection}
       />
     );
   }
   if (!connectionQuery.data?.data) {
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         variant='page'
-        title={dict.common.error}
-        description={dict.common.weEncounteredError}
+        title={dict.common.errors.connectionNotFound}
+        description={dict.common.errors.connectionNotFoundDescription}
         showHome={true}
       />
     );

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import PageSkeleton from '@/components/ui/loading/PageSkeleton';
 
 import { AIApplicationProvider } from '@/context/AIApplicationContext';
@@ -85,24 +85,24 @@ export default function AIApplicationLayoutWrapper({
 
   if (aiApplicationQuery.isError) {
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         error={aiApplicationQuery.error}
         variant='page'
         showReload={true}
         onRetry={() => aiApplicationQuery.refetch()}
-        title={dict.common.error}
-        description={dict.common.weEncounteredError}
+        title={dict.common.errors.failedToLoadAIApplication}
+        description={dict.common.errors.failedToLoadAgain}
       />
     );
   }
 
   if (!aiApplicationQuery.data?.data) {
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         variant='page'
         showHome={true}
-        title={`AI Application ${dict.common.pageNotFound.toLowerCase()}`}
-        description={dict.common.tryAgainOrContactSupport}
+        title={dict.common.errors.aiApplicationNotFound}
+        description={dict.common.errors.aiApplicationNotFoundDescription}
       />
     );
   }

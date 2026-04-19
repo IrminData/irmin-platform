@@ -65,7 +65,8 @@ export default function ReviewAndCreateStep({
 
       if (!workflowRes.data) {
         throw new Error(
-          workflowRes.message ?? 'Failed to create export workflow'
+          workflowRes.message ??
+            dict.common.errors.mutations.createWorkflowFailed
         );
       }
 
@@ -77,7 +78,8 @@ export default function ReviewAndCreateStep({
       console.error('Error creating export workflow:', error);
       irminAlert(
         'error',
-        (error as Error)?.message ?? 'Failed to create export workflow'
+        (error as Error)?.message ??
+          dict.common.errors.mutations.createWorkflowFailed
       );
     } finally {
       setIsCreating(false);

@@ -9,6 +9,7 @@ import {
 } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
@@ -127,6 +128,7 @@ const invalidateEntityQueries = (
 export const useWorkspaceTags = (workspaceSlug: string) => {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const queryClient = useQueryClient();
 
   const workspaceTagsQuery = useQuery<IrminAPIResponse<Tag[]>, Error>({
@@ -173,7 +175,10 @@ export const useWorkspaceTags = (workspaceSlug: string) => {
           irminAlert('success', res.message ?? 'Tag created successfully');
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Failed to create tag');
+          irminAlert(
+            'error',
+            error.message ?? dict.common.errors.mutations.createTagFailed
+          );
         },
       }
     ),
@@ -203,7 +208,10 @@ export const useWorkspaceTags = (workspaceSlug: string) => {
         irminAlert('success', res.message ?? 'Tag updated successfully');
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Failed to update tag');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.updateTagFailed
+        );
       },
     }),
   });
@@ -229,7 +237,10 @@ export const useWorkspaceTags = (workspaceSlug: string) => {
         irminAlert('success', res.message ?? 'Tag deleted successfully');
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Failed to delete tag');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.deleteTagFailed
+        );
       },
     }),
   });
@@ -253,7 +264,10 @@ export const useWorkspaceTags = (workspaceSlug: string) => {
       irminAlert('success', res.message ?? 'Tag added to entity successfully');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to add tag to entity');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.addTagToEntityFailed
+      );
     },
   });
 
@@ -279,7 +293,10 @@ export const useWorkspaceTags = (workspaceSlug: string) => {
       );
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to remove tag from entity');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.removeTagFromEntityFailed
+      );
     },
   });
 

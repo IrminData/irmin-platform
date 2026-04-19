@@ -18,7 +18,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
-import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import ConnectionLayoutSkeleton from '@/components/ui/loading/ConnectionLayoutSkeleton';
 import AssetSharePopover from '@/components/ui/policy-editor/AssetSharePopover';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
@@ -140,24 +140,24 @@ export default function ConnectionLayoutWrapper({
 
   if (connectionQuery.isError) {
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         error={connectionQuery.error}
         variant='page'
         showReload={true}
         onRetry={() => connectionQuery.refetch()}
-        title={dict.common.error}
-        description={dict.common.weEncounteredError}
+        title={dict.common.errors.failedToLoadConnection}
+        description={dict.common.errors.failedToLoadAgain}
       />
     );
   }
 
   if (!connection) {
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         variant='page'
         showHome={true}
-        title={`${dict.connections.connection} ${dict.common.pageNotFound.toLowerCase()}`}
-        description={dict.common.tryAgainOrContactSupport}
+        title={dict.common.errors.connectionNotFound}
+        description={dict.common.errors.connectionNotFoundDescription}
       />
     );
   }

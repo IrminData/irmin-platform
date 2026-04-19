@@ -88,7 +88,10 @@ export function useWorkspace(slug: string) {
         irminAlert('success', res.message ?? 'Workspace updated successfully');
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Failed to update workspace');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.updateWorkspaceFailed
+        );
       },
     }),
   });
@@ -115,7 +118,10 @@ export function useWorkspace(slug: string) {
         router.push(`/${locale}/workspace`);
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Failed to delete workspace');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.deleteWorkspaceFailed
+        );
       },
     }),
   });
@@ -171,7 +177,10 @@ export function useWorkspace(slug: string) {
     },
     onError: (error) => {
       console.error('Failed to transfer workspace:', error);
-      irminAlert('error', error.message ?? 'Failed to transfer workspace');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.transferWorkspaceFailed
+      );
     },
   });
 
@@ -220,7 +229,10 @@ export function useWorkspace(slug: string) {
     },
     onError: (error) => {
       console.error('Failed to leave workspace:', error);
-      irminAlert('error', error.message ?? 'Failed to leave workspace');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.leaveWorkspaceFailed
+      );
     },
   });
 

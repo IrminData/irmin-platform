@@ -20,7 +20,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
-import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import WorkflowLayoutSkeleton from '@/components/ui/loading/WorkflowLayoutSkeleton';
 import AssetSharePopover from '@/components/ui/policy-editor/AssetSharePopover';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -124,13 +124,13 @@ export default function WorkflowLayoutWrapper({
 
   if (workflowQuery.isError) {
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         error={workflowQuery.error}
         variant='page'
         showReload={true}
         onRetry={() => workflowQuery.refetch()}
-        title={dict.common.error}
-        description={dict.common.weEncounteredError}
+        title={dict.common.errors.failedToLoadWorkflow}
+        description={dict.common.errors.failedToLoadAgain}
       />
     );
   }
@@ -139,11 +139,11 @@ export default function WorkflowLayoutWrapper({
 
   if (!workflow) {
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         variant='page'
         showHome={true}
-        title={`${dict.workflow.workflow} ${dict.common.pageNotFound.toLowerCase()}`}
-        description={dict.common.tryAgainOrContactSupport}
+        title={dict.common.errors.workflowNotFound}
+        description={dict.common.errors.workflowNotFoundDescription}
       />
     );
   }

@@ -6,6 +6,7 @@ import IrminAIClient from '@/lib/ai';
 import { aiConversationsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -32,6 +33,7 @@ interface UseAIConversationsOptions {
 export function useAIConversations(options: UseAIConversationsOptions = {}) {
   const { getToken } = useIAM();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -165,7 +167,10 @@ export function useAIConversations(options: UseAIConversationsOptions = {}) {
           typedContext.previousConversations
         );
       }
-      irminAlert('error', error.message ?? 'Failed to create conversation');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.createConversationFailed
+      );
     },
     onSuccess: (newConversation, _input) => {
       // Update cache with real data from server

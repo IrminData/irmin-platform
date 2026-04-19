@@ -23,7 +23,7 @@ import CodeMirrorEditor from '@/components/scripts/ide/CodeMirrorEditor';
 import { Button } from '@/components/ui/button';
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import DisplayTitle from '@/components/ui/display-title';
-import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import { QueryError } from '@/components/ui/error/QueryError';
 import SafeComponent from '@/components/ui/error/SafeComponent';
 import PageSkeleton from '@/components/ui/loading/PageSkeleton';
@@ -66,8 +66,8 @@ export default function RepositorySection({
   return (
     <SafeComponent
       level='section'
-      title='Repository Section Error'
-      description='The repository section encountered an error. Please try refreshing the page.'
+      titleKey='repositoryTitle'
+      descriptionKey='repositoryDescription'
     >
       <Suspense>
         <RepositorySectionContent
@@ -330,10 +330,10 @@ function RepositorySectionContent({
         <div className='my-4 flex flex-row items-center justify-between gap-4'>
           <DisplayTitle>{dict.repository.repository}</DisplayTitle>
         </div>
-        <CommonErrorDisplay
+        <LocalizedErrorDisplay
           variant='section'
-          title={dict.common.error}
-          description={dict.common.insufficientPermissions}
+          title={dict.common.insufficientPermissions}
+          description={dict.common.errors.noPermissionsToViewRepository}
           showReload={false}
           showDetails={false}
         />

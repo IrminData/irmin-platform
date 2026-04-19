@@ -74,7 +74,10 @@ export const useRepositoryObjectContent = (
       }
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to download object');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.downloadObjectFailed
+      );
     },
   });
 

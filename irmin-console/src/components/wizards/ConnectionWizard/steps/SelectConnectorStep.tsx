@@ -63,14 +63,14 @@ export default function SelectConnectorStep({
 
   const handleContinue = useCallback(() => {
     if (!selectedConnector) {
-      irminAlert('error', 'Please select a connector');
+      irminAlert('error', dict.wizard.pleaseSelectConnector);
       return;
     }
     updateWizardData({
       connector: selectedConnector,
     });
     goNext();
-  }, [selectedConnector, irminAlert, goNext, updateWizardData]);
+  }, [selectedConnector, irminAlert, goNext, updateWizardData, dict]);
 
   if (connectorsQuery.isLoading) {
     return <ConnectionCreationSkeleton variant='connectors' />;

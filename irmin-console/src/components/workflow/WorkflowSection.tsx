@@ -9,7 +9,7 @@ import { formatDistanceToNow, intervalToDuration } from 'date-fns';
 
 import { TbClock, TbHourglassLow } from 'react-icons/tb';
 
-import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import { QueryError } from '@/components/ui/error/QueryError';
 import NormalList from '@/components/ui/list/NormalList';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -274,10 +274,10 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
   if (!canViewWorkflow) {
     return (
       <div className='relative container mx-auto max-w-7xl'>
-        <CommonErrorDisplay
+        <LocalizedErrorDisplay
           variant='section'
-          title={dict.common.error}
-          description={dict.common.insufficientPermissions}
+          title={dict.common.insufficientPermissions}
+          description={dict.common.errors.noPermissionsToViewWorkflow}
           showReload={false}
           showDetails={false}
         />

@@ -20,8 +20,8 @@ const RepositoryDocumentationSection = () => {
   return (
     <SafeComponent
       level='section'
-      title='Repository Documentation Error'
-      description='The repository documentation section encountered an error. Please try refreshing the page.'
+      titleKey='documentationTitle'
+      descriptionKey='documentationDescription'
     >
       <RepositoryDocumentationSectionContent />
     </SafeComponent>

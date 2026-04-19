@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { repositoryTagsQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -17,6 +18,7 @@ import {
 export function useRepositoryTags(repositorySlug: string) {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -70,7 +72,10 @@ export function useRepositoryTags(repositorySlug: string) {
           irminAlert('success', res.message ?? 'Tag created successfully');
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Error creating tag');
+          irminAlert(
+            'error',
+            error.message ?? dict.common.errors.mutations.createTagFailed
+          );
         },
       }
     ),
@@ -94,7 +99,10 @@ export function useRepositoryTags(repositorySlug: string) {
         irminAlert('success', res.message ?? 'Tag deleted successfully');
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Error deleting tag');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.deleteTagFailed
+        );
       },
     }),
   });

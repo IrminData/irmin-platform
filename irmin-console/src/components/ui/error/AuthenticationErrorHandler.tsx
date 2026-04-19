@@ -8,7 +8,7 @@ import { useAuth } from '@clerk/nextjs';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { CommonErrorDisplay } from './CommonErrorDisplay';
+import { LocalizedErrorDisplay } from './CommonErrorDisplay';
 
 interface AuthenticationErrorHandlerProps {
   error?: Error;
@@ -42,7 +42,7 @@ function AuthenticationErrorHandler({
   const { isSignedIn, isLoaded } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const { locale } = useLocale();
+  const { locale, dict } = useLocale();
   // Check if current route is public (exact matches with optional language prefix)
   const isPublicRoute =
     PUBLIC_ROUTES.some((route) => {
@@ -126,10 +126,10 @@ function AuthenticationErrorHandler({
     // instead of redirecting to sign-in, which would cause a redirect loop
     if (isSignedIn && error) {
       return (
-        <CommonErrorDisplay
+        <LocalizedErrorDisplay
           error={error}
-          title='Service Unavailable'
-          description='The service is temporarily unavailable. Please try again in a moment.'
+          title={dict.common.errors.serviceUnavailable}
+          description={dict.common.errors.serviceUnavailableDescription}
           variant='section'
           showDetails={!!error}
           showReload={true}
@@ -151,10 +151,10 @@ function AuthenticationErrorHandler({
 
     if (isAuthError) {
       return (
-        <CommonErrorDisplay
+        <LocalizedErrorDisplay
           error={error}
-          title='Authentication Required'
-          description='You need to sign in to access this content. Please sign in and try again.'
+          title={dict.common.errors.authenticationRequired}
+          description={dict.common.errors.authenticationRequiredDescription}
           variant='section'
           showDetails={false}
           showReload={true}
@@ -170,10 +170,10 @@ function AuthenticationErrorHandler({
 
     // Generic error fallback
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         error={error}
-        title='Authentication Error'
-        description='An authentication error occurred. Please try signing in again.'
+        title={dict.common.errors.authenticationError}
+        description={dict.common.errors.authenticationErrorDescription}
         variant='section'
         showDetails={!!error}
         showReload={true}

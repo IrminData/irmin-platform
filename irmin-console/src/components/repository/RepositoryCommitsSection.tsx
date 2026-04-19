@@ -22,8 +22,8 @@ export default function RepositoryCommitsSection() {
   return (
     <SafeComponent
       level='section'
-      title='Repository Commits Error'
-      description='The repository commits section encountered an error. Please try refreshing the page.'
+      titleKey='commitsTitle'
+      descriptionKey='commitsDescription'
     >
       <RepositoryCommitsSectionContent />
     </SafeComponent>

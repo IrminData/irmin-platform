@@ -51,13 +51,14 @@ export default function ConsoleNavigationWorkspaceSwitcher({
         console.error('Failed to switch workspace: ', error);
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Failed to switch workspace'
+          (error as Error)?.message ??
+            dict.common.errors.mutations.switchWorkspaceFailed
         );
       } finally {
         setProcessing(false);
       }
     },
-    [router, irminAlert, setIsMenuOpen, locale]
+    [router, irminAlert, setIsMenuOpen, locale, dict]
   );
 
   const options = useMemo(

@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { TbMessageCircle, TbPlus, TbTrash } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
-import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import { Input } from '@/components/ui/input';
 import ListSkeleton from '@/components/ui/loading/ListSkeleton';
 import {
@@ -137,8 +137,10 @@ export default function ConversationsList({
         {isLoading ? (
           <ListSkeleton items={6} className='p-2' />
         ) : error ? (
-          <CommonErrorDisplay
+          <LocalizedErrorDisplay
             error={error}
+            title={dict.common.errors.failedToLoadConversations}
+            description={dict.common.errors.failedToLoadAgain}
             variant='inline'
             showDetails={false}
             showReload={false}

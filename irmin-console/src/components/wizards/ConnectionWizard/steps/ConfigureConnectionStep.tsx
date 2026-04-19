@@ -173,7 +173,9 @@ export default function ConfigureConnectionStep({
           tags: wizardData.tags?.map((t) => t.id),
         });
         if (!res.data) {
-          throw new Error(res.message ?? 'Failed to create connection');
+          throw new Error(
+            res.message ?? dict.common.errors.mutations.createConnectionFailed
+          );
         }
         irminAlert('success', res.message ?? 'Connection created successfully');
 
@@ -190,7 +192,8 @@ export default function ConfigureConnectionStep({
         if (!isEditMode) {
           irminAlert(
             'error',
-            (error as Error)?.message ?? 'Failed to create connection'
+            (error as Error)?.message ??
+              dict.common.errors.mutations.createConnectionFailed
           );
         }
       }

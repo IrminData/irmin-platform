@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { inviteInboxQueryKey, invitesQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -31,6 +32,7 @@ export function useInvites() {
   const { workspaceSlug } = useWorkspaceContext();
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const queryClient = useQueryClient();
   const { rolesQuery } = useRoles();
 
@@ -75,7 +77,10 @@ export function useInvites() {
         irminAlert('success', res.message ?? 'Invite deleted successfully');
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Error deleting the invite');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.deleteInviteFailed
+        );
       },
     }),
   });
@@ -103,7 +108,8 @@ export function useInvites() {
     onError: (error) => {
       irminAlert(
         'error',
-        (error as Error)?.message ?? 'Error changing the invite role'
+        (error as Error)?.message ??
+          dict.common.errors.mutations.changeInviteRoleFailed
       );
     },
   });
@@ -124,7 +130,8 @@ export function useInvites() {
     onError: (error) => {
       irminAlert(
         'error',
-        (error as Error)?.message ?? 'Error resending the invite'
+        (error as Error)?.message ??
+          dict.common.errors.mutations.resendInviteFailed
       );
     },
   });
@@ -181,11 +188,14 @@ export function useInvites() {
             irminAlert('success', res.message ?? 'Invite sent successfully');
           },
           onError: (error) => {
-            irminAlert('error', error.message ?? 'Error sending the invite');
+            irminAlert(
+              'error',
+              error.message ?? dict.common.errors.mutations.sendInviteFailed
+            );
           },
         }
       ),
-    [queryClient, workspaceSlug, irminAlert, roles]
+    [queryClient, workspaceSlug, irminAlert, roles, dict]
   );
 
   const sendInviteMutation = useMutation<

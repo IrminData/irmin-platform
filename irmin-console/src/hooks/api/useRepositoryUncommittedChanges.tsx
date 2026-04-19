@@ -7,6 +7,7 @@ import {
 } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -19,6 +20,7 @@ export function useRepositoryUncommittedChanges(
 ) {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -79,7 +81,10 @@ export function useRepositoryUncommittedChanges(
       irminAlert('success', res.message ?? 'Commit created successfully');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error creating commit');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.createCommitFailed
+      );
     },
   });
 
@@ -105,7 +110,10 @@ export function useRepositoryUncommittedChanges(
       irminAlert('success', res.message ?? 'Changes reverted successfully');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error reverting changes');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.revertChangesFailed
+      );
     },
   });
 

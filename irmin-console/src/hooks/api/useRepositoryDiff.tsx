@@ -6,6 +6,7 @@ import {
 } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -27,6 +28,7 @@ export function useRepositoryDiff(
 ) {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -96,7 +98,10 @@ export function useRepositoryDiff(
       irminAlert('success', res.message ?? 'Successfully merged');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error merging refs');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.mergeRefsFailed
+      );
     },
   });
 

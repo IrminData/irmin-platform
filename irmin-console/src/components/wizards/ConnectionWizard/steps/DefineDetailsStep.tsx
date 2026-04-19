@@ -115,7 +115,8 @@ export default function DefineDetailsStep({
         console.error('Test connection error:', error);
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Failed to test connection'
+          (error as Error)?.message ??
+            dict.common.errors.mutations.testConnectionFailed
         );
       }
     },

@@ -7,7 +7,7 @@ import ConnectionSubscriptionsSection from '@/components/connection/ConnectionSu
 import EditConnectionConfigurationModal from '@/components/connection/EditConnectionConfigurationModal';
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import { Button } from '@/components/ui/button';
-import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import SafeComponent from '@/components/ui/error/SafeComponent';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import WorkflowList from '@/components/workflow/WorkflowList';
@@ -77,10 +77,10 @@ const ConnectionSection = () => {
   if (!canViewConnection) {
     return (
       <div className='relative container mx-auto max-w-7xl'>
-        <CommonErrorDisplay
+        <LocalizedErrorDisplay
           variant='section'
-          title={dict.common.error}
-          description={dict.common.insufficientPermissions}
+          title={dict.common.insufficientPermissions}
+          description={dict.common.errors.noPermissionsToViewConnection}
           showReload={false}
           showDetails={false}
         />
@@ -99,10 +99,10 @@ const ConnectionSection = () => {
   if (!connectionQuery.data?.data) {
     return (
       <div className='relative container mx-auto max-w-7xl'>
-        <CommonErrorDisplay
+        <LocalizedErrorDisplay
           variant='section'
-          title={dict.common.error}
-          description={dict.common.weEncounteredError}
+          title={dict.common.errors.connectionNotFound}
+          description={dict.common.errors.connectionNotFoundDescription}
           showReload={false}
           showDetails={false}
         />

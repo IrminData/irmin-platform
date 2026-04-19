@@ -28,8 +28,8 @@ export default function RepositoryTagsSection() {
   return (
     <SafeComponent
       level='section'
-      title='Repository Tags Error'
-      description='The repository tags section encountered an error. Please try refreshing the page.'
+      titleKey='tagsTitle'
+      descriptionKey='tagsDescription'
     >
       <RepositoryTagsSectionContent />
     </SafeComponent>

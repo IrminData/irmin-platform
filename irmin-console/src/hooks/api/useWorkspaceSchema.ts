@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -13,6 +14,7 @@ import type { ObjectSchema } from '@/types/core/ObjectSchema';
  */
 export function useWorkspaceSchema() {
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
 
@@ -31,12 +33,13 @@ export function useWorkspaceSchema() {
       console.error(error);
       irminAlert(
         'error',
-        (error as Error).message ?? 'Failed to fetch workspace schema'
+        (error as Error).message ??
+          dict.common.errors.mutations.fetchWorkspaceSchemaFailed
       );
     } finally {
       setLoading(false);
     }
-  }, [workspaceSlug, getCore, irminAlert]);
+  }, [workspaceSlug, getCore, irminAlert, dict]);
 
   const fetchedSchemaForWorkspaceRef = useRef('');
   useEffect(() => {

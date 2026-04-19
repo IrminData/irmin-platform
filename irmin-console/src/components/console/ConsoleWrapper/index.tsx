@@ -47,8 +47,8 @@ export default function ConsoleWrapper({
   return (
     <ErrorBoundary
       level='page'
-      title='Console Error'
-      description='The console encountered an error. Please try refreshing or contact support if the problem persists.'
+      titleKey='consoleTitle'
+      descriptionKey='consoleDescription'
     >
       <ConsoleWrapperContent>{children}</ConsoleWrapperContent>
     </ErrorBoundary>

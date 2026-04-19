@@ -21,8 +21,8 @@ const AIApplicationPoliciesSection = () => {
   return (
     <SafeComponent
       level='section'
-      title='AI Application Policies Error'
-      description='The AI Application policies section encountered an error. Please try refreshing the page.'
+      titleKey='policiesTitle'
+      descriptionKey='policiesDescription'
     >
       <AIApplicationPoliciesSectionContent />
     </SafeComponent>

@@ -200,7 +200,8 @@ const ScriptEditorProviderInner = ({
           console.error('Error fetching script', error);
           irminAlert(
             'error',
-            (error as Error)?.message ?? 'Failed to load script.'
+            (error as Error)?.message ??
+              dict.common.errors.mutations.loadScriptFailed
           );
           return;
         }
@@ -254,6 +255,7 @@ const ScriptEditorProviderInner = ({
       router,
       pathname,
       searchParams,
+      dict,
     ]
   );
 
@@ -424,7 +426,8 @@ const ScriptEditorProviderInner = ({
                 console.error('Error creating script:', error);
                 irminAlert(
                   'error',
-                  (error as Error)?.message ?? 'Failed to create script'
+                  (error as Error)?.message ??
+                    dict.common.errors.mutations.createScriptFailed
                 );
               }
             }}
@@ -435,7 +438,11 @@ const ScriptEditorProviderInner = ({
       }
     } catch (error) {
       console.error('Error saving script:', error);
-      irminAlert('error', (error as Error)?.message ?? 'Failed to save script');
+      irminAlert(
+        'error',
+        (error as Error)?.message ??
+          dict.common.errors.mutations.saveScriptFailed
+      );
     }
   }, [
     currentTab,
@@ -572,7 +579,8 @@ const ScriptEditorProviderInner = ({
         console.error('Error deleting script:', error);
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Failed to delete script'
+          (error as Error)?.message ??
+            dict.common.errors.mutations.deleteScriptFailed
         );
         return false;
       }
@@ -604,11 +612,12 @@ const ScriptEditorProviderInner = ({
         console.error('Error executing script:', error);
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Failed to execute script'
+          (error as Error)?.message ??
+            dict.common.errors.mutations.executeScriptFailed
         );
       }
     },
-    [dict.scripts, irminAlert, executeScriptMutation, scriptInputFiles]
+    [dict, irminAlert, executeScriptMutation, scriptInputFiles]
   );
 
   const loading =

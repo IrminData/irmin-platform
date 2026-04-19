@@ -25,8 +25,8 @@ export default function RepositoryBranchesSection() {
   return (
     <SafeComponent
       level='section'
-      title='Repository Branches Error'
-      description='The repository branches section encountered an error. Please try refreshing the page.'
+      titleKey='branchesTitle'
+      descriptionKey='branchesDescription'
     >
       <RepositoryBranchesSectionContent />
     </SafeComponent>

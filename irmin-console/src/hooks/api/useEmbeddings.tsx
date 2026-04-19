@@ -172,7 +172,10 @@ export const useEmbeddings = (
       );
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to upsert embeddings');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.upsertEmbeddingsFailed
+      );
     },
   });
 
@@ -205,7 +208,11 @@ export const useEmbeddings = (
       irminAlert('success', res.message ?? 'Metadata updated successfully');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to update metadata');
+      irminAlert(
+        'error',
+        error.message ??
+          dict.common.errors.mutations.updateEmbeddingMetadataFailed
+      );
     },
   });
 
@@ -238,7 +245,11 @@ export const useEmbeddings = (
       irminAlert('success', res.message ?? 'Priority updated successfully');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to update priority');
+      irminAlert(
+        'error',
+        error.message ??
+          dict.common.errors.mutations.updateEmbeddingPriorityFailed
+      );
     },
   });
 

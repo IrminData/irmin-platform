@@ -36,8 +36,8 @@ const AIApplicationSettingsSection = () => {
   return (
     <SafeComponent
       level='section'
-      title='AI Application Settings Error'
-      description='The AI Application settings section encountered an error. Please try refreshing the page.'
+      titleKey='appSettingsTitle'
+      descriptionKey='appSettingsDescription'
     >
       <AIApplicationSettingsSectionContent />
     </SafeComponent>

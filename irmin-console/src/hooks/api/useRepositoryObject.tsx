@@ -65,7 +65,10 @@ export const useRepositoryObject = (
       irminAlert('success', res.message ?? 'Object deleted successfully');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to delete object');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.deleteObjectFailed
+      );
     },
   });
 
@@ -91,7 +94,10 @@ export const useRepositoryObject = (
       irminAlert('success', res.message ?? 'Object moved successfully');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to move object');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.moveObjectFailed
+      );
     },
   });
 
@@ -117,7 +123,10 @@ export const useRepositoryObject = (
       irminAlert('success', res.message ?? 'Object copied successfully');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to copy object');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.copyObjectFailed
+      );
     },
   });
 
@@ -142,7 +151,10 @@ export const useRepositoryObject = (
       irminAlert('success', res.message ?? 'Object uploaded successfully');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to upload object');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.uploadObjectFailed
+      );
     },
   });
 
@@ -174,7 +186,10 @@ export const useRepositoryObject = (
       irminAlert('success', res.message ?? 'Object uploaded successfully');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to upload object');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.uploadObjectFailed
+      );
     },
   });
 
@@ -212,7 +227,10 @@ export const useRepositoryObject = (
       irminAlert('success', res.message ?? 'Pointer created successfully');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to create pointer');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.createPointerFailed
+      );
     },
   });
 

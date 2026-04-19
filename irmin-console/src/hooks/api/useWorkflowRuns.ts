@@ -10,6 +10,7 @@ import {
 import { workflowRunQueryKey, workflowRunsQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -44,6 +45,7 @@ export const useWorkflowRuns = (
 ) => {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -108,7 +110,10 @@ export const useWorkflowRuns = (
         setCurrentPage(1);
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Failed to create workflow run');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.createWorkflowRunFailed
+        );
       },
     }),
   });

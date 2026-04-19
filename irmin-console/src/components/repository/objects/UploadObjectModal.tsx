@@ -123,7 +123,10 @@ export default function UploadObjectModal({
         irminModal.close();
       } catch (error) {
         console.error('Failed to upload new object:', error);
-        setError((error as Error)?.message ?? 'Could not upload object');
+        setError(
+          (error as Error)?.message ??
+            dict.common.errors.mutations.uploadObjectFailed
+        );
       } finally {
         setLoading(false);
       }

@@ -28,8 +28,8 @@ export default function RepositorySchemaSection({
   return (
     <SafeComponent
       level='section'
-      title='Repository Schema Error'
-      description='The repository schema section encountered an error. Please try refreshing the page.'
+      titleKey='schemaTitle'
+      descriptionKey='schemaDescription'
     >
       <RepositorySchemaSectionContent
         initialSelectedPath={initialSelectedPath}

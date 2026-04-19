@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { usersQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -23,6 +24,7 @@ export function useUsers() {
   const { workspaceSlug } = useWorkspaceContext();
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const queryClient = useQueryClient();
 
   // Query for fetching all users in the current workspace
@@ -56,7 +58,10 @@ export function useUsers() {
         irminAlert('success', res.message ?? 'User deleted successfully');
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Error deleting the user');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.deleteUserFailed
+        );
       },
     }),
   });
@@ -85,7 +90,10 @@ export function useUsers() {
         irminAlert('success', res.message ?? 'User role changed successfully');
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Error changing the user role');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.changeRoleFailed
+        );
       },
     }),
   });

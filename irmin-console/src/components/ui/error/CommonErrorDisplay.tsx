@@ -15,6 +15,55 @@ import {
 
 import { Button } from '@/components/ui/button';
 
+import { useLocale } from '@/context/LocaleContext';
+
+/**
+ * Hook that returns the standard `translations` object built from the active
+ * locale's dict. Use this inside any component that renders
+ * {@link CommonErrorDisplay} while wrapped in the LocaleProvider.
+ *
+ * Uses optional chaining for every lookup so the hook degrades gracefully
+ * when rendered outside a LocaleProvider (where `useLocale()` returns the
+ * context default `{ dict: {} as Dictionary }`). Missing keys come back
+ * as `undefined`, and {@link CommonErrorDisplay} falls through to its
+ * hardcoded English defaults — no throw. For a first-class server-side
+ * render outside the provider (e.g. global-error.tsx), construct
+ * translations manually using {@link getDictionary}.
+ */
+export function useCommonErrorTranslations(): CommonErrorDisplayProps['translations'] {
+  const { dict } = useLocale();
+  const common = dict.common;
+  return {
+    somethingWentWrong: common?.somethingWentWrong,
+    error: common?.error,
+    weEncounteredError: common?.weEncounteredError,
+    tryAgain: common?.tryAgain,
+    goBackHome: common?.goBackHome,
+    reportIssue: common?.reportIssue,
+    hideDetails: common?.hideDetails,
+    showDetails: common?.showDetails,
+    errorDetails: common?.errorDetails,
+    copied: common?.copied,
+    copy: common?.copy,
+    stackTrace: common?.stackTrace,
+  };
+}
+
+/**
+ * Convenience wrapper around {@link CommonErrorDisplay} that auto-wires the
+ * `translations` prop from the active locale via {@link useCommonErrorTranslations}.
+ *
+ * Use this anywhere inside the LocaleProvider. For rendering outside the
+ * provider (e.g. global-error.tsx / WebsiteError) use {@link CommonErrorDisplay}
+ * directly with an explicit `translations` prop.
+ */
+export function LocalizedErrorDisplay(
+  props: Omit<CommonErrorDisplayProps, 'translations'>
+) {
+  const translations = useCommonErrorTranslations();
+  return <CommonErrorDisplay {...props} translations={translations} />;
+}
+
 interface CommonErrorDisplayProps {
   error?: Error | null;
   title?: string;
@@ -48,7 +97,8 @@ interface CommonErrorDisplayProps {
 const defaultTranslations = {
   somethingWentWrong: 'Something went wrong',
   error: 'Error',
-  weEncounteredError: 'We encountered an error. Please try again.',
+  weEncounteredError:
+    "We couldn't complete that action. Try again, or refresh the page if it keeps happening.",
   tryAgain: 'Try Again',
   goBackHome: 'Go Back Home',
   reportIssue: 'Report Issue',
@@ -86,8 +136,15 @@ export function CommonErrorDisplay({
   className = '',
   translations,
 }: CommonErrorDisplayProps) {
-  // Merge provided translations with defaults
-  const dict = { ...defaultTranslations, ...translations };
+  // Merge provided translations with defaults. Strip undefined entries
+  // first so a partial/misshapen translations object (e.g. from rendering
+  // outside LocaleProvider) can't blank out the English fallbacks.
+  const definedTranslations = translations
+    ? Object.fromEntries(
+        Object.entries(translations).filter(([, v]) => v !== undefined)
+      )
+    : {};
+  const dict = { ...defaultTranslations, ...definedTranslations };
 
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -182,9 +239,9 @@ export function CommonErrorDisplay({
       case 'page':
         return dict.weEncounteredError;
       case 'section':
-        return 'This section encountered an error. Please try again.';
+        return 'Something went wrong while loading. Try refreshing the page.';
       case 'component':
-        return 'This component failed to load.';
+        return 'Something went wrong while loading.';
       case 'inline':
         return error?.message || 'An error occurred.';
       default:

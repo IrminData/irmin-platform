@@ -66,7 +66,7 @@ const IAMContext = createContext<IAMContextValue>({
 
 export const IAMProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
-  const { locale, switchLocale } = useLocale();
+  const { locale, switchLocale, dict } = useLocale();
   const { irminAlert } = usePopup();
 
   // clerk hooks
@@ -333,11 +333,15 @@ export const IAMProvider = ({ children }: { children: ReactNode }) => {
         }
         throw new Error(r.message);
       } catch (err) {
-        irminAlert('error', (err as Error).message ?? 'Error updating profile');
+        irminAlert(
+          'error',
+          (err as Error).message ??
+            dict.common.errors.mutations.updateProfileFailed
+        );
         return false;
       }
     },
-    [irminAlert, locale, getToken]
+    [irminAlert, locale, getToken, dict]
   );
 
   const value = useMemo<IAMContextValue>(

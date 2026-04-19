@@ -125,6 +125,219 @@ const fi = {
 
     // Language and localization
     selectLanguage: 'Valitse kieli',
+
+    // Error boundary fallback messages (shown when a component tree throws)
+    errors: {
+      repositoryTitle: 'Arkiston lataaminen epäonnistui',
+      repositoryDescription:
+        'Arkiston lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      branchesTitle: 'Haarojen lataaminen epäonnistui',
+      branchesDescription:
+        'Haarojen lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      documentationTitle: 'Dokumentaation lataaminen epäonnistui',
+      documentationDescription:
+        'Dokumentaation lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      schemaTitle: 'Skeeman lataaminen epäonnistui',
+      schemaDescription:
+        'Skeeman lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      tagsTitle: 'Tunnisteiden lataaminen epäonnistui',
+      tagsDescription:
+        'Tunnisteiden lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      policiesTitle: 'Käyttöoikeuksien lataaminen epäonnistui',
+      policiesDescription:
+        'Käyttöoikeuksien lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      objectHistoryTitle: 'Objektin historian lataaminen epäonnistui',
+      objectHistoryDescription:
+        'Objektin historian lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      uncommittedChangesTitle:
+        'Vahvistamattomien muutosten lataaminen epäonnistui',
+      uncommittedChangesDescription:
+        'Vahvistamattomien muutosten lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      repositorySettingsTitle: 'Arkiston asetusten lataaminen epäonnistui',
+      repositorySettingsDescription:
+        'Asetusten lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      commitsTitle: 'Committien lataaminen epäonnistui',
+      commitsDescription:
+        'Commit-historian lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      pendingWritesTitle: 'Odottavien muutosten lataaminen epäonnistui',
+      pendingWritesDescription:
+        'Odottavien muutosten lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      appSettingsTitle: 'Sovelluksen asetusten lataaminen epäonnistui',
+      appSettingsDescription:
+        'Asetusten lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      activityTitle: 'Toiminnan lataaminen epäonnistui',
+      activityDescription:
+        'Toimintalokin lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      overviewTitle: 'Yleiskatsauksen lataaminen epäonnistui',
+      overviewDescription:
+        'Yleiskatsauksen lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      consoleTitle: 'Jotain meni pieleen',
+      consoleDescription:
+        'Konsolin lataaminen epäonnistui. Yritä päivittää sivu — jos ongelma jatkuu, ota yhteyttä tukeen.',
+
+      // Query failure (network / server error) — shown with a Retry button
+      failedToLoadRepository: 'Arkiston lataaminen epäonnistui',
+      failedToLoadConnection: 'Yhteyden lataaminen epäonnistui',
+      failedToLoadWorkflow: 'Työnkulun lataaminen epäonnistui',
+      failedToLoadAIApplication: 'AI-sovelluksen lataaminen epäonnistui',
+      failedToLoadWorkflowRuns: 'Työnkulun ajojen lataaminen epäonnistui',
+      failedToLoadConversations: 'Keskustelujen lataaminen epäonnistui',
+      failedToLoadConversation: 'Tämän keskustelun lataaminen epäonnistui',
+      failedToLoadStoredQueries:
+        'Tallennettujen kyselyiden lataaminen epäonnistui',
+      failedToLoadUser: 'Käyttäjän lataaminen epäonnistui',
+      failedToLoadAgain:
+        'Palvelimeen ei saatu yhteyttä. Tarkista verkkoyhteys ja yritä uudelleen.',
+
+      // Not-found fallbacks (entity in URL but API returned null)
+      repositoryNotFound: 'Arkistoa ei löytynyt',
+      repositoryNotFoundDescription:
+        'Arkisto on saatettu poistaa, tai sinulla ei ole siihen käyttöoikeutta.',
+      connectionNotFound: 'Yhteyttä ei löytynyt',
+      connectionNotFoundDescription:
+        'Yhteys on saatettu poistaa, tai sinulla ei ole siihen käyttöoikeutta.',
+      workflowNotFound: 'Työnkulkua ei löytynyt',
+      workflowNotFoundDescription:
+        'Työnkulku on saatettu poistaa, tai sinulla ei ole siihen käyttöoikeutta.',
+      aiApplicationNotFound: 'AI-sovellusta ei löytynyt',
+      aiApplicationNotFoundDescription:
+        'AI-sovellus on saatettu poistaa, tai sinulla ei ole siihen käyttöoikeutta.',
+      storedQueryNotFound: 'Tallennettua kyselyä ei löytynyt',
+      storedQueryNotFoundDescription:
+        'Tallennettu kysely on saatettu poistaa, tai sinulla ei ole siihen käyttöoikeutta.',
+      userNotFound: 'Käyttäjää ei löytynyt',
+      userNotFoundDescription:
+        'Käyttäjää ei ehkä ole olemassa, tai hän ei kuulu tähän työtilaan.',
+
+      // Permissions
+      noPermissionsToViewRepository:
+        'Sinulla ei ole oikeutta tarkastella tätä arkistoa.',
+      noPermissionsToViewConnection:
+        'Sinulla ei ole oikeutta tarkastella tätä yhteyttä.',
+      noPermissionsToViewWorkflow:
+        'Sinulla ei ole oikeutta tarkastella tätä työnkulkua.',
+      noPermissionsToViewWorkflowRuns:
+        'Sinulla ei ole oikeutta tarkastella työnkulun ajoja.',
+
+      // Authentication error handler
+      serviceUnavailable: 'Palvelu ei ole käytettävissä',
+      serviceUnavailableDescription:
+        'Palvelimeen ei saatu yhteyttä juuri nyt. Yritä hetken kuluttua uudelleen.',
+      authenticationRequired: 'Kirjautuminen vaaditaan',
+      authenticationRequiredDescription:
+        'Sinun on kirjauduttava sisään nähdäksesi tämän sisällön.',
+      authenticationError: 'Sisäänkirjautuminen epäonnistui',
+      authenticationErrorDescription:
+        'Sisäänkirjautumisessa tapahtui virhe. Yritä uudelleen.',
+
+      // Mutation/action failures (fallbacks when an API error has no message)
+      mutations: {
+        // Repository
+        createRepositoryFailed: 'Arkiston luominen epäonnistui',
+        deleteRepositoryFailed: 'Arkiston poistaminen epäonnistui',
+        updateRepositoryFailed: 'Arkiston päivittäminen epäonnistui',
+        transferRepositoryFailed: 'Arkiston siirto epäonnistui',
+        // Branch / commit
+        createBranchFailed: 'Haaran luominen epäonnistui',
+        deleteBranchFailed: 'Haaran poistaminen epäonnistui',
+        resetBranchFailed: 'Haaran palautus epäonnistui',
+        revertCommitFailed: 'Committin peruutus epäonnistui',
+        createCommitFailed: 'Committin luominen epäonnistui',
+        revertChangesFailed: 'Muutosten peruutus epäonnistui',
+        mergeRefsFailed: 'Haarojen yhdistäminen epäonnistui',
+        // Tag
+        createTagFailed: 'Tunnisteen luominen epäonnistui',
+        deleteTagFailed: 'Tunnisteen poistaminen epäonnistui',
+        updateTagFailed: 'Tunnisteen päivittäminen epäonnistui',
+        addTagToEntityFailed: 'Tunnisteen lisääminen epäonnistui',
+        removeTagFromEntityFailed: 'Tunnisteen poistaminen epäonnistui',
+        // Object
+        deleteObjectFailed: 'Objektin poistaminen epäonnistui',
+        moveObjectFailed: 'Objektin siirto epäonnistui',
+        copyObjectFailed: 'Objektin kopiointi epäonnistui',
+        uploadObjectFailed: 'Objektin lataus epäonnistui',
+        downloadObjectFailed: 'Objektin lataaminen epäonnistui',
+        createPointerFailed: 'Osoittimen luominen epäonnistui',
+        // Connection
+        createConnectionFailed: 'Yhteyden luominen epäonnistui',
+        deleteConnectionFailed: 'Yhteyden poistaminen epäonnistui',
+        updateConnectionFailed: 'Yhteyden päivittäminen epäonnistui',
+        transferConnectionFailed: 'Yhteyden siirto epäonnistui',
+        testConnectionFailed: 'Yhteyden testaus epäonnistui',
+        validateConnectorConfigurationFailed:
+          'Liittimen asetusten tarkistus epäonnistui',
+        validateSchemaFailed: 'Skeeman tarkistus epäonnistui',
+        compareSchemasFailed: 'Skeemojen vertailu epäonnistui',
+        // Workflow
+        createWorkflowFailed: 'Työnkulun luominen epäonnistui',
+        deleteWorkflowFailed: 'Työnkulun poistaminen epäonnistui',
+        updateWorkflowFailed: 'Työnkulun päivittäminen epäonnistui',
+        updateWorkflowScheduleFailed:
+          'Työnkulun aikataulun päivittäminen epäonnistui',
+        transferWorkflowFailed: 'Työnkulun siirto epäonnistui',
+        pauseWorkflowFailed: 'Työnkulun pysäyttäminen epäonnistui',
+        resumeWorkflowFailed: 'Työnkulun jatkaminen epäonnistui',
+        createWorkflowRunFailed: 'Työnkulun ajon käynnistys epäonnistui',
+        updateWorkflowableFailed: 'Työnkulun kohteen päivitys epäonnistui',
+        // AI Application
+        createAIApplicationFailed: 'AI-sovelluksen luominen epäonnistui',
+        deleteAIApplicationFailed: 'AI-sovelluksen poistaminen epäonnistui',
+        updateAIApplicationFailed: 'AI-sovelluksen päivittäminen epäonnistui',
+        transferAIApplicationFailed: 'AI-sovelluksen siirto epäonnistui',
+        approveWriteFailed: 'Odottavan muutoksen hyväksyminen epäonnistui',
+        rejectWriteFailed: 'Odottavan muutoksen hylkääminen epäonnistui',
+        // Script
+        createScriptFailed: 'Skriptin luominen epäonnistui',
+        deleteScriptFailed: 'Skriptin poistaminen epäonnistui',
+        updateScriptFailed: 'Skriptin päivittäminen epäonnistui',
+        saveScriptFailed: 'Skriptin tallennus epäonnistui',
+        executeScriptFailed: 'Skriptin suoritus epäonnistui',
+        loadScriptFailed: 'Skriptin lataaminen epäonnistui',
+        transferScriptFailed: 'Skriptin siirto epäonnistui',
+        // Stored query
+        createQueryFailed: 'Kyselyn luominen epäonnistui',
+        deleteQueryFailed: 'Kyselyn poistaminen epäonnistui',
+        updateQueryFailed: 'Kyselyn päivittäminen epäonnistui',
+        transferQueryFailed: 'Kyselyn siirto epäonnistui',
+        executeQueryFailed: 'Kyselyn suoritus epäonnistui',
+        // Workspace
+        createWorkspaceFailed: 'Työtilan luominen epäonnistui',
+        deleteWorkspaceFailed: 'Työtilan poistaminen epäonnistui',
+        updateWorkspaceFailed: 'Työtilan päivittäminen epäonnistui',
+        transferWorkspaceFailed: 'Työtilan siirto epäonnistui',
+        leaveWorkspaceFailed: 'Työtilasta poistuminen epäonnistui',
+        switchWorkspaceFailed: 'Työtilan vaihto epäonnistui',
+        fetchWorkspaceSchemaFailed: 'Työtilan skeeman lataaminen epäonnistui',
+        // Policy
+        createPolicyFailed: 'Käyttöoikeuskäytännön luominen epäonnistui',
+        deletePolicyFailed: 'Käyttöoikeuskäytännön poistaminen epäonnistui',
+        updatePolicyFailed: 'Käyttöoikeuskäytännön päivittäminen epäonnistui',
+        // User / invite
+        deleteUserFailed: 'Käyttäjän poistaminen epäonnistui',
+        changeRoleFailed: 'Käyttäjän roolin muuttaminen epäonnistui',
+        deleteInviteFailed: 'Kutsun poistaminen epäonnistui',
+        sendInviteFailed: 'Kutsun lähettäminen epäonnistui',
+        resendInviteFailed: 'Kutsun uudelleenlähettäminen epäonnistui',
+        changeInviteRoleFailed: 'Kutsun roolin muuttaminen epäonnistui',
+        acceptInviteFailed: 'Kutsun hyväksyminen epäonnistui',
+        declineInviteFailed: 'Kutsun hylkääminen epäonnistui',
+        updateProfileFailed: 'Profiilin päivittäminen epäonnistui',
+        // Embeddings (AI)
+        upsertEmbeddingsFailed: 'Upotusten tallennus epäonnistui',
+        updateEmbeddingMetadataFailed: 'Metatietojen päivittäminen epäonnistui',
+        updateEmbeddingPriorityFailed: 'Prioriteetin päivittäminen epäonnistui',
+        // Conversation
+        createConversationFailed: 'Keskustelun luominen epäonnistui',
+        deleteConversationFailed: 'Keskustelun poistaminen epäonnistui',
+        updateConversationFailed: 'Keskustelun päivittäminen epäonnistui',
+        // Billing / credentials
+        createCheckoutFailed: 'Kassalle siirtyminen epäonnistui',
+        openBillingPortalFailed: 'Laskutusportaalin avaaminen epäonnistui',
+        updateBillingFailed: 'Laskutustietojen päivittäminen epäonnistui',
+        deleteCredentialFailed: 'Tunnistetietojen poistaminen epäonnistui',
+        createCredentialFailed: 'Tunnistetietojen luominen epäonnistui',
+      },
+    },
   },
 
   // === USER INTERFACE ===
@@ -1511,6 +1724,7 @@ const fi = {
     pleaseSelectRepositoryBranch: 'Valitse data-arkiston haara',
     pleaseSelectRepositoryPaths: 'Valitse data-arkiston polut',
     pleaseSelectConnectionPath: 'Valitse yhteyden polku',
+    pleaseSelectConnector: 'Valitse liitin',
     workflowNamePlaceholder: 'Anna prosessin nimi',
     workflowDescriptionPlaceholder: 'Anna prosessin kuvaus',
     workflowDocumentationPlaceholder: 'Anna prosessin dokumentaatio',

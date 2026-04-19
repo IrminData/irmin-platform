@@ -29,7 +29,7 @@ import {
   Suggestions,
 } from '@/components/ui/ai-elements/suggestion';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import ListSkeleton from '@/components/ui/loading/ListSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -370,8 +370,10 @@ const AgentChat = ({
 
   if (shouldEnableQueries && aiConversationQuery.error) {
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         error={aiConversationQuery.error}
+        title={dict.common.errors.failedToLoadConversation}
+        description={dict.common.errors.failedToLoadAgain}
         variant='inline'
         showDetails={false}
         showReload={false}

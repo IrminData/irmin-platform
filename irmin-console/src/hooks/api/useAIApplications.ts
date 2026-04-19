@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { aiApplicationQueryKey, aiApplicationsQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -20,6 +21,7 @@ import { createMutationHandlers } from './mutations/utils';
 export function useAIApplications() {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -100,7 +102,11 @@ export function useAIApplications() {
           });
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Error creating AI Application');
+          irminAlert(
+            'error',
+            error.message ??
+              dict.common.errors.mutations.createAIApplicationFailed
+          );
         },
       }
     ),
@@ -121,6 +127,7 @@ export function useAIApplications() {
 export function useAIApplication(aiApplicationId: string) {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -208,7 +215,10 @@ export function useAIApplication(aiApplicationId: string) {
       });
     },
     onError: (error, _newData, context) => {
-      irminAlert('error', error.message ?? 'Error updating AI Application');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.updateAIApplicationFailed
+      );
       // Rollback to the previous value
       if (context?.previousData) {
         queryClient.setQueryData(
@@ -244,7 +254,10 @@ export function useAIApplication(aiApplicationId: string) {
       });
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error deleting AI Application');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.deleteAIApplicationFailed
+      );
     },
   });
 
@@ -274,7 +287,11 @@ export function useAIApplication(aiApplicationId: string) {
       });
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error transferring ownership');
+      irminAlert(
+        'error',
+        error.message ??
+          dict.common.errors.mutations.transferAIApplicationFailed
+      );
     },
   });
 

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { storedQueriesQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -29,6 +30,7 @@ type StoredQueryUpdateInput = Pick<
 export function useStoredQueries() {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -87,7 +89,10 @@ export function useStoredQueries() {
           irminAlert('success', res.message ?? 'Query created successfully');
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Failed to create query');
+          irminAlert(
+            'error',
+            error.message ?? dict.common.errors.mutations.createQueryFailed
+          );
         },
       }
     ),
@@ -115,7 +120,10 @@ export function useStoredQueries() {
           irminAlert('success', res.message ?? 'Query updated successfully');
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Failed to update query');
+          irminAlert(
+            'error',
+            error.message ?? dict.common.errors.mutations.updateQueryFailed
+          );
         },
       }
     ),
@@ -138,7 +146,10 @@ export function useStoredQueries() {
         irminAlert('success', res.message ?? 'Query deleted successfully');
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Failed to delete query');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.deleteQueryFailed
+        );
       },
     }),
   });
@@ -166,7 +177,10 @@ export function useStoredQueries() {
     },
     onError: (error) => {
       console.error(error);
-      irminAlert('error', error.message ?? 'Failed to transfer query');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.transferQueryFailed
+      );
     },
   });
 
@@ -190,7 +204,10 @@ export function useStoredQueries() {
     },
     onError: (error) => {
       console.error(error);
-      irminAlert('error', error.message ?? 'Failed to execute query');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.executeQueryFailed
+      );
     },
   });
 

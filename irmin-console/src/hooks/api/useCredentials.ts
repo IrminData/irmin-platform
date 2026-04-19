@@ -4,6 +4,7 @@ import type { CreateCredentialRequest } from '@/lib/core/resources/CredentialSer
 import { credentialsQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import type { APIToken } from '@/types/core/APIToken';
@@ -17,6 +18,7 @@ import {
 export function useCredentials() {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const queryClient = useQueryClient();
 
   const credentialsQuery = useQuery<IrminAPIResponse<APIToken[]>, Error>({
@@ -47,7 +49,10 @@ export function useCredentials() {
           );
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Error deleting credential');
+          irminAlert(
+            'error',
+            error.message ?? dict.common.errors.mutations.deleteCredentialFailed
+          );
         },
       }),
     }
@@ -88,7 +93,10 @@ export function useCredentials() {
           );
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Error creating credential');
+          irminAlert(
+            'error',
+            error.message ?? dict.common.errors.mutations.createCredentialFailed
+          );
         },
       }
     ),

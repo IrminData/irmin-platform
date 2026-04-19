@@ -25,8 +25,8 @@ const RepositoryPoliciesSection = ({ type }: { type?: PolicyResource }) => {
   return (
     <SafeComponent
       level='section'
-      title='Repository Policies Error'
-      description='The repository policies section encountered an error. Please try refreshing the page.'
+      titleKey='policiesTitle'
+      descriptionKey='policiesDescription'
     >
       <RepositoryPoliciesSectionContent type={type} />
     </SafeComponent>

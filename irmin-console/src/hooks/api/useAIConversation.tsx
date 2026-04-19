@@ -108,7 +108,10 @@ export function useAIConversation(
       }
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error deleting the conversation');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.deleteConversationFailed
+      );
     },
     onSuccess: () => {
       // Invalidate the conversations list so it refreshes
@@ -159,7 +162,10 @@ export function useAIConversation(
       return updatedConversation;
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error updating the conversation');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.updateConversationFailed
+      );
     },
     onSuccess: () => {
       irminAlert('success', 'Conversation updated successfully');

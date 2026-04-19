@@ -29,8 +29,8 @@ export default function RepositoryUncommittedChangesSection() {
   return (
     <SafeComponent
       level='section'
-      title='Repository Uncommitted Changes Error'
-      description='The repository uncommitted changes section encountered an error. Please try refreshing the page.'
+      titleKey='uncommittedChangesTitle'
+      descriptionKey='uncommittedChangesDescription'
     >
       <RepositoryUncommittedChangesSectionContent />
     </SafeComponent>

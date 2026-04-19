@@ -20,8 +20,8 @@ const AIApplicationDocumentationSection = () => {
   return (
     <SafeComponent
       level='section'
-      title='AI Application Documentation Error'
-      description='The AI Application documentation section encountered an error. Please try refreshing the page.'
+      titleKey='documentationTitle'
+      descriptionKey='documentationDescription'
     >
       <AIApplicationDocumentationSectionContent />
     </SafeComponent>

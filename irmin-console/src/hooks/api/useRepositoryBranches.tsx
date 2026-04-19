@@ -7,6 +7,7 @@ import type {
 import { repositoryBranchesQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -22,6 +23,7 @@ import {
 export function useRepositoryBranches(repositorySlug: string) {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -76,7 +78,10 @@ export function useRepositoryBranches(repositorySlug: string) {
           irminAlert('success', res.message ?? 'Branch created successfully');
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Error creating branch');
+          irminAlert(
+            'error',
+            error.message ?? dict.common.errors.mutations.createBranchFailed
+          );
         },
       }
     ),
@@ -103,7 +108,10 @@ export function useRepositoryBranches(repositorySlug: string) {
         irminAlert('success', res.message ?? 'Branch deleted successfully');
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Error deleting branch');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.deleteBranchFailed
+        );
       },
     }),
   });
@@ -135,7 +143,10 @@ export function useRepositoryBranches(repositorySlug: string) {
       });
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error resetting branch');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.resetBranchFailed
+      );
     },
   });
 
@@ -165,7 +176,10 @@ export function useRepositoryBranches(repositorySlug: string) {
       });
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error reverting commit');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.revertCommitFailed
+      );
     },
   });
 

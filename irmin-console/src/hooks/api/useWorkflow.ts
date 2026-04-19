@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { workflowQueryKey, workflowsQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -28,6 +29,7 @@ type UpdateWorkflowInput = {
 export function useWorkflow(workflowID: string) {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
   const workflowQuery = useQuery<IrminAPIResponse<Workflow>, Error>({
@@ -78,7 +80,10 @@ export function useWorkflow(workflowID: string) {
         });
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Error deleting workflow');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.deleteWorkflowFailed
+        );
       },
     }),
   });
@@ -114,7 +119,10 @@ export function useWorkflow(workflowID: string) {
         });
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Error updating workflow');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.updateWorkflowFailed
+        );
       },
     }),
   });
@@ -147,7 +155,11 @@ export function useWorkflow(workflowID: string) {
     },
     onError: (error) => {
       console.error(error);
-      irminAlert('error', error.message ?? 'Error updating workflow schedule');
+      irminAlert(
+        'error',
+        error.message ??
+          dict.common.errors.mutations.updateWorkflowScheduleFailed
+      );
     },
   });
 
@@ -176,7 +188,10 @@ export function useWorkflow(workflowID: string) {
     },
     onError: (error) => {
       console.error(error);
-      irminAlert('error', error.message ?? 'Error updating workflowable');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.updateWorkflowableFailed
+      );
     },
   });
 
@@ -205,7 +220,10 @@ export function useWorkflow(workflowID: string) {
     },
     onError: (error) => {
       console.error(error);
-      irminAlert('error', error.message ?? 'Error transfering workflow');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.transferWorkflowFailed
+      );
     },
   });
 
@@ -294,7 +312,10 @@ export function useWorkflow(workflowID: string) {
         );
       }
       console.error(error);
-      irminAlert('error', error.message ?? 'Error pausing workflow');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.pauseWorkflowFailed
+      );
     },
     onSuccess: (res: IrminAPIResponse<Workflow>) => {
       // Update with real data from server if available
@@ -403,7 +424,10 @@ export function useWorkflow(workflowID: string) {
           );
         }
         console.error(error);
-        irminAlert('error', error.message ?? 'Error resuming workflow');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.resumeWorkflowFailed
+        );
       },
       onSuccess: (res: IrminAPIResponse<Workflow>) => {
         // Update with real data from server if available

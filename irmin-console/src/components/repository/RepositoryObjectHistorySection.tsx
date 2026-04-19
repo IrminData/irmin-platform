@@ -19,8 +19,8 @@ export default function RepositoryObjectHistorySection({
   return (
     <SafeComponent
       level='section'
-      title='Repository Object History Error'
-      description='The repository object history section encountered an error. Please try refreshing the page.'
+      titleKey='objectHistoryTitle'
+      descriptionKey='objectHistoryDescription'
     >
       <RepositoryObjectHistorySectionContent path={path} />
     </SafeComponent>

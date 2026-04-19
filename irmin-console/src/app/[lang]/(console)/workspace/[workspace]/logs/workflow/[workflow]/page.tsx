@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 
 import LogsSection from '@/components/logs/LogsSection';
-import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import { QueryError } from '@/components/ui/error/QueryError';
 import ListSkeleton from '@/components/ui/loading/ListSkeleton';
 
@@ -28,16 +28,16 @@ export default function WorkflowLogsPage() {
       <QueryError
         error={workflowQuery.error}
         onRetry={() => workflowQuery.refetch()}
-        title={dict.common.error}
+        title={dict.common.errors.failedToLoadWorkflow}
       />
     );
   }
   if (!workflowQuery.data?.data) {
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         variant='page'
-        title={dict.common.error}
-        description={dict.common.weEncounteredError}
+        title={dict.common.errors.workflowNotFound}
+        description={dict.common.errors.workflowNotFoundDescription}
         showHome={true}
       />
     );

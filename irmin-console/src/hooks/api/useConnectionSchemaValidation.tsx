@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -33,6 +34,7 @@ export function useConnectionSchemaValidation() {
   const { getCore } = useIrminCore();
   const { workspaceSlug } = useWorkspaceContext();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
 
   // Mutation for validating data against a connection schema
   const validateSchemaMutation = useMutation<
@@ -52,7 +54,10 @@ export function useConnectionSchemaValidation() {
       return res;
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error validating schema');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.validateSchemaFailed
+      );
     },
   });
 
@@ -74,7 +79,10 @@ export function useConnectionSchemaValidation() {
       return res;
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error comparing schemas');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.compareSchemasFailed
+      );
     },
   });
 

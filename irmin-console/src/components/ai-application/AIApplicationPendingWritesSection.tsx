@@ -278,8 +278,8 @@ const AIApplicationPendingWritesSection = () => {
   return (
     <SafeComponent
       level='section'
-      title='Pending Writes Error'
-      description='The pending writes section encountered an error. Please try refreshing the page.'
+      titleKey='pendingWritesTitle'
+      descriptionKey='pendingWritesDescription'
     >
       <AIApplicationPendingWritesSectionContent />
     </SafeComponent>

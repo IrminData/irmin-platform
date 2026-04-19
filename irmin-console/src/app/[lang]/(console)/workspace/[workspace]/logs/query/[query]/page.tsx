@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 
 import LogsSection from '@/components/logs/LogsSection';
-import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import { QueryError } from '@/components/ui/error/QueryError';
 import ListSkeleton from '@/components/ui/loading/ListSkeleton';
 
@@ -28,16 +28,16 @@ export default function StoredQueryLogsPage() {
       <QueryError
         error={storedQueriesQuery.error}
         onRetry={() => storedQueriesQuery.refetch()}
-        title={dict.common.error}
+        title={dict.common.errors.failedToLoadStoredQueries}
       />
     );
   }
   if (!storedQueriesQuery.data?.data) {
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         variant='page'
-        title={dict.common.error}
-        description={dict.common.weEncounteredError}
+        title={dict.common.errors.storedQueryNotFound}
+        description={dict.common.errors.storedQueryNotFoundDescription}
         showHome={true}
       />
     );
@@ -49,10 +49,10 @@ export default function StoredQueryLogsPage() {
 
   if (!storedQuery) {
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         variant='page'
-        title={dict.common.error}
-        description={dict.common.weEncounteredError}
+        title={dict.common.errors.storedQueryNotFound}
+        description={dict.common.errors.storedQueryNotFoundDescription}
         showHome={true}
       />
     );

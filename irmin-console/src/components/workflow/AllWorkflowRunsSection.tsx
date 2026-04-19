@@ -11,7 +11,7 @@ import { TbClock, TbHourglassLow } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import DisplayTitle from '@/components/ui/display-title';
-import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import CardOrNormalList from '@/components/ui/list/CardOrNormalList';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import PaginationControls from '@/components/ui/PaginationControls';
@@ -263,10 +263,10 @@ const AllWorkflowRunsSection = () => {
         <div className='my-4 flex flex-row items-center justify-between gap-4'>
           <DisplayTitle>{dict.workflow.allWorkflowRuns}</DisplayTitle>
         </div>
-        <CommonErrorDisplay
+        <LocalizedErrorDisplay
           variant='section'
-          title={dict.common.error}
-          description={dict.common.insufficientPermissions}
+          title={dict.common.insufficientPermissions}
+          description={dict.common.errors.noPermissionsToViewWorkflowRuns}
           showReload={false}
           showDetails={false}
         />
@@ -280,14 +280,11 @@ const AllWorkflowRunsSection = () => {
         <div className='my-4 flex flex-row items-center justify-between gap-4'>
           <DisplayTitle>{dict.workflow.allWorkflowRuns}</DisplayTitle>
         </div>
-        <CommonErrorDisplay
+        <LocalizedErrorDisplay
           variant='section'
           error={allWorkflowRunsQuery.error}
-          title={dict.common.error}
-          description={
-            allWorkflowRunsQuery.error?.message ||
-            dict.common.somethingWentWrong
-          }
+          title={dict.common.errors.failedToLoadWorkflowRuns}
+          description={dict.common.errors.failedToLoadAgain}
           onRetry={() => allWorkflowRunsQuery.refetch()}
           showReload={true}
           showDetails={true}

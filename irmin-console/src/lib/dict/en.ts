@@ -124,6 +124,216 @@ const en = {
 
     // Language and localization
     selectLanguage: 'Select language',
+
+    // Error boundary fallback messages (shown when a component tree throws)
+    errors: {
+      repositoryTitle: "Couldn't load the repository",
+      repositoryDescription:
+        'Something went wrong while loading this repository. Try refreshing the page.',
+      branchesTitle: "Couldn't load branches",
+      branchesDescription:
+        'Something went wrong while loading branches. Try refreshing the page.',
+      documentationTitle: "Couldn't load documentation",
+      documentationDescription:
+        'Something went wrong while loading the documentation. Try refreshing the page.',
+      schemaTitle: "Couldn't load the schema",
+      schemaDescription:
+        'Something went wrong while loading the schema. Try refreshing the page.',
+      tagsTitle: "Couldn't load tags",
+      tagsDescription:
+        'Something went wrong while loading tags. Try refreshing the page.',
+      policiesTitle: "Couldn't load access policies",
+      policiesDescription:
+        'Something went wrong while loading access policies. Try refreshing the page.',
+      objectHistoryTitle: "Couldn't load object history",
+      objectHistoryDescription:
+        'Something went wrong while loading the object history. Try refreshing the page.',
+      uncommittedChangesTitle: "Couldn't load uncommitted changes",
+      uncommittedChangesDescription:
+        'Something went wrong while loading uncommitted changes. Try refreshing the page.',
+      repositorySettingsTitle: "Couldn't load repository settings",
+      repositorySettingsDescription:
+        'Something went wrong while loading the settings. Try refreshing the page.',
+      commitsTitle: "Couldn't load commits",
+      commitsDescription:
+        'Something went wrong while loading the commit history. Try refreshing the page.',
+      pendingWritesTitle: "Couldn't load pending writes",
+      pendingWritesDescription:
+        'Something went wrong while loading pending writes. Try refreshing the page.',
+      appSettingsTitle: "Couldn't load app settings",
+      appSettingsDescription:
+        'Something went wrong while loading the settings. Try refreshing the page.',
+      activityTitle: "Couldn't load activity",
+      activityDescription:
+        'Something went wrong while loading the activity log. Try refreshing the page.',
+      overviewTitle: "Couldn't load overview",
+      overviewDescription:
+        'Something went wrong while loading the overview. Try refreshing the page.',
+      consoleTitle: 'Something went wrong',
+      consoleDescription:
+        "The console couldn't load. Try refreshing the page — if it keeps happening, contact support.",
+
+      // Query failure (network / server error) — shown with a Retry button
+      failedToLoadRepository: "Couldn't load the repository",
+      failedToLoadConnection: "Couldn't load the connection",
+      failedToLoadWorkflow: "Couldn't load the workflow",
+      failedToLoadAIApplication: "Couldn't load the AI application",
+      failedToLoadWorkflowRuns: "Couldn't load workflow runs",
+      failedToLoadConversations: "Couldn't load conversations",
+      failedToLoadConversation: "Couldn't load this conversation",
+      failedToLoadStoredQueries: "Couldn't load saved queries",
+      failedToLoadUser: "Couldn't load the user",
+      failedToLoadAgain:
+        "We couldn't reach the server. Check your connection and try again.",
+
+      // Not-found fallbacks (entity in URL but API returned null)
+      repositoryNotFound: 'Repository not found',
+      repositoryNotFoundDescription:
+        'This repository may have been deleted, or you may not have access to it.',
+      connectionNotFound: 'Connection not found',
+      connectionNotFoundDescription:
+        'This connection may have been deleted, or you may not have access to it.',
+      workflowNotFound: 'Workflow not found',
+      workflowNotFoundDescription:
+        'This workflow may have been deleted, or you may not have access to it.',
+      aiApplicationNotFound: 'AI application not found',
+      aiApplicationNotFoundDescription:
+        'This AI application may have been deleted, or you may not have access to it.',
+      storedQueryNotFound: 'Saved query not found',
+      storedQueryNotFoundDescription:
+        'This saved query may have been deleted, or you may not have access to it.',
+      userNotFound: 'User not found',
+      userNotFoundDescription:
+        "This user may not exist, or isn't part of this workspace.",
+
+      // Permissions
+      noPermissionsToViewRepository:
+        "You don't have permission to view this repository.",
+      noPermissionsToViewConnection:
+        "You don't have permission to view this connection.",
+      noPermissionsToViewWorkflow:
+        "You don't have permission to view this workflow.",
+      noPermissionsToViewWorkflowRuns:
+        "You don't have permission to view workflow runs.",
+
+      // Authentication error handler
+      serviceUnavailable: 'Service unavailable',
+      serviceUnavailableDescription:
+        "We couldn't reach the server right now. Try again in a moment.",
+      authenticationRequired: 'Sign-in required',
+      authenticationRequiredDescription:
+        'You need to sign in to access this content.',
+      authenticationError: "Couldn't sign you in",
+      authenticationErrorDescription:
+        'Something went wrong during sign-in. Try again.',
+
+      // Mutation/action failures (fallbacks when an API error has no message)
+      mutations: {
+        // Repository
+        createRepositoryFailed: "Couldn't create the repository",
+        deleteRepositoryFailed: "Couldn't delete the repository",
+        updateRepositoryFailed: "Couldn't update the repository",
+        transferRepositoryFailed: "Couldn't transfer the repository",
+        // Branch / commit
+        createBranchFailed: "Couldn't create the branch",
+        deleteBranchFailed: "Couldn't delete the branch",
+        resetBranchFailed: "Couldn't reset the branch",
+        revertCommitFailed: "Couldn't revert the commit",
+        createCommitFailed: "Couldn't create the commit",
+        revertChangesFailed: "Couldn't revert changes",
+        mergeRefsFailed: "Couldn't merge branches",
+        // Tag
+        createTagFailed: "Couldn't create the tag",
+        deleteTagFailed: "Couldn't delete the tag",
+        updateTagFailed: "Couldn't update the tag",
+        addTagToEntityFailed: "Couldn't add the tag",
+        removeTagFromEntityFailed: "Couldn't remove the tag",
+        // Object
+        deleteObjectFailed: "Couldn't delete the object",
+        moveObjectFailed: "Couldn't move the object",
+        copyObjectFailed: "Couldn't copy the object",
+        uploadObjectFailed: "Couldn't upload the object",
+        downloadObjectFailed: "Couldn't download the object",
+        createPointerFailed: "Couldn't create the pointer",
+        // Connection
+        createConnectionFailed: "Couldn't create the connection",
+        deleteConnectionFailed: "Couldn't delete the connection",
+        updateConnectionFailed: "Couldn't update the connection",
+        transferConnectionFailed: "Couldn't transfer the connection",
+        testConnectionFailed: "Couldn't test the connection",
+        validateConnectorConfigurationFailed:
+          "Couldn't validate the connector configuration",
+        validateSchemaFailed: "Couldn't validate the schema",
+        compareSchemasFailed: "Couldn't compare schemas",
+        // Workflow
+        createWorkflowFailed: "Couldn't create the workflow",
+        deleteWorkflowFailed: "Couldn't delete the workflow",
+        updateWorkflowFailed: "Couldn't update the workflow",
+        updateWorkflowScheduleFailed: "Couldn't update the workflow schedule",
+        transferWorkflowFailed: "Couldn't transfer the workflow",
+        pauseWorkflowFailed: "Couldn't pause the workflow",
+        resumeWorkflowFailed: "Couldn't resume the workflow",
+        createWorkflowRunFailed: "Couldn't start the workflow run",
+        updateWorkflowableFailed: "Couldn't update the workflow target",
+        // AI Application
+        createAIApplicationFailed: "Couldn't create the AI application",
+        deleteAIApplicationFailed: "Couldn't delete the AI application",
+        updateAIApplicationFailed: "Couldn't update the AI application",
+        transferAIApplicationFailed: "Couldn't transfer the AI application",
+        approveWriteFailed: "Couldn't approve the pending write",
+        rejectWriteFailed: "Couldn't reject the pending write",
+        // Script
+        createScriptFailed: "Couldn't create the script",
+        deleteScriptFailed: "Couldn't delete the script",
+        updateScriptFailed: "Couldn't update the script",
+        saveScriptFailed: "Couldn't save the script",
+        executeScriptFailed: "Couldn't run the script",
+        loadScriptFailed: "Couldn't load the script",
+        transferScriptFailed: "Couldn't transfer the script",
+        // Stored query
+        createQueryFailed: "Couldn't create the query",
+        deleteQueryFailed: "Couldn't delete the query",
+        updateQueryFailed: "Couldn't update the query",
+        transferQueryFailed: "Couldn't transfer the query",
+        executeQueryFailed: "Couldn't run the query",
+        // Workspace
+        createWorkspaceFailed: "Couldn't create the workspace",
+        deleteWorkspaceFailed: "Couldn't delete the workspace",
+        updateWorkspaceFailed: "Couldn't update the workspace",
+        transferWorkspaceFailed: "Couldn't transfer the workspace",
+        leaveWorkspaceFailed: "Couldn't leave the workspace",
+        switchWorkspaceFailed: "Couldn't switch workspace",
+        fetchWorkspaceSchemaFailed: "Couldn't load workspace schema",
+        // Policy
+        createPolicyFailed: "Couldn't create the access policy",
+        deletePolicyFailed: "Couldn't delete the access policy",
+        updatePolicyFailed: "Couldn't update the access policy",
+        // User / invite
+        deleteUserFailed: "Couldn't remove the user",
+        changeRoleFailed: "Couldn't change the user's role",
+        deleteInviteFailed: "Couldn't delete the invite",
+        sendInviteFailed: "Couldn't send the invite",
+        resendInviteFailed: "Couldn't resend the invite",
+        changeInviteRoleFailed: "Couldn't change the invite's role",
+        acceptInviteFailed: "Couldn't accept the invite",
+        declineInviteFailed: "Couldn't decline the invite",
+        updateProfileFailed: "Couldn't update your profile",
+        // Embeddings (AI)
+        upsertEmbeddingsFailed: "Couldn't save embeddings",
+        updateEmbeddingMetadataFailed: "Couldn't update metadata",
+        updateEmbeddingPriorityFailed: "Couldn't update priority",
+        // Conversation
+        createConversationFailed: "Couldn't create the conversation",
+        deleteConversationFailed: "Couldn't delete the conversation",
+        updateConversationFailed: "Couldn't update the conversation",
+        // Billing / credentials
+        createCheckoutFailed: "Couldn't start checkout",
+        openBillingPortalFailed: "Couldn't open the billing portal",
+        updateBillingFailed: "Couldn't update billing info",
+        deleteCredentialFailed: "Couldn't delete the credential",
+        createCredentialFailed: "Couldn't create the credential",
+      },
+    },
   },
 
   // === USER INTERFACE ===
@@ -1525,6 +1735,7 @@ const en = {
     pleaseSelectRepositoryBranch: 'Please select a repository branch',
     pleaseSelectRepositoryPaths: 'Please select repository paths',
     pleaseSelectConnectionPath: 'Please select a connection path',
+    pleaseSelectConnector: 'Please select a connector',
     workflowNamePlaceholder: 'Enter workflow name',
     workflowDescriptionPlaceholder: 'Enter workflow description',
     workflowDocumentationPlaceholder: 'Enter workflow documentation',

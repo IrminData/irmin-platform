@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import DocumentationForm from '@/components/ui/form/DocumentationForm';
 import PageSkeleton from '@/components/ui/loading/PageSkeleton';
 
@@ -24,10 +24,10 @@ const ConnectionDocumentationSection = () => {
 
   if (!connectionQuery.data?.data) {
     return (
-      <CommonErrorDisplay
+      <LocalizedErrorDisplay
         variant='section'
-        title={dict.common.error}
-        description={dict.common.weEncounteredError}
+        title={dict.common.errors.connectionNotFound}
+        description={dict.common.errors.connectionNotFoundDescription}
         showReload={false}
         showDetails={false}
       />

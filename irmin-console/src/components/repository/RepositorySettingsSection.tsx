@@ -37,8 +37,8 @@ const RepositorySettingsSection = () => {
   return (
     <SafeComponent
       level='section'
-      title='Repository Settings Error'
-      description='The repository settings section encountered an error. Please try refreshing the page.'
+      titleKey='repositorySettingsTitle'
+      descriptionKey='repositorySettingsDescription'
     >
       <RepositorySettingsSectionContent />
     </SafeComponent>

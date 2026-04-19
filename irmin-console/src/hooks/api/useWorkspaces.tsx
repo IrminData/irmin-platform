@@ -49,7 +49,7 @@ export function useWorkspaces() {
  */
 export function useWorkspaceActions() {
   const { getCore } = useIrminCore();
-  const { locale } = useLocale();
+  const { locale, dict } = useLocale();
   const { irminAlert } = usePopup();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -95,7 +95,10 @@ export function useWorkspaceActions() {
           );
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Failed to create workspace');
+          irminAlert(
+            'error',
+            error.message ?? dict.common.errors.mutations.createWorkspaceFailed
+          );
         },
       }
     ),
@@ -110,11 +113,12 @@ export function useWorkspaceActions() {
         console.error('Failed to switch workspace: ', error);
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Failed to switch workspace'
+          (error as Error)?.message ??
+            dict.common.errors.mutations.switchWorkspaceFailed
         );
       }
     },
-    [locale, router, irminAlert]
+    [locale, router, irminAlert, dict]
   );
 
   return {

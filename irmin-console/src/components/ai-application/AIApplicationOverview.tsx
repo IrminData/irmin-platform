@@ -16,8 +16,8 @@ const AIApplicationOverview = () => {
   return (
     <SafeComponent
       level='section'
-      title='AI Application Overview Error'
-      description='The AI Application overview section encountered an error. Please try refreshing the page.'
+      titleKey='overviewTitle'
+      descriptionKey='overviewDescription'
     >
       <AIApplicationOverviewContent />
     </SafeComponent>

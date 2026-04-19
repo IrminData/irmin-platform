@@ -66,7 +66,8 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
         console.error('QueryContext handleExecuteSql error', error);
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Failed to execute SQL query'
+          (error as Error)?.message ??
+            dict.common.errors.mutations.executeQueryFailed
         );
       }
     },

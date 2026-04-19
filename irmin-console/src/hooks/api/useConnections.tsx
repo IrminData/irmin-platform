@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { connectionsQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -22,6 +23,7 @@ type CreateConnectionMutation = Pick<
 export function useConnections() {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -108,7 +110,10 @@ export function useConnections() {
           );
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Failed to create connection');
+          irminAlert(
+            'error',
+            error.message ?? dict.common.errors.mutations.createConnectionFailed
+          );
         },
       }
     ),

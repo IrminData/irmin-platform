@@ -77,7 +77,9 @@ export default function ConfigureRepositoryStep({
         });
 
         if (!res.data) {
-          throw new Error(res.message ?? 'Failed to create repository');
+          throw new Error(
+            res.message ?? dict.common.errors.mutations.createRepositoryFailed
+          );
         }
 
         updateWizardData(data);
@@ -93,7 +95,8 @@ export default function ConfigureRepositoryStep({
         console.error(error);
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Failed to create repository'
+          (error as Error)?.message ??
+            dict.common.errors.mutations.createRepositoryFailed
         );
       }
     },
@@ -105,6 +108,7 @@ export default function ConfigureRepositoryStep({
       onComplete,
       wizardData.tags,
       irminAlert,
+      dict,
     ]
   );
 

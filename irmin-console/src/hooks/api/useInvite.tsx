@@ -25,7 +25,7 @@ type UseInviteOptions = {
 
 export function useInvite(inviteID: string, options?: UseInviteOptions) {
   const { getCore } = useIrminCore();
-  const { locale } = useLocale();
+  const { locale, dict } = useLocale();
   const { irminAlert } = usePopup();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -81,7 +81,8 @@ export function useInvite(inviteID: string, options?: UseInviteOptions) {
     onError: (error) => {
       irminAlert(
         'error',
-        (error as Error)?.message ?? 'Error accepting the invite'
+        (error as Error)?.message ??
+          dict.common.errors.mutations.acceptInviteFailed
       );
     },
   });
@@ -105,7 +106,8 @@ export function useInvite(inviteID: string, options?: UseInviteOptions) {
     onError: (error) => {
       irminAlert(
         'error',
-        (error as Error)?.message ?? 'Error declining the invite'
+        (error as Error)?.message ??
+          dict.common.errors.mutations.declineInviteFailed
       );
     },
   });

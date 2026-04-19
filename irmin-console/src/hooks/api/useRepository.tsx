@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { repositoriesQueryKey, repositoryQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -26,6 +27,7 @@ type RepositoryUpdateInput = {
 export function useRepository(slug: string) {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -74,7 +76,10 @@ export function useRepository(slug: string) {
           );
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Error deleting repository');
+          irminAlert(
+            'error',
+            error.message ?? dict.common.errors.mutations.deleteRepositoryFailed
+          );
         },
       }),
     }
@@ -109,7 +114,10 @@ export function useRepository(slug: string) {
         irminAlert('success', res.message ?? 'Repository updated successfully');
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Error updating repository');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.updateRepositoryFailed
+        );
       },
     }),
   });
@@ -155,7 +163,10 @@ export function useRepository(slug: string) {
       );
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error transferring repository');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.transferRepositoryFailed
+      );
     },
   });
 

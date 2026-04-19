@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { scriptsQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
@@ -44,6 +45,7 @@ type ScriptTransferInput = {
 export function useScripts() {
   const { getCore } = useIrminCore();
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -105,7 +107,10 @@ export function useScripts() {
           irminAlert('success', res.message ?? 'Script created successfully');
         },
         onError: (error) => {
-          irminAlert('error', error.message ?? 'Error creating script');
+          irminAlert(
+            'error',
+            error.message ?? dict.common.errors.mutations.createScriptFailed
+          );
         },
       }
     ),
@@ -137,7 +142,10 @@ export function useScripts() {
       irminAlert('success', res.message ?? 'Script updated successfully');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error updating script');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.updateScriptFailed
+      );
     },
   });
 
@@ -159,7 +167,10 @@ export function useScripts() {
         irminAlert('success', res.message ?? 'Script deleted successfully');
       },
       onError: (error) => {
-        irminAlert('error', error.message ?? 'Error deleting script');
+        irminAlert(
+          'error',
+          error.message ?? dict.common.errors.mutations.deleteScriptFailed
+        );
       },
     }),
   });
@@ -182,7 +193,10 @@ export function useScripts() {
       irminAlert('info', res.message ?? 'Script executed successfully');
     },
     onError: (error) => {
-      irminAlert('error', error.message ?? 'Error executing script');
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.executeScriptFailed
+      );
     },
   });
 
@@ -214,7 +228,7 @@ export function useScripts() {
     onError: (error) => {
       irminAlert(
         'error',
-        error.message ?? 'Error transferring script ownership'
+        error.message ?? dict.common.errors.mutations.transferScriptFailed
       );
     },
   });
