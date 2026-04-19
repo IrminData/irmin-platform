@@ -12,7 +12,7 @@ import (
 // CoreAPIEnv is a struct that holds the environment variables for the data engine.
 type CoreAPIEnv struct {
 	Port                         string // Port to run the Core API server on
-	URL                          string // URL of the Core API server
+	URL                          string // URL of the Core API server (also used as the public base URL for webhook URLs)
 	SystemToken                  string // Token to authenticate system requests to the API
 	CorsEnabled                  bool   // Flag to enable CORS
 	HelmetEnabled                bool   // Flag to enable helmet
@@ -27,7 +27,6 @@ type CoreAPIEnv struct {
 	DatabaseConnectionString     string // Postgres DB connection string
 	ConsoleURL                   string // URL of the Irmin Console
 	InviteExpiresInDays          int    // Number of days before an invite expires
-	ClerkPublicKey               string // Clerk Public API Key
 	ClerkSecretKey               string // Clerk Secret API Key
 	ClerkSigningKey              string // Clerk Signing Key for JWT
 	ClerkSigningAlgorithm        string // Clerk Signing Algorithm for JWT
@@ -44,15 +43,11 @@ type CoreAPIEnv struct {
 	SkipOptionalDuckDBExtensions bool   // Flag to skip installation of optional DuckDB extensions
 	DaytonaAPIKey                string // API key for Daytona sandbox service
 	DaytonaAPIURL                string // Base URL for Daytona sandbox service API
-	TestConnectorBaseURL         string // Base URL of the connector to test with
-	TestConnectorToken           string // Operation token for the connector to test with
-	TestConnectorPath            string // Path to the test file in the connector
 	TestObjectName               string // Name of the test object which is expected to be a structured JSON file
 	TestUserEmail                string // Email of the test user
 	TestWorkspace                string // Workspace to test with
 	TestRepository               string // Repository to test with
 	TestBranch                   string // Branch to test with
-	TestTag                      string // Tag to test with
 	SignedURLSecret              string // HMAC secret for signed download URLs
 
 	// Credential encryption
@@ -230,10 +225,6 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
-	clerkPublicKey, err := getEnv("CLERK_PUBLIC_KEY", true, "")
-	if err != nil {
-		return nil, err
-	}
 	clerkSecretKey, err := getEnv("CLERK_SECRET_KEY", true, "")
 	if err != nil {
 		return nil, err
@@ -295,18 +286,6 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
-	testConnectorBaseURL, err := getEnv("TEST_CONNECTOR_BASE_URL", false, "")
-	if err != nil {
-		return nil, err
-	}
-	testConnectorToken, err := getEnv("TEST_CONNECTOR_TOKEN", false, "")
-	if err != nil {
-		return nil, err
-	}
-	testConnectorPath, err := getEnv("TEST_CONNECTOR_PATH", false, "")
-	if err != nil {
-		return nil, err
-	}
 	testObjectName, err := getEnv("TEST_OBJECT_NAME", false, "")
 	if err != nil {
 		return nil, err
@@ -324,10 +303,6 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 	testBranch, err := getEnv("TEST_BRANCH", false, "")
-	if err != nil {
-		return nil, err
-	}
-	testTag, err := getEnv("TEST_TAG", false, "")
 	if err != nil {
 		return nil, err
 	}
@@ -487,7 +462,6 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		DatabaseConnectionString:     databaseConnectionString,
 		ConsoleURL:                   consoleURL,
 		InviteExpiresInDays:          inviteExpiresInDays,
-		ClerkPublicKey:               clerkPublicKey,
 		ClerkSecretKey:               clerkSecretKey,
 		ClerkSigningKey:              clerkSigningKey,
 		ClerkSigningAlgorithm:        clerkSigningAlgorithm,
@@ -504,15 +478,11 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		SkipOptionalDuckDBExtensions: skipOptionalDuckDBExtensions,
 		DaytonaAPIKey:                daytonaAPIKey,
 		DaytonaAPIURL:                daytonaAPIURL,
-		TestConnectorBaseURL:         testConnectorBaseURL,
-		TestConnectorToken:           testConnectorToken,
-		TestConnectorPath:            testConnectorPath,
 		TestObjectName:               testObjectName,
 		TestUserEmail:                testUserEmail,
 		TestWorkspace:                testWorkspace,
 		TestRepository:               testRepository,
 		TestBranch:                   testBranch,
-		TestTag:                      testTag,
 		SignedURLSecret:              signedURLSecret,
 		CredentialEncryptionKeys:     credentialEncryptionKeys,
 		RequireEncryptionAtRest:      requireEncryptionAtRest,

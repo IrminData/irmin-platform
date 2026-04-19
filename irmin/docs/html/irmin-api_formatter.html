@@ -27,6 +27,7 @@ func FormatConnectionResponse(
 func FormatConnectionSubscriptionResponse(
 	subscription *db.ConnectionSubscription,
 	sqidManager *irminsqids.SQIDManager,
+	apiBaseURL string,
 ) (*irminmodels.ConnectionSubscription, error)
     FormatConnectionSubscriptionResponse creates a subscription response object
     from a database subscription object.
@@ -34,6 +35,7 @@ func FormatConnectionSubscriptionResponse(
 func FormatConnectionSubscriptionWithTokenResponse(
 	subscription *db.ConnectionSubscription,
 	sqidManager *irminsqids.SQIDManager,
+	apiBaseURL string,
 ) (*irminmodels.ConnectionSubscriptionWithToken, error)
     FormatConnectionSubscriptionWithTokenResponse creates a subscription
     response with the webhook token. This should only be used when returning a

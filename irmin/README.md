@@ -330,6 +330,12 @@ cp .env.example .env
 
 [`.env.example`](.env.example) is the single source of truth for every variable the service reads, with defaults, descriptions, and generation hints for any secrets. All variables are runtime configuration (loaded at process startup via `godotenv`) — there are no build-time variables.
 
+### Accessing env vars in code
+
+Don't call `os.Getenv` directly. All vars are loaded and validated once at startup in [`utils/loadEnvs.go`](utils/loadEnvs.go) into the typed `CoreAPIEnv` struct, which is threaded through the app as `api.Env` / `middlewares.Middlewares.Env`.
+
+Adding a new var: update `.env.example`, add a field to `CoreAPIEnv`, load it with `getEnv(...)` in `LoadEnv`, and read it from `api.Env.YourField` at the call site.
+
 ### Important: Docker Compose vs Local URLs
 
 When running the API in **docker-compose**, use service names so containers can resolve each other over Docker's internal network:

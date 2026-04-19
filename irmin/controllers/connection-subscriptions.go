@@ -11,6 +11,7 @@ import (
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -47,9 +48,12 @@ func (api *APIControllers) ConnectionSubscriptionsIndex(c fiber.Ctx) error {
 	}
 
 	// Format the response
+	apiBaseURL := api.Env.URL
 	subscriptionsResponse, formatErr := formatter.FormatIndexResponse(
 		subscriptions,
-		formatter.FormatConnectionSubscriptionResponse,
+		func(s *db.ConnectionSubscription, sm *irminsqids.SQIDManager) (*irminmodels.ConnectionSubscription, error) {
+			return formatter.FormatConnectionSubscriptionResponse(s, sm, apiBaseURL)
+		},
 		api.SQIDManager,
 	)
 	if formatErr != nil {
@@ -168,6 +172,7 @@ func (api *APIControllers) ConnectionSubscriptionsStore(c fiber.Ctx) error {
 	subscriptionResponse, formatErr := formatter.FormatConnectionSubscriptionWithTokenResponse(
 		subscription,
 		api.SQIDManager,
+		api.Env.URL,
 	)
 	if formatErr != nil {
 		return api.handleServiceError(
@@ -223,7 +228,11 @@ func (api *APIControllers) ConnectionSubscriptionsShow(c fiber.Ctx) error {
 	}
 
 	// Format the response
-	subscriptionResponse, formatErr := formatter.FormatConnectionSubscriptionResponse(subscription, api.SQIDManager)
+	subscriptionResponse, formatErr := formatter.FormatConnectionSubscriptionResponse(
+		subscription,
+		api.SQIDManager,
+		api.Env.URL,
+	)
 	if formatErr != nil {
 		return api.handleServiceError(
 			c,
@@ -307,7 +316,11 @@ func (api *APIControllers) ConnectionSubscriptionsUpdate(c fiber.Ctx) error {
 	}
 
 	// Format the response
-	subscriptionResponse, formatErr := formatter.FormatConnectionSubscriptionResponse(subscription, api.SQIDManager)
+	subscriptionResponse, formatErr := formatter.FormatConnectionSubscriptionResponse(
+		subscription,
+		api.SQIDManager,
+		api.Env.URL,
+	)
 	if formatErr != nil {
 		return api.handleServiceError(
 			c,
@@ -511,6 +524,7 @@ func (api *APIControllers) ConnectionSubscriptionsRegenerateToken(c fiber.Ctx) e
 	subscriptionResponse, formatErr := formatter.FormatConnectionSubscriptionWithTokenResponse(
 		subscription,
 		api.SQIDManager,
+		api.Env.URL,
 	)
 	if formatErr != nil {
 		return api.handleServiceError(

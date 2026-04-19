@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/db"
-	"os"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
@@ -14,6 +13,7 @@ import (
 func FormatConnectionSubscriptionResponse(
 	subscription *db.ConnectionSubscription,
 	sqidManager *irminsqids.SQIDManager,
+	apiBaseURL string,
 ) (*irminmodels.ConnectionSubscription, error) {
 	if subscription == nil {
 		return nil, errors.New("subscription is nil")
@@ -31,11 +31,6 @@ func FormatConnectionSubscriptionResponse(
 		return nil, fmt.Errorf("error encoding connection sqid: %w", err)
 	}
 
-	// Build the webhook URL
-	apiBaseURL := os.Getenv("API_BASE_URL")
-	if apiBaseURL == "" {
-		apiBaseURL = "https://api.irmin.co"
-	}
 	webhookURL := fmt.Sprintf("%s/api/v1/webhooks/connectors/%s", apiBaseURL, connectionSqid)
 
 	// Format owner if present
@@ -80,8 +75,9 @@ func FormatConnectionSubscriptionResponse(
 func FormatConnectionSubscriptionWithTokenResponse(
 	subscription *db.ConnectionSubscription,
 	sqidManager *irminsqids.SQIDManager,
+	apiBaseURL string,
 ) (*irminmodels.ConnectionSubscriptionWithToken, error) {
-	base, err := FormatConnectionSubscriptionResponse(subscription, sqidManager)
+	base, err := FormatConnectionSubscriptionResponse(subscription, sqidManager, apiBaseURL)
 	if err != nil {
 		return nil, err
 	}

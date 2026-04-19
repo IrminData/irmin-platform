@@ -9078,8 +9078,8 @@ import "irmin-api/formatter"
 - [func FormatAIApplicationResponse\(database \*db.Database, aiApplication \*db.AIApplication, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.AIApplication, error\)](<#FormatAIApplicationResponse>)
 - [func FormatAPITokenResponse\(token \*db.APIToken, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.APIToken, error\)](<#FormatAPITokenResponse>)
 - [func FormatConnectionResponse\(connection \*db.Connection, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Connection, error\)](<#FormatConnectionResponse>)
-- [func FormatConnectionSubscriptionResponse\(subscription \*db.ConnectionSubscription, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.ConnectionSubscription, error\)](<#FormatConnectionSubscriptionResponse>)
-- [func FormatConnectionSubscriptionWithTokenResponse\(subscription \*db.ConnectionSubscription, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.ConnectionSubscriptionWithToken, error\)](<#FormatConnectionSubscriptionWithTokenResponse>)
+- [func FormatConnectionSubscriptionResponse\(subscription \*db.ConnectionSubscription, sqidManager \*irminsqids.SQIDManager, apiBaseURL string\) \(\*irminmodels.ConnectionSubscription, error\)](<#FormatConnectionSubscriptionResponse>)
+- [func FormatConnectionSubscriptionWithTokenResponse\(subscription \*db.ConnectionSubscription, sqidManager \*irminsqids.SQIDManager, apiBaseURL string\) \(\*irminmodels.ConnectionSubscriptionWithToken, error\)](<#FormatConnectionSubscriptionWithTokenResponse>)
 - [func FormatConnectorResponse\(connector \*db.Connector, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Connector, error\)](<#FormatConnectorResponse>)
 - [func FormatIndexResponse\[T any, R any\]\(items \[\]T, formatter func\(\*T, \*irminsqids.SQIDManager\) \(\*R, error\), sqidManager \*irminsqids.SQIDManager\) \(\[\]R, error\)](<#FormatIndexResponse>)
 - [func FormatInviteResponse\(invite \*db.Invite, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Invite, error\)](<#FormatInviteResponse>)
@@ -9137,7 +9137,7 @@ FormatConnectionResponse creates a connection response object from a connection 
 ## func FormatConnectionSubscriptionResponse
 
 ```go
-func FormatConnectionSubscriptionResponse(subscription *db.ConnectionSubscription, sqidManager *irminsqids.SQIDManager) (*irminmodels.ConnectionSubscription, error)
+func FormatConnectionSubscriptionResponse(subscription *db.ConnectionSubscription, sqidManager *irminsqids.SQIDManager, apiBaseURL string) (*irminmodels.ConnectionSubscription, error)
 ```
 
 FormatConnectionSubscriptionResponse creates a subscription response object from a database subscription object.
@@ -9146,7 +9146,7 @@ FormatConnectionSubscriptionResponse creates a subscription response object from
 ## func FormatConnectionSubscriptionWithTokenResponse
 
 ```go
-func FormatConnectionSubscriptionWithTokenResponse(subscription *db.ConnectionSubscription, sqidManager *irminsqids.SQIDManager) (*irminmodels.ConnectionSubscriptionWithToken, error)
+func FormatConnectionSubscriptionWithTokenResponse(subscription *db.ConnectionSubscription, sqidManager *irminsqids.SQIDManager, apiBaseURL string) (*irminmodels.ConnectionSubscriptionWithToken, error)
 ```
 
 FormatConnectionSubscriptionWithTokenResponse creates a subscription response with the webhook token. This should only be used when returning a newly created subscription.
@@ -17584,7 +17584,7 @@ CoreAPIEnv is a struct that holds the environment variables for the data engine.
 ```go
 type CoreAPIEnv struct {
     Port                         string // Port to run the Core API server on
-    URL                          string // URL of the Core API server
+    URL                          string // URL of the Core API server (also used as the public base URL for webhook URLs)
     SystemToken                  string // Token to authenticate system requests to the API
     CorsEnabled                  bool   // Flag to enable CORS
     HelmetEnabled                bool   // Flag to enable helmet
@@ -17599,7 +17599,6 @@ type CoreAPIEnv struct {
     DatabaseConnectionString     string // Postgres DB connection string
     ConsoleURL                   string // URL of the Irmin Console
     InviteExpiresInDays          int    // Number of days before an invite expires
-    ClerkPublicKey               string // Clerk Public API Key
     ClerkSecretKey               string // Clerk Secret API Key
     ClerkSigningKey              string // Clerk Signing Key for JWT
     ClerkSigningAlgorithm        string // Clerk Signing Algorithm for JWT
@@ -17616,15 +17615,11 @@ type CoreAPIEnv struct {
     SkipOptionalDuckDBExtensions bool   // Flag to skip installation of optional DuckDB extensions
     DaytonaAPIKey                string // API key for Daytona sandbox service
     DaytonaAPIURL                string // Base URL for Daytona sandbox service API
-    TestConnectorBaseURL         string // Base URL of the connector to test with
-    TestConnectorToken           string // Operation token for the connector to test with
-    TestConnectorPath            string // Path to the test file in the connector
     TestObjectName               string // Name of the test object which is expected to be a structured JSON file
     TestUserEmail                string // Email of the test user
     TestWorkspace                string // Workspace to test with
     TestRepository               string // Repository to test with
     TestBranch                   string // Branch to test with
-    TestTag                      string // Tag to test with
     SignedURLSecret              string // HMAC secret for signed download URLs
 
     // Credential encryption
