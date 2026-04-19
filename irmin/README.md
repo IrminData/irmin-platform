@@ -322,35 +322,29 @@ docker buildx build --platform linux/amd64/v2,linux/arm64/v8 -t YOUR_DOCKER_USER
 
 ## Environment Variables
 
-Create a `.env` file in the root directory of the project by copying the `.env.example` file:
+Copy the template and fill in the values you need:
 
 ```bash
 cp .env.example .env
-# Add your API keys and update other variables as required:
-# LAKE_FS_ACCESS_KEY_ID=your_lakefs_access_key
-# LAKE_FS_SECRET_ACCESS_KEY=your_lakefs_secret_key
-# NOVU_SECRET_KEY=your_novu_key
 ```
+
+[`.env.example`](.env.example) is the single source of truth for every variable the service reads, with defaults, descriptions, and generation hints for any secrets. All variables are runtime configuration (loaded at process startup via `godotenv`) — there are no build-time variables.
 
 ### Important: Docker Compose vs Local URLs
 
-When running services in **docker-compose**, use service names for internal communication:
+When running the API in **docker-compose**, use service names so containers can resolve each other over Docker's internal network:
 
 ```bash
-# for docker-compose (services communicate via service names)
 LAKE_FS_URL=http://lakefs:8000
 S3_ENDPOINT=http://minio:9000
 ```
 
-When running the API **locally** (outside Docker) with docker-compose infrastructure:
+When running the API **locally** (outside Docker) against docker-compose infrastructure, use `localhost` to reach the exposed ports:
 
 ```bash
-# for local API connecting to docker-compose infrastructure
 LAKE_FS_URL=http://localhost:8000
 S3_ENDPOINT=http://localhost:9000
 ```
-
-**Why?** In docker-compose, containers use Docker's internal network where service names (like `lakefs`, `minio`) resolve to container IPs. From your host machine, you use `localhost` to access exposed ports.
 
 ## License
 

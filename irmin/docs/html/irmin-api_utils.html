@@ -327,7 +327,10 @@ type CoreAPIEnv struct {
 	PolarProductID     string // Polar product ID for the usage-based plan
 	PolarBaseURL       string // Polar API base URL (default: https://api.polar.sh, sandbox: https://sandbox-api.polar.sh)
 
-	// Sentry error tracking configuration
+	// Sentry error tracking configuration.
+	// Note: SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN are read directly
+	// from the environment by release tagging / CI scripts — not by the running
+	// service — so they are intentionally not loaded into this struct.
 	SentryEnabled          bool    // Flag to enable Sentry error tracking
 	SentryDSN              string  // Sentry DSN for error reporting
 	SentryEnvironment      string  // Sentry environment name (default "development")

@@ -25,6 +25,15 @@ func Init(logger *slog.Logger, env *utils.CoreAPIEnv) {
 		Environment:      env.SentryEnvironment,
 		TracesSampleRate: env.SentryTracesSampleRate,
 		EnableTracing:    true,
+		AttachStacktrace: true,
+		EnableLogs:       true,
+		// SendDefaultPII stays OFF: this service authenticates via Clerk JWTs
+		// and API tokens passed in Authorization / Cookie headers, and enabling
+		// PII forwards request headers and cookies verbatim to Sentry — bearer
+		// tokens and session cookies would land in event data. User and
+		// workspace context is attached explicitly by the Fiber middleware in
+		// sentry/middleware.go (request ID, method, URL, user agent only).
+		SendDefaultPII: false,
 	})
 	if err != nil {
 		logger.Error("Failed to initialize Sentry", "error", err)
