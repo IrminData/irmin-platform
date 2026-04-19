@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { env } from '@/config/env.server';
+
 import { languages } from '@/lib/dict';
 
 export const dynamic = 'force-static'; // This is a static route
@@ -10,7 +12,7 @@ export const dynamic = 'force-static'; // This is a static route
  * @returns XML sitemap for the console
  */
 export async function GET() {
-  const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+  const app_base = env.NEXT_PUBLIC_BASE_URL;
 
   const staticPaths = ['/sign-in/', '/sign-up/'];
   languages.map((lang) => {

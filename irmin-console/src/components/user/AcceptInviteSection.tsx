@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
+import { clientEnv } from '@/config/env.client';
 import { SignIn, SignUp, useAuth } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
 import { useTheme } from 'next-themes';
@@ -20,7 +21,7 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useInvite } from '@/hooks/api';
 
-const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.dev';
+const websiteUrl = clientEnv.NEXT_PUBLIC_WEBSITE_URL;
 
 export default function AcceptInviteSection({
   inviteID,

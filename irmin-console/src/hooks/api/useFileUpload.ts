@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { clientEnv } from '@/config/env.client';
+
 import { useIrminCore } from '@/context/IrminCoreContext';
 
 import { generateTempId } from '@/utils/generateTempId';
@@ -15,9 +17,7 @@ import { useInvalidateObjectQueries } from './useInvalidateObjectQueries';
  * Matches the backend MaxInMemorySizeMB default (20 MB).
  */
 const PRESIGNED_UPLOAD_THRESHOLD =
-  parseInt(process.env.NEXT_PUBLIC_PRESIGNED_UPLOAD_THRESHOLD_MB ?? '20', 10) *
-  1024 *
-  1024;
+  clientEnv.NEXT_PUBLIC_PRESIGNED_UPLOAD_THRESHOLD_MB * 1024 * 1024;
 
 /**
  * Maximum file size (in bytes) for which a client-side SHA-256 checksum is computed.

@@ -130,13 +130,18 @@ const RepositorySettingsSectionContent = () => {
   const previousTags = useRef<string>('');
   const currentTagsRef = useRef<Tag[]>(repository.tags ?? []);
 
-  // Sync selectedTags with repository data changes
+  // Reset selectedTags when repository.tags changes.
+  const [prevRepoTags, setPrevRepoTags] = useState(repository.tags);
+  if (repository.tags !== prevRepoTags) {
+    setPrevRepoTags(repository.tags);
+    setSelectedTags(repository.tags ?? []);
+  }
+
+  // Sync diff-tracking refs (can't mutate refs during render).
   useEffect(() => {
     const tags = repository.tags ?? [];
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form draft state from canonical prop; ref tracking must stay coupled
-    setSelectedTags(tags);
     currentTagsRef.current = tags;
-    previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags
+    previousTags.current = '';
   }, [repository.tags]);
 
   const handleUpdateTags = useCallback(

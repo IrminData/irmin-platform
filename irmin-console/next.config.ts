@@ -41,45 +41,46 @@ const nextConfig: NextConfig = {
   },
 };
 
-/**
- * Sentry configuration
- */
+// Source-map upload requires all three of: auth token, org, project. If any
+// is missing we disable upload entirely so builds succeed cleanly without
+// trying (and failing) to upload. Correct posture for forks, self-hosted
+// deploys, and local `pnpm build`.
+const canUploadSourceMaps = Boolean(
+  process.env.SENTRY_AUTH_TOKEN &&
+  process.env.SENTRY_ORG &&
+  process.env.SENTRY_PROJECT
+);
+
 const sentryConfig: SentryBuildOptions = {
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  sentryUrl: process.env.SENTRY_URL || 'https://sentry.io/',
 
-  org: 'irmin-dw',
-  project: 'irmin-console',
-  sentryUrl: 'https://sentry.io/',
-
-  // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
+  telemetry: false,
 
-  // For all available options, see:
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
-
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
   widenClientFileUpload: true,
 
-  // Automatically annotate React components to show their full name in breadcrumbs and session replay
   reactComponentAnnotation: {
     enabled: true,
   },
 
   // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
-  // This can increase your server load as well as your hosting bill.
-  // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
-  // side errors will fail.
   tunnelRoute: '/monitoring',
 
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,
 
-  // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
-  // See the following for more information:
-  // https://docs.sentry.io/product/crons/
-  // https://vercel.com/docs/cron-jobs
   automaticVercelMonitors: true,
+
+  sourcemaps: {
+    // Missing any of token/org/project → skip generation entirely. Build
+    // stays lean, no warnings about missing auth, no failed upload.
+    disable: !canUploadSourceMaps,
+    // When we do upload, delete the .map files from the build output so
+    // they aren't served publicly.
+    deleteSourcemapsAfterUpload: true,
+  },
 };
 
 export default withSentryConfig(nextConfig, sentryConfig);

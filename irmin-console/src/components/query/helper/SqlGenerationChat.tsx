@@ -61,26 +61,34 @@ export function SqlGenerationChat({
     textareaRef.current?.focus();
   }, []);
 
-  // Reset conversation when repository context changes
+  // Reset the conversation when the repository context changes.
   const repositorySlug = context?.['repository-slug'];
   const repositoryPath = context?.['repository-object-path'];
   const repositoryRef = context?.['repository-ref'];
+  const repositoryKey = `${repositorySlug}-${repositoryPath}-${repositoryRef}`;
+
+  const prevRepositoryKeyRef = useRef<string | null>(null);
+  const hasHydratedRepositoryKeyRef = useRef(false);
 
   useEffect(() => {
-    const repositoryKey = `${repositorySlug}-${repositoryPath}-${repositoryRef}`;
-    const prevRepositoryKey = sessionStorage.getItem('sql-chat-repository-key');
+    if (!hasHydratedRepositoryKeyRef.current) {
+      prevRepositoryKeyRef.current = sessionStorage.getItem(
+        'sql-chat-repository-key'
+      );
+      hasHydratedRepositoryKeyRef.current = true;
+    }
 
-    if (prevRepositoryKey && prevRepositoryKey !== repositoryKey) {
-      // Repository context changed, reset conversation and clear error
+    const prev = prevRepositoryKeyRef.current;
+    if (prev !== null && prev !== repositoryKey) {
       onReset();
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- effect synchronizes with sessionStorage; the setError is part of the external-state reset
       setError(null);
     }
+    prevRepositoryKeyRef.current = repositoryKey;
 
     if (repositoryKey && repositoryKey !== 'undefined-undefined-undefined') {
       sessionStorage.setItem('sql-chat-repository-key', repositoryKey);
     }
-  }, [repositorySlug, repositoryPath, repositoryRef, onReset]);
+  }, [repositoryKey, onReset]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {

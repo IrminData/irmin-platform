@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation';
 
+import { env } from '@/config/env.server';
+
 /**
  * Layout for billing settings pages.
  * Returns 404 when billing is disabled, gating all nested routes.
@@ -12,7 +14,7 @@ export default function BillingLayout({
 }: {
   children: React.ReactNode;
 }) {
-  if (process.env.NEXT_PUBLIC_BILLING_DISABLED === 'true') {
+  if (env.NEXT_PUBLIC_BILLING_DISABLED) {
     return notFound();
   }
 

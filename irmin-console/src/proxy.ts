@@ -1,6 +1,7 @@
 import type { NextFetchEvent, NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { env } from '@/config/env.server';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 import type { Locale } from '@/lib/dict';
@@ -8,9 +9,8 @@ import { defaultLocale, detectLocaleFromURL, languages } from '@/lib/dict';
 
 import { hmacPassword } from '@/utils/hmac';
 
-// Environment variables for environment authentication
-const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'false';
-const appPassword = process.env.ENV_PASSWORD;
+const requireAuth = env.REQUIRE_ENV_AUTH;
+const appPassword = env.ENV_PASSWORD;
 
 // Cache the HMAC digest — both appPassword and hmacSecret are process-lifetime
 // constants, so the result never changes and there's no need to recompute per request.
@@ -20,17 +20,6 @@ async function getExpectedHash(): Promise<string> {
     cachedExpectedHash = await hmacPassword(appPassword!);
   }
   return cachedExpectedHash;
-}
-
-// Validate that password is set when auth is required
-if (
-  requireAuth === 'true' &&
-  !appPassword &&
-  process.env.NODE_ENV === 'production'
-) {
-  throw new Error(
-    'ENV_PASSWORD environment variable must be set when REQUIRE_ENV_AUTH is true in production'
-  );
 }
 
 // List of available locales
@@ -139,10 +128,10 @@ const clerkHandler = clerkMiddleware(async (auth, req) => {
     pathname.startsWith('/frontend-docs') || pathname.startsWith('/tsdocs');
 
   // Handle dev environment authentication if it's required or if trying to access TSDoc paths
-  if (requireAuth === 'true' || isTsDocsPath) {
+  if (requireAuth || isTsDocsPath) {
     // Skip auth check if no password is configured and auth is not required
     if (!appPassword) {
-      if (requireAuth === 'true' && process.env.NODE_ENV === 'production') {
+      if (requireAuth && env.NODE_ENV === 'production') {
         return NextResponse.redirect(
           new URL('/api/verify-env-access', req.url)
         );

@@ -1,5 +1,7 @@
 'use client';
 
+import { clientEnv } from '@/config/env.client';
+
 import { TbInvoice } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
@@ -23,7 +25,7 @@ export default function BillingBanner() {
   const { dict } = useLocale();
   const { isResourceAllowed } = useResourceAllowed();
 
-  const billingEnabled = process.env.NEXT_PUBLIC_BILLING_DISABLED !== 'true';
+  const billingEnabled = !clientEnv.NEXT_PUBLIC_BILLING_DISABLED;
   const hasBillingPermission = isResourceAllowed('billing', 'read');
   const shouldFetch = billingEnabled && hasBillingPermission;
 

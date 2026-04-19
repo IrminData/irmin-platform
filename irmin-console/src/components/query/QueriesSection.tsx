@@ -119,35 +119,23 @@ function QueriesSectionContent() {
     cleanup();
   }, [selectedQuery, cleanup]);
 
-  // Handle query parameter from URL
-  const handledQueryIdRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (storedQueriesQuery.isLoading) return;
-    const queryId = searchParams.get('query');
-
-    // Reset ref if query parameter was removed
-    if (!queryId) {
-      handledQueryIdRef.current = null;
-      return;
+  // Select the query matching the URL's ?query= param once the list loads.
+  const urlQueryId = searchParams.get('query');
+  const availableQueries = storedQueriesQuery.data?.data;
+  const [handledUrlQueryId, setHandledUrlQueryId] = useState<string | null>(
+    null
+  );
+  if (!storedQueriesQuery.isLoading) {
+    if (!urlQueryId && handledUrlQueryId !== null) {
+      setHandledUrlQueryId(null);
+    } else if (urlQueryId && handledUrlQueryId !== urlQueryId) {
+      const query = availableQueries?.find((q) => q.id === urlQueryId);
+      if (query) {
+        setHandledUrlQueryId(urlQueryId);
+        setSelectedQuery(query);
+      }
     }
-
-    // Skip if we've already handled this query ID
-    if (handledQueryIdRef.current === queryId) {
-      return;
-    }
-
-    const queries = storedQueriesQuery.data?.data ?? [];
-    const query = queries.find((q) => q.id === queryId);
-    if (query) {
-      handledQueryIdRef.current = queryId;
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- selecting from async-loaded list once per URL query change; ref-guarded to be idempotent
-      setSelectedQuery(query);
-    }
-  }, [
-    searchParams,
-    storedQueriesQuery.isLoading,
-    storedQueriesQuery.data?.data,
-  ]);
+  }
 
   // Tag editing functionality
   const { addTagToEntityMutation, removeTagFromEntityMutation } =
@@ -172,13 +160,18 @@ function QueriesSectionContent() {
   const previousTags = useRef<string>('');
   const currentTagsRef = useRef<Tag[]>([]);
 
-  // Update selected tags when query changes
+  // Reset selectedTags when the selected query changes.
+  const [prevSelectedQuery, setPrevSelectedQuery] = useState(selectedQuery);
+  if (selectedQuery !== prevSelectedQuery) {
+    setPrevSelectedQuery(selectedQuery);
+    setSelectedTags(selectedQuery?.tags ?? []);
+  }
+
+  // Sync diff-tracking refs (can't mutate refs during render).
   useEffect(() => {
     const tags = selectedQuery?.tags ?? [];
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form draft state from canonical prop; ref tracking must stay coupled
-    setSelectedTags(tags);
     currentTagsRef.current = tags;
-    previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags
+    previousTags.current = '';
   }, [selectedQuery]);
 
   const handleUpdateTags = useCallback(

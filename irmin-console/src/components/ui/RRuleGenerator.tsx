@@ -130,64 +130,65 @@ export default function RRuleGenerator({
 }) {
   const { dict } = useLocale();
 
-  const [activeTab, setActiveTab] = useState('presets');
-  const [frequency, setFrequency] = useState<Frequency>(Frequency.DAILY);
-  const [selectedWeekdays, setSelectedWeekdays] = useState<Weekday[]>([]);
-  const [interval, setInterval] = useState<number>(1);
-  const [startDate, setStartDate] = useState<Date>(new Date());
-  const [generatedRule, setGeneratedRule] = useState<string>(rule || '');
-  const [copied, setCopied] = useState(false);
-
-  const initialised = useRef(false);
-  const previousRule = useRef(rule);
-
-  // Initialise form fields from rule prop on first render only
-  useEffect(() => {
-    if (initialised.current) return;
+  // Parse the `rule` prop once on mount to seed form state. Treated as an
+  // initial value — callers that need to reset should remount via `key`.
+  const [initial] = useState(() => {
+    if (!rule) return null;
     try {
-      if (!rule || rule.length === 0) return;
-
       const rrule = rrulestr(rule);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot initialisation gated by initialised ref; rule parsing must happen after mount
-      setGeneratedRule(rule);
-      setFrequency(rrule.options.freq);
-      setInterval(rrule.options.interval || 1);
-      setSelectedWeekdays(rrule.options.byweekday.map((d) => new Weekday(d)));
-
-      // Extract DTSTART if present
       const dtstartMatch = rule.match(/DTSTART:(\d{8}T\d{6}Z)/);
-      if (dtstartMatch) {
-        const dtstart = parseISO(
-          dtstartMatch[1].replace(
-            /(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/,
-            '$1-$2-$3T$4:$5:$6Z'
+      const dtstart = dtstartMatch
+        ? parseISO(
+            dtstartMatch[1].replace(
+              /(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/,
+              '$1-$2-$3T$4:$5:$6Z'
+            )
           )
-        );
-        setStartDate(dtstart);
-      }
+        : undefined;
+      return {
+        frequency: rrule.options.freq as Frequency,
+        interval: rrule.options.interval || 1,
+        weekdays: rrule.options.byweekday.map((d) => new Weekday(d)),
+        startDate: dtstart,
+      };
     } catch (error) {
       console.error(error);
-    } finally {
-      initialised.current = true;
+      return null;
     }
-  }, [rule]);
+  });
 
-  // Generate the RRule string when the form changes
-  useEffect(() => {
-    if (!initialised.current) return;
+  const [activeTab, setActiveTab] = useState('presets');
+  const [frequency, setFrequency] = useState<Frequency>(
+    initial?.frequency ?? Frequency.DAILY
+  );
+  const [selectedWeekdays, setSelectedWeekdays] = useState<Weekday[]>(
+    initial?.weekdays ?? []
+  );
+  const [interval, setInterval] = useState<number>(initial?.interval ?? 1);
+  const [startDate, setStartDate] = useState<Date>(
+    initial?.startDate ?? new Date()
+  );
+  const [copied, setCopied] = useState(false);
+
+  const previousRule = useRef(rule);
+
+  // Derive the RRule string from form state.
+  const generatedRule = useMemo(() => {
     const rrule = new RRule({
       freq: frequency,
       interval: interval,
       byweekday: selectedWeekdays,
       dtstart: startDate,
     });
-    const ruleStr = `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\n${rrule.toString()}`;
-    setGeneratedRule(ruleStr);
+    return `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\n${rrule.toString()}`;
+  }, [frequency, interval, selectedWeekdays, startDate]);
 
-    if (ruleStr === previousRule.current) return;
-    previousRule.current = ruleStr;
-    onGenerate(ruleStr);
-  }, [frequency, interval, selectedWeekdays, startDate, onGenerate]);
+  // Notify the parent when the derived rule changes.
+  useEffect(() => {
+    if (generatedRule === previousRule.current) return;
+    previousRule.current = generatedRule;
+    onGenerate(generatedRule);
+  }, [generatedRule, onGenerate]);
 
   // Derive next execution dates from the generated rule
   const nextDates = useMemo(
@@ -195,12 +196,10 @@ export default function RRuleGenerator({
     [generatedRule]
   );
 
-  // Handle preset selection
+  // Preset selection updates form state; generatedRule re-derives automatically.
   const handlePresetChange = useCallback(
     (preset: (typeof PRESETS)[0]) => {
       const ruleStr = preset.value(startDate);
-      setGeneratedRule(ruleStr);
-      onGenerate(ruleStr);
       try {
         const rrule = rrulestr(ruleStr);
         setFrequency(rrule.options.freq);
@@ -215,7 +214,7 @@ export default function RRuleGenerator({
         console.error(error);
       }
     },
-    [onGenerate, startDate]
+    [startDate]
   );
 
   // Handle copy to clipboard

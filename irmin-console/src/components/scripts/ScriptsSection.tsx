@@ -165,26 +165,41 @@ function ScriptsSectionContent() {
     [openScript]
   );
 
-  // Update selected tags when script changes
-  useEffect(() => {
-    if (!selectedScript) return;
-    // Find the current script from the scripts list to get the latest tags
-    const currentScript = scripts.find((s) => s.id === selectedScript.id);
-    if (currentScript) {
-      const tags = currentScript.tags ?? [];
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form draft state from canonical prop; ref tracking must stay coupled
-      setSelectedTags(tags);
-      currentTagsRef.current = tags;
-      previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags
-    } else {
+  // Reset selectedTags when the selected script or its list entry changes.
+  const currentScriptFromList = selectedScript
+    ? scripts.find((s) => s.id === selectedScript.id)
+    : undefined;
+  const buildScriptKey = (script: StoredScript | null | undefined) => {
+    if (!selectedScript) return null;
+    if (!script) return `${selectedScript.id}:missing`;
+    const tagSignature = (script.tags ?? [])
+      .map((t) => t.id)
+      .sort()
+      .join(',');
+    return `${selectedScript.id}:${tagSignature}`;
+  };
+  const [prevScriptKey, setPrevScriptKey] = useState<string | null>(
+    buildScriptKey(currentScriptFromList)
+  );
+  const scriptKey = buildScriptKey(currentScriptFromList);
+  if (scriptKey !== prevScriptKey) {
+    setPrevScriptKey(scriptKey);
+    if (selectedScript && !currentScriptFromList) {
       // Script no longer exists in the list (e.g., deleted externally)
-
       setSelectedScript(null);
       setSelectedTags([]);
-      currentTagsRef.current = [];
-      previousTags.current = '';
+    } else if (currentScriptFromList) {
+      setSelectedTags(currentScriptFromList.tags ?? []);
     }
-  }, [selectedScript, scripts]);
+  }
+
+  // Sync diff-tracking refs (can't mutate refs during render).
+  useEffect(() => {
+    currentTagsRef.current = selectedScript
+      ? (currentScriptFromList?.tags ?? [])
+      : [];
+    previousTags.current = '';
+  }, [selectedScript, currentScriptFromList]);
 
   const handleUpdateTags = useCallback(
     async (tags: Tag[]) => {

@@ -1,3 +1,5 @@
+import { clientEnv } from '@/config/env.client';
+
 import type { Locale } from '@/lib/dict';
 import { defaultLocale } from '@/lib/dict';
 
@@ -49,9 +51,8 @@ class IrminCore {
   private locale: Locale;
   private token: string;
 
-  public apiBase =
-    process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev/api';
-  public appBase = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+  public apiBase = clientEnv.NEXT_PUBLIC_API_URL;
+  public appBase = clientEnv.NEXT_PUBLIC_BASE_URL;
 
   public aiApplicationService: AIApplicationService;
   public billingService: BillingService;
@@ -160,8 +161,7 @@ class IrminCore {
       },
       next: {
         revalidate:
-          options.next?.revalidate ??
-          parseInt(process.env.NEXT_PUBLIC_REVALIDATE ?? '60'),
+          options.next?.revalidate ?? clientEnv.NEXT_PUBLIC_REVALIDATE,
         ...options.next,
       },
     };

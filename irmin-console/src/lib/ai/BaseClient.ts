@@ -1,3 +1,4 @@
+import { clientEnv } from '@/config/env.client';
 import { z } from 'zod';
 
 import { AIErrorSchema } from '@/types/ai/base';
@@ -8,8 +9,7 @@ export class BaseClient {
   protected workspaceSlug: string;
 
   constructor(token: string, workspaceSlug: string) {
-    this.baseUrl =
-      process.env.NEXT_PUBLIC_AI_API_URL ?? 'https://ai-api.irmin.dev';
+    this.baseUrl = clientEnv.NEXT_PUBLIC_AI_API_URL;
     this.token = token;
     this.workspaceSlug = workspaceSlug;
   }

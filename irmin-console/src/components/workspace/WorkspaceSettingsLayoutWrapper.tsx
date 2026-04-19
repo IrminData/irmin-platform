@@ -4,6 +4,8 @@ import { useMemo } from 'react';
 
 import { usePathname } from 'next/navigation';
 
+import { clientEnv } from '@/config/env.client';
+
 import {
   TbCode,
   TbInvoice,
@@ -92,7 +94,7 @@ export default function WorkspaceSettingsLayoutWrapper({
         active: pathname === `${workspaceUrl}/settings/billing`,
         icon: <TbInvoice size={14} />,
         hidden:
-          process.env.NEXT_PUBLIC_BILLING_DISABLED === 'true' ||
+          clientEnv.NEXT_PUBLIC_BILLING_DISABLED ||
           !isResourceAllowed('billing', 'read'),
       },
       {

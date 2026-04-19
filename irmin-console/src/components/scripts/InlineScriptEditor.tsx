@@ -124,41 +124,29 @@ export default function InlineScriptEditor({
     dict.scripts.scriptDeleted,
   ]);
 
-  // Reset state immediately when scriptId changes (before data loads)
-  // Only update if the value actually changed (not just a re-render)
+  // Reset editor state when scriptId changes. Same pattern as InlineQueryEditor.
+  /* eslint-disable react-hooks/set-state-in-effect -- ref coordination */
   useEffect(() => {
-    // Skip if this is a user-initiated change (handled by handleScriptSelect)
     if (isUserInitiatedChangeRef.current) {
-      // Still update the refs even if skipping reset logic
       normalizedScriptIdRef.current = normalizedScriptId;
       previousNormalizedScriptIdRef.current = normalizedScriptId;
       return;
     }
 
-    // Capture the previous value BEFORE updating refs
     const previousValue = previousNormalizedScriptIdRef.current;
-
-    // Skip if the value hasn't actually changed
     if (previousValue === normalizedScriptId) {
-      // Update refs to current value
       normalizedScriptIdRef.current = normalizedScriptId;
       previousNormalizedScriptIdRef.current = normalizedScriptId;
       return;
     }
 
     if (!normalizedScriptId) {
-      // No script selected - show blank editor
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- multi-step orchestration with refs; compare-during-render rewrite would obscure the intent
       setEditorContent('');
       setOriginalContent('');
       setLanguage('go');
       setIsNewScript(true);
-
       isTransitioningFromNewScriptRef.current = false;
     } else {
-      // Script ID exists
-      // If we're transitioning from a newly created script, preserve the editor content
-      // Otherwise, clear editor to prevent stale content from a different script
       if (!isTransitioningFromNewScriptRef.current) {
         setEditorContent('');
         setOriginalContent('');
@@ -167,23 +155,23 @@ export default function InlineScriptEditor({
       setIsNewScript(false);
     }
 
-    // Update refs AFTER reset logic completes
     normalizedScriptIdRef.current = normalizedScriptId;
     previousNormalizedScriptIdRef.current = normalizedScriptId;
   }, [normalizedScriptId]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Load script content when it becomes available
+  // Load editor content when the script fetch resolves.
+  /* eslint-disable react-hooks/set-state-in-effect -- external data sync */
   useEffect(() => {
     if (normalizedScriptId && currentScript && !scriptQuery.isLoading) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating editor from async query; depends on settled query state
       setEditorContent(currentScript.content ?? '');
       setOriginalContent(currentScript.content ?? '');
       setLanguage(currentScript.language ?? 'go');
       setIsNewScript(false);
-
       isTransitioningFromNewScriptRef.current = false;
     }
   }, [normalizedScriptId, currentScript, scriptQuery.isLoading]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleScriptSelect = useCallback(
     async (scriptId: string) => {

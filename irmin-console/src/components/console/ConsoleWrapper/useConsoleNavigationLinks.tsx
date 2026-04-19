@@ -4,6 +4,8 @@ import { useCallback, useMemo } from 'react';
 
 import { usePathname } from 'next/navigation';
 
+import { clientEnv } from '@/config/env.client';
+
 import { GoWorkflow } from 'react-icons/go';
 import { MdCode } from 'react-icons/md';
 import {
@@ -24,7 +26,7 @@ import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 import type { ConsoleNavigationLinkType } from '@/types/internal/ConsoleNavigation';
 
-const websiteURL = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.dev';
+const websiteURL = clientEnv.NEXT_PUBLIC_WEBSITE_URL;
 
 /**
  * Hook to get console navigation links

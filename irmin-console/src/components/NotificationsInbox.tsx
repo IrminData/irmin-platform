@@ -4,6 +4,7 @@ import { memo } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { clientEnv } from '@/config/env.client';
 import { Inbox, InboxContent } from '@novu/react';
 import { dark } from '@novu/react/themes';
 import { useTheme } from 'next-themes';
@@ -15,7 +16,7 @@ import {
 
 import type { User } from '@/types/core/User';
 
-const novuApplicationIdentifier = process.env.NEXT_PUBLIC_NOVU_APP_ID ?? '';
+const novuApplicationIdentifier = clientEnv.NEXT_PUBLIC_NOVU_APP_ID ?? '';
 
 /**
  * Notifications inbox component with preferences page

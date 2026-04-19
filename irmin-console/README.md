@@ -15,17 +15,61 @@ Ensure you have the following installed:
 
 ## Environment Configuration (.env)
 
-See [.env.example](.env.example) for required and optional variables.
-
-To set environment variables, copy the `.env.example` file and update the variables as required.
+Copy the template and fill in the values you need:
 
 ```bash
 cp .env.example .env
-# Add your API keys and update other variables as required:
-# API_SYSTEM_TOKEN=your_irmin_system_token
-# CLERK_SECRET_KEY=your_clerk_secret_key
-# NEXT_PUBLIC_API_DOCS_URL=https://docs.irmin.co
 ```
+
+[`.env.example`](.env.example) is the single source of truth for every variable the app reads, with defaults, descriptions, and inline `[build-time, client]` / `[runtime, server]` tags.
+
+### `NEXT_PUBLIC_` prefix
+
+Any variable prefixed with `NEXT_PUBLIC_` is exposed to the browser by Next.js and **inlined into the JS bundle at build time**. Two consequences:
+
+- **Never put secrets behind the `NEXT_PUBLIC_` prefix** — they ship to every visitor's browser.
+- **Changing a `NEXT_PUBLIC_` var requires a rebuild.** Editing `.env` and restarting the server is not enough — the old value is baked into the last build output.
+
+### Build-time vs runtime
+
+- **Build-time (inlined at `pnpm build`)** — every `NEXT_PUBLIC_*` var, plus the Sentry source-map-upload trio (`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_URL`). Change any of these and you must rebuild.
+- **Runtime (server-side only)** — `NODE_ENV`, `CLERK_SECRET_KEY`, `NOVU_SECRET_KEY`, `REQUIRE_ENV_AUTH`, `ENV_PASSWORD`, `HMAC_SECRET`, and the Sentry server sampling vars. These are read on each request (or on server startup) and can be changed without a rebuild.
+
+### Accessing env vars in code
+
+Don't read `process.env.*` directly. All vars are Zod-validated at startup and exposed through two loaders in [`src/config/`](src/config):
+
+- `clientEnv` from `env.client.ts` — `NEXT_PUBLIC_*` vars, importable anywhere.
+- `env` from `env.server.ts` — `clientEnv` plus server-only secrets; guarded by `server-only` so client imports fail the build.
+
+```ts
+// client or shared code
+import { clientEnv } from '@/config/env.client';
+// server-only
+import { env } from '@/config/env.server';
+```
+
+Adding a new var: update `.env.example`, the Zod schema, and (for client vars) the literal `raw` object in `env.client.ts`.
+
+### Sentry
+
+Sentry is disabled by default in dev so local errors don't reach the
+shared project. Flip `NEXT_PUBLIC_SENTRY_ENABLED=true` and set
+`NEXT_PUBLIC_SENTRY_DSN` to test reporting end-to-end.
+
+Source map upload happens only when `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`,
+and `SENTRY_PROJECT` are all set — typically in CI / prod builds. If
+any is missing the build succeeds with no upload attempted. Set
+`SENTRY_URL` to point at a self-hosted / EU / private-cloud Sentry.
+
+Relevant env vars (see `.env.example` for full list):
+
+- `NEXT_PUBLIC_SENTRY_ENABLED` — runtime toggle (default `false`)
+- `NEXT_PUBLIC_SENTRY_DSN` — DSN (read by client, server, and edge)
+- `SENTRY_ENVIRONMENT` — `development` / `staging` / `production`
+- `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_URL`, `SENTRY_AUTH_TOKEN` — source map upload (build-time only)
+- `NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE`, `NEXT_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE`, `NEXT_PUBLIC_SENTRY_REPLAYS_ERROR_SAMPLE_RATE` — browser sampling
+- `SENTRY_TRACES_SAMPLE_RATE`, `SENTRY_PROFILE_SESSION_SAMPLE_RATE` — server/edge sampling (continuous profiling)
 
 ## Running the Project
 

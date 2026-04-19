@@ -1,3 +1,5 @@
+import { clientEnv } from '@/config/env.client';
+
 /**
  * Properties for constructing a base URL
  */
@@ -35,10 +37,7 @@ export const constructBaseUrl = ({
   keepHash = false,
 }: ConstructBaseUrlProps) => {
   try {
-    const url = new URL(
-      pathname,
-      process.env.NEXT_PUBLIC_BASE_URL ?? 'https://localhost:3000'
-    );
+    const url = new URL(pathname, clientEnv.NEXT_PUBLIC_BASE_URL);
     const segments = url.pathname.split('/').filter(Boolean);
     const segmentIndex = segments.indexOf(segment);
 

@@ -1,5 +1,7 @@
 'use client';
 
+import { clientEnv } from '@/config/env.client';
+
 import {
   TbCode,
   TbInvoice,
@@ -131,7 +133,7 @@ const DashboardSection = () => {
                 {dict.workspace.invites}
               </Button>
             )}
-            {process.env.NEXT_PUBLIC_BILLING_DISABLED !== 'true' &&
+            {!clientEnv.NEXT_PUBLIC_BILLING_DISABLED &&
               isResourceAllowed('billing', 'read') && (
                 <Button
                   href={`${workspaceUrl}/settings/billing`}

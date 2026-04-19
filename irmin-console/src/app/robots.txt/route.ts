@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { env } from '@/config/env.server';
+
 export const dynamic = 'force-static'; // This is a static route
 
 /**
@@ -16,7 +18,7 @@ export const dynamic = 'force-static'; // This is a static route
  * @returns response - text file with instructions for web crawlers
  */
 export async function GET() {
-  const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+  const app_base = env.NEXT_PUBLIC_BASE_URL;
   let txt = `
     # *
     User-agent: *
@@ -24,13 +26,12 @@ export async function GET() {
     Disallow: /api/
     Disallow: /_next/
     Disallow: /frontend-docs/
-    
+
     # Sitemaps
     Sitemap: ${app_base}/sitemap.xml
     `;
 
-  const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'false';
-  if (requireAuth === 'true') {
+  if (env.REQUIRE_ENV_AUTH) {
     txt = `
     User-agent: *
     Disallow: /

@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react';
 
+import { clientEnv } from '@/config/env.client';
+
 import { IoInformationCircle } from 'react-icons/io5';
 
 import {
@@ -26,8 +28,7 @@ import DisplayTitle from '../ui/display-title';
 const WorkspaceApiMcpSection = () => {
   const { dict, locale } = useLocale();
 
-  const apiBaseUrl =
-    process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev/api';
+  const apiBaseUrl = clientEnv.NEXT_PUBLIC_API_URL;
   const mcpUrl = useMemo(() => {
     // MCP is mounted at /mcp on the same server as the API
     // If API URL ends with /api, replace it with /mcp, otherwise append /mcp
@@ -137,17 +138,15 @@ const WorkspaceApiMcpSection = () => {
           <Button href={tokensPageUrl} size='sm' variant='default'>
             {dict.workspace.api.getApiToken}
           </Button>
-          {process.env.NEXT_PUBLIC_API_DOCS_URL && (
-            <Button
-              href={process.env.NEXT_PUBLIC_API_DOCS_URL}
-              target='_blank'
-              rel='noopener noreferrer'
-              size='sm'
-              variant='secondary'
-            >
-              {dict.workspace.api.viewApiDocs}
-            </Button>
-          )}
+          <Button
+            href={clientEnv.NEXT_PUBLIC_API_DOCS_URL}
+            target='_blank'
+            rel='noopener noreferrer'
+            size='sm'
+            variant='secondary'
+          >
+            {dict.workspace.api.viewApiDocs}
+          </Button>
         </div>
       </div>
 
@@ -264,17 +263,15 @@ const WorkspaceApiMcpSection = () => {
           <Button href={tokensPageUrl} size='sm' variant='default'>
             {dict.workspace.api.getMcpToken}
           </Button>
-          {process.env.NEXT_PUBLIC_API_DOCS_URL && (
-            <Button
-              href={process.env.NEXT_PUBLIC_API_DOCS_URL}
-              target='_blank'
-              rel='noopener noreferrer'
-              size='sm'
-              variant='secondary'
-            >
-              {dict.workspace.api.viewMcpDocs}
-            </Button>
-          )}
+          <Button
+            href={clientEnv.NEXT_PUBLIC_API_DOCS_URL}
+            target='_blank'
+            rel='noopener noreferrer'
+            size='sm'
+            variant='secondary'
+          >
+            {dict.workspace.api.viewMcpDocs}
+          </Button>
         </div>
       </div>
     </ContentWrapper>

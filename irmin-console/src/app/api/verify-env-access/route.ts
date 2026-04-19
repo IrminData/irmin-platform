@@ -1,27 +1,17 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { env } from '@/config/env.server';
 import { getLocale } from '@/proxy';
 
 import { hmacPassword } from '@/utils/hmac';
 
-const appPassword = process.env.ENV_PASSWORD;
-const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'false';
-const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+const appPassword = env.ENV_PASSWORD;
+const requireAuth = env.REQUIRE_ENV_AUTH;
+const app_base = env.NEXT_PUBLIC_BASE_URL;
 
 /** Cookie expiry: 7 days */
 const COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-
-// Validate that password is set when auth is required in production environments
-if (
-  requireAuth === 'true' &&
-  !appPassword &&
-  process.env.NODE_ENV === 'production'
-) {
-  throw new Error(
-    'ENV_PASSWORD environment variable must be set when REQUIRE_ENV_AUTH is true in production'
-  );
-}
 
 /**
  * HTML form for signing in to the development environment
@@ -83,7 +73,7 @@ body {
  */
 export async function GET(req: NextRequest) {
   // If auth is not required and no password is set, redirect directly to home
-  if (requireAuth !== 'true' && !appPassword) {
+  if (!requireAuth && !appPassword) {
     const locale = getLocale(req);
     const expires = new Date(Date.now() + COOKIE_MAX_AGE_MS);
     const setCookieHeader = `authorisedDev=no-auth-required; Expires=${expires.toUTCString()}; Path=/; HttpOnly; Secure; SameSite=Lax`;
@@ -123,7 +113,7 @@ export async function POST(req: NextRequest) {
 
   // Check if password is configured when auth is required
   if (!appPassword) {
-    if (requireAuth === 'true') {
+    if (requireAuth) {
       return new NextResponse('Development access not configured', {
         status: 503,
       });

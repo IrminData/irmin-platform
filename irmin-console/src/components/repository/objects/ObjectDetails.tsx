@@ -432,13 +432,18 @@ export default function ObjectDetails({
   const previousTags = useRef<string>('');
   const currentTagsRef = useRef<Tag[]>(selectedObject?.tags ?? []);
 
-  // Synchronize selectedTags with selectedObject.tags when selectedObject changes
+  // Reset selectedTags when selectedObject changes.
+  const [prevSelectedObject, setPrevSelectedObject] = useState(selectedObject);
+  if (selectedObject !== prevSelectedObject) {
+    setPrevSelectedObject(selectedObject);
+    setSelectedTags(selectedObject?.tags ?? []);
+  }
+
+  // Sync diff-tracking refs (can't mutate refs during render).
   useEffect(() => {
     const tags = selectedObject?.tags ?? [];
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form draft state from canonical prop; ref tracking must stay coupled
-    setSelectedTags(tags);
     currentTagsRef.current = tags;
-    previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags
+    previousTags.current = '';
   }, [selectedObject]);
 
   const handleUpdateTags = useCallback(

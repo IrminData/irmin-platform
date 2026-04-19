@@ -151,40 +151,29 @@ export default function InlineQueryEditor({
     dict.query,
   ]);
 
-  // Reset state immediately when queryId changes (before data loads)
-  // Only update if the value actually changed (not just a re-render)
+  // Reset editor state when queryId changes. Uses ref coordination with
+  // handleQuerySelect; eliminating requires parent-side `key={queryId}`.
+  /* eslint-disable react-hooks/set-state-in-effect -- ref coordination */
   useEffect(() => {
-    // Skip if this is a user-initiated change (handled by handleQuerySelect)
     if (isUserInitiatedChangeRef.current) {
-      // Still update the refs even if skipping reset logic
       normalizedQueryIdRef.current = normalizedQueryId;
       previousNormalizedQueryIdRef.current = normalizedQueryId;
       return;
     }
 
-    // Capture the previous value BEFORE updating refs
     const previousValue = previousNormalizedQueryIdRef.current;
-
-    // Skip if the value hasn't actually changed
     if (previousValue === normalizedQueryId) {
-      // Update refs to current value
       normalizedQueryIdRef.current = normalizedQueryId;
       previousNormalizedQueryIdRef.current = normalizedQueryId;
       return;
     }
 
     if (!normalizedQueryId) {
-      // No query selected - show blank editor
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- multi-step orchestration with refs; compare-during-render rewrite would obscure the intent
       setEditorContent('');
       setOriginalContent('');
       setIsNewQuery(true);
-
       isTransitioningFromNewQueryRef.current = false;
     } else {
-      // Query ID exists
-      // If we're transitioning from a newly created query, preserve the editor content
-      // Otherwise, clear editor to prevent stale content from a different query
       if (!isTransitioningFromNewQueryRef.current) {
         setEditorContent('');
         setOriginalContent('');
@@ -192,22 +181,22 @@ export default function InlineQueryEditor({
       setIsNewQuery(false);
     }
 
-    // Update refs AFTER reset logic completes
     normalizedQueryIdRef.current = normalizedQueryId;
     previousNormalizedQueryIdRef.current = normalizedQueryId;
   }, [normalizedQueryId]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Load query content when it becomes available
+  // Load editor content when the query fetch resolves.
+  /* eslint-disable react-hooks/set-state-in-effect -- external data sync */
   useEffect(() => {
     if (normalizedQueryId && currentQuery && !queryQuery.isLoading) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating editor from async query; depends on settled query state
       setEditorContent(currentQuery.sql ?? '');
       setOriginalContent(currentQuery.sql ?? '');
       setIsNewQuery(false);
-
       isTransitioningFromNewQueryRef.current = false;
     }
   }, [normalizedQueryId, currentQuery, queryQuery.isLoading]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleQuerySelect = useCallback(
     async (queryId: string) => {

@@ -2,6 +2,8 @@
 
 import { useCallback } from 'react';
 
+import { clientEnv } from '@/config/env.client';
+
 import { IoInformationCircle } from 'react-icons/io5';
 import { TbTrash } from 'react-icons/tb';
 
@@ -77,19 +79,17 @@ export default function TokensSection() {
         <IoInformationCircle className={`mt-0.5 size-5 shrink-0 text-accent`} />
         <div className={`flex-1 text-sm text-foreground`}>
           <p>{dict.tokens.explainer}</p>
-          {process.env.NEXT_PUBLIC_API_DOCS_URL && (
-            <a
-              href={process.env.NEXT_PUBLIC_API_DOCS_URL}
-              target='_blank'
-              rel='noopener noreferrer'
-              className={`
-                mt-1 inline-block text-accent underline
-                hover:no-underline
-              `}
-            >
-              {dict.tokens.learnMoreApiDocs}
-            </a>
-          )}
+          <a
+            href={clientEnv.NEXT_PUBLIC_API_DOCS_URL}
+            target='_blank'
+            rel='noopener noreferrer'
+            className={`
+              mt-1 inline-block text-accent underline
+              hover:no-underline
+            `}
+          >
+            {dict.tokens.learnMoreApiDocs}
+          </a>
         </div>
       </div>
       {/* Row with the create token button */}

@@ -1,9 +1,11 @@
+import { env } from '@/config/env.server';
 import * as Sentry from '@sentry/nextjs';
 
-const isProduction = process.env.NODE_ENV === 'production';
+const SENTRY_ENABLED = env.NEXT_PUBLIC_SENTRY_ENABLED;
+const SENTRY_DSN = env.NEXT_PUBLIC_SENTRY_DSN ?? '';
 
 export async function register() {
-  if (!isProduction) {
+  if (!SENTRY_ENABLED || !SENTRY_DSN) {
     return;
   }
 
@@ -16,6 +18,5 @@ export async function register() {
   }
 }
 
-export const onRequestError = isProduction
-  ? Sentry.captureRequestError
-  : undefined;
+export const onRequestError =
+  SENTRY_ENABLED && SENTRY_DSN ? Sentry.captureRequestError : undefined;

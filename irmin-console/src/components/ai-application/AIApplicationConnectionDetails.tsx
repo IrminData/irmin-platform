@@ -2,6 +2,8 @@
 
 import { useCallback, useState } from 'react';
 
+import { clientEnv } from '@/config/env.client';
+
 import {
   TbBook,
   TbCheck,
@@ -39,12 +41,12 @@ const AIApplicationConnectionDetails = () => {
   const [configCopied, setConfigCopied] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
 
+  const apiBaseUrl = clientEnv.NEXT_PUBLIC_API_URL;
+
   const streamableHttpConfig = {
     mcpServers: {
       irmin: {
-        url: `${
-          process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev/api'
-        }/v1/ai-app/mcp`,
+        url: `${apiBaseUrl}/v1/ai-app/mcp`,
         headers: {
           Authorization: `Bearer ${aiApplication.api_key || '<YOUR_API_KEY>'}`,
         },
@@ -59,9 +61,7 @@ const AIApplicationConnectionDetails = () => {
         args: [
           '-y',
           'mcp-remote@latest',
-          `${
-            process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev/api'
-          }/v1/ai-app/mcp`,
+          `${apiBaseUrl}/v1/ai-app/mcp`,
           '--header',
           'Authorization: Bearer ${AUTH_TOKEN}',
         ],
@@ -72,13 +72,9 @@ const AIApplicationConnectionDetails = () => {
     },
   };
 
-  const mcpEndpoint = `${
-    process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev/api'
-  }/v1/ai-app/mcp`;
+  const mcpEndpoint = `${apiBaseUrl}/v1/ai-app/mcp`;
 
-  const restApiEndpoint = `${
-    process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev/api'
-  }/v1/ai-app`;
+  const restApiEndpoint = `${apiBaseUrl}/v1/ai-app`;
 
   const handleCopyApiKey = useCallback(async () => {
     if (aiApplication.api_key) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { AiOutlineSave } from 'react-icons/ai';
 import { MdPlayArrow } from 'react-icons/md';
@@ -80,23 +80,21 @@ const ScriptResults = ({
   const [processingRun, setProcessingRun] = useState(false);
 
   const isLoading = loading || processingRun;
-  const prevLoadingRef = useRef(isLoading);
 
-  useEffect(() => {
-    // Detect when loading finishes (transitions from true to false)
-    if (prevLoadingRef.current && !isLoading) {
+  // On loading true→false, switch to logs tab if the run failed or returned nothing.
+  const [prevIsLoading, setPrevIsLoading] = useState(isLoading);
+  if (prevIsLoading !== isLoading) {
+    setPrevIsLoading(isLoading);
+    if (prevIsLoading && !isLoading) {
       const hasErrors = result?.has_errors;
       const hasNoData =
         !result?.structured_results ||
         Object.keys(result.structured_results).length === 0;
-
       if (hasErrors || hasNoData) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- redirecting to logs tab on loading-finished edge; needs effect timing
         setActiveTab('logs');
       }
     }
-    prevLoadingRef.current = isLoading;
-  }, [isLoading, result]);
+  }
 
   const canSave = useMemo(
     () => isResourceAllowed('script', 'update'),

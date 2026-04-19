@@ -5,6 +5,7 @@ import { useSyncExternalStore } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { clientEnv } from '@/config/env.client';
 import { SignUp } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
 import { useTheme } from 'next-themes';
@@ -14,7 +15,7 @@ import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
 import { useLocale } from '@/context/LocaleContext';
 
-const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.dev';
+const websiteUrl = clientEnv.NEXT_PUBLIC_WEBSITE_URL;
 
 const noopSubscribe = () => () => {};
 const getTrue = () => true;

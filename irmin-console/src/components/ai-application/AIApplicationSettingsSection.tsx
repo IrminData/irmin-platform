@@ -143,11 +143,16 @@ const AIApplicationSettingsSectionContent = () => {
   const previousTags = useRef<string>('');
   const currentTagsRef = useRef<Tag[]>(aiApplication.tags ?? []);
 
-  // Sync selectedTags with aiApplication data changes
+  // Reset selectedTags when server tags change.
+  const [prevAppTags, setPrevAppTags] = useState(aiApplication.tags);
+  if (aiApplication.tags !== prevAppTags) {
+    setPrevAppTags(aiApplication.tags);
+    setSelectedTags(aiApplication.tags ?? []);
+  }
+
+  // Sync diff-tracking refs (can't mutate refs during render).
   useEffect(() => {
     const tags = aiApplication.tags ?? [];
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form draft state from canonical prop; ref tracking must stay coupled
-    setSelectedTags(tags);
     currentTagsRef.current = tags;
     previousTags.current = '';
   }, [aiApplication.tags]);

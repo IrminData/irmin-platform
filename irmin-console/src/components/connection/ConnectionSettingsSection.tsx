@@ -116,14 +116,20 @@ const ConnectionSettingsSection = () => {
   const previousTags = useRef<string>('');
   const currentTagsRef = useRef<Tag[]>(connectionQuery.data?.data?.tags ?? []);
 
-  // Sync selectedTags with connection data changes
+  // Reset selectedTags when server tags change.
+  const serverTags = connectionQuery.data?.data?.tags;
+  const [prevServerTags, setPrevServerTags] = useState(serverTags);
+  if (serverTags !== prevServerTags) {
+    setPrevServerTags(serverTags);
+    setSelectedTags(serverTags ?? []);
+  }
+
+  // Sync diff-tracking refs (can't mutate refs during render).
   useEffect(() => {
-    const tags = connectionQuery.data?.data?.tags ?? [];
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form draft state from canonical prop; ref tracking must stay coupled
-    setSelectedTags(tags);
+    const tags = serverTags ?? [];
     currentTagsRef.current = tags;
-    previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags
-  }, [connectionQuery.data?.data?.tags]);
+    previousTags.current = '';
+  }, [serverTags]);
 
   const handleUpdateTags = useCallback(
     async (tags: Tag[]) => {

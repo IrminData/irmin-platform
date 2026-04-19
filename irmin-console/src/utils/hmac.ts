@@ -1,9 +1,11 @@
+import { env } from '@/config/env.server';
+
 /**
  * Server-side HMAC secret used as the signing key. Falls back to a
  * deterministic derivation from ENV_PASSWORD when HMAC_SECRET is not set,
  * but a separate random secret is strongly recommended in production.
  */
-const hmacSecret = process.env.HMAC_SECRET ?? process.env.ENV_PASSWORD ?? '';
+const hmacSecret = env.HMAC_SECRET ?? env.ENV_PASSWORD ?? '';
 
 /**
  * Generate an HMAC of the password using the Web Crypto API so the raw secret
