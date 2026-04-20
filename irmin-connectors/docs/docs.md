@@ -644,8 +644,10 @@ The design principle is that the connectors service never persists vendor tokens
 Wire contract:
 
 1. The connector reads the X\-Irmin\-Connection\-Id header on inbound operation requests; that identifies which Connection this operation belongs to. The header name is exported as connectorsclient.HeaderConnectionID in irmin/ for the Core side; connectors\-side it's the literal string below.
-2. The connector calls Core at POST \{IRMIN\_API\_BASE\_URL\}/api/v1/system/oauth/access\-token with Authorization: Bearer \{IRMIN\_API\_TOKEN\} and the JSON body \{"connection\_id": \<uint\>\}.
+2. The connector calls Core at POST \{IRMIN\_API\_BASE\_URL\}/api/v1/system/oauth/access\-token with Authorization: Bearer \{IRMIN\_API\_TOKEN\} and the JSON body \{"connection\_id": \<uint\>, "force\_refresh": \<bool\>\}.
 3. Core responds 200 with \{"data": \{"access\_token": "...", "token\_type": "...", "expires\_at": "...", "scope": "..."\}\}.
+
+Cross\-service auth: Core gates the endpoint behind a system\-token check \(AuthMiddleware in irmin/middlewares/auth.go \+ validateSystemToken in services/auth.go\). For the connector to be authorised, IRMIN\_API\_TOKEN here must be byte\-equal to Core's TOKEN env var. This is the same contract the Phase 2 lazy fetch already relies on; the force\_refresh variant added in Phase 3 shares the gate and adds no new auth surface.
 
 Failure modes are translated to sentinel errors so callers can surface the right UX:
 
@@ -666,6 +668,7 @@ All other non\-2xx responses collapse to a wrapped fmt\-error so callers can dec
 - [type OAuthTokenClient](<#OAuthTokenClient>)
   - [func NewOAuthTokenClient\(coreBaseURL, systemToken string\) \*OAuthTokenClient](<#NewOAuthTokenClient>)
   - [func \(c \*OAuthTokenClient\) FetchVendorAccessToken\(ctx context.Context, connectionID uint\) \(\*VendorAccessToken, error\)](<#OAuthTokenClient.FetchVendorAccessToken>)
+  - [func \(c \*OAuthTokenClient\) ForceRefreshVendorAccessToken\(ctx context.Context, connectionID uint\) \(\*VendorAccessToken, error\)](<#OAuthTokenClient.ForceRefreshVendorAccessToken>)
 - [type VendorAccessToken](<#VendorAccessToken>)
   - [func \(t \*VendorAccessToken\) AuthorizationHeader\(\) string](<#VendorAccessToken.AuthorizationHeader>)
 
@@ -791,6 +794,15 @@ func (c *OAuthTokenClient) FetchVendorAccessToken(ctx context.Context, connectio
 FetchVendorAccessToken asks Core for a currently\-valid vendor token for the given Connection. Core transparently refreshes if the stored token is inside its expiry skew window.
 
 Idempotent and safe to call on every vendor\-bound request; the fast path is a single small HTTPS round\-trip to Core with no vendor I/O.
+
+<a name="OAuthTokenClient.ForceRefreshVendorAccessToken"></a>
+### func \(\*OAuthTokenClient\) ForceRefreshVendorAccessToken
+
+```go
+func (c *OAuthTokenClient) ForceRefreshVendorAccessToken(ctx context.Context, connectionID uint) (*VendorAccessToken, error)
+```
+
+ForceRefreshVendorAccessToken asks Core to rotate the stored token unconditionally and return the freshly\-issued access token. Callers use this on retry after the vendor rejected a previously\-cached token mid\-operation \(401 on a token that hadn't yet entered the local expiry skew window\). Uses the same sentinel errors as FetchVendorAccessToken.
 
 <a name="VendorAccessToken"></a>
 ## type VendorAccessToken
@@ -1699,8 +1711,18 @@ LoadEnv loads environment variables from the .env file in the project root, sets
 import "irmin-connectors/connectors/common"
 ```
 
+Package common hosts the shared pieces every connector composes into its own controller. oauth\_base.go introduces OAuthConnector — an embeddable struct that handles the grunt work of authenticating a connector request against Core's OAuth system:
+
+- Reads X\-Irmin\-Connection\-Id from the inbound Fiber request.
+- Calls lib.OAuthTokenClient.FetchVendorAccessToken \(and the force variant on retry\) so the vendor always sees a currently\-valid bearer token.
+- Maps the package sentinel errors from lib onto HTTP status codes Core knows how to surface in the console \("reconnect required" → 428, Core unreachable → 502, bad inbound header → 400\).
+- Stamps the connector's declared ConnectionOAuthConfig onto the /info response so the console can render the Connect button for OAuth\-backed connectors without a separate metadata call.
+
+Concrete connectors compose \*OAuthConnector into their Controllers struct. Static\-credential connectors \(HTTP, Postgres, etc.\) can embed it too — the helpers no\-op cleanly when ConnectionOAuthConfig is nil, which keeps the embed uniform across the connector family.
+
 ## Index
 
+- [Variables](<#variables>)
 - [func BuildDetailsFromFields\(fields map\[string\]string, definitions map\[string\]irminmodels.DynamicField\) map\[string\]string](<#BuildDetailsFromFields>)
 - [func BuildSettingsFromFields\(fields map\[string\]string, definitions map\[string\]irminmodels.DynamicField\) map\[string\]string](<#BuildSettingsFromFields>)
 - [func CancelOperation\(c fiber.Ctx, app \*models.ConnectorsApp, cancellationFunc func\(\*models.ConnectorsApp, \*db.Operation\) error\) error](<#CancelOperation>)
@@ -1737,6 +1759,7 @@ import "irmin-connectors/connectors/common"
 - [func SetupConnectorRoutes\(config ConnectorRouteConfig\)](<#SetupConnectorRoutes>)
 - [func ValidateOperationToken\(c fiber.Ctx, app \*models.ConnectorsApp, getConnectorInfo func\(\) models.ConnectorDetails\) error](<#ValidateOperationToken>)
 - [func ValidateSystemToken\(c fiber.Ctx, app \*models.ConnectorsApp, getConnectorInfo func\(\) models.ConnectorDetails\) error](<#ValidateSystemToken>)
+- [func WrapHTTPClient\(client \*http.Client, o \*OAuthConnector, c fiber.Ctx\) \*http.Client](<#WrapHTTPClient>)
 - [type ConfigFieldProvider](<#ConfigFieldProvider>)
 - [type ConfigValidationProvider](<#ConfigValidationProvider>)
 - [type ConnectorController](<#ConnectorController>)
@@ -1764,6 +1787,16 @@ import "irmin-connectors/connectors/common"
   - [func \(p \*NotSupportedSchemaProvider\) GetSchema\(\_ fiber.Ctx, \_ any, \_ string, \_ \*string\) \(\*irminmodels.ObjectSchema, error\)](<#NotSupportedSchemaProvider.GetSchema>)
   - [func \(p \*NotSupportedSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#NotSupportedSchemaProvider.GetSupportedOperationTypes>)
   - [func \(p \*NotSupportedSchemaProvider\) InitializeClient\(\_ fiber.Ctx, \_ \*slog.Logger, \_ \*db.Operation\) \(any, \*string, func\(\), error\)](<#NotSupportedSchemaProvider.InitializeClient>)
+- [type OAuthConnector](<#OAuthConnector>)
+  - [func NewOAuthConnector\(app \*models.ConnectorsApp, cfg \*irminmodels.ConnectionOAuthConfig\) \*OAuthConnector](<#NewOAuthConnector>)
+  - [func \(o \*OAuthConnector\) ForceRefreshAccessToken\(c fiber.Ctx\) \(\*lib.VendorAccessToken, error\)](<#OAuthConnector.ForceRefreshAccessToken>)
+  - [func \(o \*OAuthConnector\) InjectInfoOAuthConfig\(info \*models.ConnectorDetails\)](<#OAuthConnector.InjectInfoOAuthConfig>)
+  - [func \(o \*OAuthConnector\) ResolveAccessToken\(c fiber.Ctx\) \(\*lib.VendorAccessToken, error\)](<#OAuthConnector.ResolveAccessToken>)
+  - [func \(o \*OAuthConnector\) ResolveOrWriteError\(c fiber.Ctx\) \(\*lib.VendorAccessToken, bool\)](<#OAuthConnector.ResolveOrWriteError>)
+  - [func \(o \*OAuthConnector\) WriteResolveError\(c fiber.Ctx, err error\) error](<#OAuthConnector.WriteResolveError>)
+- [type OAuthRoundTripper](<#OAuthRoundTripper>)
+  - [func NewOAuthRoundTripper\(base http.RoundTripper, o \*OAuthConnector, c fiber.Ctx\) \*OAuthRoundTripper](<#NewOAuthRoundTripper>)
+  - [func \(rt \*OAuthRoundTripper\) RoundTrip\(req \*http.Request\) \(\*http.Response, error\)](<#OAuthRoundTripper.RoundTrip>)
 - [type OperationCancelConfig](<#OperationCancelConfig>)
 - [type OperationInitProvider](<#OperationInitProvider>)
 - [type OperationLog](<#OperationLog>)
@@ -1775,6 +1808,16 @@ import "irmin-connectors/connectors/common"
 - [type Subscription](<#Subscription>)
 - [type UnsubscribeProvider](<#UnsubscribeProvider>)
 
+
+## Variables
+
+<a name="ErrOAuthNotConfigured"></a>ErrOAuthNotConfigured is returned by the resolver helpers when a static\-credential connector accidentally asks for a vendor token. It's never surfaced from a correctly\-wired connector; exists so the embed stays uniform without \`if o \!= nil \{ … \}\` dances at call sites.
+
+```go
+var ErrOAuthNotConfigured = errors.New(
+    "oauth: connector has no ConnectionOAuthConfig; cannot resolve vendor token",
+)
+```
 
 <a name="BuildDetailsFromFields"></a>
 ## func BuildDetailsFromFields
@@ -2100,6 +2143,15 @@ func ValidateSystemToken(c fiber.Ctx, app *models.ConnectorsApp, getConnectorInf
 
 ValidateSystemToken validates the system token for connector endpoints. It automatically gets connector info and sets context locals.
 
+<a name="WrapHTTPClient"></a>
+## func WrapHTTPClient
+
+```go
+func WrapHTTPClient(client *http.Client, o *OAuthConnector, c fiber.Ctx) *http.Client
+```
+
+WrapHTTPClient returns a new \*http.Client whose Transport is an OAuthRoundTripper around the input client's transport. Preserves the input client's Timeout, CheckRedirect, Jar — only the Transport is replaced. Pass nil to start from an empty client.
+
 <a name="ConfigFieldProvider"></a>
 ## type ConfigFieldProvider
 
@@ -2393,6 +2445,149 @@ func (p *NotSupportedSchemaProvider) InitializeClient(_ fiber.Ctx, _ *slog.Logge
 ```
 
 InitializeClient returns an error indicating schema operations are not supported.
+
+<a name="OAuthConnector"></a>
+## type OAuthConnector
+
+OAuthConnector holds the shared OAuth machinery a concrete connector composes into its controller. One instance per connector process; safe for concurrent use \(every method operates on the immutable Config \+ a stateless token client\).
+
+TokenClient may be nil when the connector doesn't use OAuth — in that case every helper short\-circuits to the equivalent no\-op, which means static\-credential connectors can embed \*OAuthConnector uniformly without conditional wiring in each call site.
+
+```go
+type OAuthConnector struct {
+    // Config is the vendor-side OAuth metadata this connector declares.
+    // When nil, the connector is static-credential and
+    // InjectInfoOAuthConfig leaves the /info response untouched.
+    Config *irminmodels.ConnectionOAuthConfig
+
+    // TokenClient fetches a fresh vendor token from Core on every
+    // outbound call. Populated from env (IRMIN_API_BASE_URL +
+    // IRMIN_API_TOKEN) during app bootstrap; shared across every
+    // connector that embeds this struct.
+    TokenClient *lib.OAuthTokenClient
+}
+```
+
+<a name="NewOAuthConnector"></a>
+### func NewOAuthConnector
+
+```go
+func NewOAuthConnector(app *models.ConnectorsApp, cfg *irminmodels.ConnectionOAuthConfig) *OAuthConnector
+```
+
+NewOAuthConnector wires an OAuthConnector from the connector app's environment. Pass the connector's declared ConnectionOAuthConfig to enable the Connect button on the /info response; pass nil for static\-credential connectors that still want the uniform embed \(the resolver methods then return ErrOAuthNotConfigured\).
+
+The caller retains ownership of the app — the OAuthConnector keeps only the token client \+ logger references it needs.
+
+<a name="OAuthConnector.ForceRefreshAccessToken"></a>
+### func \(\*OAuthConnector\) ForceRefreshAccessToken
+
+```go
+func (o *OAuthConnector) ForceRefreshAccessToken(c fiber.Ctx) (*lib.VendorAccessToken, error)
+```
+
+ForceRefreshAccessToken is the retry variant: it asks Core to rotate the stored token unconditionally. Callers use this after a vendor returns 401 on a token that was still within the local expiry window \(i.e., the user revoked Irmin at the vendor side mid\-flight\).
+
+<a name="OAuthConnector.InjectInfoOAuthConfig"></a>
+### func \(\*OAuthConnector\) InjectInfoOAuthConfig
+
+```go
+func (o *OAuthConnector) InjectInfoOAuthConfig(info *models.ConnectorDetails)
+```
+
+InjectInfoOAuthConfig stamps this connector's ConnectionOAuthConfig onto the provided /info response. No\-op when the connector declared no OAuth config — callers pass their regular ConnectorDetails through this method uniformly regardless of OAuth status.
+
+<a name="OAuthConnector.ResolveAccessToken"></a>
+### func \(\*OAuthConnector\) ResolveAccessToken
+
+```go
+func (o *OAuthConnector) ResolveAccessToken(c fiber.Ctx) (*lib.VendorAccessToken, error)
+```
+
+ResolveAccessToken returns a currently\-valid vendor access token for the Connection identified by the inbound request's X\-Irmin\-Connection\-Id header. Safe to call on every outbound vendor request; Core's fast path is a single HTTPS round\-trip with no vendor I/O when the stored token isn't near expiry.
+
+The returned \*VendorAccessToken has an AuthorizationHeader\(\) helper that callers stamp straight onto vendor requests. Sentinel errors are translated to HTTP status codes by the companion WriteResolveError.
+
+<a name="OAuthConnector.ResolveOrWriteError"></a>
+### func \(\*OAuthConnector\) ResolveOrWriteError
+
+```go
+func (o *OAuthConnector) ResolveOrWriteError(c fiber.Ctx) (*lib.VendorAccessToken, bool)
+```
+
+ResolveOrWriteError is a convenience for the common "one\-shot" call pattern: resolve the token, or write the error and stop. Returns \(token, true\) on success, \(nil, false\) when the error response has already been written. Lets concrete controllers keep the happy\-path branch short:
+
+```
+tok, ok := o.ResolveOrWriteError(c)
+if !ok {
+    return nil
+}
+// ... make vendor call with tok.AuthorizationHeader()
+```
+
+<a name="OAuthConnector.WriteResolveError"></a>
+### func \(\*OAuthConnector\) WriteResolveError
+
+```go
+func (o *OAuthConnector) WriteResolveError(c fiber.Ctx, err error) error
+```
+
+WriteResolveError maps a resolver error onto the appropriate HTTP response. Centralized so every connector surfaces identical status codes for the same failure modes — the console relies on 428 as the "render Reconnect CTA" signal, for instance.
+
+Status mapping:
+
+- ErrNotConnected → 428 Precondition Required \(reconnect needed\)
+- ErrRefreshRejected → 428 Precondition Required \(reconnect needed\)
+- ErrMissingConnectionHeader → 400 Bad Request
+- ErrOAuthNotConfigured → 500 Internal Server Error \(wiring bug\)
+- ErrCoreUnavailable → 502 Bad Gateway \(transient\)
+- anything else → 500 Internal Server Error
+
+<a name="OAuthRoundTripper"></a>
+## type OAuthRoundTripper
+
+OAuthRoundTripper is the outbound middleware that stamps a vendor access token on every request and retries once on 401 with a forced refresh. Wrap the connector's existing http.Client transport with this once at construction, then let vendor\-specific code drive the client normally.
+
+The Fiber request context is captured at construction so we can propagate cancellations and deadlines into Core's token fetch — the inbound operation has a bounded lifetime, and a refresh shouldn't outlive it.
+
+```go
+type OAuthRoundTripper struct {
+    // Base is the transport we wrap; usually http.DefaultTransport or a
+    // vendor's pre-configured transport. Must not be nil.
+    Base http.RoundTripper
+
+    // OAuth is the embeddable base this round-tripper reads the
+    // connection ID and token from. A nil/empty OAuth short-circuits
+    // every call to ErrOAuthNotConfigured — static-credential
+    // connectors wouldn't install this transport in the first place.
+    OAuth *OAuthConnector
+
+    // Ctx is the inbound Fiber context. Captured once so every outbound
+    // request (including retries) reads the same X-Irmin-Connection-Id
+    // header and uses the operation's context deadline.
+    Ctx fiber.Ctx
+}
+```
+
+<a name="NewOAuthRoundTripper"></a>
+### func NewOAuthRoundTripper
+
+```go
+func NewOAuthRoundTripper(base http.RoundTripper, o *OAuthConnector, c fiber.Ctx) *OAuthRoundTripper
+```
+
+NewOAuthRoundTripper constructs a RoundTripper wired to the given Fiber request. Base defaults to http.DefaultTransport when nil.
+
+<a name="OAuthRoundTripper.RoundTrip"></a>
+### func \(\*OAuthRoundTripper\) RoundTrip
+
+```go
+func (rt *OAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
+```
+
+RoundTrip stamps the Authorization header and, on a 401 response, retries once after forcing Core to rotate the stored token.
+
+The retry needs a re\-readable request body. We buffer the body once at entry so the second attempt can replay it; connectors typically send small JSON payloads to vendor APIs so the memory cost is negligible. If the body is too large for that tradeoff, the caller should set req.GetBody themselves and we'll honor it.
 
 <a name="OperationCancelConfig"></a>
 ## type OperationCancelConfig
@@ -3978,6 +4173,183 @@ func TestSubscribe(ctx context.Context, client *helpers.ConnectorClient, webhook
 
 TestSubscribe tests the subscription capability of a connector.
 
+# commontest
+
+```go
+import "irmin-connectors/connectors/common/commontest"
+```
+
+Package commontest hosts test fixtures for the OAuth connector base. It lives in its own subpackage so production code in connectors/common never imports test servers, and so concrete connectors \(Stripe, Linear, Google Drive when they land\) can reuse the same fixtures without copy\-paste.
+
+The two servers below simulate the smallest possible slice of Core \+ vendor behavior an OAuth\-backed connector needs to be exercised end\-to\-end:
+
+- FakeCore serves Core's POST /api/v1/system/oauth/access\-token endpoint, including the Phase 3 force\_refresh flag. It rotates its "stored" token when forced so tests can assert the retry actually reached Core.
+- FakeVendor serves an arbitrary vendor API endpoint with configurable per\-request behavior — most usefully, "reject the first request with 401, then accept the second after the caller force\-refreshed."
+
+Together they let a test drive the OAuthRoundTripper through the retry loop without a single mock; every I/O path hits a real httptest server.
+
+## Index
+
+- [func ReadBody\(t \*testing.T, resp \*http.Response\) string](<#ReadBody>)
+- [type FakeCore](<#FakeCore>)
+  - [func NewFakeCore\(t \*testing.T, systemToken string, tokenSequence ...string\) \*FakeCore](<#NewFakeCore>)
+  - [func \(fc \*FakeCore\) BaseURL\(\) string](<#FakeCore.BaseURL>)
+  - [func \(fc \*FakeCore\) ForceCalls\(\) int](<#FakeCore.ForceCalls>)
+  - [func \(fc \*FakeCore\) LastServedToken\(\) string](<#FakeCore.LastServedToken>)
+  - [func \(fc \*FakeCore\) LazyCalls\(\) int](<#FakeCore.LazyCalls>)
+- [type FakeVendor](<#FakeVendor>)
+  - [func NewFakeVendor\(t \*testing.T\) \*FakeVendor](<#NewFakeVendor>)
+  - [func \(fv \*FakeVendor\) AlwaysReject\(\)](<#FakeVendor.AlwaysReject>)
+  - [func \(fv \*FakeVendor\) AuthHeaders\(\) \[\]string](<#FakeVendor.AuthHeaders>)
+  - [func \(fv \*FakeVendor\) RejectOnceThenAccept\(successBody string\)](<#FakeVendor.RejectOnceThenAccept>)
+  - [func \(fv \*FakeVendor\) SetHandler\(h http.HandlerFunc\)](<#FakeVendor.SetHandler>)
+  - [func \(fv \*FakeVendor\) URL\(\) string](<#FakeVendor.URL>)
+
+
+<a name="ReadBody"></a>
+## func ReadBody
+
+```go
+func ReadBody(t *testing.T, resp *http.Response) string
+```
+
+ReadBody returns the response body as a string. Wraps the usual io.ReadAll \+ Close dance tests otherwise repeat a dozen times.
+
+<a name="FakeCore"></a>
+## type FakeCore
+
+FakeCore is an in\-process stand\-in for Irmin Core's internal access\-token endpoint. The zero value is not useful; call NewFakeCore.
+
+The server honors the force\_refresh flag: when true, it swaps its "stored" token for the next pre\-seeded value. Tests use this to assert the retry path actually forced Core to rotate rather than silently replaying the lazy\-cached token.
+
+```go
+type FakeCore struct {
+    // Server is the underlying httptest.Server. Callers read its URL
+    // to configure an OAuthTokenClient.
+    Server *httptest.Server
+
+    // SystemToken is the Bearer token the server expects in the
+    // Authorization header. Requests missing or mismatching it get 401.
+    SystemToken string
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewFakeCore"></a>
+### func NewFakeCore
+
+```go
+func NewFakeCore(t *testing.T, systemToken string, tokenSequence ...string) *FakeCore
+```
+
+NewFakeCore starts an httptest server pre\-seeded with the given sequence of access\-token values. The first is returned on lazy fetches; each force\_refresh:true call advances to the next one.
+
+systemToken is the Bearer credential the server will check for on inbound requests; supply the same value to NewOAuthTokenClient so the signing round\-trips match.
+
+<a name="FakeCore.BaseURL"></a>
+### func \(\*FakeCore\) BaseURL
+
+```go
+func (fc *FakeCore) BaseURL() string
+```
+
+BaseURL returns the server's root URL for passing into NewOAuthTokenClient.
+
+<a name="FakeCore.ForceCalls"></a>
+### func \(\*FakeCore\) ForceCalls
+
+```go
+func (fc *FakeCore) ForceCalls() int
+```
+
+ForceCalls returns the number of force\_refresh:true fetches served.
+
+<a name="FakeCore.LastServedToken"></a>
+### func \(\*FakeCore\) LastServedToken
+
+```go
+func (fc *FakeCore) LastServedToken() string
+```
+
+LastServedToken returns the value of the most recent access\_token the server handed out. Handy for assertions that verify the round\-tripper actually stamped the right header.
+
+<a name="FakeCore.LazyCalls"></a>
+### func \(\*FakeCore\) LazyCalls
+
+```go
+func (fc *FakeCore) LazyCalls() int
+```
+
+LazyCalls returns the number of non\-force access\-token fetches served.
+
+<a name="FakeVendor"></a>
+## type FakeVendor
+
+FakeVendor is an in\-process stand\-in for a vendor API. The behavior per request is caller\-configurable via SetHandler; the default handler rejects everything until explicitly wired.
+
+The server keeps a running count of the Authorization headers it saw, so tests can assert both "did the first call carry access\-1" and "did the retry carry access\-2 \(the force\-refreshed value\)."
+
+```go
+type FakeVendor struct {
+    Server *httptest.Server
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewFakeVendor"></a>
+### func NewFakeVendor
+
+```go
+func NewFakeVendor(t *testing.T) *FakeVendor
+```
+
+NewFakeVendor starts an httptest server with a no\-op default handler. Call SetHandler to install the behavior a given test wants.
+
+<a name="FakeVendor.AlwaysReject"></a>
+### func \(\*FakeVendor\) AlwaysReject
+
+```go
+func (fv *FakeVendor) AlwaysReject()
+```
+
+AlwaysReject installs a handler that returns 401 unconditionally. Mirrors the "user revoked the app at the vendor" terminal state — the retry loop hits it, force\-refreshes, retries, and still gets 401; the connector should then surface the failure.
+
+<a name="FakeVendor.AuthHeaders"></a>
+### func \(\*FakeVendor\) AuthHeaders
+
+```go
+func (fv *FakeVendor) AuthHeaders() []string
+```
+
+AuthHeaders returns a snapshot of the Authorization header values every inbound request carried, in arrival order. Callers assert on this to prove the round\-tripper stamped the right token on each attempt \(first = cached, second = force\-refreshed\).
+
+<a name="FakeVendor.RejectOnceThenAccept"></a>
+### func \(\*FakeVendor\) RejectOnceThenAccept
+
+```go
+func (fv *FakeVendor) RejectOnceThenAccept(successBody string)
+```
+
+RejectOnceThenAccept installs a handler that 401s the first request and 200s every subsequent one. The canonical "vendor revoked the token mid\-flight" scenario the retry loop exists to handle.
+
+<a name="FakeVendor.SetHandler"></a>
+### func \(\*FakeVendor\) SetHandler
+
+```go
+func (fv *FakeVendor) SetHandler(h http.HandlerFunc)
+```
+
+SetHandler replaces the active request handler atomically. Safe to call mid\-test to flip behavior between scenarios \(e.g., first run returns 401, next run returns 200\).
+
+<a name="FakeVendor.URL"></a>
+### func \(\*FakeVendor\) URL
+
+```go
+func (fv *FakeVendor) URL() string
+```
+
+URL returns the vendor's root URL. Tests use this as the base for any vendor\-bound request they drive through the round\-tripper.
+
 # client
 
 ```go
@@ -4803,9 +5175,12 @@ import "irmin-connectors/connectors/http/controllers"
 
 Controllers holds the dependencies for the HTTP connector controllers.
 
+OAuthConnector is embedded even though HTTP is a static\-credential connector. The base no\-ops cleanly when Config is nil \(Info stamping skips, resolver returns ErrOAuthNotConfigured\), which keeps the embed uniform across the connector family. This is the "prove the base handles the non\-OAuth case" step from Phase 3: HTTP reuses the shared scaffolding without adopting OAuth itself.
+
 ```go
 type Controllers struct {
     *common.Controllers
+    *common.OAuthConnector
 }
 ```
 

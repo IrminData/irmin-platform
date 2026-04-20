@@ -4,6 +4,36 @@
 <pre>
 package common // import "irmin-connectors/connectors/common"
 
+Package common hosts the shared pieces every connector composes into its own
+controller. oauth_base.go introduces OAuthConnector — an embeddable struct that
+handles the grunt work of authenticating a connector request against Core's
+OAuth system:
+
+  - Reads X-Irmin-Connection-Id from the inbound Fiber request.
+  - Calls lib.OAuthTokenClient.FetchVendorAccessToken (and the force variant on
+    retry) so the vendor always sees a currently-valid bearer token.
+  - Maps the package sentinel errors from lib onto HTTP status codes Core knows
+    how to surface in the console ("reconnect required" → 428, Core unreachable
+    → 502, bad inbound header → 400).
+  - Stamps the connector's declared ConnectionOAuthConfig onto the /info
+    response so the console can render the Connect button for OAuth-backed
+    connectors without a separate metadata call.
+
+Concrete connectors compose *OAuthConnector into their Controllers struct.
+Static-credential connectors (HTTP, Postgres, etc.) can embed it too — the
+helpers no-op cleanly when ConnectionOAuthConfig is nil, which keeps the embed
+uniform across the connector family.
+
+VARIABLES
+
+var ErrOAuthNotConfigured = errors.New(
+	"oauth: connector has no ConnectionOAuthConfig; cannot resolve vendor token",
+)
+    ErrOAuthNotConfigured is returned by the resolver helpers when a
+    static-credential connector accidentally asks for a vendor token. It's never
+    surfaced from a correctly-wired connector; exists so the embed stays uniform
+    without `if o != nil { … }` dances at call sites.
+
 
 FUNCTIONS
 
@@ -225,6 +255,16 @@ func ValidateSystemToken(
     ValidateSystemToken validates the system token for connector endpoints.
     It automatically gets connector info and sets context locals.
 
+func WrapHTTPClient(
+	client *http.Client,
+	o *OAuthConnector,
+	c fiber.Ctx,
+) *http.Client
+    WrapHTTPClient returns a new *http.Client whose Transport is an
+    OAuthRoundTripper around the input client's transport. Preserves the input
+    client's Timeout, CheckRedirect, Jar — only the Transport is replaced.
+    Pass nil to start from an empty client.
+
 
 TYPES
 
@@ -424,6 +464,133 @@ func (p *NotSupportedSchemaProvider) InitializeClient(
 ) (any, *string, func(), error)
     InitializeClient returns an error indicating schema operations are not
     supported.
+
+type OAuthConnector struct {
+	// Config is the vendor-side OAuth metadata this connector declares.
+	// When nil, the connector is static-credential and
+	// InjectInfoOAuthConfig leaves the /info response untouched.
+	Config *irminmodels.ConnectionOAuthConfig
+
+	// TokenClient fetches a fresh vendor token from Core on every
+	// outbound call. Populated from env (IRMIN_API_BASE_URL +
+	// IRMIN_API_TOKEN) during app bootstrap; shared across every
+	// connector that embeds this struct.
+	TokenClient *lib.OAuthTokenClient
+}
+    OAuthConnector holds the shared OAuth machinery a concrete connector
+    composes into its controller. One instance per connector process; safe for
+    concurrent use (every method operates on the immutable Config + a stateless
+    token client).
+
+    TokenClient may be nil when the connector doesn't use OAuth — in that
+    case every helper short-circuits to the equivalent no-op, which means
+    static-credential connectors can embed *OAuthConnector uniformly without
+    conditional wiring in each call site.
+
+func NewOAuthConnector(
+	app *models.ConnectorsApp,
+	cfg *irminmodels.ConnectionOAuthConfig,
+) *OAuthConnector
+    NewOAuthConnector wires an OAuthConnector from the connector app's
+    environment. Pass the connector's declared ConnectionOAuthConfig to enable
+    the Connect button on the /info response; pass nil for static-credential
+    connectors that still want the uniform embed (the resolver methods then
+    return ErrOAuthNotConfigured).
+
+    The caller retains ownership of the app — the OAuthConnector keeps only the
+    token client + logger references it needs.
+
+func (o *OAuthConnector) ForceRefreshAccessToken(c fiber.Ctx) (*lib.VendorAccessToken, error)
+    ForceRefreshAccessToken is the retry variant: it asks Core to rotate the
+    stored token unconditionally. Callers use this after a vendor returns 401
+    on a token that was still within the local expiry window (i.e., the user
+    revoked Irmin at the vendor side mid-flight).
+
+func (o *OAuthConnector) InjectInfoOAuthConfig(info *models.ConnectorDetails)
+    InjectInfoOAuthConfig stamps this connector's ConnectionOAuthConfig onto the
+    provided /info response. No-op when the connector declared no OAuth config
+    — callers pass their regular ConnectorDetails through this method uniformly
+    regardless of OAuth status.
+
+func (o *OAuthConnector) ResolveAccessToken(c fiber.Ctx) (*lib.VendorAccessToken, error)
+    ResolveAccessToken returns a currently-valid vendor access token for the
+    Connection identified by the inbound request's X-Irmin-Connection-Id header.
+    Safe to call on every outbound vendor request; Core's fast path is a single
+    HTTPS round-trip with no vendor I/O when the stored token isn't near expiry.
+
+    The returned *VendorAccessToken has an AuthorizationHeader() helper that
+    callers stamp straight onto vendor requests. Sentinel errors are translated
+    to HTTP status codes by the companion WriteResolveError.
+
+func (o *OAuthConnector) ResolveOrWriteError(c fiber.Ctx) (*lib.VendorAccessToken, bool)
+    ResolveOrWriteError is a convenience for the common "one-shot" call pattern:
+    resolve the token, or write the error and stop. Returns (token, true) on
+    success, (nil, false) when the error response has already been written.
+    Lets concrete controllers keep the happy-path branch short:
+
+        tok, ok := o.ResolveOrWriteError(c)
+        if !ok {
+            return nil
+        }
+        // ... make vendor call with tok.AuthorizationHeader()
+
+func (o *OAuthConnector) WriteResolveError(c fiber.Ctx, err error) error
+    WriteResolveError maps a resolver error onto the appropriate HTTP response.
+    Centralized so every connector surfaces identical status codes for the same
+    failure modes — the console relies on 428 as the "render Reconnect CTA"
+    signal, for instance.
+
+    Status mapping:
+
+      - ErrNotConnected → 428 Precondition Required (reconnect needed)
+      - ErrRefreshRejected → 428 Precondition Required (reconnect needed)
+      - ErrMissingConnectionHeader → 400 Bad Request
+      - ErrOAuthNotConfigured → 500 Internal Server Error (wiring bug)
+      - ErrCoreUnavailable → 502 Bad Gateway (transient)
+      - anything else → 500 Internal Server Error
+
+type OAuthRoundTripper struct {
+	// Base is the transport we wrap; usually http.DefaultTransport or a
+	// vendor's pre-configured transport. Must not be nil.
+	Base http.RoundTripper
+
+	// OAuth is the embeddable base this round-tripper reads the
+	// connection ID and token from. A nil/empty OAuth short-circuits
+	// every call to ErrOAuthNotConfigured — static-credential
+	// connectors wouldn't install this transport in the first place.
+	OAuth *OAuthConnector
+
+	// Ctx is the inbound Fiber context. Captured once so every outbound
+	// request (including retries) reads the same X-Irmin-Connection-Id
+	// header and uses the operation's context deadline.
+	Ctx fiber.Ctx
+}
+    OAuthRoundTripper is the outbound middleware that stamps a vendor access
+    token on every request and retries once on 401 with a forced refresh.
+    Wrap the connector's existing http.Client transport with this once at
+    construction, then let vendor-specific code drive the client normally.
+
+    The Fiber request context is captured at construction so we can propagate
+    cancellations and deadlines into Core's token fetch — the inbound operation
+    has a bounded lifetime, and a refresh shouldn't outlive it.
+
+func NewOAuthRoundTripper(
+	base http.RoundTripper,
+	o *OAuthConnector,
+	c fiber.Ctx,
+) *OAuthRoundTripper
+    NewOAuthRoundTripper constructs a RoundTripper wired to the given Fiber
+    request. Base defaults to http.DefaultTransport when nil.
+
+func (rt *OAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
+    RoundTrip stamps the Authorization header and, on a 401 response, retries
+    once after forcing Core to rotate the stored token.
+
+    The retry needs a re-readable request body. We buffer the body once at entry
+    so the second attempt can replay it; connectors typically send small JSON
+    payloads to vendor APIs so the memory cost is negligible. If the body is too
+    large for that tradeoff, the caller should set req.GetBody themselves and
+    we'll honor it.
 
 type OperationCancelConfig struct {
 	App              *models.ConnectorsApp

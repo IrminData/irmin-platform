@@ -109,6 +109,72 @@ func TestFetchVendorAccessTokenRejectsZeroID(t *testing.T) {
 	}
 }
 
+func TestForceRefreshVendorAccessTokenSendsFlag(t *testing.T) {
+	// Connectors retry on 401 by calling the force variant; on the wire,
+	// that must reach Core as force_refresh:true so Core bypasses the
+	// skew-window short-circuit and actually rotates the token.
+	//
+	// Also asserts the Authorization header carries the connector's
+	// system token. Core's AuthMiddleware compares this value to its
+	// own SystemToken env var to gate every /system/* endpoint; if the
+	// force variant ever stopped stamping it, Core would 403 and the
+	// retry loop would silently degrade to "no recovery from vendor
+	// revocation."
+	var (
+		seenBody string
+		seenAuth string
+	)
+	base, httpClient := newFakeCore(t, func(w http.ResponseWriter, r *http.Request) {
+		seenAuth = r.Header.Get("Authorization")
+		b, _ := io.ReadAll(r.Body)
+		seenBody = string(b)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"data":{"access_token":"rotated","token_type":"Bearer"}}`)
+	})
+	client := NewOAuthTokenClient(base, "sys")
+	client.HTTPClient = httpClient
+
+	tok, err := client.ForceRefreshVendorAccessToken(context.Background(), 99)
+	if err != nil {
+		t.Fatalf("ForceRefreshVendorAccessToken: %v", err)
+	}
+	if tok.Value != "rotated" {
+		t.Fatalf("token = %q, want rotated", tok.Value)
+	}
+	if seenAuth != "Bearer sys" {
+		t.Fatalf("Authorization header = %q, want Bearer sys", seenAuth)
+	}
+	if !strings.Contains(seenBody, `"force_refresh":true`) {
+		t.Fatalf("body missing force_refresh flag: %q", seenBody)
+	}
+	if !strings.Contains(seenBody, `"connection_id":99`) {
+		t.Fatalf("body missing connection_id: %q", seenBody)
+	}
+}
+
+func TestFetchVendorAccessTokenOmitsForceRefreshOnHappyPath(t *testing.T) {
+	// The stock path must NOT send force_refresh — Core's struct uses
+	// omitempty, so the absence of the field is how "no force" is
+	// expressed on the wire. Belt-and-braces for anyone who later
+	// refactors fetchAccessToken's payload building.
+	var seenBody string
+	base, httpClient := newFakeCore(t, func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		seenBody = string(b)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"data":{"access_token":"a","token_type":"Bearer"}}`)
+	})
+	client := NewOAuthTokenClient(base, "sys")
+	client.HTTPClient = httpClient
+
+	if _, err := client.FetchVendorAccessToken(context.Background(), 1); err != nil {
+		t.Fatalf("FetchVendorAccessToken: %v", err)
+	}
+	if strings.Contains(seenBody, "force_refresh") {
+		t.Fatalf("lazy path sent force_refresh; body = %q", seenBody)
+	}
+}
+
 func TestFetchVendorAccessTokenRejectsEmptyConfig(t *testing.T) {
 	client := &OAuthTokenClient{} // no base URL, no token
 	_, err := client.FetchVendorAccessToken(context.Background(), 1)

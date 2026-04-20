@@ -21,9 +21,17 @@
 //  2. The connector calls Core at
 //     POST {IRMIN_API_BASE_URL}/api/v1/system/oauth/access-token
 //     with Authorization: Bearer {IRMIN_API_TOKEN} and the JSON body
-//     {"connection_id": <uint>}.
+//     {"connection_id": <uint>, "force_refresh": <bool>}.
 //  3. Core responds 200 with {"data": {"access_token": "...",
 //     "token_type": "...", "expires_at": "...", "scope": "..."}}.
+//
+// Cross-service auth: Core gates the endpoint behind a system-token
+// check (AuthMiddleware in irmin/middlewares/auth.go +
+// validateSystemToken in services/auth.go). For the connector to be
+// authorised, IRMIN_API_TOKEN here must be byte-equal to Core's TOKEN
+// env var. This is the same contract the Phase 2 lazy fetch already
+// relies on; the force_refresh variant added in Phase 3 shares the
+// gate and adds no new auth surface.
 //
 // Failure modes are translated to sentinel errors so callers can surface
 // the right UX:
@@ -174,6 +182,31 @@ func (c *OAuthTokenClient) FetchVendorAccessToken(
 	ctx context.Context,
 	connectionID uint,
 ) (*VendorAccessToken, error) {
+	return c.fetchAccessToken(ctx, connectionID, false /* forceRefresh */)
+}
+
+// ForceRefreshVendorAccessToken asks Core to rotate the stored token
+// unconditionally and return the freshly-issued access token. Callers
+// use this on retry after the vendor rejected a previously-cached token
+// mid-operation (401 on a token that hadn't yet entered the local
+// expiry skew window). Uses the same sentinel errors as
+// FetchVendorAccessToken.
+func (c *OAuthTokenClient) ForceRefreshVendorAccessToken(
+	ctx context.Context,
+	connectionID uint,
+) (*VendorAccessToken, error) {
+	return c.fetchAccessToken(ctx, connectionID, true /* forceRefresh */)
+}
+
+// fetchAccessToken is the shared transport for both the lazy and forced
+// variants. force_refresh is only set on the wire when true so the
+// stock "give me a token" request stays byte-identical to what it was
+// before the Phase 3 change (Core's struct uses omitempty).
+func (c *OAuthTokenClient) fetchAccessToken(
+	ctx context.Context,
+	connectionID uint,
+	forceRefresh bool,
+) (*VendorAccessToken, error) {
 	if connectionID == 0 {
 		return nil, ErrMissingConnectionHeader
 	}
@@ -181,7 +214,11 @@ func (c *OAuthTokenClient) FetchVendorAccessToken(
 		return nil, fmt.Errorf("%w: client not configured", ErrCoreUnavailable)
 	}
 
-	body, marshalErr := json.Marshal(map[string]uint{"connection_id": connectionID})
+	payload := map[string]any{"connection_id": connectionID}
+	if forceRefresh {
+		payload["force_refresh"] = true
+	}
+	body, marshalErr := json.Marshal(payload)
 	if marshalErr != nil {
 		return nil, fmt.Errorf("oauth: marshal request: %w", marshalErr)
 	}
