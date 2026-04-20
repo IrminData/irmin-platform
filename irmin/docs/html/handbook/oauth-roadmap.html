@@ -34,9 +34,9 @@ the transient project plan.
 | Phase | What | Status |
 |---|---|---|
 | 1 | Encryption foundation — keyring, backfill migration, encrypted-JSON serializer | ✅ Shipped (#416, #417) |
-| 2 | OAuth flow — endpoints, DCR, tokens, sessions, JIT access-token endpoint | ✅ Shipped (this branch) |
-| 3 | Shared OAuth base in `irmin-connectors` | 🚧 Next |
-| 4 | Stripe connector (pull · push · patch) | ⏳ Planned |
+| 2 | OAuth flow — endpoints, DCR, tokens, sessions, JIT access-token endpoint | ✅ Shipped (#418) |
+| 3 | Shared OAuth base in `irmin-connectors` | ✅ Shipped (irmin#424, irmin-connectors#161) |
+| 4 | Stripe connector (pull · push · patch) | 🚧 Next |
 | 5 | Linear + Google Drive connectors | ⏳ Planned |
 | 6 | Console OAuth UI | ⏳ Planned |
 | 7 | User-facing walkthroughs with screenshots + launch | ⏳ Planned |
@@ -140,62 +140,64 @@ Shipped on this branch. Surface area:
   attaches it as `Connection-OAuth-Access-Token` on downstream
   requests; retries once on 401 after triggering a refresh.
 
-## Phase 3 — Shared OAuth base in `irmin-connectors`
+## Phase 3 — Shared OAuth base in `irmin-connectors` ✅
 
-Motivation: an OAuth-backed connector should declare the minimum —
-auth URLs, scopes, write-path mapping — and inherit everything else
-(token fetch, refresh triggering, 401 retry, schema discovery glue)
-from a shared base. This keeps per-connector code small enough that
-adding the tenth OAuth connector isn't ten times the work of adding
-the first.
+Shipped in [irmin#424](https://github.com/IrminData/irmin/pull/424)
+(Core side) and
+[irmin-connectors#161](https://github.com/IrminData/irmin-connectors/pull/161)
+(connectors side). No SDK tag was needed — `ConnectionOAuthConfig`
+landed earlier and the wire shape stays compatible (`force_refresh`
+uses `omitempty`).
 
-**Deliverables**
+The motivating constraint held: the fake-vendor connector that
+exercises the generic OAuth integration suite is **99 LOC** of
+vendor-specific code (acceptance criterion #5).
 
-- `irmin-sdk-go`: add `ConnectionOAuthConfig` to the connector `Info`
-  response. Fields: `Provider`, `AuthorizationURL`, `TokenURL`,
-  `RevocationURL` (optional), `DCREndpoint` (optional, RFC 7591),
-  `Scopes`, `PKCE` (required true), `ExtraParams` (e.g.,
-  `access_type=offline`). Ship as a tagged SDK release; Core + the
-  connectors service pin to it.
-- `irmin-connectors/connectors/common/oauth_base.go` — abstract base
-  that wires up:
-  - Fetching access tokens from Core's internal endpoint on every
-    outbound call.
-  - Retry-on-401 with a forced refresh.
-  - Surfacing `ConnectionOAuthConfig` through the connector `Info`
-    response so the console knows to render a Connect button.
-- `irmin-connectors/connectors/common/oauth_client.go` — the HTTP
-  middleware itself; shared by every OAuth connector.
-- `irmin-connectors/connectors/common/oauth_test_fixture.go` — an
-  in-process `httptest.Server` that speaks enough of OAuth +
-  DCR + token refresh to drive per-connector integration tests.
-- Per-connector boilerplate: a `NewOAuthConnector` constructor that
-  takes vendor specifics (base URL, path-to-endpoint mapping,
-  schema discovery hook) and returns a ready connector.
+**Core side** (`irmin#424`)
 
-**Acceptance criteria**
+- `controllers/oauth.go::SystemOAuthAccessToken` accepts an optional
+  `force_refresh: true` flag. When set, Core bypasses the local
+  skew-window short-circuit and rotates the token unconditionally.
+  The same `is_system` gate guards both variants — no parallel auth
+  surface. Cross-service contract: `IRMIN_API_TOKEN` (connectors)
+  must equal `TOKEN` (Core); covered by
+  `TestSystemOAuthAccessTokenAuthGate`.
+- `services/oauth/token.go::ForceRefreshAccessToken` reuses the
+  existing `RefreshToken` row-locking + upsert via a private
+  `refreshToken(force bool)` helper. Extracted
+  `loadLockedTokenRow` and `performRefresh` so cognitive complexity
+  stays inside `gocognit`.
+- Successful forced refreshes emit an
+  `oauth.refreshed (forced) for connection N` audit event with
+  `WorkspaceID` populated (looked up via `GetConnectionByID`) so it
+  surfaces in the console's workspace-scoped log queries. Lazy
+  refreshes stay silent — they fire on every expiring call.
 
-- `connectors/common/` exposes an embeddable `OAuthConnector` base
-  that concrete connectors compose into their own controller. Works
-  equally well for static-client and DCR vendors.
-- The base handles: operation init/status/cancel lifecycle, the
-  `X-Irmin-Connection-Id` read, `lib.OAuthTokenClient` calls,
-  sentinel-to-HTTP mapping, audit hooks.
-- At least one existing static-credential connector (propose: HTTP,
-  the simplest) migrates to the base as a proof — no behavior
-  change, just fewer lines of glue.
-- The base is covered by unit tests with a mock vendor + in-process
-  mock of Core's `/system/oauth/access-token` endpoint.
-- A fake vendor connector, written against the base in under ~100
-  LOC of vendor-specific code, passes the generic OAuth integration
-  test suite.
+**Connectors side** (`irmin-connectors#161`)
 
-**Out of scope.** Migrating Postgres / MySQL / SFTP to the new base.
-They keep working on the legacy path; opportunistic migration in
-later PRs.
+- `lib/oauth_token_client.go::ForceRefreshVendorAccessToken` sends
+  the `force_refresh:true` payload. The lazy variant stays
+  byte-identical on the wire.
+- `connectors/common/oauth_base.go` — embeddable `OAuthConnector`.
+  Handles `X-Irmin-Connection-Id` read, token resolution,
+  sentinel-to-HTTP mapping (`ErrNotConnected` /
+  `ErrRefreshRejected` → 428 to signal "render the Reconnect CTA",
+  `ErrCoreUnavailable` → 502, `ErrMissingConnectionHeader` → 400).
+- `connectors/common/oauth_client.go` —
+  `OAuthRoundTripper` + `WrapHTTPClient`. Stamps `Authorization`
+  on every outbound request, retries once on vendor 401 after
+  forcing Core to rotate. Honors `req.GetBody` for streaming-safe
+  retries; falls back to a buffered body otherwise.
+- `connectors/common/commontest/` — reusable `FakeCore` and
+  `FakeVendor` httptest fixtures in their own subpackage so test
+  servers never enter production binaries.
+- HTTP connector embeds `*common.OAuthConnector` with `Config: nil`
+  as the static-credential proof — zero behavior change, just
+  validates the base no-ops cleanly when OAuth isn't configured.
 
-**Estimate.** ~500–800 LOC in `connectors/common/`, ~200 in the
-ported HTTP connector, plus tests. One focused PR.
+**Out of scope (deferred).** Migrating Postgres / MySQL / SFTP to the
+new base. They keep working on the legacy path; opportunistic
+migration in later PRs.
 
 ## Phase 4 — Stripe connector
 
