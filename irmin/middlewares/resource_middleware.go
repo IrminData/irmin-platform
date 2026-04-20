@@ -63,13 +63,22 @@ func resourceMiddleware[T any](
 		)
 	}
 
-	// Decode the resource ID.
+	// Decode the resource ID. A malformed or non-SQID value (e.g., a
+	// frontend-generated placeholder like `temp-connections-...` sent
+	// before the real record exists) is a client-side shape problem,
+	// not a server bug — map it to 404 (resource not found) instead
+	// of 500. The previous behavior treated every decode failure as
+	// an internal error, flooded Sentry with stack traces, and
+	// surfaced a scary 500 to the console when the right answer is
+	// "that resource doesn't exist".
 	resourceID, err := api.SQIDManager.Decode(resourceIDType, resourceSqid)
 	if err != nil {
 		return api.handleServiceError(
 			c,
-			fmt.Sprintf("Error decoding %s sqid", resourceIDType),
-			services.NewInternalErrorf("error decoding sqid: %v", err),
+			fmt.Sprintf("Invalid %s id %q: %v", resourceIDType, resourceSqid, err),
+			fmt.Errorf("invalid %s id %q: %w",
+				resourceIDType, resourceSqid, services.ErrNotFound,
+			),
 			dict,
 		)
 	}
