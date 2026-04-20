@@ -24,7 +24,7 @@ other connector in the catalogue fits one of these patterns.
 |---|---|---|---|
 | [Postgres](#postgres) | Database | Static credentials | pull · push · patch · subscribe |
 | [REST / HTTP](#rest--http) | Generic API | Bearer / basic / header | pull · push · patch |
-| [Stripe](#stripe) | SaaS | OAuth 2.0 | pull · push · patch (subscribe planned) |
+| [Stripe](#stripe) | SaaS | Restricted API key | pull · push · patch (subscribe planned) |
 | [Pinecone](#pinecone) | Vector store | API key | pull · push |
 | [Firecrawl](#firecrawl) | Web scraping | API key | pull (async) |
 
@@ -260,23 +260,18 @@ explicitly.
 ### Stripe
 
 Connect Irmin to a Stripe account to pull charges, subscriptions,
-invoices, customers, and payouts into a versioned repository. OAuth-
-backed — no passwords or API keys to paste.
-
-> **Note:**
-> The Stripe connector is on the OAuth roadmap as the first launch
-> connector. The flow and console UI described here are the intended
-> shape; until the Stripe connector and its associated Console UI
-> ship, this page documents the target experience. For the phased
-> implementation plan, see
-> [oauth-roadmap.md](../oauth-roadmap.md).
+invoices, customers, and payouts into a versioned repository, and to
+push or patch customers, invoices, products, and prices. Authenticated
+with a Stripe **restricted API key** — the merchant controls exactly
+which resources and scopes Irmin can touch, with no Stripe Connect
+platform setup on either side.
 
 #### Capabilities
 
 | Operation | Supported | What it does |
 |---|:-:|---|
-| Pull | ✅ | Export Stripe resources (charges, subscriptions, invoices, customers, payouts) as JSON / Parquet files into a LakeFS branch |
-| Push | ✅ | Create or replace Stripe objects by pushing a JSON file to the path of the target resource (e.g., `customers/cus_abc.json`, `invoices/new-invoice.json`) |
+| Pull | ✅ | Export Stripe resources (customers, charges, subscriptions, invoices, payouts) as JSON arrays into a LakeFS branch |
+| Push | ✅ | Create or update Stripe objects by pushing a JSON file to the path of the target resource (e.g., `customers/cus_abc.json`, `customers/new-alice.json`). Writable resources: customers, invoices, products, prices |
 | Patch | ✅ | Apply a JSON-Patch to an existing Stripe object — partial updates like "set this customer's email" or "add a metadata key to this invoice" |
 | Subscribe | Planned | Stripe webhooks for real-time events |
 
@@ -284,79 +279,77 @@ backed — no passwords or API keys to paste.
 
 - A Stripe account (live or test mode). For evaluation, Stripe's test
   mode gives you full functionality without real transactions.
-- You must be an **account owner** or have the **administrator** role
-  on the Stripe account to authorise third-party integrations.
+- Permission to create an API key on the Stripe account — owner or
+  developer role is enough.
+
+#### Why not OAuth?
+
+Stripe's OAuth (Stripe Connect) requires you to register a platform
+app per environment and doesn't support dynamic client registration
+(RFC 7591). That's a lot of ops setup for the same end result — a
+scoped credential — that a Stripe restricted API key already gives
+you. Future OAuth-backed connectors will ship for vendors that
+actually benefit from the flow (Linear, Intercom, Monday, Sentry).
 
 #### Setting up the connection
 
 From the connections page, click **New connection** and pick
 **Stripe** from the catalogue.
 
-**Connect with Stripe.** Unlike static-credential connectors, Stripe
-uses OAuth. Instead of a credentials form, you'll see a **Connect
-with Stripe** button.
+**Generate a restricted API key.**
 
-1. Click **Connect with Stripe**. A new window opens pointing at
-   `connect.stripe.com`.
-2. Sign in to your Stripe account (if you aren't already).
-3. Review the permissions Irmin is requesting — by default, **read
-   only**: Irmin can see charges, subscriptions, invoices, customers,
-   but cannot create, modify, or delete anything in your Stripe
-   account.
-4. Click **Connect my Stripe account** in the Stripe UI.
+1. Open the [Stripe API keys page](https://dashboard.stripe.com/apikeys).
+2. Click **Create restricted key**.
+3. Give the key a descriptive name (e.g., `Irmin — production pull`).
+4. Set permissions per resource:
+   - **Read** on Customers, Charges, Invoices, Subscriptions, Payouts
+     if you want to pull them.
+   - **Write** on Customers, Invoices, Products, Prices if you want
+     Irmin to push or patch those resources. Leave the rest at
+     **None** for least-privilege.
+5. Click **Create key** and copy the `rk_live_…` (or `rk_test_…`)
+   value once. Stripe only shows it to you on creation; save it in
+   your password manager.
 
-Stripe redirects back to Irmin. The window closes automatically, and
-the Irmin wizard advances to the settings step.
-
-**Settings:**
+**Paste the key into Irmin.**
 
 | Field | What it means | Example |
 |---|---|---|
-| **Stripe API version** | Pinned API version for schema stability | `2024-06-20` (latest) |
-| **Included resource types** | Which Stripe resources to expose | `charges`, `subscriptions`, `invoices`, ... |
+| **Stripe API key** (required) | The restricted key you just created. `sk_...` secret keys also work but grant full account access — prefer restricted. | `rk_live_51Nv12ab…` |
+| **Stripe API version** (optional) | Pinned API version stamped on the `Stripe-Version` header. Leave empty to use Irmin's default (`2026-03-25.dahlia`). | `2026-03-25.dahlia` |
 
-Leave the API version at the default unless you have a specific need
-to pin an older one. Changing the API version later may cause schema
-diffs if Stripe adjusted field shapes between versions.
-
-**Configure + test.** Irmin verifies the connection by calling
-Stripe's `GET /v1/charges?limit=1`. If it returns data (or a valid
-empty result), the connection is confirmed.
+**Configure + test.** Irmin verifies the key by calling
+`GET /v1/charges?limit=1`. If it returns data (or a valid empty
+result), the connection is confirmed.
 
 If the test fails:
 
-- **"Connect your Stripe account"** — the OAuth authorisation didn't
-  complete. Click **Connect with Stripe** again.
-- **"Token expired"** — this shouldn't happen on a fresh connection,
-  but if it does, click **Reconnect** on the connection page.
-- **"Permission denied"** — you authorised a Stripe account that
-  doesn't have the resource type enabled (e.g., pulling
-  subscriptions on an account without Stripe Billing).
-
-#### Scopes
-
-Pull-only connections request `read_only`. If you plan to push or
-patch, you'll be asked to re-authorise with Stripe's `read_write`
-scope the first time you configure a write operation — this is a
-separate consent screen, so Stripe users stay in control of whether
-Irmin can modify their account.
+- **"Stripe rejected the API key"** — the key is wrong, expired, or
+  missing the Charges-read permission. Regenerate on Stripe and
+  paste again.
+- **"Stripe API call failed"** — network-level problem reaching
+  `api.stripe.com`. Check outbound connectivity from the connector
+  host.
 
 #### First pull
 
 1. From the connection detail page, click **Pull** → **Configure new
    pull**.
-2. Pick the resource type (e.g., `charges`).
-3. Optionally add filters:
-   - **Date range** — start / end ISO timestamps.
-   - **Limit** — max objects to pull in this run (useful for first
-     tests; remove for full sync).
-4. Pick a target LakeFS repository and branch.
-5. Click **Run**.
+2. Leave the path empty to pull every enabled resource, or set it to
+   a single resource name (e.g., `customers`) or a single record
+   (e.g., `customers/cus_Nv12ab`).
+3. Pick a target LakeFS repository and branch.
+4. Click **Run**.
 
-Irmin fetches the charges via Stripe's list API, auto-paginates
-(Stripe cursor-based), and saves them as a Parquet file on the target
-branch. Subsequent pulls on the same resource produce a new commit on
-the branch — view the diff to see what changed between snapshots.
+Irmin fetches each resource via Stripe's list API, auto-paginates
+(100 records per page, Stripe cursor-based), and writes one JSON
+array file per resource (`customers.json`, `charges.json`, …) to the
+target branch. Subsequent pulls produce a new commit on the branch —
+view the diff to see what changed between snapshots.
+
+Want columnar queries? Run a downstream DuckDB action against the
+pulled JSON — parsing a JSON array into a Parquet table is a
+one-liner and keeps the pull itself simple.
 
 #### Pushing and patching (writes)
 
@@ -364,34 +357,31 @@ Stripe's write semantics map cleanly onto Irmin's path-based operation
 schemas — see the
 [How connections work](./how-connections-work.md) page for the
 underlying "Everything is a File" model. For Stripe, paths look like
-`{resource_type}/{id}.json`.
+`{resource_type}/{id-or-new-*}.json`.
 
-**Push** — create-or-replace an object. The target path determines
-whether Irmin calls Stripe's create endpoint or update endpoint:
+**Push** — create or update an object. The filename determines which:
 
-- `customers/cus_Nv12ab34.json` — replace an existing customer by
+- `customers/cus_Nv12ab34.json` — update an existing customer by
   sending the file contents to Stripe's Update Customer API.
-- `customers/new-enterprise-signup.json` — any path where the filename
-  isn't an existing Stripe ID is treated as a create. Irmin POSTs the
-  file to Create Customer; Stripe assigns the real `cus_…` ID and the
-  response is written back to the branch so the next push finds it.
+- `customers/new-enterprise-signup.json` — any file whose name starts
+  with `new-` (or is exactly `new.json`) creates a new record. Irmin
+  POSTs to Create Customer; Stripe assigns the real `cus_…` id.
 - `invoices/new-invoice.json`, `products/new-product.json`,
-  `prices/new-price.json` — same pattern for every writable resource
-  type.
+  `prices/new-price.json` — same pattern for every writable resource.
 
 **Patch** — apply a JSON-Patch document to an existing object. Useful
 for targeted updates without round-tripping the full record:
 
-- Patch `customers/cus_Nv12ab34.json` with
-  `[{"op":"replace","path":"/email","value":"new@example.com"}]` to
-  just change the email.
-- Patch `invoices/in_1Nv12…` with
-  `[{"op":"add","path":"/metadata/priority","value":"urgent"}]` to
-  annotate.
+- Patch `/customers/cus_Nv12ab34.json/email` with
+  `{"op":"replace","value":"new@example.com"}` to just change the
+  email.
+- Patch `/invoices/in_1Nv12.json/metadata/priority` with
+  `{"op":"add","value":"urgent"}` to annotate.
 
-Irmin translates the patch into Stripe's update API call, sending only
-the changed fields. This is safer than a full push for concurrent
-edits — it doesn't clobber fields a teammate updated meanwhile.
+Irmin coalesces every patch op targeting the same resource into a
+single Stripe update call, sending only the changed fields. Safer
+than a full push for concurrent edits — it doesn't clobber fields a
+teammate updated meanwhile.
 
 Either operation can be triggered manually from the connection page,
 or driven from a workflow (e.g., "after a Postgres pull, push any new
@@ -399,40 +389,25 @@ rows as Stripe customers"). Failures surface Stripe's error message
 directly — `invalid email format`, `cannot invoice a deleted
 customer`, etc. — so you can see exactly what Stripe rejected.
 
-#### Reconnecting
-
-If Stripe's side of the token is invalidated (you revoked Irmin in
-your Stripe settings, or rotated your account password with strong
-security settings), the next pull will fail with "Reconnect required."
-
-From the connection page, click **Reconnect**. The OAuth flow runs
-again; once complete, operations resume without changing the
-connection's existing ID, settings, or history.
-
 #### Disconnecting
 
-Click **Disconnect** on the connection page. Irmin:
-
-1. Sends a best-effort revocation to Stripe so the token is invalid
-   server-side.
-2. Deletes the stored tokens from Irmin.
-3. Leaves the Connection itself (and any historical pulls) in place —
-   you can re-authorise later by clicking **Connect with Stripe**
-   again.
-
-If you want to fully remove the connection including its history,
-delete the Connection itself.
+Click **Disconnect** on the connection page. Irmin deletes the
+stored API key. If you want to revoke the key at Stripe too (so a
+copy on another machine couldn't still use it), visit the
+[API keys page](https://dashboard.stripe.com/apikeys) and click
+**Delete** next to the key.
 
 #### Gotchas
 
 - **Only one Stripe account per connection.** If you need data from
   multiple Stripe accounts (e.g., a parent org with separate brand
-  accounts), create separate Connections.
-- **Connect platform awareness.** Irmin uses Stripe Connect
-  internally for the OAuth flow. Your connected account type
-  (Standard / Express / Custom) determines what resources are
-  available — Standard accounts expose everything, Express/Custom
-  are more limited by design.
+  accounts), create separate Connections with separate restricted
+  keys.
+- **Least-privilege scoping lives on the key, not on Irmin.** The
+  permissions you pick when creating the restricted key decide what
+  Irmin can do. If a push fails with "permission denied," it's
+  because the key doesn't have Write on that resource — regenerate
+  with the right permissions instead of looking for an Irmin toggle.
 - **API version drift.** If Stripe deprecates a field in a newer API
   version, your pinned version protects you. But it also means you'll
   miss new fields Stripe has added since your pinned date. Bump the
@@ -440,17 +415,21 @@ delete the Connection itself.
 - **Rate limits.** Stripe allows 100 requests/second by default.
   Large pulls auto-throttle; very large historical backfills may take
   time. Configure the pull as a workflow so it runs in the background.
-- **Idempotency on create.** Pushes to a `new-*.json` path are sent
-  with a deterministic Idempotency-Key derived from the file contents
-  and the branch commit SHA, so re-running the same workflow never
-  creates duplicate customers/invoices. If you change the file then
-  push again, Stripe treats it as a new create and you'll get a new
-  ID — that's the intended semantics.
+- **Idempotency on writes.** Every push and patch is sent with a
+  deterministic `Idempotency-Key` derived from the file contents, so
+  re-running the same workflow never duplicates customers/invoices.
+  Stripe's idempotency window is 24 hours — after that, the same
+  content reuses the stored response. Change the file and push again,
+  Stripe treats it as a new write.
 - **Irreversible writes.** Stripe doesn't support "undo." A bad push
   or patch modifies real Stripe data that isn't rolled back by
   reverting the Irmin commit. Test write workflows against Stripe
-  test mode (a second connection) before pointing them at a live
-  account.
+  test mode (a second connection with an `rk_test_…` key) before
+  pointing them at a live account.
+- **Restricted-key creation auditing.** Stripe records every
+  restricted-key creation in the account's audit log. Naming the key
+  descriptively (e.g., `Irmin — production pull`) makes it easy to
+  find and revoke later.
 
 ### Pinecone
 

@@ -14,10 +14,15 @@ the transient project plan.
 | 1 | Encryption foundation — keyring, backfill migration, encrypted-JSON serializer | ✅ Shipped (#416, #417) |
 | 2 | OAuth flow — endpoints, DCR, tokens, sessions, JIT access-token endpoint | ✅ Shipped (#418) |
 | 3 | Shared OAuth base in `irmin-connectors` | ✅ Shipped (irmin#424, irmin-connectors#161) |
-| 4 | Stripe connector (pull · push · patch) | 🚧 Next |
-| 5 | Linear + Google Drive connectors | ⏳ Planned |
+| 4 | First real OAuth connector — DCR-capable vendor (Linear / Intercom / Monday / Sentry) | 🚧 Next |
+| 5 | Second OAuth connector + Google Drive (non-DCR, scope-sensitive) | ⏳ Planned |
 | 6 | Console OAuth UI | ⏳ Planned |
 | 7 | User-facing walkthroughs with screenshots + launch | ⏳ Planned |
+
+Stripe shipped as an **API-key** connector, not an OAuth one. See
+[Stripe in connectors.md](./connecting-to-irmin/connectors.md#stripe)
+for the user-facing shape and [Decisions locked in](#decisions-locked-in)
+below for the rationale.
 
 ## Decisions locked in
 
@@ -32,25 +37,29 @@ Anything here is settled. If we later change it, update in place.
 - **Encryption scope.** All connector secrets (OAuth tokens + existing
   connector credentials marked `Secret: true` in `DynamicField`) go
   through the keyring. Shipped in Phase 1.
-- **DCR vs. static clients.** Both are first-class. RFC 7591 DCR
-  (e.g., Linear via their MCP server) registers per-workspace; static
-  admin-configured clients (e.g., Stripe) use one OAuth app per
-  environment via env vars. Neither is a fallback for the other.
-- **Stripe operations at launch.** Pull **and** push **and** patch,
-  not pull-only. Stripe's write API is well-covered and maps cleanly
-  onto our path-based operation schemas (`customers/{id}.json`,
-  `invoices/new-invoice.json`, JSON-Patch for partial updates).
+- **DCR vs. static clients.** Both remain first-class. RFC 7591 DCR
+  (e.g., Linear via their MCP OAuth server) registers per-workspace;
+  static admin-configured clients (e.g., Google Drive) use one OAuth
+  app per environment via env vars. Neither is a fallback for the
+  other.
+- **Stripe ships as API-key, not OAuth.** Stripe Connect requires a
+  pre-registered platform app per environment and doesn't support
+  RFC 7591 DCR, so the ops overhead of OAuth-for-Stripe would have
+  been paid without actually exercising the DCR path we want Phase 4
+  to prove. Stripe's restricted API keys already give users
+  per-resource scope control, and the connector ships with pull +
+  push + patch against customers, invoices, products, and prices
+  ([connectors.md → Stripe](./connecting-to-irmin/connectors.md#stripe)).
   Subscribe (webhook ingestion) deferred — needs separate
   infrastructure.
-- **Launch slate is Stripe → Linear → Google Drive** (in that order),
-  not HubSpot / Intercom. The earlier plan led with HubSpot + Stripe
-  + Intercom; revised because the maintainer doesn't have test
-  accounts for HubSpot or Intercom, and "we can only ship what we
-  can actually test." The final three cover the full axis we care
-  about at launch: SaaS billing (Stripe, static client, read+write),
-  dev-tooling with DCR (Linear), and user-scoped document storage
-  (Google Drive, non-DCR, scope-sensitive). Nothing after these
-  three is committed.
+- **Revised launch slate.** One DCR-capable OAuth connector (Phase 4)
+  plus Google Drive as the non-DCR static-client case, plus Stripe
+  already shipped as API-key. The DCR pick comes from Linear /
+  Intercom / Monday / Sentry — whichever the maintainer has a live
+  test account for when Phase 4 starts. Together the three cover the
+  axes we care about: SaaS billing (Stripe, API key), dev-tooling
+  with DCR, and user-scoped document storage (Google Drive,
+  scope-sensitive). Nothing after these three is committed.
 - **Naming.** SDK types get a concrete domain prefix
   (`ConnectionOAuthConfig`, not `OAuthConfig`) so future additions
   for unrelated OAuth concepts (internal auth, MCP-client auth)
@@ -177,98 +186,72 @@ vendor-specific code (acceptance criterion #5).
 new base. They keep working on the legacy path; opportunistic
 migration in later PRs.
 
-## Phase 4 — Stripe connector
+## Phase 4 — First real OAuth connector (DCR-capable)
 
-First real OAuth connector. Exercises the static-client path (Stripe
-doesn't support DCR).
+First production connector that actually runs the OAuth base from
+Phase 3 end-to-end. The goal is to prove the **RFC 7591 DCR** path,
+so vendor picks are narrowed to ones that offer Dynamic Client
+Registration out of the box:
 
-**Operation surface**
+- **Linear** — DCR via their MCP OAuth server; data: issues, projects,
+  cycles, teams.
+- **Intercom** — DCR-compatible MCP OAuth; data: contacts,
+  conversations, companies.
+- **Monday.com** — DCR via their OAuth 2.1 surface; data: boards,
+  items, updates.
+- **Sentry** — DCR-compatible OAuth; data: issues, events, releases.
 
-Already documented as target experience in
-[connectors.md → Stripe](./connecting-to-irmin/connectors.md#stripe).
-Short form:
+The exact pick is decided when Phase 4 starts, based on which vendor
+the maintainer has a live test account for. Whichever one ships, it
+follows the same shape as any OAuth connector in this codebase:
 
-- **Pull.** Charges, subscriptions, invoices, customers, payouts →
-  Parquet per resource, cursor-paginated, API version pinned via
-  connection setting.
-- **Push.** File path determines create vs. update:
-  - `customers/{existing_id}.json` → POST to Update Customer
-  - `customers/new-*.json` → POST to Create Customer; Stripe's
-    assigned `cus_…` ID written back to the branch as the response
-    so the next push resolves to an update
-  - `invoices/new-invoice.json`, `products/new-product.json`,
-    `prices/new-price.json` — same pattern
-  - `Idempotency-Key: sha256(file contents || commit SHA)` —
-    deterministic per-push, so workflow re-runs never duplicate
-- **Patch.** JSON-Patch on an existing resource file translates to
-  Stripe's partial-update endpoint. Safer for concurrent edits
-  because it only sends changed fields.
-- **Subscribe.** Deferred.
+- Declare `ConnectionOAuthConfig` with the vendor's authorize / token
+  URLs and a populated `DCREndpoint`.
+- Wire pull / push / patch through the shared base (no bespoke token
+  plumbing — Phase 3's `OAuthConnector` + `OAuthRoundTripper` handle
+  resolve + 401 retry).
+- Pin the vendor's API version via a Settings field where available.
+- Integration tests against the vendor's test mode; unit tests with
+  the `commontest/` `FakeCore` + `FakeVendor` fixtures.
 
-**Scope handling.** Pull-only configurations request `read_only`.
-Configuring the first write op triggers a separate `read_write`
-re-consent at Stripe. Users keep explicit control over whether Irmin
-can modify their account.
+**Manual verification checklist** (applicable to whichever vendor
+wins the pick):
 
-**Tasks**
+1. Fresh Connection → OAuth flow → DCR client gets created and
+   persisted per-workspace.
+2. Pull a non-trivial resource → commit snapshot.
+3. Push / patch a record (where the vendor supports writes) →
+   confirm round-trip in the vendor dashboard.
+4. Force-expire the access token in Core → next operation silently
+   refreshes and succeeds via `ForceRefreshVendorAccessToken`.
+5. Revoke Irmin at the vendor → next operation surfaces the
+   `oauth_refresh_rejected` sentinel (Reconnect CTA wired in Phase 6).
 
-- Register one Stripe Connect platform per environment (dev /
-  staging / prod). Store the client ID/secret in each env's secret
-  store.
-- Env vars: `STRIPE_OAUTH_CLIENT_ID`, `STRIPE_OAUTH_CLIENT_SECRET`.
-- `irmin-connectors/connectors/stripe/`:
-  - `config.go` — declares `ConnectionOAuthConfig` pointing at
-    `connect.stripe.com/oauth/authorize` + `/oauth/token`
-  - `controller.go` — extends the shared base; wires pull / push /
-    patch to Stripe's list / create / update endpoints
-  - `paths.go` — the path → Stripe endpoint map
-  - `schema.go` — Stripe-Version-pinned schema generation for each
-    supported resource
-- Integration tests against Stripe test mode (runs in CI with a
-  dedicated test-mode Connect platform).
-- Manual verification checklist:
-  1. Connect a fresh Stripe test account → pull charges → commit
-     snapshot
-  2. Push a new customer → confirm it appears in Stripe
-  3. Patch that customer's email → confirm update in Stripe
-  4. Force-expire the access token → next operation silently
-     refreshes and succeeds
-  5. Revoke Irmin at Stripe → next operation surfaces a Reconnect
-     CTA (once Phase 6 lands)
+**Why not Stripe?** Stripe's OAuth requires a pre-registered platform
+app per environment (no DCR, no `/oauth/register` endpoint), which
+adds ops overhead without exercising the DCR path this phase is
+trying to prove. Stripe shipped as an API-key connector instead —
+see [connectors.md → Stripe](./connecting-to-irmin/connectors.md#stripe).
 
-**Edge cases to validate**
+**Estimate.** ~400–600 LOC plus tests. One PR on `irmin-connectors`.
 
-- **Stripe account types.** Standard / Express / Custom behave
-  differently at the OAuth layer. Pick one supported mode for
-  launch and document it; the others are follow-ups.
-- **API version pinning.** `Stripe-Version` header on every call so
-  fields don't silently migrate out from under pulls.
-- **Revocation semantics.** Stripe doesn't fully implement RFC 7009;
-  the revoke call is best-effort and the local token row is deleted
-  regardless. Document this — users expect Disconnect to work.
+## Phase 5 — Second OAuth connector + Google Drive
 
-**Estimate.** ~400–600 LOC plus tests. One PR, merged behind the
-Phase 3 PR.
+Two more connectors to close out the launch slate:
 
-## Phase 5 — Linear + Google Drive
-
-The other two launch connectors. Landed in this order:
-
-1. **Linear.** DCR-capable via their MCP OAuth server. Exercises the
-   RFC 7591 dynamic-registration path end-to-end — the thing Stripe
-   skips — so by the end of Phase 5 we've validated both OAuth client
-   models (static admin-configured + DCR) on live vendors. Data:
-   issues, projects, cycles, teams — versioned as JSON.
+1. **A second DCR connector** from the Phase 4 candidate pool — the
+   one we didn't pick first. Confirms the DCR path isn't coincidentally
+   shaped to a single vendor.
 2. **Google Drive.** Non-DCR, per-env static client. Exercises
    Google's slightly idiosyncratic OAuth: short refresh-token
    lifetimes in testing mode, explicit revocation endpoint, scope
    granularity (`drive.readonly` vs `drive.file` vs `drive`). Data:
-   file metadata (as JSON) + file contents (as byte blobs — this is
-   the first connector to exercise non-JSON pulls through OAuth).
+   file metadata (as JSON) + file contents (as byte blobs — first
+   connector to exercise non-JSON pulls through OAuth).
 
-Each follows the same shape as Stripe: declare
-`ConnectionOAuthConfig`, map paths to the vendor's REST surface,
-implement pull/push/patch through the shared base, add tests.
+Each follows the same shape: declare `ConnectionOAuthConfig`, map
+paths to the vendor's REST surface, implement pull/push/patch through
+the shared base, add tests.
 
 Nothing beyond these two is committed. When the launch slate ships
 and we have real usage data, we'll revisit candidates (GitHub,
@@ -352,13 +335,15 @@ Launch work is a sweep over it:
 - **Screenshots.** Capture against the shipped console UI (not
   mockups) — one per walkthrough for the Connect flow + one per
   First Pull result.
-- **Cover the launch slate.** Add a walkthrough for each of
-  Linear and Google Drive (Stripe already has one). Keep the same
-  target-experience framing each shipped walkthrough already uses:
-  Capabilities / Setup / First pull / Operating patterns / Gotchas.
+- **Cover the launch slate.** Add a walkthrough for each Phase 4 /
+  Phase 5 OAuth connector (Stripe already has one; it ships as
+  API-key). Keep the same target-experience framing each shipped
+  walkthrough already uses: Capabilities / Setup / First pull /
+  Operating patterns / Gotchas.
 - **Launch post.** Framing: "connect your tools to versioned
-  storage in a click." Concrete demo is Stripe → a compute action
-  that transforms pulled data → commit to a branch for review.
+  storage in a click." Concrete demo: pull from Stripe (API key) →
+  compute action that transforms the data → commit to a branch for
+  review.
 - **Delete this roadmap page** and its row in `handbook/README.md`.
   From here on, the handbook only carries the long-term
   architectural view (see `connector-architecture.md`), not
