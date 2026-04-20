@@ -18,12 +18,13 @@ Connectors define the interfaces that allow Irmin to interact with external syst
   Connector" steps below apply to you; the OAuth-specific
   additions/deltas are in the dedicated **"OAuth-Backed Connectors"**
   section at the bottom of this file.
-- **Shared base class (work in progress):** the long-term goal is a
-  `connectors/common/` base that absorbs the lifecycle + auth + OAuth
-  glue so new connectors are ~300–500 lines of vendor-specific code.
-  Until that refactor lands, both the legacy per-connector-controller
-  shape documented below and the shared-base shape will be valid; new
-  OAuth connectors should wait for the base if they can.
+- **Shared base:** lifecycle plumbing (routes, middleware, op
+  init/status/cancel) and OAuth wiring (token resolution, retry,
+  Info stamping) live in `connectors/common/`. Concrete connectors
+  embed `*common.Controllers` and (for OAuth) `*common.OAuthConnector`,
+  then implement only vendor-specific code. See
+  [`connectors/common/README.md`](../connectors/common/README.md) for
+  the full API reference.
 
 ## Adding a New Connector
 
@@ -51,12 +52,20 @@ connectors/
 
 When adding a new connector, you must edit these files:
 
-1. **`connectors/connectors.go`** - Add your connector to:
-   - `SetupConnectorRoutes()` function
-   - `StartConnectorSubscriptionListener()` function (if supporting subscriptions)
-   - `RegisterAllConnectors()` function
+1. **`connectors/connectors.go`** — add your connector to:
+   - `SetupConnectorRoutes(app)` — call your package's
+     `SetupRoutes(app)` so routes register at startup.
+   - `SetupListenerManager(logger, db)` — register your
+     `StartListener` if your connector supports subscriptions
+     (`ConnectorCapabilityPatchEvent`).
+   - `RegisterAllConnectors(...)` — append a `{Name, Slug}` entry so
+     the connector self-registers with Core's API on boot.
 
-2. **`public/`** directory - Add your connector's logo and any public assets
+2. **`public/`** directory — add your connector's logo and any
+   public assets referenced from the details page template.
+
+3. **`templates/connector-details/`** + **`templates/embedded.go`** —
+   add the HTML template for the public details page (see Section 8).
 
 ### 3. Standard Connector Endpoints
 
@@ -103,27 +112,51 @@ These endpoints are called during active operations and require an operation tok
 
 ### 5. Data Structures
 
-#### Required Models
+The connector-side wire shape for credentials and configuration is
+two flat `map[string]string` blobs called `details` and `settings`.
+Connector-specific schemas (which fields, types, labels, defaults)
+live in `config/config.go` as `map[string]irminmodels.DynamicField`
+definitions, not as Go structs:
 
-**ConnectionSettings** - Connector-specific configuration:
 ```go
-type ConnectionSettings struct {
-    // Add your connector's required settings
-    Host     string `json:"host"`
-    Port     int    `json:"port"`
-    Database string `json:"database"`
-    // ... other fields
+// config/config.go
+func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField {
+    return map[string]irminmodels.DynamicField{
+        "host":     {Type: "string",  Label: "Host",     Required: true},
+        "port":     {Type: "integer", Label: "Port",     Required: false},
+        "username": {Type: "string",  Label: "Username", Required: true},
+        "password": {Type: "string",  Label: "Password", Required: true, Secret: true},
+    }
 }
 ```
 
-**ConnectionDetails** - User credentials and sensitive data:
-```go
-type ConnectionDetails struct {
-    Username string `json:"username"`
-    Password string `json:"password"`
-    // ... other sensitive fields
-}
-```
+Many existing connectors also keep typed `ConnectionDetails` /
+`ConnectionSettings` Go structs in `models/` purely for internal
+ergonomics — converting the inbound `map[string]string` into a
+typed value once at the start of an operation. That's optional;
+nothing in the shared base requires them.
+
+The provider methods that wire these together:
+
+- `OperationInitProvider.GetOperationFormFields` — return the
+  required + optional field names (use
+  `common.GetRequiredFieldNames` / `GetOptionalFieldNames` against
+  your DynamicField definitions to derive them automatically).
+- `OperationInitProvider.BuildDetails` /
+  `BuildSettings` — turn the parsed form into the
+  `map[string]string` shape Core expects (use
+  `common.BuildDetailsFromFields` /
+  `BuildSettingsFromFields`).
+- `ConfigFieldProvider.GetDynamicFields` — return the field
+  definitions for the requested `key` ("details" or "settings"),
+  optionally enriching `settings` with runtime data (e.g. populate
+  a database-name dropdown by fetching the list from the vendor).
+- `ConfigValidationProvider.TestConnection` — actually open a
+  connection with the provided details to verify they work.
+
+Full provider interface definitions and reference implementations
+are in
+[`connectors/common/README.md`](../connectors/common/README.md).
 
 ### 6. What Connectors Should Accept and Return
 
@@ -198,31 +231,23 @@ templates/
        htmlContent = YourConnectorDetailsHTML
    ```
 
-4. **Implement the details page controller:**
+4. **Implement the details page controller** by delegating to the
+   shared helper. It loads the template, fills in the connector
+   info (name, description, logo, capabilities), and renders the
+   HTML — you only supply the connector slug and an optional
+   subscription-flavoured description:
+
    ```go
    func (cs *Controllers) DetailsPage(c fiber.Ctx) error {
-       templateManager := templates.NewConnectorTemplateManager()
-       template, err := templateManager.LoadTemplate("your-connector")
-       if err != nil {
-           return c.Status(fiber.StatusInternalServerError).SendString("Error loading template")
-       }
-
-       data := templates.ConnectorDetailsData{
-           Title:       "IRMIN Your Connector - Details",
-           Description: "Description of your connector's capabilities...",
-           LogoPath:    "/public/your-connector.png",
-           LogoAlt:     "Your Connector Logo",
-           EventListeningDescription: "Description of event capabilities...",
-           DocsPath:    "/your-connector/docs",
-       }
-
-       htmlContent, err := template.RenderHTML(data)
-       if err != nil {
-           return c.Status(fiber.StatusInternalServerError).SendString("Error rendering template")
-       }
-
-       c.Set("Content-Type", "text/html")
-       return c.Status(fiber.StatusOK).SendString(htmlContent)
+       return common.RenderConnectorDetailsPage(
+           c,
+           cs.App,
+           "your-connector",
+           config.GetConnectorInfo,
+           // Optional: supply when the connector supports patch_event
+           // and you want a custom blurb explaining how subscriptions
+           // are wired (see PostgreSQL's details page for an example).
+       )
    }
    ```
 
@@ -263,22 +288,43 @@ type ConnectorDetailsData struct {
 
 ### 11. Example Implementation Pattern
 
+Don't hand-wire routes. Use `common.SetupConnectorRoutes` — it
+registers the full base + capability-based route set in one call,
+puts the right middleware in front of each handler, and stays in
+lockstep with any future additions to the connector contract:
+
 ```go
 // routes.go
+package yourconnector
+
+import (
+    "irmin-connectors/connectors/common"
+    "irmin-connectors/connectors/your-connector/config"
+    yourcontrollers "irmin-connectors/connectors/your-connector/controllers"
+    "irmin-connectors/models"
+)
+
 func SetupRoutes(app *models.ConnectorsApp) {
-    controller := controllers.NewControllers(app)
-    routes := app.App.Group("/your-connector")
-    
-    // System token endpoints
-    routes.Get("/info", controller.Info, controller.ValidateSystemTokenMiddleware)
-    routes.Post("/configuration/:key/fields", controller.ConfigFields, controller.ValidateSystemTokenMiddleware)
-    // ... other endpoints
-    
-    // Operation token endpoints
-    routes.Post("/operation/pull", controller.OperationPull, controller.ValidateOperationTokenMiddleware)
-    // ... other endpoints
+    controller := yourcontrollers.NewControllers(app)
+    common.SetupConnectorRoutes(common.ConnectorRouteConfig{
+        App:           app,
+        Controller:    controller,
+        ConnectorSlug: "your-connector",
+        Capabilities:  common.GetConnectorCapabilitiesFromConfig(config.GetConnectorInfo),
+    })
 }
 ```
+
+`SetupConnectorRoutes` registers (with the `system-token`
+middleware): `GET /info`, `POST /configuration/:key/fields`,
+`POST /configuration/validate`, `POST /operation/init`,
+`POST /operation/cancel`, `POST /operation/status`. With the
+`operation-token` middleware: `POST /operation/schema/:operation`
+plus one of `pull` / `push` / `patch` / `subscribe` /
+`unsubscribe` per declared capability. And without auth:
+`GET /details`. See
+[`connectors/common/README.md`](../connectors/common/README.md) for
+the full API reference.
 
 ### 12. Testing Your Connector
 
@@ -369,69 +415,118 @@ connection-time fields.
 `settings` is unchanged — project/database/workspace selection still
 belongs there.
 
-#### 3. Fetch vendor tokens via `lib.OAuthTokenClient`
+Stamp the OAuth config onto the `/info` response so the console
+knows to render a Connect button:
 
-In operation handlers (init, pull, push, patch, subscribe), read the
-`X-Irmin-Connection-Id` header Core stamps on every inbound request
-and call Core to get a currently-valid vendor access token:
+```go
+func (cs *Controllers) Info(c fiber.Ctx) error {
+    info := config.GetConnectorInfo()
+    cs.InjectInfoOAuthConfig(&info) // no-op if Config is nil
+    return c.JSON(info)
+}
+```
+
+#### 3. Embed `*common.OAuthConnector` and use `WrapHTTPClient`
+
+Compose `*common.OAuthConnector` into your controllers struct
+alongside `*common.Controllers`:
+
+```go
+package mycontrollers
+
+import (
+    "irmin-connectors/connectors/common"
+    "irmin-connectors/connectors/myconnector/config"
+    "irmin-connectors/models"
+)
+
+type Controllers struct {
+    *common.Controllers
+    *common.OAuthConnector
+}
+
+func NewControllers(app *models.ConnectorsApp) *Controllers {
+    return &Controllers{
+        Controllers:    common.NewControllers(app),
+        OAuthConnector: common.NewOAuthConnector(app, config.GetConnectorInfo().ConnectionOAuthConfig),
+    }
+}
+```
+
+`NewOAuthConnector` reads `IRMIN_API_BASE_URL` + `IRMIN_API_TOKEN`
+from the app's environment to wire the token client. Pass `nil` for
+`ConnectionOAuthConfig` if the connector is static-credential (the
+helpers stay safe; Info-stamping is skipped).
+
+Then make vendor calls through `WrapHTTPClient`:
 
 ```go
 import (
-    "errors"
-    "irmin-connectors/lib"
+    "net/http"
+
+    "irmin-connectors/connectors/common"
 
     "github.com/gofiber/fiber/v3"
 )
 
-// Create once per process (the client is safe for concurrent use).
-var oauthClient = lib.NewOAuthTokenClient(env.APIBaseURL, env.APIToken)
-
-func (ctl *Controller) OperationPull(c fiber.Ctx) error {
-    connectionID, err := lib.ConnectionIDFromRequestHeader(c.Get)
+func (cs *Controllers) OperationPull(c fiber.Ctx) error {
+    client := common.WrapHTTPClient(http.DefaultClient, cs.OAuthConnector, c)
+    req, _ := http.NewRequestWithContext(c.Context(), http.MethodGet,
+        "https://api.hubapi.com/crm/v3/objects/contacts", http.NoBody)
+    resp, err := client.Do(req)
     if err != nil {
-        return fiber.NewError(fiber.StatusBadRequest, err.Error())
+        // sentinel-to-HTTP mapping (see step 4)
+        return cs.WriteResolveError(c, err)
     }
-    token, err := oauthClient.FetchVendorAccessToken(c.Context(), connectionID)
-    if err != nil {
-        switch {
-        case errors.Is(err, lib.ErrNotConnected),
-             errors.Is(err, lib.ErrRefreshRejected):
-            // User must reconnect through the console.
-            return fiber.NewError(fiber.StatusUnauthorized,
-                "reconnect required")
-        case errors.Is(err, lib.ErrCoreUnavailable):
-            return fiber.NewError(fiber.StatusServiceUnavailable,
-                "core temporarily unavailable")
-        }
-        return err // unexpected
-    }
-
-    // token.AuthorizationHeader() is "Bearer ya29..." (or whatever
-    // token_type the vendor returned).
-    req, _ := http.NewRequestWithContext(c.Context(), "GET",
-        "https://api.hubapi.com/crm/v3/objects/contacts", nil)
-    req.Header.Set("Authorization", token.AuthorizationHeader())
-    // ... call vendor ...
+    defer resp.Body.Close()
+    // ... shape resp.Body into Irmin's storage format ...
 }
 ```
 
-The fast path on `FetchVendorAccessToken` is a single small HTTPS
-round-trip to Core; Core returns the cached token without calling the
-vendor. Refresh only fires when the stored token is within the
-configured skew window, and Core serializes concurrent refreshes per
-connection.
+What the wrapped client does for you:
+
+- Reads `X-Irmin-Connection-Id` from the inbound Fiber request.
+- Calls Core to fetch a currently-valid vendor token. Fast path is a
+  single small HTTPS round-trip with no vendor I/O — Core returns
+  the cached token unless it's inside the skew window.
+- Stamps `Authorization: Bearer …` on the outbound request.
+- On a vendor 401, calls Core with `force_refresh:true` to rotate
+  the token, then retries the request **once**. After that single
+  retry, a still-401 bubbles up — the user revoked Irmin at the
+  vendor and needs to reconnect.
+
+If you talk to a vendor SDK that holds its own `*http.Client`, wrap
+it the same way:
+
+```go
+sdkClient := vendor.NewClient(vendor.WithHTTPClient(
+    common.WrapHTTPClient(http.DefaultClient, cs.OAuthConnector, c),
+))
+```
+
+You only need `ResolveAccessToken` directly when the round-tripper
+can't see the call (e.g. building a WebSocket URL with the bearer
+in a query param). When you do, surface its error through
+`cs.WriteResolveError(c, err)` so the response stays uniform.
 
 #### 4. Map sentinel errors to HTTP responses
 
-The connector helper exposes three sentinels:
+`OAuthConnector.WriteResolveError` is the canonical mapping every
+OAuth connector should use — the console branches on the JSON `code`
+field and expects the same status codes regardless of vendor.
 
-- `lib.ErrNotConnected` — Connection has never completed OAuth.
-  Return **401** so the console shows a Connect CTA.
-- `lib.ErrRefreshRejected` — vendor rejected Core's refresh (user
-  likely revoked the app). Return **401** — same UX as the above.
-- `lib.ErrCoreUnavailable` — Core is unreachable or returned 5xx.
-  Return **503** so the console treats it as transient.
-- Any other error — **500**; log for debugging.
+| Sentinel | Status | Console UX |
+|---|---|---|
+| `lib.ErrNotConnected` | 428 Precondition Required | Render "Connect with X" CTA |
+| `lib.ErrRefreshRejected` | 428 Precondition Required | Render "Reconnect with X" CTA (vendor revoked) |
+| `lib.ErrMissingConnectionHeader` | 400 Bad Request | Internal — Core failed to stamp header |
+| `common.ErrOAuthNotConfigured` | 500 Internal Server Error | Wiring bug — connector embedded with `Config: nil` |
+| `lib.ErrCoreUnavailable` | 502 Bad Gateway | Transient — retry with backoff |
+
+Don't return 401 for "user must reconnect" — 401 means "the vendor
+rejected the call we just made", which the console treats
+differently. The 428s are the deliberate signal that the user must
+reconnect.
 
 The console drives Connect / Reconnect / Disconnect UI from Core's
 `GET /workspaces/:w/connections/:c/oauth/status`, so connectors do
@@ -454,17 +549,42 @@ For DCR-capable vendors (Intercom, Linear, Sentry, ...), the operator
 setup is **empty** — Core registers a per-workspace client on first
 use.
 
-#### 6. Everything else is the same
+#### 6. Test against `commontest`
+
+`connectors/common/commontest/` ships reusable httptest fixtures so
+per-connector tests don't reinvent OAuth simulators:
+
+- `commontest.NewFakeCore(t, systemToken, ...tokenSequence)` —
+  stands in for Core's `/api/v1/system/oauth/access-token`. Honors
+  `force_refresh:true` by advancing through the seeded sequence;
+  `LazyCalls()` / `ForceCalls()` for assertions.
+- `commontest.NewFakeVendor(t)` — bare `httptest.Server` whose
+  handler is set per test. Records the `Authorization` header on
+  every inbound request. Convenience handlers:
+  - `RejectOnceThenAccept(body)` — the canonical "vendor revoked
+    mid-flight" scenario; first request 401s, the rest succeed.
+  - `AlwaysReject()` — terminal revocation. Asserts the round-tripper
+    only retries once.
+
+Reference patterns to copy:
+- `connectors/common/oauth_base_test.go` — happy path, 401→retry,
+  terminal 401, missing header, Core down.
+- `connectors/common/oauth_fake_vendor_test.go` — full vendor
+  connector against the base in 99 LOC.
+
+#### 7. Everything else is the same
 
 Schema discovery, pull/push/patch, subscribe, error recovery,
 templates for the details page — all work identically whether the
-connector is static-credential or OAuth-backed. The only new
-dependency is `lib.OAuthTokenClient`.
+connector is static-credential or OAuth-backed.
 
 ### See Also
 
 - `concepts-and-processes.md` — the end-to-end OAuth flow and key
   invariants
 - `oauth-connectors.md` — planned OAuth connectors (Stripe, Linear,
-  Google Drive) and concept-level pattern library
+  Google Drive) + the full base architecture
+- [`connectors/common/README.md`](../connectors/common/README.md) —
+  full API reference for `OAuthConnector`, `WrapHTTPClient`, and
+  `commontest`
 

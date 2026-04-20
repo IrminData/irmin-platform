@@ -18,7 +18,8 @@ func SetupRoutes(app *models.ConnectorsApp) {
 
 ## ConnectorController Interface
 
-All connectors must implement this interface:
+All connectors must implement this interface (defined in
+`connectors/common/routes.go`):
 
 ```go
 type ConnectorController interface {
@@ -36,119 +37,280 @@ type ConnectorController interface {
 	ValidateSystemTokenMiddleware(c fiber.Ctx) error
 	ValidateOperationTokenMiddleware(c fiber.Ctx) error
 
-	// Capability-based (optional)
+	// Capability-based (only called when the capability is declared)
 	OperationPull(c fiber.Ctx) error
 	OperationPush(c fiber.Ctx) error
 	OperationPatch(c fiber.Ctx) error
 	SubscribeToChanges(c fiber.Ctx) error
+	UnsubscribeFromChanges(c fiber.Ctx) error
 }
 ```
 
-## One-Line Implementations
+The recommended composition is to embed `*common.Controllers` (and
+`*common.OAuthConnector` for OAuth-backed connectors) into your own
+`Controllers` struct. The embed gives you all the `cs.HandleXxx`
+methods used in the examples below.
 
 ```go
-// Info and details
+type Controllers struct {
+	*common.Controllers
+	// *common.OAuthConnector  // for OAuth-backed connectors
+}
+
+func NewControllers(app *models.ConnectorsApp) *Controllers {
+	return &Controllers{
+		Controllers: common.NewControllers(app),
+	}
+}
+```
+
+## One-line implementations (info, details, middleware, status, cancel)
+
+These wrap directly to package-level helpers:
+
+```go
+// Info — common.RenderConnectorInfo prefixes URLs with cs.App.Env.URL
+// and returns the JSON.
 func (cs *Controllers) Info(c fiber.Ctx) error {
 	return common.RenderConnectorInfo(c, cs.App, config.GetConnectorInfo)
 }
 
+// DetailsPage — RenderConnectorDetailsPage takes the app, the slug,
+// the info getter, and an optional event-listening description.
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error {
-	return common.RenderConnectorDetailsPage(c, "myconnector", config.GetConnectorInfo)
+	return common.RenderConnectorDetailsPage(c, cs.App, "myconnector", config.GetConnectorInfo)
 }
 
-// Token validation
+// Token middlewares — wired into routes by SetupConnectorRoutes; you
+// just need the thin adapters below so the ConnectorController
+// interface is satisfied.
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error {
 	return common.ValidateSystemToken(c, cs.App, config.GetConnectorInfo)
 }
 
-// Operations
-func (cs *Controllers) OperationCancel(c fiber.Ctx) error {
-	return common.CancelOperation(c, cs.App, common.DefaultDatabaseCancellation)
+func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error {
+	return common.ValidateOperationToken(c, cs.App, config.GetConnectorInfo)
 }
 
+// Status — HandleOperationStatus reads operation_token from form data,
+// loads the operation row, and returns common.OperationStatus JSON.
 func (cs *Controllers) OperationStatus(c fiber.Ctx) error {
 	return common.HandleOperationStatus(c, config.GetConnectorInfo, cs.App)
 }
+
+// Cancel — DefaultDatabaseCancellation marks the row as cancelled in
+// the connectors DB. Use LogOnlyCancellation if your connector has no
+// in-flight side effects to roll back.
+func (cs *Controllers) OperationCancel(c fiber.Ctx) error {
+	return common.CancelOperation(c, cs.App, common.DefaultDatabaseCancellation)
+}
 ```
 
-## Provider Pattern for Complex Operations
+## Provider pattern for init / config / pull / push / patch / schema
+
+Operations that need connector-specific behavior expose a provider
+interface. The connector implements the provider, then calls the
+matching `Handle*` helper. `OperationInit`, `ConfigFields`, and
+`ConfigValidate` are methods on `*common.Controllers` — call them
+through the embed (`cs.HandleXxx`). The data operation handlers
+(`HandleOperationPull/Push/Patch/SchemaGet`) are package-level
+functions that take `cs.Logger` and `cs.DB`.
 
 ```go
-// Pull operations
+// OperationInit — pass the controller itself as the provider when it
+// implements the OperationInitProvider methods (most connectors do).
+func (cs *Controllers) OperationInit(c fiber.Ctx) error {
+	return cs.HandleOperationInit(c, cs)
+}
+
+// ConfigFields — same pattern; cs implements ConfigFieldProvider.
+func (cs *Controllers) ConfigFields(c fiber.Ctx) error {
+	return cs.HandleConfigFields(c, cs)
+}
+
+// ConfigValidate — same pattern; cs implements ConfigValidationProvider.
+func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
+	return cs.HandleConfigValidation(c, cs)
+}
+
+// Pull — package-level; threads cs.Logger and cs.DB.
 func (cs *Controllers) OperationPull(c fiber.Ctx) error {
-	provider := &MySQLPullProvider{}
-	return common.HandleOperationPull(c, provider, cs.Logger)
+	return common.HandleOperationPull(c, &MySQLPullProvider{}, cs.Logger, cs.DB)
 }
 
-// Push operations  
+// Push, Patch, SchemaGet follow the same shape.
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
-	provider := &MySQLPushProvider{}
-	return common.HandleOperationPush(c, provider, cs.Logger)
+	return common.HandleOperationPush(c, &MySQLPushProvider{}, cs.Logger, cs.DB)
 }
 
-// Patch operations
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
-	provider := &MySQLPatchProvider{}
-	return common.HandleOperationPatch(c, provider, cs.Logger)
+	return common.HandleOperationPatch(c, &MySQLPatchProvider{}, cs.Logger, cs.DB)
 }
 
-// Schema operations
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
-	provider := &MySQLSchemaProvider{}
-	return common.HandleOperationSchemaGet(c, provider, cs.Logger)
+	return common.HandleOperationSchemaGet(c, &MySQLSchemaProvider{}, cs.Logger, cs.DB)
+}
+
+// Subscribe — connector-specific; see existing connectors.
+// Unsubscribe — package-level helper.
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error {
+	return cs.HandleUnsubscribeFromChanges(c, &MyUnsubscribeProvider{})
 }
 ```
 
-## Provider Interfaces
+## Provider interfaces
 
-**Pull Operations:**
+**OperationInit:**
+```go
+type OperationInitProvider interface {
+	GetOperationFormFields() (required []string, optional []string)
+	BuildDetails(fields map[string]string) (map[string]string, error)
+	BuildSettings(fields map[string]string) (map[string]string, error)
+}
+```
+
+**ConfigFields:**
+```go
+type ConfigFieldProvider interface {
+	GetDynamicFields(ctx fiber.Ctx, key string, fields map[string]string) (map[string]irminmodels.DynamicField, error)
+}
+```
+
+**ConfigValidation:**
+```go
+type ConfigValidationProvider interface {
+	GetRequiredFormFields() (required []string, optional []string)
+	ValidateFields(ctx fiber.Ctx, details map[string]any, settings map[string]any) []string
+	TestConnection(
+		ctx fiber.Ctx,
+		details map[string]any,
+		settings map[string]any,
+	) (canConnect, detailsValid, settingsValid bool, errors []string)
+}
+```
+
+**Pull:**
 ```go
 type PullOperationProvider interface {
-	InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (client any, databaseName *string, cleanup func(), err error)
-	GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error)
-	GetFileByPath(c fiber.Ctx, client any, path string) (string, []byte, error)
+	InitializeClient(
+		c fiber.Ctx, logger *slog.Logger, operation *db.Operation,
+	) (client any, databaseName *string, cleanup func(), err error)
+	GetAllFiles(c fiber.Ctx, client any) (filePaths []string, fileContents [][]byte, err error)
+	GetFileByPath(c fiber.Ctx, client any, path string) (filePath string, fileContent []byte, err error)
 }
 ```
 
-**Push Operations:**
+**Push:**
 ```go
 type PushOperationProvider interface {
-	InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (client any, databaseName *string, cleanup func(), err error)
+	InitializeClient(
+		c fiber.Ctx, logger *slog.Logger, operation *db.Operation,
+	) (client any, databaseName *string, cleanup func(), err error)
 	ProcessFiles(c fiber.Ctx, client any, files map[string][]byte, targetPath string) error
 }
 ```
 
-**Patch Operations:**
+**Patch:**
 ```go
 type PatchOperationProvider interface {
-	InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (client any, cleanup func(), err error)
-	ExecutePatchOperation(c fiber.Ctx, client any, op irminmodels.PatchOperation, tableName, rowIdentifier, columnName string) error
+	InitializeClient(
+		c fiber.Ctx, logger *slog.Logger, operation *db.Operation,
+	) (client any, cleanup func(), err error)
+	ExecutePatchOperation(
+		c fiber.Ctx, client any, op irminmodels.PatchOperation,
+		tableName, rowIdentifier, columnName string,
+	) error
 }
 ```
 
-**Schema Operations:**
+**Schema:**
 ```go
 type SchemaOperationProvider interface {
-	InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (client any, databaseName *string, cleanup func(), err error)
-	GetSchema(c fiber.Ctx, client any, operationType string, databaseName *string) (*irminmodels.ObjectSchema, error)
+	InitializeClient(
+		c fiber.Ctx, logger *slog.Logger, operation *db.Operation,
+	) (client any, path *string, cleanup func(), err error)
+	GetSchema(
+		c fiber.Ctx, client any, operationType string, path *string,
+	) (*irminmodels.ObjectSchema, error)
 	GetSupportedOperationTypes() []string
 }
 ```
 
-For schema providers, implement `GetSupportedOperationTypes()` using:
+**Unsubscribe:**
+```go
+type UnsubscribeProvider interface {
+	StopListener(subscriptionID uint) error
+}
+```
+
+For schema providers, derive the supported types from the declared
+capabilities:
+
 ```go
 func (p *MySQLSchemaProvider) GetSupportedOperationTypes() []string {
 	return common.CapabilitiesToOperationTypes(config.GetConnectorInfo().Capabilities)
 }
 ```
 
-## Unsupported Operations
+If your connector listens for vendor changes through the central
+`ListenerManager`, the package ships a ready-made unsubscribe
+provider:
+
+```go
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error {
+	return cs.HandleUnsubscribeFromChanges(c,
+		&common.ListenerManagerUnsubscribeProvider{Manager: cs.App.ListenerManager})
+}
+```
+
+## Helpers for config + form handling
+
+The package exposes helpers concrete connectors reuse to keep
+config-field code small:
+
+- `BuildDetailsFromFields(fields, definitions)` /
+  `BuildSettingsFromFields(fields, definitions)` — turn flat
+  multipart form input (`details[host]`, `settings[database]`, …)
+  into the `map[string]string` shape Core expects.
+- `GetRequiredDetailsFieldNames(defs)`,
+  `GetOptionalDetailsFieldNames(defs)`,
+  `GetRequiredSettingsFieldNames(defs)`,
+  `GetOptionalSettingsFieldNames(defs)`,
+  `GetRequiredFieldNames(detailsDefs, settingsDefs)`,
+  `GetOptionalFieldNames(detailsDefs, settingsDefs)` — reflection
+  over a `map[string]irminmodels.DynamicField` to derive which
+  fields are required/optional. Use these from
+  `OperationInitProvider.GetOperationFormFields` and
+  `ConfigValidationProvider.GetRequiredFormFields`.
+- `CreateSelectOptions(values []string)` /
+  `CreateSelectOptionsWithLabels(map[string]string)` — build
+  `[]irminmodels.SelectOption` for dropdown fields populated at
+  runtime (e.g. fetching a list of databases to choose from).
+- `CapabilitiesToOperationTypes(caps)` — maps
+  `[]irminmodels.ConnectorCapability` to the string operation-type
+  identifiers (`"pull"`, `"push"`, `"patch"`, `"subscribe"`).
+- `ConvertFormFieldsToMaps(fields)` — splits a flat
+  `details[*]` / `settings[*]` form into the two `map[string]any`
+  blobs `ConfigValidationProvider.TestConnection` receives.
+- `LogOperationEvent(db, logger, operationID, eventType, message, data)` —
+  appends a structured row to the operation's log so the console
+  can show progress / errors. Use this from any provider that
+  wants finer-grained progress reporting than the implicit
+  start/finish bookends.
+
+## Unsupported operations
+
+If a connector doesn't implement a capability, return the matching
+`HandleNotSupported*` so callers get a uniform 405 response:
 
 ```go
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
 	return common.HandleNotSupportedPatch(c)
 }
 ```
+
+There are matching `HandleNotSupportedPull`, `HandleNotSupportedPush`,
+and `HandleNotSupportedSchemaGet` for the other capabilities.
 
 ## Automatic Route Registration
 
@@ -164,3 +326,141 @@ Routes are created automatically based on connector capabilities:
 - `POST /operation/subscribe` (ConnectorCapabilityPatchEvent)
 
 See existing connectors (MySQL, PostgreSQL, SFTP) for implementation examples.
+
+## OAuth Connectors
+
+The package includes an embeddable OAuth base for connectors that
+authenticate via OAuth 2.0 + PKCE rather than static credentials.
+Static-credential connectors can also embed it (with `Config: nil`)
+to keep the controller shape uniform — the helpers no-op cleanly.
+
+For the conceptual background — why per-call token fetch, static
+client vs DCR, the wire flow — see
+[`guides/oauth-connectors.md`](../../guides/oauth-connectors.md).
+This section is the API reference.
+
+### `OAuthConnector` (oauth_base.go)
+
+Embeddable struct that holds the per-process `lib.OAuthTokenClient`
+and the connector's declared `ConnectionOAuthConfig`.
+
+```go
+type Controllers struct {
+    *common.Controllers
+    *common.OAuthConnector
+}
+
+func NewControllers(app *models.ConnectorsApp) *Controllers {
+    return &Controllers{
+        Controllers:    common.NewControllers(app),
+        OAuthConnector: common.NewOAuthConnector(app, config.GetConnectorInfo().ConnectionOAuthConfig),
+    }
+}
+```
+
+`NewOAuthConnector` reads `IRMIN_API_BASE_URL` + `IRMIN_API_TOKEN`
+from the app's environment to wire the underlying token client. Pass
+`nil` for `Config` if your connector is static-credential — the
+helpers stay safe and Info-stamping is skipped.
+
+**Methods:**
+
+- `ResolveAccessToken(c fiber.Ctx) (*lib.VendorAccessToken, error)` —
+  reads `X-Irmin-Connection-Id` and asks Core for a fresh vendor
+  access token. Returns `lib.ErrMissingConnectionHeader` if the
+  header is absent, `lib.ErrNotConnected` / `lib.ErrRefreshRejected`
+  if the user needs to reconnect, `lib.ErrCoreUnavailable` if Core
+  is down, or `ErrOAuthNotConfigured` if the embed has `Config: nil`.
+- `ForceRefreshAccessToken(c fiber.Ctx) (*lib.VendorAccessToken, error)` —
+  same but asks Core to rotate unconditionally. Used internally by
+  the round-tripper retry; rarely called directly.
+- `WriteResolveError(c fiber.Ctx, err error) error` — sentinel→HTTP
+  mapping every OAuth connector should use. See the table below.
+- `ResolveOrWriteError(c fiber.Ctx) (*lib.VendorAccessToken, bool)` —
+  one-shot: returns `(token, true)` on success or writes the error
+  response and returns `(nil, false)`. Lets handlers stay flat.
+- `InjectInfoOAuthConfig(*models.ConnectorDetails)` — stamps the
+  declared OAuth config onto the `/info` response so the console
+  knows to render a Connect button. No-op when `Config` is nil.
+
+### `WrapHTTPClient` and `OAuthRoundTripper` (oauth_client.go)
+
+The recommended way to talk to a vendor API. `WrapHTTPClient` returns
+a new `*http.Client` whose `Transport` is an `OAuthRoundTripper`
+around the input client's transport. Preserves the input client's
+`Timeout`, `CheckRedirect`, `Jar`.
+
+```go
+func (cs *Controllers) OperationPull(c fiber.Ctx) error {
+    client := common.WrapHTTPClient(http.DefaultClient, cs.OAuthConnector, c)
+    req, _ := http.NewRequestWithContext(c.Context(), http.MethodGet,
+        "https://api.vendor.example/v1/items", http.NoBody)
+    resp, err := client.Do(req)
+    if err != nil {
+        return cs.WriteResolveError(c, err)
+    }
+    defer resp.Body.Close()
+    // ... shape resp.Body into Irmin's storage format ...
+}
+```
+
+The transport:
+1. Calls `OAuthConnector.ResolveAccessToken(c)` and stamps
+   `Authorization: Bearer …` on the request.
+2. On a vendor 401, calls `ForceRefreshAccessToken(c)`, re-stamps,
+   and retries **once**. After a single retry, a still-401 bubbles
+   up — the user revoked Irmin at the vendor and needs to reconnect.
+3. Buffers the request body once at entry so the retry can replay
+   it. Honors `req.GetBody` if you set it (preferred for streaming
+   bodies that shouldn't be buffered in memory).
+
+If you talk to a vendor SDK that holds its own `*http.Client`, wrap
+it the same way:
+
+```go
+sdkClient := vendor.NewClient(vendor.WithHTTPClient(
+    common.WrapHTTPClient(http.DefaultClient, cs.OAuthConnector, c),
+))
+```
+
+### Sentinel-to-HTTP mapping
+
+Both `WriteResolveError` and the round-tripper use the same mapping:
+
+| Sentinel | Status | JSON `code` |
+|---|---|---|
+| `lib.ErrNotConnected` | 428 Precondition Required | `oauth_not_connected` |
+| `lib.ErrRefreshRejected` | 428 Precondition Required | `oauth_refresh_rejected` |
+| `lib.ErrMissingConnectionHeader` | 400 Bad Request | `oauth_missing_connection_header` |
+| `common.ErrOAuthNotConfigured` | 500 Internal Server Error | `oauth_not_configured` |
+| `lib.ErrCoreUnavailable` | 502 Bad Gateway | `oauth_core_unavailable` |
+| anything else | 500 Internal Server Error | `oauth_error` |
+
+The console branches on `code`. The 428s are the signal that the
+user must reconnect — do not return 401 for these (401 means "the
+vendor rejected the call we just made", a different UX).
+
+### Testing — `commontest` subpackage
+
+`connectors/common/commontest/` ships reusable httptest fixtures so
+per-connector tests don't reinvent OAuth simulators.
+
+- **`NewFakeCore(t, systemToken, ...tokenSequence)`** — stands in
+  for Core's `/api/v1/system/oauth/access-token`. Honors
+  `force_refresh:true` by advancing through the seeded token
+  sequence; tracks `LazyCalls()` and `ForceCalls()` for assertions.
+- **`NewFakeVendor(t)`** — bare `httptest.Server` whose handler is
+  set per-test. Records the `Authorization` header on every inbound
+  request. Helper handlers:
+  - `RejectOnceThenAccept(body)` — the canonical "vendor revoked
+    mid-flight" scenario. First request returns 401; subsequent
+    requests return 200 with `body`.
+  - `AlwaysReject()` — terminal revocation. Useful for asserting the
+    base only retries once.
+
+Reference tests:
+- `connectors/common/oauth_base_test.go` — drives every scenario
+  through a real `fiber.App`. Copy the patterns wholesale.
+- `connectors/common/oauth_fake_vendor_test.go` — a complete fake
+  connector against the base in 99 LOC. Use it as the upper bound
+  on how much glue a new vendor connector should need.

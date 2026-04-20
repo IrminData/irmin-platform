@@ -166,7 +166,15 @@ calling and what's being done. Keep them distinct.
 - **Why this indirection**: Core is the single point of token refresh
   with row-locking. Connectors never cache, store, or refresh tokens
   themselves.
-- **Implementation**: use `lib.OAuthTokenClient` — don't roll your own.
+- **Implementation**: embed `*common.OAuthConnector` in your
+  controllers and call vendor APIs through `common.WrapHTTPClient`.
+  The wrapped client stamps the bearer on every outbound request and
+  transparently retries once on a vendor 401 after force-refreshing
+  the token. `lib.OAuthTokenClient` is the lower-level primitive the
+  base wraps; only call it directly if the round-tripper can't see
+  the call (e.g. WebSocket URLs with the bearer in a query param).
+  Full API reference in
+  [`connectors/common/README.md`](../connectors/common/README.md).
 
 ## Operations in detail
 
