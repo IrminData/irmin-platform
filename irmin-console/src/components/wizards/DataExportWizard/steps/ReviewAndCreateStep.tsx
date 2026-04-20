@@ -96,12 +96,7 @@ export default function ReviewAndCreateStep({
           <h3 className='mb-2 text-lg font-semibold'>
             {dict.wizard.reviewAndCreateExportWorkflow}
           </h3>
-          <p
-            className={`
-              text-sm text-gray-600
-              dark:text-gray-400
-            `}
-          >
+          <p className={`text-sm text-muted-foreground`}>
             {dict.wizard.reviewAndCreateExportWorkflowDescription}
           </p>
         </div>
@@ -110,12 +105,7 @@ export default function ReviewAndCreateStep({
       {/* Review Configuration */}
       <div className='space-y-6'>
         {/* Connection Information */}
-        <div
-          className={`
-            rounded-lg border p-4
-            dark:border-gray-800
-          `}
-        >
+        <div className={`rounded-[2px] border p-4`}>
           <h4 className='mb-3 font-medium'>{dict.wizard.exportDestination}</h4>
           <div className='space-y-2'>
             <div className='flex items-center gap-2'>
@@ -136,12 +126,7 @@ export default function ReviewAndCreateStep({
               <span className='text-sm font-medium'>
                 {dict.wizard.exportPath}:
               </span>
-              <span
-                className={`
-                  text-sm text-gray-600
-                  dark:text-gray-400
-                `}
-              >
+              <span className={`text-sm text-muted-foreground`}>
                 {wizardData.workflowData.export_to_connection_path}
               </span>
             </div>
@@ -149,12 +134,7 @@ export default function ReviewAndCreateStep({
         </div>
 
         {/* Repository Information */}
-        <div
-          className={`
-            rounded-lg border p-4
-            dark:border-gray-800
-          `}
-        >
+        <div className={`rounded-[2px] border p-4`}>
           <h4 className='mb-3 font-medium'>{dict.wizard.sourceRepository}</h4>
           <div className='space-y-2'>
             <div className='flex items-center gap-2'>
@@ -187,24 +167,14 @@ export default function ReviewAndCreateStep({
         </div>
 
         {/* Workflow Information */}
-        <div
-          className={`
-            rounded-lg border p-4
-            dark:border-gray-800
-          `}
-        >
+        <div className={`rounded-[2px] border p-4`}>
           <h4 className='mb-3 font-medium'>{dict.wizard.workflowDetails}</h4>
           <div className='space-y-2'>
             <div className='flex items-center gap-2'>
               <span className='text-sm font-medium'>
                 {dict.wizard.workflowName}:
               </span>
-              <span
-                className={`
-                  text-sm text-gray-600
-                  dark:text-gray-400
-                `}
-              >
+              <span className={`text-sm text-muted-foreground`}>
                 {wizardData.workflowData.name}
               </span>
             </div>
@@ -212,12 +182,7 @@ export default function ReviewAndCreateStep({
               <span className='text-sm font-medium'>
                 {dict.common.description}:
               </span>
-              <span
-                className={`
-                  text-sm text-gray-600
-                  dark:text-gray-400
-                `}
-              >
+              <span className={`text-sm text-muted-foreground`}>
                 {wizardData.workflowData.description}
               </span>
             </div>
@@ -226,12 +191,7 @@ export default function ReviewAndCreateStep({
                 <span className='text-sm font-medium'>
                   {dict.wizard.documentation}:
                 </span>
-                <span
-                  className={`
-                    text-sm text-gray-600
-                    dark:text-gray-400
-                  `}
-                >
+                <span className={`text-sm text-muted-foreground`}>
                   {wizardData.workflowData.documentation}
                 </span>
               </div>
@@ -241,12 +201,7 @@ export default function ReviewAndCreateStep({
                 <span className='text-sm font-medium'>
                   {dict.workflow.schedule.workflowSchedule}:
                 </span>
-                <span
-                  className={`
-                    text-sm text-gray-600
-                    dark:text-gray-400
-                  `}
-                >
+                <span className={`text-sm text-muted-foreground`}>
                   {wizardData.workflowData.schedule.triggers?.length ?? 0}{' '}
                   {dict.workflow.schedule.trigger}
                 </span>
@@ -258,12 +213,7 @@ export default function ReviewAndCreateStep({
 
       {/* Creation Progress */}
       {isCreating && (
-        <div
-          className={`
-            rounded-lg border p-4
-            dark:border-gray-800
-          `}
-        >
+        <div className={`rounded-[2px] border p-4`}>
           <h4 className='mb-3 font-medium'>
             {dict.wizard.creatingExportWorkflow}
           </h4>
@@ -272,7 +222,7 @@ export default function ReviewAndCreateStep({
               <div
                 className={`
                   size-2 rounded-full
-                  ${creationProgress.workflow ? 'bg-green-500' : 'bg-gray-300'}
+                  ${creationProgress.workflow ? 'bg-green-500' : 'bg-muted'}
                 `}
               />
               <span className='text-sm'>{dict.wizard.creatingWorkflow}</span>
@@ -281,12 +231,7 @@ export default function ReviewAndCreateStep({
         </div>
       )}
 
-      <div
-        className={`
-          border-t pt-4
-          dark:border-gray-800
-        `}
-      >
+      <div className={`border-t pt-4`}>
         <div className='flex gap-3'>
           <Button
             type='button'
@@ -302,7 +247,7 @@ export default function ReviewAndCreateStep({
             type='button'
             className='flex-1'
             size='lg'
-            variant='default'
+            variant='accent'
             onClick={handleCreate}
             disabled={isCreating}
             loading={isCreating}

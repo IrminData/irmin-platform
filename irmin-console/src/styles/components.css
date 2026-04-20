@@ -11,43 +11,24 @@
 }
 
 /* ============================================================================
-   BACKGROUND PATTERNS
-   ============================================================================ */
-.pattern-bg {
-  @apply bg-cover bg-fixed bg-center bg-no-repeat;
-  background-image: url('/ui-assets/elements/pattern-white.svg');
-}
-.dark .pattern-bg {
-  background-image: url('/ui-assets/elements/pattern-dark.svg');
-}
-
-/* ============================================================================
    DATA SHEET GRID
    ============================================================================ */
 .data-sheet-grid {
   font-size: 12px;
-  --dsg-border-color: #d9e1e6;
-  --dsg-selection-border-color: #5fa671;
-  --dsg-header-text-color: #444d51;
-  --dsg-header-active-text-color: #124559;
-  --dsg-cell-background-color: white;
-  --dsg-cell-disabled-background-color: white;
+  /* Create a stacking context so the body::after grain overlay doesn't
+     mix-blend through the grid's canvas. */
+  isolation: isolate;
+  --dsg-border-color: hsl(var(--border));
+  --dsg-selection-border-color: hsl(var(--accent));
+  --dsg-header-text-color: hsl(var(--muted-foreground));
+  --dsg-header-active-text-color: hsl(var(--foreground));
+  --dsg-cell-background-color: hsl(var(--card));
+  --dsg-cell-disabled-background-color: hsl(var(--muted));
   --dsg-corner-indicator-width: 10px;
-}
-.dark .data-sheet-grid {
-  --dsg-border-color: #12262f;
-  --dsg-selection-border-color: #aec3b0;
-  --dsg-header-text-color: #bbb2ae;
-  --dsg-header-active-text-color: #fff;
-  --dsg-cell-background-color: #01161e;
-  --dsg-cell-disabled-background-color: #01161e;
 }
 .data-sheet-grid .dsg-container {
   height: 100% !important;
-  color: #01161e;
-}
-.dark .data-sheet-grid .dsg-container {
-  color: white;
+  color: hsl(var(--foreground));
 }
 .data-sheet-grid .dsg-input {
   font-size: 12px;
@@ -59,12 +40,20 @@
 
 /* ============================================================================
    CODEMIRROR EDITOR
-   ============================================================================ */
-.cm-editor {
-  all: unset !important;
-}
+   ============================================================================
+   Previously `all: unset !important` was applied to `.cm-editor` — that
+   flattened every style CodeMirror itself ships, including the syntax
+   highlighter's token colors. Let CodeMirror's own theme render and
+   only override the focus ring (we draw our own focus via a parent
+   wrapper where relevant).
+*/
 .cm-editor.cm-focused {
   outline: none;
+}
+.codemirror-editor {
+  /* Isolate from body::after grain blend — keeps syntax-highlight colors
+     true rather than multiplied through the paper texture. */
+  isolation: isolate;
 }
 .codemirror-editor .cm-theme {
   height: 100%;
@@ -77,14 +66,10 @@
 /* --- Base Styles --- */
 .mdxeditor,
 .mdx-viewer {
-  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.6;
-  color: #333;
-}
-.dark .mdxeditor,
-.dark .mdx-viewer {
-  color: #ccc;
+  color: hsl(var(--foreground));
 }
 
 /* --- MDX Editor Specific --- */
@@ -148,14 +133,13 @@
 .mdx-viewer h4,
 .mdx-viewer h5,
 .mdx-viewer h6 {
-  color: #222;
+  color: hsl(var(--foreground));
   margin-bottom: 0.5em;
   line-height: 1.25;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.02em;
   @media screen and (max-width: 768px) {
     margin-bottom: 0.25em;
     line-height: 1;
-    letter-spacing: -0.05em;
   }
 }
 
@@ -234,7 +218,7 @@
 /* --- Link Styles --- */
 .mdxeditor a,
 .mdx-viewer a {
-  color: #1a73e8;
+  color: hsl(var(--accent));
   text-decoration: none;
 }
 .mdxeditor a:hover,
@@ -243,7 +227,7 @@
 }
 
 .mdx-viewer .prose a {
-  @apply text-primary hover:text-primary/80 underline transition-colors;
+  @apply text-accent underline underline-offset-4 decoration-1 hover:decoration-2 transition-[text-decoration-thickness];
 }
 
 /* --- List Styles --- */
@@ -273,40 +257,42 @@
 /* --- Blockquote Styles --- */
 .mdxeditor blockquote,
 .mdx-viewer blockquote {
-  border-left: 4px solid #ccc;
+  border-left: 1px solid hsl(var(--border));
   padding-left: 1em;
-  color: #666;
+  color: hsl(var(--muted-foreground));
   margin: 1em 0;
+  font-family: var(--font-display);
+  font-style: italic;
 }
 
 .mdx-viewer .prose blockquote {
-  @apply border-l-4 border-primary/30 bg-muted/20 pl-4 py-2 italic text-muted-foreground;
+  @apply border-l border-border pl-4 py-1 italic text-muted-foreground font-display;
 }
 
 /* --- Code Styles --- */
 .mdxeditor code,
 .mdx-viewer code {
-  font-family: 'Courier New', Courier, monospace;
-  background-color: #f5f5f5;
+  font-family: var(--font-mono);
+  background-color: hsl(var(--muted));
   padding: 0.2em 0.4em;
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 .mdx-viewer .prose code {
-  @apply bg-muted/50 text-muted-foreground px-1.5 py-0.5 rounded text-xs font-mono;
+  @apply bg-muted/50 text-muted-foreground px-1.5 py-0.5 rounded-[2px] text-xs font-mono;
 }
 
 .mdxeditor pre,
 .mdx-viewer pre {
-  font-family: 'Courier New', Courier, monospace;
-  background-color: #f5f5f5;
+  font-family: var(--font-mono);
+  background-color: hsl(var(--muted));
   padding: 1em;
   overflow-x: auto;
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 .mdx-viewer .prose pre {
-  @apply bg-muted/30 border border-border/30 rounded-lg p-4 overflow-x-auto;
+  @apply bg-muted/40 border border-border/60 rounded-[2px] p-4 overflow-x-auto;
 }
 
 /* --- Table Styles --- */
@@ -321,58 +307,14 @@
 .mdxeditor td,
 .mdx-viewer th,
 .mdx-viewer td {
-  border: 1px solid #ccc;
+  border: 1px solid hsl(var(--border));
   padding: 0.5em;
   text-align: left;
 }
 
 .mdxeditor th,
 .mdx-viewer th {
-  background-color: #f9f9f9;
-}
-
-/* --- Dark Mode Styles --- */
-.dark .mdxeditor h1,
-.dark .mdxeditor h2,
-.dark .mdxeditor h3,
-.dark .mdxeditor h4,
-.dark .mdxeditor h5,
-.dark .mdxeditor h6,
-.dark .mdxeditor p,
-.dark .mdx-viewer h1,
-.dark .mdx-viewer h2,
-.dark .mdx-viewer h3,
-.dark .mdx-viewer h4,
-.dark .mdx-viewer h5,
-.dark .mdx-viewer h6,
-.dark .mdx-viewer p {
-  color: #ccc;
-}
-
-.dark .mdxeditor a,
-.dark .mdx-viewer a {
-  color: #1a73e8;
-}
-
-.dark .mdxeditor blockquote,
-.dark .mdx-viewer blockquote {
-  border-left: 4px solid #666;
-  color: #ccc;
-}
-
-.dark .mdxeditor code,
-.dark .mdx-viewer code {
-  background-color: #333;
-}
-
-.dark .mdxeditor pre,
-.dark .mdx-viewer pre {
-  background-color: #333;
-}
-
-.dark .mdxeditor th,
-.dark .mdx-viewer th {
-  background-color: #333;
+  background-color: hsl(var(--muted));
 }
 
 /* ============================================================================

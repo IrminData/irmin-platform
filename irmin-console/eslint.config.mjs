@@ -114,7 +114,13 @@ export default tseslint.config(
         {
           ignore: [
             'scrollbar-hide',
-            'pattern-bg',
+            'dot-grid',
+            'dot-grid-dense',
+            'type-display',
+            'type-display-tight',
+            'type-mono-label',
+            'type-mono-small',
+            'link-underline',
             'data-sheet-grid',
             'codemirror-editor',
             'mdx-viewer',

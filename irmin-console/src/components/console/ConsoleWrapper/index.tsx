@@ -3,12 +3,12 @@
 import type { ComponentPropsWithoutRef } from 'react';
 import { useState } from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 
+import { Logo } from '@/components/Logo/Logo';
 import ConsoleSearch from '@/components/search/ConsoleSearch';
 import { Button } from '@/components/ui/button';
 import AuthenticationErrorHandler from '@/components/ui/error/AuthenticationErrorHandler';
@@ -168,25 +168,11 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                   `}
                 >
                   <Link href='/' aria-label='Go to website home page'>
-                    <Image
-                      className={`
-                        block h-[24px]
-                        dark:hidden
-                      `}
-                      src='/irmin-logo.svg'
-                      alt='Irmin logo'
-                      width={100}
-                      height={100}
-                    />
-                    <Image
-                      className={`
-                        hidden h-[24px]
-                        dark:block
-                      `}
-                      src='/irmin-logo-light.svg'
-                      alt='Irmin logo'
-                      width={100}
-                      height={100}
+                    <Logo
+                      className='
+                        text-[1.25rem]
+                        md:text-[1.35rem]
+                      '
                     />
                   </Link>
                 </div>
@@ -205,7 +191,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                   aria-controls='console-sidebar-wrapper'
                   onClick={() => setIsMenuFolded(!foldMenu)}
                   size={'icon'}
-                  variant={'link'}
+                  variant={'ghost'}
                 >
                   {foldMenu ? (
                     <TbChevronRight
@@ -419,27 +405,11 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                   ${foldMenu ? `lg:block` : `lg:hidden`}
                 `}
               >
-                <Image
-                  className={`
-                    block h-full max-h-4 object-contain
-                    md:max-h-6
-                    dark:hidden
-                  `}
-                  src='/irmin-logo.svg'
-                  alt='Irmin logo'
-                  width={100}
-                  height={26}
-                />
-                <Image
-                  className={`
-                    hidden h-full max-h-4 object-contain
-                    md:max-h-6
-                    dark:block
-                  `}
-                  src='/irmin-logo-light.svg'
-                  alt='Irmin logo'
-                  width={100}
-                  height={26}
+                <Logo
+                  className='
+                    text-[1.1rem]
+                    md:text-[1.25rem]
+                  '
                 />
               </div>
               <div

@@ -111,12 +111,7 @@ export default function ConfigureExportStep({
           <h3 className='mb-2 text-lg font-semibold'>
             {dict.wizard.configureExportSettings}
           </h3>
-          <p
-            className={`
-              text-sm text-gray-600
-              dark:text-gray-400
-            `}
-          >
+          <p className={`text-sm text-muted-foreground`}>
             {dict.wizard.configureExportSettingsDescription}
           </p>
         </div>
@@ -315,12 +310,7 @@ export default function ConfigureExportStep({
           />
         </div>
 
-        <div
-          className={`
-            border-t pt-4
-            dark:border-gray-800
-          `}
-        >
+        <div className={`border-t pt-4`}>
           <div className='flex gap-3'>
             <Button
               type='button'
@@ -335,7 +325,7 @@ export default function ConfigureExportStep({
               type='button'
               className='flex-1'
               size='lg'
-              variant='default'
+              variant='accent'
               onClick={handleSubmit(onSubmit)}
               loading={isSubmitting}
             >

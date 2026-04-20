@@ -30,7 +30,7 @@ export default function ReviewAndCreateStep({
     <div className='flex flex-col gap-4 px-4 py-8'>
       <div className='flex flex-col gap-2'>
         <h3 className='text-lg font-semibold'>{dict.common.view}</h3>
-        <div className='rounded-lg border bg-card p-4'>
+        <div className='rounded-[2px] border bg-card p-4'>
           <div className='space-y-2'>
             <div>
               <span className='font-medium'>{dict.common.name}:</span>
@@ -54,7 +54,7 @@ export default function ReviewAndCreateStep({
         <Button variant='secondary' onClick={goBack} className='flex-1'>
           {dict.common.back}
         </Button>
-        <Button variant='gradient' onClick={handleComplete} className='flex-1'>
+        <Button variant='accent' onClick={handleComplete} className='flex-1'>
           {dict.common.confirm}
         </Button>
       </div>

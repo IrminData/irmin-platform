@@ -50,11 +50,27 @@ const NotificationsButton = ({ profile }: { profile: User }) => {
       }}
     >
       <Popover>
-        <PopoverTrigger>
-          <TbBell
-            className='size-4 w-full opacity-60'
+        {/* asChild so PopoverTrigger doesn't inject its own styled <button>.
+            The wrapping <button> here stays borderless and borrows the
+            sidebar chrome styling of the ThemeSwitch beside it. Without
+            this the native button renders with user-agent default borders
+            on Chromium, which clashed against ThemeSwitch's ghost variant
+            and read as a grouped-bordered pair in the sidebar. */}
+        <PopoverTrigger asChild>
+          <button
+            type='button'
             aria-label='Notifications'
-          />
+            className={`
+              inline-flex size-10 cursor-pointer items-center justify-center
+              rounded-[2px] border-0 bg-transparent text-foreground
+              transition-colors duration-150
+              hover:bg-muted
+              focus-visible:outline-1 focus-visible:outline-offset-1
+              focus-visible:outline-accent/70
+            `}
+          >
+            <TbBell className='size-4 opacity-60' aria-hidden='true' />
+          </button>
         </PopoverTrigger>
         <PopoverContent className='h-[600px] w-[400px] p-0'>
           <Notifications

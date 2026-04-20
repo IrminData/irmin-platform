@@ -5,7 +5,7 @@ import { WorkspaceCardSkeleton } from '@/components/ui/loading/WorkspaceCardSkel
  * Mirror skeleton for `ManageWorkspacesSection` (the workspace selector).
  *
  * Real structure (see `src/components/workspace/ManageWorkspacesSection.tsx`):
- * - `pattern-bg h-full` background.
+ * - Full-height wrapper (background grain handled globally).
  * - `container mx-auto max-w-4xl px-4 py-16`.
  * - Header row: `DisplayTitle` + description paragraph on the left,
  *   "Create new workspace" button on the right (gradient, size sm).
@@ -20,7 +20,7 @@ import { WorkspaceCardSkeleton } from '@/components/ui/loading/WorkspaceCardSkel
  */
 export default function WorkspacesLoading() {
   return (
-    <div className='pattern-bg h-full'>
+    <div className='h-full'>
       <div className='relative container mx-auto max-w-4xl px-4 py-16'>
         {/* Header: title + description + create button */}
         <div

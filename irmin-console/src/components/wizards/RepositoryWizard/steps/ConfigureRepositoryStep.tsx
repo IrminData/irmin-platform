@@ -203,7 +203,7 @@ export default function ConfigureRepositoryStep({
         type='button'
         onClick={handleSubmit(handleCreate)}
         size='lg'
-        variant='gradient'
+        variant='accent'
         loading={createRepositoryMutation.isPending}
       >
         {dict.repository.createNewRepository}

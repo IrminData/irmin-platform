@@ -13,10 +13,7 @@ export default function AuthLayoutWrapper({
   return (
     <div
       id='auth-layout-wrapper'
-      className={`
-        pattern-bg relative overflow-hidden bg-background bg-cover bg-top
-        bg-no-repeat
-      `}
+      className='relative overflow-hidden bg-background'
     >
       <div
         className={`

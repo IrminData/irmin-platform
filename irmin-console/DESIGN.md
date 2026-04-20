@@ -1,684 +1,424 @@
-# Design System — Irmin
+# DESIGN.md — Irmin Console
 
-## Product Context
+**Concept.** The Console shares the **Almanac** visual system with the Irmin marketing site — cream paper + warm ink, a single lime accent, hairline rules, flat surfaces, Fraunces display + IBM Plex Sans body + IBM Plex Mono for labels and code. Any Console surface should read as a sibling page to the website: same fonts, same tokens, same hover behavior, same logo, same favicons.
 
-- **What this is:** Data warehouse and management platform with git-like versioning, workflow orchestration, and AI-powered analytics
-- **Who it's for:** Developers and data engineers who want GitHub-style workflows for data
-- **Space/industry:** Data platforms (peers: Snowflake, Databricks, MotherDuck, Supabase, Neon)
-- **Project type:** Web app / data dashboard with marketing site
+The Console is a tool. Structure, UX flows, interactive components, and data visualization carry the weight — motion stays minimal and functional. The website's `DESIGN.md` at `../irmin-website/DESIGN.md` is the canonical source for anything shared; this file captures Console-specific rules.
 
-## Aesthetic Direction
-
-- **Direction:** Industrial/Utilitarian with a developer-data focus
-- **Decoration level:** Minimal — typography and spacing do the work
-- **Mood:** Professional, technical, trustworthy. GitHub for data. Not flashy, not corporate. Feels like a tool built by engineers for engineers.
-- **Reference sites:** Supabase (dark mode benchmark), Neon (developer aesthetic), GitHub (information density)
+**Who it's for.** Developers and data engineers running Irmin as their data platform. Reference siblings: GitHub, Supabase, Neon — density, precision, no flash.
 
 ## Typography
 
-- **Display/Hero:** Geist Sans bold — condensed display faces fight readability in a dense data-platform UI. Bold weight + tight tracking carries the hierarchy without a second typeface.
-- **Body:** Geist Sans — clean geometric sans-serif, excellent readability at 14px
-- **UI/Labels:** Geist Sans (same as body)
-- **Data/Tables:** Geist Sans with tabular-nums feature, or Geist Mono for code/IDs
-- **Code:** Geist Mono
-- **Serif accent:** Lora — for blockquotes, testimonials, editorial content
-- **Loading:** Self-hosted variable fonts via Next.js localFont
-- **Scale:** 11px (labels) / 12px (small) / 13px (compact UI) / 14px (body) / 16px (large body) / 18px (subtitle) / 24-30px (display, Geist Sans bold)
-- **Body base:** 14px, line-height 1.6
+| Role    | Family                                                  | Usage                                                                                  |
+| ------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Display | **Fraunces** (Google, variable: `opsz`, `SOFT`, `WONK`) | Page `<h1>` via `DisplayTitle`, the wordmark `<Logo />`, blockquotes. Rare on purpose. |
+| Sans    | **IBM Plex Sans** (Google)                              | Body, nav, buttons, form fields, table cells. Base **14 px** / line-height 1.6.        |
+| Mono    | **IBM Plex Mono** (Google)                              | Eyebrows, form labels, identifiers, cell numerics (`tabular-nums`), code, captions.    |
 
-## Color
+Fonts load via `next/font/google` in `src/app/layout.tsx` and expose three CSS variables: `--font-fraunces`, `--font-plex-sans`, `--font-plex-mono`. Tailwind aliases `font-display`, `font-sans`, `font-mono`. Legacy `font-main` / `font-serif` classes still resolve (aliased to Plex Sans and Fraunces respectively).
 
-### Approach
+**Scale.** 11 px mono label / 12 px small / 13 px compact UI / 14 px body / 16 px large body / 18 px subtitle / 24–30 px display via `DisplayTitle`. Data tables and metadata panels live at 13–14 px. Use fixed sizes — fluid `clamp()` type belongs in editorial hero contexts, not the app.
 
-Restrained — blue primary (HSL 197) plus green accent (HSL 137), with neutral teal for secondary surfaces. One warm amber and one violet reserved for chart differentiation only.
+**Utilities** (in `src/styles/utilities.css`):
 
-### Primary — Irmin Blue
+- `.type-display` / `.type-display-tight` — Fraunces axis settings, hero scale.
+- `.type-mono-label` — 11 px uppercase mono, 0.14em tracking. Always for form labels, eyebrows, column headers.
+- `.type-mono-small` — 12 px mono, normal case. Captions, meta.
+- `.link-underline` — accent underline that scales on hover/focus.
 
-| Stop | HSL            | Usage                             |
-| ---- | -------------- | --------------------------------- |
-| 100  | 197, 100%, 90% | Light backgrounds, hover          |
-| 200  | 197, 65%, 81%  | Light borders, subtle highlights  |
-| 300  | 197, 49%, 68%  | Disabled states                   |
-| 400  | 197, 29%, 44%  | Secondary text on light           |
-| 500  | 197, 67%, 27%  | **Primary actions, links, brand** |
-| 600  | 197, 67%, 20%  | Hover states for primary          |
-| 700  | 197, 67%, 14%  | Active states                     |
-| 800  | 197, 67%, 10%  | Dark surfaces                     |
-| 900  | 197, 67%, 4%   | Near-black                        |
+Always use `DisplayTitle` over inlining `<h1 className="text-3xl font-bold">`.
 
-### Accent — Irmin Green
+## Color — `src/styles/theme.css`
 
-| Stop | HSL               | Usage                                  |
-| ---- | ----------------- | -------------------------------------- |
-| 100  | 137, 20%, 94%     | Success backgrounds, light fills       |
-| 200  | 137, 20%, 88%     | Hover on success elements              |
-| 300  | 137, 22%, 82%     | Borders on success states              |
-| 400  | 137, 25%, 76%     | Subtle active indicators               |
-| 500  | **137, 35%, 50%** | **Success badges, active branch tags** |
-| 600  | **137, 35%, 42%** | **Commit buttons, primary accent CTA** |
-| 700  | **137, 35%, 34%** | **Accent hover states**                |
-| 800  | 137, 25%, 26%     | Dark accent surfaces                   |
-| 900  | 137, 25%, 18%     | Near-black accent                      |
+Cream paper canvas (light) or warm ink canvas (dark), with **one** sharp accent: **acid lime**. No gradients. No secondary accents. No colored backgrounds on sections — cards separate via hairline rules, not fills.
 
-Rationale: Steps 100-400 stay at 20% saturation for subtle backgrounds. Steps 500-700 jump to 35% so success states and CTAs pop. Steps 800-900 ease back to 25%.
+```
+Light:
+  --background  42 30% 95%    /* warm paper */
+  --foreground  180 10% 10%   /* ink */
+  --accent      72 80% 32%    /* acid lime (AA on cream) */
+  --card        42 28% 97%
+  --muted       42 18% 87%    /* one step darker than bg — visible on cream */
+  --border      42 12% 78%    /* warm; hairlines read against paper */
 
-### Neutrals
+Dark:
+  --background  170 8% 6%     /* warm near-black */
+  --foreground  42 28% 92%    /* paper */
+  --accent      72 88% 62%    /* same lime, nudged brighter */
+  --card        170 8% 9%
+  --muted       170 6% 12%
+  --border      170 6% 16%
+```
 
-- **Irmin Teal** — HSL 197 at 18% saturation, lightness 90→10 (100→900).
-- **Irmin Black** — HSL 197 at 90–100% saturation, lightness 83→1 (100→900). Dark surfaces, deep backgrounds.
+**Console override — muted / border are tuned one notch stronger on light than the website.** The marketing site's paper aesthetic reads well with barely-there borders because each section already carries a `§` number and generous padding. In-app tables, search fields, and skeletons have none of that — they need a visible baseline or they dissolve into the cream canvas. We keep the same cream/ink intent; we just push muted/border contrast up by ~3-5% lightness on light mode. Dark mode values match the website.
 
-### Semantic Colors
+Every surface pulls from semantic tokens (`bg-background`, `bg-card`, `text-foreground`, `border-border`, `text-accent`), so both themes work without branching code.
 
-- **Success:** Irmin Green 500–600
-- **Warning:** HSL(45, 93%, 47%) — amber
-- **Error/Destructive:** HSL(0, 84%, 66%) light / HSL(0, 84%, 37%) dark
-- **Info:** Irmin Blue 300–400
+**Chart palette.** Five distinct hues tuned for cream/ink, harmonized with lime. Exact values in `--chart-1` through `--chart-5`.
 
-### Chart Palette
+| Chart | Light HSL     | Dark HSL      | Role                       |
+| ----- | ------------- | ------------- | -------------------------- |
+| 1     | `72 70% 38%`  | `72 80% 58%`  | Lime-olive (accent anchor) |
+| 2     | `200 55% 40%` | `200 60% 58%` | Slate-teal                 |
+| 3     | `25 75% 48%`  | `25 80% 62%`  | Rust                       |
+| 4     | `280 35% 50%` | `280 45% 68%` | Plum                       |
+| 5     | `42 30% 40%`  | `42 30% 62%`  | Warm brown                 |
 
-| Chart | HSL           | Name   | Role                       |
-| ----- | ------------- | ------ | -------------------------- |
-| 1     | 197, 67%, 55% | Blue   | Primary brand, brightened  |
-| 2     | 137, 35%, 55% | Green  | Accent, boosted saturation |
-| 3     | 32, 80%, 58%  | Amber  | Warm contrast hue          |
-| 4     | 280, 40%, 60% | Violet | Max hue separation         |
-| 5     | 197, 30%, 45% | Teal   | Secondary brand            |
+**Legacy `irmin-*` palette — aliased, not extended.** Pre-Almanac code used `bg-irmin-blue-500`, `text-irmin-green-700`, etc., across ~30 files. Those token names remain defined in `@theme inline` but now map to Almanac semantic tones (greens → lime, blues/teals → ink/paper neutrals, blacks → deep ink). Old call sites render in the new palette without a sweep. **New code must use semantic tokens.** Each legacy reference is a paper cut the next pass through the file should clean up.
 
-Five distinct hues, not monochromatic — data viz needs instant series separation.
+## Visual primitives
 
-### Theme tokens
+- **Grain overlay** — SVG fractal noise, `mix-blend-multiply` (light) / `overlay` (dark), 6 %/12 % opacity, fixed on `body::after`, non-interactive. Defined in `src/styles/base.css`.
+- **Dot grid** — `.dot-grid` / `.dot-grid-dense` radial-gradient utilities for empty states and hero backgrounds. Use sparingly — most empty regions belong to skeletons.
+- **Hairline rules** — 1 px `border-border` separates every section and every card. No fills, no shadows. `border-b border-border` is the workhorse.
+- **Radius** — `--radius: 0.125rem` (2 px). Minimal. Avatars and dots can go to `rounded-full`.
+- **Shadows** — **none.** No `shadow-*` classes anywhere. Lift via background (`bg-card` vs. `bg-background`). Reject on sight.
 
-Each mode defines one canonical value per semantic slot. Blue-tinted neutrals throughout — raw grays break cohesion (see Anti-patterns).
+## Logo
 
-| Token            | Light         | Dark          |
-| ---------------- | ------------- | ------------- |
-| Background       | `0 0% 100%`   | `197 94% 4%`  |
-| Card             | `0 0% 98%`    | `197 98% 10%` |
-| Muted            | `200 24% 93%` | `197 30% 11%` |
-| Muted foreground | `197 10% 40%` | `197 15% 52%` |
-| Border           | `197 15% 91%` | `197 66% 15%` |
+The wordmark is a single instance of **Fraunces** variable, locked at `opsz 60 · SOFT 20 · WONK 1 · wght 600` with tracking `-0.03em`, plus a single lime accent dot sized `0.32em` at `0.18em` trailing margin and `translateY(-0.08em)`. The recipe lives in [src/components/Logo/Logo.tsx](src/components/Logo/Logo.tsx) and every in-app rendering flows through it.
 
-See `src/styles/theme.css` for the full token set. Decisions Log carries the rationale for each value.
+Render with `<Logo />` everywhere in-app. It inherits `currentColor`, so it theme-flips without a light/dark variant — pass `className="text-[1.25rem]"` (or similar) to scale. For external/raster surfaces that need the mark without Fraunces loaded (OG images, Clerk theming, emails, decks) use the SVGs under `public/brand/`: wordmarks, icons, lockups (horizontal + vertical), avatars, favicons, and the standalone accent dot. The raster favicon pack lives at `public/brand/favicon/`.
+
+**Icon.** The lowercase `i` from the wordmark with its tittle replaced by the acid-lime dot. Use only on surfaces too small for the wordmark (favicons, app icons, tight chrome). Everywhere else, the wordmark is the right answer.
+
+**Do**
+
+- Render in-app via `<Logo />` so the mark inherits `currentColor`.
+- Keep the lime dot lime. One token, one value, rare by design.
+
+**Don't**
+
+- Don't rebuild the wordmark from a non-Fraunces font.
+- Don't recolor, darken, or desaturate the lime dot for contrast.
+- Don't stretch, skew, outline, or drop-shadow the logo.
+- Don't reintroduce the old Irmin blue/teal/green palette alongside the mark.
+
+### Name in copy — Irmin, not IRMIN
+
+The logotype is lowercase `irmin` because the Fraunces wordmark is rendered that way, not because the name is spelled lowercase.
+
+- **Prose, titles, metadata, alt text, schema.org `name`:** `Irmin`.
+- **Logotype, `<Logo />`, SVG paths:** stays `irmin`.
+- **Mono chrome** (eyebrows, footer colophon, avatar labels): lowercase `irmin` is allowed as a design register.
+- **URLs, package names, code identifiers, domains:** lowercase (`irmin.app`, `github.com/irmin-co`).
+- **Never `IRMIN` (all caps).** Reads as an acronym. Fix on sight.
+
+## Motion principles
+
+Minimal-functional. Motion clarifies cause and effect; it never performs.
+
+- **Durations.** `duration-75` (50 ms micro) / `duration-150` (short, hover default) / `duration-200` (buttons) / `duration-300` (drawers, sheets).
+- **Easing.** `ease-out` for entries, `ease-in` for exits, `ease-in-out` for reversible (sidebar fold). Tailwind default for micro color/opacity flips.
+- **Transition properties.** List them explicitly — never `transition-all` / bare `transition`. Canonical: `transition-[color,background-color,border-color] duration-150`.
+- **`prefers-reduced-motion: reduce`** honored globally in `base.css` (durations clamp to 0.01 ms). Don't override per-component.
+- **Scope.** Motion clarifies cause and effect: hover, focus, drawer open, sidebar fold, skeleton pulse. Nothing decorative.
 
 ## Spacing
 
-- **Base unit:** 4px
-- **Density:** Compact — this is a data platform, information density matters
-- **Scale:** 2xs(2px) xs(4px) sm(8px) md(16px) lg(24px) xl(32px) 2xl(48px) 3xl(64px)
-- **Card padding:** 20-24px (p-5 or p-6)
-- **Input padding:** 8-12px horizontal
-- **Table cell padding:** 10-12px
+Density is the Console's differentiator.
 
-## Layout
+- **Base unit:** 4 px. Scale `xs(4) sm(8) md(16) lg(24) xl(32) 2xl(48) 3xl(64)`.
+- **Card padding:** 20–24 px (`p-5` / `p-6`).
+- **Table cell padding:** 10–12 px.
+- **Input padding:** underline-only collapses horizontal padding; labels sit above.
+- **App layout:** sidebar (240–280 px) + main content; full width inside `<main>`.
+- **Prose** (docs, help surfaces): `max-w-prose` (~68ch).
 
-- **Approach:** Grid-disciplined — consistent columns, predictable alignment
-- **Grid:** Sidebar (240-280px) + main content area
-- **Max content width:** 1200px for marketing, full-width for app
-- **Border radius:** sm(4px) md(8px/0.5rem) lg(12px) xl(16px) full(9999px for badges/pills)
+Content spacing lives in page-level layouts — the Console has no global section-padding token.
 
-## Motion
+## Form fields
 
-- **Approach:** Minimal-functional — transitions that aid comprehension only
-- **Duration:** micro(50-100ms) short(150ms) medium(250ms)
-- **Hover transitions:** 100-150ms for color/opacity changes
-- **No decorative animations** in the app UI. Save expressive motion for marketing site.
-- **Respect `prefers-reduced-motion` globally.** `base.css` caps `animation-duration` and `transition-duration` to 0.01ms site-wide when the user opts in. Components inherit this — don't override per-component.
+All form fields use an **underline-only** treatment — no boxed inputs, no rounded corners, no filled backgrounds. Single `border-b border-input` hairline; `focus:border-accent` flips it lime. Padding is `py-2.5`, `px-0`.
 
-### Easing
+- **Inputs** — [src/components/ui/input.tsx](src/components/ui/input.tsx). The Console `Input` retains the existing `icon`, `loading`, and `longtext` props so in-app callers don't break. The wrapper owns the underline + focus treatment; inner `<input>` stays unstyled.
+- **Textareas** — [src/components/ui/textarea.tsx](src/components/ui/textarea.tsx). Same underline + `field-sizing: content` + `min-h-24`. **Do not hard-code `rows={N}`** — a fixed `rows` attr defeats content sizing and leaves a floating gap above the next element.
+- **Labels** — `.type-mono-label`, above the field. Not inside (no floating labels), never placeholder-only.
+- **Required mark** — `*` suffixed to the label, `text-accent`.
+- **Error state** — `aria-invalid:border-destructive` on the field + `role="alert"` destructive text below.
+- **Exception — data-sheet grid.** Cell editors in `react-datasheet-grid` need a visible box for edit affordance. Pass a `className` on the wrapper to reintroduce `border border-input` + `bg-card` — those are functional overrides, not aesthetic.
 
-Split by what's moving. Rule of thumb: if the user can perceive _direction_ in the motion, name the easing.
+## Button chrome
 
-- **Micro** (color, opacity, shadow — anything non-positional ≤ 150ms): Tailwind default `ease`. At that duration the curve is imperceptible.
-- **Movement** (transform, width, margin, translate — anything that moves in space): name the easing.
-  - Enter (appearing, expanding, translating in): `ease-out`
-  - Exit (disappearing, collapsing, translating away): `ease-in`
-  - Reversible move (sidebar fold, drawer slide, hamburger morph): `ease-in-out`
+All interactive buttons use the shared `Button` component — [src/components/ui/button.tsx](src/components/ui/button.tsx). Key rules:
 
-## Component Library
+- **Cursor** — always `cursor-pointer` on native `<button>`. Tailwind class, not browser default.
+- **Disabled** — `disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed`.
+- **Focus ring** — `focus-visible:outline-1 outline-accent/70 outline-offset-1`. Softer than the website's 2 px offset 2 ring; at Console density an aggressive halo wraps half the chrome on screen (tabs, icon buttons).
+- **Transition** — explicit: `transition-[color,background-color,border-color,transform] duration-150 ease-out`.
+- **Radius** — `rounded-[2px]` across all variants.
+- **Scale on press** — `active:scale-[0.96]`, disabled on `disabled` state.
+- **No global `border` in the base** — the base class does NOT reserve a 1 px stroke. Each variant that wants a visible border adds `border border-<color>` explicitly. This keeps `ghost`, `link`, and the theme/fold icon buttons truly borderless on cream — otherwise the base.css `border-color: var(--border)` fallback would bleed a tinted 1 px edge through.
 
-- **Base:** Radix UI primitives with shadcn/ui "new-york" style
-- **Variants:** CVA (Class Variance Authority) for button/badge/input variants
-- **Icons:** Lucide
-- **52+ custom UI components** built on the Radix + CVA foundation
+| Variant       | Idle                                           | Hover                     |
+| ------------- | ---------------------------------------------- | ------------------------- |
+| `default`     | Transparent, no border, foreground text        | Muted bg                  |
+| `outline`     | Transparent, hairline border, foreground text  | Muted bg, stronger border |
+| `secondary`   | Secondary bg, no visible border                | Muted bg                  |
+| `accent`      | Lime bg, accent-fg text, accent border         | Slight opacity drop       |
+| `ghost`       | Transparent, no border                         | Muted bg                  |
+| `link`        | Underlined, accent decoration 1 px, no border  | Thickness → 2 px          |
+| `destructive` | Destructive bg, destructive border             | Slight opacity drop       |
+| `gradient`    | _legacy alias_ — renders identical to `accent` |                           |
+| `gray`        | Card bg, no border                             | Muted bg                  |
+
+**Console override — `default` is quiet by default.** The website uses a solid `bg-foreground` fill on its default button. In-app, nearly every surface already carries chrome (cards, rows, table headers, list items, top-nav action bars). Layering a bordered/filled button on top of that stack produces pill-grids that read as visual noise. The Console's `default` is therefore borderless and transparent at idle with only a `hover:bg-muted` state. Pick variants deliberately:
+
+- `default` or `ghost` — almost everything. Inline text actions, nav items, icon buttons.
+- `outline` — when the button needs to read as a tappable container (a primary form action without brand weight).
+- `accent` / `gradient` — brand-forward CTAs (Create, Commit, Save).
+- `destructive` — dangerous actions.
+
+One button → one variant. If you catch yourself wanting a bordered + filled pill for a tertiary action, pick ghost and let the surrounding structure carry the affordance.
+
+Sizes: `sm` (h-9 · px-4) / `default` (h-10 · px-5) / `lg` (h-12 · px-7) / `icon` (size-10). `iconFirst` controls flex direction. For navigation, always pass `href` to `Button` (it renders as `<Link>`); never nest `<Link>` around a `Button` (invalid HTML).
+
+## Responsiveness
+
+Mobile-first. Console layouts must render cleanly from 375 px up, expose the sidebar at `md ≥ 48rem` (768 px), and take full advantage of wider rows at `lg ≥ 64rem` (1024 px) and beyond.
+
+**Breakpoints** (Tailwind defaults, confirmed against `src/styles/theme.css`):
+
+- `sm` 40rem · rarely used, mobile variance only
+- `md` 48rem · tablet — sidebar emerges
+- `lg` 64rem · desktop baseline
+- `xl` 80rem · generous desktop
+- `2xl` 86rem · upper bound
+
+Use `md:` / `lg:` to step up from mobile defaults. Avoid `sm:` overrides on desktop defaults.
 
 ## Accessibility
 
-Non-negotiable. Every component ships with these rules satisfied.
+Non-negotiable. Every PR passes these.
 
 ### Semantic HTML first
 
-Reach for the right element before reaching for ARIA:
-
-- `<button>` triggers actions; `<a>` / `<Link>` navigates to a URL. Never `<button onClick={router.push}>` — it breaks Cmd/Ctrl+click, middle-click, drag-to-tab.
-- `<input>` / `<select>` / `<textarea>` always with a real `<label>` or `aria-label` on the control.
-- HTML5 landmarks (`<header>` / `<nav>` / `<main>` / `<aside>` / `<footer>`) over `<div role="...">`.
-- `<table>` for tabular data; `<ul>` / `<ol>` for lists.
-
-Every console page has one `<main id="console-content">` (the root-layout skip link targets it). Sidebar is `<aside>`; link groups inside are `<nav aria-label="...">`.
+`<button>` for actions; `<a>` / `<Link>` for navigation. No `<button onClick={router.push}>`. No `<Link><button>` nesting. Use landmarks (`<header>`, `<nav>`, `<main>`, `<aside>`, `<footer>`).
 
 ### Focus
 
-- Every interactive element shows a visible focus ring: `focus-visible:ring-1 focus-visible:ring-ring`. Never `outline-none` without a replacement.
-- Use `focus-visible:` (keyboard-only) in Tailwind — the bare `focus:` prefix fires on mouse click too.
-- `focus-within:` for compound controls (wrapper gains focused styling when any child is focused).
-- Opening a modal: focus moves into it. Closing: focus returns to the trigger. Submit-with-errors: focus the first invalid field.
-- Don't build a focus trap unless you also ship Escape + focus return. Use Radix `Dialog` / `Popover` for real modals, or render as a disclosure region without claiming `role="dialog"`.
+Every interactive element carries a visible focus ring: `focus-visible:outline-2 outline-accent outline-offset-2`. Never `outline-none` without an equivalent replacement.
 
 ### ARIA — claim only what you implement
 
-- `role="dialog"` + `aria-modal` requires focus trap, Escape handler, focus return. Missing any → drop the role.
-- `aria-controls` target must exist when the attribute is set. Gate the attribute on the controlled element's render condition, not on "popup visible".
-- `role="listbox"` contains only `option` or `group` children. Loading skeletons, empty states, footer buttons belong outside.
-- `role="combobox"` requires `aria-expanded`, `aria-controls`, `aria-autocomplete`, and — if implemented — `aria-activedescendant`.
-
-### Icons & images
-
-- Decorative icon adjacent to a text label: `aria-hidden="true"`.
-- Icon-only button or link: `aria-label` describing the action.
-- Icon inside a button that also has text: `aria-hidden="true"` on the icon.
-- `<img>` / `<Image>`: always `alt`. Decorative is `alt=""` (NOT missing). Informational describes the meaning in context, not "image of X".
-- Inline SVG component: `aria-hidden="true"` if decorative, `role="img" aria-label="..."` if informational.
+`role="dialog"` requires focus trap + Escape + focus return. `aria-controls` target must exist in the DOM. Icon-only button → `aria-label`. Decorative icon adjacent to text → `aria-hidden="true"`.
 
 ### Keyboard
 
-- Every mouse action works from a keyboard. Tab reaches every interactive element in visual order.
-- `tabIndex={0}` only on custom widgets that aren't natively focusable. `tabIndex={-1}` for programmatically-focusable-only elements.
-- Browser defaults handle Enter/Space on buttons — don't `preventDefault`.
-- Escape dismisses open overlays.
-- Arrow keys navigate inside compound widgets (tabs, listbox, menu) — only claim the role if you wire the keys.
+Arrow keys inside compound widgets (tabs, listbox, menu, combobox). Escape dismisses overlays. Tab order matches visual order.
 
 ### Heading hierarchy
 
-- One `<h1>` per page (`DisplayTitle` renders it).
-- Levels hierarchical — no skipping `<h1>` → `<h3>`.
-- `scroll-margin-top` on any heading that can be a hash-anchor target. `DisplayTitle` bakes `scroll-mt-20`.
+One `<h1>` per page via `DisplayTitle`, then `<h2>` / `<h3>`. No skipping levels.
 
 ### Translations include ARIA
 
-All user-visible text — **including `aria-label`, `title`, live-region text, and `sr-only` spans** — lives in `dict`. Finnish users hear Finnish. Validate with `pnpm dict:validate`.
+Every `aria-label`, `title`, `alt`, and error string flows through the dictionary (`useLocale().dict`). Hardcoded English fails review.
 
 ### Hover & interactive states
 
-- Every interactive element has a `hover:` state that visibly shifts contrast (color, background, shadow, translate). No imperceptible shade swaps.
-- Active/pressed: slightly darker/compressed, ~100ms.
-- Disabled on native elements: `disabled` attribute + reduced opacity + `cursor-not-allowed`. On `<a>` / `<Link>` (no native `disabled`): `aria-disabled="true"` + `tabIndex={-1}` + `pointer-events-none`.
+Every interactive element has a visible `hover:` state shift. Transition uses explicit property lists, never `transition-all`.
 
 ### Touch
 
-- Minimum 44×44px hit target on mobile.
-- `touch-action: manipulation` on interactive elements removes iOS's 300ms double-tap delay.
-- Pad the button, not the icon inside it — hit target is the button's bounding box.
+44 × 44 minimum hit target on mobile. `touch-action: manipulation` on interactive elements to remove the 300 ms delay.
 
-## Forms
+### Contrast
 
-The most failure-prone UI surface. Every form follows these rules.
-
-### Inputs
-
-- `autoComplete` on every text input. Standard values: `email`, `current-password`, `new-password`, `given-name`, `organization`, `url`, `one-time-code`.
-- Meaningful `name` (`name="email"`, not `name="input-1"`).
-- `type` matches content: `email` / `tel` / `url` / `number` / `search`. Ships the right mobile keyboard automatically.
-- `inputmode` when `type` isn't enough (numeric PIN: `type="text" inputmode="numeric"`).
-- `spellCheck={false}` on emails, URLs, codes, usernames, API tokens, file paths.
-- Never block paste. `onPaste` + `preventDefault` is hostile to password-manager users.
-- `autoComplete="off"` on non-auth search fields (stops password managers from attempting to fill).
-- `autoFocus` sparingly — desktop only, one primary input per page, never on mobile.
-
-### Labels
-
-- Every input gets a real `<label htmlFor>`. `aria-label` only when a visible label isn't appropriate (compact toolbar controls).
-- Placeholder is NOT a label. It disappears on focus — user loses context mid-type. Use a real label above + placeholder for format/example.
-- Checkbox / radio: wrap with `<label>` or use `htmlFor` — no dead zones between control and text.
-
-### Validation
-
-- Errors inline, next to the offending field. Not a toast, not a top banner.
-- On submit: focus the first invalid field.
-- Error copy includes the fix: `"Email address is invalid — check for typos after the @"` > `"Email invalid"`.
-- Server-side per-field errors surface at the field, not in a generic alert.
-
-### Submit
-
-- Button stays enabled until the request starts. Pre-disabling on `!isValid` hides _why_ the button won't work.
-- During the request: spinner inside the button, button disabled, form locked.
-- On error: re-enable, surface the error, keep the form state.
-- On success: clear feedback + advance the flow.
-
-### Placeholders
-
-- End with `…`. `"e.g., sk-1a2b…"`, `"Search data and more…"`.
-- Show the pattern, not the field name. The label already names the field.
-
-### Unsaved changes
-
-- Any form representing persistent state warns before navigation-away with unsaved changes (router guard or `beforeunload`).
-
-### Dark mode native `<select>`
-
-- `base.css` globally sets explicit `background-color` + `color` so Windows dark mode doesn't render white-on-white. Don't override per-select.
-
-## Images
-
-- **`<Image>` over `<img>`** wherever possible — handles width/height, lazy-loading, AVIF/WebP.
-- **Explicit `width` + `height`** (or `fill` + sized container). Prevents CLS.
-- **`alt` on every image.** Decorative: `alt=""`. Informational: describe meaning in context.
-- **`priority`** on the single critical above-the-fold image per page. Not on every hero.
-- **`loading="lazy"`** is the default for `<Image>` — keep it.
-- **Aspect ratio reserved** during load via dimensions or `aspect-ratio` CSS. No layout shift when the image swaps in.
+Cream/ink/lime palette passes AA at the token level. Large-text-only exception for `text-accent` on cream — **do not** use accent for body copy.
 
 ## Content & Copy
 
-Voice and micro-typography across marketing, in-app, tooltips, errors, empty states.
-
 ### Voice
 
-- **Active voice.** "Install the CLI" > "The CLI can be installed".
-- **Second person.** "You can invite teammates" > "Users can invite teammates".
-- **Specific button labels.** "Save API Key" > "Submit".
-- **Numerals for counts.** "8 deployments" > "eight".
-- **Title Case for buttons and page headings.** Sentence case in body.
-- **`&` over "and"** in space-constrained UI (e.g., "API & MCP"); regular "and" in body copy.
-- **First-person-plural or passive for errors.** "We couldn't reach the server" / "Server didn't respond" — never "You did something wrong".
+Console copy is functional, precise, second-person — the voice of a tool.
+
+- Active voice: "Save changes" not "Changes can be saved".
+- Second person: "You control the schema".
+- Specific button labels: "Request access" / "Run query" — never "Submit" / "OK".
+- No marketing clichés: ban "unlock", "leverage", "seamlessly", "game-changing".
 
 ### Typography micro-rules
 
-- **Ellipsis `…` (U+2026), never `...`.** Loading: `"Saving…"`. Placeholders: `"Search…"`. Truncation: `"Long title…"`.
-- **Curly quotes `" "` `' '`** in prose, not straight `" "` `' '`. Code stays straight.
-- **Non-breaking spaces** between values that shouldn't wrap:
-  - Units: `10&nbsp;MB`, `3.5&nbsp;GB`, `200&nbsp;ms`
-  - Shortcuts: `⌘&nbsp;K`, `Ctrl&nbsp;K`
-  - Brand name + model: `Anthropic&nbsp;Claude`, `OpenAI&nbsp;GPT-5`
-- **`text-wrap: balance`** on headings (baked into `DisplayTitle`).
-- **`tabular-nums`** on number columns (Typography section).
+- **Title Case** for buttons and page headings; **sentence case** in body.
+- **`&` over `and`** in UI labels ("API & MCP"); full word `and` in body copy.
+- **Ellipsis `…` (U+2026)**, never `...`.
+- **Curly quotes `" "` / `' '`** in prose; straight in code.
+- **Non-breaking spaces** between values and units (`10&nbsp;MB`, `200&nbsp;ms`), shortcut modifiers (`⌘&nbsp;K`), brand names (`Anthropic&nbsp;Claude`).
+- **`text-wrap: balance`** on display titles (default in `DisplayTitle`).
+- **`tabular-nums`** on anything numeric that changes in place.
 
 ### Empty states
 
-Tell users (a) what this is, (b) why it's empty, (c) the next step. "No repositories yet. Create your first to start versioning data." Primary action button on every empty state that has a sensible next step.
+Say what's missing and what to do. "No workflows yet — create one" beats "Nothing here". Pair with a primary CTA.
 
 ### Loading copy
 
-Verb + object + `…`: `"Loading workspaces…"`, `"Running query…"`. Never just `"Loading…"` when you know what's loading.
+If a spinner carries text, make it specific: "Fetching schema…" not "Loading…". Spinner-only is fine for sub-200 ms hits.
 
 ### Dates, numbers, identifiers
 
-- Every date through `Intl.DateTimeFormat(locale)`. Never hardcode `"Jan 5, 2026"` — wrong in Finnish (`5. tammikuuta 2026`).
-- Every displayed number through `Intl.NumberFormat(locale)`. Thousands separators differ: `1,234,567` (en) vs `1 234 567` (fi).
-- Identifiers stay raw. Slugs, UUIDs, commit SHAs: wrap with `<span translate="no">` so browser auto-translation doesn't mangle them.
+- Dates: `Intl.DateTimeFormat(locale)`.
+- Numbers: `Intl.NumberFormat(locale)`.
+- Identifiers (slugs, UUIDs, commit SHAs): wrap in `<span translate="no">` so browser translation doesn't corrupt them.
 
 ### Error copy
 
-Error States section owns the primitive-choice rules. The copy rule across both: entity-specific over generic, include the fix, don't blame the user.
+Say what failed and what to try. Include the retry affordance. No stack traces in user-facing copy — those belong in Sentry.
+
+## Images
+
+- Every `<img>` / `next/image` / `<Media>` has an `alt`. Empty (`alt=""`) for decorative is fine; **missing** is not.
+- Informational images describe the meaning, not "image of X".
+- Every `<Image>` has explicit `width` / `height` to avoid CLS.
+- Reserve `priority` for the single above-the-fold critical image per page.
 
 ## Error States
 
-The console has a **three-tier error-boundary system** plus two query-specific primitives. Never hand-roll error UI — pick the right primitive and use it.
+Three-tier boundary system.
 
 ### Boundary tiers (catastrophic → local)
 
-| Tier             | Component                            | Triggers on         | Scope                                       |
-| ---------------- | ------------------------------------ | ------------------- | ------------------------------------------- |
-| 1 — catastrophic | `src/app/global-error.tsx`           | Root layout crashes | Whole document. Detects locale from URL.    |
-| 2 — route        | `src/app/[lang]/(console)/error.tsx` | Route segment crash | Console content area.                       |
-| 3 — section      | `<SafeComponent>` wrapping a subtree | Subtree crash       | Contained region; sidebar/nav stay mounted. |
+| Tier | Component                    | Scope                |
+| ---- | ---------------------------- | -------------------- |
+| 1    | `global-error.tsx`           | Whole document       |
+| 2    | `[lang]/(console)/error.tsx` | Console content area |
+| 3    | `<SafeComponent>`            | Contained region     |
 
-### Primitives
+### Primitives — `src/components/ui/error/`
 
-- **`CommonErrorDisplay`** — base UI (icon + title + description + retry/report/details). Pure; accepts a `translations` prop. Use only _outside_ `LocaleProvider` (e.g., `global-error.tsx`).
-- **`LocalizedErrorDisplay`** — wraps `CommonErrorDisplay` with `useCommonErrorTranslations`. Preferred for any in-provider call site.
-- **`SafeComponent`** — functional wrapper around `ErrorBoundary` to protect a subtree. `titleKey` / `descriptionKey` point at `dict.common.errors.*`.
-- **`ErrorBoundary`** — class-based React boundary. Keys are typed against `Dictionary['common']['errors']`; typos fail at compile time.
-- **`QueryError`** — for TanStack Query error states. Pass `error`, `onRetry={() => refetch()}`, optional `title` / `description`.
-- **`AuthenticationErrorHandler`** — auth/profile errors. Mounted inside layouts (`(console)/ConsoleWrapper` around `<main>`, `(authentication)/layout.tsx` around its children). Reads `authError` from `IAMContext`. Never mount at provider level — it wipes the app shell on every profile-fetch blip.
-
-### Copy rules
-
-- All user-facing error strings live in `dict.common.errors.*`; mutation alerts under `dict.common.errors.mutations.*` (one entry per CRUD verb × domain).
-- No hardcoded English fallbacks: `error.message ?? dict.common.errors.mutations.deleteRepositoryFailed`, never `error.message ?? 'Failed to delete repository'`.
-- See Content & Copy for the cross-cutting voice rules (entity-specific over generic, include the fix, don't blame the user).
-
-### Decision tree
-
-1. Is this a **TanStack Query error state**? → `<QueryError error={query.error} onRetry={() => query.refetch()} />`.
-2. Is this a **React rendering crash** I want to contain to a region? → Wrap with `<SafeComponent level='section' titleKey='...' descriptionKey='...'>`.
-3. Is this a **mutation error** that should toast? → `irminAlert('error', error.message ?? dict.common.errors.mutations.xxxFailed)`.
-4. Is this an **auth/profile error** that should redirect or block the content area? → `IAMContext.authError` + the `AuthenticationErrorHandler` already mounted in the layout. Don't add a new one.
-5. **Outside a LocaleProvider** (server-side `global-error.tsx` etc.)? → `CommonErrorDisplay` with a manually constructed `translations` object.
-6. None of the above (building a new error UI)? → Stop. Compose `LocalizedErrorDisplay` instead.
+- `CommonErrorDisplay` — pure component; accepts `translations` (works outside `LocaleProvider`).
+- `LocalizedErrorHandler` — wraps the pure component with `useCommonErrorTranslations`.
+- `SafeComponent` — `ErrorBoundary` wrapper for subtrees.
+- `ErrorBoundary` — class-based React boundary.
+- `QueryError` — TanStack Query error state.
+- `AuthenticationErrorHandler` — mounted **inside** layouts (around `<main>`), not at the provider level. Provider-level mounting wipes the sidebar / search / theme toggle on a profile-fetch failure.
 
 ## Loading & Skeleton States
 
-**A skeleton is a promise — "content is coming, in this exact shape and position."** When it lies about shape or position the layout shifts on data arrival and the perceived-performance win evaporates. Get skeletons right or render nothing.
+### When to skeleton vs. spin vs. nothing
+
+- **Nothing** — static surfaces, pre-fetched data, SSR routes.
+- **Spinner** — transient user actions (form submit, save).
+- **Skeleton** — client-fetched surface that takes > 200 ms.
 
 ### Mirror principle
 
-Skeleton matches the real component on all four axes:
+A skeleton is a drop-in silhouette of the real thing:
 
-1. **Outer shape** — same width, padding, border, radius, shadow.
-2. **Internal rhythm** — same rectangles, same widths, same gaps. Real row `[icon 36px] [title 240px] [stats 4×32px] [chevron 16px]` → skeleton row of five rectangles at matching widths.
-3. **Responsive behavior** — stacks, hides columns, and reflows at the same breakpoints.
-4. **Count** — if the real list renders ~6 items, render 6 skeletons. Same grid columns (`md:grid-cols-2 lg:grid-cols-3`) as the real list.
+1. Same outer shape (width, padding, border, radius).
+2. Same internal rhythm (rectangles, gaps, responsive reflow).
+3. Same responsive behavior (stack, hide columns, reflow at the same breakpoints).
+4. Same count (6 real items → 6 skeleton rows).
 
-If you can't mirror closely, render nothing (or a spinner). A wrong shape reflows visibly when data lands — worse than no feedback.
-
-### One skeleton per surface
-
-Never sequence two different skeletons for the same list while data fetches (page-level → list-level → real list in 500ms reads as broken). Pick the most specific, hold it until data is ready. Layout skeleton + list skeleton render together in one tree, not in sequence.
+One skeleton per surface. Never sequence two different skeletons on the same list.
 
 ### Tokens
 
-Always semantic tokens, never raw Tailwind grays.
-
-| Use                                      | Not                            |
-| ---------------------------------------- | ------------------------------ |
-| `bg-muted`                               | `bg-gray-200`                  |
-| `dark:bg-muted` (same token, both modes) | `dark:bg-gray-800`             |
-| `bg-muted/40` for subtle on-card pulses  | `bg-gray-100 dark:bg-gray-700` |
-
-Raw grays break the blue-tinted (HSL 197) dark palette — the root cause of the "fluctuating skeleton colors" symptom across the codebase.
+`bg-muted`, never raw grays. Use `LoadingSkeleton` — the primitive in `src/components/ui/loading/LoadingSkeleton.tsx` — and compose it.
 
 ### Motion
 
-- `animate-pulse` (Tailwind default). Don't layer `transition-opacity` on top — it fights the keyframe.
-- Never `opacity-10` or similarly invisible opacities. Target ~80–90% of the card's text-contrast against its background; an invisible skeleton defeats the "loading" signal.
-- `prefers-reduced-motion` is handled globally (see Motion section) — new skeletons inherit it for free.
-
-### Primitive
-
-- **`LoadingSkeleton`** (`src/components/ui/loading/LoadingSkeleton.tsx`) — the base building block. A pulsing `bg-muted` rectangle. Compose it, don't replace it.
-- **Composed skeletons** live next to it: `PageSkeleton`, `DetailPageSkeleton`, `ListSkeleton`, `TableSkeleton`, `SchemaSkeleton`, etc. When you add a new page or list, add a matching composed skeleton in the same folder and import it from the page's `loading.tsx` (Next.js reads that as the suspense fallback).
-
-### When to use a spinner instead
-
-Skeletons are for content the user is **waiting to read**. Spinners (`<LoadingSpinner>`) are for transient actions the user **triggered**: submitting a form, opening a modal, the first second of an editor mount. If the content will arrive in under 200ms on a healthy connection, a spinner reads better than a shape that flashes away.
+`animate-pulse` (Tailwind default); respects `prefers-reduced-motion`.
 
 ### Keep skeletons in lockstep with the real component
 
-**Every UI change that alters a component's shape, container, column count, row count, header layout, or action buttons must update its skeleton in the same commit.** A skeleton that lies is worse than no skeleton — it produces a layout shift the moment real data lands and destroys the trust the shape was supposed to earn. Common drift we've caught in review, all of which have shipped as bugs:
-
-- **Wrong container.** Skeleton uses `max-w-3xl` but real page uses `max-w-7xl` (or vice versa). The skeleton ends up visibly off-center or narrower than the header above it.
-- **Skeleton renders its own container that the real component doesn't.** Next the skeleton sits inside the layout's container PLUS its own, and the content is nested too deep.
-- **Skeleton container doesn't wrap the tabs.** If the real layout wraps both the header row and its `TabsWithBackButton` in one `container mx-auto max-w-7xl`, the skeleton must too — otherwise tabs drift wider than the header on large viewports.
-- **Raw grays left behind.** `bg-gray-200 dark:bg-gray-800` instead of `bg-muted`. Flags the skeleton as stale.
-- **Item count mismatch.** Real list renders 8 items but skeleton renders 6 (or vice versa). Page jumps when data lands.
-- **Wrong column layout.** Real component is a 2-column `lg:grid-cols-2` form, skeleton is a single-column stack. Or real is a single-column list, skeleton is a 2-column sidebar + grid.
-- **Generic fallback for a specific page.** `<FormSkeleton />` on a page that's actually a table-with-banner. `<ListPageSkeleton />` on a page that has no title or search bar. Skeletons named "Form" or "List" aren't license to use them where the real page isn't one.
-
-When you touch a component, grep for its paired skeleton (usually `ComponentName` → `ComponentNameSkeleton` or referenced from the nearest `loading.tsx`) and apply the same structural change. The skeleton lives in `src/components/ui/loading/` and/or the relevant `loading.tsx` in `src/app/`. Both places count.
-
-In review, if the diff touches a section and doesn't touch its skeleton, ask why. A wrong skeleton is a reviewable UI regression, not a polish item.
+Any change to container shape, column count, row count, header, or buttons must update the paired skeleton (either next to the component or the nearest `loading.tsx`) **in the same commit**. A skeleton that no longer mirrors causes a layout jump on data arrival. Common drifts: adding a column, adding a header button, swapping a chip for a badge, adding a second-row metadata block.
 
 ## SEO & Metadata
 
-Metadata is a design surface — tab titles, bookmarks, share previews, search results are all first-impression moments. Never let Next.js fall back to a slug-reconstructed title.
-
-### Three surfaces, one source
-
-| Surface        | Reads                                                 | Audience                                    |
-| -------------- | ----------------------------------------------------- | ------------------------------------------- |
-| Browser chrome | `<title>`, `<meta description>`, favicon, theme-color | Every user, every tab                       |
-| Social shares  | Open Graph + Twitter Card                             | Slack, iMessage, Twitter, LinkedIn previews |
-| Search engines | robots, canonical, sitemap, hreflang, JSON-LD         | Marketing routes only                       |
-
-All three derive from one `generateMetadata` output — don't diverge by hand.
-
-### Page-type matrix
-
-| Route group                                                          | Indexed? | Title pattern                    | OG image          | Notes                                                                                  |
-| -------------------------------------------------------------------- | -------- | -------------------------------- | ----------------- | -------------------------------------------------------------------------------------- |
-| Marketing (`/`, `/pricing`, `/docs`, blog)                           | ✅ yes   | `{Page} · Irmin`                 | Dynamic per page  | Full SEO suite.                                                                        |
-| Auth (`(authentication)/*` — sign-in, sign-up, invite)               | ❌ no    | `{Page} · Irmin`                 | Static brand card | `noindex, follow`. Titles still matter for browser tabs + share previews.              |
-| Console (`(console)/*` — workspace, repos, workflows, catalog, etc.) | ❌ no    | `{Entity} – {Workspace} · Irmin` | Static brand card | `noindex, nofollow`. Authenticated content. Metadata is tab-title + bookmark fidelity. |
-| Error pages                                                          | ❌ no    | `Something went wrong · Irmin`   | Static brand card | Never leak error details into metadata.                                                |
+The Console's public perimeter is thin (sign-in, accept-invite, landing redirects). In-app content is authenticated and carries `noindex, nofollow`.
 
 ### Title pattern
 
-```
-{Leaf entity} – {Workspace name} · Irmin
-```
+`{Leaf entity} – {Workspace name} · Irmin`. Max 60 chars.
 
-Examples:
+- `·` (U+00B7 middle dot) separates site from section.
+- `–` (U+2013 en dash) separates segments.
+- Title composition lives in `src/lib/metadata.ts`; extend there, not inline.
 
-- Workspace home: `Tim's Office · Irmin`
-- Workspace list (no workspace): `Select a workspace · Irmin`
-- Resource list: `Repositories – Tim's Office · Irmin`
-- Resource detail: `demo-data – Tim's Office · Irmin`
-- Resource subpage: `Lineage – demo-data – Tim's Office · Irmin`
-- Catalog: `Catalog – Tim's Office · Irmin`
-- Marketing: `Just like GitHub for Data · Irmin`
+### Description
 
-**Length limit: 60 characters** (Google truncates at ~55–60 in desktop results). If the natural pattern exceeds 60, collapse non-leaf segments to their initials — starting from the root (workspace) and working toward the leaf, one segment at a time, stopping as soon as the result fits. **The leaf entity is never truncated** — that's what users are looking for. Only when every non-leaf segment has already been collapsed and it still doesn't fit do we fall back to `{leaf} · Irmin` alone.
-
-Examples (assuming all exceed 60 chars):
-
-- 2 segments: `Very Long Repository Name – My Big Corporation Workspace · Irmin` → `Very Long Repository Name – M.B.C.W. · Irmin`
-- 3 segments: `Lineage – Very Long Repo Name – Very Long Workspace Name · Irmin` → `Lineage – Very Long Repo Name – V.L.W.N. · Irmin` (collapse root first) → `Lineage – V.L.R.N. – V.L.W.N. · Irmin` (then the middle, if still too long)
-
-**`title.template` participates in the same rule.** A layout that injects an entity name into `title.template` (e.g. repo, workflow) must pre-collapse that name against a reserved leaf budget so child pages don't blow past 60 chars once `%s` is resolved. Use `buildTitleTemplate(nonLeafSegments)` in `src/lib/metadata.ts` — it mirrors `buildTitle` but reserves ~20 chars for the future leaf before deciding whether to collapse. Interpolating raw entity names into a template string is a bug (the collapse logic never runs).
-
-**Separator: `·` (U+00B7 middle dot) between site and section, `–` (en-dash) between segments within the section.** Keep consistent; mixing `|` and `—` across pages looks sloppy.
-
-### Data-fetching rule
-
-`generateMetadata` **must** fetch the real entity name via the same core API service the page uses. Never reconstruct from URL slug. `demo-data` → "Demo Data" is a guess; the actual name is `demo_data` or `Demo Data Copy 2` or something with punctuation the slug stripped.
-
-Pattern:
-
-```ts
-// app/[lang]/(console)/workspace/[workspace]/repositories/[repo]/layout.tsx
-import { cache } from 'react';
-
-const fetchRepo = cache(async (workspace: string, repo: string) => {
-  return core.repositoryService.fetchRepository({ workspace, slug: repo });
-});
-
-export async function generateMetadata({ params }): Promise<Metadata> {
-  const { lang, workspace, repo } = await params;
-  try {
-    const repository = await fetchRepo(workspace, repo);
-    return {
-      title: `${repository.name} – ${repository.workspace_name}`,
-      description: repository.description?.slice(0, 155),
-    };
-  } catch {
-    // Fallback: slug-derived with an ellipsis signaling unloaded state.
-    // Better than pretending we know the name.
-    return { title: `${repo}…` };
-  }
-}
-```
-
-- **`React.cache()`** dedupes the fetch between `generateMetadata` and the page component, so we don't pay for it twice.
-- **Fallback chain:** real data → slug with `…` suffix → generic `· Irmin`. Never a fabricated title.
-- **Failures don't surface as errors** — metadata silently falls back. The page itself handles the error boundary.
-
-### Description pattern
-
-- **Resource pages:** the resource's actual description field, truncated at 155 chars with no trailing `…` (browsers add their own).
-- **List pages:** one-line template — `"Workflows in Tim's Office"`, `"Repositories in Tim's Office"`.
-- **Resource with no description:** short generic — `"{entity_type} in {workspace}"`. Do not fabricate.
-- **Marketing:** copywritten per page. No generic boilerplate.
-- **Never use hardcoded marketing copy on in-app routes.** "Sync, analyse & manage your data with AI in minutes" is fine on `/`; it's confusing on `/workspace/tims-office/repositories`.
-
-**Length: 150–160 characters.** Google shows ~155 on desktop, ~120 on mobile. Front-load the important words.
+150–160 chars. Front-load important words.
 
 ### Open Graph + Twitter Card
 
-Every page emits both — consumers read one or the other.
-
-| Field       | OG               | Twitter               | Value                                                                                            |
-| ----------- | ---------------- | --------------------- | ------------------------------------------------------------------------------------------------ |
-| Site name   | `og:site_name`   | `twitter:site`        | `"Irmin"` / `@irmin_data`                                                                        |
-| Title       | `og:title`       | `twitter:title`       | Same as `<title>`, drop the `· Irmin` suffix (card shows the site)                               |
-| Description | `og:description` | `twitter:description` | Same as `<meta description>`                                                                     |
-| Image       | `og:image`       | `twitter:image`       | Absolute URL, `1200 × 630`, JPG or PNG                                                           |
-| Type        | `og:type`        | —                     | `website` for marketing/app/auth; `article` for blog posts + catalog pages with authored content |
-| URL         | `og:url`         | —                     | Absolute canonical                                                                               |
-| Locale      | `og:locale`      | —                     | `en_US` / `fi_FI` from URL                                                                       |
-| Card        | —                | `twitter:card`        | `summary_large_image`                                                                            |
-
-**Dynamic OG images.** `opengraph-image.tsx` per route, edge runtime, `<ImageResponse>`. Render entity name + one stat + brand. Static `opengraph-image.png` per route group as fallback.
-
-**In-app routes** use a single static brand card. They're `noindex`, so the OG image exists only for Slack/iMessage previews — a brand card is better than leaking workspace names into arbitrary threads.
-
-### Locale & hreflang
-
-- `<html lang>` already driven from the `[lang]` param. ✓
-- `alternates.languages` on marketing pages:
-
-  ```ts
-  alternates: {
-    canonical: 'https://irmin.co/en/pricing',
-    languages: {
-      en: 'https://irmin.co/en/pricing',
-      fi: 'https://irmin.co/fi/pricing',
-    },
-  }
-  ```
-
-- Metadata strings come from `dict` just like the rest of the UI. Finnish titles for `/fi/*`.
-
-### Canonical URLs
-
-- Every page: `alternates.canonical` pointing at the absolute URL with no query string, unless the query string is the primary identifier (rare in this app).
-- Filter/pagination query params are for state, not for SEO — strip them from the canonical.
-- Trailing slashes: never. Match the deployed route exactly.
+Both required. Drop `· Irmin` from OG title (the card shows the site). Default OG/Twitter cards ship via `src/app/opengraph-image.tsx` / `src/app/twitter-image.tsx` (Next.js file conventions).
 
 ### Robots & indexing
 
-- **Marketing:** `index, follow` (default).
-- **Auth routes:** `noindex, follow` — don't index sign-in, but don't break link graph from it.
-- **Console routes:** `noindex, nofollow` — authenticated, no value to crawlers, prevents accidental workspace-URL indexing if a user pastes one publicly.
-- **Error pages:** `noindex`.
-- `robots.txt` generated from `app/robots.ts`. Disallow `/api/*`, `/en/workspace/*`, `/fi/workspace/*`, `/en/sign-in`, etc. Allow marketing + `/en/docs/*`.
-
-### Sitemap
-
-- `app/sitemap.ts` — dynamic. Marketing URLs only. Include every locale (`/en/pricing`, `/fi/pricing`). `changefreq` + `priority` set per section. Regenerate on build.
-- Blog/docs: include every published post across every locale.
-- Never include in-app routes.
-
-### Structured data (JSON-LD)
-
-- **Marketing homepage:** `Organization` + `WebSite` (enables site-name in Google results, sitelinks search box).
-- **Blog posts:** `Article` with `headline`, `datePublished`, `author`, `image`.
-- **Docs:** `TechArticle`.
-- **Product / pricing page:** `Product` + `Offer` if we ever list SKUs.
-- **In-app routes:** none — noindex makes it moot.
-
-Emit as `<script type="application/ld+json">` rendered server-side in `layout.tsx` or `page.tsx`.
+Public routes: `index, follow`. In-app routes: `noindex, nofollow`. Use the helper in `src/lib/metadata.ts`.
 
 ### Favicon, icons, theme-color
 
-Handled via Next.js file conventions (`app/icon.{png,svg}`, `app/apple-icon.png`) + the `viewport.themeColor` export already in `app/layout.tsx`. No inline `<link rel="icon">` tags needed.
+- `src/app/favicon.ico` · `src/app/icon.png` · `src/app/apple-icon.png` — sourced from the Almanac `public/brand/favicon/` pack. Already the new set.
+- `viewport.themeColor` — `#f4eedf` (cream) light / `#0e1010` (ink) dark. Defined in `src/app/layout.tsx`.
 
-### Implementation patterns
+### Logo assets for external surfaces
 
-- **`generateMetadata` over `metadata`** when the value depends on data. Static objects only for truly static routes.
-- **Hoist metadata to the deepest layout that knows the entity.** Workspace layout owns workspace title. Repo layout owns repo title. Child pages use `title.template` to compose:
+`public/brand/` ships the shared Almanac set:
 
-  ```ts
-  // workspace layout
-  export async function generateMetadata({ params }) {
-    const workspace = await fetchWorkspace(params.workspace);
-    return {
-      title: {
-        template: `%s – ${workspace.name} · Irmin`,
-        default: `${workspace.name} · Irmin`,
-      },
-    };
-  }
+- `lockup-horizontal-*.svg` · `lockup-vertical-*.svg` — lockups.
+- `wordmark-*.svg` — wordmark only.
+- `icon-*.svg` — icon only.
+- `avatar-*.svg` — square avatars.
+- `dot-accent*.svg` — isolated lime dot.
+- `favicon/*.png` — raster favicon pack (16 · 32 · 48 · 180 · 192 · 512 in light and dark).
 
-  // repo page
-  export async function generateMetadata({ params }) {
-    const repo = await fetchRepo(params.workspace, params.repo);
-    return { title: repo.name }; // resolves to "demo-data – Tim's Office · Irmin"
-  }
-  ```
-
-- **One title template per layout level.** Don't re-declare the `· Irmin` suffix at the leaf.
-- **Never hand-roll `<Head>` elements.** Everything goes through the App Router `metadata` / `generateMetadata` / `viewport` exports so Next.js can stream them correctly.
-
-### Before shipping a new route
-
-- [ ] `generateMetadata` fetches the real entity name (not slug-derived).
-- [ ] `React.cache()` used to dedupe with the page's data fetch.
-- [ ] Title ≤ 60 chars, description ≤ 160 chars.
-- [ ] Fallback handles fetch failure without throwing.
-- [ ] `alternates.canonical` set.
-- [ ] `alternates.languages` set (marketing only).
-- [ ] `robots` reflects the route's indexing policy.
-- [ ] Dynamic OG image renders correctly (Next.js devtools → Open Graph tab).
-- [ ] Title visible in browser tab matches expected pattern (not slug-reconstructed).
-- [ ] Localized strings in both `en.ts` and `fi.ts`.
+Variants: `light`, `dark`, `mono-black`, `mono-white`, `safe-*`, `lime-badge-*`, `currentColor`.
 
 ## Anti-patterns
 
-Reject in review. One grep-able list of patterns that keep coming up.
+Reject in review.
 
 ### HTML / semantics
 
-- `<div onClick>` / `<span onClick>` — use `<button>` or `<a>`.
-- `<button onClick={router.push}>` for navigation — use `<Link>`.
-- `<Link><button>` nested — invalid interactive nesting.
-- `<a href="javascript:…">` — use `<button>`.
-- Missing `alt` on `<img>` / `<Image>` (empty `alt=""` is fine; missing is not).
-- Missing `width` / `height` on images.
-- Heading-level skips (`<h1>` → `<h3>`).
-- `user-scalable=no` or `maximum-scale=1` in viewport meta.
+- `<div onClick>`, `<button onClick={router.push}>`, `<Link><button>` nesting.
+- Missing `alt` on images, missing `width` / `height`, heading-level skips.
 
 ### ARIA
 
-- `role="listbox"` wrapping non-option children.
-- `aria-controls` pointing at an id not in the DOM.
-- `role="dialog"` + `aria-modal` without focus trap + Escape + focus return.
-- Icon-only button without `aria-label`.
-- Decorative icon adjacent to text label without `aria-hidden="true"`.
+- Claims that aren't backed by behavior (`role="dialog"` without focus trap).
+- `aria-controls` pointing at an id that doesn't exist.
+- Hardcoded English in `aria-label` / `title` / `alt`.
 
 ### Focus / keyboard
 
-- `outline: none` / `outline-none` without visible focus replacement.
-- `focus:` (bare) when `focus-visible:` was intended.
-- `tabIndex={0}` on natively-focusable elements.
-- `autoFocus` on mobile or on non-primary inputs.
+- `outline-none` without a visible focus replacement.
+- `focus:` (bare) when `focus-visible:` is intended.
+- `tabIndex={0}` on natively focusable elements. `autoFocus` on mobile.
 
 ### Forms
 
-- Placeholder as the only label.
-- `onPaste` + `preventDefault`.
-- Submit disabled before the user interacts.
-- `spellCheck` left on for emails / codes / tokens.
+- Placeholder-only labels. Floating labels.
+- Boxed inputs outside data-sheet cells.
+- Hard-coded `rows={N}` on `<Textarea>`.
+- `onPaste + preventDefault`. Submit pre-disabled.
 
 ### Motion
 
-- `transition: all` / `transition-all`.
-- Animating layout properties (`width`, `top`, `left`, `margin`) — prefer `transform`.
-- `opacity-10` (or near-invisible) on a skeleton.
-- Per-component overrides of `prefers-reduced-motion`.
+- `transition-all` / `transition` (bare) — always list properties.
+- Animating layout (`width`, `top`, `left`, `margin`) — use `transform`.
+- Decorative animation (bouncing, parallax, auto-rotating carousels).
+- Per-component override of `prefers-reduced-motion`.
 
 ### Styling
 
-- Raw Tailwind grays (`bg-gray-*`, `text-gray-*`, `border-gray-*`, `dark:*-gray-*`). Use semantic tokens.
-- Hardcoded hex colors in components. Use theme tokens.
-- Font families other than Geist Sans / Geist Mono / Lora.
-- `!important` to override Tailwind.
+- Gradients. Any kind.
+- Drop-shadows. `shadow-sm`, `shadow-xs`, `drop-shadow-*`.
+- Rounded cards (> 2 px) — `rounded-full` reserved for avatars/dots.
+- Raw Tailwind grays (`bg-gray-*`, `dark:*-gray-*`) — use `bg-muted` / `bg-card`.
+- Hardcoded hex colors / font families other than Fraunces / Plex Sans / Plex Mono.
+- Recoloring the lime dot for contrast.
 
 ### Performance
 
-- `.map()` over >50 items without virtualization.
-- Reading layout in render (`getBoundingClientRect`, `offsetHeight`, `scrollTop`).
-- Controlled `<input>` that re-renders a large tree every keystroke. Debounce or uncontrolled.
-- Non-critical fonts without `preload: false`.
+- `.map()` over > 50 items without virtualization.
+- Reading layout in render (`getBoundingClientRect` outside an effect).
+- Controlled `<input>` re-rendering a large tree per keystroke.
+- Hardcoded pixel widths on responsive images. `priority` on every `<Image>`.
 
 ### Copy
 
-- Hardcoded English `aria-label` / `title` / error string. Everything through `dict`.
-- Three dots `...` instead of `…`.
-- Straight quotes in prose.
-- Generic titles ("Something went wrong") when a specific one is knowable.
-- Hardcoded date/number formats. Use `Intl.*`.
-
-### Next.js
-
-- Hand-rolled `<Head>` elements. Use `metadata` / `generateMetadata` / `viewport`.
-- `themeColor` on the `metadata` export — Next 16 silently drops it. Use `viewport`.
-- `generateMetadata` reconstructing titles from URL slugs. Fetch the real entity name with `React.cache()`.
+- `IRMIN` (all caps).
+- Straight quotes in prose. `...` instead of `…`.
+- Marketing clichés ("unlock", "leverage", "seamlessly", "game-changing").

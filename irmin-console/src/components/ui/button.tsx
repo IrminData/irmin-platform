@@ -10,57 +10,78 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/utils/tw';
 
 const buttonVariants = cva(
+  // Base — no global `border` width. Variants that need a visible stroke
+  // include `border` alongside the color. Keeping borderless variants
+  // (ghost, link, secondary) truly borderless avoids the 1px cream-tinted
+  // phantom stroke that base.css `*` rules would otherwise apply.
   `
     inline-flex cursor-pointer appearance-none items-center justify-center
-    rounded-md border-none text-sm font-normal whitespace-nowrap
-    transition-[color,background-color,border-color,opacity]
-    focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden
-    disabled:pointer-events-none disabled:opacity-50
+    rounded-[2px] text-sm font-medium tracking-tight whitespace-nowrap
+    transition-[color,background-color,border-color,transform] duration-150
+    ease-out
+    focus-visible:outline-1 focus-visible:outline-offset-1
+    focus-visible:outline-accent/70
+    active:scale-[0.96]
+    disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50
+    disabled:active:scale-100
   `,
   {
     variants: {
       variant: {
+        // Default = soft muted fill, no border. Reads as a button (not
+        // prose) without stacking stroke noise against adjacent chrome.
+        // Middle ground between the bordered-pill (too loud) and the
+        // fully-transparent ghost (too quiet — wizard CTAs were reading
+        // as centered text rather than clickable actions).
         default: `
-          bg-primary text-primary-foreground shadow-xs
-          hover:bg-primary/80
+          bg-muted text-foreground
+          hover:bg-secondary
         `,
         destructive: `
-          bg-destructive text-destructive-foreground shadow-xs
-          hover:bg-destructive/80
+          border border-destructive bg-destructive text-destructive-foreground
+          hover:bg-destructive/85
         `,
+        // Use explicitly when a button needs to be recognizable as a
+        // container (e.g., primary form action without brand weight).
         outline: `
-          border border-solid border-accent-foreground/50 text-foreground/90
-          shadow-xs
-          hover:bg-background hover:text-foreground
+          border border-border bg-transparent text-foreground
+          hover:border-foreground/60 hover:bg-muted
         `,
         secondary: `
-          bg-secondary text-secondary-foreground shadow-xs
-          hover:bg-secondary/80
+          bg-secondary text-secondary-foreground
+          hover:bg-muted
         `,
+        // Loud primary — the single filled variant. Use for brand-forward
+        // CTAs ("Create …", "Commit", etc.).
         accent: `
-          bg-accent text-accent-foreground shadow-xs
-          hover:bg-accent/80
+          border border-accent bg-accent text-accent-foreground
+          hover:bg-accent/85
         `,
         gray: `
-          bg-card text-card-foreground shadow-xs
-          hover:bg-card/80
+          bg-card text-card-foreground
+          hover:bg-muted
         `,
-        ghost: 'hover:bg-accent/20',
+        ghost: `
+          text-foreground
+          hover:bg-muted
+        `,
         link: `
-          text-foreground underline-offset-4
-          hover:text-foreground/90 hover:underline
+          bg-transparent text-foreground underline decoration-accent
+          decoration-1 underline-offset-[6px]
+          hover:decoration-2
         `,
+        // Legacy alias — identical to `accent`. DESIGN.md documents the
+        // deprecation; kept so ~20 existing callers don't break.
         gradient: `
-          bg-linear-to-r from-irmin-green-700 to-irmin-green-600 text-white
-          shadow-xs
-          hover:opacity-80
+          border border-accent bg-accent text-accent-foreground
+          hover:bg-accent/85
         `,
       },
       size: {
-        sm: 'h-9 rounded-md px-2 text-xs',
-        default: 'h-10 px-3 py-2',
-        lg: 'h-12 rounded-md px-4',
-        icon: 'size-9',
+        sm: 'h-9 px-4 text-xs',
+        default: 'h-10 px-5',
+        lg: 'h-12 px-7 text-[15px]',
+        icon: 'size-10',
       },
       iconFirst: {
         true: 'flex-row',
@@ -141,7 +162,9 @@ const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
           </>
         ) : (
           <>
-            {icon && size !== 'icon' && <span className={'mr-1'}>{icon}</span>}
+            {icon && size !== 'icon' && (
+              <span className='mr-1.5 inline-flex items-center'>{icon}</span>
+            )}
             {icon && size === 'icon' && icon}
             {children}
           </>

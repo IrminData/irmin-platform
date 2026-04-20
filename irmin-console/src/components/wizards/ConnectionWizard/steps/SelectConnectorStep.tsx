@@ -79,12 +79,7 @@ export default function SelectConnectorStep({
   return (
     <div className='flex w-full flex-col space-y-6'>
       {selectedConnector && (
-        <div
-          className={`
-            flex flex-col justify-center border-b pb-4
-            dark:border-gray-800
-          `}
-        >
+        <div className='flex flex-col justify-center border-b border-border pb-4'>
           <p className='mb-2 text-sm opacity-80'>
             {dict.connections.create.selectedConnector}:
           </p>
@@ -92,15 +87,11 @@ export default function SelectConnectorStep({
         </div>
       )}
       {/* Category Filter */}
-      <div
-        className={`
-          flex w-full flex-wrap gap-2 border-b pb-4
-          dark:border-gray-800
-        `}
-      >
+      <div className='flex w-full flex-wrap gap-2 border-b border-border pb-4'>
         {categoryFilterOptions.map((category) => (
           <Button
             variant={category === activeCategory ? 'accent' : 'secondary'}
+            size='sm'
             key={`category-${category}`}
             onClick={() => setActiveCategory(category ?? '')}
             className='capitalize'
@@ -109,76 +100,83 @@ export default function SelectConnectorStep({
           </Button>
         ))}
       </div>
-      {/* Connector Selection */}
+      {/* Connector Selection.
+          Each card clips the logo inside a rounded-[2px] overflow-hidden
+          tile so brand-color Stripe/Pinecone/etc. don't bleed to the
+          card's own rounded corners. Card itself uses hairline border +
+          accent-on-selected, not a grey bg + outline, so it matches the
+          rest of the wizard chrome. */}
       <div className='flex flex-wrap gap-2'>
-        {filteredConnectors.map((connector) => (
-          <button
-            type='button'
-            className={`
-              flex w-max max-w-[50%] cursor-pointer flex-row items-center
-              justify-start gap-4 rounded-lg bg-gray-100 px-4 py-2 text-left
-              text-sm text-foreground shadow-sm transition-opacity
-              hover:opacity-80
-              dark:bg-gray-800 dark:text-gray-200
-              ${
-                selectedConnector?.id === connector.id &&
-                `
-                  outline outline-gray-800
-                  dark:outline-gray-200
-                `
-              }
-            `}
-            key={`connector-${connector.id}`}
-            onClick={() => {
-              setSelectedConnector(connector);
-            }}
-          >
-            <Avatar className='size-12 rounded-none'>
-              <AvatarImage src={connector.logo_url} alt={connector.name} />
-              <AvatarFallback>
-                {connector.name.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className='flex flex-col justify-start gap-1'>
-              {connector.primary_category && (
-                <Badge variant='secondary'>{connector.primary_category}</Badge>
-              )}
-              <p>{connector.name}</p>
-            </div>
-          </button>
-        ))}
+        {filteredConnectors.map((connector) => {
+          const isSelected = selectedConnector?.id === connector.id;
+          return (
+            <button
+              type='button'
+              className={`
+                group flex w-max max-w-[50%] cursor-pointer flex-row
+                items-center justify-start gap-4 rounded-[2px] border bg-card
+                px-3 py-2 text-left text-sm text-foreground
+                transition-[background-color,border-color] duration-150
+                hover:bg-muted
+                ${isSelected ? 'border-accent bg-accent/10' : 'border-border'}
+              `}
+              key={`connector-${connector.id}`}
+              onClick={() => {
+                setSelectedConnector(connector);
+              }}
+              aria-pressed={isSelected}
+            >
+              <div
+                className={`
+                  flex size-12 shrink-0 items-center justify-center
+                  overflow-hidden rounded-[2px] bg-background
+                `}
+              >
+                <Avatar className='size-full rounded-none'>
+                  <AvatarImage src={connector.logo_url} alt={connector.name} />
+                  <AvatarFallback>
+                    {connector.name.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <div className='flex flex-col justify-start gap-1'>
+                {connector.primary_category && (
+                  <Badge variant='secondary'>
+                    {connector.primary_category}
+                  </Badge>
+                )}
+                <p>{connector.name}</p>
+              </div>
+            </button>
+          );
+        })}
       </div>
-      <div
-        className={`
-          border-t pt-4
-          dark:border-gray-800
-        `}
-      >
-        {onCancel && (
-          <Button
-            className='mb-3 w-full'
-            size='lg'
-            variant='secondary'
-            type='button'
-            onClick={onCancel}
-          >
-            {dict.common.cancel}
-          </Button>
-        )}
+      <div className='border-t border-border pt-4'>
         <Button
           className='w-full'
           size='lg'
-          variant='default'
+          variant='accent'
           type='button'
           disabled={!selectedConnector}
           onClick={handleContinue}
         >
           {dict.connections.create.confirmConnectorSelection}
         </Button>
+        {onCancel && (
+          <Button
+            className='mt-2 w-full'
+            size='lg'
+            variant='ghost'
+            type='button'
+            onClick={onCancel}
+          >
+            {dict.common.cancel}
+          </Button>
+        )}
       </div>
       <div className='flex items-center justify-between'>
         <Button
-          variant='secondary'
+          variant='outline'
           size='sm'
           onClick={() => {
             irminAlert('info', dict.connectors.customConnectorNotAvailable);
@@ -189,7 +187,8 @@ export default function SelectConnectorStep({
         </Button>
         <Button
           variant='ghost'
-          icon={<TbHelp size={18} />}
+          size='sm'
+          icon={<TbHelp size={16} />}
           href='/contact'
           target='_blank'
           aria-label='Go to support page'

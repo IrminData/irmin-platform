@@ -2,7 +2,6 @@
 
 import { useSyncExternalStore } from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 import { clientEnv } from '@/config/env.client';
@@ -10,6 +9,7 @@ import { SignIn } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
 import { useTheme } from 'next-themes';
 
+import { Logo } from '@/components/Logo/Logo';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
@@ -46,25 +46,11 @@ const SignInSection = () => {
           `}
           aria-label='Go to website'
         >
-          <Image
-            className={`
-              h-9 min-h-5 w-auto
-              dark:hidden
-            `}
-            src='/irmin-logo.svg'
-            alt='Irmin logo'
-            width={200}
-            height={100}
-          />
-          <Image
-            className={`
-              hidden h-9 min-h-5 w-auto
-              dark:block
-            `}
-            src='/irmin-logo-light.svg'
-            alt='Irmin logo'
-            width={200}
-            height={100}
+          <Logo
+            className='
+              text-[1.5rem]
+              md:text-[1.6rem]
+            '
           />
         </Link>
         <div className='ml-auto' />

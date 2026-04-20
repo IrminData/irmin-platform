@@ -110,7 +110,7 @@ const ListCardSkeleton = () => (
 
 const WorkspaceDashboardSkeleton = () => {
   return (
-    <div className='pattern-bg min-h-full py-4'>
+    <div className='min-h-full py-4'>
       <div
         className={`
           relative container mx-auto max-w-6xl

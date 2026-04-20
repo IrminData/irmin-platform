@@ -6,7 +6,9 @@ import type { UseQueryResult } from '@tanstack/react-query';
 
 import { LuSearchX } from 'react-icons/lu';
 import {
+  TbArrowDown,
   TbArrowsSort,
+  TbArrowUp,
   TbDotsVertical,
   TbFile,
   TbFolder,
@@ -265,28 +267,31 @@ export default function ObjectList({
               <TableHeader>
                 <TableRow>
                   <TableHead className='w-[300px]'>
-                    <Button variant='ghost' onClick={() => handleSort('name')}>
-                      {dict.common.name}
-                      <TbArrowsSort className='ml-2 size-4' />
-                    </Button>
+                    <SortHeaderButton
+                      label={dict.common.name}
+                      sortKey='name'
+                      activeKey={sortConfig.key}
+                      direction={sortConfig.direction}
+                      onSort={handleSort}
+                    />
                   </TableHead>
                   <TableHead className='font-normal'>
-                    <Button
-                      variant='ghost'
-                      onClick={() => handleSort('content_type')}
-                    >
-                      {dict.repository.objects.contentType}
-                      <TbArrowsSort className='ml-2 size-4' />
-                    </Button>
+                    <SortHeaderButton
+                      label={dict.repository.objects.contentType}
+                      sortKey='content_type'
+                      activeKey={sortConfig.key}
+                      direction={sortConfig.direction}
+                      onSort={handleSort}
+                    />
                   </TableHead>
                   <TableHead>
-                    <Button
-                      variant='ghost'
-                      onClick={() => handleSort('last_modified')}
-                    >
-                      {dict.common.lastModified}
-                      <TbArrowsSort className='ml-2 size-4' />
-                    </Button>
+                    <SortHeaderButton
+                      label={dict.common.lastModified}
+                      sortKey='last_modified'
+                      activeKey={sortConfig.key}
+                      direction={sortConfig.direction}
+                      onSort={handleSort}
+                    />
                   </TableHead>
                   <TableHead />
                 </TableRow>
@@ -406,5 +411,56 @@ export default function ObjectList({
         )}
       </div>
     </div>
+  );
+}
+
+type SortKey = 'content_type' | 'last_modified' | 'name' | 'path' | 'type';
+
+/**
+ * Column-header sort button. Text-only mono label, directional chevron.
+ * Previously wrapped the header in a full-height Button which read as
+ * an input pill; this renders as a quiet sortable label with active
+ * state signaled by a filled chevron instead of a bordered container.
+ */
+function SortHeaderButton({
+  label,
+  sortKey,
+  activeKey,
+  direction,
+  onSort,
+}: {
+  label: string;
+  sortKey: SortKey;
+  activeKey: SortKey;
+  direction: 'ascending' | 'descending';
+  onSort: (key: SortKey) => void;
+}) {
+  const isActive = activeKey === sortKey;
+  const Chevron = !isActive
+    ? TbArrowsSort
+    : direction === 'ascending'
+      ? TbArrowUp
+      : TbArrowDown;
+  return (
+    <button
+      type='button'
+      onClick={() => onSort(sortKey)}
+      className={`
+        inline-flex cursor-pointer items-center gap-1.5 bg-transparent
+        text-[11px] font-medium tracking-[0.08em] text-muted-foreground
+        uppercase transition-colors duration-150
+        hover:text-foreground
+        focus-visible:outline-1 focus-visible:outline-offset-1
+        focus-visible:outline-accent/70
+        data-[active=true]:text-foreground
+      `}
+      data-active={isActive}
+      aria-label={
+        isActive ? `${label}, sorted ${direction}` : `${label}, not sorted`
+      }
+    >
+      {label}
+      <Chevron className='size-3 shrink-0 opacity-70' aria-hidden='true' />
+    </button>
   );
 }

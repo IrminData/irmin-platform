@@ -96,7 +96,7 @@ const ManageWorkspacesSection = () => {
         title='Workspace Error'
         description='Failed to load workspace management'
       >
-        <div className='pattern-bg h-full'>
+        <div className='h-full'>
           <div className='relative container mx-auto max-w-3xl px-4 py-28'>
             <QueryError
               error={error}
@@ -116,7 +116,7 @@ const ManageWorkspacesSection = () => {
       title='Workspace Management'
       description='Failed to load workspace management interface'
     >
-      <div className='pattern-bg h-full'>
+      <div className='h-full'>
         <div className='relative container mx-auto max-w-4xl px-4 py-16'>
           {/* Pending invites */}
           {pendingInvites.length > 0 && (

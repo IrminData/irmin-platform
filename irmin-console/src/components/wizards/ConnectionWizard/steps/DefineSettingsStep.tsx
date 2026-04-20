@@ -136,12 +136,7 @@ export default function DefineSettingsStep({
     <div className='space-y-6'>
       {/* Display Connector Information */}
       {wizardData.connector && (
-        <div
-          className={`
-            flex flex-col justify-center border-b pb-4
-            dark:border-gray-800
-          `}
-        >
+        <div className={`flex flex-col justify-center border-b pb-4`}>
           <p className='mb-2 text-sm opacity-80'>
             {dict.connections.create.selectedConnector}:
           </p>

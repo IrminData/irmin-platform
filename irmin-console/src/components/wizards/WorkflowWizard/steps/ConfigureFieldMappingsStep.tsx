@@ -123,12 +123,7 @@ function ConfigureFieldMappingsStep({
         <h3 className='mb-2 text-lg font-semibold'>
           {dict.schemaFieldMapper.fieldMappings}
         </h3>
-        <p
-          className={`
-            text-sm text-gray-600
-            dark:text-gray-400
-          `}
-        >
+        <p className={`text-sm text-muted-foreground`}>
           {dict.wizard.fieldMappingsDescription}
         </p>
       </div>
@@ -140,15 +135,10 @@ function ConfigureFieldMappingsStep({
         showEmptyState={true}
       />
       <div className='grow' />
-      <div
-        className={`
-          mt-auto border-t pt-4
-          dark:border-gray-800
-        `}
-      >
+      <div className={`mt-auto border-t pt-4`}>
         <Button
           className='mb-6 inline-block w-full'
-          variant='gradient'
+          variant='accent'
           size={'lg'}
           onClick={handleContinue}
         >

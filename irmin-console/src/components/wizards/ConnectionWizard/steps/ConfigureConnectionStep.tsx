@@ -245,12 +245,7 @@ export default function ConfigureConnectionStep({
   return (
     <div className='space-y-6'>
       {wizardData.connector && (
-        <div
-          className={`
-            flex flex-col justify-center border-b pb-4
-            dark:border-gray-800
-          `}
-        >
+        <div className={`flex flex-col justify-center border-b pb-4`}>
           <p className='mb-2 text-sm opacity-80'>
             {dict.connections.create.selectedConnector}:
           </p>
@@ -283,7 +278,7 @@ export default function ConfigureConnectionStep({
           </p>
           <Button
             className='w-full'
-            variant='gradient'
+            variant='accent'
             size='lg'
             loading={
               isSubmittingEdit ||

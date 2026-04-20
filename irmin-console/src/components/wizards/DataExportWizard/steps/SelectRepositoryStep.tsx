@@ -58,32 +58,14 @@ export default function SelectRepositoryStep({
     return (
       <div className='flex w-full flex-col space-y-6 px-4 py-8'>
         <div className='animate-pulse space-y-4'>
-          <div
-            className={`
-              h-4 w-1/3 rounded-sm bg-gray-200
-              dark:bg-gray-700
-            `}
-          />
-          <div
-            className={`
-              h-3 w-2/3 rounded-sm bg-gray-200
-              dark:bg-gray-700
-            `}
-          />
-          <div
-            className={`
-              h-10 w-full rounded-sm bg-gray-200
-              dark:bg-gray-700
-            `}
-          />
+          <div className={`h-4 w-1/3 rounded-sm bg-muted`} />
+          <div className={`h-3 w-2/3 rounded-sm bg-muted`} />
+          <div className={`h-10 w-full rounded-sm bg-muted`} />
           <div className='space-y-2'>
             {Array.from({ length: 3 }, (_, i) => (
               <div
                 key={`skeleton-${i}`}
-                className={`
-                  h-16 w-full rounded-sm bg-gray-200
-                  dark:bg-gray-700
-                `}
+                className={`h-16 w-full rounded-sm bg-muted`}
               />
             ))}
           </div>
@@ -99,12 +81,7 @@ export default function SelectRepositoryStep({
           <h3 className='mb-2 text-lg font-semibold'>
             {dict.wizard.selectSourceRepository}
           </h3>
-          <p
-            className={`
-              text-sm text-gray-600
-              dark:text-gray-400
-            `}
-          >
+          <p className={`text-sm text-muted-foreground`}>
             {dict.wizard.selectSourceRepositoryDescription}
           </p>
         </div>
@@ -124,7 +101,7 @@ export default function SelectRepositoryStep({
 
         <div className='max-h-64 space-y-2 overflow-y-auto'>
           {filteredRepositories.length === 0 ? (
-            <p className='py-4 text-center text-sm text-gray-500'>
+            <p className='py-4 text-center text-sm text-muted-foreground'>
               {searchQuery
                 ? dict.wizard.noRepositoriesFound
                 : dict.wizard.noRepositoriesAvailable}
@@ -135,15 +112,13 @@ export default function SelectRepositoryStep({
                 key={repository.id}
                 type='button'
                 className={`
-                  w-full rounded-lg border p-3 text-left transition-colors
+                  w-full rounded-[2px] border p-3 text-left transition-colors
                   ${
                     wizardData.repository?.id === repository.id
-                      ? `bg-card`
+                      ? 'border-accent bg-accent/10'
                       : `
-                        border-gray-200
-                        hover:border-gray-300
-                        dark:border-gray-700
-                        dark:hover:border-gray-600
+                        border-border
+                        hover:border-foreground/40
                       `
                   }
                 `}
@@ -152,20 +127,10 @@ export default function SelectRepositoryStep({
                 <div className='flex items-center gap-3'>
                   <div className='flex-1'>
                     <div className='font-medium'>{repository.name}</div>
-                    <div
-                      className={`
-                        text-sm text-gray-600
-                        dark:text-gray-400
-                      `}
-                    >
+                    <div className={`text-sm text-muted-foreground`}>
                       {repository.description || dict.wizard.noDescription}
                     </div>
-                    <div
-                      className={`
-                        text-xs text-gray-500
-                        dark:text-gray-500
-                      `}
-                    >
+                    <div className={`text-xs text-muted-foreground`}>
                       {dict.wizard.defaultBranch} {repository.default_branch}
                     </div>
                   </div>
@@ -176,12 +141,7 @@ export default function SelectRepositoryStep({
         </div>
       </div>
 
-      <div
-        className={`
-          border-t pt-4
-          dark:border-gray-800
-        `}
-      >
+      <div className={`border-t pt-4`}>
         <div className='flex gap-3'>
           <Button
             className='flex-1'
@@ -194,7 +154,7 @@ export default function SelectRepositoryStep({
           <Button
             className='flex-1'
             size='lg'
-            variant='default'
+            variant='accent'
             onClick={handleContinue}
             disabled={!wizardData.repository}
           >

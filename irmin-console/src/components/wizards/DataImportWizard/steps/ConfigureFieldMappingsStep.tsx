@@ -111,28 +111,13 @@ export default function ConfigureFieldMappingsStep({
           <h3 className='mb-2 text-lg font-semibold'>
             {dict.schemaFieldMapper.fieldMappings}
           </h3>
-          <p
-            className={`
-              text-sm text-gray-600
-              dark:text-gray-400
-            `}
-          >
+          <p className={`text-sm text-muted-foreground`}>
             {dict.wizard.fieldMappingsDescription}
           </p>
         </div>
 
-        <div
-          className={`
-            rounded-lg border border-gray-200 p-8 text-center
-            dark:border-gray-700
-          `}
-        >
-          <p
-            className={`
-              text-sm text-gray-600
-              dark:text-gray-400
-            `}
-          >
+        <div className={`rounded-[2px] border border-border p-8 text-center`}>
+          <p className={`text-sm text-muted-foreground`}>
             {wizardData.createNewConnection || wizardData.createNewRepository
               ? dict.wizard.fieldMappingsNotAvailableNewResources
               : dict.wizard.fieldMappingsNotAvailable}
@@ -140,15 +125,10 @@ export default function ConfigureFieldMappingsStep({
         </div>
 
         <div className='grow' />
-        <div
-          className={`
-            mt-auto border-t pt-4
-            dark:border-gray-800
-          `}
-        >
+        <div className={`mt-auto border-t pt-4`}>
           <Button
             className='mb-6 inline-block w-full'
-            variant='gradient'
+            variant='accent'
             size={'lg'}
             onClick={handleContinue}
           >
@@ -173,12 +153,7 @@ export default function ConfigureFieldMappingsStep({
         <h3 className='mb-2 text-lg font-semibold'>
           {dict.schemaFieldMapper.fieldMappings}
         </h3>
-        <p
-          className={`
-            text-sm text-gray-600
-            dark:text-gray-400
-          `}
-        >
+        <p className={`text-sm text-muted-foreground`}>
           {dict.wizard.fieldMappingsDescription}
         </p>
       </div>
@@ -192,12 +167,7 @@ export default function ConfigureFieldMappingsStep({
       />
 
       <div className='grow' />
-      <div
-        className={`
-          flex gap-3 border-t pt-4
-          dark:border-gray-800
-        `}
-      >
+      <div className={`flex gap-3 border-t pt-4`}>
         <Button
           variant='secondary'
           onClick={handleGoBack}
@@ -209,7 +179,7 @@ export default function ConfigureFieldMappingsStep({
         <Button
           className='flex-1'
           size='lg'
-          variant='default'
+          variant='accent'
           onClick={handleContinue}
         >
           {dict.common.continue}

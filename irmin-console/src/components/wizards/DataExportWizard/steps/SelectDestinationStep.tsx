@@ -92,12 +92,7 @@ export default function SelectDestinationStep({
           <h3 className='mb-2 text-lg font-semibold'>
             {dict.wizard.selectExportDestination}
           </h3>
-          <p
-            className={`
-              text-sm text-gray-600
-              dark:text-gray-400
-            `}
-          >
+          <p className={`text-sm text-muted-foreground`}>
             {dict.wizard.selectExportDestinationDescription}
           </p>
         </div>
@@ -123,12 +118,7 @@ export default function SelectDestinationStep({
                 <span className='font-medium'>
                   {dict.wizard.useExistingConnection}
                 </span>
-                <span
-                  className={`
-                    text-sm text-gray-600
-                    dark:text-gray-400
-                  `}
-                >
+                <span className={`text-sm text-muted-foreground`}>
                   {dict.wizard.selectFromExistingConnections}
                 </span>
               </div>
@@ -150,12 +140,7 @@ export default function SelectDestinationStep({
                 <span className='font-medium'>
                   {dict.wizard.createNewConnection}
                 </span>
-                <span
-                  className={`
-                    text-sm text-gray-600
-                    dark:text-gray-400
-                  `}
-                >
+                <span className={`text-sm text-muted-foreground`}>
                   {!isResourceAllowed('connection', 'create')
                     ? dict.common.insufficientPermissions
                     : dict.wizard.setupNewConnectionToDataSource}
@@ -182,7 +167,7 @@ export default function SelectDestinationStep({
 
           <div className='max-h-64 space-y-2 overflow-y-auto'>
             {filteredConnections.length === 0 ? (
-              <p className='py-4 text-center text-sm text-gray-500'>
+              <p className='py-4 text-center text-sm text-muted-foreground'>
                 {searchQuery
                   ? dict.wizard.noConnectionsFound
                   : dict.wizard.noConnectionsAvailable}
@@ -193,15 +178,13 @@ export default function SelectDestinationStep({
                   key={connection.id}
                   type='button'
                   className={`
-                    w-full rounded-lg border p-3 text-left transition-colors
+                    w-full rounded-[2px] border p-3 text-left transition-colors
                     ${
                       wizardData.connection?.id === connection.id
-                        ? `bg-card`
+                        ? 'border-accent bg-accent/10'
                         : `
-                          border-gray-200
-                          hover:border-gray-300
-                          dark:border-gray-700
-                          dark:hover:border-gray-600
+                          border-border
+                          hover:border-foreground/40
                         `
                     }
                   `}
@@ -219,12 +202,7 @@ export default function SelectDestinationStep({
                     </Avatar>
                     <div className='flex-1'>
                       <div className='font-medium'>{connection.name}</div>
-                      <div
-                        className={`
-                          text-sm text-gray-600
-                          dark:text-gray-400
-                        `}
-                      >
+                      <div className={`text-sm text-muted-foreground`}>
                         {connection.description || dict.wizard.noDescription}
                       </div>
                     </div>
@@ -256,16 +234,11 @@ export default function SelectDestinationStep({
 
       {!wizardData.createNewConnection && (
         <>
-          <div
-            className={`
-              border-t pt-4
-              dark:border-gray-800
-            `}
-          >
+          <div className={`border-t pt-4`}>
             <Button
               className='w-full'
               size='lg'
-              variant='default'
+              variant='accent'
               onClick={handleContinue}
               disabled={!wizardData.connection}
             >

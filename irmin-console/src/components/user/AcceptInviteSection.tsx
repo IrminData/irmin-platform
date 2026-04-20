@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
@@ -11,6 +10,7 @@ import { useTheme } from 'next-themes';
 
 import { TbCheck, TbX } from 'react-icons/tb';
 
+import { Logo } from '@/components/Logo/Logo';
 import { Button } from '@/components/ui/button';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -75,25 +75,11 @@ export default function AcceptInviteSection({
             `}
             aria-label='Go to website'
           >
-            <Image
-              className={`
-                h-9 min-h-5 w-auto
-                dark:hidden
-              `}
-              src='/irmin-logo.svg'
-              alt='Irmin logo'
-              width={200}
-              height={100}
-            />
-            <Image
-              className={`
-                hidden h-9 min-h-5 w-auto
-                dark:block
-              `}
-              src='/irmin-logo-light.svg'
-              alt='Irmin logo'
-              width={200}
-              height={100}
+            <Logo
+              className='
+                text-[1.5rem]
+                md:text-[1.6rem]
+              '
             />
           </Link>
           <div className='ml-auto' />
@@ -134,12 +120,13 @@ export default function AcceptInviteSection({
       <div className='container mx-auto my-8 max-w-3xl'>
         <div
           className={`
-            rounded-lg border border-red-400 bg-red-100 px-4 py-3 text-red-700
+            rounded-[2px] border border-destructive/40 bg-destructive/10 px-4
+            py-3 text-destructive
           `}
           role='alert'
         >
           <div className='flex gap-4'>
-            <TbX className='size-6 text-red-400' />
+            <TbX className='size-6 text-destructive' />
             <div>
               <p className='font-bold'>Invalid Invitation</p>
               <p className='text-sm'>
@@ -172,25 +159,11 @@ export default function AcceptInviteSection({
           `}
           aria-label='Go to website'
         >
-          <Image
-            className={`
-              h-9 min-h-5 w-auto
-              dark:hidden
-            `}
-            src='/irmin-logo.svg'
-            alt='Irmin logo'
-            width={200}
-            height={100}
-          />
-          <Image
-            className={`
-              hidden h-9 min-h-5 w-auto
-              dark:block
-            `}
-            src='/irmin-logo-light.svg'
-            alt='Irmin logo'
-            width={200}
-            height={100}
+          <Logo
+            className='
+              text-[1.5rem]
+              md:text-[1.6rem]
+            '
           />
         </Link>
         <div className='ml-auto' />
@@ -257,11 +230,12 @@ export default function AcceptInviteSection({
         {acceptInviteMutation.error && (
           <div
             className={`
-              rounded-lg border border-red-400 bg-red-100 px-4 py-3 text-red-700
+              rounded-[2px] border border-destructive/40 bg-destructive/10 px-4
+              py-3 text-destructive
             `}
           >
             <div className='flex gap-4'>
-              <TbX className='size-6 text-red-400' />
+              <TbX className='size-6 text-destructive' />
               <div>
                 <p className='font-bold'>{dict.common.ohNo}:</p>
                 <p className='text-sm'>{acceptInviteMutation.error.message}</p>
@@ -273,11 +247,12 @@ export default function AcceptInviteSection({
         {declineInviteMutation.error && (
           <div
             className={`
-              rounded-lg border border-red-400 bg-red-100 px-4 py-3 text-red-700
+              rounded-[2px] border border-destructive/40 bg-destructive/10 px-4
+              py-3 text-destructive
             `}
           >
             <div className='flex gap-4'>
-              <TbX className='size-6 text-red-400' />
+              <TbX className='size-6 text-destructive' />
               <div>
                 <p className='font-bold'>{dict.common.ohNo}:</p>
                 <p className='text-sm'>{declineInviteMutation.error.message}</p>

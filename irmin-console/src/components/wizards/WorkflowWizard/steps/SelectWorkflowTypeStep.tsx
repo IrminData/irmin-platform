@@ -89,41 +89,30 @@ function SelectWorkflowTypeStep({
           return (
             <button
               key={option.type}
+              type='button'
+              aria-pressed={isSelected}
               onClick={() => handleTypeSelect(option.type)}
               className={`
-                group relative flex w-full items-start gap-4 rounded-xl border
-                p-4 text-left
-                transition-[border-color,background-color,box-shadow]
-                hover:border-accent hover:bg-accent/10
-                dark:hover:border-accent dark:hover:bg-accent/20
+                group relative flex w-full items-start gap-4 rounded-[2px]
+                border p-4 text-left transition-[border-color,background-color]
+                duration-150
+                hover:border-accent/60 hover:bg-accent/5
                 ${
                   isSelected
-                    ? `
-                      border-accent bg-accent/10 ring-1 ring-accent
-                      dark:border-accent dark:bg-accent/20 dark:ring-accent
-                    `
-                    : `
-                      border-gray-200 bg-white
-                      dark:border-gray-800 dark:bg-gray-950
-                    `
+                    ? 'border-accent bg-accent/10'
+                    : 'border-border bg-card'
                 }
               `}
             >
               <div
                 className={`
-                  shrink-0 rounded-lg p-2.5 transition-colors
+                  shrink-0 rounded-[2px] p-2.5 transition-colors duration-150
                   ${
                     isSelected
-                      ? `
-                        bg-accent/10 text-accent
-                        dark:bg-accent/20 dark:text-accent
-                      `
+                      ? 'bg-accent/15 text-accent'
                       : `
-                        bg-gray-100 text-gray-600
-                        group-hover:bg-accent/10 group-hover:text-accent
-                        dark:bg-gray-800 dark:text-gray-400
-                        dark:group-hover:bg-accent/20
-                        dark:group-hover:text-accent
+                        bg-muted text-muted-foreground
+                        group-hover:text-accent
                       `
                   }
                 `}
@@ -133,28 +122,13 @@ function SelectWorkflowTypeStep({
               <div className='flex flex-col gap-1'>
                 <span
                   className={`
-                    font-medium transition-colors
-                    ${
-                      isSelected
-                        ? `
-                          text-accent-foreground
-                          dark:text-accent
-                        `
-                        : `
-                          text-gray-900
-                          dark:text-gray-100
-                        `
-                    }
+                    font-medium transition-colors duration-150
+                    ${isSelected ? 'text-foreground' : 'text-foreground'}
                   `}
                 >
                   {option.label}
                 </span>
-                <span
-                  className={`
-                    text-sm/normal transition-colors
-                    ${isSelected ? `text-accent` : `text-accent-foreground`}
-                  `}
-                >
+                <span className='text-sm/normal text-muted-foreground'>
                   {option.description}
                 </span>
               </div>
@@ -163,31 +137,26 @@ function SelectWorkflowTypeStep({
         })}
       </div>
       <div className='grow' />
-      <div
-        className={`
-          mt-auto border-t pt-4
-          dark:border-gray-800
-        `}
-      >
-        {onCancel && (
-          <Button
-            className='mb-3 inline-block w-full'
-            variant='secondary'
-            size='lg'
-            onClick={onCancel}
-          >
-            {dict.common.cancel}
-          </Button>
-        )}
+      <div className='mt-auto border-t border-border pt-4'>
         <Button
-          className='mb-6 inline-block w-full'
-          variant='gradient'
+          className='mb-2 w-full'
+          variant='accent'
           size='lg'
           onClick={handleContinue}
           disabled={!wizardData.type}
         >
           {dict.workflow.create.confirmAndContinue}
         </Button>
+        {onCancel && (
+          <Button
+            className='mb-6 w-full'
+            variant='ghost'
+            size='lg'
+            onClick={onCancel}
+          >
+            {dict.common.cancel}
+          </Button>
+        )}
       </div>
     </div>
   );

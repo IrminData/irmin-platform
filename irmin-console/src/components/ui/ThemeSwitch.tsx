@@ -24,7 +24,7 @@ export default function ThemeSwitch() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant='link' size='icon' aria-label='Toggle theme'>
+        <Button variant='ghost' size='icon' aria-label='Toggle theme'>
           <TbSun
             className={`
               size-4 scale-100 rotate-0 opacity-60 transition-transform

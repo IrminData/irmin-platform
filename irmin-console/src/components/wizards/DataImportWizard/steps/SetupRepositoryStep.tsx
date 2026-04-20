@@ -92,12 +92,7 @@ export default function SetupRepositoryStep({
           <h3 className='mb-2 text-lg font-semibold'>
             {dict.wizard.setupRepository}
           </h3>
-          <p
-            className={`
-              text-sm text-gray-600
-              dark:text-gray-400
-            `}
-          >
+          <p className={`text-sm text-muted-foreground`}>
             {dict.wizard.setupRepositoryDescription}
           </p>
         </div>
@@ -123,12 +118,7 @@ export default function SetupRepositoryStep({
                 <span className='font-medium'>
                   {dict.wizard.useExistingRepository}
                 </span>
-                <span
-                  className={`
-                    text-sm text-gray-600
-                    dark:text-gray-400
-                  `}
-                >
+                <span className={`text-sm text-muted-foreground`}>
                   {dict.wizard.selectFromExistingRepositories}
                 </span>
               </div>
@@ -150,12 +140,7 @@ export default function SetupRepositoryStep({
                 <span className='font-medium'>
                   {dict.repository.createNewRepository}
                 </span>
-                <span
-                  className={`
-                    text-sm text-gray-600
-                    dark:text-gray-400
-                  `}
-                >
+                <span className={`text-sm text-muted-foreground`}>
                   {!isResourceAllowed('repository', 'create')
                     ? dict.common.insufficientPermissions
                     : dict.wizard.createNewRepositoryDescription}
@@ -182,7 +167,7 @@ export default function SetupRepositoryStep({
 
           <div className='max-h-64 space-y-2 overflow-y-auto'>
             {filteredRepositories.length === 0 ? (
-              <p className='py-4 text-center text-sm text-gray-500'>
+              <p className='py-4 text-center text-sm text-muted-foreground'>
                 {searchQuery
                   ? dict.wizard.noRepositoriesFound
                   : dict.wizard.noRepositoriesAvailable}
@@ -193,15 +178,13 @@ export default function SetupRepositoryStep({
                   key={repository.id}
                   type='button'
                   className={`
-                    w-full rounded-lg border p-3 text-left transition-colors
+                    w-full rounded-[2px] border p-3 text-left transition-colors
                     ${
                       wizardData.repository?.id === repository.id
-                        ? `bg-card`
+                        ? 'border-accent bg-accent/10'
                         : `
-                          border-gray-200
-                          hover:border-gray-300
-                          dark:border-gray-700
-                          dark:hover:border-gray-600
+                          border-border
+                          hover:border-foreground/40
                         `
                     }
                   `}
@@ -210,20 +193,10 @@ export default function SetupRepositoryStep({
                   <div className='flex items-center gap-3'>
                     <div className='flex-1'>
                       <div className='font-medium'>{repository.name}</div>
-                      <div
-                        className={`
-                          text-sm text-gray-600
-                          dark:text-gray-400
-                        `}
-                      >
+                      <div className={`text-sm text-muted-foreground`}>
                         {repository.description || dict.wizard.noDescription}
                       </div>
-                      <div
-                        className={`
-                          text-xs text-gray-500
-                          dark:text-gray-500
-                        `}
-                      >
+                      <div className={`text-xs text-muted-foreground`}>
                         {dict.wizard.defaultBranch} {repository.default_branch}
                       </div>
                     </div>
@@ -251,12 +224,7 @@ export default function SetupRepositoryStep({
       )}
 
       {!wizardData.createNewRepository && (
-        <div
-          className={`
-            flex gap-3 border-t pt-4
-            dark:border-gray-800
-          `}
-        >
+        <div className={`flex gap-3 border-t pt-4`}>
           <Button
             variant='secondary'
             onClick={goBack}
@@ -268,7 +236,7 @@ export default function SetupRepositoryStep({
           <Button
             className='flex-1'
             size='lg'
-            variant='default'
+            variant='accent'
             onClick={handleContinue}
             disabled={!wizardData.repository}
           >

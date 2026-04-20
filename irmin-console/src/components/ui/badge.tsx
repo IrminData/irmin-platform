@@ -6,19 +6,18 @@ import { cn } from '@/utils/tw';
 
 const badgeVariants = cva(
   `
-    inline-flex w-max items-center rounded-md border p-1 text-xs font-normal
-    transition-colors
+    inline-flex w-max items-center rounded-[2px] px-1.5 py-0.5 text-[11px]
+    font-medium tracking-[0.02em] transition-colors duration-150
     focus:outline-hidden
   `,
   {
     variants: {
       variant: {
-        default: 'border-transparent bg-accent/80 text-accent-foreground',
-        primary: 'border-transparent bg-primary/80 text-primary-foreground',
-        secondary: 'border-transparent bg-secondary text-secondary-foreground',
-        destructive:
-          'border-transparent bg-destructive text-destructive-foreground',
-        outline: 'text-foreground',
+        default: 'bg-accent/15 text-accent',
+        primary: 'bg-muted text-foreground',
+        secondary: 'bg-secondary text-secondary-foreground',
+        destructive: 'bg-destructive/15 text-destructive',
+        outline: 'border border-border text-foreground',
       },
     },
     defaultVariants: {

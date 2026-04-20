@@ -92,8 +92,7 @@ export default function SideModal({
             {steps && currentStep && steps.length > 1 && (
               <div
                 className={`
-                  mx-6 mb-6 rounded-lg bg-gray-50 p-4
-                  dark:bg-gray-800
+                  mx-6 mb-6 rounded-[2px] border border-border bg-card p-4
                 `}
               >
                 <div className='flex items-center justify-between'>
@@ -106,17 +105,21 @@ export default function SideModal({
                       key={step}
                     >
                       <div className='flex items-center'>
+                        {/*
+                          Step indicator. `text-accent-foreground` is the
+                          paired readable color on `bg-accent` (dark ink
+                          on lime, not white). Previous `text-white` on
+                          lime was WCAG AA-failing — numerals barely
+                          visible in dark mode.
+                        */}
                         <div
                           className={`
                             flex size-8 items-center justify-center rounded-full
-                            text-sm font-semibold text-white
+                            text-sm font-semibold
                             ${
                               currentStep >= index + 1
-                                ? 'bg-accent shadow-md'
-                                : `
-                                  bg-gray-300
-                                  dark:bg-gray-600
-                                `
+                                ? 'bg-accent text-accent-foreground'
+                                : 'bg-muted text-muted-foreground'
                             }
                           `}
                         >
@@ -128,10 +131,7 @@ export default function SideModal({
                             ${
                               currentStep >= index + 1
                                 ? 'text-accent'
-                                : `
-                                  text-gray-600
-                                  dark:text-gray-400
-                                `
+                                : 'text-muted-foreground'
                             }
                           `}
                         >
@@ -145,10 +145,7 @@ export default function SideModal({
                             ${
                               currentStep > index + 1
                                 ? 'border-accent'
-                                : `
-                                  border-gray-300
-                                  dark:border-gray-600
-                                `
+                                : 'border-border'
                             }
                           `}
                         />

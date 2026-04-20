@@ -526,7 +526,7 @@ function RepositorySectionContent({
                       {dict.repository.objects.createPointer}
                     </Button>
                     <Button
-                      variant='default'
+                      variant='accent'
                       size='sm'
                       onClick={handleUpload}
                       icon={<TbUpload />}

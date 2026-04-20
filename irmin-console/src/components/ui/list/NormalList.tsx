@@ -212,9 +212,9 @@ const NormalList = ({
                             {/* If details exist, add toggle button */}
                             {row.details && (
                               <Button
-                                size='lg'
-                                variant='link'
-                                className='mt-1 ml-2 px-0'
+                                size='icon'
+                                variant='ghost'
+                                className='ml-1 size-8'
                                 onClick={() => {
                                   if (openDetails.includes(rowIndex)) {
                                     setOpenDetails(

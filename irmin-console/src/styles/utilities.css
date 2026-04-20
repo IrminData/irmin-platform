@@ -40,4 +40,77 @@
     content-visibility: auto;
     contain-intrinsic-size: auto 120px;
   }
+
+  /* --- Almanac Typography Helpers --- */
+  .type-display {
+    font-family: var(--font-display);
+    font-variation-settings:
+      'opsz' 144,
+      'SOFT' 30,
+      'WONK' 1;
+    letter-spacing: -0.025em;
+    line-height: 0.95;
+  }
+
+  .type-display-tight {
+    font-family: var(--font-display);
+    font-variation-settings:
+      'opsz' 144,
+      'SOFT' 0,
+      'WONK' 0;
+    letter-spacing: -0.03em;
+    line-height: 0.92;
+  }
+
+  .type-mono-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem; /* 11px */
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+
+  .type-mono-small {
+    font-family: var(--font-mono);
+    font-size: 0.75rem; /* 12px */
+    line-height: 1.5;
+  }
+
+  /* --- Accent Underline (hover reveal) --- */
+  .link-underline {
+    position: relative;
+    display: inline-block;
+  }
+  .link-underline::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -2px;
+    height: 1px;
+    background: hsla(var(--accent));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .link-underline:hover::after,
+  .link-underline:focus-visible::after {
+    transform: scaleX(1);
+  }
+
+  /* --- Dot Grid Backgrounds --- */
+  .dot-grid {
+    background-image: radial-gradient(
+      hsla(var(--foreground) / 0.14) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
+  }
+  .dot-grid-dense {
+    background-image: radial-gradient(
+      hsla(var(--foreground) / 0.18) 1px,
+      transparent 1px
+    );
+    background-size: 16px 16px;
+  }
 }

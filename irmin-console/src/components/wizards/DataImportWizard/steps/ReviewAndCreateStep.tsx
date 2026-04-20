@@ -152,12 +152,7 @@ export default function ReviewAndCreateStep({
           <h3 className='mb-2 text-lg font-semibold'>
             {dict.wizard.reviewYourSetup}
           </h3>
-          <p
-            className={`
-              text-sm text-gray-600
-              dark:text-gray-400
-            `}
-          >
+          <p className={`text-sm text-muted-foreground`}>
             {dict.wizard.reviewConfigurationDescription}
           </p>
         </div>
@@ -171,31 +166,16 @@ export default function ReviewAndCreateStep({
             <Badge variant='secondary'>{dict.policy.creating}</Badge>
           )}
         </h4>
-        <div
-          className={`
-            rounded-lg border border-gray-200 p-4
-            dark:border-gray-700
-          `}
-        >
+        <div className={`rounded-[2px] border border-border p-4`}>
           {wizardData.createNewConnection ? (
             <div>
               <div className='font-medium'>
                 {wizardData.connectionData.name}
               </div>
-              <div
-                className={`
-                  text-sm text-gray-600
-                  dark:text-gray-400
-                `}
-              >
+              <div className={`text-sm text-muted-foreground`}>
                 {wizardData.connectionData.description}
               </div>
-              <div
-                className={`
-                  mt-1 text-xs text-gray-500
-                  dark:text-gray-500
-                `}
-              >
+              <div className={`mt-1 text-xs text-muted-foreground`}>
                 {dict.wizard.connector}{' '}
                 {wizardData.connectionData.connector?.name}
               </div>
@@ -203,20 +183,10 @@ export default function ReviewAndCreateStep({
           ) : (
             <div>
               <div className='font-medium'>{wizardData.connection?.name}</div>
-              <div
-                className={`
-                  text-sm text-gray-600
-                  dark:text-gray-400
-                `}
-              >
+              <div className={`text-sm text-muted-foreground`}>
                 {wizardData.connection?.description}
               </div>
-              <div
-                className={`
-                  mt-1 text-xs text-gray-500
-                  dark:text-gray-500
-                `}
-              >
+              <div className={`mt-1 text-xs text-muted-foreground`}>
                 {dict.wizard.connector} {wizardData.connection?.connector.name}
               </div>
             </div>
@@ -232,31 +202,16 @@ export default function ReviewAndCreateStep({
             <Badge variant='secondary'>{dict.policy.creating}</Badge>
           )}
         </h4>
-        <div
-          className={`
-            rounded-lg border border-gray-200 p-4
-            dark:border-gray-700
-          `}
-        >
+        <div className={`rounded-[2px] border border-border p-4`}>
           {wizardData.createNewRepository ? (
             <div>
               <div className='font-medium'>
                 {wizardData.repositoryData.name}
               </div>
-              <div
-                className={`
-                  text-sm text-gray-600
-                  dark:text-gray-400
-                `}
-              >
+              <div className={`text-sm text-muted-foreground`}>
                 {wizardData.repositoryData.description}
               </div>
-              <div
-                className={`
-                  mt-1 text-xs text-gray-500
-                  dark:text-gray-500
-                `}
-              >
+              <div className={`mt-1 text-xs text-muted-foreground`}>
                 {dict.wizard.defaultBranch}{' '}
                 {wizardData.repositoryData.default_branch}
               </div>
@@ -264,20 +219,10 @@ export default function ReviewAndCreateStep({
           ) : (
             <div>
               <div className='font-medium'>{wizardData.repository?.name}</div>
-              <div
-                className={`
-                  text-sm text-gray-600
-                  dark:text-gray-400
-                `}
-              >
+              <div className={`text-sm text-muted-foreground`}>
                 {wizardData.repository?.description}
               </div>
-              <div
-                className={`
-                  mt-1 text-xs text-gray-500
-                  dark:text-gray-500
-                `}
-              >
+              <div className={`mt-1 text-xs text-muted-foreground`}>
                 {dict.wizard.defaultBranch}{' '}
                 {wizardData.repository?.default_branch}
               </div>
@@ -294,27 +239,12 @@ export default function ReviewAndCreateStep({
             <Badge variant='secondary'>{dict.policy.creating}</Badge>
           )}
         </h4>
-        <div
-          className={`
-            rounded-lg border border-gray-200 p-4
-            dark:border-gray-700
-          `}
-        >
+        <div className={`rounded-[2px] border border-border p-4`}>
           <div className='font-medium'>{wizardData.workflowData.name}</div>
-          <div
-            className={`
-              text-sm text-gray-600
-              dark:text-gray-400
-            `}
-          >
+          <div className={`text-sm text-muted-foreground`}>
             {wizardData.workflowData.description}
           </div>
-          <div
-            className={`
-              mt-2 space-y-1 text-xs text-gray-500
-              dark:text-gray-500
-            `}
-          >
+          <div className={`mt-2 space-y-1 text-xs text-muted-foreground`}>
             <div>
               {dict.wizard.importPaths}{' '}
               {wizardData.workflowData.import_from_connection_paths.join(', ')}
@@ -349,20 +279,14 @@ export default function ReviewAndCreateStep({
           <h4 className='flex items-center gap-2 font-medium'>
             {dict.schemaFieldMapper.fieldMappings}
           </h4>
-          <div
-            className={`
-              rounded-lg border border-gray-200 p-4
-              dark:border-gray-700
-            `}
-          >
+          <div className={`rounded-[2px] border border-border p-4`}>
             <div className='space-y-2'>
               {wizardData.workflowData.field_mappings.map((mapping, index) => (
                 <div
                   key={`${mapping.source_path}-${mapping.destination_path}-${index}`}
                   className={`
-                    flex items-center justify-between rounded-lg border
-                    border-gray-100 p-3
-                    dark:border-gray-600
+                    flex items-center justify-between rounded-[2px] border
+                    border-border p-3
                   `}
                 >
                   <div className='flex items-center gap-3'>
@@ -374,7 +298,7 @@ export default function ReviewAndCreateStep({
                     >
                       {mapping.source_field}
                     </span>
-                    <span className='text-xs text-gray-500'>→</span>
+                    <span className='text-xs text-muted-foreground'>→</span>
                     <span
                       className={`
                         rounded-sm bg-irmin-green-100 px-2 py-1 text-xs
@@ -384,7 +308,7 @@ export default function ReviewAndCreateStep({
                       {mapping.destination_field}
                     </span>
                   </div>
-                  <div className='text-xs text-gray-500'>
+                  <div className='text-xs text-muted-foreground'>
                     {mapping.source_path} → {mapping.destination_path}
                   </div>
                 </div>
@@ -398,7 +322,7 @@ export default function ReviewAndCreateStep({
       {isAnyCreating && (
         <div
           className={`
-            rounded-lg bg-blue-50 p-4
+            rounded-[2px] bg-blue-50 p-4
             dark:bg-blue-900/20
           `}
         >
@@ -429,12 +353,7 @@ export default function ReviewAndCreateStep({
         </div>
       )}
 
-      <div
-        className={`
-          flex gap-3 border-t pt-4
-          dark:border-gray-800
-        `}
-      >
+      <div className={`flex gap-3 border-t pt-4`}>
         <Button
           variant='secondary'
           onClick={goBack}
@@ -447,7 +366,7 @@ export default function ReviewAndCreateStep({
         <Button
           className='flex-1'
           size='lg'
-          variant='gradient'
+          variant='accent'
           onClick={handleCreate}
           loading={isCreating}
           disabled={isCreating}

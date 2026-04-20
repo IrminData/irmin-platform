@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 
-import localFont from 'next/font/local';
+import { Fraunces, IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
 
 import { ClerkProvider } from '@clerk/nextjs';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -23,19 +23,32 @@ import { ThemeProvider } from '@/context/ThemeProvider';
 
 import './globals.css';
 
-const geistSans = localFont({
-  src: '../../public/fonts/Geist/Geist-VariableFont_wght.ttf',
-  variable: '--geist-sans',
+// Almanac typography stack (matches irmin-website).
+//  - Fraunces → display (h1, logotype, marketing-grade headlines)
+//  - IBM Plex Sans → body / UI
+//  - IBM Plex Mono → labels, code, eyebrows
+// Fraunces is a variable font; declaring `axes` requires `weight: 'variable'`
+// (or omitting weight entirely). Using explicit weight arrays is only valid
+// when no axes are requested. We need opsz/SOFT/WONK for the DisplayTitle
+// and Logo recipes, so we load the full variable face.
+const fraunces = Fraunces({
+  variable: '--font-fraunces',
+  subsets: ['latin'],
+  display: 'swap',
+  weight: 'variable',
+  axes: ['SOFT', 'WONK', 'opsz'],
 });
-const geistMono = localFont({
-  src: '../../public/fonts/Geist_Mono/GeistMono-VariableFont_wght.ttf',
-  variable: '--geist-mono',
+const plexSans = IBM_Plex_Sans({
+  variable: '--font-plex-sans',
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
 });
-const loraSerif = localFont({
-  src: '../../public/fonts/Lora/Lora-VariableFont_wght.ttf',
-  variable: '--lora-serif',
-  // Editorial serif — only rendered in <blockquote>. Skip preload.
-  preload: false,
+const plexMono = IBM_Plex_Mono({
+  variable: '--font-plex-mono',
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['300', '400', '500', '600'],
 });
 
 /**
@@ -73,14 +86,15 @@ export async function generateMetadata(props: {
 
 /**
  * Viewport configuration. Theme-color lives here, not on `metadata` — Next.js
- * 13.3+ deprecated `metadata.themeColor` and Next 16 silently drops it. The
- * dark hex matches --background in src/styles/theme.css .dark, which is
- * HSL(197 94% 4%) ≈ rgb(1, 14, 20) = #010e14.
+ * 13.3+ deprecated `metadata.themeColor` and Next 16 silently drops it. Hexes
+ * track --background in src/styles/theme.css:
+ *   light  HSL(42 30% 95%) ≈ #f4eedf  (cream paper)
+ *   dark   HSL(170 8% 6%)  ≈ #0e1010  (warm near-black)
  */
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#010e14' },
+    { media: '(prefers-color-scheme: light)', color: '#f4eedf' },
+    { media: '(prefers-color-scheme: dark)', color: '#0e1010' },
   ],
 };
 
@@ -104,9 +118,9 @@ export default async function RootLayout(props: {
       <head />
       <body
         className={`
-          ${geistSans.variable}
-          ${geistMono.variable}
-          ${loraSerif.variable}
+          ${fraunces.variable}
+          ${plexSans.variable}
+          ${plexMono.variable}
           scrollbar-hide overscroll-none bg-background text-foreground
           antialiased
         `}

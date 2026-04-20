@@ -177,8 +177,8 @@ export default function WorkflowWizard({
       {workflowTypeDescription && (
         <div
           className={`
-            mx-4 mb-4 flex items-start gap-3 rounded-lg border border-accent/30
-            bg-accent/10 p-3
+            mx-4 mb-4 flex items-start gap-3 rounded-[2px] border
+            border-accent/30 bg-accent/10 p-3
             dark:border-accent-foreground dark:bg-accent/10
           `}
         >

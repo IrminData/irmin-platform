@@ -107,12 +107,7 @@ export default function ConfigureImportStep({
           <h3 className='mb-2 text-lg font-semibold'>
             {dict.workflow.create.configureImport}
           </h3>
-          <p
-            className={`
-              text-sm text-gray-600
-              dark:text-gray-400
-            `}
-          >
+          <p className={`text-sm text-muted-foreground`}>
             {dict.wizard.configureImportDescription}
           </p>
         </div>
@@ -302,12 +297,7 @@ export default function ConfigureImportStep({
           />
         </div>
 
-        <div
-          className={`
-            flex gap-3 border-t pt-4
-            dark:border-gray-800
-          `}
-        >
+        <div className={`flex gap-3 border-t pt-4`}>
           <Button
             type='button'
             variant='secondary'
@@ -321,7 +311,7 @@ export default function ConfigureImportStep({
             type='button'
             className='flex-1'
             size='lg'
-            variant='default'
+            variant='accent'
             onClick={handleSubmit(handleSubmitForm)}
             loading={isSubmitting}
           >

@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { clientEnv } from '@/config/env.client';
 
 import {
+  TbChevronDown,
   TbCode,
   TbInvoice,
   TbLogs,
@@ -18,6 +19,12 @@ import {
 
 import AssistantSection from '@/components/assistant/AssistantSection';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { QueryError } from '@/components/ui/error/QueryError';
 import WorkspaceDashboardSkeleton from '@/components/ui/loading/WorkspaceDashboardSkeleton';
 import {
@@ -95,7 +102,7 @@ const DashboardSection = () => {
 
   if (workspaceQuery?.isError) {
     return (
-      <div className='pattern-bg min-h-full py-12'>
+      <div className='min-h-full py-12'>
         <div className='relative container mx-auto max-w-6xl px-4'>
           <QueryError
             error={workspaceQuery.error}
@@ -113,7 +120,7 @@ const DashboardSection = () => {
   }
 
   return (
-    <div className='pattern-bg min-h-full py-4'>
+    <div className='min-h-full py-4'>
       <div
         className={`
           relative container mx-auto w-full max-w-7xl
@@ -121,12 +128,15 @@ const DashboardSection = () => {
         `}
       >
         <div className='flex flex-col gap-4 px-4 pb-12'>
-          {/* Navigation Buttons. Every button gets an explanatory tooltip —
-              Catalog & Lineage alone needs one (the label is industry-
-              jargon), and giving just that button a tooltip would read as
-              inconsistent. So all buttons have them. */}
+          {/* Workspace navigation.
+              Primary group (4 chips): My Profile, Settings, Logs, Catalog
+              & Lineage — the four surfaces the workspace owner hits
+              most. Everything else (Users, Invites, Tags, Billing,
+              API/MCP) sits under a "More" dropdown to keep the first-
+              scan cognitive load low. Nine equal-weight chips in a row
+              was reading as noise. */}
           <TooltipProvider delayDuration={300}>
-            <div className='flex flex-row flex-wrap gap-2'>
+            <div className='flex flex-row flex-wrap items-center gap-2'>
               <NavButtonWithTooltip
                 href={`/${locale}/profile`}
                 icon={<TbUser className='size-4' />}
@@ -141,39 +151,6 @@ const DashboardSection = () => {
                   tooltip={dict.workspace.dashboardTooltips.settings}
                 />
               )}
-              {isResourceAllowed('workspace_tag', 'read') && (
-                <NavButtonWithTooltip
-                  href={`${workspaceUrl}/settings/tags`}
-                  icon={<TbTag className='size-4' />}
-                  label={dict.workspace.tags}
-                  tooltip={dict.workspace.dashboardTooltips.tags}
-                />
-              )}
-              {isResourceAllowed('user', 'read') && (
-                <NavButtonWithTooltip
-                  href={`${workspaceUrl}/settings/users`}
-                  icon={<TbUsersGroup className='size-4' />}
-                  label={dict.workspace.users}
-                  tooltip={dict.workspace.dashboardTooltips.users}
-                />
-              )}
-              {isResourceAllowed('invite', 'read') && (
-                <NavButtonWithTooltip
-                  href={`${workspaceUrl}/settings/invites`}
-                  icon={<TbMail className='size-4' />}
-                  label={dict.workspace.invites}
-                  tooltip={dict.workspace.dashboardTooltips.invites}
-                />
-              )}
-              {!clientEnv.NEXT_PUBLIC_BILLING_DISABLED &&
-                isResourceAllowed('billing', 'read') && (
-                  <NavButtonWithTooltip
-                    href={`${workspaceUrl}/settings/billing`}
-                    icon={<TbInvoice className='size-4' />}
-                    label={dict.workspace.billing}
-                    tooltip={dict.workspace.dashboardTooltips.billing}
-                  />
-                )}
               {isResourceAllowed('audit_log', 'read') && (
                 <NavButtonWithTooltip
                   href={`${workspaceUrl}/logs`}
@@ -183,11 +160,12 @@ const DashboardSection = () => {
                 />
               )}
               {/* Catalog & Lineage — the /catalog route renders the
-                  DocumentationSection (internal naming stays "documentation"
-                  in API, DB, and src/components/documentation/*; only the
-                  UI-facing label and route path were renamed). The
-                  isResourceAllowed check uses the internal permission key
-                  'documentation' intentionally. */}
+                  DocumentationSection (internal naming stays
+                  "documentation" in API, DB, and
+                  src/components/documentation/*; only the UI-facing
+                  label and route path were renamed). The
+                  isResourceAllowed check uses the internal permission
+                  key 'documentation' intentionally. */}
               {isResourceAllowed('documentation', 'read') && (
                 <NavButtonWithTooltip
                   href={`${workspaceUrl}/catalog`}
@@ -196,12 +174,78 @@ const DashboardSection = () => {
                   tooltip={dict.catalog.catalogAndLineageTooltip}
                 />
               )}
-              <NavButtonWithTooltip
-                href={`${workspaceUrl}/settings/api-mcp`}
-                icon={<TbCode className='size-4' />}
-                label={dict.workspace.apiMcp}
-                tooltip={dict.workspace.dashboardTooltips.apiMcp}
-              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    className='gap-1 text-xs'
+                    aria-label={dict.common.more}
+                  >
+                    {dict.common.more}
+                    <TbChevronDown
+                      className='size-3 opacity-70'
+                      aria-hidden='true'
+                    />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='start'>
+                  {isResourceAllowed('user', 'read') && (
+                    <DropdownMenuItem asChild>
+                      <a href={`${workspaceUrl}/settings/users`}>
+                        <TbUsersGroup
+                          className='size-4 opacity-70'
+                          aria-hidden='true'
+                        />
+                        <span>{dict.workspace.users}</span>
+                      </a>
+                    </DropdownMenuItem>
+                  )}
+                  {isResourceAllowed('invite', 'read') && (
+                    <DropdownMenuItem asChild>
+                      <a href={`${workspaceUrl}/settings/invites`}>
+                        <TbMail
+                          className='size-4 opacity-70'
+                          aria-hidden='true'
+                        />
+                        <span>{dict.workspace.invites}</span>
+                      </a>
+                    </DropdownMenuItem>
+                  )}
+                  {isResourceAllowed('workspace_tag', 'read') && (
+                    <DropdownMenuItem asChild>
+                      <a href={`${workspaceUrl}/settings/tags`}>
+                        <TbTag
+                          className='size-4 opacity-70'
+                          aria-hidden='true'
+                        />
+                        <span>{dict.workspace.tags}</span>
+                      </a>
+                    </DropdownMenuItem>
+                  )}
+                  {!clientEnv.NEXT_PUBLIC_BILLING_DISABLED &&
+                    isResourceAllowed('billing', 'read') && (
+                      <DropdownMenuItem asChild>
+                        <a href={`${workspaceUrl}/settings/billing`}>
+                          <TbInvoice
+                            className='size-4 opacity-70'
+                            aria-hidden='true'
+                          />
+                          <span>{dict.workspace.billing}</span>
+                        </a>
+                      </DropdownMenuItem>
+                    )}
+                  <DropdownMenuItem asChild>
+                    <a href={`${workspaceUrl}/settings/api-mcp`}>
+                      <TbCode
+                        className='size-4 opacity-70'
+                        aria-hidden='true'
+                      />
+                      <span>{dict.workspace.apiMcp}</span>
+                    </a>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </TooltipProvider>
           <BillingBanner />
@@ -225,9 +269,15 @@ const DashboardSection = () => {
               )}
             </div>
           </div>
-          {/* Wizard Selector */}
+          {/* Wizard entry points. Rendered as a flat hairline-separated row
+              (or stacked on mobile) instead of the old 3-column icon-in-
+              circle card grid — that was the textbook AI-slop layout.
+              Typography + a trailing arrow carry the affordance now. */}
           <div
-            className={`flex w-full flex-row items-stretch justify-start gap-2`}
+            className={`
+              flex w-full flex-col items-stretch border-t border-border
+              md:flex-row
+            `}
           >
             <WizardSelector
               availableWizards={['data-import', 'data-export', 'pipeline']}

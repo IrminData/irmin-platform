@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { GoWorkflow } from 'react-icons/go';
 import { TbBrain, TbDatabase, TbDots, TbPlus, TbRun } from 'react-icons/tb';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -146,9 +145,9 @@ export function DashboardListCard({
           <div className='flex items-center gap-2'>
             {items.length > 0 && (
               <Button
-                variant='ghost'
+                variant='link'
                 size='sm'
-                className='text-xs'
+                className='px-1 text-xs'
                 href={viewAllHref}
               >
                 {dict.list.viewAll}
@@ -156,7 +155,9 @@ export function DashboardListCard({
             )}
             {!hideCreateNewButton && items.length > 0 && (
               <Button
+                variant='ghost'
                 size='sm'
+                className='px-2 text-xs'
                 icon={<TbPlus className='size-3' />}
                 href={createNewHref}
               >
@@ -175,10 +176,7 @@ export function DashboardListCard({
         {loading ? (
           <div className='space-y-1'>
             {Array.from({ length: 5 }, (_, index) => (
-              <div
-                key={`skeleton-${type}-item-${index}`}
-                className='rounded-lg border border-border p-1.5'
-              >
+              <div key={`skeleton-${type}-item-${index}`} className='p-1.5'>
                 <LoadingSkeleton className='mb-0.5 h-5 w-3/4' />
                 <LoadingSkeleton className='h-4 w-1/2' />
               </div>
@@ -204,8 +202,8 @@ export function DashboardListCard({
                       <div
                         key={itemDetails.id}
                         className={`
-                          flex h-auto items-center justify-between rounded-lg
-                          border border-border p-1.5
+                          flex h-auto items-center justify-between gap-2 p-1.5
+                          hover:bg-muted/40
                         `}
                       >
                         <div className='min-w-0 flex-1'>
@@ -214,11 +212,23 @@ export function DashboardListCard({
                           >
                             <Link
                               href={`${workspaceUrl}/${type}/${itemDetails.href}`}
+                              className='min-w-0 truncate'
                             >
                               {itemDetails.name}
                             </Link>
                             {type === 'workflows' && (
-                              <Badge className='px-1 py-0 text-xs'>
+                              // Workflow type inline as a quiet mono
+                              // label, not a Badge pill. Every type was
+                              // the same accent tint so the pill added
+                              // shape-noise without communicating the
+                              // distinction.
+                              <span
+                                className={`
+                                  shrink-0 font-mono text-[10px]
+                                  tracking-[0.08em] text-muted-foreground
+                                  uppercase
+                                `}
+                              >
                                 {itemDetails.type === 'action' &&
                                   dict.workflow.action}
                                 {itemDetails.type === 'import' &&
@@ -227,10 +237,12 @@ export function DashboardListCard({
                                   dict.workflow.export}
                                 {itemDetails.type === 'pipeline' &&
                                   dict.workflow.pipeline.pipeline}
-                              </Badge>
+                              </span>
                             )}
                           </div>
-                          <p className='truncate text-xs text-muted-foreground'>
+                          <p
+                            className={`truncate text-xs text-muted-foreground`}
+                          >
                             {itemDetails.description}
                           </p>
                         </div>

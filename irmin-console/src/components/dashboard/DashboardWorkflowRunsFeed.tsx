@@ -100,10 +100,7 @@ export function DashboardWorkflowRunsFeed({
         {workflowRunsQuery.isLoading ? (
           <div className='space-y-1'>
             {Array.from({ length: 8 }, (_, index) => (
-              <div
-                key={`skeleton-run-${index}`}
-                className='rounded-lg border border-border p-1.5'
-              >
+              <div key={`skeleton-run-${index}`} className='p-1.5'>
                 <div className='mb-0.5 flex items-center gap-1.5'>
                   <LoadingSkeleton className='h-3 w-1/3' />
                   <LoadingSkeleton className='h-4 w-16' />
@@ -133,8 +130,7 @@ export function DashboardWorkflowRunsFeed({
                         key={run.id}
                         className={`
                           flex cursor-pointer items-center justify-between
-                          rounded-lg border border-border p-1.5
-                          transition-colors
+                          rounded-[2px] p-1.5 transition-colors
                           hover:bg-muted/50
                         `}
                         href={`${workspaceUrl}/workflows/${run.workflow_id}/run/${run.id}`}

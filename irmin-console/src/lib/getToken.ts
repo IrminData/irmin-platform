@@ -29,7 +29,12 @@ export async function getToken(): Promise<string> {
     token = await getToken({ template: 'irmin-core' });
     if (!token) throw new Error('Failed to get token');
 
-    // Set the token in an HTTP-only, secure cookie with expiry shorter than the token expiry
+    // Set the token in an HTTP-only, secure cookie with an expiry shorter
+    // than the token's own. This is an optimisation — on callers where
+    // cookie mutation isn't allowed (React Server Components, including
+    // `generateMetadata`), Next.js throws. That's expected and not an
+    // error for us: the next call simply re-fetches a fresh token. We
+    // swallow that specific failure silently and only log unexpected ones.
     try {
       cookieStore.set(tokenCookieName, token, {
         httpOnly: true,
@@ -38,7 +43,14 @@ export async function getToken(): Promise<string> {
         maxAge: 60, // Token expires in 60 seconds
       });
     } catch (error) {
-      console.warn('Failed to set token cookie', error);
+      const isExpectedReadOnlyContext =
+        error instanceof Error &&
+        /can only be modified in a Server Action or Route Handler/i.test(
+          error.message
+        );
+      if (!isExpectedReadOnlyContext) {
+        console.warn('Failed to set token cookie', error);
+      }
     }
   }
 
