@@ -100,12 +100,7 @@ export default function SelectConnectorStep({
           </Button>
         ))}
       </div>
-      {/* Connector Selection.
-          Each card clips the logo inside a rounded-[2px] overflow-hidden
-          tile so brand-color Stripe/Pinecone/etc. don't bleed to the
-          card's own rounded corners. Card itself uses hairline border +
-          accent-on-selected, not a grey bg + outline, so it matches the
-          rest of the wizard chrome. */}
+      {/* Connector Selection */}
       <div className='flex flex-wrap gap-2'>
         {filteredConnectors.map((connector) => {
           const isSelected = selectedConnector?.id === connector.id;
@@ -126,19 +121,12 @@ export default function SelectConnectorStep({
               }}
               aria-pressed={isSelected}
             >
-              <div
-                className={`
-                  flex size-12 shrink-0 items-center justify-center
-                  overflow-hidden rounded-[2px] bg-background
-                `}
-              >
-                <Avatar className='size-full rounded-none'>
-                  <AvatarImage src={connector.logo_url} alt={connector.name} />
-                  <AvatarFallback>
-                    {connector.name.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
+              <Avatar className='size-12'>
+                <AvatarImage src={connector.logo_url} alt={connector.name} />
+                <AvatarFallback>
+                  {connector.name.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               <div className='flex flex-col justify-start gap-1'>
                 {connector.primary_category && (
                   <Badge variant='secondary'>

@@ -4,7 +4,7 @@ const SkeletonConnectorInfo = () => (
   <div className='flex flex-col justify-center border-b border-border pb-4'>
     <LoadingSkeleton className='mb-2 h-4 w-32' />
     <div className='flex items-center gap-4'>
-      <LoadingSkeleton className='size-16 rounded-md' />
+      <LoadingSkeleton className='size-16 rounded-full' />
       <div className='flex flex-col gap-1'>
         <LoadingSkeleton className='h-6 w-24' />
         <LoadingSkeleton className='h-5 w-32' />
@@ -42,7 +42,7 @@ const SkeletonConnectorCard = () => (
       rounded-lg bg-muted/40 px-4 py-2
     `}
   >
-    <LoadingSkeleton className='size-12 rounded-md' />
+    <LoadingSkeleton className='size-12 rounded-full' />
     <div className='flex flex-col gap-1'>
       <LoadingSkeleton className='h-5 w-16' />
       <LoadingSkeleton className='h-4 w-24' />
