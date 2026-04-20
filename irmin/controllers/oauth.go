@@ -277,8 +277,15 @@ func (api *APIControllers) OAuthCallback(c fiber.Ctx) error {
 // a fresh access token for a connection. Uses raw uint (not SQID) because
 // it's an internal service-to-service call where SQID encoding would add
 // coupling without benefit.
+//
+// ForceRefresh is the escape hatch for vendor-side revocation: when the
+// vendor 401s on a token that's still within its local expiry window, the
+// caller retries with force_refresh=true so Core bypasses the skew check
+// and calls the vendor refresh endpoint unconditionally. See the Phase 3
+// OAuth base in irmin-connectors for the retry-on-401 flow.
 type systemAccessTokenRequest struct {
 	ConnectionID uint `json:"connection_id"`
+	ForceRefresh bool `json:"force_refresh,omitempty"`
 }
 
 type systemAccessTokenResponse struct {
@@ -300,6 +307,17 @@ type systemAccessTokenResponse struct {
 // @Failure 401 {object} irminmodels.IrminAPIResponse
 // @Failure 403 {object} irminmodels.IrminAPIResponse
 // @Router /system/oauth/access-token [post]
+//
+// Auth chain (covered by TestSystemOAuthAccessTokenAuthGate):
+//   - AuthMiddleware on /api/v1 strips the Bearer token and stamps
+//     c.Locals("is_system", true) iff the token equals env.SystemToken.
+//   - This handler additionally enforces is_system == true before
+//     anything else. The same gate guards the lazy variant
+//     (force_refresh=false) and the force-refresh variant
+//     (force_refresh=true) — there is no separate auth path.
+//
+// Cross-service contract: irmin-connectors must run with
+// IRMIN_API_TOKEN set to the same value as Core's TOKEN env var.
 func (api *APIControllers) SystemOAuthAccessToken(c fiber.Ctx) error {
 	// Middleware normally populates the locale dictionary; if something
 	// upstream didn't, fall back to an empty dict so every error path
@@ -327,9 +345,20 @@ func (api *APIControllers) SystemOAuthAccessToken(c fiber.Ctx) error {
 			services.ErrInvalidRequest, dict)
 	}
 
-	token, tokErr := api.Services.OAuthService.GetAccessToken(c.Context(), req.ConnectionID)
+	var (
+		token  *oauth.AccessToken
+		tokErr error
+	)
+	if req.ForceRefresh {
+		token, tokErr = api.Services.OAuthService.ForceRefreshAccessToken(c.Context(), req.ConnectionID)
+	} else {
+		token, tokErr = api.Services.OAuthService.GetAccessToken(c.Context(), req.ConnectionID)
+	}
 	if tokErr != nil {
 		return api.mapOAuthError(c, "Failed to get access token", tokErr, dict)
+	}
+	if req.ForceRefresh {
+		api.recordForcedRefreshAuditEvent(req.ConnectionID)
 	}
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: systemAccessTokenResponse{
@@ -339,6 +368,52 @@ func (api *APIControllers) SystemOAuthAccessToken(c fiber.Ctx) error {
 			Scope:       token.Scope,
 		},
 	})
+}
+
+// recordForcedRefreshAuditEvent emits an audit event for a successful
+// force-refresh. Looks up the connection so the event carries
+// WorkspaceID — the existing audit-log query paths
+// (GetLogEventsForWorkspace, GetLogEventsByWorkspaceAndAsset) all
+// filter on workspace, so without it the event would persist but
+// never surface in any console view. Lazy refreshes stay silent
+// (they fire on every expiring call and would flood the log); a
+// forced refresh only happens when a vendor rejected an
+// otherwise-valid token, which is the signal worth keeping.
+//
+// On lookup failure we still emit the event with at least the
+// connection ID and log a warning — partial trail beats no trail,
+// and the failure itself is interesting for diagnostics.
+func (api *APIControllers) recordForcedRefreshAuditEvent(connID uint) {
+	conn, lookupErr := api.DB.GetConnectionByID(connID)
+	if lookupErr != nil {
+		api.Logger.Warn(
+			"oauth: load connection for audit event failed; emitting without workspace",
+			"connection_id", connID,
+			"error", lookupErr,
+		)
+	}
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, buildForcedRefreshLogEvent(connID, conn))
+}
+
+// buildForcedRefreshLogEvent constructs the LogEvent for a successful
+// force-refresh. Pure function so the WorkspaceID-stamping invariant
+// can be locked in by a unit test without spinning up a DB; the
+// surrounding recordForcedRefreshAuditEvent owns the DB lookup that
+// produces conn. conn may be nil on lookup failure — in that case the
+// event still carries ConnectionID so the trail isn't empty.
+func buildForcedRefreshLogEvent(connID uint, conn *db.Connection) *db.LogEvent {
+	event := &db.LogEvent{
+		Type:         db.LogEventTypeInfo,
+		Description:  fmt.Sprintf("oauth.refreshed (forced) for connection %d", connID),
+		ConnectionID: &connID,
+	}
+	if conn != nil {
+		// Take a fresh local so the pointer doesn't alias the input
+		// struct's field (which the caller may mutate later).
+		workspaceID := conn.WorkspaceID
+		event.WorkspaceID = &workspaceID
+	}
+	return event
 }
 
 // --- Error mapping ------------------------------------------------------------

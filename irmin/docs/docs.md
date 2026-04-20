@@ -2574,6 +2574,13 @@ func (api *APIControllers) SystemOAuthAccessToken(c fiber.Ctx) error
 
 SystemOAuthAccessToken godoc @Summary Fetch a fresh access token \(system token only\) @Description Returns a non\-expired access token for a connection, refreshing transparently if needed. Called by irmin\-connectors. @Tags oauth @Security SystemTokenAuth @Accept json @Produce json @Param request body systemAccessTokenRequest true "connection\_id" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=systemAccessTokenResponse\} @Failure 401 \{object\} irminmodels.IrminAPIResponse @Failure 403 \{object\} irminmodels.IrminAPIResponse @Router /system/oauth/access\-token \[post\]
 
+Auth chain \(covered by TestSystemOAuthAccessTokenAuthGate\):
+
+- AuthMiddleware on /api/v1 strips the Bearer token and stamps c.Locals\("is\_system", true\) iff the token equals env.SystemToken.
+- This handler additionally enforces is\_system == true before anything else. The same gate guards the lazy variant \(force\_refresh=false\) and the force\-refresh variant \(force\_refresh=true\) — there is no separate auth path.
+
+Cross\-service contract: irmin\-connectors must run with IRMIN\_API\_TOKEN set to the same value as Core's TOKEN env var.
+
 <a name="APIControllers.SystemWebhook"></a>
 ### func \(\*APIControllers\) SystemWebhook
 
@@ -19604,6 +19611,7 @@ All stored secrets go through the encrypted\_json GORM serializer; this package 
 - [type Options](<#Options>)
 - [type Service](<#Service>)
   - [func NewService\(opts Options\) \(\*Service, error\)](<#NewService>)
+  - [func \(s \*Service\) ForceRefreshAccessToken\(ctx context.Context, connectionID uint\) \(\*AccessToken, error\)](<#Service.ForceRefreshAccessToken>)
   - [func \(s \*Service\) GetAccessToken\(ctx context.Context, connectionID uint\) \(\*AccessToken, error\)](<#Service.GetAccessToken>)
   - [func \(s \*Service\) GetConnectionOAuthStatus\(\_ context.Context, connectionID uint\) \(\*ConnectionStatus, error\)](<#Service.GetConnectionOAuthStatus>)
   - [func \(s \*Service\) HandleCallback\(ctx context.Context, state, code string\) \(\*CallbackResult, error\)](<#Service.HandleCallback>)
@@ -19830,6 +19838,17 @@ func NewService(opts Options) (*Service, error)
 ```
 
 NewService builds a Service. All required fields are validated; missing optional fields fall back to safe defaults.
+
+<a name="Service.ForceRefreshAccessToken"></a>
+### func \(\*Service\) ForceRefreshAccessToken
+
+```go
+func (s *Service) ForceRefreshAccessToken(ctx context.Context, connectionID uint) (*AccessToken, error)
+```
+
+ForceRefreshAccessToken rotates the stored token unconditionally and returns the freshly\-issued access token. Callers use this when the vendor rejected a previously\-cached token mid\-operation \(401 on a token that hadn't yet entered the skew window\) — the only remedy is to force a refresh regardless of local expiry state.
+
+Returns ErrNotConnected when the connection has no token row. Returns ErrRefreshRejected if the vendor rejects the refresh.
 
 <a name="Service.GetAccessToken"></a>
 ### func \(\*Service\) GetAccessToken

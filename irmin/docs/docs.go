@@ -15212,6 +15212,9 @@ const docTemplate = `{
             "properties": {
                 "connection_id": {
                     "type": "integer"
+                },
+                "force_refresh": {
+                    "type": "boolean"
                 }
             }
         },

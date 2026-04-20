@@ -159,19 +159,24 @@ func createTestConnection(
 // createTestOAuthClient inserts an admin-configured-style client row for
 // the given (connector, workspace). Matches the non-DCR path, i.e. what
 // HubSpot/Stripe flows look like.
+// testOAuthCallbackURI is the redirect URI every integration test
+// registers its OAuth client with. The Service is constructed with the
+// same value via newIntegrationService so flow assertions see a
+// consistent callback host; there's no reason for per-test variance.
+const testOAuthCallbackURI = "https://api.irmin.dev/api/v1/oauth/callback"
+
 func createTestOAuthClient(
 	t *testing.T,
 	d *db.Database,
 	connector *db.Connector,
 	workspaceID uint,
-	redirectURI string,
 ) *db.ConnectionOAuthClient {
 	t.Helper()
 	client := &db.ConnectionOAuthClient{
 		ConnectorID: connector.ID,
 		WorkspaceID: &workspaceID,
 		ClientID:    "test-client-id",
-		RedirectURI: redirectURI,
+		RedirectURI: testOAuthCallbackURI,
 		Secrets: db.CustomFieldValues{
 			db.ConnectionOAuthSecretKeyClientSecret: "test-client-secret",
 		},
@@ -370,7 +375,6 @@ func TestIntegrationStartFlowAndHandleCallback(t *testing.T) {
 		d,
 		connector,
 		workspace.ID,
-		"https://api.irmin.dev/api/v1/oauth/callback",
 	)
 	capture := captureTokenExchange(vendor)
 	svc := newIntegrationService(t, d, &testConfigProvider{
@@ -415,7 +419,6 @@ func TestIntegrationRevokeCleansSessions(t *testing.T) {
 		d,
 		connector,
 		workspace.ID,
-		"https://api.irmin.dev/api/v1/oauth/callback",
 	)
 
 	svc := newIntegrationService(t, d, &testConfigProvider{
@@ -480,7 +483,6 @@ func TestIntegrationRefreshPreservesOldRefreshToken(t *testing.T) {
 		d,
 		connector,
 		workspace.ID,
-		"https://api.irmin.dev/api/v1/oauth/callback",
 	)
 
 	// Many real vendors (HubSpot among them) don't rotate refresh tokens.
@@ -539,6 +541,83 @@ func TestIntegrationRefreshPreservesOldRefreshToken(t *testing.T) {
 	}
 	if vendor.TokenCalls != 1 {
 		t.Fatalf("expected exactly 1 token call, got %d", vendor.TokenCalls)
+	}
+}
+
+func TestIntegrationForceRefreshBypassesSkewWindow(t *testing.T) {
+	// Force-refresh is how the connectors service recovers when a vendor
+	// rejects a locally-fresh token mid-operation (token revoked at the
+	// vendor before its ExpiresAt entered the skew window). The regular
+	// GetAccessToken path would short-circuit and return the same stale
+	// token; ForceRefreshAccessToken must hit the vendor unconditionally.
+	d, user, workspace := ensureIntegrationEnv(t)
+	connector := createTestConnector(t, d)
+	conn := createTestConnection(t, d, user, workspace, connector)
+	vendor := newVendorMock(t)
+	_ = createTestOAuthClient(
+		t,
+		d,
+		connector,
+		workspace.ID,
+	)
+	vendor.TokenHandler = func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"access_token":  "force-rotated",
+			"refresh_token": "refresh-2",
+			"token_type":    "Bearer",
+			"expires_in":    3600,
+		})
+	}
+	svc := newIntegrationService(t, d, &testConfigProvider{
+		fn: func(_ *db.Connector) (*oauth.Config, error) {
+			return configFor(vendor), nil
+		},
+	})
+
+	// Seed a token that's well outside the skew window — GetAccessToken
+	// would happily return it without contacting the vendor.
+	freshExpiry := time.Now().Add(2 * time.Hour)
+	tok := &db.ConnectionOAuthToken{
+		ConnectionID: conn.ID,
+		Secrets: db.CustomFieldValues{
+			db.ConnectionOAuthSecretKeyAccessToken:  "still-valid-locally",
+			db.ConnectionOAuthSecretKeyRefreshToken: "refresh-1",
+		},
+		ExpiresAt: &freshExpiry,
+		TokenType: "Bearer",
+	}
+	if err := d.UpsertConnectionOAuthToken(d.DB, tok); err != nil {
+		t.Fatalf("seed token: %v", err)
+	}
+
+	// Control: the lazy path should NOT hit the vendor.
+	if _, err := svc.GetAccessToken(context.Background(), conn.ID); err != nil {
+		t.Fatalf("GetAccessToken: %v", err)
+	}
+	if vendor.TokenCalls != 0 {
+		t.Fatalf("GetAccessToken hit vendor for a fresh token; got %d calls", vendor.TokenCalls)
+	}
+
+	// Force path: must hit the vendor and return the rotated token.
+	at, err := svc.ForceRefreshAccessToken(context.Background(), conn.ID)
+	if err != nil {
+		t.Fatalf("ForceRefreshAccessToken: %v", err)
+	}
+	if at.Value != "force-rotated" {
+		t.Fatalf("ForceRefreshAccessToken value = %q, want %q", at.Value, "force-rotated")
+	}
+	if vendor.TokenCalls != 1 {
+		t.Fatalf("expected exactly 1 vendor call after force-refresh, got %d", vendor.TokenCalls)
+	}
+
+	// Stored row reflects the rotation.
+	stored, err := d.GetConnectionOAuthTokenByConnectionID(conn.ID)
+	if err != nil {
+		t.Fatalf("reload token: %v", err)
+	}
+	if got := stored.Secrets[db.ConnectionOAuthSecretKeyAccessToken]; got != "force-rotated" {
+		t.Fatalf("access_token not rotated in DB: %q", got)
 	}
 }
 

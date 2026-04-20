@@ -2239,6 +2239,17 @@ func (api *APIControllers) SystemOAuthAccessToken(c fiber.Ctx) error
     @Failure 401 {object} irminmodels.IrminAPIResponse @Failure 403 {object}
     irminmodels.IrminAPIResponse @Router /system/oauth/access-token [post]
 
+    Auth chain (covered by TestSystemOAuthAccessTokenAuthGate):
+      - AuthMiddleware on /api/v1 strips the Bearer token and stamps
+        c.Locals("is_system", true) iff the token equals env.SystemToken.
+      - This handler additionally enforces is_system == true before anything
+        else. The same gate guards the lazy variant (force_refresh=false) and
+        the force-refresh variant (force_refresh=true) — there is no separate
+        auth path.
+
+    Cross-service contract: irmin-connectors must run with IRMIN_API_TOKEN set
+    to the same value as Core's TOKEN env var.
+
 func (api *APIControllers) SystemWebhook(c fiber.Ctx) error
     SystemWebhook godoc @Summary System webhook endpoint @Description Handle
     webhook events from internal services (LakeFS, orchestrator dispatch

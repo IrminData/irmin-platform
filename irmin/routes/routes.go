@@ -110,9 +110,20 @@ func RegisterAPIRoutes(
 	system.Post("/webhook", apiControllers.SystemWebhook)
 	system.Post("/schema-from-file", apiControllers.GenerateFileSchema)
 	system.Post("/usage/report", apiControllers.ReportUsage)
-	// Internal OAuth access-token endpoint: called by irmin-connectors to
-	// obtain a fresh (possibly refreshed) access token for a connection.
-	// The handler itself enforces that the caller holds a system token.
+	// Internal OAuth access-token endpoint: called by irmin-connectors
+	// to obtain a fresh (possibly refreshed) access token for a
+	// connection. Auth is layered:
+	//   1. AuthMiddleware on the parent /api/v1 group runs first; it
+	//      strips the Bearer token and sets c.Locals("is_system", true)
+	//      iff the token equals env.SystemToken (constant-time compare
+	//      in services/auth.go validateSystemToken).
+	//   2. The handler additionally requires is_system == true before
+	//      ever touching the OAuth service. Same gate guards both the
+	//      lazy variant and the force_refresh path — there is no
+	//      separate code path for force-refresh.
+	// Cross-service contract: irmin-connectors must run with
+	// IRMIN_API_TOKEN set to Core's TOKEN env var. Tested in
+	// controllers/oauth_test.go::TestSystemOAuthAccessTokenAuthGate.
 	system.Post("/oauth/access-token", apiControllers.SystemOAuthAccessToken)
 
 	// Profile routes

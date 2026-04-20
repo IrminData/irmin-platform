@@ -217,6 +217,19 @@ type Service struct {
     by multiple goroutines; the only mutable state is the HTTP client
     (concurrency-safe by design).
 
+func (s *Service) ForceRefreshAccessToken(
+	ctx context.Context,
+	connectionID uint,
+) (*AccessToken, error)
+    ForceRefreshAccessToken rotates the stored token unconditionally and returns
+    the freshly-issued access token. Callers use this when the vendor rejected
+    a previously-cached token mid-operation (401 on a token that hadn't yet
+    entered the skew window) — the only remedy is to force a refresh regardless
+    of local expiry state.
+
+    Returns ErrNotConnected when the connection has no token row. Returns
+    ErrRefreshRejected if the vendor rejects the refresh.
+
 func (s *Service) GetAccessToken(ctx context.Context, connectionID uint) (*AccessToken, error)
     GetAccessToken returns a fresh access token for the connection. If the
     current token is expired — or within RefreshSkew of expiring — the refresh

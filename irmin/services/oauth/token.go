@@ -107,6 +107,25 @@ func (s *Service) GetAccessToken(ctx context.Context, connectionID uint) (*Acces
 	return accessTokenFromRow(refreshed), nil
 }
 
+// ForceRefreshAccessToken rotates the stored token unconditionally and
+// returns the freshly-issued access token. Callers use this when the
+// vendor rejected a previously-cached token mid-operation (401 on a
+// token that hadn't yet entered the skew window) — the only remedy is
+// to force a refresh regardless of local expiry state.
+//
+// Returns ErrNotConnected when the connection has no token row.
+// Returns ErrRefreshRejected if the vendor rejects the refresh.
+func (s *Service) ForceRefreshAccessToken(
+	ctx context.Context,
+	connectionID uint,
+) (*AccessToken, error) {
+	refreshed, err := s.refreshToken(ctx, connectionID, true /* force */)
+	if err != nil {
+		return nil, err
+	}
+	return accessTokenFromRow(refreshed), nil
+}
+
 // RefreshToken rotates the stored access token using the refresh token.
 // Runs inside a transaction with SELECT ... FOR UPDATE on the token row,
 // so concurrent callers (two connector requests, or a scheduled sweep
@@ -121,6 +140,20 @@ func (s *Service) RefreshToken(
 	ctx context.Context,
 	connectionID uint,
 ) (*db.ConnectionOAuthToken, error) {
+	return s.refreshToken(ctx, connectionID, false /* force */)
+}
+
+// refreshToken is the shared implementation for both lazy and forced
+// refresh. When force is false, the lock-holder short-circuits if
+// another caller has already written a fresh row; when true, we always
+// hit the vendor regardless of local expiry state. Force is how the
+// connectors service recovers from a vendor-side mid-flight revocation
+// that arrives before the token's ExpiresAt lands in the skew window.
+func (s *Service) refreshToken(
+	ctx context.Context,
+	connectionID uint,
+	force bool,
+) (*db.ConnectionOAuthToken, error) {
 	if connectionID == 0 {
 		return nil, ErrNotConnected
 	}
@@ -131,66 +164,99 @@ func (s *Service) RefreshToken(
 		// will block here, then find an already-fresh row and skip the
 		// network call. `FOR UPDATE` works on Postgres; the existing codebase
 		// uses it via Clauses in lib/lockKeyTx.go-style patterns.
-		var row db.ConnectionOAuthToken
-		getErr := tx.
-			Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("connection_id = ?", connectionID).
-			First(&row).Error
-		if errors.Is(getErr, gorm.ErrRecordNotFound) {
-			return ErrNotConnected
-		}
-		if getErr != nil {
-			return fmt.Errorf("load token under lock: %w", getErr)
+		row, loadErr := s.loadLockedTokenRow(tx, connectionID)
+		if loadErr != nil {
+			return loadErr
 		}
 
 		// Double-checked freshness: another caller may have just refreshed
-		// while we were waiting for the lock.
-		if !s.needsRefresh(&row) {
-			result = &row
+		// while we were waiting for the lock. Force-refresh callers skip
+		// this and always re-hit the vendor — they're recovering from a
+		// mid-flight revocation that won't be visible in local state.
+		if !force && !s.needsRefresh(row) {
+			result = row
 			return nil
 		}
 
-		refreshToken := row.Secrets[db.ConnectionOAuthSecretKeyRefreshToken]
-		if refreshToken == "" {
-			// No refresh token on file — we can't refresh silently. The
-			// caller needs to prompt the user to reconnect.
-			return ErrNotConnected
+		refreshed, runErr := s.performRefresh(ctx, tx, row)
+		if runErr != nil {
+			return runErr
 		}
-
-		// We need the Config + client to know the TokenURL + creds. Fetch
-		// here rather than at service-construction time so config changes
-		// (rare) take effect without a restart.
-		connection, connErr := s.db.GetConnectionByID(row.ConnectionID)
-		if connErr != nil {
-			return fmt.Errorf("load connection: %w", connErr)
-		}
-		cfg, client, resolveErr := s.resolveConnectorOAuth(ctx, connection)
-		if resolveErr != nil {
-			return resolveErr
-		}
-
-		resp, exchangeErr := s.exchangeRefreshToken(ctx, cfg, client, refreshToken)
-		if exchangeErr != nil {
-			return s.classifyRefreshError(exchangeErr)
-		}
-
-		next := buildTokenRow(row.ConnectionID, resp, s.clock.Now(), true /* isRefresh */)
-		// Carry forward the old refresh_token if the vendor didn't rotate
-		// it — many don't, and losing it would brick the connection on
-		// the next refresh.
-		if _, ok := next.Secrets[db.ConnectionOAuthSecretKeyRefreshToken]; !ok {
-			next.Secrets[db.ConnectionOAuthSecretKeyRefreshToken] = refreshToken
-		}
-		if upsertErr := s.db.UpsertConnectionOAuthToken(tx, next); upsertErr != nil {
-			return fmt.Errorf("upsert refreshed token: %w", upsertErr)
-		}
-		result = next
+		result = refreshed
 		return nil
 	})
 	if txErr != nil {
 		return nil, txErr
 	}
 	return result, nil
+}
+
+// loadLockedTokenRow grabs the token row under SELECT ... FOR UPDATE.
+// Mapped separately from refreshToken so the surrounding transaction
+// function stays within gocognit limits even after the force-refresh
+// branch.
+func (s *Service) loadLockedTokenRow(
+	tx *gorm.DB,
+	connectionID uint,
+) (*db.ConnectionOAuthToken, error) {
+	var row db.ConnectionOAuthToken
+	getErr := tx.
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("connection_id = ?", connectionID).
+		First(&row).Error
+	if errors.Is(getErr, gorm.ErrRecordNotFound) {
+		return nil, ErrNotConnected
+	}
+	if getErr != nil {
+		return nil, fmt.Errorf("load token under lock: %w", getErr)
+	}
+	return &row, nil
+}
+
+// performRefresh resolves the vendor config, posts the refresh-grant,
+// and upserts the rotated row. Returns the persisted row on success.
+// Extracted from refreshToken so the transaction callback stays simple
+// enough for gocognit (<= 20).
+func (s *Service) performRefresh(
+	ctx context.Context,
+	tx *gorm.DB,
+	row *db.ConnectionOAuthToken,
+) (*db.ConnectionOAuthToken, error) {
+	refreshToken := row.Secrets[db.ConnectionOAuthSecretKeyRefreshToken]
+	if refreshToken == "" {
+		// No refresh token on file — we can't refresh silently. The
+		// caller needs to prompt the user to reconnect.
+		return nil, ErrNotConnected
+	}
+
+	// We need the Config + client to know the TokenURL + creds. Fetch
+	// here rather than at service-construction time so config changes
+	// (rare) take effect without a restart.
+	connection, connErr := s.db.GetConnectionByID(row.ConnectionID)
+	if connErr != nil {
+		return nil, fmt.Errorf("load connection: %w", connErr)
+	}
+	cfg, client, resolveErr := s.resolveConnectorOAuth(ctx, connection)
+	if resolveErr != nil {
+		return nil, resolveErr
+	}
+
+	resp, exchangeErr := s.exchangeRefreshToken(ctx, cfg, client, refreshToken)
+	if exchangeErr != nil {
+		return nil, s.classifyRefreshError(exchangeErr)
+	}
+
+	next := buildTokenRow(row.ConnectionID, resp, s.clock.Now(), true /* isRefresh */)
+	// Carry forward the old refresh_token if the vendor didn't rotate
+	// it — many don't, and losing it would brick the connection on
+	// the next refresh.
+	if _, ok := next.Secrets[db.ConnectionOAuthSecretKeyRefreshToken]; !ok {
+		next.Secrets[db.ConnectionOAuthSecretKeyRefreshToken] = refreshToken
+	}
+	if upsertErr := s.db.UpsertConnectionOAuthToken(tx, next); upsertErr != nil {
+		return nil, fmt.Errorf("upsert refreshed token: %w", upsertErr)
+	}
+	return next, nil
 }
 
 // Revoke calls the vendor's revocation endpoint (if one is configured)
