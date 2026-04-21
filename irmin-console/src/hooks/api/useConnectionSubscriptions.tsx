@@ -5,6 +5,8 @@ import { connectionSubscriptionsQueryKey } from '@/lib/queryKeys';
 import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { isTempId } from '@/utils/generateTempId';
+
 import type {
   ConnectionSubscription,
   ConnectionSubscriptionWithToken,
@@ -40,7 +42,9 @@ export function useConnectionSubscriptions(
         connectionID,
       });
     },
-    enabled: !!connectionID && enabled,
+    // Skip fetch on optimistic-create temp connection ids — the
+    // subscriptions endpoint would 404 on a non-SQID connection id.
+    enabled: !!connectionID && !isTempId(connectionID) && enabled,
   });
 
   // Mutation for creating a new subscription

@@ -28,6 +28,8 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useScripts, useUsers } from '@/hooks/api';
 
+import { isTempId } from '@/utils/generateTempId';
+
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { ScriptResult, StoredScript } from '@/types/core/Script';
 import type { ActionInputData } from '@/types/core/Workflow';
@@ -181,6 +183,15 @@ const ScriptEditorProviderInner = ({
       );
 
       if (existingTabIndex === -1) {
+        // Refuse to fetch a client-generated temp id — the server
+        // can't decode it as a SQID. In practice this happens if
+        // the user clicks an optimistic-create list row before the
+        // mutation reconciles with the real SQID; silently returning
+        // is better than surfacing a 404 toast for a transient state.
+        if (isTempId(scriptId)) {
+          return;
+        }
+
         let scriptData: StoredScript | null = null;
         try {
           // Fetch script data from the server

@@ -7,6 +7,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { isTempId } from '@/utils/generateTempId';
+
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { WorkflowSchedule } from '@/types/core/Schedule';
 import type {
@@ -54,6 +56,12 @@ export function useWorkflow(workflowID: string) {
           }
         : undefined;
     },
+    // Skip server fetch when the id is an optimistic-create
+    // placeholder (user navigated to the detail page before the
+    // real SQID came back); the list-cache initialData covers the
+    // placeholder shape and the query will fire normally after the
+    // mutation reconciles.
+    enabled: !!workflowID && !isTempId(workflowID),
   });
 
   const deleteWorkflowMutation = useMutation<IrminAPIResponse, Error, string>({

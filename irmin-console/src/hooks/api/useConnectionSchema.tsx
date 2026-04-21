@@ -7,6 +7,8 @@ import { connectionSchemaQueryKey } from '@/lib/queryKeys';
 import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { isTempId } from '@/utils/generateTempId';
+
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
 
@@ -38,7 +40,9 @@ export function useConnectionSchema(
         path: undefined,
       });
     },
-    enabled: shouldUseSingleQuery && !!connectionID,
+    // Skip server fetch when the connection is an optimistic-create
+    // placeholder — the schema endpoint would 404 on a non-SQID id.
+    enabled: shouldUseSingleQuery && !!connectionID && !isTempId(connectionID),
   });
 
   // Multiple queries for specific paths - use combine to get stable output
@@ -61,7 +65,7 @@ export function useConnectionSchema(
               path,
             });
           },
-          enabled: !!connectionID,
+          enabled: !!connectionID && !isTempId(connectionID),
         })),
     combine: (results) => ({
       data: results.map((result) => result.data?.data),

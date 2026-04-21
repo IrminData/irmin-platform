@@ -13,6 +13,8 @@ import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
+import { isTempId } from '@/utils/generateTempId';
+
 import type { Invite } from '@/types/core/Invite';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
@@ -52,7 +54,9 @@ export function useInvite(inviteID: string, options?: UseInviteOptions) {
           }
         : undefined;
     },
-    enabled: !!inviteID && !options?.skipQuery,
+    // Skip server fetch on optimistic-create temp ids — the list
+    // cache already holds the placeholder.
+    enabled: !!inviteID && !isTempId(inviteID) && !options?.skipQuery,
   });
 
   // Mutation to accept an invite

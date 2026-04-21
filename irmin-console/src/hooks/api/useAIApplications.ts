@@ -7,7 +7,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { generateTempId } from '@/utils/generateTempId';
+import { generateTempId, isTempId } from '@/utils/generateTempId';
 
 import type { AIApplication } from '@/types/core/AIApplication';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
@@ -140,6 +140,12 @@ export function useAIApplication(aiApplicationId: string) {
         aiApplicationId,
       });
     },
+    // Gate the server fetch: non-empty id + not a client-generated
+    // temp id. Without the gate, navigating to the detail page of a
+    // just-created AI application fires `GET /ai-applications/temp-...`
+    // against a SQID-decoding backend. Prior revision had no gate
+    // at all and fetched unconditionally.
+    enabled: !!aiApplicationId && !isTempId(aiApplicationId),
   });
 
   const updateAIApplicationMutation = useMutation<

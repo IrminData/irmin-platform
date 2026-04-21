@@ -15,6 +15,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { isTempId } from '@/utils/generateTempId';
+
 import type { AIConversation } from '@/types/ai/base';
 import type { AIUpdateConversationRequest } from '@/types/ai/requests';
 
@@ -44,7 +46,13 @@ export function useAIConversation(
       const client = new IrminAIClient(token, workspaceSlug);
       return await client.conversations.getConversation(conversationID);
     },
-    enabled: !!conversationID && options?.enabled !== false,
+    // Skip fetch on optimistic-create temp conversation ids — the
+    // AI conversation endpoints would reject a non-real id, and the
+    // list cache already surfaces the placeholder.
+    enabled:
+      !!conversationID &&
+      !isTempId(conversationID) &&
+      options?.enabled !== false,
     retry: (failureCount, error) => {
       if (error instanceof Error && error.message.includes('404')) {
         return failureCount < 5;
@@ -85,7 +93,13 @@ export function useAIConversation(
       // API returns array of StoredMessage (LangChain format)
       return await response.json();
     },
-    enabled: !!conversationID && options?.enabled !== false,
+    // Skip fetch on optimistic-create temp conversation ids — the
+    // AI conversation endpoints would reject a non-real id, and the
+    // list cache already surfaces the placeholder.
+    enabled:
+      !!conversationID &&
+      !isTempId(conversationID) &&
+      options?.enabled !== false,
   });
 
   const deleteAIConversationMutation = useMutation<void, Error, string>({

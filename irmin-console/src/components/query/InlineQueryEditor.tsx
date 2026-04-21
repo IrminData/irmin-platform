@@ -32,6 +32,8 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 import { useStoredQueries } from '@/hooks/api/useStoredQueries';
 import { useBaseUrl } from '@/hooks/utils';
 
+import { isTempId } from '@/utils/generateTempId';
+
 interface InlineQueryEditorProps {
   currentQueryId: string | null;
   onQueryIdChange: (queryId: string) => void;
@@ -112,7 +114,10 @@ export default function InlineQueryEditor({
       });
       return response.data;
     },
-    enabled: !!normalizedQueryId,
+    // Skip the server fetch when the id is a client-generated temp
+    // id from an optimistic create. The list cache already carries
+    // the placeholder until the real SQID arrives.
+    enabled: !!normalizedQueryId && !isTempId(normalizedQueryId),
   });
 
   const currentQuery = queryQuery.data;

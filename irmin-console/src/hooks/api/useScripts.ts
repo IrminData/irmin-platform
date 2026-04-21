@@ -7,6 +7,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { isTempId } from '@/utils/generateTempId';
+
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { ScriptResult, StoredScript } from '@/types/core/Script';
 import type { ActionInputData } from '@/types/core/Workflow';
@@ -262,7 +264,8 @@ export function useScript(scriptId?: string) {
         scriptId: scriptId!,
       });
     },
-    enabled: !!scriptId,
+    // Skip server fetch on optimistic-create temp ids.
+    enabled: !!scriptId && !isTempId(scriptId),
   });
 
   return { scriptQuery };

@@ -5,6 +5,8 @@ import { workspaceTagsQueryKey } from '@/lib/queryKeys';
 import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { isTempId } from '@/utils/generateTempId';
+
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { TagWithAssets } from '@/types/core/Tag';
 
@@ -25,7 +27,9 @@ export function useWorkspaceTag(tagID?: string) {
       });
       return tag;
     },
-    enabled: !!tagID,
+    // Skip fetch on optimistic-create temp ids; the list cache
+    // carries the placeholder until the real SQID arrives.
+    enabled: !!tagID && !isTempId(tagID),
   });
 
   return {

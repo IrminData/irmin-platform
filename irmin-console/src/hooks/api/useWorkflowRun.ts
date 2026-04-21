@@ -6,6 +6,8 @@ import { workflowRunQueryKey, workflowRunsQueryKey } from '@/lib/queryKeys';
 import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { isTempId } from '@/utils/generateTempId';
+
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { WorkflowRun } from '@/types/core/WorkflowRun';
 
@@ -62,6 +64,18 @@ export const useWorkflowRun = (
       return undefined;
     },
     ...options,
+    // Skip server fetch when the workflowID is a client-generated
+    // temp id (user navigated to the runs page of an
+    // optimistic-create workflow before its real SQID came back).
+    // Run IDs are always server-assigned so we only guard workflowID.
+    // The temp-id guard is combined with `options.enabled` after the
+    // spread so a caller cannot accidentally re-enable a fetch against
+    // a temp id by passing `enabled: true`.
+    enabled:
+      !!workflowID &&
+      !isTempId(workflowID) &&
+      !!runID &&
+      options?.enabled !== false,
   });
 
   return {

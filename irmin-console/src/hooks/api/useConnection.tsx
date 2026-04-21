@@ -9,6 +9,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { isTempId } from '@/utils/generateTempId';
+
 import type { Connection } from '@/types/core/Connection';
 import type { ConnectorConfigurationValidationResult } from '@/types/core/Connector';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
@@ -60,7 +62,12 @@ export function useConnection(connectionID: string) {
           }
         : undefined;
     },
-    enabled: !!connectionID,
+    // Skip the server fetch when the id is a client-generated
+    // temp id (optimistic create). React Query's initialData still
+    // surfaces the placeholder from the list cache; as soon as the
+    // create mutation reconciles, the route re-renders with the
+    // real SQID and this query fires normally.
+    enabled: !!connectionID && !isTempId(connectionID),
   });
 
   // Mutation for deleting a connection

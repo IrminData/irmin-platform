@@ -5,6 +5,8 @@ import { policiesQueryKey, policyQueryKey } from '@/lib/queryKeys';
 import { useIrminCore } from '@/context/IrminCoreContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { isTempId } from '@/utils/generateTempId';
+
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { Policy } from '@/types/core/Policy';
 
@@ -40,7 +42,10 @@ export function usePolicy(policyId?: string) {
       }
       return undefined;
     },
-    enabled: !!policyId,
+    // Skip server fetch on client-generated temp ids (optimistic
+    // create); initialData covers the placeholder shape until the
+    // real SQID arrives.
+    enabled: !!policyId && !isTempId(policyId),
   });
 
   return {
