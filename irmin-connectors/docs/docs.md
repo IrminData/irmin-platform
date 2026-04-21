@@ -2908,6 +2908,28 @@ func SetupRoutes(app *models.ConnectorsApp)
 
 SetupRoutes sets up the routes for the SFTP connector.
 
+# stripeconnector
+
+```go
+import "irmin-connectors/connectors/stripe"
+```
+
+Package stripeconnector wires the Stripe controllers into the shared HTTP router. Call SetupRoutes once at startup; everything else hangs off config.GetConnectorInfo.
+
+## Index
+
+- [func SetupRoutes\(app \*models.ConnectorsApp\)](<#SetupRoutes>)
+
+
+<a name="SetupRoutes"></a>
+## func SetupRoutes
+
+```go
+func SetupRoutes(app *models.ConnectorsApp)
+```
+
+SetupRoutes sets up the routes for the Stripe connector.
+
 # connectorsclient
 
 ```go
@@ -9081,5 +9103,1006 @@ func NewConnectionSettingsFromMap(settings map[string]any) (*ConnectionSettings,
 ```
 
 NewConnectionSettingsFromMap creates a ConnectionSettings from a map\[string\]any.
+
+# client
+
+```go
+import "irmin-connectors/connectors/stripe/client"
+```
+
+Package client is the thin Stripe HTTP client the Stripe connector uses for every outbound call. A bespoke client \(rather than the official github.com/stripe/stripe\-go SDK\) keeps the dependency surface small and lets us do exactly what we need: header pinning \(Stripe\-Version\), cursor pagination, deterministic idempotency keys, and a narrow set of resource endpoints.
+
+Every write stamps an Idempotency\-Key derived from the body — Stripe dedupes within a 24\-hour window, which matches the re\-run guarantees Irmin wants for workflows.
+
+Request bodies use Stripe's form\-encoded flavor \(RFC 3986 \+ bracketed nesting\) rather than JSON, because that's what Stripe's v1 API expects. Pull uses JSON responses; write endpoints return JSON too.
+
+## Index
+
+- [Constants](<#constants>)
+- [Variables](<#variables>)
+- [func ExtractID\(raw json.RawMessage\) \(string, error\)](<#ExtractID>)
+- [func IsAuthError\(err error\) bool](<#IsAuthError>)
+- [func JSONToForm\(input \[\]byte\) \(url.Values, error\)](<#JSONToForm>)
+- [type APIError](<#APIError>)
+  - [func \(e \*APIError\) Error\(\) string](<#APIError.Error>)
+- [type Client](<#Client>)
+  - [func InitFromOperation\(\_ \*slog.Logger, operation \*db.Operation, opts ...Option\) \(\*Client, \*stripemodels.ConnectionDetails, \*stripemodels.ConnectionSettings, error\)](<#InitFromOperation>)
+  - [func NewClient\(apiKey, apiVersion string, opts ...Option\) \*Client](<#NewClient>)
+  - [func \(c \*Client\) Create\(ctx context.Context, resourcePath, scope string, form url.Values\) \(json.RawMessage, error\)](<#Client.Create>)
+  - [func \(c \*Client\) GetByID\(ctx context.Context, resourcePath, id string\) \(json.RawMessage, error\)](<#Client.GetByID>)
+  - [func \(c \*Client\) List\(ctx context.Context, resourcePath string, startingAfter string, extra url.Values\) \(\*ListPage, error\)](<#Client.List>)
+  - [func \(c \*Client\) ListAll\(ctx context.Context, resourcePath string, extra url.Values\) \(\[\]json.RawMessage, error\)](<#Client.ListAll>)
+  - [func \(c \*Client\) ListBounded\(ctx context.Context, resourcePath string, extra url.Values, maxRecords int\) \(\[\]json.RawMessage, bool, error\)](<#Client.ListBounded>)
+  - [func \(c \*Client\) Ping\(ctx context.Context\) error](<#Client.Ping>)
+  - [func \(c \*Client\) Update\(ctx context.Context, resourcePath, id, scope string, form url.Values\) \(json.RawMessage, error\)](<#Client.Update>)
+- [type ListPage](<#ListPage>)
+- [type Option](<#Option>)
+  - [func WithBaseURL\(baseURL string\) Option](<#WithBaseURL>)
+  - [func WithHTTPClient\(hc \*http.Client\) Option](<#WithHTTPClient>)
+  - [func WithProgressHandler\(h ProgressHandler\) Option](<#WithProgressHandler>)
+- [type ParsedPath](<#ParsedPath>)
+  - [func ParsePath\(path string\) \(ParsedPath, error\)](<#ParsePath>)
+- [type ProgressEvent](<#ProgressEvent>)
+- [type ProgressHandler](<#ProgressHandler>)
+- [type Resource](<#Resource>)
+  - [func FindResource\(name string\) \(Resource, error\)](<#FindResource>)
+  - [func KnownResources\(\) \[\]Resource](<#KnownResources>)
+
+
+## Constants
+
+<a name="ProgressKindPage"></a>ProgressKind\* enumerate the event types emitted via ProgressHandler.
+
+```go
+const (
+    // ProgressKindPage fires after each successful list-page response.
+    ProgressKindPage = "page"
+    // ProgressKindRateLimit fires when the client is about to sleep
+    // before retrying a 429. Without this event, rate-limit storms
+    // look like a silent hang.
+    ProgressKindRateLimit = "rate_limit"
+)
+```
+
+<a name="ResourceCustomers"></a>Resource slugs used across config, schema, and controller code. Exported as constants so switch / lookup sites have one source of truth instead of bare string literals scattered through the file.
+
+```go
+const (
+    ResourceCustomers     = "customers"
+    ResourceCharges       = "charges"
+    ResourceSubscriptions = "subscriptions"
+    ResourceInvoices      = "invoices"
+    ResourcePayouts       = "payouts"
+    ResourceProducts      = "products"
+    ResourcePrices        = "prices"
+)
+```
+
+<a name="DefaultBaseURL"></a>DefaultBaseURL is the Stripe REST API root. Overridable via NewClient options so tests can point at an httptest.Server.
+
+```go
+const DefaultBaseURL = "https://api.stripe.com"
+```
+
+<a name="ListPageSize"></a>ListPageSize is the per\-request page size Irmin asks Stripe for on list endpoints. Stripe's documented max is 100; we take the max to minimize round\-trips on large accounts.
+
+```go
+const ListPageSize = 100
+```
+
+## Variables
+
+<a name="ErrEmptyForm"></a>ErrEmptyForm is returned by Create and Update when the provided form has no entries. Sending an empty body to Stripe's Create Customer \(etc.\) endpoints silently creates a record with zero user\-supplied fields — a "ghost" resource the caller almost certainly didn't intend. We reject this at the client boundary.
+
+```go
+var ErrEmptyForm = errors.New(
+    "stripe: refusing to send empty form — would create a ghost resource",
+)
+```
+
+<a name="ErrEmptyJSONInput"></a>ErrEmptyJSONInput is returned by JSONToForm when the caller passes a JSON document that would produce an empty form \(\`null\`, \`\{\}\`, or an object with every field being JSON null\). Sending an empty form to Stripe creates a record with zero user\-supplied fields — a ghost customer, a ghost invoice. The client refuses at parse time so the failure surfaces with a useful error instead of a silent "create succeeded" log pointing at a useless record.
+
+```go
+var ErrEmptyJSONInput = errors.New(
+    "stripe: JSON input produced no form entries — refusing to send an empty payload",
+)
+```
+
+<a name="ExtractID"></a>
+## func ExtractID
+
+```go
+func ExtractID(raw json.RawMessage) (string, error)
+```
+
+ExtractID plucks the \`id\` field out of a Stripe record. Returns the id and nil on success, "" and a descriptive error when the record can't be parsed or has no id — so pagination loops don't silently terminate on malformed data. Used by the pagination loop to build the \`starting\_after\` cursor and by operation\-log emitters to record the id Stripe assigned on create. Returns "" if the record is malformed \(which also terminates the pagination loop safely\).
+
+<a name="IsAuthError"></a>
+## func IsAuthError
+
+```go
+func IsAuthError(err error) bool
+```
+
+IsAuthError reports whether err is a Stripe 401/403 response. The config\-validation path uses this to render a "bad API key" message distinct from generic failure.
+
+<a name="JSONToForm"></a>
+## func JSONToForm
+
+```go
+func JSONToForm(input []byte) (url.Values, error)
+```
+
+JSONToForm flattens an arbitrary JSON object into Stripe's bracketed form\-encoding convention. Stripe's v1 API doesn't accept JSON request bodies; every write is application/x\-www\-form\-urlencoded with nested structures expressed as \`parent\[child\]=value\` and arrays as \`parent\[0\]\[child\]=value\`.
+
+Rules:
+
+- objects become \`key\[subkey\]=value\`
+- arrays of primitives become \`key\[\]=v1&key\[\]=v2\` \(Stripe accepts both indexed and empty\-bracket notation for primitive arrays; empty\-bracket is simpler and matches Stripe's own docs\)
+- arrays of objects become \`key\[0\]\[subkey\]=value\`
+- nil / JSON null values are skipped \(Stripe treats absence and null differently — null explicitly clears a field, while absence leaves it unchanged; skipping gives the safer "leave alone" default\)
+- booleans render as "true"/"false", numbers via strconv
+
+Keys are emitted in sorted order so the same input always produces the same form string — load\-bearing for our deterministic Idempotency\-Key derivation \(sha256 of the form body\).
+
+<a name="APIError"></a>
+## type APIError
+
+APIError is the Stripe error envelope \(\`\{"error": \{...\}\}\`\). We surface the fields verbatim so callers can pass them through to operation logs — users expect to see Stripe's original message.
+
+```go
+type APIError struct {
+    Type    string `json:"type"`
+    Code    string `json:"code"`
+    Message string `json:"message"`
+    Param   string `json:"param"`
+    // HTTPStatus is populated by the client, not Stripe.
+    HTTPStatus int `json:"http_status"`
+}
+```
+
+<a name="APIError.Error"></a>
+### func \(\*APIError\) Error
+
+```go
+func (e *APIError) Error() string
+```
+
+Error satisfies the \`error\` interface. Format keeps the Stripe type \+ code prefix so log lines are greppable.
+
+<a name="Client"></a>
+## type Client
+
+Client is the Stripe HTTP client. One instance per operation is fine — no internal caching, just configured transport \+ headers.
+
+```go
+type Client struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="InitFromOperation"></a>
+### func InitFromOperation
+
+```go
+func InitFromOperation(_ *slog.Logger, operation *db.Operation, opts ...Option) (*Client, *stripemodels.ConnectionDetails, *stripemodels.ConnectionSettings, error)
+```
+
+InitFromOperation builds a Stripe Client from the persisted Connection details \+ settings on a db.Operation. Mirrors the helper other connectors expose \(e.g., pineconeclient.InitPineconeClient\); the pull / push / patch handlers all start from this single seam.
+
+The logger argument is accepted for parity with other connectors even though the client itself is logger\-free — operation logging lives in the controllers. Extra Options let controllers attach observability hooks \(notably WithProgressHandler\) without every caller having to re\-parse the connection details.
+
+<a name="NewClient"></a>
+### func NewClient
+
+```go
+func NewClient(apiKey, apiVersion string, opts ...Option) *Client
+```
+
+NewClient constructs a Stripe HTTP client. apiKey must be a secret or restricted key \(caller validated via stripemodels.ConnectionDetails\); apiVersion is the pinned Stripe\-Version.
+
+<a name="Client.Create"></a>
+### func \(\*Client\) Create
+
+```go
+func (c *Client) Create(ctx context.Context, resourcePath, scope string, form url.Values) (json.RawMessage, error)
+```
+
+Create posts a form\-encoded body to the given resource path. Stripe assigns the resource id and returns the full record in the response body, which callers unmarshal into their resource type.
+
+The Idempotency\-Key is composed from the form body \(deterministic — url.Values.Encode sorts keys\), a caller\-supplied \`scope\` string, and the client's pinned Stripe\-Version:
+
+```
+sha256(form.Encode() || 0x00 || scope || 0x00 || apiVersion)
+```
+
+This means \(a\) whitespace / key\-order changes in the source file don't change the key \(callers pass file contents through JSONToForm which normalizes both\), \(b\) two different source files can share content and still produce distinct keys via their \`scope\`, and \(c\) bumping Stripe\-Version invalidates cached responses so users don't get the old version's response shape back.
+
+<a name="Client.GetByID"></a>
+### func \(\*Client\) GetByID
+
+```go
+func (c *Client) GetByID(ctx context.Context, resourcePath, id string) (json.RawMessage, error)
+```
+
+GetByID fetches a single resource record at \`/v1/\<resource\>/\<id\>\`. Returns the raw record JSON — callers pass the body straight through to the branch.
+
+<a name="Client.List"></a>
+### func \(\*Client\) List
+
+```go
+func (c *Client) List(ctx context.Context, resourcePath string, startingAfter string, extra url.Values) (*ListPage, error)
+```
+
+List fetches a single page of a list endpoint. Higher\-level helpers \(e.g., ListAll\) loop over this until HasMore is false. The \`extra\` map lets callers pass resource\-specific filters — the standard \`limit\` and \`starting\_after\` are stamped automatically.
+
+<a name="Client.ListAll"></a>
+### func \(\*Client\) ListAll
+
+```go
+func (c *Client) ListAll(ctx context.Context, resourcePath string, extra url.Values) ([]json.RawMessage, error)
+```
+
+ListAll pages through the entire list and returns every record. Use for small\-to\-medium resource sets; very large accounts should use ListBounded with a cap to avoid loading everything in memory.
+
+<a name="Client.ListBounded"></a>
+### func \(\*Client\) ListBounded
+
+```go
+func (c *Client) ListBounded(ctx context.Context, resourcePath string, extra url.Values, maxRecords int) ([]json.RawMessage, bool, error)
+```
+
+ListBounded pages through the list but stops once \`maxRecords\` records have been collected. A maxRecords \<= 0 means unbounded. The second return value is true when the cap truncated the result \(the source actually had more records than returned\).
+
+Irmin's pull path uses this so a merchant with millions of Stripe records can cap per\-resource memory via the \`max\_records\_per\_resource\` setting instead of OOM'ing the connector.
+
+<a name="Client.Ping"></a>
+### func \(\*Client\) Ping
+
+```go
+func (c *Client) Ping(ctx context.Context) error
+```
+
+Ping calls a lightweight endpoint that requires a valid API key. /v1/balance is accessible with every Stripe API key \(including narrowly\-scoped restricted keys that only have write access on a specific resource\) — unlike /v1/charges?limit=1 which requires Read on Charges and falsely fails a write\-only key at config\- validation time. The endpoint is idempotent, has no side effects, and returns a small fixed response.
+
+<a name="Client.Update"></a>
+### func \(\*Client\) Update
+
+```go
+func (c *Client) Update(ctx context.Context, resourcePath, id, scope string, form url.Values) (json.RawMessage, error)
+```
+
+Update posts a form\-encoded body to an existing resource. Stripe uses POST \(not PATCH/PUT\) for partial updates — only the provided fields are changed.
+
+Idempotency key is scoped identically to Create; see that doc for the composition.
+
+<a name="ListPage"></a>
+## type ListPage
+
+ListPage is a single page of a list response. \`HasMore\` drives the outer pagination loop; \`NextCursor\` is the last element's id, which Stripe expects as the \`starting\_after\` param on the next call.
+
+```go
+type ListPage struct {
+    Data       []json.RawMessage
+    HasMore    bool
+    NextCursor string
+}
+```
+
+<a name="Option"></a>
+## type Option
+
+Option configures the Client at construction time.
+
+```go
+type Option func(*Client)
+```
+
+<a name="WithBaseURL"></a>
+### func WithBaseURL
+
+```go
+func WithBaseURL(baseURL string) Option
+```
+
+WithBaseURL overrides the API base URL. Tests pass an httptest server URL here; production callers use the default.
+
+<a name="WithHTTPClient"></a>
+### func WithHTTPClient
+
+```go
+func WithHTTPClient(hc *http.Client) Option
+```
+
+WithHTTPClient overrides the underlying http.Client. Tests set a custom transport here to assert on outbound headers.
+
+<a name="WithProgressHandler"></a>
+### func WithProgressHandler
+
+```go
+func WithProgressHandler(h ProgressHandler) Option
+```
+
+WithProgressHandler installs an observability hook for pagination \+ retry loops. Pass nil to disable \(same as the default\).
+
+<a name="ParsedPath"></a>
+## type ParsedPath
+
+ParsedPath is the decoded view of a branch path targeting a specific resource record. operationPush \+ operationPatch use it to decide whether a write is a Create \(id empty, filename starts with "new\-"\) or an Update \(id present\).
+
+```go
+type ParsedPath struct {
+    Resource Resource
+    // ID is the Stripe resource id (e.g., "cus_abc123") or empty when
+    // the path is a new-* placeholder.
+    ID  string
+    // IsNew is true for `new-*.json` paths — i.e., the push should
+    // create a new record and let Stripe assign the id.
+    IsNew bool
+}
+```
+
+<a name="ParsePath"></a>
+### func ParsePath
+
+```go
+func ParsePath(path string) (ParsedPath, error)
+```
+
+ParsePath decodes a branch path like \`customers/cus\_abc123.json\` or \`customers/new\-alice.json\` into its ParsedPath form. The trailing \`.json\` is required so that the schema matches what pull produces \(pull emits parquet snapshots, but push/patch operate on JSON records authored by the user — the extension disambiguates\).
+
+<a name="ProgressEvent"></a>
+## type ProgressEvent
+
+ProgressEvent is a single observability event emitted from the Stripe client during long\-running operations. The pull path uses this to surface per\-page progress \+ rate\-limit waits into the workflow's log stream so an apparently\-stuck run is actually diagnosable.
+
+```go
+type ProgressEvent struct {
+    // Kind discriminates the event. One of ProgressKindPage or
+    // ProgressKindRateLimit (more may be added later).
+    Kind string
+    // ResourcePath is the endpoint the event applies to
+    // (e.g., "/v1/customers"). Always set.
+    ResourcePath string
+    // Page is 1-based page number within the current pagination loop.
+    // Only meaningful for ProgressKindPage.
+    Page int
+    // RecordsSoFar is the cumulative record count accumulated by this
+    // call to ListBounded. Only meaningful for ProgressKindPage.
+    RecordsSoFar int
+    // Cursor is the `starting_after` cursor that produced this page,
+    // or "" for the first page. Useful for resume / diagnostics.
+    // Only meaningful for ProgressKindPage.
+    Cursor string
+    // Attempt is the 0-based retry attempt. Only meaningful for
+    // ProgressKindRateLimit.
+    Attempt int
+    // Wait is how long the client is about to sleep before retrying.
+    // Only meaningful for ProgressKindRateLimit.
+    Wait time.Duration
+}
+```
+
+<a name="ProgressHandler"></a>
+## type ProgressHandler
+
+ProgressHandler receives observability events from long\-running operations. Called synchronously from inside the pagination / retry loops — implementations must return quickly. nil\-safe: callers that don't need progress events simply don't set one.
+
+```go
+type ProgressHandler func(ProgressEvent)
+```
+
+<a name="Resource"></a>
+## type Resource
+
+Resource describes one Stripe resource this connector knows about — its REST path under /v1, its directory\-name on the branch, and what capabilities Irmin exposes for it.
+
+Adding a new resource is a single entry in KnownResources plus \(if writes are supported\) ensuring the branch JSON parses cleanly through JSONToForm — no connector\-level code changes needed.
+
+```go
+type Resource struct {
+    // Name is the branch directory (e.g., "customers") and the slug
+    // users see in operation paths.
+    Name string
+    // Path is the Stripe REST path without the trailing slash
+    // (e.g., "/v1/customers").
+    Path string
+    // Pull is true when this resource is listed + exported on pull.
+    Pull bool
+    // Write is true when users can create / update this resource via
+    // push and patch. Some resources (charges, payouts) are read-only
+    // by policy even when the key has write scope — we don't expose
+    // them as writable.
+    Write bool
+}
+```
+
+<a name="FindResource"></a>
+### func FindResource
+
+```go
+func FindResource(name string) (Resource, error)
+```
+
+FindResource returns the Resource with the given branch name, or an error naming every known resource so users get a useful message when they target a typo.
+
+<a name="KnownResources"></a>
+### func KnownResources
+
+```go
+func KnownResources() []Resource
+```
+
+KnownResources returns every Stripe resource the connector exposes. The order of the returned slice drives the pull loop order in operationPull so the emitted zip is deterministic.
+
+Returned by a function rather than exposed as a package\-level variable because the repo's golangci config forbids globals — and the table is immutable \+ cheap to rebuild per call, so there's no caching win worth the exception.
+
+# config
+
+```go
+import "irmin-connectors/connectors/stripe/config"
+```
+
+Package config declares Stripe's DynamicField schema and the ConnectorDetails payload served from the /info endpoint.
+
+Auth is \*\*restricted API key\*\*, not OAuth — Stripe's OAuth \(Stripe Connect\) requires pre\-registered platform apps and doesn't support RFC 7591 dynamic client registration, which adds ops overhead without exercising the DCR path the OAuth roadmap wants to prove. Users generate a restricted key scoped to the resources they want Irmin to touch; the merchant picks the least\-privilege scopes in their Stripe dashboard.
+
+## Index
+
+- [Constants](<#constants>)
+- [func GetConnectorInfo\(\) models.ConnectorDetails](<#GetConnectorInfo>)
+- [func GetDetailsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetDetailsFieldDefinitions>)
+- [func GetDetailsFields\(\) \[\]string](<#GetDetailsFields>)
+- [func GetOptionalFields\(\) \[\]string](<#GetOptionalFields>)
+- [func GetRequiredDetailsFields\(\) \[\]string](<#GetRequiredDetailsFields>)
+- [func GetRequiredFields\(\) \[\]string](<#GetRequiredFields>)
+- [func GetRequiredSettingsFields\(\) \[\]string](<#GetRequiredSettingsFields>)
+- [func GetSettingsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetSettingsFieldDefinitions>)
+- [func GetSettingsFields\(\) \[\]string](<#GetSettingsFields>)
+
+
+## Constants
+
+<a name="DefaultAPIVersion"></a>DefaultAPIVersion pins the Stripe API version Irmin stamps on every outbound request when the Connection's settings don't override it. Kept current\-ish and advertised in the field help text so users know which shape to expect in pulled parquet. Bump deliberately; a bump can silently rename fields in downstream schemas.
+
+```go
+const DefaultAPIVersion = "2026-03-25.dahlia"
+```
+
+<a name="GetConnectorInfo"></a>
+## func GetConnectorInfo
+
+```go
+func GetConnectorInfo() models.ConnectorDetails
+```
+
+GetConnectorInfo returns the default connector information for Stripe.
+
+<a name="GetDetailsFieldDefinitions"></a>
+## func GetDetailsFieldDefinitions
+
+```go
+func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
+```
+
+GetDetailsFieldDefinitions returns all detail fields with their metadata.
+
+<a name="GetDetailsFields"></a>
+## func GetDetailsFields
+
+```go
+func GetDetailsFields() []string
+```
+
+GetDetailsFields returns the detail\-specific fields.
+
+<a name="GetOptionalFields"></a>
+## func GetOptionalFields
+
+```go
+func GetOptionalFields() []string
+```
+
+GetOptionalFields returns the optional form fields for Stripe.
+
+<a name="GetRequiredDetailsFields"></a>
+## func GetRequiredDetailsFields
+
+```go
+func GetRequiredDetailsFields() []string
+```
+
+GetRequiredDetailsFields returns only the required detail\-specific fields.
+
+<a name="GetRequiredFields"></a>
+## func GetRequiredFields
+
+```go
+func GetRequiredFields() []string
+```
+
+GetRequiredFields returns the mandatory form fields for Stripe.
+
+<a name="GetRequiredSettingsFields"></a>
+## func GetRequiredSettingsFields
+
+```go
+func GetRequiredSettingsFields() []string
+```
+
+GetRequiredSettingsFields returns only the required settings\-specific fields.
+
+<a name="GetSettingsFieldDefinitions"></a>
+## func GetSettingsFieldDefinitions
+
+```go
+func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
+```
+
+GetSettingsFieldDefinitions returns settings fields.
+
+<a name="GetSettingsFields"></a>
+## func GetSettingsFields
+
+```go
+func GetSettingsFields() []string
+```
+
+GetSettingsFields returns the settings\-specific fields.
+
+# stripecontrollers
+
+```go
+import "irmin-connectors/connectors/stripe/controllers"
+```
+
+Package stripecontrollers holds the HTTP handlers for every connector endpoint. One file per operation, mirroring the pattern used by pinecone/ and firecrawl/. The Controllers struct embeds \*common.Controllers so every method inherits the shared HandleConfigFields / HandleOperationInit machinery.
+
+## Index
+
+- [type Controllers](<#Controllers>)
+  - [func NewControllers\(app \*models.ConnectorsApp\) \*Controllers](<#NewControllers>)
+  - [func \(cs \*Controllers\) BuildDetails\(fields map\[string\]string\) \(map\[string\]string, error\)](<#Controllers.BuildDetails>)
+  - [func \(cs \*Controllers\) BuildSettings\(fields map\[string\]string\) \(map\[string\]string, error\)](<#Controllers.BuildSettings>)
+  - [func \(cs \*Controllers\) ConfigFields\(c fiber.Ctx\) error](<#Controllers.ConfigFields>)
+  - [func \(cs \*Controllers\) ConfigValidate\(c fiber.Ctx\) error](<#Controllers.ConfigValidate>)
+  - [func \(cs \*Controllers\) DetailsPage\(c fiber.Ctx\) error](<#Controllers.DetailsPage>)
+  - [func \(cs \*Controllers\) GetDynamicFields\(\_ fiber.Ctx, key string, \_ map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Controllers.GetDynamicFields>)
+  - [func \(cs \*Controllers\) GetOperationFormFields\(\) \(\[\]string, \[\]string\)](<#Controllers.GetOperationFormFields>)
+  - [func \(cs \*Controllers\) GetRequiredFormFields\(\) \(\[\]string, \[\]string\)](<#Controllers.GetRequiredFormFields>)
+  - [func \(cs \*Controllers\) Info\(c fiber.Ctx\) error](<#Controllers.Info>)
+  - [func \(cs \*Controllers\) OperationCancel\(c fiber.Ctx\) error](<#Controllers.OperationCancel>)
+  - [func \(cs \*Controllers\) OperationInit\(c fiber.Ctx\) error](<#Controllers.OperationInit>)
+  - [func \(cs \*Controllers\) OperationPatch\(c fiber.Ctx\) error](<#Controllers.OperationPatch>)
+  - [func \(cs \*Controllers\) OperationPull\(c fiber.Ctx\) error](<#Controllers.OperationPull>)
+  - [func \(cs \*Controllers\) OperationPush\(c fiber.Ctx\) error](<#Controllers.OperationPush>)
+  - [func \(cs \*Controllers\) OperationSchemaGet\(c fiber.Ctx\) error](<#Controllers.OperationSchemaGet>)
+  - [func \(cs \*Controllers\) OperationStatus\(c fiber.Ctx\) error](<#Controllers.OperationStatus>)
+  - [func \(cs \*Controllers\) SubscribeToChanges\(c fiber.Ctx\) error](<#Controllers.SubscribeToChanges>)
+  - [func \(cs \*Controllers\) TestConnection\(\_ fiber.Ctx, details map\[string\]any, settings map\[string\]any\) \(bool, bool, bool, \[\]string\)](<#Controllers.TestConnection>)
+  - [func \(cs \*Controllers\) UnsubscribeFromChanges\(c fiber.Ctx\) error](<#Controllers.UnsubscribeFromChanges>)
+  - [func \(cs \*Controllers\) ValidateFields\(\_ fiber.Ctx, details map\[string\]any, \_ map\[string\]any\) \[\]string](<#Controllers.ValidateFields>)
+  - [func \(cs \*Controllers\) ValidateOperationTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateOperationTokenMiddleware>)
+  - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
+- [type StripePullProvider](<#StripePullProvider>)
+  - [func \(p \*StripePullProvider\) GetAllFiles\(c fiber.Ctx, clientAny any\) \(\[\]string, \[\]\[\]byte, error\)](<#StripePullProvider.GetAllFiles>)
+  - [func \(p \*StripePullProvider\) GetFileByPath\(c fiber.Ctx, clientAny any, rawPath string\) \(string, \[\]byte, error\)](<#StripePullProvider.GetFileByPath>)
+  - [func \(p \*StripePullProvider\) InitializeClient\(\_ fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#StripePullProvider.InitializeClient>)
+- [type StripePushProvider](<#StripePushProvider>)
+  - [func \(p \*StripePushProvider\) InitializeClient\(\_ fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#StripePushProvider.InitializeClient>)
+  - [func \(p \*StripePushProvider\) ProcessFiles\(c fiber.Ctx, clientAny any, files map\[string\]\[\]byte, targetPath string\) error](<#StripePushProvider.ProcessFiles>)
+- [type StripeSchemaProvider](<#StripeSchemaProvider>)
+  - [func \(p \*StripeSchemaProvider\) GetSchema\(\_ fiber.Ctx, \_ any, operationType string, \_ \*string\) \(\*irminmodels.ObjectSchema, error\)](<#StripeSchemaProvider.GetSchema>)
+  - [func \(p \*StripeSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#StripeSchemaProvider.GetSupportedOperationTypes>)
+  - [func \(p \*StripeSchemaProvider\) InitializeClient\(\_ fiber.Ctx, \_ \*slog.Logger, \_ \*db.Operation\) \(any, \*string, func\(\), error\)](<#StripeSchemaProvider.InitializeClient>)
+
+
+<a name="Controllers"></a>
+## type Controllers
+
+Controllers holds the dependencies for the Stripe connector controllers. Single struct — no OAuth helpers to embed since Stripe ships with API\-key auth.
+
+```go
+type Controllers struct {
+    *common.Controllers
+}
+```
+
+<a name="NewControllers"></a>
+### func NewControllers
+
+```go
+func NewControllers(app *models.ConnectorsApp) *Controllers
+```
+
+NewControllers creates a new instance of controllers with the required dependencies.
+
+<a name="Controllers.BuildDetails"></a>
+### func \(\*Controllers\) BuildDetails
+
+```go
+func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
+```
+
+BuildDetails implements the OperationInitProvider interface.
+
+<a name="Controllers.BuildSettings"></a>
+### func \(\*Controllers\) BuildSettings
+
+```go
+func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
+```
+
+BuildSettings implements the OperationInitProvider interface.
+
+<a name="Controllers.ConfigFields"></a>
+### func \(\*Controllers\) ConfigFields
+
+```go
+func (cs *Controllers) ConfigFields(c fiber.Ctx) error
+```
+
+ConfigFields godoc @Summary Get Stripe connector configuration fields @Description Get dynamic configuration fields for the Stripe connector based on the configuration key \(details or settings\) @Tags stripe @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration key" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/configuration/\{key\}/fields \[post\]
+
+<a name="Controllers.ConfigValidate"></a>
+### func \(\*Controllers\) ConfigValidate
+
+```go
+func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
+```
+
+ConfigValidate godoc @Summary Validate Stripe connector configuration @Description Validate Stripe connection details by making a lightweight test call to the Stripe API \(/v1/charges?limit=1\) @Tags stripe @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[api\_key\] formData string true "Stripe restricted or secret API key" @Param settings\[api\_version\] formData string false "Pinned Stripe\-Version header" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/configuration/validate \[post\]
+
+<a name="Controllers.DetailsPage"></a>
+### func \(\*Controllers\) DetailsPage
+
+```go
+func (cs *Controllers) DetailsPage(c fiber.Ctx) error
+```
+
+DetailsPage godoc @Summary Get Stripe connector details page @Description Get an HTML page with detailed information about the Stripe connector including capabilities, authentication methods, and usage examples @Tags stripe @Accept json @Produce text/html @Success 200 \{string\} string "Stripe connector details page" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/details \[get\]
+
+<a name="Controllers.GetDynamicFields"></a>
+### func \(\*Controllers\) GetDynamicFields
+
+```go
+func (cs *Controllers) GetDynamicFields(_ fiber.Ctx, key string, _ map[string]string) (map[string]irminmodels.DynamicField, error)
+```
+
+GetDynamicFields implements the ConfigFieldProvider interface.
+
+<a name="Controllers.GetOperationFormFields"></a>
+### func \(\*Controllers\) GetOperationFormFields
+
+```go
+func (cs *Controllers) GetOperationFormFields() ([]string, []string)
+```
+
+GetOperationFormFields implements the OperationInitProvider interface.
+
+<a name="Controllers.GetRequiredFormFields"></a>
+### func \(\*Controllers\) GetRequiredFormFields
+
+```go
+func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
+```
+
+GetRequiredFormFields implements the ConfigValidationProvider interface. Only api\_key is strictly required for validation — the api\_version setting is optional and resolves to a default.
+
+<a name="Controllers.Info"></a>
+### func \(\*Controllers\) Info
+
+```go
+func (cs *Controllers) Info(c fiber.Ctx) error
+```
+
+Info godoc @Summary Get Stripe connector information @Description Get detailed information about the Stripe connector including capabilities, configuration fields, and API endpoints @Tags stripe @Security SystemTokenAuth @Accept json @Produce json @Success 200 \{object\} models.ConnectorDetails "Stripe connector information retrieved successfully" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/info \[get\]
+
+<a name="Controllers.OperationCancel"></a>
+### func \(\*Controllers\) OperationCancel
+
+```go
+func (cs *Controllers) OperationCancel(c fiber.Ctx) error
+```
+
+OperationCancel godoc @Summary Cancel Stripe operation @Description Cancel an ongoing Stripe operation using the operation token @Tags stripe @Security SystemTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} fiber.Map "Operation cancelled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/operation/cancel \[post\]
+
+<a name="Controllers.OperationInit"></a>
+### func \(\*Controllers\) OperationInit
+
+```go
+func (cs *Controllers) OperationInit(c fiber.Ctx) error
+```
+
+OperationInit godoc @Summary Initialize Stripe operation @Description Initialize a new Stripe operation with connection details and settings, returning an operation token for subsequent requests @Tags stripe @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[api\_key\] formData string true "Stripe restricted or secret API key" @Param settings\[api\_version\] formData string false "Pinned Stripe\-Version header \(optional\)" @Success 200 \{object\} fiber.Map "Operation initialized successfully with operation token" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/operation/init \[post\]
+
+<a name="Controllers.OperationPatch"></a>
+### func \(\*Controllers\) OperationPatch
+
+```go
+func (cs *Controllers) OperationPatch(c fiber.Ctx) error
+```
+
+OperationPatch applies a JSON\-Patch document to Stripe resources. Each patch op's \`path\` is a JSON\-Pointer that starts with a Stripe resource file path \(e.g., \`/customers/cus\_abc.json/email\`\). The suffix after the file path is the pointer into the resource record; we translate it to Stripe's bracketed form field \(e.g., \`email\`, \`metadata\[plan\]\`, \`items\[0\]\[price\]\`\).
+
+Unlike push \(which sends the whole record\), patch sends only the touched fields — safer for concurrent edits because it won't clobber fields modified between pull \+ patch.
+
+Multiple patch ops targeting the same resource are coalesced into a single Stripe update call so that Stripe's partial\-update semantics apply atomically per resource.
+
+@Summary Apply JSON\-Patch operations to Stripe resources @Description Translate a JSON\-Patch document into one partial\-update call per targeted Stripe resource. Only add / replace / remove are supported; move and copy are rejected because Stripe's fields aren't structurally rearrangeable. @Tags stripe @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param patches formData file true "JSON file containing a JSON\-Patch array" @Success 200 \{object\} fiber.Map "Patches applied successfully" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/operation/patch \[post\]
+
+<a name="Controllers.OperationPull"></a>
+### func \(\*Controllers\) OperationPull
+
+```go
+func (cs *Controllers) OperationPull(c fiber.Ctx) error
+```
+
+OperationPull godoc @Summary Pull data from Stripe @Description Pull Stripe resources \(customers, charges, subscriptions, invoices, payouts\) as JSON files. If path is empty, every pull\-enabled resource is returned. Response is a ZIP archive of the resulting files. @Tags stripe @Security OperationTokenAuth @Accept multipart/form\-data @Produce application/zip @Param operation\_token formData string true "Operation token received from operation/init" @Param path formData string false "Optional resource name \(e.g., 'customers'\) or \`resource/id\` for single\-record pull" @Success 200 \{file\} binary "ZIP archive of pulled JSON files \(one per resource\)" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 409 \{object\} fiber.Map "Operation already running" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/operation/pull \[post\]
+
+<a name="Controllers.OperationPush"></a>
+### func \(\*Controllers\) OperationPush
+
+```go
+func (cs *Controllers) OperationPush(c fiber.Ctx) error
+```
+
+OperationPush godoc @Summary Push data to Stripe @Description Push JSON records to Stripe. Files under \`\<resource\>/new\-\*.json\` create new records; files under \`\<resource\>/\<id\>.json\` update existing ones. Supported resources: customers, invoices, products, prices. @Tags stripe @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param file formData file true "ZIP containing JSON resource files" @Param path formData string false "Optional target path selector \(file or directory prefix like \`customers/\`\)" @Success 200 \{object\} fiber.Map "Data pushed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file format" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 409 \{object\} fiber.Map "Operation already running" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/operation/push \[post\]
+
+<a name="Controllers.OperationSchemaGet"></a>
+### func \(\*Controllers\) OperationSchemaGet
+
+```go
+func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
+```
+
+OperationSchemaGet godoc @Summary Get Stripe operation schema @Description Get the schema for Stripe pull / push / patch operations as an Irmin\-compatible ObjectSchema. @Tags stripe @Security OperationTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push, patch\) @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/operation/schema/\{operation\} \[post\]
+
+<a name="Controllers.OperationStatus"></a>
+### func \(\*Controllers\) OperationStatus
+
+```go
+func (cs *Controllers) OperationStatus(c fiber.Ctx) error
+```
+
+OperationStatus godoc @Summary Get Stripe operation status @Description Get the current status of a Stripe operation using the operation token @Tags stripe @Security SystemTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} common.OperationStatus "Operation status retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/operation/status \[post\]
+
+<a name="Controllers.SubscribeToChanges"></a>
+### func \(\*Controllers\) SubscribeToChanges
+
+```go
+func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
+```
+
+SubscribeToChanges is not supported by the Stripe connector.
+
+<a name="Controllers.TestConnection"></a>
+### func \(\*Controllers\) TestConnection
+
+```go
+func (cs *Controllers) TestConnection(_ fiber.Ctx, details map[string]any, settings map[string]any) (bool, bool, bool, []string)
+```
+
+TestConnection implements the ConfigValidationProvider interface. Constructs a live Stripe client from the provided details \+ settings and pings /v1/charges?limit=1 \(Stripe's documented auth probe\).
+
+<a name="Controllers.UnsubscribeFromChanges"></a>
+### func \(\*Controllers\) UnsubscribeFromChanges
+
+```go
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+```
+
+UnsubscribeFromChanges is not supported by the Stripe connector.
+
+<a name="Controllers.ValidateFields"></a>
+### func \(\*Controllers\) ValidateFields
+
+```go
+func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
+```
+
+ValidateFields implements the ConfigValidationProvider interface. Checks structural validity of the provided details without hitting Stripe. TestConnection below does the live round\-trip.
+
+<a name="Controllers.ValidateOperationTokenMiddleware"></a>
+### func \(\*Controllers\) ValidateOperationTokenMiddleware
+
+```go
+func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error
+```
+
+ValidateOperationTokenMiddleware validates the operation token.
+
+<a name="Controllers.ValidateSystemTokenMiddleware"></a>
+### func \(\*Controllers\) ValidateSystemTokenMiddleware
+
+```go
+func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
+```
+
+ValidateSystemTokenMiddleware validates the system token.
+
+<a name="StripePullProvider"></a>
+## type StripePullProvider
+
+StripePullProvider is the connector\-side implementation of common.PullOperationProvider. Each pull emits one \`\<resource\>.json\` file per configured resource type — a plain JSON array of the records Stripe returned, in Stripe's wire shape, no reshaping. Downstream Irmin queries can ingest this with DuckDB when a columnar view is desired.
+
+```go
+type StripePullProvider struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="StripePullProvider.GetAllFiles"></a>
+### func \(\*StripePullProvider\) GetAllFiles
+
+```go
+func (p *StripePullProvider) GetAllFiles(c fiber.Ctx, clientAny any) ([]string, [][]byte, error)
+```
+
+GetAllFiles lists every pull\-enabled resource and returns one JSON file per resource. One Stripe rate\-limit charge per resource page \(100 records\). \`max\_records\_per\_resource\` on the Connection caps per\-resource size so a million\-record Stripe account doesn't OOM the connector.
+
+<a name="StripePullProvider.GetFileByPath"></a>
+### func \(\*StripePullProvider\) GetFileByPath
+
+```go
+func (p *StripePullProvider) GetFileByPath(c fiber.Ctx, clientAny any, rawPath string) (string, []byte, error)
+```
+
+GetFileByPath supports two modes:
+
+- "customers" or "customers.json" → pull just the customers resource
+- "customers/cus\_…" → GET a single record by ID
+
+The \`.json\` suffix is accepted on whole\-resource pulls because that's the filename pullResource emits on output — so a workflow authored as "this connector path produces \`customers.json\`" round\-trips cleanly without users having to remember that the input form drops the extension.
+
+Empty path is rejected — HandleOperationPull dispatches to GetAllFiles in that case, so reaching the provider with an empty path is a programming error.
+
+<a name="StripePullProvider.InitializeClient"></a>
+### func \(\*StripePullProvider\) InitializeClient
+
+```go
+func (p *StripePullProvider) InitializeClient(_ fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
+```
+
+InitializeClient builds the Stripe client for this operation and installs a progress handler so long\-running pulls surface per\-page and rate\-limit events into the workflow log stream. Without the handler, a multi\-minute Stripe pull emits zero events between operation/init and operation/pull's final response — operators debugging a stuck run have nothing to work with.
+
+<a name="StripePushProvider"></a>
+## type StripePushProvider
+
+StripePushProvider is the connector\-side implementation of common.PushOperationProvider. It walks the uploaded ZIP, decides create\-vs\-update per file path, and posts each record to Stripe's REST API with a deterministic Idempotency\-Key.
+
+```go
+type StripePushProvider struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="StripePushProvider.InitializeClient"></a>
+### func \(\*StripePushProvider\) InitializeClient
+
+```go
+func (p *StripePushProvider) InitializeClient(_ fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
+```
+
+InitializeClient constructs the Stripe client from the Operation's stored details \+ settings.
+
+<a name="StripePushProvider.ProcessFiles"></a>
+### func \(\*StripePushProvider\) ProcessFiles
+
+```go
+func (p *StripePushProvider) ProcessFiles(c fiber.Ctx, clientAny any, files map[string][]byte, targetPath string) error
+```
+
+ProcessFiles iterates every file in the uploaded ZIP and dispatches each one to Stripe based on its path. Stops on the first hard error — Stripe writes aren't transactional and a partial run is harder to reason about than an abort. Already\-applied writes are safe to retry because the idempotency key is content\-derived.
+
+Emits a "push\_summary" operation log event at the end \(or on abort\) with per\-bucket counts, so downstream observability doesn't have to infer completion from the generic "Push operation completed" line from the common package.
+
+<a name="StripeSchemaProvider"></a>
+## type StripeSchemaProvider
+
+StripeSchemaProvider advertises the branch\-layout the connector produces on pull and the paths it accepts on push/patch. Each resource gets a dedicated JSON\-Schema describing the fields Stripe's create/update endpoints accept, matching the official API reference. Stripe records can carry even more fields on response than we enumerate — \`additionalProperties: true\` keeps the schema permissive so Stripe\-Version bumps don't invalidate pulled snapshots or rejected push files.
+
+```go
+type StripeSchemaProvider struct{}
+```
+
+<a name="StripeSchemaProvider.GetSchema"></a>
+### func \(\*StripeSchemaProvider\) GetSchema
+
+```go
+func (p *StripeSchemaProvider) GetSchema(_ fiber.Ctx, _ any, operationType string, _ *string) (*irminmodels.ObjectSchema, error)
+```
+
+GetSchema returns an Irmin ObjectSchema describing the emitted pull files and the accepted push paths.
+
+<a name="StripeSchemaProvider.GetSupportedOperationTypes"></a>
+### func \(\*StripeSchemaProvider\) GetSupportedOperationTypes
+
+```go
+func (p *StripeSchemaProvider) GetSupportedOperationTypes() []string
+```
+
+GetSupportedOperationTypes returns the list of supported operation types.
+
+<a name="StripeSchemaProvider.InitializeClient"></a>
+### func \(\*StripeSchemaProvider\) InitializeClient
+
+```go
+func (p *StripeSchemaProvider) InitializeClient(_ fiber.Ctx, _ *slog.Logger, _ *db.Operation) (any, *string, func(), error)
+```
+
+InitializeClient is required by the common provider interface but does no real work for Stripe — the schema is static and derived from the resource map, not from a live API call.
+
+# stripemodels
+
+```go
+import "irmin-connectors/connectors/stripe/models"
+```
+
+Package stripemodels holds the Stripe\-specific typed views of the Connection's persisted details and settings. Mirrors the pattern used by every other static\-credential connector so that controller code can unmarshal once and pass strongly\-typed structs around.
+
+## Index
+
+- [type ConnectionDetails](<#ConnectionDetails>)
+  - [func NewConnectionDetailsFromMap\(details map\[string\]any\) \(\*ConnectionDetails, error\)](<#NewConnectionDetailsFromMap>)
+- [type ConnectionSettings](<#ConnectionSettings>)
+  - [func NewConnectionSettingsFromMap\(settings map\[string\]any\) \(\*ConnectionSettings, error\)](<#NewConnectionSettingsFromMap>)
+  - [func \(cs \*ConnectionSettings\) ResolvedAPIVersion\(\) string](<#ConnectionSettings.ResolvedAPIVersion>)
+
+
+<a name="ConnectionDetails"></a>
+## type ConnectionDetails
+
+ConnectionDetails holds the sensitive authentication information for Stripe.
+
+```go
+type ConnectionDetails struct {
+    APIKey string `json:"api_key"`
+}
+```
+
+<a name="NewConnectionDetailsFromMap"></a>
+### func NewConnectionDetailsFromMap
+
+```go
+func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, error)
+```
+
+NewConnectionDetailsFromMap creates a ConnectionDetails from a map\[string\]any.
+
+<a name="ConnectionSettings"></a>
+## type ConnectionSettings
+
+ConnectionSettings holds the configuration for a Stripe connection.
+
+```go
+type ConnectionSettings struct {
+    // APIVersion is the value stamped on the Stripe-Version header. The
+    // empty-string case resolves to config.DefaultAPIVersion at use time
+    // via ResolvedAPIVersion, so call sites don't have to duplicate the
+    // fallback.
+    APIVersion string `json:"api_version"`
+}
+```
+
+<a name="NewConnectionSettingsFromMap"></a>
+### func NewConnectionSettingsFromMap
+
+```go
+func NewConnectionSettingsFromMap(settings map[string]any) (*ConnectionSettings, error)
+```
+
+NewConnectionSettingsFromMap creates a ConnectionSettings from a map\[string\]any.
+
+Settings are optional for Stripe — an empty map is valid and resolves to the default API version. Returning \(\*ConnectionSettings, nil\) for the empty case \(rather than erroring\) matches the pattern used by other connectors with all\-optional settings.
+
+<a name="ConnectionSettings.ResolvedAPIVersion"></a>
+### func \(\*ConnectionSettings\) ResolvedAPIVersion
+
+```go
+func (cs *ConnectionSettings) ResolvedAPIVersion() string
+```
+
+ResolvedAPIVersion returns the pinned API version with the default fallback applied. Use this at request time so call sites don't branch on the empty\-string case.
 
 Generated by [gomarkdoc](<https://github.com/princjef/gomarkdoc>)

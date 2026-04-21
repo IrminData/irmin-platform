@@ -1,0 +1,58 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/stripe/config</title></head><body>
+<h1>Package irmin-connectors/connectors/stripe/config</h1>
+<pre>
+package config // import "irmin-connectors/connectors/stripe/config"
+
+Package config declares Stripe's DynamicField schema and the ConnectorDetails
+payload served from the /info endpoint.
+
+Auth is **restricted API key**, not OAuth — Stripe's OAuth (Stripe Connect)
+requires pre-registered platform apps and doesn't support RFC 7591 dynamic
+client registration, which adds ops overhead without exercising the DCR path
+the OAuth roadmap wants to prove. Users generate a restricted key scoped to
+the resources they want Irmin to touch; the merchant picks the least-privilege
+scopes in their Stripe dashboard.
+
+CONSTANTS
+
+const DefaultAPIVersion = "2026-03-25.dahlia"
+    DefaultAPIVersion pins the Stripe API version Irmin stamps on every outbound
+    request when the Connection's settings don't override it. Kept current-ish
+    and advertised in the field help text so users know which shape to expect
+    in pulled parquet. Bump deliberately; a bump can silently rename fields in
+    downstream schemas.
+
+
+FUNCTIONS
+
+func GetConnectorInfo() models.ConnectorDetails
+    GetConnectorInfo returns the default connector information for Stripe.
+
+func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
+    GetDetailsFieldDefinitions returns all detail fields with their metadata.
+
+func GetDetailsFields() []string
+    GetDetailsFields returns the detail-specific fields.
+
+func GetOptionalFields() []string
+    GetOptionalFields returns the optional form fields for Stripe.
+
+func GetRequiredDetailsFields() []string
+    GetRequiredDetailsFields returns only the required detail-specific fields.
+
+func GetRequiredFields() []string
+    GetRequiredFields returns the mandatory form fields for Stripe.
+
+func GetRequiredSettingsFields() []string
+    GetRequiredSettingsFields returns only the required settings-specific
+    fields.
+
+func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
+    GetSettingsFieldDefinitions returns settings fields.
+
+func GetSettingsFields() []string
+    GetSettingsFields returns the settings-specific fields.
+
+</pre>
+</body></html>

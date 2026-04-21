@@ -4856,6 +4856,670 @@
                 }
             }
         },
+        "/stripe/configuration/validate": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Validate Stripe connection details by making a lightweight test call to the Stripe API (/v1/charges?limit=1)",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stripe"
+                ],
+                "summary": "Validate Stripe connector configuration",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Stripe restricted or secret API key",
+                        "name": "details[api_key]",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pinned Stripe-Version header",
+                        "name": "settings[api_version]",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Configuration validation result",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.ConnectorConfigurationValidationResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid configuration data",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/stripe/configuration/{key}/fields": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Get dynamic configuration fields for the Stripe connector based on the configuration key (details or settings)",
+                "consumes": [
+                    "application/json",
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stripe"
+                ],
+                "summary": "Get Stripe connector configuration fields",
+                "parameters": [
+                    {
+                        "enum": [
+                            "details",
+                            "settings"
+                        ],
+                        "type": "string",
+                        "description": "Configuration key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Configuration fields retrieved successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "$ref": "#/definitions/irminmodels.DynamicField"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid configuration key",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/stripe/details": {
+            "get": {
+                "description": "Get an HTML page with detailed information about the Stripe connector including capabilities, authentication methods, and usage examples",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "stripe"
+                ],
+                "summary": "Get Stripe connector details page",
+                "responses": {
+                    "200": {
+                        "description": "Stripe connector details page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/stripe/info": {
+            "get": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Get detailed information about the Stripe connector including capabilities, configuration fields, and API endpoints",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stripe"
+                ],
+                "summary": "Get Stripe connector information",
+                "responses": {
+                    "200": {
+                        "description": "Stripe connector information retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.ConnectorDetails"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/stripe/operation/cancel": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Cancel an ongoing Stripe operation using the operation token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stripe"
+                ],
+                "summary": "Cancel Stripe operation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Operation token received from operation/init",
+                        "name": "operation_token",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Operation cancelled successfully",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid operation token",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Operation not found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/stripe/operation/init": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Initialize a new Stripe operation with connection details and settings, returning an operation token for subsequent requests",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stripe"
+                ],
+                "summary": "Initialize Stripe operation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Stripe restricted or secret API key",
+                        "name": "details[api_key]",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pinned Stripe-Version header (optional)",
+                        "name": "settings[api_version]",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Operation initialized successfully with operation token",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid operation data",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/stripe/operation/patch": {
+            "post": {
+                "security": [
+                    {
+                        "OperationTokenAuth": []
+                    }
+                ],
+                "description": "Translate a JSON-Patch document into one partial-update call per targeted Stripe resource. Only add / replace / remove are supported; move and copy are rejected because Stripe's fields aren't structurally rearrangeable.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stripe"
+                ],
+                "summary": "Apply JSON-Patch operations to Stripe resources",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Operation token received from operation/init",
+                        "name": "operation_token",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "JSON file containing a JSON-Patch array",
+                        "name": "patches",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Patches applied successfully",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/stripe/operation/pull": {
+            "post": {
+                "security": [
+                    {
+                        "OperationTokenAuth": []
+                    }
+                ],
+                "description": "Pull Stripe resources (customers, charges, subscriptions, invoices, payouts) as JSON files. If path is empty, every pull-enabled resource is returned. Response is a ZIP archive of the resulting files.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/zip"
+                ],
+                "tags": [
+                    "stripe"
+                ],
+                "summary": "Pull data from Stripe",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Operation token received from operation/init",
+                        "name": "operation_token",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Optional resource name (e.g., 'customers') or `resource/id` for single-record pull",
+                        "name": "path",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ZIP archive of pulled JSON files (one per resource)",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid operation token",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Operation not found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "409": {
+                        "description": "Operation already running",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/stripe/operation/push": {
+            "post": {
+                "security": [
+                    {
+                        "OperationTokenAuth": []
+                    }
+                ],
+                "description": "Push JSON records to Stripe. Files under `\u003cresource\u003e/new-*.json` create new records; files under `\u003cresource\u003e/\u003cid\u003e.json` update existing ones. Supported resources: customers, invoices, products, prices.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stripe"
+                ],
+                "summary": "Push data to Stripe",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Operation token received from operation/init",
+                        "name": "operation_token",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "ZIP containing JSON resource files",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Optional target path selector (file or directory prefix like `customers/`)",
+                        "name": "path",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Data pushed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid operation token or file format",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Operation not found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "409": {
+                        "description": "Operation already running",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/stripe/operation/schema/{operation}": {
+            "post": {
+                "security": [
+                    {
+                        "OperationTokenAuth": []
+                    }
+                ],
+                "description": "Get the schema for Stripe pull / push / patch operations as an Irmin-compatible ObjectSchema.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stripe"
+                ],
+                "summary": "Get Stripe operation schema",
+                "parameters": [
+                    {
+                        "enum": [
+                            "pull",
+                            "push",
+                            "patch"
+                        ],
+                        "type": "string",
+                        "description": "Operation type",
+                        "name": "operation",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Operation token received from operation/init",
+                        "name": "operation_token",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Operation schema retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.ObjectSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Operation not found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/stripe/operation/status": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Get the current status of a Stripe operation using the operation token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stripe"
+                ],
+                "summary": "Get Stripe operation status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Operation token received from operation/init",
+                        "name": "operation_token",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Operation status retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/common.OperationStatus"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid operation token",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Operation not found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/swagger": {
             "get": {
                 "description": "Interactive API documentation interface using Swagger UI",

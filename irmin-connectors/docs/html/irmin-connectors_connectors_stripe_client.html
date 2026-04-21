@@ -1,0 +1,364 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/stripe/client</title></head><body>
+<h1>Package irmin-connectors/connectors/stripe/client</h1>
+<pre>
+package client // import "irmin-connectors/connectors/stripe/client"
+
+Package client is the thin Stripe HTTP client the Stripe connector uses
+for every outbound call. A bespoke client (rather than the official
+github.com/stripe/stripe-go SDK) keeps the dependency surface small and lets us
+do exactly what we need: header pinning (Stripe-Version), cursor pagination,
+deterministic idempotency keys, and a narrow set of resource endpoints.
+
+Every write stamps an Idempotency-Key derived from the body — Stripe dedupes
+within a 24-hour window, which matches the re-run guarantees Irmin wants for
+workflows.
+
+Request bodies use Stripe's form-encoded flavor (RFC 3986 + bracketed nesting)
+rather than JSON, because that's what Stripe's v1 API expects. Pull uses JSON
+responses; write endpoints return JSON too.
+
+CONSTANTS
+
+const (
+	// ProgressKindPage fires after each successful list-page response.
+	ProgressKindPage = "page"
+	// ProgressKindRateLimit fires when the client is about to sleep
+	// before retrying a 429. Without this event, rate-limit storms
+	// look like a silent hang.
+	ProgressKindRateLimit = "rate_limit"
+)
+    ProgressKind* enumerate the event types emitted via ProgressHandler.
+
+const (
+	ResourceCustomers     = "customers"
+	ResourceCharges       = "charges"
+	ResourceSubscriptions = "subscriptions"
+	ResourceInvoices      = "invoices"
+	ResourcePayouts       = "payouts"
+	ResourceProducts      = "products"
+	ResourcePrices        = "prices"
+)
+    Resource slugs used across config, schema, and controller code. Exported as
+    constants so switch / lookup sites have one source of truth instead of bare
+    string literals scattered through the file.
+
+const DefaultBaseURL = "https://api.stripe.com"
+    DefaultBaseURL is the Stripe REST API root. Overridable via NewClient
+    options so tests can point at an httptest.Server.
+
+const ListPageSize = 100
+    ListPageSize is the per-request page size Irmin asks Stripe for on list
+    endpoints. Stripe's documented max is 100; we take the max to minimize
+    round-trips on large accounts.
+
+
+VARIABLES
+
+var ErrEmptyForm = errors.New(
+	"stripe: refusing to send empty form — would create a ghost resource",
+)
+    ErrEmptyForm is returned by Create and Update when the provided form has no
+    entries. Sending an empty body to Stripe's Create Customer (etc.) endpoints
+    silently creates a record with zero user-supplied fields — a "ghost"
+    resource the caller almost certainly didn't intend. We reject this at the
+    client boundary.
+
+var ErrEmptyJSONInput = errors.New(
+	"stripe: JSON input produced no form entries — refusing to send an empty payload",
+)
+    ErrEmptyJSONInput is returned by JSONToForm when the caller passes a JSON
+    document that would produce an empty form (`null`, `{}`, or an object with
+    every field being JSON null). Sending an empty form to Stripe creates a
+    record with zero user-supplied fields — a ghost customer, a ghost invoice.
+    The client refuses at parse time so the failure surfaces with a useful error
+    instead of a silent "create succeeded" log pointing at a useless record.
+
+
+FUNCTIONS
+
+func ExtractID(raw json.RawMessage) (string, error)
+    ExtractID plucks the `id` field out of a Stripe record. Returns the id and
+    nil on success, "" and a descriptive error when the record can't be parsed
+    or has no id — so pagination loops don't silently terminate on malformed
+    data. Used by the pagination loop to build the `starting_after` cursor
+    and by operation-log emitters to record the id Stripe assigned on create.
+    Returns "" if the record is malformed (which also terminates the pagination
+    loop safely).
+
+func IsAuthError(err error) bool
+    IsAuthError reports whether err is a Stripe 401/403 response. The
+    config-validation path uses this to render a "bad API key" message distinct
+    from generic failure.
+
+func JSONToForm(input []byte) (url.Values, error)
+    JSONToForm flattens an arbitrary JSON object into Stripe's bracketed
+    form-encoding convention. Stripe's v1 API doesn't accept JSON request
+    bodies; every write is application/x-www-form-urlencoded with
+    nested structures expressed as `parent[child]=value` and arrays as
+    `parent[0][child]=value`.
+
+    Rules:
+      - objects become `key[subkey]=value`
+      - arrays of primitives become `key[]=v1&amp;key[]=v2` (Stripe accepts both
+        indexed and empty-bracket notation for primitive arrays; empty-bracket
+        is simpler and matches Stripe's own docs)
+      - arrays of objects become `key[0][subkey]=value`
+      - nil / JSON null values are skipped (Stripe treats absence and null
+        differently — null explicitly clears a field, while absence leaves it
+        unchanged; skipping gives the safer "leave alone" default)
+      - booleans render as "true"/"false", numbers via strconv
+
+    Keys are emitted in sorted order so the same input always produces the same
+    form string — load-bearing for our deterministic Idempotency-Key derivation
+    (sha256 of the form body).
+
+
+TYPES
+
+type APIError struct {
+	Type    string `json:"type"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Param   string `json:"param"`
+	// HTTPStatus is populated by the client, not Stripe.
+	HTTPStatus int `json:"http_status"`
+}
+    APIError is the Stripe error envelope (`{"error": {...}}`). We surface the
+    fields verbatim so callers can pass them through to operation logs — users
+    expect to see Stripe's original message.
+
+func (e *APIError) Error() string
+    Error satisfies the `error` interface. Format keeps the Stripe type + code
+    prefix so log lines are greppable.
+
+type Client struct {
+	// Has unexported fields.
+}
+    Client is the Stripe HTTP client. One instance per operation is fine — no
+    internal caching, just configured transport + headers.
+
+func InitFromOperation(
+	_ *slog.Logger,
+	operation *db.Operation,
+	opts ...Option,
+) (*Client, *stripemodels.ConnectionDetails, *stripemodels.ConnectionSettings, error)
+    InitFromOperation builds a Stripe Client from the persisted Connection
+    details + settings on a db.Operation. Mirrors the helper other connectors
+    expose (e.g., pineconeclient.InitPineconeClient); the pull / push / patch
+    handlers all start from this single seam.
+
+    The logger argument is accepted for parity with other connectors even
+    though the client itself is logger-free — operation logging lives in the
+    controllers. Extra Options let controllers attach observability hooks
+    (notably WithProgressHandler) without every caller having to re-parse the
+    connection details.
+
+func NewClient(apiKey, apiVersion string, opts ...Option) *Client
+    NewClient constructs a Stripe HTTP client. apiKey must be a secret or
+    restricted key (caller validated via stripemodels.ConnectionDetails);
+    apiVersion is the pinned Stripe-Version.
+
+func (c *Client) Create(
+	ctx context.Context,
+	resourcePath, scope string,
+	form url.Values,
+) (json.RawMessage, error)
+    Create posts a form-encoded body to the given resource path. Stripe assigns
+    the resource id and returns the full record in the response body, which
+    callers unmarshal into their resource type.
+
+    The Idempotency-Key is composed from the form body (deterministic —
+    url.Values.Encode sorts keys), a caller-supplied `scope` string, and the
+    client's pinned Stripe-Version:
+
+        sha256(form.Encode() || 0x00 || scope || 0x00 || apiVersion)
+
+    This means (a) whitespace / key-order changes in the source file don't
+    change the key (callers pass file contents through JSONToForm which
+    normalizes both), (b) two different source files can share content and still
+    produce distinct keys via their `scope`, and (c) bumping Stripe-Version
+    invalidates cached responses so users don't get the old version's response
+    shape back.
+
+func (c *Client) GetByID(
+	ctx context.Context,
+	resourcePath, id string,
+) (json.RawMessage, error)
+    GetByID fetches a single resource record at `/v1/&lt;resource&gt;/&lt;id&gt;`. Returns
+    the raw record JSON — callers pass the body straight through to the branch.
+
+func (c *Client) List(
+	ctx context.Context,
+	resourcePath string,
+	startingAfter string,
+	extra url.Values,
+) (*ListPage, error)
+    List fetches a single page of a list endpoint. Higher-level helpers (e.g.,
+    ListAll) loop over this until HasMore is false. The `extra` map lets callers
+    pass resource-specific filters — the standard `limit` and `starting_after`
+    are stamped automatically.
+
+func (c *Client) ListAll(
+	ctx context.Context,
+	resourcePath string,
+	extra url.Values,
+) ([]json.RawMessage, error)
+    ListAll pages through the entire list and returns every record. Use for
+    small-to-medium resource sets; very large accounts should use ListBounded
+    with a cap to avoid loading everything in memory.
+
+func (c *Client) ListBounded(
+	ctx context.Context,
+	resourcePath string,
+	extra url.Values,
+	maxRecords int,
+) ([]json.RawMessage, bool, error)
+    ListBounded pages through the list but stops once `maxRecords` records have
+    been collected. A maxRecords &lt;= 0 means unbounded. The second return value
+    is true when the cap truncated the result (the source actually had more
+    records than returned).
+
+    Irmin's pull path uses this so a merchant with millions of Stripe records
+    can cap per-resource memory via the `max_records_per_resource` setting
+    instead of OOM'ing the connector.
+
+func (c *Client) Ping(ctx context.Context) error
+    Ping calls a lightweight endpoint that requires a valid API key. /v1/balance
+    is accessible with every Stripe API key (including narrowly-scoped
+    restricted keys that only have write access on a specific resource) —
+    unlike /v1/charges?limit=1 which requires Read on Charges and falsely fails
+    a write-only key at config- validation time. The endpoint is idempotent,
+    has no side effects, and returns a small fixed response.
+
+func (c *Client) Update(
+	ctx context.Context,
+	resourcePath, id, scope string,
+	form url.Values,
+) (json.RawMessage, error)
+    Update posts a form-encoded body to an existing resource. Stripe uses POST
+    (not PATCH/PUT) for partial updates — only the provided fields are changed.
+
+    Idempotency key is scoped identically to Create; see that doc for the
+    composition.
+
+type ListPage struct {
+	Data       []json.RawMessage
+	HasMore    bool
+	NextCursor string
+}
+    ListPage is a single page of a list response. `HasMore` drives the outer
+    pagination loop; `NextCursor` is the last element's id, which Stripe expects
+    as the `starting_after` param on the next call.
+
+type Option func(*Client)
+    Option configures the Client at construction time.
+
+func WithBaseURL(baseURL string) Option
+    WithBaseURL overrides the API base URL. Tests pass an httptest server URL
+    here; production callers use the default.
+
+func WithHTTPClient(hc *http.Client) Option
+    WithHTTPClient overrides the underlying http.Client. Tests set a custom
+    transport here to assert on outbound headers.
+
+func WithProgressHandler(h ProgressHandler) Option
+    WithProgressHandler installs an observability hook for pagination + retry
+    loops. Pass nil to disable (same as the default).
+
+type ParsedPath struct {
+	Resource Resource
+	// ID is the Stripe resource id (e.g., "cus_abc123") or empty when
+	// the path is a new-* placeholder.
+	ID string
+	// IsNew is true for `new-*.json` paths — i.e., the push should
+	// create a new record and let Stripe assign the id.
+	IsNew bool
+}
+    ParsedPath is the decoded view of a branch path targeting a specific
+    resource record. operationPush + operationPatch use it to decide whether a
+    write is a Create (id empty, filename starts with "new-") or an Update (id
+    present).
+
+func ParsePath(path string) (ParsedPath, error)
+    ParsePath decodes a branch path like `customers/cus_abc123.json` or
+    `customers/new-alice.json` into its ParsedPath form. The trailing `.json` is
+    required so that the schema matches what pull produces (pull emits parquet
+    snapshots, but push/patch operate on JSON records authored by the user — the
+    extension disambiguates).
+
+type ProgressEvent struct {
+	// Kind discriminates the event. One of ProgressKindPage or
+	// ProgressKindRateLimit (more may be added later).
+	Kind string
+	// ResourcePath is the endpoint the event applies to
+	// (e.g., "/v1/customers"). Always set.
+	ResourcePath string
+	// Page is 1-based page number within the current pagination loop.
+	// Only meaningful for ProgressKindPage.
+	Page int
+	// RecordsSoFar is the cumulative record count accumulated by this
+	// call to ListBounded. Only meaningful for ProgressKindPage.
+	RecordsSoFar int
+	// Cursor is the `starting_after` cursor that produced this page,
+	// or "" for the first page. Useful for resume / diagnostics.
+	// Only meaningful for ProgressKindPage.
+	Cursor string
+	// Attempt is the 0-based retry attempt. Only meaningful for
+	// ProgressKindRateLimit.
+	Attempt int
+	// Wait is how long the client is about to sleep before retrying.
+	// Only meaningful for ProgressKindRateLimit.
+	Wait time.Duration
+}
+    ProgressEvent is a single observability event emitted from the Stripe
+    client during long-running operations. The pull path uses this to surface
+    per-page progress + rate-limit waits into the workflow's log stream so an
+    apparently-stuck run is actually diagnosable.
+
+type ProgressHandler func(ProgressEvent)
+    ProgressHandler receives observability events from long-running operations.
+    Called synchronously from inside the pagination / retry loops —
+    implementations must return quickly. nil-safe: callers that don't need
+    progress events simply don't set one.
+
+type Resource struct {
+	// Name is the branch directory (e.g., "customers") and the slug
+	// users see in operation paths.
+	Name string
+	// Path is the Stripe REST path without the trailing slash
+	// (e.g., "/v1/customers").
+	Path string
+	// Pull is true when this resource is listed + exported on pull.
+	Pull bool
+	// Write is true when users can create / update this resource via
+	// push and patch. Some resources (charges, payouts) are read-only
+	// by policy even when the key has write scope — we don't expose
+	// them as writable.
+	Write bool
+}
+    Resource describes one Stripe resource this connector knows about — its REST
+    path under /v1, its directory-name on the branch, and what capabilities
+    Irmin exposes for it.
+
+    Adding a new resource is a single entry in KnownResources plus (if writes
+    are supported) ensuring the branch JSON parses cleanly through JSONToForm —
+    no connector-level code changes needed.
+
+func FindResource(name string) (Resource, error)
+    FindResource returns the Resource with the given branch name, or an error
+    naming every known resource so users get a useful message when they target a
+    typo.
+
+func KnownResources() []Resource
+    KnownResources returns every Stripe resource the connector exposes.
+    The order of the returned slice drives the pull loop order in operationPull
+    so the emitted zip is deterministic.
+
+    Returned by a function rather than exposed as a package-level variable
+    because the repo's golangci config forbids globals — and the table is
+    immutable + cheap to rebuild per call, so there's no caching win worth the
+    exception.
+
+</pre>
+</body></html>

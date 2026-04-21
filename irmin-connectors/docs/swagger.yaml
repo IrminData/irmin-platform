@@ -4022,6 +4022,449 @@ paths:
       summary: Unsubscribe from changes (not supported)
       tags:
       - sftp
+  /stripe/configuration/{key}/fields:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Get dynamic configuration fields for the Stripe connector based
+        on the configuration key (details or settings)
+      parameters:
+      - description: Configuration key
+        enum:
+        - details
+        - settings
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration fields retrieved successfully
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/irminmodels.DynamicField'
+            type: object
+        "400":
+          description: Bad request - invalid configuration key
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get Stripe connector configuration fields
+      tags:
+      - stripe
+  /stripe/configuration/validate:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Validate Stripe connection details by making a lightweight test
+        call to the Stripe API (/v1/charges?limit=1)
+      parameters:
+      - description: Stripe restricted or secret API key
+        in: formData
+        name: details[api_key]
+        required: true
+        type: string
+      - description: Pinned Stripe-Version header
+        in: formData
+        name: settings[api_version]
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration validation result
+          schema:
+            $ref: '#/definitions/irminmodels.ConnectorConfigurationValidationResult'
+        "400":
+          description: Bad request - invalid configuration data
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Validate Stripe connector configuration
+      tags:
+      - stripe
+  /stripe/details:
+    get:
+      consumes:
+      - application/json
+      description: Get an HTML page with detailed information about the Stripe connector
+        including capabilities, authentication methods, and usage examples
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: Stripe connector details page
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Get Stripe connector details page
+      tags:
+      - stripe
+  /stripe/info:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about the Stripe connector including capabilities,
+        configuration fields, and API endpoints
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Stripe connector information retrieved successfully
+          schema:
+            $ref: '#/definitions/models.ConnectorDetails'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get Stripe connector information
+      tags:
+      - stripe
+  /stripe/operation/cancel:
+    post:
+      consumes:
+      - application/json
+      description: Cancel an ongoing Stripe operation using the operation token
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation cancelled successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Cancel Stripe operation
+      tags:
+      - stripe
+  /stripe/operation/init:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Initialize a new Stripe operation with connection details and settings,
+        returning an operation token for subsequent requests
+      parameters:
+      - description: Stripe restricted or secret API key
+        in: formData
+        name: details[api_key]
+        required: true
+        type: string
+      - description: Pinned Stripe-Version header (optional)
+        in: formData
+        name: settings[api_version]
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation initialized successfully with operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation data
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Initialize Stripe operation
+      tags:
+      - stripe
+  /stripe/operation/patch:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Translate a JSON-Patch document into one partial-update call per
+        targeted Stripe resource. Only add / replace / remove are supported; move
+        and copy are rejected because Stripe's fields aren't structurally rearrangeable.
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: JSON file containing a JSON-Patch array
+        in: formData
+        name: patches
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Patches applied successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Apply JSON-Patch operations to Stripe resources
+      tags:
+      - stripe
+  /stripe/operation/pull:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Pull Stripe resources (customers, charges, subscriptions, invoices,
+        payouts) as JSON files. If path is empty, every pull-enabled resource is returned.
+        Response is a ZIP archive of the resulting files.
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: Optional resource name (e.g., 'customers') or `resource/id` for
+          single-record pull
+        in: formData
+        name: path
+        type: string
+      produces:
+      - application/zip
+      responses:
+        "200":
+          description: ZIP archive of pulled JSON files (one per resource)
+          schema:
+            type: file
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "409":
+          description: Operation already running
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Pull data from Stripe
+      tags:
+      - stripe
+  /stripe/operation/push:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 'Push JSON records to Stripe. Files under `<resource>/new-*.json`
+        create new records; files under `<resource>/<id>.json` update existing ones.
+        Supported resources: customers, invoices, products, prices.'
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: ZIP containing JSON resource files
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Optional target path selector (file or directory prefix like
+          `customers/`)
+        in: formData
+        name: path
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data pushed successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token or file format
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "409":
+          description: Operation already running
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Push data to Stripe
+      tags:
+      - stripe
+  /stripe/operation/schema/{operation}:
+    post:
+      consumes:
+      - application/json
+      description: Get the schema for Stripe pull / push / patch operations as an
+        Irmin-compatible ObjectSchema.
+      parameters:
+      - description: Operation type
+        enum:
+        - pull
+        - push
+        - patch
+        in: path
+        name: operation
+        required: true
+        type: string
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation schema retrieved successfully
+          schema:
+            $ref: '#/definitions/irminmodels.ObjectSchema'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Get Stripe operation schema
+      tags:
+      - stripe
+  /stripe/operation/status:
+    post:
+      consumes:
+      - application/json
+      description: Get the current status of a Stripe operation using the operation
+        token
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation status retrieved successfully
+          schema:
+            $ref: '#/definitions/common.OperationStatus'
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get Stripe operation status
+      tags:
+      - stripe
   /swagger:
     get:
       consumes:
