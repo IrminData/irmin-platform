@@ -7,7 +7,14 @@ import Link from 'next/link';
 import { BsFilePdf, BsPerson, BsSearch, BsTag } from 'react-icons/bs';
 import { GoWorkflow } from 'react-icons/go';
 import { HiOutlineDocumentText } from 'react-icons/hi';
-import { TbClipboardX, TbCode, TbDatabase, TbRun, TbSql } from 'react-icons/tb';
+import {
+  TbClipboardX,
+  TbCode,
+  TbDatabase,
+  TbRun,
+  TbSparkles,
+  TbSql,
+} from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,6 +37,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import {
+  useAIApplications,
   useConnections,
   useRepositories,
   useStoredQueries,
@@ -141,6 +149,7 @@ export default function DocumentationSection() {
   const { repositoriesQuery } = useRepositories();
   const { scriptsQuery } = useScripts();
   const { storedQueriesQuery } = useStoredQueries();
+  const { aiApplicationsQuery } = useAIApplications();
   const { workspaceSlug, workspaceQuery } = useWorkspaceContext();
   const { profile } = useIAM();
   const { dict, locale } = useLocale();
@@ -166,6 +175,10 @@ export default function DocumentationSection() {
   const queries = useMemo(
     () => storedQueriesQuery.data?.data ?? [],
     [storedQueriesQuery.data?.data]
+  );
+  const aiApplications = useMemo(
+    () => aiApplicationsQuery.data?.data ?? [],
+    [aiApplicationsQuery.data?.data]
   );
 
   const connectionById = useMemo(() => {
@@ -200,6 +213,21 @@ export default function DocumentationSection() {
     return map;
   }, [workflows]);
 
+  const repositoryAIApplications = useMemo(() => {
+    const map = new Map<string, { id: string; name: string }[]>();
+    for (const app of aiApplications) {
+      const slugs = new Set(
+        (app.data_sources ?? []).map((ds) => ds.repository)
+      );
+      for (const slug of slugs) {
+        const list = map.get(slug) ?? [];
+        list.push({ id: app.id, name: app.name });
+        map.set(slug, list);
+      }
+    }
+    return map;
+  }, [aiApplications]);
+
   const stats = useMemo(
     () => ({
       repositories: repositories.length,
@@ -207,12 +235,13 @@ export default function DocumentationSection() {
       workflows: workflows.length,
       scripts: scripts.length,
       queries: queries.length,
+      aiApplications: aiApplications.length,
       importWorkflows: workflows.filter((w) => w.type === 'import').length,
       exportWorkflows: workflows.filter((w) => w.type === 'export').length,
       actionWorkflows: workflows.filter((w) => w.type === 'action').length,
       pipelineWorkflows: workflows.filter((w) => w.type === 'pipeline').length,
     }),
-    [repositories, connections, workflows, scripts, queries]
+    [repositories, connections, workflows, scripts, queries, aiApplications]
   );
 
   const handleDownloadPDF = useCallback(async () => {
@@ -229,6 +258,7 @@ export default function DocumentationSection() {
         workflows,
         scripts,
         queries,
+        aiApplications,
         repositoryWorkflows,
         baseUrl: typeof window !== 'undefined' ? window.location.origin : '',
       });
@@ -246,6 +276,7 @@ export default function DocumentationSection() {
     workflows,
     scripts,
     queries,
+    aiApplications,
     repositoryWorkflows,
   ]);
 
@@ -255,7 +286,8 @@ export default function DocumentationSection() {
     workflowsQuery.isLoading ||
     repositoriesQuery.isLoading ||
     scriptsQuery.isLoading ||
-    storedQueriesQuery.isLoading
+    storedQueriesQuery.isLoading ||
+    aiApplicationsQuery.isLoading
   ) {
     return <DocumentationSkeleton />;
   }
@@ -267,6 +299,7 @@ export default function DocumentationSection() {
     repositoriesQuery.error,
     scriptsQuery.error,
     storedQueriesQuery.error,
+    aiApplicationsQuery.error,
   ].filter(Boolean);
 
   if (errors.length > 0) {
@@ -282,6 +315,7 @@ export default function DocumentationSection() {
               if (repositoriesQuery.error) repositoriesQuery.refetch();
               if (scriptsQuery.error) scriptsQuery.refetch();
               if (storedQueriesQuery.error) storedQueriesQuery.refetch();
+              if (aiApplicationsQuery.error) aiApplicationsQuery.refetch();
             }}
             title={dict.common.errors.failedToLoadDocumentation}
             description={dict.common.errors.failedToLoadAgain}
@@ -296,6 +330,7 @@ export default function DocumentationSection() {
   const filteredWorkflows = matchSearch(workflows, searchTerm);
   const filteredScripts = matchSearch(scripts, searchTerm);
   const filteredQueries = matchSearch(queries, searchTerm);
+  const filteredAIApplications = matchSearch(aiApplications, searchTerm);
 
   if (!workspace) return null;
 
@@ -304,7 +339,8 @@ export default function DocumentationSection() {
     connections.length === 0 &&
     workflows.length === 0 &&
     scripts.length === 0 &&
-    queries.length === 0;
+    queries.length === 0 &&
+    aiApplications.length === 0;
 
   if (isWorkspaceEmpty) {
     return (
@@ -413,7 +449,7 @@ export default function DocumentationSection() {
                     className={`
                       grid grid-cols-2 gap-3 text-sm
                       sm:grid-cols-3
-                      lg:grid-cols-5
+                      lg:grid-cols-6
                     `}
                   >
                     <div className='rounded-md border p-3'>
@@ -454,6 +490,14 @@ export default function DocumentationSection() {
                       </dd>
                       <dt className='text-xs text-muted-foreground'>
                         {dict.query.queries}
+                      </dt>
+                    </div>
+                    <div className='rounded-md border p-3'>
+                      <dd className='text-lg font-semibold tabular-nums'>
+                        {stats.aiApplications}
+                      </dd>
+                      <dt className='text-xs text-muted-foreground'>
+                        {dict.consoleNavigation.aiApplications}
                       </dt>
                     </div>
                   </dl>
@@ -551,6 +595,9 @@ export default function DocumentationSection() {
                       repository={repository}
                       showNotes={true}
                       relatedWorkflows={repositoryWorkflows.get(
+                        repository.slug
+                      )}
+                      relatedAIApplications={repositoryAIApplications.get(
                         repository.slug
                       )}
                     />
@@ -1075,6 +1122,195 @@ export default function DocumentationSection() {
                               </div>
                             )}
                           </dl>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+
+          {aiApplications.length > 0 && (
+            <section className='space-y-6'>
+              <div className='flex items-center gap-3'>
+                <div className='rounded-lg bg-muted p-2'>
+                  <TbSparkles
+                    aria-hidden='true'
+                    className='size-5 text-muted-foreground'
+                  />
+                </div>
+                <div>
+                  <h2 className='text-2xl'>
+                    {dict.consoleNavigation.aiApplications}
+                  </h2>
+                  <p className='text-sm text-muted-foreground'>
+                    {dict.catalog.aiApplicationSectionDescription}
+                  </p>
+                </div>
+              </div>
+
+              {filteredAIApplications.length === 0 ? (
+                <EmptyState
+                  icon={<TbClipboardX className='size-full' />}
+                  title={dict.catalog.aiApplicationSearchEmptyTitle}
+                  description={dict.catalog.aiApplicationSearchEmptyDescription}
+                  size='md'
+                  action={{
+                    label: dict.catalog.clearSearch,
+                    onClick: () => setSearchTerm(''),
+                    variant: 'outline',
+                  }}
+                />
+              ) : (
+                <div
+                  className={`
+                    grid grid-cols-1 gap-6
+                    lg:grid-cols-2
+                  `}
+                >
+                  {filteredAIApplications.map((app) => {
+                    const owner = ownerSummary(app.owner);
+                    const appTags = renderTags(app.tags);
+                    const appNotes = renderDocumentation(
+                      app.documentation,
+                      dict.catalog.notesHeading
+                    );
+                    const dataSourceRepos = Array.from(
+                      new Set(
+                        (app.data_sources ?? []).map((ds) => ds.repository)
+                      )
+                    );
+                    const customTools = app.custom_tools ?? [];
+                    const storedQueryToolCount = customTools.filter(
+                      (t) => t.type === 'stored_query'
+                    ).length;
+                    const workflowToolCount = customTools.filter(
+                      (t) => t.type === 'workflow'
+                    ).length;
+                    const embeddingToolCount = customTools.filter(
+                      (t) => t.type === 'embedding_search'
+                    ).length;
+                    const writeEnabled = app.tools?.write_enabled ?? false;
+                    return (
+                      <Card key={`ai-application-${app.id}`}>
+                        <CardHeader>
+                          <CardTitle>
+                            <Link
+                              href={`/${locale}/workspace/${workspaceSlug}/ai-applications/${app.id}`}
+                              className='hover:underline'
+                            >
+                              {app.name}
+                            </Link>
+                          </CardTitle>
+                          {app.description && (
+                            <CardDescription>{app.description}</CardDescription>
+                          )}
+                        </CardHeader>
+                        <CardContent>
+                          <dl className='space-y-3 text-sm'>
+                            {owner && (
+                              <div className='flex flex-col gap-1'>
+                                <dt
+                                  className={`
+                                    flex items-center gap-2 text-sm
+                                    text-muted-foreground
+                                  `}
+                                >
+                                  <BsPerson
+                                    aria-hidden='true'
+                                    className='size-4'
+                                  />
+                                  {dict.common.owner}
+                                </dt>
+                                <dd className='font-medium text-foreground'>
+                                  {owner.name}
+                                  {owner.email ? ` • ${owner.email}` : ''}
+                                </dd>
+                              </div>
+                            )}
+                            <div className='flex flex-col gap-1'>
+                              <dt className='text-muted-foreground'>
+                                {dict.catalog.aiApplicationDataSources}
+                              </dt>
+                              <dd className='flex flex-wrap gap-2'>
+                                {dataSourceRepos.length === 0 ? (
+                                  <span className='text-muted-foreground'>
+                                    {dict.catalog.aiApplicationNoDataSources}
+                                  </span>
+                                ) : (
+                                  dataSourceRepos.map((slug) => {
+                                    const repo = repositoryBySlug.get(slug);
+                                    const label = repo?.name ?? slug;
+                                    return (
+                                      <Link
+                                        key={slug}
+                                        href={`/${locale}/workspace/${workspaceSlug}/repositories/${slug}`}
+                                        className='hover:underline'
+                                      >
+                                        <Badge variant='outline'>{label}</Badge>
+                                      </Link>
+                                    );
+                                  })
+                                )}
+                              </dd>
+                            </div>
+                            <div className='flex flex-col gap-1'>
+                              <dt className='text-muted-foreground'>
+                                {dict.catalog.aiApplicationCustomTools}
+                              </dt>
+                              <dd className='text-xs text-muted-foreground'>
+                                {dict.catalog.aiApplicationCustomToolsBreakdown
+                                  .replace(
+                                    '{storedQueries}',
+                                    String(storedQueryToolCount)
+                                  )
+                                  .replace(
+                                    '{workflows}',
+                                    String(workflowToolCount)
+                                  )
+                                  .replace(
+                                    '{embeddings}',
+                                    String(embeddingToolCount)
+                                  )}
+                              </dd>
+                            </div>
+                            <div className='flex flex-col gap-1'>
+                              <dt className='text-muted-foreground'>
+                                {dict.list.status}
+                              </dt>
+                              <dd>
+                                <StatusBadge
+                                  status={writeEnabled ? 'pending' : 'default'}
+                                  label={
+                                    writeEnabled
+                                      ? dict.catalog.aiApplicationWriteEnabled
+                                      : dict.catalog.aiApplicationReadOnly
+                                  }
+                                />
+                              </dd>
+                            </div>
+                            {appTags && (
+                              <div className='flex flex-col gap-1'>
+                                <dt
+                                  className={`
+                                    flex items-center gap-2
+                                    text-muted-foreground
+                                  `}
+                                >
+                                  <BsTag
+                                    aria-hidden='true'
+                                    className='size-4'
+                                  />
+                                  {dict.repository.tags.tags}
+                                </dt>
+                                <dd className='flex flex-wrap gap-2'>
+                                  {appTags}
+                                </dd>
+                              </div>
+                            )}
+                          </dl>
+                          {appNotes}
                         </CardContent>
                       </Card>
                     );

@@ -2103,6 +2103,23 @@ const en = {
     querySearchEmptyTitle: 'No queries match your search',
     querySearchEmptyDescription:
       'Adjust your search term to see query documentation.',
+    aiApplicationSectionDescription:
+      'AI Applications connected to this workspace — which repositories they read, which tools they expose.',
+    aiApplicationSearchEmptyTitle: 'No AI Applications match your search',
+    aiApplicationSearchEmptyDescription:
+      'Adjust your search term to see AI Application documentation.',
+    aiApplicationDataSources: 'Data sources',
+    aiApplicationCustomTools: 'Custom tools',
+    aiApplicationWriteEnabled: 'Write access enabled',
+    aiApplicationReadOnly: 'Read only',
+    aiApplicationNoDataSources: 'No data sources configured',
+    aiApplicationCustomToolsBreakdown:
+      '{storedQueries} stored queries · {workflows} workflows · {embeddings} embedding searches',
+    aiApplicationFlowsTitle: 'AI Application flows',
+    aiApplicationFlowsEmptyDescription:
+      'Adjust your search term to see AI Application flows.',
+    consumes: 'consumes',
+    directoryAIApplicationsEmpty: 'No AI Applications defined.',
     scheduleLabel: 'Schedule',
     workspaceEmptyTitle: 'Workspace is empty',
     workspaceEmptyDescription:
@@ -2132,6 +2149,7 @@ const en = {
     loadingDetails: 'Loading details...',
     andMoreObjects: 'and {count} more...',
     relatedWorkflows: 'Related workflows',
+    relatedAIApplications: 'Related AI Applications',
   },
 
   // === LIST COMPONENTS ===

@@ -40,6 +40,8 @@ interface RepositoryDocumentationCardProps {
   showNotes?: boolean;
   /** Related workflows to display as links */
   relatedWorkflows?: { id: string; name: string; type: string }[];
+  /** Related AI Applications to display as links */
+  relatedAIApplications?: { id: string; name: string }[];
 }
 
 /**
@@ -52,6 +54,7 @@ export default function RepositoryDocumentationCard({
   workflowUsageCount,
   showNotes,
   relatedWorkflows,
+  relatedAIApplications,
 }: RepositoryDocumentationCardProps) {
   const { locale, dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
@@ -128,6 +131,24 @@ export default function RepositoryDocumentationCard({
                     className='hover:underline'
                   >
                     <Badge variant='outline'>{wf.name}</Badge>
+                  </Link>
+                ))}
+              </dd>
+            </div>
+          )}
+          {relatedAIApplications && relatedAIApplications.length > 0 && (
+            <div className='flex flex-col gap-1'>
+              <dt className='text-muted-foreground'>
+                {dict.catalog.relatedAIApplications}
+              </dt>
+              <dd className='flex flex-wrap gap-2'>
+                {relatedAIApplications.map((app) => (
+                  <Link
+                    key={app.id}
+                    href={`/${locale}/workspace/${workspaceSlug}/ai-applications/${app.id}`}
+                    className='hover:underline'
+                  >
+                    <Badge variant='outline'>{app.name}</Badge>
                   </Link>
                 ))}
               </dd>

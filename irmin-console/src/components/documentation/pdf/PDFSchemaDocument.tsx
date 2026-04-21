@@ -2,6 +2,7 @@
 
 import { Document, Link, Page, Text, View } from '@react-pdf/renderer';
 
+import type { AIApplication } from '@/types/core/AIApplication';
 import type { Connection } from '@/types/core/Connection';
 import type { Repository } from '@/types/core/Repository';
 import type { Workflow } from '@/types/core/Workflow';
@@ -22,6 +23,7 @@ export interface SchemaPDFProps {
   workflows: Workflow[];
   connections: Connection[];
   repositories: Repository[];
+  aiApplications: AIApplication[];
   connectionById: Map<string, Connection>;
   repositoryBySlug: Map<string, Repository>;
   baseUrl: string;
@@ -35,6 +37,7 @@ export default function PDFSchemaDocument({
   workflows,
   connections,
   repositories,
+  aiApplications,
   connectionById,
   repositoryBySlug,
   baseUrl,
@@ -169,6 +172,77 @@ export default function PDFSchemaDocument({
           )
         )}
 
+        {/* AI Application Flows */}
+        {aiApplications.length > 0 && (
+          <View>
+            <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
+              AI Application flows
+            </Text>
+            <Text style={styles.sectionDescription}>
+              Which AI Applications read from which repositories.
+            </Text>
+            {aiApplications.map((app) => {
+              const slugs = Array.from(
+                new Set((app.data_sources ?? []).map((ds) => ds.repository))
+              );
+              const writeEnabled = app.tools?.write_enabled ?? false;
+              return (
+                <View key={app.id} style={styles.card} wrap={false}>
+                  <Link
+                    src={`${baseUrl}/${locale}/workspace/${workspace.slug}/ai-applications/${app.id}`}
+                    style={styles.cardTitle}
+                  >
+                    {app.name}
+                  </Link>
+                  {app.description && (
+                    <Text style={styles.cardDescription}>
+                      {app.description}
+                    </Text>
+                  )}
+                  <View style={styles.fieldRow}>
+                    <Text style={styles.fieldLabel}>Access</Text>
+                    <Text style={styles.fieldValue}>
+                      {writeEnabled ? 'Read/Write' : 'Read only'}
+                    </Text>
+                  </View>
+                  <View style={styles.fieldRow}>
+                    <Text style={styles.fieldLabel}>Owner</Text>
+                    <Text style={styles.fieldValue}>
+                      {ownerText(app.owner)}
+                    </Text>
+                  </View>
+                  <View style={[styles.flowChain, { marginTop: 8 }]}>
+                    {slugs.length === 0 ? (
+                      <Text style={styles.flowNode}>No data sources</Text>
+                    ) : (
+                      <>
+                        {slugs.map((slug, idx) => {
+                          const repo = repositoryBySlug.get(slug);
+                          return (
+                            <View
+                              key={`${app.id}-${slug}`}
+                              style={{ flexDirection: 'row' }}
+                            >
+                              <Text style={styles.flowNode}>
+                                {repo?.name ?? slug}
+                              </Text>
+                              {idx < slugs.length - 1 ? (
+                                <Text style={styles.flowNode}>, </Text>
+                              ) : null}
+                            </View>
+                          );
+                        })}
+                        <Text style={styles.flowArrow}>{'\u2192'}</Text>
+                        <Text style={styles.flowNode}>{app.name}</Text>
+                      </>
+                    )}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
         {/* Component Directory */}
         <Text style={[styles.sectionTitle, { marginTop: 32 }]}>
           Component directory
@@ -237,6 +311,45 @@ export default function PDFSchemaDocument({
                 </View>
               </View>
             ))}
+          </View>
+        )}
+
+        {/* AI Applications */}
+        {aiApplications.length > 0 && (
+          <View>
+            <Text style={styles.groupTitle}>AI Applications</Text>
+            {aiApplications.map((app) => {
+              const slugs = Array.from(
+                new Set((app.data_sources ?? []).map((ds) => ds.repository))
+              );
+              return (
+                <View key={app.id} style={styles.card} wrap={false}>
+                  <Link
+                    src={`${baseUrl}/${locale}/workspace/${workspace.slug}/ai-applications/${app.id}`}
+                    style={styles.cardTitle}
+                  >
+                    {app.name}
+                  </Link>
+                  {app.description && (
+                    <Text style={styles.cardDescription}>
+                      {app.description}
+                    </Text>
+                  )}
+                  <View style={styles.fieldRow}>
+                    <Text style={styles.fieldLabel}>Owner</Text>
+                    <Text style={styles.fieldValue}>
+                      {ownerText(app.owner)}
+                    </Text>
+                  </View>
+                  <View style={styles.fieldRow}>
+                    <Text style={styles.fieldLabel}>Consumes</Text>
+                    <Text style={styles.fieldValue}>
+                      {slugs.length} repositories
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
           </View>
         )}
       </Page>

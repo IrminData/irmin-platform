@@ -2093,6 +2093,23 @@ const fi = {
     querySearchEmptyTitle: 'Yhtään kyselyä ei vastaa hakuasi',
     querySearchEmptyDescription:
       'Muuta hakutermiäsi nähdäksesi kyselyiden dokumentaatio.',
+    aiApplicationSectionDescription:
+      'Tähän työtilaan kytketyt AI-sovellukset — mitä arkistoja ne lukevat ja mitä työkaluja ne tarjoavat.',
+    aiApplicationSearchEmptyTitle: 'Yhtään AI-sovellusta ei vastaa hakuasi',
+    aiApplicationSearchEmptyDescription:
+      'Muuta hakutermiäsi nähdäksesi AI-sovellusten dokumentaatio.',
+    aiApplicationDataSources: 'Tietolähteet',
+    aiApplicationCustomTools: 'Mukautetut työkalut',
+    aiApplicationWriteEnabled: 'Kirjoitusoikeus käytössä',
+    aiApplicationReadOnly: 'Vain luku',
+    aiApplicationNoDataSources: 'Tietolähteitä ei ole määritetty',
+    aiApplicationCustomToolsBreakdown:
+      '{storedQueries} tallennettua kyselyä · {workflows} työnkulkua · {embeddings} upotushakua',
+    aiApplicationFlowsTitle: 'AI-sovellusvirrat',
+    aiApplicationFlowsEmptyDescription:
+      'Säädä hakuehtoja nähdäksesi AI-sovellusvirrat.',
+    consumes: 'käyttää',
+    directoryAIApplicationsEmpty: 'AI-sovelluksia ei ole määritetty.',
     scheduleLabel: 'Aikataulu',
     workspaceEmptyTitle: 'Työtila on tyhjä',
     workspaceEmptyDescription:
@@ -2122,6 +2139,7 @@ const fi = {
     loadingDetails: 'Ladataan tietoja...',
     andMoreObjects: 'ja {count} lisää...',
     relatedWorkflows: 'Liittyvät työnkulut',
+    relatedAIApplications: 'Liittyvät AI-sovellukset',
   },
 
   // === LIST COMPONENTS ===

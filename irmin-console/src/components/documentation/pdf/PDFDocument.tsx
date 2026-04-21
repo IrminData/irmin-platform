@@ -2,6 +2,7 @@
 
 import { Document, Link, Page, Text, View } from '@react-pdf/renderer';
 
+import type { AIApplication } from '@/types/core/AIApplication';
 import type { Connection } from '@/types/core/Connection';
 import type { Repository } from '@/types/core/Repository';
 import type { StoredScript } from '@/types/core/Script';
@@ -18,6 +19,7 @@ interface WorkspaceStats {
   workflows: number;
   scripts: number;
   queries: number;
+  aiApplications: number;
   importWorkflows: number;
   exportWorkflows: number;
   actionWorkflows: number;
@@ -40,6 +42,7 @@ export interface DocumentationPDFProps {
   workflows: Workflow[];
   scripts: StoredScript[];
   queries: StoredQuery[];
+  aiApplications: AIApplication[];
   repositoryWorkflows: Map<
     string,
     { id: string; name: string; type: string }[]
@@ -58,9 +61,13 @@ export default function PDFDocument({
   workflows,
   scripts,
   queries,
+  aiApplications,
   repositoryWorkflows,
   baseUrl,
 }: DocumentationPDFProps) {
+  const repositoryNameBySlug = new Map(
+    repositories.map((repo) => [repo.slug, repo.name])
+  );
   return (
     <Document>
       <Page size='A4' style={styles.page}>
@@ -106,6 +113,10 @@ export default function PDFDocument({
             <View style={styles.statBox}>
               <Text style={styles.statNumber}>{stats.queries}</Text>
               <Text style={styles.statLabel}>Queries</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>{stats.aiApplications}</Text>
+              <Text style={styles.statLabel}>AI Applications</Text>
             </View>
           </View>
 
@@ -338,6 +349,93 @@ export default function PDFDocument({
                 )}
               </View>
             ))}
+          </View>
+        )}
+
+        {/* AI Applications */}
+        {aiApplications.length > 0 && (
+          <View>
+            <Text style={styles.sectionTitle}>AI Applications</Text>
+            <Text style={styles.sectionDescription}>
+              AI Applications connected to this workspace, their data sources
+              and custom tools.
+            </Text>
+            {aiApplications.map((app) => {
+              const dataSourceSlugs = Array.from(
+                new Set((app.data_sources ?? []).map((ds) => ds.repository))
+              );
+              const customTools = app.custom_tools ?? [];
+              const storedQueryCount = customTools.filter(
+                (t) => t.type === 'stored_query'
+              ).length;
+              const workflowToolCount = customTools.filter(
+                (t) => t.type === 'workflow'
+              ).length;
+              const embeddingCount = customTools.filter(
+                (t) => t.type === 'embedding_search'
+              ).length;
+              const writeEnabled = app.tools?.write_enabled ?? false;
+              return (
+                <View key={app.id} style={styles.card} wrap={false}>
+                  <Link
+                    src={`${baseUrl}/${locale}/workspace/${workspace.slug}/ai-applications/${app.id}`}
+                    style={styles.cardTitle}
+                  >
+                    {app.name}
+                  </Link>
+                  {app.description && (
+                    <Text style={styles.cardDescription}>
+                      {app.description}
+                    </Text>
+                  )}
+                  <View style={styles.fieldRow}>
+                    <Text style={styles.fieldLabel}>Owner</Text>
+                    <Text style={styles.fieldValue}>
+                      {ownerText(app.owner)}
+                    </Text>
+                  </View>
+                  <View style={styles.fieldRow}>
+                    <Text style={styles.fieldLabel}>Data sources</Text>
+                    <Text style={styles.fieldValue}>
+                      {dataSourceSlugs.length === 0
+                        ? 'None'
+                        : dataSourceSlugs
+                            .map(
+                              (slug) => repositoryNameBySlug.get(slug) ?? slug
+                            )
+                            .join(', ')}
+                    </Text>
+                  </View>
+                  <View style={styles.fieldRow}>
+                    <Text style={styles.fieldLabel}>Custom tools</Text>
+                    <Text style={styles.fieldValue}>
+                      {storedQueryCount} stored queries, {workflowToolCount}{' '}
+                      workflows, {embeddingCount} embedding searches
+                    </Text>
+                  </View>
+                  <View style={styles.fieldRow}>
+                    <Text style={styles.fieldLabel}>Access</Text>
+                    <Text style={styles.fieldValue}>
+                      {writeEnabled ? 'Read/Write' : 'Read only'}
+                    </Text>
+                  </View>
+                  {tagsText(app.tags) && (
+                    <View style={styles.fieldRow}>
+                      <Text style={styles.fieldLabel}>Tags</Text>
+                      <Text style={styles.fieldValue}>
+                        {tagsText(app.tags)}
+                      </Text>
+                    </View>
+                  )}
+                  {app.documentation && app.documentation.length > 0 && (
+                    <View style={styles.notesSection}>
+                      <Text style={styles.notesHeading}>Notes</Text>
+                      <MarkdownContent content={app.documentation} />
+                    </View>
+                  )}
+                </View>
+              );
+            })}
           </View>
         )}
 
