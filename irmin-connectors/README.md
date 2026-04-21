@@ -1,4 +1,4 @@
-<img src="https://github.com/IrminData/irmin-console/blob/development/public/irmin-logo-light.svg" width="200" alt="Irmin Logo">
+<img src="https://raw.githubusercontent.com/IrminData/.github/refs/heads/development/irmin-logo-light.svg" width="200" alt="Irmin Logo">
 
 # Irmin Connectors
 
@@ -9,7 +9,7 @@ A collection of deployable connectors for Irmin that enable universal interactio
 - **[PostgreSQL](connectors/postgres/README.md)** - Database connector for PostgreSQL.
 - **[MySQL](connectors/mysql/README.md)** - Database connector for MySQL.
 - **[SFTP](connectors/sftp/README.md)** - File transfer protocol connector for SFTP.
-- **[HTTP](connectors/http/README.md)** - Generic HTTP connector for connecting to any HTTP endpoint. 
+- **[HTTP](connectors/http/README.md)** - Generic HTTP connector for connecting to any HTTP endpoint.
 
 ## What are Irmin Connectors?
 
@@ -141,6 +141,7 @@ go run main.go -connector postgres -v
 ```
 
 The test suite validates:
+
 - Connector info and metadata
 - Configuration field retrieval and validation
 - Operation lifecycle (init, status, cancel)
@@ -152,7 +153,7 @@ For detailed documentation, see **[E2E Test Suite README](e2e-tests/README.md)**
 
 ## Docker
 
-> For the best Docker experience on macOS, we recommend using [OrbStack](https://orbstack.dev/) instead of Docker Desktop. 
+> For the best Docker experience on macOS, we recommend using [OrbStack](https://orbstack.dev/) instead of Docker Desktop.
 
 ### Docker Compose Setup
 
@@ -170,6 +171,7 @@ docker compose up -d db_connectors
 ```
 
 This command runs the services in detached mode (`-d`) and includes:
+
 - PostgreSQL database on port 5435
 
 #### Running the Complete Stack
@@ -235,11 +237,13 @@ The project generates three types of documentation:
 ### Quick Start
 
 **Generate all documentation**:
+
 ```bash
 ./generate-docs.sh
 ```
 
 This script will:
+
 - Install required tools (`gomarkdoc` and `swag`) if not present
 - Generate HTML docs for all packages in `docs/html/`
 - Create a combined markdown reference in `docs/docs.md`
@@ -247,6 +251,7 @@ This script will:
 - Ensure proper Go version compatibility
 
 **View documentation**:
+
 - HTML docs: Open `docs/html/index.html` in your browser
 - Markdown: View `docs/docs.md`
 - Swagger UI: `http://localhost:8080/swagger`
@@ -308,12 +313,14 @@ swag init -g main.go --output ./docs --parseDependency --parseInternal
 ```
 
 **Parameter types**:
+
 - `path` - URL path parameter
-- `query` - Query string parameter  
+- `query` - Query string parameter
 - `formData` - Form field
 - `body` - JSON request body (requires `@Accept json`)
 
 **Response types**:
+
 - Single object: `{object} Model`
 - Array: `{object} irminmodels.IrminAPIResponse{data=[]Model}`
 - Composed: `{object} irminmodels.IrminAPIResponse{data=Model}`
@@ -343,6 +350,7 @@ type User struct {
 ```
 
 **Useful struct tags**:
+
 - `json:"field_name"` - JSON field name
 - `example:"value"` - Example value in Swagger UI
 - `validate:"required"` - Mark field as required
