@@ -1,4 +1,4 @@
-<img src="https://github.com/IrminData/.github/blob/development/irmin-logo-light.svg" width="200">
+<img src="https://raw.githubusercontent.com/IrminData/.github/refs/heads/development/irmin-logo-light.svg" width="200" alt="Irmin Logo">
 
 # Irmin Console
 
