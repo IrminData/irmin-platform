@@ -116,3 +116,8 @@ var ExportGetMaxRuntime = func(o *Orchestrator, workflow *db.Workflow) int {
 var ExportGetMaxAttempts = func(o *Orchestrator, workflow *db.Workflow) int {
 	return o.getMaxAttempts(workflow)
 }
+
+// ExportAggregateOperationErrors exports aggregateOperationErrors for testing.
+var ExportAggregateOperationErrors = func(operation string, errs []error) error {
+	return aggregateOperationErrors(workflowOperation(operation), errs)
+}

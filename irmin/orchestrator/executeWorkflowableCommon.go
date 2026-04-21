@@ -2,6 +2,7 @@ package orchestrator
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	irmincache "irmin-api/cache"
 	connectorsclient "irmin-api/connectors-client"
@@ -29,6 +30,21 @@ type operationResult struct {
 	transferredBytes int64
 	operationLogs    []connectorsclient.OperationLog
 	errors           []error
+}
+
+// aggregateOperationErrors collapses a slice of per-file import/export
+// errors into a single error suitable for the caller to propagate. The
+// returned error wraps all inputs via errors.Join so each one remains
+// accessible with errors.Is / errors.As. Returns nil on an empty slice
+// so callers can forward the result directly.
+func aggregateOperationErrors(operation workflowOperation, errs []error) error {
+	if len(errs) == 0 {
+		return nil
+	}
+	return fmt.Errorf(
+		"%s operation had %d error(s): %w",
+		operation, len(errs), errors.Join(errs...),
+	)
 }
 
 // trimPaths removes leading slashes from path slices.
@@ -458,6 +474,24 @@ func (o *Orchestrator) executeWorkflowableCommon(
 		)
 	}
 
+	// Aggregate any per-file errors from DataImport / DataExport into a
+	// single returned error. Historically this function returned
+	// (logs, nil) even when `result.errors` was non-empty — the errors
+	// showed up in the workflow run logs but the caller
+	// (executeWorkflowWithContext) saw a nil error, set
+	// allAttemptsFailed = false, and marked the run WorkflowStatusComplete.
+	//
+	// That's the bug behind runs showing a green "complete" badge while
+	// their logs contain "Error during data import: ...". The run
+	// status has to reflect reality, otherwise downstream retry logic,
+	// alerts, and billing signals all get the wrong answer.
+	//
+	// Consistency with the commit gate below: we already refuse to
+	// commit on any error, so a partial-success run would also produce
+	// no repository changes. Marking it "complete" compounds that with
+	// a misleading status. Fail the run on any per-file error.
+	opErr := aggregateOperationErrors(operation, result.errors)
+
 	// Commit changes if import operation was successful (no errors)
 	// Export operations only read from the repository, so they should not commit
 	if operation == operationImport && len(result.errors) == 0 {
@@ -482,7 +516,7 @@ func (o *Orchestrator) executeWorkflowableCommon(
 		logs = append(logs, commitLogs...)
 	}
 
-	return logs, nil
+	return logs, opErr
 }
 
 // commitWorkflowChanges commits changes to a repository branch with workflow metadata in the commit message.
