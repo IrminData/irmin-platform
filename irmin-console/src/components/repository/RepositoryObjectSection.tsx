@@ -7,6 +7,8 @@ import { notFound } from 'next/navigation';
 import { AiOutlinePlayCircle } from 'react-icons/ai';
 import { TbBookmark, TbChevronUp } from 'react-icons/tb';
 
+import { ContentTooLargeError } from '@/lib/core/errors';
+
 import CreateSavedQueryModal from '@/components/query/CreateQueryModal';
 import SqlHelper from '@/components/query/helper/SqlHelper';
 import QueryResults from '@/components/query/QueryResults';
@@ -15,6 +17,7 @@ import RepositoryFiletree from '@/components/repository/objects/RepositoryFiletr
 import SimpleObjectDetails from '@/components/repository/objects/SimpleObjectDetails';
 import CodeMirrorEditor from '@/components/scripts/ide/CodeMirrorEditor';
 import { Button } from '@/components/ui/button';
+import DataSizeWarning from '@/components/ui/DataSizeWarning';
 import { QueryError } from '@/components/ui/error/QueryError';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
@@ -76,12 +79,8 @@ export default function RepositoryObjectSection({
     path
   );
 
-  const { repositoryObjectContentQuery } = useRepositoryObjectContent(
-    repositorySlug,
-    effectiveRef,
-    path,
-    true
-  );
+  const { repositoryObjectContentQuery, downloadObjectRawMutation } =
+    useRepositoryObjectContent(repositorySlug, effectiveRef, path, true);
 
   const { repositoryObjectSchemaQuery } = useRepositoryObjectSchema(
     repositorySlug,
@@ -252,6 +251,37 @@ export default function RepositoryObjectSection({
                     className={`rounded-lg border border-card bg-background p-8`}
                   >
                     <LoadingSkeleton className='h-96 w-full' />
+                  </div>
+                ) : repositoryObjectContentQuery.error instanceof
+                  ContentTooLargeError ? (
+                  // Dedicated card when the inline-preview refused the
+                  // file because it exceeds MAX_IN_MEMORY_SIZE_MB on
+                  // the server. DataSizeWarning + onDownload gives the
+                  // user a real way forward: pull the full file via
+                  // the server's tier-based download path (which
+                  // doesn't have the inline-preview cap).
+                  <div
+                    className={`rounded-lg border border-card bg-background p-8`}
+                  >
+                    <DataSizeWarning
+                      dataSize={repositoryObjectContentQuery.error.sizeBytes}
+                      type='blob'
+                      severity='error'
+                      contentType={selectedObject?.content_type ?? undefined}
+                      onDownload={() => {
+                        if (!selectedObject || !effectiveRef) return;
+                        // Guard against double-click: mutations don't
+                        // dedupe in-flight calls, so two rapid clicks
+                        // would fire two identical GETs and trigger
+                        // two browser downloads of the same file.
+                        if (downloadObjectRawMutation.isPending) return;
+                        downloadObjectRawMutation.mutate({
+                          path: selectedObject.path,
+                          ref: effectiveRef,
+                          contentType: selectedObject.content_type ?? undefined,
+                        });
+                      }}
+                    />
                   </div>
                 ) : repositoryObjectContentQuery.error ? (
                   <div

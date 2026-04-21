@@ -10,6 +10,7 @@ import type {
   IrminAPIResponse,
 } from '@/types/core/IrminAPIResponse';
 
+import { ContentTooLargeError, isContentTooLargePayload } from './errors';
 import AIApplicationService from './resources/AIApplicationService';
 import BillingService from './resources/BillingService';
 import ConnectionService from './resources/ConnectionService';
@@ -175,6 +176,101 @@ class IrminCore {
   };
 
   /**
+   * Shared error-response handler for fetchAPI, fetchBinary, and
+   * fetchRawBlob. Reads the response body (optionally cloning it),
+   * extracts the best human-readable message, then throws — either
+   * a rich `ContentTooLargeError` when the body matches the structured
+   * 413 payload, or a plain `Error` otherwise.
+   *
+   * Never returns. Callers put this inside an `if (!ok)` branch and
+   * rely on the throw to exit.
+   *
+   * Options exist because the three callers have small-but-meaningful
+   * behavioral differences that predate this helper:
+   *
+   * - `gateOnContentType`: when true, only attempts `response.json()`
+   *   if Content-Type includes `application/json`. Binary callers
+   *   accept any content type and don't want to blindly parse a
+   *   non-JSON body. `fetchAPI` always parses because its whole
+   *   contract is JSON responses.
+   * - `cloneResponse`: when true, parses a clone so the caller can
+   *   still read the original body. `fetchAPI` needs this because
+   *   its success path would otherwise fight for the stream. Binary
+   *   callers throw on error and never reuse the body — leave false.
+   * - `prefixStatusInMessage`: when true, the extracted message is
+   *   wrapped as `[status] message` (binary-caller convention).
+   *   `fetchAPI` uses the bare extracted message to stay
+   *   backwards-compatible with callers that pattern-match on the
+   *   error string.
+   * - `warnOnParseError`: when true, a JSON parse failure logs a
+   *   `console.warn`. `fetchAPI` warns; binary callers stay silent
+   *   because missing JSON is expected for non-JSON responses.
+   *
+   * Previously each caller hand-rolled this block and the 413
+   * structured-error handling was copy-pasted across all three —
+   * fixing the payload shape in one site would silently leave the
+   * others broken. Consolidating keeps that risk in one place.
+   */
+  private throwForResponse = async (
+    response: Response,
+    opts: {
+      defaultMessage: string;
+      gateOnContentType?: boolean;
+      cloneResponse?: boolean;
+      prefixStatusInMessage?: boolean;
+      warnOnParseError?: boolean;
+    }
+  ): Promise<never> => {
+    let message = opts.defaultMessage;
+    let parsedBody: unknown = null;
+    try {
+      const shouldParse =
+        !opts.gateOnContentType ||
+        (response.headers.get('content-type') || '').includes(
+          'application/json'
+        );
+      if (shouldParse) {
+        const source = opts.cloneResponse ? response.clone() : response;
+        parsedBody = await source.json();
+        const body = parsedBody as {
+          errors?: string[];
+          message?: string;
+        } | null;
+        const uniqueMessages = new Set<string>();
+        if (Array.isArray(body?.errors)) {
+          body.errors.forEach((error: string) => {
+            if (error) uniqueMessages.add(error);
+          });
+        }
+        if (body?.message) {
+          uniqueMessages.add(body.message);
+        }
+        if (uniqueMessages.size > 0) {
+          const extracted = Array.from(uniqueMessages).join('\n');
+          message = opts.prefixStatusInMessage
+            ? `[${response.status}] ${extracted}`
+            : extracted;
+        }
+      }
+    } catch (e) {
+      if (opts.warnOnParseError) {
+        console.warn('Failed to parse error data:', e);
+      }
+    }
+    // Rich-error path: the backend signals "content_too_large" on a
+    // 413 via a structured payload that carries size + max. Throw a
+    // typed error so viewer UIs can render a "download instead"
+    // card instead of a generic error toast.
+    if (response.status === 413) {
+      const dataField = (parsedBody as { data?: unknown } | null)?.data;
+      if (isContentTooLargePayload(dataField)) {
+        throw new ContentTooLargeError(message, dataField);
+      }
+    }
+    throw new Error(message);
+  };
+
+  /**
    * Fetch data from the Irmin API and check allowed status codes.
    *
    * @param url - The API endpoint URL.
@@ -196,31 +292,20 @@ class IrminCore {
       allowedStatusCodes.length > 0 &&
       !allowedStatusCodes.includes(response.status)
     ) {
-      let errorMessage = `Unexpected status code: ${response.status} for ${
-        options.method ?? 'GET'
-      } ${url}`;
-      try {
-        // Clone response to safely parse JSON without consuming the original stream
-        const errorData = await response.clone().json();
-        const uniqueMessages = new Set<string>();
-
-        if (errorData?.errors && Array.isArray(errorData.errors)) {
-          errorData.errors.forEach((error: string) => {
-            if (error) uniqueMessages.add(error);
-          });
-        }
-        if (errorData?.message) {
-          uniqueMessages.add(errorData.message);
-        }
-
-        if (uniqueMessages.size > 0) {
-          errorMessage = Array.from(uniqueMessages).join('\n');
-        }
-      } catch (e) {
-        // Ignore errors from parsing JSON
-        console.warn('Failed to parse error data:', e);
-      }
-      throw new Error(errorMessage);
+      await this.throwForResponse(response, {
+        defaultMessage: `Unexpected status code: ${response.status} for ${
+          options.method ?? 'GET'
+        } ${url}`,
+        // fetchAPI's body is always JSON — don't gate.
+        gateOnContentType: false,
+        // Clone so the success path's `response.json()` downstream
+        // doesn't race with the error parse.
+        cloneResponse: true,
+        // fetchAPI keeps backwards-compat by emitting a bare message.
+        prefixStatusInMessage: false,
+        // fetchAPI warns (historic behavior preserved).
+        warnOnParseError: true,
+      });
     }
 
     // Handle empty responses (e.g. 204 No Content)
@@ -303,32 +388,16 @@ class IrminCore {
 
     // validate allowed statuses
     if (allowedStatusCodes && !allowedStatusCodes.includes(response.status)) {
-      // Try to extract a human-readable error message from the response body,
-      // matching the same extraction logic used by fetchAPI.
-      let message = `Request failed with status ${response.status}`;
-      try {
-        const ct = response.headers.get('content-type') || '';
-        if (ct.includes('application/json')) {
-          const body = await response.json();
-          const uniqueMessages = new Set<string>();
-
-          if (Array.isArray(body?.errors)) {
-            body.errors.forEach((error: string) => {
-              if (error) uniqueMessages.add(error);
-            });
-          }
-          if (body?.message) {
-            uniqueMessages.add(body.message);
-          }
-
-          if (uniqueMessages.size > 0) {
-            message = `[${response.status}] ${Array.from(uniqueMessages).join('\n')}`;
-          }
-        }
-      } catch {
-        // Ignore parse errors, use default message
-      }
-      throw new Error(message);
+      await this.throwForResponse(response, {
+        defaultMessage: `Request failed with status ${response.status}`,
+        // Binary responses may be non-JSON; only parse if the header
+        // says so.
+        gateOnContentType: true,
+        // No clone needed — binary callers don't reuse the body.
+        cloneResponse: false,
+        // Binary-caller convention: prefix status in error message.
+        prefixStatusInMessage: true,
+      });
     }
 
     // inspect content type
@@ -344,6 +413,62 @@ class IrminCore {
     }
 
     // default to blob for binary data
+    return await response.blob();
+  };
+
+  /**
+   * Fetch raw bytes from the Irmin API, always as a Blob regardless of
+   * the response's Content-Type header. Use this for any path that is
+   * ultimately a "download the file to disk" operation — notably
+   * raw-object downloads where an `application/json` response is still
+   * meant to be a file, not a parsed JS value.
+   *
+   * The motivating bug: `fetchBinary` auto-parses `application/json`
+   * responses, so a 23 MB `stripe-customers.json` came back as a JS
+   * array. The download path only knew how to turn Blob/string into a
+   * browser download and fell through to the error alert — a silent
+   * failure for the exact file type the download flow existed to
+   * support.
+   *
+   * `fetchRawBlob` never parses. Blobs round-trip through
+   * `URL.createObjectURL` + anchor click exactly the way the source
+   * bytes arrived, so downloads are byte-identical to what the server
+   * emitted.
+   *
+   * Error handling mirrors `fetchBinary` (including the typed
+   * `ContentTooLargeError` throw path on structured 413s) so callers
+   * swapping from `fetchBinary` don't lose any error fidelity.
+   *
+   * @param url – the API endpoint URL
+   * @param options – fetch options
+   * @param allowedStatusCodes – optional list of extra statuses to treat as OK
+   * @returns the response as a raw Blob
+   */
+  public fetchRawBlob = async (
+    url: string,
+    options: RequestInit,
+    allowedStatusCodes?: number[]
+  ): Promise<Blob> => {
+    const headers = {
+      ...options.headers,
+      Accept: '*/*',
+    };
+
+    const response = await this._fetch(url, {
+      ...options,
+      headers,
+      cache: 'no-store',
+    });
+
+    if (allowedStatusCodes && !allowedStatusCodes.includes(response.status)) {
+      await this.throwForResponse(response, {
+        defaultMessage: `Request failed with status ${response.status}`,
+        gateOnContentType: true,
+        cloneResponse: false,
+        prefixStatusInMessage: true,
+      });
+    }
+
     return await response.blob();
   };
 }

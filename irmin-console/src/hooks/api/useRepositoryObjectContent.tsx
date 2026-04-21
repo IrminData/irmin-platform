@@ -81,11 +81,49 @@ export const useRepositoryObjectContent = (
     },
   });
 
+  // Raw-file download: triggered when the inline-preview fetch 413s
+  // because the file exceeds MAX_IN_MEMORY_SIZE_MB on the server. Routes
+  // through ObjectService.downloadObjectRaw, which uses fetchRawBlob
+  // and therefore never parses the response body — critical for JSON
+  // files like stripe-customers.json where fetchBinary would otherwise
+  // return a parsed array and break the download path. The server's
+  // size-tiered download (in-memory / stream / presigned redirect)
+  // handles arbitrarily large files.
+  const downloadObjectRawMutation = useMutation<
+    Blob,
+    Error,
+    { path: string; ref: string; contentType?: string }
+  >({
+    mutationFn: async (data) => {
+      const irminCore = await getCore();
+      return irminCore.objectService.downloadObjectRaw({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        path: data.path,
+        ref: data.ref,
+      });
+    },
+    onSuccess: (blob, vars) => {
+      const filename = vars.path.split('/').pop() ?? 'download';
+      const mimeType =
+        vars.contentType || blob.type || 'application/octet-stream';
+      downloadFile(blob, filename, mimeType);
+      irminAlert('success', dict.common.downloadSuccess);
+    },
+    onError: (error) => {
+      irminAlert(
+        'error',
+        error.message ?? dict.common.errors.mutations.downloadObjectFailed
+      );
+    },
+  });
+
   return {
     // Queries
     repositoryObjectContentQuery,
 
     // Mutations
     downloadObjectAsZipMutation,
+    downloadObjectRawMutation,
   };
 };

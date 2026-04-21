@@ -84,6 +84,7 @@ class ObjectService {
     this.getObjectStructuredContent =
       this.getObjectStructuredContent.bind(this);
     this.downloadObjectZip = this.downloadObjectZip.bind(this);
+    this.downloadObjectRaw = this.downloadObjectRaw.bind(this);
     this.getObjectSchema = this.getObjectSchema.bind(this);
     this.uploadObject = this.uploadObject.bind(this);
     this.uploadObjectFromURL = this.uploadObjectFromURL.bind(this);
@@ -197,6 +198,40 @@ class ObjectService {
     if (limitResponse) urlParams.append('limit-response', 'true');
     const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/content?${urlParams.toString()}`;
     return await this.irminCore.fetchBinary(url, { method: 'GET' }, [200]);
+  }
+
+  /**
+   * Download the raw bytes of an object as a Blob. Uses `fetchRawBlob`
+   * so `application/json` responses aren't parsed into JS values —
+   * downloads need the original bytes, not a re-serialized object.
+   *
+   * The server routes through the size-tiered download path (in-memory,
+   * stream, or presigned redirect), so arbitrarily large files work.
+   * The inline-preview cap (`MAX_IN_MEMORY_SIZE_MB`) does NOT apply.
+   *
+   * @param props
+   * @param props.workspace - The workspace slug.
+   * @param props.repository - The repository slug.
+   * @param props.path - The path of the object.
+   * @param props.ref - The ref (branch, tag or commit hash).
+   * @returns Blob with the raw object bytes.
+   */
+  async downloadObjectRaw({
+    workspace,
+    repository,
+    path,
+    ref,
+  }: {
+    workspace: string;
+    repository: string;
+    path: string;
+    ref?: string;
+  }): Promise<Blob> {
+    const urlParams = new URLSearchParams();
+    urlParams.append('path', path);
+    if (ref) urlParams.append('ref', ref);
+    const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/content?${urlParams.toString()}`;
+    return await this.irminCore.fetchRawBlob(url, { method: 'GET' }, [200]);
   }
 
   /**
