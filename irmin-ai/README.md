@@ -1,4 +1,4 @@
-<img src="https://github.com/IrminData/irmin-console/blob/development/public/irmin-logo-light.svg" width="200" alt="Irmin Logo">
+<img src="https://raw.githubusercontent.com/IrminData/.github/refs/heads/development/irmin-logo-light.svg" width="200" alt="Irmin Logo">
 
 # Irmin AI
 
@@ -43,15 +43,19 @@ Ensure you have the following installed:
 ## Quick Start
 
 1. **Install dependencies:**
+
 ```bash
 pnpm install
 ```
+
 2. **Set environment variables:**
+
 ```bash
 cp .env.example .env
 ```
-Open `.env` and fill in the values you need. See [`.env.example`](.env.example) for the full list of variables, defaults, and descriptions. All variables are read at process startup (runtime).
-3. **Run:**
+
+Open `.env` and fill in the values you need. See [`.env.example`](.env.example) for the full list of variables, defaults, and descriptions. All variables are read at process startup (runtime). 3. **Run:**
+
 ```bash
    pnpm dev               # Development
 pnpm build && pnpm start  # Production
@@ -62,6 +66,7 @@ pnpm build && pnpm start  # Production
 The API includes comprehensive Swagger/OpenAPI documentation with interactive testing capabilities.
 
 **Access Swagger UI:**
+
 ```bash
 # Start the development server
 pnpm dev
@@ -71,6 +76,7 @@ open http://localhost:3000/docs
 ```
 
 **Features:**
+
 - 📊 Interactive explorer – exercise every endpoint directly in the browser
 - 🔐 Authentication support – built-in JWT and workspace header authentication
 - 📝 Complete schemas – request/response payloads with examples
@@ -78,12 +84,14 @@ open http://localhost:3000/docs
 - ⚡ Streaming support – try the assistant’s NDJSON event stream live
 
 **Authentication in Swagger:**
+
 1. Click **Authorize**
 2. Enter your JWT in `bearerAuth`
 3. Provide `X-Workspace-Slug` in `workspaceHeader`
 4. Call authenticated endpoints directly from the UI
 
 **Endpoint overview:**
+
 - `POST /api/agents/:agentId` and `/stream` – execute agents (assistant streams by default)
 - `GET/POST /api/conversations` – manage workspace-scoped conversations and messages
 - `GET /api/info/*` – fetch user, workspace, model, and tool metadata
@@ -91,6 +99,7 @@ open http://localhost:3000/docs
 - `POST /api/system/scripts/vectorize-docs` – trigger the documentation ingestion script
 
 **OpenAPI spec:**
+
 - JSON: `http://localhost:3000/docs/json`
 - YAML: `http://localhost:3000/docs/yaml`
 
@@ -124,6 +133,7 @@ curl -X POST http://localhost:3000/api/agents/assistant/stream \
 Agents use LangChain’s `createAgent` builder backed by the LangGraph Postgres checkpointer. Each conversation maps to a `thread_id`, so agent state persists between requests and stays aligned with the `conversations` table. The assistant enriches context with vector results and optionally loads MCP tools.
 
 Streaming responses are emitted as newline-delimited JSON and forward LangChain v2 `StreamEvent`s verbatim. Expect:
+
 - `reasoning-delta` / `reasoning-end` events from Anthropic thinking tokens
 - `llm_response` / `agent_response` chunks with natural language output
 - `tool_call_*` and `tool_result_*` events when MCP tools execute
@@ -147,6 +157,7 @@ Don't read `process.env.*` directly. Import the typed `env` object from [`src/co
 
 ```ts
 import { env } from '@/config/env';
+
 const dsn = env.SENTRY_DSN;
 ```
 
@@ -173,17 +184,20 @@ pnpm run clean       # Remove build artifacts
 The system scripts framework handles operational jobs with zero configuration.
 
 **Available script**
+
 - `vectorize-docs` – Fetches Groq/OpenAI SDK documentation from GitHub, ingests local `llm-docs/*.md`, chunks content, uploads vectors to the `irmin-docs` system collection, and prunes stale chunks when `replaceMode` is enabled.
 
 See [src/scripts/README.md](src/scripts/README.md) for execution details.
 
 ### Script principles
+
 - Zero configuration defaults for collection names, chunk sizes, and sources
 - Simple execution via API (`POST /api/system/scripts/vectorize-docs`), `tsx`, or direct import
 - Self-contained analytics logging, replace vs append behaviour, and Qdrant clean-up
 - Ready for future scheduling automation and additional maintenance scripts
 
 ### Example response
+
 ```json
 {
   "success": true,
@@ -205,6 +219,7 @@ See [src/scripts/README.md](src/scripts/README.md) for execution details.
 ## API Testing
 
 Test utilities live in `src/tests/` and can be executed with `tsx`:
+
 - `assistant-agent.test.ts` – Agent listing, configuration, Anthropic reasoning streams, conversation CRUD, info endpoints (non-streaming assertions are skipped because thinking tokens require streaming)
 - `hypothetical-retrieval.test.ts` – Benchmarks `retrieveWithHypotheticalContent`, compares baseline vs hypothetical queries, and verifies fallback/error handling
 - `vectorize-docs.test.ts` – Runs the ingestion script in replace/append modes, validates Qdrant indexing, and ensures local markdown files are ingested
@@ -215,26 +230,32 @@ Test utilities live in `src/tests/` and can be executed with `tsx`:
 ## Services
 
 ### LLM service
+
 Wraps Anthropic, Groq, and OpenAI chat models using LangSmith tracing wrappers. Supplies shared defaults plus provider-specific overrides for thinking tokens, streaming, and timeouts. Provides metadata for `/api/info/models`.
 See [src/services/llm.ts](src/services/llm.ts).
 
 ### MCP (tools) service
+
 Creates request-scoped `MultiServerMCPClient` instances, requires a caller JWT before exposing Irmin MCP endpoints, and returns tool definitions that plug directly into LangChain agents.
 See [src/services/tools.ts](src/services/tools.ts).
 
 ### Analytics service
+
 Persists structured analytics events (model usage, vector ops, errors) to PostgreSQL and associates them with AI models when possible.
 See [src/services/analytics.ts](src/services/analytics.ts).
 
 ### SystemPromptBuilder service
+
 Generates system prompts that combine base text with user, workspace, conversation, and agent metadata, while accepting optional custom context.
 See [src/services/systemPromptBuilder.ts](src/services/systemPromptBuilder.ts).
 
 ### Completion service
+
 Streams completions from configured models and integrates with analytics logging.
 See [src/services/completion.ts](src/services/completion.ts).
 
 ### Title generation service
+
 Creates fallback titles, triggers async updates after assistant responses, validates AI output, and records analytics.
 See [src/services/titleGeneration.ts](src/services/titleGeneration.ts).
 
@@ -245,14 +266,17 @@ See [src/services/titleGeneration.ts](src/services/titleGeneration.ts).
 ## Vector Embeddings & RAG
 
 Irmin AI ships with a Qdrant-backed RAG stack:
+
 - **IndexingService** – Validates documents with Zod, creates embeddings via OpenAI, tracks collection stats, and supports replace/append workflows
 - **RetrievalService** – Provides similarity search, context assembly, multi-query retrieval, contextual compression, and hypothetical-content retrieval (HyDE-style) using Groq LLMs
 - **CollectionService** – Manages workspace/user scoped collections in PostgreSQL with access checks and statistic helpers
 
 Run Qdrant locally:
+
 ```bash
 docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant
 ```
+
 Dashboard: `http://localhost:6333/dashboard`
 
 Detailed documentation lives in [src/vector/README.md](src/vector/README.md).
@@ -264,6 +288,7 @@ Detailed documentation lives in [src/vector/README.md](src/vector/README.md).
 ## Agents
 
 The agents framework sits atop `llmService`, `toolsService`, and LangChain agent builders.
+
 - `assistant` – Anthropic-first streaming agent with reasoning tokens, optional MCP tool usage, Groq/OpenAI fallback middleware, and vector-backed context enrichment
 - `query` – Groq-powered SQL generator that validates repository context before execution (synchronous responses)
 - `scripting` – Groq-powered Go automation generator (synchronous responses)
@@ -275,6 +300,7 @@ All agents share sanitized inputs, workspace/user validation, persisted conversa
 PostgreSQL (via Drizzle ORM) stores conversations, messages, AI models, vector collections, and analytics.
 
 **Schema highlights**
+
 - `conversations` – Workspace + user scoped threads with optional `agentId`
 - `messages` – Stores message content, type (reasoning/assistant/user), and token usage
 - `ai_models` – Catalog of supported models and pricing metadata
@@ -282,11 +308,13 @@ PostgreSQL (via Drizzle ORM) stores conversations, messages, AI models, vector c
 - `analytics` – Event log for key operations
 
 **Setup**
+
 1. Provision PostgreSQL
 2. Set `DATABASE_URL`
 3. Run `pnpm db:generate && pnpm db:migrate`
 
 ### Workspace-based access control
+
 - Requests require `Authorization` and `X-Workspace-Slug`
 - Middleware enforces user/workspace membership
 - Agents verify conversations belong to the caller
@@ -298,28 +326,33 @@ Model Context Protocol tools extend agent capabilities. Configure additional ser
 
 ## Docker
 
-> For the best Docker experience on macOS, we recommend using [OrbStack](https://orbstack.dev/) instead of Docker Desktop. 
+> For the best Docker experience on macOS, we recommend using [OrbStack](https://orbstack.dev/) instead of Docker Desktop.
 
 ### Docker Compose Setup
 
 Spin up infrastructure with the provided `docker-compose.yml`:
+
 - **API Service** (`irmin_ai`) – Fastify server
 - **PostgreSQL** (`db_ai`) – Application database
 - **Qdrant** (`qdrant`) – Vector store
 
 #### Run infrastructure only
+
 ```bash
 docker compose up -d db_ai qdrant
 ```
+
 - PostgreSQL on port 5436
 - Qdrant on port 6333
 
 #### Run the full stack
+
 ```bash
 docker compose up -d
 ```
 
 #### Stop services
+
 ```bash
 # Stop containers
 docker compose down
@@ -331,12 +364,14 @@ docker compose down -v
 ### Dockerfile Usage
 
 #### Build and run
+
 ```bash
 docker build -t irmin-ai .
 docker run -p 3001:3000 --env-file .env irmin-ai
 ```
 
 #### Multi-platform buildx example
+
 ```bash
 docker buildx create --use
 docker buildx ls
