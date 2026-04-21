@@ -1021,13 +1021,7 @@ func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error {
 		)
 		if getObjectContentErr != nil {
 			if errors.Is(getObjectContentErr, services.ErrContentTooLarge) {
-				return utils.WriteResponse(c, fiber.StatusRequestEntityTooLarge, irminmodels.IrminAPIResponse{
-					Errors: []string{fmt.Sprintf(
-						"File too large to display (%.2f MB). Maximum size: %.2f MB. Please download the file instead.",
-						float64(object.SizeBytes)/utils.BytesPerMB,
-						float64(utils.DefaultMaxBinaryResponseSizeBytes)/utils.BytesPerMB,
-					)},
-				})
+				return api.writeContentTooLargeResponse(c, object)
 			}
 			return api.handleServiceError(
 				c,
@@ -1126,15 +1120,8 @@ func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error
 		limitResponse,
 	)
 	if getObjectStructuredContentErr != nil {
-		// Check if error is due to content being too large
 		if errors.Is(getObjectStructuredContentErr, services.ErrContentTooLarge) {
-			return utils.WriteResponse(c, fiber.StatusRequestEntityTooLarge, irminmodels.IrminAPIResponse{
-				Errors: []string{fmt.Sprintf(
-					"File too large to display (%.2f MB). Maximum size: %.2f MB. Please download the file instead.",
-					float64(object.SizeBytes)/utils.BytesPerMB,
-					float64(utils.DefaultMaxBinaryResponseSizeBytes)/utils.BytesPerMB,
-				)},
-			})
+			return api.writeContentTooLargeResponse(c, object)
 		}
 		return api.handleServiceError(
 			c,
@@ -1520,5 +1507,41 @@ func (api *APIControllers) RepositoryObjectsValidate(c fiber.Ctx) error {
 
 	return api.validateAndWriteResponse(c, statusCode, irminmodels.IrminAPIResponse{
 		Data: validationResponse,
+	})
+}
+
+// writeContentTooLargeResponse sends a 413 response shaped so the
+// console can render a "too large to preview — download instead" UI
+// instead of the generic error toast users were seeing before. The
+// previous version of this error embedded the hardcoded 20 MB limit in
+// the message string, which disagreed with the actual env-driven
+// threshold after the service side started honoring MAX_IN_MEMORY_SIZE_MB.
+//
+// The structured Data payload gives the console everything it needs to
+// build the CTA — concrete sizes in MB, and a boolean telling the UI
+// that downloading is always a valid fallback (the download endpoint
+// routes via the tier system and handles big files natively).
+func (api *APIControllers) writeContentTooLargeResponse(
+	c fiber.Ctx,
+	object *db.RepositoryObject,
+) error {
+	maxInMemoryBytes := int64(api.Env.MaxInMemorySizeMB) * int64(utils.BytesPerMB)
+	sizeMB := float64(object.SizeBytes) / utils.BytesPerMB
+	maxSizeMB := float64(maxInMemoryBytes) / utils.BytesPerMB
+	return utils.WriteResponse(c, fiber.StatusRequestEntityTooLarge, irminmodels.IrminAPIResponse{
+		Message: fmt.Sprintf(
+			"File too large to display (%.2f MB). Maximum inline size: %.2f MB. Download the file instead.",
+			sizeMB, maxSizeMB,
+		),
+		Errors: []string{"content_too_large"},
+		Data: map[string]any{
+			"code":           "content_too_large",
+			"size_mb":        sizeMB,
+			"max_size_mb":    maxSizeMB,
+			"size_bytes":     object.SizeBytes,
+			"max_size_bytes": maxInMemoryBytes,
+			"path":           object.Path,
+			"downloadable":   true,
+		},
 	})
 }

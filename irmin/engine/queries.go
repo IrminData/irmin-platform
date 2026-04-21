@@ -20,6 +20,12 @@ import (
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+
+	// duckdbdriver is the upstream Go driver we depend on transitively
+	// through irmin-api/duckdb. scanRow needs its Map / Decimal / UUID
+	// types by name to normalize driver-side composite values into
+	// JSON-marshalable shapes.
+	duckdbdriver "github.com/marcboeker/go-duckdb"
 	"gorm.io/gorm"
 )
 
@@ -981,7 +987,14 @@ func processQueryRows(rows *sql.Rows) ([]map[string]any, []string, []string, []e
 	return data, logs, columns, errors
 }
 
-// scanRow scans a single row from the query results into a map.
+// scanRow scans a single row from the query results into a map. The
+// DuckDB Go driver returns some columns as driver-specific types
+// (duckdb.Map for MAP columns, duckdbdriver.Decimal for DECIMAL, duckdbdriver.UUID
+// for UUID) that don't round-trip cleanly through encoding/json.
+// Irmin's response marshaler fails on those with
+// "json: unsupported type: duckdb.Map" and the query result never
+// reaches the client. normalizeDuckDBValue walks the scanned value
+// tree and converts each driver type to a JSON-native equivalent.
 func scanRow(rows *sql.Rows, columns []string) (map[string]any, error) {
 	values := make([]any, len(columns))
 	valuePtrs := make([]any, len(columns))
@@ -995,14 +1008,82 @@ func scanRow(rows *sql.Rows, columns []string) (map[string]any, error) {
 
 	rowMap := make(map[string]any)
 	for i, colName := range columns {
-		v := values[i]
-		if b, ok := v.([]byte); ok {
-			v = string(b)
-		}
-		rowMap[colName] = v
+		rowMap[colName] = normalizeDuckDBValue(values[i])
 	}
 
 	return rowMap, nil
+}
+
+// normalizeDuckDBValue converts DuckDB driver-specific types into
+// JSON-native equivalents that encoding/json can marshal without
+// tripping "unsupported type" errors. Recursive because composite
+// columns (MAP of STRUCT, LIST of MAP, etc.) nest the problem types
+// arbitrarily deep.
+//
+// Handled cases, in the order they're most likely to appear:
+//
+//   - []byte → string (legacy, kept for BLOB-to-TEXT behavior parity
+//     with pre-MAP scanRow implementations)
+//   - duckdb.Map → map[string]any with stringified keys. The driver
+//     returns map[any]any (MAP<K, V> where K can be any type), but
+//     JSON objects only accept string keys. fmt.Sprint covers every
+//     Go type the driver can produce as a key without losing info.
+//   - duckdbdriver.Decimal → string via String(). Float64 would lose
+//     precision for arbitrary-scale decimals; the string form is
+//     lossless and trivially parseable on the console side.
+//   - duckdbdriver.UUID → canonical UUID string via String(). Raw UUIDs are
+//     [16]byte and serialize as an int array by default.
+//   - map[string]any / []any → recurse into children so composite
+//     types nested inside structs/lists get normalized too.
+//
+// Other scalars (numbers, bools, strings, time.Time) pass through
+// unchanged — encoding/json handles them natively.
+func normalizeDuckDBValue(v any) any {
+	switch val := v.(type) {
+	case nil:
+		return nil
+	case []byte:
+		return string(val)
+	case duckdbdriver.Map:
+		out := make(map[string]any, len(val))
+		for k, vv := range val {
+			// Stringify keys so the result is a JSON-compatible object.
+			// fmt.Sprint handles every primitive Go type (numbers,
+			// bools, strings, time, even structs with Stringer).
+			out[fmt.Sprint(k)] = normalizeDuckDBValue(vv)
+		}
+		return out
+	case duckdbdriver.Decimal:
+		// Take the address to call the pointer-receiver String method
+		// the driver defines.
+		return val.String()
+	case *duckdbdriver.Decimal:
+		if val == nil {
+			return nil
+		}
+		return val.String()
+	case duckdbdriver.UUID:
+		return val.String()
+	case *duckdbdriver.UUID:
+		if val == nil {
+			return nil
+		}
+		return val.String()
+	case map[string]any:
+		out := make(map[string]any, len(val))
+		for k, vv := range val {
+			out[k] = normalizeDuckDBValue(vv)
+		}
+		return out
+	case []any:
+		out := make([]any, len(val))
+		for i, vv := range val {
+			out[i] = normalizeDuckDBValue(vv)
+		}
+		return out
+	default:
+		return v
+	}
 }
 
 // RemoveSQLComments removes comments from SQL query while respecting string literals.

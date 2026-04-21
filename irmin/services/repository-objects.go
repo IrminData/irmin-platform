@@ -1046,11 +1046,18 @@ func (api *APIServices) GetRepositoryObjectContent(
 		return api.getPointerTargetContent(c, locale, user, workspace, repository, object, limitResponse)
 	}
 
-	// Check size limit before fetching content to avoid loading large objects into memory
-	if limitResponse && object.SizeBytes > utils.DefaultMaxBinaryResponseSizeBytes {
+	// Check size limit before fetching content to avoid loading large objects into memory.
+	// The threshold is driven by MAX_IN_MEMORY_SIZE_MB (the same env knob
+	// GetRepositoryObjectDownload's tier selector uses), so operators have one
+	// setting that controls "how big is too big to load into RAM" across the system.
+	// Previously this site pinned the hardcoded DefaultMaxBinaryResponseSizeBytes
+	// (20MB) and refused to serve any connector snapshot above that — a 23MB Stripe
+	// customers.json was unviewable regardless of deployment config.
+	maxInMemoryBytes := int64(api.Env.MaxInMemorySizeMB) * int64(utils.BytesPerMB)
+	if limitResponse && object.SizeBytes > maxInMemoryBytes {
 		api.Logger.WarnContext(c, "Object content exceeds size limit, refusing to fetch",
 			"size_mb", float64(object.SizeBytes)/utils.BytesPerMB,
-			"limit_mb", float64(utils.DefaultMaxBinaryResponseSizeBytes)/utils.BytesPerMB,
+			"limit_mb", float64(maxInMemoryBytes)/utils.BytesPerMB,
 			"path", object.Path,
 		)
 		return nil, ErrContentTooLarge
@@ -1070,10 +1077,11 @@ func (api *APIServices) GetRepositoryObjectContent(
 		return nil, NewInternalErrorf("error retrieving object content from data engine: %w", err)
 	}
 
-	// Safety check: Verify actual content size matches expectations when limiting responses
-	// This catches cases where object metadata might be stale or incorrect
+	// Safety check: verify actual content size matches expectations when limiting
+	// responses. Catches cases where object metadata is stale or incorrect. Uses
+	// the same env-driven threshold as the pre-fetch check above.
 	if limitResponse {
-		if errorMsg := utils.CheckByteSizeLimit(content, utils.DefaultMaxBinaryResponseSizeBytes); errorMsg != nil {
+		if errorMsg := utils.CheckByteSizeLimit(content, maxInMemoryBytes); errorMsg != nil {
 			api.Logger.WarnContext(c, "Content size mismatch detected",
 				"metadata_size", object.SizeBytes,
 				"actual_size", len(content),
@@ -1177,11 +1185,18 @@ func (api *APIServices) getPointerTargetContent(
 			return nil, ErrAccessDenied
 		}
 
-		// Check size limit before fetching content to avoid loading large objects into memory
-		if limitResponse && targetObject.SizeBytes > utils.DefaultMaxBinaryResponseSizeBytes {
+		// Check size limit before fetching content to avoid loading large objects
+		// into memory. Uses the env-driven MaxInMemorySizeMB like the direct-object
+		// path at line 1050 — keeps the two sites in sync so the 413 payload (which
+		// always reports the env-driven limit) matches the threshold that actually
+		// rejected the request. Previously this site pinned the hardcoded 20MB
+		// constant and would reject a 23MB pointer under a 50MB env config while
+		// the error told users the limit was 50MB.
+		maxInMemoryBytes := int64(api.Env.MaxInMemorySizeMB) * int64(utils.BytesPerMB)
+		if limitResponse && targetObject.SizeBytes > maxInMemoryBytes {
 			api.Logger.WarnContext(c, "Pointer target object exceeds size limit, refusing to fetch",
 				"size_mb", float64(targetObject.SizeBytes)/utils.BytesPerMB,
-				"limit_mb", float64(utils.DefaultMaxBinaryResponseSizeBytes)/utils.BytesPerMB,
+				"limit_mb", float64(maxInMemoryBytes)/utils.BytesPerMB,
 				"target_path", pointerTarget.Path,
 			)
 			return nil, ErrContentTooLarge
@@ -1204,9 +1219,11 @@ func (api *APIServices) getPointerTargetContent(
 		return nil, NewInternalErrorf("error retrieving pointer target content: %w", contentErr)
 	}
 
-	// Safety check for response size limit
+	// Safety check for response size limit. Uses the same env-driven threshold
+	// as the pre-fetch check above.
 	if limitResponse {
-		if errorMsg := utils.CheckByteSizeLimit(targetContent, utils.DefaultMaxBinaryResponseSizeBytes); errorMsg != nil {
+		maxInMemoryBytes := int64(api.Env.MaxInMemorySizeMB) * int64(utils.BytesPerMB)
+		if errorMsg := utils.CheckByteSizeLimit(targetContent, maxInMemoryBytes); errorMsg != nil {
 			api.Logger.WarnContext(c, "Pointer target content exceeds size limit",
 				"actual_size", len(targetContent),
 				"target_path", pointerTarget.Path,
