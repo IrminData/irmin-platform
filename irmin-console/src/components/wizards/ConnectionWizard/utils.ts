@@ -5,6 +5,31 @@ import type {
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';
 
+/**
+ * Placeholder that the API returns in place of a stored secret. Sending the
+ * same placeholder back on PATCH preserves the stored value server-side.
+ */
+const SECRET_PLACEHOLDER = 'SECRET';
+
+/**
+ * Whether any value equals {@link SECRET_PLACEHOLDER} — i.e. the user has
+ * left a stored secret untouched. The backend only returns the placeholder
+ * for fields flagged `secret`, so a values-only check is sufficient.
+ */
+export function hasUnchangedSecrets(
+  values: DynamicFieldValues | undefined
+): boolean {
+  if (!values) {
+    return false;
+  }
+  for (const value of Object.values(values)) {
+    if (value === SECRET_PLACEHOLDER) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function convertConnectionValuesToDynamicValues(
   values?: ConnectionFieldValues
 ): DynamicFieldValues {
@@ -81,7 +106,8 @@ const normalizeValueForField = (
 
 export function populateFieldDefaults(
   fields?: DynamicFields,
-  values?: DynamicFieldValues
+  values?: DynamicFieldValues,
+  options?: { secretHelpText?: string }
 ): DynamicFields {
   if (!fields) {
     return {};
@@ -95,11 +121,24 @@ export function populateFieldDefaults(
       rawValue === undefined
         ? field.default
         : normalizeValueForField(field, rawValue);
-    const shouldOmitDefault = field.secret && rawValue !== undefined;
+
+    // When editing, the API returns SECRET_PLACEHOLDER for stored secrets.
+    // Pre-filling that placeholder lets the user keep the stored value (PATCH
+    // treats it as "no change") while making the input non-empty so the
+    // password field renders masked dots as an "already set" signal.
+    const isStoredSecret =
+      field.secret &&
+      rawValue === SECRET_PLACEHOLDER &&
+      options?.secretHelpText;
 
     populated[key] = {
       ...field,
-      default: shouldOmitDefault ? undefined : defaultValue,
+      default: defaultValue,
+      help_text: isStoredSecret
+        ? field.help_text
+          ? `${field.help_text} — ${options?.secretHelpText}`
+          : options?.secretHelpText
+        : field.help_text,
     };
   }
 

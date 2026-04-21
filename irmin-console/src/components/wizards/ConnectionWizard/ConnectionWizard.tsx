@@ -166,6 +166,7 @@ export default function ConnectionWizard({
           updateWizardData={updateWizardData}
           goBack={goBack}
           goNext={goNext}
+          mode={wizardMode}
         />
       )}
       {((wizardMode === 'create' && currentStep === 4) ||

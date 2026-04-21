@@ -24,7 +24,7 @@ import type {
 } from '@/types/internal/DynamicField';
 
 import type { ConnectionWizardData, ConnectionWizardMode } from '../types';
-import { populateFieldDefaults } from '../utils';
+import { hasUnchangedSecrets, populateFieldDefaults } from '../utils';
 
 /**
  * Step component for defining connection details
@@ -64,6 +64,27 @@ export default function DefineDetailsStep({
         const newName =
           (irmin_connection_name as string) ||
           `${wizardData.connector?.name} ${defaultTimestamp}`;
+
+        // In edit mode, if the user left any stored secret untouched, the
+        // form contains the "SECRET" placeholder instead of the real value.
+        // The validate endpoint has no merge logic for that placeholder, so
+        // calling it would fail the connector's auth. Check both details
+        // (current form) and settings (carried over on wizardData) since
+        // the validate call sends both. Skip validation and advance — the
+        // PATCH submit will preserve stored secrets.
+        if (
+          isEditMode &&
+          (hasUnchangedSecrets(connectionDetails) ||
+            hasUnchangedSecrets(wizardData.connectionSettings))
+        ) {
+          updateWizardData({
+            name: newName,
+            connectionDetails: connectionDetails,
+          });
+          goNext();
+          return;
+        }
+
         // Validate the connector configuration
         const res = await validateConnectorConfigurationMutation.mutateAsync({
           details: convertToConnectionFieldValues(connectionDetails),
@@ -134,13 +155,17 @@ export default function DefineDetailsStep({
       getToken,
       locale,
       configureStep,
+      isEditMode,
     ]
   );
 
   const formFields = useMemo(() => {
     const connectorFields = populateFieldDefaults(
       connectionConfigurationQuery.data?.data ?? undefined,
-      wizardData.connectionDetails
+      wizardData.connectionDetails,
+      isEditMode
+        ? { secretHelpText: dict.connections.config.secretUnchangedHelp }
+        : undefined
     );
 
     const defaultName =
@@ -166,6 +191,7 @@ export default function DefineDetailsStep({
     connectionConfigurationQuery.data?.data,
     dict.connections.create.connectionName,
     dict.connections.create.connectionNamePlaceholder,
+    dict.connections.config.secretUnchangedHelp,
     defaultTimestamp,
     wizardData.connectionDetails,
     wizardData.connector?.name,

@@ -1064,6 +1064,7 @@ const fi = {
       editConfigurationAction: 'Muokkaa konfiguraatiota',
       editDescription:
         'Päivitä yhteyden tunnistetiedot ja asetukset ennen tallennusta.',
+      secretUnchangedHelp: 'Jätä ennalleen säilyttääksesi tallennetun arvon',
       updateConfiguration: 'Päivitä konfiguraatio',
       updateFailed: 'Yhteyden päivitys epäonnistui. Tarkista virheet.',
     },

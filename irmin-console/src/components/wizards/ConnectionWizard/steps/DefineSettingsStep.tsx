@@ -17,8 +17,8 @@ import { convertToConnectionFieldValues } from '@/utils/convertToConnectionField
 
 import type { DynamicFieldValues } from '@/types/internal/DynamicField';
 
-import type { ConnectionWizardData } from '../types';
-import { populateFieldDefaults } from '../utils';
+import type { ConnectionWizardData, ConnectionWizardMode } from '../types';
+import { hasUnchangedSecrets, populateFieldDefaults } from '../utils';
 
 /**
  * Step component for defining connection settings
@@ -28,12 +28,15 @@ export default function DefineSettingsStep({
   updateWizardData,
   goBack,
   goNext,
+  mode = 'create',
 }: {
   wizardData: ConnectionWizardData;
   updateWizardData: (updates: Partial<ConnectionWizardData>) => void;
   goBack: () => void;
   goNext: () => void;
+  mode?: ConnectionWizardMode;
 }) {
+  const isEditMode = mode === 'edit';
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
 
@@ -68,14 +71,36 @@ export default function DefineSettingsStep({
     () =>
       populateFieldDefaults(
         connectionConfigurationQuery.data?.data ?? undefined,
-        wizardData.connectionSettings
+        wizardData.connectionSettings,
+        isEditMode
+          ? { secretHelpText: dict.connections.config.secretUnchangedHelp }
+          : undefined
       ),
-    [connectionConfigurationQuery.data?.data, wizardData.connectionSettings]
+    [
+      connectionConfigurationQuery.data?.data,
+      wizardData.connectionSettings,
+      isEditMode,
+      dict.connections.config.secretUnchangedHelp,
+    ]
   );
 
   const handleContinue = useCallback(
     async (formValues: DynamicFieldValues) => {
       try {
+        // In edit mode, skip validation when any stored secret is still the
+        // backend SECRET_PLACEHOLDER — validating would fail because the
+        // connector receives the literal placeholder. PATCH will preserve
+        // stored secrets on submit.
+        if (
+          isEditMode &&
+          (hasUnchangedSecrets(wizardData.connectionDetails) ||
+            hasUnchangedSecrets(formValues))
+        ) {
+          updateWizardData({ connectionSettings: formValues });
+          goNext();
+          return;
+        }
+
         // Validate the connector configuration
         const res = await validateConnectorConfigurationMutation.mutateAsync({
           details: wizardData.connectionDetails
@@ -114,6 +139,7 @@ export default function DefineSettingsStep({
       updateWizardData,
       goNext,
       dict,
+      isEditMode,
     ]
   );
 

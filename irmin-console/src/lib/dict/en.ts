@@ -1068,6 +1068,7 @@ const en = {
       editConfigurationAction: 'Edit configuration',
       editDescription:
         'Update connection credentials and settings, then validate before saving.',
+      secretUnchangedHelp: 'Leave unchanged to keep the stored value',
       updateConfiguration: 'Update configuration',
       updateFailed: 'Failed to update connection. Please review the errors.',
     },

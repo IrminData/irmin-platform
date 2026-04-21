@@ -28,6 +28,7 @@ import type {
   ConnectionWizardData,
   ConnectionWizardMode,
 } from '../types';
+import { hasUnchangedSecrets } from '../utils';
 
 /**
  * Step component for configuring and creating the connection
@@ -99,36 +100,47 @@ export default function ConfigureConnectionStep({
           });
         }
 
-        // Validate connection configuration before creating
-        const validationRes =
-          await validateConnectorConfigurationMutation.mutateAsync({
-            details: convertToConnectionFieldValues(
-              wizardData.connectionDetails
-            ),
-            settings: convertToConnectionFieldValues(
-              wizardData.connectionSettings
-            ),
-          });
+        // In edit mode, skip pre-save validation when stored secrets are
+        // still the SECRET_PLACEHOLDER. The validate endpoint would pass the
+        // literal placeholder through to the connector and fail auth; the
+        // PATCH submit will preserve those secrets server-side.
+        const skipValidation =
+          isEditMode &&
+          (hasUnchangedSecrets(wizardData.connectionDetails) ||
+            hasUnchangedSecrets(wizardData.connectionSettings));
 
-        // Check if validation passed
-        if (
-          !validationRes.data?.ok ||
-          !validationRes.data?.can_connect ||
-          !validationRes.data?.connection_details_valid ||
-          !validationRes.data?.connection_settings_valid
-        ) {
-          const errorMessage =
-            validationRes.data?.errors?.join(', ') ??
-            dict.connections.create.configuration_invalid;
-          irminAlert('error', errorMessage);
+        if (!skipValidation) {
+          // Validate connection configuration before creating
+          const validationRes =
+            await validateConnectorConfigurationMutation.mutateAsync({
+              details: convertToConnectionFieldValues(
+                wizardData.connectionDetails
+              ),
+              settings: convertToConnectionFieldValues(
+                wizardData.connectionSettings
+              ),
+            });
 
-          // Redirect user to the appropriate step based on which validation failed
-          if (!validationRes.data?.connection_details_valid) {
-            goToStep(detailsStep);
-          } else if (!validationRes.data?.connection_settings_valid) {
-            goToStep(settingsStep);
+          // Check if validation passed
+          if (
+            !validationRes.data?.ok ||
+            !validationRes.data?.can_connect ||
+            !validationRes.data?.connection_details_valid ||
+            !validationRes.data?.connection_settings_valid
+          ) {
+            const errorMessage =
+              validationRes.data?.errors?.join(', ') ??
+              dict.connections.create.configuration_invalid;
+            irminAlert('error', errorMessage);
+
+            // Redirect user to the appropriate step based on which validation failed
+            if (!validationRes.data?.connection_details_valid) {
+              goToStep(detailsStep);
+            } else if (!validationRes.data?.connection_settings_valid) {
+              goToStep(settingsStep);
+            }
+            return;
           }
-          return;
         }
 
         const payload: ConnectionConfigurationSubmission = {
