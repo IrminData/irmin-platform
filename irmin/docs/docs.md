@@ -8347,8 +8347,8 @@ import "irmin-api/engine"
   - [func \(c \*Client\) CreateBranch\(workspace, repository, name, from string, isImmutable bool\) \(\*irminmodels.Branch, error\)](<#Client.CreateBranch>)
   - [func \(c \*Client\) CreateRepository\(workspace, name, defaultBranch string, isImmutable bool, gcDefaultRetentionDays, gcDefaultBranchRetentionDays \*int\) \(\*Repository, error\)](<#Client.CreateRepository>)
   - [func \(c \*Client\) CreateTag\(workspace, repository, name, ref string\) \(\*irminmodels.GitTag, error\)](<#Client.CreateTag>)
-  - [func \(c \*Client\) DataExport\(ctx context.Context, connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]string, int64, \[\]connectorsclient.OperationLog, \[\]error\)](<#Client.DataExport>)
-  - [func \(c \*Client\) DataImport\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, workspace string, repository string, branch string, repositoryPath string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]lakefs.ObjectMetadata, \[\]connectorsclient.OperationLog, \[\]error\)](<#Client.DataImport>)
+  - [func \(c \*Client\) DataExport\(ctx context.Context, connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping\) \(\[\]string, int64, \[\]connectorsclient.OperationLog, \[\]error\)](<#Client.DataExport>)
+  - [func \(c \*Client\) DataImport\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, workspace string, repository string, branch string, repositoryPath string, fieldMappings \[\]irminmodels.FieldMapping\) \(\[\]lakefs.ObjectMetadata, \[\]connectorsclient.OperationLog, \[\]error\)](<#Client.DataImport>)
   - [func \(c \*Client\) DataMovementSchema\(ctx context.Context, connection \*db.Connection, method, path string, tx ...\*gorm.DB\) \(\*irminmodels.ObjectSchema, \[\]connectorsclient.OperationLog, error\)](<#Client.DataMovementSchema>)
   - [func \(c \*Client\) DeleteBranch\(workspace, repository, branch string\) error](<#Client.DeleteBranch>)
   - [func \(c \*Client\) DeleteObject\(workspace, repository, path, ref string, tx ...\*gorm.DB\) error](<#Client.DeleteObject>)
@@ -8817,19 +8817,23 @@ func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminmodel
 ### func \(\*Client\) DataExport
 
 ```go
-func (c *Client) DataExport(ctx context.Context, connection *db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths []string, fieldMappings []irminmodels.FieldMapping, tx ...*gorm.DB) ([]string, int64, []connectorsclient.OperationLog, []error)
+func (c *Client) DataExport(ctx context.Context, connection *db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths []string, fieldMappings []irminmodels.FieldMapping) ([]string, int64, []connectorsclient.OperationLog, []error)
 ```
 
-DataExport exports data from a lakeFS repository to an external connector. It applies field mappings to route and transform data, merges files that map to the same destination, and pushes the results to the connector. Returns the paths of the files that were pushed and any errors that occurred. If tx is provided, it will be used instead of creating a new transaction.
+DataExport exports data from a lakeFS repository to an external connector. It applies field mappings to route and transform data, merges files that map to the same destination, and pushes the results to the connector. Returns the paths of the files that were pushed and any errors that occurred.
+
+Intentionally NOT wrapped in a GORM transaction. \`dataExportInternal\` fetches from LakeFS \(HTTP\), runs DuckDB transforms, and pushes to the connector \(HTTP\) — no PostgreSQL writes. See the DataImport godoc above for the full rationale; the same phantom "sql: transaction has already been committed or rolled back" error was showing up here on context cancellation.
 
 <a name="Client.DataImport"></a>
 ### func \(\*Client\) DataImport
 
 ```go
-func (c *Client) DataImport(ctx context.Context, connection *db.Connection, connectionPaths []string, workspace string, repository string, branch string, repositoryPath string, fieldMappings []irminmodels.FieldMapping, tx ...*gorm.DB) ([]lakefs.ObjectMetadata, []connectorsclient.OperationLog, []error)
+func (c *Client) DataImport(ctx context.Context, connection *db.Connection, connectionPaths []string, workspace string, repository string, branch string, repositoryPath string, fieldMappings []irminmodels.FieldMapping) ([]lakefs.ObjectMetadata, []connectorsclient.OperationLog, []error)
 ```
 
-DataImport imports data from an external source into a lakeFS repository. It applies field mappings to route and transform data, merges files that map to the same destination, and uploads the results. Returns the metadata of the uploaded objects and any errors that occurred. If tx is provided, it will be used instead of creating a new transaction.
+DataImport imports data from an external source into a lakeFS repository. It applies field mappings to route and transform data, merges files that map to the same destination, and uploads the results. Returns the metadata of the uploaded objects and any errors that occurred.
+
+Intentionally NOT wrapped in a GORM transaction. \`dataImportInternal\` performs an HTTP pull from the connector, DuckDB field\-mapping transforms, and a LakeFS upload — no PostgreSQL writes at all. A prior revision wrapped it in \`c.DB.WithContext\(ctx\).Transaction\(...\)\` with a closure that returned nil \(so the tx always committed\). On context cancellation \(workflow timeout\), GORM's commit failed with "sql: transaction has already been committed or rolled back", that phantom error got merged into the returned error slice, and users saw it surface alongside the real failure \("context deadline exceeded on POST /stripe/operation/pull"\). The wrapper added zero transactional integrity because there was nothing to roll back.
 
 <a name="Client.DataMovementSchema"></a>
 ### func \(\*Client\) DataMovementSchema

@@ -233,7 +233,18 @@ func (c *Client) buildTargetPath(basePath, itemName string, hasMultipleItems boo
 // It applies field mappings to route and transform data, merges files that map
 // to the same destination, and uploads the results.
 // Returns the metadata of the uploaded objects and any errors that occurred.
-// If tx is provided, it will be used instead of creating a new transaction.
+//
+// Intentionally NOT wrapped in a GORM transaction. `dataImportInternal`
+// performs an HTTP pull from the connector, DuckDB field-mapping
+// transforms, and a LakeFS upload — no PostgreSQL writes at all. A prior
+// revision wrapped it in `c.DB.WithContext(ctx).Transaction(...)` with
+// a closure that returned nil (so the tx always committed). On context
+// cancellation (workflow timeout), GORM's commit failed with
+// "sql: transaction has already been committed or rolled back", that
+// phantom error got merged into the returned error slice, and users
+// saw it surface alongside the real failure ("context deadline
+// exceeded on POST /stripe/operation/pull"). The wrapper added zero
+// transactional integrity because there was nothing to roll back.
 func (c *Client) DataImport(
 	ctx context.Context,
 	connection *db.Connection,
@@ -243,64 +254,19 @@ func (c *Client) DataImport(
 	branch string,
 	repositoryPath string,
 	fieldMappings []irminmodels.FieldMapping,
-	tx ...*gorm.DB,
 ) ([]lakefs.ObjectMetadata, []connectorsclient.OperationLog, []error) {
 	// Note: No locking needed here - workflow execution is already locked per run,
-	// and each workflow run creates its own independent connector operation
-
-	// If a transaction is provided, use it; otherwise create a new one
-	if len(tx) > 0 && tx[0] != nil {
-		// Use provided transaction
-		var result []lakefs.ObjectMetadata
-
-		// Process the data import
-		var processErr []error
-		var operationLogs []connectorsclient.OperationLog
-		result, operationLogs, processErr = c.dataImportInternal(
-			ctx,
-			connection,
-			connectionPaths,
-			workspace,
-			repository,
-			branch,
-			repositoryPath,
-			fieldMappings,
-		)
-		return result, operationLogs, processErr
-	}
-
-	// Create new transaction
-	var result []lakefs.ObjectMetadata
-	var operationLogs []connectorsclient.OperationLog
-	var resultErrors []error
-
-	transactionErr := c.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Process the data import
-		var processErr []error
-		result, operationLogs, processErr = c.dataImportInternal(
-			ctx,
-			connection,
-			connectionPaths,
-			workspace,
-			repository,
-			branch,
-			repositoryPath,
-			fieldMappings,
-		)
-		resultErrors = processErr
-		// Don't fail the transaction based on process errors - let them be collected
-		return nil
-	})
-
-	if transactionErr != nil {
-		c.Logger.ErrorContext(ctx, "DataImport transaction failed", "error", transactionErr)
-		// Combine transaction error with any existing process errors
-		allErrors := []error{transactionErr}
-		allErrors = append(allErrors, resultErrors...)
-		return nil, operationLogs, allErrors
-	}
-
-	return result, operationLogs, resultErrors
+	// and each workflow run creates its own independent connector operation.
+	return c.dataImportInternal(
+		ctx,
+		connection,
+		connectionPaths,
+		workspace,
+		repository,
+		branch,
+		repositoryPath,
+		fieldMappings,
+	)
 }
 
 // dataImportInternal contains the core data import logic, separated for clarity.
@@ -873,7 +839,13 @@ func (c *Client) fetchObjectsFromPaths(
 // It applies field mappings to route and transform data, merges files that map
 // to the same destination, and pushes the results to the connector.
 // Returns the paths of the files that were pushed and any errors that occurred.
-// If tx is provided, it will be used instead of creating a new transaction.
+//
+// Intentionally NOT wrapped in a GORM transaction. `dataExportInternal`
+// fetches from LakeFS (HTTP), runs DuckDB transforms, and pushes to the
+// connector (HTTP) — no PostgreSQL writes. See the DataImport godoc
+// above for the full rationale; the same phantom "sql: transaction has
+// already been committed or rolled back" error was showing up here on
+// context cancellation.
 func (c *Client) DataExport(
 	ctx context.Context,
 	connection *db.Connection,
@@ -883,70 +855,24 @@ func (c *Client) DataExport(
 	branch string,
 	requestedRepositoryPaths []string,
 	fieldMappings []irminmodels.FieldMapping,
-	tx ...*gorm.DB,
 ) ([]string, int64, []connectorsclient.OperationLog, []error) {
 	// Note: No locking needed here - workflow execution is already locked per run,
-	// and each workflow run creates its own independent connector operation
-
-	// If a transaction is provided, use it; otherwise create a new one
-	if len(tx) > 0 && tx[0] != nil {
-		// Use provided transaction
-		// Process the data export
-		result, finalFiles, operationLogs, processErr := c.dataExportInternal(
-			ctx,
-			connection,
-			connectionPath,
-			workspaceSlug,
-			repositorySlug,
-			branch,
-			requestedRepositoryPaths,
-			fieldMappings,
-			tx[0],
-		)
-		totalBytes := int64(0)
-		if len(processErr) == 0 {
-			totalBytes = SumFileMapBytes(finalFiles)
-		}
-		return result, totalBytes, operationLogs, processErr
+	// and each workflow run creates its own independent connector operation.
+	result, finalFiles, operationLogs, processErr := c.dataExportInternal(
+		ctx,
+		connection,
+		connectionPath,
+		workspaceSlug,
+		repositorySlug,
+		branch,
+		requestedRepositoryPaths,
+		fieldMappings,
+	)
+	totalBytes := int64(0)
+	if len(processErr) == 0 {
+		totalBytes = SumFileMapBytes(finalFiles)
 	}
-
-	// Create new transaction
-	var result []string
-	var totalBytes int64
-	var operationLogs []connectorsclient.OperationLog
-	var resultErrors []error
-	transactionErr := c.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Process the data export
-		var processErr []error
-		var finalFiles map[string][]byte
-		result, finalFiles, operationLogs, processErr = c.dataExportInternal(
-			ctx,
-			connection,
-			connectionPath,
-			workspaceSlug,
-			repositorySlug,
-			branch,
-			requestedRepositoryPaths,
-			fieldMappings,
-		)
-		if len(processErr) == 0 {
-			totalBytes = SumFileMapBytes(finalFiles)
-		} else {
-			totalBytes = 0
-		}
-		resultErrors = processErr
-		// Don't fail the transaction based on process errors - let them be collected
-		return nil
-	})
-
-	if transactionErr != nil {
-		// Combine transaction error with any existing process errors
-		allErrors := []error{transactionErr}
-		allErrors = append(allErrors, resultErrors...)
-		return nil, 0, operationLogs, allErrors
-	}
-
-	return result, totalBytes, operationLogs, resultErrors
+	return result, totalBytes, operationLogs, processErr
 }
 
 // dataExportInternal contains the core data export logic, separated for clarity.
