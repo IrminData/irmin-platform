@@ -126,7 +126,7 @@ function WorkflowScheduleForm({
     });
   });
   const [maxRetries, setMaxRetries] = useState(initialData?.max_retries ?? 3);
-  const [maxRuntime, setMaxRuntime] = useState(initialData?.max_runtime ?? 15);
+  const [maxRuntime, setMaxRuntime] = useState(initialData?.max_runtime ?? 120);
   const [minInterval, setMinInterval] = useState(
     initialData?.min_interval ?? 120
   );
