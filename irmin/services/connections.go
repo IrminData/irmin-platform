@@ -664,8 +664,9 @@ func (api *APIServices) MaskConnectionSecrets(c context.Context, connections ...
 		}
 	}
 
-	// 2. Fetch schema for each connector
-	schemas := api.fetchConnectorSchemas(c, connectorMap)
+	// 2. Resolve schema for each connector (cached on the Connector row;
+	//    lazily backfilled for pre-cache rows).
+	schemas := api.resolveConnectorSchemas(c, connectorMap)
 
 	// 3. Mask secrets
 	api.applySecretMasking(connections, schemas)
@@ -699,41 +700,60 @@ func (api *APIServices) applySecretMasking(
 	}
 }
 
-func (api *APIServices) fetchConnectorSchemas(
+// resolveConnectorSchemas returns the cached secret-masking schema for each
+// connector. Schemas are populated on connector register/update and stored on
+// the Connector row, so the hot read path (list/get connections) does not
+// fan out to irmin-connectors. If a row predates the cache, the schema is
+// fetched once and persisted lazily.
+func (api *APIServices) resolveConnectorSchemas(
 	c context.Context,
 	connectorMap map[uint]*db.Connector,
 ) map[uint]map[string]irminmodels.DynamicField {
 	schemas := make(map[uint]map[string]irminmodels.DynamicField)
 	for id, connector := range connectorMap {
-		// Use "en" locale for internal schema fetching
+		if connector.Schema != nil {
+			// Presence-checked, not length-checked: a connector with zero
+			// dynamic fields is legitimate and must still hit the cache path.
+			schemas[id] = connector.Schema
+			continue
+		}
+
+		// Lazy backfill for rows that predate the cached schema column.
+		// Use "en" locale for internal schema fetching.
 		client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, "en")
-
-		allFields := make(map[string]irminmodels.DynamicField)
-
-		// Fetch details fields - add to schema even if settings fetch fails
-		detailsFields, err := client.GetConfigFields(c, "details", nil, nil)
-		if err != nil {
-			api.Logger.ErrorContext(c, "Error fetching details fields", "connector", connector.Name, "error", err)
-		} else {
-			for k, v := range detailsFields {
-				allFields["details."+k] = v
-			}
+		fetched, complete := api.fetchConnectorSchema(c, client, connector.Name)
+		if !complete {
+			// Transient failure on at least one side — applySecretMasking will
+			// mask everything as fail-safe. Don't persist; retry next request.
+			continue
 		}
 
-		// Fetch settings fields - add to schema even if details fetch failed
-		settingsFields, err := client.GetConfigFields(c, "settings", nil, nil)
-		if err != nil {
-			api.Logger.ErrorContext(c, "Error fetching settings fields", "connector", connector.Name, "error", err)
-		} else {
-			for k, v := range settingsFields {
-				allFields["settings."+k] = v
-			}
+		// `fetched` may legitimately be empty (connector declares no fields);
+		// cache it anyway so we stop fanning out on every read. Use a
+		// non-nil empty map so the presence check above hits.
+		if fetched == nil {
+			fetched = map[string]irminmodels.DynamicField{}
 		}
+		connector.Schema = fetched
+		schemas[id] = fetched
 
-		// Only add to schemas if we successfully fetched at least one field type
-		// If both failed, allFields will be empty and applySecretMasking will mask everything as fail-safe
-		if len(allFields) > 0 {
-			schemas[id] = allFields
+		// Persist the backfill. Pass a struct (not a map) so GORM applies the
+		// `serializer:json` tag and JSON-encodes the value into jsonb; a map
+		// Updates call skips the serializer and the write fails. Select the
+		// schema column explicitly so we don't touch other fields.
+		if err := api.DB.Model(connector).
+			Select("schema").
+			Updates(&db.Connector{Schema: fetched}).Error; err != nil {
+			api.Logger.WarnContext(
+				c,
+				"Failed to persist lazily-fetched connector schema; masking will still work, but next request will re-fetch",
+				"connector",
+				connector.Name,
+				"connector_id",
+				id,
+				"error",
+				err,
+			)
 		}
 	}
 	return schemas

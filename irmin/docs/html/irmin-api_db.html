@@ -781,6 +781,12 @@ type Connector struct {
 	AuthorEmail string `json:"author_email,omitempty"`
 	// (optional) URL to read more about the connector, such as documentation
 	ReadMoreURL string `json:"read_more_url,omitempty"`
+	// Cached dynamic-field schema for details + settings, keyed as
+	// "details.&lt;field&gt;" and "settings.&lt;field&gt;". Populated on connector
+	// register/update from the connector's /configuration/{type}/fields
+	// endpoints so secret-masking on the connection list path doesn't have
+	// to fan out to every connector on every read.
+	Schema map[string]irminmodels.DynamicField `json:"schema,omitempty"           gorm:"type:jsonb;serializer:json"`
 }
 
 type CursorPagination struct {

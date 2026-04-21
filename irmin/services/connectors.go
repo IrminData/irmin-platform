@@ -110,6 +110,11 @@ func (api *APIServices) CreateConnector(
 	}
 
 	api.updateConnectorFromInfo(connector, req, *connectorInfo)
+	// Only overwrite a previously cached schema if the fresh fetch succeeded
+	// on both sides; a partial failure would otherwise wipe good cached data.
+	if schema, complete := api.fetchConnectorSchema(c, connectorClient, connector.Name); complete {
+		connector.Schema = schema
+	}
 	saveConnectorErr := api.DB.Save(connector).Error
 	if saveConnectorErr != nil {
 		api.Logger.ErrorContext(c, "Error updating connector", "error", saveConnectorErr)
@@ -148,6 +153,11 @@ func (api *APIServices) UpdateConnector(
 
 	// Update the connector
 	api.updateConnectorFromInfo(connector, req, *connectorInfo)
+	// Only overwrite a previously cached schema if the fresh fetch succeeded
+	// on both sides; a partial failure would otherwise wipe good cached data.
+	if schema, complete := api.fetchConnectorSchema(c, connectorClient, connector.Name); complete {
+		connector.Schema = schema
+	}
 	saveConnectorErr := api.DB.Save(connector).Error
 	if saveConnectorErr != nil {
 		api.Logger.ErrorContext(c, "Error updating connector", "error", saveConnectorErr)
@@ -173,6 +183,49 @@ func (api *APIServices) DeleteConnector(c context.Context, connector *db.Connect
 	}
 
 	return nil
+}
+
+// fetchConnectorSchema fetches the static details + settings field schemas
+// from a connector (no overrides applied) and returns them merged into a
+// single map keyed as "details.<field>" / "settings.<field>". Used to cache
+// the schema on the Connector row at register/update time so the list path
+// doesn't have to fan out on every read.
+//
+// The second return value reports whether the fetch was complete — both
+// sides responded without error. A connector that genuinely declares zero
+// fields returns an empty map with complete=true, which callers should
+// still cache to avoid a permanent fan-out loop. complete=false means a
+// transient error on at least one side; callers should retry later
+// instead of caching a partial/empty result.
+func (api *APIServices) fetchConnectorSchema(
+	c context.Context,
+	client *connectorsclient.Client,
+	connectorName string,
+) (map[string]irminmodels.DynamicField, bool) {
+	merged := make(map[string]irminmodels.DynamicField)
+	complete := true
+
+	detailsFields, err := client.GetConfigFields(c, "details", nil, nil)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error fetching details fields", "connector", connectorName, "error", err)
+		complete = false
+	} else {
+		for k, v := range detailsFields {
+			merged["details."+k] = v
+		}
+	}
+
+	settingsFields, err := client.GetConfigFields(c, "settings", nil, nil)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error fetching settings fields", "connector", connectorName, "error", err)
+		complete = false
+	} else {
+		for k, v := range settingsFields {
+			merged["settings."+k] = v
+		}
+	}
+
+	return merged, complete
 }
 
 func (api *APIServices) GetConnectorConfigurationFields(
