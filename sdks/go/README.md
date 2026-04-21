@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/IrminData/.github/refs/heads/development/irmin-logo-light.svg" width="200" alt="Irmin Logo">
+
 # Irmin SDK for Go
 
 A comprehensive Go SDK for the Irmin platform, providing type-safe access to the Core API, data models, validation, utilities, and connector management.
@@ -5,7 +7,7 @@ A comprehensive Go SDK for the Irmin platform, providing type-safe access to the
 ## What's Included
 
 - **🔌 API Client**: Complete REST client for all Irmin Core API endpoints
-- **📋 Data Models**: Strongly typed Go structs for all API entities  
+- **📋 Data Models**: Strongly typed Go structs for all API entities
 - **✅ Validation**: Client-side request validation with enhanced security features
 - **🆔 SQID Management**: Unique identifier generation and validation
 - **🔗 Connector Client**: Manage data source connections and operations
@@ -37,7 +39,7 @@ import (
 func main() {
     // Create a context for API calls
     ctx := context.Background()
-    
+
     // Create a new client
     client := irmincore.NewClient("https://api.irmin.co/api", "your-token", "en")
 
@@ -107,8 +109,8 @@ if err != nil {
 
 // Run SQL analytics
 results, err := duckClient.QueryToMap(`
-    SELECT city, COUNT(*) as count, AVG(age) as avg_age 
-    FROM users 
+    SELECT city, COUNT(*) as count, AVG(age) as avg_age
+    FROM users
     GROUP BY city
 `)
 if err != nil {
@@ -116,7 +118,7 @@ if err != nil {
 }
 
 for _, row := range results {
-    fmt.Printf("City: %s, Count: %v, Avg Age: %.1f\n", 
+    fmt.Printf("City: %s, Count: %v, Avg Age: %.1f\n",
         row["city"], row["count"], row["avg_age"])
 }
 ```
@@ -139,6 +141,7 @@ connection.Connector = "postgres"
 The Core API client provides methods for all Irmin endpoints:
 
 ### Workspaces
+
 ```go
 ctx := context.Background()
 
@@ -149,6 +152,7 @@ _, err = client.UpdateWorkspace(ctx, "workspace-id", updateRequest)
 ```
 
 ### Connections
+
 ```go
 ctx := context.Background()
 
@@ -158,6 +162,7 @@ connections, _, err := client.GetConnections(ctx, "workspace-id")
 ```
 
 ### Workflows & Queries
+
 ```go
 ctx := context.Background()
 
@@ -169,6 +174,7 @@ query, _, err := client.CreateQuery(ctx, "workspace-id", request)
 ```
 
 ### Repositories & Version Control
+
 ```go
 ctx := context.Background()
 
@@ -179,6 +185,7 @@ commits, _, err := client.GetRepositoryCommits(ctx, "workspace-id", "repo-id", "
 ```
 
 ### User & Role Management
+
 ```go
 ctx := context.Background()
 
@@ -255,7 +262,7 @@ sqidManager := irminsqids.NewSQIDManager("your-alphabet")
 // Use with API client for server-side validation
 client := irmincore.NewClientWithSQIDManager(
     "https://api.irmin.co/api",
-    "your-token", 
+    "your-token",
     "en",
     sqidManager,
 )
@@ -271,7 +278,7 @@ ctx := context.Background()
 // Pull data from a source
 result, err := connectorClient.OperationPull(ctx, "path/to/data")
 
-// Push data to a destination  
+// Push data to a destination
 err = connectorClient.OperationPush(ctx, "path/to/destination", file)
 
 // Subscribe to real-time updates
@@ -283,6 +290,7 @@ subscription, err := connectorClient.SubscribeToChanges(ctx, webhookURL, webhook
 The DuckDB client provides powerful in-memory data processing capabilities:
 
 ### Key Features
+
 - **Multiple Format Support**: CSV, JSON, Parquet, Avro, ORC, Delta, Iceberg
 - **SQL Analytics**: Full SQL interface for data analysis and aggregation
 - **Data Merging**: Combine multiple data sources with different strategies
@@ -322,8 +330,8 @@ result, err := client.MergeFiles(sourceFiles, "merged", duckdb.MergeStrategyUnio
 
 // Run complex analytics
 results, err := client.QueryToMap(`
-    SELECT category, COUNT(*) as count, AVG(price) as avg_price 
-    FROM products 
+    SELECT category, COUNT(*) as count, AVG(price) as avg_price
+    FROM products
     GROUP BY category
 `)
 ```
@@ -361,6 +369,7 @@ client.HTTPClient.Timeout = 30 * time.Second
 ### Content Type Support
 
 The SDK supports multiple content types:
+
 - JSON requests/responses
 - Multipart form data
 - File uploads
@@ -379,7 +388,7 @@ if err != nil {
     if strings.Contains(err.Error(), "validation failed") {
         fmt.Println("Request validation failed")
     }
-    
+
     // Check API response errors
     if resp != nil && len(resp.Errors) > 0 {
         fmt.Printf("API errors: %v\n", resp.Errors)
@@ -405,8 +414,9 @@ go test ./duckdb -v
 ## Contributing
 
 The SDK is organized into focused packages:
+
 - `core-api/` - Main API client
-- `models/` - Data models  
+- `models/` - Data models
 - `validator/` - Validation logic
 - `sqids/` - SQID management
 - `connector/` - Connector client
