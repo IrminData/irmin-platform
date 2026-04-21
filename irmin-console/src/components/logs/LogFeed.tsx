@@ -98,12 +98,15 @@ const LogFeed = ({
       <Button
         variant='ghost'
         size='sm'
-        className='absolute top-1 left-10'
+        className={`
+          absolute top-1 left-10 text-white!
+          hover:bg-white/10!
+        `}
         onClick={handleCopy}
         title={copied ? dict.common.copied : dict.common.copy}
         icon={
           copied ? (
-            <TbCheck size={12} className='text-green-500' />
+            <TbCheck size={12} className='text-green-400' />
           ) : (
             <TbCopy size={12} />
           )
