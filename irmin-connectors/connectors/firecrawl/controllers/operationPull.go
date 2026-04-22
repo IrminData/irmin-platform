@@ -31,13 +31,7 @@ type FirecrawlPullProvider struct {
 // Throttling lives in common.LogOperationProgress (every 5 polls)
 // since each poll-loop iteration is a "page" event.
 func (p *FirecrawlPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
-	return func(event common.ProgressEvent) {
-		var operationID uint
-		if operation != nil {
-			operationID = operation.ID
-		}
-		common.LogOperationProgress(p.dbInstance, p.logger, operationID, event)
-	}
+	return common.NewProgressHandler(p.dbInstance, p.logger, operation)
 }
 
 // InitializeClient initializes the Firecrawl client for pull operations.

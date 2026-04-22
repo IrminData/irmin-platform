@@ -40,13 +40,7 @@ type PineconePullProvider struct {
 //
 // Throttling lives in common.LogOperationProgress (every 5 pages).
 func (p *PineconePullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
-	return func(event common.ProgressEvent) {
-		var operationID uint
-		if operation != nil {
-			operationID = operation.ID
-		}
-		common.LogOperationProgress(p.dbInstance, p.logger, operationID, event)
-	}
+	return common.NewProgressHandler(p.dbInstance, p.logger, operation)
 }
 
 // getNamespaceValue returns the namespace value or empty string if nil.

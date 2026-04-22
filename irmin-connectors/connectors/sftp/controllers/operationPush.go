@@ -26,13 +26,7 @@ type SFTPPushProvider struct {
 // Always returns a non-nil handler. Nil-safety lives one layer down
 // in common.LogOperationProgress.
 func (p *SFTPPushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
-	return func(event common.ProgressEvent) {
-		var operationID uint
-		if operation != nil {
-			operationID = operation.ID
-		}
-		common.LogOperationProgress(p.dbInstance, p.logger, operationID, event)
-	}
+	return common.NewProgressHandler(p.dbInstance, p.logger, operation)
 }
 
 // InitializeClient initializes the SFTP client for push operations.

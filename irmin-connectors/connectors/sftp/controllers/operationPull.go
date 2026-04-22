@@ -31,13 +31,7 @@ type SFTPPullProvider struct {
 // File events fire per file (caller-throttled — one file = one
 // emission); rate-limit events fire per retry attempt.
 func (p *SFTPPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
-	return func(event common.ProgressEvent) {
-		var operationID uint
-		if operation != nil {
-			operationID = operation.ID
-		}
-		common.LogOperationProgress(p.dbInstance, p.logger, operationID, event)
-	}
+	return common.NewProgressHandler(p.dbInstance, p.logger, operation)
 }
 
 // InitializeClient initializes the SFTP client for pull operations.

@@ -45,13 +45,7 @@ type StripePullProvider struct {
 // rate-limit unthrottled), so this method emits every event the
 // client fires and lets the common helper decide what surfaces.
 func (p *StripePullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
-	return func(event common.ProgressEvent) {
-		var operationID uint
-		if operation != nil {
-			operationID = operation.ID
-		}
-		common.LogOperationProgress(p.dbInstance, p.logger, operationID, event)
-	}
+	return common.NewProgressHandler(p.dbInstance, p.logger, operation)
 }
 
 // InitializeClient builds the Stripe client for this operation and
