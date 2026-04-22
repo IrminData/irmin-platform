@@ -12,6 +12,7 @@ A comprehensive Go SDK for the Irmin platform, providing type-safe access to the
 - **🆔 SQID Management**: Unique identifier generation and validation
 - **🔗 Connector Client**: Manage data source connections and operations
 - **📊 DuckDB Client**: In-memory data processing with SQL analytics for CSV, JSON, Parquet and more
+- **📡 Observability**: Shared progress-event vocabulary for long-running operations (see [observability/](#observability))
 - **🛠️ Utilities**: Helper functions for common tasks (JSON schema generation, file handling, etc.)
 
 ## Installation
@@ -337,6 +338,39 @@ results, err := client.QueryToMap(`
 ```
 
 📚 **[Full DuckDB Documentation →](./duckdb/README.md)**
+
+## Observability
+
+Shared progress-event vocabulary for long-running operations. Producers
+fire `ProgressEvent`s into a `ProgressHandler`; the handler routes them
+to the right sink (operation log row, workflow log, NDJSON stream).
+The taxonomy is consistent across services so a `"page"` event means
+the same thing whether it comes from a connector, a Core workflow, or
+the AI service.
+
+```go
+import "github.com/IrminData/irmin-sdk-go/observability"
+
+// Define a handler that emits to your sink:
+handler := observability.ProgressHandler(func(ev observability.ProgressEvent) {
+    // ...persist, log, or stream the event...
+})
+
+// Producers fire events from inside long loops:
+handler(observability.ProgressEvent{
+    Kind:         observability.ProgressKindPage,
+    ResourcePath: "/v1/customers",
+    Page:         5,
+    RecordsSoFar: 500,
+    Cursor:       "cus_abc",
+})
+```
+
+The kinds (`page`, `rate_limit`, `batch`, `query`, `file`, `heartbeat`)
+are stable wire-format strings; an irmin-ai TypeScript consumer will
+see the same values. Sink-aware helpers (DB persistence, throttling,
+heartbeat tickers) live in the consuming service — irmin-connectors
+ships its own under `connectors/common`.
 
 ## Utilities
 
