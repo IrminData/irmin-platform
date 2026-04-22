@@ -1819,34 +1819,16 @@ Concrete connectors compose \*OAuthConnector into their Controllers struct. Stat
 
 ## Constants
 
-<a name="ProgressKindPage"></a>ProgressKind\* enumerate the event types emitted via ProgressHandler.
+<a name="ProgressKindPage"></a>ProgressKind\* — see \[sdkprogress\] for documentation. String values are the cross\-language wire format and remain stable.
 
 ```go
 const (
-    // ProgressKindPage fires after each successful list-page response
-    // in a paginated-HTTP connector (Stripe, Pinecone list, HTTP
-    // pagination).
-    ProgressKindPage = "page"
-    // ProgressKindRateLimit fires when a connector is about to sleep
-    // before retrying a 429 / quota / backoff. Without this event,
-    // rate-limit storms look like a silent hang.
-    ProgressKindRateLimit = "rate_limit"
-    // ProgressKindBatch fires after each chunk of a bulk upload
-    // (Pinecone upserts, Postgres COPY in chunks).
-    ProgressKindBatch = "batch"
-    // ProgressKindQuery fires during a long-running SQL row-scan
-    // (Postgres, MySQL). Callers throttle their own emission — one
-    // row == one event would flood the log.
-    ProgressKindQuery = "query"
-    // ProgressKindFile fires per file during a multi-file transfer
-    // (SFTP list/download, Firecrawl per-page scrape).
-    ProgressKindFile = "file"
-    // ProgressKindHeartbeat is emitted by the common pull/push
-    // handler every 30s for the lifetime of the operation, even if
-    // the provider's ProgressHandler is nil. It's the floor of
-    // observability: no connector can ship a silent 10-minute
-    // operation, even by accident.
-    ProgressKindHeartbeat = "heartbeat"
+    ProgressKindPage      = sdkprogress.ProgressKindPage
+    ProgressKindRateLimit = sdkprogress.ProgressKindRateLimit
+    ProgressKindBatch     = sdkprogress.ProgressKindBatch
+    ProgressKindQuery     = sdkprogress.ProgressKindQuery
+    ProgressKindFile      = sdkprogress.ProgressKindFile
+    ProgressKindHeartbeat = sdkprogress.ProgressKindHeartbeat
 )
 ```
 
@@ -2766,61 +2748,19 @@ type PatchOperationProvider interface {
 <a name="ProgressEvent"></a>
 ## type ProgressEvent
 
-ProgressEvent is a single observability event emitted from a connector's long\-running operation. Connectors call the operation's ProgressHandler to surface per\-page / per\-batch / per\-file / retry progress into the workflow log stream, so an apparently\-stuck run is actually diagnosable.
-
-Not every field is meaningful for every Kind — see the field docs. The Kind discriminator selects which subset applies.
+ProgressEvent — see \[sdkprogress.ProgressEvent\].
 
 ```go
-type ProgressEvent struct {
-    // Kind discriminates the event. Use one of the ProgressKind*
-    // constants below.
-    Kind string
-
-    // ResourcePath is a human-readable identifier for what's being
-    // processed: an API path ("/v1/customers"), a table name
-    // ("public.orders"), a file path ("inbox/report.csv"), a
-    // namespace URI ("qdrant://vectors"). Should always be set.
-    ResourcePath string
-
-    // Page is the 1-based page number within the current pagination
-    // loop.
-    Page int
-    // RecordsSoFar is the cumulative record count accumulated so far.
-    RecordsSoFar int
-    // Cursor is the cursor value that produced this page (e.g.,
-    // starting_after), or "" for the first page.
-    Cursor string
-
-    // Attempt is the 0-based retry attempt.
-    Attempt int
-    // Wait is how long the caller is about to sleep before retrying.
-    Wait time.Duration
-
-    // Batch is the 1-based batch index.
-    Batch int
-    // BatchSize is the number of records in this batch.
-    BatchSize int
-
-    // Rows is the cumulative number of rows processed.
-    Rows int64
-
-    // File is the file path currently being transferred.
-    File string
-    // BytesTransferred is the cumulative bytes moved for this
-    // operation (or for the current file — connector decides).
-    BytesTransferred int64
-    // BytesTotal is the total expected bytes, or 0 if unknown.
-    BytesTotal int64
-}
+type ProgressEvent = sdkprogress.ProgressEvent
 ```
 
 <a name="ProgressHandler"></a>
 ## type ProgressHandler
 
-ProgressHandler receives observability events from long\-running operations. Called synchronously from inside the connector's pagination / retry / transfer loops — implementations must return quickly. nil\-safe: connectors whose operations are short\-running may return nil from their PullOperationProvider.ProgressHandler / PushOperationProvider.ProgressHandler method.
+ProgressHandler — see \[sdkprogress.ProgressHandler\].
 
 ```go
-type ProgressHandler func(ProgressEvent)
+type ProgressHandler = sdkprogress.ProgressHandler
 ```
 
 <a name="NewProgressHandler"></a>

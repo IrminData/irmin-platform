@@ -3,12 +3,12 @@ module irmin-connectors
 go 1.25.0
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20260418163941-4b3d6024ab1c
-	github.com/getsentry/sentry-go v0.45.1
+	github.com/IrminData/irmin-sdk-go v0.0.0-20260422152928-4f2b05199847
+	github.com/getsentry/sentry-go v0.46.0
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/gofiber/fiber/v3 v3.1.0
 	github.com/google/uuid v1.6.0
-	github.com/jackc/pgx/v5 v5.9.1
+	github.com/jackc/pgx/v5 v5.9.2
 	github.com/joho/godotenv v1.5.1
 	github.com/mendableai/firecrawl-go v1.0.0
 	github.com/pinecone-io/go-pinecone/v4 v4.1.4
@@ -46,7 +46,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/gofiber/schema v1.7.1 // indirect
-	github.com/gofiber/utils/v2 v2.0.3 // indirect
+	github.com/gofiber/utils/v2 v2.0.4 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
@@ -79,12 +79,12 @@ require (
 	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
-	golang.org/x/telemetry v0.0.0-20260414141209-fac6e1c83189 // indirect
+	golang.org/x/telemetry v0.0.0-20260421165255-392afab6f40e // indirect
 	golang.org/x/text v0.36.0 // indirect
 	golang.org/x/tools v0.44.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260420184626-e10c466a9529 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260420184626-e10c466a9529 // indirect
 	google.golang.org/grpc v1.80.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/mysql v1.6.0 // indirect
