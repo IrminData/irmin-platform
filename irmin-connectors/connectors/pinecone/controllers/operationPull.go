@@ -28,14 +28,25 @@ type PineconePullProvider struct {
 	logger     *slog.Logger
 }
 
-// ProgressHandler returns nil today — Phase 3 of the
-// progress-events rollout wires the cursor-paginated
-// FetchAll/ListVectors loop to emit ProgressKindPage events so a
-// 100k-vector pull stops looking like a multi-minute hang. Until
-// then, the baseline heartbeat from the common pull handler covers
-// the gap.
-func (p *PineconePullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
-	return nil
+// ProgressHandler returns the per-page observability callback the
+// Pinecone client fires from inside FetchAll's cursor-pagination
+// loop. Without it, a 100k-vector pull emits zero events between
+// operation/init and operation/pull's final response — the same
+// silent-window failure mode Stripe got fixed for.
+//
+// Always returns a non-nil handler. Nil-safety lives one layer down
+// in common.LogOperationProgress, which no-ops on nil dbInstance /
+// logger / nil operation.
+//
+// Throttling lives in common.LogOperationProgress (every 5 pages).
+func (p *PineconePullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
+	return func(event common.ProgressEvent) {
+		var operationID uint
+		if operation != nil {
+			operationID = operation.ID
+		}
+		common.LogOperationProgress(p.dbInstance, p.logger, operationID, event)
+	}
 }
 
 // getNamespaceValue returns the namespace value or empty string if nil.
@@ -55,13 +66,18 @@ func (p *PineconePullProvider) InitializeClient(
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
-	client, namespace, err := pineconeclient.InitPineconeClient(nil, logger, operation)
+	// Hydrate logger before building the handler so the closure
+	// p.ProgressHandler returns has a valid logger.
+	p.logger = logger
+	client, namespace, err := pineconeclient.InitPineconeClient(
+		nil, logger, operation,
+		pineconeclient.WithProgressHandler(p.ProgressHandler(operation)),
+	)
 	if err != nil {
 		return nil, nil, func() {}, err
 	}
 
 	p.namespace = namespace
-	p.logger = logger
 
 	cleanup := func() {
 		_ = client.Close()

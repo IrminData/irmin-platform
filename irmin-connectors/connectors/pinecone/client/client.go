@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"irmin-connectors/connectors/common"
 	pineconemodels "irmin-connectors/connectors/pinecone/models"
 	"irmin-connectors/db"
 
@@ -33,6 +34,30 @@ type PineconeClient struct {
 	index     *pinecone.IndexConnection
 	namespace string
 	logger    *slog.Logger
+	// progressHandler is the optional observability hook for the
+	// FetchAll pagination loop and the Upsert batching loop. Without
+	// it, a 100k-vector pull or upsert emits zero events between
+	// operation/init and operation/pull's final response, which leaves
+	// operators debugging a multi-minute hang with no signal — the
+	// same field-incident shape Stripe got fixed for. Pull / push
+	// controllers wire this up via WithProgressHandler so events
+	// surface on the operation log stream.
+	progressHandler common.ProgressHandler
+}
+
+// PineconeOption configures the PineconeClient at construction time.
+// Mirrors the functional-options shape Stripe uses
+// (connectors/stripe/client/client.go) so connector authors can copy
+// either as a reference.
+type PineconeOption func(*PineconeClient)
+
+// WithProgressHandler installs an observability hook for the
+// pagination + batching loops. Pass nil to disable (same as the
+// default).
+func WithProgressHandler(h common.ProgressHandler) PineconeOption {
+	return func(c *PineconeClient) {
+		c.progressHandler = h
+	}
 }
 
 // EmbeddingRecord represents the Irmin embedding format.
@@ -60,7 +85,12 @@ type SearchResponse struct {
 }
 
 // InitPineconeClient initializes a Pinecone client from operation configuration.
-func InitPineconeClient(_ any, logger *slog.Logger, operation *db.Operation) (*PineconeClient, *string, error) {
+func InitPineconeClient(
+	_ any,
+	logger *slog.Logger,
+	operation *db.Operation,
+	opts ...PineconeOption,
+) (*PineconeClient, *string, error) {
 	ctx := context.Background()
 
 	// Parse connection details (contains api_key)
@@ -131,8 +161,51 @@ func InitPineconeClient(_ any, logger *slog.Logger, operation *db.Operation) (*P
 		namespace: *namespace,
 		logger:    logger,
 	}
+	for _, opt := range opts {
+		opt(client)
+	}
 
 	return client, namespace, nil
+}
+
+// emitPageProgress invokes the configured progress handler with a
+// FetchAll pagination event. No-op when no handler is set.
+func (c *PineconeClient) emitPageProgress(page, records int, cursor string) {
+	if c.progressHandler == nil {
+		return
+	}
+	c.progressHandler(common.ProgressEvent{
+		Kind:         common.ProgressKindPage,
+		ResourcePath: c.resourcePath(),
+		Page:         page,
+		RecordsSoFar: records,
+		Cursor:       cursor,
+	})
+}
+
+// emitBatchProgress invokes the configured progress handler with an
+// Upsert batch event. No-op when no handler is set.
+func (c *PineconeClient) emitBatchProgress(batch, batchSize int) {
+	if c.progressHandler == nil {
+		return
+	}
+	c.progressHandler(common.ProgressEvent{
+		Kind:         common.ProgressKindBatch,
+		ResourcePath: c.resourcePath(),
+		Batch:        batch,
+		BatchSize:    batchSize,
+	})
+}
+
+// resourcePath formats the index/namespace identifier used in
+// progress events. Operators reading the operation log know which
+// Pinecone index a stuck pull belongs to — important when one
+// workflow touches multiple indexes.
+func (c *PineconeClient) resourcePath() string {
+	if c.namespace == "" {
+		return "pinecone://default"
+	}
+	return "pinecone://" + c.namespace
 }
 
 // Close releases resources held by the client.
@@ -167,21 +240,24 @@ func (c *PineconeClient) Upsert(ctx context.Context, records []EmbeddingRecord) 
 
 	// Upsert in batches
 	for i := 0; i < len(vectors); i += UpsertBatchSize {
-		end := i + UpsertBatchSize
-		if end > len(vectors) {
-			end = len(vectors)
-		}
+		end := min(i+UpsertBatchSize, len(vectors))
 		batch := vectors[i:end]
+		batchNum := i/UpsertBatchSize + 1
 
 		upsertedCount, err := c.index.UpsertVectors(ctx, batch)
 		if err != nil {
-			return fmt.Errorf("failed to upsert batch %d: %w", i/UpsertBatchSize, err)
+			return fmt.Errorf("failed to upsert batch %d: %w", batchNum, err)
 		}
 
 		c.logger.InfoContext(ctx, "upserted vectors",
-			"batch", i/UpsertBatchSize+1,
+			"batch", batchNum,
 			"count", upsertedCount,
 		)
+
+		// Surface per-batch progress so a multi-minute upsert
+		// (100k+ vectors) doesn't look like a silent hang. Throttling
+		// lives in common.LogOperationProgress (every 10th batch).
+		c.emitBatchProgress(batchNum, len(batch))
 	}
 
 	return nil
@@ -267,7 +343,14 @@ func (c *PineconeClient) FetchAll(ctx context.Context) ([]EmbeddingRecord, error
 	// List all vector IDs first
 	var paginationToken *string
 	limit := uint32(FetchBatchSize)
+	page := 0
 	for {
+		page++
+		var cursor string
+		if paginationToken != nil {
+			cursor = *paginationToken
+		}
+
 		listResp, err := c.index.ListVectors(ctx, &pinecone.ListVectorsRequest{
 			Limit:           &limit,
 			PaginationToken: paginationToken,
@@ -296,6 +379,13 @@ func (c *PineconeClient) FetchAll(ctx context.Context) ([]EmbeddingRecord, error
 				"total", len(allRecords),
 			)
 		}
+
+		// Surface per-page progress to the operation log stream so a
+		// 100k-vector pull stops looking like a multi-minute hang.
+		// Throttling lives in common.LogOperationProgress (every 5
+		// pages); the handler emits every page and lets the helper
+		// decide what to log.
+		c.emitPageProgress(page, len(allRecords), cursor)
 
 		// Check for more pages and update token
 		if listResp.NextPaginationToken == nil || *listResp.NextPaginationToken == "" {

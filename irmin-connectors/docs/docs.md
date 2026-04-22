@@ -6595,13 +6595,15 @@ import "irmin-connectors/connectors/pinecone/client"
 - [func ValidateConnection\(apiKey, host, namespace string\) error](<#ValidateConnection>)
 - [type EmbeddingRecord](<#EmbeddingRecord>)
 - [type PineconeClient](<#PineconeClient>)
-  - [func InitPineconeClient\(\_ any, logger \*slog.Logger, operation \*db.Operation\) \(\*PineconeClient, \*string, error\)](<#InitPineconeClient>)
+  - [func InitPineconeClient\(\_ any, logger \*slog.Logger, operation \*db.Operation, opts ...PineconeOption\) \(\*PineconeClient, \*string, error\)](<#InitPineconeClient>)
   - [func \(c \*PineconeClient\) Close\(\) error](<#PineconeClient.Close>)
   - [func \(c \*PineconeClient\) Delete\(ctx context.Context, ids \[\]string\) error](<#PineconeClient.Delete>)
   - [func \(c \*PineconeClient\) FetchAll\(ctx context.Context\) \(\[\]EmbeddingRecord, error\)](<#PineconeClient.FetchAll>)
   - [func \(c \*PineconeClient\) Search\(ctx context.Context, queryVector \[\]float32, topK int\) \(\*SearchResponse, error\)](<#PineconeClient.Search>)
   - [func \(c \*PineconeClient\) Upsert\(ctx context.Context, records \[\]EmbeddingRecord\) error](<#PineconeClient.Upsert>)
   - [func \(c \*PineconeClient\) UpsertSingle\(ctx context.Context, record EmbeddingRecord\) error](<#PineconeClient.UpsertSingle>)
+- [type PineconeOption](<#PineconeOption>)
+  - [func WithProgressHandler\(h common.ProgressHandler\) PineconeOption](<#WithProgressHandler>)
 - [type SearchResponse](<#SearchResponse>)
 - [type SearchResult](<#SearchResult>)
 
@@ -6674,7 +6676,7 @@ type PineconeClient struct {
 ### func InitPineconeClient
 
 ```go
-func InitPineconeClient(_ any, logger *slog.Logger, operation *db.Operation) (*PineconeClient, *string, error)
+func InitPineconeClient(_ any, logger *slog.Logger, operation *db.Operation, opts ...PineconeOption) (*PineconeClient, *string, error)
 ```
 
 InitPineconeClient initializes a Pinecone client from operation configuration.
@@ -6732,6 +6734,24 @@ func (c *PineconeClient) UpsertSingle(ctx context.Context, record EmbeddingRecor
 ```
 
 UpsertSingle inserts or updates a single vector in the Pinecone index. This is a convenience method for patch operations that operate on single records.
+
+<a name="PineconeOption"></a>
+## type PineconeOption
+
+PineconeOption configures the PineconeClient at construction time. Mirrors the functional\-options shape Stripe uses \(connectors/stripe/client/client.go\) so connector authors can copy either as a reference.
+
+```go
+type PineconeOption func(*PineconeClient)
+```
+
+<a name="WithProgressHandler"></a>
+### func WithProgressHandler
+
+```go
+func WithProgressHandler(h common.ProgressHandler) PineconeOption
+```
+
+WithProgressHandler installs an observability hook for the pagination \+ batching loops. Pass nil to disable \(same as the default\).
 
 <a name="SearchResponse"></a>
 ## type SearchResponse
@@ -6894,11 +6914,11 @@ import "irmin-connectors/connectors/pinecone/controllers"
   - [func \(p \*PineconePullProvider\) GetAllFiles\(c fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#PineconePullProvider.GetAllFiles>)
   - [func \(p \*PineconePullProvider\) GetFileByPath\(c fiber.Ctx, client any, rawPath string\) \(string, \[\]byte, error\)](<#PineconePullProvider.GetFileByPath>)
   - [func \(p \*PineconePullProvider\) InitializeClient\(\_ fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#PineconePullProvider.InitializeClient>)
-  - [func \(p \*PineconePullProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#PineconePullProvider.ProgressHandler>)
+  - [func \(p \*PineconePullProvider\) ProgressHandler\(operation \*db.Operation\) common.ProgressHandler](<#PineconePullProvider.ProgressHandler>)
 - [type PineconePushProvider](<#PineconePushProvider>)
   - [func \(p \*PineconePushProvider\) InitializeClient\(\_ fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#PineconePushProvider.InitializeClient>)
   - [func \(p \*PineconePushProvider\) ProcessFiles\(c fiber.Ctx, client any, files map\[string\]\[\]byte, \_ string\) error](<#PineconePushProvider.ProcessFiles>)
-  - [func \(p \*PineconePushProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#PineconePushProvider.ProgressHandler>)
+  - [func \(p \*PineconePushProvider\) ProgressHandler\(operation \*db.Operation\) common.ProgressHandler](<#PineconePushProvider.ProgressHandler>)
 - [type PineconeSchemaProvider](<#PineconeSchemaProvider>)
   - [func \(p \*PineconeSchemaProvider\) GetSchema\(\_ fiber.Ctx, \_ any, operationType string, namespace \*string\) \(\*irminmodels.ObjectSchema, error\)](<#PineconeSchemaProvider.GetSchema>)
   - [func \(p \*PineconeSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#PineconeSchemaProvider.GetSupportedOperationTypes>)
@@ -7165,10 +7185,14 @@ InitializeClient initializes the Pinecone client for pull operations.
 ### func \(\*PineconePullProvider\) ProgressHandler
 
 ```go
-func (p *PineconePullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+func (p *PineconePullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
 ```
 
-ProgressHandler returns nil today — Phase 3 of the progress\-events rollout wires the cursor\-paginated FetchAll/ListVectors loop to emit ProgressKindPage events so a 100k\-vector pull stops looking like a multi\-minute hang. Until then, the baseline heartbeat from the common pull handler covers the gap.
+ProgressHandler returns the per\-page observability callback the Pinecone client fires from inside FetchAll's cursor\-pagination loop. Without it, a 100k\-vector pull emits zero events between operation/init and operation/pull's final response — the same silent\-window failure mode Stripe got fixed for.
+
+Always returns a non\-nil handler. Nil\-safety lives one layer down in common.LogOperationProgress, which no\-ops on nil dbInstance / logger / nil operation.
+
+Throttling lives in common.LogOperationProgress \(every 5 pages\).
 
 <a name="PineconePushProvider"></a>
 ## type PineconePushProvider
@@ -7203,10 +7227,14 @@ ProcessFiles processes the extracted files and upserts them to Pinecone.
 ### func \(\*PineconePushProvider\) ProgressHandler
 
 ```go
-func (p *PineconePushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+func (p *PineconePushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
 ```
 
-ProgressHandler returns nil today — Phase 3 of the progress\-events rollout adds per\-batch upsert progress \(ProgressKindBatch\). The baseline heartbeat from the common push handler covers the gap.
+ProgressHandler returns the per\-batch observability callback the Pinecone client fires from inside the Upsert batching loop. Without it, a 100k\-vector upsert emits zero events between operation/init and the final response — same silent\-window failure mode Stripe got fixed for.
+
+Always returns a non\-nil handler. Nil\-safety lives one layer down in common.LogOperationProgress.
+
+Throttling lives in common.LogOperationProgress \(every 10th batch\).
 
 <a name="PineconeSchemaProvider"></a>
 ## type PineconeSchemaProvider

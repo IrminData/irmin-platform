@@ -60,11 +60,15 @@ var progressCoverage = []struct {
 		expectedNonNilPull: false, // Phase 3 flips this true
 	},
 	{
-		name:               "Pinecone",
-		pullProvider:       &pineconecontrollers.PineconePullProvider{},
-		pushProvider:       &pineconecontrollers.PineconePushProvider{},
-		expectedNonNilPull: false, // Phase 3 flips this true (HIGH priority)
-		expectedNonNilPush: false, // Phase 3 flips this true (batch upserts)
+		name:         "Pinecone",
+		pullProvider: &pineconecontrollers.PineconePullProvider{},
+		pushProvider: &pineconecontrollers.PineconePushProvider{},
+		// Phase 3 wired ProgressKindPage from FetchAll's
+		// cursor-pagination loop and ProgressKindBatch from Upsert's
+		// batching loop. Both providers always return non-nil
+		// handlers; nil-safety lives in common.LogOperationProgress.
+		expectedNonNilPull: true,
+		expectedNonNilPush: true,
 	},
 	{
 		name:               "PostgreSQL",

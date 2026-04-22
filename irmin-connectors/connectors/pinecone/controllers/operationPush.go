@@ -29,12 +29,24 @@ type PineconePushProvider struct {
 	logger     *slog.Logger
 }
 
-// ProgressHandler returns nil today — Phase 3 of the
-// progress-events rollout adds per-batch upsert progress
-// (ProgressKindBatch). The baseline heartbeat from the common push
-// handler covers the gap.
-func (p *PineconePushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
-	return nil
+// ProgressHandler returns the per-batch observability callback the
+// Pinecone client fires from inside the Upsert batching loop.
+// Without it, a 100k-vector upsert emits zero events between
+// operation/init and the final response — same silent-window
+// failure mode Stripe got fixed for.
+//
+// Always returns a non-nil handler. Nil-safety lives one layer down
+// in common.LogOperationProgress.
+//
+// Throttling lives in common.LogOperationProgress (every 10th batch).
+func (p *PineconePushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
+	return func(event common.ProgressEvent) {
+		var operationID uint
+		if operation != nil {
+			operationID = operation.ID
+		}
+		common.LogOperationProgress(p.dbInstance, p.logger, operationID, event)
+	}
 }
 
 // getNamespaceValue returns the namespace value or empty string if nil.
@@ -51,13 +63,18 @@ func (p *PineconePushProvider) InitializeClient(
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
-	client, namespace, err := pineconeclient.InitPineconeClient(nil, logger, operation)
+	// Hydrate logger before building the handler so the closure
+	// p.ProgressHandler returns has a valid logger.
+	p.logger = logger
+	client, namespace, err := pineconeclient.InitPineconeClient(
+		nil, logger, operation,
+		pineconeclient.WithProgressHandler(p.ProgressHandler(operation)),
+	)
 	if err != nil {
 		return nil, nil, func() {}, fmt.Errorf("failed to initialize Pinecone client: %w", err)
 	}
 
 	p.namespace = namespace
-	p.logger = logger
 
 	cleanup := func() {
 		_ = client.Close()
