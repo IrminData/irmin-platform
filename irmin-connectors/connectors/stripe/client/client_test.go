@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"irmin-connectors/connectors/common"
 	"irmin-connectors/connectors/stripe/client"
 )
 
@@ -510,12 +511,12 @@ func TestClient_ProgressHandler_EmitsPerPageAndRateLimit(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	var pageEvents, rateLimitEvents []client.ProgressEvent
-	handler := func(ev client.ProgressEvent) {
+	var pageEvents, rateLimitEvents []common.ProgressEvent
+	handler := func(ev common.ProgressEvent) {
 		switch ev.Kind {
-		case client.ProgressKindPage:
+		case common.ProgressKindPage:
 			pageEvents = append(pageEvents, ev)
-		case client.ProgressKindRateLimit:
+		case common.ProgressKindRateLimit:
 			rateLimitEvents = append(rateLimitEvents, ev)
 		}
 	}

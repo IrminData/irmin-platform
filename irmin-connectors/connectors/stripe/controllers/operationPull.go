@@ -28,94 +28,51 @@ type StripePullProvider struct {
 	logger     *slog.Logger
 }
 
-// ProgressHandler returns nil today. Stripe DOES emit per-page +
-// rate-limit progress, but it's currently wired through the local
-// stripeclient.ProgressHandler type inside InitializeClient (see
-// makeProgressHandler below). Phase 5 of the progress-events
-// rollout deletes makeProgressHandler in favor of returning a real
-// common.ProgressHandler from this method, at which point the
-// expected-progress coverage test in connectors/common will flip
-// Stripe to required-non-nil. The baseline heartbeat from the
-// common pull handler already fires regardless.
-func (p *StripePullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
-	return nil
+// ProgressHandler returns the per-page + rate-limit observability
+// callback that gets wired into the Stripe client during
+// InitializeClient. Without it, a multi-minute Stripe pull emits zero
+// events between operation/init and operation/pull's final response,
+// leaving operators debugging a 10-minute hang with no signal —
+// which is exactly the field incident this whole machinery exists
+// to prevent.
+//
+// Always returns a non-nil handler. Nil-safety lives one layer down
+// in common.LogOperationProgress, which no-ops on nil dbInstance /
+// logger / nil operation — so this method is safe to call from the
+// progress-coverage audit test on a bare provider too.
+//
+// Throttling lives in common.LogOperationProgress (every 5 pages,
+// rate-limit unthrottled), so this method emits every event the
+// client fires and lets the common helper decide what surfaces.
+func (p *StripePullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
+	return func(event common.ProgressEvent) {
+		var operationID uint
+		if operation != nil {
+			operationID = operation.ID
+		}
+		common.LogOperationProgress(p.dbInstance, p.logger, operationID, event)
+	}
 }
 
 // InitializeClient builds the Stripe client for this operation and
-// installs a progress handler so long-running pulls surface per-page
-// and rate-limit events into the workflow log stream. Without the
-// handler, a multi-minute Stripe pull emits zero events between
-// operation/init and operation/pull's final response — operators
-// debugging a stuck run have nothing to work with.
+// installs the progress handler so long-running pulls surface
+// per-page and rate-limit events into the workflow log stream.
 func (p *StripePullProvider) InitializeClient(
 	_ fiber.Ctx,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
-	// Rebuild the handler on every Initialize so operation + dbInstance
-	// captured in the closure always match the in-flight operation.
-	progressHandler := p.makeProgressHandler(operation)
+	// Hydrate logger before building the handler so the closure
+	// p.ProgressHandler returns has a valid logger.
+	p.logger = logger
 	stripe, _, _, err := stripeclient.InitFromOperation(
 		logger, operation,
-		stripeclient.WithProgressHandler(progressHandler),
+		stripeclient.WithProgressHandler(p.ProgressHandler(operation)),
 	)
 	if err != nil {
 		return nil, nil, func() {}, err
 	}
-	p.logger = logger
 	return stripe, nil, func() {}, nil
-}
-
-// progressLogInterval throttles per-page log events — one every 5
-// pages (or every rate-limit wait, unthrottled). Without the throttle,
-// a 300-page pull on a big Stripe account would emit 300 log rows and
-// flood the UI. Rate-limit waits bypass throttling because they're
-// rare and each one matters.
-const progressLogInterval = 5
-
-// makeProgressHandler returns a Stripe client ProgressHandler that
-// emits events onto the operation log stream. Closes over the
-// operation + dbInstance so every page fires a log row users can see
-// in the workflow run view.
-func (p *StripePullProvider) makeProgressHandler(operation *db.Operation) stripeclient.ProgressHandler {
-	if operation == nil || p.dbInstance == nil || p.logger == nil {
-		return nil
-	}
-	return func(ev stripeclient.ProgressEvent) {
-		switch ev.Kind {
-		case stripeclient.ProgressKindPage:
-			// Always log the first page (so users see "something's
-			// happening") and every Nth page thereafter.
-			if ev.Page != 1 && ev.Page%progressLogInterval != 0 {
-				return
-			}
-			common.LogOperationEvent(
-				p.dbInstance, p.logger, operation.ID,
-				db.LogEventTypeInfo,
-				"Stripe pull in progress",
-				map[string]any{
-					"resource_path": ev.ResourcePath,
-					"page":          ev.Page,
-					"records":       ev.RecordsSoFar,
-					"cursor":        ev.Cursor,
-				},
-			)
-		case stripeclient.ProgressKindRateLimit:
-			// Rate-limit waits deserve their own event — they're
-			// otherwise silent, and a storm of them explains a
-			// multi-minute delay.
-			common.LogOperationEvent(
-				p.dbInstance, p.logger, operation.ID,
-				db.LogEventTypeInfo,
-				"Stripe rate-limit backoff",
-				map[string]any{
-					"resource_path": ev.ResourcePath,
-					"attempt":       ev.Attempt,
-					"wait_ms":       ev.Wait.Milliseconds(),
-				},
-			)
-		}
-	}
 }
 
 // GetAllFiles lists every pull-enabled resource and returns one JSON

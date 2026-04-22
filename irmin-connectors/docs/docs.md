@@ -9401,30 +9401,15 @@ Request bodies use Stripe's form\-encoded flavor \(RFC 3986 \+ bracketed nesting
 - [type Option](<#Option>)
   - [func WithBaseURL\(baseURL string\) Option](<#WithBaseURL>)
   - [func WithHTTPClient\(hc \*http.Client\) Option](<#WithHTTPClient>)
-  - [func WithProgressHandler\(h ProgressHandler\) Option](<#WithProgressHandler>)
+  - [func WithProgressHandler\(h common.ProgressHandler\) Option](<#WithProgressHandler>)
 - [type ParsedPath](<#ParsedPath>)
   - [func ParsePath\(path string\) \(ParsedPath, error\)](<#ParsePath>)
-- [type ProgressEvent](<#ProgressEvent>)
-- [type ProgressHandler](<#ProgressHandler>)
 - [type Resource](<#Resource>)
   - [func FindResource\(name string\) \(Resource, error\)](<#FindResource>)
   - [func KnownResources\(\) \[\]Resource](<#KnownResources>)
 
 
 ## Constants
-
-<a name="ProgressKindPage"></a>ProgressKind\* enumerate the event types emitted via ProgressHandler.
-
-```go
-const (
-    // ProgressKindPage fires after each successful list-page response.
-    ProgressKindPage = "page"
-    // ProgressKindRateLimit fires when the client is about to sleep
-    // before retrying a 429. Without this event, rate-limit storms
-    // look like a silent hang.
-    ProgressKindRateLimit = "rate_limit"
-)
-```
 
 <a name="ResourceCustomers"></a>Resource slugs used across config, schema, and controller code. Exported as constants so switch / lookup sites have one source of truth instead of bare string literals scattered through the file.
 
@@ -9682,7 +9667,7 @@ WithHTTPClient overrides the underlying http.Client. Tests set a custom transpor
 ### func WithProgressHandler
 
 ```go
-func WithProgressHandler(h ProgressHandler) Option
+func WithProgressHandler(h common.ProgressHandler) Option
 ```
 
 WithProgressHandler installs an observability hook for pagination \+ retry loops. Pass nil to disable \(same as the default\).
@@ -9712,47 +9697,6 @@ func ParsePath(path string) (ParsedPath, error)
 ```
 
 ParsePath decodes a branch path like \`customers/cus\_abc123.json\` or \`customers/new\-alice.json\` into its ParsedPath form. The trailing \`.json\` is required so that the schema matches what pull produces \(pull emits parquet snapshots, but push/patch operate on JSON records authored by the user — the extension disambiguates\).
-
-<a name="ProgressEvent"></a>
-## type ProgressEvent
-
-ProgressEvent is a single observability event emitted from the Stripe client during long\-running operations. The pull path uses this to surface per\-page progress \+ rate\-limit waits into the workflow's log stream so an apparently\-stuck run is actually diagnosable.
-
-```go
-type ProgressEvent struct {
-    // Kind discriminates the event. One of ProgressKindPage or
-    // ProgressKindRateLimit (more may be added later).
-    Kind string
-    // ResourcePath is the endpoint the event applies to
-    // (e.g., "/v1/customers"). Always set.
-    ResourcePath string
-    // Page is 1-based page number within the current pagination loop.
-    // Only meaningful for ProgressKindPage.
-    Page int
-    // RecordsSoFar is the cumulative record count accumulated by this
-    // call to ListBounded. Only meaningful for ProgressKindPage.
-    RecordsSoFar int
-    // Cursor is the `starting_after` cursor that produced this page,
-    // or "" for the first page. Useful for resume / diagnostics.
-    // Only meaningful for ProgressKindPage.
-    Cursor string
-    // Attempt is the 0-based retry attempt. Only meaningful for
-    // ProgressKindRateLimit.
-    Attempt int
-    // Wait is how long the client is about to sleep before retrying.
-    // Only meaningful for ProgressKindRateLimit.
-    Wait time.Duration
-}
-```
-
-<a name="ProgressHandler"></a>
-## type ProgressHandler
-
-ProgressHandler receives observability events from long\-running operations. Called synchronously from inside the pagination / retry loops — implementations must return quickly. nil\-safe: callers that don't need progress events simply don't set one.
-
-```go
-type ProgressHandler func(ProgressEvent)
-```
 
 <a name="Resource"></a>
 ## type Resource
@@ -9950,7 +9894,7 @@ Package stripecontrollers holds the HTTP handlers for every connector endpoint. 
   - [func \(p \*StripePullProvider\) GetAllFiles\(c fiber.Ctx, clientAny any\) \(\[\]string, \[\]\[\]byte, error\)](<#StripePullProvider.GetAllFiles>)
   - [func \(p \*StripePullProvider\) GetFileByPath\(c fiber.Ctx, clientAny any, rawPath string\) \(string, \[\]byte, error\)](<#StripePullProvider.GetFileByPath>)
   - [func \(p \*StripePullProvider\) InitializeClient\(\_ fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#StripePullProvider.InitializeClient>)
-  - [func \(p \*StripePullProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#StripePullProvider.ProgressHandler>)
+  - [func \(p \*StripePullProvider\) ProgressHandler\(operation \*db.Operation\) common.ProgressHandler](<#StripePullProvider.ProgressHandler>)
 - [type StripePushProvider](<#StripePushProvider>)
   - [func \(p \*StripePushProvider\) InitializeClient\(\_ fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#StripePushProvider.InitializeClient>)
   - [func \(p \*StripePushProvider\) ProcessFiles\(c fiber.Ctx, clientAny any, files map\[string\]\[\]byte, targetPath string\) error](<#StripePushProvider.ProcessFiles>)
@@ -10228,16 +10172,20 @@ Empty path is rejected — HandleOperationPull dispatches to GetAllFiles in that
 func (p *StripePullProvider) InitializeClient(_ fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
 ```
 
-InitializeClient builds the Stripe client for this operation and installs a progress handler so long\-running pulls surface per\-page and rate\-limit events into the workflow log stream. Without the handler, a multi\-minute Stripe pull emits zero events between operation/init and operation/pull's final response — operators debugging a stuck run have nothing to work with.
+InitializeClient builds the Stripe client for this operation and installs the progress handler so long\-running pulls surface per\-page and rate\-limit events into the workflow log stream.
 
 <a name="StripePullProvider.ProgressHandler"></a>
 ### func \(\*StripePullProvider\) ProgressHandler
 
 ```go
-func (p *StripePullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+func (p *StripePullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
 ```
 
-ProgressHandler returns nil today. Stripe DOES emit per\-page \+ rate\-limit progress, but it's currently wired through the local stripeclient.ProgressHandler type inside InitializeClient \(see makeProgressHandler below\). Phase 5 of the progress\-events rollout deletes makeProgressHandler in favor of returning a real common.ProgressHandler from this method, at which point the expected\-progress coverage test in connectors/common will flip Stripe to required\-non\-nil. The baseline heartbeat from the common pull handler already fires regardless.
+ProgressHandler returns the per\-page \+ rate\-limit observability callback that gets wired into the Stripe client during InitializeClient. Without it, a multi\-minute Stripe pull emits zero events between operation/init and operation/pull's final response, leaving operators debugging a 10\-minute hang with no signal — which is exactly the field incident this whole machinery exists to prevent.
+
+Always returns a non\-nil handler. Nil\-safety lives one layer down in common.LogOperationProgress, which no\-ops on nil dbInstance / logger / nil operation — so this method is safe to call from the progress\-coverage audit test on a bare provider too.
+
+Throttling lives in common.LogOperationProgress \(every 5 pages, rate\-limit unthrottled\), so this method emits every event the client fires and lets the common helper decide what surfaces.
 
 <a name="StripePushProvider"></a>
 ## type StripePushProvider

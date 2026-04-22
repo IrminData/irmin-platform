@@ -88,10 +88,14 @@ var progressCoverage = []struct {
 		expectedNonNilPush: false, // Phase 3 flips this true
 	},
 	{
-		name:               "Stripe",
-		pullProvider:       &stripecontrollers.StripePullProvider{},
-		pushProvider:       &stripecontrollers.StripePushProvider{},
-		expectedNonNilPull: false, // Phase 5 flips this true once the migration to common.* lands
+		name:         "Stripe",
+		pullProvider: &stripecontrollers.StripePullProvider{},
+		pushProvider: &stripecontrollers.StripePushProvider{},
+		// Pull migrated from local stripeclient.* progress types to
+		// common.* in Phase 5. Returns a non-nil handler even on a
+		// zero-value provider — nil-safety lives in
+		// common.LogOperationProgress, not in the provider's guard.
+		expectedNonNilPull: true,
 		expectedNonNilPush: false, // Phase 3 flips this true
 	},
 }

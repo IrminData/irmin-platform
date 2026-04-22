@@ -28,6 +28,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"irmin-connectors/connectors/common"
 )
 
 // DefaultBaseURL is the Stripe REST API root. Overridable via
@@ -111,55 +113,9 @@ type Client struct {
 	// emits zero events between operation/init and operation/pull's
 	// final result, which leaves operators debugging a 10-minute hang
 	// with no signal. Callers (the pull controller) wire this up to
-	// the operation-log stream.
-	progressHandler ProgressHandler
+	// the operation-log stream via common.LogOperationProgress.
+	progressHandler common.ProgressHandler
 }
-
-// ProgressEvent is a single observability event emitted from the
-// Stripe client during long-running operations. The pull path uses
-// this to surface per-page progress + rate-limit waits into the
-// workflow's log stream so an apparently-stuck run is actually
-// diagnosable.
-type ProgressEvent struct {
-	// Kind discriminates the event. One of ProgressKindPage or
-	// ProgressKindRateLimit (more may be added later).
-	Kind string
-	// ResourcePath is the endpoint the event applies to
-	// (e.g., "/v1/customers"). Always set.
-	ResourcePath string
-	// Page is 1-based page number within the current pagination loop.
-	// Only meaningful for ProgressKindPage.
-	Page int
-	// RecordsSoFar is the cumulative record count accumulated by this
-	// call to ListBounded. Only meaningful for ProgressKindPage.
-	RecordsSoFar int
-	// Cursor is the `starting_after` cursor that produced this page,
-	// or "" for the first page. Useful for resume / diagnostics.
-	// Only meaningful for ProgressKindPage.
-	Cursor string
-	// Attempt is the 0-based retry attempt. Only meaningful for
-	// ProgressKindRateLimit.
-	Attempt int
-	// Wait is how long the client is about to sleep before retrying.
-	// Only meaningful for ProgressKindRateLimit.
-	Wait time.Duration
-}
-
-// ProgressKind* enumerate the event types emitted via ProgressHandler.
-const (
-	// ProgressKindPage fires after each successful list-page response.
-	ProgressKindPage = "page"
-	// ProgressKindRateLimit fires when the client is about to sleep
-	// before retrying a 429. Without this event, rate-limit storms
-	// look like a silent hang.
-	ProgressKindRateLimit = "rate_limit"
-)
-
-// ProgressHandler receives observability events from long-running
-// operations. Called synchronously from inside the pagination /
-// retry loops — implementations must return quickly. nil-safe:
-// callers that don't need progress events simply don't set one.
-type ProgressHandler func(ProgressEvent)
 
 // Option configures the Client at construction time.
 type Option func(*Client)
@@ -182,7 +138,7 @@ func WithHTTPClient(hc *http.Client) Option {
 
 // WithProgressHandler installs an observability hook for pagination
 // + retry loops. Pass nil to disable (same as the default).
-func WithProgressHandler(h ProgressHandler) Option {
+func WithProgressHandler(h common.ProgressHandler) Option {
 	return func(c *Client) {
 		c.progressHandler = h
 	}
@@ -348,8 +304,8 @@ func (c *Client) emitPageProgress(resourcePath string, page, records int, cursor
 	if c.progressHandler == nil {
 		return
 	}
-	c.progressHandler(ProgressEvent{
-		Kind:         ProgressKindPage,
+	c.progressHandler(common.ProgressEvent{
+		Kind:         common.ProgressKindPage,
 		ResourcePath: resourcePath,
 		Page:         page,
 		RecordsSoFar: records,
@@ -363,8 +319,8 @@ func (c *Client) emitRateLimitProgress(resourcePath string, attempt int, wait ti
 	if c.progressHandler == nil {
 		return
 	}
-	c.progressHandler(ProgressEvent{
-		Kind:         ProgressKindRateLimit,
+	c.progressHandler(common.ProgressEvent{
+		Kind:         common.ProgressKindRateLimit,
 		ResourcePath: resourcePath,
 		Attempt:      attempt,
 		Wait:         wait,

@@ -259,20 +259,25 @@ func (p *StripePullProvider) InitializeClient(
 	operation *db.Operation,
 ) (any, *string, func(), error)
     InitializeClient builds the Stripe client for this operation and installs
-    a progress handler so long-running pulls surface per-page and rate-limit
-    events into the workflow log stream. Without the handler, a multi-minute
-    Stripe pull emits zero events between operation/init and operation/pull's
-    final response — operators debugging a stuck run have nothing to work with.
+    the progress handler so long-running pulls surface per-page and rate-limit
+    events into the workflow log stream.
 
-func (p *StripePullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
-    ProgressHandler returns nil today. Stripe DOES emit per-page +
-    rate-limit progress, but it's currently wired through the local
-    stripeclient.ProgressHandler type inside InitializeClient (see
-    makeProgressHandler below). Phase 5 of the progress-events rollout deletes
-    makeProgressHandler in favor of returning a real common.ProgressHandler
-    from this method, at which point the expected-progress coverage test in
-    connectors/common will flip Stripe to required-non-nil. The baseline
-    heartbeat from the common pull handler already fires regardless.
+func (p *StripePullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler returns the per-page + rate-limit observability callback
+    that gets wired into the Stripe client during InitializeClient. Without it,
+    a multi-minute Stripe pull emits zero events between operation/init and
+    operation/pull's final response, leaving operators debugging a 10-minute
+    hang with no signal — which is exactly the field incident this whole
+    machinery exists to prevent.
+
+    Always returns a non-nil handler. Nil-safety lives one layer down in
+    common.LogOperationProgress, which no-ops on nil dbInstance / logger / nil
+    operation — so this method is safe to call from the progress-coverage audit
+    test on a bare provider too.
+
+    Throttling lives in common.LogOperationProgress (every 5 pages, rate-limit
+    unthrottled), so this method emits every event the client fires and lets the
+    common helper decide what surfaces.
 
 type StripePushProvider struct {
 	// Has unexported fields.

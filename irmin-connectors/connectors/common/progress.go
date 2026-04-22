@@ -144,6 +144,16 @@ func LogOperationProgress(
 	operationID uint,
 	event ProgressEvent,
 ) {
+	// Nil-safe per the docstring contract — connectors return real
+	// handlers from ProgressHandler(operation) before InitializeClient
+	// has hydrated dbInstance, and tests instantiate bare providers.
+	// In both cases the handler may fire with a nil dbInstance and we
+	// must no-op rather than panic. logger==nil is also tolerated;
+	// LogOperationEvent itself logs through it on marshal errors so
+	// nil there would be a separate panic.
+	if dbInstance == nil || logger == nil {
+		return
+	}
 	if !shouldEmitProgress(event) {
 		return
 	}

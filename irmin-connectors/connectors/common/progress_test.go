@@ -233,6 +233,21 @@ func TestRenderProgressEvent_JSONRoundTrip(t *testing.T) {
 	}
 }
 
+// TestLogOperationProgress_NilSafe verifies the documented contract:
+// passing a nil dbInstance or logger no-ops rather than panicking.
+// Connectors return real handlers from ProgressHandler(operation)
+// before InitializeClient has hydrated the dbInstance, and the
+// progress-coverage audit test invokes those handlers on bare
+// providers — both paths must not panic.
+func TestLogOperationProgress_NilSafe(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("nil dbInstance/logger should not panic: %v", r)
+		}
+	}()
+	LogOperationProgress(nil, nil, 0, ProgressEvent{Kind: ProgressKindHeartbeat})
+}
+
 // TestProgressHandler_InvocationCounts verifies a real handler is
 // invoked exactly once per call — the common contract every
 // connector relies on. Throttling happens in LogOperationProgress,
