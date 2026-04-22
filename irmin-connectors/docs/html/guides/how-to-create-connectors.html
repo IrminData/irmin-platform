@@ -357,6 +357,190 @@ Before submitting:
 4. Validate error handling scenarios
 5. Check authentication mechanisms work properly
 
+## Observability — progress events
+
+A 10-minute Stripe import once produced zero log rows between
+`operation/init` and a `context deadline exceeded`. The connector
+wasn't broken — Stripe pagination was slow — but without per-page
+emission inside the pagination loop, operators saw nothing for 10
+minutes, then a timeout. Silent multi-minute operations are
+chronically hard to triage.
+
+Every long-running connector loop — paginated HTTP, retry/backoff,
+chunked upload, SQL row scan, multi-file SFTP transfer — needs
+per-iteration emission. Shared vocabulary in
+[`connectors/common/progress.go`](../connectors/common/progress.go).
+
+### The contract
+
+Both `PullOperationProvider` and `PushOperationProvider` require:
+
+```go
+// Return nil only if the operation can't exceed ~10 seconds.
+ProgressHandler(operation *db.Operation) common.ProgressHandler
+```
+
+Returning nil is allowed — the common pull/push handler emits a 30s
+baseline heartbeat regardless. But anything that paginates, retries,
+or batches should return a real handler.
+
+### Skeleton
+
+`common.NewProgressHandler` is the standard implementation. Hydrate
+`p.logger` in `InitializeClient` first so the closure captures it:
+
+```go
+func (p *YourProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
+    return common.NewProgressHandler(p.dbInstance, p.logger, operation)
+}
+
+func (p *YourProvider) InitializeClient(
+    c fiber.Ctx,
+    logger *slog.Logger,
+    operation *db.Operation,
+) (any, *string, func(), error) {
+    p.logger = logger
+    client, err := yourclient.Init(...)
+    if err != nil {
+        return nil, nil, func() {}, err
+    }
+    client.SetProgressHandler(p.ProgressHandler(operation))
+    // ...
+}
+```
+
+The returned handler is always non-nil. Nil-safety lives in
+`common.LogOperationProgress` (no-ops on nil `dbInstance`/`logger`),
+so it's safe to invoke from tests or pre-hydration paths.
+
+### Picking a kind
+
+| Kind | When to fire | Throttling |
+| --- | --- | --- |
+| `ProgressKindPage` | Each pagination iteration (cursor-based or offset-based HTTP list endpoints). Set `Page`, `RecordsSoFar`, `Cursor`. | `LogOperationProgress` emits page 1 + every 5 pages. |
+| `ProgressKindRateLimit` | Before each retry/backoff sleep. Set `Attempt`, `Wait`. | Unthrottled — every retry surfaces. |
+| `ProgressKindBatch` | After each chunk of a bulk upload. Set `Batch`, `BatchSize`. | `LogOperationProgress` emits batch 1 + every 10 batches. |
+| `ProgressKindQuery` | During SQL row scans. Set `Rows`. | **Caller throttles** via `common.ThrottledQueryEmitter` — every N rows OR every T of wall clock. |
+| `ProgressKindFile` | Per file in a multi-file transfer. Set `File`, `BytesTransferred`, optionally `BytesTotal`. | Caller throttles (one file = one event is usually fine). |
+| `ProgressKindHeartbeat` | Don't emit yourself — the common pull/push handler emits this every 30s automatically. | Always logs. |
+
+`ResourcePath` should always be set so operators can disambiguate
+multiple targets in one workflow: `/v1/customers`,
+`postgres://orders/users`, `sftp://host:22`, `pinecone://my-index`.
+
+### Wiring the client
+
+Two patterns, both accepted:
+
+**Functional options** — used by Stripe and Pinecone. Best when
+you control the client constructor and there are multiple optional
+configuration knobs:
+
+```go
+type Option func(*Client)
+
+func WithProgressHandler(h common.ProgressHandler) Option {
+    return func(c *Client) { c.progressHandler = h }
+}
+
+func NewClient(apiKey string, opts ...Option) *Client { /* ... */ }
+```
+
+**Setter method** — used by SFTP and Firecrawl. Best when the
+client constructor signature is shared across multiple callers and
+adding a variadic would ripple wider than a one-liner:
+
+```go
+func (c *YourClient) SetProgressHandler(h common.ProgressHandler) {
+    c.progressHandler = h
+}
+```
+
+Either way: the client owns the per-iteration emission, the
+controller owns the closure binding `operation` + `dbInstance`, and
+`common.LogOperationProgress` owns throttling + log-row formatting.
+
+### Throttling gotchas
+
+- **Don't pre-throttle `Page` / `Batch` / `RateLimit`.**
+  `LogOperationProgress` knows the cadence. Emit every iteration;
+  let the helper filter.
+- **Do pre-throttle `Query` / `File`.** Millions of `rows.Next()`
+  iterations would emit millions of events. Use
+  [`common.ThrottledQueryEmitter`](../connectors/common/progress.go) —
+  fires every N rows OR every T of wall clock, whichever first.
+  First call always emits.
+- **Heartbeats are free.** Even with a nil `ProgressHandler`, the
+  common handler emits `ProgressKindHeartbeat` every 30s.
+- **Build the emitter inside the retry loop, not outside.** The
+  emitter is stateful (`lastRows`, `lastEmit`). If the inner
+  function resets its row counter on each attempt (as Postgres /
+  MySQL `executeInserts` does), reusing the emitter across attempts
+  means attempt 2 hits the row gate with `1 - 4001 < 1000`, stays
+  closed forever, and silences the deadlock-retry path you wanted
+  to observe. Hoist `handler` and `resourcePath` out; build the
+  emitter in:
+
+  ```go
+  handler := p.ProgressHandler(operation)
+  resourcePath := resourcePathForTable(p.databaseName, tableName)
+  for attempt := 1; attempt <= utils.MaxRetries; attempt++ {
+      emit := common.ThrottledQueryEmitter(handler, resourcePath, 1000, 5*time.Second)
+      err := executeInsertsRetryable(c, tx, records, columns, insertSQL, emit)
+      // ...
+  }
+  ```
+
+### SDK-managed jobs (poll loops)
+
+When an external SDK owns the long-running loop (Firecrawl's
+`Crawl` is the canonical example), wrap it at the controller layer.
+Two failure modes the Firecrawl PR caught:
+
+1. **Unbounded polling.** A loop that exits only on `"completed" ||
+   "failed"` spins forever if the SDK surfaces an unfamiliar status
+   (`"cancelled"`, a future API addition) — and it holds the
+   operation execution lock the whole time. Fix: cap with
+   `context.WithTimeout` (Firecrawl uses 30 minutes) and treat any
+   unknown status as **terminal**. Defaulting unknown → terminal is
+   what keeps you safe against SDK drift.
+
+2. **Paginated status responses.** Vendor APIs often return job
+   status in pages with a `Next` cursor (Firecrawl returns ~10MB at
+   a time). The SDK's "wait for completion" call may not follow it
+   — you'll silently receive only the first page. Walk the cursor
+   yourself before returning.
+
+[`connectors/firecrawl/client/client.go`](../connectors/firecrawl/client/client.go)
+has both: a deadline-bounded poll loop using a known-active-statuses
+lookup, plus `aggregateCrawlPages` for the `Next` chain.
+
+### Reference implementations
+
+- **[Stripe](../connectors/stripe/client/client.go)** —
+  `WithProgressHandler` option, per-page + rate-limit emission in
+  `ListBounded`. The original incident.
+- **[Pinecone](../connectors/pinecone/client/client.go)** — page
+  events from `FetchAll`, batch events from `Upsert`.
+- **[Postgres](../connectors/postgres/controllers/operationPush.go)** —
+  `ThrottledQueryEmitter` over `buildRecordsFromRows` (pull) and
+  `executeInserts` (push). Shows the emitter-per-retry pattern.
+- **[SFTP](../connectors/sftp/client/sftpClient.go)** — per-file +
+  per-retry events via setter. Upload emits cumulative
+  `BytesTransferred` so the percentage reads correctly.
+- **[Firecrawl](../connectors/firecrawl/client/client.go)** — async
+  job, bounded poll loop, `Next`-URL aggregation.
+
+### Audit gate
+
+Every connector must appear in
+[`connectors/progress_audit_test.go`](../connectors/progress_audit_test.go)
+with explicit `expectedNonNilPull` / `expectedNonNilPush` flags.
+CI fails when a connector's `ProgressHandler` return value diverges
+from the table (catches refactor regressions) or when a new
+connector lands in `RegisterAllConnectors` without an entry. Add
+yourself to the table when you wire the handler.
+
 ## OAuth-Backed Connectors
 
 Most SaaS vendors (HubSpot, Stripe, Intercom, Linear, Sentry, ...) use

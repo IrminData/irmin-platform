@@ -192,6 +192,52 @@ been open unreasonably long (>24h).
 Connectors declare capabilities via `/info`; Core only calls the
 endpoints corresponding to declared capabilities.
 
+### Observability and progress
+
+Long-running operations need to surface intermediate progress, or
+an apparently-stuck run is undiagnosable. Shared vocabulary lives
+in `connectors/common`; the data path:
+
+```
+provider.GetAllFiles / ProcessFiles
+        │
+        │ (per-iteration emit during pagination / batching / scans)
+        ▼
+common.ProgressHandler  ←──────┐
+        │                      │
+        ▼                      │ (provider-supplied closure)
+common.LogOperationProgress    │
+        │ (per-kind throttling)│
+        ▼                      │
+common.LogOperationEvent       │
+        │                      │
+        ▼                      │
+db.OperationLog row  ──────────┘
+        │
+        ▼
+workflow run log stream
+```
+
+Two enforcement layers:
+
+- **Per-iteration emission** is the connector's job. The provider
+  returns a `common.ProgressHandler` from
+  `ProgressHandler(operation)`; the client wires it into its inner
+  loops. Throttling (every 5 pages, every 10 batches, etc.) lives
+  in `common.LogOperationProgress`.
+- **30-second heartbeat** is the common handler's job. A goroutine
+  in `HandleOperationPull` / `HandleOperationPush` fires
+  `ProgressKindHeartbeat` for the operation's lifetime, even when
+  the provider's handler returns nil. No connector ships a silent
+  10-minute operation by accident.
+
+[`connectors/progress_audit_test.go`](../connectors/progress_audit_test.go)
+fails CI when a connector lands in `RegisterAllConnectors` without
+a `ProgressHandler` declaration.
+
+For the implementation cookbook see
+[**how-to-create-connectors.md → Observability**](./how-to-create-connectors.md#observability--progress-events).
+
 ### "Everything is a File"
 
 Connectors normalise diverse external data into files. This is the

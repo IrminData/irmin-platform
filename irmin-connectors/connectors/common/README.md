@@ -298,6 +298,138 @@ config-field code small:
   wants finer-grained progress reporting than the implicit
   start/finish bookends.
 
+## Progress and observability
+
+Long-running operations need per-iteration log emission or they
+look like silent hangs. Shared types in
+[`progress.go`](./progress.go); every `PullOperationProvider` and
+`PushOperationProvider` must declare intent via:
+
+```go
+ProgressHandler(operation *db.Operation) ProgressHandler
+```
+
+Return nil only if the operation can't exceed ~10 seconds — the
+common pull/push handler emits a 30s heartbeat regardless, so even
+nil-handler connectors aren't fully silent.
+
+### `ProgressEvent` and `ProgressKind*`
+
+```go
+type ProgressEvent struct {
+    Kind         string  // ProgressKindPage | RateLimit | Batch | Query | File | Heartbeat
+    ResourcePath string  // human-readable identifier (URL, table, file path...)
+
+    // ProgressKindPage
+    Page         int
+    RecordsSoFar int
+    Cursor       string
+
+    // ProgressKindRateLimit
+    Attempt int
+    Wait    time.Duration
+
+    // ProgressKindBatch
+    Batch     int
+    BatchSize int
+
+    // ProgressKindQuery
+    Rows int64
+
+    // ProgressKindFile
+    File             string
+    BytesTransferred int64
+    BytesTotal       int64
+}
+```
+
+`Kind` discriminates which subset of fields applies. Always set
+`ResourcePath` so operators can tell which target (Pinecone index,
+SFTP host, Postgres table, ...) a stuck operation belongs to.
+
+### `LogOperationProgress`
+
+The connector-facing emission helper. Handles per-kind throttling
+and delegates to `LogOperationEvent`. Nil-safe on `dbInstance` /
+`logger` so handlers built before `InitializeClient` finishes
+hydrating won't panic when invoked.
+
+```go
+common.LogOperationProgress(dbInstance, logger, operation.ID, common.ProgressEvent{
+    Kind:         common.ProgressKindPage,
+    ResourcePath: "/v1/customers",
+    Page:         5,
+    RecordsSoFar: 500,
+    Cursor:       "cus_abc",
+})
+```
+
+Throttling rules baked in:
+
+- **Page**: emits page 1 + every 5th page
+- **Batch**: emits batch 1 + every 10th batch
+- **RateLimit / File / Heartbeat**: always emits (unthrottled)
+- **Query**: always emits — caller must pre-throttle (use
+  `ThrottledQueryEmitter`)
+
+### `ThrottledQueryEmitter`
+
+Pre-throttle helper for high-cardinality kinds (SQL `rows.Next()`,
+byte-level file streams). Returns a closure that fires at most
+every N rows OR every T of wall clock, whichever first. First call
+always emits.
+
+```go
+emit := common.ThrottledQueryEmitter(
+    p.ProgressHandler(operation),
+    "postgres://" + dbName + "/" + tableName,
+    1000,           // minRows
+    5*time.Second,  // minInterval
+)
+
+for rows.Next() {
+    // ...scan...
+    rowsScanned++
+    emit(rowsScanned)
+}
+```
+
+Returns a no-op closure when handler is nil — callers don't need a
+guard.
+
+**Stateful**: `lastRows` and `lastEmit` persist between calls. In
+retry loops where the inner function resets its row counter (as
+Postgres / MySQL `executeInserts` does), build the emitter inside
+the loop, not outside — otherwise stale state keeps the row gate
+closed on attempt 2 and silences the deadlock-retry path. Hoist
+`ProgressHandler` and `ResourcePath` out; build the emitter in. See
+[guides/how-to-create-connectors.md → Throttling gotchas](../../guides/how-to-create-connectors.md#throttling-gotchas)
+for a worked example.
+
+### `NewProgressHandler` and the `ProgressHandler` mandate
+
+Every provider must implement
+`ProgressHandler(operation *db.Operation) common.ProgressHandler`
+— the interface enforces it at compile time. Return nil only if the
+operation can't exceed ~10 seconds; otherwise return a real handler.
+
+`common.NewProgressHandler` is the standard implementation every
+Phase 3 connector uses:
+
+```go
+func (p *YourProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
+    return common.NewProgressHandler(p.dbInstance, p.logger, operation)
+}
+```
+
+Wire it from `InitializeClient` after hydrating `p.logger`. Choose
+between functional options (`WithProgressHandler` — Stripe,
+Pinecone) and a setter (`SetProgressHandler` — SFTP, Firecrawl) per
+connector; both are accepted.
+
+For worked examples per emission shape see
+[**guides/how-to-create-connectors.md → Observability**](../../guides/how-to-create-connectors.md#observability--progress-events).
+
 ## Unsupported operations
 
 If a connector doesn't implement a capability, return the matching
