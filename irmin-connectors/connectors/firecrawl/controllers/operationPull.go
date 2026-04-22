@@ -18,13 +18,26 @@ type FirecrawlPullProvider struct {
 	logger     *slog.Logger
 }
 
-// ProgressHandler returns nil today — Firecrawl crawls are
-// SDK-managed (mendableai/firecrawl-go owns the inner loop) so we
-// rely on the common pull handler's baseline heartbeat. Phase 3 of
-// the progress-events rollout adds a controller-level poll loop that
-// surfaces the SDK's job status as ProgressKindPage events.
-func (p *FirecrawlPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
-	return nil
+// ProgressHandler returns the per-poll observability callback the
+// Firecrawl client fires from inside Crawl's status-poll loop. The
+// SDK's synchronous CrawlURL blocks until completion with no
+// progress signal; the client's async path (gated on a non-nil
+// handler) submits the crawl and polls CheckCrawlStatus every
+// CrawlPollInterval, surfacing completed/total page counts.
+//
+// Always returns a non-nil handler. Nil-safety lives one layer down
+// in common.LogOperationProgress.
+//
+// Throttling lives in common.LogOperationProgress (every 5 polls)
+// since each poll-loop iteration is a "page" event.
+func (p *FirecrawlPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
+	return func(event common.ProgressEvent) {
+		var operationID uint
+		if operation != nil {
+			operationID = operation.ID
+		}
+		common.LogOperationProgress(p.dbInstance, p.logger, operationID, event)
+	}
 }
 
 // InitializeClient initializes the Firecrawl client for pull operations.
@@ -33,10 +46,14 @@ func (p *FirecrawlPullProvider) InitializeClient(
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
+	// Hydrate logger before building the handler so the closure
+	// p.ProgressHandler returns has a valid logger.
+	p.logger = logger
 	firecrawlClient, err := client.InitFirecrawlClient(c, logger, operation)
 	if err != nil {
 		return nil, nil, func() {}, fmt.Errorf("failed to initialize Firecrawl client: %w", err)
 	}
+	firecrawlClient.SetProgressHandler(p.ProgressHandler(operation))
 
 	cleanup := func() {
 		// Firecrawl client doesn't need explicit cleanup

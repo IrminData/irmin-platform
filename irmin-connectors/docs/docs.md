@@ -4545,6 +4545,7 @@ import "irmin-connectors/connectors/firecrawl/client"
   - [func \(c \*FirecrawlClient\) Map\(\) \(map\[string\]\[\]byte, error\)](<#FirecrawlClient.Map>)
   - [func \(c \*FirecrawlClient\) Scrape\(\) \(map\[string\]\[\]byte, error\)](<#FirecrawlClient.Scrape>)
   - [func \(c \*FirecrawlClient\) Search\(\) \(map\[string\]\[\]byte, error\)](<#FirecrawlClient.Search>)
+  - [func \(c \*FirecrawlClient\) SetProgressHandler\(h common.ProgressHandler\)](<#FirecrawlClient.SetProgressHandler>)
 
 
 ## Constants
@@ -4567,6 +4568,18 @@ const (
     // Default API URL
     DefaultAPIURL = "https://api.firecrawl.dev"
 )
+```
+
+<a name="CrawlMaxDuration"></a>CrawlMaxDuration caps the entire async crawl \+ poll operation. Firecrawl crawls of even huge sites finish in well under this; hitting this limit means the job is genuinely stuck \(an unexpected status the SDK doesn't surface, a runaway scrape against a site we can't bound, etc.\) and we should bail rather than holding the operation execution lock forever.
+
+```go
+const CrawlMaxDuration = 30 * time.Minute
+```
+
+<a name="CrawlPollInterval"></a>CrawlPollInterval is how often the Crawl loop polls CheckCrawlStatus for progress \+ completion. Chosen to be short enough that operators see steady progress on a multi\-minute crawl, long enough not to spam Firecrawl's API.
+
+```go
+const CrawlPollInterval = 5 * time.Second
 ```
 
 <a name="DeduplicateFilename"></a>
@@ -4636,6 +4649,7 @@ type FirecrawlClient struct {
     Query         string
     Limit         *int
     WaitFor       *int
+    // contains filtered or unexported fields
 }
 ```
 
@@ -4655,7 +4669,7 @@ InitFirecrawlClient initializes a Firecrawl client from operation configuration.
 func (c *FirecrawlClient) Crawl() (map[string][]byte, error)
 ```
 
-Crawl performs a crawl operation on a URL and all its subpages.
+Crawl performs a crawl operation on a URL and all its subpages. When a progress handler is installed via SetProgressHandler, Crawl switches from the SDK's synchronous CrawlURL to AsyncCrawlURL \+ CheckCrawlStatus polling so per\-poll progress \(completed/total page counts\) surfaces into the operation log. Without a handler, Crawl preserves the original synchronous path so existing callers that don't wire progress are unaffected.
 
 <a name="FirecrawlClient.Execute"></a>
 ### func \(\*FirecrawlClient\) Execute
@@ -4692,6 +4706,15 @@ func (c *FirecrawlClient) Search() (map[string][]byte, error)
 ```
 
 Search performs a search operation \(note: may not be available in all API versions\).
+
+<a name="FirecrawlClient.SetProgressHandler"></a>
+### func \(\*FirecrawlClient\) SetProgressHandler
+
+```go
+func (c *FirecrawlClient) SetProgressHandler(h common.ProgressHandler)
+```
+
+SetProgressHandler installs an observability hook for Crawl's status\-poll loop. Pass nil to disable — Crawl falls back to the SDK's synchronous CrawlURL when no handler is set, preserving existing behavior for callers that don't wire progress.
 
 # config
 
@@ -4809,7 +4832,7 @@ import "irmin-connectors/connectors/firecrawl/controllers"
   - [func \(p \*FirecrawlPullProvider\) GetAllFiles\(c fiber.Ctx, clientAny any\) \(\[\]string, \[\]\[\]byte, error\)](<#FirecrawlPullProvider.GetAllFiles>)
   - [func \(p \*FirecrawlPullProvider\) GetFileByPath\(c fiber.Ctx, clientAny any, path string\) \(string, \[\]byte, error\)](<#FirecrawlPullProvider.GetFileByPath>)
   - [func \(p \*FirecrawlPullProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#FirecrawlPullProvider.InitializeClient>)
-  - [func \(p \*FirecrawlPullProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#FirecrawlPullProvider.ProgressHandler>)
+  - [func \(p \*FirecrawlPullProvider\) ProgressHandler\(operation \*db.Operation\) common.ProgressHandler](<#FirecrawlPullProvider.ProgressHandler>)
 - [type FirecrawlSchemaProvider](<#FirecrawlSchemaProvider>)
   - [func \(p \*FirecrawlSchemaProvider\) GetSchema\(\_ fiber.Ctx, clientAny any, operationType string, \_ \*string\) \(\*irminmodels.ObjectSchema, error\)](<#FirecrawlSchemaProvider.GetSchema>)
   - [func \(p \*FirecrawlSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#FirecrawlSchemaProvider.GetSupportedOperationTypes>)
@@ -5076,10 +5099,14 @@ InitializeClient initializes the Firecrawl client for pull operations.
 ### func \(\*FirecrawlPullProvider\) ProgressHandler
 
 ```go
-func (p *FirecrawlPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+func (p *FirecrawlPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
 ```
 
-ProgressHandler returns nil today — Firecrawl crawls are SDK\-managed \(mendableai/firecrawl\-go owns the inner loop\) so we rely on the common pull handler's baseline heartbeat. Phase 3 of the progress\-events rollout adds a controller\-level poll loop that surfaces the SDK's job status as ProgressKindPage events.
+ProgressHandler returns the per\-poll observability callback the Firecrawl client fires from inside Crawl's status\-poll loop. The SDK's synchronous CrawlURL blocks until completion with no progress signal; the client's async path \(gated on a non\-nil handler\) submits the crawl and polls CheckCrawlStatus every CrawlPollInterval, surfacing completed/total page counts.
+
+Always returns a non\-nil handler. Nil\-safety lives one layer down in common.LogOperationProgress.
+
+Throttling lives in common.LogOperationProgress \(every 5 polls\) since each poll\-loop iteration is a "page" event.
 
 <a name="FirecrawlSchemaProvider"></a>
 ## type FirecrawlSchemaProvider

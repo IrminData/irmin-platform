@@ -22,6 +22,18 @@ const (
 	// Default API URL
 	DefaultAPIURL = "https://api.firecrawl.dev"
 )
+const CrawlMaxDuration = 30 * time.Minute
+    CrawlMaxDuration caps the entire async crawl + poll operation. Firecrawl
+    crawls of even huge sites finish in well under this; hitting this limit
+    means the job is genuinely stuck (an unexpected status the SDK doesn't
+    surface, a runaway scrape against a site we can't bound, etc.) and we should
+    bail rather than holding the operation execution lock forever.
+
+const CrawlPollInterval = 5 * time.Second
+    CrawlPollInterval is how often the Crawl loop polls CheckCrawlStatus for
+    progress + completion. Chosen to be short enough that operators see steady
+    progress on a multi-minute crawl, long enough not to spam Firecrawl's API.
+
 
 FUNCTIONS
 
@@ -60,6 +72,8 @@ type FirecrawlClient struct {
 	Query         string
 	Limit         *int
 	WaitFor       *int
+
+	// Has unexported fields.
 }
     FirecrawlClient represents a client for interacting with the Firecrawl API.
 
@@ -68,7 +82,12 @@ func InitFirecrawlClient(_ any, logger *slog.Logger, operation *db.Operation) (*
     configuration.
 
 func (c *FirecrawlClient) Crawl() (map[string][]byte, error)
-    Crawl performs a crawl operation on a URL and all its subpages.
+    Crawl performs a crawl operation on a URL and all its subpages. When a
+    progress handler is installed via SetProgressHandler, Crawl switches from
+    the SDK's synchronous CrawlURL to AsyncCrawlURL + CheckCrawlStatus polling
+    so per-poll progress (completed/total page counts) surfaces into the
+    operation log. Without a handler, Crawl preserves the original synchronous
+    path so existing callers that don't wire progress are unaffected.
 
 func (c *FirecrawlClient) Execute() (map[string][]byte, error)
     Execute runs the configured operation and returns the resulting files.
@@ -82,6 +101,12 @@ func (c *FirecrawlClient) Scrape() (map[string][]byte, error)
 func (c *FirecrawlClient) Search() (map[string][]byte, error)
     Search performs a search operation (note: may not be available in all API
     versions).
+
+func (c *FirecrawlClient) SetProgressHandler(h common.ProgressHandler)
+    SetProgressHandler installs an observability hook for Crawl's status-poll
+    loop. Pass nil to disable — Crawl falls back to the SDK's synchronous
+    CrawlURL when no handler is set, preserving existing behavior for callers
+    that don't wire progress.
 
 </pre>
 </body></html>

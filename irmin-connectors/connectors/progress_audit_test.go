@@ -56,8 +56,12 @@ var progressCoverage = []struct {
 		name:         "Firecrawl",
 		pullProvider: &firecrawlcontrollers.FirecrawlPullProvider{},
 		// Firecrawl ships pull-only.
-		pushProvider:       nil,
-		expectedNonNilPull: false, // Phase 3 flips this true
+		pushProvider: nil,
+		// Phase 3 switched Crawl from the SDK's synchronous
+		// CrawlURL to AsyncCrawlURL + CheckCrawlStatus polling
+		// (gated on a non-nil handler), emitting ProgressKindPage
+		// per poll with completed/total page counts.
+		expectedNonNilPull: true,
 	},
 	{
 		name:         "Pinecone",

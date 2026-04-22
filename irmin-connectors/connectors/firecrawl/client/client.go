@@ -1,13 +1,18 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
+	"irmin-connectors/connectors/common"
 	"irmin-connectors/db"
 
 	firecrawl "github.com/mendableai/firecrawl-go"
@@ -47,6 +52,58 @@ type FirecrawlClient struct {
 	Query         string
 	Limit         *int
 	WaitFor       *int
+	// progressHandler is the optional observability hook for the
+	// Crawl status-poll loop. The Firecrawl SDK's synchronous CrawlURL
+	// blocks until completion with no progress signal; this client
+	// switches to AsyncCrawlURL + CheckCrawlStatus polling when a
+	// handler is set, emitting per-poll ProgressKindPage events with
+	// completed/total page counts. Without it, a 500-page crawl
+	// silently consumed 10+ minutes between operation/init and the
+	// final response — same shape as the field incident that
+	// prompted this rollout.
+	progressHandler common.ProgressHandler
+}
+
+// CrawlPollInterval is how often the Crawl loop polls
+// CheckCrawlStatus for progress + completion. Chosen to be short
+// enough that operators see steady progress on a multi-minute crawl,
+// long enough not to spam Firecrawl's API.
+const CrawlPollInterval = 5 * time.Second
+
+// CrawlMaxDuration caps the entire async crawl + poll operation.
+// Firecrawl crawls of even huge sites finish in well under this;
+// hitting this limit means the job is genuinely stuck (an
+// unexpected status the SDK doesn't surface, a runaway scrape
+// against a site we can't bound, etc.) and we should bail rather
+// than holding the operation execution lock forever.
+const CrawlMaxDuration = 30 * time.Minute
+
+// activeCrawlStatuses are the Firecrawl statuses the SDK treats as
+// "still running" (sourced from firecrawl-go v1.0.0's
+// monitorJobStatus). Anything outside this set — including
+// "completed", "failed", "cancelled", or any future SDK addition —
+// is terminal: we exit the poll loop and let the caller handle the
+// final status. Defaulting unknowns to "terminal" rather than
+// "still running" prevents infinite loops on SDK / API drift, which
+// is the failure mode the operation execution lock makes
+// disastrous.
+//
+//nolint:gochecknoglobals // taxonomy lookup table; defining it inside the poll loop would build the map every iteration for no benefit, and it's read-only after init.
+var activeCrawlStatuses = map[string]bool{
+	"active":   true,
+	"paused":   true,
+	"pending":  true,
+	"queued":   true,
+	"waiting":  true,
+	"scraping": true,
+}
+
+// SetProgressHandler installs an observability hook for Crawl's
+// status-poll loop. Pass nil to disable — Crawl falls back to the
+// SDK's synchronous CrawlURL when no handler is set, preserving
+// existing behavior for callers that don't wire progress.
+func (c *FirecrawlClient) SetProgressHandler(h common.ProgressHandler) {
+	c.progressHandler = h
 }
 
 // Config holds the configuration for the Firecrawl client.
@@ -305,6 +362,12 @@ func (c *FirecrawlClient) Scrape() (map[string][]byte, error) {
 }
 
 // Crawl performs a crawl operation on a URL and all its subpages.
+// When a progress handler is installed via SetProgressHandler, Crawl
+// switches from the SDK's synchronous CrawlURL to AsyncCrawlURL +
+// CheckCrawlStatus polling so per-poll progress (completed/total
+// page counts) surfaces into the operation log. Without a handler,
+// Crawl preserves the original synchronous path so existing callers
+// that don't wire progress are unaffected.
 func (c *FirecrawlClient) Crawl() (map[string][]byte, error) {
 	if c.URL == "" {
 		return nil, errors.New("url is required for crawl operation")
@@ -319,10 +382,21 @@ func (c *FirecrawlClient) Crawl() (map[string][]byte, error) {
 		Limit: c.Limit,
 	}
 
-	// Perform crawl (synchronous - waits for completion)
-	result, err := c.App.CrawlURL(c.URL, params, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to crawl URL: %w", err)
+	var result *firecrawl.CrawlStatusResponse
+	if c.progressHandler != nil {
+		var err error
+		result, err = c.crawlWithProgress(params)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Synchronous fallback — preserved verbatim for callers that
+		// haven't opted into progress events.
+		syncResult, err := c.App.CrawlURL(c.URL, params, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to crawl URL: %w", err)
+		}
+		result = syncResult
 	}
 
 	if result == nil {
@@ -356,6 +430,130 @@ func (c *FirecrawlClient) Crawl() (map[string][]byte, error) {
 	}
 
 	return files, nil
+}
+
+// crawlWithProgress kicks off an async Firecrawl crawl, polls
+// CheckCrawlStatus every CrawlPollInterval until completion, and
+// fires a ProgressKindPage event per poll so operators see
+// completed/total page counts climbing during a multi-minute crawl.
+//
+// Bounded by CrawlMaxDuration so a stuck job releases the operation
+// execution lock instead of hanging the connector. After completion,
+// follows Next-URL pagination so large crawls (>10MB of result data)
+// return all pages — CheckCrawlStatus only returns one page at a
+// time and the SDK doesn't aggregate.
+func (c *FirecrawlClient) crawlWithProgress(params *firecrawl.CrawlParams) (*firecrawl.CrawlStatusResponse, error) {
+	asyncResp, err := c.App.AsyncCrawlURL(c.URL, params, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start async crawl: %w", err)
+	}
+	if asyncResp == nil || asyncResp.ID == "" {
+		return nil, errors.New("async crawl returned no job ID")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), CrawlMaxDuration)
+	defer cancel()
+
+	page := 0
+	var finalStatus *firecrawl.CrawlStatusResponse
+	for {
+		if ctx.Err() != nil {
+			return nil, fmt.Errorf(
+				"crawl job %s exceeded max duration %s — releasing operation lock",
+				asyncResp.ID, CrawlMaxDuration,
+			)
+		}
+
+		status, statusErr := c.App.CheckCrawlStatus(asyncResp.ID)
+		if statusErr != nil {
+			return nil, fmt.Errorf("failed to check crawl status (job %s): %w", asyncResp.ID, statusErr)
+		}
+		if status == nil {
+			return nil, fmt.Errorf("nil status response for crawl job %s", asyncResp.ID)
+		}
+
+		page++
+		c.progressHandler(common.ProgressEvent{
+			Kind:         common.ProgressKindPage,
+			ResourcePath: "firecrawl://" + c.URL,
+			Page:         page,
+			RecordsSoFar: status.Completed,
+		})
+
+		if !activeCrawlStatuses[status.Status] {
+			finalStatus = status
+			break
+		}
+		time.Sleep(CrawlPollInterval)
+	}
+
+	if finalStatus.Status == "completed" {
+		if aggErr := c.aggregateCrawlPages(ctx, asyncResp.ID, finalStatus); aggErr != nil {
+			return nil, aggErr
+		}
+	}
+
+	return finalStatus, nil
+}
+
+// aggregateCrawlPages walks the Next URL chain on a completed
+// CrawlStatusResponse, appending Data from each page so callers
+// receive the full crawl result. Without this, large crawls
+// (>500 pages or >10MB of total data) silently return only the
+// first page — CheckCrawlStatus is paginated and firecrawl-go
+// v1.0.0's CrawlURL / monitorJobStatus don't follow the Next link
+// either, so this aggregation is what makes the async path
+// strictly better than the synchronous fallback.
+func (c *FirecrawlClient) aggregateCrawlPages(
+	ctx context.Context,
+	jobID string,
+	status *firecrawl.CrawlStatusResponse,
+) error {
+	page := 1
+	for status.Next != nil && *status.Next != "" {
+		page++
+		nextPage, err := c.fetchCrawlStatusPage(ctx, *status.Next)
+		if err != nil {
+			return fmt.Errorf("failed to fetch crawl page %d for job %s: %w", page, jobID, err)
+		}
+		status.Data = append(status.Data, nextPage.Data...)
+		status.Next = nextPage.Next
+	}
+	return nil
+}
+
+// fetchCrawlStatusPage GETs a Firecrawl Next URL verbatim and
+// unmarshals the CrawlStatusResponse. We can't reuse the SDK's
+// CheckCrawlStatus because it takes a job ID and constructs the URL
+// itself; the Next URL is the API's pagination cursor, opaque to us
+// except for the auth header.
+func (c *FirecrawlClient) fetchCrawlStatusPage(
+	ctx context.Context,
+	nextURL string,
+) (*firecrawl.CrawlStatusResponse, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, nextURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("invalid next URL %q: %w", nextURL, err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.App.APIKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("next URL returned HTTP %d: %s", resp.StatusCode, string(body))
+	}
+
+	var page firecrawl.CrawlStatusResponse
+	if decodeErr := json.NewDecoder(resp.Body).Decode(&page); decodeErr != nil {
+		return nil, fmt.Errorf("decode crawl page: %w", decodeErr)
+	}
+	return &page, nil
 }
 
 // Map performs a map operation to discover all URLs from a website.

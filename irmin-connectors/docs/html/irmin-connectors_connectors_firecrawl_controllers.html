@@ -232,12 +232,19 @@ func (p *FirecrawlPullProvider) InitializeClient(
 ) (any, *string, func(), error)
     InitializeClient initializes the Firecrawl client for pull operations.
 
-func (p *FirecrawlPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
-    ProgressHandler returns nil today — Firecrawl crawls are SDK-managed
-    (mendableai/firecrawl-go owns the inner loop) so we rely on the common
-    pull handler's baseline heartbeat. Phase 3 of the progress-events rollout
-    adds a controller-level poll loop that surfaces the SDK's job status as
-    ProgressKindPage events.
+func (p *FirecrawlPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler returns the per-poll observability callback the Firecrawl
+    client fires from inside Crawl's status-poll loop. The SDK's synchronous
+    CrawlURL blocks until completion with no progress signal; the client's
+    async path (gated on a non-nil handler) submits the crawl and polls
+    CheckCrawlStatus every CrawlPollInterval, surfacing completed/total page
+    counts.
+
+    Always returns a non-nil handler. Nil-safety lives one layer down in
+    common.LogOperationProgress.
+
+    Throttling lives in common.LogOperationProgress (every 5 polls) since each
+    poll-loop iteration is a "page" event.
 
 type FirecrawlSchemaProvider struct {
 	APIBaseURL string
