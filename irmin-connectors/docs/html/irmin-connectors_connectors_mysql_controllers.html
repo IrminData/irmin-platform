@@ -291,6 +291,13 @@ func (p *MySQLPullProvider) InitializeClient(
 ) (any, *string, func(), error)
     InitializeClient initializes the MySQL client for pull operations.
 
+func (p *MySQLPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+    ProgressHandler returns nil today — Phase 3 of the progress-events
+    rollout wires per-row throttled query progress (ProgressKindQuery) into
+    buildRecordsFromRows so 10M-row scans stop looking like a 30-minute hang.
+    Until then, the baseline heartbeat from the common pull handler covers the
+    gap.
+
 type MySQLPushProvider struct {
 	// Has unexported fields.
 }
@@ -311,6 +318,11 @@ func (p *MySQLPushProvider) ProcessFiles(
 ) error
     ProcessFiles processes the extracted files and inserts them into MySQL
     tables.
+
+func (p *MySQLPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+    ProgressHandler returns nil today — Phase 3 of the progress-events rollout
+    adds per-batch insert progress (ProgressKindBatch). The baseline heartbeat
+    from the common push handler covers the gap.
 
 type MySQLSchemaProvider struct{}
     MySQLSchemaProvider implements the SchemaOperationProvider interface for

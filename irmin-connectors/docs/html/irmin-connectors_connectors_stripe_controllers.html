@@ -264,6 +264,16 @@ func (p *StripePullProvider) InitializeClient(
     Stripe pull emits zero events between operation/init and operation/pull's
     final response — operators debugging a stuck run have nothing to work with.
 
+func (p *StripePullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+    ProgressHandler returns nil today. Stripe DOES emit per-page +
+    rate-limit progress, but it's currently wired through the local
+    stripeclient.ProgressHandler type inside InitializeClient (see
+    makeProgressHandler below). Phase 5 of the progress-events rollout deletes
+    makeProgressHandler in favor of returning a real common.ProgressHandler
+    from this method, at which point the expected-progress coverage test in
+    connectors/common will flip Stripe to required-non-nil. The baseline
+    heartbeat from the common pull handler already fires regardless.
+
 type StripePushProvider struct {
 	// Has unexported fields.
 }
@@ -296,6 +306,12 @@ func (p *StripePushProvider) ProcessFiles(
     per-bucket counts, so downstream observability doesn't have to infer
     completion from the generic "Push operation completed" line from the common
     package.
+
+func (p *StripePushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+    ProgressHandler returns nil today — Stripe push is a per-record REST POST
+    loop, and Phase 3 of the progress-events rollout will thread per-batch
+    progress (ProgressKindBatch) through it. Until then, the baseline heartbeat
+    from the common push handler covers the gap.
 
 type StripeSchemaProvider struct{}
     StripeSchemaProvider advertises the branch-layout the connector produces on

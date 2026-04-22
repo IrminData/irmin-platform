@@ -1722,6 +1722,7 @@ Concrete connectors compose \*OAuthConnector into their Controllers struct. Stat
 
 ## Index
 
+- [Constants](<#constants>)
 - [Variables](<#variables>)
 - [func BuildDetailsFromFields\(fields map\[string\]string, definitions map\[string\]irminmodels.DynamicField\) map\[string\]string](<#BuildDetailsFromFields>)
 - [func BuildSettingsFromFields\(fields map\[string\]string, definitions map\[string\]irminmodels.DynamicField\) map\[string\]string](<#BuildSettingsFromFields>)
@@ -1753,6 +1754,7 @@ Concrete connectors compose \*OAuthConnector into their Controllers struct. Stat
 - [func HandleOperationStatus\(c fiber.Ctx, getConnectorInfo func\(\) models.ConnectorDetails, app \*models.ConnectorsApp\) error](<#HandleOperationStatus>)
 - [func LogOnlyCancellation\(app \*models.ConnectorsApp, operation \*db.Operation\) error](<#LogOnlyCancellation>)
 - [func LogOperationEvent\(dbInstance \*db.Database, logger \*slog.Logger, operationID uint, eventType db.LogEventType, message string, metadata map\[string\]any\)](<#LogOperationEvent>)
+- [func LogOperationProgress\(dbInstance \*db.Database, logger \*slog.Logger, operationID uint, event ProgressEvent\)](<#LogOperationProgress>)
 - [func RenderConnectorDetailsPage\(c fiber.Ctx, app \*models.ConnectorsApp, connectorSlug string, getConnectorInfo func\(\) models.ConnectorDetails, eventDescription ...string\) error](<#RenderConnectorDetailsPage>)
 - [func RenderConnectorInfo\(c fiber.Ctx, app \*models.ConnectorsApp, getConnectorInfo func\(\) models.ConnectorDetails\) error](<#RenderConnectorInfo>)
 - [func RenderDetailsPage\(c fiber.Ctx, config DetailsPageConfig\) error](<#RenderDetailsPage>)
@@ -1780,9 +1782,11 @@ Concrete connectors compose \*OAuthConnector into their Controllers struct. Stat
   - [func \(p \*NotSupportedPullProvider\) GetAllFiles\(\_ fiber.Ctx, \_ any\) \(\[\]string, \[\]\[\]byte, error\)](<#NotSupportedPullProvider.GetAllFiles>)
   - [func \(p \*NotSupportedPullProvider\) GetFileByPath\(\_ fiber.Ctx, \_ any, \_ string\) \(string, \[\]byte, error\)](<#NotSupportedPullProvider.GetFileByPath>)
   - [func \(p \*NotSupportedPullProvider\) InitializeClient\(\_ fiber.Ctx, \_ \*slog.Logger, \_ \*db.Operation\) \(any, \*string, func\(\), error\)](<#NotSupportedPullProvider.InitializeClient>)
+  - [func \(p \*NotSupportedPullProvider\) ProgressHandler\(\_ \*db.Operation\) ProgressHandler](<#NotSupportedPullProvider.ProgressHandler>)
 - [type NotSupportedPushProvider](<#NotSupportedPushProvider>)
   - [func \(p \*NotSupportedPushProvider\) InitializeClient\(\_ fiber.Ctx, \_ \*slog.Logger, \_ \*db.Operation\) \(any, \*string, func\(\), error\)](<#NotSupportedPushProvider.InitializeClient>)
   - [func \(p \*NotSupportedPushProvider\) ProcessFiles\(\_ fiber.Ctx, \_ any, \_ map\[string\]\[\]byte, \_ string\) error](<#NotSupportedPushProvider.ProcessFiles>)
+  - [func \(p \*NotSupportedPushProvider\) ProgressHandler\(\_ \*db.Operation\) ProgressHandler](<#NotSupportedPushProvider.ProgressHandler>)
 - [type NotSupportedSchemaProvider](<#NotSupportedSchemaProvider>)
   - [func \(p \*NotSupportedSchemaProvider\) GetSchema\(\_ fiber.Ctx, \_ any, \_ string, \_ \*string\) \(\*irminmodels.ObjectSchema, error\)](<#NotSupportedSchemaProvider.GetSchema>)
   - [func \(p \*NotSupportedSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#NotSupportedSchemaProvider.GetSupportedOperationTypes>)
@@ -1802,12 +1806,47 @@ Concrete connectors compose \*OAuthConnector into their Controllers struct. Stat
 - [type OperationLog](<#OperationLog>)
 - [type OperationStatus](<#OperationStatus>)
 - [type PatchOperationProvider](<#PatchOperationProvider>)
+- [type ProgressEvent](<#ProgressEvent>)
+- [type ProgressHandler](<#ProgressHandler>)
 - [type PullOperationProvider](<#PullOperationProvider>)
 - [type PushOperationProvider](<#PushOperationProvider>)
 - [type SchemaOperationProvider](<#SchemaOperationProvider>)
 - [type Subscription](<#Subscription>)
 - [type UnsubscribeProvider](<#UnsubscribeProvider>)
 
+
+## Constants
+
+<a name="ProgressKindPage"></a>ProgressKind\* enumerate the event types emitted via ProgressHandler.
+
+```go
+const (
+    // ProgressKindPage fires after each successful list-page response
+    // in a paginated-HTTP connector (Stripe, Pinecone list, HTTP
+    // pagination).
+    ProgressKindPage = "page"
+    // ProgressKindRateLimit fires when a connector is about to sleep
+    // before retrying a 429 / quota / backoff. Without this event,
+    // rate-limit storms look like a silent hang.
+    ProgressKindRateLimit = "rate_limit"
+    // ProgressKindBatch fires after each chunk of a bulk upload
+    // (Pinecone upserts, Postgres COPY in chunks).
+    ProgressKindBatch = "batch"
+    // ProgressKindQuery fires during a long-running SQL row-scan
+    // (Postgres, MySQL). Callers throttle their own emission — one
+    // row == one event would flood the log.
+    ProgressKindQuery = "query"
+    // ProgressKindFile fires per file during a multi-file transfer
+    // (SFTP list/download, Firecrawl per-page scrape).
+    ProgressKindFile = "file"
+    // ProgressKindHeartbeat is emitted by the common pull/push
+    // handler every 30s for the lifetime of the operation, even if
+    // the provider's ProgressHandler is nil. It's the floor of
+    // observability: no connector can ship a silent 10-minute
+    // operation, even by accident.
+    ProgressKindHeartbeat = "heartbeat"
+)
+```
 
 ## Variables
 
@@ -2088,6 +2127,23 @@ func LogOperationEvent(dbInstance *db.Database, logger *slog.Logger, operationID
 ```
 
 LogOperationEvent creates an operation log entry with the specified type, message, and metadata. This is a helper function to standardize operation logging across all connector handlers.
+
+<a name="LogOperationProgress"></a>
+## func LogOperationProgress
+
+```go
+func LogOperationProgress(dbInstance *db.Database, logger *slog.Logger, operationID uint, event ProgressEvent)
+```
+
+LogOperationProgress emits a ProgressEvent as an operation log row, applying per\-kind throttling. Connectors should call this instead of ripping throttling logic back into each connector's makeProgressHandler — that's how Stripe got here in the first place.
+
+Throttling rules:
+
+- Page: logs on page 1 and every progressLogIntervalPage pages.
+- Batch: logs on batch 1 and every progressLogIntervalBatch batches.
+- Query, File, RateLimit, Heartbeat: always log. Callers of Query and File should pre\-throttle at the call site \(e.g., every 1000 rows, every 5s of wall clock\) to avoid one\-row\-per\-event floods.
+
+Nil\-safe for dbInstance \+ logger — used by tests that don't want DB side effects.
 
 <a name="RenderConnectorDetailsPage"></a>
 ## func RenderConnectorDetailsPage
@@ -2383,6 +2439,15 @@ func (p *NotSupportedPullProvider) InitializeClient(_ fiber.Ctx, _ *slog.Logger,
 
 InitializeClient returns an error indicating pull operations are not supported.
 
+<a name="NotSupportedPullProvider.ProgressHandler"></a>
+### func \(\*NotSupportedPullProvider\) ProgressHandler
+
+```go
+func (p *NotSupportedPullProvider) ProgressHandler(_ *db.Operation) ProgressHandler
+```
+
+ProgressHandler returns nil — providers that reject every pull call have nothing to observe. The common pull handler's baseline heartbeat is still installed anyway, so a misrouted request to a push\-only connector still surfaces a log row.
+
 <a name="NotSupportedPushProvider"></a>
 ## type NotSupportedPushProvider
 
@@ -2409,6 +2474,15 @@ func (p *NotSupportedPushProvider) ProcessFiles(_ fiber.Ctx, _ any, _ map[string
 ```
 
 ProcessFiles returns an error indicating push operations are not supported.
+
+<a name="NotSupportedPushProvider.ProgressHandler"></a>
+### func \(\*NotSupportedPushProvider\) ProgressHandler
+
+```go
+func (p *NotSupportedPushProvider) ProgressHandler(_ *db.Operation) ProgressHandler
+```
+
+ProgressHandler returns nil — providers that reject every push call have nothing to observe. The common push handler's baseline heartbeat is still installed anyway.
 
 <a name="NotSupportedSchemaProvider"></a>
 ## type NotSupportedSchemaProvider
@@ -2674,6 +2748,66 @@ type PatchOperationProvider interface {
 }
 ```
 
+<a name="ProgressEvent"></a>
+## type ProgressEvent
+
+ProgressEvent is a single observability event emitted from a connector's long\-running operation. Connectors call the operation's ProgressHandler to surface per\-page / per\-batch / per\-file / retry progress into the workflow log stream, so an apparently\-stuck run is actually diagnosable.
+
+Not every field is meaningful for every Kind — see the field docs. The Kind discriminator selects which subset applies.
+
+```go
+type ProgressEvent struct {
+    // Kind discriminates the event. Use one of the ProgressKind*
+    // constants below.
+    Kind string
+
+    // ResourcePath is a human-readable identifier for what's being
+    // processed: an API path ("/v1/customers"), a table name
+    // ("public.orders"), a file path ("inbox/report.csv"), a
+    // namespace URI ("qdrant://vectors"). Should always be set.
+    ResourcePath string
+
+    // Page is the 1-based page number within the current pagination
+    // loop.
+    Page int
+    // RecordsSoFar is the cumulative record count accumulated so far.
+    RecordsSoFar int
+    // Cursor is the cursor value that produced this page (e.g.,
+    // starting_after), or "" for the first page.
+    Cursor string
+
+    // Attempt is the 0-based retry attempt.
+    Attempt int
+    // Wait is how long the caller is about to sleep before retrying.
+    Wait time.Duration
+
+    // Batch is the 1-based batch index.
+    Batch int
+    // BatchSize is the number of records in this batch.
+    BatchSize int
+
+    // Rows is the cumulative number of rows processed.
+    Rows int64
+
+    // File is the file path currently being transferred.
+    File string
+    // BytesTransferred is the cumulative bytes moved for this
+    // operation (or for the current file — connector decides).
+    BytesTransferred int64
+    // BytesTotal is the total expected bytes, or 0 if unknown.
+    BytesTotal int64
+}
+```
+
+<a name="ProgressHandler"></a>
+## type ProgressHandler
+
+ProgressHandler receives observability events from long\-running operations. Called synchronously from inside the connector's pagination / retry / transfer loops — implementations must return quickly. nil\-safe: connectors whose operations are short\-running may return nil from their PullOperationProvider.ProgressHandler / PushOperationProvider.ProgressHandler method.
+
+```go
+type ProgressHandler func(ProgressEvent)
+```
+
 <a name="PullOperationProvider"></a>
 ## type PullOperationProvider
 
@@ -2693,6 +2827,15 @@ type PullOperationProvider interface {
 
     // GetFileByPath retrieves a specific file by path
     GetFileByPath(c fiber.Ctx, client any, path string) (filePath string, fileContent []byte, err error)
+
+    // ProgressHandler returns the observability callback this
+    // provider wires into its client for per-page / per-batch /
+    // per-file events. Return nil only if the underlying operations
+    // are short enough not to need progress events (most
+    // health-check style connectors) — the common pull handler
+    // always wraps the provider call with a baseline heartbeat, so
+    // returning nil does not leave the operation silent.
+    ProgressHandler(operation *db.Operation) ProgressHandler
 }
 ```
 
@@ -2712,6 +2855,15 @@ type PushOperationProvider interface {
 
     // ProcessFiles processes the extracted files and uploads/inserts them
     ProcessFiles(c fiber.Ctx, client any, files map[string][]byte, targetPath string) error
+
+    // ProgressHandler returns the observability callback this
+    // provider wires into its client for per-batch / per-file
+    // events. Return nil only if the underlying operations are
+    // short enough not to need progress events — the common push
+    // handler always wraps the provider call with a baseline
+    // heartbeat, so returning nil does not leave the operation
+    // silent.
+    ProgressHandler(operation *db.Operation) ProgressHandler
 }
 ```
 
@@ -4657,6 +4809,7 @@ import "irmin-connectors/connectors/firecrawl/controllers"
   - [func \(p \*FirecrawlPullProvider\) GetAllFiles\(c fiber.Ctx, clientAny any\) \(\[\]string, \[\]\[\]byte, error\)](<#FirecrawlPullProvider.GetAllFiles>)
   - [func \(p \*FirecrawlPullProvider\) GetFileByPath\(c fiber.Ctx, clientAny any, path string\) \(string, \[\]byte, error\)](<#FirecrawlPullProvider.GetFileByPath>)
   - [func \(p \*FirecrawlPullProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#FirecrawlPullProvider.InitializeClient>)
+  - [func \(p \*FirecrawlPullProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#FirecrawlPullProvider.ProgressHandler>)
 - [type FirecrawlSchemaProvider](<#FirecrawlSchemaProvider>)
   - [func \(p \*FirecrawlSchemaProvider\) GetSchema\(\_ fiber.Ctx, clientAny any, operationType string, \_ \*string\) \(\*irminmodels.ObjectSchema, error\)](<#FirecrawlSchemaProvider.GetSchema>)
   - [func \(p \*FirecrawlSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#FirecrawlSchemaProvider.GetSupportedOperationTypes>)
@@ -4918,6 +5071,15 @@ func (p *FirecrawlPullProvider) InitializeClient(c fiber.Ctx, logger *slog.Logge
 ```
 
 InitializeClient initializes the Firecrawl client for pull operations.
+
+<a name="FirecrawlPullProvider.ProgressHandler"></a>
+### func \(\*FirecrawlPullProvider\) ProgressHandler
+
+```go
+func (p *FirecrawlPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler returns nil today — Firecrawl crawls are SDK\-managed \(mendableai/firecrawl\-go owns the inner loop\) so we rely on the common pull handler's baseline heartbeat. Phase 3 of the progress\-events rollout adds a controller\-level poll loop that surfaces the SDK's job status as ProgressKindPage events.
 
 <a name="FirecrawlSchemaProvider"></a>
 ## type FirecrawlSchemaProvider
@@ -5183,9 +5345,11 @@ import "irmin-connectors/connectors/http/controllers"
   - [func \(p \*HTTPPullProvider\) GetAllFiles\(c fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#HTTPPullProvider.GetAllFiles>)
   - [func \(p \*HTTPPullProvider\) GetFileByPath\(c fiber.Ctx, client any, path string\) \(string, \[\]byte, error\)](<#HTTPPullProvider.GetFileByPath>)
   - [func \(p \*HTTPPullProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#HTTPPullProvider.InitializeClient>)
+  - [func \(p \*HTTPPullProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#HTTPPullProvider.ProgressHandler>)
 - [type HTTPPushProvider](<#HTTPPushProvider>)
   - [func \(p \*HTTPPushProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#HTTPPushProvider.InitializeClient>)
   - [func \(p \*HTTPPushProvider\) ProcessFiles\(c fiber.Ctx, client any, files map\[string\]\[\]byte, rawPath string\) error](<#HTTPPushProvider.ProcessFiles>)
+  - [func \(p \*HTTPPushProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#HTTPPushProvider.ProgressHandler>)
 - [type HTTPSchemaProvider](<#HTTPSchemaProvider>)
   - [func \(p \*HTTPSchemaProvider\) GetSchema\(c fiber.Ctx, client any, \_ string, requestPath \*string\) \(\*irminmodels.ObjectSchema, error\)](<#HTTPSchemaProvider.GetSchema>)
   - [func \(p \*HTTPSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#HTTPSchemaProvider.GetSupportedOperationTypes>)
@@ -5451,6 +5615,15 @@ func (p *HTTPPullProvider) InitializeClient(c fiber.Ctx, logger *slog.Logger, op
 
 InitializeClient initializes the HTTP client for pull operations.
 
+<a name="HTTPPullProvider.ProgressHandler"></a>
+### func \(\*HTTPPullProvider\) ProgressHandler
+
+```go
+func (p *HTTPPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler returns nil — a single HTTP request bounded by the configured timeout \(default 300s\) can't produce a meaningful silent\-window incident, and the common pull handler's baseline heartbeat covers what little exposure remains.
+
 <a name="HTTPPushProvider"></a>
 ## type HTTPPushProvider
 
@@ -5479,6 +5652,15 @@ func (p *HTTPPushProvider) ProcessFiles(c fiber.Ctx, client any, files map[strin
 ```
 
 ProcessFiles processes the extracted files and sends them to the HTTP endpoint. The rawPath parameter is used to modify the request URL \(absolute path replaces, relative path appends\).
+
+<a name="HTTPPushProvider.ProgressHandler"></a>
+### func \(\*HTTPPushProvider\) ProgressHandler
+
+```go
+func (p *HTTPPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler returns nil — HTTP push is a single bounded request. The baseline heartbeat from the common push handler covers the brief silent window.
 
 <a name="HTTPSchemaProvider"></a>
 ## type HTTPSchemaProvider
@@ -5948,9 +6130,11 @@ import "irmin-connectors/connectors/mysql/controllers"
   - [func \(p \*MySQLPullProvider\) GetAllFiles\(c fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#MySQLPullProvider.GetAllFiles>)
   - [func \(p \*MySQLPullProvider\) GetFileByPath\(c fiber.Ctx, client any, rawPath string\) \(string, \[\]byte, error\)](<#MySQLPullProvider.GetFileByPath>)
   - [func \(p \*MySQLPullProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#MySQLPullProvider.InitializeClient>)
+  - [func \(p \*MySQLPullProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#MySQLPullProvider.ProgressHandler>)
 - [type MySQLPushProvider](<#MySQLPushProvider>)
   - [func \(p \*MySQLPushProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#MySQLPushProvider.InitializeClient>)
   - [func \(p \*MySQLPushProvider\) ProcessFiles\(c fiber.Ctx, client any, files map\[string\]\[\]byte, rawPath string\) error](<#MySQLPushProvider.ProcessFiles>)
+  - [func \(p \*MySQLPushProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#MySQLPushProvider.ProgressHandler>)
 - [type MySQLSchemaProvider](<#MySQLSchemaProvider>)
   - [func \(p \*MySQLSchemaProvider\) GetSchema\(c fiber.Ctx, client any, \_ string, databaseName \*string\) \(\*irminmodels.ObjectSchema, error\)](<#MySQLSchemaProvider.GetSchema>)
   - [func \(p \*MySQLSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#MySQLSchemaProvider.GetSupportedOperationTypes>)
@@ -6257,6 +6441,15 @@ func (p *MySQLPullProvider) InitializeClient(c fiber.Ctx, logger *slog.Logger, o
 
 InitializeClient initializes the MySQL client for pull operations.
 
+<a name="MySQLPullProvider.ProgressHandler"></a>
+### func \(\*MySQLPullProvider\) ProgressHandler
+
+```go
+func (p *MySQLPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler returns nil today — Phase 3 of the progress\-events rollout wires per\-row throttled query progress \(ProgressKindQuery\) into buildRecordsFromRows so 10M\-row scans stop looking like a 30\-minute hang. Until then, the baseline heartbeat from the common pull handler covers the gap.
+
 <a name="MySQLPushProvider"></a>
 ## type MySQLPushProvider
 
@@ -6285,6 +6478,15 @@ func (p *MySQLPushProvider) ProcessFiles(c fiber.Ctx, client any, files map[stri
 ```
 
 ProcessFiles processes the extracted files and inserts them into MySQL tables.
+
+<a name="MySQLPushProvider.ProgressHandler"></a>
+### func \(\*MySQLPushProvider\) ProgressHandler
+
+```go
+func (p *MySQLPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler returns nil today — Phase 3 of the progress\-events rollout adds per\-batch insert progress \(ProgressKindBatch\). The baseline heartbeat from the common push handler covers the gap.
 
 <a name="MySQLSchemaProvider"></a>
 ## type MySQLSchemaProvider
@@ -6692,9 +6894,11 @@ import "irmin-connectors/connectors/pinecone/controllers"
   - [func \(p \*PineconePullProvider\) GetAllFiles\(c fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#PineconePullProvider.GetAllFiles>)
   - [func \(p \*PineconePullProvider\) GetFileByPath\(c fiber.Ctx, client any, rawPath string\) \(string, \[\]byte, error\)](<#PineconePullProvider.GetFileByPath>)
   - [func \(p \*PineconePullProvider\) InitializeClient\(\_ fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#PineconePullProvider.InitializeClient>)
+  - [func \(p \*PineconePullProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#PineconePullProvider.ProgressHandler>)
 - [type PineconePushProvider](<#PineconePushProvider>)
   - [func \(p \*PineconePushProvider\) InitializeClient\(\_ fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#PineconePushProvider.InitializeClient>)
   - [func \(p \*PineconePushProvider\) ProcessFiles\(c fiber.Ctx, client any, files map\[string\]\[\]byte, \_ string\) error](<#PineconePushProvider.ProcessFiles>)
+  - [func \(p \*PineconePushProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#PineconePushProvider.ProgressHandler>)
 - [type PineconeSchemaProvider](<#PineconeSchemaProvider>)
   - [func \(p \*PineconeSchemaProvider\) GetSchema\(\_ fiber.Ctx, \_ any, operationType string, namespace \*string\) \(\*irminmodels.ObjectSchema, error\)](<#PineconeSchemaProvider.GetSchema>)
   - [func \(p \*PineconeSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#PineconeSchemaProvider.GetSupportedOperationTypes>)
@@ -6957,6 +7161,15 @@ func (p *PineconePullProvider) InitializeClient(_ fiber.Ctx, logger *slog.Logger
 
 InitializeClient initializes the Pinecone client for pull operations.
 
+<a name="PineconePullProvider.ProgressHandler"></a>
+### func \(\*PineconePullProvider\) ProgressHandler
+
+```go
+func (p *PineconePullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler returns nil today — Phase 3 of the progress\-events rollout wires the cursor\-paginated FetchAll/ListVectors loop to emit ProgressKindPage events so a 100k\-vector pull stops looking like a multi\-minute hang. Until then, the baseline heartbeat from the common pull handler covers the gap.
+
 <a name="PineconePushProvider"></a>
 ## type PineconePushProvider
 
@@ -6985,6 +7198,15 @@ func (p *PineconePushProvider) ProcessFiles(c fiber.Ctx, client any, files map[s
 ```
 
 ProcessFiles processes the extracted files and upserts them to Pinecone.
+
+<a name="PineconePushProvider.ProgressHandler"></a>
+### func \(\*PineconePushProvider\) ProgressHandler
+
+```go
+func (p *PineconePushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler returns nil today — Phase 3 of the progress\-events rollout adds per\-batch upsert progress \(ProgressKindBatch\). The baseline heartbeat from the common push handler covers the gap.
 
 <a name="PineconeSchemaProvider"></a>
 ## type PineconeSchemaProvider
@@ -7471,9 +7693,11 @@ import "irmin-connectors/connectors/postgres/controllers"
   - [func \(p \*PostgresPullProvider\) GetAllFiles\(c fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#PostgresPullProvider.GetAllFiles>)
   - [func \(p \*PostgresPullProvider\) GetFileByPath\(c fiber.Ctx, client any, rawPath string\) \(string, \[\]byte, error\)](<#PostgresPullProvider.GetFileByPath>)
   - [func \(p \*PostgresPullProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#PostgresPullProvider.InitializeClient>)
+  - [func \(p \*PostgresPullProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#PostgresPullProvider.ProgressHandler>)
 - [type PostgresPushProvider](<#PostgresPushProvider>)
   - [func \(p \*PostgresPushProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#PostgresPushProvider.InitializeClient>)
   - [func \(p \*PostgresPushProvider\) ProcessFiles\(c fiber.Ctx, client any, files map\[string\]\[\]byte, rawPath string\) error](<#PostgresPushProvider.ProcessFiles>)
+  - [func \(p \*PostgresPushProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#PostgresPushProvider.ProgressHandler>)
 
 
 ## Constants
@@ -7803,6 +8027,15 @@ func (p *PostgresPullProvider) InitializeClient(c fiber.Ctx, logger *slog.Logger
 
 InitializeClient initializes the PostgreSQL client for pull operations.
 
+<a name="PostgresPullProvider.ProgressHandler"></a>
+### func \(\*PostgresPullProvider\) ProgressHandler
+
+```go
+func (p *PostgresPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler returns nil today — Phase 3 of the progress\-events rollout wires per\-row throttled query progress \(ProgressKindQuery\) into buildRecordsFromRows so 10M\-row scans stop looking like a 30\-minute hang. Until then, the baseline heartbeat from the common pull handler covers the gap.
+
 <a name="PostgresPushProvider"></a>
 ## type PostgresPushProvider
 
@@ -7831,6 +8064,15 @@ func (p *PostgresPushProvider) ProcessFiles(c fiber.Ctx, client any, files map[s
 ```
 
 ProcessFiles processes the extracted files and inserts them into PostgreSQL tables.
+
+<a name="PostgresPushProvider.ProgressHandler"></a>
+### func \(\*PostgresPushProvider\) ProgressHandler
+
+```go
+func (p *PostgresPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler returns nil today — Phase 3 of the progress\-events rollout adds per\-batch COPY progress \(ProgressKindBatch\). The baseline heartbeat from the common push handler covers the gap.
 
 # postgresmodels
 
@@ -8667,9 +8909,11 @@ import "irmin-connectors/connectors/sftp/controllers"
   - [func \(p \*SFTPPullProvider\) GetAllFiles\(c fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#SFTPPullProvider.GetAllFiles>)
   - [func \(p \*SFTPPullProvider\) GetFileByPath\(c fiber.Ctx, client any, rawPath string\) \(string, \[\]byte, error\)](<#SFTPPullProvider.GetFileByPath>)
   - [func \(p \*SFTPPullProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#SFTPPullProvider.InitializeClient>)
+  - [func \(p \*SFTPPullProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#SFTPPullProvider.ProgressHandler>)
 - [type SFTPPushProvider](<#SFTPPushProvider>)
   - [func \(p \*SFTPPushProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#SFTPPushProvider.InitializeClient>)
   - [func \(p \*SFTPPushProvider\) ProcessFiles\(c fiber.Ctx, client any, files map\[string\]\[\]byte, rawPath string\) error](<#SFTPPushProvider.ProcessFiles>)
+  - [func \(p \*SFTPPushProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#SFTPPushProvider.ProgressHandler>)
 - [type SFTPSchemaProvider](<#SFTPSchemaProvider>)
   - [func \(p \*SFTPSchemaProvider\) GetSchema\(ctx fiber.Ctx, client any, operationType string, remotePath \*string\) \(\*irminmodels.ObjectSchema, error\)](<#SFTPSchemaProvider.GetSchema>)
   - [func \(p \*SFTPSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#SFTPSchemaProvider.GetSupportedOperationTypes>)
@@ -8958,6 +9202,15 @@ func (p *SFTPPullProvider) InitializeClient(c fiber.Ctx, logger *slog.Logger, op
 
 InitializeClient initializes the SFTP client for pull operations.
 
+<a name="SFTPPullProvider.ProgressHandler"></a>
+### func \(\*SFTPPullProvider\) ProgressHandler
+
+```go
+func (p *SFTPPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler returns nil today — Phase 3 of the progress\-events rollout adds per\-file transfer progress \(ProgressKindFile\) so 10k\-file directory pulls stop looking like a multi\-minute hang. Until then, the baseline heartbeat from the common pull handler covers the gap.
+
 <a name="SFTPPushProvider"></a>
 ## type SFTPPushProvider
 
@@ -8986,6 +9239,15 @@ func (p *SFTPPushProvider) ProcessFiles(c fiber.Ctx, client any, files map[strin
 ```
 
 ProcessFiles processes the extracted files and uploads them to the SFTP server.
+
+<a name="SFTPPushProvider.ProgressHandler"></a>
+### func \(\*SFTPPushProvider\) ProgressHandler
+
+```go
+func (p *SFTPPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler returns nil today — Phase 3 of the progress\-events rollout adds per\-file upload progress \(ProgressKindFile\). The baseline heartbeat from the common push handler covers the gap.
 
 <a name="SFTPSchemaProvider"></a>
 ## type SFTPSchemaProvider
@@ -9688,9 +9950,11 @@ Package stripecontrollers holds the HTTP handlers for every connector endpoint. 
   - [func \(p \*StripePullProvider\) GetAllFiles\(c fiber.Ctx, clientAny any\) \(\[\]string, \[\]\[\]byte, error\)](<#StripePullProvider.GetAllFiles>)
   - [func \(p \*StripePullProvider\) GetFileByPath\(c fiber.Ctx, clientAny any, rawPath string\) \(string, \[\]byte, error\)](<#StripePullProvider.GetFileByPath>)
   - [func \(p \*StripePullProvider\) InitializeClient\(\_ fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#StripePullProvider.InitializeClient>)
+  - [func \(p \*StripePullProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#StripePullProvider.ProgressHandler>)
 - [type StripePushProvider](<#StripePushProvider>)
   - [func \(p \*StripePushProvider\) InitializeClient\(\_ fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#StripePushProvider.InitializeClient>)
   - [func \(p \*StripePushProvider\) ProcessFiles\(c fiber.Ctx, clientAny any, files map\[string\]\[\]byte, targetPath string\) error](<#StripePushProvider.ProcessFiles>)
+  - [func \(p \*StripePushProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#StripePushProvider.ProgressHandler>)
 - [type StripeSchemaProvider](<#StripeSchemaProvider>)
   - [func \(p \*StripeSchemaProvider\) GetSchema\(\_ fiber.Ctx, \_ any, operationType string, \_ \*string\) \(\*irminmodels.ObjectSchema, error\)](<#StripeSchemaProvider.GetSchema>)
   - [func \(p \*StripeSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#StripeSchemaProvider.GetSupportedOperationTypes>)
@@ -9966,6 +10230,15 @@ func (p *StripePullProvider) InitializeClient(_ fiber.Ctx, logger *slog.Logger, 
 
 InitializeClient builds the Stripe client for this operation and installs a progress handler so long\-running pulls surface per\-page and rate\-limit events into the workflow log stream. Without the handler, a multi\-minute Stripe pull emits zero events between operation/init and operation/pull's final response — operators debugging a stuck run have nothing to work with.
 
+<a name="StripePullProvider.ProgressHandler"></a>
+### func \(\*StripePullProvider\) ProgressHandler
+
+```go
+func (p *StripePullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler returns nil today. Stripe DOES emit per\-page \+ rate\-limit progress, but it's currently wired through the local stripeclient.ProgressHandler type inside InitializeClient \(see makeProgressHandler below\). Phase 5 of the progress\-events rollout deletes makeProgressHandler in favor of returning a real common.ProgressHandler from this method, at which point the expected\-progress coverage test in connectors/common will flip Stripe to required\-non\-nil. The baseline heartbeat from the common pull handler already fires regardless.
+
 <a name="StripePushProvider"></a>
 ## type StripePushProvider
 
@@ -9996,6 +10269,15 @@ func (p *StripePushProvider) ProcessFiles(c fiber.Ctx, clientAny any, files map[
 ProcessFiles iterates every file in the uploaded ZIP and dispatches each one to Stripe based on its path. Stops on the first hard error — Stripe writes aren't transactional and a partial run is harder to reason about than an abort. Already\-applied writes are safe to retry because the idempotency key is content\-derived.
 
 Emits a "push\_summary" operation log event at the end \(or on abort\) with per\-bucket counts, so downstream observability doesn't have to infer completion from the generic "Push operation completed" line from the common package.
+
+<a name="StripePushProvider.ProgressHandler"></a>
+### func \(\*StripePushProvider\) ProgressHandler
+
+```go
+func (p *StripePushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler returns nil today — Stripe push is a per\-record REST POST loop, and Phase 3 of the progress\-events rollout will thread per\-batch progress \(ProgressKindBatch\) through it. Until then, the baseline heartbeat from the common push handler covers the gap.
 
 <a name="StripeSchemaProvider"></a>
 ## type StripeSchemaProvider

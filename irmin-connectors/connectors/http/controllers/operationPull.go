@@ -17,6 +17,14 @@ type HTTPPullProvider struct {
 	logger     *slog.Logger
 }
 
+// ProgressHandler returns nil — a single HTTP request bounded by the
+// configured timeout (default 300s) can't produce a meaningful
+// silent-window incident, and the common pull handler's baseline
+// heartbeat covers what little exposure remains.
+func (p *HTTPPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
+	return nil
+}
+
 // InitializeClient initializes the HTTP client for pull operations.
 func (p *HTTPPullProvider) InitializeClient(
 	c fiber.Ctx,

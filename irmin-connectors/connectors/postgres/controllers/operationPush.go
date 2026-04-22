@@ -27,6 +27,14 @@ type PostgresPushProvider struct {
 	logger       *slog.Logger
 }
 
+// ProgressHandler returns nil today — Phase 3 of the
+// progress-events rollout adds per-batch COPY progress
+// (ProgressKindBatch). The baseline heartbeat from the common push
+// handler covers the gap.
+func (p *PostgresPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
+	return nil
+}
+
 // InitializeClient initializes the PostgreSQL client for push operations.
 func (p *PostgresPushProvider) InitializeClient(
 	c fiber.Ctx,

@@ -250,6 +250,12 @@ func (p *HTTPPullProvider) InitializeClient(
 ) (any, *string, func(), error)
     InitializeClient initializes the HTTP client for pull operations.
 
+func (p *HTTPPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+    ProgressHandler returns nil — a single HTTP request bounded by the
+    configured timeout (default 300s) can't produce a meaningful silent-window
+    incident, and the common pull handler's baseline heartbeat covers what
+    little exposure remains.
+
 type HTTPPushProvider struct {
 	// Has unexported fields.
 }
@@ -271,6 +277,11 @@ func (p *HTTPPushProvider) ProcessFiles(
     ProcessFiles processes the extracted files and sends them to the HTTP
     endpoint. The rawPath parameter is used to modify the request URL (absolute
     path replaces, relative path appends).
+
+func (p *HTTPPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+    ProgressHandler returns nil — HTTP push is a single bounded request.
+    The baseline heartbeat from the common push handler covers the brief silent
+    window.
 
 type HTTPSchemaProvider struct {
 	APIBaseURL string

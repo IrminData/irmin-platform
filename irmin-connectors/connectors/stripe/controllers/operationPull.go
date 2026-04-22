@@ -28,6 +28,19 @@ type StripePullProvider struct {
 	logger     *slog.Logger
 }
 
+// ProgressHandler returns nil today. Stripe DOES emit per-page +
+// rate-limit progress, but it's currently wired through the local
+// stripeclient.ProgressHandler type inside InitializeClient (see
+// makeProgressHandler below). Phase 5 of the progress-events
+// rollout deletes makeProgressHandler in favor of returning a real
+// common.ProgressHandler from this method, at which point the
+// expected-progress coverage test in connectors/common will flip
+// Stripe to required-non-nil. The baseline heartbeat from the
+// common pull handler already fires regardless.
+func (p *StripePullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
+	return nil
+}
+
 // InitializeClient builds the Stripe client for this operation and
 // installs a progress handler so long-running pulls surface per-page
 // and rate-limit events into the workflow log stream. Without the

@@ -217,6 +217,13 @@ func (p *PineconePullProvider) InitializeClient(
 ) (any, *string, func(), error)
     InitializeClient initializes the Pinecone client for pull operations.
 
+func (p *PineconePullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+    ProgressHandler returns nil today — Phase 3 of the progress-events
+    rollout wires the cursor-paginated FetchAll/ListVectors loop to emit
+    ProgressKindPage events so a 100k-vector pull stops looking like a
+    multi-minute hang. Until then, the baseline heartbeat from the common pull
+    handler covers the gap.
+
 type PineconePushProvider struct {
 	// Has unexported fields.
 }
@@ -237,6 +244,11 @@ func (p *PineconePushProvider) ProcessFiles(
 	_ string,
 ) error
     ProcessFiles processes the extracted files and upserts them to Pinecone.
+
+func (p *PineconePushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+    ProgressHandler returns nil today — Phase 3 of the progress-events rollout
+    adds per-batch upsert progress (ProgressKindBatch). The baseline heartbeat
+    from the common push handler covers the gap.
 
 type PineconeSchemaProvider struct{}
     PineconeSchemaProvider implements the SchemaOperationProvider interface for

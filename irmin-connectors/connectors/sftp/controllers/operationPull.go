@@ -18,6 +18,15 @@ type SFTPPullProvider struct {
 	logger     *slog.Logger
 }
 
+// ProgressHandler returns nil today — Phase 3 of the
+// progress-events rollout adds per-file transfer progress
+// (ProgressKindFile) so 10k-file directory pulls stop looking like
+// a multi-minute hang. Until then, the baseline heartbeat from the
+// common pull handler covers the gap.
+func (p *SFTPPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
+	return nil
+}
+
 // InitializeClient initializes the SFTP client for pull operations.
 func (p *SFTPPullProvider) InitializeClient(
 	c fiber.Ctx,

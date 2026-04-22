@@ -54,6 +54,15 @@ type PushOperationProvider interface {
 
 	// ProcessFiles processes the extracted files and uploads/inserts them
 	ProcessFiles(c fiber.Ctx, client any, files map[string][]byte, targetPath string) error
+
+	// ProgressHandler returns the observability callback this
+	// provider wires into its client for per-batch / per-file
+	// events. Return nil only if the underlying operations are
+	// short enough not to need progress events — the common push
+	// handler always wraps the provider call with a baseline
+	// heartbeat, so returning nil does not leave the operation
+	// silent.
+	ProgressHandler(operation *db.Operation) ProgressHandler
 }
 
 // HandleOperationPush provides a common HTTP handler for push operation endpoints.
@@ -101,6 +110,15 @@ func HandleOperationPush(
 		"Push operation execution started",
 		nil,
 	)
+
+	// Baseline heartbeat — fires every heartbeatInterval for the
+	// duration of the push, even if the provider's ProgressHandler
+	// is nil. Push can silently spend minutes inside ProcessFiles or
+	// inside the presigned-URL download path (10-minute timeout), so
+	// a floor-level cadence is essential.
+	heartbeatStop := make(chan struct{})
+	go startHeartbeat(dbInstance, logger, operation.ID, "operation/push", heartbeatStop)
+	defer close(heartbeatStop)
 
 	// Initialize the client
 	client, _, cleanup, err := provider.InitializeClient(c, logger, operation)
@@ -292,6 +310,15 @@ func (p *NotSupportedPushProvider) ProcessFiles(
 	_ string,
 ) error {
 	return errors.New("push operations are not supported by this connector")
+}
+
+// ProgressHandler returns nil — providers that reject every push
+// call have nothing to observe. The common push handler's baseline
+// heartbeat is still installed anyway.
+func (p *NotSupportedPushProvider) ProgressHandler(
+	_ *db.Operation,
+) ProgressHandler {
+	return nil
 }
 
 // handlePresignedURLFile downloads a zip from a presigned URL to a temp file,

@@ -262,6 +262,12 @@ func (p *SFTPPullProvider) InitializeClient(
 ) (any, *string, func(), error)
     InitializeClient initializes the SFTP client for pull operations.
 
+func (p *SFTPPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+    ProgressHandler returns nil today — Phase 3 of the progress-events rollout
+    adds per-file transfer progress (ProgressKindFile) so 10k-file directory
+    pulls stop looking like a multi-minute hang. Until then, the baseline
+    heartbeat from the common pull handler covers the gap.
+
 type SFTPPushProvider struct {
 	// Has unexported fields.
 }
@@ -282,6 +288,11 @@ func (p *SFTPPushProvider) ProcessFiles(
 ) error
     ProcessFiles processes the extracted files and uploads them to the SFTP
     server.
+
+func (p *SFTPPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+    ProgressHandler returns nil today — Phase 3 of the progress-events rollout
+    adds per-file upload progress (ProgressKindFile). The baseline heartbeat
+    from the common push handler covers the gap.
 
 type SFTPSchemaProvider struct {
 	APIBaseURL string

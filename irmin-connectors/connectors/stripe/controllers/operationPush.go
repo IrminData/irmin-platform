@@ -25,6 +25,15 @@ type StripePushProvider struct {
 	logger     *slog.Logger
 }
 
+// ProgressHandler returns nil today — Stripe push is a per-record
+// REST POST loop, and Phase 3 of the progress-events rollout will
+// thread per-batch progress (ProgressKindBatch) through it. Until
+// then, the baseline heartbeat from the common push handler covers
+// the gap.
+func (p *StripePushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
+	return nil
+}
+
 // InitializeClient constructs the Stripe client from the Operation's
 // stored details + settings.
 func (p *StripePushProvider) InitializeClient(

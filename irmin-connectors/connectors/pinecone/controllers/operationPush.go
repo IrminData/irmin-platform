@@ -29,6 +29,14 @@ type PineconePushProvider struct {
 	logger     *slog.Logger
 }
 
+// ProgressHandler returns nil today — Phase 3 of the
+// progress-events rollout adds per-batch upsert progress
+// (ProgressKindBatch). The baseline heartbeat from the common push
+// handler covers the gap.
+func (p *PineconePushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
+	return nil
+}
+
 // getNamespaceValue returns the namespace value or empty string if nil.
 func (p *PineconePushProvider) getNamespaceValue() string {
 	if p.namespace == nil {

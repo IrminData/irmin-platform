@@ -28,6 +28,16 @@ type PineconePullProvider struct {
 	logger     *slog.Logger
 }
 
+// ProgressHandler returns nil today — Phase 3 of the
+// progress-events rollout wires the cursor-paginated
+// FetchAll/ListVectors loop to emit ProgressKindPage events so a
+// 100k-vector pull stops looking like a multi-minute hang. Until
+// then, the baseline heartbeat from the common pull handler covers
+// the gap.
+func (p *PineconePullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
+	return nil
+}
+
 // getNamespaceValue returns the namespace value or empty string if nil.
 func (p *PineconePullProvider) getNamespaceValue() string {
 	if p.namespace == nil {

@@ -20,6 +20,15 @@ type PostgresPullProvider struct {
 	logger       *slog.Logger
 }
 
+// ProgressHandler returns nil today — Phase 3 of the
+// progress-events rollout wires per-row throttled query progress
+// (ProgressKindQuery) into buildRecordsFromRows so 10M-row scans
+// stop looking like a 30-minute hang. Until then, the baseline
+// heartbeat from the common pull handler covers the gap.
+func (p *PostgresPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
+	return nil
+}
+
 // InitializeClient initializes the PostgreSQL client for pull operations.
 func (p *PostgresPullProvider) InitializeClient(
 	c fiber.Ctx,

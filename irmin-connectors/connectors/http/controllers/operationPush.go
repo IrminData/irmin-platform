@@ -21,6 +21,13 @@ type HTTPPushProvider struct {
 	logger     *slog.Logger
 }
 
+// ProgressHandler returns nil — HTTP push is a single bounded
+// request. The baseline heartbeat from the common push handler
+// covers the brief silent window.
+func (p *HTTPPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
+	return nil
+}
+
 // InitializeClient initializes the HTTP client for push operations.
 func (p *HTTPPushProvider) InitializeClient(
 	c fiber.Ctx,

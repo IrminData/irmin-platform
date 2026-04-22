@@ -26,6 +26,15 @@ type PullOperationProvider interface {
 
 	// GetFileByPath retrieves a specific file by path
 	GetFileByPath(c fiber.Ctx, client any, path string) (filePath string, fileContent []byte, err error)
+
+	// ProgressHandler returns the observability callback this
+	// provider wires into its client for per-page / per-batch /
+	// per-file events. Return nil only if the underlying operations
+	// are short enough not to need progress events (most
+	// health-check style connectors) — the common pull handler
+	// always wraps the provider call with a baseline heartbeat, so
+	// returning nil does not leave the operation silent.
+	ProgressHandler(operation *db.Operation) ProgressHandler
 }
 
 // HandleOperationPull provides a common HTTP handler for pull operation endpoints.
@@ -97,6 +106,15 @@ func executePullOperation(
 		"Pull operation execution started",
 		nil,
 	)
+
+	// Baseline heartbeat — fires every heartbeatInterval for the
+	// duration of the operation, even if the provider's
+	// ProgressHandler is nil. The goroutine exits as soon as the
+	// deferred close(heartbeatStop) runs, before executePullOperation
+	// returns, so we never leak past the operation.
+	heartbeatStop := make(chan struct{})
+	go startHeartbeat(dbInstance, logger, operation.ID, "operation/pull", heartbeatStop)
+	defer close(heartbeatStop)
 
 	// Initialize the client
 	client, _, cleanup, err := provider.InitializeClient(c, logger, operation)
@@ -290,6 +308,16 @@ func (p *NotSupportedPullProvider) GetFileByPath(
 	return "", nil, errors.New(
 		"pull operations are not supported by this connector",
 	)
+}
+
+// ProgressHandler returns nil — providers that reject every pull
+// call have nothing to observe. The common pull handler's baseline
+// heartbeat is still installed anyway, so a misrouted request to a
+// push-only connector still surfaces a log row.
+func (p *NotSupportedPullProvider) ProgressHandler(
+	_ *db.Operation,
+) ProgressHandler {
+	return nil
 }
 
 // HandleNotSupportedPull provides a common handler for connectors that don't support pull operations.

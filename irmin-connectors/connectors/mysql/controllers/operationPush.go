@@ -27,6 +27,14 @@ type MySQLPushProvider struct {
 	logger       *slog.Logger
 }
 
+// ProgressHandler returns nil today — Phase 3 of the
+// progress-events rollout adds per-batch insert progress
+// (ProgressKindBatch). The baseline heartbeat from the common push
+// handler covers the gap.
+func (p *MySQLPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
+	return nil
+}
+
 // InitializeClient initializes the MySQL client for push operations.
 func (p *MySQLPushProvider) InitializeClient(
 	c fiber.Ctx,

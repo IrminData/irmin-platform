@@ -18,6 +18,15 @@ type FirecrawlPullProvider struct {
 	logger     *slog.Logger
 }
 
+// ProgressHandler returns nil today — Firecrawl crawls are
+// SDK-managed (mendableai/firecrawl-go owns the inner loop) so we
+// rely on the common pull handler's baseline heartbeat. Phase 3 of
+// the progress-events rollout adds a controller-level poll loop that
+// surfaces the SDK's job status as ProgressKindPage events.
+func (p *FirecrawlPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
+	return nil
+}
+
 // InitializeClient initializes the Firecrawl client for pull operations.
 func (p *FirecrawlPullProvider) InitializeClient(
 	c fiber.Ctx,

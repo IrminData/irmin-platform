@@ -17,6 +17,14 @@ type SFTPPushProvider struct {
 	logger     *slog.Logger
 }
 
+// ProgressHandler returns nil today — Phase 3 of the
+// progress-events rollout adds per-file upload progress
+// (ProgressKindFile). The baseline heartbeat from the common push
+// handler covers the gap.
+func (p *SFTPPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
+	return nil
+}
+
 // InitializeClient initializes the SFTP client for push operations.
 func (p *SFTPPushProvider) InitializeClient(
 	c fiber.Ctx,
