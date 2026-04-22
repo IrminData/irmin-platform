@@ -27,12 +27,19 @@ type PostgresPushProvider struct {
 	logger       *slog.Logger
 }
 
-// ProgressHandler returns nil today — Phase 3 of the
-// progress-events rollout adds per-batch COPY progress
-// (ProgressKindBatch). The baseline heartbeat from the common push
-// handler covers the gap.
-func (p *PostgresPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
-	return nil
+// ProgressHandler returns the per-row-batch observability callback
+// that Postgres' single-row INSERT loop fires from inside
+// executeInserts. A million-row push without progress emission
+// looks identical to a hung connection until the final COMMIT —
+// same field-incident shape that Stripe got fixed for.
+//
+// Always returns a non-nil handler. Nil-safety lives one layer down
+// in common.LogOperationProgress.
+//
+// Throttling lives in common.ThrottledQueryEmitter at the call site
+// (every 1000 rows OR every 5s).
+func (p *PostgresPushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
+	return common.NewProgressHandler(p.dbInstance, p.logger, operation)
 }
 
 // InitializeClient initializes the PostgreSQL client for push operations.
@@ -270,9 +277,23 @@ func (p *PostgresPushProvider) executeTransactionWithLogging(
 	insertSQL string,
 	operation *db.Operation,
 ) error {
+	handler := p.ProgressHandler(operation)
+	resourcePath := resourcePathForTable(p.databaseName, tableName)
+
 	var lastErr error
 	for attempt := 1; attempt <= utils.MaxRetries; attempt++ {
-		err := executeTransactionStep(c, client, tableName, records, columns, insertSQL)
+		// Build a fresh emitter per attempt. executeInserts resets
+		// its inserted counter to 0 on each call, but
+		// ThrottledQueryEmitter keeps lastRows / lastEmit across
+		// invocations. A deadlock retry would then see rows=1
+		// against a stale lastRows=4001, the row gate stays closed,
+		// and progress goes silent for the entire retry attempt
+		// (defeating the whole point of this PR).
+		emit := common.ThrottledQueryEmitter(
+			handler, resourcePath,
+			queryProgressMinRows, queryProgressMinInterval,
+		)
+		err := executeTransactionStep(c, client, tableName, records, columns, insertSQL, emit)
 		if err == nil {
 			return nil
 		}
@@ -339,14 +360,20 @@ func executeDelete(c fiber.Ctx, tx *postgresclient.Tx, tableName string) error {
 	return nil
 }
 
-// executeInserts executes the INSERT operations within a transaction.
+// executeInserts executes the INSERT operations within a
+// transaction, firing onProgress with the running insert count after
+// each row. Pass a no-op closure to disable progress emission (or
+// use common.ThrottledQueryEmitter, which returns one for nil
+// handlers).
 func executeInserts(
 	c fiber.Ctx,
 	tx *postgresclient.Tx,
 	records []map[string]any,
 	columns []string,
 	insertSQL string,
+	onProgress func(int64),
 ) error {
+	var inserted int64
 	for _, record := range records {
 		args := make([]any, len(columns))
 		for i, col := range columns {
@@ -355,6 +382,8 @@ func executeInserts(
 		if _, err := tx.Exec(c, insertSQL, args...); err != nil {
 			return fmt.Errorf("failed to insert row: %w", err)
 		}
+		inserted++
+		onProgress(inserted)
 	}
 	return nil
 }
@@ -367,6 +396,7 @@ func executeTransactionStep(
 	records []map[string]any,
 	columns []string,
 	insertSQL string,
+	onProgress func(int64),
 ) error {
 	tx, err := client.BeginTransaction(c)
 	if err != nil {
@@ -390,7 +420,7 @@ func executeTransactionStep(
 	}
 
 	// insert each new record
-	err = executeInserts(c, tx, records, columns, insertSQL)
+	err = executeInserts(c, tx, records, columns, insertSQL, onProgress)
 	if err != nil {
 		if rollbackErr := tx.Rollback(c); rollbackErr != nil {
 			// Log the rollback error but don't return it

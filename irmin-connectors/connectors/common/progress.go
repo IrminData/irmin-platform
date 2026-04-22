@@ -124,6 +124,33 @@ const heartbeatInterval = 30 * time.Second
 // duplication, and so a future change ripples in one place.
 const progressMessageDefault = "Operation in progress"
 
+// NewProgressHandler returns a ProgressHandler that forwards every
+// event to LogOperationProgress with the given dbInstance + logger,
+// using the operation's ID. The standard implementation every Phase 3
+// connector returns from its provider's ProgressHandler(operation)
+// method — written once here so a future bug fix to the dispatch
+// shape (e.g. tagging events with the operation slug, capturing
+// per-event timing) propagates everywhere instead of needing a
+// patch in 5+ closures.
+//
+// nil-operation safe: an event arriving before the operation is
+// hydrated logs against operationID=0, which the LogOperationProgress
+// → LogOperationEvent path tolerates. Callers that want to drop
+// events when operation is nil can wrap this themselves.
+func NewProgressHandler(
+	dbInstance *db.Database,
+	logger *slog.Logger,
+	operation *db.Operation,
+) ProgressHandler {
+	return func(event ProgressEvent) {
+		var operationID uint
+		if operation != nil {
+			operationID = operation.ID
+		}
+		LogOperationProgress(dbInstance, logger, operationID, event)
+	}
+}
+
 // LogOperationProgress emits a ProgressEvent as an operation log row,
 // applying per-kind throttling. Connectors should call this instead
 // of ripping throttling logic back into each connector's
@@ -234,6 +261,55 @@ func renderProgressEvent(event ProgressEvent) (string, map[string]any) {
 		return progressMessageDefault, metadata
 	default:
 		return progressMessageDefault, metadata
+	}
+}
+
+// ThrottledQueryEmitter returns a closure that wraps handler with a
+// "fire at most every minRows of progress OR every minInterval of
+// wall clock, whichever first" gate. The first call always emits so
+// the operator immediately sees the operation is alive.
+//
+// Designed for ProgressKindQuery (and any future per-row /
+// per-byte kind that LogOperationProgress doesn't pre-throttle):
+// callers know the natural per-iteration granularity and want to
+// emit once per "interesting amount of progress" rather than every
+// row. SQL row scans (Postgres / MySQL) are the immediate use case
+// — millions of rows.Next() iterations would flood the log otherwise.
+//
+// Returns a no-op when handler is nil so the row-loop call site can
+// invoke it unconditionally.
+func ThrottledQueryEmitter(
+	handler ProgressHandler,
+	resourcePath string,
+	minRows int64,
+	minInterval time.Duration,
+) func(rowsScanned int64) {
+	if handler == nil {
+		return func(int64) {}
+	}
+	var lastRows int64 = -1
+	var lastEmit time.Time
+	return func(rows int64) {
+		if lastRows < 0 {
+			// First call always emits — operator-visible "started"
+			// signal regardless of throttle thresholds.
+			lastRows, lastEmit = rows, time.Now()
+			handler(ProgressEvent{
+				Kind:         ProgressKindQuery,
+				ResourcePath: resourcePath,
+				Rows:         rows,
+			})
+			return
+		}
+		if rows-lastRows < minRows && time.Since(lastEmit) < minInterval {
+			return
+		}
+		lastRows, lastEmit = rows, time.Now()
+		handler(ProgressEvent{
+			Kind:         ProgressKindQuery,
+			ResourcePath: resourcePath,
+			Rows:         rows,
+		})
 	}
 }
 

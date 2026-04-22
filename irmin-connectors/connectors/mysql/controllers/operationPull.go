@@ -9,6 +9,7 @@ import (
 	mysqlclient "irmin-connectors/connectors/mysql/client"
 	"irmin-connectors/db"
 	"log/slog"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -20,13 +21,42 @@ type MySQLPullProvider struct {
 	logger       *slog.Logger
 }
 
-// ProgressHandler returns nil today — Phase 3 of the
-// progress-events rollout wires per-row throttled query progress
-// (ProgressKindQuery) into buildRecordsFromRows so 10M-row scans
-// stop looking like a 30-minute hang. Until then, the baseline
-// heartbeat from the common pull handler covers the gap.
-func (p *MySQLPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
-	return nil
+// ProgressHandler returns the per-row-batch observability callback
+// MySQL's row-scan loop fires from inside buildRecordsFromRows. A
+// 10M-row table pull silently consumed 20-30 minutes between
+// operation/init and the final response otherwise — same shape as
+// the Postgres bug, same field-incident shape Stripe got fixed for.
+//
+// Always returns a non-nil handler. Nil-safety lives one layer down
+// in common.LogOperationProgress.
+//
+// Throttling lives in common.ThrottledQueryEmitter at the call site
+// (every queryProgressMinRows OR every queryProgressMinInterval).
+func (p *MySQLPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
+	return common.NewProgressHandler(p.dbInstance, p.logger, operation)
+}
+
+// queryProgressMinRows is the row-count gate for MySQL row-scan
+// progress emission — emit at most one log row per 1000 scanned.
+// Mirrors the Postgres setting; keeping the same constant per
+// connector means SQL-style connectors all surface progress at the
+// same observable cadence.
+const queryProgressMinRows = 1000
+
+// queryProgressMinInterval is the wall-clock gate paired with
+// queryProgressMinRows.
+const queryProgressMinInterval = 5 * time.Second
+
+// resourcePathForTable formats the mysql://<db>/<table> identifier
+// used in progress events. Operators with multiple databases or
+// tables can tell which scan is stuck. Package-level so both pull
+// and push providers share one implementation.
+func resourcePathForTable(databaseName *string, table string) string {
+	dbName := ""
+	if databaseName != nil {
+		dbName = *databaseName
+	}
+	return "mysql://" + dbName + "/" + table
 }
 
 // InitializeClient initializes the MySQL client for pull operations.
@@ -183,7 +213,13 @@ func (p *MySQLPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath strin
 	}
 
 	// Build records
-	recs, err := buildRecordsFromRows(rows, cols)
+	emit := common.ThrottledQueryEmitter(
+		p.ProgressHandler(operation),
+		resourcePathForTable(p.databaseName, path),
+		queryProgressMinRows,
+		queryProgressMinInterval,
+	)
+	recs, err := buildRecordsFromRows(rows, cols, emit)
 	if err != nil {
 		if operation != nil && p.dbInstance != nil && p.logger != nil {
 			common.LogOperationEvent(
@@ -264,9 +300,13 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
 }
 
-// buildRecordsFromRows converts rows into a slice of maps.
-func buildRecordsFromRows(rows *sql.Rows, cols []string) ([]map[string]any, error) {
+// buildRecordsFromRows converts rows into a slice of maps and fires
+// onProgress with the running row count after each scan. Pass a
+// no-op closure (or use common.ThrottledQueryEmitter, which returns
+// one for nil handlers) to disable progress emission.
+func buildRecordsFromRows(rows *sql.Rows, cols []string, onProgress func(int64)) ([]map[string]any, error) {
 	var recs []map[string]any
+	var scanned int64
 	for rows.Next() {
 		values := make([]any, len(cols))
 		valuePtrs := make([]any, len(cols))
@@ -283,6 +323,8 @@ func buildRecordsFromRows(rows *sql.Rows, cols []string) ([]map[string]any, erro
 			row[col] = values[i]
 		}
 		recs = append(recs, row)
+		scanned++
+		onProgress(scanned)
 	}
 
 	if err := rows.Err(); err != nil {

@@ -75,18 +75,25 @@ var progressCoverage = []struct {
 		expectedNonNilPush: true,
 	},
 	{
-		name:               "PostgreSQL",
-		pullProvider:       &postgrescontrollers.PostgresPullProvider{},
-		pushProvider:       &postgrescontrollers.PostgresPushProvider{},
-		expectedNonNilPull: false, // Phase 3 flips this true (HIGH priority)
-		expectedNonNilPush: false, // Phase 3 flips this true
+		name:         "PostgreSQL",
+		pullProvider: &postgrescontrollers.PostgresPullProvider{},
+		pushProvider: &postgrescontrollers.PostgresPushProvider{},
+		// Phase 3 wired ProgressKindQuery from buildRecordsFromRows
+		// (pull row scans) and executeInserts (push single-row
+		// INSERT loop). Both throttled via common.ThrottledQueryEmitter
+		// at every 1000 rows OR every 5s.
+		expectedNonNilPull: true,
+		expectedNonNilPush: true,
 	},
 	{
-		name:               "MySQL",
-		pullProvider:       &mysqlcontrollers.MySQLPullProvider{},
-		pushProvider:       &mysqlcontrollers.MySQLPushProvider{},
-		expectedNonNilPull: false, // Phase 3 flips this true (HIGH priority)
-		expectedNonNilPush: false, // Phase 3 flips this true
+		name:         "MySQL",
+		pullProvider: &mysqlcontrollers.MySQLPullProvider{},
+		pushProvider: &mysqlcontrollers.MySQLPushProvider{},
+		// Phase 3 wired the same shape as Postgres: ProgressKindQuery
+		// from buildRecordsFromRows (pull) and executeInserts (push),
+		// throttled via common.ThrottledQueryEmitter.
+		expectedNonNilPull: true,
+		expectedNonNilPush: true,
 	},
 	{
 		name:         "SFTP",

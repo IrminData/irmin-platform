@@ -8,6 +8,7 @@ import (
 	postgresclient "irmin-connectors/connectors/postgres/client"
 	"irmin-connectors/db"
 	"log/slog"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/jackc/pgx/v5"
@@ -20,13 +21,48 @@ type PostgresPullProvider struct {
 	logger       *slog.Logger
 }
 
-// ProgressHandler returns nil today — Phase 3 of the
-// progress-events rollout wires per-row throttled query progress
-// (ProgressKindQuery) into buildRecordsFromRows so 10M-row scans
-// stop looking like a 30-minute hang. Until then, the baseline
-// heartbeat from the common pull handler covers the gap.
-func (p *PostgresPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
-	return nil
+// ProgressHandler returns the per-row-batch observability callback
+// that Postgres' row-scan loop fires from inside buildRecordsFromRows.
+// Without it, a 10M-row table pull emits zero events between
+// operation/init and the final response — same silent-window
+// failure mode Stripe got fixed for, but worse since SQL scans can
+// run 30+ minutes.
+//
+// Always returns a non-nil handler. Nil-safety lives one layer down
+// in common.LogOperationProgress.
+//
+// Throttling lives in common.ThrottledQueryEmitter at the call site
+// (every 1000 rows OR every 5s) — Query is unthrottled in
+// LogOperationProgress so callers control their own granularity,
+// since "every page" doesn't translate cleanly to row scans.
+func (p *PostgresPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
+	return common.NewProgressHandler(p.dbInstance, p.logger, operation)
+}
+
+// queryProgressMinRows is the row-count gate for Postgres /
+// MySQL row-scan progress emission — emit at most one log row per
+// 1000 scanned. Scans on big tables (10M+ rows) would otherwise
+// emit 10k+ log rows.
+const queryProgressMinRows = 1000
+
+// queryProgressMinInterval is the wall-clock gate paired with
+// queryProgressMinRows. Tables with very wide rows (think TOAST'd
+// JSON) might scan slowly enough that 1000 rows takes minutes — the
+// time gate means operators still see progress in that window.
+const queryProgressMinInterval = 5 * time.Second
+
+// resourcePathForTable formats the postgres://<db>/<table>
+// identifier used in progress events. Operators seeing the log row
+// know which table inside which database is being scanned.
+// Package-level so both pull and push providers share one
+// implementation; the inputs (databaseName + table) are all that's
+// needed to compute the path.
+func resourcePathForTable(databaseName *string, table string) string {
+	dbName := ""
+	if databaseName != nil {
+		dbName = *databaseName
+	}
+	return "postgres://" + dbName + "/" + table
 }
 
 // InitializeClient initializes the PostgreSQL client for pull operations.
@@ -168,7 +204,13 @@ func (p *PostgresPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath st
 	}
 
 	// Build records
-	recs, err := buildRecordsFromRows(rows, cols)
+	emit := common.ThrottledQueryEmitter(
+		p.ProgressHandler(operation),
+		resourcePathForTable(p.databaseName, path),
+		queryProgressMinRows,
+		queryProgressMinInterval,
+	)
+	recs, err := buildRecordsFromRows(rows, cols, emit)
 	if err != nil {
 		if operation != nil && p.dbInstance != nil && p.logger != nil {
 			common.LogOperationEvent(
@@ -249,9 +291,13 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
 }
 
-// buildRecordsFromRows converts rows into a slice of maps.
-func buildRecordsFromRows(rows pgx.Rows, cols []string) ([]map[string]any, error) {
+// buildRecordsFromRows converts rows into a slice of maps and fires
+// onProgress with the running row count after each scan. Pass a
+// no-op closure (or use common.ThrottledQueryEmitter, which returns
+// one for nil handlers) to disable progress emission.
+func buildRecordsFromRows(rows pgx.Rows, cols []string, onProgress func(int64)) ([]map[string]any, error) {
 	var recs []map[string]any
+	var scanned int64
 	for rows.Next() {
 		values, err := rows.Values()
 		if err != nil {
@@ -263,6 +309,8 @@ func buildRecordsFromRows(rows pgx.Rows, cols []string) ([]map[string]any, error
 			row[col] = values[i]
 		}
 		recs = append(recs, row)
+		scanned++
+		onProgress(scanned)
 	}
 
 	if err := rows.Err(); err != nil {

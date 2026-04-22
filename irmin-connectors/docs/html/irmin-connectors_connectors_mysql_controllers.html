@@ -291,12 +291,18 @@ func (p *MySQLPullProvider) InitializeClient(
 ) (any, *string, func(), error)
     InitializeClient initializes the MySQL client for pull operations.
 
-func (p *MySQLPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
-    ProgressHandler returns nil today — Phase 3 of the progress-events
-    rollout wires per-row throttled query progress (ProgressKindQuery) into
-    buildRecordsFromRows so 10M-row scans stop looking like a 30-minute hang.
-    Until then, the baseline heartbeat from the common pull handler covers the
-    gap.
+func (p *MySQLPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler returns the per-row-batch observability callback MySQL's
+    row-scan loop fires from inside buildRecordsFromRows. A 10M-row table
+    pull silently consumed 20-30 minutes between operation/init and the final
+    response otherwise — same shape as the Postgres bug, same field-incident
+    shape Stripe got fixed for.
+
+    Always returns a non-nil handler. Nil-safety lives one layer down in
+    common.LogOperationProgress.
+
+    Throttling lives in common.ThrottledQueryEmitter at the call site (every
+    queryProgressMinRows OR every queryProgressMinInterval).
 
 type MySQLPushProvider struct {
 	// Has unexported fields.
@@ -319,10 +325,16 @@ func (p *MySQLPushProvider) ProcessFiles(
     ProcessFiles processes the extracted files and inserts them into MySQL
     tables.
 
-func (p *MySQLPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
-    ProgressHandler returns nil today — Phase 3 of the progress-events rollout
-    adds per-batch insert progress (ProgressKindBatch). The baseline heartbeat
-    from the common push handler covers the gap.
+func (p *MySQLPushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler returns the per-row-batch observability callback MySQL's
+    single-row INSERT loop fires from inside executeInserts. A million-row push
+    without progress emission looks identical to a hung connection until COMMIT
+    — same field-incident shape Stripe got fixed for.
+
+    Always returns a non-nil handler. Nil-safety lives one layer down in
+    common.LogOperationProgress.
+
+    Throttling lives in common.ThrottledQueryEmitter at the call site.
 
 type MySQLSchemaProvider struct{}
     MySQLSchemaProvider implements the SchemaOperationProvider interface for

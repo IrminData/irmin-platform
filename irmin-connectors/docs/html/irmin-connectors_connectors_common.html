@@ -291,6 +291,27 @@ func SetupConnectorRoutes(config ConnectorRouteConfig)
     SetupConnectorRoutes sets up all routes for a connector based on its
     capabilities.
 
+func ThrottledQueryEmitter(
+	handler ProgressHandler,
+	resourcePath string,
+	minRows int64,
+	minInterval time.Duration,
+) func(rowsScanned int64)
+    ThrottledQueryEmitter returns a closure that wraps handler with a "fire at
+    most every minRows of progress OR every minInterval of wall clock, whichever
+    first" gate. The first call always emits so the operator immediately sees
+    the operation is alive.
+
+    Designed for ProgressKindQuery (and any future per-row / per-byte kind
+    that LogOperationProgress doesn't pre-throttle): callers know the natural
+    per-iteration granularity and want to emit once per "interesting amount of
+    progress" rather than every row. SQL row scans (Postgres / MySQL) are the
+    immediate use case — millions of rows.Next() iterations would flood the log
+    otherwise.
+
+    Returns a no-op when handler is nil so the row-loop call site can invoke it
+    unconditionally.
+
 func ValidateOperationToken(
 	c fiber.Ctx,
 	app *models.ConnectorsApp,
@@ -772,6 +793,24 @@ type ProgressHandler func(ProgressEvent)
     quickly. nil-safe: connectors whose operations are short-running
     may return nil from their PullOperationProvider.ProgressHandler /
     PushOperationProvider.ProgressHandler method.
+
+func NewProgressHandler(
+	dbInstance *db.Database,
+	logger *slog.Logger,
+	operation *db.Operation,
+) ProgressHandler
+    NewProgressHandler returns a ProgressHandler that forwards every event
+    to LogOperationProgress with the given dbInstance + logger, using the
+    operation's ID. The standard implementation every Phase 3 connector returns
+    from its provider's ProgressHandler(operation) method — written once here
+    so a future bug fix to the dispatch shape (e.g. tagging events with the
+    operation slug, capturing per-event timing) propagates everywhere instead of
+    needing a patch in 5+ closures.
+
+    nil-operation safe: an event arriving before the operation is hydrated logs
+    against operationID=0, which the LogOperationProgress → LogOperationEvent
+    path tolerates. Callers that want to drop events when operation is nil can
+    wrap this themselves.
 
 type PullOperationProvider interface {
 	// InitializeClient initializes the client for pull operations

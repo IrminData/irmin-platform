@@ -1759,6 +1759,7 @@ Concrete connectors compose \*OAuthConnector into their Controllers struct. Stat
 - [func RenderConnectorInfo\(c fiber.Ctx, app \*models.ConnectorsApp, getConnectorInfo func\(\) models.ConnectorDetails\) error](<#RenderConnectorInfo>)
 - [func RenderDetailsPage\(c fiber.Ctx, config DetailsPageConfig\) error](<#RenderDetailsPage>)
 - [func SetupConnectorRoutes\(config ConnectorRouteConfig\)](<#SetupConnectorRoutes>)
+- [func ThrottledQueryEmitter\(handler ProgressHandler, resourcePath string, minRows int64, minInterval time.Duration\) func\(rowsScanned int64\)](<#ThrottledQueryEmitter>)
 - [func ValidateOperationToken\(c fiber.Ctx, app \*models.ConnectorsApp, getConnectorInfo func\(\) models.ConnectorDetails\) error](<#ValidateOperationToken>)
 - [func ValidateSystemToken\(c fiber.Ctx, app \*models.ConnectorsApp, getConnectorInfo func\(\) models.ConnectorDetails\) error](<#ValidateSystemToken>)
 - [func WrapHTTPClient\(client \*http.Client, o \*OAuthConnector, c fiber.Ctx\) \*http.Client](<#WrapHTTPClient>)
@@ -1808,6 +1809,7 @@ Concrete connectors compose \*OAuthConnector into their Controllers struct. Stat
 - [type PatchOperationProvider](<#PatchOperationProvider>)
 - [type ProgressEvent](<#ProgressEvent>)
 - [type ProgressHandler](<#ProgressHandler>)
+  - [func NewProgressHandler\(dbInstance \*db.Database, logger \*slog.Logger, operation \*db.Operation\) ProgressHandler](<#NewProgressHandler>)
 - [type PullOperationProvider](<#PullOperationProvider>)
 - [type PushOperationProvider](<#PushOperationProvider>)
 - [type SchemaOperationProvider](<#SchemaOperationProvider>)
@@ -2180,6 +2182,19 @@ func SetupConnectorRoutes(config ConnectorRouteConfig)
 ```
 
 SetupConnectorRoutes sets up all routes for a connector based on its capabilities.
+
+<a name="ThrottledQueryEmitter"></a>
+## func ThrottledQueryEmitter
+
+```go
+func ThrottledQueryEmitter(handler ProgressHandler, resourcePath string, minRows int64, minInterval time.Duration) func(rowsScanned int64)
+```
+
+ThrottledQueryEmitter returns a closure that wraps handler with a "fire at most every minRows of progress OR every minInterval of wall clock, whichever first" gate. The first call always emits so the operator immediately sees the operation is alive.
+
+Designed for ProgressKindQuery \(and any future per\-row / per\-byte kind that LogOperationProgress doesn't pre\-throttle\): callers know the natural per\-iteration granularity and want to emit once per "interesting amount of progress" rather than every row. SQL row scans \(Postgres / MySQL\) are the immediate use case — millions of rows.Next\(\) iterations would flood the log otherwise.
+
+Returns a no\-op when handler is nil so the row\-loop call site can invoke it unconditionally.
 
 <a name="ValidateOperationToken"></a>
 ## func ValidateOperationToken
@@ -2807,6 +2822,17 @@ ProgressHandler receives observability events from long\-running operations. Cal
 ```go
 type ProgressHandler func(ProgressEvent)
 ```
+
+<a name="NewProgressHandler"></a>
+### func NewProgressHandler
+
+```go
+func NewProgressHandler(dbInstance *db.Database, logger *slog.Logger, operation *db.Operation) ProgressHandler
+```
+
+NewProgressHandler returns a ProgressHandler that forwards every event to LogOperationProgress with the given dbInstance \+ logger, using the operation's ID. The standard implementation every Phase 3 connector returns from its provider's ProgressHandler\(operation\) method — written once here so a future bug fix to the dispatch shape \(e.g. tagging events with the operation slug, capturing per\-event timing\) propagates everywhere instead of needing a patch in 5\+ closures.
+
+nil\-operation safe: an event arriving before the operation is hydrated logs against operationID=0, which the LogOperationProgress → LogOperationEvent path tolerates. Callers that want to drop events when operation is nil can wrap this themselves.
 
 <a name="PullOperationProvider"></a>
 ## type PullOperationProvider
@@ -6157,11 +6183,11 @@ import "irmin-connectors/connectors/mysql/controllers"
   - [func \(p \*MySQLPullProvider\) GetAllFiles\(c fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#MySQLPullProvider.GetAllFiles>)
   - [func \(p \*MySQLPullProvider\) GetFileByPath\(c fiber.Ctx, client any, rawPath string\) \(string, \[\]byte, error\)](<#MySQLPullProvider.GetFileByPath>)
   - [func \(p \*MySQLPullProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#MySQLPullProvider.InitializeClient>)
-  - [func \(p \*MySQLPullProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#MySQLPullProvider.ProgressHandler>)
+  - [func \(p \*MySQLPullProvider\) ProgressHandler\(operation \*db.Operation\) common.ProgressHandler](<#MySQLPullProvider.ProgressHandler>)
 - [type MySQLPushProvider](<#MySQLPushProvider>)
   - [func \(p \*MySQLPushProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#MySQLPushProvider.InitializeClient>)
   - [func \(p \*MySQLPushProvider\) ProcessFiles\(c fiber.Ctx, client any, files map\[string\]\[\]byte, rawPath string\) error](<#MySQLPushProvider.ProcessFiles>)
-  - [func \(p \*MySQLPushProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#MySQLPushProvider.ProgressHandler>)
+  - [func \(p \*MySQLPushProvider\) ProgressHandler\(operation \*db.Operation\) common.ProgressHandler](<#MySQLPushProvider.ProgressHandler>)
 - [type MySQLSchemaProvider](<#MySQLSchemaProvider>)
   - [func \(p \*MySQLSchemaProvider\) GetSchema\(c fiber.Ctx, client any, \_ string, databaseName \*string\) \(\*irminmodels.ObjectSchema, error\)](<#MySQLSchemaProvider.GetSchema>)
   - [func \(p \*MySQLSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#MySQLSchemaProvider.GetSupportedOperationTypes>)
@@ -6472,10 +6498,14 @@ InitializeClient initializes the MySQL client for pull operations.
 ### func \(\*MySQLPullProvider\) ProgressHandler
 
 ```go
-func (p *MySQLPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+func (p *MySQLPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
 ```
 
-ProgressHandler returns nil today — Phase 3 of the progress\-events rollout wires per\-row throttled query progress \(ProgressKindQuery\) into buildRecordsFromRows so 10M\-row scans stop looking like a 30\-minute hang. Until then, the baseline heartbeat from the common pull handler covers the gap.
+ProgressHandler returns the per\-row\-batch observability callback MySQL's row\-scan loop fires from inside buildRecordsFromRows. A 10M\-row table pull silently consumed 20\-30 minutes between operation/init and the final response otherwise — same shape as the Postgres bug, same field\-incident shape Stripe got fixed for.
+
+Always returns a non\-nil handler. Nil\-safety lives one layer down in common.LogOperationProgress.
+
+Throttling lives in common.ThrottledQueryEmitter at the call site \(every queryProgressMinRows OR every queryProgressMinInterval\).
 
 <a name="MySQLPushProvider"></a>
 ## type MySQLPushProvider
@@ -6510,10 +6540,14 @@ ProcessFiles processes the extracted files and inserts them into MySQL tables.
 ### func \(\*MySQLPushProvider\) ProgressHandler
 
 ```go
-func (p *MySQLPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+func (p *MySQLPushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
 ```
 
-ProgressHandler returns nil today — Phase 3 of the progress\-events rollout adds per\-batch insert progress \(ProgressKindBatch\). The baseline heartbeat from the common push handler covers the gap.
+ProgressHandler returns the per\-row\-batch observability callback MySQL's single\-row INSERT loop fires from inside executeInserts. A million\-row push without progress emission looks identical to a hung connection until COMMIT — same field\-incident shape Stripe got fixed for.
+
+Always returns a non\-nil handler. Nil\-safety lives one layer down in common.LogOperationProgress.
+
+Throttling lives in common.ThrottledQueryEmitter at the call site.
 
 <a name="MySQLSchemaProvider"></a>
 ## type MySQLSchemaProvider
@@ -7748,11 +7782,11 @@ import "irmin-connectors/connectors/postgres/controllers"
   - [func \(p \*PostgresPullProvider\) GetAllFiles\(c fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#PostgresPullProvider.GetAllFiles>)
   - [func \(p \*PostgresPullProvider\) GetFileByPath\(c fiber.Ctx, client any, rawPath string\) \(string, \[\]byte, error\)](<#PostgresPullProvider.GetFileByPath>)
   - [func \(p \*PostgresPullProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#PostgresPullProvider.InitializeClient>)
-  - [func \(p \*PostgresPullProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#PostgresPullProvider.ProgressHandler>)
+  - [func \(p \*PostgresPullProvider\) ProgressHandler\(operation \*db.Operation\) common.ProgressHandler](<#PostgresPullProvider.ProgressHandler>)
 - [type PostgresPushProvider](<#PostgresPushProvider>)
   - [func \(p \*PostgresPushProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#PostgresPushProvider.InitializeClient>)
   - [func \(p \*PostgresPushProvider\) ProcessFiles\(c fiber.Ctx, client any, files map\[string\]\[\]byte, rawPath string\) error](<#PostgresPushProvider.ProcessFiles>)
-  - [func \(p \*PostgresPushProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#PostgresPushProvider.ProgressHandler>)
+  - [func \(p \*PostgresPushProvider\) ProgressHandler\(operation \*db.Operation\) common.ProgressHandler](<#PostgresPushProvider.ProgressHandler>)
 
 
 ## Constants
@@ -8086,10 +8120,14 @@ InitializeClient initializes the PostgreSQL client for pull operations.
 ### func \(\*PostgresPullProvider\) ProgressHandler
 
 ```go
-func (p *PostgresPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+func (p *PostgresPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
 ```
 
-ProgressHandler returns nil today — Phase 3 of the progress\-events rollout wires per\-row throttled query progress \(ProgressKindQuery\) into buildRecordsFromRows so 10M\-row scans stop looking like a 30\-minute hang. Until then, the baseline heartbeat from the common pull handler covers the gap.
+ProgressHandler returns the per\-row\-batch observability callback that Postgres' row\-scan loop fires from inside buildRecordsFromRows. Without it, a 10M\-row table pull emits zero events between operation/init and the final response — same silent\-window failure mode Stripe got fixed for, but worse since SQL scans can run 30\+ minutes.
+
+Always returns a non\-nil handler. Nil\-safety lives one layer down in common.LogOperationProgress.
+
+Throttling lives in common.ThrottledQueryEmitter at the call site \(every 1000 rows OR every 5s\) — Query is unthrottled in LogOperationProgress so callers control their own granularity, since "every page" doesn't translate cleanly to row scans.
 
 <a name="PostgresPushProvider"></a>
 ## type PostgresPushProvider
@@ -8124,10 +8162,14 @@ ProcessFiles processes the extracted files and inserts them into PostgreSQL tabl
 ### func \(\*PostgresPushProvider\) ProgressHandler
 
 ```go
-func (p *PostgresPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+func (p *PostgresPushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
 ```
 
-ProgressHandler returns nil today — Phase 3 of the progress\-events rollout adds per\-batch COPY progress \(ProgressKindBatch\). The baseline heartbeat from the common push handler covers the gap.
+ProgressHandler returns the per\-row\-batch observability callback that Postgres' single\-row INSERT loop fires from inside executeInserts. A million\-row push without progress emission looks identical to a hung connection until the final COMMIT — same field\-incident shape that Stripe got fixed for.
+
+Always returns a non\-nil handler. Nil\-safety lives one layer down in common.LogOperationProgress.
+
+Throttling lives in common.ThrottledQueryEmitter at the call site \(every 1000 rows OR every 5s\).
 
 # postgresmodels
 

@@ -27,12 +27,18 @@ type MySQLPushProvider struct {
 	logger       *slog.Logger
 }
 
-// ProgressHandler returns nil today — Phase 3 of the
-// progress-events rollout adds per-batch insert progress
-// (ProgressKindBatch). The baseline heartbeat from the common push
-// handler covers the gap.
-func (p *MySQLPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
-	return nil
+// ProgressHandler returns the per-row-batch observability callback
+// MySQL's single-row INSERT loop fires from inside executeInserts.
+// A million-row push without progress emission looks identical to a
+// hung connection until COMMIT — same field-incident shape Stripe
+// got fixed for.
+//
+// Always returns a non-nil handler. Nil-safety lives one layer down
+// in common.LogOperationProgress.
+//
+// Throttling lives in common.ThrottledQueryEmitter at the call site.
+func (p *MySQLPushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
+	return common.NewProgressHandler(p.dbInstance, p.logger, operation)
 }
 
 // InitializeClient initializes the MySQL client for push operations.
@@ -272,9 +278,21 @@ func (p *MySQLPushProvider) executeTransactionWithLogging(
 	insertSQL string,
 	operation *db.Operation,
 ) error {
+	handler := p.ProgressHandler(operation)
+	resourcePath := resourcePathForTable(p.databaseName, tableName)
+
 	var lastErr error
 	for attempt := 1; attempt <= utils.MaxRetries; attempt++ {
-		err := executeTransactionStep(c, client, tableName, records, columns, insertSQL)
+		// Build a fresh emitter per attempt — see Postgres' matching
+		// fix in the parent PR for the full reasoning. Reusing the
+		// emitter across deadlock retries silences progress for the
+		// entire retry attempt because the row gate stays closed
+		// against stale lastRows state.
+		emit := common.ThrottledQueryEmitter(
+			handler, resourcePath,
+			queryProgressMinRows, queryProgressMinInterval,
+		)
+		err := executeTransactionStep(c, client, tableName, records, columns, insertSQL, emit)
 		if err == nil {
 			return nil
 		}
@@ -341,14 +359,20 @@ func executeDelete(c fiber.Ctx, tx *mysqlclient.Tx, tableName string) error {
 	return nil
 }
 
-// executeInserts executes the INSERT operations within a transaction.
+// executeInserts executes the INSERT operations within a
+// transaction, firing onProgress with the running insert count after
+// each row. Pass a no-op closure to disable progress emission (or
+// use common.ThrottledQueryEmitter, which returns one for nil
+// handlers).
 func executeInserts(
 	c fiber.Ctx,
 	tx *mysqlclient.Tx,
 	records []map[string]any,
 	columns []string,
 	insertSQL string,
+	onProgress func(int64),
 ) error {
+	var inserted int64
 	for _, record := range records {
 		args := make([]any, len(columns))
 		for i, col := range columns {
@@ -357,6 +381,8 @@ func executeInserts(
 		if _, err := tx.Exec(c, insertSQL, args...); err != nil {
 			return fmt.Errorf("failed to insert row: %w", err)
 		}
+		inserted++
+		onProgress(inserted)
 	}
 	return nil
 }
@@ -369,6 +395,7 @@ func executeTransactionStep(
 	records []map[string]any,
 	columns []string,
 	insertSQL string,
+	onProgress func(int64),
 ) error {
 	tx, err := client.BeginTransaction(c)
 	if err != nil {
@@ -392,7 +419,7 @@ func executeTransactionStep(
 	}
 
 	// insert each new record
-	err = executeInserts(c, tx, records, columns, insertSQL)
+	err = executeInserts(c, tx, records, columns, insertSQL, onProgress)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			// Log the rollback error but don't return it

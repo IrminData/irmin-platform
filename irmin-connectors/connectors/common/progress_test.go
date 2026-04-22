@@ -233,6 +233,62 @@ func TestRenderProgressEvent_JSONRoundTrip(t *testing.T) {
 	}
 }
 
+// TestThrottledQueryEmitter_FirstCallEmits verifies the
+// always-emit-first-call contract — operators need an immediate
+// "started" signal regardless of the throttle threshold, otherwise
+// a fast-completing query (10 rows total) would never fire.
+func TestThrottledQueryEmitter_FirstCallEmits(t *testing.T) {
+	var got []ProgressEvent
+	emit := ThrottledQueryEmitter(
+		func(ev ProgressEvent) { got = append(got, ev) },
+		"postgres://demo/orders", 1000, 5*time.Second,
+	)
+	emit(0)
+	if len(got) != 1 {
+		t.Fatalf("first call: got %d emissions, want 1", len(got))
+	}
+	if got[0].Kind != ProgressKindQuery || got[0].ResourcePath != "postgres://demo/orders" {
+		t.Errorf("first emission shape = %+v", got[0])
+	}
+}
+
+// TestThrottledQueryEmitter_RowGate covers the "fire every N rows"
+// half of the throttle. With minRows=1000 and a fast call sequence,
+// we should emit at row counts 0, 1000, 2000... and skip everything
+// in between.
+func TestThrottledQueryEmitter_RowGate(t *testing.T) {
+	var rowsAt []int64
+	emit := ThrottledQueryEmitter(
+		func(ev ProgressEvent) { rowsAt = append(rowsAt, ev.Rows) },
+		"x", 1000, 1*time.Hour, // long interval so only the row gate matters
+	)
+	for r := int64(0); r <= 3000; r += 100 {
+		emit(r)
+	}
+	want := []int64{0, 1000, 2000, 3000}
+	if len(rowsAt) != len(want) {
+		t.Fatalf("emit row counts = %v, want %v", rowsAt, want)
+	}
+	for i, w := range want {
+		if rowsAt[i] != w {
+			t.Errorf("emission %d: row=%d, want %d", i, rowsAt[i], w)
+		}
+	}
+}
+
+// TestThrottledQueryEmitter_NilHandler asserts the nil-handler fast
+// path returns a usable no-op closure. The row-scan loop calls the
+// returned function on every iteration; if it returned nil the loop
+// would have to add its own guard (defeating the abstraction).
+func TestThrottledQueryEmitter_NilHandler(t *testing.T) {
+	emit := ThrottledQueryEmitter(nil, "x", 100, time.Second)
+	if emit == nil {
+		t.Fatal("nil-handler path returned nil emitter — must return no-op closure")
+	}
+	emit(0)
+	emit(50000)
+}
+
 // TestLogOperationProgress_NilSafe verifies the documented contract:
 // passing a nil dbInstance or logger no-ops rather than panicking.
 // Connectors return real handlers from ProgressHandler(operation)
