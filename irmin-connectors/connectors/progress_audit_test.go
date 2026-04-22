@@ -85,11 +85,14 @@ var progressCoverage = []struct {
 		expectedNonNilPush: false, // Phase 3 flips this true
 	},
 	{
-		name:               "SFTP",
-		pullProvider:       &sftpcontrollers.SFTPPullProvider{},
-		pushProvider:       &sftpcontrollers.SFTPPushProvider{},
-		expectedNonNilPull: false, // Phase 3 flips this true (per-file)
-		expectedNonNilPush: false, // Phase 3 flips this true
+		name:         "SFTP",
+		pullProvider: &sftpcontrollers.SFTPPullProvider{},
+		pushProvider: &sftpcontrollers.SFTPPushProvider{},
+		// Phase 3 wired ProgressKindFile into DownloadDirectory's
+		// recursive walk + UploadDirectory's per-file loop, plus
+		// ProgressKindRateLimit into executeWithRetry's backoff.
+		expectedNonNilPull: true,
+		expectedNonNilPush: true,
 	},
 	{
 		name:         "Stripe",

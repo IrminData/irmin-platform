@@ -262,11 +262,19 @@ func (p *SFTPPullProvider) InitializeClient(
 ) (any, *string, func(), error)
     InitializeClient initializes the SFTP client for pull operations.
 
-func (p *SFTPPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
-    ProgressHandler returns nil today — Phase 3 of the progress-events rollout
-    adds per-file transfer progress (ProgressKindFile) so 10k-file directory
-    pulls stop looking like a multi-minute hang. Until then, the baseline
-    heartbeat from the common pull handler covers the gap.
+func (p *SFTPPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler returns the per-file observability callback the SFTP
+    client fires from inside DownloadDirectory's recursive walk and the
+    executeWithRetry backoff loop. Without it, a 10k-file directory pull
+    or a flaky-network retry storm silently consumes 5-10 minutes between
+    operation/init and the final response — same field-incident shape Stripe got
+    fixed for.
+
+    Always returns a non-nil handler. Nil-safety lives one layer down in
+    common.LogOperationProgress.
+
+    File events fire per file (caller-throttled — one file = one emission);
+    rate-limit events fire per retry attempt.
 
 type SFTPPushProvider struct {
 	// Has unexported fields.
@@ -289,10 +297,15 @@ func (p *SFTPPushProvider) ProcessFiles(
     ProcessFiles processes the extracted files and uploads them to the SFTP
     server.
 
-func (p *SFTPPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
-    ProgressHandler returns nil today — Phase 3 of the progress-events rollout
-    adds per-file upload progress (ProgressKindFile). The baseline heartbeat
-    from the common push handler covers the gap.
+func (p *SFTPPushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler returns the per-file observability callback the SFTP client
+    fires from inside UploadDirectory's per-file loop and the executeWithRetry
+    backoff loop. Without it, a 10k-file upload or a flaky-network retry
+    storm silently consumes 5-10 minutes between operation/init and the final
+    response.
+
+    Always returns a non-nil handler. Nil-safety lives one layer down in
+    common.LogOperationProgress.
 
 type SFTPSchemaProvider struct {
 	APIBaseURL string

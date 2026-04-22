@@ -17,12 +17,22 @@ type SFTPPushProvider struct {
 	logger     *slog.Logger
 }
 
-// ProgressHandler returns nil today — Phase 3 of the
-// progress-events rollout adds per-file upload progress
-// (ProgressKindFile). The baseline heartbeat from the common push
-// handler covers the gap.
-func (p *SFTPPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler {
-	return nil
+// ProgressHandler returns the per-file observability callback the
+// SFTP client fires from inside UploadDirectory's per-file loop and
+// the executeWithRetry backoff loop. Without it, a 10k-file upload
+// or a flaky-network retry storm silently consumes 5-10 minutes
+// between operation/init and the final response.
+//
+// Always returns a non-nil handler. Nil-safety lives one layer down
+// in common.LogOperationProgress.
+func (p *SFTPPushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
+	return func(event common.ProgressEvent) {
+		var operationID uint
+		if operation != nil {
+			operationID = operation.ID
+		}
+		common.LogOperationProgress(p.dbInstance, p.logger, operationID, event)
+	}
 }
 
 // InitializeClient initializes the SFTP client for push operations.
@@ -31,10 +41,14 @@ func (p *SFTPPushProvider) InitializeClient(
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
+	// Hydrate logger before building the handler so the closure
+	// p.ProgressHandler returns has a valid logger.
+	p.logger = logger
 	client, err := sftpclient.InitSftpClient(c, logger, operation)
 	if err != nil {
 		return nil, nil, func() {}, fmt.Errorf("failed to initialize SFTP client: %w", err)
 	}
+	client.SetProgressHandler(p.ProgressHandler(operation))
 
 	// Connect to SFTP server
 	err = client.Connect()

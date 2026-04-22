@@ -8212,6 +8212,7 @@ import "irmin-connectors/connectors/sftp/client"
   - [func \(c \*SftpClient\) GetMetrics\(\) \*MetricsCollector](<#SftpClient.GetMetrics>)
   - [func \(c \*SftpClient\) ListDirectory\(path string\) \(\[\]FileInfo, error\)](<#SftpClient.ListDirectory>)
   - [func \(c \*SftpClient\) RemoveDirectory\(path string\) error](<#SftpClient.RemoveDirectory>)
+  - [func \(c \*SftpClient\) SetProgressHandler\(h common.ProgressHandler\)](<#SftpClient.SetProgressHandler>)
   - [func \(c \*SftpClient\) TestConnection\(\) error](<#SftpClient.TestConnection>)
   - [func \(c \*SftpClient\) UploadDirectory\(files map\[string\]\[\]byte, remotePath string\) error](<#SftpClient.UploadDirectory>)
   - [func \(c \*SftpClient\) UploadFile\(localData \[\]byte, remotePath string\) error](<#SftpClient.UploadFile>)
@@ -8701,6 +8702,15 @@ func (c *SftpClient) RemoveDirectory(path string) error
 
 RemoveDirectory removes a directory from the remote server.
 
+<a name="SftpClient.SetProgressHandler"></a>
+### func \(\*SftpClient\) SetProgressHandler
+
+```go
+func (c *SftpClient) SetProgressHandler(h common.ProgressHandler)
+```
+
+SetProgressHandler installs an observability hook for the per\-file transfer \+ retry loops. Pass nil to disable. Picked over the functional\-options pattern used in Stripe / Pinecone clients because SFTP's NewSftpClient signature is shared with multiple callers and adding a variadic option there would ripple wider than the one\-line setter.
+
 <a name="SftpClient.TestConnection"></a>
 ### func \(\*SftpClient\) TestConnection
 
@@ -8937,11 +8947,11 @@ import "irmin-connectors/connectors/sftp/controllers"
   - [func \(p \*SFTPPullProvider\) GetAllFiles\(c fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#SFTPPullProvider.GetAllFiles>)
   - [func \(p \*SFTPPullProvider\) GetFileByPath\(c fiber.Ctx, client any, rawPath string\) \(string, \[\]byte, error\)](<#SFTPPullProvider.GetFileByPath>)
   - [func \(p \*SFTPPullProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#SFTPPullProvider.InitializeClient>)
-  - [func \(p \*SFTPPullProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#SFTPPullProvider.ProgressHandler>)
+  - [func \(p \*SFTPPullProvider\) ProgressHandler\(operation \*db.Operation\) common.ProgressHandler](<#SFTPPullProvider.ProgressHandler>)
 - [type SFTPPushProvider](<#SFTPPushProvider>)
   - [func \(p \*SFTPPushProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#SFTPPushProvider.InitializeClient>)
   - [func \(p \*SFTPPushProvider\) ProcessFiles\(c fiber.Ctx, client any, files map\[string\]\[\]byte, rawPath string\) error](<#SFTPPushProvider.ProcessFiles>)
-  - [func \(p \*SFTPPushProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#SFTPPushProvider.ProgressHandler>)
+  - [func \(p \*SFTPPushProvider\) ProgressHandler\(operation \*db.Operation\) common.ProgressHandler](<#SFTPPushProvider.ProgressHandler>)
 - [type SFTPSchemaProvider](<#SFTPSchemaProvider>)
   - [func \(p \*SFTPSchemaProvider\) GetSchema\(ctx fiber.Ctx, client any, operationType string, remotePath \*string\) \(\*irminmodels.ObjectSchema, error\)](<#SFTPSchemaProvider.GetSchema>)
   - [func \(p \*SFTPSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#SFTPSchemaProvider.GetSupportedOperationTypes>)
@@ -9234,10 +9244,14 @@ InitializeClient initializes the SFTP client for pull operations.
 ### func \(\*SFTPPullProvider\) ProgressHandler
 
 ```go
-func (p *SFTPPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+func (p *SFTPPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
 ```
 
-ProgressHandler returns nil today — Phase 3 of the progress\-events rollout adds per\-file transfer progress \(ProgressKindFile\) so 10k\-file directory pulls stop looking like a multi\-minute hang. Until then, the baseline heartbeat from the common pull handler covers the gap.
+ProgressHandler returns the per\-file observability callback the SFTP client fires from inside DownloadDirectory's recursive walk and the executeWithRetry backoff loop. Without it, a 10k\-file directory pull or a flaky\-network retry storm silently consumes 5\-10 minutes between operation/init and the final response — same field\-incident shape Stripe got fixed for.
+
+Always returns a non\-nil handler. Nil\-safety lives one layer down in common.LogOperationProgress.
+
+File events fire per file \(caller\-throttled — one file = one emission\); rate\-limit events fire per retry attempt.
 
 <a name="SFTPPushProvider"></a>
 ## type SFTPPushProvider
@@ -9272,10 +9286,12 @@ ProcessFiles processes the extracted files and uploads them to the SFTP server.
 ### func \(\*SFTPPushProvider\) ProgressHandler
 
 ```go
-func (p *SFTPPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+func (p *SFTPPushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
 ```
 
-ProgressHandler returns nil today — Phase 3 of the progress\-events rollout adds per\-file upload progress \(ProgressKindFile\). The baseline heartbeat from the common push handler covers the gap.
+ProgressHandler returns the per\-file observability callback the SFTP client fires from inside UploadDirectory's per\-file loop and the executeWithRetry backoff loop. Without it, a 10k\-file upload or a flaky\-network retry storm silently consumes 5\-10 minutes between operation/init and the final response.
+
+Always returns a non\-nil handler. Nil\-safety lives one layer down in common.LogOperationProgress.
 
 <a name="SFTPSchemaProvider"></a>
 ## type SFTPSchemaProvider

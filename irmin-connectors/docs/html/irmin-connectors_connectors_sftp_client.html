@@ -232,6 +232,13 @@ func (c *SftpClient) ListDirectory(path string) ([]FileInfo, error)
 func (c *SftpClient) RemoveDirectory(path string) error
     RemoveDirectory removes a directory from the remote server.
 
+func (c *SftpClient) SetProgressHandler(h common.ProgressHandler)
+    SetProgressHandler installs an observability hook for the per-file transfer
+    + retry loops. Pass nil to disable. Picked over the functional-options
+    pattern used in Stripe / Pinecone clients because SFTP's NewSftpClient
+    signature is shared with multiple callers and adding a variadic option there
+    would ripple wider than the one-line setter.
+
 func (c *SftpClient) TestConnection() error
     TestConnection tests the SFTP connection without performing operations.
 

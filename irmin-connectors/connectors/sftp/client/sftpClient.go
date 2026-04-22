@@ -8,8 +8,11 @@ import (
 	"io"
 	"net"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
+
+	"irmin-connectors/connectors/common"
 
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
@@ -44,6 +47,14 @@ type SftpClient struct {
 	securityConfig *SecurityConfig
 	retryConfig    *RetryConfig
 	metrics        *MetricsCollector
+	// progressHandler is the optional observability hook for the
+	// per-file transfer loops in DownloadDirectory / UploadDirectory
+	// and the retry loop in executeWithRetry. Without it, a 10k-file
+	// dir transfer silently consumes 5-10 minutes between
+	// operation/init and the final response — the same field-incident
+	// shape Stripe got fixed for. Pull / push controllers wire this
+	// up via SetProgressHandler.
+	progressHandler common.ProgressHandler
 }
 
 // ConnectionConfig holds the configuration for SFTP connections.
@@ -113,6 +124,57 @@ func NewSftpClientWithSecurity(
 		retryConfig:    retryConfig,
 		metrics:        NewMetricsCollector(),
 	}, nil
+}
+
+// SetProgressHandler installs an observability hook for the
+// per-file transfer + retry loops. Pass nil to disable. Picked over
+// the functional-options pattern used in Stripe / Pinecone clients
+// because SFTP's NewSftpClient signature is shared with multiple
+// callers and adding a variadic option there would ripple wider
+// than the one-line setter.
+func (c *SftpClient) SetProgressHandler(h common.ProgressHandler) {
+	c.progressHandler = h
+}
+
+// emitFileProgress invokes the configured progress handler with a
+// per-file transfer event. No-op when no handler is set.
+func (c *SftpClient) emitFileProgress(file string, transferred, total int64) {
+	if c.progressHandler == nil {
+		return
+	}
+	c.progressHandler(common.ProgressEvent{
+		Kind:             common.ProgressKindFile,
+		ResourcePath:     c.resourcePath(),
+		File:             file,
+		BytesTransferred: transferred,
+		BytesTotal:       total,
+	})
+}
+
+// emitRetryProgress invokes the configured progress handler with a
+// retry-backoff event. No-op when no handler is set. Without these
+// events a flaky network mid-transfer looks identical to a hung
+// operation.
+func (c *SftpClient) emitRetryProgress(operation string, attempt int, wait time.Duration) {
+	if c.progressHandler == nil {
+		return
+	}
+	c.progressHandler(common.ProgressEvent{
+		Kind:         common.ProgressKindRateLimit,
+		ResourcePath: c.resourcePath() + "#" + operation,
+		Attempt:      attempt,
+		Wait:         wait,
+	})
+}
+
+// resourcePath formats the sftp://<host>:<port> identifier used in
+// progress events. Operators with multiple SFTP connections in one
+// workflow can tell which host a stuck transfer belongs to.
+func (c *SftpClient) resourcePath() string {
+	if c.config == nil {
+		return "sftp://"
+	}
+	return "sftp://" + net.JoinHostPort(c.config.Host, strconv.Itoa(c.config.Port))
 }
 
 // GetMetrics returns the metrics collector for this client.
@@ -277,11 +339,15 @@ func (c *SftpClient) executeWithRetry(operation string, fn func() error) error {
 
 	for attempt := 0; attempt <= c.retryConfig.MaxRetries; attempt++ {
 		if attempt > 0 {
+			// Surface the upcoming sleep before we take it — a flaky
+			// network mid-transfer looks identical to a hung
+			// operation otherwise.
+			c.emitRetryProgress(operation, attempt-1, delay)
 			time.Sleep(delay)
-			delay = time.Duration(float64(delay) * c.retryConfig.BackoffFactor)
-			if delay > c.retryConfig.MaxDelay {
-				delay = c.retryConfig.MaxDelay
-			}
+			delay = min(
+				time.Duration(float64(delay)*c.retryConfig.BackoffFactor),
+				c.retryConfig.MaxDelay,
+			)
 		}
 
 		err := fn()
@@ -589,6 +655,11 @@ func (c *SftpClient) downloadDirectoryRecursive(remotePath, relativePath string,
 				return fmt.Errorf("failed to download file %s: %w", fullRemotePath, downloadErr)
 			}
 			files[fullRelativePath] = fileContent
+			// Surface per-file progress so a 10k-file directory
+			// transfer doesn't look like a multi-minute silent hang.
+			// Total bytes is unknown ahead of time (would need a
+			// pre-walk) — pass 0 to omit the bytes_total field.
+			c.emitFileProgress(fullRelativePath, int64(len(fileContent)), 0)
 		}
 	}
 
@@ -626,6 +697,7 @@ func (c *SftpClient) UploadDirectory(files map[string][]byte, remotePath string)
 	}
 
 	// Upload each file
+	var bytesUploaded int64
 	for relativeFilePath, content := range files {
 		fullRemotePath := filepath.Join(cleanBasePath, relativeFilePath)
 
@@ -653,6 +725,14 @@ func (c *SftpClient) UploadDirectory(files map[string][]byte, remotePath string)
 		if err != nil {
 			return fmt.Errorf("failed to upload file %s: %w", fullRemotePath, err)
 		}
+		// Surface per-file progress so a 10k-file directory upload
+		// doesn't look like a multi-minute silent hang.
+		// BytesTransferred must be on the same scale as BytesTotal —
+		// here, both are cumulative across the directory so the log
+		// row reads as "X / Y bytes" rather than "this-file-size /
+		// total-dir-size" which is meaningless to operators.
+		bytesUploaded += int64(len(content))
+		c.emitFileProgress(relativeFilePath, bytesUploaded, totalSize)
 	}
 
 	return nil
