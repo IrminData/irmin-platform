@@ -61,44 +61,49 @@ TYPES
 type ProgressEvent struct {
 	// Kind discriminates the event. Use one of the ProgressKind*
 	// constants below.
-	Kind string
+	Kind string `json:"kind"`
 
 	// ResourcePath is a human-readable identifier for what's being
 	// processed: an API path ("/v1/customers"), a table name
 	// ("public.orders"), a file path ("inbox/report.csv"), an
 	// index URI ("pinecone://my-index"). Should always be set so
 	// operators with multiple targets per workflow can disambiguate.
-	ResourcePath string
+	ResourcePath string `json:"resource_path,omitempty"`
 
 	// Page is the 1-based page number within the current pagination
 	// loop.
-	Page int
+	Page int `json:"page,omitempty"`
 	// RecordsSoFar is the cumulative record count accumulated so far.
-	RecordsSoFar int
+	RecordsSoFar int `json:"records_so_far,omitempty"`
 	// Cursor is the cursor value that produced this page (e.g.,
 	// starting_after), or "" for the first page.
-	Cursor string
+	Cursor string `json:"cursor,omitempty"`
 
-	// Attempt is the 0-based retry attempt.
-	Attempt int
+	// Attempt is the 1-based retry attempt (1 = first retry, 2 = second, …).
+	// 1-based so that omitempty can elide the field on non-rate-limit
+	// events without colliding with a meaningful "first retry" value —
+	// matching the Page and Batch conventions.
+	Attempt int `json:"attempt,omitempty"`
 	// Wait is how long the caller is about to sleep before retrying.
-	Wait time.Duration
+	// Serialised as a Go duration (nanoseconds) so the round trip is
+	// lossless; consumers that prefer seconds can convert.
+	Wait time.Duration `json:"wait,omitempty"`
 
 	// Batch is the 1-based batch index.
-	Batch int
+	Batch int `json:"batch,omitempty"`
 	// BatchSize is the number of records in this batch.
-	BatchSize int
+	BatchSize int `json:"batch_size,omitempty"`
 
 	// Rows is the cumulative number of rows processed.
-	Rows int64
+	Rows int64 `json:"rows,omitempty"`
 
 	// File is the file path currently being transferred.
-	File string
+	File string `json:"file,omitempty"`
 	// BytesTransferred is the cumulative bytes moved for this
 	// operation (or for the current file — emitter decides).
-	BytesTransferred int64
+	BytesTransferred int64 `json:"bytes_transferred,omitempty"`
 	// BytesTotal is the total expected bytes, or 0 if unknown.
-	BytesTotal int64
+	BytesTotal int64 `json:"bytes_total,omitempty"`
 }
     ProgressEvent is a single observability event emitted from a long-running
     operation. Producers fire these into a ProgressHandler; the handler is
@@ -107,6 +112,12 @@ type ProgressEvent struct {
 
     Not every field is meaningful for every Kind — see the field docs. The Kind
     discriminator selects which subset applies.
+
+    JSON tags are provided so ProgressEvent can round-trip across the async
+    operation /operation/status wire format. Field names are snake_case and
+    every per-kind field is marked omitempty so a "page" event doesn't carry
+    zero-valued file/rate-limit fields on the wire. Tag values are part of that
+    wire format and must stay stable across services.
 
 type ProgressHandler func(ProgressEvent)
     ProgressHandler receives observability events from long-running operations.

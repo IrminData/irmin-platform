@@ -3687,6 +3687,268 @@ type WorkflowRequest struct {
 }
 ```
 
+# connectorsclient
+
+```go
+import "github.com/IrminData/irmin-sdk-go/connectorsclient"
+```
+
+Package connectorsclient is the Irmin SDK client for the connector\-service HTTP plugin protocol.
+
+At present the package intentionally covers only the asynchronous pull protocol — POST /operation/pull \(202 \+ job\_id\), GET /operation/status/:job\_id, GET /operation/result/:job\_id, and POST /operation/cancel/:job\_id — because that is the surface Core needs to stop buffering large zips in memory and avoid Railway's \~300s edge timeout on long Stripe / Pinecone / Postgres pulls.
+
+Core today has an in\-repo connectors\-client with the full set of synchronous endpoints \(init, pull, push, patch, subscribe, etc.\). Migration plan:
+
+1. SDK publishes these async types \+ methods \(this package\).
+2. Core's in\-repo client switches to depend on these for the async endpoints, keeping the existing sync helpers for everything else.
+3. Remaining helpers move into this SDK package incrementally.
+
+Consumers that only need the async protocol \(tests, tooling\) can use this package standalone. It carries no transitive dependency on Core or the connectors service beyond the shared SDK models.
+
+## Index
+
+- [Constants](<#constants>)
+- [Variables](<#variables>)
+- [type APIError](<#APIError>)
+  - [func \(e \*APIError\) Error\(\) string](<#APIError.Error>)
+- [type Client](<#Client>)
+  - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
+  - [func \(c \*Client\) CancelOperationJob\(ctx context.Context, jobID string\) error](<#Client.CancelOperationJob>)
+  - [func \(c \*Client\) FetchOperationResult\(ctx context.Context, jobID string\) \(io.ReadCloser, error\)](<#Client.FetchOperationResult>)
+  - [func \(c \*Client\) GetOperationJobStatus\(ctx context.Context, jobID string\) \(\*irminmodels.OperationJobStatusResponse, error\)](<#Client.GetOperationJobStatus>)
+  - [func \(c \*Client\) StartOperationPull\(ctx context.Context, req StartOperationPullRequest\) \(\*irminmodels.StartOperationPullResponse, error\)](<#Client.StartOperationPull>)
+  - [func \(c \*Client\) WithConnectionID\(id uint\) \*Client](<#Client.WithConnectionID>)
+- [type JobFailedError](<#JobFailedError>)
+  - [func \(e \*JobFailedError\) Error\(\) string](<#JobFailedError.Error>)
+  - [func \(e \*JobFailedError\) Unwrap\(\) error](<#JobFailedError.Unwrap>)
+- [type StartOperationPullRequest](<#StartOperationPullRequest>)
+
+
+## Constants
+
+<a name="HeaderConnectionID"></a>HeaderConnectionID is sent on every outbound connector request so the receiving service can identify which Irmin Connection the operation belongs to. The value mirrors the exact string used by the existing Core\-side connectors\-client so migration is a drop\-in.
+
+Using Go's canonical HTTP header form avoids net/http silently rewriting it at send time and keeps reads consistent.
+
+```go
+const HeaderConnectionID = "X-Irmin-Connection-Id"
+```
+
+## Variables
+
+<a name="ErrJobFailed"></a>ErrJobFailed is returned when a status response indicates the job has reached a non\-success terminal state \(failed or cancelled\). Callers that wrap this can surface the original connector\-supplied error message from OperationJobStatusResponse.Error.
+
+```go
+var ErrJobFailed = errors.New("operation job ended in a non-success terminal state")
+```
+
+<a name="ErrLegacySyncPullResponse"></a>ErrLegacySyncPullResponse is returned by StartOperationPull when the connector service responds with a 200 OK \+ zip body instead of the expected 202 Accepted \+ \{job\_id\}. Its presence means the connector service is still on the pre\-async protocol and the caller is talking to an unmigrated deployment; the Core poll wrapper should bail out with an actionable message rather than attempt a silent fallback, per the "no backward\-compat shim" decision in the async\-pull plan.
+
+```go
+var ErrLegacySyncPullResponse = errors.New(
+    "connector returned legacy synchronous pull response (HTTP 200 with body); " +
+        "expected 202 Accepted from async protocol — upgrade the connector service",
+)
+```
+
+<a name="ErrResultNotReady"></a>ErrResultNotReady is returned by FetchOperationResult when the job is still in a non\-terminal state \(pending or running\) at the time of the fetch. The Core poll wrapper should only call FetchOperationResult after observing status=complete; this error surfaces a protocol mistake rather than a transient condition and is not safe to retry without polling status again.
+
+```go
+var ErrResultNotReady = errors.New(
+    "operation result is not ready: job has not reached terminal status=complete",
+)
+```
+
+<a name="APIError"></a>
+## type APIError
+
+APIError is returned when the connector service responds with an unexpected HTTP status code. Callers can inspect StatusCode and Body for diagnostics, or use errors.As to unwrap it from wrapped errors.
+
+```go
+type APIError struct {
+    // StatusCode is the HTTP status returned by the connector.
+    StatusCode int
+    // Body is the response body (may be JSON, may be plain text)
+    // captured verbatim for diagnostics.
+    Body string
+}
+```
+
+<a name="APIError.Error"></a>
+### func \(\*APIError\) Error
+
+```go
+func (e *APIError) Error() string
+```
+
+Error implements the error interface.
+
+<a name="Client"></a>
+## type Client
+
+Client is the async\-protocol connector\-service HTTP client.
+
+A Client is safe for concurrent use. It keeps two underlying http.Clients: one for short request/response calls \(status, start, cancel\) and one without a top\-level timeout for the streaming result fetch, so long zip downloads are not cut off by the request\-response timer.
+
+```go
+type Client struct {
+    // BaseURL is the connector service base, e.g.
+    // "https://connectors.irmin.dev/stripe". It must include the
+    // connector-specific prefix the service expects.
+    BaseURL string
+
+    // Token is the operation or system token for the connector,
+    // set on the Authorization header as "Bearer <token>".
+    Token string
+
+    // Locale is used to request localised messages from the
+    // connector service via the Accept-Language header.
+    Locale string
+
+    // HTTPClient is the client used for short requests (start,
+    // status, cancel). Defaults to a client with
+    // irminsdkgo.DefaultConnectorTimeout. Callers that need custom
+    // transports, proxies, or timeouts may replace it.
+    HTTPClient *http.Client
+
+    // ConnectionID is the Irmin Connection ID this client is
+    // operating on behalf of. When non-zero it is sent as
+    // HeaderConnectionID on every outbound request so OAuth-backed
+    // connectors can fetch the right access token. Leave zero for
+    // calls that are not connection-scoped.
+    ConnectionID uint
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewClient"></a>
+### func NewClient
+
+```go
+func NewClient(baseURL, token, locale string) *Client
+```
+
+NewClient creates a new connector\-service client with sensible default http.Client settings. The two underlying clients share a single transport so connection pooling and TLS sessions are reused across short and streaming calls.
+
+<a name="Client.CancelOperationJob"></a>
+### func \(\*Client\) CancelOperationJob
+
+```go
+func (c *Client) CancelOperationJob(ctx context.Context, jobID string) error
+```
+
+CancelOperationJob requests that the connector service cancel an in\-flight async operation job. Safe to call on terminal jobs \(server is expected to treat it as a no\-op\). Uses POST with the job\_id on the path so it composes with existing per\-job routes.
+
+<a name="Client.FetchOperationResult"></a>
+### func \(\*Client\) FetchOperationResult
+
+```go
+func (c *Client) FetchOperationResult(ctx context.Context, jobID string) (io.ReadCloser, error)
+```
+
+FetchOperationResult streams the result archive \(zip\) for a completed async operation job. The caller is responsible for closing the returned io.ReadCloser — the connection stays open until the caller drains or closes it, and the request context governs the transfer lifetime.
+
+The body is intentionally not buffered into memory; this is the whole point of the async protocol. Callers should pipe the reader directly into their downstream processing \(archive extraction, re\-upload to LakeFS, etc.\) so the zip never lands fully on either peer.
+
+Semantics by response status:
+
+- 200 OK with application/zip \(or any non\-JSON\) body: returns the body reader.
+- 409 Conflict: the job is not yet in terminal state complete. Returns ErrResultNotReady; callers should resume polling status rather than retry the result fetch.
+- Any other non\-2xx: returns \*APIError.
+
+<a name="Client.GetOperationJobStatus"></a>
+### func \(\*Client\) GetOperationJobStatus
+
+```go
+func (c *Client) GetOperationJobStatus(ctx context.Context, jobID string) (*irminmodels.OperationJobStatusResponse, error)
+```
+
+GetOperationJobStatus polls the status of an async operation job. Safe to call repeatedly; the Core side drives a poll loop at roughly 5s cadence. Progress events on the response are cumulative, so consumers may either diff against a previously seen slice or replace their local view wholesale.
+
+The caller should stop polling once the returned Status satisfies OperationJobStatus.IsTerminal.
+
+<a name="Client.StartOperationPull"></a>
+### func \(\*Client\) StartOperationPull
+
+```go
+func (c *Client) StartOperationPull(ctx context.Context, req StartOperationPullRequest) (*irminmodels.StartOperationPullResponse, error)
+```
+
+StartOperationPull initiates an asynchronous pull against a connector. It expects the connector service to respond with 202 Accepted and \{job\_id, ...\}; the returned StartOperationPullResponse carries that job\_id, which the caller then uses to poll status and, eventually, fetch the result.
+
+On HTTP 200 \(legacy synchronous response\) this returns ErrLegacySyncPullResponse without attempting to drain the body — per the async\-pull plan there is intentionally no sync fallback, and surfacing a specific error lets the Core poll wrapper print an actionable message rather than silently degrade.
+
+Any other non\-2xx status returns an \*APIError.
+
+<a name="Client.WithConnectionID"></a>
+### func \(\*Client\) WithConnectionID
+
+```go
+func (c *Client) WithConnectionID(id uint) *Client
+```
+
+WithConnectionID returns the receiver after setting ConnectionID, enabling a fluent call\-site:
+
+```
+client := connectorsclient.NewClient(url, tok, "en").WithConnectionID(conn.ID)
+```
+
+Mutates and returns the same pointer. Passing 0 clears the connection context.
+
+<a name="JobFailedError"></a>
+## type JobFailedError
+
+JobFailedError wraps ErrJobFailed with the terminal status and the connector\-supplied error message, so callers that wish to act on cancelled vs. failed can discriminate without re\-reading the status response.
+
+```go
+type JobFailedError struct {
+    // Status is the terminal status observed. Always
+    // OperationJobStatusFailed or OperationJobStatusCancelled.
+    Status irminmodels.OperationJobStatus
+    // Message is the operator-facing error message from the status
+    // response. May be empty for cancellations.
+    Message string
+}
+```
+
+<a name="JobFailedError.Error"></a>
+### func \(\*JobFailedError\) Error
+
+```go
+func (e *JobFailedError) Error() string
+```
+
+Error implements the error interface.
+
+<a name="JobFailedError.Unwrap"></a>
+### func \(\*JobFailedError\) Unwrap
+
+```go
+func (e *JobFailedError) Unwrap() error
+```
+
+Unwrap lets errors.Is\(err, ErrJobFailed\) succeed on wrapped JobFailedError values, so callers can check the sentinel and then use errors.As to extract the detail.
+
+<a name="StartOperationPullRequest"></a>
+## type StartOperationPullRequest
+
+StartOperationPullRequest holds the payload for POST /operation/pull under the async protocol. It intentionally uses the same x\-www\-form\-urlencoded surface as the pre\-async handler so the server\-side route signature does not churn; only the response shape changes \(202 \+ \{job\_id\} instead of a streamed zip body\).
+
+```go
+type StartOperationPullRequest struct {
+    // Path is the connector-specific resource path being pulled
+    // (e.g., "/v1/customers" for Stripe, a table identifier for
+    // Postgres). Required.
+    Path string
+
+    // Extra carries any additional form fields the specific
+    // connector accepts on its pull endpoint (cursor, filters,
+    // batch hints). Use for connector-specific parameters — the
+    // shared SDK types cannot enumerate every connector's knobs.
+    Extra map[string]string
+}
+```
+
 # duckdb
 
 ```go
@@ -4082,6 +4344,10 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type ObjectSchema](<#ObjectSchema>)
 - [type ObjectSchemaDiff](<#ObjectSchemaDiff>)
 - [type ObjectType](<#ObjectType>)
+- [type OperationJob](<#OperationJob>)
+- [type OperationJobStatus](<#OperationJobStatus>)
+  - [func \(s OperationJobStatus\) IsTerminal\(\) bool](<#OperationJobStatus.IsTerminal>)
+- [type OperationJobStatusResponse](<#OperationJobStatusResponse>)
 - [type OutputFormat](<#OutputFormat>)
 - [type Patch](<#Patch>)
 - [type PatchDirection](<#PatchDirection>)
@@ -4130,6 +4396,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type SearchResponse](<#SearchResponse>)
 - [type SearchResult](<#SearchResult>)
 - [type SelectOption](<#SelectOption>)
+- [type StartOperationPullResponse](<#StartOperationPullResponse>)
 - [type StoredQuery](<#StoredQuery>)
 - [type StoredScript](<#StoredScript>)
 - [type SubscriptionStatus](<#SubscriptionStatus>)
@@ -5375,6 +5642,140 @@ const (
 )
 ```
 
+<a name="OperationJob"></a>
+## type OperationJob
+
+OperationJob is the metadata record for an asynchronous connector operation \(currently: pull; push/patch to follow\).
+
+The connector service creates one of these on POST /operation/pull, returns its ID to the caller, then fills in status/progress as the worker runs. The full job payload is typically only returned inside status responses; POST /operation/pull itself returns the slimmer StartOperationPullResponse to keep the accept\-fast path fast.
+
+```go
+type OperationJob struct {
+    // JobID is the connector-service-issued identifier for this job.
+    // Opaque to clients — used to poll status, fetch result, or
+    // cancel.
+    JobID string `json:"job_id" example:"opjob_9m3x7k2n8q5p"`
+
+    // ConnectorID is the SQID of the connector plugin that owns this
+    // job (e.g., Stripe, Pinecone, Postgres). Present so poll
+    // consumers can disambiguate when the same core process runs
+    // multiple pulls in parallel.
+    ConnectorID string `json:"connector_id" example:"conn_5p8q2n7m9x4k"`
+
+    // OperationID is the connector-side operation token / numeric
+    // identifier this job is executing against. Maps to the
+    // Operation record created via /operation/init.
+    OperationID string `json:"operation_id" example:"42"`
+
+    // Status is the current lifecycle state. See OperationJobStatus.
+    Status OperationJobStatus `json:"status" example:"running"`
+
+    // CreatedAt is the UTC time the job was accepted by the
+    // connector service.
+    CreatedAt time.Time `json:"created_at"`
+
+    // ExpiresAt is when the result, if any, will be garbage-collected
+    // by the connector service's janitor. After this point a
+    // /operation/result call is not guaranteed to succeed even for
+    // jobs that reached status=complete. nil means no TTL.
+    //
+    // Pointer rather than time.Time + omitempty because encoding/json's
+    // omitempty does not treat a zero time.Time as empty — it would
+    // serialise as "0001-01-01T00:00:00Z" on the wire. Matches the
+    // *time.Time convention used elsewhere in this SDK's models.
+    ExpiresAt *time.Time `json:"expires_at,omitempty"`
+}
+```
+
+<a name="OperationJobStatus"></a>
+## type OperationJobStatus
+
+OperationJobStatus enumerates the lifecycle states of an asynchronous connector operation job \(e.g., a long\-running pull\).
+
+The wire\-format string values are stable across service boundaries: irmin\-connectors emits these values on /operation/status and the Core poll wrapper compares against them directly. Treat a rename here as a breaking change for every consumer at once.
+
+```go
+type OperationJobStatus string
+```
+
+<a name="OperationJobStatusPending"></a>
+
+```go
+const (
+    // OperationJobStatusPending means the job has been accepted but
+    // its worker has not yet started. Short-lived state; most consumers
+    // can fold it into "running" for UX purposes.
+    OperationJobStatusPending OperationJobStatus = "pending"
+
+    // OperationJobStatusRunning means the worker goroutine is actively
+    // producing output (paginating an API, scanning rows, building
+    // the result archive, etc.). Progress events on the status
+    // response correspond to this phase.
+    OperationJobStatusRunning OperationJobStatus = "running"
+
+    // OperationJobStatusComplete means the worker finished
+    // successfully and the result is ready to fetch via
+    // /operation/result/:job_id. Terminal.
+    OperationJobStatusComplete OperationJobStatus = "complete"
+
+    // OperationJobStatusFailed means the worker hit an unrecoverable
+    // error and will not produce a result. The error message is
+    // surfaced on the status response. Terminal.
+    OperationJobStatusFailed OperationJobStatus = "failed"
+
+    // OperationJobStatusCancelled means the job was cancelled before
+    // it could finish, either by an explicit /operation/cancel call
+    // or by the connector service shutting the job down (e.g., TTL
+    // expiry, pod shutdown). Terminal.
+    OperationJobStatusCancelled OperationJobStatus = "cancelled"
+)
+```
+
+<a name="OperationJobStatus.IsTerminal"></a>
+### func \(OperationJobStatus\) IsTerminal
+
+```go
+func (s OperationJobStatus) IsTerminal() bool
+```
+
+IsTerminal reports whether a status is a terminal state \(no further transitions\). Useful for the Core poll loop's exit condition.
+
+<a name="OperationJobStatusResponse"></a>
+## type OperationJobStatusResponse
+
+OperationJobStatusResponse is the body returned by GET /operation/status/:job\_id. It carries the current status plus any observability events accumulated since job start, so the console can surface per\-page / per\-batch / rate\-limit progress without opening a separate stream.
+
+Progress events are cumulative — the connector service appends to the slice as work proceeds. Clients polling every \~5s can diff Progress against what they've already displayed, or simply replace.
+
+```go
+type OperationJobStatusResponse struct {
+    // JobID echoes the ID from the URL so callers receiving a batch
+    // of responses (or logs) can associate the body with its job
+    // without re-parsing the request.
+    JobID string `json:"job_id" example:"opjob_9m3x7k2n8q5p"`
+
+    // Status is the current lifecycle state at the time of the
+    // response. Callers should stop polling once this becomes
+    // terminal (see OperationJobStatus.IsTerminal).
+    Status OperationJobStatus `json:"status" example:"running"`
+
+    // Progress is the cumulative slice of observability events the
+    // connector worker has emitted so far. Uses the shared
+    // observability.ProgressEvent vocabulary, so a "page" or
+    // "rate_limit" event means the same thing here as it does in
+    // Core workflow logs or AI stream events.
+    //
+    // May be empty for short-lived jobs that finish before any
+    // event is emitted.
+    Progress []observability.ProgressEvent `json:"progress,omitempty"`
+
+    // Error is populated when Status is OperationJobStatusFailed.
+    // Operator-facing message; not a machine-readable code. Empty
+    // for any non-failed status.
+    Error string `json:"error,omitempty" example:"stripe API returned 401 Unauthorized"`
+}
+```
+
 <a name="OutputFormat"></a>
 ## type OutputFormat
 
@@ -6370,6 +6771,21 @@ type SelectOption struct {
 }
 ```
 
+<a name="StartOperationPullResponse"></a>
+## type StartOperationPullResponse
+
+StartOperationPullResponse is the body returned by POST /operation/pull under the async protocol. It is intentionally minimal — just the job\_id — so the accept path stays fast and any future fields \(e.g., estimated runtime\) can be added without breaking callers.
+
+The HTTP status for this response is 202 Accepted, not 200 OK, so the Core SDK client uses the status code as the primary protocol discriminator; a legacy 200 with a zip body is reported as ErrLegacySyncPullResponse.
+
+```go
+type StartOperationPullResponse struct {
+    // JobID is the identifier the caller uses on subsequent
+    // /operation/status and /operation/result calls.
+    JobID string `json:"job_id" example:"opjob_9m3x7k2n8q5p"`
+}
+```
+
 <a name="StoredQuery"></a>
 ## type StoredQuery
 
@@ -7013,48 +7429,55 @@ ProgressEvent is a single observability event emitted from a long\-running opera
 
 Not every field is meaningful for every Kind — see the field docs. The Kind discriminator selects which subset applies.
 
+JSON tags are provided so ProgressEvent can round\-trip across the async operation /operation/status wire format. Field names are snake\_case and every per\-kind field is marked omitempty so a "page" event doesn't carry zero\-valued file/rate\-limit fields on the wire. Tag values are part of that wire format and must stay stable across services.
+
 ```go
 type ProgressEvent struct {
     // Kind discriminates the event. Use one of the ProgressKind*
     // constants below.
-    Kind string
+    Kind string `json:"kind"`
 
     // ResourcePath is a human-readable identifier for what's being
     // processed: an API path ("/v1/customers"), a table name
     // ("public.orders"), a file path ("inbox/report.csv"), an
     // index URI ("pinecone://my-index"). Should always be set so
     // operators with multiple targets per workflow can disambiguate.
-    ResourcePath string
+    ResourcePath string `json:"resource_path,omitempty"`
 
     // Page is the 1-based page number within the current pagination
     // loop.
-    Page int
+    Page int `json:"page,omitempty"`
     // RecordsSoFar is the cumulative record count accumulated so far.
-    RecordsSoFar int
+    RecordsSoFar int `json:"records_so_far,omitempty"`
     // Cursor is the cursor value that produced this page (e.g.,
     // starting_after), or "" for the first page.
-    Cursor string
+    Cursor string `json:"cursor,omitempty"`
 
-    // Attempt is the 0-based retry attempt.
-    Attempt int
+    // Attempt is the 1-based retry attempt (1 = first retry, 2 = second, …).
+    // 1-based so that omitempty can elide the field on non-rate-limit
+    // events without colliding with a meaningful "first retry" value —
+    // matching the Page and Batch conventions.
+    Attempt int `json:"attempt,omitempty"`
     // Wait is how long the caller is about to sleep before retrying.
-    Wait time.Duration
+    // Serialised as a Go duration (nanoseconds) so the round trip is
+    // lossless; consumers that prefer seconds can convert.
+    Wait time.Duration `json:"wait,omitempty"`
 
     // Batch is the 1-based batch index.
-    Batch int
+    Batch int `json:"batch,omitempty"`
     // BatchSize is the number of records in this batch.
-    BatchSize int
+    BatchSize int `json:"batch_size,omitempty"`
 
     // Rows is the cumulative number of rows processed.
-    Rows int64
+    Rows int64 `json:"rows,omitempty"`
 
     // File is the file path currently being transferred.
-    File string
+    File string `json:"file,omitempty"`
     // BytesTransferred is the cumulative bytes moved for this
     // operation (or for the current file — emitter decides).
-    BytesTransferred int64
+    BytesTransferred int64 `json:"bytes_transferred,omitempty"`
     // BytesTotal is the total expected bytes, or 0 if unknown.
-    BytesTotal int64
+    BytesTotal int64 `json:"bytes_total,omitempty"`
 }
 ```
 

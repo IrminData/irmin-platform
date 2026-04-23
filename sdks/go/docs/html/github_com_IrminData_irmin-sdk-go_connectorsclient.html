@@ -1,0 +1,233 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>github.com/IrminData/irmin-sdk-go/connectorsclient</title></head><body>
+<h1>Package github.com/IrminData/irmin-sdk-go/connectorsclient</h1>
+<pre>
+package connectorsclient // import "github.com/IrminData/irmin-sdk-go/connectorsclient"
+
+Package connectorsclient is the Irmin SDK client for the connector-service HTTP
+plugin protocol.
+
+At present the package intentionally covers only the asynchronous pull
+protocol — POST /operation/pull (202 + job_id), GET /operation/status/:job_id,
+GET /operation/result/:job_id, and POST /operation/cancel/:job_id — because
+that is the surface Core needs to stop buffering large zips in memory and avoid
+Railway's ~300s edge timeout on long Stripe / Pinecone / Postgres pulls.
+
+Core today has an in-repo connectors-client with the full set of synchronous
+endpoints (init, pull, push, patch, subscribe, etc.). Migration plan:
+
+ 1. SDK publishes these async types + methods (this package).
+ 2. Core's in-repo client switches to depend on these for the async endpoints,
+    keeping the existing sync helpers for everything else.
+ 3. Remaining helpers move into this SDK package incrementally.
+
+Consumers that only need the async protocol (tests, tooling) can use this
+package standalone. It carries no transitive dependency on Core or the
+connectors service beyond the shared SDK models.
+
+CONSTANTS
+
+const HeaderConnectionID = "X-Irmin-Connection-Id"
+    HeaderConnectionID is sent on every outbound connector request so the
+    receiving service can identify which Irmin Connection the operation belongs
+    to. The value mirrors the exact string used by the existing Core-side
+    connectors-client so migration is a drop-in.
+
+    Using Go's canonical HTTP header form avoids net/http silently rewriting it
+    at send time and keeps reads consistent.
+
+
+VARIABLES
+
+var ErrJobFailed = errors.New("operation job ended in a non-success terminal state")
+    ErrJobFailed is returned when a status response indicates the job has
+    reached a non-success terminal state (failed or cancelled). Callers that
+    wrap this can surface the original connector-supplied error message from
+    OperationJobStatusResponse.Error.
+
+var ErrLegacySyncPullResponse = errors.New(
+	"connector returned legacy synchronous pull response (HTTP 200 with body); " +
+		"expected 202 Accepted from async protocol — upgrade the connector service",
+)
+    ErrLegacySyncPullResponse is returned by StartOperationPull when the
+    connector service responds with a 200 OK + zip body instead of the expected
+    202 Accepted + {job_id}. Its presence means the connector service is still
+    on the pre-async protocol and the caller is talking to an unmigrated
+    deployment; the Core poll wrapper should bail out with an actionable message
+    rather than attempt a silent fallback, per the "no backward-compat shim"
+    decision in the async-pull plan.
+
+var ErrResultNotReady = errors.New(
+	"operation result is not ready: job has not reached terminal status=complete",
+)
+    ErrResultNotReady is returned by FetchOperationResult when the job is still
+    in a non-terminal state (pending or running) at the time of the fetch.
+    The Core poll wrapper should only call FetchOperationResult after observing
+    status=complete; this error surfaces a protocol mistake rather than a
+    transient condition and is not safe to retry without polling status again.
+
+
+TYPES
+
+type APIError struct {
+	// StatusCode is the HTTP status returned by the connector.
+	StatusCode int
+	// Body is the response body (may be JSON, may be plain text)
+	// captured verbatim for diagnostics.
+	Body string
+}
+    APIError is returned when the connector service responds with an unexpected
+    HTTP status code. Callers can inspect StatusCode and Body for diagnostics,
+    or use errors.As to unwrap it from wrapped errors.
+
+func (e *APIError) Error() string
+    Error implements the error interface.
+
+type Client struct {
+	// BaseURL is the connector service base, e.g.
+	// "https://connectors.irmin.dev/stripe". It must include the
+	// connector-specific prefix the service expects.
+	BaseURL string
+
+	// Token is the operation or system token for the connector,
+	// set on the Authorization header as "Bearer &lt;token&gt;".
+	Token string
+
+	// Locale is used to request localised messages from the
+	// connector service via the Accept-Language header.
+	Locale string
+
+	// HTTPClient is the client used for short requests (start,
+	// status, cancel). Defaults to a client with
+	// irminsdkgo.DefaultConnectorTimeout. Callers that need custom
+	// transports, proxies, or timeouts may replace it.
+	HTTPClient *http.Client
+
+	// ConnectionID is the Irmin Connection ID this client is
+	// operating on behalf of. When non-zero it is sent as
+	// HeaderConnectionID on every outbound request so OAuth-backed
+	// connectors can fetch the right access token. Leave zero for
+	// calls that are not connection-scoped.
+	ConnectionID uint
+	// Has unexported fields.
+}
+    Client is the async-protocol connector-service HTTP client.
+
+    A Client is safe for concurrent use. It keeps two underlying http.Clients:
+    one for short request/response calls (status, start, cancel) and one without
+    a top-level timeout for the streaming result fetch, so long zip downloads
+    are not cut off by the request-response timer.
+
+func NewClient(baseURL, token, locale string) *Client
+    NewClient creates a new connector-service client with sensible default
+    http.Client settings. The two underlying clients share a single transport
+    so connection pooling and TLS sessions are reused across short and streaming
+    calls.
+
+func (c *Client) CancelOperationJob(ctx context.Context, jobID string) error
+    CancelOperationJob requests that the connector service cancel an in-flight
+    async operation job. Safe to call on terminal jobs (server is expected to
+    treat it as a no-op). Uses POST with the job_id on the path so it composes
+    with existing per-job routes.
+
+func (c *Client) FetchOperationResult(
+	ctx context.Context,
+	jobID string,
+) (io.ReadCloser, error)
+    FetchOperationResult streams the result archive (zip) for a completed
+    async operation job. The caller is responsible for closing the returned
+    io.ReadCloser — the connection stays open until the caller drains or closes
+    it, and the request context governs the transfer lifetime.
+
+    The body is intentionally not buffered into memory; this is the whole point
+    of the async protocol. Callers should pipe the reader directly into their
+    downstream processing (archive extraction, re-upload to LakeFS, etc.) so the
+    zip never lands fully on either peer.
+
+    Semantics by response status:
+
+      - 200 OK with application/zip (or any non-JSON) body: returns the body
+        reader.
+      - 409 Conflict: the job is not yet in terminal state complete. Returns
+        ErrResultNotReady; callers should resume polling status rather than
+        retry the result fetch.
+      - Any other non-2xx: returns *APIError.
+
+func (c *Client) GetOperationJobStatus(
+	ctx context.Context,
+	jobID string,
+) (*irminmodels.OperationJobStatusResponse, error)
+    GetOperationJobStatus polls the status of an async operation job. Safe to
+    call repeatedly; the Core side drives a poll loop at roughly 5s cadence.
+    Progress events on the response are cumulative, so consumers may either diff
+    against a previously seen slice or replace their local view wholesale.
+
+    The caller should stop polling once the returned Status satisfies
+    OperationJobStatus.IsTerminal.
+
+func (c *Client) StartOperationPull(
+	ctx context.Context,
+	req StartOperationPullRequest,
+) (*irminmodels.StartOperationPullResponse, error)
+    StartOperationPull initiates an asynchronous pull against a connector.
+    It expects the connector service to respond with 202 Accepted and {job_id,
+    ...}; the returned StartOperationPullResponse carries that job_id, which the
+    caller then uses to poll status and, eventually, fetch the result.
+
+    On HTTP 200 (legacy synchronous response) this returns
+    ErrLegacySyncPullResponse without attempting to drain the body — per the
+    async-pull plan there is intentionally no sync fallback, and surfacing a
+    specific error lets the Core poll wrapper print an actionable message rather
+    than silently degrade.
+
+    Any other non-2xx status returns an *APIError.
+
+func (c *Client) WithConnectionID(id uint) *Client
+    WithConnectionID returns the receiver after setting ConnectionID, enabling a
+    fluent call-site:
+
+        client := connectorsclient.NewClient(url, tok, "en").WithConnectionID(conn.ID)
+
+    Mutates and returns the same pointer. Passing 0 clears the connection
+    context.
+
+type JobFailedError struct {
+	// Status is the terminal status observed. Always
+	// OperationJobStatusFailed or OperationJobStatusCancelled.
+	Status irminmodels.OperationJobStatus
+	// Message is the operator-facing error message from the status
+	// response. May be empty for cancellations.
+	Message string
+}
+    JobFailedError wraps ErrJobFailed with the terminal status and the
+    connector-supplied error message, so callers that wish to act on cancelled
+    vs. failed can discriminate without re-reading the status response.
+
+func (e *JobFailedError) Error() string
+    Error implements the error interface.
+
+func (e *JobFailedError) Unwrap() error
+    Unwrap lets errors.Is(err, ErrJobFailed) succeed on wrapped JobFailedError
+    values, so callers can check the sentinel and then use errors.As to extract
+    the detail.
+
+type StartOperationPullRequest struct {
+	// Path is the connector-specific resource path being pulled
+	// (e.g., "/v1/customers" for Stripe, a table identifier for
+	// Postgres). Required.
+	Path string
+
+	// Extra carries any additional form fields the specific
+	// connector accepts on its pull endpoint (cursor, filters,
+	// batch hints). Use for connector-specific parameters — the
+	// shared SDK types cannot enumerate every connector's knobs.
+	Extra map[string]string
+}
+    StartOperationPullRequest holds the payload for POST /operation/pull under
+    the async protocol. It intentionally uses the same x-www-form-urlencoded
+    surface as the pre-async handler so the server-side route signature does not
+    churn; only the response shape changes (202 + {job_id} instead of a streamed
+    zip body).
+
+</pre>
+</body></html>
