@@ -158,7 +158,15 @@
     "overrides": {
       "require-in-the-middle": "7.5.2",
       "import-in-the-middle": "1.14.4",
-      "@codemirror/state": "6.6.0"
+      "@uiw/react-codemirror": "4.25.4",
+      "@uiw/codemirror-theme-vscode": "4.25.4",
+      "@uiw/codemirror-themes": "4.25.4",
+      "@uiw/codemirror-extensions-basic-setup": "4.25.4",
+      "@codemirror/view": "6.39.15",
+      "@codemirror/state": "6.5.4",
+      "@codemirror/lang-javascript": "6.2.4",
+      "@codemirror/lang-markdown": "6.4.0",
+      "@codemirror/lang-sql": "6.9.1"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",
