@@ -72,12 +72,11 @@ func (o *Orchestrator) performPatchExport(
 	}
 
 	// Initialize connector operation
-	_, opClient, _, cancel, initErr := o.dataEngine.InitializeConnectorOperation(ctx, connection)
+	opClient, initErr := o.dataEngine.InitializeConnectorOperation(ctx, connection)
 	if initErr != nil {
 		logs = append(logs, fmt.Sprintf("Failed to initialize connector: %v", initErr))
 		return logs, fmt.Errorf("failed to initialize connector: %w", initErr)
 	}
-	defer cancel()
 
 	// Serialize patches to JSON
 	patchJSON, marshalErr := json.Marshal(patches)

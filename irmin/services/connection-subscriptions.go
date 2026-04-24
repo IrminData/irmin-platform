@@ -82,8 +82,10 @@ func (s *ConnectionSubscriptionService) RegisterSubscriptionWithConnector(
 	// Subscribe to changes
 	connectorSubscription, err := opClient.SubscribeToChanges(ctx, webhookURL, subscription.WebhookToken)
 	if err != nil {
-		// Clean up the operation if subscription fails
-		_ = systemClient.CancelOperation(ctx, operation.ID)
+		// No explicit operation cancel is issued here. The legacy
+		// form-bodied /operation/cancel has been removed; the init'd
+		// operation will be reaped by its own token TTL on the connector
+		// side. Pull ops use the SDK's async job cancel path instead.
 		return nil, fmt.Errorf("failed to subscribe to connector changes: %w", err)
 	}
 
@@ -122,16 +124,11 @@ func (s *ConnectionSubscriptionService) UnregisterSubscriptionFromConnector(
 		"en",
 	).WithConnectionID(connection.ID)
 
-	// Unsubscribe from changes
+	// Unsubscribe from changes. No explicit operation cancel is issued
+	// afterwards; the legacy form-bodied /operation/cancel has been
+	// removed. Operation tokens expire via TTL on the connector side.
 	if unsubErr := opClient.UnsubscribeFromChanges(ctx, connectorSubscriptionID); unsubErr != nil {
-		// Clean up operation even if unsubscribe fails
-		_ = systemClient.CancelOperation(ctx, operation.ID)
 		return fmt.Errorf("failed to unsubscribe from connector changes: %w", unsubErr)
-	}
-
-	// Clean up operation
-	if cancelErr := systemClient.CancelOperation(ctx, operation.ID); cancelErr != nil {
-		return fmt.Errorf("failed to cancel connector operation: %w", cancelErr)
 	}
 
 	return nil

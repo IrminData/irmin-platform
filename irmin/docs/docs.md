@@ -464,15 +464,14 @@ import "irmin-api/connectors-client"
 - [Constants](<#constants>)
 - [type Client](<#Client>)
   - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
-  - [func \(c \*Client\) CancelOperation\(ctx context.Context, operationID uint\) error](<#Client.CancelOperation>)
   - [func \(c \*Client\) FetchAPI\(ctx context.Context, opts RequestOptions, out any\) error](<#Client.FetchAPI>)
   - [func \(c \*Client\) FetchStreamFiles\(ctx context.Context, opts RequestOptions\) \(\[\]PulledFile, error\)](<#Client.FetchStreamFiles>)
   - [func \(c \*Client\) FetchStreamFilesReader\(ctx context.Context, opts RequestOptions\) \(io.ReadCloser, error\)](<#Client.FetchStreamFilesReader>)
   - [func \(c \*Client\) GetConfigFields\(ctx context.Context, configType string, details map\[string\]string, settings map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Client.GetConfigFields>)
   - [func \(c \*Client\) GetInfo\(ctx context.Context\) \(\*ConnectorInfo, error\)](<#Client.GetInfo>)
-  - [func \(c \*Client\) GetOperationStatus\(ctx context.Context, operationID uint\) \(\*OperationStatus, error\)](<#Client.GetOperationStatus>)
   - [func \(c \*Client\) GetSchema\(ctx context.Context, method, path string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GetSchema>)
   - [func \(c \*Client\) InitOperation\(ctx context.Context, details map\[string\]string, settings map\[string\]string\) \(\*Operation, error\)](<#Client.InitOperation>)
+  - [func \(c \*Client\) LastAsyncPullJobID\(\) string](<#Client.LastAsyncPullJobID>)
   - [func \(c \*Client\) OperationPatch\(ctx context.Context, patchFile FormFile\) \(string, error\)](<#Client.OperationPatch>)
   - [func \(c \*Client\) OperationPull\(ctx context.Context, path string\) \(\[\]PulledFile, error\)](<#Client.OperationPull>)
   - [func \(c \*Client\) OperationPullStream\(ctx context.Context, path string\) \(io.ReadCloser, error\)](<#Client.OperationPullStream>)
@@ -483,11 +482,11 @@ import "irmin-api/connectors-client"
   - [func \(c \*Client\) UnsubscribeFromChanges\(ctx context.Context, subscriptionID uint\) error](<#Client.UnsubscribeFromChanges>)
   - [func \(c \*Client\) ValidateConfigFields\(ctx context.Context, details map\[string\]string, settings map\[string\]string\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#Client.ValidateConfigFields>)
   - [func \(c \*Client\) WithConnectionID\(id uint\) \*Client](<#Client.WithConnectionID>)
+  - [func \(c \*Client\) WithFallbackAsyncPullJobID\(jobID string\) \*Client](<#Client.WithFallbackAsyncPullJobID>)
+  - [func \(c \*Client\) WithLogger\(logger \*slog.Logger\) \*Client](<#Client.WithLogger>)
 - [type ConnectorInfo](<#ConnectorInfo>)
 - [type FormFile](<#FormFile>)
 - [type Operation](<#Operation>)
-- [type OperationLog](<#OperationLog>)
-- [type OperationStatus](<#OperationStatus>)
 - [type PulledFile](<#PulledFile>)
 - [type RequestOptions](<#RequestOptions>)
 - [type Subscription](<#Subscription>)
@@ -503,6 +502,12 @@ Exported as a constant so the server\-side helper in irmin\-connectors can impor
 
 ```go
 const HeaderConnectionID = "X-Irmin-Connection-Id"
+```
+
+<a name="PollInterval"></a>PollInterval is the cadence at which the async\-pull wrapper polls /operation/status between the initial 202 Accepted and a terminal state. Exported as a package\-level const so tests can tune it and so operators can see the tunable knob at a glance. 5s matches the connector\-service heartbeat cadence so one poll round\-trip is guaranteed to observe any status flip since the last poll.
+
+```go
+const PollInterval = 5 * time.Second
 ```
 
 <a name="Client"></a>
@@ -530,6 +535,13 @@ type Client struct {
     // access token via Core's internal endpoint. Leave zero for calls that
     // are not connection-scoped (e.g., connector registration, info).
     ConnectionID uint
+
+    // Logger, when non-nil, receives Debug-level progress events from
+    // the async-pull poll loop and cancel-on-context-done paths. Nil
+    // is safe — the client simply drops those logs. The field lives
+    // here rather than being plumbed per-call so engine.Client can
+    // attach its workflow-scoped slog.Logger once at initialization.
+    Logger *slog.Logger
     // contains filtered or unexported fields
 }
 ```
@@ -542,21 +554,6 @@ func NewClient(baseURL, token, locale string) *Client
 ```
 
 NewClient creates a new Connector API client with default settings.
-
-<a name="Client.CancelOperation"></a>
-### func \(\*Client\) CancelOperation
-
-```go
-func (c *Client) CancelOperation(ctx context.Context, operationID uint) error
-```
-
-CancelOperation cancels an operation with the connector. Cancellation is used to revoke the operation token and stop any ongoing processes, like event listeners.
-
-Note: System token is required for this operation.
-
-Parameters: \- ctx: Context for request cancellation and timeout control. \- operationID: The ID of the operation to cancel.
-
-Returns: \- An error if the operation cannot be cancelled.
 
 <a name="Client.FetchAPI"></a>
 ### func \(\*Client\) FetchAPI
@@ -615,21 +612,6 @@ Parameters: \- ctx: Context for request cancellation and timeout control.
 
 Returns: \- A pointer to ConnectorInfo if the request is successful. \- An error if the API call fails or the response cannot be unmarshalled.
 
-<a name="Client.GetOperationStatus"></a>
-### func \(\*Client\) GetOperationStatus
-
-```go
-func (c *Client) GetOperationStatus(ctx context.Context, operationID uint) (*OperationStatus, error)
-```
-
-GetOperationStatus retrieves the status of an operation with the connector.
-
-Note: System token is required for this operation.
-
-Parameters: \- ctx: Context for request cancellation and timeout control. \- operationID: The ID of the operation to get the status of.
-
-Returns: \- The status of the operation if the request is successful. \- An error if the operation cannot be retrieved.
-
 <a name="Client.GetSchema"></a>
 ### func \(\*Client\) GetSchema
 
@@ -660,6 +642,15 @@ Parameters: \- ctx: Context for request cancellation and timeout control. \- det
 
 Returns: \- The newly created operation if the request is successful. \- An error if the request fails.
 
+<a name="Client.LastAsyncPullJobID"></a>
+### func \(\*Client\) LastAsyncPullJobID
+
+```go
+func (c *Client) LastAsyncPullJobID() string
+```
+
+LastAsyncPullJobID returns the currently remembered async pull job ID. Returns empty string on a fresh Client — the cache is only populated by a successful StartOperationPull earlier on this same Client instance. See fallbackAsyncPullJobID's docstring for when this is load\-bearing.
+
 <a name="Client.OperationPatch"></a>
 ### func \(\*Client\) OperationPatch
 
@@ -682,18 +673,14 @@ Returns: \- A string containing the response message from the push operation. \-
 func (c *Client) OperationPull(ctx context.Context, path string) ([]PulledFile, error)
 ```
 
-OperationPull sends a POST request to the /operation/pull endpoint, retrieves the full streamed content, extracts the filename from the Content\-Disposition header \(if available\), and returns both.
+OperationPull starts an async pull against the connector service and blocks until a terminal status is reached. On success the result zip is read from /operation/result and returned as a single PulledFile whose Content is the raw zip bytes — identical in shape to the pre\-async synchronous response, so downstream callers that feed the bytes into irminutils.UnzipFiles do not change.
+
+Parameters:
+
+- ctx: Context for the whole lifecycle \(start \+ poll \+ fetch\). Cancellation triggers a best\-effort /operation/cancel and returns the ctx error.
+- path: Connector\-specific resource path to pull.
 
 Note: Operation token is required for this operation.
-
-Parameters: \- ctx: Context for request cancellation and timeout control. \- path: The path in the connector to pull data for.
-
-Returns: \- A slice of PulledFile objects containing the following:
-
-- Byte map containing the full streamed content.
-- String containing the filename extracted from the Content\-Disposition header \(if present\).
-
-\- An error if the request fails.
 
 <a name="Client.OperationPullStream"></a>
 ### func \(\*Client\) OperationPullStream
@@ -702,7 +689,9 @@ Returns: \- A slice of PulledFile objects containing the following:
 func (c *Client) OperationPullStream(ctx context.Context, path string) (io.ReadCloser, error)
 ```
 
-OperationPullStream sends a POST request to the /operation/pull endpoint and returns a streaming reader for the response body. The caller is responsible for closing the reader. The response is expected to be a zip archive.
+OperationPullStream starts an async pull and returns a streaming reader over the result zip. The caller is responsible for closing the returned reader. Kept as the low\-allocation path for the streaming import in engine/dataMovement.go.
+
+The returned reader is tied to the async\-pull poll loop only up to the point the result starts streaming; once the reader is handed back the only governance on the stream is the caller's context.
 
 <a name="Client.OperationPush"></a>
 ### func \(\*Client\) OperationPush
@@ -797,6 +786,34 @@ client := connectorsclient.NewClient(url, tok, "en").WithConnectionID(conn.ID)
 
 Mutates and returns the same pointer; Client is a plain struct so the caller owns its sharing story. Passing 0 clears the connection context.
 
+<a name="Client.WithFallbackAsyncPullJobID"></a>
+### func \(\*Client\) WithFallbackAsyncPullJobID
+
+```go
+func (c *Client) WithFallbackAsyncPullJobID(jobID string) *Client
+```
+
+WithFallbackAsyncPullJobID seeds the client with a known async pull job ID. Used when /operation/pull returns 409 without a job\_id so Core can still attempt targeted cancellation.
+
+Currently only called from tests — production code relies on the in\-pull rememberAsyncPullJobID/clearRememberedAsyncPullJobID pair to populate the cache during a live pull. Exposed as a hook so callers running multiple pulls against one long\-lived Client can pre\-seed the cache from an out\-of\-band source \(e.g., a durable queue\); in the typical one\-pull\-per\-client engine flow the cache is either populated mid\-pull or not used at all.
+
+<a name="Client.WithLogger"></a>
+### func \(\*Client\) WithLogger
+
+```go
+func (c *Client) WithLogger(logger *slog.Logger) *Client
+```
+
+WithLogger returns the receiver after attaching a slog.Logger for async\-pull progress\-event forwarding and best\-effort cancel diagnostics. Mutates and returns the same pointer for fluent call sites:
+
+```
+client := connectorsclient.NewClient(url, tok, "en").
+	WithConnectionID(conn.ID).
+	WithLogger(c.Logger)
+```
+
+Passing nil clears the logger and silences the pull loop's Debug output — matches the default zero\-value behaviour.
+
 <a name="ConnectorInfo"></a>
 ## type ConnectorInfo
 
@@ -858,35 +875,6 @@ type Operation struct {
     Token                   string            `json:"token"                   example:"1234567890"`
     ConfigHash              string            `json:"configHash"              example:"dad9439d003d075c99035d7d42521fbbc6f01758e2ba00559a56ff64c1fa0344"`
     ConnectorRegistrationID uint              `json:"connectorRegistrationID" example:"1"`
-}
-```
-
-<a name="OperationLog"></a>
-## type OperationLog
-
-OperationLog represents a record of a log tied to an operation.
-
-```go
-type OperationLog struct {
-    CreatedAt string         `json:"created_at"`
-    Type      string         `json:"type"`
-    Message   string         `json:"message"`
-    Metadata  map[string]any `json:"metadata"`
-}
-```
-
-<a name="OperationStatus"></a>
-## type OperationStatus
-
-OperationStatus represents the response for an operation status check.
-
-```go
-type OperationStatus struct {
-    OperationID   uint              `json:"operation_id"`
-    Details       map[string]string `json:"details"`
-    Settings      map[string]string `json:"settings"`
-    Subscriptions []Subscription    `json:"subscriptions"`
-    Logs          []OperationLog    `json:"logs"`
 }
 ```
 
@@ -3024,6 +3012,7 @@ import "irmin-api/db"
 - [Variables](<#variables>)
 - [func ContainsSQLInjectionPattern\(input string\) bool](<#ContainsSQLInjectionPattern>)
 - [func ContainsSuspiciousPatterns\(input string\) bool](<#ContainsSuspiciousPatterns>)
+- [func EnsureNotificationTriggerStatementsForTest\(\) \[\]string](<#EnsureNotificationTriggerStatementsForTest>)
 - [func GenerateWebhookToken\(\) \(string, error\)](<#GenerateWebhookToken>)
 - [func GetFreeTierDisplayLimits\(\) map\[UsageDimension\]int64](<#GetFreeTierDisplayLimits>)
 - [func GetFreeTierHardLimits\(\) map\[UsageDimension\]int64](<#GetFreeTierHardLimits>)
@@ -3571,6 +3560,15 @@ func ContainsSuspiciousPatterns(input string) bool
 ```
 
 ContainsSuspiciousPatterns checks for additional suspicious patterns.
+
+<a name="EnsureNotificationTriggerStatementsForTest"></a>
+## func EnsureNotificationTriggerStatementsForTest
+
+```go
+func EnsureNotificationTriggerStatementsForTest() []string
+```
+
+EnsureNotificationTriggerStatementsForTest exposes trigger DDL for package\-external tests.
 
 <a name="GenerateWebhookToken"></a>
 ## func GenerateWebhookToken
@@ -8347,9 +8345,9 @@ import "irmin-api/engine"
   - [func \(c \*Client\) CreateBranch\(workspace, repository, name, from string, isImmutable bool\) \(\*irminmodels.Branch, error\)](<#Client.CreateBranch>)
   - [func \(c \*Client\) CreateRepository\(workspace, name, defaultBranch string, isImmutable bool, gcDefaultRetentionDays, gcDefaultBranchRetentionDays \*int\) \(\*Repository, error\)](<#Client.CreateRepository>)
   - [func \(c \*Client\) CreateTag\(workspace, repository, name, ref string\) \(\*irminmodels.GitTag, error\)](<#Client.CreateTag>)
-  - [func \(c \*Client\) DataExport\(ctx context.Context, connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping\) \(\[\]string, int64, \[\]connectorsclient.OperationLog, \[\]error\)](<#Client.DataExport>)
-  - [func \(c \*Client\) DataImport\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, workspace string, repository string, branch string, repositoryPath string, fieldMappings \[\]irminmodels.FieldMapping\) \(\[\]lakefs.ObjectMetadata, \[\]connectorsclient.OperationLog, \[\]error\)](<#Client.DataImport>)
-  - [func \(c \*Client\) DataMovementSchema\(ctx context.Context, connection \*db.Connection, method, path string, tx ...\*gorm.DB\) \(\*irminmodels.ObjectSchema, \[\]connectorsclient.OperationLog, error\)](<#Client.DataMovementSchema>)
+  - [func \(c \*Client\) DataExport\(ctx context.Context, connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping\) \(\[\]string, int64, \[\]error\)](<#Client.DataExport>)
+  - [func \(c \*Client\) DataImport\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, workspace string, repository string, branch string, repositoryPath string, fieldMappings \[\]irminmodels.FieldMapping\) \(\[\]lakefs.ObjectMetadata, \[\]error\)](<#Client.DataImport>)
+  - [func \(c \*Client\) DataMovementSchema\(ctx context.Context, connection \*db.Connection, method, path string, tx ...\*gorm.DB\) \(\*irminmodels.ObjectSchema, error\)](<#Client.DataMovementSchema>)
   - [func \(c \*Client\) DeleteBranch\(workspace, repository, branch string\) error](<#Client.DeleteBranch>)
   - [func \(c \*Client\) DeleteObject\(workspace, repository, path, ref string, tx ...\*gorm.DB\) error](<#Client.DeleteObject>)
   - [func \(c \*Client\) DeleteRepository\(ctx context.Context, workspace, repository string, keepObjects bool\) error](<#Client.DeleteRepository>)
@@ -8369,7 +8367,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) GetRepository\(ctx context.Context, workspace, repository string\) \(\*Repository, error\)](<#Client.GetRepository>)
   - [func \(c \*Client\) GetTag\(workspace, repository, tag string\) \(\*irminmodels.GitTag, error\)](<#Client.GetTag>)
   - [func \(c \*Client\) GetUncommittedChanges\(workspace, repository, branch string\) \(\*irminmodels.Diff, error\)](<#Client.GetUncommittedChanges>)
-  - [func \(c \*Client\) InitializeConnectorOperation\(ctx context.Context, connection \*db.Connection, tx ...\*gorm.DB\) \(\*connectorsclient.Client, \*connectorsclient.Client, \*uint, func\(\), error\)](<#Client.InitializeConnectorOperation>)
+  - [func \(c \*Client\) InitializeConnectorOperation\(ctx context.Context, connection \*db.Connection, tx ...\*gorm.DB\) \(\*connectorsclient.Client, error\)](<#Client.InitializeConnectorOperation>)
   - [func \(c \*Client\) ListBranches\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.Branch, error\)](<#Client.ListBranches>)
   - [func \(c \*Client\) ListCommits\(workspace, repository, ref string, after \*string, limit \*int\) \(\[\]irminmodels.Commit, \*lakefs.Pagination, error\)](<#Client.ListCommits>)
   - [func \(c \*Client\) ListRepositories\(workspace string\) \(\[\]Repository, error\)](<#Client.ListRepositories>)
@@ -8379,9 +8377,9 @@ import "irmin-api/engine"
   - [func \(c \*Client\) ObjectExists\(workspace, repository, path, ref string\) \(bool, error\)](<#Client.ObjectExists>)
   - [func \(c \*Client\) ProcessFieldMappings\(ctx context.Context, files map\[string\]\[\]byte, fieldMappings \[\]irminmodels.FieldMapping\) \(map\[string\]\[\]byte, error\)](<#Client.ProcessFieldMappings>)
   - [func \(c \*Client\) ProcessTransformations\(ctx context.Context, files map\[string\]\[\]byte, config TransformConfig\) \(map\[string\]\[\]byte, error\)](<#Client.ProcessTransformations>)
-  - [func \(c \*Client\) PullFilesFromConnector\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string\) \(map\[string\]\[\]byte, \[\]connectorsclient.OperationLog, error\)](<#Client.PullFilesFromConnector>)
-  - [func \(c \*Client\) PullFilesFromConnectorStreaming\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, lakeFSRepo, branch string, pathPrefix string\) \(\[\]lakefs.ObjectMetadata, \[\]connectorsclient.OperationLog, error\)](<#Client.PullFilesFromConnectorStreaming>)
-  - [func \(c \*Client\) PushFilesToConnector\(ctx context.Context, connection \*db.Connection, connectionPath string, objects \[\]\*irminmodels.Object, files map\[string\]\[\]byte, tx ...\*gorm.DB\) \(\[\]string, \[\]connectorsclient.OperationLog, error\)](<#Client.PushFilesToConnector>)
+  - [func \(c \*Client\) PullFilesFromConnector\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string\) \(map\[string\]\[\]byte, error\)](<#Client.PullFilesFromConnector>)
+  - [func \(c \*Client\) PullFilesFromConnectorStreaming\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, lakeFSRepo, branch string, pathPrefix string\) \(\[\]lakefs.ObjectMetadata, error\)](<#Client.PullFilesFromConnectorStreaming>)
+  - [func \(c \*Client\) PushFilesToConnector\(ctx context.Context, connection \*db.Connection, connectionPath string, objects \[\]\*irminmodels.Object, files map\[string\]\[\]byte, tx ...\*gorm.DB\) \(\[\]string, error\)](<#Client.PushFilesToConnector>)
   - [func \(c \*Client\) ResetBranchToCommit\(workspace, repository, branch, commitRef string, force bool\) error](<#Client.ResetBranchToCommit>)
   - [func \(c \*Client\) RevertCommit\(workspace, repository, branch, commitRef string, parentNumber int\) \(\*irminmodels.Commit, error\)](<#Client.RevertCommit>)
   - [func \(c \*Client\) RevertUncommitedChanges\(workspace, repository, branch, path, pathType string\) error](<#Client.RevertUncommitedChanges>)
@@ -8817,7 +8815,7 @@ func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminmodel
 ### func \(\*Client\) DataExport
 
 ```go
-func (c *Client) DataExport(ctx context.Context, connection *db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths []string, fieldMappings []irminmodels.FieldMapping) ([]string, int64, []connectorsclient.OperationLog, []error)
+func (c *Client) DataExport(ctx context.Context, connection *db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths []string, fieldMappings []irminmodels.FieldMapping) ([]string, int64, []error)
 ```
 
 DataExport exports data from a lakeFS repository to an external connector. It applies field mappings to route and transform data, merges files that map to the same destination, and pushes the results to the connector. Returns the paths of the files that were pushed and any errors that occurred.
@@ -8828,7 +8826,7 @@ Intentionally NOT wrapped in a GORM transaction. \`dataExportInternal\` fetches 
 ### func \(\*Client\) DataImport
 
 ```go
-func (c *Client) DataImport(ctx context.Context, connection *db.Connection, connectionPaths []string, workspace string, repository string, branch string, repositoryPath string, fieldMappings []irminmodels.FieldMapping) ([]lakefs.ObjectMetadata, []connectorsclient.OperationLog, []error)
+func (c *Client) DataImport(ctx context.Context, connection *db.Connection, connectionPaths []string, workspace string, repository string, branch string, repositoryPath string, fieldMappings []irminmodels.FieldMapping) ([]lakefs.ObjectMetadata, []error)
 ```
 
 DataImport imports data from an external source into a lakeFS repository. It applies field mappings to route and transform data, merges files that map to the same destination, and uploads the results. Returns the metadata of the uploaded objects and any errors that occurred.
@@ -8839,7 +8837,7 @@ Intentionally NOT wrapped in a GORM transaction. \`dataImportInternal\` performs
 ### func \(\*Client\) DataMovementSchema
 
 ```go
-func (c *Client) DataMovementSchema(ctx context.Context, connection *db.Connection, method, path string, tx ...*gorm.DB) (*irminmodels.ObjectSchema, []connectorsclient.OperationLog, error)
+func (c *Client) DataMovementSchema(ctx context.Context, connection *db.Connection, method, path string, tx ...*gorm.DB) (*irminmodels.ObjectSchema, error)
 ```
 
 DataMovementSchema retrieves the schema for a specific method from the connector. It returns the schema and an error if any occurred. If tx is provided, it will be used instead of creating a new transaction.
@@ -9019,10 +9017,12 @@ func (c *Client) GetUncommittedChanges(workspace, repository, branch string) (*i
 ### func \(\*Client\) InitializeConnectorOperation
 
 ```go
-func (c *Client) InitializeConnectorOperation(ctx context.Context, connection *db.Connection, tx ...*gorm.DB) (*connectorsclient.Client, *connectorsclient.Client, *uint, func(), error)
+func (c *Client) InitializeConnectorOperation(ctx context.Context, connection *db.Connection, tx ...*gorm.DB) (*connectorsclient.Client, error)
 ```
 
-InitializeConnectorOperation sets up a connector operation and returns a system connector client, an operation client, along with a cancel function to clean up when done. It returns an error if initialization fails. If tx is provided, it will be used instead of creating a new transaction.
+InitializeConnectorOperation sets up a connector operation and returns an operation client. It returns an error if initialization fails. If tx is provided, it will be used instead of creating a new transaction.
+
+Note: the legacy system\-token cancel\-on\-cleanup has been removed. Async pull now manages its own job\-level cancellation via the SDK's CancelOperationJob wrapper \(see connectorsclient.OperationPull / OperationPullStream\). Non\-pull operations \(push/patch/schema\) are synchronous on the connector side; no explicit cancel call is needed.
 
 <a name="Client.ListBranches"></a>
 ### func \(\*Client\) ListBranches
@@ -9109,7 +9109,7 @@ ProcessTransformations applies transformations to the input files and returns tr
 ### func \(\*Client\) PullFilesFromConnector
 
 ```go
-func (c *Client) PullFilesFromConnector(ctx context.Context, connection *db.Connection, connectionPaths []string) (map[string][]byte, []connectorsclient.OperationLog, error)
+func (c *Client) PullFilesFromConnector(ctx context.Context, connection *db.Connection, connectionPaths []string) (map[string][]byte, error)
 ```
 
 PullFilesFromConnector pulls files from a connector, unzips them, and returns a map of file paths to file contents. It returns a map of file paths to file contents and an error if any occurred.
@@ -9118,7 +9118,7 @@ PullFilesFromConnector pulls files from a connector, unzips them, and returns a 
 ### func \(\*Client\) PullFilesFromConnectorStreaming
 
 ```go
-func (c *Client) PullFilesFromConnectorStreaming(ctx context.Context, connection *db.Connection, connectionPaths []string, lakeFSRepo, branch string, pathPrefix string) ([]lakefs.ObjectMetadata, []connectorsclient.OperationLog, error)
+func (c *Client) PullFilesFromConnectorStreaming(ctx context.Context, connection *db.Connection, connectionPaths []string, lakeFSRepo, branch string, pathPrefix string) ([]lakefs.ObjectMetadata, error)
 ```
 
 PullFilesFromConnectorStreaming pulls files from a connector and uploads them directly to LakeFS without loading all files into memory simultaneously. The connector response is streamed to a temporary file on disk, then each file is extracted and uploaded individually.
@@ -9127,7 +9127,7 @@ PullFilesFromConnectorStreaming pulls files from a connector and uploads them di
 ### func \(\*Client\) PushFilesToConnector
 
 ```go
-func (c *Client) PushFilesToConnector(ctx context.Context, connection *db.Connection, connectionPath string, objects []*irminmodels.Object, files map[string][]byte, tx ...*gorm.DB) ([]string, []connectorsclient.OperationLog, error)
+func (c *Client) PushFilesToConnector(ctx context.Context, connection *db.Connection, connectionPath string, objects []*irminmodels.Object, files map[string][]byte, tx ...*gorm.DB) ([]string, error)
 ```
 
 PushFilesToConnector pushes files to a connector. It returns the paths of the files that were pushed and an error if any occurred. If tx is provided, it will be used instead of creating a new transaction.
@@ -12193,7 +12193,7 @@ import "irmin-api/lib"
   - [func GetNovuWorkflowDefinitions\(\) \[\]NovuWorkflowDefinition](<#GetNovuWorkflowDefinitions>)
 - [type SchemaCacheManager](<#SchemaCacheManager>)
   - [func NewSchemaCacheManager\(env \*utils.CoreAPIEnv, logger \*slog.Logger, db \*db.Database\) \*SchemaCacheManager](<#NewSchemaCacheManager>)
-  - [func \(scm \*SchemaCacheManager\) GetConnectionSchema\(ctx context.Context, connection \*db.Connection, operationMethod, path, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, \[\]connectorsclient.OperationLog, error\)](<#SchemaCacheManager.GetConnectionSchema>)
+  - [func \(scm \*SchemaCacheManager\) GetConnectionSchema\(ctx context.Context, connection \*db.Connection, operationMethod, path, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, error\)](<#SchemaCacheManager.GetConnectionSchema>)
   - [func \(scm \*SchemaCacheManager\) GetObjectSchema\(ctx context.Context, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, ref, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, error\)](<#SchemaCacheManager.GetObjectSchema>)
 - [type TestSuite](<#TestSuite>)
   - [func GetTestSuite\(\) \*TestSuite](<#GetTestSuite>)
@@ -12691,7 +12691,7 @@ NewSchemaCacheManager creates a new SchemaCacheManager instance.
 ### func \(\*SchemaCacheManager\) GetConnectionSchema
 
 ```go
-func (scm *SchemaCacheManager) GetConnectionSchema(ctx context.Context, connection *db.Connection, operationMethod, path, locale string, ignoreCache bool) (*irminmodels.ObjectSchema, []connectorsclient.OperationLog, error)
+func (scm *SchemaCacheManager) GetConnectionSchema(ctx context.Context, connection *db.Connection, operationMethod, path, locale string, ignoreCache bool) (*irminmodels.ObjectSchema, error)
 ```
 
 GetConnectionSchema returns the schema for a connection. It first checks if the schema is cached, and if so, returns the cached schema. Otherwise, it fetches the schema from the Data Engine and caches it asynchronously.
@@ -13561,6 +13561,8 @@ import "irmin-api/orchestrator"
 ## Index
 
 - [Constants](<#constants>)
+- [func ApplyStalePendingUpdates\(gormDB \*gorm.DB, now, cutoff time.Time, logPrefix string\) \(int64, error\)](<#ApplyStalePendingUpdates>)
+- [func ProcessPendingWorkflowRunIDs\(ctx context.Context, pendingIDs \[\]uint, processFn func\(context.Context, \*db.RunStatusNotificationPayload\) error\) error](<#ProcessPendingWorkflowRunIDs>)
 - [type BaseLogEntry](<#BaseLogEntry>)
 - [type CommitLog](<#CommitLog>)
 - [type ConnectionEvent](<#ConnectionEvent>)
@@ -13648,6 +13650,35 @@ const (
     GracefulShutdownTimeout = 30 * time.Second
 )
 ```
+
+<a name="StalePendingWorkflowRunAgeThreshold"></a>
+
+```go
+const (
+
+    // StalePendingWorkflowRunAgeThreshold is the age at which pending runs are
+    // treated as abandoned and auto-cancelled by maintenance.
+    StalePendingWorkflowRunAgeThreshold = stalePendingWorkflowRunCancelAge
+)
+```
+
+<a name="ApplyStalePendingUpdates"></a>
+## func ApplyStalePendingUpdates
+
+```go
+func ApplyStalePendingUpdates(gormDB *gorm.DB, now, cutoff time.Time, logPrefix string) (int64, error)
+```
+
+ApplyStalePendingUpdates marks pending runs older than cutoff as cancelled.
+
+<a name="ProcessPendingWorkflowRunIDs"></a>
+## func ProcessPendingWorkflowRunIDs
+
+```go
+func ProcessPendingWorkflowRunIDs(ctx context.Context, pendingIDs []uint, processFn func(context.Context, *db.RunStatusNotificationPayload) error) error
+```
+
+ProcessPendingWorkflowRunIDs feeds pending run IDs through a provided processor callback and joins any per\-run failures into one error.
 
 <a name="BaseLogEntry"></a>
 ## type BaseLogEntry

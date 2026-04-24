@@ -375,7 +375,7 @@ func (o *Orchestrator) handleConnectionWrite(
 	var logs []string
 
 	connectionPath := strings.TrimLeft(*stage.ConnectionWritePath, "/")
-	pushedPaths, operationLogs, err := o.dataEngine.PushFilesToConnector(
+	pushedPaths, err := o.dataEngine.PushFilesToConnector(
 		ctx,
 		connection,
 		connectionPath,
@@ -395,18 +395,10 @@ func (o *Orchestrator) handleConnectionWrite(
 		return logs, err
 	}
 
-	for _, operationLog := range operationLogs {
-		logs = append(
-			logs,
-			fmt.Sprintf(
-				"Connector operation log: %s: %s, %s %v",
-				operationLog.Type,
-				operationLog.Message,
-				operationLog.CreatedAt,
-				operationLog.Metadata,
-			),
-		)
-	}
+	// Live per-operation log surfacing from the connector was removed
+	// along with the legacy POST /operation/status endpoint. Push is still
+	// a sync call, so the whole operation either succeeds or returns a
+	// final error — no progress events to forward.
 
 	for _, pushedPath := range pushedPaths {
 		logs = append(logs, fmt.Sprintf("Object ('%s') pushed to connector.", pushedPath))
@@ -426,7 +418,7 @@ func (o *Orchestrator) handleConnectionRead(
 ) ([]string, error) {
 	var logs []string
 
-	pulledPaths, operationLogs, err := o.dataEngine.PullFilesFromConnector(ctx, connection, stage.ConnectionReadPaths)
+	pulledPaths, err := o.dataEngine.PullFilesFromConnector(ctx, connection, stage.ConnectionReadPaths)
 	if err != nil {
 		if ctx.Err() != nil {
 			// If cancelled, collect any logs from the pull operation
@@ -440,18 +432,10 @@ func (o *Orchestrator) handleConnectionRead(
 		return logs, err
 	}
 
-	for _, operationLog := range operationLogs {
-		logs = append(
-			logs,
-			fmt.Sprintf(
-				"Connector operation log: %s: %s, %s %v",
-				operationLog.Type,
-				operationLog.Message,
-				operationLog.CreatedAt,
-				operationLog.Metadata,
-			),
-		)
-	}
+	// Live per-operation log surfacing from the connector was removed
+	// along with the legacy POST /operation/status endpoint. Pull progress
+	// events are now streamed to slog.Debug inside the SDK's async poll
+	// wrapper, not threaded back into workflow run logs.
 
 	// Check accumulated size to prevent OOM on large pulls
 	var totalSize int64

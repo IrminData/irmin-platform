@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	irmincache "irmin-api/cache"
-	connectorsclient "irmin-api/connectors-client"
 	"irmin-api/db"
 	"irmin-api/lakefs"
 	"irmin-api/lib"
@@ -28,7 +27,6 @@ type operationResult struct {
 	importedObjects  []lakefs.ObjectMetadata
 	exportedPaths    []string
 	transferredBytes int64
-	operationLogs    []connectorsclient.OperationLog
 	errors           []error
 }
 
@@ -72,7 +70,7 @@ func (o *Orchestrator) performImportOperation(
 		repositoryPath = repositoryPaths[0]
 	}
 
-	importedObjects, operationLogs, errors := o.dataEngine.DataImport(
+	importedObjects, errors := o.dataEngine.DataImport(
 		ctx,
 		connection,
 		connectionPaths,
@@ -86,7 +84,6 @@ func (o *Orchestrator) performImportOperation(
 	return operationResult{
 		importedObjects:  importedObjects,
 		transferredBytes: sumImportedObjectBytes(importedObjects),
-		operationLogs:    operationLogs,
 		errors:           errors,
 	}
 }
@@ -107,7 +104,7 @@ func (o *Orchestrator) performExportOperation(
 		connectionPath = connectionPaths[0]
 	}
 
-	exportedPaths, transferredBytes, operationLogs, errors := o.dataEngine.DataExport(
+	exportedPaths, transferredBytes, errors := o.dataEngine.DataExport(
 		ctx,
 		connection,
 		connectionPath,
@@ -121,7 +118,6 @@ func (o *Orchestrator) performExportOperation(
 	return operationResult{
 		exportedPaths:    exportedPaths,
 		transferredBytes: transferredBytes,
-		operationLogs:    operationLogs,
 		errors:           errors,
 	}
 }
@@ -170,17 +166,14 @@ func (o *Orchestrator) processOperationResults(
 		}
 	}
 
-	// Log connector operation logs with structured format
-	for _, operationLog := range result.operationLogs {
-		logs = append(logs, lb.ConnectorOp(ConnectorOperationLog{
-			BaseLogEntry: BaseLogEntry{
-				Message: operationLog.Message,
-			},
-			ConnectorName: connectorName,
-			OperationType: operationLog.Type,
-			Metadata:      operationLog.Metadata,
-		}))
-	}
+	// Live per-connector-operation progress logs used to be surfaced here
+	// via POST /operation/status. That endpoint was form-bodied and
+	// coupled to the legacy sync protocol; async pull now forwards
+	// progress events through the SDK poll loop (slog.Debug on the
+	// server) rather than attaching them to workflow run logs. Push and
+	// patch operations remain sync on the connector side but have also
+	// lost their per-operation log surfacing here — re-add via a
+	// dedicated ticket if users miss it.
 
 	// Log import summary and individual objects
 	if operation == operationImport && len(result.importedObjects) > 0 {

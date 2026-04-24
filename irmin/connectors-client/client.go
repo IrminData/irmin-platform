@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 
 	irminsdkgo "github.com/IrminData/irmin-sdk-go"
 )
@@ -61,6 +63,30 @@ type Client struct {
 	// access token via Core's internal endpoint. Leave zero for calls that
 	// are not connection-scoped (e.g., connector registration, info).
 	ConnectionID uint
+
+	// Logger, when non-nil, receives Debug-level progress events from
+	// the async-pull poll loop and cancel-on-context-done paths. Nil
+	// is safe — the client simply drops those logs. The field lives
+	// here rather than being plumbed per-call so engine.Client can
+	// attach its workflow-scoped slog.Logger once at initialization.
+	Logger *slog.Logger
+
+	// asyncPullJobMu guards fallbackAsyncPullJobID because the client can be
+	// shared across goroutines.
+	asyncPullJobMu sync.RWMutex
+	// fallbackAsyncPullJobID stores the last known async pull job ID for
+	// this connection/client. Load-bearing ONLY in the narrow scenario
+	// where:
+	//   (1) the same Client instance makes a second pull after a first
+	//       pull that failed mid-flight (so rememberAsyncPullJobID was
+	//       called but clearRememberedAsyncPullJobID was not), AND
+	//   (2) the second pull returns 409 from a pre-SDK-#194 connector
+	//       service that does not populate AlreadyRunningBody.JobID.
+	// With the new SDK + new connector service the server always
+	// populates JobID on 409, so this cache stays unread. Retire once
+	// the SDK-populated path is confirmed in production — tracked in
+	// the connectors-service rollout notes.
+	fallbackAsyncPullJobID string
 }
 
 // NewClient creates a new Connector API client with default settings.
@@ -95,6 +121,66 @@ func NewClient(baseURL, token, locale string) *Client {
 func (c *Client) WithConnectionID(id uint) *Client {
 	c.ConnectionID = id
 	return c
+}
+
+// WithLogger returns the receiver after attaching a slog.Logger for
+// async-pull progress-event forwarding and best-effort cancel
+// diagnostics. Mutates and returns the same pointer for fluent call
+// sites:
+//
+//	client := connectorsclient.NewClient(url, tok, "en").
+//		WithConnectionID(conn.ID).
+//		WithLogger(c.Logger)
+//
+// Passing nil clears the logger and silences the pull loop's Debug
+// output — matches the default zero-value behaviour.
+func (c *Client) WithLogger(logger *slog.Logger) *Client {
+	c.Logger = logger
+	return c
+}
+
+// WithFallbackAsyncPullJobID seeds the client with a known async pull job ID.
+// Used when /operation/pull returns 409 without a job_id so Core can still
+// attempt targeted cancellation.
+//
+// Currently only called from tests — production code relies on the
+// in-pull rememberAsyncPullJobID/clearRememberedAsyncPullJobID pair
+// to populate the cache during a live pull. Exposed as a hook so
+// callers running multiple pulls against one long-lived Client can
+// pre-seed the cache from an out-of-band source (e.g., a durable
+// queue); in the typical one-pull-per-client engine flow the cache
+// is either populated mid-pull or not used at all.
+func (c *Client) WithFallbackAsyncPullJobID(jobID string) *Client {
+	c.rememberAsyncPullJobID(jobID)
+	return c
+}
+
+// LastAsyncPullJobID returns the currently remembered async pull job ID.
+// Returns empty string on a fresh Client — the cache is only populated by
+// a successful StartOperationPull earlier on this same Client instance.
+// See fallbackAsyncPullJobID's docstring for when this is load-bearing.
+func (c *Client) LastAsyncPullJobID() string {
+	c.asyncPullJobMu.RLock()
+	defer c.asyncPullJobMu.RUnlock()
+	return c.fallbackAsyncPullJobID
+}
+
+func (c *Client) rememberAsyncPullJobID(jobID string) {
+	c.asyncPullJobMu.Lock()
+	c.fallbackAsyncPullJobID = strings.TrimSpace(jobID)
+	c.asyncPullJobMu.Unlock()
+}
+
+func (c *Client) clearRememberedAsyncPullJobID(jobID string) {
+	trimmed := strings.TrimSpace(jobID)
+	if trimmed == "" {
+		return
+	}
+	c.asyncPullJobMu.Lock()
+	if c.fallbackAsyncPullJobID == trimmed {
+		c.fallbackAsyncPullJobID = ""
+	}
+	c.asyncPullJobMu.Unlock()
 }
 
 // setConnectionHeader stamps HeaderConnectionID on the request when a

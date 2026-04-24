@@ -21,6 +21,14 @@ const HeaderConnectionID = "X-Irmin-Connection-Id"
     Exported as a constant so the server-side helper in irmin-connectors can
     import the exact same string without drift.
 
+const PollInterval = 5 * time.Second
+    PollInterval is the cadence at which the async-pull wrapper polls
+    /operation/status between the initial 202 Accepted and a terminal state.
+    Exported as a package-level const so tests can tune it and so operators can
+    see the tunable knob at a glance. 5s matches the connector-service heartbeat
+    cadence so one poll round-trip is guaranteed to observe any status flip
+    since the last poll.
+
 
 TYPES
 
@@ -43,24 +51,20 @@ type Client struct {
 	// access token via Core's internal endpoint. Leave zero for calls that
 	// are not connection-scoped (e.g., connector registration, info).
 	ConnectionID uint
+
+	// Logger, when non-nil, receives Debug-level progress events from
+	// the async-pull poll loop and cancel-on-context-done paths. Nil
+	// is safe — the client simply drops those logs. The field lives
+	// here rather than being plumbed per-call so engine.Client can
+	// attach its workflow-scoped slog.Logger once at initialization.
+	Logger *slog.Logger
+
 	// Has unexported fields.
 }
     Client represents the Connector API client.
 
 func NewClient(baseURL, token, locale string) *Client
     NewClient creates a new Connector API client with default settings.
-
-func (c *Client) CancelOperation(ctx context.Context, operationID uint) error
-    CancelOperation cancels an operation with the connector. Cancellation
-    is used to revoke the operation token and stop any ongoing processes,
-    like event listeners.
-
-    Note: System token is required for this operation.
-
-    Parameters: - ctx: Context for request cancellation and timeout control.
-    - operationID: The ID of the operation to cancel.
-
-    Returns: - An error if the operation cannot be cancelled.
 
 func (c *Client) FetchAPI(ctx context.Context, opts RequestOptions, out any) error
     FetchAPI sends a request and attempts to parse the JSON response into a
@@ -108,17 +112,6 @@ func (c *Client) GetInfo(ctx context.Context) (*ConnectorInfo, error)
     Returns: - A pointer to ConnectorInfo if the request is successful. - An
     error if the API call fails or the response cannot be unmarshalled.
 
-func (c *Client) GetOperationStatus(ctx context.Context, operationID uint) (*OperationStatus, error)
-    GetOperationStatus retrieves the status of an operation with the connector.
-
-    Note: System token is required for this operation.
-
-    Parameters: - ctx: Context for request cancellation and timeout control.
-    - operationID: The ID of the operation to get the status of.
-
-    Returns: - The status of the operation if the request is successful.
-    - An error if the operation cannot be retrieved.
-
 func (c *Client) GetSchema(ctx context.Context, method, path string) (*irminmodels.ObjectSchema, error)
     GetSchema retrieves the schema for a specific operation method.
 
@@ -150,6 +143,12 @@ func (c *Client) InitOperation(
     Returns: - The newly created operation if the request is successful.
     - An error if the request fails.
 
+func (c *Client) LastAsyncPullJobID() string
+    LastAsyncPullJobID returns the currently remembered async pull job ID.
+    Returns empty string on a fresh Client — the cache is only populated by
+    a successful StartOperationPull earlier on this same Client instance.
+    See fallbackAsyncPullJobID's docstring for when this is load-bearing.
+
 func (c *Client) OperationPatch(ctx context.Context, patchFile FormFile) (string, error)
     OperationPatch sends a patch file to the /operation/patch endpoint to apply
     JSON patch operations to the data.
@@ -164,26 +163,30 @@ func (c *Client) OperationPatch(ctx context.Context, patchFile FormFile) (string
     - An error if the request fails.
 
 func (c *Client) OperationPull(ctx context.Context, path string) ([]PulledFile, error)
-    OperationPull sends a POST request to the /operation/pull endpoint,
-    retrieves the full streamed content, extracts the filename from the
-    Content-Disposition header (if available), and returns both.
+    OperationPull starts an async pull against the connector service and blocks
+    until a terminal status is reached. On success the result zip is read from
+    /operation/result and returned as a single PulledFile whose Content is the
+    raw zip bytes — identical in shape to the pre-async synchronous response,
+    so downstream callers that feed the bytes into irminutils.UnzipFiles do not
+    change.
+
+    Parameters:
+      - ctx: Context for the whole lifecycle (start + poll + fetch).
+        Cancellation triggers a best-effort /operation/cancel and returns the
+        ctx error.
+      - path: Connector-specific resource path to pull.
 
     Note: Operation token is required for this operation.
 
-    Parameters: - ctx: Context for request cancellation and timeout control.
-    - path: The path in the connector to pull data for.
-
-    Returns: - A slice of PulledFile objects containing the following:
-      - Byte map containing the full streamed content.
-      - String containing the filename extracted from the Content-Disposition
-        header (if present).
-
-    - An error if the request fails.
-
 func (c *Client) OperationPullStream(ctx context.Context, path string) (io.ReadCloser, error)
-    OperationPullStream sends a POST request to the /operation/pull endpoint and
-    returns a streaming reader for the response body. The caller is responsible
-    for closing the reader. The response is expected to be a zip archive.
+    OperationPullStream starts an async pull and returns a streaming reader
+    over the result zip. The caller is responsible for closing the returned
+    reader. Kept as the low-allocation path for the streaming import in
+    engine/dataMovement.go.
+
+    The returned reader is tied to the async-pull poll loop only up to the
+    point the result starts streaming; once the reader is handed back the only
+    governance on the stream is the caller's context.
 
 func (c *Client) OperationPush(ctx context.Context, path string, file FormFile) (string, error)
     OperationPush sends a file to the /operation/push endpoint along with a
@@ -258,6 +261,31 @@ func (c *Client) WithConnectionID(id uint) *Client
     Mutates and returns the same pointer; Client is a plain struct so the caller
     owns its sharing story. Passing 0 clears the connection context.
 
+func (c *Client) WithFallbackAsyncPullJobID(jobID string) *Client
+    WithFallbackAsyncPullJobID seeds the client with a known async pull job ID.
+    Used when /operation/pull returns 409 without a job_id so Core can still
+    attempt targeted cancellation.
+
+    Currently only called from tests — production code relies on the in-pull
+    rememberAsyncPullJobID/clearRememberedAsyncPullJobID pair to populate
+    the cache during a live pull. Exposed as a hook so callers running
+    multiple pulls against one long-lived Client can pre-seed the cache
+    from an out-of-band source (e.g., a durable queue); in the typical
+    one-pull-per-client engine flow the cache is either populated mid-pull or
+    not used at all.
+
+func (c *Client) WithLogger(logger *slog.Logger) *Client
+    WithLogger returns the receiver after attaching a slog.Logger for async-pull
+    progress-event forwarding and best-effort cancel diagnostics. Mutates and
+    returns the same pointer for fluent call sites:
+
+        client := connectorsclient.NewClient(url, tok, "en").
+        	WithConnectionID(conn.ID).
+        	WithLogger(c.Logger)
+
+    Passing nil clears the logger and silences the pull loop's Debug output —
+    matches the default zero-value behaviour.
+
 type ConnectorInfo struct {
 	Name             string                            `json:"name"              example:"My Connector"`
 	Description      string                            `json:"description"       example:"My Connector Description"`
@@ -305,23 +333,6 @@ type Operation struct {
 	ConnectorRegistrationID uint              `json:"connectorRegistrationID" example:"1"`
 }
     Operation represents a record of an initiated operation tied to a connector.
-
-type OperationLog struct {
-	CreatedAt string         `json:"created_at"`
-	Type      string         `json:"type"`
-	Message   string         `json:"message"`
-	Metadata  map[string]any `json:"metadata"`
-}
-    OperationLog represents a record of a log tied to an operation.
-
-type OperationStatus struct {
-	OperationID   uint              `json:"operation_id"`
-	Details       map[string]string `json:"details"`
-	Settings      map[string]string `json:"settings"`
-	Subscriptions []Subscription    `json:"subscriptions"`
-	Logs          []OperationLog    `json:"logs"`
-}
-    OperationStatus represents the response for an operation status check.
 
 type PulledFile struct {
 	// Filename is the name extracted from the Content-Disposition header.

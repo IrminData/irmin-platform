@@ -131,12 +131,11 @@ func (o *Orchestrator) applyPatchesToConnection(
 	logs = append(logs, fmt.Sprintf("Applying patches to connection '%s'", connection.Name))
 
 	// Initialize connector operation
-	_, opClient, _, cancel, err := o.dataEngine.InitializeConnectorOperation(ctx, connection)
+	opClient, err := o.dataEngine.InitializeConnectorOperation(ctx, connection)
 	if err != nil {
 		logs = append(logs, fmt.Sprintf("Failed to initialize connector: %v", err))
 		return logs, fmt.Errorf("failed to initialize connector: %w", err)
 	}
-	defer cancel()
 
 	// Serialize patches to JSON
 	patchJSON, err := json.Marshal(patches)

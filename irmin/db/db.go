@@ -387,26 +387,22 @@ func (d *Database) RunRawQuery(sqlQuery string, args ...any) error {
 
 // EnsureNotificationTrigger ensures that the workflow run notification trigger exists in the database.
 func (d *Database) EnsureNotificationTrigger(ctx context.Context) error {
-	// Check if the trigger already exists
-	var exists bool
-	scanErr := d.WithContext(ctx).Raw(`
-			SELECT EXISTS (
-			SELECT 1 FROM pg_trigger 
-			WHERE tgname = 'workflow_run_notify'
-		)
-		`).Scan(&exists).Error
-	if scanErr != nil {
-		return scanErr
-	}
-
-	if exists {
-		return nil
-	}
-
-	// Apply the trigger if it doesn't exist
+	// Recreate trigger/function idempotently to ensure the listener wiring
+	// remains correct even if another table has a trigger with the same name.
 	return d.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Create the notification function
-		if createFunctionErr := tx.Exec(`
+		for _, statement := range ensureNotificationTriggerStatements() {
+			if err := tx.Exec(statement).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func ensureNotificationTriggerStatements() []string {
+	return []string{
+		`
 			CREATE OR REPLACE FUNCTION notify_workflow_run_status()
 			RETURNS trigger AS $$
 			BEGIN
@@ -422,20 +418,20 @@ func (d *Database) EnsureNotificationTrigger(ctx context.Context) error {
 				RETURN NEW;
 			END;
 			$$ LANGUAGE plpgsql;
-		`).Error; createFunctionErr != nil {
-			return createFunctionErr
-		}
-
-		// Create the trigger
-		if createTriggerErr := tx.Exec(`
+		`,
+		`
+			DROP TRIGGER IF EXISTS workflow_run_notify ON workflow_runs;
+		`,
+		`
 			CREATE TRIGGER workflow_run_notify
 				AFTER INSERT OR UPDATE OF status ON workflow_runs
 				FOR EACH ROW
 				EXECUTE FUNCTION notify_workflow_run_status();
-		`).Error; createTriggerErr != nil {
-			return createTriggerErr
-		}
+		`,
+	}
+}
 
-		return nil
-	})
+// EnsureNotificationTriggerStatementsForTest exposes trigger DDL for package-external tests.
+func EnsureNotificationTriggerStatementsForTest() []string {
+	return ensureNotificationTriggerStatements()
 }

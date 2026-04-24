@@ -56,59 +56,45 @@ func (c *Client) validateConnectionCapability(
 	}
 }
 
-// InitializeConnectorOperation sets up a connector operation and returns a system connector client,
-// an operation client, along with a cancel function to clean up when done.
+// InitializeConnectorOperation sets up a connector operation and returns an operation client.
 // It returns an error if initialization fails.
 // If tx is provided, it will be used instead of creating a new transaction.
+//
+// Note: the legacy system-token cancel-on-cleanup has been removed. Async
+// pull now manages its own job-level cancellation via the SDK's
+// CancelOperationJob wrapper (see connectorsclient.OperationPull /
+// OperationPullStream). Non-pull operations (push/patch/schema) are
+// synchronous on the connector side; no explicit cancel call is needed.
 func (c *Client) InitializeConnectorOperation(
 	ctx context.Context,
 	connection *db.Connection,
 	tx ...*gorm.DB,
-) (*connectorsclient.Client, *connectorsclient.Client, *uint, func(), error) {
+) (*connectorsclient.Client, error) {
 	// Note: No locking needed here - workflow execution is already locked,
 	// and each workflow run creates its own independent connector operation
 	// Also no transaction needed - connector initialization is just HTTP calls
 
 	// Process the connector initialization directly (no transaction needed)
-	systemClient, opClient, operationID, cancelFunc, processErr := c.initializeConnectorOperationInternal(
-		ctx,
-		connection,
-	)
-	if processErr != nil {
-		return nil, nil, nil, nil, processErr
-	}
-
-	return systemClient, opClient, operationID, cancelFunc, nil
+	return c.initializeConnectorOperationInternal(ctx, connection)
 }
 
 // initializeConnectorOperationInternal contains the core connector initialization logic, separated for clarity.
 func (c *Client) initializeConnectorOperationInternal(
 	ctx context.Context,
 	connection *db.Connection,
-) (*connectorsclient.Client, *connectorsclient.Client, *uint, func(), error) {
+) (*connectorsclient.Client, error) {
 	// Create base connector client (don't store on shared struct to avoid race conditions).
 	systemClient := connectorsclient.NewClient(
 		connection.Connector.APIBaseURL,
 		connection.Connector.SystemToken,
-		c.Locale).WithConnectionID(connection.ID)
+		c.Locale).
+		WithConnectionID(connection.ID).
+		WithLogger(c.Logger)
 
 	// Initialize a new operation.
 	op, err := systemClient.InitOperation(ctx, connection.Details, connection.Settings)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to initialize operation: %w", err)
-	}
-
-	// Define cancel function with error logging.
-	// Use a fresh context for cleanup to ensure it succeeds even if the original context is cancelled.
-	// Capture systemClient in the closure to avoid race conditions.
-	cancel := func() {
-		// Create background context for cleanup
-		cleanupCtx := context.Background()
-
-		// Cancel the operation
-		if cancelOperationErr := systemClient.CancelOperation(cleanupCtx, op.ID); cancelOperationErr != nil {
-			c.Logger.ErrorContext(cleanupCtx, "failed to cancel operation", "error", cancelOperationErr)
-		}
+		return nil, fmt.Errorf("failed to initialize operation: %w", err)
 	}
 
 	// Create operation-specific client (always in English for schema retrieval/actions).
@@ -116,9 +102,10 @@ func (c *Client) initializeConnectorOperationInternal(
 		connection.Connector.APIBaseURL,
 		op.Token,
 		"en",
-	).WithConnectionID(connection.ID)
-
-	return systemClient, opClient, &op.ID, cancel, nil
+	).
+		WithConnectionID(connection.ID).
+		WithLogger(c.Logger)
+	return opClient, nil
 }
 
 // DataMovementSchema retrieves the schema for a specific method from the connector.
@@ -129,13 +116,11 @@ func (c *Client) DataMovementSchema(
 	connection *db.Connection,
 	method, path string,
 	tx ...*gorm.DB,
-) (*irminmodels.ObjectSchema, []connectorsclient.OperationLog, error) {
-	systemClient, opClient, operationID, cancel, err := c.InitializeConnectorOperation(ctx, connection, tx...)
+) (*irminmodels.ObjectSchema, error) {
+	opClient, err := c.InitializeConnectorOperation(ctx, connection, tx...)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	// Ensure operation is cancelled when done.
-	defer cancel()
 
 	// If empty method, use "pull"
 	if method == "" {
@@ -154,33 +139,27 @@ func (c *Client) DataMovementSchema(
 	switch method {
 	case string(irminmodels.ConnectorCapabilityPull):
 		if validateCapabilityErr := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPull); validateCapabilityErr != nil {
-			return nil, nil, validateCapabilityErr
+			return nil, validateCapabilityErr
 		}
 	case string(irminmodels.ConnectorCapabilityPush):
 		if validateCapabilityErr := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPush); validateCapabilityErr != nil {
-			return nil, nil, validateCapabilityErr
+			return nil, validateCapabilityErr
 		}
 	case string(irminmodels.ConnectorCapabilityApplyPatch):
 		if validateCapabilityErr := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityApplyPatch); validateCapabilityErr != nil {
-			return nil, nil, validateCapabilityErr
+			return nil, validateCapabilityErr
 		}
 	default:
-		return nil, nil, fmt.Errorf("invalid method: %s", method)
+		return nil, fmt.Errorf("invalid method: %s", method)
 	}
 
 	// Retrieve method schema.
 	schema, err := opClient.GetSchema(ctx, method, path)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get schema for method %q: %w", method, err)
+		return nil, fmt.Errorf("failed to get schema for method %q: %w", method, err)
 	}
 
-	// Collect logs for the operation
-	operationStatus, getOperationStatusErr := systemClient.GetOperationStatus(ctx, *operationID)
-	if getOperationStatusErr != nil {
-		return nil, nil, fmt.Errorf("failed to get operation status: %w", getOperationStatusErr)
-	}
-
-	return schema, operationStatus.Logs, nil
+	return schema, nil
 }
 
 // processFieldMappings applies field mappings to files and merges results.
@@ -254,7 +233,7 @@ func (c *Client) DataImport(
 	branch string,
 	repositoryPath string,
 	fieldMappings []irminmodels.FieldMapping,
-) ([]lakefs.ObjectMetadata, []connectorsclient.OperationLog, []error) {
+) ([]lakefs.ObjectMetadata, []error) {
 	// Note: No locking needed here - workflow execution is already locked per run,
 	// and each workflow run creates its own independent connector operation.
 	return c.dataImportInternal(
@@ -279,40 +258,40 @@ func (c *Client) dataImportInternal(
 	branch string,
 	repositoryPath string,
 	fieldMappings []irminmodels.FieldMapping,
-) ([]lakefs.ObjectMetadata, []connectorsclient.OperationLog, []error) {
+) ([]lakefs.ObjectMetadata, []error) {
 	// When no field mappings are needed, use the streaming path to avoid loading
 	// all files into memory. Files are streamed from the connector to a temp file,
 	// extracted, and uploaded to LakeFS one at a time.
 	if len(fieldMappings) == 0 {
 		lakeFSRepo := utils.ConstructLakeFSRepositoryName(workspace, repository)
-		metadata, operationLogs, streamErr := c.PullFilesFromConnectorStreaming(
+		metadata, streamErr := c.PullFilesFromConnectorStreaming(
 			ctx, connection, connectionPaths, lakeFSRepo, branch, repositoryPath,
 		)
 		if streamErr != nil {
-			return nil, operationLogs, []error{streamErr}
+			return nil, []error{streamErr}
 		}
-		return metadata, operationLogs, nil
+		return metadata, nil
 	}
 
 	// With field mappings, files must be loaded into memory for DuckDB transforms.
-	allFiles, operationLogs, err := c.PullFilesFromConnector(ctx, connection, connectionPaths)
+	allFiles, err := c.PullFilesFromConnector(ctx, connection, connectionPaths)
 	if err != nil {
-		return nil, operationLogs, []error{err}
+		return nil, []error{err}
 	}
 
 	// Process field mappings (or return files as-is if no mappings)
 	processedFiles, processingErrors := c.processFieldMappings(ctx, allFiles, fieldMappings)
 	if len(processingErrors) > 0 {
-		return nil, operationLogs, processingErrors
+		return nil, processingErrors
 	}
 
 	// Upload the processed files
 	uploadedFiles, uploadErrors := c.uploadFiles(processedFiles, workspace, repository, branch, repositoryPath)
 	if len(uploadErrors) > 0 {
-		return nil, operationLogs, uploadErrors
+		return nil, uploadErrors
 	}
 
-	return uploadedFiles, operationLogs, nil
+	return uploadedFiles, nil
 }
 
 // uploadFiles uploads files to lakeFS concurrently.
@@ -442,18 +421,17 @@ func (c *Client) PullFilesFromConnector(
 	ctx context.Context,
 	connection *db.Connection,
 	connectionPaths []string,
-) (map[string][]byte, []connectorsclient.OperationLog, error) {
+) (map[string][]byte, error) {
 	// Validate connector capability
 	if err := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPull); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// Initialize connector operation.
-	systemClient, opClient, operationID, cancel, err := c.InitializeConnectorOperation(ctx, connection)
+	opClient, err := c.InitializeConnectorOperation(ctx, connection)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to initialize connector operation: %w", err)
+		return nil, fmt.Errorf("failed to initialize connector operation: %w", err)
 	}
-	defer cancel()
 
 	// Pull the matching files from the connector.
 	pulled := make([]connectorsclient.PulledFile, 0)
@@ -463,7 +441,7 @@ func (c *Client) PullFilesFromConnector(
 	if len(connectionPaths) == 0 {
 		pulledFiles, pullErr := opClient.OperationPull(ctx, "")
 		if pullErr != nil {
-			return nil, nil, fmt.Errorf("failed to pull all files: %w", pullErr)
+			return nil, fmt.Errorf("failed to pull all files: %w", pullErr)
 		}
 		pulled = append(pulled, pulledFiles...)
 	} else {
@@ -471,7 +449,7 @@ func (c *Client) PullFilesFromConnector(
 		for _, connectionPath := range connectionPaths {
 			pulledFiles, pullErr := opClient.OperationPull(ctx, connectionPath)
 			if pullErr != nil {
-				return nil, nil, fmt.Errorf("failed to pull files: %w", pullErr)
+				return nil, fmt.Errorf("failed to pull files: %w", pullErr)
 			}
 			pulled = append(pulled, pulledFiles...)
 		}
@@ -487,7 +465,7 @@ func (c *Client) PullFilesFromConnector(
 		// Unzip the file
 		unzipped, unzipFilesErr := irminutils.UnzipFiles(file.Content)
 		if unzipFilesErr != nil {
-			return nil, nil, fmt.Errorf("failed to unzip file: %w", unzipFilesErr)
+			return nil, fmt.Errorf("failed to unzip file: %w", unzipFilesErr)
 		}
 
 		// Track accumulated size and fail early before copying into the map
@@ -495,7 +473,7 @@ func (c *Client) PullFilesFromConnector(
 			totalSize += int64(len(content))
 		}
 		if totalSize > maxBytes {
-			return nil, nil, fmt.Errorf(
+			return nil, fmt.Errorf(
 				"pulled data exceeds in-memory limit (%d MB);"+
 					" consider removing field mappings to enable streaming import",
 				maxMB,
@@ -505,13 +483,7 @@ func (c *Client) PullFilesFromConnector(
 		maps.Copy(allFiles, unzipped)
 	}
 
-	// Collect logs for the operation
-	operationStatus, getOperationStatusErr := systemClient.GetOperationStatus(ctx, *operationID)
-	if getOperationStatusErr != nil {
-		return nil, nil, fmt.Errorf("failed to get operation status: %w", getOperationStatusErr)
-	}
-
-	return allFiles, operationStatus.Logs, nil
+	return allFiles, nil
 }
 
 // PullFilesFromConnectorStreaming pulls files from a connector and uploads them directly to LakeFS
@@ -523,16 +495,15 @@ func (c *Client) PullFilesFromConnectorStreaming(
 	connectionPaths []string,
 	lakeFSRepo, branch string,
 	pathPrefix string,
-) ([]lakefs.ObjectMetadata, []connectorsclient.OperationLog, error) {
+) ([]lakefs.ObjectMetadata, error) {
 	if err := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPull); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	systemClient, opClient, operationID, cancel, err := c.InitializeConnectorOperation(ctx, connection)
+	opClient, err := c.InitializeConnectorOperation(ctx, connection)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to initialize connector operation: %w", err)
+		return nil, fmt.Errorf("failed to initialize connector operation: %w", err)
 	}
-	defer cancel()
 
 	var uploaded []lakefs.ObjectMetadata
 
@@ -551,7 +522,7 @@ func (c *Client) PullFilesFromConnectorStreaming(
 			ctx, opClient, connectionPath, lakeFSRepo, branch, pathPrefix, hasMultipleItems,
 		)
 		if pullErr != nil {
-			return nil, nil, pullErr
+			return nil, pullErr
 		}
 		uploaded = append(uploaded, pulled...)
 		// Once we've uploaded any files, subsequent uploads must use multi-file
@@ -561,13 +532,7 @@ func (c *Client) PullFilesFromConnectorStreaming(
 		}
 	}
 
-	// Collect logs
-	operationStatus, getStatusErr := systemClient.GetOperationStatus(ctx, *operationID)
-	if getStatusErr != nil {
-		return nil, nil, fmt.Errorf("failed to get operation status: %w", getStatusErr)
-	}
-
-	return uploaded, operationStatus.Logs, nil
+	return uploaded, nil
 }
 
 // pullAndExtractToLakeFS streams a single pull from the connector to a temp file,
@@ -855,10 +820,10 @@ func (c *Client) DataExport(
 	branch string,
 	requestedRepositoryPaths []string,
 	fieldMappings []irminmodels.FieldMapping,
-) ([]string, int64, []connectorsclient.OperationLog, []error) {
+) ([]string, int64, []error) {
 	// Note: No locking needed here - workflow execution is already locked per run,
 	// and each workflow run creates its own independent connector operation.
-	result, finalFiles, operationLogs, processErr := c.dataExportInternal(
+	result, finalFiles, processErr := c.dataExportInternal(
 		ctx,
 		connection,
 		connectionPath,
@@ -872,7 +837,7 @@ func (c *Client) DataExport(
 	if len(processErr) == 0 {
 		totalBytes = SumFileMapBytes(finalFiles)
 	}
-	return result, totalBytes, operationLogs, processErr
+	return result, totalBytes, processErr
 }
 
 // dataExportInternal contains the core data export logic, separated for clarity.
@@ -886,28 +851,28 @@ func (c *Client) dataExportInternal(
 	requestedRepositoryPaths []string,
 	fieldMappings []irminmodels.FieldMapping,
 	tx ...*gorm.DB,
-) ([]string, map[string][]byte, []connectorsclient.OperationLog, []error) {
+) ([]string, map[string][]byte, []error) {
 	repoName := utils.ConstructLakeFSRepositoryName(workspaceSlug, repositorySlug)
 
 	// Fetch all objects and their contents
 	objects, files, repositoryPaths, fetchErrors := c.fetchObjectsFromPaths(repoName, branch, requestedRepositoryPaths)
 	if len(fetchErrors) > 0 {
-		return repositoryPaths, nil, nil, fetchErrors
+		return repositoryPaths, nil, fetchErrors
 	}
 
 	// Process field mappings (or return files as-is if no mappings)
 	finalFiles, processingErrors := c.processFieldMappings(ctx, files, fieldMappings)
 	if len(processingErrors) > 0 {
-		return repositoryPaths, nil, nil, processingErrors
+		return repositoryPaths, nil, processingErrors
 	}
 
 	// Push the files to the connection path
-	_, operationLogs, pushErr := c.PushFilesToConnector(ctx, connection, connectionPath, objects, finalFiles, tx...)
+	_, pushErr := c.PushFilesToConnector(ctx, connection, connectionPath, objects, finalFiles, tx...)
 	if pushErr != nil {
-		return repositoryPaths, nil, operationLogs, []error{pushErr}
+		return repositoryPaths, nil, []error{pushErr}
 	}
 
-	return repositoryPaths, finalFiles, operationLogs, nil
+	return repositoryPaths, finalFiles, nil
 }
 
 // SumFileMapBytes returns the total byte count across all values in a file map.
@@ -932,14 +897,14 @@ func (c *Client) PushFilesToConnector(
 	objects []*irminmodels.Object,
 	files map[string][]byte,
 	tx ...*gorm.DB,
-) ([]string, []connectorsclient.OperationLog, error) {
+) ([]string, error) {
 	// Validate connector capability
 	if err := c.validateConnectionCapability(connection, irminmodels.ConnectorCapabilityPush); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// Validate files against push schema if available
-	targetSchema, _, schemaErr := c.DataMovementSchema(ctx, connection, "push", connectionPath, tx...)
+	targetSchema, schemaErr := c.DataMovementSchema(ctx, connection, "push", connectionPath, tx...)
 	if schemaErr == nil && targetSchema != nil {
 		// Create validation config with DuckDB support for non-JSON files (CSV, Parquet, etc.)
 		validationConfig := &enginevalidation.Config{
@@ -949,7 +914,7 @@ func (c *Client) PushFilesToConnector(
 		}
 		validationResult := enginevalidation.ValidateFiles(ctx, files, targetSchema, validationConfig)
 		if !validationResult.Valid {
-			return nil, nil, &ConnectorSchemaValidationError{
+			return nil, &ConnectorSchemaValidationError{
 				Result:         validationResult,
 				OperationType:  "push",
 				ConnectionName: connection.Name,
@@ -959,14 +924,10 @@ func (c *Client) PushFilesToConnector(
 	}
 
 	// Initialize connector operation.
-	systemClient, opClient, operationID, cancel, initializeConnectorOperationErr := c.InitializeConnectorOperation(
-		ctx,
-		connection,
-		tx...)
+	opClient, initializeConnectorOperationErr := c.InitializeConnectorOperation(ctx, connection, tx...)
 	if initializeConnectorOperationErr != nil {
-		return nil, nil, fmt.Errorf("failed to initialize connector operation: %w", initializeConnectorOperationErr)
+		return nil, fmt.Errorf("failed to initialize connector operation: %w", initializeConnectorOperationErr)
 	}
-	defer cancel()
 
 	// Build the connection path to push the zip to.
 	objName := ""
@@ -978,13 +939,7 @@ func (c *Client) PushFilesToConnector(
 	// Push files: use presigned URL for large payloads, direct upload for small ones.
 	pushErr := c.pushFilesWithSizeRouting(ctx, opClient, connPath, files)
 	if pushErr != nil {
-		return nil, nil, fmt.Errorf("failed to push files: %w", pushErr)
-	}
-
-	// Collect logs for the operation
-	operationStatus, getOperationStatusErr := systemClient.GetOperationStatus(ctx, *operationID)
-	if getOperationStatusErr != nil {
-		return nil, nil, fmt.Errorf("failed to get operation status: %w", getOperationStatusErr)
+		return nil, fmt.Errorf("failed to push files: %w", pushErr)
 	}
 
 	// Return the files that were pushed.
@@ -992,7 +947,7 @@ func (c *Client) PushFilesToConnector(
 	for pushedPath := range files {
 		pushedPaths = append(pushedPaths, pushedPath)
 	}
-	return pushedPaths, operationStatus.Logs, nil
+	return pushedPaths, nil
 }
 
 // pushFilesWithSizeRouting zips and pushes files to a connector, choosing between

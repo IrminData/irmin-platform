@@ -39,21 +39,21 @@ func TestGetConnectionSchema(t *testing.T) {
 	schemaCacheManager := lib.NewSchemaCacheManager(ts.Env, logger, ts.DB)
 
 	// Get the pull schema
-	schemaPull, _, pullSchemaErr := schemaCacheManager.GetConnectionSchema(ctx, &connection, "pull", "", "en", true)
+	schemaPull, pullSchemaErr := schemaCacheManager.GetConnectionSchema(ctx, &connection, "pull", "", "en", true)
 	if pullSchemaErr != nil {
 		t.Fatalf("Failed to get connection pull schema: %v", pullSchemaErr)
 	}
 	assert.NotNil(t, schemaPull)
 
 	// Get the push schema
-	schemaPush, _, pushSchemaErr := schemaCacheManager.GetConnectionSchema(ctx, &connection, "push", "", "en", true)
+	schemaPush, pushSchemaErr := schemaCacheManager.GetConnectionSchema(ctx, &connection, "push", "", "en", true)
 	if pushSchemaErr != nil {
 		t.Fatalf("Failed to get connection push schema: %v", pushSchemaErr)
 	}
 	assert.NotNil(t, schemaPush)
 
 	// Get the pull schema not ignoring the cache
-	schemaPullCached, _, pullCachedSchemaErr := schemaCacheManager.GetConnectionSchema(
+	schemaPullCached, pullCachedSchemaErr := schemaCacheManager.GetConnectionSchema(
 		ctx,
 		&connection,
 		"pull",
@@ -68,7 +68,7 @@ func TestGetConnectionSchema(t *testing.T) {
 	assert.DeepEqual(t, schemaPull, schemaPullCached)
 
 	// Get the push schema not ignoring the cache
-	schemaPushCached, _, pushCachedSchemaErr := schemaCacheManager.GetConnectionSchema(
+	schemaPushCached, pushCachedSchemaErr := schemaCacheManager.GetConnectionSchema(
 		ctx,
 		&connection,
 		"push",

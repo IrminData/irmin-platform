@@ -3,7 +3,7 @@ module irmin-api
 go 1.25.4
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20260418163941-4b3d6024ab1c
+	github.com/IrminData/irmin-sdk-go v0.0.0-20260424102423-b325ef87b8df
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.99.1
 	github.com/clerk/clerk-sdk-go/v2 v2.5.1
 	github.com/daytonaio/daytona/libs/sdk-go v0.167.0
@@ -28,6 +28,7 @@ require (
 	github.com/zeebo/assert v1.3.1
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.6.0
+	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.1
 )
 
@@ -92,6 +93,7 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.21 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.26 // indirect
 	github.com/richardlehane/mscfb v1.0.6 // indirect

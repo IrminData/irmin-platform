@@ -36,6 +36,9 @@ func (o *Orchestrator) runMaintenanceLoop(ctx context.Context) {
 // overall tick finishes quickly on a cold database.
 func (o *Orchestrator) runMaintenanceTick(ctx context.Context) {
 	o.sweepExpiredOAuthSessions(ctx)
+	if _, err := o.cleanupStalePendingWorkflowRuns(ctx, time.Now()); err != nil {
+		o.logger.ErrorContext(ctx, "stale pending cleanup sweep failed", "error", err)
+	}
 }
 
 // sweepExpiredOAuthSessions drops OAuth session rows whose TTL has

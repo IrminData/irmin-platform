@@ -30,6 +30,29 @@ const (
 	// GracefulShutdownTimeout is the maximum time to wait for active workflows during shutdown.
 	GracefulShutdownTimeout = 30 * time.Second
 )
+const (
+	DispatchEventTypeWorkflowRun DispatchEventType = "workflow_run"
+)
+const (
+
+	// StalePendingWorkflowRunAgeThreshold is the age at which pending runs are
+	// treated as abandoned and auto-cancelled by maintenance.
+	StalePendingWorkflowRunAgeThreshold = stalePendingWorkflowRunCancelAge
+)
+
+FUNCTIONS
+
+func ApplyStalePendingUpdates(gormDB *gorm.DB, now, cutoff time.Time, logPrefix string) (int64, error)
+    ApplyStalePendingUpdates marks pending runs older than cutoff as cancelled.
+
+func ProcessPendingWorkflowRunIDs(
+	ctx context.Context,
+	pendingIDs []uint,
+	processFn func(context.Context, *db.RunStatusNotificationPayload) error,
+) error
+    ProcessPendingWorkflowRunIDs feeds pending run IDs through a provided
+    processor callback and joins any per-run failures into one error.
+
 
 TYPES
 
@@ -89,9 +112,6 @@ type DispatchEvent struct {
 type DispatchEventType string
     DispatchEventType represents the type of dispatch event.
 
-const (
-	DispatchEventTypeWorkflowRun DispatchEventType = "workflow_run"
-)
 type ExportObjectLog struct {
 	BaseLogEntry
 	RepositorySlug string `json:"repository_slug"`

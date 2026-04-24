@@ -20,6 +20,17 @@ type DispatchEventType string
 
 const (
 	DispatchEventTypeWorkflowRun DispatchEventType = "workflow_run"
+	// pendingWorkflowReconcileInterval is a safety-net scan cadence for
+	// pending runs in case LISTEN/NOTIFY messages are dropped or the listener
+	// temporarily disconnects.
+	pendingWorkflowReconcileInterval = 15 * time.Second
+	// pendingWorkflowReconcileMinAge skips very fresh pending runs that are
+	// likely to be picked up by LISTEN/NOTIFY naturally, reducing redundant
+	// claim attempts in the periodic reconciliation sweep.
+	pendingWorkflowReconcileMinAge = 30 * time.Second
+	// pendingWorkflowReconcileBatchSize limits each reconciliation sweep to
+	// bound DB work while still draining stuck pending runs over time.
+	pendingWorkflowReconcileBatchSize = 100
 )
 
 // DispatchEvent represents an event dispatched by the orchestrator to the API.
@@ -229,6 +240,14 @@ func (o *Orchestrator) processNotifications(
 	notificationChan <-chan string,
 	listenerErrChan <-chan error,
 ) error {
+	// Safety net: process pending runs periodically in case any notification
+	// was missed while the dispatcher was unavailable.
+	if err := o.reconcilePendingWorkflowRuns(ctx); err != nil {
+		o.logger.ErrorContext(ctx, "initial pending run reconciliation failed", "error", err)
+	}
+	reconcileTicker := time.NewTicker(pendingWorkflowReconcileInterval)
+	defer reconcileTicker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -240,39 +259,10 @@ func (o *Orchestrator) processNotifications(
 			return fmt.Errorf("notification listener failed: %w", err)
 
 		case payload := <-notificationChan:
-			o.logger.InfoContext(ctx, "received notification", "payload", payload)
-
-			notification, err := o.parseNotification(payload)
-			if err != nil {
-				o.logger.ErrorContext(ctx, "failed to parse notification payload",
-					"error", err,
-					"payload", payload)
-				continue
-			}
-
-			// Handle different status changes
-			switch notification.Status {
-			case string(irminmodels.WorkflowStatusPending):
-				// New workflow run to dispatch
-				if processWorkflowRunErr := o.processWorkflowRun(ctx, notification); processWorkflowRunErr != nil {
-					o.logger.ErrorContext(ctx, "failed to process workflow run",
-						"error", processWorkflowRunErr,
-						"run_id", notification.ID)
-				}
-
-			case string(irminmodels.WorkflowStatusCancelled):
-				// Workflow run cancelled - need to stop execution
-				o.logger.InfoContext(ctx, "workflow run cancelled, attempting to cancel execution",
-					"run_id", notification.ID)
-
-				cancelled := o.CancelWorkflowRun(notification.ID)
-				if cancelled {
-					o.logger.InfoContext(ctx, "workflow execution cancelled successfully",
-						"run_id", notification.ID)
-				} else {
-					o.logger.InfoContext(ctx, "workflow not running or already finished",
-						"run_id", notification.ID)
-				}
+			o.handleNotificationPayload(ctx, payload)
+		case <-reconcileTicker.C:
+			if err := o.reconcilePendingWorkflowRuns(ctx); err != nil {
+				o.logger.ErrorContext(ctx, "pending run reconciliation failed", "error", err)
 			}
 		}
 	}
@@ -285,6 +275,42 @@ func (o *Orchestrator) parseNotification(payload string) (*db.RunStatusNotificat
 		return nil, fmt.Errorf("failed to parse notification: %w", err)
 	}
 	return &notification, nil
+}
+
+func (o *Orchestrator) handleNotificationPayload(ctx context.Context, payload string) {
+	o.logger.InfoContext(ctx, "received notification", "payload", payload)
+
+	notification, err := o.parseNotification(payload)
+	if err != nil {
+		o.logger.ErrorContext(ctx, "failed to parse notification payload", "error", err, "payload", payload)
+		return
+	}
+
+	switch notification.Status {
+	case string(irminmodels.WorkflowStatusPending):
+		// New workflow run to dispatch
+		if processWorkflowRunErr := o.processWorkflowRun(ctx, notification); processWorkflowRunErr != nil {
+			o.logger.ErrorContext(
+				ctx,
+				"failed to process workflow run",
+				"error",
+				processWorkflowRunErr,
+				"run_id",
+				notification.ID,
+			)
+		}
+
+	case string(irminmodels.WorkflowStatusCancelled):
+		// Workflow run cancelled - need to stop execution
+		o.logger.InfoContext(ctx, "workflow run cancelled, attempting to cancel execution", "run_id", notification.ID)
+
+		cancelled := o.CancelWorkflowRun(notification.ID)
+		if cancelled {
+			o.logger.InfoContext(ctx, "workflow execution cancelled successfully", "run_id", notification.ID)
+			return
+		}
+		o.logger.InfoContext(ctx, "workflow not running or already finished", "run_id", notification.ID)
+	}
 }
 
 // processWorkflowRun processes a single workflow run.
@@ -384,4 +410,52 @@ func (o *Orchestrator) dispatchRun(ctx context.Context, run *db.WorkflowRun) err
 	o.logger.InfoContext(ctx, "dispatched run", "run_id", run.ID)
 
 	return nil
+}
+
+// reconcilePendingWorkflowRuns scans and processes a bounded set of pending
+// workflow runs so dispatch can recover from transient LISTEN/NOTIFY gaps.
+func (o *Orchestrator) reconcilePendingWorkflowRuns(ctx context.Context) error {
+	cutoff := time.Now().Add(-pendingWorkflowReconcileMinAge)
+	var pendingIDs []uint
+	if err := o.db.WithContext(ctx).
+		Model(&db.WorkflowRun{}).
+		Where(
+			"status = ? AND deleted_at IS NULL AND created_at <= ?",
+			irminmodels.WorkflowStatusPending,
+			cutoff,
+		).
+		Order("id ASC").
+		Limit(pendingWorkflowReconcileBatchSize).
+		Pluck("id", &pendingIDs).Error; err != nil {
+		return fmt.Errorf("query pending workflow runs: %w", err)
+	}
+	if len(pendingIDs) == 0 {
+		return nil
+	}
+
+	return ProcessPendingWorkflowRunIDs(ctx, pendingIDs, o.processWorkflowRun)
+}
+
+// ProcessPendingWorkflowRunIDs feeds pending run IDs through a provided
+// processor callback and joins any per-run failures into one error.
+func ProcessPendingWorkflowRunIDs(
+	ctx context.Context,
+	pendingIDs []uint,
+	processFn func(context.Context, *db.RunStatusNotificationPayload) error,
+) error {
+	if len(pendingIDs) == 0 || processFn == nil {
+		return nil
+	}
+
+	var reconcileErr error
+	for _, runID := range pendingIDs {
+		if err := processFn(ctx, &db.RunStatusNotificationPayload{
+			ID:        runID,
+			Status:    string(irminmodels.WorkflowStatusPending),
+			Operation: "reconcile",
+		}); err != nil {
+			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("run %d: %w", runID, err))
+		}
+	}
+	return reconcileErr
 }

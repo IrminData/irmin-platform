@@ -212,6 +212,10 @@ func ContainsSQLInjectionPattern(input string) bool
 func ContainsSuspiciousPatterns(input string) bool
     ContainsSuspiciousPatterns checks for additional suspicious patterns.
 
+func EnsureNotificationTriggerStatementsForTest() []string
+    EnsureNotificationTriggerStatementsForTest exposes trigger DDL for
+    package-external tests.
+
 func GenerateWebhookToken() (string, error)
     GenerateWebhookToken creates a secure random token for webhook
     authentication.
