@@ -342,7 +342,7 @@ func (c *SftpClient) executeWithRetry(operation string, fn func() error) error {
 			// Surface the upcoming sleep before we take it — a flaky
 			// network mid-transfer looks identical to a hung
 			// operation otherwise.
-			c.emitRetryProgress(operation, attempt-1, delay)
+			c.emitRetryProgress(operation, attempt, delay)
 			time.Sleep(delay)
 			delay = min(
 				time.Duration(float64(delay)*c.retryConfig.BackoffFactor),

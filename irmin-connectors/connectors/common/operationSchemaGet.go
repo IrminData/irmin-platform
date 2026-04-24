@@ -3,7 +3,9 @@ package common
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"irmin-connectors/db"
+	"irmin-connectors/models"
 	"log/slog"
 	"slices"
 	"strings"
@@ -49,44 +51,98 @@ func CapabilitiesToOperationTypes(capabilities []irminmodels.ConnectorCapability
 }
 
 // HandleOperationSchemaGet provides a common HTTP handler for schema operation endpoints.
+//
+// Under the unified Guard API the handler persists an OperationJob
+// row via manager.Begin so concurrent schema requests against the
+// same operation get a structured 409 carrying the blocking
+// job_id. Release is deferred; a provider panic is recovered so
+// the row never sticks at running.
 func HandleOperationSchemaGet(
 	c fiber.Ctx,
 	provider SchemaOperationProvider,
 	logger *slog.Logger,
 	dbInstance *db.Database,
-) error {
+	app *models.ConnectorsApp,
+) (retErr error) {
+	manager, managerOK := app.JobManager.(*JobManager)
+	if !managerOK || manager == nil {
+		return RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.JobErrorReasonInternal,
+			errors.New("job manager not configured"),
+			"",
+		)
+	}
+
 	// Get the operation from the context
 	operation, ok := c.Locals("operation").(*db.Operation)
 	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid operation type in context",
-		})
+		return RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.JobErrorReasonInternal,
+			errors.New("invalid operation type in context"),
+			"",
+		)
 	}
 
-	// Use Level 2 lock to prevent concurrent execution of the same operation
-	locked, err := db.TryLockOperationExecution(dbInstance.DB, operation.ID)
-	if err != nil {
-		logger.Error("failed to acquire operation execution lock", "error", err, "operation_id", operation.ID)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to acquire operation lock",
-		})
+	connectorName := resolveConnectorName(c)
+
+	guard, alreadyErr, beginErr := manager.Begin(BeginOperationJobInput{
+		OperationID:             operation.ID,
+		ConnectorRegistrationID: operation.ConnectorRegistrationID,
+		ConnectorName:           connectorName,
+		Kind:                    "schema",
+	})
+	if alreadyErr != nil {
+		return RespondAlreadyRunning(c, alreadyErr)
 	}
-	if !locked {
-		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-			"error": "Operation is already running",
-		})
+	if beginErr != nil {
+		logger.Error("failed to acquire operation execution lock",
+			"error", beginErr, "operation_id", operation.ID)
+		return RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.JobErrorReasonTransientDB,
+			beginErr,
+			"",
+		)
 	}
 
-	// Ensure lock is released when operation completes
+	outcome := JobOutcome{
+		Status: irminmodels.OperationJobStatusFailed,
+		Error:  "handler exited without setting outcome",
+	}
 	defer func() {
-		if unlockErr := db.UnlockOperationExecution(dbInstance.DB, operation.ID); unlockErr != nil {
-			logger.Error("failed to release operation execution lock", "error", unlockErr, "operation_id", operation.ID)
+		// See operationPush.go's panic recovery for the rationale
+		// on overwriting retErr with a structured 500 rather than
+		// re-panicking into fiber's generic panic middleware.
+		if r := recover(); r != nil {
+			logger.Error("schema handler panic recovered",
+				"error", fmt.Sprintf("%v", r), "operation_id", operation.ID)
+			outcome = JobOutcome{
+				Status: irminmodels.OperationJobStatusFailed,
+				Error:  fmt.Sprintf("handler panic: %v", r),
+			}
+			retErr = RespondJobError(
+				c,
+				fiber.StatusInternalServerError,
+				irminmodels.JobErrorReasonInternal,
+				fmt.Errorf("handler panic: %v", r),
+				guard.JobID(),
+			)
 		}
+		guard.Release(outcome)
 	}()
 
 	// Get the operation type from the URL parameter
 	operationType := c.Params("operation")
 	if operationType == "" {
+		outcome = JobOutcome{
+			Status: irminmodels.OperationJobStatusFailed,
+			Error:  "operation type is required",
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Operation type is required",
 		})
@@ -97,6 +153,10 @@ func HandleOperationSchemaGet(
 	isSupported := slices.Contains(supportedTypes, operationType)
 
 	if !isSupported {
+		outcome = JobOutcome{
+			Status: irminmodels.OperationJobStatusFailed,
+			Error:  "invalid operation type: " + operationType,
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid operation type. Supported types: " + joinStrings(supportedTypes, ", "),
 		})
@@ -105,6 +165,10 @@ func HandleOperationSchemaGet(
 	// Initialize the client
 	client, defaultPath, cleanup, err := provider.InitializeClient(c, logger, operation)
 	if err != nil {
+		outcome = JobOutcome{
+			Status: irminmodels.OperationJobStatusFailed,
+			Error:  "initialize client: " + err.Error(),
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialize client: " + err.Error(),
 		})
@@ -126,6 +190,10 @@ func HandleOperationSchemaGet(
 	// Get the schema from the provider
 	schema, err := provider.GetSchema(c, client, operationType, finalPath)
 	if err != nil {
+		outcome = JobOutcome{
+			Status: irminmodels.OperationJobStatusFailed,
+			Error:  "get schema: " + err.Error(),
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to get schema: " + err.Error(),
 		})
@@ -134,11 +202,16 @@ func HandleOperationSchemaGet(
 	// Write JSON response
 	c.Set("Content-Type", "application/json")
 	if err = json.NewEncoder(c.Response().BodyWriter()).Encode(schema); err != nil {
+		outcome = JobOutcome{
+			Status: irminmodels.OperationJobStatusFailed,
+			Error:  "encode schema: " + err.Error(),
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to encode schema: " + err.Error(),
 		})
 	}
 
+	outcome = JobOutcome{Status: irminmodels.OperationJobStatusComplete}
 	return nil
 }
 

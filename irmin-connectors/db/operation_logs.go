@@ -35,12 +35,3 @@ func (d *Database) CreateOperationLog(operationLog *OperationLog) (*OperationLog
 	}
 	return operationLog, nil
 }
-
-// GetAllLogsForOperation retrieves all OperationLog records for a given operation ID.
-func (d *Database) GetAllLogsForOperation(operationID uint) ([]OperationLog, error) {
-	var logs []OperationLog
-	if err := d.Where(&OperationLog{OperationID: operationID}).Find(&logs).Error; err != nil {
-		return nil, fmt.Errorf("failed to fetch operation logs: %w", err)
-	}
-	return logs, nil
-}

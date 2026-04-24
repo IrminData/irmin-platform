@@ -45,6 +45,38 @@ An operation represents a specific task or workflow involving data transfer:
 
 Operations have defined lifecycles with initialization, execution, and completion phases.
 
+#### Operation Execution Lock and the JobManager Guard
+
+Every execution of a pull / push / patch / schema request flows
+through `common.JobManager.Begin`, which acquires a session-scoped
+Postgres advisory lock on the operation's ID and persists a
+pending `OperationJob` row. The returned `OperationGuard` owns
+that lock for the full operation lifetime; its `Release` method
+writes the terminal status (complete / failed / cancelled) and
+frees the lock on the same pinned PG session.
+
+Key properties connector authors should rely on:
+
+- **Contention surfaces structurally.** A second caller hitting
+  the same operation while the first is in-flight receives a 409
+  `AlreadyRunningBody` carrying the blocking `job_id`, `kind`, and
+  `started_at` — not an opaque error string.
+- **Synchronous release is safe against panics.** The common
+  handlers wrap provider code in a `defer recover()` that
+  releases the guard with `status=failed` before rethrowing, so a
+  buggy provider cannot leave an `OperationJob` stuck at running.
+- **Pool-handle lock helpers are deprecated.** Do not call
+  `db.TryLockOperationExecution` / `db.UnlockOperationExecution`
+  in new code: the unlock can route to a different pool
+  connection than the lock and silently fail to release. Route
+  through `manager.Begin` + `guard.Release` instead.
+- **Stuck rows are janitor-reclaimable.** If a worker process
+  dies before writing the terminal status, the janitor's
+  `StuckThreshold` pass probes the advisory lock and marks the
+  row failed once the holder's session is gone. Heartbeats every
+  30s bump `updated_at` so live-but-silent workers are not false-
+  positive reclaimed.
+
 ### "Everything is a File" Philosophy
 
 Connectors follow the principle that all data should be treated as files:

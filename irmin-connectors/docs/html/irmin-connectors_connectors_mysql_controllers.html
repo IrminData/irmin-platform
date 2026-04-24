@@ -78,9 +78,6 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
     details page" @Failure 500 {object} fiber.Map "Internal server error"
     @Router /mysql/details [get]
 
-func (cs *Controllers) GetConnectorInfo() models.ConnectorDetails
-    GetConnectorInfo implements the OperationStatusProvider interface.
-
 func (cs *Controllers) GetDynamicFields(
 	c fiber.Ctx,
 	key string,
@@ -106,17 +103,6 @@ func (cs *Controllers) Info(c fiber.Ctx) error
     @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing
     authentication" @Failure 500 {object} fiber.Map "Internal server error"
     @Router /mysql/info [get]
-
-func (cs *Controllers) OperationCancel(c fiber.Ctx) error
-    OperationCancel godoc @Summary Cancel MySQL operation @Description Cancel
-    an ongoing MySQL operation using the operation token @Tags mysql @Security
-    SystemTokenAuth @Accept json @Produce json @Param operation_token formData
-    string true "Operation token received from operation/init" @Success 200
-    {object} fiber.Map "Operation cancelled successfully" @Failure 400 {object}
-    fiber.Map "Bad request - invalid operation token" @Failure 401 {object}
-    fiber.Map "Unauthorized - invalid or missing authentication" @Failure 404
-    {object} fiber.Map "Operation not found" @Failure 500 {object} fiber.Map
-    "Internal server error" @Router /mysql/operation/cancel [post]
 
 func (cs *Controllers) OperationInit(c fiber.Ctx) error
     OperationInit godoc @Summary Initialize MySQL operation @Description
@@ -194,18 +180,6 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
     {object} fiber.Map "Operation not found" @Failure 500 {object} fiber.Map
     "Internal server error" @Router /mysql/operation/schema/{operation} [post]
 
-func (cs *Controllers) OperationStatus(c fiber.Ctx) error
-    OperationStatus godoc @Summary Get MySQL operation status @Description
-    Get the current status of a MySQL operation using the operation token
-    @Tags mysql @Security SystemTokenAuth @Accept json @Produce json @Param
-    operation_token formData string true "Operation token received from
-    operation/init" @Success 200 {object} common.OperationStatus "Operation
-    status retrieved successfully" @Failure 400 {object} fiber.Map "Bad request
-    - invalid operation token" @Failure 401 {object} fiber.Map "Unauthorized
-    - invalid or missing authentication" @Failure 404 {object} fiber.Map
-    "Operation not found" @Failure 500 {object} fiber.Map "Internal server
-    error" @Router /mysql/operation/status [post]
-
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
     SubscribeToChanges godoc @Summary Subscribe to MySQL database changes
     @Description Set up real-time monitoring of MySQL database changes using
@@ -278,14 +252,18 @@ type MySQLPullProvider struct {
 }
     MySQLPullProvider implements the PullOperationProvider interface for MySQL.
 
-func (p *MySQLPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error)
+func (p *MySQLPullProvider) GetAllFiles(
+	ctx context.Context, client any, operation *db.Operation,
+) ([]string, [][]byte, error)
     GetAllFiles retrieves all tables as JSON files.
 
-func (p *MySQLPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath string) (string, []byte, error)
+func (p *MySQLPullProvider) GetFileByPath(
+	ctx context.Context, client any, operation *db.Operation, rawPath string,
+) (string, []byte, error)
     GetFileByPath retrieves a specific table as a JSON file.
 
 func (p *MySQLPullProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error)

@@ -22,6 +22,18 @@ type ConnectorInfo struct {
 	ReadMoreURL      string                            `json:"read_more_url"`
 }
 
+// Subscription represents a record of an active subscription to changes in data.
+type Subscription struct {
+	ID                      uint    `json:"ID"`
+	CreatedAt               string  `json:"CreatedAt"`
+	UpdatedAt               string  `json:"UpdatedAt"`
+	DeletedAt               *string `json:"DeletedAt,omitempty"`
+	WebhookURL              string  `json:"webhookUrl"`
+	WebhookAccessToken      string  `json:"webhookAccessToken"`
+	ConnectorRegistrationID uint    `json:"connectorRegistrationID"`
+	OperationID             uint    `json:"operationID"`
+}
+
 // Operation represents a record of an initiated operation tied to a connector.
 type Operation struct {
 	ID                      uint              `json:"ID"`
@@ -33,33 +45,4 @@ type Operation struct {
 	Token                   string            `json:"token"`
 	ConfigHash              string            `json:"configHash"`
 	ConnectorRegistrationID uint              `json:"connectorRegistrationID"`
-}
-
-// OperationLog represents a record of a log tied to an operation.
-type OperationLog struct {
-	CreatedAt string         `json:"created_at"`
-	Type      string         `json:"type"`
-	Message   string         `json:"message"`
-	Metadata  map[string]any `json:"metadata"`
-}
-
-// OperationStatus represents the response for an operation status check.
-type OperationStatus struct {
-	OperationID   uint              `json:"operation_id"`
-	Details       map[string]string `json:"details"`
-	Settings      map[string]string `json:"settings"`
-	Subscriptions []Subscription    `json:"subscriptions"`
-	Logs          []OperationLog    `json:"logs"`
-}
-
-// Subscription represents a record of an active subscription to changes in data.
-type Subscription struct {
-	ID                      uint    `json:"ID"`
-	CreatedAt               string  `json:"CreatedAt"`
-	UpdatedAt               string  `json:"UpdatedAt"`
-	DeletedAt               *string `json:"DeletedAt,omitempty"`
-	WebhookURL              string  `json:"webhookUrl"`
-	WebhookAccessToken      string  `json:"webhookAccessToken"`
-	ConnectorRegistrationID uint    `json:"connectorRegistrationID"`
-	OperationID             uint    `json:"operationID"`
 }

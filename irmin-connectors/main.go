@@ -29,6 +29,7 @@ import (
 	"flag"
 	"fmt"
 	"irmin-connectors/connectors"
+	"irmin-connectors/connectors/common"
 	"irmin-connectors/db"
 	"irmin-connectors/models"
 	sentryutil "irmin-connectors/sentry"
@@ -200,6 +201,9 @@ func setupFiberApp(env *utils.ConnectorsEnv) *fiber.App {
 func setupCache() fiber.Handler {
 	return cache.New(cache.Config{
 		Expiration: CacheExpirationDuration,
+		Next: func(c fiber.Ctx) bool {
+			return shouldBypassAppCache(c.Path())
+		},
 		Methods: []string{
 			http.MethodGet,
 			http.MethodHead,
@@ -224,6 +228,11 @@ func setupCache() fiber.Handler {
 			return c.Path() + queries + c.Get("authorization")
 		},
 	})
+}
+
+func shouldBypassAppCache(path string) bool {
+	return strings.HasPrefix(path, "/operation/status/") ||
+		strings.HasPrefix(path, "/operation/result/")
 }
 
 // setupPublicCORS configures and returns a permissive CORS middleware for public routes.
@@ -300,12 +309,21 @@ func setupConnectorsApp(env *utils.ConnectorsEnv, database *db.Database, app *fi
 	logger := slog.Default()
 	listenerManager := connectors.SetupListenerManager(logger, database)
 
+	// Construct the async operation JobManager and kick off the
+	// janitor goroutine. The janitor is idempotent so launching it
+	// here rather than lazily on the first StartJob gives us a
+	// deterministic startup order: expired jobs from a previous pod
+	// lifetime get reaped on the first tick (~1m after startup).
+	jobManager := common.NewJobManager(database, logger, common.JobManagerConfig{})
+	jobManager.StartJanitor()
+
 	return &models.ConnectorsApp{
 		App:             app,
 		DB:              database,
 		Env:             env,
 		Logger:          logger,
 		ListenerManager: listenerManager,
+		JobManager:      jobManager,
 	}
 }
 
@@ -516,6 +534,13 @@ func main() {
 
 	// Register the API routes
 	connectors.SetupConnectorRoutes(connectorsApp)
+
+	// Register the top-level async-job HTTP endpoints (status /
+	// result / cancel). These live outside the per-connector group
+	// because the SDK client addresses them by job_id alone — the
+	// connector slug is a server-side audit field on the
+	// OperationJob row, not part of the URL.
+	common.RegisterJobHandlers(app, connectorsApp)
 
 	// Create context for startup timeout
 	startupCtx, startupCancel := context.WithTimeout(context.Background(), StartupTimeoutSeconds*time.Second)

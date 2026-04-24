@@ -83,18 +83,6 @@ func (cs *Controllers) Info(c fiber.Ctx) error
     missing authentication" @Failure 500 {object} fiber.Map "Internal server
     error" @Router /firecrawl/info [get]
 
-func (cs *Controllers) OperationCancel(c fiber.Ctx) error
-    OperationCancel godoc @Summary Cancel Firecrawl operation @Description
-    Cancel an ongoing Firecrawl operation using the operation token @Tags
-    firecrawl @Security SystemTokenAuth @Accept json @Produce json @Param
-    operation_token formData string true "Operation token received from
-    operation/init" @Success 200 {object} fiber.Map "Operation cancelled
-    successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
-    operation token" @Failure 401 {object} fiber.Map "Unauthorized - invalid
-    or missing authentication" @Failure 404 {object} fiber.Map "Operation not
-    found" @Failure 500 {object} fiber.Map "Internal server error" @Router
-    /firecrawl/operation/cancel [post]
-
 func (cs *Controllers) OperationInit(c fiber.Ctx) error
     OperationInit godoc @Summary Initialize Firecrawl operation @Description
     Initialize a new Firecrawl operation with connection details and settings,
@@ -160,18 +148,6 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
     fiber.Map "Operation not found" @Failure 500 {object} fiber.Map "Internal
     server error" @Router /firecrawl/operation/schema/{operation} [post]
 
-func (cs *Controllers) OperationStatus(c fiber.Ctx) error
-    OperationStatus godoc @Summary Get Firecrawl operation status @Description
-    Get the current status of a Firecrawl operation using the operation token
-    @Tags firecrawl @Security SystemTokenAuth @Accept json @Produce json
-    @Param operation_token formData string true "Operation token received from
-    operation/init" @Success 200 {object} common.OperationStatus "Operation
-    status retrieved successfully" @Failure 400 {object} fiber.Map "Bad request
-    - invalid operation token" @Failure 401 {object} fiber.Map "Unauthorized
-    - invalid or missing authentication" @Failure 404 {object} fiber.Map
-    "Operation not found" @Failure 500 {object} fiber.Map "Internal server
-    error" @Router /firecrawl/operation/status [post]
-
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
     SubscribeToChanges godoc @Summary Firecrawl connector does not support
     webhook subscriptions @Description Firecrawl connector does not support
@@ -217,16 +193,20 @@ type FirecrawlPullProvider struct {
     FirecrawlPullProvider implements the PullOperationProvider interface for
     Firecrawl.
 
-func (p *FirecrawlPullProvider) GetAllFiles(c fiber.Ctx, clientAny any) ([]string, [][]byte, error)
+func (p *FirecrawlPullProvider) GetAllFiles(
+	_ context.Context, clientAny any, operation *db.Operation,
+) ([]string, [][]byte, error)
     GetAllFiles executes the configured Firecrawl operation and returns the
     results as files.
 
-func (p *FirecrawlPullProvider) GetFileByPath(c fiber.Ctx, clientAny any, path string) (string, []byte, error)
+func (p *FirecrawlPullProvider) GetFileByPath(
+	ctx context.Context, clientAny any, operation *db.Operation, path string,
+) (string, []byte, error)
     GetFileByPath retrieves a specific file by path. For Firecrawl, this is
     treated as a new URL to scrape.
 
 func (p *FirecrawlPullProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error)

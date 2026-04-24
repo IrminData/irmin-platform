@@ -210,13 +210,12 @@ func (r *TestRunner) runConnectorTests(ctx context.Context, name string, cfg Con
 		operationInitialized = true
 	}
 
-	// Ensure operation cleanup always happens if we initialized one
-	if operationInitialized {
-		defer func() {
-			// Silent cleanup - errors are not critical here
-			_ = client.CancelOperation(ctx, operationID)
-		}()
-	}
+	// The legacy form-bodied POST /operation/cancel endpoint used for best-
+	// effort cleanup was removed in Phase 2 of the async-pull rollout.
+	// Operation rows created by init() are short-lived fixtures that the
+	// test database wipes between runs, so there is nothing to clean up at
+	// this layer. Async-pull job artifacts (zips, worker state) are reaped
+	// by the job manager's janitor.
 
 	// Only proceed with operation-dependent tests if we have a valid token
 	if operationInitialized {
@@ -225,7 +224,6 @@ func (r *TestRunner) runConnectorTests(ctx context.Context, name string, cfg Con
 			name,
 			&cfg,
 			specificTest,
-			testTypeOperation,
 			client,
 			operationToken,
 			operationID,
@@ -240,7 +238,6 @@ func (r *TestRunner) runOperationDependentTests(
 	name string,
 	cfg *ConnectorConfig,
 	specificTest string,
-	testTypeOperation string,
 	client *helpers.ConnectorClient,
 	operationToken string,
 	operationID uint,
@@ -282,10 +279,11 @@ func (r *TestRunner) runOperationDependentTests(
 		r.runRoundTripTest(ctx, name, opClient, cfg, info)
 	}
 
-	// Test 10-11: Operation lifecycle tests
-	if runAll || specificTest == testTypeOperation {
-		r.runOperationLifecycleTests(ctx, name, client, operationID)
-	}
+	// Operation lifecycle tests (status, cancel) were removed in Phase 2 of
+	// the async-pull rollout. Those endpoints no longer exist on connectors;
+	// the async-job protocol addresses them by job_id at the top level, driven
+	// by Core. Coverage lives in Core's integration suite.
+	_ = operationID
 }
 
 // runSchemaTest runs the schema test.
@@ -402,31 +400,4 @@ func (r *TestRunner) runRoundTripTest(
 		}
 		r.SkipTest("Round-Trip (Push/Pull)", name, reason)
 	}
-}
-
-// runOperationLifecycleTests runs operation status and cancel tests.
-func (r *TestRunner) runOperationLifecycleTests(
-	ctx context.Context,
-	name string,
-	client *helpers.ConnectorClient,
-	operationID uint,
-) {
-	// Test: Operation status
-	r.RunTest("Operation Status", name, func() error {
-		return tests.TestOperationStatus(ctx, client, operationID)
-	})
-
-	// Test: Operation status with logs verification
-	r.RunTest("Operation Status (Logs)", name, func() error {
-		return tests.TestOperationStatusWithLogs(ctx, client, operationID)
-	})
-
-	// Test: Operation cancel
-	// Note: This test explicitly validates the cancel operation works
-	// Actual cleanup is handled by defer in runConnectorTests
-	// Cancel will be called twice: once here as a test, once in defer
-	// This is acceptable as cancel operations should be idempotent
-	r.RunTest("Operation Cancel", name, func() error {
-		return tests.TestOperationCancel(ctx, client, operationID)
-	})
 }

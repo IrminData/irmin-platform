@@ -28,8 +28,6 @@ type ConnectorController interface {
 	ConfigFields(c fiber.Ctx) error
 	ConfigValidate(c fiber.Ctx) error
 	OperationInit(c fiber.Ctx) error
-	OperationCancel(c fiber.Ctx) error
-	OperationStatus(c fiber.Ctx) error
 	OperationSchemaGet(c fiber.Ctx) error
 	DetailsPage(c fiber.Ctx) error
 
@@ -45,6 +43,13 @@ type ConnectorController interface {
 	UnsubscribeFromChanges(c fiber.Ctx) error
 }
 ```
+
+Status and cancel are not per-connector: the async-job protocol
+serves them at the top level via `GET /operation/status/:job_id`,
+`GET /operation/result/:job_id`, and `POST /operation/cancel/:job_id`.
+Those routes are mounted once in `RegisterJobHandlers`, require
+`Authorization: Bearer <operation-token>` matching the operation tied
+to the job, and are therefore still opaque to connector route code.
 
 The recommended composition is to embed `*common.Controllers` (and
 `*common.OAuthConnector` for OAuth-backed connectors) into your own
@@ -64,7 +69,7 @@ func NewControllers(app *models.ConnectorsApp) *Controllers {
 }
 ```
 
-## One-line implementations (info, details, middleware, status, cancel)
+## One-line implementations (info, details, middleware)
 
 These wrap directly to package-level helpers:
 
@@ -90,19 +95,6 @@ func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error {
 
 func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error {
 	return common.ValidateOperationToken(c, cs.App, config.GetConnectorInfo)
-}
-
-// Status — HandleOperationStatus reads operation_token from form data,
-// loads the operation row, and returns common.OperationStatus JSON.
-func (cs *Controllers) OperationStatus(c fiber.Ctx) error {
-	return common.HandleOperationStatus(c, config.GetConnectorInfo, cs.App)
-}
-
-// Cancel — DefaultDatabaseCancellation marks the row as cancelled in
-// the connectors DB. Use LogOnlyCancellation if your connector has no
-// in-flight side effects to roll back.
-func (cs *Controllers) OperationCancel(c fiber.Ctx) error {
-	return common.CancelOperation(c, cs.App, common.DefaultDatabaseCancellation)
 }
 ```
 
@@ -133,22 +125,26 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
 	return cs.HandleConfigValidation(c, cs)
 }
 
-// Pull — package-level; threads cs.Logger and cs.DB.
+// Pull — package-level; threads cs.Logger, cs.DB, and cs.App.
+// cs.App carries the shared *JobManager the handler needs for
+// lock acquisition and async-job bookkeeping.
 func (cs *Controllers) OperationPull(c fiber.Ctx) error {
-	return common.HandleOperationPull(c, &MySQLPullProvider{}, cs.Logger, cs.DB)
+	return common.HandleOperationPull(c, &MySQLPullProvider{}, cs.Logger, cs.DB, cs.App)
 }
 
-// Push, Patch, SchemaGet follow the same shape.
+// Push, Patch, SchemaGet follow the same shape. Every handler
+// routes its advisory-lock acquisition through JobManager.Begin
+// so that 409 responses carry the blocking job_id uniformly.
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
-	return common.HandleOperationPush(c, &MySQLPushProvider{}, cs.Logger, cs.DB)
+	return common.HandleOperationPush(c, &MySQLPushProvider{}, cs.Logger, cs.DB, cs.App)
 }
 
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
-	return common.HandleOperationPatch(c, &MySQLPatchProvider{}, cs.Logger, cs.DB)
+	return common.HandleOperationPatch(c, &MySQLPatchProvider{}, cs.Logger, cs.DB, cs.App)
 }
 
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
-	return common.HandleOperationSchemaGet(c, &MySQLSchemaProvider{}, cs.Logger, cs.DB)
+	return common.HandleOperationSchemaGet(c, &MySQLSchemaProvider{}, cs.Logger, cs.DB, cs.App)
 }
 
 // Subscribe — connector-specific; see existing connectors.
@@ -449,7 +445,10 @@ and `HandleNotSupportedSchemaGet` for the other capabilities.
 Routes are created automatically based on connector capabilities:
 
 **Base routes (always registered):**
-- `GET /info`, `POST /configuration/*`, `POST /operation/{init,cancel,status,schema}`, `GET /details`
+- `GET /info`, `POST /configuration/*`, `POST /operation/init`, `POST /operation/schema/:operation`, `GET /details`
+
+**Top-level async-job routes (mounted once, not per connector):**
+- `GET /operation/status/:job_id`, `GET /operation/result/:job_id`, `POST /operation/cancel/:job_id`
 
 **Capability-based routes:**
 - `POST /operation/pull` (ConnectorCapabilityPull)

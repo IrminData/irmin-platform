@@ -1,7 +1,6 @@
 package pineconecontrollers
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,10 +13,8 @@ import (
 	"irmin-connectors/connectors/common"
 	pineconeclient "irmin-connectors/connectors/pinecone/client"
 	"irmin-connectors/db"
-	"irmin-connectors/utils"
 
 	"github.com/IrminData/irmin-sdk-go/duckdb"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -26,6 +23,9 @@ type PineconePullProvider struct {
 	namespace  *string
 	dbInstance *db.Database
 	logger     *slog.Logger
+	// ctx is hydrated by InitializeClient before ProgressHandler
+	// wiring — see StripePullProvider.ctx for the full rationale.
+	ctx context.Context
 }
 
 // ProgressHandler returns the per-page observability callback the
@@ -40,7 +40,7 @@ type PineconePullProvider struct {
 //
 // Throttling lives in common.LogOperationProgress (every 5 pages).
 func (p *PineconePullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
-	return common.NewProgressHandler(p.dbInstance, p.logger, operation)
+	return common.NewProgressHandlerWithContext(p.ctx, p.dbInstance, p.logger, operation)
 }
 
 // getNamespaceValue returns the namespace value or empty string if nil.
@@ -56,15 +56,17 @@ const parquetInsertBatchSize = 100
 
 // InitializeClient initializes the Pinecone client for pull operations.
 func (p *PineconePullProvider) InitializeClient(
-	_ fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
-	// Hydrate logger before building the handler so the closure
-	// p.ProgressHandler returns has a valid logger.
+	// Hydrate logger + ctx before building the handler so the
+	// closure p.ProgressHandler returns has a valid logger and can
+	// fan events into the async-pull job's Progress slice.
 	p.logger = logger
+	p.ctx = ctx
 	client, namespace, err := pineconeclient.InitPineconeClient(
-		nil, logger, operation,
+		ctx, logger, operation,
 		pineconeclient.WithProgressHandler(p.ProgressHandler(operation)),
 	)
 	if err != nil {
@@ -81,16 +83,15 @@ func (p *PineconePullProvider) InitializeClient(
 }
 
 // GetAllFiles retrieves all vectors from Pinecone as a parquet file.
-func (p *PineconePullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error) {
+func (p *PineconePullProvider) GetAllFiles(
+	ctx context.Context, client any, operation *db.Operation,
+) ([]string, [][]byte, error) {
 	pineconeClient, ok := client.(*pineconeclient.PineconeClient)
 	if !ok {
 		return nil, nil, errors.New("invalid client type for Pinecone pull provider")
 	}
 
-	operation, _ := c.Locals("operation").(*db.Operation)
-
 	// Fetch all vectors from Pinecone
-	ctx := context.Background()
 	records, err := pineconeClient.FetchAll(ctx)
 	if err != nil {
 		if operation != nil && p.dbInstance != nil && p.logger != nil {
@@ -137,7 +138,9 @@ func (p *PineconePullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [
 }
 
 // GetFileByPath handles both search (path = query) and fetch operations.
-func (p *PineconePullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath string) (string, []byte, error) {
+func (p *PineconePullProvider) GetFileByPath(
+	ctx context.Context, client any, operation *db.Operation, rawPath string,
+) (string, []byte, error) {
 	pineconeClient, ok := client.(*pineconeclient.PineconeClient)
 	if !ok {
 		return "", nil, errors.New("invalid client type for Pinecone pull provider")
@@ -145,22 +148,20 @@ func (p *PineconePullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath st
 
 	// If path is provided, treat it as a search query
 	if rawPath != "" {
-		return p.performSearch(c, pineconeClient, rawPath)
+		return p.performSearch(ctx, pineconeClient, operation, rawPath)
 	}
 
 	// No path - fetch all vectors as parquet
-	return p.fetchAllAsParquet(pineconeClient)
+	return p.fetchAllAsParquet(ctx, pineconeClient)
 }
 
 // performSearch handles search operations with a query vector.
 func (p *PineconePullProvider) performSearch(
-	c fiber.Ctx,
+	ctx context.Context,
 	pineconeClient *pineconeclient.PineconeClient,
+	operation *db.Operation,
 	rawPath string,
 ) (string, []byte, error) {
-	operation, _ := c.Locals("operation").(*db.Operation)
-	ctx := context.Background()
-
 	// Try to parse the path as a JSON vector
 	var queryVector []float32
 	if err := json.Unmarshal([]byte(rawPath), &queryVector); err != nil {
@@ -226,10 +227,9 @@ func (p *PineconePullProvider) logSearchSuccess(operation *db.Operation, matchCo
 
 // fetchAllAsParquet fetches all vectors and converts to parquet.
 func (p *PineconePullProvider) fetchAllAsParquet(
+	ctx context.Context,
 	pineconeClient *pineconeclient.PineconeClient,
 ) (string, []byte, error) {
-	ctx := context.Background()
-
 	records, err := pineconeClient.FetchAll(ctx)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to fetch vectors: %w", err)
@@ -415,174 +415,20 @@ func escapeSQLString(s string) string {
 // @Failure 500 {object} fiber.Map "Internal server error"
 // @Router /pinecone/operation/pull [post]
 func (cs *Controllers) OperationPull(c fiber.Ctx) error {
-	// Get the operation from the context
-	operation, ok := c.Locals("operation").(*db.Operation)
-	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid operation type in context",
-		})
-	}
-
-	// Use Level 2 lock to prevent concurrent execution of the same operation
-	locked, err := db.TryLockOperationExecution(cs.DB.DB, operation.ID)
-	if err != nil {
-		cs.Logger.Error("failed to acquire operation execution lock", "error", err, "operation_id", operation.ID)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to acquire operation lock",
-		})
-	}
-	if !locked {
-		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-			"error": "Operation is already running",
-		})
-	}
-
-	// Ensure lock is released when operation completes
-	defer func() {
-		if unlockErr := db.UnlockOperationExecution(cs.DB.DB, operation.ID); unlockErr != nil {
-			cs.Logger.Error("failed to release operation execution lock",
-				"error", unlockErr, "operation_id", operation.ID)
-		}
-	}()
-
-	// Log operation execution start
-	common.LogOperationEvent(
-		cs.DB,
-		cs.Logger,
-		operation.ID,
-		db.LogEventTypeInfo,
-		"Pull operation execution started",
-		nil,
-	)
-
+	// Phase 2 cutover: the connector-specific OperationPull
+	// implementation has been collapsed onto common.HandleOperationPull
+	// so it inherits the async-pull accept path (202 + job_id) and the
+	// shared job manager infrastructure. The inline Level-2 execution
+	// lock, form parsing, provider dispatch, and zip-writing were all
+	// redundant with the shared handler's equivalents and would have
+	// skipped the async protocol — keeping them here would have left
+	// Pinecone pulls synchronous and reintroduced the Railway 300s
+	// edge timeout for full-index exports.
 	provider := &PineconePullProvider{
 		dbInstance: cs.DB,
 		logger:     cs.Logger,
 	}
-
-	// Initialize the client
-	client, _, cleanup, initErr := provider.InitializeClient(c, cs.Logger, operation)
-	if initErr != nil {
-		common.LogOperationEvent(
-			cs.DB,
-			cs.Logger,
-			operation.ID,
-			db.LogEventTypeError,
-			"Failed to initialize Pinecone client for pull operation",
-			map[string]any{
-				"error": initErr.Error(),
-			},
-		)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to initialize client: " + initErr.Error(),
-		})
-	}
-	defer cleanup()
-
-	// Parse "path" field from form
-	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
-	if err != nil {
-		common.LogOperationEvent(
-			cs.DB,
-			cs.Logger,
-			operation.ID,
-			db.LogEventTypeError,
-			"Failed to parse form fields for pull operation",
-			map[string]any{
-				"error": err.Error(),
-			},
-		)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	rawPath := fields["path"]
-
-	// Prepare the result files
-	resultFiles := make(map[string][]byte)
-
-	if rawPath == "" {
-		// Fetch all vectors
-		resultPaths, resultContents, getErr := provider.GetAllFiles(c, client)
-		if getErr != nil {
-			cs.Logger.Error("failed to get all vectors", "error", getErr)
-			common.LogOperationEvent(
-				cs.DB,
-				cs.Logger,
-				operation.ID,
-				db.LogEventTypeError,
-				"Failed to fetch all vectors during pull operation",
-				map[string]any{
-					"error": getErr.Error(),
-				},
-			)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to fetch vectors: " + getErr.Error(),
-			})
-		}
-		for i, resultPath := range resultPaths {
-			resultFiles[resultPath] = resultContents[i]
-		}
-	} else {
-		// Search with query
-		resultPath, resultContent, getErr := provider.GetFileByPath(c, client, rawPath)
-		if getErr != nil {
-			cs.Logger.Error("failed to search", "error", getErr)
-			common.LogOperationEvent(
-				cs.DB,
-				cs.Logger,
-				operation.ID,
-				db.LogEventTypeError,
-				"Failed to search during pull operation",
-				map[string]any{
-					"error": getErr.Error(),
-					"query": rawPath,
-				},
-			)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to search: " + getErr.Error(),
-			})
-		}
-		resultFiles[resultPath] = resultContent
-	}
-
-	// Create a zip archive of the result files
-	zipBytes, err := irminutils.ZipFiles(resultFiles)
-	if err != nil {
-		cs.Logger.Error("failed to create zip archive", "error", err)
-		common.LogOperationEvent(
-			cs.DB,
-			cs.Logger,
-			operation.ID,
-			db.LogEventTypeError,
-			"Failed to create zip archive for pull operation",
-			map[string]any{
-				"error": err.Error(),
-			},
-		)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create zip archive",
-		})
-	}
-
-	// Log successful completion
-	common.LogOperationEvent(
-		cs.DB,
-		cs.Logger,
-		operation.ID,
-		db.LogEventTypeInfo,
-		"Pull operation completed successfully",
-		map[string]any{
-			"file_count": len(resultFiles),
-			"path":       rawPath,
-		},
-	)
-
-	// Return the result files as a zip archive stream
-	c.Response().Header.Set("Content-Type", "application/zip")
-	c.Response().Header.Set("Content-Disposition", "attachment; filename=result.zip")
-	return c.Status(fiber.StatusOK).SendStream(bytes.NewReader(zipBytes))
+	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB, cs.App)
 }
 
 // SubscribeToChanges is not supported by Pinecone connector.

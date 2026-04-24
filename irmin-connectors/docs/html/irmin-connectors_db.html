@@ -43,6 +43,14 @@ func TryLockOperationExecution(db *gorm.DB, operationID uint) (bool, error)
 
     The lock must be explicitly released with UnlockOperationExecution.
 
+    Deprecated: TryLockOperationExecution + UnlockOperationExecution is
+    pool-unsafe — the pool may route the unlock Raw() call to a different
+    session than the one that took the lock, silently leaking the advisory
+    lock until the original conn is closed. Use the common.JobManager.Begin
+    / OperationGuard.Release pair instead, which pins a single session via
+    WithSessionLock for the full operation lifetime. Kept for one release so
+    out-of-tree callers have a deprecation window.
+
 func UnlockKey(db *gorm.DB, key string) error
     UnlockKey releases a session-scoped advisory lock. Returns ErrLockNotHeld if
     the lock was not held by the current session.
@@ -50,6 +58,9 @@ func UnlockKey(db *gorm.DB, key string) error
 func UnlockOperationExecution(db *gorm.DB, operationID uint) error
     UnlockOperationExecution releases a session-scoped advisory lock for
     operation execution.
+
+    Deprecated: see TryLockOperationExecution for the rationale. Use
+    common.JobManager.Begin / OperationGuard.Release instead.
 
 func WithOperationExecutionLock(db *gorm.DB, operationID uint, fn func(conn *gorm.DB) error) (bool, error)
     WithOperationExecutionLock acquires a session-scoped execution lock for
@@ -99,6 +110,11 @@ func (d *Database) CreateConnectorRegistration(registration *ConnectorRegistrati
 func (d *Database) CreateOperation(operation *Operation) (*Operation, error)
     CreateOperation inserts a new Operation record into the database.
 
+func (d *Database) CreateOperationJob(job *OperationJob) (*OperationJob, error)
+    CreateOperationJob inserts a new OperationJob record. Returns the record
+    (with zero-value timestamps filled in by GORM) so callers can surface
+    CreatedAt on the accept-path response without a re-read.
+
 func (d *Database) CreateOperationLog(operationLog *OperationLog) (*OperationLog, error)
     CreateOperationLog inserts a new OperationLog record into the database.
 
@@ -108,6 +124,12 @@ func (d *Database) CreateSubscription(subscription *Subscription) (*Subscription
 func (d *Database) DeleteConnectorRegistration(id uint) error
     DeleteConnectorRegistration removes the record with the specified ID from
     the database.
+
+func (d *Database) DeleteExpiredOperationJobs(now time.Time) (int64, error)
+    DeleteExpiredOperationJobs removes all rows whose ExpiresAt is in the past.
+    Returns the number of rows deleted so the janitor can log a meaningful
+    number. The result file is NOT deleted here — the janitor handles filesystem
+    cleanup separately (it reads ResultPath first, then calls this).
 
 func (d *Database) DeleteOperation(id uint) error
     DeleteOperation removes the record with the specified ID from the database.
@@ -123,6 +145,22 @@ func (d *Database) DeleteSubscriptionsByOperationID(operationID uint) error
     DeleteSubscriptionsByOperationID removes all subscriptions associated with
     the specified operation ID.
 
+func (d *Database) FindActiveOperationJob(operationID uint) (*OperationJob, error)
+    FindActiveOperationJob returns the job currently holding the operation_exec
+    advisory lock for operationID, if any. "Active" means status is pending or
+    running — both non-terminal states that imply the worker goroutine is either
+    about to start or in-flight.
+
+    Used by the 409 path: when Begin fails to acquire the lock we surface the
+    blocking job's ID to the caller so they can poll its status or cancel it
+    without a second round-trip. Returns gorm.ErrRecordNotFound when no active
+    row exists (e.g., a legacy-sync handler still holds the lock without having
+    registered a job row); callers treat that as "retry later".
+
+    Multiple active rows shouldn't happen in practice — Begin takes the advisory
+    lock before creating the row — but if the DB is in a weird state we pick the
+    most recently created one so the operator can find the live worker.
+
 func (d *Database) FindOperationByConfigHash(
 	connectorRegistrationID uint,
 	configHash *string,
@@ -134,10 +172,6 @@ func (d *Database) FindOperationByConfigHash(
 func (d *Database) GetAllConnectorRegistrations() ([]ConnectorRegistration, error)
     GetAllConnectorRegistrations retrieves all ConnectorRegistration records
     from the database.
-
-func (d *Database) GetAllLogsForOperation(operationID uint) ([]OperationLog, error)
-    GetAllLogsForOperation retrieves all OperationLog records for a given
-    operation ID.
 
 func (d *Database) GetAllOperations() ([]Operation, error)
     GetAllOperations retrieves all Operation records from the database.
@@ -161,6 +195,15 @@ func (d *Database) GetOperationByID(id uint) (*Operation, error)
     GetOperationByID retrieves an Operation record from the database by ID.
     This includes soft-deleted operations.
 
+func (d *Database) GetOperationJob(jobID string) (*OperationJob, error)
+    GetOperationJob fetches a job by its opaque JobID. Returns (nil, nil) when
+    no row matches — callers decide whether that's a 404 (unknown job) or a
+    410 (expired + already reaped); the janitor deletes expired rows, so the
+    distinction is made at the handler level by consulting a seen-job cache we
+    do not maintain here. The server-side choice is "treat missing as 404";
+    a real 410 requires a tombstone row, which is a deliberate non-goal of this
+    phase.
+
 func (d *Database) GetOperationsByConnectorRegistrationID(id uint) ([]Operation, error)
     GetOperationsByConnectorRegistrationID retrieves all Operation records from
     the database by associated connector registration ID.
@@ -175,6 +218,26 @@ func (d *Database) GetSubscriptionsByOperationID(operationID uint) ([]Subscripti
     GetSubscriptionsByOperationID retrieves all Subscription records for a
     specific operation.
 
+func (d *Database) ListExpiredOperationJobs(now time.Time) ([]OperationJob, error)
+    ListExpiredOperationJobs returns the jobs whose ExpiresAt is in the past,
+    without deleting them. Used by the janitor to know which ResultPath files to
+    unlink before issuing DeleteExpiredOperationJobs.
+
+func (d *Database) ListStuckOperationJobs(threshold time.Time) ([]OperationJob, error)
+    ListStuckOperationJobs returns jobs still in a non-terminal status
+    (pending / running) whose updated_at is older than threshold. These are
+    candidates for janitor reclaim: a worker that vanished (pod crash, SIGKILL,
+    network partition) leaves the row at status=running indefinitely because the
+    terminal-transition write never happens. The janitor compares updated_at
+    against the stuck threshold — a live worker's heartbeat bumps updated_at
+    every heartbeat tick via UpdateOperationJobProgress, so anything quieter
+    than threshold is presumed dead.
+
+    The caller is expected to probe the operation's advisory lock before
+    actually reclaiming the row, so a slow-but-alive worker (e.g., one caught
+    in a long network call with the heartbeat goroutine wedged) is not falsely
+    killed.
+
 func (d *Database) Migrate() error
     Migrate runs the auto migration calls in the correct order. It separates the
     migrations into groups based on model dependencies.
@@ -184,6 +247,34 @@ func (d *Database) Reset() error
 
 func (d *Database) RunRawQuery(sqlQuery string, args ...any) error
     RunRawQuery executes a raw SQL query against the database.
+
+func (d *Database) UpdateOperationJobProgress(jobID string, progressJSON []byte) error
+    UpdateOperationJobProgress replaces the Progress JSON column for a job.
+    Writers serialise the in-memory slice before calling this, so there is no
+    rows-level race — the worker owns the authoritative copy and persists it
+    after each append.
+
+func (d *Database) UpdateOperationJobStatus(
+	jobID string,
+	status string,
+	errMsg *string,
+	resultPath *string,
+	expiresAt *time.Time,
+) error
+    UpdateOperationJobStatus sets the Status column (and optionally Error /
+    ResultPath / ExpiresAt) for a job. Uses a column-scoped Updates() call so
+    concurrent Progress appends from the worker goroutine don't race — GORM
+    serialises the single-column write at the SQL level.
+
+func (d *Database) WithOperationExecutionLock(
+	operationID uint,
+	fn func(conn *gorm.DB) error,
+) (bool, error)
+    WithOperationExecutionLock is the method-form wrapper around the
+    package-level WithOperationExecutionLock helper. Exposed on *Database so the
+    JobStore interface used by common.JobManager can acquire the lock without
+    reaching through to a raw *gorm.DB — tests pass an in-memory fake that stubs
+    this method while production keeps the pinned-connection semantics.
 
 type LogEventType string
 
@@ -216,6 +307,82 @@ func FindOperationByConfigHashTx(
     connector registration ID and configuration hash using the provided
     transaction context. This should be used within transactions to avoid race
     conditions.
+
+type OperationJob struct {
+	// JobID is the connector-issued opaque identifier. Primary key
+	// because it's what every external call (status / result /
+	// cancel) lookups on.
+	JobID string `gorm:"primaryKey;type:varchar(64)" json:"job_id"`
+
+	// ConnectorRegistrationID is the connector-service-local FK to
+	// the connector this job was started on. Used for auditing; not
+	// surfaced directly on the status response (we surface the
+	// connector name via ConnectorName).
+	ConnectorRegistrationID uint `gorm:"index" json:"connector_registration_id"`
+
+	// ConnectorName is the connector slug (e.g., "stripe"). Echoed on
+	// the status response as OperationJob.ConnectorID in the SDK
+	// shape — the SDK uses that field as a human-readable connector
+	// ident, not a sqid.
+	ConnectorName string `gorm:"type:varchar(128);index" json:"connector_name"`
+
+	// OperationID is the connector-service-local Operation row this
+	// job is executing against. Needed so the worker can fetch the
+	// operation, hydrate the provider, and emit progress events that
+	// round-trip to the operation log.
+	OperationID uint `gorm:"index" json:"operation_id"`
+
+	// Kind tags the row with the operation kind (pull / push /
+	// patch / schema) so 409 AlreadyRunningBody responses can tell
+	// the caller which flavor is blocking. Nullable varchar with an
+	// empty default so pre-migration rows and tests that don't
+	// supply a kind continue to work — the wire shape tolerates an
+	// empty Kind as "unknown".
+	Kind string `gorm:"type:varchar(32);index" json:"kind"`
+
+	// Status is the lifecycle state. Stored as text so migrations
+	// don't require a Postgres enum type — the set of valid values is
+	// enforced by the SDK constants (OperationJobStatusPending etc.).
+	Status string `gorm:"type:varchar(32);index;not null" json:"status"`
+
+	// Progress is the cumulative JSON-encoded slice of ProgressEvent
+	// values the worker has emitted so far. Kept as a single JSON
+	// column rather than a child table because the append volume is
+	// low (one event per page/batch/heartbeat, not per row) and the
+	// whole slice is always read together on GET /operation/status.
+	Progress datatypes.JSON `gorm:"type:json" json:"progress"`
+
+	// Error is populated when Status=failed. Operator-facing message;
+	// not a machine-readable code.
+	Error string `gorm:"type:text" json:"error"`
+
+	// ResultPath is the absolute filesystem path of the result zip
+	// once the worker has finished. Empty until then.
+	ResultPath string `gorm:"type:text" json:"result_path"`
+
+	// CreatedAt / UpdatedAt are standard GORM-managed timestamps.
+	// They are used by the janitor together with ExpiresAt to drive
+	// GC decisions.
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+
+	// ExpiresAt is when the janitor should garbage-collect this row
+	// and its result file. Set when the job reaches a terminal state
+	// (complete/failed/cancelled); zero for in-flight jobs.
+	ExpiresAt *time.Time `gorm:"index" json:"expires_at,omitempty"`
+}
+    OperationJob is the GORM-mapped persistence record for an asynchronous
+    connector operation job (e.g., a long-running pull).
+
+    The wire-facing SDK type lives in
+    github.com/IrminData/irmin-sdk-go/models.OperationJob — fields here mirror
+    that shape but add the bookkeeping columns (Progress JSON, ResultPath,
+    Error) that the server side needs and the SDK client does not. The connector
+    service converts between the two at the HTTP boundary.
+
+func (OperationJob) TableName() string
+    TableName pins the GORM-derived table name so future renames of the Go type
+    (unlikely but nonzero) don't silently migrate schema.
 
 type OperationLog struct {
 	gorm.Model

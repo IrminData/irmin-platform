@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"irmin-connectors/db"
+	"irmin-connectors/models"
 	"irmin-connectors/utils"
 	"log/slog"
 	"net"
@@ -16,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	sdkmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 )
@@ -66,39 +68,96 @@ type PushOperationProvider interface {
 }
 
 // HandleOperationPush provides a common HTTP handler for push operation endpoints.
+//
+// Under the unified Guard API the push handler is synchronous but
+// still persists an OperationJob row via manager.Begin so concurrent
+// pushes against the same operation get a structured 409 carrying
+// the blocking job_id. Release is deferred; a provider panic is
+// recovered so the row never sticks at status=running.
 func HandleOperationPush(
 	c fiber.Ctx,
 	provider PushOperationProvider,
 	logger *slog.Logger,
 	dbInstance *db.Database,
-) error {
+	app *models.ConnectorsApp,
+) (retErr error) {
+	manager, managerOK := app.JobManager.(*JobManager)
+	if !managerOK || manager == nil {
+		return RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			sdkmodels.JobErrorReasonInternal,
+			errors.New("job manager not configured"),
+			"",
+		)
+	}
+
 	// Get the operation from the context
 	operation, ok := c.Locals("operation").(*db.Operation)
 	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid operation type in context",
-		})
+		return RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			sdkmodels.JobErrorReasonInternal,
+			errors.New("invalid operation type in context"),
+			"",
+		)
 	}
 
-	// Use Level 2 lock to prevent concurrent execution of the same operation
-	locked, err := db.TryLockOperationExecution(dbInstance.DB, operation.ID)
-	if err != nil {
-		logger.Error("failed to acquire operation execution lock", "error", err, "operation_id", operation.ID)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to acquire operation lock",
-		})
+	connectorName := resolveConnectorName(c)
+
+	guard, alreadyErr, beginErr := manager.Begin(BeginOperationJobInput{
+		OperationID:             operation.ID,
+		ConnectorRegistrationID: operation.ConnectorRegistrationID,
+		ConnectorName:           connectorName,
+		Kind:                    "push",
+	})
+	if alreadyErr != nil {
+		return RespondAlreadyRunning(c, alreadyErr)
 	}
-	if !locked {
-		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-			"error": "Operation is already running",
-		})
+	if beginErr != nil {
+		logger.Error("failed to acquire operation execution lock",
+			"error", beginErr, "operation_id", operation.ID)
+		return RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			sdkmodels.JobErrorReasonTransientDB,
+			beginErr,
+			"",
+		)
 	}
 
-	// Ensure lock is released when operation completes
+	// Pessimistic default — only overwritten on successful
+	// completion. Release deferred so any early return (panic,
+	// error path) still marks the row terminal and frees the
+	// advisory lock.
+	outcome := JobOutcome{
+		Status: sdkmodels.OperationJobStatusFailed,
+		Error:  "handler exited without setting outcome",
+	}
 	defer func() {
-		if unlockErr := db.UnlockOperationExecution(dbInstance.DB, operation.ID); unlockErr != nil {
-			logger.Error("failed to release operation execution lock", "error", unlockErr, "operation_id", operation.ID)
+		// Recover any panic inside the handler body so we can emit
+		// a structured 500 via RespondJobError (overwriting retErr
+		// on the named return) instead of re-panicking and letting
+		// fiber's panic middleware produce a generic body. The
+		// guard's terminal-status write still happens synchronously
+		// below so /operation/status observes the failure.
+		if r := recover(); r != nil {
+			logger.Error("push handler panic recovered",
+				"error", fmt.Sprintf("%v", r), "operation_id", operation.ID)
+			outcome = JobOutcome{
+				Status: sdkmodels.OperationJobStatusFailed,
+				Error:  fmt.Sprintf("handler panic: %v", r),
+			}
+			retErr = RespondJobError(
+				c,
+				fiber.StatusInternalServerError,
+				sdkmodels.JobErrorReasonInternal,
+				fmt.Errorf("handler panic: %v", r),
+				guard.JobID(),
+			)
 		}
+		guard.Release(outcome)
 	}()
 
 	// Log operation execution start
@@ -120,121 +179,45 @@ func HandleOperationPush(
 	go startHeartbeat(dbInstance, logger, operation.ID, "operation/push", heartbeatStop)
 	defer close(heartbeatStop)
 
-	// Initialize the client
 	client, _, cleanup, err := provider.InitializeClient(c, logger, operation)
 	if err != nil {
-		LogOperationEvent(
-			dbInstance,
-			logger,
-			operation.ID,
-			db.LogEventTypeError,
-			"Failed to initialize client for push operation",
-			map[string]any{
-				"error": err.Error(),
-			},
-		)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to initialize client: " + err.Error(),
-		})
+		logPushFailure(dbInstance, logger, operation.ID,
+			"Failed to initialize client for push operation", err)
+		return MarkFailedAndRespond(c, &outcome, fiber.StatusInternalServerError, "initialize client", err)
 	}
 	defer cleanup()
 
-	// Parse form fields for target path
 	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
 	if err != nil {
-		LogOperationEvent(
-			dbInstance,
-			logger,
-			operation.ID,
-			db.LogEventTypeError,
-			"Failed to parse form fields for push operation",
-			map[string]any{
-				"error": err.Error(),
-			},
-		)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		logPushFailure(dbInstance, logger, operation.ID,
+			"Failed to parse form fields for push operation", err)
+		return MarkFailedAndRespond(c, &outcome, fiber.StatusBadRequest, "parse form fields", err)
 	}
 
 	// Pass raw path to provider for connector-specific processing
 	rawPath := fields["path"]
 
-	// Check if a presigned URL was provided instead of a file upload.
-	// This avoids loading the full file into the core API's memory.
-	presignedURL := c.FormValue("presigned_url")
-
-	var files map[string][]byte
-	if presignedURL != "" {
-		var dlErr error
-		files, dlErr = handlePresignedURLFile(presignedURL)
-		if dlErr != nil {
-			LogOperationEvent(
-				dbInstance,
-				logger,
-				operation.ID,
-				db.LogEventTypeError,
-				"Failed to download file from presigned URL for push operation",
-				map[string]any{
-					"error": dlErr.Error(),
-				},
-			)
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": dlErr.Error(),
-			})
-		}
-	} else {
-		var uploadErr error
-		files, uploadErr = handleUploadedFile(c)
-		if uploadErr != nil {
-			LogOperationEvent(
-				dbInstance,
-				logger,
-				operation.ID,
-				db.LogEventTypeError,
-				"Failed to handle uploaded file for push operation",
-				map[string]any{
-					"error": uploadErr.Error(),
-				},
-			)
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": uploadErr.Error(),
-			})
-		}
+	files, srcStage, srcErr := acquirePushFiles(c)
+	if srcErr != nil {
+		logPushFailure(dbInstance, logger, operation.ID,
+			"Failed to acquire files for push operation", srcErr)
+		return MarkFailedAndRespond(c, &outcome, fiber.StatusBadRequest, srcStage, srcErr)
 	}
 
 	if len(files) == 0 {
-		LogOperationEvent(
-			dbInstance,
-			logger,
-			operation.ID,
-			db.LogEventTypeError,
-			"No files found in uploaded ZIP",
-			nil,
-		)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "No files found in uploaded ZIP",
-		})
+		LogOperationEvent(dbInstance, logger, operation.ID,
+			db.LogEventTypeError, "No files found in uploaded ZIP", nil)
+		return MarkFailedAndRespond(c, &outcome, fiber.StatusBadRequest,
+			"upload", errors.New("no files found in uploaded zip"))
 	}
 
-	// Process files using provider
-	err = provider.ProcessFiles(c, client, files, rawPath)
-	if err != nil {
-		logger.Error("failed to process files", "error", err)
-		LogOperationEvent(
-			dbInstance,
-			logger,
-			operation.ID,
-			db.LogEventTypeError,
-			"Failed to process files during push operation",
-			map[string]any{
-				"error": err.Error(),
-				"path":  rawPath,
-			},
-		)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to process files: " + err.Error(),
-		})
+	if procErr := provider.ProcessFiles(c, client, files, rawPath); procErr != nil {
+		logger.Error("failed to process files", "error", procErr)
+		LogOperationEvent(dbInstance, logger, operation.ID,
+			db.LogEventTypeError, "Failed to process files during push operation",
+			map[string]any{"error": procErr.Error(), "path": rawPath})
+		return MarkFailedAndRespond(c, &outcome, fiber.StatusInternalServerError,
+			"process files", procErr)
 	}
 
 	// Log successful completion
@@ -250,10 +233,46 @@ func HandleOperationPush(
 		},
 	)
 
+	outcome = JobOutcome{Status: sdkmodels.OperationJobStatusComplete}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Successfully pushed data",
 		"status":  "completed",
 	})
+}
+
+// logPushFailure emits the canonical error-level operation log
+// entry used throughout HandleOperationPush. Centralised so the log
+// shape stays consistent and the handler body stays short.
+func logPushFailure(dbInstance *db.Database, logger *slog.Logger, operationID uint, msg string, err error) {
+	LogOperationEvent(
+		dbInstance,
+		logger,
+		operationID,
+		db.LogEventTypeError,
+		msg,
+		map[string]any{"error": err.Error()},
+	)
+}
+
+// acquirePushFiles picks between the presigned-URL and direct-upload
+// source for a push request. Returns (files, "", nil) on success; on
+// failure the second return is a short stage label ("presigned
+// download" / "upload") used for the handler's outcome message so
+// operators can tell the two paths apart without re-reading the
+// error.
+func acquirePushFiles(c fiber.Ctx) (map[string][]byte, string, error) {
+	if presignedURL := c.FormValue("presigned_url"); presignedURL != "" {
+		files, err := handlePresignedURLFile(presignedURL)
+		if err != nil {
+			return nil, "presigned download", err
+		}
+		return files, "", nil
+	}
+	files, err := handleUploadedFile(c)
+	if err != nil {
+		return nil, "upload", err
+	}
+	return files, "", nil
 }
 
 // handleUploadedFile processes the uploaded ZIP file and returns the extracted files.

@@ -137,6 +137,7 @@ func (d *Database) Migrate() error {
 		&OperationLog{},
 		&ConnectorRegistration{},
 		&Subscription{},
+		&OperationJob{},
 	}
 
 	if err := d.migrateModels(models...); err != nil {
@@ -154,6 +155,7 @@ func (d *Database) Reset() error {
 		&Operation{},
 		&ConnectorRegistration{},
 		&Subscription{},
+		&OperationJob{},
 	); err != nil {
 		return fmt.Errorf("failed to drop tables: %w", err)
 	}

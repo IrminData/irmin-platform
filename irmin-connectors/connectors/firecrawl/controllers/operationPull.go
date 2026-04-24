@@ -1,6 +1,7 @@
 package firecrawlcontrollers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -16,6 +17,9 @@ import (
 type FirecrawlPullProvider struct {
 	dbInstance *db.Database
 	logger     *slog.Logger
+	// ctx is hydrated by InitializeClient before ProgressHandler
+	// wiring — see StripePullProvider.ctx for the full rationale.
+	ctx context.Context
 }
 
 // ProgressHandler returns the per-poll observability callback the
@@ -31,19 +35,21 @@ type FirecrawlPullProvider struct {
 // Throttling lives in common.LogOperationProgress (every 5 polls)
 // since each poll-loop iteration is a "page" event.
 func (p *FirecrawlPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
-	return common.NewProgressHandler(p.dbInstance, p.logger, operation)
+	return common.NewProgressHandlerWithContext(p.ctx, p.dbInstance, p.logger, operation)
 }
 
 // InitializeClient initializes the Firecrawl client for pull operations.
 func (p *FirecrawlPullProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
-	// Hydrate logger before building the handler so the closure
-	// p.ProgressHandler returns has a valid logger.
+	// Hydrate logger + ctx before building the handler so the
+	// closure p.ProgressHandler returns has a valid logger and can
+	// fan events into the async-pull job's Progress slice.
 	p.logger = logger
-	firecrawlClient, err := client.InitFirecrawlClient(c, logger, operation)
+	p.ctx = ctx
+	firecrawlClient, err := client.InitFirecrawlClient(ctx, logger, operation)
 	if err != nil {
 		return nil, nil, func() {}, fmt.Errorf("failed to initialize Firecrawl client: %w", err)
 	}
@@ -58,13 +64,13 @@ func (p *FirecrawlPullProvider) InitializeClient(
 }
 
 // GetAllFiles executes the configured Firecrawl operation and returns the results as files.
-func (p *FirecrawlPullProvider) GetAllFiles(c fiber.Ctx, clientAny any) ([]string, [][]byte, error) {
+func (p *FirecrawlPullProvider) GetAllFiles(
+	_ context.Context, clientAny any, operation *db.Operation,
+) ([]string, [][]byte, error) {
 	firecrawlClient, ok := clientAny.(*client.FirecrawlClient)
 	if !ok {
 		return nil, nil, errors.New("invalid client type for Firecrawl pull provider")
 	}
-
-	operation, _ := c.Locals("operation").(*db.Operation)
 
 	// Log operation start
 	p.logOperationEvent(operation, db.LogEventTypeInfo, "Starting Firecrawl operation", map[string]any{
@@ -108,7 +114,9 @@ func (p *FirecrawlPullProvider) GetAllFiles(c fiber.Ctx, clientAny any) ([]strin
 
 // GetFileByPath retrieves a specific file by path.
 // For Firecrawl, this is treated as a new URL to scrape.
-func (p *FirecrawlPullProvider) GetFileByPath(c fiber.Ctx, clientAny any, path string) (string, []byte, error) {
+func (p *FirecrawlPullProvider) GetFileByPath(
+	ctx context.Context, clientAny any, operation *db.Operation, path string,
+) (string, []byte, error) {
 	firecrawlClient, ok := clientAny.(*client.FirecrawlClient)
 	if !ok {
 		return "", nil, errors.New("invalid client type for Firecrawl pull provider")
@@ -116,11 +124,11 @@ func (p *FirecrawlPullProvider) GetFileByPath(c fiber.Ctx, clientAny any, path s
 
 	// If a path is provided, treat it as a URL to scrape
 	if path != "" {
-		return p.scrapeSpecificURL(c, firecrawlClient, path)
+		return p.scrapeSpecificURL(operation, firecrawlClient, path)
 	}
 
 	// If no path provided, fall back to GetAllFiles behavior
-	filePaths, fileContents, err := p.GetAllFiles(c, clientAny)
+	filePaths, fileContents, err := p.GetAllFiles(ctx, clientAny, operation)
 	if err != nil {
 		return "", nil, err
 	}
@@ -135,12 +143,10 @@ func (p *FirecrawlPullProvider) GetFileByPath(c fiber.Ctx, clientAny any, path s
 
 // scrapeSpecificURL scrapes a specific URL and returns the result.
 func (p *FirecrawlPullProvider) scrapeSpecificURL(
-	c fiber.Ctx,
+	operation *db.Operation,
 	firecrawlClient *client.FirecrawlClient,
 	path string,
 ) (string, []byte, error) {
-	operation, _ := c.Locals("operation").(*db.Operation)
-
 	// Create a modified client with the new URL
 	modifiedClient := &client.FirecrawlClient{
 		App:           firecrawlClient.App,
@@ -209,5 +215,5 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 		dbInstance: cs.DB,
 		logger:     cs.Logger,
 	}
-	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
+	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB, cs.App)
 }

@@ -201,7 +201,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 		APIBaseURL: cs.App.Env.APIBaseURL,
 		APIToken:   cs.App.Env.APIToken,
 	}
-	return common.HandleOperationSchemaGet(c, provider, cs.Logger, cs.DB)
+	return common.HandleOperationSchemaGet(c, provider, cs.Logger, cs.DB, cs.App)
 }
 
 // strPtr is a helper to create a pointer to a string.

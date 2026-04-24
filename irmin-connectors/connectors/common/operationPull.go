@@ -2,277 +2,392 @@ package common
 
 import (
 	"archive/zip"
-	"bytes"
+	"context"
 	"errors"
+	"fmt"
 	"irmin-connectors/db"
+	"irmin-connectors/models"
 	"irmin-connectors/utils"
 	"log/slog"
+	"os"
+	"time"
 
+	sdkmodels "github.com/IrminData/irmin-sdk-go/models"
+	sdkprogress "github.com/IrminData/irmin-sdk-go/observability"
 	"github.com/gofiber/fiber/v3"
-	"gorm.io/gorm"
 )
 
 // PullOperationProvider defines the interface for connector-specific pull operation handling.
+//
+// Under the async protocol the pull body runs in a worker goroutine
+// detached from the fiber request lifecycle, so providers receive an
+// explicit context.Context (derived from the job's cancel scope) and
+// the preloaded *db.Operation rather than a fiber.Ctx. Providers that
+// previously grabbed these off c.Context() / c.Locals("operation")
+// inside each method are adjusted to accept them as arguments.
 type PullOperationProvider interface {
-	// InitializeClient initializes the client for pull operations
+	// InitializeClient initializes the client for pull operations.
+	// ctx is the job-scoped context — cancellation flows to the
+	// underlying vendor client via this ctx when the job is
+	// cancelled.
 	InitializeClient(
-		c fiber.Ctx,
+		ctx context.Context,
 		logger *slog.Logger,
 		operation *db.Operation,
 	) (client any, databaseName *string, cleanup func(), err error)
 
-	// GetAllFiles retrieves all available data as files
-	GetAllFiles(c fiber.Ctx, client any) (filePaths []string, fileContents [][]byte, err error)
+	// GetAllFiles retrieves all available data as files.
+	GetAllFiles(
+		ctx context.Context,
+		client any,
+		operation *db.Operation,
+	) (filePaths []string, fileContents [][]byte, err error)
 
-	// GetFileByPath retrieves a specific file by path
-	GetFileByPath(c fiber.Ctx, client any, path string) (filePath string, fileContent []byte, err error)
+	// GetFileByPath retrieves a specific file by path.
+	GetFileByPath(
+		ctx context.Context,
+		client any,
+		operation *db.Operation,
+		path string,
+	) (filePath string, fileContent []byte, err error)
 
 	// ProgressHandler returns the observability callback this
 	// provider wires into its client for per-page / per-batch /
-	// per-file events. Return nil only if the underlying operations
-	// are short enough not to need progress events (most
-	// health-check style connectors) — the common pull handler
-	// always wraps the provider call with a baseline heartbeat, so
-	// returning nil does not leave the operation silent.
+	// per-file events.
 	ProgressHandler(operation *db.Operation) ProgressHandler
 }
 
-// HandleOperationPull provides a common HTTP handler for pull operation endpoints.
+// HandleOperationPull starts an async pull job and returns
+// HTTP 202 Accepted with {"job_id": "..."}. The actual pull runs in a
+// background worker owned by the app's JobManager; callers poll
+// /operation/status/:job_id and fetch /operation/result/:job_id when
+// it reaches status=complete.
+//
+// Streaming is intentionally avoided here. The pre-async handler
+// buffered the full zip in memory because SendStreamWriter's callback
+// runs after the handler returns, which deadlocks against the
+// session-scoped advisory lock held by WithOperationExecutionLock.
+// Under the async protocol we go one step further: the zip is written
+// to a tmpfile inside the worker goroutine and served from disk via
+// /operation/result/:job_id, so neither the accept path nor the
+// result path holds the advisory lock across a long file transfer.
 func HandleOperationPull(
 	c fiber.Ctx,
 	provider PullOperationProvider,
 	logger *slog.Logger,
 	dbInstance *db.Database,
+	app *models.ConnectorsApp,
 ) error {
-	// Get the operation from the context
+	manager, managerOK := app.JobManager.(*JobManager)
+	if !managerOK || manager == nil {
+		return RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			sdkmodels.JobErrorReasonInternal,
+			errors.New("job manager not configured"),
+			"",
+		)
+	}
+
 	operation, ok := c.Locals("operation").(*db.Operation)
 	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid operation type in context",
-		})
-	}
-
-	// Use WithOperationExecutionLock which pins the DB connection so that
-	// acquire and release happen on the same session (required by PostgreSQL
-	// session-scoped advisory locks). The zip is built in a buffer inside the
-	// callback so the lock covers the entire operation; the buffer is sent
-	// after the callback returns.
-	locked, lockErr := db.WithOperationExecutionLock(
-		dbInstance.DB,
-		operation.ID,
-		func(_ *gorm.DB) error {
-			return executePullOperation(
-				c, provider, logger, dbInstance, operation,
-			)
-		},
-	)
-	if lockErr != nil {
-		logger.Error(
-			"failed during operation execution",
-			"error", lockErr,
-			"operation_id", operation.ID,
+		return RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			sdkmodels.JobErrorReasonInternal,
+			errors.New("invalid operation type in context"),
+			"",
 		)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to execute operation",
-		})
-	}
-	if !locked {
-		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-			"error": "Operation is already running",
-		})
 	}
 
-	return nil
+	connectorName := resolveConnectorName(c)
+
+	// Parse form fields up front so the accept response can fail
+	// fast on a malformed request (path is optional; the provider
+	// decides). Extra form fields are captured as a map so the
+	// provider gets them inside the worker. Done before Begin so
+	// we don't take the lock and then reject the request on a bad
+	// form field.
+	rawPath, formFields, err := parsePullFormFields(c)
+	if err != nil {
+		return RespondJobError(
+			c,
+			fiber.StatusBadRequest,
+			sdkmodels.JobErrorReasonInvalidRequest,
+			err,
+			"",
+		)
+	}
+
+	guard, alreadyErr, err := manager.Begin(BeginOperationJobInput{
+		OperationID:             operation.ID,
+		ConnectorRegistrationID: operation.ConnectorRegistrationID,
+		ConnectorName:           connectorName,
+		Kind:                    "pull",
+	})
+	if alreadyErr != nil {
+		return RespondAlreadyRunning(c, alreadyErr)
+	}
+	if err != nil {
+		logger.Error("failed to acquire operation execution lock", "error", err, "operation_id", operation.ID)
+		return RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			sdkmodels.JobErrorReasonTransientDB,
+			err,
+			"",
+		)
+	}
+
+	fn := buildPullWorker(provider, logger, dbInstance, operation, rawPath, formFields)
+	job := manager.StartJobWithGuard(guard, fn)
+
+	return c.Status(fiber.StatusAccepted).JSON(sdkmodels.StartOperationPullResponse{
+		JobID: job.JobID,
+	})
 }
 
-// executePullOperation performs the actual pull operation logic.
-// The zip is built in a buffer so the advisory lock callback can complete
-// synchronously — avoiding the deadlock that SendStreamWriter would cause
-// (its callback runs after the handler returns, but the lock callback
-// blocks the handler).
-func executePullOperation(
-	c fiber.Ctx,
+// resolveConnectorName pulls the connector slug out of the request
+// context when available. Returns "" on unknown — the caller uses
+// this purely for auditing on the OperationJob row, so an empty
+// value is an acceptable "unknown connector" marker.
+func resolveConnectorName(c fiber.Ctx) string {
+	if info, ok := c.Locals("connectorInfo").(*models.ConnectorDetails); ok && info != nil {
+		return info.Name
+	}
+	return ""
+}
+
+// parsePullFormFields captures the path and any additional form
+// fields. Extra captures whatever the connector provider may consume
+// inside the worker — the common handler doesn't look at them, but
+// they need to be lifted out of the request context now because
+// Fiber's request body is not safe to read from a background
+// goroutine.
+func parsePullFormFields(c fiber.Ctx) (string, map[string]string, error) {
+	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
+	if err != nil {
+		return "", nil, err
+	}
+	// ParseFormFields only returns the fields we asked about. That
+	// matches the legacy handler's shape, and the worker re-reads
+	// additional fields from c.Locals / fiber's form as needed —
+	// the providers currently only inspect "path", so an
+	// additional-fields map is reserved for future extensions.
+	return fields["path"], fields, nil
+}
+
+// buildPullWorker composes the WorkerFunc the JobManager runs. The
+// closure holds references to the provider, the request-time fiber
+// context (captured so providers that inspect c.Locals still work),
+// and the parsed form fields. The worker body runs outside the fiber
+// request lifecycle, so every reference it reaches must be safe to
+// dereference after the accept response has been written — providers
+// that rely on c.Locals for values other than "operation" need to
+// ensure those values are also pre-captured here in the future.
+//
+// Unlike the pre-guard implementation this no longer takes the
+// advisory lock internally — JobManager.Begin now holds it on the
+// guard's pinned PG session for the whole job lifetime. The
+// worker purely runs provider code.
+func buildPullWorker(
 	provider PullOperationProvider,
 	logger *slog.Logger,
 	dbInstance *db.Database,
 	operation *db.Operation,
-) error {
-	// Log operation execution start
-	LogOperationEvent(
-		dbInstance,
-		logger,
-		operation.ID,
-		db.LogEventTypeInfo,
-		"Pull operation execution started",
-		nil,
-	)
-
-	// Baseline heartbeat — fires every heartbeatInterval for the
-	// duration of the operation, even if the provider's
-	// ProgressHandler is nil. The goroutine exits as soon as the
-	// deferred close(heartbeatStop) runs, before executePullOperation
-	// returns, so we never leak past the operation.
-	heartbeatStop := make(chan struct{})
-	go startHeartbeat(dbInstance, logger, operation.ID, "operation/pull", heartbeatStop)
-	defer close(heartbeatStop)
-
-	// Initialize the client
-	client, _, cleanup, err := provider.InitializeClient(c, logger, operation)
-	if err != nil {
+	rawPath string,
+	_ map[string]string,
+) WorkerFunc {
+	return func(
+		ctx context.Context,
+		appendProgress func(sdkprogress.ProgressEvent),
+		resultPath string,
+	) error {
 		LogOperationEvent(
 			dbInstance,
 			logger,
 			operation.ID,
-			db.LogEventTypeError,
-			"Failed to initialize client for pull operation",
-			map[string]any{
-				"error": err.Error(),
-			},
+			db.LogEventTypeInfo,
+			"Pull operation execution started",
+			nil,
 		)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to initialize client: " + err.Error(),
-		})
-	}
-	defer cleanup()
 
-	// Parse "path" field from form
-	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
-	if err != nil {
-		LogOperationEvent(
-			dbInstance,
-			logger,
-			operation.ID,
-			db.LogEventTypeError,
-			"Failed to parse form fields for pull operation",
-			map[string]any{
-				"error": err.Error(),
-			},
-		)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
+		// Heartbeat — fires every heartbeatInterval for the
+		// duration of the job so idle clients still see motion in
+		// the progress slice even when the provider's own handler
+		// is silent. The heartbeat goes through appendProgress →
+		// UpdateOperationJobProgress, which bumps updated_at and
+		// keeps the janitor's stuck-reclaim pass from false-
+		// positiving on live-but-quiet workers.
+		heartbeatStop := make(chan struct{})
+		go startJobHeartbeat(ctx, "operation/pull", appendProgress, heartbeatStop)
+		defer close(heartbeatStop)
 
-	// Pass raw path to provider for connector-specific processing
-	rawPath := fields["path"]
+		// Inject the job's appendProgress into ctx so that
+		// NewProgressHandlerWithContext — called from every
+		// provider's InitializeClient via NewProgressHandler — picks
+		// it up and fans every vendor-originated page / batch /
+		// rate-limit event into the job's cumulative Progress slice.
+		// The provider's own OperationLog path is unchanged; this is
+		// purely an additional sink.
+		jobCtx := WithJobProgress(ctx, appendProgress)
 
-	// Prepare the object to store the result files
-	resultFiles := make(map[string][]byte)
-
-	// Determine mode by path
-	if rawPath == "" {
-		// Return all available files
-		resultPaths, resultContents, getErr := provider.GetAllFiles(c, client)
-		if getErr != nil {
-			logger.Error("failed to get all files", "error", getErr)
+		client, _, cleanup, err := provider.InitializeClient(jobCtx, logger, operation)
+		if err != nil {
 			LogOperationEvent(
 				dbInstance,
 				logger,
 				operation.ID,
+				db.LogEventTypeError,
+				"Failed to initialize client for pull operation",
+				map[string]any{"error": err.Error()},
+			)
+			return fmt.Errorf("initialize client: %w", err)
+		}
+		defer cleanup()
+
+		resultFiles, err := collectPullResults(jobCtx, provider, client, operation, rawPath, dbInstance, logger)
+		if err != nil {
+			return err
+		}
+
+		if writeErr := writeZipToPath(resultPath, resultFiles); writeErr != nil {
+			LogOperationEvent(
+				dbInstance, logger, operation.ID,
+				db.LogEventTypeError,
+				"Failed to write zip archive for pull operation",
+				map[string]any{"error": writeErr.Error()},
+			)
+			return writeErr
+		}
+
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Pull operation completed successfully",
+			map[string]any{
+				"file_count": len(resultFiles),
+				"path":       rawPath,
+			},
+		)
+		return nil
+	}
+}
+
+// collectPullResults dispatches to GetAllFiles or GetFileByPath based
+// on rawPath and returns the file map. Honours ctx cancellation via
+// an early check — providers themselves are expected to consult ctx
+// too, but a short-circuit here avoids doing any work if the job was
+// cancelled before the worker ran far enough to call the provider.
+func collectPullResults(
+	ctx context.Context,
+	provider PullOperationProvider,
+	client any,
+	operation *db.Operation,
+	rawPath string,
+	dbInstance *db.Database,
+	logger *slog.Logger,
+) (map[string][]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	resultFiles := make(map[string][]byte)
+	if rawPath == "" {
+		paths, contents, err := provider.GetAllFiles(ctx, client, operation)
+		if err != nil {
+			LogOperationEvent(
+				dbInstance, logger, operation.ID,
 				db.LogEventTypeError,
 				"Failed to get all files during pull operation",
-				map[string]any{
-					"error": getErr.Error(),
-				},
+				map[string]any{"error": err.Error()},
 			)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to get all files: " + getErr.Error(),
-			})
+			return nil, fmt.Errorf("get all files: %w", err)
 		}
-		for i, resultPath := range resultPaths {
-			resultFiles[resultPath] = resultContents[i]
+		for i, p := range paths {
+			resultFiles[p] = contents[i]
 		}
-	} else {
-		// Return a specific file
-		resultPath, resultContent, getErr := provider.GetFileByPath(c, client, rawPath)
-		if getErr != nil {
-			logger.Error("failed to get file", "error", getErr)
-			LogOperationEvent(
-				dbInstance,
-				logger,
-				operation.ID,
-				db.LogEventTypeError,
-				"Failed to get file during pull operation",
-				map[string]any{
-					"error": getErr.Error(),
-					"path":  rawPath,
-				},
-			)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to get file: " + getErr.Error(),
-			})
-		}
-		resultFiles[resultPath] = resultContent
+		return resultFiles, nil
 	}
 
-	// Build the zip into a buffer. The file contents are already in memory
-	// (from GetAllFiles/GetFileByPath), so buffering the zip adds negligible
-	// overhead and avoids the deadlock that SendStreamWriter would cause.
-	var buf bytes.Buffer
-	zipWriter := zip.NewWriter(&buf)
-
-	for filePath, content := range resultFiles {
-		entry, createErr := zipWriter.Create(filePath)
-		if createErr != nil {
-			LogOperationEvent(
-				dbInstance, logger, operation.ID,
-				db.LogEventTypeError,
-				"Failed to create zip entry during pull operation",
-				map[string]any{
-					"error": createErr.Error(),
-					"path":  filePath,
-				},
-			)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to create zip entry: " + createErr.Error(),
-			})
-		}
-		if _, writeErr := entry.Write(content); writeErr != nil {
-			LogOperationEvent(
-				dbInstance, logger, operation.ID,
-				db.LogEventTypeError,
-				"Failed to write zip entry during pull operation",
-				map[string]any{
-					"error": writeErr.Error(),
-					"path":  filePath,
-				},
-			)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to write zip entry: " + writeErr.Error(),
-			})
-		}
-	}
-
-	if closeErr := zipWriter.Close(); closeErr != nil {
+	path, content, err := provider.GetFileByPath(ctx, client, operation, rawPath)
+	if err != nil {
 		LogOperationEvent(
 			dbInstance, logger, operation.ID,
 			db.LogEventTypeError,
-			"Failed to finalize zip archive during pull operation",
-			map[string]any{
-				"error": closeErr.Error(),
-			},
+			"Failed to get file during pull operation",
+			map[string]any{"error": err.Error(), "path": rawPath},
 		)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to finalize zip archive: " + closeErr.Error(),
-		})
+		return nil, fmt.Errorf("get file by path: %w", err)
+	}
+	resultFiles[path] = content
+	return resultFiles, nil
+}
+
+// writeZipToPath streams the collected files into a zip at dest. If
+// an error occurs mid-way the partial file is removed so the result
+// endpoint's stat check surfaces 410 rather than serving a corrupted
+// zip.
+func writeZipToPath(dest string, files map[string][]byte) error {
+	f, err := os.Create(dest)
+	if err != nil {
+		return fmt.Errorf("create result file: %w", err)
+	}
+	cleanup := func(closeErr error) error {
+		if cerr := f.Close(); cerr != nil && closeErr == nil {
+			closeErr = cerr
+		}
+		if closeErr != nil {
+			_ = os.Remove(dest)
+		}
+		return closeErr
 	}
 
-	// Log success after all entries have been written.
-	LogOperationEvent(
-		dbInstance,
-		logger,
-		operation.ID,
-		db.LogEventTypeInfo,
-		"Pull operation completed successfully",
-		map[string]any{
-			"file_count": len(resultFiles),
-			"path":       rawPath,
-		},
-	)
+	zw := zip.NewWriter(f)
+	for filePath, content := range files {
+		entry, createErr := zw.Create(filePath)
+		if createErr != nil {
+			_ = zw.Close()
+			return cleanup(fmt.Errorf("create zip entry %q: %w", filePath, createErr))
+		}
+		if _, writeErr := entry.Write(content); writeErr != nil {
+			_ = zw.Close()
+			return cleanup(fmt.Errorf("write zip entry %q: %w", filePath, writeErr))
+		}
+	}
+	if closeErr := zw.Close(); closeErr != nil {
+		return cleanup(fmt.Errorf("close zip writer: %w", closeErr))
+	}
+	return cleanup(nil)
+}
 
-	c.Set("Content-Type", "application/zip")
-	c.Set("Content-Disposition", "attachment; filename=result.zip")
-	return c.Status(fiber.StatusOK).Send(buf.Bytes())
+// startJobHeartbeat emits a ProgressKindHeartbeat every
+// heartbeatInterval until stop is closed or ctx is cancelled. Mirrors
+// the pre-async startHeartbeat but targets the job's progress slice
+// instead of the OperationLog directly.
+func startJobHeartbeat(
+	ctx context.Context,
+	resourcePath string,
+	appendProgress func(sdkprogress.ProgressEvent),
+	stop <-chan struct{},
+) {
+	ticker := time.NewTicker(heartbeatInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-stop:
+			return
+		case <-ticker.C:
+			appendProgress(sdkprogress.ProgressEvent{
+				Kind:         sdkprogress.ProgressKindHeartbeat,
+				ResourcePath: resourcePath,
+			})
+		}
+	}
 }
 
 // NotSupportedPullProvider provides a default implementation for connectors that don't support pull operations.
@@ -280,7 +395,7 @@ type NotSupportedPullProvider struct{}
 
 // InitializeClient returns an error indicating pull operations are not supported.
 func (p *NotSupportedPullProvider) InitializeClient(
-	_ fiber.Ctx,
+	_ context.Context,
 	_ *slog.Logger,
 	_ *db.Operation,
 ) (any, *string, func(), error) {
@@ -291,8 +406,9 @@ func (p *NotSupportedPullProvider) InitializeClient(
 
 // GetAllFiles returns an error indicating pull operations are not supported.
 func (p *NotSupportedPullProvider) GetAllFiles(
-	_ fiber.Ctx,
+	_ context.Context,
 	_ any,
+	_ *db.Operation,
 ) ([]string, [][]byte, error) {
 	return nil, nil, errors.New(
 		"pull operations are not supported by this connector",
@@ -301,8 +417,9 @@ func (p *NotSupportedPullProvider) GetAllFiles(
 
 // GetFileByPath returns an error indicating pull operations are not supported.
 func (p *NotSupportedPullProvider) GetFileByPath(
-	_ fiber.Ctx,
+	_ context.Context,
 	_ any,
+	_ *db.Operation,
 	_ string,
 ) (string, []byte, error) {
 	return "", nil, errors.New(
@@ -310,13 +427,8 @@ func (p *NotSupportedPullProvider) GetFileByPath(
 	)
 }
 
-// ProgressHandler returns nil — providers that reject every pull
-// call have nothing to observe. The common pull handler's baseline
-// heartbeat is still installed anyway, so a misrouted request to a
-// push-only connector still surfaces a log row.
-func (p *NotSupportedPullProvider) ProgressHandler(
-	_ *db.Operation,
-) ProgressHandler {
+// ProgressHandler returns nil — providers that reject every pull call have nothing to observe.
+func (p *NotSupportedPullProvider) ProgressHandler(_ *db.Operation) ProgressHandler {
 	return nil
 }
 

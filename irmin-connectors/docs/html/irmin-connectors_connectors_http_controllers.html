@@ -90,17 +90,6 @@ func (cs *Controllers) Info(c fiber.Ctx) error
     fiber.Map "Unauthorized - invalid or missing authentication" @Failure 500
     {object} fiber.Map "Internal server error" @Router /http/info [get]
 
-func (cs *Controllers) OperationCancel(c fiber.Ctx) error
-    OperationCancel godoc @Summary Cancel HTTP operation @Description Cancel
-    an ongoing HTTP operation using the operation token @Tags http @Security
-    SystemTokenAuth @Accept json @Produce json @Param operation_token formData
-    string true "Operation token received from operation/init" @Success 200
-    {object} fiber.Map "Operation cancelled successfully" @Failure 400 {object}
-    fiber.Map "Bad request - invalid operation token" @Failure 401 {object}
-    fiber.Map "Unauthorized - invalid or missing authentication" @Failure 404
-    {object} fiber.Map "Operation not found" @Failure 500 {object} fiber.Map
-    "Internal server error" @Router /http/operation/cancel [post]
-
 func (cs *Controllers) OperationInit(c fiber.Ctx) error
     OperationInit godoc @Summary Initialize HTTP operation @Description
     Initialize a new HTTP operation with connection details and settings,
@@ -180,18 +169,6 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
     found" @Failure 500 {object} fiber.Map "Internal server error" @Router
     /http/operation/schema/{operation} [post]
 
-func (cs *Controllers) OperationStatus(c fiber.Ctx) error
-    OperationStatus godoc @Summary Get HTTP operation status @Description Get
-    the current status of an HTTP operation using the operation token @Tags http
-    @Security SystemTokenAuth @Accept json @Produce json @Param operation_token
-    formData string true "Operation token received from operation/init"
-    @Success 200 {object} common.OperationStatus "Operation status retrieved
-    successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
-    operation token" @Failure 401 {object} fiber.Map "Unauthorized - invalid
-    or missing authentication" @Failure 404 {object} fiber.Map "Operation not
-    found" @Failure 500 {object} fiber.Map "Internal server error" @Router
-    /http/operation/status [post]
-
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
     SubscribeToChanges godoc @Summary HTTP connector does not support
     webhook subscriptions @Description HTTP connector does not support
@@ -234,17 +211,21 @@ type HTTPPullProvider struct {
 }
     HTTPPullProvider implements the PullOperationProvider interface for HTTP.
 
-func (p *HTTPPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error)
+func (p *HTTPPullProvider) GetAllFiles(
+	_ context.Context, client any, operation *db.Operation,
+) ([]string, [][]byte, error)
     GetAllFiles makes a request to the configured endpoint and returns the
     response as a file.
 
-func (p *HTTPPullProvider) GetFileByPath(c fiber.Ctx, client any, path string) (string, []byte, error)
+func (p *HTTPPullProvider) GetFileByPath(
+	_ context.Context, client any, operation *db.Operation, path string,
+) (string, []byte, error)
     GetFileByPath makes a request to the configured endpoint with an optional
     path modification. The path parameter is used to modify the request URL
     (absolute path replaces, relative path appends).
 
 func (p *HTTPPullProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error)

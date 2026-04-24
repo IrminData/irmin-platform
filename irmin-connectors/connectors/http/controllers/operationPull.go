@@ -1,6 +1,7 @@
 package httpcontrollers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"irmin-connectors/connectors/common"
@@ -27,11 +28,11 @@ func (p *HTTPPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandl
 
 // InitializeClient initializes the HTTP client for pull operations.
 func (p *HTTPPullProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
-	client, err := httpclient.InitHTTPClient(c, logger, operation)
+	client, err := httpclient.InitHTTPClient(ctx, logger, operation)
 	if err != nil {
 		return nil, nil, func() {}, fmt.Errorf("failed to initialize HTTP client: %w", err)
 	}
@@ -47,13 +48,13 @@ func (p *HTTPPullProvider) InitializeClient(
 // GetAllFiles makes a request to the configured endpoint and returns the response as a file.
 //
 //nolint:gocognit // Complex? Maybe, but it's okay for now
-func (p *HTTPPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error) {
+func (p *HTTPPullProvider) GetAllFiles(
+	_ context.Context, client any, operation *db.Operation,
+) ([]string, [][]byte, error) {
 	httpClient, ok := client.(*httpclient.HTTPClient)
 	if !ok {
 		return nil, nil, errors.New("invalid client type for HTTP pull provider")
 	}
-
-	operation, _ := c.Locals("operation").(*db.Operation)
 
 	// Make the HTTP request
 	resp, err := httpClient.MakeRequest()
@@ -171,13 +172,13 @@ func (p *HTTPPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]b
 // The path parameter is used to modify the request URL (absolute path replaces, relative path appends).
 //
 //nolint:gocognit // Complex? Maybe, but it's okay for now
-func (p *HTTPPullProvider) GetFileByPath(c fiber.Ctx, client any, path string) (string, []byte, error) {
+func (p *HTTPPullProvider) GetFileByPath(
+	_ context.Context, client any, operation *db.Operation, path string,
+) (string, []byte, error) {
 	httpClient, ok := client.(*httpclient.HTTPClient)
 	if !ok {
 		return "", nil, errors.New("invalid client type for HTTP pull provider")
 	}
-
-	operation, _ := c.Locals("operation").(*db.Operation)
 
 	// If a path is provided, use it to modify the request URL
 	if path != "" {
@@ -321,5 +322,5 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 		dbInstance: cs.DB,
 		logger:     cs.Logger,
 	}
-	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
+	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB, cs.App)
 }

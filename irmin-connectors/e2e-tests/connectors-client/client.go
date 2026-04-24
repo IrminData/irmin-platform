@@ -17,7 +17,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -480,43 +479,6 @@ func (c *Client) InitOperation(ctx context.Context, details, settings map[string
 	}
 
 	return &operation, nil
-}
-
-// GetOperationStatus retrieves the status of an operation.
-func (c *Client) GetOperationStatus(ctx context.Context, operationID uint) (*OperationStatus, error) {
-	formFields := map[string]string{
-		"operation_id": strconv.FormatUint(uint64(operationID), 10),
-	}
-
-	var operationStatus OperationStatus
-	if err := c.FetchAPI(ctx, RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    "/operation/status",
-		FormFields:  formFields,
-		ContentType: "application/x-www-form-urlencoded",
-	}, &operationStatus); err != nil {
-		return nil, err
-	}
-
-	return &operationStatus, nil
-}
-
-// CancelOperation cancels an operation.
-func (c *Client) CancelOperation(ctx context.Context, operationID uint) error {
-	formFields := map[string]string{
-		"operation_id": strconv.FormatUint(uint64(operationID), 10),
-	}
-
-	if err := c.FetchAPI(ctx, RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    "/operation/cancel",
-		FormFields:  formFields,
-		ContentType: "application/x-www-form-urlencoded",
-	}, nil); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // GetSchema retrieves the schema for a specific operation method.

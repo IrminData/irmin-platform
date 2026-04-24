@@ -84,17 +84,6 @@ func (cs *Controllers) Info(c fiber.Ctx) error
     missing authentication" @Failure 500 {object} fiber.Map "Internal server
     error" @Router /pinecone/info [get]
 
-func (cs *Controllers) OperationCancel(c fiber.Ctx) error
-    OperationCancel godoc @Summary Cancel Pinecone operation @Description Cancel
-    an ongoing Pinecone operation using the operation token @Tags pinecone
-    @Security SystemTokenAuth @Accept json @Produce json @Param operation_token
-    formData string true "Operation token received from operation/init" @Success
-    200 {object} fiber.Map "Operation cancelled successfully" @Failure 400
-    {object} fiber.Map "Bad request - invalid operation token" @Failure 401
-    {object} fiber.Map "Unauthorized - invalid or missing authentication"
-    @Failure 404 {object} fiber.Map "Operation not found" @Failure 500 {object}
-    fiber.Map "Internal server error" @Router /pinecone/operation/cancel [post]
-
 func (cs *Controllers) OperationInit(c fiber.Ctx) error
     OperationInit godoc @Summary Initialize Pinecone operation @Description
     Initialize a new Pinecone operation with connection details and settings,
@@ -164,18 +153,6 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
     "Internal server error" @Router /pinecone/operation/schema/{operation}
     [post]
 
-func (cs *Controllers) OperationStatus(c fiber.Ctx) error
-    OperationStatus godoc @Summary Get Pinecone operation status @Description
-    Get the current status of a Pinecone operation using the operation token
-    @Tags pinecone @Security SystemTokenAuth @Accept json @Produce json
-    @Param operation_token formData string true "Operation token received from
-    operation/init" @Success 200 {object} common.OperationStatus "Operation
-    status retrieved successfully" @Failure 400 {object} fiber.Map "Bad request
-    - invalid operation token" @Failure 401 {object} fiber.Map "Unauthorized
-    - invalid or missing authentication" @Failure 404 {object} fiber.Map
-    "Operation not found" @Failure 500 {object} fiber.Map "Internal server
-    error" @Router /pinecone/operation/status [post]
-
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
     SubscribeToChanges is not supported by Pinecone connector.
 
@@ -204,14 +181,18 @@ type PineconePullProvider struct {
     PineconePullProvider implements the PullOperationProvider interface for
     Pinecone.
 
-func (p *PineconePullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error)
+func (p *PineconePullProvider) GetAllFiles(
+	ctx context.Context, client any, operation *db.Operation,
+) ([]string, [][]byte, error)
     GetAllFiles retrieves all vectors from Pinecone as a parquet file.
 
-func (p *PineconePullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath string) (string, []byte, error)
+func (p *PineconePullProvider) GetFileByPath(
+	ctx context.Context, client any, operation *db.Operation, rawPath string,
+) (string, []byte, error)
     GetFileByPath handles both search (path = query) and fetch operations.
 
 func (p *PineconePullProvider) InitializeClient(
-	_ fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error)

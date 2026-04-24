@@ -18,6 +18,7 @@ import (
 	"irmin-connectors/utils"
 
 	"github.com/IrminData/irmin-sdk-go/duckdb"
+	sdkmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 )
@@ -484,35 +485,75 @@ func (p *PineconePushProvider) validateParquetSchema(
 // @Failure 404 {object} fiber.Map "Operation not found"
 // @Failure 500 {object} fiber.Map "Internal server error"
 // @Router /pinecone/operation/push [post]
-func (cs *Controllers) OperationPush(c fiber.Ctx) error {
+func (cs *Controllers) OperationPush(c fiber.Ctx) (retErr error) {
+	manager, managerOK := cs.App.JobManager.(*common.JobManager)
+	if !managerOK || manager == nil {
+		return common.RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			sdkmodels.JobErrorReasonInternal,
+			errors.New("job manager not configured"),
+			"",
+		)
+	}
+
 	// Get the operation from the context
 	operation, ok := c.Locals("operation").(*db.Operation)
 	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid operation type in context",
-		})
+		return common.RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			sdkmodels.JobErrorReasonInternal,
+			errors.New("invalid operation type in context"),
+			"",
+		)
 	}
 
-	// Use Level 2 lock to prevent concurrent execution of the same operation
-	locked, err := db.TryLockOperationExecution(cs.DB.DB, operation.ID)
-	if err != nil {
-		cs.Logger.Error("failed to acquire operation execution lock", "error", err, "operation_id", operation.ID)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to acquire operation lock",
-		})
+	guard, alreadyErr, beginErr := manager.Begin(common.BeginOperationJobInput{
+		OperationID:             operation.ID,
+		ConnectorRegistrationID: operation.ConnectorRegistrationID,
+		ConnectorName:           "pinecone",
+		Kind:                    "push",
+	})
+	if alreadyErr != nil {
+		return common.RespondAlreadyRunning(c, alreadyErr)
 	}
-	if !locked {
-		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-			"error": "Operation is already running",
-		})
+	if beginErr != nil {
+		cs.Logger.Error("failed to acquire operation execution lock",
+			"error", beginErr, "operation_id", operation.ID)
+		return common.RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			sdkmodels.JobErrorReasonTransientDB,
+			beginErr,
+			"",
+		)
 	}
 
-	// Ensure lock is released when operation completes
+	outcome := common.JobOutcome{
+		Status: sdkmodels.OperationJobStatusFailed,
+		Error:  "handler exited without setting outcome",
+	}
 	defer func() {
-		if unlockErr := db.UnlockOperationExecution(cs.DB.DB, operation.ID); unlockErr != nil {
-			cs.Logger.Error("failed to release operation execution lock",
-				"error", unlockErr, "operation_id", operation.ID)
+		// See common/operationPush.go for the rationale on
+		// overwriting retErr with a structured 500 rather than
+		// re-panicking into fiber's generic panic middleware.
+		if r := recover(); r != nil {
+			cs.Logger.Error("pinecone push panic recovered",
+				"error", fmt.Sprintf("%v", r), "operation_id", operation.ID)
+			outcome = common.JobOutcome{
+				Status: sdkmodels.OperationJobStatusFailed,
+				Error:  fmt.Sprintf("handler panic: %v", r),
+			}
+			retErr = common.RespondJobError(
+				c,
+				fiber.StatusInternalServerError,
+				sdkmodels.JobErrorReasonInternal,
+				fmt.Errorf("handler panic: %v", r),
+				guard.JobID(),
+			)
 		}
+		guard.Release(outcome)
 	}()
 
 	// Log operation execution start
@@ -530,94 +571,46 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 		logger:     cs.Logger,
 	}
 
-	// Initialize the client
 	client, _, cleanup, initErr := provider.InitializeClient(c, cs.Logger, operation)
 	if initErr != nil {
-		common.LogOperationEvent(
-			cs.DB,
-			cs.Logger,
-			operation.ID,
-			db.LogEventTypeError,
-			"Failed to initialize Pinecone client for push operation",
-			map[string]any{
-				"error": initErr.Error(),
-			},
-		)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to initialize client: " + initErr.Error(),
-		})
+		logPineconePushFailure(cs, operation.ID,
+			"Failed to initialize Pinecone client for push operation", initErr)
+		return common.MarkFailedAndRespond(c, &outcome,
+			fiber.StatusInternalServerError, "initialize client", initErr)
 	}
 	defer cleanup()
 
-	// Parse form fields for target path
 	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
 	if err != nil {
-		common.LogOperationEvent(
-			cs.DB,
-			cs.Logger,
-			operation.ID,
-			db.LogEventTypeError,
-			"Failed to parse form fields for push operation",
-			map[string]any{
-				"error": err.Error(),
-			},
-		)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		logPineconePushFailure(cs, operation.ID,
+			"Failed to parse form fields for push operation", err)
+		return common.MarkFailedAndRespond(c, &outcome,
+			fiber.StatusBadRequest, "parse form fields", err)
 	}
 	rawPath := fields["path"]
 
-	// Handle uploaded file
 	files, err := handleUploadedFile(c)
 	if err != nil {
-		common.LogOperationEvent(
-			cs.DB,
-			cs.Logger,
-			operation.ID,
-			db.LogEventTypeError,
-			"Failed to handle uploaded file for push operation",
-			map[string]any{
-				"error": err.Error(),
-			},
-		)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		logPineconePushFailure(cs, operation.ID,
+			"Failed to handle uploaded file for push operation", err)
+		return common.MarkFailedAndRespond(c, &outcome,
+			fiber.StatusBadRequest, "upload", err)
 	}
 
 	if len(files) == 0 {
-		common.LogOperationEvent(
-			cs.DB,
-			cs.Logger,
-			operation.ID,
-			db.LogEventTypeError,
-			"No files found in uploaded ZIP",
-			nil,
-		)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "No files found in uploaded ZIP",
-		})
+		common.LogOperationEvent(cs.DB, cs.Logger, operation.ID,
+			db.LogEventTypeError, "No files found in uploaded ZIP", nil)
+		return common.MarkFailedAndRespond(c, &outcome,
+			fiber.StatusBadRequest, "upload", errors.New("no files found in uploaded zip"))
 	}
 
-	// Process files using provider
-	err = provider.ProcessFiles(c, client, files, rawPath)
-	if err != nil {
-		cs.Logger.Error("failed to process files", "error", err)
-		common.LogOperationEvent(
-			cs.DB,
-			cs.Logger,
-			operation.ID,
-			db.LogEventTypeError,
-			"Failed to process files during push operation",
-			map[string]any{
-				"error": err.Error(),
-				"path":  rawPath,
-			},
-		)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to process files: " + err.Error(),
-		})
+	if procErr := provider.ProcessFiles(c, client, files, rawPath); procErr != nil {
+		cs.Logger.Error("failed to process files", "error", procErr)
+		common.LogOperationEvent(cs.DB, cs.Logger, operation.ID,
+			db.LogEventTypeError, "Failed to process files during push operation",
+			map[string]any{"error": procErr.Error(), "path": rawPath})
+		return common.MarkFailedAndRespond(c, &outcome,
+			fiber.StatusInternalServerError, "process files", procErr)
 	}
 
 	// Log successful completion
@@ -633,10 +626,25 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 		},
 	)
 
+	outcome = common.JobOutcome{Status: sdkmodels.OperationJobStatusComplete}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Successfully pushed data to Pinecone",
 		"status":  "completed",
 	})
+}
+
+// logPineconePushFailure emits the canonical error-level operation
+// log entry used throughout OperationPush. Centralised so the log
+// shape stays consistent and the handler stays short.
+func logPineconePushFailure(cs *Controllers, operationID uint, msg string, err error) {
+	common.LogOperationEvent(
+		cs.DB,
+		cs.Logger,
+		operationID,
+		db.LogEventTypeError,
+		msg,
+		map[string]any{"error": err.Error()},
+	)
 }
 
 // handleUploadedFile processes the uploaded ZIP file and returns the extracted files.

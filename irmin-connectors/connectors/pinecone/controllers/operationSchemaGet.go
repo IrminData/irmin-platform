@@ -180,5 +180,5 @@ func (p *PineconeSchemaProvider) GetSupportedOperationTypes() []string {
 // @Router /pinecone/operation/schema/{operation} [post]
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 	provider := &PineconeSchemaProvider{}
-	return common.HandleOperationSchemaGet(c, provider, cs.Logger, cs.DB)
+	return common.HandleOperationSchemaGet(c, provider, cs.Logger, cs.DB, cs.App)
 }

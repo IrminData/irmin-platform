@@ -260,7 +260,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 		dbInstance: cs.DB,
 		logger:     cs.Logger,
 	}
-	return common.HandleOperationPush(c, provider, cs.Logger, cs.DB)
+	return common.HandleOperationPush(c, provider, cs.Logger, cs.DB, cs.App)
 }
 
 // getContentTypeForExtension returns the appropriate Content-Type for a file extension using the SDK.

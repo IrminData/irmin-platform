@@ -538,8 +538,8 @@ func TestClient_ProgressHandler_EmitsPerPageAndRateLimit(t *testing.T) {
 	// Rate-limit event: exactly one (the 429 on call #1).
 	if len(rateLimitEvents) != 1 {
 		t.Errorf("rate-limit events = %d, want 1", len(rateLimitEvents))
-	} else if ev := rateLimitEvents[0]; ev.ResourcePath != "/v1/customers" || ev.Attempt != 0 {
-		t.Errorf("rate-limit event shape = %+v, want path=/v1/customers attempt=0", ev)
+	} else if ev := rateLimitEvents[0]; ev.ResourcePath != "/v1/customers" || ev.Attempt != 1 {
+		t.Errorf("rate-limit event shape = %+v, want path=/v1/customers attempt=1", ev)
 	}
 
 	// Page events: one per page (2 pages).

@@ -1,6 +1,7 @@
 package sftpcontrollers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"irmin-connectors/connectors/common"
@@ -16,6 +17,9 @@ import (
 type SFTPPullProvider struct {
 	dbInstance *db.Database
 	logger     *slog.Logger
+	// ctx is hydrated by InitializeClient before ProgressHandler
+	// wiring — see StripePullProvider.ctx for the full rationale.
+	ctx context.Context
 }
 
 // ProgressHandler returns the per-file observability callback the
@@ -31,19 +35,21 @@ type SFTPPullProvider struct {
 // File events fire per file (caller-throttled — one file = one
 // emission); rate-limit events fire per retry attempt.
 func (p *SFTPPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
-	return common.NewProgressHandler(p.dbInstance, p.logger, operation)
+	return common.NewProgressHandlerWithContext(p.ctx, p.dbInstance, p.logger, operation)
 }
 
 // InitializeClient initializes the SFTP client for pull operations.
 func (p *SFTPPullProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
-	// Hydrate logger before building the handler so the closure
-	// p.ProgressHandler returns has a valid logger.
+	// Hydrate logger + ctx before building the handler so the
+	// closure p.ProgressHandler returns has a valid logger and can
+	// fan events into the async-pull job's Progress slice.
 	p.logger = logger
-	client, err := sftpclient.InitSftpClient(c, logger, operation)
+	p.ctx = ctx
+	client, err := sftpclient.InitSftpClient(ctx, logger, operation)
 	if err != nil {
 		return nil, nil, func() {}, fmt.Errorf("failed to initialize SFTP client: %w", err)
 	}
@@ -57,7 +63,7 @@ func (p *SFTPPullProvider) InitializeClient(
 
 	cleanup := func() {
 		if closeErr := client.Close(); closeErr != nil {
-			logger.Error("Failed to close SFTP client", "error", closeErr)
+			logger.ErrorContext(ctx, "Failed to close SFTP client", "error", closeErr)
 		}
 	}
 
@@ -66,17 +72,17 @@ func (p *SFTPPullProvider) InitializeClient(
 }
 
 // GetAllFiles downloads all files from the root directory.
-func (p *SFTPPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error) {
+func (p *SFTPPullProvider) GetAllFiles(
+	_ context.Context, client any, operation *db.Operation,
+) ([]string, [][]byte, error) {
 	sftpClient, ok := client.(*sftpclient.SftpClient)
 	if !ok {
 		return nil, nil, errors.New("invalid client type for SFTP pull provider")
 	}
 
-	operation, _ := c.Locals("operation").(*db.Operation)
-
 	// For SFTP, "all files" means all files in the root directory
 	path := "/"
-	filePaths, fileContents, err := p.downloadFromPath(c, sftpClient, path)
+	filePaths, fileContents, err := p.downloadFromPath(operation, sftpClient, path)
 
 	if err != nil && operation != nil && p.dbInstance != nil && p.logger != nil {
 		common.LogOperationEvent(
@@ -96,13 +102,13 @@ func (p *SFTPPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]b
 }
 
 // GetFileByPath downloads a specific file by path.
-func (p *SFTPPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath string) (string, []byte, error) {
+func (p *SFTPPullProvider) GetFileByPath(
+	_ context.Context, client any, operation *db.Operation, rawPath string,
+) (string, []byte, error) {
 	sftpClient, ok := client.(*sftpclient.SftpClient)
 	if !ok {
 		return "", nil, errors.New("invalid client type for SFTP pull provider")
 	}
-
-	operation, _ := c.Locals("operation").(*db.Operation)
 
 	// SFTP-specific path processing - normalize for file system
 	path := normalizePath(rawPath)
@@ -185,12 +191,10 @@ func (p *SFTPPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath string
 //
 //nolint:gocognit // Complex? Maybe, but it's okay for now
 func (p *SFTPPullProvider) downloadFromPath(
-	c fiber.Ctx,
+	operation *db.Operation,
 	client *sftpclient.SftpClient,
 	path string,
 ) ([]string, [][]byte, error) {
-	operation, _ := c.Locals("operation").(*db.Operation)
-
 	// Check if path exists and whether it's a file or directory
 	fileInfo, err := client.GetFileInfo(path)
 	if err != nil {
@@ -318,5 +322,5 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 		dbInstance: cs.DB,
 		logger:     cs.Logger,
 	}
-	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
+	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB, cs.App)
 }

@@ -1,12 +1,48 @@
 package common
 
 import (
+	"context"
 	"irmin-connectors/db"
 	"log/slog"
 	"time"
 
 	sdkprogress "github.com/IrminData/irmin-sdk-go/observability"
 )
+
+// jobProgressKey is the context key used by the async-pull worker to
+// smuggle its append-progress closure into provider code without
+// changing every provider's ProgressHandler signature. When a
+// provider calls NewProgressHandler(db, logger, op) from inside
+// InitializeClient (which now receives the job-scoped ctx), the
+// returned handler fans out to the job's Progress slice as well as
+// the OperationLog.
+//
+// Type is a named struct so the key cannot collide with any other
+// context value in the process.
+type jobProgressKey struct{}
+
+// WithJobProgress returns a new ctx that carries appendProgress —
+// consumed by NewProgressHandler inside the provider's
+// InitializeClient to fan out events to the job status response. The
+// async-pull worker is the only caller; no production code outside
+// asyncOperation.go should use this directly.
+func WithJobProgress(
+	ctx context.Context,
+	appendProgress func(sdkprogress.ProgressEvent),
+) context.Context {
+	return context.WithValue(ctx, jobProgressKey{}, appendProgress)
+}
+
+// jobProgressFromContext returns the appendProgress closure set by
+// WithJobProgress, or nil if ctx carries none. nil-safe call sites
+// simply skip the fan-out.
+func jobProgressFromContext(ctx context.Context) func(sdkprogress.ProgressEvent) {
+	if ctx == nil {
+		return nil
+	}
+	fn, _ := ctx.Value(jobProgressKey{}).(func(sdkprogress.ProgressEvent))
+	return fn
+}
 
 // ProgressEvent / ProgressHandler / ProgressKind* are now canonical
 // in irmin-sdk-go/observability so every Irmin service (Core
@@ -80,12 +116,39 @@ func NewProgressHandler(
 	logger *slog.Logger,
 	operation *db.Operation,
 ) ProgressHandler {
+	return NewProgressHandlerWithContext(context.Background(), dbInstance, logger, operation)
+}
+
+// NewProgressHandlerWithContext is the async-aware variant: if ctx
+// carries a WithJobProgress closure, the returned handler fans every
+// event out to the job's Progress slice in addition to
+// LogOperationProgress, so GET /operation/status/:job_id surfaces
+// per-page / per-batch / rate-limit events to polling clients. When
+// ctx is nil or carries no appendProgress, behaviour collapses to
+// plain NewProgressHandler — legacy call sites stay unchanged.
+//
+// Providers that want the fan-out should call this from inside
+// InitializeClient (which now receives a job-scoped ctx), and pass
+// the returned handler to their vendor client in place of the
+// ctx-less NewProgressHandler. New connectors should prefer this
+// variant; the older one is retained for non-async callers (push,
+// patch) until they migrate.
+func NewProgressHandlerWithContext(
+	ctx context.Context,
+	dbInstance *db.Database,
+	logger *slog.Logger,
+	operation *db.Operation,
+) ProgressHandler {
+	appendJob := jobProgressFromContext(ctx)
 	return func(event ProgressEvent) {
 		var operationID uint
 		if operation != nil {
 			operationID = operation.ID
 		}
 		LogOperationProgress(dbInstance, logger, operationID, event)
+		if appendJob != nil {
+			appendJob(event)
+		}
 	}
 }
 

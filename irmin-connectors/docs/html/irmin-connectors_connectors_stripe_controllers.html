@@ -87,17 +87,6 @@ func (cs *Controllers) Info(c fiber.Ctx) error
     missing authentication" @Failure 500 {object} fiber.Map "Internal server
     error" @Router /stripe/info [get]
 
-func (cs *Controllers) OperationCancel(c fiber.Ctx) error
-    OperationCancel godoc @Summary Cancel Stripe operation @Description Cancel
-    an ongoing Stripe operation using the operation token @Tags stripe @Security
-    SystemTokenAuth @Accept json @Produce json @Param operation_token formData
-    string true "Operation token received from operation/init" @Success 200
-    {object} fiber.Map "Operation cancelled successfully" @Failure 400 {object}
-    fiber.Map "Bad request - invalid operation token" @Failure 401 {object}
-    fiber.Map "Unauthorized - invalid or missing authentication" @Failure 404
-    {object} fiber.Map "Operation not found" @Failure 500 {object} fiber.Map
-    "Internal server error" @Router /stripe/operation/cancel [post]
-
 func (cs *Controllers) OperationInit(c fiber.Ctx) error
     OperationInit godoc @Summary Initialize Stripe operation @Description
     Initialize a new Stripe operation with connection details and settings,
@@ -184,18 +173,6 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
     found" @Failure 500 {object} fiber.Map "Internal server error" @Router
     /stripe/operation/schema/{operation} [post]
 
-func (cs *Controllers) OperationStatus(c fiber.Ctx) error
-    OperationStatus godoc @Summary Get Stripe operation status @Description
-    Get the current status of a Stripe operation using the operation token
-    @Tags stripe @Security SystemTokenAuth @Accept json @Produce json @Param
-    operation_token formData string true "Operation token received from
-    operation/init" @Success 200 {object} common.OperationStatus "Operation
-    status retrieved successfully" @Failure 400 {object} fiber.Map "Bad request
-    - invalid operation token" @Failure 401 {object} fiber.Map "Unauthorized
-    - invalid or missing authentication" @Failure 404 {object} fiber.Map
-    "Operation not found" @Failure 500 {object} fiber.Map "Internal server
-    error" @Router /stripe/operation/status [post]
-
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
     SubscribeToChanges is not supported by the Stripe connector.
 
@@ -231,14 +208,16 @@ type StripePullProvider struct {
     returned, in Stripe's wire shape, no reshaping. Downstream Irmin queries can
     ingest this with DuckDB when a columnar view is desired.
 
-func (p *StripePullProvider) GetAllFiles(c fiber.Ctx, clientAny any) ([]string, [][]byte, error)
+func (p *StripePullProvider) GetAllFiles(
+	ctx context.Context, clientAny any, operation *db.Operation,
+) ([]string, [][]byte, error)
     GetAllFiles lists every pull-enabled resource and returns one JSON file per
     resource. One Stripe rate-limit charge per resource page (100 records).
     `max_records_per_resource` on the Connection caps per-resource size so a
     million-record Stripe account doesn't OOM the connector.
 
 func (p *StripePullProvider) GetFileByPath(
-	c fiber.Ctx, clientAny any, rawPath string,
+	ctx context.Context, clientAny any, operation *db.Operation, rawPath string,
 ) (string, []byte, error)
     GetFileByPath supports two modes:
       - "customers" or "customers.json" → pull just the customers resource
@@ -254,7 +233,7 @@ func (p *StripePullProvider) GetFileByPath(
     error.
 
 func (p *StripePullProvider) InitializeClient(
-	_ fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error)

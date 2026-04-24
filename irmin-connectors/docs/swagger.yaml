@@ -1,70 +1,4 @@
 definitions:
-  common.OperationLog:
-    properties:
-      created_at:
-        type: string
-      message:
-        type: string
-      metadata:
-        additionalProperties: {}
-        type: object
-      type:
-        type: string
-    type: object
-  common.OperationStatus:
-    properties:
-      created_at:
-        type: string
-      deleted_at:
-        type: string
-      details:
-        additionalProperties:
-          type: string
-        type: object
-      logs:
-        items:
-          $ref: '#/definitions/common.OperationLog'
-        type: array
-      operation_id:
-        type: integer
-      settings:
-        additionalProperties:
-          type: string
-        type: object
-      subscriptions:
-        items:
-          $ref: '#/definitions/common.Subscription'
-        type: array
-      updated_at:
-        type: string
-    type: object
-  common.Subscription:
-    properties:
-      ID:
-        example: 1
-        type: integer
-      connector_registration_id:
-        example: 1
-        type: integer
-      created_at:
-        example: "2021-01-01T00:00:00Z"
-        type: string
-      deleted_at:
-        example: "2021-01-01T00:00:00Z"
-        type: string
-      operation_id:
-        example: 1
-        type: integer
-      updated_at:
-        example: "2021-01-01T00:00:00Z"
-        type: string
-      webhook_access_token:
-        example: "1234567890"
-        type: string
-      webhook_url:
-        example: https://example.com/webhook
-        type: string
-    type: object
   db.ConnectorRegistration:
     properties:
       connectorName:
@@ -943,45 +877,6 @@ paths:
       summary: Get Firecrawl connector information
       tags:
       - firecrawl
-  /firecrawl/operation/cancel:
-    post:
-      consumes:
-      - application/json
-      description: Cancel an ongoing Firecrawl operation using the operation token
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation cancelled successfully
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "400":
-          description: Bad request - invalid operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "404":
-          description: Operation not found
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Cancel Firecrawl operation
-      tags:
-      - firecrawl
   /firecrawl/operation/init:
     post:
       consumes:
@@ -1182,46 +1077,6 @@ paths:
       security:
       - OperationTokenAuth: []
       summary: Get Firecrawl operation schema
-      tags:
-      - firecrawl
-  /firecrawl/operation/status:
-    post:
-      consumes:
-      - application/json
-      description: Get the current status of a Firecrawl operation using the operation
-        token
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation status retrieved successfully
-          schema:
-            $ref: '#/definitions/common.OperationStatus'
-        "400":
-          description: Bad request - invalid operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "404":
-          description: Operation not found
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Get Firecrawl operation status
       tags:
       - firecrawl
   /firecrawl/operation/subscribe:
@@ -1428,45 +1283,6 @@ paths:
       security:
       - SystemTokenAuth: []
       summary: Get HTTP connector information
-      tags:
-      - http
-  /http/operation/cancel:
-    post:
-      consumes:
-      - application/json
-      description: Cancel an ongoing HTTP operation using the operation token
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation cancelled successfully
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "400":
-          description: Bad request - invalid operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "404":
-          description: Operation not found
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Cancel HTTP operation
       tags:
       - http
   /http/operation/init:
@@ -1718,46 +1534,6 @@ paths:
       summary: Get HTTP operation schema
       tags:
       - http
-  /http/operation/status:
-    post:
-      consumes:
-      - application/json
-      description: Get the current status of an HTTP operation using the operation
-        token
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation status retrieved successfully
-          schema:
-            $ref: '#/definitions/common.OperationStatus'
-        "400":
-          description: Bad request - invalid operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "404":
-          description: Operation not found
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Get HTTP operation status
-      tags:
-      - http
   /http/operation/subscribe:
     post:
       consumes:
@@ -1984,45 +1760,6 @@ paths:
       security:
       - SystemTokenAuth: []
       summary: Get MySQL connector information
-      tags:
-      - mysql
-  /mysql/operation/cancel:
-    post:
-      consumes:
-      - application/json
-      description: Cancel an ongoing MySQL operation using the operation token
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation cancelled successfully
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "400":
-          description: Bad request - invalid operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "404":
-          description: Operation not found
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Cancel MySQL operation
       tags:
       - mysql
   /mysql/operation/init:
@@ -2279,46 +2016,6 @@ paths:
       summary: Get MySQL operation schema
       tags:
       - mysql
-  /mysql/operation/status:
-    post:
-      consumes:
-      - application/json
-      description: Get the current status of a MySQL operation using the operation
-        token
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation status retrieved successfully
-          schema:
-            $ref: '#/definitions/common.OperationStatus'
-        "400":
-          description: Bad request - invalid operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "404":
-          description: Operation not found
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Get MySQL operation status
-      tags:
-      - mysql
   /mysql/operation/subscribe:
     post:
       consumes:
@@ -2549,45 +2246,6 @@ paths:
       summary: Get Pinecone connector information
       tags:
       - pinecone
-  /pinecone/operation/cancel:
-    post:
-      consumes:
-      - application/json
-      description: Cancel an ongoing Pinecone operation using the operation token
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation cancelled successfully
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "400":
-          description: Bad request - invalid operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "404":
-          description: Operation not found
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Cancel Pinecone operation
-      tags:
-      - pinecone
   /pinecone/operation/init:
     post:
       consumes:
@@ -2815,46 +2473,6 @@ paths:
       summary: Get Pinecone operation schema
       tags:
       - pinecone
-  /pinecone/operation/status:
-    post:
-      consumes:
-      - application/json
-      description: Get the current status of a Pinecone operation using the operation
-        token
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation status retrieved successfully
-          schema:
-            $ref: '#/definitions/common.OperationStatus'
-        "400":
-          description: Bad request - invalid operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "404":
-          description: Operation not found
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Get Pinecone operation status
-      tags:
-      - pinecone
   /postgres/configuration/{key}/fields:
     post:
       consumes:
@@ -3041,45 +2659,6 @@ paths:
       security:
       - SystemTokenAuth: []
       summary: Get PostgreSQL connector information
-      tags:
-      - postgres
-  /postgres/operation/cancel:
-    post:
-      consumes:
-      - application/json
-      description: Cancel an ongoing PostgreSQL operation using the operation token
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation cancelled successfully
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "400":
-          description: Bad request - invalid operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "404":
-          description: Operation not found
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Cancel PostgreSQL operation
       tags:
       - postgres
   /postgres/operation/init:
@@ -3340,46 +2919,6 @@ paths:
       summary: Get PostgreSQL operation schema
       tags:
       - postgres
-  /postgres/operation/status:
-    post:
-      consumes:
-      - application/json
-      description: Get the current status of a PostgreSQL operation using the operation
-        token
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation status retrieved successfully
-          schema:
-            $ref: '#/definitions/common.OperationStatus'
-        "400":
-          description: Bad request - invalid operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "404":
-          description: Operation not found
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Get PostgreSQL operation status
-      tags:
-      - postgres
   /postgres/operation/subscribe:
     post:
       consumes:
@@ -3625,45 +3164,6 @@ paths:
       security:
       - SystemTokenAuth: []
       summary: Get SFTP connector information
-      tags:
-      - sftp
-  /sftp/operation/cancel:
-    post:
-      consumes:
-      - application/json
-      description: Cancel an ongoing SFTP operation using the operation token
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation cancelled successfully
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "400":
-          description: Bad request - invalid operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "404":
-          description: Operation not found
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Cancel SFTP operation
       tags:
       - sftp
   /sftp/operation/init:
@@ -3916,46 +3416,6 @@ paths:
       summary: Get SFTP operation schema
       tags:
       - sftp
-  /sftp/operation/status:
-    post:
-      consumes:
-      - application/json
-      description: Get the current status of an SFTP operation using the operation
-        token
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation status retrieved successfully
-          schema:
-            $ref: '#/definitions/common.OperationStatus'
-        "400":
-          description: Bad request - invalid operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "404":
-          description: Operation not found
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Get SFTP operation status
-      tags:
-      - sftp
   /sftp/operation/subscribe:
     post:
       consumes:
@@ -4148,45 +3608,6 @@ paths:
       security:
       - SystemTokenAuth: []
       summary: Get Stripe connector information
-      tags:
-      - stripe
-  /stripe/operation/cancel:
-    post:
-      consumes:
-      - application/json
-      description: Cancel an ongoing Stripe operation using the operation token
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation cancelled successfully
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "400":
-          description: Bad request - invalid operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "404":
-          description: Operation not found
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Cancel Stripe operation
       tags:
       - stripe
   /stripe/operation/init:
@@ -4423,46 +3844,6 @@ paths:
       security:
       - OperationTokenAuth: []
       summary: Get Stripe operation schema
-      tags:
-      - stripe
-  /stripe/operation/status:
-    post:
-      consumes:
-      - application/json
-      description: Get the current status of a Stripe operation using the operation
-        token
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation status retrieved successfully
-          schema:
-            $ref: '#/definitions/common.OperationStatus'
-        "400":
-          description: Bad request - invalid operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "404":
-          description: Operation not found
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Get Stripe operation status
       tags:
       - stripe
   /swagger:

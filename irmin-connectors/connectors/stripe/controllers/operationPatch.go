@@ -47,48 +47,87 @@ import (
 // @Failure 401 {object} fiber.Map "Unauthorized"
 // @Failure 500 {object} fiber.Map "Internal server error"
 // @Router /stripe/operation/patch [post]
-func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
-	operation, ok := c.Locals("operation").(*db.Operation)
-	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid operation type in context",
-		})
+func (cs *Controllers) OperationPatch(c fiber.Ctx) (retErr error) {
+	manager, managerOK := cs.App.JobManager.(*common.JobManager)
+	if !managerOK || manager == nil {
+		return common.RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.JobErrorReasonInternal,
+			errors.New("job manager not configured"),
+			"",
+		)
 	}
 
-	// Level-2 execution lock. Without it, two concurrent patch requests
-	// against the same operation interleave their Stripe update calls
-	// and their operation-log events, and an idempotent retry (e.g.,
-	// the caller's retry after a transient 503) can race with the
-	// original still-running request. Pull/push already take this lock
-	// in connectors/common; patch was the hole.
-	//
-	// Non-blocking TryLock with defer Unlock matches the push pattern —
-	// simpler than the pinned-session WithOperationExecutionLock which
-	// pull needs because it holds the lock across zip assembly. Patch's
-	// work is short and already transactional per-resource, so a Try
-	// that returns 409 on contention is the right shape.
-	locked, lockErr := db.TryLockOperationExecution(cs.DB.DB, operation.ID)
-	if lockErr != nil {
+	operation, ok := c.Locals("operation").(*db.Operation)
+	if !ok {
+		return common.RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.JobErrorReasonInternal,
+			errors.New("invalid operation type in context"),
+			"",
+		)
+	}
+
+	// Execution lock via the unified JobManager.Begin path. The
+	// legacy TryLockOperationExecution / UnlockOperationExecution
+	// pair this replaced had a latent bug: the unlock could run on
+	// a different pooled connection than the one that took the
+	// lock (session-scoped advisory locks are conn-bound in
+	// Postgres). Begin pins the conn via WithSessionLock, and
+	// Release frees it synchronously before returning — so the
+	// row transition and the lock release happen under the same
+	// session.
+	guard, alreadyErr, beginErr := manager.Begin(common.BeginOperationJobInput{
+		OperationID:             operation.ID,
+		ConnectorRegistrationID: operation.ConnectorRegistrationID,
+		ConnectorName:           "stripe",
+		Kind:                    "patch",
+	})
+	if alreadyErr != nil {
+		return common.RespondAlreadyRunning(c, alreadyErr)
+	}
+	if beginErr != nil {
 		cs.Logger.Error(
 			"failed to acquire operation execution lock",
-			"error", lockErr, "operation_id", operation.ID,
+			"error", beginErr, "operation_id", operation.ID,
 		)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to acquire operation lock",
-		})
+		return common.RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.JobErrorReasonTransientDB,
+			beginErr,
+			"",
+		)
 	}
-	if !locked {
-		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-			"error": "Operation is already running",
-		})
+
+	outcome := common.JobOutcome{
+		Status: irminmodels.OperationJobStatusFailed,
+		Error:  "handler exited without setting outcome",
 	}
 	defer func() {
-		if unlockErr := db.UnlockOperationExecution(cs.DB.DB, operation.ID); unlockErr != nil {
+		// See common/operationPush.go for the rationale on
+		// overwriting retErr with a structured 500 rather than
+		// re-panicking into fiber's generic panic middleware.
+		if r := recover(); r != nil {
 			cs.Logger.Error(
-				"failed to release operation execution lock",
-				"error", unlockErr, "operation_id", operation.ID,
+				"stripe patch panic recovered",
+				"error", fmt.Sprintf("%v", r), "operation_id", operation.ID,
+			)
+			outcome = common.JobOutcome{
+				Status: irminmodels.OperationJobStatusFailed,
+				Error:  fmt.Sprintf("handler panic: %v", r),
+			}
+			retErr = common.RespondJobError(
+				c,
+				fiber.StatusInternalServerError,
+				irminmodels.JobErrorReasonInternal,
+				fmt.Errorf("handler panic: %v", r),
+				guard.JobID(),
 			)
 		}
+		guard.Release(outcome)
 	}()
 
 	common.LogOperationEvent(
@@ -106,6 +145,10 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
 			"Failed to initialize Stripe client for patch",
 			map[string]any{"error": err.Error()},
 		)
+		outcome = common.JobOutcome{
+			Status: irminmodels.OperationJobStatusFailed,
+			Error:  "initialize stripe client: " + err.Error(),
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialize Stripe client: " + err.Error(),
 		})
@@ -119,11 +162,19 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
 			"Failed to read patches from form",
 			map[string]any{"error": err.Error()},
 		)
+		outcome = common.JobOutcome{
+			Status: irminmodels.OperationJobStatusFailed,
+			Error:  "read patches: " + err.Error(),
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	grouped, err := groupPatchesByResource(patches)
 	if err != nil {
+		outcome = common.JobOutcome{
+			Status: irminmodels.OperationJobStatusFailed,
+			Error:  "group patches: " + err.Error(),
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -142,6 +193,10 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
 		if applyErr := cs.applyResourcePatches(
 			ctx, stripe, key, ops, operation,
 		); applyErr != nil {
+			outcome = common.JobOutcome{
+				Status: irminmodels.OperationJobStatusFailed,
+				Error:  "apply patches: " + applyErr.Error(),
+			}
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": applyErr.Error(),
 			})
@@ -155,6 +210,7 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
 		map[string]any{"patch_count": len(patches), "resource_count": len(grouped)},
 	)
 
+	outcome = common.JobOutcome{Status: irminmodels.OperationJobStatusComplete}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Patch operations applied successfully",
 		"count":   len(patches),

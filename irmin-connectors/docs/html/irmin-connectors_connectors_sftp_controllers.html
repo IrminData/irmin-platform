@@ -101,17 +101,6 @@ func (cs *Controllers) Info(c fiber.Ctx) error
     fiber.Map "Unauthorized - invalid or missing authentication" @Failure 500
     {object} fiber.Map "Internal server error" @Router /sftp/info [get]
 
-func (cs *Controllers) OperationCancel(c fiber.Ctx) error
-    OperationCancel godoc @Summary Cancel SFTP operation @Description Cancel
-    an ongoing SFTP operation using the operation token @Tags sftp @Security
-    SystemTokenAuth @Accept json @Produce json @Param operation_token formData
-    string true "Operation token received from operation/init" @Success 200
-    {object} fiber.Map "Operation cancelled successfully" @Failure 400 {object}
-    fiber.Map "Bad request - invalid operation token" @Failure 401 {object}
-    fiber.Map "Unauthorized - invalid or missing authentication" @Failure 404
-    {object} fiber.Map "Operation not found" @Failure 500 {object} fiber.Map
-    "Internal server error" @Router /sftp/operation/cancel [post]
-
 func (cs *Controllers) OperationInit(c fiber.Ctx) error
     OperationInit godoc @Summary Initialize SFTP operation @Description
     Initialize a new SFTP operation with connection details and settings,
@@ -190,18 +179,6 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
     found" @Failure 500 {object} fiber.Map "Internal server error" @Router
     /sftp/operation/schema/{operation} [post]
 
-func (cs *Controllers) OperationStatus(c fiber.Ctx) error
-    OperationStatus godoc @Summary Get SFTP operation status @Description Get
-    the current status of an SFTP operation using the operation token @Tags sftp
-    @Security SystemTokenAuth @Accept json @Produce json @Param operation_token
-    formData string true "Operation token received from operation/init"
-    @Success 200 {object} common.OperationStatus "Operation status retrieved
-    successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
-    operation token" @Failure 401 {object} fiber.Map "Unauthorized - invalid
-    or missing authentication" @Failure 404 {object} fiber.Map "Operation not
-    found" @Failure 500 {object} fiber.Map "Internal server error" @Router
-    /sftp/operation/status [post]
-
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
     SubscribeToChanges godoc @Summary Subscribe to changes (not supported)
     @Description SFTP connector does not support real-time subscriptions
@@ -249,14 +226,18 @@ type SFTPPullProvider struct {
 }
     SFTPPullProvider implements the PullOperationProvider interface for SFTP.
 
-func (p *SFTPPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error)
+func (p *SFTPPullProvider) GetAllFiles(
+	_ context.Context, client any, operation *db.Operation,
+) ([]string, [][]byte, error)
     GetAllFiles downloads all files from the root directory.
 
-func (p *SFTPPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath string) (string, []byte, error)
+func (p *SFTPPullProvider) GetFileByPath(
+	_ context.Context, client any, operation *db.Operation, rawPath string,
+) (string, []byte, error)
     GetFileByPath downloads a specific file by path.
 
 func (p *SFTPPullProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error)

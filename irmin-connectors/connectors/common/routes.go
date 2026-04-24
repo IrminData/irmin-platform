@@ -14,8 +14,6 @@ type ConnectorController interface {
 	ConfigFields(c fiber.Ctx) error
 	ConfigValidate(c fiber.Ctx) error
 	OperationInit(c fiber.Ctx) error
-	OperationCancel(c fiber.Ctx) error
-	OperationStatus(c fiber.Ctx) error
 	OperationSchemaGet(c fiber.Ctx) error
 	DetailsPage(c fiber.Ctx) error
 
@@ -60,16 +58,6 @@ func SetupConnectorRoutes(config ConnectorRouteConfig) {
 		"/operation/init",
 		config.Controller.ValidateSystemTokenMiddleware,
 		config.Controller.OperationInit,
-	)
-	connectorRoutes.Post(
-		"/operation/cancel",
-		config.Controller.ValidateSystemTokenMiddleware,
-		config.Controller.OperationCancel,
-	)
-	connectorRoutes.Post(
-		"/operation/status",
-		config.Controller.ValidateSystemTokenMiddleware,
-		config.Controller.OperationStatus,
 	)
 
 	// Setup operation routes that require operation token

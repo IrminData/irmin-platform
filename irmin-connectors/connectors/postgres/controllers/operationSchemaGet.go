@@ -130,5 +130,5 @@ func (p *PostgreSQLSchemaProvider) GetSupportedOperationTypes() []string {
 // @Router /postgres/operation/schema/{operation} [post]
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 	provider := &PostgreSQLSchemaProvider{}
-	return common.HandleOperationSchemaGet(c, provider, cs.Logger, cs.DB)
+	return common.HandleOperationSchemaGet(c, provider, cs.Logger, cs.DB, cs.App)
 }

@@ -222,6 +222,89 @@ docker buildx build --platform linux/amd64/v2,linux/arm64/v8 -t YOUR_DOCKER_USER
 docker run -p 8080:8080 --env-file .env irmin-connectors
 ```
 
+## Async Operations Protocol
+
+Long-running operations follow a `202 Accepted → poll → fetch
+result` protocol so clients never hold an open request across a
+multi-minute pull. Three top-level endpoints govern job lifecycle:
+
+| Endpoint | Method | Body |
+|----------|--------|------|
+| `/operation/status/:job_id` | GET | `sdkmodels.OperationJobStatusResponse` on 2xx, `sdkmodels.JobErrorBody` on 4xx/5xx |
+| `/operation/result/:job_id` | GET | `application/zip` stream on 200; `409` until worker finishes (client treats as "keep polling"); `410 Gone` when the janitor reaped the file |
+| `/operation/cancel/:job_id` | POST | `sdkmodels.CancelOperationJobResponse` with `was_active` on 2xx, `JobErrorBody` on 4xx/5xx |
+
+All three require `Authorization: Bearer <operation-token>` where
+the token matches the Operation row backing the job. Cancel is
+idempotent — calling on a terminal job still returns 200 with
+`was_active=false`.
+
+### Structured error envelopes
+
+Every non-2xx response from these endpoints carries
+`sdkmodels.JobErrorBody`:
+
+```json
+{
+  "error":    "transient database error",
+  "reason":   "transient_db_error",
+  "retryable": true,
+  "job_id":   "opjob_9m3x7k2n8q5p"
+}
+```
+
+Reasons are stable strings (`transient_db_error`,
+`corrupted_job_state`, `not_found`, `invalid_request`, `internal`)
+— SDK clients use them to classify failures without parsing the
+human-readable `error` field. `retryable=true` is the signal to
+back off and retry; `false` is terminal for the caller.
+
+The pre-async `{"error":"..."}` shape has been replaced across all
+5 handler call sites (pull, push, schema, pinecone push, stripe
+patch). The SDK falls back to `*APIError` for any body missing the
+`reason` discriminator, so staged rollouts of SDK clients against
+this service continue to work.
+
+### 409 with job_id
+
+A 409 "Operation is already running" response now carries the
+blocking job's details via `sdkmodels.AlreadyRunningBody`:
+
+```json
+{
+  "error":         "Operation is already running",
+  "job_id":        "opjob_9m3x7k2n8q5p",
+  "operation_id":  42,
+  "kind":          "pull",
+  "started_at":    "2026-04-24T10:30:00Z"
+}
+```
+
+Clients can pipe `job_id` straight into
+`POST /operation/cancel/:job_id` or `GET /operation/status/:job_id`
+to either stop or poll the blocker — no substring matching on the
+error message.
+
+### Lock + guard semantics
+
+Every handler that takes the operation-execution lock routes
+through `common.JobManager.Begin`, which pins a Postgres session
+for the full operation lifetime and releases the session-scoped
+`pg_advisory_lock` synchronously via the `OperationGuard.Release`
+defer. The older `db.TryLockOperationExecution` /
+`db.UnlockOperationExecution` helpers are `Deprecated` — they
+used pool handles for acquire/release which could route the
+unlock to a different session than the acquire, silently leaking
+locks until the original connection was closed.
+
+Async workers additionally go through
+`JobManager.StartJobWithGuard`, which recovers panics so a
+provider bug never leaves a row stuck at `status=running`. A
+janitor pass also reclaims rows whose advisory lock is free but
+whose `updated_at` is older than the configured `StuckThreshold`
+(default 30 minutes, ~60 heartbeats) as a belt-and-suspenders
+safety net for pod crashes.
+
 ## API Documentation
 
 This project generates comprehensive documentation in multiple formats using a unified workflow.

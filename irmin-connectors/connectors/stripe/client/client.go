@@ -513,7 +513,7 @@ func (c *Client) do(req *http.Request) (json.RawMessage, error) {
 		// Rate-limit waits are otherwise silent. Surface them so a
 		// 429 storm (up to ~3 minutes of cumulative backoff) is
 		// visible in the workflow log instead of looking like a hang.
-		c.emitRateLimitProgress(req.URL.Path, attempt, wait)
+		c.emitRateLimitProgress(req.URL.Path, attempt+1, wait)
 		select {
 		case <-req.Context().Done():
 			return nil, req.Context().Err()

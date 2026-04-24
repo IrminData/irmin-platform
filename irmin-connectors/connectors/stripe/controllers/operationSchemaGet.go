@@ -1097,7 +1097,7 @@ func strPtr(s string) *string {
 // @Router /stripe/operation/schema/{operation} [post]
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 	provider := &StripeSchemaProvider{}
-	return common.HandleOperationSchemaGet(c, provider, cs.Logger, cs.DB)
+	return common.HandleOperationSchemaGet(c, provider, cs.Logger, cs.DB, cs.App)
 }
 
 // SubscribeToChanges is not supported by the Stripe connector.

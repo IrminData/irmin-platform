@@ -1,6 +1,7 @@
 package postgrescontrollers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,6 +20,9 @@ type PostgresPullProvider struct {
 	databaseName *string
 	dbInstance   *db.Database
 	logger       *slog.Logger
+	// ctx is hydrated by InitializeClient before ProgressHandler
+	// wiring — see StripePullProvider.ctx for the full rationale.
+	ctx context.Context
 }
 
 // ProgressHandler returns the per-row-batch observability callback
@@ -36,7 +40,7 @@ type PostgresPullProvider struct {
 // LogOperationProgress so callers control their own granularity,
 // since "every page" doesn't translate cleanly to row scans.
 func (p *PostgresPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
-	return common.NewProgressHandler(p.dbInstance, p.logger, operation)
+	return common.NewProgressHandlerWithContext(p.ctx, p.dbInstance, p.logger, operation)
 }
 
 // queryProgressMinRows is the row-count gate for Postgres /
@@ -67,17 +71,20 @@ func resourcePathForTable(databaseName *string, table string) string {
 
 // InitializeClient initializes the PostgreSQL client for pull operations.
 func (p *PostgresPullProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
-	client, databaseName, err := postgresclient.InitPostgresClient(c, logger, operation)
+	client, databaseName, err := postgresclient.InitPostgresClient(ctx, logger, operation)
 	if err != nil {
 		return nil, nil, func() {}, err
 	}
 
-	// Store database name for use in path processing
+	// Store database name + ctx for use in path processing and the
+	// ProgressHandler fan-out into the async-pull job slice.
 	p.databaseName = databaseName
+	p.ctx = ctx
+	p.logger = logger
 
 	cleanup := func() {
 		client.Close()
@@ -87,16 +94,16 @@ func (p *PostgresPullProvider) InitializeClient(
 }
 
 // GetAllFiles retrieves all tables as JSON files.
-func (p *PostgresPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error) {
+func (p *PostgresPullProvider) GetAllFiles(
+	ctx context.Context, client any, operation *db.Operation,
+) ([]string, [][]byte, error) {
 	postgresClient, ok := client.(*postgresclient.PostgresClient)
 	if !ok {
 		return nil, nil, errors.New("invalid client type for PostgreSQL pull provider")
 	}
 
-	operation, _ := c.Locals("operation").(*db.Operation)
-
 	// Get list of tables
-	tables, err := postgresClient.GetTables(c)
+	tables, err := postgresClient.GetTables(ctx)
 	if err != nil {
 		if operation != nil && p.dbInstance != nil && p.logger != nil {
 			common.LogOperationEvent(
@@ -134,7 +141,7 @@ func (p *PostgresPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [
 
 	// Process each table
 	for i, table := range tables {
-		resultPath, resultContent, getErr := p.GetFileByPath(c, client, table)
+		resultPath, resultContent, getErr := p.GetFileByPath(ctx, client, operation, table)
 		if getErr != nil {
 			if operation != nil && p.dbInstance != nil && p.logger != nil {
 				common.LogOperationEvent(
@@ -160,13 +167,13 @@ func (p *PostgresPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [
 }
 
 // GetFileByPath retrieves a specific table as a JSON file.
-func (p *PostgresPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath string) (string, []byte, error) {
+func (p *PostgresPullProvider) GetFileByPath(
+	ctx context.Context, client any, operation *db.Operation, rawPath string,
+) (string, []byte, error) {
 	postgresClient, ok := client.(*postgresclient.PostgresClient)
 	if !ok {
 		return "", nil, errors.New("invalid client type for PostgreSQL pull provider")
 	}
-
-	operation, _ := c.Locals("operation").(*db.Operation)
 
 	// Database-specific path processing with proper database name
 	path := processRawPath(rawPath, p.databaseName)
@@ -176,7 +183,7 @@ func (p *PostgresPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath st
 
 	// Query table data
 	query := fmt.Sprintf(`SELECT * FROM "%s"`, path)
-	rows, err := postgresClient.Query(c, query)
+	rows, err := postgresClient.Query(ctx, query)
 	if err != nil {
 		if operation != nil && p.dbInstance != nil && p.logger != nil {
 			common.LogOperationEvent(
@@ -288,7 +295,7 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 		dbInstance: cs.DB,
 		logger:     cs.Logger,
 	}
-	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
+	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB, cs.App)
 }
 
 // buildRecordsFromRows converts rows into a slice of maps and fires

@@ -26,6 +26,12 @@ import (
 type StripePullProvider struct {
 	dbInstance *db.Database
 	logger     *slog.Logger
+	// ctx is hydrated by InitializeClient before the provider's
+	// ProgressHandler is wired into the vendor client. Carries the
+	// job's WithJobProgress closure so vendor-originated events fan
+	// into the OperationJob status response as well as the
+	// OperationLog.
+	ctx context.Context
 }
 
 // ProgressHandler returns the per-page + rate-limit observability
@@ -45,20 +51,23 @@ type StripePullProvider struct {
 // rate-limit unthrottled), so this method emits every event the
 // client fires and lets the common helper decide what surfaces.
 func (p *StripePullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler {
-	return common.NewProgressHandler(p.dbInstance, p.logger, operation)
+	return common.NewProgressHandlerWithContext(p.ctx, p.dbInstance, p.logger, operation)
 }
 
 // InitializeClient builds the Stripe client for this operation and
 // installs the progress handler so long-running pulls surface
 // per-page and rate-limit events into the workflow log stream.
 func (p *StripePullProvider) InitializeClient(
-	_ fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
-	// Hydrate logger before building the handler so the closure
-	// p.ProgressHandler returns has a valid logger.
+	// Hydrate logger + ctx before building the handler so the
+	// closure p.ProgressHandler returns has a valid logger and can
+	// fan events into the async-pull job's Progress slice via the
+	// ctx-carried WithJobProgress closure.
 	p.logger = logger
+	p.ctx = ctx
 	stripe, _, _, err := stripeclient.InitFromOperation(
 		logger, operation,
 		stripeclient.WithProgressHandler(p.ProgressHandler(operation)),
@@ -74,13 +83,13 @@ func (p *StripePullProvider) InitializeClient(
 // (100 records). `max_records_per_resource` on the Connection caps
 // per-resource size so a million-record Stripe account doesn't OOM
 // the connector.
-func (p *StripePullProvider) GetAllFiles(c fiber.Ctx, clientAny any) ([]string, [][]byte, error) {
+func (p *StripePullProvider) GetAllFiles(
+	ctx context.Context, clientAny any, operation *db.Operation,
+) ([]string, [][]byte, error) {
 	stripe, ok := clientAny.(*stripeclient.Client)
 	if !ok {
 		return nil, nil, errors.New("stripe: invalid client type for pull")
 	}
-	operation, _ := c.Locals("operation").(*db.Operation)
-	ctx := c.Context()
 	maxRecords := p.pullLimit(operation)
 
 	var paths []string
@@ -118,7 +127,7 @@ func (p *StripePullProvider) GetAllFiles(c fiber.Ctx, clientAny any) ([]string, 
 // GetAllFiles in that case, so reaching the provider with an empty
 // path is a programming error.
 func (p *StripePullProvider) GetFileByPath(
-	c fiber.Ctx, clientAny any, rawPath string,
+	ctx context.Context, clientAny any, operation *db.Operation, rawPath string,
 ) (string, []byte, error) {
 	if rawPath == "" {
 		return "", nil, errors.New(
@@ -130,8 +139,6 @@ func (p *StripePullProvider) GetFileByPath(
 	if !ok {
 		return "", nil, errors.New("stripe: invalid client type for pull")
 	}
-	operation, _ := c.Locals("operation").(*db.Operation)
-	ctx := c.Context()
 
 	// Single-record mode: `customers/cus_abc` (with or without `.json`)
 	if strings.Contains(strings.TrimPrefix(rawPath, "/"), "/") {
@@ -365,5 +372,5 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 		dbInstance: cs.DB,
 		logger:     cs.Logger,
 	}
-	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
+	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB, cs.App)
 }
