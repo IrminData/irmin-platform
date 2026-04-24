@@ -154,3 +154,154 @@ type StartOperationPullResponse struct {
 	// /operation/status and /operation/result calls.
 	JobID string `json:"job_id" example:"opjob_9m3x7k2n8q5p"`
 }
+
+// AlreadyRunningBody is the wire shape returned by any connector
+// endpoint that refuses a request because the same operation is
+// already in flight (HTTP 409 Conflict).
+//
+// The pre-async protocol returned just {"error": "Operation is already
+// running"} — opaque to callers. This body carries the in-flight
+// job_id so callers can redirect their polling (or cancel the
+// blocker) without guessing.
+//
+// JobID is guaranteed non-empty when the server side uses the unified
+// JobManager.Begin path. It may be empty when a legacy sync code path
+// holds the lock without registering a job row; callers should treat
+// that as "retry later" rather than a hard error.
+type AlreadyRunningBody struct {
+	// Error is the stable human-readable message. Always
+	// "Operation is already running" — kept for backwards
+	// compatibility with clients that key off the error string.
+	Error string `json:"error" example:"Operation is already running"`
+
+	// JobID is the opaque identifier of the currently-running job.
+	// Clients can pass this straight to CancelOperationJob or
+	// GetOperationJobStatus. Empty only for legacy holders that have
+	// not migrated to the JobManager.Begin path yet.
+	JobID string `json:"job_id,omitempty" example:"opjob_9m3x7k2n8q5p"`
+
+	// OperationID is the connector-service-local numeric ID of the
+	// operation the lock was taken on. Present so operator-facing
+	// logs can cross-reference the operation row directly.
+	OperationID uint `json:"operation_id,omitempty" example:"42"`
+
+	// Kind is the operation kind holding the lock. One of "pull",
+	// "push", "patch", "schema". Helps operators distinguish a
+	// long-running pull from a fast sync push when triaging
+	// contention.
+	Kind string `json:"kind,omitempty" example:"pull"`
+
+	// StartedAt is when the in-flight job was accepted. Clients can
+	// compute elapsed time to decide whether to wait or cancel. nil
+	// for legacy sync holders with no registered row.
+	//
+	// Pointer rather than time.Time + omitempty because encoding/json's
+	// omitempty does not treat a zero time.Time as empty — it would
+	// serialise as "0001-01-01T00:00:00Z" on the wire. Matches the
+	// convention used by ExpiresAt above and the *time.Time fields
+	// in the other models in this package.
+	StartedAt *time.Time `json:"started_at,omitempty"`
+}
+
+// JobErrorReason enumerates the machine-readable failure modes of
+// the /operation/{status,result,cancel} endpoints. Stable strings —
+// Core's poll wrapper compares against these values directly.
+//
+// Retryability is NOT encoded in the reason itself — use the
+// Retryable field on JobErrorBody. Some reasons are retryable in
+// some contexts and not in others (e.g., a "not_found" on cancel is
+// terminal for the caller but a "not_found" during a race with
+// janitor reclaim is benign).
+type JobErrorReason string
+
+const (
+	// JobErrorReasonTransientDB signals a recoverable database-layer
+	// error (connection reset, pool exhaustion, statement timeout).
+	// Callers should retry after a short backoff.
+	JobErrorReasonTransientDB JobErrorReason = "transient_db_error"
+
+	// JobErrorReasonCorruptedRow signals that the job row exists but
+	// its persisted state is unreadable (e.g., malformed progress
+	// JSON). Not retryable — the row needs operator intervention or
+	// janitor reaping.
+	JobErrorReasonCorruptedRow JobErrorReason = "corrupted_job_state"
+
+	// JobErrorReasonNotFound signals that no job with the requested
+	// ID exists. Returned on 404; callers should not retry.
+	JobErrorReasonNotFound JobErrorReason = "not_found"
+
+	// JobErrorReasonInvalidRequest signals that the caller sent a
+	// malformed request (missing job_id, bad token, etc.). Not
+	// retryable without changing the request.
+	JobErrorReasonInvalidRequest JobErrorReason = "invalid_request"
+
+	// JobErrorReasonInternal is the catch-all for failures that
+	// don't fit the other buckets. Not retryable by default; the
+	// response body's human-readable Error field carries detail.
+	JobErrorReasonInternal JobErrorReason = "internal"
+)
+
+// JobErrorBody is the structured error envelope returned by the
+// async-job endpoints on any non-2xx response (404, 409 auth issues,
+// 500). The legacy unstructured {"error": "..."} shape is a proper
+// subset — the Error field is always populated — so middleware
+// tolerant of the legacy shape still reads the message.
+//
+// Clients driving retry logic should read Reason + Retryable rather
+// than parsing Error. Example: Core's poll wrapper retries only when
+// Retryable is true AND Reason is JobErrorReasonTransientDB.
+type JobErrorBody struct {
+	// Error is the operator-facing human-readable message. Stable
+	// enough for log grep but not a machine-readable code.
+	Error string `json:"error" example:"failed to load job"`
+
+	// Reason is the machine-readable failure classification. See
+	// JobErrorReason for the stable value set.
+	Reason JobErrorReason `json:"reason" example:"transient_db_error"`
+
+	// Retryable reports whether the caller should retry the same
+	// request after a short backoff. False for any terminal failure
+	// mode (not_found, corrupted_job_state, invalid_request).
+	Retryable bool `json:"retryable" example:"true"`
+
+	// JobID echoes the ID from the URL when the server could parse
+	// one. Empty for request-level failures (malformed URL, missing
+	// path parameter).
+	JobID string `json:"job_id,omitempty" example:"opjob_9m3x7k2n8q5p"`
+}
+
+// CancelOperationJobResponse is the 200 body returned by
+// POST /operation/cancel/:job_id. The endpoint is idempotent —
+// calling it on a terminal (complete/failed/cancelled) job still
+// returns 200 — so callers that want to distinguish "we actually
+// signalled a running worker" from "job was already terminal" can
+// inspect WasActive.
+//
+// A 200 response does NOT mean the worker has exited. Cancel is
+// fire-and-forget: the signal is accepted and the worker's context
+// is cancelled, but the worker may still be in its shutdown path
+// for a short window. Poll /operation/status to observe the
+// terminal transition.
+type CancelOperationJobResponse struct {
+	// JobID echoes the ID from the URL so batched responses can be
+	// associated with their requests without re-parsing.
+	JobID string `json:"job_id" example:"opjob_9m3x7k2n8q5p"`
+
+	// Status is the job's current lifecycle state at the moment
+	// cancel was processed. If WasActive is true this will usually
+	// still be "running" (the cancel signal has been sent but the
+	// worker has not yet transitioned). If WasActive is false this
+	// is a terminal status.
+	Status OperationJobStatus `json:"status" example:"running"`
+
+	// WasActive is true when cancel actually signalled a live
+	// worker. False for idempotent no-op calls against terminal
+	// jobs — the request is still a success, but the caller can
+	// distinguish "we cancelled it" from "it was already done".
+	WasActive bool `json:"was_active" example:"true"`
+
+	// Message is a human-readable status line. Kept for log
+	// readability; callers driving UI should use Status + WasActive
+	// instead.
+	Message string `json:"message" example:"cancellation requested"`
+}

@@ -57,6 +57,14 @@ var ErrLegacySyncPullResponse = errors.New(
     rather than attempt a silent fallback, per the "no backward-compat shim"
     decision in the async-pull plan.
 
+var ErrOperationAlreadyRunning = errors.New(
+	"connector refused the request: operation is already running",
+)
+    ErrOperationAlreadyRunning is the sentinel returned when a connector refuses
+    a request because the same operation is already in flight (HTTP 409).
+    Callers wrap this with AlreadyRunningError to surface the job_id of the
+    blocker; use errors.As to unwrap.
+
 var ErrResultNotReady = errors.New(
 	"operation result is not ready: job has not reached terminal status=complete",
 )
@@ -82,6 +90,32 @@ type APIError struct {
 
 func (e *APIError) Error() string
     Error implements the error interface.
+
+type AlreadyRunningError struct {
+	// Body is the full structured payload the server returned. JobID
+	// is the most useful field for callers, but Kind / StartedAt /
+	// OperationID are kept for logs and operator diagnostics.
+	Body irminmodels.AlreadyRunningBody
+}
+    AlreadyRunningError wraps ErrOperationAlreadyRunning with the details of
+    the currently-running job so callers can redirect their polling (or issue a
+    cancel) without a second round-trip to the server to discover what's holding
+    the lock.
+
+    Returned by StartOperationPull (and any other op-start path that migrates
+    onto the async protocol) when the server responds with HTTP 409 + an
+    AlreadyRunningBody payload.
+
+func (e *AlreadyRunningError) Error() string
+    Error implements the error interface.
+
+func (e *AlreadyRunningError) JobID() string
+    JobID is a convenience accessor for the most commonly consumed field so
+    callers don't have to reach through Body every time.
+
+func (e *AlreadyRunningError) Unwrap() error
+    Unwrap lets errors.Is(err, ErrOperationAlreadyRunning) succeed on wrapped
+    AlreadyRunningError values, matching the pattern used by JobFailedError.
 
 type Client struct {
 	// BaseURL is the connector service base, e.g.
@@ -129,6 +163,24 @@ func (c *Client) CancelOperationJob(ctx context.Context, jobID string) error
     async operation job. Safe to call on terminal jobs (server is expected to
     treat it as a no-op). Uses POST with the job_id on the path so it composes
     with existing per-job routes.
+
+    Returns nil on any 2xx; the richer response shape (status, was_active) is
+    available via CancelOperationJobDetail. Callers that only need idempotent
+    fire-and-forget semantics can keep calling this method.
+
+func (c *Client) CancelOperationJobDetail(
+	ctx context.Context,
+	jobID string,
+) (*irminmodels.CancelOperationJobResponse, error)
+    CancelOperationJobDetail is the richer form of CancelOperationJob that
+    returns the parsed CancelOperationJobResponse on success so callers can
+    tell "we actually signalled a running worker" (WasActive=true) from "job was
+    already terminal" (WasActive=false).
+
+    Servers that pre-date the structured response shape will return a 200
+    without WasActive; in that case the response carries the default zero values
+    (Status="", WasActive=false) and callers should treat that as the legacy
+    "accepted, unknown state" signal.
 
 func (c *Client) FetchOperationResult(
 	ctx context.Context,
@@ -210,6 +262,38 @@ func (e *JobFailedError) Unwrap() error
     Unwrap lets errors.Is(err, ErrJobFailed) succeed on wrapped JobFailedError
     values, so callers can check the sentinel and then use errors.As to extract
     the detail.
+
+type JobServerError struct {
+	// StatusCode is the HTTP status returned by the connector. Kept
+	// separately from Body so callers can discriminate 404 vs 500
+	// without re-parsing the reason code.
+	StatusCode int
+
+	// Body is the structured error envelope. Reason and Retryable
+	// are the machine-readable signals; Error carries the
+	// operator-facing message.
+	Body irminmodels.JobErrorBody
+}
+    JobServerError wraps a structured JobErrorBody returned by the async-job
+    endpoints (status/result/cancel) on any non-2xx response. Callers driving
+    retry logic should inspect Retryable and Reason rather than the raw Error
+    string.
+
+    Returned by GetOperationJobStatus, FetchOperationResult, and
+    CancelOperationJob when the server responds with a structured JobErrorBody
+    payload. For older servers that still return the unstructured {"error":
+    "..."} shape, the client falls back to APIError so this type only surfaces
+    on migrated deployments.
+
+func (e *JobServerError) Error() string
+    Error implements the error interface.
+
+func (e *JobServerError) Reason() irminmodels.JobErrorReason
+    Reason returns the machine-readable failure classification.
+
+func (e *JobServerError) Retryable() bool
+    Retryable reports whether the server classified this failure as safe to
+    retry after a short backoff.
 
 type StartOperationPullRequest struct {
 	// Path is the connector-specific resource path being pulled

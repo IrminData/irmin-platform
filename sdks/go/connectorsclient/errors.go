@@ -84,3 +84,94 @@ func (e *JobFailedError) Error() string {
 func (e *JobFailedError) Unwrap() error {
 	return ErrJobFailed
 }
+
+// ErrOperationAlreadyRunning is the sentinel returned when a
+// connector refuses a request because the same operation is already
+// in flight (HTTP 409). Callers wrap this with AlreadyRunningError
+// to surface the job_id of the blocker; use errors.As to unwrap.
+var ErrOperationAlreadyRunning = errors.New(
+	"connector refused the request: operation is already running",
+)
+
+// AlreadyRunningError wraps ErrOperationAlreadyRunning with the
+// details of the currently-running job so callers can redirect their
+// polling (or issue a cancel) without a second round-trip to the
+// server to discover what's holding the lock.
+//
+// Returned by StartOperationPull (and any other op-start path that
+// migrates onto the async protocol) when the server responds with
+// HTTP 409 + an AlreadyRunningBody payload.
+type AlreadyRunningError struct {
+	// Body is the full structured payload the server returned. JobID
+	// is the most useful field for callers, but Kind / StartedAt /
+	// OperationID are kept for logs and operator diagnostics.
+	Body irminmodels.AlreadyRunningBody
+}
+
+// Error implements the error interface.
+func (e *AlreadyRunningError) Error() string {
+	if e.Body.JobID == "" {
+		// Legacy holder without a registered job row. Callers
+		// shouldn't try to cancel by job_id; the retry-later hint is
+		// the best we can give.
+		return "operation is already running (no job_id available; retry later)"
+	}
+	return fmt.Sprintf(
+		"operation is already running (job_id=%s, kind=%s)",
+		e.Body.JobID, e.Body.Kind,
+	)
+}
+
+// Unwrap lets errors.Is(err, ErrOperationAlreadyRunning) succeed on
+// wrapped AlreadyRunningError values, matching the pattern used by
+// JobFailedError.
+func (e *AlreadyRunningError) Unwrap() error {
+	return ErrOperationAlreadyRunning
+}
+
+// JobID is a convenience accessor for the most commonly consumed
+// field so callers don't have to reach through Body every time.
+func (e *AlreadyRunningError) JobID() string {
+	return e.Body.JobID
+}
+
+// JobServerError wraps a structured JobErrorBody returned by the
+// async-job endpoints (status/result/cancel) on any non-2xx
+// response. Callers driving retry logic should inspect Retryable
+// and Reason rather than the raw Error string.
+//
+// Returned by GetOperationJobStatus, FetchOperationResult, and
+// CancelOperationJob when the server responds with a structured
+// JobErrorBody payload. For older servers that still return the
+// unstructured {"error": "..."} shape, the client falls back to
+// APIError so this type only surfaces on migrated deployments.
+type JobServerError struct {
+	// StatusCode is the HTTP status returned by the connector. Kept
+	// separately from Body so callers can discriminate 404 vs 500
+	// without re-parsing the reason code.
+	StatusCode int
+
+	// Body is the structured error envelope. Reason and Retryable
+	// are the machine-readable signals; Error carries the
+	// operator-facing message.
+	Body irminmodels.JobErrorBody
+}
+
+// Error implements the error interface.
+func (e *JobServerError) Error() string {
+	return fmt.Sprintf(
+		"connector job endpoint returned status %d (reason=%s, retryable=%t): %s",
+		e.StatusCode, e.Body.Reason, e.Body.Retryable, e.Body.Error,
+	)
+}
+
+// Retryable reports whether the server classified this failure as
+// safe to retry after a short backoff.
+func (e *JobServerError) Retryable() bool {
+	return e.Body.Retryable
+}
+
+// Reason returns the machine-readable failure classification.
+func (e *JobServerError) Reason() irminmodels.JobErrorReason {
+	return e.Body.Reason
+}

@@ -3711,9 +3711,14 @@ Consumers that only need the async protocol \(tests, tooling\) can use this pack
 - [Variables](<#variables>)
 - [type APIError](<#APIError>)
   - [func \(e \*APIError\) Error\(\) string](<#APIError.Error>)
+- [type AlreadyRunningError](<#AlreadyRunningError>)
+  - [func \(e \*AlreadyRunningError\) Error\(\) string](<#AlreadyRunningError.Error>)
+  - [func \(e \*AlreadyRunningError\) JobID\(\) string](<#AlreadyRunningError.JobID>)
+  - [func \(e \*AlreadyRunningError\) Unwrap\(\) error](<#AlreadyRunningError.Unwrap>)
 - [type Client](<#Client>)
   - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
   - [func \(c \*Client\) CancelOperationJob\(ctx context.Context, jobID string\) error](<#Client.CancelOperationJob>)
+  - [func \(c \*Client\) CancelOperationJobDetail\(ctx context.Context, jobID string\) \(\*irminmodels.CancelOperationJobResponse, error\)](<#Client.CancelOperationJobDetail>)
   - [func \(c \*Client\) FetchOperationResult\(ctx context.Context, jobID string\) \(io.ReadCloser, error\)](<#Client.FetchOperationResult>)
   - [func \(c \*Client\) GetOperationJobStatus\(ctx context.Context, jobID string\) \(\*irminmodels.OperationJobStatusResponse, error\)](<#Client.GetOperationJobStatus>)
   - [func \(c \*Client\) StartOperationPull\(ctx context.Context, req StartOperationPullRequest\) \(\*irminmodels.StartOperationPullResponse, error\)](<#Client.StartOperationPull>)
@@ -3721,6 +3726,10 @@ Consumers that only need the async protocol \(tests, tooling\) can use this pack
 - [type JobFailedError](<#JobFailedError>)
   - [func \(e \*JobFailedError\) Error\(\) string](<#JobFailedError.Error>)
   - [func \(e \*JobFailedError\) Unwrap\(\) error](<#JobFailedError.Unwrap>)
+- [type JobServerError](<#JobServerError>)
+  - [func \(e \*JobServerError\) Error\(\) string](<#JobServerError.Error>)
+  - [func \(e \*JobServerError\) Reason\(\) irminmodels.JobErrorReason](<#JobServerError.Reason>)
+  - [func \(e \*JobServerError\) Retryable\(\) bool](<#JobServerError.Retryable>)
 - [type StartOperationPullRequest](<#StartOperationPullRequest>)
 
 
@@ -3748,6 +3757,14 @@ var ErrJobFailed = errors.New("operation job ended in a non-success terminal sta
 var ErrLegacySyncPullResponse = errors.New(
     "connector returned legacy synchronous pull response (HTTP 200 with body); " +
         "expected 202 Accepted from async protocol — upgrade the connector service",
+)
+```
+
+<a name="ErrOperationAlreadyRunning"></a>ErrOperationAlreadyRunning is the sentinel returned when a connector refuses a request because the same operation is already in flight \(HTTP 409\). Callers wrap this with AlreadyRunningError to surface the job\_id of the blocker; use errors.As to unwrap.
+
+```go
+var ErrOperationAlreadyRunning = errors.New(
+    "connector refused the request: operation is already running",
 )
 ```
 
@@ -3782,6 +3799,49 @@ func (e *APIError) Error() string
 ```
 
 Error implements the error interface.
+
+<a name="AlreadyRunningError"></a>
+## type AlreadyRunningError
+
+AlreadyRunningError wraps ErrOperationAlreadyRunning with the details of the currently\-running job so callers can redirect their polling \(or issue a cancel\) without a second round\-trip to the server to discover what's holding the lock.
+
+Returned by StartOperationPull \(and any other op\-start path that migrates onto the async protocol\) when the server responds with HTTP 409 \+ an AlreadyRunningBody payload.
+
+```go
+type AlreadyRunningError struct {
+    // Body is the full structured payload the server returned. JobID
+    // is the most useful field for callers, but Kind / StartedAt /
+    // OperationID are kept for logs and operator diagnostics.
+    Body irminmodels.AlreadyRunningBody
+}
+```
+
+<a name="AlreadyRunningError.Error"></a>
+### func \(\*AlreadyRunningError\) Error
+
+```go
+func (e *AlreadyRunningError) Error() string
+```
+
+Error implements the error interface.
+
+<a name="AlreadyRunningError.JobID"></a>
+### func \(\*AlreadyRunningError\) JobID
+
+```go
+func (e *AlreadyRunningError) JobID() string
+```
+
+JobID is a convenience accessor for the most commonly consumed field so callers don't have to reach through Body every time.
+
+<a name="AlreadyRunningError.Unwrap"></a>
+### func \(\*AlreadyRunningError\) Unwrap
+
+```go
+func (e *AlreadyRunningError) Unwrap() error
+```
+
+Unwrap lets errors.Is\(err, ErrOperationAlreadyRunning\) succeed on wrapped AlreadyRunningError values, matching the pattern used by JobFailedError.
 
 <a name="Client"></a>
 ## type Client
@@ -3838,6 +3898,19 @@ func (c *Client) CancelOperationJob(ctx context.Context, jobID string) error
 ```
 
 CancelOperationJob requests that the connector service cancel an in\-flight async operation job. Safe to call on terminal jobs \(server is expected to treat it as a no\-op\). Uses POST with the job\_id on the path so it composes with existing per\-job routes.
+
+Returns nil on any 2xx; the richer response shape \(status, was\_active\) is available via CancelOperationJobDetail. Callers that only need idempotent fire\-and\-forget semantics can keep calling this method.
+
+<a name="Client.CancelOperationJobDetail"></a>
+### func \(\*Client\) CancelOperationJobDetail
+
+```go
+func (c *Client) CancelOperationJobDetail(ctx context.Context, jobID string) (*irminmodels.CancelOperationJobResponse, error)
+```
+
+CancelOperationJobDetail is the richer form of CancelOperationJob that returns the parsed CancelOperationJobResponse on success so callers can tell "we actually signalled a running worker" \(WasActive=true\) from "job was already terminal" \(WasActive=false\).
+
+Servers that pre\-date the structured response shape will return a 200 without WasActive; in that case the response carries the default zero values \(Status="", WasActive=false\) and callers should treat that as the legacy "accepted, unknown state" signal.
 
 <a name="Client.FetchOperationResult"></a>
 ### func \(\*Client\) FetchOperationResult
@@ -3928,6 +4001,54 @@ func (e *JobFailedError) Unwrap() error
 ```
 
 Unwrap lets errors.Is\(err, ErrJobFailed\) succeed on wrapped JobFailedError values, so callers can check the sentinel and then use errors.As to extract the detail.
+
+<a name="JobServerError"></a>
+## type JobServerError
+
+JobServerError wraps a structured JobErrorBody returned by the async\-job endpoints \(status/result/cancel\) on any non\-2xx response. Callers driving retry logic should inspect Retryable and Reason rather than the raw Error string.
+
+Returned by GetOperationJobStatus, FetchOperationResult, and CancelOperationJob when the server responds with a structured JobErrorBody payload. For older servers that still return the unstructured \{"error": "..."\} shape, the client falls back to APIError so this type only surfaces on migrated deployments.
+
+```go
+type JobServerError struct {
+    // StatusCode is the HTTP status returned by the connector. Kept
+    // separately from Body so callers can discriminate 404 vs 500
+    // without re-parsing the reason code.
+    StatusCode int
+
+    // Body is the structured error envelope. Reason and Retryable
+    // are the machine-readable signals; Error carries the
+    // operator-facing message.
+    Body irminmodels.JobErrorBody
+}
+```
+
+<a name="JobServerError.Error"></a>
+### func \(\*JobServerError\) Error
+
+```go
+func (e *JobServerError) Error() string
+```
+
+Error implements the error interface.
+
+<a name="JobServerError.Reason"></a>
+### func \(\*JobServerError\) Reason
+
+```go
+func (e *JobServerError) Reason() irminmodels.JobErrorReason
+```
+
+Reason returns the machine\-readable failure classification.
+
+<a name="JobServerError.Retryable"></a>
+### func \(\*JobServerError\) Retryable
+
+```go
+func (e *JobServerError) Retryable() bool
+```
+
+Retryable reports whether the server classified this failure as safe to retry after a short backoff.
 
 <a name="StartOperationPullRequest"></a>
 ## type StartOperationPullRequest
@@ -4297,11 +4418,13 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type APIToken](<#APIToken>)
 - [type ActionExecutableType](<#ActionExecutableType>)
 - [type ActionInputData](<#ActionInputData>)
+- [type AlreadyRunningBody](<#AlreadyRunningBody>)
 - [type BillingAddress](<#BillingAddress>)
 - [type BillingInfo](<#BillingInfo>)
 - [type BillingInfoTaxID](<#BillingInfoTaxID>)
 - [type Branch](<#Branch>)
 - [type BranchGarbageCollectionRules](<#BranchGarbageCollectionRules>)
+- [type CancelOperationJobResponse](<#CancelOperationJobResponse>)
 - [type ChangeItem](<#ChangeItem>)
 - [type ChangeType](<#ChangeType>)
 - [type Commit](<#Commit>)
@@ -4337,6 +4460,8 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type IrminAPIPaginationMetadata](<#IrminAPIPaginationMetadata>)
 - [type IrminAPIResponse](<#IrminAPIResponse>)
 - [type JSONSchema](<#JSONSchema>)
+- [type JobErrorBody](<#JobErrorBody>)
+- [type JobErrorReason](<#JobErrorReason>)
 - [type LogEvent](<#LogEvent>)
 - [type LogEventType](<#LogEventType>)
 - [type MergeStrategy](<#MergeStrategy>)
@@ -4699,6 +4824,52 @@ type ActionInputData struct {
 }
 ```
 
+<a name="AlreadyRunningBody"></a>
+## type AlreadyRunningBody
+
+AlreadyRunningBody is the wire shape returned by any connector endpoint that refuses a request because the same operation is already in flight \(HTTP 409 Conflict\).
+
+The pre\-async protocol returned just \{"error": "Operation is already running"\} — opaque to callers. This body carries the in\-flight job\_id so callers can redirect their polling \(or cancel the blocker\) without guessing.
+
+JobID is guaranteed non\-empty when the server side uses the unified JobManager.Begin path. It may be empty when a legacy sync code path holds the lock without registering a job row; callers should treat that as "retry later" rather than a hard error.
+
+```go
+type AlreadyRunningBody struct {
+    // Error is the stable human-readable message. Always
+    // "Operation is already running" — kept for backwards
+    // compatibility with clients that key off the error string.
+    Error string `json:"error" example:"Operation is already running"`
+
+    // JobID is the opaque identifier of the currently-running job.
+    // Clients can pass this straight to CancelOperationJob or
+    // GetOperationJobStatus. Empty only for legacy holders that have
+    // not migrated to the JobManager.Begin path yet.
+    JobID string `json:"job_id,omitempty" example:"opjob_9m3x7k2n8q5p"`
+
+    // OperationID is the connector-service-local numeric ID of the
+    // operation the lock was taken on. Present so operator-facing
+    // logs can cross-reference the operation row directly.
+    OperationID uint `json:"operation_id,omitempty" example:"42"`
+
+    // Kind is the operation kind holding the lock. One of "pull",
+    // "push", "patch", "schema". Helps operators distinguish a
+    // long-running pull from a fast sync push when triaging
+    // contention.
+    Kind string `json:"kind,omitempty" example:"pull"`
+
+    // StartedAt is when the in-flight job was accepted. Clients can
+    // compute elapsed time to decide whether to wait or cancel. nil
+    // for legacy sync holders with no registered row.
+    //
+    // Pointer rather than time.Time + omitempty because encoding/json's
+    // omitempty does not treat a zero time.Time as empty — it would
+    // serialise as "0001-01-01T00:00:00Z" on the wire. Matches the
+    // convention used by ExpiresAt above and the *time.Time fields
+    // in the other models in this package.
+    StartedAt *time.Time `json:"started_at,omitempty"`
+}
+```
+
 <a name="BillingAddress"></a>
 ## type BillingAddress
 
@@ -4762,6 +4933,39 @@ BranchGarbageCollectionRules represents the garbage collection rules for a branc
 type BranchGarbageCollectionRules struct {
     BranchID      string `json:"branch_id"      validate:"required,validslug"      example:"main"`
     RetentionDays int    `json:"retention_days" validate:"required,gte=0,lte=3650" example:"30"`
+}
+```
+
+<a name="CancelOperationJobResponse"></a>
+## type CancelOperationJobResponse
+
+CancelOperationJobResponse is the 200 body returned by POST /operation/cancel/:job\_id. The endpoint is idempotent — calling it on a terminal \(complete/failed/cancelled\) job still returns 200 — so callers that want to distinguish "we actually signalled a running worker" from "job was already terminal" can inspect WasActive.
+
+A 200 response does NOT mean the worker has exited. Cancel is fire\-and\-forget: the signal is accepted and the worker's context is cancelled, but the worker may still be in its shutdown path for a short window. Poll /operation/status to observe the terminal transition.
+
+```go
+type CancelOperationJobResponse struct {
+    // JobID echoes the ID from the URL so batched responses can be
+    // associated with their requests without re-parsing.
+    JobID string `json:"job_id" example:"opjob_9m3x7k2n8q5p"`
+
+    // Status is the job's current lifecycle state at the moment
+    // cancel was processed. If WasActive is true this will usually
+    // still be "running" (the cancel signal has been sent but the
+    // worker has not yet transitioned). If WasActive is false this
+    // is a terminal status.
+    Status OperationJobStatus `json:"status" example:"running"`
+
+    // WasActive is true when cancel actually signalled a live
+    // worker. False for idempotent no-op calls against terminal
+    // jobs — the request is still a success, but the caller can
+    // distinguish "we cancelled it" from "it was already done".
+    WasActive bool `json:"was_active" example:"true"`
+
+    // Message is a human-readable status line. Kept for log
+    // readability; callers driving UI should use Status + WasActive
+    // instead.
+    Message string `json:"message" example:"cancellation requested"`
 }
 ```
 
@@ -5483,6 +5687,77 @@ type JSONSchema struct {
     XInferredBy         *string            `json:"x-inferred-by,omitempty"                                                                                    example:"duckdb-information_schema"`
     XUnmappedTypes      *[]string          `json:"x-unmapped-types,omitempty"                                                                                 example:"CUSTOM_TYPE,UNKNOWN_TYPE"`
 }
+```
+
+<a name="JobErrorBody"></a>
+## type JobErrorBody
+
+JobErrorBody is the structured error envelope returned by the async\-job endpoints on any non\-2xx response \(404, 409 auth issues, 500\). The legacy unstructured \{"error": "..."\} shape is a proper subset — the Error field is always populated — so middleware tolerant of the legacy shape still reads the message.
+
+Clients driving retry logic should read Reason \+ Retryable rather than parsing Error. Example: Core's poll wrapper retries only when Retryable is true AND Reason is JobErrorReasonTransientDB.
+
+```go
+type JobErrorBody struct {
+    // Error is the operator-facing human-readable message. Stable
+    // enough for log grep but not a machine-readable code.
+    Error string `json:"error" example:"failed to load job"`
+
+    // Reason is the machine-readable failure classification. See
+    // JobErrorReason for the stable value set.
+    Reason JobErrorReason `json:"reason" example:"transient_db_error"`
+
+    // Retryable reports whether the caller should retry the same
+    // request after a short backoff. False for any terminal failure
+    // mode (not_found, corrupted_job_state, invalid_request).
+    Retryable bool `json:"retryable" example:"true"`
+
+    // JobID echoes the ID from the URL when the server could parse
+    // one. Empty for request-level failures (malformed URL, missing
+    // path parameter).
+    JobID string `json:"job_id,omitempty" example:"opjob_9m3x7k2n8q5p"`
+}
+```
+
+<a name="JobErrorReason"></a>
+## type JobErrorReason
+
+JobErrorReason enumerates the machine\-readable failure modes of the /operation/\{status,result,cancel\} endpoints. Stable strings — Core's poll wrapper compares against these values directly.
+
+Retryability is NOT encoded in the reason itself — use the Retryable field on JobErrorBody. Some reasons are retryable in some contexts and not in others \(e.g., a "not\_found" on cancel is terminal for the caller but a "not\_found" during a race with janitor reclaim is benign\).
+
+```go
+type JobErrorReason string
+```
+
+<a name="JobErrorReasonTransientDB"></a>
+
+```go
+const (
+    // JobErrorReasonTransientDB signals a recoverable database-layer
+    // error (connection reset, pool exhaustion, statement timeout).
+    // Callers should retry after a short backoff.
+    JobErrorReasonTransientDB JobErrorReason = "transient_db_error"
+
+    // JobErrorReasonCorruptedRow signals that the job row exists but
+    // its persisted state is unreadable (e.g., malformed progress
+    // JSON). Not retryable — the row needs operator intervention or
+    // janitor reaping.
+    JobErrorReasonCorruptedRow JobErrorReason = "corrupted_job_state"
+
+    // JobErrorReasonNotFound signals that no job with the requested
+    // ID exists. Returned on 404; callers should not retry.
+    JobErrorReasonNotFound JobErrorReason = "not_found"
+
+    // JobErrorReasonInvalidRequest signals that the caller sent a
+    // malformed request (missing job_id, bad token, etc.). Not
+    // retryable without changing the request.
+    JobErrorReasonInvalidRequest JobErrorReason = "invalid_request"
+
+    // JobErrorReasonInternal is the catch-all for failures that
+    // don't fit the other buckets. Not retryable by default; the
+    // response body's human-readable Error field carries detail.
+    JobErrorReasonInternal JobErrorReason = "internal"
+)
 ```
 
 <a name="LogEvent"></a>

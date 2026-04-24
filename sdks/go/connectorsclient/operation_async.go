@@ -78,6 +78,19 @@ func (c *Client) StartOperationPull(
 		return nil, ErrLegacySyncPullResponse
 	}
 
+	// 409 Conflict is the structured "operation already running"
+	// signal. Parse the body into AlreadyRunningError so callers can
+	// errors.As it and reach the blocking job_id directly. If the
+	// body does not match the structured shape, fall back to
+	// *APIError to preserve diagnostics for pre-envelope servers.
+	if resp.StatusCode == http.StatusConflict {
+		bodyBytes := readBoundedBody(resp)
+		if alreadyErr := readAlreadyRunningError(bodyBytes); alreadyErr != nil {
+			return nil, alreadyErr
+		}
+		return nil, apiErrorFromBytes(resp.StatusCode, bodyBytes)
+	}
+
 	if resp.StatusCode != http.StatusAccepted {
 		return nil, readAPIError(resp)
 	}
@@ -129,7 +142,7 @@ func (c *Client) GetOperationJobStatus(
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, readAPIError(resp)
+		return nil, readJobNonSuccess(resp)
 	}
 
 	bodyBytes, err := io.ReadAll(resp.Body)
@@ -189,6 +202,12 @@ func (c *Client) FetchOperationResult(
 	// Bounded drain — streamClient has no top-level timeout, so a
 	// misbehaving server sending an unbounded 409 body would otherwise
 	// hang this path. errorBodyReadLimit matches readAPIError's guard.
+	//
+	// We keep ErrResultNotReady as the primary signal here because
+	// the poll wrapper's state machine keys off it; the structured
+	// JobErrorBody shape does not override that semantic — a 409 on
+	// the result endpoint means "keep polling status" regardless of
+	// whether the body carries a reason.
 	if resp.StatusCode == http.StatusConflict {
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, errorBodyReadLimit))
 		_ = resp.Body.Close()
@@ -196,7 +215,7 @@ func (c *Client) FetchOperationResult(
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		apiErr := readAPIError(resp)
+		apiErr := readJobNonSuccess(resp)
 		_ = resp.Body.Close()
 		return nil, apiErr
 	}
@@ -209,30 +228,69 @@ func (c *Client) FetchOperationResult(
 // in-flight async operation job. Safe to call on terminal jobs
 // (server is expected to treat it as a no-op). Uses POST with the
 // job_id on the path so it composes with existing per-job routes.
+//
+// Returns nil on any 2xx; the richer response shape (status,
+// was_active) is available via CancelOperationJobDetail. Callers
+// that only need idempotent fire-and-forget semantics can keep
+// calling this method.
 func (c *Client) CancelOperationJob(ctx context.Context, jobID string) error {
+	_, err := c.CancelOperationJobDetail(ctx, jobID)
+	return err
+}
+
+// CancelOperationJobDetail is the richer form of CancelOperationJob
+// that returns the parsed CancelOperationJobResponse on success so
+// callers can tell "we actually signalled a running worker"
+// (WasActive=true) from "job was already terminal" (WasActive=false).
+//
+// Servers that pre-date the structured response shape will return a
+// 200 without WasActive; in that case the response carries the
+// default zero values (Status="", WasActive=false) and callers
+// should treat that as the legacy "accepted, unknown state" signal.
+func (c *Client) CancelOperationJobDetail(
+	ctx context.Context,
+	jobID string,
+) (*irminmodels.CancelOperationJobResponse, error) {
 	if jobID == "" {
-		return errors.New("jobID must not be empty")
+		return nil, errors.New("jobID must not be empty")
 	}
 
 	endpoint := fmt.Sprintf("%s/operation/cancel/%s", c.BaseURL, url.PathEscape(jobID))
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, nil)
 	if err != nil {
-		return fmt.Errorf("failed to build cancel request: %w", err)
+		return nil, fmt.Errorf("failed to build cancel request: %w", err)
 	}
 	c.applyDefaultHeaders(httpReq, "application/json")
 
 	resp, err := c.HTTPClient.Do(httpReq)
 	if err != nil {
-		return fmt.Errorf("cancel request to %s failed: %w", httpReq.URL, err)
+		return nil, fmt.Errorf("cancel request to %s failed: %w", httpReq.URL, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return readAPIError(resp)
+		return nil, readJobNonSuccess(resp)
 	}
-	// Response body (if any) is ignored — cancel is fire-and-forget.
-	_, _ = io.Copy(io.Discard, resp.Body)
-	return nil
+
+	bodyBytes, readErr := io.ReadAll(io.LimitReader(resp.Body, errorBodyReadLimit))
+	if readErr != nil {
+		// Read failure on a 2xx is unexpected — surface it rather
+		// than silently returning a zero-valued response.
+		return nil, fmt.Errorf("failed to read cancel response body: %w", readErr)
+	}
+	// Legacy servers return {"message": "cancellation requested"}
+	// without the richer fields. Attempt structured decode; if the
+	// body is empty or minimally-shaped the zero-valued response is
+	// the correct thing to return.
+	var out irminmodels.CancelOperationJobResponse
+	if len(bodyBytes) > 0 {
+		// Best-effort decode. JSON errors here would mean the server
+		// returned non-JSON on a 2xx, which contradicts its own
+		// content type; don't fail the cancel over it — the cancel
+		// itself succeeded at the HTTP layer.
+		_ = json.Unmarshal(bodyBytes, &out)
+	}
+	return &out, nil
 }
 
 // encodeStartPullForm renders a StartOperationPullRequest as
@@ -275,4 +333,87 @@ func readAPIError(resp *http.Response) error {
 		StatusCode: resp.StatusCode,
 		Body:       buf.String(),
 	}
+}
+
+// readAlreadyRunningError reads the response body and attempts to
+// decode it into an AlreadyRunningBody. Returns a wrapped
+// *AlreadyRunningError on success, or nil if the body cannot be
+// decoded into the structured shape — the caller should fall back
+// to *APIError (constructed from the same bytes via apiErrorFromBytes)
+// in that case to preserve diagnostics for pre-envelope servers.
+//
+// "Structured shape" means the body was valid JSON containing the
+// canonical Error string. JobID absent is acceptable (legacy sync
+// holder); body totally malformed is not.
+func readAlreadyRunningError(bodyBytes []byte) *AlreadyRunningError {
+	if len(bodyBytes) == 0 {
+		return nil
+	}
+	var body irminmodels.AlreadyRunningBody
+	if err := json.Unmarshal(bodyBytes, &body); err != nil {
+		// Intentional discard — a JSON parse failure means the
+		// server did not send a structured body; the caller falls
+		// back to *APIError with the raw bytes. Propagating the
+		// parse error would obscure the actual HTTP failure.
+		return nil //nolint:nilerr // parse failure means "not structured" — caller falls back to *APIError
+	}
+	if body.Error == "" {
+		// Likely a non-AlreadyRunningBody JSON object (e.g.,
+		// {"foo":"bar"}). Don't claim it's a structured 409.
+		return nil
+	}
+	return &AlreadyRunningError{Body: body}
+}
+
+// readJobServerError attempts to decode bodyBytes into a
+// JobErrorBody. Returns *JobServerError on success, nil otherwise.
+//
+// The discriminator is a non-empty Reason field. Old-style
+// {"error": "..."} bodies lack this and fall through so the caller
+// can surface *APIError with the original bytes.
+func readJobServerError(statusCode int, bodyBytes []byte) *JobServerError {
+	if len(bodyBytes) == 0 {
+		return nil
+	}
+	var body irminmodels.JobErrorBody
+	if err := json.Unmarshal(bodyBytes, &body); err != nil {
+		// Intentional discard — same rationale as
+		// readAlreadyRunningError. A parse failure means the server
+		// did not send a structured body; let the caller fall back
+		// to *APIError with the raw bytes.
+		return nil //nolint:nilerr // parse failure means "not structured" — caller falls back to *APIError
+	}
+	if body.Reason == "" {
+		return nil
+	}
+	return &JobServerError{StatusCode: statusCode, Body: body}
+}
+
+// apiErrorFromBytes is the *APIError fallback for the cases where
+// the structured-body decoders rejected the response. Keeps the raw
+// bytes as the diagnostic Body string so operator-facing logs still
+// see whatever the server actually sent.
+func apiErrorFromBytes(statusCode int, bodyBytes []byte) error {
+	return &APIError{StatusCode: statusCode, Body: string(bodyBytes)}
+}
+
+// readBoundedBody drains up to errorBodyReadLimit bytes of the
+// response body for error-parsing purposes. Separate helper so the
+// structured/legacy decoders operate on the same byte slice without
+// each re-reading resp.Body.
+func readBoundedBody(resp *http.Response) []byte {
+	buf, _ := io.ReadAll(io.LimitReader(resp.Body, errorBodyReadLimit))
+	return buf
+}
+
+// readJobNonSuccess centralises the non-2xx body parsing used by
+// status / result / cancel: prefer *JobServerError when the body
+// carries a structured reason, fall back to *APIError otherwise.
+// Consumes the body.
+func readJobNonSuccess(resp *http.Response) error {
+	bodyBytes := readBoundedBody(resp)
+	if structured := readJobServerError(resp.StatusCode, bodyBytes); structured != nil {
+		return structured
+	}
+	return apiErrorFromBytes(resp.StatusCode, bodyBytes)
 }
