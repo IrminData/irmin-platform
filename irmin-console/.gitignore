@@ -74,3 +74,6 @@ package-lock.json
 .cursor/mcp.json
 .vscode/mcp.json
 .aider*
+
+# Claude Code / git worktrees used for isolated work
+.worktrees/
