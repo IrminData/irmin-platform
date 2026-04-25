@@ -96,6 +96,46 @@ func doJobRequest(
 	return resp
 }
 
+// TestJobRoutesMountedUnderConnectorSlug exercises the per-connector
+// mount registered by MountJobHandlersOnGroup. The SDK builds
+// lifecycle URLs as "{connector_base_url}/operation/{status,result,
+// cancel}/{job_id}" where connector_base_url already includes the
+// "/{slug}" prefix Core resolved at registration time. A root-only
+// mount returns 404 on every poll — see operationJobHandlers.go for
+// the rationale on why both mounts coexist.
+func TestJobRoutesMountedUnderConnectorSlug(t *testing.T) {
+	store := newMemJobStore()
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	manager := NewJobManagerWithStore(store, logger, JobManagerConfig{
+		TTL:             DefaultJobTTL,
+		JanitorInterval: 24 * time.Hour,
+		ResultDir:       t.TempDir(),
+	})
+	t.Cleanup(manager.StopJanitor)
+
+	operationStore := &fakeOperationStore{operations: map[uint]*db.Operation{
+		42: {Model: gorm.Model{ID: 42}, Token: "legacy-unused"},
+	}}
+
+	app := fiber.New()
+	// Mount the lifecycle routes under a connector group, exactly as
+	// SetupConnectorRoutes does in production.
+	group := app.Group("/stripe")
+	registerJobHandlers(group, manager, operationStore)
+	seedJobWithToken(t, store, "opjob_under_slug", 42, "token-xyz")
+
+	resp := doJobRequest(
+		t,
+		app,
+		http.MethodGet,
+		"http://localhost/stripe/operation/status/opjob_under_slug",
+		"Bearer token-xyz",
+	)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status under /stripe/ = %d, want 200 (route mismatch regression)", resp.StatusCode)
+	}
+}
+
 func TestJobRoutesRequireMatchingOperationToken(t *testing.T) {
 	app, store, opStore := newJobHandlerTestApp(t)
 	// Phase 4: lifecycle auth keys off OperationJob.OperationToken,

@@ -88,6 +88,14 @@ func SetupConnectorRoutes(config ConnectorRouteConfig) {
 
 	setupCapabilityRoutes(connectorRoutes, config.Controller, config.Capabilities)
 
+	// Mirror the per-job lifecycle routes (status / result / cancel)
+	// under this connector's group so the SDK's slug-prefixed URLs
+	// land on the right handlers. The same routes are also mounted
+	// at the connectors-app root by RegisterJobHandlers; both share
+	// one JobManager so it doesn't matter which mount the caller
+	// hits — see operationJobHandlers.go for the rationale.
+	MountJobHandlersOnGroup(connectorRoutes, config.App)
+
 	// Public information about the connector (no authentication required)
 	connectorRoutes.Get("/details", config.Controller.DetailsPage)
 }
@@ -97,11 +105,11 @@ func SetupConnectorRoutes(config ConnectorRouteConfig) {
 // All data routes use the same Phase-4 chain: system token (proves the
 // caller is Core), then EnsureOperationMiddleware (upserts the
 // Operation row from request-body credentials so the worker has
-// details / settings to operate against). The lifecycle routes
-// /operation/status/:job_id, /operation/result/:job_id,
-// /operation/cancel/:job_id are registered separately by the
-// connectors-app bootstrap and use the per-job operation token via
-// validateJobOperationToken — see operationJobHandlers.go.
+// details / settings to operate against). The per-job lifecycle
+// routes (status / result / cancel) are mounted both at the
+// connectors-app root by RegisterJobHandlers and per-connector by
+// MountJobHandlersOnGroup (see SetupConnectorRoutes); both mounts
+// share one JobManager.
 func setupCapabilityRoutes(
 	routes fiber.Router,
 	controller ConnectorController,

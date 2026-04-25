@@ -230,9 +230,21 @@ func setupCache() fiber.Handler {
 	})
 }
 
+// shouldBypassAppCache returns true for the per-job lifecycle routes
+// (status / result) so the response cache never serves a stale snapshot
+// to the SDK's poll loop. Both mount shapes are covered:
+//
+//   - root mount (RegisterJobHandlers):           /operation/{status,result}/:job_id
+//   - per-connector mount (MountJobHandlersOnGroup): /{slug}/operation/{status,result}/:job_id
+//
+// Using strings.Contains rather than HasPrefix is deliberate — it
+// captures the slug-prefixed shape too, and no other route in the
+// connectors-app carries `/operation/status/` or `/operation/result/`
+// as a substring, so there's no risk of bypassing legitimately
+// cacheable traffic. Cancel is POST and isn't cached regardless.
 func shouldBypassAppCache(path string) bool {
-	return strings.HasPrefix(path, "/operation/status/") ||
-		strings.HasPrefix(path, "/operation/result/")
+	return strings.Contains(path, "/operation/status/") ||
+		strings.Contains(path, "/operation/result/")
 }
 
 // setupPublicCORS configures and returns a permissive CORS middleware for public routes.

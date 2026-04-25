@@ -12,26 +12,44 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// RegisterJobHandlers mounts the top-level async-job HTTP endpoints on
-// the provided fiber app. Called from main at startup, once. Routes
-// are top-level (not under a connector slug) because the SDK client
-// addresses them by job_id alone — the connector slug is a server-side
-// detail that lives inside the persisted OperationJob row.
+// RegisterJobHandlers mounts the async-job HTTP lifecycle endpoints
+// (status / result / cancel) at the connectors-app root. Called from
+// main at startup, once.
 //
-// Routes:
+// The same routes are also mirrored per-connector by
+// SetupConnectorRoutes — see MountJobHandlersOnGroup. The SDK client
+// builds lifecycle URLs as
+// "{connector_base_url}/operation/{status,result,cancel}/{job_id}"
+// where connector_base_url already carries the "/{slug}" prefix Core
+// resolved at registration time, so a root-only mount returns 404 on
+// every poll. Both mounts route to the same handlers and the same
+// JobManager — job_id alone disambiguates which job — so the
+// duplication is cheap routing-table noise, not duplicated state.
+//
+// Routes (registered both here and per-connector):
 //
 //	GET  /operation/status/:job_id   — job status snapshot
 //	GET  /operation/result/:job_id   — result zip stream (409 until ready)
 //	POST /operation/cancel/:job_id   — cancel an in-flight job
 //
-// All routes require the operation token associated with the job's
-// backing operation row (Authorization: Bearer <operation-token>).
-// The job_id remains opaque, but is no longer an auth secret.
+// All routes require the per-job operation token returned in the 202
+// body of the corresponding Start* request. The connector's system
+// token is rejected by design.
 func RegisterJobHandlers(app *fiber.App, connectorsApp *models.ConnectorsApp) {
 	manager := mustJobManager(connectorsApp)
 	operationStore := mustOperationStore(connectorsApp)
 
 	registerJobHandlers(app, manager, operationStore)
+}
+
+// MountJobHandlersOnGroup mirrors the lifecycle routes onto a per-
+// connector router group so the SDK's slug-prefixed URLs hit the
+// expected handlers. Called from SetupConnectorRoutes — see the
+// RegisterJobHandlers doc comment for why both mounts are needed.
+func MountJobHandlersOnGroup(group fiber.Router, connectorsApp *models.ConnectorsApp) {
+	manager := mustJobManager(connectorsApp)
+	operationStore := mustOperationStore(connectorsApp)
+	registerJobHandlers(group, manager, operationStore)
 }
 
 type operationStore interface {
@@ -45,17 +63,21 @@ func mustOperationStore(app *models.ConnectorsApp) operationStore {
 	return app.DB
 }
 
-func registerJobHandlers(app *fiber.App, manager *JobManager, operationStore operationStore) {
+// registerJobHandlers mounts the three lifecycle routes on any router
+// — works equally on the root *fiber.App or a connector's
+// fiber.Router group. The handlers and the auth middleware are the
+// same across mount points; routing is by job_id only.
+func registerJobHandlers(router fiber.Router, manager *JobManager, operationStore operationStore) {
 	auth := func(c fiber.Ctx) error {
 		return validateJobOperationToken(c, manager, operationStore)
 	}
-	app.Get("/operation/status/:job_id", auth, func(c fiber.Ctx) error {
+	router.Get("/operation/status/:job_id", auth, func(c fiber.Ctx) error {
 		return handleJobStatus(c, manager)
 	})
-	app.Get("/operation/result/:job_id", auth, func(c fiber.Ctx) error {
+	router.Get("/operation/result/:job_id", auth, func(c fiber.Ctx) error {
 		return handleJobResult(c, manager)
 	})
-	app.Post("/operation/cancel/:job_id", auth, func(c fiber.Ctx) error {
+	router.Post("/operation/cancel/:job_id", auth, func(c fiber.Ctx) error {
 		return handleJobCancel(c, manager)
 	})
 }

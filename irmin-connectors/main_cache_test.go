@@ -154,6 +154,69 @@ func TestSetupCacheSkipsOperationResultRoute(t *testing.T) {
 	}
 }
 
+// TestSetupCacheSkipsSlugPrefixedOperationStatusRoute is the
+// regression companion to PR #184: lifecycle routes are now mirrored
+// per-connector under /{slug}/operation/{status,result}/:job_id, and
+// the response cache must bypass that shape too — otherwise the SDK's
+// poll loop would see a 10-second-stale row and miss the
+// running→complete transition. shouldBypassAppCache uses
+// strings.Contains specifically to cover both mounts.
+func TestSetupCacheSkipsSlugPrefixedOperationStatusRoute(t *testing.T) {
+	app := fiber.New()
+	app.Use(setupCache())
+
+	calls := 0
+	app.Get("/stripe/operation/status/:job_id", func(c fiber.Ctx) error {
+		calls++
+		return c.JSON(fiber.Map{"calls": calls})
+	})
+
+	firstResp := doCacheTestRequest(t, app, "http://localhost/stripe/operation/status/opjob_123")
+	secondResp := doCacheTestRequest(t, app, "http://localhost/stripe/operation/status/opjob_123")
+
+	firstBody := decodeMapBody(t, firstResp)
+	secondBody := decodeMapBody(t, secondResp)
+
+	if firstBody["calls"] != float64(1) {
+		t.Fatalf("first calls = %v, want 1", firstBody["calls"])
+	}
+	if secondBody["calls"] != float64(2) {
+		t.Fatalf("second calls = %v, want 2 (slug-prefixed lifecycle route must bypass cache)", secondBody["calls"])
+	}
+}
+
+func TestSetupCacheSkipsSlugPrefixedOperationResultRoute(t *testing.T) {
+	app := fiber.New()
+	app.Use(setupCache())
+
+	calls := 0
+	app.Get("/stripe/operation/result/:job_id", func(c fiber.Ctx) error {
+		calls++
+		if calls == 1 {
+			return c.Status(http.StatusConflict).JSON(fiber.Map{
+				"error":  "job not ready",
+				"status": "running",
+			})
+		}
+		return c.Status(http.StatusOK).JSON(fiber.Map{
+			"status": "complete",
+		})
+	})
+
+	firstResp := doCacheTestRequest(t, app, "http://localhost/stripe/operation/result/opjob_123")
+	secondResp := doCacheTestRequest(t, app, "http://localhost/stripe/operation/result/opjob_123")
+
+	if firstResp.StatusCode != http.StatusConflict {
+		t.Fatalf("first status = %d, want 409", firstResp.StatusCode)
+	}
+	if secondResp.StatusCode != http.StatusOK {
+		t.Fatalf(
+			"second status = %d, want 200 (slug-prefixed lifecycle route must bypass cache)",
+			secondResp.StatusCode,
+		)
+	}
+}
+
 func TestSetupCacheStillCachesNonOperationGET(t *testing.T) {
 	app := fiber.New()
 	app.Use(setupCache())
