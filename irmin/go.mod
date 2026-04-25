@@ -8,7 +8,7 @@ require (
 	github.com/clerk/clerk-sdk-go/v2 v2.5.1
 	github.com/daytonaio/daytona/libs/sdk-go v0.169.0
 	github.com/getsentry/sentry-go v0.46.0
-	github.com/gofiber/fiber/v3 v3.1.0
+	github.com/gofiber/fiber/v3 v3.2.0
 	github.com/gofiber/storage/memory/v2 v2.1.2
 	github.com/gofiber/storage/s3/v2 v2.6.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
