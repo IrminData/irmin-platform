@@ -31,14 +31,15 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.4.0
-          # 5m was the previous ceiling; with skip-cache=true (no
-          # build-cache reuse across runs) the analysis runs cold
-          # every time and the codebase regularly clocks ~5m exactly,
-          # so a one-second slow-down trips the timeout while
-          # producing 0 issues. 10m gives margin without hiding a
-          # real regression.
+          # 10m sized to absorb cold-cache runs (first run after a
+          # go.sum or tool-version change, which evicts the action's
+          # cache key). The codebase clocks ~5m from cold, and a
+          # 5m ceiling tripped exactly that on this PR's first run.
+          # Warm runs finish well under the budget — the cache
+          # enablement below is still doing the work; this is just
+          # margin for the cold case.
           args: --timeout=10m
-          skip-cache: true
+          skip-cache: false
 
       - name: Create or update PR comment on failure
         if: failure()
