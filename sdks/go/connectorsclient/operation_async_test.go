@@ -17,9 +17,10 @@ import (
 )
 
 // TestStartOperationPull_HappyPath verifies the 202 + job_id path.
-// Also asserts that Authorization / Accept-Language / the connection
-// header are stamped on the outbound request, so a future refactor
-// that drops applyDefaultHeaders is caught here.
+// Also asserts that Authorization and the connection header are
+// stamped on the outbound request, and that Accept-Language is NOT
+// sent — connector responses are English-only and the SDK
+// intentionally has no locale plumbing.
 func TestStartOperationPull_HappyPath(t *testing.T) {
 	var (
 		gotPath       string
@@ -41,21 +42,24 @@ func TestStartOperationPull_HappyPath(t *testing.T) {
 		gotConnection = r.Header.Get(connectorsclient.HeaderConnectionID)
 
 		w.WriteHeader(http.StatusAccepted)
-		_ = json.NewEncoder(w).Encode(irminmodels.StartOperationPullResponse{JobID: "opjob_test123"})
+		_ = json.NewEncoder(w).Encode(irminmodels.StartOperationJobResponse{
+			JobID:          "opjob_test123",
+			OperationToken: "optk_test456",
+		})
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok_abc", "en").WithConnectionID(42)
+	c := connectorsclient.NewClient(srv.URL, "tok_abc").WithConnectionID(42)
 
-	resp, err := c.StartOperationPull(context.Background(), connectorsclient.StartOperationPullRequest{
+	job, err := c.StartOperationPull(context.Background(), connectorsclient.StartOperationPullRequest{
 		Path:  "/v1/customers",
 		Extra: map[string]string{"cursor": "abc"},
 	})
 	if err != nil {
 		t.Fatalf("StartOperationPull: %v", err)
 	}
-	if resp.JobID != "opjob_test123" {
-		t.Errorf("JobID = %q, want opjob_test123", resp.JobID)
+	if job.JobID != "opjob_test123" {
+		t.Errorf("JobID = %q, want opjob_test123", job.JobID)
 	}
 	if gotPath != "/v1/customers" {
 		t.Errorf("form path = %q, want /v1/customers", gotPath)
@@ -63,11 +67,70 @@ func TestStartOperationPull_HappyPath(t *testing.T) {
 	if gotAuth != "Bearer tok_abc" {
 		t.Errorf("Authorization = %q, want Bearer tok_abc", gotAuth)
 	}
-	if gotLocale != "en" {
-		t.Errorf("Accept-Language = %q, want en", gotLocale)
+	if gotLocale != "" {
+		t.Errorf("Accept-Language = %q, want empty (locale plumbing removed)", gotLocale)
 	}
 	if gotConnection != "42" {
 		t.Errorf("%s = %q, want 42", connectorsclient.HeaderConnectionID, gotConnection)
+	}
+}
+
+func TestStartOperationPush_ExtraCannotOverwriteReservedFields(t *testing.T) {
+	var (
+		gotPath         string
+		gotPresignedURL string
+		gotFile         string
+		gotMode         string
+	)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/operation/push" {
+			t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+		if err := r.ParseForm(); err != nil {
+			t.Fatalf("ParseForm: %v", err)
+		}
+		gotPath = r.FormValue("path")
+		gotPresignedURL = r.FormValue("presigned_url")
+		gotFile = r.FormValue("file")
+		gotMode = r.FormValue("mode")
+
+		w.WriteHeader(http.StatusAccepted)
+		_ = json.NewEncoder(w).Encode(irminmodels.StartOperationJobResponse{
+			JobID:          "opjob_push123",
+			OperationToken: "optk_push456",
+		})
+	}))
+	defer srv.Close()
+
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	job, err := c.StartOperationPush(context.Background(), connectorsclient.StartOperationPushRequest{
+		Path:         "/explicit",
+		PresignedURL: "https://storage.example/push.zip",
+		Extra: map[string]string{
+			"path":          "/from-extra",
+			"presigned_url": "https://storage.example/evil.zip",
+			"file":          "evil.zip",
+			"mode":          "upsert",
+		},
+	})
+	if err != nil {
+		t.Fatalf("StartOperationPush: %v", err)
+	}
+	if job.JobID != "opjob_push123" {
+		t.Errorf("JobID = %q, want opjob_push123", job.JobID)
+	}
+	if gotPath != "/explicit" {
+		t.Errorf("form path = %q, want /explicit", gotPath)
+	}
+	if gotPresignedURL != "https://storage.example/push.zip" {
+		t.Errorf("form presigned_url = %q, want explicit presigned URL", gotPresignedURL)
+	}
+	if gotFile != "" {
+		t.Errorf("form file = %q, want empty", gotFile)
+	}
+	if gotMode != "upsert" {
+		t.Errorf("form mode = %q, want upsert", gotMode)
 	}
 }
 
@@ -82,7 +145,7 @@ func TestStartOperationPull_LegacySyncResponse(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
+	c := connectorsclient.NewClient(srv.URL, "tok")
 	_, err := c.StartOperationPull(
 		context.Background(),
 		connectorsclient.StartOperationPullRequest{Path: "/v1/customers"},
@@ -102,7 +165,7 @@ func TestStartOperationPull_NonAcceptedStatus(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
+	c := connectorsclient.NewClient(srv.URL, "tok")
 	_, err := c.StartOperationPull(context.Background(), connectorsclient.StartOperationPullRequest{Path: "/x"})
 
 	var apiErr *connectorsclient.APIError
@@ -127,7 +190,7 @@ func TestStartOperationPull_AcceptedButNoJobID(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
+	c := connectorsclient.NewClient(srv.URL, "tok")
 	_, err := c.StartOperationPull(context.Background(), connectorsclient.StartOperationPullRequest{Path: "/x"})
 	if err == nil || !strings.Contains(err.Error(), "did not return a job_id") {
 		t.Fatalf("err = %v, want missing-job_id error", err)
@@ -166,7 +229,7 @@ func TestGetOperationJobStatus_Transitions(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
+	c := connectorsclient.NewClient(srv.URL, "tok")
 	ctx := context.Background()
 	wantStatuses := []irminmodels.OperationJobStatus{
 		irminmodels.OperationJobStatusPending,
@@ -174,7 +237,8 @@ func TestGetOperationJobStatus_Transitions(t *testing.T) {
 		irminmodels.OperationJobStatusComplete,
 	}
 	for i, want := range wantStatuses {
-		got, err := c.GetOperationJobStatus(ctx, "opjob_test123")
+		job := connectorsclient.NewOperationJobForTest(c, "opjob_test123", "optk_test")
+		got, err := job.Status(ctx)
 		if err != nil {
 			t.Fatalf("call %d: GetOperationJobStatus: %v", i, err)
 		}
@@ -205,8 +269,9 @@ func TestGetOperationJobStatus_Failed(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
-	got, err := c.GetOperationJobStatus(context.Background(), "opjob_test123")
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	job := connectorsclient.NewOperationJobForTest(c, "opjob_test123", "optk_test")
+	got, err := job.Status(context.Background())
 	if err != nil {
 		t.Fatalf("GetOperationJobStatus: %v", err)
 	}
@@ -224,8 +289,8 @@ func TestGetOperationJobStatus_Failed(t *testing.T) {
 // TestGetOperationJobStatus_EmptyJobID verifies the guard against an
 // empty job_id that would otherwise produce a malformed URL.
 func TestGetOperationJobStatus_EmptyJobID(t *testing.T) {
-	c := connectorsclient.NewClient("http://example", "tok", "en")
-	_, err := c.GetOperationJobStatus(context.Background(), "")
+	c := connectorsclient.NewClient("http://example", "tok")
+	_, err := connectorsclient.NewOperationJobForTest(c, "", "optk_test").Status(context.Background())
 	if err == nil {
 		t.Fatalf("expected error for empty jobID")
 	}
@@ -245,8 +310,8 @@ func TestFetchOperationResult_HappyPath(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
-	rc, err := c.FetchOperationResult(context.Background(), "opjob_test123")
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	rc, err := connectorsclient.NewOperationJobForTest(c, "opjob_test123", "optk_test").Result(context.Background())
 	if err != nil {
 		t.Fatalf("FetchOperationResult: %v", err)
 	}
@@ -271,8 +336,8 @@ func TestFetchOperationResult_NotReady(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
-	rc, err := c.FetchOperationResult(context.Background(), "opjob_test123")
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	rc, err := connectorsclient.NewOperationJobForTest(c, "opjob_test123", "optk_test").Result(context.Background())
 	if rc != nil {
 		_ = rc.Close()
 		t.Fatalf("expected nil reader on not-ready")
@@ -291,8 +356,8 @@ func TestFetchOperationResult_ServerError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
-	rc, err := c.FetchOperationResult(context.Background(), "opjob_test123")
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	rc, err := connectorsclient.NewOperationJobForTest(c, "opjob_test123", "optk_test").Result(context.Background())
 	if rc != nil {
 		_ = rc.Close()
 		t.Fatalf("expected nil reader on server error")
@@ -319,8 +384,8 @@ func TestCancelOperationJob_HappyPath(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
-	if err := c.CancelOperationJob(context.Background(), "opjob_test123"); err != nil {
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	if err := connectorsclient.NewOperationJobForTest(c, "opjob_test123", "optk_test").Cancel(context.Background()); err != nil {
 		t.Fatalf("CancelOperationJob: %v", err)
 	}
 	if gotPath != "/operation/cancel/opjob_test123" {

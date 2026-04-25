@@ -26,6 +26,7 @@ var specializedTypes = map[string]string{
 	".ndjson": "application/x-ndjson",
 	".tsv":    "text/tab-separated-values",
 	".tab":    "text/tab-separated-values",
+	".xml":    "application/xml",
 	".yaml":   "application/x-yaml",
 	".yml":    "application/x-yaml",
 

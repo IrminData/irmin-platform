@@ -46,3 +46,6 @@ go.work
 .cursor/mcp.json
 .vscode/mcp.json
 .aider*
+
+# Claude Code / git worktrees used for isolated work
+.worktrees/

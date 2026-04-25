@@ -10,15 +10,50 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
+
+// OperationJob is a handle to an async operation the caller started
+// via Client.StartOperation{Pull,Push,Patch}. It encapsulates the
+// job_id and the per-job operation token the server mints on the 202
+// response. Every lifecycle method (Status, Result, Cancel, Wait) uses
+// the operation token for authentication — the Client's broader
+// system token is never sent to job-scoped routes.
+//
+// This mirrors the wire-contract security property: the system token
+// authorises starting an operation, the operation token authorises
+// everything else about that one operation. A compromised system
+// token cannot poll or cancel in-flight jobs it did not start; a
+// compromised operation token can only affect the one job it was
+// minted for.
+//
+// OperationJob is created by the Start* methods — do not construct
+// instances directly. A handle is tied to the Client that started it;
+// the Client's HTTP transport and connection-ID header are reused on
+// every lifecycle call.
+type OperationJob struct {
+	// JobID is the server-assigned opaque identifier for this
+	// operation. Safe to log.
+	JobID string
+
+	// operationToken is the per-job bearer credential. Unexported so
+	// callers cannot bypass the handle; the SDK is the only code path
+	// that sends it on the wire.
+	operationToken string
+
+	// client is the parent Client whose transport, BaseURL, Locale,
+	// and ConnectionID are reused on every lifecycle call.
+	client *Client
+}
 
 // StartOperationPullRequest holds the payload for POST /operation/pull
 // under the async protocol. It intentionally uses the same
 // x-www-form-urlencoded surface as the pre-async handler so the
 // server-side route signature does not churn; only the response
-// shape changes (202 + {job_id} instead of a streamed zip body).
+// shape changes (202 + {job_id, operation_token} instead of a streamed
+// zip body).
 type StartOperationPullRequest struct {
 	// Path is the connector-specific resource path being pulled
 	// (e.g., "/v1/customers" for Stripe, a table identifier for
@@ -32,34 +67,144 @@ type StartOperationPullRequest struct {
 	Extra map[string]string
 }
 
+// StartOperationPushRequest holds the payload for POST /operation/push
+// under the async protocol. The body is multipart/form-data — the
+// server expects either `file` (a zip of resource files) or
+// `presigned_url` (a URL it can fetch the zip from), plus an optional
+// `path` form field for connector-specific targeting.
+//
+// Exactly one of File, FilePath, or PresignedURL must be set. Extra
+// carries any additional form fields the specific connector accepts
+// on its push endpoint.
+type StartOperationPushRequest struct {
+	// Path is the connector-specific target (table name, bucket
+	// prefix, HTTP URL override, etc.). Optional.
+	Path string
+	// PresignedURL lets the connector service fetch the zip directly
+	// from S3 so Core does not have to stream large payloads through
+	// itself. When set, File and FilePath are ignored.
+	PresignedURL string
+	// File is an in-memory zip. Used when PresignedURL is empty.
+	File []byte
+	// FileName is the multipart part filename when File is set.
+	// Defaults to "push.zip".
+	FileName string
+	// FilePath points at a zip on disk. Used when both PresignedURL
+	// and File are empty.
+	FilePath string
+	// Extra carries additional form fields (connector-specific).
+	Extra map[string]string
+}
+
+// StartOperationPatchRequest holds the payload for POST /operation/patch
+// under the async protocol. The body is multipart/form-data with a
+// required `patches` file carrying the JSON Patch operations.
+//
+// Patches may be supplied inline via Patches (the SDK marshals them)
+// or as raw JSON bytes via PatchesJSON (caller-marshalled, preserves
+// key ordering when that matters).
+type StartOperationPatchRequest struct {
+	// Patches is the slice of JSON Patch ops to apply. When non-empty
+	// the SDK marshals it into the `patches` multipart field.
+	Patches []irminmodels.PatchOperation
+	// PatchesJSON is the raw JSON bytes of the operations array. Used
+	// when Patches is nil — the caller owns marshalling.
+	PatchesJSON []byte
+	// FileName is the multipart part filename for the patches field.
+	// Defaults to "patches.json".
+	FileName string
+	// Extra carries additional form fields (connector-specific).
+	Extra map[string]string
+}
+
 // StartOperationPull initiates an asynchronous pull against a
-// connector. It expects the connector service to respond with
-// 202 Accepted and {job_id, ...}; the returned
-// StartOperationPullResponse carries that job_id, which the caller
-// then uses to poll status and, eventually, fetch the result.
+// connector. The Client's system token authorises the start; the
+// returned OperationJob carries the per-job operation token used on
+// subsequent lifecycle calls.
 //
-// On HTTP 200 (legacy synchronous response) this returns
-// ErrLegacySyncPullResponse without attempting to drain the body —
-// per the async-pull plan there is intentionally no sync fallback,
-// and surfacing a specific error lets the Core poll wrapper print
-// an actionable message rather than silently degrade.
+// Semantics by response status:
 //
-// Any other non-2xx status returns an *APIError.
+//   - 202 Accepted — job queued; returns the handle.
+//   - 200 OK — the connector service is on the pre-async protocol.
+//     Returns ErrLegacySyncPullResponse without draining the body
+//     (which could be a multi-gigabyte zip).
+//   - 409 Conflict — an operation is already running for this
+//     connection. Returns *AlreadyRunningError carrying the blocking
+//     job_id when the server emits a structured body, *APIError
+//     otherwise.
+//   - Any other non-2xx — *APIError.
 func (c *Client) StartOperationPull(
 	ctx context.Context,
 	req StartOperationPullRequest,
-) (*irminmodels.StartOperationPullResponse, error) {
+) (*OperationJob, error) {
 	body, headers := encodeStartPullForm(req)
+	return c.startOperation(ctx, "/operation/pull", http.MethodPost, body, headers)
+}
 
-	httpReq, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodPost,
-		c.BaseURL+"/operation/pull",
-		body,
-	)
+// StartOperationPush initiates an asynchronous push. See
+// StartOperationPull for the response-status semantics.
+func (c *Client) StartOperationPush(
+	ctx context.Context,
+	req StartOperationPushRequest,
+) (*OperationJob, error) {
+	opts, err := buildPushRequestOptions(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build start pull request: %w", err)
+		return nil, err
 	}
+	return c.startOperationFromOpts(ctx, "/operation/push", opts)
+}
+
+// StartOperationPatch initiates an asynchronous patch. See
+// StartOperationPull for the response-status semantics.
+func (c *Client) StartOperationPatch(
+	ctx context.Context,
+	req StartOperationPatchRequest,
+) (*OperationJob, error) {
+	opts, err := buildPatchRequestOptions(req)
+	if err != nil {
+		return nil, err
+	}
+	return c.startOperationFromOpts(ctx, "/operation/patch", opts)
+}
+
+// startOperationFromOpts is the variant of startOperation that builds
+// the request body + headers via prepareBodyAndHeaders (multipart /
+// form-urlencoded switched on opts.ContentType). Pull uses the
+// direct body path because its form encoding is trivial; push and
+// patch need the multipart plumbing.
+func (c *Client) startOperationFromOpts(
+	ctx context.Context,
+	endpoint string,
+	opts RequestOptions,
+) (*OperationJob, error) {
+	bodyReader, headers, err := c.prepareBodyAndHeaders(opts)
+	if err != nil {
+		return nil, err
+	}
+	return c.startOperation(ctx, endpoint, opts.Method, bodyReader, headers)
+}
+
+// startOperation is the shared request driver for
+// Start{Pull,Push,Patch}. Handles the 202/200-legacy/409/other-non-2xx
+// branching, decodes the StartOperationJobResponse, and returns a
+// constructed OperationJob handle.
+func (c *Client) startOperation(
+	ctx context.Context,
+	endpoint string,
+	method string,
+	body io.Reader,
+	headers map[string]string,
+) (*OperationJob, error) {
+	fullURL := c.BaseURL + endpoint
+
+	httpReq, err := http.NewRequestWithContext(ctx, method, fullURL, body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build start-operation request: %w", err)
+	}
+	// Caller headers first, defaults LAST so a caller-supplied
+	// opts.Headers cannot silently overwrite Authorization or
+	// X-Irmin-Connection-Id on the start-operation call. See
+	// applyDefaultHeaders for the contract.
 	for k, v := range headers {
 		httpReq.Header.Set(k, v)
 	}
@@ -67,22 +212,18 @@ func (c *Client) StartOperationPull(
 
 	resp, err := c.HTTPClient.Do(httpReq)
 	if err != nil {
-		return nil, fmt.Errorf("start pull request to %s failed: %w", httpReq.URL, err)
+		return nil, fmt.Errorf("start-operation request to %s failed: %w", httpReq.URL, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	// Legacy sync servers return 200 with the zip body. Don't drain
-	// the body — it can be gigabytes. Bail with the sentinel so the
-	// poll wrapper can emit an actionable operator message.
+	// Legacy sync server — the connectors service returned a 200
+	// with a body (zip for pull, success JSON for push/patch) instead
+	// of the expected 202 Accepted. Don't drain the body, it could be
+	// a multi-gigabyte zip on the pull path.
 	if resp.StatusCode == http.StatusOK {
-		return nil, ErrLegacySyncPullResponse
+		return nil, ErrLegacySyncResponse
 	}
 
-	// 409 Conflict is the structured "operation already running"
-	// signal. Parse the body into AlreadyRunningError so callers can
-	// errors.As it and reach the blocking job_id directly. If the
-	// body does not match the structured shape, fall back to
-	// *APIError to preserve diagnostics for pre-envelope servers.
 	if resp.StatusCode == http.StatusConflict {
 		bodyBytes := readBoundedBody(resp)
 		if alreadyErr := readAlreadyRunningError(bodyBytes); alreadyErr != nil {
@@ -97,45 +238,49 @@ func (c *Client) StartOperationPull(
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read start pull response body: %w", err)
+		return nil, fmt.Errorf("failed to read start-operation response body: %w", err)
 	}
 
-	var out irminmodels.StartOperationPullResponse
+	var out irminmodels.StartOperationJobResponse
 	if unmarshalErr := json.Unmarshal(bodyBytes, &out); unmarshalErr != nil {
-		return nil, fmt.Errorf("failed to unmarshal start pull response: %w", unmarshalErr)
+		return nil, fmt.Errorf("failed to unmarshal start-operation response: %w", unmarshalErr)
 	}
 	if out.JobID == "" {
 		return nil, errors.New(
-			"connector accepted the pull (HTTP 202) but did not return a job_id",
+			"connector accepted the operation (HTTP 202) but did not return a job_id",
 		)
 	}
-	return &out, nil
-}
-
-// GetOperationJobStatus polls the status of an async operation job.
-// Safe to call repeatedly; the Core side drives a poll loop at
-// roughly 5s cadence. Progress events on the response are cumulative,
-// so consumers may either diff against a previously seen slice or
-// replace their local view wholesale.
-//
-// The caller should stop polling once the returned Status satisfies
-// OperationJobStatus.IsTerminal.
-func (c *Client) GetOperationJobStatus(
-	ctx context.Context,
-	jobID string,
-) (*irminmodels.OperationJobStatusResponse, error) {
-	if jobID == "" {
-		return nil, errors.New("jobID must not be empty")
+	if out.OperationToken == "" {
+		// Server is on a pre-Phase-4 build that accepts the async
+		// protocol but has not yet started minting per-job operation
+		// tokens. Without a token the handle cannot authenticate the
+		// lifecycle routes — surface a typed error so the caller can
+		// distinguish this from other misbehaviours.
+		return nil, ErrMissingOperationToken
 	}
 
-	endpoint := fmt.Sprintf("%s/operation/status/%s", c.BaseURL, url.PathEscape(jobID))
+	return &OperationJob{
+		JobID:          out.JobID,
+		operationToken: out.OperationToken,
+		client:         c,
+	}, nil
+}
+
+// Status returns the current status snapshot for the job. Safe to
+// call repeatedly; progress events are cumulative.
+func (j *OperationJob) Status(ctx context.Context) (*irminmodels.OperationJobStatusResponse, error) {
+	if j == nil {
+		return nil, errors.New("nil OperationJob handle")
+	}
+
+	endpoint := fmt.Sprintf("%s/operation/status/%s", j.client.BaseURL, url.PathEscape(j.JobID))
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build status request: %w", err)
 	}
-	c.applyDefaultHeaders(httpReq, "application/json")
+	j.client.applyHeadersForToken(httpReq, j.operationToken, "application/json")
 
-	resp, err := c.HTTPClient.Do(httpReq)
+	resp, err := j.client.HTTPClient.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("status request to %s failed: %w", httpReq.URL, err)
 	}
@@ -157,61 +302,48 @@ func (c *Client) GetOperationJobStatus(
 	return &out, nil
 }
 
-// FetchOperationResult streams the result archive (zip) for a
-// completed async operation job. The caller is responsible for
-// closing the returned io.ReadCloser — the connection stays open
-// until the caller drains or closes it, and the request context
-// governs the transfer lifetime.
-//
-// The body is intentionally not buffered into memory; this is the
-// whole point of the async protocol. Callers should pipe the
-// reader directly into their downstream processing (archive
-// extraction, re-upload to LakeFS, etc.) so the zip never lands
-// fully on either peer.
+// Result streams the result archive for a completed job.
 //
 // Semantics by response status:
 //
-//   - 200 OK with application/zip (or any non-JSON) body: returns
-//     the body reader.
-//   - 409 Conflict: the job is not yet in terminal state complete.
-//     Returns ErrResultNotReady; callers should resume polling
-//     status rather than retry the result fetch.
-//   - Any other non-2xx: returns *APIError.
-func (c *Client) FetchOperationResult(
-	ctx context.Context,
-	jobID string,
-) (io.ReadCloser, error) {
-	if jobID == "" {
-		return nil, errors.New("jobID must not be empty")
+//   - 200 OK — returns the body reader; caller owns Close.
+//   - 204 No Content — terminal job with no artifact (push/patch
+//     style). Returns ErrNoResultArtifact; check via errors.Is.
+//   - 409 Conflict — job is still running. Returns ErrResultNotReady;
+//     caller should resume polling Status.
+//   - Any other non-2xx — *APIError or *JobServerError depending on
+//     whether the body carries a structured JobErrorBody.
+func (j *OperationJob) Result(ctx context.Context) (io.ReadCloser, error) {
+	if j == nil {
+		return nil, errors.New("nil OperationJob handle")
 	}
 
-	endpoint := fmt.Sprintf("%s/operation/result/%s", c.BaseURL, url.PathEscape(jobID))
+	endpoint := fmt.Sprintf("%s/operation/result/%s", j.client.BaseURL, url.PathEscape(j.JobID))
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build result request: %w", err)
 	}
-	c.applyDefaultHeaders(httpReq, "application/zip")
+	j.client.applyHeadersForToken(httpReq, j.operationToken, "application/zip")
 
-	resp, err := c.streamClient.Do(httpReq)
+	resp, err := j.client.streamClient.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("result request to %s failed: %w", httpReq.URL, err)
 	}
 
-	// 409 signals "not ready". Drain+close the body so the
-	// connection can be reused, then surface the typed error.
-	// Bounded drain — streamClient has no top-level timeout, so a
-	// misbehaving server sending an unbounded 409 body would otherwise
-	// hang this path. errorBodyReadLimit matches readAPIError's guard.
-	//
-	// We keep ErrResultNotReady as the primary signal here because
-	// the poll wrapper's state machine keys off it; the structured
-	// JobErrorBody shape does not override that semantic — a 409 on
-	// the result endpoint means "keep polling status" regardless of
-	// whether the body carries a reason.
 	if resp.StatusCode == http.StatusConflict {
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, errorBodyReadLimit))
 		_ = resp.Body.Close()
 		return nil, ErrResultNotReady
+	}
+
+	// 204 is the structured "complete but no artifact" signal for
+	// push/patch/subscribe jobs. Drain (there should be no body) and
+	// surface the sentinel so callers that only care about status
+	// reach a clean success branch.
+	if resp.StatusCode == http.StatusNoContent {
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, errorBodyReadLimit))
+		_ = resp.Body.Close()
+		return nil, ErrNoResultArtifact
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -220,49 +352,40 @@ func (c *Client) FetchOperationResult(
 		return nil, apiErr
 	}
 
-	// Success — hand the live body to the caller. They own Close.
 	return resp.Body, nil
 }
 
-// CancelOperationJob requests that the connector service cancel an
-// in-flight async operation job. Safe to call on terminal jobs
-// (server is expected to treat it as a no-op). Uses POST with the
-// job_id on the path so it composes with existing per-job routes.
-//
-// Returns nil on any 2xx; the richer response shape (status,
-// was_active) is available via CancelOperationJobDetail. Callers
-// that only need idempotent fire-and-forget semantics can keep
-// calling this method.
-func (c *Client) CancelOperationJob(ctx context.Context, jobID string) error {
-	_, err := c.CancelOperationJobDetail(ctx, jobID)
+// Cancel requests that the connector service cancel this job. Safe to
+// call on terminal jobs (server treats it as a no-op). Returns nil on
+// any 2xx; the richer response shape (status, was_active) is
+// available via CancelDetail.
+func (j *OperationJob) Cancel(ctx context.Context) error {
+	_, err := j.CancelDetail(ctx)
 	return err
 }
 
-// CancelOperationJobDetail is the richer form of CancelOperationJob
-// that returns the parsed CancelOperationJobResponse on success so
-// callers can tell "we actually signalled a running worker"
-// (WasActive=true) from "job was already terminal" (WasActive=false).
+// CancelDetail is the richer form of Cancel that returns the parsed
+// CancelOperationJobResponse on success so callers can tell "we
+// actually signalled a running worker" (WasActive=true) from "job was
+// already terminal" (WasActive=false).
 //
 // Servers that pre-date the structured response shape will return a
 // 200 without WasActive; in that case the response carries the
-// default zero values (Status="", WasActive=false) and callers
-// should treat that as the legacy "accepted, unknown state" signal.
-func (c *Client) CancelOperationJobDetail(
-	ctx context.Context,
-	jobID string,
-) (*irminmodels.CancelOperationJobResponse, error) {
-	if jobID == "" {
-		return nil, errors.New("jobID must not be empty")
+// default zero values and callers should treat that as the legacy
+// "accepted, unknown state" signal.
+func (j *OperationJob) CancelDetail(ctx context.Context) (*irminmodels.CancelOperationJobResponse, error) {
+	if j == nil {
+		return nil, errors.New("nil OperationJob handle")
 	}
 
-	endpoint := fmt.Sprintf("%s/operation/cancel/%s", c.BaseURL, url.PathEscape(jobID))
+	endpoint := fmt.Sprintf("%s/operation/cancel/%s", j.client.BaseURL, url.PathEscape(j.JobID))
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build cancel request: %w", err)
 	}
-	c.applyDefaultHeaders(httpReq, "application/json")
+	j.client.applyHeadersForToken(httpReq, j.operationToken, "application/json")
 
-	resp, err := c.HTTPClient.Do(httpReq)
+	resp, err := j.client.HTTPClient.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("cancel request to %s failed: %w", httpReq.URL, err)
 	}
@@ -274,23 +397,53 @@ func (c *Client) CancelOperationJobDetail(
 
 	bodyBytes, readErr := io.ReadAll(io.LimitReader(resp.Body, errorBodyReadLimit))
 	if readErr != nil {
-		// Read failure on a 2xx is unexpected — surface it rather
-		// than silently returning a zero-valued response.
 		return nil, fmt.Errorf("failed to read cancel response body: %w", readErr)
 	}
-	// Legacy servers return {"message": "cancellation requested"}
-	// without the richer fields. Attempt structured decode; if the
-	// body is empty or minimally-shaped the zero-valued response is
-	// the correct thing to return.
 	var out irminmodels.CancelOperationJobResponse
 	if len(bodyBytes) > 0 {
-		// Best-effort decode. JSON errors here would mean the server
-		// returned non-JSON on a 2xx, which contradicts its own
-		// content type; don't fail the cancel over it — the cancel
-		// itself succeeded at the HTTP layer.
+		// Best-effort decode — a server returning non-JSON on a 2xx
+		// contradicts its own content type; don't fail the cancel
+		// over it, the cancel itself succeeded at the HTTP layer.
 		_ = json.Unmarshal(bodyBytes, &out)
 	}
 	return &out, nil
+}
+
+// Wait polls Status until the job reaches a terminal state (complete,
+// failed, or cancelled) or ctx is cancelled. Returns ctx.Err on
+// cancellation. On terminal failure or cancellation, the status
+// response is still returned so callers can inspect progress /
+// error details; check Status.Status.IsTerminal and classify
+// success via == irminmodels.OperationJobStatusComplete.
+//
+// pollInterval is clamped to a 500ms floor so a zero value does not
+// busy-loop the connector service. Typical callers use 1–5s.
+func (j *OperationJob) Wait(
+	ctx context.Context,
+	pollInterval time.Duration,
+) (*irminmodels.OperationJobStatusResponse, error) {
+	if j == nil {
+		return nil, errors.New("nil OperationJob handle")
+	}
+	const minPoll = 500 * time.Millisecond
+	if pollInterval < minPoll {
+		pollInterval = minPoll
+	}
+
+	for {
+		status, err := j.Status(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if status.Status.IsTerminal() {
+			return status, nil
+		}
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(pollInterval):
+		}
+	}
 }
 
 // encodeStartPullForm renders a StartOperationPullRequest as
@@ -313,6 +466,124 @@ func encodeStartPullForm(req StartOperationPullRequest) (io.Reader, map[string]s
 		"Content-Type": "application/x-www-form-urlencoded",
 	}
 	return body, headers
+}
+
+// buildPushRequestOptions composes the multipart body for a push.
+// Validates that exactly one source (File / FilePath / PresignedURL)
+// is set.
+func buildPushRequestOptions(req StartOperationPushRequest) (RequestOptions, error) {
+	sources := 0
+	if req.PresignedURL != "" {
+		sources++
+	}
+	if len(req.File) > 0 {
+		sources++
+	}
+	if req.FilePath != "" {
+		sources++
+	}
+	if sources == 0 {
+		return RequestOptions{}, errors.New(
+			"StartOperationPush requires one of File, FilePath, or PresignedURL",
+		)
+	}
+	if sources > 1 {
+		return RequestOptions{}, errors.New(
+			"StartOperationPush accepts exactly one of File, FilePath, or PresignedURL",
+		)
+	}
+
+	formFields := map[string]string{}
+	if req.Path != "" {
+		formFields["path"] = req.Path
+	}
+	for k, v := range req.Extra {
+		// Protect against a caller overwriting reserved fields via Extra.
+		if k == "path" || k == "file" || k == "presigned_url" {
+			continue
+		}
+		formFields[k] = v
+	}
+
+	var files []FormFile
+	if req.PresignedURL != "" {
+		formFields["presigned_url"] = req.PresignedURL
+		return RequestOptions{
+			Method:      http.MethodPost,
+			FormFields:  formFields,
+			ContentType: "application/x-www-form-urlencoded",
+		}, nil
+	}
+
+	fileName := req.FileName
+	if fileName == "" {
+		fileName = "push.zip"
+	}
+	if len(req.File) > 0 {
+		files = []FormFile{{
+			FieldName: "file",
+			FileName:  fileName,
+			Reader:    bytes.NewReader(req.File),
+		}}
+	} else {
+		files = []FormFile{{
+			FieldName: "file",
+			FileName:  fileName,
+			FilePath:  req.FilePath,
+		}}
+	}
+
+	return RequestOptions{
+		Method:      http.MethodPost,
+		FormFields:  formFields,
+		Files:       files,
+		ContentType: "multipart/form-data",
+	}, nil
+}
+
+// buildPatchRequestOptions composes the multipart body for a patch.
+// Either Patches (marshalled here) or PatchesJSON (caller-supplied
+// bytes) must carry the operations.
+func buildPatchRequestOptions(req StartOperationPatchRequest) (RequestOptions, error) {
+	var payload []byte
+	switch {
+	case len(req.PatchesJSON) > 0:
+		payload = req.PatchesJSON
+	case len(req.Patches) > 0:
+		marshalled, err := json.Marshal(req.Patches)
+		if err != nil {
+			return RequestOptions{}, fmt.Errorf("failed to marshal patch operations: %w", err)
+		}
+		payload = marshalled
+	default:
+		return RequestOptions{}, errors.New(
+			"StartOperationPatch requires Patches or PatchesJSON to be set",
+		)
+	}
+
+	fileName := req.FileName
+	if fileName == "" {
+		fileName = "patches.json"
+	}
+
+	formFields := map[string]string{}
+	for k, v := range req.Extra {
+		if k == "patches" {
+			continue
+		}
+		formFields[k] = v
+	}
+
+	return RequestOptions{
+		Method:     http.MethodPost,
+		FormFields: formFields,
+		Files: []FormFile{{
+			FieldName: "patches",
+			FileName:  fileName,
+			Reader:    bytes.NewReader(payload),
+		}},
+		ContentType: "multipart/form-data",
+	}, nil
 }
 
 // errorBodyReadLimit is the upper bound on how many bytes of a

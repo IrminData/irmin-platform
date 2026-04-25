@@ -3693,17 +3693,15 @@ type WorkflowRequest struct {
 import "github.com/IrminData/irmin-sdk-go/connectorsclient"
 ```
 
-Package connectorsclient is the Irmin SDK client for the connector\-service HTTP plugin protocol.
+Package connectorsclient is the Irmin SDK client for the connector\-service HTTP plugin protocol. It is the single client every Irmin service \(Core, orchestrator, CLI\) uses to talk to the connectors service; per\-service re\-implementations were folded in here so the wire contract lives in one place.
 
-At present the package intentionally covers only the asynchronous pull protocol — POST /operation/pull \(202 \+ job\_id\), GET /operation/status/:job\_id, GET /operation/result/:job\_id, and POST /operation/cancel/:job\_id — because that is the surface Core needs to stop buffering large zips in memory and avoid Railway's \~300s edge timeout on long Stripe / Pinecone / Postgres pulls.
+The package covers both surfaces the connectors service exposes:
 
-Core today has an in\-repo connectors\-client with the full set of synchronous endpoints \(init, pull, push, patch, subscribe, etc.\). Migration plan:
+- Async job protocol for data\-plane operations: POST /operation/pull, /operation/push, /operation/patch → 202 Accepted \+ \{job\_id\}, polled via GET /operation/status/:job\_id, fetched via GET /operation/result/:job\_id, cancelled via POST /operation/cancel/:job\_id. WaitForJob drives the poll loop in one call so callers don't re\-implement the state machine.
 
-1. SDK publishes these async types \+ methods \(this package\).
-2. Core's in\-repo client switches to depend on these for the async endpoints, keeping the existing sync helpers for everything else.
-3. Remaining helpers move into this SDK package incrementally.
+- Synchronous metadata operations: GET /info, POST /configuration/:type/fields, POST /configuration/validate, POST /operation/schema/:method, POST /operation/subscribe, POST /operation/unsubscribe. These are cheap, bounded calls — putting them behind the job protocol would only add latency.
 
-Consumers that only need the async protocol \(tests, tooling\) can use this package standalone. It carries no transitive dependency on Core or the connectors service beyond the shared SDK models.
+Authentication: Bearer tokens on every request \(system token for info/config/registration, operation token for schema/subscribe and the async data\-plane\). The client stamps an X\-Irmin\-Connection\-Id header \(see WithConnectionID\) so OAuth\-backed connectors can fetch the right access token from Core's internal endpoint without a second round\-trip.
 
 ## Index
 
@@ -3716,13 +3714,23 @@ Consumers that only need the async protocol \(tests, tooling\) can use this pack
   - [func \(e \*AlreadyRunningError\) JobID\(\) string](<#AlreadyRunningError.JobID>)
   - [func \(e \*AlreadyRunningError\) Unwrap\(\) error](<#AlreadyRunningError.Unwrap>)
 - [type Client](<#Client>)
-  - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
-  - [func \(c \*Client\) CancelOperationJob\(ctx context.Context, jobID string\) error](<#Client.CancelOperationJob>)
-  - [func \(c \*Client\) CancelOperationJobDetail\(ctx context.Context, jobID string\) \(\*irminmodels.CancelOperationJobResponse, error\)](<#Client.CancelOperationJobDetail>)
-  - [func \(c \*Client\) FetchOperationResult\(ctx context.Context, jobID string\) \(io.ReadCloser, error\)](<#Client.FetchOperationResult>)
-  - [func \(c \*Client\) GetOperationJobStatus\(ctx context.Context, jobID string\) \(\*irminmodels.OperationJobStatusResponse, error\)](<#Client.GetOperationJobStatus>)
-  - [func \(c \*Client\) StartOperationPull\(ctx context.Context, req StartOperationPullRequest\) \(\*irminmodels.StartOperationPullResponse, error\)](<#Client.StartOperationPull>)
+  - [func NewClient\(baseURL, token string\) \*Client](<#NewClient>)
+  - [func \(c \*Client\) FetchAPI\(ctx context.Context, opts RequestOptions, out any\) error](<#Client.FetchAPI>)
+  - [func \(c \*Client\) FetchStreamFiles\(ctx context.Context, opts RequestOptions\) \(\[\]PulledFile, error\)](<#Client.FetchStreamFiles>)
+  - [func \(c \*Client\) FetchStreamFilesReader\(ctx context.Context, opts RequestOptions\) \(io.ReadCloser, error\)](<#Client.FetchStreamFilesReader>)
+  - [func \(c \*Client\) GetConfigFields\(ctx context.Context, configType string, details map\[string\]string, settings map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Client.GetConfigFields>)
+  - [func \(c \*Client\) GetInfo\(ctx context.Context\) \(\*ConnectorInfo, error\)](<#Client.GetInfo>)
+  - [func \(c \*Client\) GetSchema\(ctx context.Context, method, path string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GetSchema>)
+  - [func \(c \*Client\) Request\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
+  - [func \(c \*Client\) StartOperationPatch\(ctx context.Context, req StartOperationPatchRequest\) \(\*OperationJob, error\)](<#Client.StartOperationPatch>)
+  - [func \(c \*Client\) StartOperationPull\(ctx context.Context, req StartOperationPullRequest\) \(\*OperationJob, error\)](<#Client.StartOperationPull>)
+  - [func \(c \*Client\) StartOperationPush\(ctx context.Context, req StartOperationPushRequest\) \(\*OperationJob, error\)](<#Client.StartOperationPush>)
+  - [func \(c \*Client\) SubscribeToChanges\(ctx context.Context, webhookURL, webhookAccessToken string\) \(\*Subscription, error\)](<#Client.SubscribeToChanges>)
+  - [func \(c \*Client\) UnsubscribeFromChanges\(ctx context.Context, subscriptionID uint\) error](<#Client.UnsubscribeFromChanges>)
+  - [func \(c \*Client\) ValidateConfigFields\(ctx context.Context, details map\[string\]string, settings map\[string\]string\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#Client.ValidateConfigFields>)
   - [func \(c \*Client\) WithConnectionID\(id uint\) \*Client](<#Client.WithConnectionID>)
+- [type ConnectorInfo](<#ConnectorInfo>)
+- [type FormFile](<#FormFile>)
 - [type JobFailedError](<#JobFailedError>)
   - [func \(e \*JobFailedError\) Error\(\) string](<#JobFailedError.Error>)
   - [func \(e \*JobFailedError\) Unwrap\(\) error](<#JobFailedError.Unwrap>)
@@ -3730,14 +3738,25 @@ Consumers that only need the async protocol \(tests, tooling\) can use this pack
   - [func \(e \*JobServerError\) Error\(\) string](<#JobServerError.Error>)
   - [func \(e \*JobServerError\) Reason\(\) irminmodels.JobErrorReason](<#JobServerError.Reason>)
   - [func \(e \*JobServerError\) Retryable\(\) bool](<#JobServerError.Retryable>)
+- [type OperationJob](<#OperationJob>)
+  - [func \(j \*OperationJob\) Cancel\(ctx context.Context\) error](<#OperationJob.Cancel>)
+  - [func \(j \*OperationJob\) CancelDetail\(ctx context.Context\) \(\*irminmodels.CancelOperationJobResponse, error\)](<#OperationJob.CancelDetail>)
+  - [func \(j \*OperationJob\) Result\(ctx context.Context\) \(io.ReadCloser, error\)](<#OperationJob.Result>)
+  - [func \(j \*OperationJob\) Status\(ctx context.Context\) \(\*irminmodels.OperationJobStatusResponse, error\)](<#OperationJob.Status>)
+  - [func \(j \*OperationJob\) Wait\(ctx context.Context, pollInterval time.Duration\) \(\*irminmodels.OperationJobStatusResponse, error\)](<#OperationJob.Wait>)
+- [type PulledFile](<#PulledFile>)
+- [type RequestOptions](<#RequestOptions>)
+- [type StartOperationPatchRequest](<#StartOperationPatchRequest>)
 - [type StartOperationPullRequest](<#StartOperationPullRequest>)
+- [type StartOperationPushRequest](<#StartOperationPushRequest>)
+- [type Subscription](<#Subscription>)
 
 
 ## Constants
 
-<a name="HeaderConnectionID"></a>HeaderConnectionID is sent on every outbound connector request so the receiving service can identify which Irmin Connection the operation belongs to. The value mirrors the exact string used by the existing Core\-side connectors\-client so migration is a drop\-in.
+<a name="HeaderConnectionID"></a>HeaderConnectionID is sent on every outbound connector request so the receiving service can identify which Irmin Connection the operation belongs to. The value mirrors the exact string used by the legacy Core\-side connectors\-client so migration is a drop\-in.
 
-Using Go's canonical HTTP header form avoids net/http silently rewriting it at send time and keeps reads consistent.
+Exported as a constant so the server\-side helper in irmin\-connectors can import the exact same string without drift.
 
 ```go
 const HeaderConnectionID = "X-Irmin-Connection-Id"
@@ -3751,12 +3770,39 @@ const HeaderConnectionID = "X-Irmin-Connection-Id"
 var ErrJobFailed = errors.New("operation job ended in a non-success terminal state")
 ```
 
-<a name="ErrLegacySyncPullResponse"></a>ErrLegacySyncPullResponse is returned by StartOperationPull when the connector service responds with a 200 OK \+ zip body instead of the expected 202 Accepted \+ \{job\_id\}. Its presence means the connector service is still on the pre\-async protocol and the caller is talking to an unmigrated deployment; the Core poll wrapper should bail out with an actionable message rather than attempt a silent fallback, per the "no backward\-compat shim" decision in the async\-pull plan.
+<a name="ErrLegacySyncPullResponse"></a>ErrLegacySyncPullResponse is an alias retained because the SDK PR that introduced it was cited externally as a pull\-specific sentinel. New call sites should use ErrLegacySyncResponse.
+
+Deprecated: use ErrLegacySyncResponse. Kept for one release cycle so existing errors.Is checks keep matching.
 
 ```go
-var ErrLegacySyncPullResponse = errors.New(
-    "connector returned legacy synchronous pull response (HTTP 200 with body); " +
+var ErrLegacySyncPullResponse = ErrLegacySyncResponse
+```
+
+<a name="ErrLegacySyncResponse"></a>ErrLegacySyncResponse is returned by any Start\*Operation call when the connector service responds with a 200 OK \+ body instead of the expected 202 Accepted \+ \{job\_id, operation\_token\}. Its presence means the connector service is still on the pre\-async protocol and the caller is talking to an unmigrated deployment; the Core poll wrapper should bail out with an actionable message rather than attempt a silent fallback, per the "no backward\-compat shim" decision in the async\-protocol plan.
+
+Returned by StartOperationPull, StartOperationPush, and StartOperationPatch alike; the earlier pull\-specific name ErrLegacySyncPullResponse aliases this for back\-compat.
+
+```go
+var ErrLegacySyncResponse = errors.New(
+    "connector returned legacy synchronous response (HTTP 200 with body); " +
         "expected 202 Accepted from async protocol — upgrade the connector service",
+)
+```
+
+<a name="ErrMissingOperationToken"></a>ErrMissingOperationToken is returned by StartOperation\{Pull,Push,Patch\} when the connector service responds with 202 \+ \{job\_id\} but without the per\-job operation\_token the async protocol requires. This means the server is on a pre\-Phase\-4 build that has the async routes but hasn't started minting per\-job tokens yet — calling the lifecycle routes \(status / result / cancel\) would 401 without it. Operators seeing this should upgrade the connectors service.
+
+```go
+var ErrMissingOperationToken = errors.New(
+    "connector accepted the operation (HTTP 202) but did not return an operation_token; " +
+        "upgrade the connectors service to a build that mints per-job tokens",
+)
+```
+
+<a name="ErrNoResultArtifact"></a>ErrNoResultArtifact is returned by OperationJob.Result when the server signals that the terminal job has no downloadable artifact \(HTTP 204 No Content\). push, patch, and subscribe jobs surface this because their success signal is status=complete, not a file. Callers that only observe completion should check the error via errors.Is and treat it as success rather than a missing\-result failure.
+
+```go
+var ErrNoResultArtifact = errors.New(
+    "operation job completed without a result artifact (push/patch/subscribe)",
 )
 ```
 
@@ -3846,9 +3892,9 @@ Unwrap lets errors.Is\(err, ErrOperationAlreadyRunning\) succeed on wrapped Alre
 <a name="Client"></a>
 ## type Client
 
-Client is the async\-protocol connector\-service HTTP client.
+Client is the connector\-service HTTP client.
 
-A Client is safe for concurrent use. It keeps two underlying http.Clients: one for short request/response calls \(status, start, cancel\) and one without a top\-level timeout for the streaming result fetch, so long zip downloads are not cut off by the request\-response timer.
+A Client is safe for concurrent use. It keeps two underlying http.Clients: one for short request/response calls \(status, start, cancel, metadata\) and one without a top\-level timeout for streaming \(/operation/result, multipart downloads\), so long transfers are not cut off by the request\-response timer.
 
 ```go
 type Client struct {
@@ -3857,25 +3903,21 @@ type Client struct {
     // connector-specific prefix the service expects.
     BaseURL string
 
-    // Token is the operation or system token for the connector,
-    // set on the Authorization header as "Bearer <token>".
+    // Token is the operation or system token for the connector, set on
+    // the Authorization header as "Bearer <token>".
     Token string
 
-    // Locale is used to request localised messages from the
-    // connector service via the Accept-Language header.
-    Locale string
-
-    // HTTPClient is the client used for short requests (start,
-    // status, cancel). Defaults to a client with
-    // irminsdkgo.DefaultConnectorTimeout. Callers that need custom
-    // transports, proxies, or timeouts may replace it.
+    // HTTPClient is the client used for short request-response calls.
+    // Defaults to a client with irminsdkgo.DefaultConnectorTimeout.
+    // Callers that need custom transports, proxies, or timeouts may
+    // replace it.
     HTTPClient *http.Client
 
-    // ConnectionID is the Irmin Connection ID this client is
-    // operating on behalf of. When non-zero it is sent as
-    // HeaderConnectionID on every outbound request so OAuth-backed
-    // connectors can fetch the right access token. Leave zero for
-    // calls that are not connection-scoped.
+    // ConnectionID is the Irmin Connection ID this client is operating
+    // on behalf of. When non-zero it is sent as HeaderConnectionID on
+    // every outbound request so OAuth-backed connectors can fetch the
+    // right access token. Leave zero for calls that are not
+    // connection-scoped.
     ConnectionID uint
     // contains filtered or unexported fields
 }
@@ -3885,73 +3927,150 @@ type Client struct {
 ### func NewClient
 
 ```go
-func NewClient(baseURL, token, locale string) *Client
+func NewClient(baseURL, token string) *Client
 ```
 
 NewClient creates a new connector\-service client with sensible default http.Client settings. The two underlying clients share a single transport so connection pooling and TLS sessions are reused across short and streaming calls.
 
-<a name="Client.CancelOperationJob"></a>
-### func \(\*Client\) CancelOperationJob
+Note: connector responses are English\-only. There is no Accept\-Language negotiation — the connectors service does not localize error bodies, dynamic\-field labels, or progress text, and callers that need translated UI strings must layer their own localization on top of the connector's responses.
+
+<a name="Client.FetchAPI"></a>
+### func \(\*Client\) FetchAPI
 
 ```go
-func (c *Client) CancelOperationJob(ctx context.Context, jobID string) error
+func (c *Client) FetchAPI(ctx context.Context, opts RequestOptions, out any) error
 ```
 
-CancelOperationJob requests that the connector service cancel an in\-flight async operation job. Safe to call on terminal jobs \(server is expected to treat it as a no\-op\). Uses POST with the job\_id on the path so it composes with existing per\-job routes.
+FetchAPI issues a request and unmarshals the JSON response body into out. Passes through the Request pipeline; out may be nil for fire\-and\-forget calls.
 
-Returns nil on any 2xx; the richer response shape \(status, was\_active\) is available via CancelOperationJobDetail. Callers that only need idempotent fire\-and\-forget semantics can keep calling this method.
-
-<a name="Client.CancelOperationJobDetail"></a>
-### func \(\*Client\) CancelOperationJobDetail
+<a name="Client.FetchStreamFiles"></a>
+### func \(\*Client\) FetchStreamFiles
 
 ```go
-func (c *Client) CancelOperationJobDetail(ctx context.Context, jobID string) (*irminmodels.CancelOperationJobResponse, error)
+func (c *Client) FetchStreamFiles(ctx context.Context, opts RequestOptions) ([]PulledFile, error)
 ```
 
-CancelOperationJobDetail is the richer form of CancelOperationJob that returns the parsed CancelOperationJobResponse on success so callers can tell "we actually signalled a running worker" \(WasActive=true\) from "job was already terminal" \(WasActive=false\).
+FetchStreamFiles issues a request and parses the response body into PulledFile entries. If the response is multipart/\*, each part becomes one entry; otherwise the full body is returned as a single file. Loads the full body into memory — callers with large downloads should prefer FetchStreamFilesReader.
 
-Servers that pre\-date the structured response shape will return a 200 without WasActive; in that case the response carries the default zero values \(Status="", WasActive=false\) and callers should treat that as the legacy "accepted, unknown state" signal.
-
-<a name="Client.FetchOperationResult"></a>
-### func \(\*Client\) FetchOperationResult
+<a name="Client.FetchStreamFilesReader"></a>
+### func \(\*Client\) FetchStreamFilesReader
 
 ```go
-func (c *Client) FetchOperationResult(ctx context.Context, jobID string) (io.ReadCloser, error)
+func (c *Client) FetchStreamFilesReader(ctx context.Context, opts RequestOptions) (io.ReadCloser, error)
 ```
 
-FetchOperationResult streams the result archive \(zip\) for a completed async operation job. The caller is responsible for closing the returned io.ReadCloser — the connection stays open until the caller drains or closes it, and the request context governs the transfer lifetime.
+FetchStreamFilesReader issues a request and returns a live body reader. The caller owns Close. When ctx is nil a cancellable background context is substituted \(no deadline — streams can be arbitrarily long\) and its cancel is tied to the reader's Close via cancelOnCloseReader.
 
-The body is intentionally not buffered into memory; this is the whole point of the async protocol. Callers should pipe the reader directly into their downstream processing \(archive extraction, re\-upload to LakeFS, etc.\) so the zip never lands fully on either peer.
-
-Semantics by response status:
-
-- 200 OK with application/zip \(or any non\-JSON\) body: returns the body reader.
-- 409 Conflict: the job is not yet in terminal state complete. Returns ErrResultNotReady; callers should resume polling status rather than retry the result fetch.
-- Any other non\-2xx: returns \*APIError.
-
-<a name="Client.GetOperationJobStatus"></a>
-### func \(\*Client\) GetOperationJobStatus
+<a name="Client.GetConfigFields"></a>
+### func \(\*Client\) GetConfigFields
 
 ```go
-func (c *Client) GetOperationJobStatus(ctx context.Context, jobID string) (*irminmodels.OperationJobStatusResponse, error)
+func (c *Client) GetConfigFields(ctx context.Context, configType string, details map[string]string, settings map[string]string) (map[string]irminmodels.DynamicField, error)
 ```
 
-GetOperationJobStatus polls the status of an async operation job. Safe to call repeatedly; the Core side drives a poll loop at roughly 5s cadence. Progress events on the response are cumulative, so consumers may either diff against a previously seen slice or replace their local view wholesale.
+GetConfigFields fetches the configuration fields for a given configuration type \(e.g. "details", "settings"\). The details and settings maps carry any prefilled values the connector's field resolver can use to derive dependent fields.
 
-The caller should stop polling once the returned Status satisfies OperationJobStatus.IsTerminal.
+Requires a system token on the Client.
+
+<a name="Client.GetInfo"></a>
+### func \(\*Client\) GetInfo
+
+```go
+func (c *Client) GetInfo(ctx context.Context) (*ConnectorInfo, error)
+```
+
+GetInfo fetches the connector's metadata from GET /info.
+
+Requires a system token on the Client.
+
+<a name="Client.GetSchema"></a>
+### func \(\*Client\) GetSchema
+
+```go
+func (c *Client) GetSchema(ctx context.Context, method, path string) (*irminmodels.ObjectSchema, error)
+```
+
+GetSchema fetches the schema the connector exposes for a specific operation method \(pull / push / patch\) at the given resource path. Pass an empty path for the connector's root resource.
+
+Schema is cheap, request\-scoped metadata and stays on the sync route; it does not go through the async job protocol.
+
+Requires an operation token on the Client.
+
+<a name="Client.Request"></a>
+### func \(\*Client\) Request
+
+```go
+func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, error)
+```
+
+Request issues an HTTP request and returns the full response body as bytes. Default timeout via DefaultConnectorTimeout when ctx is nil.
+
+<a name="Client.StartOperationPatch"></a>
+### func \(\*Client\) StartOperationPatch
+
+```go
+func (c *Client) StartOperationPatch(ctx context.Context, req StartOperationPatchRequest) (*OperationJob, error)
+```
+
+StartOperationPatch initiates an asynchronous patch. See StartOperationPull for the response\-status semantics.
 
 <a name="Client.StartOperationPull"></a>
 ### func \(\*Client\) StartOperationPull
 
 ```go
-func (c *Client) StartOperationPull(ctx context.Context, req StartOperationPullRequest) (*irminmodels.StartOperationPullResponse, error)
+func (c *Client) StartOperationPull(ctx context.Context, req StartOperationPullRequest) (*OperationJob, error)
 ```
 
-StartOperationPull initiates an asynchronous pull against a connector. It expects the connector service to respond with 202 Accepted and \{job\_id, ...\}; the returned StartOperationPullResponse carries that job\_id, which the caller then uses to poll status and, eventually, fetch the result.
+StartOperationPull initiates an asynchronous pull against a connector. The Client's system token authorises the start; the returned OperationJob carries the per\-job operation token used on subsequent lifecycle calls.
 
-On HTTP 200 \(legacy synchronous response\) this returns ErrLegacySyncPullResponse without attempting to drain the body — per the async\-pull plan there is intentionally no sync fallback, and surfacing a specific error lets the Core poll wrapper print an actionable message rather than silently degrade.
+Semantics by response status:
 
-Any other non\-2xx status returns an \*APIError.
+- 202 Accepted — job queued; returns the handle.
+- 200 OK — the connector service is on the pre\-async protocol. Returns ErrLegacySyncPullResponse without draining the body \(which could be a multi\-gigabyte zip\).
+- 409 Conflict — an operation is already running for this connection. Returns \*AlreadyRunningError carrying the blocking job\_id when the server emits a structured body, \*APIError otherwise.
+- Any other non\-2xx — \*APIError.
+
+<a name="Client.StartOperationPush"></a>
+### func \(\*Client\) StartOperationPush
+
+```go
+func (c *Client) StartOperationPush(ctx context.Context, req StartOperationPushRequest) (*OperationJob, error)
+```
+
+StartOperationPush initiates an asynchronous push. See StartOperationPull for the response\-status semantics.
+
+<a name="Client.SubscribeToChanges"></a>
+### func \(\*Client\) SubscribeToChanges
+
+```go
+func (c *Client) SubscribeToChanges(ctx context.Context, webhookURL, webhookAccessToken string) (*Subscription, error)
+```
+
+SubscribeToChanges registers webhookURL to receive change events. Subscribe is a fast, idempotent webhook\-registration call; it stays on the sync route and is not driven through the async job protocol.
+
+Requires an operation token on the Client.
+
+<a name="Client.UnsubscribeFromChanges"></a>
+### func \(\*Client\) UnsubscribeFromChanges
+
+```go
+func (c *Client) UnsubscribeFromChanges(ctx context.Context, subscriptionID uint) error
+```
+
+UnsubscribeFromChanges removes a previously\-registered webhook so the connector stops sending change notifications.
+
+Requires an operation token on the Client.
+
+<a name="Client.ValidateConfigFields"></a>
+### func \(\*Client\) ValidateConfigFields
+
+```go
+func (c *Client) ValidateConfigFields(ctx context.Context, details map[string]string, settings map[string]string) (*irminmodels.ConnectorConfigurationValidationResult, error)
+```
+
+ValidateConfigFields asks the connector to validate a full configuration payload \(details \+ settings\) against its rules, typically right before saving a Connection.
+
+Requires a system token on the Client.
 
 <a name="Client.WithConnectionID"></a>
 ### func \(\*Client\) WithConnectionID
@@ -3963,10 +4082,54 @@ func (c *Client) WithConnectionID(id uint) *Client
 WithConnectionID returns the receiver after setting ConnectionID, enabling a fluent call\-site:
 
 ```
-client := connectorsclient.NewClient(url, tok, "en").WithConnectionID(conn.ID)
+client := connectorsclient.NewClient(url, tok).WithConnectionID(conn.ID)
 ```
 
 Mutates and returns the same pointer. Passing 0 clears the connection context.
+
+<a name="ConnectorInfo"></a>
+## type ConnectorInfo
+
+ConnectorInfo holds metadata about a connector returned from the connector's /info endpoint. Requires a system token.
+
+```go
+type ConnectorInfo struct {
+    Name             string                            `json:"name"              example:"My Connector"`
+    Description      string                            `json:"description"       example:"My Connector Description"`
+    Version          string                            `json:"version"           example:"1.0.0"`
+    StructureVersion string                            `json:"structure_version" example:"1.0.0"`
+    Author           string                            `json:"author"            example:"John Doe"`
+    APIBaseURL       string                            `json:"api_base_url"      example:"https://api.example.com"`
+    LogoURL          string                            `json:"logo_url"          example:"https://example.com/logo.png"`
+    Capabilities     []irminmodels.ConnectorCapability `json:"capabilities"      example:"pull,push"`
+    PrimaryCategory  irminmodels.ConnectorCategory     `json:"primary_category"  example:"database"`
+    Categories       []irminmodels.ConnectorCategory   `json:"categories"        example:"database,api"`
+    AuthorEmail      string                            `json:"author_email"      example:"john.doe@example.com"`
+    Documentation    string                            `json:"documentation"     example:"https://example.com/documentation"`
+    ReadMoreURL      string                            `json:"read_more_url"     example:"https://example.com/read-more"`
+
+    // ConnectionOAuthConfig is optional. When present, the connector
+    // declares it uses OAuth 2.0 (authorization code + PKCE) for
+    // authenticating a Connection, and Core runs the flow on the
+    // user's behalf. Nil/absent means the connector uses the legacy
+    // DynamicField form path (password / API key / etc.).
+    ConnectionOAuthConfig *irminmodels.ConnectionOAuthConfig `json:"connection_oauth_config,omitempty"`
+}
+```
+
+<a name="FormFile"></a>
+## type FormFile
+
+FormFile describes a single file attachment for multipart uploads. Provide either FilePath \(the file is opened on demand\) or Reader \(already\-open stream\); if both are set, Reader wins.
+
+```go
+type FormFile struct {
+    FieldName string
+    FilePath  string
+    Reader    io.Reader
+    FileName  string
+}
+```
 
 <a name="JobFailedError"></a>
 ## type JobFailedError
@@ -4050,10 +4213,154 @@ func (e *JobServerError) Retryable() bool
 
 Retryable reports whether the server classified this failure as safe to retry after a short backoff.
 
+<a name="OperationJob"></a>
+## type OperationJob
+
+OperationJob is a handle to an async operation the caller started via Client.StartOperation\{Pull,Push,Patch\}. It encapsulates the job\_id and the per\-job operation token the server mints on the 202 response. Every lifecycle method \(Status, Result, Cancel, Wait\) uses the operation token for authentication — the Client's broader system token is never sent to job\-scoped routes.
+
+This mirrors the wire\-contract security property: the system token authorises starting an operation, the operation token authorises everything else about that one operation. A compromised system token cannot poll or cancel in\-flight jobs it did not start; a compromised operation token can only affect the one job it was minted for.
+
+OperationJob is created by the Start\* methods — do not construct instances directly. A handle is tied to the Client that started it; the Client's HTTP transport and connection\-ID header are reused on every lifecycle call.
+
+```go
+type OperationJob struct {
+    // JobID is the server-assigned opaque identifier for this
+    // operation. Safe to log.
+    JobID string
+    // contains filtered or unexported fields
+}
+```
+
+<a name="OperationJob.Cancel"></a>
+### func \(\*OperationJob\) Cancel
+
+```go
+func (j *OperationJob) Cancel(ctx context.Context) error
+```
+
+Cancel requests that the connector service cancel this job. Safe to call on terminal jobs \(server treats it as a no\-op\). Returns nil on any 2xx; the richer response shape \(status, was\_active\) is available via CancelDetail.
+
+<a name="OperationJob.CancelDetail"></a>
+### func \(\*OperationJob\) CancelDetail
+
+```go
+func (j *OperationJob) CancelDetail(ctx context.Context) (*irminmodels.CancelOperationJobResponse, error)
+```
+
+CancelDetail is the richer form of Cancel that returns the parsed CancelOperationJobResponse on success so callers can tell "we actually signalled a running worker" \(WasActive=true\) from "job was already terminal" \(WasActive=false\).
+
+Servers that pre\-date the structured response shape will return a 200 without WasActive; in that case the response carries the default zero values and callers should treat that as the legacy "accepted, unknown state" signal.
+
+<a name="OperationJob.Result"></a>
+### func \(\*OperationJob\) Result
+
+```go
+func (j *OperationJob) Result(ctx context.Context) (io.ReadCloser, error)
+```
+
+Result streams the result archive for a completed job.
+
+Semantics by response status:
+
+- 200 OK — returns the body reader; caller owns Close.
+- 204 No Content — terminal job with no artifact \(push/patch style\). Returns ErrNoResultArtifact; check via errors.Is.
+- 409 Conflict — job is still running. Returns ErrResultNotReady; caller should resume polling Status.
+- Any other non\-2xx — \*APIError or \*JobServerError depending on whether the body carries a structured JobErrorBody.
+
+<a name="OperationJob.Status"></a>
+### func \(\*OperationJob\) Status
+
+```go
+func (j *OperationJob) Status(ctx context.Context) (*irminmodels.OperationJobStatusResponse, error)
+```
+
+Status returns the current status snapshot for the job. Safe to call repeatedly; progress events are cumulative.
+
+<a name="OperationJob.Wait"></a>
+### func \(\*OperationJob\) Wait
+
+```go
+func (j *OperationJob) Wait(ctx context.Context, pollInterval time.Duration) (*irminmodels.OperationJobStatusResponse, error)
+```
+
+Wait polls Status until the job reaches a terminal state \(complete, failed, or cancelled\) or ctx is cancelled. Returns ctx.Err on cancellation. On terminal failure or cancellation, the status response is still returned so callers can inspect progress / error details; check Status.Status.IsTerminal and classify success via == irminmodels.OperationJobStatusComplete.
+
+pollInterval is clamped to a 500ms floor so a zero value does not busy\-loop the connector service. Typical callers use 1–5s.
+
+<a name="PulledFile"></a>
+## type PulledFile
+
+PulledFile is one file extracted from a streaming multipart or single\-file response.
+
+```go
+type PulledFile struct {
+    Filename string
+    Content  []byte
+}
+```
+
+<a name="RequestOptions"></a>
+## type RequestOptions
+
+RequestOptions controls how a request is issued via Request / FetchAPI / FetchStreamFiles. Callers pick one of the four well\-known ContentType values — the body preparation path dispatches on it.
+
+```go
+type RequestOptions struct {
+    // Method is the HTTP verb (http.MethodGet, http.MethodPost, ...).
+    Method string
+    // Endpoint is the path appended to Client.BaseURL. Include the
+    // leading slash.
+    Endpoint string
+    // AllowedStatus is the set of response codes considered successful.
+    // Empty means "2xx".
+    AllowedStatus []int
+    // Body is the request body for JSON / raw content types. Ignored
+    // for multipart and form-urlencoded.
+    Body any
+    // FormFields are key-value fields for multipart or form-urlencoded
+    // requests.
+    FormFields map[string]string
+    // Files are the attachments for multipart requests.
+    Files []FormFile
+    // Headers are applied after applyDefaultHeaders, so a caller can
+    // override the default Authorization, Accept-Language, Accept,
+    // and HeaderConnectionID values.
+    Headers map[string]string
+    // ContentType switches the body-preparation strategy. One of:
+    // "application/json", "multipart/form-data",
+    // "application/x-www-form-urlencoded", or any other value for a
+    // raw []byte/string body.
+    ContentType string
+}
+```
+
+<a name="StartOperationPatchRequest"></a>
+## type StartOperationPatchRequest
+
+StartOperationPatchRequest holds the payload for POST /operation/patch under the async protocol. The body is multipart/form\-data with a required \`patches\` file carrying the JSON Patch operations.
+
+Patches may be supplied inline via Patches \(the SDK marshals them\) or as raw JSON bytes via PatchesJSON \(caller\-marshalled, preserves key ordering when that matters\).
+
+```go
+type StartOperationPatchRequest struct {
+    // Patches is the slice of JSON Patch ops to apply. When non-empty
+    // the SDK marshals it into the `patches` multipart field.
+    Patches []irminmodels.PatchOperation
+    // PatchesJSON is the raw JSON bytes of the operations array. Used
+    // when Patches is nil — the caller owns marshalling.
+    PatchesJSON []byte
+    // FileName is the multipart part filename for the patches field.
+    // Defaults to "patches.json".
+    FileName string
+    // Extra carries additional form fields (connector-specific).
+    Extra map[string]string
+}
+```
+
 <a name="StartOperationPullRequest"></a>
 ## type StartOperationPullRequest
 
-StartOperationPullRequest holds the payload for POST /operation/pull under the async protocol. It intentionally uses the same x\-www\-form\-urlencoded surface as the pre\-async handler so the server\-side route signature does not churn; only the response shape changes \(202 \+ \{job\_id\} instead of a streamed zip body\).
+StartOperationPullRequest holds the payload for POST /operation/pull under the async protocol. It intentionally uses the same x\-www\-form\-urlencoded surface as the pre\-async handler so the server\-side route signature does not churn; only the response shape changes \(202 \+ \{job\_id, operation\_token\} instead of a streamed zip body\).
 
 ```go
 type StartOperationPullRequest struct {
@@ -4067,6 +4374,53 @@ type StartOperationPullRequest struct {
     // batch hints). Use for connector-specific parameters — the
     // shared SDK types cannot enumerate every connector's knobs.
     Extra map[string]string
+}
+```
+
+<a name="StartOperationPushRequest"></a>
+## type StartOperationPushRequest
+
+StartOperationPushRequest holds the payload for POST /operation/push under the async protocol. The body is multipart/form\-data — the server expects either \`file\` \(a zip of resource files\) or \`presigned\_url\` \(a URL it can fetch the zip from\), plus an optional \`path\` form field for connector\-specific targeting.
+
+Exactly one of File, FilePath, or PresignedURL must be set. Extra carries any additional form fields the specific connector accepts on its push endpoint.
+
+```go
+type StartOperationPushRequest struct {
+    // Path is the connector-specific target (table name, bucket
+    // prefix, HTTP URL override, etc.). Optional.
+    Path string
+    // PresignedURL lets the connector service fetch the zip directly
+    // from S3 so Core does not have to stream large payloads through
+    // itself. When set, File and FilePath are ignored.
+    PresignedURL string
+    // File is an in-memory zip. Used when PresignedURL is empty.
+    File []byte
+    // FileName is the multipart part filename when File is set.
+    // Defaults to "push.zip".
+    FileName string
+    // FilePath points at a zip on disk. Used when both PresignedURL
+    // and File are empty.
+    FilePath string
+    // Extra carries additional form fields (connector-specific).
+    Extra map[string]string
+}
+```
+
+<a name="Subscription"></a>
+## type Subscription
+
+Subscription records the server\-side registration of a webhook the connector will hit on data changes.
+
+```go
+type Subscription struct {
+    ID                      uint    `json:"ID"                      example:"1"`
+    CreatedAt               string  `json:"CreatedAt"               example:"2021-01-01T00:00:00Z"`
+    UpdatedAt               string  `json:"UpdatedAt"               example:"2021-01-01T00:00:00Z"`
+    DeletedAt               *string `json:"DeletedAt,omitempty"     example:"2021-01-01T00:00:00Z"`
+    WebhookURL              string  `json:"webhookUrl"              example:"https://example.com/webhook"`
+    WebhookAccessToken      string  `json:"webhookAccessToken"      example:"1234567890"`
+    ConnectorRegistrationID uint    `json:"connectorRegistrationID" example:"1"`
+    OperationID             uint    `json:"operationID"             example:"1"`
 }
 ```
 
@@ -4521,6 +4875,7 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type SearchResponse](<#SearchResponse>)
 - [type SearchResult](<#SearchResult>)
 - [type SelectOption](<#SelectOption>)
+- [type StartOperationJobResponse](<#StartOperationJobResponse>)
 - [type StartOperationPullResponse](<#StartOperationPullResponse>)
 - [type StoredQuery](<#StoredQuery>)
 - [type StoredScript](<#StoredScript>)
@@ -5182,8 +5537,6 @@ type Connector struct {
     LogoURL string `json:"logo_url"          validate:"required,validimageurl"                                                                                                                                         example:"https://cdn.irmin.dev/mysql.png"`
     // Array of capabilities of the connector, eg. what kind of operations the connector can perform
     Capabilities []ConnectorCapability `json:"capabilities"      validate:"required,dive,oneof=pull push apply_patch patch_event"                                                                                                          example:"pull,push"`
-    // Array of locales supported by the connector, eg. what languages the connector supports
-    Locales []string `json:"locales"           validate:"required,dive,min=2,max=5"                                                                                                                                      example:"en,fi"`
     // Array of categories associated with the connector, eg. what kind of connector it is
     Categories []ConnectorCategory `json:"categories"        validate:"required,dive,oneof=database crm erp warehouse marketing analytics storage messaging payment social calendar project_management ecommerce iot monitoring other" example:"database"`
     // Primary category of the connector
@@ -7046,19 +7399,41 @@ type SelectOption struct {
 }
 ```
 
-<a name="StartOperationPullResponse"></a>
-## type StartOperationPullResponse
+<a name="StartOperationJobResponse"></a>
+## type StartOperationJobResponse
 
-StartOperationPullResponse is the body returned by POST /operation/pull under the async protocol. It is intentionally minimal — just the job\_id — so the accept path stays fast and any future fields \(e.g., estimated runtime\) can be added without breaking callers.
+StartOperationJobResponse is the body returned by POST /operation/pull, /operation/push, and /operation/patch under the async protocol. The HTTP status is 202 Accepted; a legacy 200 with a zip body is reported as ErrLegacySyncPullResponse.
 
-The HTTP status for this response is 202 Accepted, not 200 OK, so the Core SDK client uses the status code as the primary protocol discriminator; a legacy 200 with a zip body is reported as ErrLegacySyncPullResponse.
+The response carries two fields:
+
+- JobID identifies the async job for subsequent /operation/status, /operation/result, and /operation/cancel calls.
+
+- OperationToken is a short\-lived, job\-scoped bearer credential minted by the server. It is the ONLY credential accepted on the per\-job lifecycle routes — the broad system token used to start the operation is intentionally rejected there. This preserves the scope\-limitation property of operation tokens: a compromised system token cannot poll, fetch, or cancel an in\-flight job it did not start.
+
+The SDK's Client.StartOperation\{Pull,Push,Patch\} converts this body into a \*connectorsclient.OperationJob handle that encapsulates the token so callers never pass it around manually.
 
 ```go
-type StartOperationPullResponse struct {
+type StartOperationJobResponse struct {
     // JobID is the identifier the caller uses on subsequent
     // /operation/status and /operation/result calls.
     JobID string `json:"job_id" example:"opjob_9m3x7k2n8q5p"`
+
+    // OperationToken is the per-job bearer credential for lifecycle
+    // routes. Minted by the server on Start*; TTL matches the
+    // underlying OperationJob row.
+    OperationToken string `json:"operation_token" example:"optk_7f3d2a9c1e6b"`
 }
+```
+
+<a name="StartOperationPullResponse"></a>
+## type StartOperationPullResponse
+
+StartOperationPullResponse is the legacy name for StartOperationJobResponse. Kept as an alias so existing connector\-service handlers compile unchanged while the rename propagates.
+
+Deprecated: use StartOperationJobResponse.
+
+```go
+type StartOperationPullResponse = StartOperationJobResponse
 ```
 
 <a name="StoredQuery"></a>

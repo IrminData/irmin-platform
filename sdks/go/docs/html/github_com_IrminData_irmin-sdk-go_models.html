@@ -466,8 +466,6 @@ type Connector struct {
 	LogoURL string `json:"logo_url"          validate:"required,validimageurl"                                                                                                                                         example:"https://cdn.irmin.dev/mysql.png"`
 	// Array of capabilities of the connector, eg. what kind of operations the connector can perform
 	Capabilities []ConnectorCapability `json:"capabilities"      validate:"required,dive,oneof=pull push apply_patch patch_event"                                                                                                          example:"pull,push"`
-	// Array of locales supported by the connector, eg. what languages the connector supports
-	Locales []string `json:"locales"           validate:"required,dive,min=2,max=5"                                                                                                                                      example:"en,fi"`
 	// Array of categories associated with the connector, eg. what kind of connector it is
 	Categories []ConnectorCategory `json:"categories"        validate:"required,dive,oneof=database crm erp warehouse marketing analytics storage messaging payment social calendar project_management ecommerce iot monitoring other" example:"database"`
 	// Primary category of the connector
@@ -1717,19 +1715,43 @@ type SelectOption struct {
 }
     SelectOption represents an option for select/radio fields.
 
-type StartOperationPullResponse struct {
+type StartOperationJobResponse struct {
 	// JobID is the identifier the caller uses on subsequent
 	// /operation/status and /operation/result calls.
 	JobID string `json:"job_id" example:"opjob_9m3x7k2n8q5p"`
-}
-    StartOperationPullResponse is the body returned by POST /operation/pull
-    under the async protocol. It is intentionally minimal — just the job_id — so
-    the accept path stays fast and any future fields (e.g., estimated runtime)
-    can be added without breaking callers.
 
-    The HTTP status for this response is 202 Accepted, not 200 OK, so the Core
-    SDK client uses the status code as the primary protocol discriminator;
-    a legacy 200 with a zip body is reported as ErrLegacySyncPullResponse.
+	// OperationToken is the per-job bearer credential for lifecycle
+	// routes. Minted by the server on Start*; TTL matches the
+	// underlying OperationJob row.
+	OperationToken string `json:"operation_token" example:"optk_7f3d2a9c1e6b"`
+}
+    StartOperationJobResponse is the body returned by POST /operation/pull,
+    /operation/push, and /operation/patch under the async protocol. The HTTP
+    status is 202 Accepted; a legacy 200 with a zip body is reported as
+    ErrLegacySyncPullResponse.
+
+    The response carries two fields:
+
+      - JobID identifies the async job for subsequent /operation/status,
+        /operation/result, and /operation/cancel calls.
+
+      - OperationToken is a short-lived, job-scoped bearer credential minted
+        by the server. It is the ONLY credential accepted on the per-job
+        lifecycle routes — the broad system token used to start the operation
+        is intentionally rejected there. This preserves the scope-limitation
+        property of operation tokens: a compromised system token cannot poll,
+        fetch, or cancel an in-flight job it did not start.
+
+    The SDK's Client.StartOperation{Pull,Push,Patch} converts this body into a
+    *connectorsclient.OperationJob handle that encapsulates the token so callers
+    never pass it around manually.
+
+type StartOperationPullResponse = StartOperationJobResponse
+    StartOperationPullResponse is the legacy name for StartOperationJobResponse.
+    Kept as an alias so existing connector-service handlers compile unchanged
+    while the rename propagates.
+
+    Deprecated: use StartOperationJobResponse.
 
 type StoredQuery struct {
 	ID          string    `json:"id"             validate:"required,validsqid=queries" example:"query_1a2b3c4d5e"`

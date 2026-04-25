@@ -29,7 +29,7 @@ func TestStartOperationPull_AlreadyRunning_Structured(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
+	c := connectorsclient.NewClient(srv.URL, "tok")
 	_, err := c.StartOperationPull(
 		context.Background(),
 		connectorsclient.StartOperationPullRequest{Path: "/v1/customers"},
@@ -64,7 +64,7 @@ func TestStartOperationPull_AlreadyRunning_LegacyFallback(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
+	c := connectorsclient.NewClient(srv.URL, "tok")
 	_, err := c.StartOperationPull(
 		context.Background(),
 		connectorsclient.StartOperationPullRequest{Path: "/v1/customers"},
@@ -94,7 +94,7 @@ func TestStartOperationPull_AlreadyRunning_Garbled(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
+	c := connectorsclient.NewClient(srv.URL, "tok")
 	_, err := c.StartOperationPull(
 		context.Background(),
 		connectorsclient.StartOperationPullRequest{Path: "/x"},
@@ -129,8 +129,8 @@ func TestGetOperationJobStatus_StructuredError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
-	_, err := c.GetOperationJobStatus(context.Background(), "opjob_test")
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	_, err := connectorsclient.NewOperationJobForTest(c, "opjob_test", "optk_test").Status(context.Background())
 
 	var jobErr *connectorsclient.JobServerError
 	if !errors.As(err, &jobErr) {
@@ -160,8 +160,8 @@ func TestGetOperationJobStatus_LegacyErrorFallback(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
-	_, err := c.GetOperationJobStatus(context.Background(), "opjob_test")
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	_, err := connectorsclient.NewOperationJobForTest(c, "opjob_test", "optk_test").Status(context.Background())
 
 	var apiErr *connectorsclient.APIError
 	if !errors.As(err, &apiErr) {
@@ -192,8 +192,8 @@ func TestGetOperationJobStatus_NotFoundStructured(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
-	_, err := c.GetOperationJobStatus(context.Background(), "opjob_gone")
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	_, err := connectorsclient.NewOperationJobForTest(c, "opjob_gone", "optk_test").Status(context.Background())
 
 	var jobErr *connectorsclient.JobServerError
 	if !errors.As(err, &jobErr) {
@@ -222,8 +222,8 @@ func TestFetchOperationResult_StructuredError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
-	rc, err := c.FetchOperationResult(context.Background(), "opjob_test")
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	rc, err := connectorsclient.NewOperationJobForTest(c, "opjob_test", "optk_test").Result(context.Background())
 	if rc != nil {
 		_ = rc.Close()
 		t.Fatalf("expected nil reader on server error")
@@ -256,8 +256,8 @@ func TestFetchOperationResult_409_PrefersErrResultNotReady(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
-	rc, err := c.FetchOperationResult(context.Background(), "opjob_test")
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	rc, err := connectorsclient.NewOperationJobForTest(c, "opjob_test", "optk_test").Result(context.Background())
 	if rc != nil {
 		_ = rc.Close()
 		t.Fatalf("expected nil reader")
@@ -280,8 +280,8 @@ func TestCancelOperationJobDetail_StructuredSuccess(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
-	got, err := c.CancelOperationJobDetail(context.Background(), "opjob_test")
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	got, err := connectorsclient.NewOperationJobForTest(c, "opjob_test", "optk_test").CancelDetail(context.Background())
 	if err != nil {
 		t.Fatalf("CancelOperationJobDetail: %v", err)
 	}
@@ -306,8 +306,8 @@ func TestCancelOperationJobDetail_LegacyMessageBody(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
-	got, err := c.CancelOperationJobDetail(context.Background(), "opjob_test")
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	got, err := connectorsclient.NewOperationJobForTest(c, "opjob_test", "optk_test").CancelDetail(context.Background())
 	if err != nil {
 		t.Fatalf("CancelOperationJobDetail: %v", err)
 	}
@@ -333,8 +333,8 @@ func TestCancelOperationJob_BackCompat(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
-	if err := c.CancelOperationJob(context.Background(), "opjob_test"); err != nil {
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	if err := connectorsclient.NewOperationJobForTest(c, "opjob_test", "optk_test").Cancel(context.Background()); err != nil {
 		t.Fatalf("CancelOperationJob: %v", err)
 	}
 }
@@ -353,8 +353,8 @@ func TestCancelOperationJob_StructuredError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := connectorsclient.NewClient(srv.URL, "tok", "en")
-	err := c.CancelOperationJob(context.Background(), "opjob_test")
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	err := connectorsclient.NewOperationJobForTest(c, "opjob_test", "optk_test").Cancel(context.Background())
 
 	var jobErr *connectorsclient.JobServerError
 	if !errors.As(err, &jobErr) {

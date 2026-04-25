@@ -18,8 +18,6 @@ type Connector struct {
 	LogoURL string `json:"logo_url"          validate:"required,validimageurl"                                                                                                                                         example:"https://cdn.irmin.dev/mysql.png"`
 	// Array of capabilities of the connector, eg. what kind of operations the connector can perform
 	Capabilities []ConnectorCapability `json:"capabilities"      validate:"required,dive,oneof=pull push apply_patch patch_event"                                                                                                          example:"pull,push"`
-	// Array of locales supported by the connector, eg. what languages the connector supports
-	Locales []string `json:"locales"           validate:"required,dive,min=2,max=5"                                                                                                                                      example:"en,fi"`
 	// Array of categories associated with the connector, eg. what kind of connector it is
 	Categories []ConnectorCategory `json:"categories"        validate:"required,dive,oneof=database crm erp warehouse marketing analytics storage messaging payment social calendar project_management ecommerce iot monitoring other" example:"database"`
 	// Primary category of the connector

@@ -28,18 +28,30 @@ func (e *APIError) Error() string {
 	)
 }
 
-// ErrLegacySyncPullResponse is returned by StartOperationPull when
-// the connector service responds with a 200 OK + zip body instead of
-// the expected 202 Accepted + {job_id}. Its presence means the
-// connector service is still on the pre-async protocol and the
-// caller is talking to an unmigrated deployment; the Core poll
+// ErrLegacySyncResponse is returned by any Start*Operation call when
+// the connector service responds with a 200 OK + body instead of the
+// expected 202 Accepted + {job_id, operation_token}. Its presence
+// means the connector service is still on the pre-async protocol and
+// the caller is talking to an unmigrated deployment; the Core poll
 // wrapper should bail out with an actionable message rather than
 // attempt a silent fallback, per the "no backward-compat shim"
-// decision in the async-pull plan.
-var ErrLegacySyncPullResponse = errors.New(
-	"connector returned legacy synchronous pull response (HTTP 200 with body); " +
+// decision in the async-protocol plan.
+//
+// Returned by StartOperationPull, StartOperationPush, and
+// StartOperationPatch alike; the earlier pull-specific name
+// ErrLegacySyncPullResponse aliases this for back-compat.
+var ErrLegacySyncResponse = errors.New(
+	"connector returned legacy synchronous response (HTTP 200 with body); " +
 		"expected 202 Accepted from async protocol — upgrade the connector service",
 )
+
+// ErrLegacySyncPullResponse is an alias retained because the SDK PR
+// that introduced it was cited externally as a pull-specific
+// sentinel. New call sites should use ErrLegacySyncResponse.
+//
+// Deprecated: use ErrLegacySyncResponse. Kept for one release cycle
+// so existing errors.Is checks keep matching.
+var ErrLegacySyncPullResponse = ErrLegacySyncResponse
 
 // ErrResultNotReady is returned by FetchOperationResult when the job
 // is still in a non-terminal state (pending or running) at the time
@@ -49,6 +61,28 @@ var ErrLegacySyncPullResponse = errors.New(
 // is not safe to retry without polling status again.
 var ErrResultNotReady = errors.New(
 	"operation result is not ready: job has not reached terminal status=complete",
+)
+
+// ErrNoResultArtifact is returned by OperationJob.Result when the
+// server signals that the terminal job has no downloadable artifact
+// (HTTP 204 No Content). push, patch, and subscribe jobs surface this
+// because their success signal is status=complete, not a file. Callers
+// that only observe completion should check the error via errors.Is
+// and treat it as success rather than a missing-result failure.
+var ErrNoResultArtifact = errors.New(
+	"operation job completed without a result artifact (push/patch/subscribe)",
+)
+
+// ErrMissingOperationToken is returned by StartOperation{Pull,Push,Patch}
+// when the connector service responds with 202 + {job_id} but
+// without the per-job operation_token the async protocol requires.
+// This means the server is on a pre-Phase-4 build that has the async
+// routes but hasn't started minting per-job tokens yet — calling the
+// lifecycle routes (status / result / cancel) would 401 without it.
+// Operators seeing this should upgrade the connectors service.
+var ErrMissingOperationToken = errors.New(
+	"connector accepted the operation (HTTP 202) but did not return an operation_token; " +
+		"upgrade the connectors service to a build that mints per-job tokens",
 )
 
 // ErrJobFailed is returned when a status response indicates the job

@@ -139,21 +139,44 @@ type OperationJobStatusResponse struct {
 	Error string `json:"error,omitempty" example:"stripe API returned 401 Unauthorized"`
 }
 
-// StartOperationPullResponse is the body returned by
-// POST /operation/pull under the async protocol. It is intentionally
-// minimal — just the job_id — so the accept path stays fast and any
-// future fields (e.g., estimated runtime) can be added without
-// breaking callers.
+// StartOperationJobResponse is the body returned by
+// POST /operation/pull, /operation/push, and /operation/patch under
+// the async protocol. The HTTP status is 202 Accepted; a legacy 200
+// with a zip body is reported as ErrLegacySyncPullResponse.
 //
-// The HTTP status for this response is 202 Accepted, not 200 OK, so
-// the Core SDK client uses the status code as the primary protocol
-// discriminator; a legacy 200 with a zip body is reported as
-// ErrLegacySyncPullResponse.
-type StartOperationPullResponse struct {
+// The response carries two fields:
+//
+//   - JobID identifies the async job for subsequent /operation/status,
+//     /operation/result, and /operation/cancel calls.
+//
+//   - OperationToken is a short-lived, job-scoped bearer credential
+//     minted by the server. It is the ONLY credential accepted on the
+//     per-job lifecycle routes — the broad system token used to start
+//     the operation is intentionally rejected there. This preserves
+//     the scope-limitation property of operation tokens: a compromised
+//     system token cannot poll, fetch, or cancel an in-flight job it
+//     did not start.
+//
+// The SDK's Client.StartOperation{Pull,Push,Patch} converts this body
+// into a *connectorsclient.OperationJob handle that encapsulates the
+// token so callers never pass it around manually.
+type StartOperationJobResponse struct {
 	// JobID is the identifier the caller uses on subsequent
 	// /operation/status and /operation/result calls.
 	JobID string `json:"job_id" example:"opjob_9m3x7k2n8q5p"`
+
+	// OperationToken is the per-job bearer credential for lifecycle
+	// routes. Minted by the server on Start*; TTL matches the
+	// underlying OperationJob row.
+	OperationToken string `json:"operation_token" example:"optk_7f3d2a9c1e6b"`
 }
+
+// StartOperationPullResponse is the legacy name for StartOperationJobResponse.
+// Kept as an alias so existing connector-service handlers compile unchanged
+// while the rename propagates.
+//
+// Deprecated: use StartOperationJobResponse.
+type StartOperationPullResponse = StartOperationJobResponse
 
 // AlreadyRunningBody is the wire shape returned by any connector
 // endpoint that refuses a request because the same operation is
