@@ -134,6 +134,119 @@ func TestStartOperationPush_ExtraCannotOverwriteReservedFields(t *testing.T) {
 	}
 }
 
+// TestStartOperationPull_CarriesDetailsAndSettings verifies that the
+// Phase-4 credential channel reaches the connector in the
+// `details[<key>]=<value>` / `settings[<key>]=<value>` form-field
+// shape — the same shape /operation/init used to ship once and the
+// connector's existing ParseFormFields parser already understands.
+// Without this, post-init-retirement Start* requests would fail at
+// the worker because no Operation row carries credentials.
+func TestStartOperationPull_CarriesDetailsAndSettings(t *testing.T) {
+	captured := make(map[string]string)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			t.Fatalf("ParseForm: %v", err)
+		}
+		// Capture every form field so the test can assert both the
+		// presence of expected entries AND the absence of leakage
+		// from Extra into reserved credential slots.
+		for k, vs := range r.Form {
+			if len(vs) > 0 {
+				captured[k] = vs[0]
+			}
+		}
+		w.WriteHeader(http.StatusAccepted)
+		_ = json.NewEncoder(w).Encode(irminmodels.StartOperationJobResponse{
+			JobID:          "opjob_creds",
+			OperationToken: "optk_creds",
+		})
+	}))
+	defer srv.Close()
+
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	_, err := c.StartOperationPull(context.Background(), connectorsclient.StartOperationPullRequest{
+		Path: "/v1/customers",
+		Details: map[string]string{
+			"host":     "db.example",
+			"password": "s3cr3t",
+		},
+		Settings: map[string]string{
+			"schema": "public",
+		},
+		Extra: map[string]string{
+			"cursor": "abc",
+			// Attempting to inject a credential via Extra must be
+			// silently dropped — the encoder uses isReservedCredentialKey
+			// to refuse `details[*]` / `settings[*]` keys in Extra.
+			"details[password]": "tampered",
+		},
+	})
+	if err != nil {
+		t.Fatalf("StartOperationPull: %v", err)
+	}
+
+	want := map[string]string{
+		"path":              "/v1/customers",
+		"details[host]":     "db.example",
+		"details[password]": "s3cr3t",
+		"settings[schema]":  "public",
+		"cursor":            "abc",
+	}
+	for k, v := range want {
+		if captured[k] != v {
+			t.Errorf("form %s = %q, want %q", k, captured[k], v)
+		}
+	}
+	// Extra-supplied "details[password]"="tampered" must NOT have
+	// overwritten the legitimate Details value.
+	if captured["details[password]"] == "tampered" {
+		t.Errorf("Extra.details[password] leaked through and tampered the credential channel")
+	}
+}
+
+// TestStartOperationPatch_CarriesDetailsAndSettings asserts the
+// multipart credential channel works on patch (which uses the same
+// addCredentialFormFields helper). Push exercises the same code path.
+func TestStartOperationPatch_CarriesDetailsAndSettings(t *testing.T) {
+	captured := make(map[string]string)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseMultipartForm(1 << 20); err != nil {
+			t.Fatalf("ParseMultipartForm: %v", err)
+		}
+		for k, vs := range r.MultipartForm.Value {
+			if len(vs) > 0 {
+				captured[k] = vs[0]
+			}
+		}
+		w.WriteHeader(http.StatusAccepted)
+		_ = json.NewEncoder(w).Encode(irminmodels.StartOperationJobResponse{
+			JobID:          "opjob_patch",
+			OperationToken: "optk_patch",
+		})
+	}))
+	defer srv.Close()
+
+	c := connectorsclient.NewClient(srv.URL, "tok")
+	_, err := c.StartOperationPatch(context.Background(), connectorsclient.StartOperationPatchRequest{
+		PatchesJSON: []byte(`[]`),
+		Details: map[string]string{
+			"api_key": "pat_xyz",
+		},
+		Settings: map[string]string{
+			"workspace": "team-a",
+		},
+	})
+	if err != nil {
+		t.Fatalf("StartOperationPatch: %v", err)
+	}
+	if captured["details[api_key]"] != "pat_xyz" {
+		t.Errorf("details[api_key] = %q, want pat_xyz", captured["details[api_key]"])
+	}
+	if captured["settings[workspace]"] != "team-a" {
+		t.Errorf("settings[workspace] = %q, want team-a", captured["settings[workspace]"])
+	}
+}
+
 // TestStartOperationPull_LegacySyncResponse verifies that a 200 OK
 // from an unmigrated connector surfaces the ErrLegacySyncPullResponse
 // sentinel rather than silently degrading to a sync path.

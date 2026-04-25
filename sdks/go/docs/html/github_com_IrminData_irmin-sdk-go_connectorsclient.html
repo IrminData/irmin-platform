@@ -519,6 +519,13 @@ type StartOperationPatchRequest struct {
 	// FileName is the multipart part filename for the patches field.
 	// Defaults to "patches.json".
 	FileName string
+
+	// Details / Settings carry the connection's credentials and
+	// workspace-level scoping. See StartOperationPullRequest for the
+	// long-form rationale.
+	Details  map[string]string
+	Settings map[string]string
+
 	// Extra carries additional form fields (connector-specific).
 	Extra map[string]string
 }
@@ -535,6 +542,28 @@ type StartOperationPullRequest struct {
 	// (e.g., "/v1/customers" for Stripe, a table identifier for
 	// Postgres). Required.
 	Path string
+
+	// Details carries the connection's external-system credentials
+	// (host / port / API key / TLS cert / etc.) — the same map
+	// shape the pre-async /operation/init handshake used to ship
+	// once and the connector cached on its Operation row.
+	//
+	// After Phase 4, /operation/init is gone; every Start* request
+	// carries the credentials inline so the connector service can
+	// upsert its Operation row on the fly. The wire shape is
+	// `details[&lt;key&gt;]=&lt;value&gt;` form fields, matching what
+	// /operation/init expected so the server-side parser does not
+	// have to change.
+	//
+	// For OAuth-backed connectors, this map is typically empty —
+	// the connector reaches into Core via the SystemOAuthAccessToken
+	// route on every vendor call.
+	Details map[string]string
+
+	// Settings carries workspace-level scoping choices (which
+	// project / schema / folder to pull from). Same wire shape as
+	// Details: `settings[&lt;key&gt;]=&lt;value&gt;` form fields.
+	Settings map[string]string
 
 	// Extra carries any additional form fields the specific
 	// connector accepts on its pull endpoint (cursor, filters,
@@ -564,6 +593,13 @@ type StartOperationPushRequest struct {
 	// FilePath points at a zip on disk. Used when both PresignedURL
 	// and File are empty.
 	FilePath string
+
+	// Details / Settings carry the connection's credentials and
+	// workspace-level scoping. See StartOperationPullRequest for the
+	// long-form rationale — the same shape applies here.
+	Details  map[string]string
+	Settings map[string]string
+
 	// Extra carries additional form fields (connector-specific).
 	Extra map[string]string
 }
