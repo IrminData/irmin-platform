@@ -34,7 +34,12 @@ func TestGetSchemaEscapesMethodPathSegment(t *testing.T) {
 	defer srv.Close()
 
 	c := connectorsclient.NewClient(srv.URL, "tok")
-	schema, err := c.GetSchema(context.Background(), "pull/preview?mode=full", "/datasets/quarterly reports")
+	schema, err := c.GetSchema(
+		context.Background(),
+		"pull/preview?mode=full",
+		"/datasets/quarterly reports",
+		nil, nil,
+	)
 	if err != nil {
 		t.Fatalf("GetSchema: %v", err)
 	}

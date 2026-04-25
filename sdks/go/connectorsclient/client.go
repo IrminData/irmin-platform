@@ -268,6 +268,13 @@ func writeFormFile(writer *multipart.Writer, file FormFile) error {
 	return nil
 }
 
+// contentTypeFormURLEncoded is the Content-Type stamped on every
+// urlencoded request the SDK emits — exported as an unexported
+// package constant so the four call sites that emit it (
+// prepareURLEncodedBody, encodeStartPullForm, the schema POST, and
+// the config-field handlers) stay consistent and goconst-friendly.
+const contentTypeFormURLEncoded = "application/x-www-form-urlencoded"
+
 // prepareURLEncodedBody renders formFields as
 // application/x-www-form-urlencoded and sets the Content-Type header.
 func prepareURLEncodedBody(formFields map[string]string, headers map[string]string) io.Reader {
@@ -275,7 +282,7 @@ func prepareURLEncodedBody(formFields map[string]string, headers map[string]stri
 	for key, val := range formFields {
 		values.Set(key, val)
 	}
-	headers["Content-Type"] = "application/x-www-form-urlencoded"
+	headers["Content-Type"] = contentTypeFormURLEncoded
 	return strings.NewReader(values.Encode())
 }
 

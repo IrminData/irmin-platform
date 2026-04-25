@@ -23,17 +23,25 @@ type Subscription struct {
 // Subscribe is a fast, idempotent webhook-registration call; it stays
 // on the sync route and is not driven through the async job protocol.
 //
-// Requires an operation token on the Client.
-func (c *Client) SubscribeToChanges(ctx context.Context, webhookURL, webhookAccessToken string) (*Subscription, error) {
+// Phase 4: details/settings ride on the request body so the connector
+// service can upsert its Operation row inline before invoking the
+// connector-specific subscribe handler. Authenticated via the
+// connector's system token on the Client.
+func (c *Client) SubscribeToChanges(
+	ctx context.Context,
+	webhookURL, webhookAccessToken string,
+	details, settings map[string]string,
+) (*Subscription, error) {
+	formFields := buildDetailsSettingsForm(details, settings)
+	formFields["webhook_url"] = webhookURL
+	formFields["webhook_access_token"] = webhookAccessToken
+
 	var subscription Subscription
 	if err := c.FetchAPI(ctx, RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: "/operation/subscribe",
-		FormFields: map[string]string{
-			"webhook_url":          webhookURL,
-			"webhook_access_token": webhookAccessToken,
-		},
-		ContentType: "application/x-www-form-urlencoded",
+		Method:      http.MethodPost,
+		Endpoint:    "/operation/subscribe",
+		FormFields:  formFields,
+		ContentType: contentTypeFormURLEncoded,
 	}, &subscription); err != nil {
 		return nil, err
 	}
@@ -41,16 +49,20 @@ func (c *Client) SubscribeToChanges(ctx context.Context, webhookURL, webhookAcce
 }
 
 // UnsubscribeFromChanges removes a previously-registered webhook so
-// the connector stops sending change notifications.
-//
-// Requires an operation token on the Client.
-func (c *Client) UnsubscribeFromChanges(ctx context.Context, subscriptionID uint) error {
+// the connector stops sending change notifications. Same Phase-4
+// credential channel as SubscribeToChanges.
+func (c *Client) UnsubscribeFromChanges(
+	ctx context.Context,
+	subscriptionID uint,
+	details, settings map[string]string,
+) error {
+	formFields := buildDetailsSettingsForm(details, settings)
+	formFields["subscription_id"] = strconv.FormatUint(uint64(subscriptionID), 10)
+
 	return c.FetchAPI(ctx, RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: "/operation/unsubscribe",
-		FormFields: map[string]string{
-			"subscription_id": strconv.FormatUint(uint64(subscriptionID), 10),
-		},
-		ContentType: "application/x-www-form-urlencoded",
+		Method:      http.MethodPost,
+		Endpoint:    "/operation/unsubscribe",
+		FormFields:  formFields,
+		ContentType: contentTypeFormURLEncoded,
 	}, nil)
 }

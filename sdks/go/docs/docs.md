@@ -3720,13 +3720,13 @@ Authentication: Bearer tokens on every request \(system token for info/config/re
   - [func \(c \*Client\) FetchStreamFilesReader\(ctx context.Context, opts RequestOptions\) \(io.ReadCloser, error\)](<#Client.FetchStreamFilesReader>)
   - [func \(c \*Client\) GetConfigFields\(ctx context.Context, configType string, details map\[string\]string, settings map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Client.GetConfigFields>)
   - [func \(c \*Client\) GetInfo\(ctx context.Context\) \(\*ConnectorInfo, error\)](<#Client.GetInfo>)
-  - [func \(c \*Client\) GetSchema\(ctx context.Context, method, path string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GetSchema>)
+  - [func \(c \*Client\) GetSchema\(ctx context.Context, method, path string, details, settings map\[string\]string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GetSchema>)
   - [func \(c \*Client\) Request\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
   - [func \(c \*Client\) StartOperationPatch\(ctx context.Context, req StartOperationPatchRequest\) \(\*OperationJob, error\)](<#Client.StartOperationPatch>)
   - [func \(c \*Client\) StartOperationPull\(ctx context.Context, req StartOperationPullRequest\) \(\*OperationJob, error\)](<#Client.StartOperationPull>)
   - [func \(c \*Client\) StartOperationPush\(ctx context.Context, req StartOperationPushRequest\) \(\*OperationJob, error\)](<#Client.StartOperationPush>)
-  - [func \(c \*Client\) SubscribeToChanges\(ctx context.Context, webhookURL, webhookAccessToken string\) \(\*Subscription, error\)](<#Client.SubscribeToChanges>)
-  - [func \(c \*Client\) UnsubscribeFromChanges\(ctx context.Context, subscriptionID uint\) error](<#Client.UnsubscribeFromChanges>)
+  - [func \(c \*Client\) SubscribeToChanges\(ctx context.Context, webhookURL, webhookAccessToken string, details, settings map\[string\]string\) \(\*Subscription, error\)](<#Client.SubscribeToChanges>)
+  - [func \(c \*Client\) UnsubscribeFromChanges\(ctx context.Context, subscriptionID uint, details, settings map\[string\]string\) error](<#Client.UnsubscribeFromChanges>)
   - [func \(c \*Client\) ValidateConfigFields\(ctx context.Context, details map\[string\]string, settings map\[string\]string\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#Client.ValidateConfigFields>)
   - [func \(c \*Client\) WithConnectionID\(id uint\) \*Client](<#Client.WithConnectionID>)
 - [type ConnectorInfo](<#ConnectorInfo>)
@@ -3987,14 +3987,12 @@ Requires a system token on the Client.
 ### func \(\*Client\) GetSchema
 
 ```go
-func (c *Client) GetSchema(ctx context.Context, method, path string) (*irminmodels.ObjectSchema, error)
+func (c *Client) GetSchema(ctx context.Context, method, path string, details, settings map[string]string) (*irminmodels.ObjectSchema, error)
 ```
 
 GetSchema fetches the schema the connector exposes for a specific operation method \(pull / push / patch\) at the given resource path. Pass an empty path for the connector's root resource.
 
-Schema is cheap, request\-scoped metadata and stays on the sync route; it does not go through the async job protocol.
-
-Requires an operation token on the Client.
+Schema is cheap, request\-scoped metadata and stays on the sync route; it does not go through the async job protocol. Details and Settings are nevertheless required: post\-Phase\-4, the connector service upserts the matching Operation row on every data route \(including schema\) so the worker can read credentials on connector\-specific schema introspection. Pass the same maps the caller would pass to StartOperation\*.
 
 <a name="Client.Request"></a>
 ### func \(\*Client\) Request
@@ -4043,23 +4041,21 @@ StartOperationPush initiates an asynchronous push. See StartOperationPull for th
 ### func \(\*Client\) SubscribeToChanges
 
 ```go
-func (c *Client) SubscribeToChanges(ctx context.Context, webhookURL, webhookAccessToken string) (*Subscription, error)
+func (c *Client) SubscribeToChanges(ctx context.Context, webhookURL, webhookAccessToken string, details, settings map[string]string) (*Subscription, error)
 ```
 
 SubscribeToChanges registers webhookURL to receive change events. Subscribe is a fast, idempotent webhook\-registration call; it stays on the sync route and is not driven through the async job protocol.
 
-Requires an operation token on the Client.
+Phase 4: details/settings ride on the request body so the connector service can upsert its Operation row inline before invoking the connector\-specific subscribe handler. Authenticated via the connector's system token on the Client.
 
 <a name="Client.UnsubscribeFromChanges"></a>
 ### func \(\*Client\) UnsubscribeFromChanges
 
 ```go
-func (c *Client) UnsubscribeFromChanges(ctx context.Context, subscriptionID uint) error
+func (c *Client) UnsubscribeFromChanges(ctx context.Context, subscriptionID uint, details, settings map[string]string) error
 ```
 
-UnsubscribeFromChanges removes a previously\-registered webhook so the connector stops sending change notifications.
-
-Requires an operation token on the Client.
+UnsubscribeFromChanges removes a previously\-registered webhook so the connector stops sending change notifications. Same Phase\-4 credential channel as SubscribeToChanges.
 
 <a name="Client.ValidateConfigFields"></a>
 ### func \(\*Client\) ValidateConfigFields
