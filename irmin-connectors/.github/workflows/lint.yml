@@ -32,7 +32,12 @@ jobs:
         with:
           version: v2.6.1
           args: --timeout=5m
-          skip-cache: true
+          # skip-cache was true historically, which made every run
+          # analyse the full module from cold and pushed the lint
+          # job toward its timeout ceiling. The action's built-in
+          # cache keys on go.sum + tool version, so warm starts
+          # across PRs are safe and produce the expected speedup.
+          skip-cache: false
 
       - name: Create or update PR comment on failure
         if: failure()
