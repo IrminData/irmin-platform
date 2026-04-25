@@ -76,7 +76,9 @@ func (o *Orchestrator) performPatchExport(
 	client := connectorjobs.NewConnectorClient(connection)
 
 	start, startErr := client.StartOperationPatch(ctx, connectorsclient.StartOperationPatchRequest{
-		Patches: patches,
+		Patches:  patches,
+		Details:  connection.Details,
+		Settings: connection.Settings,
 	})
 	if startErr != nil {
 		logs = append(logs, fmt.Sprintf("Failed to start patch job: %v", startErr))

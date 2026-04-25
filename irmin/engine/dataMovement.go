@@ -97,9 +97,11 @@ func (c *Client) DataMovementSchema(
 	}
 
 	// Schema is cheap request-scoped metadata — stays on the sync
-	// route. No async job and no operation logs.
+	// route. No async job and no operation logs. Details / Settings
+	// ride on the request so the connector service can upsert its
+	// Operation row inline (Phase 4 retired /operation/init).
 	client := connectorjobs.NewConnectorClient(connection)
-	schema, err := client.GetSchema(ctx, method, schemaPath)
+	schema, err := client.GetSchema(ctx, method, schemaPath, connection.Details, connection.Settings)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get schema for method %q: %w", method, err)
 	}
@@ -386,7 +388,7 @@ func (c *Client) PullFilesFromConnector(
 	}
 
 	for _, connectionPath := range paths {
-		pulledFiles, pullErr := c.pullOneJob(ctx, client, connectionPath)
+		pulledFiles, pullErr := c.pullOneJob(ctx, client, connection, connectionPath)
 		if pullErr != nil {
 			return nil, pullErr
 		}
@@ -407,14 +409,20 @@ func (c *Client) PullFilesFromConnector(
 }
 
 // pullOneJob runs a single async pull job and unzips the result into a
-// file map.
+// file map. The connection's Details / Settings ride on the request
+// body so the connector service can upsert its Operation row inline
+// (Phase 4 retired the /operation/init handshake — see
+// irmin-connectors/guides/concepts-and-processes.md).
 func (c *Client) pullOneJob(
 	ctx context.Context,
 	client *connectorsclient.Client,
+	connection *db.Connection,
 	connectionPath string,
 ) (map[string][]byte, error) {
 	start, startErr := client.StartOperationPull(ctx, connectorsclient.StartOperationPullRequest{
-		Path: connectionPath,
+		Path:     connectionPath,
+		Details:  connection.Details,
+		Settings: connection.Settings,
 	})
 	if startErr != nil {
 		return nil, fmt.Errorf("failed to start pull: %w", startErr)
@@ -471,7 +479,7 @@ func (c *Client) PullFilesFromConnectorStreaming(
 
 	for _, connectionPath := range paths {
 		pulled, pullErr := c.pullAndExtractToLakeFS(
-			ctx, client, connectionPath, lakeFSRepo, branch, pathPrefix, hasMultipleItems,
+			ctx, client, connection, connectionPath, lakeFSRepo, branch, pathPrefix, hasMultipleItems,
 		)
 		if pullErr != nil {
 			return nil, pullErr
@@ -492,11 +500,14 @@ func (c *Client) PullFilesFromConnectorStreaming(
 func (c *Client) pullAndExtractToLakeFS(
 	ctx context.Context,
 	client *connectorsclient.Client,
+	connection *db.Connection,
 	connectionPath, lakeFSRepo, branch, pathPrefix string,
 	callerHasMultipleItems bool,
 ) ([]lakefs.ObjectMetadata, error) {
 	start, startErr := client.StartOperationPull(ctx, connectorsclient.StartOperationPullRequest{
-		Path: connectionPath,
+		Path:     connectionPath,
+		Details:  connection.Details,
+		Settings: connection.Settings,
 	})
 	if startErr != nil {
 		return nil, fmt.Errorf("failed to start pull: %w", startErr)
@@ -894,7 +905,7 @@ func (c *Client) PushFilesToConnector(
 	connPath := c.buildTargetPath(connectionPath, objName, len(files) > 1)
 
 	// Push files: use presigned URL for large payloads, direct upload for small ones.
-	if pushErr := c.pushFilesWithSizeRouting(ctx, client, connPath, files); pushErr != nil {
+	if pushErr := c.pushFilesWithSizeRouting(ctx, client, connection, connPath, files); pushErr != nil {
 		return nil, fmt.Errorf("failed to push files: %w", pushErr)
 	}
 
@@ -910,6 +921,7 @@ func (c *Client) PushFilesToConnector(
 func (c *Client) pushFilesWithSizeRouting(
 	ctx context.Context,
 	client *connectorsclient.Client,
+	connection *db.Connection,
 	connPath string,
 	files map[string][]byte,
 ) error {
@@ -920,16 +932,20 @@ func (c *Client) pushFilesWithSizeRouting(
 
 	threshold := int64(c.Env.MaxInMemorySizeMB) * int64(utils.BytesPerMB)
 	if totalSize <= threshold {
-		return c.pushFilesDirect(ctx, client, connPath, files)
+		return c.pushFilesDirect(ctx, client, connection, connPath, files)
 	}
-	return c.pushFilesViaTempFile(ctx, client, connPath, files)
+	return c.pushFilesViaTempFile(ctx, client, connection, connPath, files)
 }
 
 // pushFilesDirect zips files in memory and starts an async push with
-// the zip bytes inline in the multipart body.
+// the zip bytes inline in the multipart body. The connection's
+// Details / Settings ride on the request body so the connector
+// service can upsert its Operation row inline (Phase 4 retired the
+// /operation/init handshake).
 func (c *Client) pushFilesDirect(
 	ctx context.Context,
 	client *connectorsclient.Client,
+	connection *db.Connection,
 	connPath string,
 	files map[string][]byte,
 ) error {
@@ -942,6 +958,8 @@ func (c *Client) pushFilesDirect(
 		Path:     connPath,
 		File:     zipData,
 		FileName: "export.zip",
+		Details:  connection.Details,
+		Settings: connection.Settings,
 	})
 	if startErr != nil {
 		return fmt.Errorf("failed to start push: %w", startErr)
@@ -962,10 +980,13 @@ const s3CleanupTimeout = 30 * time.Second
 // pushFilesViaTempFile writes the zip to a temp file, uploads it to
 // S3, generates a presigned GET URL, and starts an async push with
 // the presigned URL. The connector downloads the zip directly from S3,
-// avoiding in-memory buffering of large payloads.
+// avoiding in-memory buffering of large payloads. As with pushFilesDirect,
+// the connection's Details / Settings ride on the start request so the
+// connector service can upsert its Operation row inline (Phase 4).
 func (c *Client) pushFilesViaTempFile(
 	ctx context.Context,
 	client *connectorsclient.Client,
+	connection *db.Connection,
 	connPath string,
 	files map[string][]byte,
 ) error {
@@ -1032,6 +1053,8 @@ func (c *Client) pushFilesViaTempFile(
 	start, startErr := client.StartOperationPush(ctx, connectorsclient.StartOperationPushRequest{
 		Path:         connPath,
 		PresignedURL: presignedURL,
+		Details:      connection.Details,
+		Settings:     connection.Settings,
 	})
 	if startErr != nil {
 		return fmt.Errorf("failed to start push: %w", startErr)

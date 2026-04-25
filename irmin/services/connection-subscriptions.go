@@ -72,7 +72,13 @@ func (s *ConnectionSubscriptionService) RegisterSubscriptionWithConnector(
 	// Format: {API_URL}/api/v1/webhooks/connectors/{connectionSqid}
 	webhookURL := fmt.Sprintf("%s/api/v1/webhooks/connectors/%s", s.apiURL, connectionSqid)
 
-	connectorSubscription, err := client.SubscribeToChanges(ctx, webhookURL, subscription.WebhookToken)
+	connectorSubscription, err := client.SubscribeToChanges(
+		ctx,
+		webhookURL,
+		subscription.WebhookToken,
+		connection.Details,
+		connection.Settings,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to subscribe to connector changes: %w", err)
 	}
@@ -93,7 +99,12 @@ func (s *ConnectionSubscriptionService) UnregisterSubscriptionFromConnector(
 
 	client := s.newSubscribeClient(connection)
 
-	if unsubErr := client.UnsubscribeFromChanges(ctx, connectorSubscriptionID); unsubErr != nil {
+	if unsubErr := client.UnsubscribeFromChanges(
+		ctx,
+		connectorSubscriptionID,
+		connection.Details,
+		connection.Settings,
+	); unsubErr != nil {
 		return fmt.Errorf("failed to unsubscribe from connector changes: %w", unsubErr)
 	}
 

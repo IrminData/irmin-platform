@@ -31,7 +31,13 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.4.0
-          args: --timeout=5m
+          # 5m was the previous ceiling; with skip-cache=true (no
+          # build-cache reuse across runs) the analysis runs cold
+          # every time and the codebase regularly clocks ~5m exactly,
+          # so a one-second slow-down trips the timeout while
+          # producing 0 issues. 10m gives margin without hiding a
+          # real regression.
+          args: --timeout=10m
           skip-cache: true
 
       - name: Create or update PR comment on failure
