@@ -4016,7 +4016,7 @@ StartOperationPull initiates an asynchronous pull against a connector. The Clien
 Semantics by response status:
 
 - 202 Accepted — job queued; returns the handle.
-- 200 OK — the connector service is on the pre\-async protocol. Returns ErrLegacySyncPullResponse without draining the body \(which could be a multi\-gigabyte zip\).
+- 200 OK — the connector service is on the pre\-async protocol. Returns ErrLegacySyncResponse without draining the body \(which could be a multi\-gigabyte zip\).
 - 409 Conflict — an operation is already running for this connection. Returns \*AlreadyRunningError carrying the blocking job\_id when the server emits a structured body, \*APIError otherwise.
 - Any other non\-2xx — \*APIError.
 
@@ -7425,7 +7425,7 @@ type SelectOption struct {
 <a name="StartOperationJobResponse"></a>
 ## type StartOperationJobResponse
 
-StartOperationJobResponse is the body returned by POST /operation/pull, /operation/push, and /operation/patch under the async protocol. The HTTP status is 202 Accepted; a legacy 200 with a zip body is reported as ErrLegacySyncPullResponse.
+StartOperationJobResponse is the body returned by POST /operation/pull, /operation/push, and /operation/patch under the async protocol. The HTTP status is 202 Accepted; a legacy 200 with a zip body is reported as ErrLegacySyncResponse.
 
 The response carries two fields:
 

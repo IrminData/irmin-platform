@@ -162,7 +162,7 @@ type StartOperationPatchRequest struct {
 //
 //   - 202 Accepted — job queued; returns the handle.
 //   - 200 OK — the connector service is on the pre-async protocol.
-//     Returns ErrLegacySyncPullResponse without draining the body
+//     Returns ErrLegacySyncResponse without draining the body
 //     (which could be a multi-gigabyte zip).
 //   - 409 Conflict — an operation is already running for this
 //     connection. Returns *AlreadyRunningError carrying the blocking

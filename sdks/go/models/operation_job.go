@@ -143,7 +143,7 @@ type OperationJobStatusResponse struct {
 // StartOperationJobResponse is the body returned by
 // POST /operation/pull, /operation/push, and /operation/patch under
 // the async protocol. The HTTP status is 202 Accepted; a legacy 200
-// with a zip body is reported as ErrLegacySyncPullResponse.
+// with a zip body is reported as ErrLegacySyncResponse.
 //
 // The response carries two fields:
 //
