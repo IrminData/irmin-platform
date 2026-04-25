@@ -6,20 +6,20 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"maps"
 	"os"
 	"path"
 	"strings"
 	"time"
 
 	"irmin-api/bucket"
-	connectorsclient "irmin-api/connectors-client"
+	"irmin-api/connectorjobs"
 	"irmin-api/db"
 	"irmin-api/duckdb"
 	enginevalidation "irmin-api/engine/validation"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 
+	"github.com/IrminData/irmin-sdk-go/connectorsclient"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -56,72 +56,15 @@ func (c *Client) validateConnectionCapability(
 	}
 }
 
-// InitializeConnectorOperation sets up a connector operation and returns an operation client.
-// It returns an error if initialization fails.
-// If tx is provided, it will be used instead of creating a new transaction.
-//
-// Note: the legacy system-token cancel-on-cleanup has been removed. Async
-// pull now manages its own job-level cancellation via the SDK's
-// CancelOperationJob wrapper (see connectorsclient.OperationPull /
-// OperationPullStream). Non-pull operations (push/patch/schema) are
-// synchronous on the connector side; no explicit cancel call is needed.
-func (c *Client) InitializeConnectorOperation(
-	ctx context.Context,
-	connection *db.Connection,
-	tx ...*gorm.DB,
-) (*connectorsclient.Client, error) {
-	// Note: No locking needed here - workflow execution is already locked,
-	// and each workflow run creates its own independent connector operation
-	// Also no transaction needed - connector initialization is just HTTP calls
-
-	// Process the connector initialization directly (no transaction needed)
-	return c.initializeConnectorOperationInternal(ctx, connection)
-}
-
-// initializeConnectorOperationInternal contains the core connector initialization logic, separated for clarity.
-func (c *Client) initializeConnectorOperationInternal(
-	ctx context.Context,
-	connection *db.Connection,
-) (*connectorsclient.Client, error) {
-	// Create base connector client (don't store on shared struct to avoid race conditions).
-	systemClient := connectorsclient.NewClient(
-		connection.Connector.APIBaseURL,
-		connection.Connector.SystemToken,
-		c.Locale).
-		WithConnectionID(connection.ID).
-		WithLogger(c.Logger)
-
-	// Initialize a new operation.
-	op, err := systemClient.InitOperation(ctx, connection.Details, connection.Settings)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize operation: %w", err)
-	}
-
-	// Create operation-specific client (always in English for schema retrieval/actions).
-	opClient := connectorsclient.NewClient(
-		connection.Connector.APIBaseURL,
-		op.Token,
-		"en",
-	).
-		WithConnectionID(connection.ID).
-		WithLogger(c.Logger)
-	return opClient, nil
-}
-
 // DataMovementSchema retrieves the schema for a specific method from the connector.
 // It returns the schema and an error if any occurred.
 // If tx is provided, it will be used instead of creating a new transaction.
 func (c *Client) DataMovementSchema(
 	ctx context.Context,
 	connection *db.Connection,
-	method, path string,
-	tx ...*gorm.DB,
+	method, schemaPath string,
+	_ ...*gorm.DB,
 ) (*irminmodels.ObjectSchema, error) {
-	opClient, err := c.InitializeConnectorOperation(ctx, connection, tx...)
-	if err != nil {
-		return nil, err
-	}
-
 	// If empty method, use "pull"
 	if method == "" {
 		method = string(irminmodels.ConnectorCapabilityPull)
@@ -153,12 +96,13 @@ func (c *Client) DataMovementSchema(
 		return nil, fmt.Errorf("invalid method: %s", method)
 	}
 
-	// Retrieve method schema.
-	schema, err := opClient.GetSchema(ctx, method, path)
+	// Schema is cheap request-scoped metadata — stays on the sync
+	// route. No async job and no operation logs.
+	client := connectorjobs.NewConnectorClient(connection)
+	schema, err := client.GetSchema(ctx, method, schemaPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get schema for method %q: %w", method, err)
 	}
-
 	return schema, nil
 }
 
@@ -427,63 +371,75 @@ func (c *Client) PullFilesFromConnector(
 		return nil, err
 	}
 
-	// Initialize connector operation.
-	opClient, err := c.InitializeConnectorOperation(ctx, connection)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize connector operation: %w", err)
-	}
+	client := connectorjobs.NewConnectorClient(connection)
 
-	// Pull the matching files from the connector.
-	pulled := make([]connectorsclient.PulledFile, 0)
-
-	// If connectionPaths is empty or nil, pull all files by passing empty string
-	// The connector service interprets empty path as "get all files"
-	if len(connectionPaths) == 0 {
-		pulledFiles, pullErr := opClient.OperationPull(ctx, "")
-		if pullErr != nil {
-			return nil, fmt.Errorf("failed to pull all files: %w", pullErr)
-		}
-		pulled = append(pulled, pulledFiles...)
-	} else {
-		// Pull specific paths
-		for _, connectionPath := range connectionPaths {
-			pulledFiles, pullErr := opClient.OperationPull(ctx, connectionPath)
-			if pullErr != nil {
-				return nil, fmt.Errorf("failed to pull files: %w", pullErr)
-			}
-			pulled = append(pulled, pulledFiles...)
-		}
-	}
-
-	// Loop through the pulled files to unzip them and construct a list of all files.
 	allFiles := make(map[string][]byte)
 	var totalSize int64
 	maxMB := c.Env.MaxInMemorySizeMB * InMemoryMultiplier
 	maxBytes := int64(maxMB) * int64(utils.BytesPerMB)
 
-	for _, file := range pulled {
-		// Unzip the file
-		unzipped, unzipFilesErr := irminutils.UnzipFiles(file.Content)
-		if unzipFilesErr != nil {
-			return nil, fmt.Errorf("failed to unzip file: %w", unzipFilesErr)
-		}
+	paths := connectionPaths
+	if len(paths) == 0 {
+		// Empty path is the connector-service convention for "pull
+		// every resource" — one job per call, same as per-path.
+		paths = []string{""}
+	}
 
-		// Track accumulated size and fail early before copying into the map
-		for _, content := range unzipped {
+	for _, connectionPath := range paths {
+		pulledFiles, pullErr := c.pullOneJob(ctx, client, connectionPath)
+		if pullErr != nil {
+			return nil, pullErr
+		}
+		for name, content := range pulledFiles {
 			totalSize += int64(len(content))
+			if totalSize > maxBytes {
+				return nil, fmt.Errorf(
+					"pulled data exceeds in-memory limit (%d MB);"+
+						" consider removing field mappings to enable streaming import",
+					maxMB,
+				)
+			}
+			allFiles[name] = content
 		}
-		if totalSize > maxBytes {
-			return nil, fmt.Errorf(
-				"pulled data exceeds in-memory limit (%d MB);"+
-					" consider removing field mappings to enable streaming import",
-				maxMB,
-			)
-		}
-
-		maps.Copy(allFiles, unzipped)
 	}
 
 	return allFiles, nil
+}
+
+// pullOneJob runs a single async pull job and unzips the result into a
+// file map.
+func (c *Client) pullOneJob(
+	ctx context.Context,
+	client *connectorsclient.Client,
+	connectionPath string,
+) (map[string][]byte, error) {
+	start, startErr := client.StartOperationPull(ctx, connectorsclient.StartOperationPullRequest{
+		Path: connectionPath,
+	})
+	if startErr != nil {
+		return nil, fmt.Errorf("failed to start pull: %w", startErr)
+	}
+
+	if jobErr := connectorjobs.Run(ctx, start); jobErr != nil {
+		return nil, fmt.Errorf("pull job %s: %w", start.JobID, jobErr)
+	}
+
+	reader, fetchErr := start.Result(ctx)
+	if fetchErr != nil {
+		return nil, fmt.Errorf("failed to fetch pull result for job %s: %w", start.JobID, fetchErr)
+	}
+	defer func() { _ = reader.Close() }()
+
+	zipBytes, readErr := io.ReadAll(reader)
+	if readErr != nil {
+		return nil, fmt.Errorf("failed to read pull result for job %s: %w", start.JobID, readErr)
+	}
+
+	files, unzipErr := irminutils.UnzipFiles(zipBytes)
+	if unzipErr != nil {
+		return nil, fmt.Errorf("failed to unzip pull result for job %s: %w", start.JobID, unzipErr)
+	}
+	return files, nil
 }
 
 // PullFilesFromConnectorStreaming pulls files from a connector and uploads them directly to LakeFS
@@ -500,33 +456,27 @@ func (c *Client) PullFilesFromConnectorStreaming(
 		return nil, err
 	}
 
-	opClient, err := c.InitializeConnectorOperation(ctx, connection)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize connector operation: %w", err)
-	}
+	client := connectorjobs.NewConnectorClient(connection)
 
 	var uploaded []lakefs.ObjectMetadata
 
-	// Process each connection path
 	paths := connectionPaths
 	if len(paths) == 0 {
 		paths = []string{""}
 	}
 
-	// Multiple connection paths means multiple items overall, which affects
-	// buildTargetPath semantics (append filename vs replace).
+	// Multiple connection paths means multiple items overall, which
+	// affects buildTargetPath semantics (append filename vs replace).
 	hasMultipleItems := len(paths) > 1
 
 	for _, connectionPath := range paths {
 		pulled, pullErr := c.pullAndExtractToLakeFS(
-			ctx, opClient, connectionPath, lakeFSRepo, branch, pathPrefix, hasMultipleItems,
+			ctx, client, connectionPath, lakeFSRepo, branch, pathPrefix, hasMultipleItems,
 		)
 		if pullErr != nil {
 			return nil, pullErr
 		}
 		uploaded = append(uploaded, pulled...)
-		// Once we've uploaded any files, subsequent uploads must use multi-file
-		// semantics to avoid overwriting earlier uploads.
 		if len(pulled) > 0 {
 			hasMultipleItems = true
 		}
@@ -541,13 +491,25 @@ func (c *Client) PullFilesFromConnectorStreaming(
 // which affects buildTargetPath semantics (append filename vs replace).
 func (c *Client) pullAndExtractToLakeFS(
 	ctx context.Context,
-	opClient *connectorsclient.Client,
+	client *connectorsclient.Client,
 	connectionPath, lakeFSRepo, branch, pathPrefix string,
 	callerHasMultipleItems bool,
 ) ([]lakefs.ObjectMetadata, error) {
-	reader, pullErr := opClient.OperationPullStream(ctx, connectionPath)
-	if pullErr != nil {
-		return nil, fmt.Errorf("failed to pull files: %w", pullErr)
+	start, startErr := client.StartOperationPull(ctx, connectorsclient.StartOperationPullRequest{
+		Path: connectionPath,
+	})
+	if startErr != nil {
+		return nil, fmt.Errorf("failed to start pull: %w", startErr)
+	}
+
+	jobErr := connectorjobs.Run(ctx, start)
+	if jobErr != nil {
+		return nil, fmt.Errorf("pull job %s: %w", start.JobID, jobErr)
+	}
+
+	reader, fetchErr := start.Result(ctx)
+	if fetchErr != nil {
+		return nil, fmt.Errorf("failed to fetch pull result for job %s: %w", start.JobID, fetchErr)
 	}
 
 	// Stream to temp file for seekable zip reading
@@ -867,8 +829,7 @@ func (c *Client) dataExportInternal(
 	}
 
 	// Push the files to the connection path
-	_, pushErr := c.PushFilesToConnector(ctx, connection, connectionPath, objects, finalFiles, tx...)
-	if pushErr != nil {
+	if _, pushErr := c.PushFilesToConnector(ctx, connection, connectionPath, objects, finalFiles, tx...); pushErr != nil {
 		return repositoryPaths, nil, []error{pushErr}
 	}
 
@@ -923,11 +884,7 @@ func (c *Client) PushFilesToConnector(
 		}
 	}
 
-	// Initialize connector operation.
-	opClient, initializeConnectorOperationErr := c.InitializeConnectorOperation(ctx, connection, tx...)
-	if initializeConnectorOperationErr != nil {
-		return nil, fmt.Errorf("failed to initialize connector operation: %w", initializeConnectorOperationErr)
-	}
+	client := connectorjobs.NewConnectorClient(connection)
 
 	// Build the connection path to push the zip to.
 	objName := ""
@@ -937,12 +894,10 @@ func (c *Client) PushFilesToConnector(
 	connPath := c.buildTargetPath(connectionPath, objName, len(files) > 1)
 
 	// Push files: use presigned URL for large payloads, direct upload for small ones.
-	pushErr := c.pushFilesWithSizeRouting(ctx, opClient, connPath, files)
-	if pushErr != nil {
+	if pushErr := c.pushFilesWithSizeRouting(ctx, client, connPath, files); pushErr != nil {
 		return nil, fmt.Errorf("failed to push files: %w", pushErr)
 	}
 
-	// Return the files that were pushed.
 	pushedPaths := make([]string, 0, len(files))
 	for pushedPath := range files {
 		pushedPaths = append(pushedPaths, pushedPath)
@@ -954,7 +909,7 @@ func (c *Client) PushFilesToConnector(
 // direct upload (small payloads) and presigned URL (large payloads) based on total size.
 func (c *Client) pushFilesWithSizeRouting(
 	ctx context.Context,
-	opClient *connectorsclient.Client,
+	client *connectorsclient.Client,
 	connPath string,
 	files map[string][]byte,
 ) error {
@@ -965,15 +920,16 @@ func (c *Client) pushFilesWithSizeRouting(
 
 	threshold := int64(c.Env.MaxInMemorySizeMB) * int64(utils.BytesPerMB)
 	if totalSize <= threshold {
-		return c.pushFilesDirect(ctx, opClient, connPath, files)
+		return c.pushFilesDirect(ctx, client, connPath, files)
 	}
-	return c.pushFilesViaTempFile(ctx, opClient, connPath, files)
+	return c.pushFilesViaTempFile(ctx, client, connPath, files)
 }
 
-// pushFilesDirect zips files in memory and sends them directly to the connector.
+// pushFilesDirect zips files in memory and starts an async push with
+// the zip bytes inline in the multipart body.
 func (c *Client) pushFilesDirect(
 	ctx context.Context,
-	opClient *connectorsclient.Client,
+	client *connectorsclient.Client,
 	connPath string,
 	files map[string][]byte,
 ) error {
@@ -982,12 +938,19 @@ func (c *Client) pushFilesDirect(
 		return fmt.Errorf("failed to zip files: %w", zipErr)
 	}
 
-	_, pushErr := opClient.OperationPush(
-		ctx,
-		connPath,
-		connectorsclient.FormFile{Reader: bytes.NewBuffer(zipData), FileName: "export.zip"},
-	)
-	return pushErr
+	start, startErr := client.StartOperationPush(ctx, connectorsclient.StartOperationPushRequest{
+		Path:     connPath,
+		File:     zipData,
+		FileName: "export.zip",
+	})
+	if startErr != nil {
+		return fmt.Errorf("failed to start push: %w", startErr)
+	}
+
+	if jobErr := connectorjobs.Run(ctx, start); jobErr != nil {
+		return fmt.Errorf("push job %s: %w", start.JobID, jobErr)
+	}
+	return nil
 }
 
 // presignedURLExpiry is the duration for which a presigned S3 URL is valid.
@@ -996,16 +959,16 @@ const presignedURLExpiry = 15 * time.Minute
 // s3CleanupTimeout is the timeout for best-effort S3 object cleanup after a push.
 const s3CleanupTimeout = 30 * time.Second
 
-// pushFilesViaTempFile writes the zip to a temp file, uploads it to S3, generates
-// a presigned GET URL, and sends that URL to the connector. The connector downloads
-// the zip directly from S3, avoiding in-memory buffering of large payloads.
+// pushFilesViaTempFile writes the zip to a temp file, uploads it to
+// S3, generates a presigned GET URL, and starts an async push with
+// the presigned URL. The connector downloads the zip directly from S3,
+// avoiding in-memory buffering of large payloads.
 func (c *Client) pushFilesViaTempFile(
 	ctx context.Context,
-	opClient *connectorsclient.Client,
+	client *connectorsclient.Client,
 	connPath string,
 	files map[string][]byte,
 ) error {
-	// Create temp file for the zip
 	tempFile, tempErr := os.CreateTemp("", "push-zip-*.zip")
 	if tempErr != nil {
 		return fmt.Errorf("failed to create temp file: %w", tempErr)
@@ -1013,7 +976,6 @@ func (c *Client) pushFilesViaTempFile(
 	defer os.Remove(tempFile.Name())
 	defer tempFile.Close()
 
-	// Write zip to temp file instead of memory
 	zipWriter := zip.NewWriter(tempFile)
 	for filePath, content := range files {
 		safePath, sanitizeErr := utils.SanitizeZipEntryPath(filePath)
@@ -1035,24 +997,21 @@ func (c *Client) pushFilesViaTempFile(
 		return fmt.Errorf("failed to close zip writer: %w", closeErr)
 	}
 
-	// Seek to beginning for reading
 	if _, seekErr := tempFile.Seek(0, io.SeekStart); seekErr != nil {
 		return fmt.Errorf("failed to seek temp file: %w", seekErr)
 	}
 
-	// Upload the temp file to S3
 	s3Client, s3Err := bucket.CreateClient(c.Env, c.Env.IrminS3Bucket, c.DB)
 	if s3Err != nil {
 		return fmt.Errorf("failed to create S3 client: %w", s3Err)
 	}
 
 	s3Key := fmt.Sprintf("tmp/push-%s.zip", uuid.New().String())
+	deleteS3Object := true
 	defer func() {
-		// Safe to delete immediately: the connector's push handler is synchronous —
-		// it downloads, extracts, and processes the zip within the same HTTP call.
-		// OperationPushPresigned blocks until that call returns, so the file is no
-		// longer needed by the time this defer runs. The presigned URL expiry is just
-		// a safety margin for slow downloads, not for async processing.
+		if !deleteS3Object {
+			return
+		}
 		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), s3CleanupTimeout)
 		defer cleanupCancel()
 		_, _ = s3Client.Conn().DeleteObject(cleanupCtx, &s3.DeleteObjectInput{
@@ -1065,13 +1024,26 @@ func (c *Client) pushFilesViaTempFile(
 		return fmt.Errorf("failed to upload zip to S3: %w", uploadErr)
 	}
 
-	// Generate a presigned GET URL for the connector to download the zip
 	presignedURL, presignErr := s3Client.PresignedGetURL(ctx, s3Key, presignedURLExpiry)
 	if presignErr != nil {
 		return fmt.Errorf("failed to generate presigned URL: %w", presignErr)
 	}
 
-	// Send the presigned URL to the connector instead of the file itself
-	_, pushErr := opClient.OperationPushPresigned(ctx, connPath, presignedURL)
-	return pushErr
+	start, startErr := client.StartOperationPush(ctx, connectorsclient.StartOperationPushRequest{
+		Path:         connPath,
+		PresignedURL: presignedURL,
+	})
+	if startErr != nil {
+		return fmt.Errorf("failed to start push: %w", startErr)
+	}
+
+	if jobErr := connectorjobs.Run(ctx, start); jobErr != nil {
+		deleteS3Object = shouldDeletePresignedPushObject(jobErr)
+		return fmt.Errorf("push job %s: %w", start.JobID, jobErr)
+	}
+	return nil
+}
+
+func shouldDeletePresignedPushObject(jobErr error) bool {
+	return !connectorjobs.IsWaitError(jobErr)
 }

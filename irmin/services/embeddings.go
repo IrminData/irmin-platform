@@ -101,7 +101,7 @@ func (api *APIServices) VectorizeObjects(
 	defer embeddingsClient.Close()
 
 	// Initialize data engine client to fetch source files
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, NewInternalErrorf("error creating data engine client: %w", err)
@@ -257,7 +257,7 @@ func (api *APIServices) SearchEmbeddings(
 	}
 
 	// Initialize data engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, NewInternalErrorf("error creating data engine client: %w", err)
@@ -420,7 +420,7 @@ func (api *APIServices) ListEmbeddingFiles(
 	}
 
 	// Initialize data engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, NewInternalErrorf("error creating data engine client: %w", err)
@@ -506,7 +506,7 @@ func (api *APIServices) GetEmbeddingFileInfo(
 	}
 
 	// Initialize data engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, NewInternalErrorf("error creating data engine client: %w", err)
@@ -617,7 +617,7 @@ func (api *APIServices) UpsertEmbeddings(
 	}
 	defer embeddingsClient.Close()
 
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		return nil, NewInternalErrorf("error creating data engine client: %w", err)
 	}
@@ -865,7 +865,7 @@ func (api *APIServices) UpdateEmbeddingMetadata(
 		ref = repository.DefaultBranch
 	}
 
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		return NewInternalErrorf("error creating data engine client: %w", err)
 	}
@@ -981,7 +981,7 @@ func (api *APIServices) UpdateEmbeddingPriority(
 		ref = repository.DefaultBranch
 	}
 
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		return NewInternalErrorf("error creating data engine client: %w", err)
 	}

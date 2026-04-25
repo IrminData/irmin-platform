@@ -381,7 +381,7 @@ func setupServices(
 	cacheStorage fiber.Storage,
 ) (*orchestrator.Orchestrator, *irminsqids.SQIDManager, *locales.LocaleManager, *permissions.Service, *engine.Client, error) {
 	// Initialize data engine
-	dataEngine, err := engine.NewClient(ctx, "en", slog.Default(), env, database)
+	dataEngine, err := engine.NewClient(ctx, slog.Default(), env, database)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}

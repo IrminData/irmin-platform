@@ -156,7 +156,7 @@ func (api *APIControllers) RepositoryObjectsCreateSignedURL(c fiber.Ctx) error {
 	}
 
 	// Verify the object exists by looking it up via the data engine
-	dataEngine, engineErr := engine.NewClient(c.Context(), "en", api.Logger, api.Env, api.DB)
+	dataEngine, engineErr := engine.NewClient(c.Context(), api.Logger, api.Env, api.DB)
 	if engineErr != nil {
 		api.Logger.Error("Error creating data engine client for signed URL", "error", engineErr)
 		return api.handleServiceError(

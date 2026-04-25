@@ -174,7 +174,6 @@ func (m *BranchProtectionManager) UpdateBranchProtection(repositoryName, branchN
     UpdateBranchProtection updates protection rules for a branch.
 
 type Client struct {
-	Locale            string
 	LakeFSClient      *lakefs.Client
 	Logger            *slog.Logger
 	Env               *utils.CoreAPIEnv
@@ -186,12 +185,13 @@ type Client struct {
 
 func NewClient(
 	ctx context.Context,
-	locale string,
 	logger *slog.Logger,
 	env *utils.CoreAPIEnv,
 	db *db.Database,
 ) (*Client, error)
     NewClient creates a new Irmin Data Engine API client with default settings.
+    Connector responses are English-only — the client carries no locale state
+    and stamps no Accept-Language header on outbound connector calls.
 
 func (c *Client) ApplyFieldMappings(
 	ctx context.Context,
@@ -328,8 +328,8 @@ func (c *Client) DataImport(
 func (c *Client) DataMovementSchema(
 	ctx context.Context,
 	connection *db.Connection,
-	method, path string,
-	tx ...*gorm.DB,
+	method, schemaPath string,
+	_ ...*gorm.DB,
 ) (*irminmodels.ObjectSchema, error)
     DataMovementSchema retrieves the schema for a specific method from the
     connector. It returns the schema and an error if any occurred. If tx is
@@ -413,21 +413,6 @@ func (c *Client) GetTag(workspace, repository, tag string) (*irminmodels.GitTag,
 func (c *Client) GetUncommittedChanges(
 	workspace, repository, branch string,
 ) (*irminmodels.Diff, error)
-
-func (c *Client) InitializeConnectorOperation(
-	ctx context.Context,
-	connection *db.Connection,
-	tx ...*gorm.DB,
-) (*connectorsclient.Client, error)
-    InitializeConnectorOperation sets up a connector operation and returns an
-    operation client. It returns an error if initialization fails. If tx is
-    provided, it will be used instead of creating a new transaction.
-
-    Note: the legacy system-token cancel-on-cleanup has been removed. Async pull
-    now manages its own job-level cancellation via the SDK's CancelOperationJob
-    wrapper (see connectorsclient.OperationPull / OperationPullStream). Non-pull
-    operations (push/patch/schema) are synchronous on the connector side;
-    no explicit cancel call is needed.
 
 func (c *Client) ListBranches(ctx context.Context, workspace, repository string) ([]irminmodels.Branch, error)
 

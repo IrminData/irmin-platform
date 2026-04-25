@@ -286,7 +286,7 @@ func (api *APIServices) UploadRepositoryObject(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, NewInternalErrorf("error creating data engine client: %w", err)
@@ -379,7 +379,7 @@ func (api *APIServices) UploadRepositoryObjectFromURL(
 	defer safeBody.Close()
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, NewInternalErrorf("error creating data engine client: %w", err)
@@ -570,7 +570,7 @@ func (api *APIServices) MoveRepositoryObject(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, NewInternalErrorf("error creating data engine client: %w", err)
@@ -731,7 +731,7 @@ func (api *APIServices) CopyRepositoryObject(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, NewInternalErrorf("error creating data engine client: %w", err)
@@ -860,7 +860,7 @@ func (api *APIServices) DeleteRepositoryObject(
 	// Delete the object from the data engine and the database
 	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
 		// Initialize Data Engine client
-		dataEngine, dataEngineErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+		dataEngine, dataEngineErr := engine.NewClient(c, api.Logger, api.Env, api.DB)
 		if dataEngineErr != nil {
 			api.Logger.ErrorContext(c, "error creating data engine client", "error", dataEngineErr)
 			return NewInternalErrorf("error creating data engine client: %w", dataEngineErr)
@@ -950,7 +950,7 @@ func (api *APIServices) GetRepositoryObjectDownload(
 
 	tier := utils.DetermineFileSizeTier(object.SizeBytes, api.Env)
 
-	dataEngine, engineErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, engineErr := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if engineErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", engineErr)
 		return nil, NewInternalErrorf("error creating data engine client: %w", engineErr)
@@ -1064,7 +1064,7 @@ func (api *APIServices) GetRepositoryObjectContent(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, NewInternalErrorf("error creating data engine client: %w", err)
@@ -1097,7 +1097,7 @@ func (api *APIServices) GetRepositoryObjectContent(
 // getPointerTargetContent resolves a pointer and returns the content of the target object.
 func (api *APIServices) getPointerTargetContent(
 	c context.Context,
-	locale string,
+	_ string,
 	user *db.User,
 	workspace *db.Workspace,
 	repository *db.Repository,
@@ -1105,7 +1105,7 @@ func (api *APIServices) getPointerTargetContent(
 	limitResponse bool,
 ) ([]byte, error) {
 	// Initialize Data Engine client to fetch pointer content
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, NewInternalErrorf("error creating data engine client: %w", err)
@@ -1341,7 +1341,7 @@ func (api *APIServices) ZipRepositoryObject(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, "", err
@@ -1400,7 +1400,7 @@ func (api *APIServices) StreamZipRepositoryObject(
 		return ErrAccessDenied
 	}
 
-	dataEngine, engineErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, engineErr := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if engineErr != nil {
 		return NewInternalErrorf("error creating data engine client: %w", engineErr)
 	}
@@ -1460,7 +1460,7 @@ func (api *APIServices) GeneratePresignedUploadURL(
 		return nil, ErrAccessDenied
 	}
 
-	dataEngine, engineErr := engine.NewClient(c, "en", api.Logger, api.Env, api.DB)
+	dataEngine, engineErr := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if engineErr != nil {
 		return nil, NewInternalErrorf("error creating data engine client: %w", engineErr)
 	}
@@ -1505,7 +1505,7 @@ func (api *APIServices) AssociatePresignedUpload(
 		return nil, ErrAccessDenied
 	}
 
-	dataEngine, engineErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, engineErr := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if engineErr != nil {
 		return nil, NewInternalErrorf("error creating data engine client: %w", engineErr)
 	}
@@ -1615,7 +1615,7 @@ func (api *APIServices) GetRepositoryObjectHistory(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, NewInternalErrorf("error creating data engine client: %w", err)
@@ -1943,7 +1943,7 @@ func (api *APIServices) validateTargetRepository(
 // validateTargetObject validates that the target object exists, is not a pointer, and user has read access.
 func (api *APIServices) validateTargetObject(
 	c context.Context,
-	locale string,
+	_ string,
 	user *db.User,
 	workspace *db.Workspace,
 	targetRepo *db.Repository,
@@ -1978,7 +1978,7 @@ func (api *APIServices) validateTargetObject(
 	}
 
 	// Validate that the target object exists
-	dataEngineForValidation, dataEngineErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngineForValidation, dataEngineErr := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if dataEngineErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client for validation", "error", dataEngineErr)
 		return NewInternalErrorf("error creating data engine client: %w", dataEngineErr)
@@ -2047,7 +2047,7 @@ func (api *APIServices) validateTargetObject(
 // createAndUploadPointer creates the pointer file content and uploads it to the repository.
 func (api *APIServices) createAndUploadPointer(
 	c context.Context,
-	locale string,
+	_ string,
 	workspace *db.Workspace,
 	repository *db.Repository,
 	pointerPath string,
@@ -2073,7 +2073,7 @@ func (api *APIServices) createAndUploadPointer(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, NewInternalErrorf("error creating data engine client: %w", err)

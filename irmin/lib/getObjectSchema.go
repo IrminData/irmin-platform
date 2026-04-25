@@ -105,7 +105,7 @@ func (scm *SchemaCacheManager) GetObjectSchema(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(ctx, locale, scm.logger, scm.env, scm.db)
+	dataEngine, err := engine.NewClient(ctx, scm.logger, scm.env, scm.db)
 	if err != nil {
 		scm.logger.ErrorContext(ctx, "error creating data engine client", "error", err)
 		return nil, err

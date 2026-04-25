@@ -103,7 +103,7 @@ func GetRepository(
 		)
 
 		// Initialize Data Engine client
-		dataEngine, createClientErr := engine.NewClient(ctx, locale, logger, env, d)
+		dataEngine, createClientErr := engine.NewClient(ctx, logger, env, d)
 		if createClientErr != nil {
 			logger.ErrorContext(ctx, "error creating data engine client", "error", createClientErr)
 			return nil, fmt.Errorf("error creating data engine client: %w", createClientErr)

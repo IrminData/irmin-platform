@@ -1,15 +1,14 @@
 package orchestrator
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+
+	"irmin-api/connectorjobs"
 	"irmin-api/db"
 
-	connectorsclient "irmin-api/connectors-client"
-
+	"github.com/IrminData/irmin-sdk-go/connectorsclient"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
@@ -71,29 +70,22 @@ func (o *Orchestrator) performPatchExport(
 		return logs, fmt.Errorf("connection '%s' does not support apply_patch capability", connection.Name)
 	}
 
-	// Initialize connector operation
-	opClient, initErr := o.dataEngine.InitializeConnectorOperation(ctx, connection)
-	if initErr != nil {
-		logs = append(logs, fmt.Sprintf("Failed to initialize connector: %v", initErr))
-		return logs, fmt.Errorf("failed to initialize connector: %w", initErr)
-	}
+	// Start the async patch job via the SDK. The server returns a
+	// job_id we poll to terminal; patches are multipart-uploaded once
+	// here, the connector-side worker applies them sequentially.
+	client := connectorjobs.NewConnectorClient(connection)
 
-	// Serialize patches to JSON
-	patchJSON, marshalErr := json.Marshal(patches)
-	if marshalErr != nil {
-		logs = append(logs, fmt.Sprintf("Failed to marshal patches: %v", marshalErr))
-		return logs, fmt.Errorf("failed to marshal patches: %w", marshalErr)
-	}
-
-	// Send patches to connector
-	_, patchErr := opClient.OperationPatch(ctx, connectorsclient.FormFile{
-		Reader:    bytes.NewReader(patchJSON),
-		FieldName: "patches",
-		FileName:  "patches.json",
+	start, startErr := client.StartOperationPatch(ctx, connectorsclient.StartOperationPatchRequest{
+		Patches: patches,
 	})
-	if patchErr != nil {
-		logs = append(logs, fmt.Sprintf("Patch operation failed: %v", patchErr))
-		return logs, fmt.Errorf("patch operation failed: %w", patchErr)
+	if startErr != nil {
+		logs = append(logs, fmt.Sprintf("Failed to start patch job: %v", startErr))
+		return logs, fmt.Errorf("failed to start patch job: %w", startErr)
+	}
+
+	if jobErr := connectorjobs.Run(ctx, start); jobErr != nil {
+		logs = append(logs, fmt.Sprintf("Patch job %s failed: %v", start.JobID, jobErr))
+		return logs, fmt.Errorf("patch job %s failed: %w", start.JobID, jobErr)
 	}
 
 	logs = append(logs, fmt.Sprintf("Successfully exported %d patches to connection '%s'",

@@ -1772,11 +1772,9 @@ func (s *ConnectionSubscriptionService) RegisterSubscriptionWithConnector(
 	subscription *db.ConnectionSubscription,
 	connectionSqid string,
 ) (*uint, error)
-    RegisterSubscriptionWithConnector registers a subscription with
-    the connector service. It initializes a connector operation,
-    subscribes to changes, and returns the connector subscription ID.
-    If the connector doesn't support patch_event capability, it returns
-    ErrConnectorCapabilityNotSupported.
+    RegisterSubscriptionWithConnector registers a subscription with the
+    connector service. If the connector doesn't support patch_event capability,
+    it returns ErrConnectorCapabilityNotSupported.
 
 func (s *ConnectionSubscriptionService) UnregisterSubscriptionFromConnector(
 	ctx context.Context,
@@ -1784,7 +1782,7 @@ func (s *ConnectionSubscriptionService) UnregisterSubscriptionFromConnector(
 	connectorSubscriptionID uint,
 ) error
     UnregisterSubscriptionFromConnector removes a subscription from the
-    connector service. It cancels the operation and unsubscribes from changes.
+    connector service.
 
 type CreateCustomToolRequest struct {
 	Name            string            `json:"name"`

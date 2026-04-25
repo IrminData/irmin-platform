@@ -110,7 +110,7 @@ func (api *APIControllers) SignedDownload(c fiber.Ctx) error {
 	}
 
 	// Create engine client
-	dataEngine, engineErr := engine.NewClient(c.Context(), "en", api.Logger, api.Env, api.DB)
+	dataEngine, engineErr := engine.NewClient(c.Context(), api.Logger, api.Env, api.DB)
 	if engineErr != nil {
 		api.Logger.Error("Signed download: error creating data engine client", "error", engineErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -164,7 +164,7 @@ func (api *APIControllers) serveSignedZipDownload(
 		totalSize = object.SizeBytes
 	}
 
-	dataEngine, engineErr := engine.NewClient(c.Context(), "en", api.Logger, api.Env, api.DB)
+	dataEngine, engineErr := engine.NewClient(c.Context(), api.Logger, api.Env, api.DB)
 	if engineErr != nil {
 		api.Logger.Error("Signed zip download: error creating data engine client", "error", engineErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

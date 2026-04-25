@@ -483,7 +483,7 @@ func (api *APIServices) ExecuteSQL(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
 		return nil, NewInternalErrorf("error creating data engine client: %w", createDataEngineClientErr)
@@ -585,7 +585,7 @@ func (api *APIServices) processInputFiles(
 	inputs []irminmodels.ActionInputData,
 ) (map[string][]byte, error) {
 	// Initialize Data Engine client for fetching input data
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
 		return nil, NewInternalErrorf("error creating data engine client: %w", createDataEngineClientErr)

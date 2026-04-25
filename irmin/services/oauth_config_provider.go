@@ -4,29 +4,26 @@ import (
 	"context"
 	"fmt"
 
-	connectorsclient "irmin-api/connectors-client"
 	"irmin-api/db"
 	"irmin-api/services/oauth"
+
+	"github.com/IrminData/irmin-sdk-go/connectorsclient"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // connectorsClientOAuthConfigProvider is the production ConfigProvider.
 // It resolves a connector's ConnectionOAuthConfig by calling the connector
-// service's /info endpoint via the existing connectors-client HTTP
-// wrapper, then translates the SDK shape into the internal oauth.Config
-// consumed by the flow.
-type connectorsClientOAuthConfigProvider struct {
-	// locale is sent as Accept-Language when calling the connector. The
-	// OAuth metadata itself isn't localized, but /info might return a
-	// localized description. "en" is the safe default.
-	locale string
-}
+// service's /info endpoint via the SDK client and translating the SDK
+// shape into the internal oauth.Config consumed by the flow.
+//
+// The struct holds no state — it exists as a named type so the oauth
+// flow can inject a mock provider in tests.
+type connectorsClientOAuthConfigProvider struct{}
 
-// newConnectorsClientOAuthConfigProvider returns the provider wired
-// against the connector's registered APIBaseURL.
+// newConnectorsClientOAuthConfigProvider returns the provider.
 func newConnectorsClientOAuthConfigProvider() *connectorsClientOAuthConfigProvider {
-	return &connectorsClientOAuthConfigProvider{locale: "en"}
+	return &connectorsClientOAuthConfigProvider{}
 }
 
 // GetOAuthConfig fetches the connector's /info response and extracts the
@@ -40,7 +37,7 @@ func (p *connectorsClientOAuthConfigProvider) GetOAuthConfig(
 	if connector == nil || connector.APIBaseURL == "" || connector.SystemToken == "" {
 		return nil, oauth.ErrConfigUnavailable
 	}
-	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, p.locale)
+	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken)
 	info, err := client.GetInfo(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%w: fetch /info: %w", oauth.ErrConfigUnavailable, err)

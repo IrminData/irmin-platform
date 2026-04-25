@@ -1892,15 +1892,6 @@ definitions:
         description: ID is a unique SQIDidentifier of the connector
         example: conn_9m3x7k2n8q5p
         type: string
-      locales:
-        description: Array of locales supported by the connector, eg. what languages
-          the connector supports
-        example:
-        - en
-        - fi
-        items:
-          type: string
-        type: array
       logo_url:
         description: URL to the connector's logo
         example: https://cdn.irmin.dev/mysql.png
@@ -1955,7 +1946,6 @@ definitions:
     - categories
     - description
     - id
-    - locales
     - logo_url
     - name
     - primary_category

@@ -3,9 +3,10 @@ package services
 import (
 	"context"
 	"errors"
-	connectorsclient "irmin-api/connectors-client"
 	"irmin-api/db"
 	"irmin-api/utils"
+
+	"github.com/IrminData/irmin-sdk-go/connectorsclient"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -52,7 +53,6 @@ func (api *APIServices) updateConnectorFromInfo(
 	connector.Author = connectorInfo.Author
 	connector.LogoURL = connectorInfo.LogoURL
 	connector.Capabilities = utils.ConvertToStringSlice(connectorInfo.Capabilities)
-	connector.Locales = connectorInfo.Locales
 	connector.PrimaryCategory = string(connectorInfo.PrimaryCategory)
 	connector.Categories = utils.ConvertToStringSlice(connectorInfo.Categories)
 	connector.AuthorEmail = connectorInfo.AuthorEmail
@@ -76,7 +76,7 @@ func (api *APIServices) CreateConnector(
 	}
 
 	// Create new connector client
-	connectorClient := connectorsclient.NewClient(req.URL, req.SystemToken, locale)
+	connectorClient := connectorsclient.NewClient(req.URL, req.SystemToken)
 
 	// Request the info endpoint of the connector
 	connectorInfo, getInfoErr := connectorClient.GetInfo(c)
@@ -142,7 +142,7 @@ func (api *APIServices) UpdateConnector(
 	}
 
 	// Create new connector client
-	connectorClient := connectorsclient.NewClient(req.URL, req.SystemToken, locale)
+	connectorClient := connectorsclient.NewClient(req.URL, req.SystemToken)
 
 	// Request the info endpoint of the connector
 	connectorInfo, getInfoErr := connectorClient.GetInfo(c)
@@ -242,7 +242,7 @@ func (api *APIServices) GetConnectorConfigurationFields(
 	settingsStr := utils.ConvertToStringMap(req.Settings)
 
 	// Create new connector client
-	connectorClient := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
+	connectorClient := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken)
 
 	// Get the connection settings
 	configurationFields, getConfigFieldsErr := connectorClient.GetConfigFields(
@@ -272,7 +272,7 @@ func (api *APIServices) ValidateConnectorConfiguration(
 	settingsStr := utils.ConvertToStringMap(req.Settings)
 
 	// Create new connector client
-	connectorClient := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
+	connectorClient := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken)
 
 	// Test the connection
 	testResponse, validateConfigFieldsErr := connectorClient.ValidateConfigFields(c, detailsStr, settingsStr)

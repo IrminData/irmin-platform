@@ -17757,7 +17757,6 @@ const docTemplate = `{
                 "categories",
                 "description",
                 "id",
-                "locales",
                 "logo_url",
                 "name",
                 "primary_category",
@@ -17808,17 +17807,6 @@ const docTemplate = `{
                     "description": "ID is a unique SQIDidentifier of the connector",
                     "type": "string",
                     "example": "conn_9m3x7k2n8q5p"
-                },
-                "locales": {
-                    "description": "Array of locales supported by the connector, eg. what languages the connector supports",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "en",
-                        "fi"
-                    ]
                 },
                 "logo_url": {
                     "description": "URL to the connector's logo",

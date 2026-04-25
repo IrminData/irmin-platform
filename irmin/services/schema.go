@@ -26,7 +26,7 @@ func (api *APIServices) GenerateSchemaFromUploadedFile(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(ctx, locale, api.Logger, api.Env, api.DB)
+	dataEngine, err := engine.NewClient(ctx, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(ctx, "error creating data engine client", "error", err)
 		return nil, NewInternalErrorf("error creating data engine client: %w", err)

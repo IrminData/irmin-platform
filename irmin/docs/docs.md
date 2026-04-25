@@ -453,480 +453,141 @@ type ResourceUsageMetrics struct {
 }
 ```
 
-# connectorsclient
+# connectorjobs
 
 ```go
-import "irmin-api/connectors-client"
+import "irmin-api/connectorjobs"
 ```
 
 ## Index
 
 - [Constants](<#constants>)
-- [type Client](<#Client>)
-  - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
-  - [func \(c \*Client\) FetchAPI\(ctx context.Context, opts RequestOptions, out any\) error](<#Client.FetchAPI>)
-  - [func \(c \*Client\) FetchStreamFiles\(ctx context.Context, opts RequestOptions\) \(\[\]PulledFile, error\)](<#Client.FetchStreamFiles>)
-  - [func \(c \*Client\) FetchStreamFilesReader\(ctx context.Context, opts RequestOptions\) \(io.ReadCloser, error\)](<#Client.FetchStreamFilesReader>)
-  - [func \(c \*Client\) GetConfigFields\(ctx context.Context, configType string, details map\[string\]string, settings map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Client.GetConfigFields>)
-  - [func \(c \*Client\) GetInfo\(ctx context.Context\) \(\*ConnectorInfo, error\)](<#Client.GetInfo>)
-  - [func \(c \*Client\) GetSchema\(ctx context.Context, method, path string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GetSchema>)
-  - [func \(c \*Client\) InitOperation\(ctx context.Context, details map\[string\]string, settings map\[string\]string\) \(\*Operation, error\)](<#Client.InitOperation>)
-  - [func \(c \*Client\) LastAsyncPullJobID\(\) string](<#Client.LastAsyncPullJobID>)
-  - [func \(c \*Client\) OperationPatch\(ctx context.Context, patchFile FormFile\) \(string, error\)](<#Client.OperationPatch>)
-  - [func \(c \*Client\) OperationPull\(ctx context.Context, path string\) \(\[\]PulledFile, error\)](<#Client.OperationPull>)
-  - [func \(c \*Client\) OperationPullStream\(ctx context.Context, path string\) \(io.ReadCloser, error\)](<#Client.OperationPullStream>)
-  - [func \(c \*Client\) OperationPush\(ctx context.Context, path string, file FormFile\) \(string, error\)](<#Client.OperationPush>)
-  - [func \(c \*Client\) OperationPushPresigned\(ctx context.Context, path, presignedURL string\) \(string, error\)](<#Client.OperationPushPresigned>)
-  - [func \(c \*Client\) Request\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
-  - [func \(c \*Client\) SubscribeToChanges\(ctx context.Context, webhookURL, webhookAccessToken string\) \(\*Subscription, error\)](<#Client.SubscribeToChanges>)
-  - [func \(c \*Client\) UnsubscribeFromChanges\(ctx context.Context, subscriptionID uint\) error](<#Client.UnsubscribeFromChanges>)
-  - [func \(c \*Client\) ValidateConfigFields\(ctx context.Context, details map\[string\]string, settings map\[string\]string\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#Client.ValidateConfigFields>)
-  - [func \(c \*Client\) WithConnectionID\(id uint\) \*Client](<#Client.WithConnectionID>)
-  - [func \(c \*Client\) WithFallbackAsyncPullJobID\(jobID string\) \*Client](<#Client.WithFallbackAsyncPullJobID>)
-  - [func \(c \*Client\) WithLogger\(logger \*slog.Logger\) \*Client](<#Client.WithLogger>)
-- [type ConnectorInfo](<#ConnectorInfo>)
-- [type FormFile](<#FormFile>)
-- [type Operation](<#Operation>)
-- [type PulledFile](<#PulledFile>)
-- [type RequestOptions](<#RequestOptions>)
-- [type Subscription](<#Subscription>)
+- [func ContextWithProgress\(ctx context.Context, h observability.ProgressHandler\) context.Context](<#ContextWithProgress>)
+- [func IsWaitError\(err error\) bool](<#IsWaitError>)
+- [func NewConnectorClient\(connection \*db.Connection\) \*connectorsclient.Client](<#NewConnectorClient>)
+- [func ProgressFromContext\(ctx context.Context\) observability.ProgressHandler](<#ProgressFromContext>)
+- [func Run\(ctx context.Context, job \*connectorsclient.OperationJob\) error](<#Run>)
+- [func RunWithProgress\(ctx context.Context, job \*connectorsclient.OperationJob, onProgress observability.ProgressHandler\) error](<#RunWithProgress>)
+- [type WaitError](<#WaitError>)
+  - [func \(e \*WaitError\) Error\(\) string](<#WaitError.Error>)
+  - [func \(e \*WaitError\) Unwrap\(\) error](<#WaitError.Unwrap>)
 
 
 ## Constants
 
-<a name="HeaderConnectionID"></a>HeaderConnectionID is sent on every outbound connector request so the receiving service can identify which Connection the operation belongs to. The connectors service uses it to call back to Core's internal OAuth access\-token endpoint when it needs to authenticate with a vendor API.
-
-The value uses Go's canonical HTTP header form \(capitalized first letter of each hyphen\-separated word\) so net/http's internal canonicalization doesn't rewrite it at send time. HTTP headers are case\-insensitive on the wire, but this avoids linter churn and keeps reads consistent.
-
-Exported as a constant so the server\-side helper in irmin\-connectors can import the exact same string without drift.
+<a name="CancelTimeout"></a>CancelTimeout bounds the best\-effort /operation/cancel call made when a wait/poll path fails.
 
 ```go
-const HeaderConnectionID = "X-Irmin-Connection-Id"
+const CancelTimeout = 5 * time.Second
 ```
 
-<a name="PollInterval"></a>PollInterval is the cadence at which the async\-pull wrapper polls /operation/status between the initial 202 Accepted and a terminal state. Exported as a package\-level const so tests can tune it and so operators can see the tunable knob at a glance. 5s matches the connector\-service heartbeat cadence so one poll round\-trip is guaranteed to observe any status flip since the last poll.
+<a name="MaxConsecutiveStatusPollErrors"></a>MaxConsecutiveStatusPollErrors is how many back\-to\-back failures of the /operation/status poll Run will tolerate before treating the remote as gone. A connector that is healthy but momentarily unreachable \(network blip, restarting pod, transient 5xx\) should not kill a long\-running pull on the first failed poll. The value matches what the pre\-consolidation connectors\-client used \(3\) so existing operator expectations carry over.
 
 ```go
-const PollInterval = 5 * time.Second
+const MaxConsecutiveStatusPollErrors = 3
 ```
 
-<a name="Client"></a>
-## type Client
-
-Client represents the Connector API client.
+<a name="PollInterval"></a>PollInterval controls how often Core polls /operation/status while waiting for an async connector job to reach a terminal state.
 
 ```go
-type Client struct {
-    // BaseURL is your Connector's API base: e.g. "https://connectors.irmin.dev/postgres"
-    BaseURL string
+const PollInterval = 2 * time.Second
+```
 
-    // Token is the operation or system token for the Connector, depending on what you're doing.
-    Token string
+<a name="ContextWithProgress"></a>
+## func ContextWithProgress
 
-    // Locale is used to request localised messages from the Connector API.
-    Locale string
+```go
+func ContextWithProgress(ctx context.Context, h observability.ProgressHandler) context.Context
+```
 
-    // HTTPClient is a customisable HTTP client. You can set timeouts, proxies, etc.
-    HTTPClient *http.Client
+ContextWithProgress returns a copy of ctx that carries the given progress handler. The handler is consulted by Run as it polls /operation/status and observes new events. Pass nil to clear an inherited handler explicitly.
 
-    // ConnectionID is the Irmin Connection ID this client is operating on
-    // behalf of. When non-zero it is sent as HeaderConnectionID on every
-    // outbound request so OAuth-backed connectors can fetch the right
-    // access token via Core's internal endpoint. Leave zero for calls that
-    // are not connection-scoped (e.g., connector registration, info).
-    ConnectionID uint
+<a name="IsWaitError"></a>
+## func IsWaitError
 
-    // Logger, when non-nil, receives Debug-level progress events from
-    // the async-pull poll loop and cancel-on-context-done paths. Nil
-    // is safe — the client simply drops those logs. The field lives
-    // here rather than being plumbed per-call so engine.Client can
-    // attach its workflow-scoped slog.Logger once at initialization.
-    Logger *slog.Logger
-    // contains filtered or unexported fields
+```go
+func IsWaitError(err error) bool
+```
+
+IsWaitError reports whether err came from a failed wait/poll path.
+
+<a name="NewConnectorClient"></a>
+## func NewConnectorClient
+
+```go
+func NewConnectorClient(connection *db.Connection) *connectorsclient.Client
+```
+
+NewConnectorClient builds a connectorsclient.Client targeting the connector that backs the given Connection, with the connection ID header pre\-stamped so every request the caller issues carries the correct X\-Irmin\-Connection\-Id.
+
+This package is the central seam for outbound async connector calls \(Run, IsWaitError, WaitError live here too\), and engine, orchestrator, and services all import it. Hosting the helper here lets every caller converge on the same construction without forcing a back\-edge from engine → lib that would create an import cycle \(lib already imports engine\).
+
+Callers that need a bare client for connector\-level \(not connection\-level\) calls — e.g. registering a brand\-new connector before any connection exists — should call connectorsclient.NewClient directly with the connector's APIBaseURL and SystemToken.
+
+<a name="ProgressFromContext"></a>
+## func ProgressFromContext
+
+```go
+func ProgressFromContext(ctx context.Context) observability.ProgressHandler
+```
+
+ProgressFromContext returns the handler attached via ContextWithProgress, or nil if none was set. Exported for callers that want to inspect / forward the handler — typical Run / orchestrator flow does not need to reach for this directly.
+
+<a name="Run"></a>
+## func Run
+
+```go
+func Run(ctx context.Context, job *connectorsclient.OperationJob) error
+```
+
+Run drives an OperationJob handle to terminal state. If the supplied ctx carries a progress handler \(see ContextWithProgress\), every newly observed event is fanned to that handler before terminal classification. Equivalent to RunWithProgress\(ctx, job, ProgressFromContext\(ctx\)\) — see RunWithProgress for the full contract.
+
+<a name="RunWithProgress"></a>
+## func RunWithProgress
+
+```go
+func RunWithProgress(ctx context.Context, job *connectorsclient.OperationJob, onProgress observability.ProgressHandler) error
+```
+
+RunWithProgress drives an OperationJob handle to terminal state and, while polling, fans every newly\-observed progress event to onProgress. This is the seam through which long\-running connector operations surface page / batch / file / rate\-limit events into orchestrator log streams or any other operator\-facing sink. The vocabulary is observability.ProgressEvent — defined in the SDK so connectors, Core, and AI all see the same shapes on the wire.
+
+Semantics:
+
+- onProgress may be nil; the function then behaves as a plain Wait\+terminal\-classifier loop.
+- onProgress is called synchronously from the polling loop, in the order events appear in OperationJobStatusResponse.Progress. Implementations must return quickly — typically by enqueueing the event into a buffered channel or appending to a log slice.
+- Each event is delivered exactly once across the lifetime of one RunWithProgress call. The connector service publishes a cumulative slice; we diff against the count of events seen so far to avoid duplicating earlier events on each poll.
+- Polling cadence is PollInterval \(2s\).
+
+On any path that does NOT see a terminal status — Status\(\) error, ctx cancellation, or a final status that is neither complete / failed / cancelled — RunWithProgress issues a best\-effort cancel against the server\-side worker \(otherwise it would hold the operation lock until the janitor reaped it\) and wraps the failure in \*WaitError. Callers that own inputs the worker might still be reading \(e.g., presigned S3 URLs handed to a push job\) check IsWaitError to decide whether premature cleanup is safe — see engine.shouldDeletePresignedPushObject.
+
+<a name="WaitError"></a>
+## type WaitError
+
+WaitError marks failures where the job did not reach a terminal status locally. The connector worker may still be using any inputs handed to the job — including presigned S3 URLs handed to a push job — even after the best\-effort cancel request returns. Callers that own those inputs \(engine.shouldDeletePresignedPushObject is the canonical example\) inspect WaitError via IsWaitError to decide whether it is safe to clean up.
+
+```go
+type WaitError struct {
+    Err error
 }
 ```
 
-<a name="NewClient"></a>
-### func NewClient
+<a name="WaitError.Error"></a>
+### func \(\*WaitError\) Error
 
 ```go
-func NewClient(baseURL, token, locale string) *Client
+func (e *WaitError) Error() string
 ```
 
-NewClient creates a new Connector API client with default settings.
 
-<a name="Client.FetchAPI"></a>
-### func \(\*Client\) FetchAPI
+
+<a name="WaitError.Unwrap"></a>
+### func \(\*WaitError\) Unwrap
 
 ```go
-func (c *Client) FetchAPI(ctx context.Context, opts RequestOptions, out any) error
+func (e *WaitError) Unwrap() error
 ```
 
-FetchAPI sends a request and attempts to parse the JSON response into a struct if provided.
 
-<a name="Client.FetchStreamFiles"></a>
-### func \(\*Client\) FetchStreamFiles
-
-```go
-func (c *Client) FetchStreamFiles(ctx context.Context, opts RequestOptions) ([]PulledFile, error)
-```
-
-FetchStreamFiles sends a request based on the provided RequestOptions and returns a slice of PulledFile. If the response is multipart, each part is parsed as a separate file. Otherwise, the response is treated as a single file.
-
-<a name="Client.FetchStreamFilesReader"></a>
-### func \(\*Client\) FetchStreamFilesReader
-
-```go
-func (c *Client) FetchStreamFilesReader(ctx context.Context, opts RequestOptions) (io.ReadCloser, error)
-```
-
-FetchStreamFilesReader sends a request and returns a streaming reader for the response body. The caller is responsible for closing the returned reader. This avoids loading the entire response into memory, suitable for large file transfers.
-
-<a name="Client.GetConfigFields"></a>
-### func \(\*Client\) GetConfigFields
-
-```go
-func (c *Client) GetConfigFields(ctx context.Context, configType string, details map[string]string, settings map[string]string) (map[string]irminmodels.DynamicField, error)
-```
-
-GetConfigFields fetches the configuration fields for a given configuration type.
-
-Note: System token is required for this operation.
-
-Parameters: \- ctx: Context for request cancellation and timeout control. \- configType: The type of configuration, e.g. "details" or "settings". \- details: A map containing prefilled configuration details \(e.g. host, port, user, password, etc.\). \- settings: A map containing prefilled configuration settings \(e.g. database, schema, table, etc.\).
-
-Returns: \- A list of DynamicField objects representing the configuration fields if the request is successful. \- An error if the request fails.
-
-<a name="Client.GetInfo"></a>
-### func \(\*Client\) GetInfo
-
-```go
-func (c *Client) GetInfo(ctx context.Context) (*ConnectorInfo, error)
-```
-
-GetInfo fetches the connector's information from the /info endpoint.
-
-Note: System token is required for this operation.
-
-Parameters: \- ctx: Context for request cancellation and timeout control.
-
-Returns: \- A pointer to ConnectorInfo if the request is successful. \- An error if the API call fails or the response cannot be unmarshalled.
-
-<a name="Client.GetSchema"></a>
-### func \(\*Client\) GetSchema
-
-```go
-func (c *Client) GetSchema(ctx context.Context, method, path string) (*irminmodels.ObjectSchema, error)
-```
-
-GetSchema retrieves the schema for a specific operation method.
-
-Note: Operation token is required for this operation.
-
-Parameters: \- method: The operation method for which to retrieve the schema, e.g. "pull", "push", etc. \- path: The path within the connection to get schema for, empty string means the root path
-
-Returns: \- The schema for the specified operation method if the request is successful. \- An error if the request fails.
-
-<a name="Client.InitOperation"></a>
-### func \(\*Client\) InitOperation
-
-```go
-func (c *Client) InitOperation(ctx context.Context, details map[string]string, settings map[string]string) (*Operation, error)
-```
-
-InitOperation creates a new operation with the connector. The operation is used to store the configuration details and settings for a specific operation.
-
-Note: System token is required for this operation.
-
-Parameters: \- ctx: Context for request cancellation and timeout control. \- details: A map containing configuration details \(e.g. host, port, user, password, etc.\). \- settings: A map containing configuration settings \(e.g. database, schema, table, etc.\).
-
-Returns: \- The newly created operation if the request is successful. \- An error if the request fails.
-
-<a name="Client.LastAsyncPullJobID"></a>
-### func \(\*Client\) LastAsyncPullJobID
-
-```go
-func (c *Client) LastAsyncPullJobID() string
-```
-
-LastAsyncPullJobID returns the currently remembered async pull job ID. Returns empty string on a fresh Client — the cache is only populated by a successful StartOperationPull earlier on this same Client instance. See fallbackAsyncPullJobID's docstring for when this is load\-bearing.
-
-<a name="Client.OperationPatch"></a>
-### func \(\*Client\) OperationPatch
-
-```go
-func (c *Client) OperationPatch(ctx context.Context, patchFile FormFile) (string, error)
-```
-
-OperationPatch sends a patch file to the /operation/patch endpoint to apply JSON patch operations to the data.
-
-Note: Operation token is required for this operation.
-
-Parameters: \- ctx: Context for request cancellation and timeout control. \- patchFile: A JSON form file "patches" containing the list of JSON patch operations to apply to the data.
-
-Returns: \- A string containing the response message from the push operation. \- An error if the request fails.
-
-<a name="Client.OperationPull"></a>
-### func \(\*Client\) OperationPull
-
-```go
-func (c *Client) OperationPull(ctx context.Context, path string) ([]PulledFile, error)
-```
-
-OperationPull starts an async pull against the connector service and blocks until a terminal status is reached. On success the result zip is read from /operation/result and returned as a single PulledFile whose Content is the raw zip bytes — identical in shape to the pre\-async synchronous response, so downstream callers that feed the bytes into irminutils.UnzipFiles do not change.
-
-Parameters:
-
-- ctx: Context for the whole lifecycle \(start \+ poll \+ fetch\). Cancellation triggers a best\-effort /operation/cancel and returns the ctx error.
-- path: Connector\-specific resource path to pull.
-
-Note: Operation token is required for this operation.
-
-<a name="Client.OperationPullStream"></a>
-### func \(\*Client\) OperationPullStream
-
-```go
-func (c *Client) OperationPullStream(ctx context.Context, path string) (io.ReadCloser, error)
-```
-
-OperationPullStream starts an async pull and returns a streaming reader over the result zip. The caller is responsible for closing the returned reader. Kept as the low\-allocation path for the streaming import in engine/dataMovement.go.
-
-The returned reader is tied to the async\-pull poll loop only up to the point the result starts streaming; once the reader is handed back the only governance on the stream is the caller's context.
-
-<a name="Client.OperationPush"></a>
-### func \(\*Client\) OperationPush
-
-```go
-func (c *Client) OperationPush(ctx context.Context, path string, file FormFile) (string, error)
-```
-
-OperationPush sends a file to the /operation/push endpoint along with a target path.
-
-Note: Operation token is required for this operation.
-
-Parameters: \- ctx: Context for request cancellation and timeout control. \- path: A form field "path" with the provided path value. \- file: A form file "file" containing the file to push.
-
-Returns: \- A string containing the response message from the push operation. \- An error if the request fails.
-
-<a name="Client.OperationPushPresigned"></a>
-### func \(\*Client\) OperationPushPresigned
-
-```go
-func (c *Client) OperationPushPresigned(ctx context.Context, path, presignedURL string) (string, error)
-```
-
-OperationPushPresigned sends a presigned URL to the /operation/push endpoint instead of uploading the file directly. The connector downloads the file from the presigned URL, avoiding in\-memory buffering of large payloads.
-
-<a name="Client.Request"></a>
-### func \(\*Client\) Request
-
-```go
-func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, error)
-```
-
-Request sends requests to the REST API of the connector and returns the raw response data. It utilises prepareBodyAndHeaders and doRequest to reduce code duplication.
-
-<a name="Client.SubscribeToChanges"></a>
-### func \(\*Client\) SubscribeToChanges
-
-```go
-func (c *Client) SubscribeToChanges(ctx context.Context, webhookURL, webhookAccessToken string) (*Subscription, error)
-```
-
-SubscribeToChanges subscribes to changes in the data and sends the changes to the specified webhook.
-
-Note: Operation token is required for this operation.
-
-Parameters: \- ctx: Context for request cancellation and timeout control. \- webhookURL: The URL of the webhook to send the changes to. \- webhookAccessToken: The token to authenticate the webhook request with.
-
-Returns: \- The subscription record if the request is successful. \- An error if the request fails.
-
-<a name="Client.UnsubscribeFromChanges"></a>
-### func \(\*Client\) UnsubscribeFromChanges
-
-```go
-func (c *Client) UnsubscribeFromChanges(ctx context.Context, subscriptionID uint) error
-```
-
-UnsubscribeFromChanges removes a subscription and stops the connector from sending webhook notifications.
-
-Note: Operation token is required for this operation.
-
-Parameters: \- ctx: Context for request cancellation and timeout control. \- subscriptionID: The ID of the subscription to remove.
-
-Returns: \- An error if the request fails.
-
-<a name="Client.ValidateConfigFields"></a>
-### func \(\*Client\) ValidateConfigFields
-
-```go
-func (c *Client) ValidateConfigFields(ctx context.Context, details map[string]string, settings map[string]string) (*irminmodels.ConnectorConfigurationValidationResult, error)
-```
-
-ValidateConfigFields validates the configuration fields provided by the user.
-
-Note: System token is required for this operation.
-
-Parameters: \- ctx: Context for request cancellation and timeout control. \- details: A map containing configuration details provided by the user. \- settings: A map containing configuration settings provided by the user.
-
-Returns: \- A validation result from the connector if the request is successful. \- An error if there is a problem with the request.
-
-<a name="Client.WithConnectionID"></a>
-### func \(\*Client\) WithConnectionID
-
-```go
-func (c *Client) WithConnectionID(id uint) *Client
-```
-
-WithConnectionID returns the receiver after setting ConnectionID, for call\-site\-friendly chaining:
-
-```
-client := connectorsclient.NewClient(url, tok, "en").WithConnectionID(conn.ID)
-```
-
-Mutates and returns the same pointer; Client is a plain struct so the caller owns its sharing story. Passing 0 clears the connection context.
-
-<a name="Client.WithFallbackAsyncPullJobID"></a>
-### func \(\*Client\) WithFallbackAsyncPullJobID
-
-```go
-func (c *Client) WithFallbackAsyncPullJobID(jobID string) *Client
-```
-
-WithFallbackAsyncPullJobID seeds the client with a known async pull job ID. Used when /operation/pull returns 409 without a job\_id so Core can still attempt targeted cancellation.
-
-Currently only called from tests — production code relies on the in\-pull rememberAsyncPullJobID/clearRememberedAsyncPullJobID pair to populate the cache during a live pull. Exposed as a hook so callers running multiple pulls against one long\-lived Client can pre\-seed the cache from an out\-of\-band source \(e.g., a durable queue\); in the typical one\-pull\-per\-client engine flow the cache is either populated mid\-pull or not used at all.
-
-<a name="Client.WithLogger"></a>
-### func \(\*Client\) WithLogger
-
-```go
-func (c *Client) WithLogger(logger *slog.Logger) *Client
-```
-
-WithLogger returns the receiver after attaching a slog.Logger for async\-pull progress\-event forwarding and best\-effort cancel diagnostics. Mutates and returns the same pointer for fluent call sites:
-
-```
-client := connectorsclient.NewClient(url, tok, "en").
-	WithConnectionID(conn.ID).
-	WithLogger(c.Logger)
-```
-
-Passing nil clears the logger and silences the pull loop's Debug output — matches the default zero\-value behaviour.
-
-<a name="ConnectorInfo"></a>
-## type ConnectorInfo
-
-ConnectorInfo holds metadata about a connector returned from the connector's /info endpoint.
-
-```go
-type ConnectorInfo struct {
-    Name             string                            `json:"name"              example:"My Connector"`
-    Description      string                            `json:"description"       example:"My Connector Description"`
-    Version          string                            `json:"version"           example:"1.0.0"`
-    StructureVersion string                            `json:"structure_version" example:"1.0.0"`
-    Author           string                            `json:"author"            example:"John Doe"`
-    APIBaseURL       string                            `json:"api_base_url"      example:"https://api.example.com"`
-    LogoURL          string                            `json:"logo_url"          example:"https://example.com/logo.png"`
-    Capabilities     []irminmodels.ConnectorCapability `json:"capabilities"      example:"pull,push"`
-    Locales          []string                          `json:"locales"           example:"en,fr"`
-    PrimaryCategory  irminmodels.ConnectorCategory     `json:"primary_category"  example:"database"`
-    Categories       []irminmodels.ConnectorCategory   `json:"categories"        example:"database,api"`
-    AuthorEmail      string                            `json:"author_email"      example:"john.doe@example.com"`
-    Documentation    string                            `json:"documentation"     example:"https://example.com/documentation"`
-    ReadMoreURL      string                            `json:"read_more_url"     example:"https://example.com/read-more"`
-
-    // ConnectionOAuthConfig is optional. When present, the connector
-    // declares it uses OAuth 2.0 (authorization code + PKCE) for
-    // authenticating a Connection, and Core runs the flow on the user's
-    // behalf. Nil/absent means the connector uses the legacy
-    // DynamicField form path (password / API key / etc.).
-    ConnectionOAuthConfig *irminmodels.ConnectionOAuthConfig `json:"connection_oauth_config,omitempty"`
-}
-```
-
-<a name="FormFile"></a>
-## type FormFile
-
-FormFile holds information about a file you want to upload with multipart/form\-data.
-
-```go
-type FormFile struct {
-    FieldName string    // The form field name.
-    FilePath  string    // Local path to the file on disk.
-    Reader    io.Reader // Use if you already have a stream (os.Open, bytes.Buffer, etc.).
-    FileName  string    // Optional override for the actual filename.
-}
-```
-
-<a name="Operation"></a>
-## type Operation
-
-Operation represents a record of an initiated operation tied to a connector.
-
-```go
-type Operation struct {
-    ID                      uint              `json:"ID"                      example:"1"`
-    CreatedAt               string            `json:"CreatedAt"               example:"2021-01-01T00:00:00Z"`
-    UpdatedAt               string            `json:"UpdatedAt"               example:"2021-01-01T00:00:00Z"`
-    DeletedAt               *string           `json:"DeletedAt,omitempty"     example:"2021-01-01T00:00:00Z"`
-    Details                 map[string]string `json:"details"`  // Configuration (details) of the operation, formatted like {"database":"my_database","table":"my_table"}
-    Settings                map[string]string `json:"settings"` // Configuration (settings) of the operation, formatted like {"database":"my_database","table":"my_table"}
-    Token                   string            `json:"token"                   example:"1234567890"`
-    ConfigHash              string            `json:"configHash"              example:"dad9439d003d075c99035d7d42521fbbc6f01758e2ba00559a56ff64c1fa0344"`
-    ConnectorRegistrationID uint              `json:"connectorRegistrationID" example:"1"`
-}
-```
-
-<a name="PulledFile"></a>
-## type PulledFile
-
-PulledFile represents a file returned with a stream request.
-
-```go
-type PulledFile struct {
-    // Filename is the name extracted from the Content-Disposition header.
-    Filename string
-    // Content holds the file's content.
-    Content []byte
-}
-```
-
-<a name="RequestOptions"></a>
-## type RequestOptions
-
-RequestOptions allows you to specify how you'd like to send data in the request.
-
-```go
-type RequestOptions struct {
-    Method        string
-    Endpoint      string
-    AllowedStatus []int             // Status codes that are considered successful. If none provided, all 2xx codes are considered successful.
-    Body          any               // For JSON, this can be a struct or map to JSON-encode.
-    FormFields    map[string]string // Key-value form fields (for multipart/form-data or URL-encoded).
-    Files         []FormFile        // Files to attach (for multipart/form-data).
-    Headers       map[string]string // Extra headers, if needed.
-    ContentType   string            // e.g. "application/json", "multipart/form-data", etc.
-}
-```
-
-<a name="Subscription"></a>
-## type Subscription
-
-Subscription represents a record of an active subscription to changes in data.
-
-```go
-type Subscription struct {
-    ID                      uint    `json:"ID"                      example:"1"`
-    CreatedAt               string  `json:"CreatedAt"               example:"2021-01-01T00:00:00Z"`
-    UpdatedAt               string  `json:"UpdatedAt"               example:"2021-01-01T00:00:00Z"`
-    DeletedAt               *string `json:"DeletedAt,omitempty"     example:"2021-01-01T00:00:00Z"`
-    WebhookURL              string  `json:"webhookUrl"              example:"https://example.com/webhook"`
-    WebhookAccessToken      string  `json:"webhookAccessToken"      example:"1234567890"`
-    ConnectorRegistrationID uint    `json:"connectorRegistrationID" example:"1"`
-    OperationID             uint    `json:"operationID"             example:"1"`
-}
-```
 
 # controllers
 
@@ -4393,8 +4054,6 @@ type Connector struct {
     LogoURL string `json:"logo_url"`
     // List of capabilities supported by the connector e.g. pull, push, webhook_pull, webhook_patch
     Capabilities []string `json:"capabilities"               gorm:"type:jsonb;serializer:json"`
-    // List of locales supported by the connector
-    Locales []string `json:"locales"                    gorm:"type:jsonb;serializer:json"`
     // (optional) Primary category of the connector
     PrimaryCategory string `json:"primary_category,omitempty" gorm:"type:varchar(255)"`
     // (optional) List of categories the connector belongs to
@@ -8334,7 +7993,7 @@ import "irmin-api/engine"
   - [func \(m \*BranchProtectionManager\) RenameBranch\(repositoryName, currentName, newName string, isImmutable bool, currentBranch \*lakefs.Branch\) \(\*irminmodels.Branch, error\)](<#BranchProtectionManager.RenameBranch>)
   - [func \(m \*BranchProtectionManager\) UpdateBranchProtection\(repositoryName, branchName string, isImmutable bool\) error](<#BranchProtectionManager.UpdateBranchProtection>)
 - [type Client](<#Client>)
-  - [func NewClient\(ctx context.Context, locale string, logger \*slog.Logger, env \*utils.CoreAPIEnv, db \*db.Database\) \(\*Client, error\)](<#NewClient>)
+  - [func NewClient\(ctx context.Context, logger \*slog.Logger, env \*utils.CoreAPIEnv, db \*db.Database\) \(\*Client, error\)](<#NewClient>)
   - [func \(c \*Client\) ApplyFieldMappings\(ctx context.Context, duckDBClient \*duckdb.QueryClient, fileContent \[\]byte, originalFilePath string, mappings \[\]irminmodels.FieldMapping\) \(map\[string\]\[\]byte, error\)](<#Client.ApplyFieldMappings>)
   - [func \(c \*Client\) ApplyTransformations\(ctx context.Context, duckDBClient \*duckdb.QueryClient, files map\[string\]\[\]byte, config TransformConfig\) \(map\[string\]\[\]byte, error\)](<#Client.ApplyTransformations>)
   - [func \(c \*Client\) CommitChanges\(workspace, repository, branch, message, author string, allowEmpty bool\) \(\*irminmodels.Commit, error\)](<#Client.CommitChanges>)
@@ -8347,7 +8006,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) CreateTag\(workspace, repository, name, ref string\) \(\*irminmodels.GitTag, error\)](<#Client.CreateTag>)
   - [func \(c \*Client\) DataExport\(ctx context.Context, connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping\) \(\[\]string, int64, \[\]error\)](<#Client.DataExport>)
   - [func \(c \*Client\) DataImport\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, workspace string, repository string, branch string, repositoryPath string, fieldMappings \[\]irminmodels.FieldMapping\) \(\[\]lakefs.ObjectMetadata, \[\]error\)](<#Client.DataImport>)
-  - [func \(c \*Client\) DataMovementSchema\(ctx context.Context, connection \*db.Connection, method, path string, tx ...\*gorm.DB\) \(\*irminmodels.ObjectSchema, error\)](<#Client.DataMovementSchema>)
+  - [func \(c \*Client\) DataMovementSchema\(ctx context.Context, connection \*db.Connection, method, schemaPath string, \_ ...\*gorm.DB\) \(\*irminmodels.ObjectSchema, error\)](<#Client.DataMovementSchema>)
   - [func \(c \*Client\) DeleteBranch\(workspace, repository, branch string\) error](<#Client.DeleteBranch>)
   - [func \(c \*Client\) DeleteObject\(workspace, repository, path, ref string, tx ...\*gorm.DB\) error](<#Client.DeleteObject>)
   - [func \(c \*Client\) DeleteRepository\(ctx context.Context, workspace, repository string, keepObjects bool\) error](<#Client.DeleteRepository>)
@@ -8367,7 +8026,6 @@ import "irmin-api/engine"
   - [func \(c \*Client\) GetRepository\(ctx context.Context, workspace, repository string\) \(\*Repository, error\)](<#Client.GetRepository>)
   - [func \(c \*Client\) GetTag\(workspace, repository, tag string\) \(\*irminmodels.GitTag, error\)](<#Client.GetTag>)
   - [func \(c \*Client\) GetUncommittedChanges\(workspace, repository, branch string\) \(\*irminmodels.Diff, error\)](<#Client.GetUncommittedChanges>)
-  - [func \(c \*Client\) InitializeConnectorOperation\(ctx context.Context, connection \*db.Connection, tx ...\*gorm.DB\) \(\*connectorsclient.Client, error\)](<#Client.InitializeConnectorOperation>)
   - [func \(c \*Client\) ListBranches\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.Branch, error\)](<#Client.ListBranches>)
   - [func \(c \*Client\) ListCommits\(workspace, repository, ref string, after \*string, limit \*int\) \(\[\]irminmodels.Commit, \*lakefs.Pagination, error\)](<#Client.ListCommits>)
   - [func \(c \*Client\) ListRepositories\(workspace string\) \(\[\]Repository, error\)](<#Client.ListRepositories>)
@@ -8684,7 +8342,6 @@ Client represents the Irmin Data Engine API client.
 
 ```go
 type Client struct {
-    Locale            string
     LakeFSClient      *lakefs.Client
     Logger            *slog.Logger
     Env               *utils.CoreAPIEnv
@@ -8698,10 +8355,10 @@ type Client struct {
 ### func NewClient
 
 ```go
-func NewClient(ctx context.Context, locale string, logger *slog.Logger, env *utils.CoreAPIEnv, db *db.Database) (*Client, error)
+func NewClient(ctx context.Context, logger *slog.Logger, env *utils.CoreAPIEnv, db *db.Database) (*Client, error)
 ```
 
-NewClient creates a new Irmin Data Engine API client with default settings.
+NewClient creates a new Irmin Data Engine API client with default settings. Connector responses are English\-only — the client carries no locale state and stamps no Accept\-Language header on outbound connector calls.
 
 <a name="Client.ApplyFieldMappings"></a>
 ### func \(\*Client\) ApplyFieldMappings
@@ -8837,7 +8494,7 @@ Intentionally NOT wrapped in a GORM transaction. \`dataImportInternal\` performs
 ### func \(\*Client\) DataMovementSchema
 
 ```go
-func (c *Client) DataMovementSchema(ctx context.Context, connection *db.Connection, method, path string, tx ...*gorm.DB) (*irminmodels.ObjectSchema, error)
+func (c *Client) DataMovementSchema(ctx context.Context, connection *db.Connection, method, schemaPath string, _ ...*gorm.DB) (*irminmodels.ObjectSchema, error)
 ```
 
 DataMovementSchema retrieves the schema for a specific method from the connector. It returns the schema and an error if any occurred. If tx is provided, it will be used instead of creating a new transaction.
@@ -9012,17 +8669,6 @@ func (c *Client) GetUncommittedChanges(workspace, repository, branch string) (*i
 ```
 
 
-
-<a name="Client.InitializeConnectorOperation"></a>
-### func \(\*Client\) InitializeConnectorOperation
-
-```go
-func (c *Client) InitializeConnectorOperation(ctx context.Context, connection *db.Connection, tx ...*gorm.DB) (*connectorsclient.Client, error)
-```
-
-InitializeConnectorOperation sets up a connector operation and returns an operation client. It returns an error if initialization fails. If tx is provided, it will be used instead of creating a new transaction.
-
-Note: the legacy system\-token cancel\-on\-cleanup has been removed. Async pull now manages its own job\-level cancellation via the SDK's CancelOperationJob wrapper \(see connectorsclient.OperationPull / OperationPullStream\). Non\-pull operations \(push/patch/schema\) are synchronous on the connector side; no explicit cancel call is needed.
 
 <a name="Client.ListBranches"></a>
 ### func \(\*Client\) ListBranches
@@ -17168,7 +16814,7 @@ NewConnectionSubscriptionService creates a new connection subscription service.
 func (s *ConnectionSubscriptionService) RegisterSubscriptionWithConnector(ctx context.Context, connection *db.Connection, subscription *db.ConnectionSubscription, connectionSqid string) (*uint, error)
 ```
 
-RegisterSubscriptionWithConnector registers a subscription with the connector service. It initializes a connector operation, subscribes to changes, and returns the connector subscription ID. If the connector doesn't support patch\_event capability, it returns ErrConnectorCapabilityNotSupported.
+RegisterSubscriptionWithConnector registers a subscription with the connector service. If the connector doesn't support patch\_event capability, it returns ErrConnectorCapabilityNotSupported.
 
 <a name="ConnectionSubscriptionService.UnregisterSubscriptionFromConnector"></a>
 ### func \(\*ConnectionSubscriptionService\) UnregisterSubscriptionFromConnector
@@ -17177,7 +16823,7 @@ RegisterSubscriptionWithConnector registers a subscription with the connector se
 func (s *ConnectionSubscriptionService) UnregisterSubscriptionFromConnector(ctx context.Context, connection *db.Connection, connectorSubscriptionID uint) error
 ```
 
-UnregisterSubscriptionFromConnector removes a subscription from the connector service. It cancels the operation and unsubscribes from changes.
+UnregisterSubscriptionFromConnector removes a subscription from the connector service.
 
 <a name="CreateCustomToolRequest"></a>
 ## type CreateCustomToolRequest
@@ -19976,6 +19622,18 @@ type VendorError struct {
 ```go
 func (e *VendorError) Error() string
 ```
+
+
+
+# engine
+
+```go
+import "irmin-api/tests/engine"
+```
+
+Package engine contains isolated engine regression tests that avoid the integration TestMain in the main engine package.
+
+## Index
 
 
 

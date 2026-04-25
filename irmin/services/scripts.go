@@ -423,7 +423,7 @@ func (api *APIServices) ExecuteScript(
 	inputFiles := make(map[string][]byte)
 	if len(req.Input) > 0 {
 		// Initialize Data Engine client for fetching input data
-		dataEngine, createDataEngineClientErr := engine.NewClient(c, "en", api.Logger, api.Env, api.DB)
+		dataEngine, createDataEngineClientErr := engine.NewClient(c, api.Logger, api.Env, api.DB)
 		if createDataEngineClientErr != nil {
 			api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
 			return nil, NewInternalErrorf("error creating data engine client: %w", createDataEngineClientErr)

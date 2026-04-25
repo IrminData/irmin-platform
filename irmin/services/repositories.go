@@ -357,7 +357,6 @@ func (api *APIServices) CreateRepository(
 	// Initialize Data Engine client
 	dataEngine, createDataEngineClientErr := engine.NewClient(
 		c,
-		locale,
 		api.Logger,
 		api.Env,
 		api.DB,
@@ -485,7 +484,6 @@ func (api *APIServices) UpdateRepository(
 	// Initialize Data Engine client
 	dataEngine, createDataEngineClientErr := engine.NewClient(
 		c,
-		locale,
 		api.Logger,
 		api.Env,
 		api.DB,
@@ -574,7 +572,6 @@ func (api *APIServices) DeleteRepository(
 	// Initialize Data Engine client
 	dataEngine, createDataEngineClientErr := engine.NewClient(
 		c,
-		locale,
 		api.Logger,
 		api.Env,
 		api.DB,

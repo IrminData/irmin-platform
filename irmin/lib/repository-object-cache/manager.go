@@ -125,7 +125,7 @@ func (m *Manager) RefreshObjectFromDataEngine(
 	existingObject *db.RepositoryObject,
 ) (*db.RepositoryObject, error) {
 	// Initialize Data Engine client
-	dataEngine, initErr := engine.NewClient(ctx, locale, m.logger, m.env, m.db)
+	dataEngine, initErr := engine.NewClient(ctx, m.logger, m.env, m.db)
 	if initErr != nil {
 		return nil, fmt.Errorf("error creating data engine client: %w", initErr)
 	}

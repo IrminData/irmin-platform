@@ -24,7 +24,7 @@ func TestRepositoryEventTrigger_PostCommit(t *testing.T) {
 
 	// Create data engine client
 	ctx := context.Background()
-	dataEngine, err := engine.NewClient(ctx, "en", ts.Logger, ts.Env, ts.DB)
+	dataEngine, err := engine.NewClient(ctx, ts.Logger, ts.Env, ts.DB)
 	if err != nil {
 		t.Fatalf("Failed to create data engine: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestRepositoryEventTrigger_EventTypeMismatch(t *testing.T) {
 
 	// Create data engine client
 	ctx := context.Background()
-	dataEngine, err := engine.NewClient(ctx, "en", ts.Logger, ts.Env, ts.DB)
+	dataEngine, err := engine.NewClient(ctx, ts.Logger, ts.Env, ts.DB)
 	if err != nil {
 		t.Fatalf("Failed to create data engine: %v", err)
 	}
@@ -274,7 +274,7 @@ func TestRepositoryEventTrigger_RefFilter(t *testing.T) {
 
 	// Create data engine client
 	ctx := context.Background()
-	dataEngine, err := engine.NewClient(ctx, "en", ts.Logger, ts.Env, ts.DB)
+	dataEngine, err := engine.NewClient(ctx, ts.Logger, ts.Env, ts.DB)
 	if err != nil {
 		t.Fatalf("Failed to create data engine: %v", err)
 	}
@@ -406,7 +406,7 @@ func TestWorkflowRunEventTrigger_PreWorkflowRun(t *testing.T) {
 
 	// Create data engine client
 	ctx := context.Background()
-	dataEngine, err := engine.NewClient(ctx, "en", ts.Logger, ts.Env, ts.DB)
+	dataEngine, err := engine.NewClient(ctx, ts.Logger, ts.Env, ts.DB)
 	if err != nil {
 		t.Fatalf("Failed to create data engine: %v", err)
 	}
@@ -535,7 +535,7 @@ func TestWorkflowRunEventTrigger_PostWorkflowRun(t *testing.T) {
 
 	// Create data engine client
 	ctx := context.Background()
-	dataEngine, err := engine.NewClient(ctx, "en", ts.Logger, ts.Env, ts.DB)
+	dataEngine, err := engine.NewClient(ctx, ts.Logger, ts.Env, ts.DB)
 	if err != nil {
 		t.Fatalf("Failed to create data engine: %v", err)
 	}
@@ -664,7 +664,7 @@ func TestWorkflowRunEventTrigger_EventTypeMismatch(t *testing.T) {
 
 	// Create data engine client
 	ctx := context.Background()
-	dataEngine, err := engine.NewClient(ctx, "en", ts.Logger, ts.Env, ts.DB)
+	dataEngine, err := engine.NewClient(ctx, ts.Logger, ts.Env, ts.DB)
 	if err != nil {
 		t.Fatalf("Failed to create data engine: %v", err)
 	}

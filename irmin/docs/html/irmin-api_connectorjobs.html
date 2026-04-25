@@ -1,0 +1,120 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/connectorjobs</title></head><body>
+<h1>Package irmin-api/connectorjobs</h1>
+<pre>
+package connectorjobs // import "irmin-api/connectorjobs"
+
+
+CONSTANTS
+
+const CancelTimeout = 5 * time.Second
+    CancelTimeout bounds the best-effort /operation/cancel call made when a
+    wait/poll path fails.
+
+const MaxConsecutiveStatusPollErrors = 3
+    MaxConsecutiveStatusPollErrors is how many back-to-back failures of the
+    /operation/status poll Run will tolerate before treating the remote as gone.
+    A connector that is healthy but momentarily unreachable (network blip,
+    restarting pod, transient 5xx) should not kill a long-running pull on
+    the first failed poll. The value matches what the pre-consolidation
+    connectors-client used (3) so existing operator expectations carry over.
+
+const PollInterval = 2 * time.Second
+    PollInterval controls how often Core polls /operation/status while waiting
+    for an async connector job to reach a terminal state.
+
+
+FUNCTIONS
+
+func ContextWithProgress(ctx context.Context, h observability.ProgressHandler) context.Context
+    ContextWithProgress returns a copy of ctx that carries the given progress
+    handler. The handler is consulted by Run as it polls /operation/status and
+    observes new events. Pass nil to clear an inherited handler explicitly.
+
+func IsWaitError(err error) bool
+    IsWaitError reports whether err came from a failed wait/poll path.
+
+func NewConnectorClient(connection *db.Connection) *connectorsclient.Client
+    NewConnectorClient builds a connectorsclient.Client targeting the
+    connector that backs the given Connection, with the connection ID header
+    pre-stamped so every request the caller issues carries the correct
+    X-Irmin-Connection-Id.
+
+    This package is the central seam for outbound async connector calls (Run,
+    IsWaitError, WaitError live here too), and engine, orchestrator, and
+    services all import it. Hosting the helper here lets every caller converge
+    on the same construction without forcing a back-edge from engine → lib that
+    would create an import cycle (lib already imports engine).
+
+    Callers that need a bare client for connector-level (not connection-level)
+    calls — e.g. registering a brand-new connector before any connection exists
+    — should call connectorsclient.NewClient directly with the connector's
+    APIBaseURL and SystemToken.
+
+func ProgressFromContext(ctx context.Context) observability.ProgressHandler
+    ProgressFromContext returns the handler attached via ContextWithProgress,
+    or nil if none was set. Exported for callers that want to inspect / forward
+    the handler — typical Run / orchestrator flow does not need to reach for
+    this directly.
+
+func Run(ctx context.Context, job *connectorsclient.OperationJob) error
+    Run drives an OperationJob handle to terminal state. If the supplied ctx
+    carries a progress handler (see ContextWithProgress), every newly observed
+    event is fanned to that handler before terminal classification. Equivalent
+    to RunWithProgress(ctx, job, ProgressFromContext(ctx)) — see RunWithProgress
+    for the full contract.
+
+func RunWithProgress(
+	ctx context.Context,
+	job *connectorsclient.OperationJob,
+	onProgress observability.ProgressHandler,
+) error
+    RunWithProgress drives an OperationJob handle to terminal state and,
+    while polling, fans every newly-observed progress event to onProgress.
+    This is the seam through which long-running connector operations surface
+    page / batch / file / rate-limit events into orchestrator log streams or any
+    other operator-facing sink. The vocabulary is observability.ProgressEvent
+    — defined in the SDK so connectors, Core, and AI all see the same shapes on
+    the wire.
+
+    Semantics:
+      - onProgress may be nil; the function then behaves as a plain
+        Wait+terminal-classifier loop.
+      - onProgress is called synchronously from the polling loop, in the order
+        events appear in OperationJobStatusResponse.Progress. Implementations
+        must return quickly — typically by enqueueing the event into a buffered
+        channel or appending to a log slice.
+      - Each event is delivered exactly once across the lifetime of one
+        RunWithProgress call. The connector service publishes a cumulative
+        slice; we diff against the count of events seen so far to avoid
+        duplicating earlier events on each poll.
+      - Polling cadence is PollInterval (2s).
+
+    On any path that does NOT see a terminal status — Status() error,
+    ctx cancellation, or a final status that is neither complete / failed
+    / cancelled — RunWithProgress issues a best-effort cancel against the
+    server-side worker (otherwise it would hold the operation lock until the
+    janitor reaped it) and wraps the failure in *WaitError. Callers that own
+    inputs the worker might still be reading (e.g., presigned S3 URLs handed to
+    a push job) check IsWaitError to decide whether premature cleanup is safe —
+    see engine.shouldDeletePresignedPushObject.
+
+
+TYPES
+
+type WaitError struct {
+	Err error
+}
+    WaitError marks failures where the job did not reach a terminal status
+    locally. The connector worker may still be using any inputs handed to
+    the job — including presigned S3 URLs handed to a push job — even after
+    the best-effort cancel request returns. Callers that own those inputs
+    (engine.shouldDeletePresignedPushObject is the canonical example) inspect
+    WaitError via IsWaitError to decide whether it is safe to clean up.
+
+func (e *WaitError) Error() string
+
+func (e *WaitError) Unwrap() error
+
+</pre>
+</body></html>

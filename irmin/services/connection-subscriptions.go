@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	connectorsclient "irmin-api/connectors-client"
+	"irmin-api/connectorjobs"
 	"irmin-api/db"
+
+	"github.com/IrminData/irmin-sdk-go/connectorsclient"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -41,93 +43,57 @@ func hasPatchEventCapability(connector *db.Connector) bool {
 	return false
 }
 
-// RegisterSubscriptionWithConnector registers a subscription with the connector service.
-// It initializes a connector operation, subscribes to changes, and returns the connector subscription ID.
-// If the connector doesn't support patch_event capability, it returns ErrConnectorCapabilityNotSupported.
+// newSubscribeClient builds the SDK client used for
+// subscribe/unsubscribe calls. Under the async protocol there is no
+// separate operation token — the system token authenticates
+// subscribe/unsubscribe directly, which the connectors service
+// accepts once Phase 4 relaxes the OperationToken-only middleware on
+// those routes.
+func (s *ConnectionSubscriptionService) newSubscribeClient(connection *db.Connection) *connectorsclient.Client {
+	return connectorjobs.NewConnectorClient(connection)
+}
+
+// RegisterSubscriptionWithConnector registers a subscription with the
+// connector service. If the connector doesn't support patch_event
+// capability, it returns ErrConnectorCapabilityNotSupported.
 func (s *ConnectionSubscriptionService) RegisterSubscriptionWithConnector(
 	ctx context.Context,
 	connection *db.Connection,
 	subscription *db.ConnectionSubscription,
 	connectionSqid string,
 ) (*uint, error) {
-	// Check if connector supports patch_event capability
 	if !hasPatchEventCapability(&connection.Connector) {
 		return nil, ErrConnectorCapabilityNotSupported
 	}
 
-	// Create system client to initialize operation
-	systemClient := connectorsclient.NewClient(
-		connection.Connector.APIBaseURL,
-		connection.Connector.SystemToken,
-		"en",
-	).WithConnectionID(connection.ID)
+	client := s.newSubscribeClient(connection)
 
-	// Initialize operation with connection details
-	operation, err := systemClient.InitOperation(ctx, connection.Details, connection.Settings)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize connector operation: %w", err)
-	}
-
-	// Create operation client
-	opClient := connectorsclient.NewClient(
-		connection.Connector.APIBaseURL,
-		operation.Token,
-		"en",
-	).WithConnectionID(connection.ID)
-
-	// Build webhook URL for this connection
+	// Build webhook URL for this connection.
 	// Format: {API_URL}/api/v1/webhooks/connectors/{connectionSqid}
 	webhookURL := fmt.Sprintf("%s/api/v1/webhooks/connectors/%s", s.apiURL, connectionSqid)
 
-	// Subscribe to changes
-	connectorSubscription, err := opClient.SubscribeToChanges(ctx, webhookURL, subscription.WebhookToken)
+	connectorSubscription, err := client.SubscribeToChanges(ctx, webhookURL, subscription.WebhookToken)
 	if err != nil {
-		// No explicit operation cancel is issued here. The legacy
-		// form-bodied /operation/cancel has been removed; the init'd
-		// operation will be reaped by its own token TTL on the connector
-		// side. Pull ops use the SDK's async job cancel path instead.
 		return nil, fmt.Errorf("failed to subscribe to connector changes: %w", err)
 	}
 
 	return &connectorSubscription.ID, nil
 }
 
-// UnregisterSubscriptionFromConnector removes a subscription from the connector service.
-// It cancels the operation and unsubscribes from changes.
+// UnregisterSubscriptionFromConnector removes a subscription from the
+// connector service.
 func (s *ConnectionSubscriptionService) UnregisterSubscriptionFromConnector(
 	ctx context.Context,
 	connection *db.Connection,
 	connectorSubscriptionID uint,
 ) error {
-	// Check if connector supports patch_event capability
 	if !hasPatchEventCapability(&connection.Connector) {
 		return nil
 	}
 
-	// Create system client
-	systemClient := connectorsclient.NewClient(
-		connection.Connector.APIBaseURL,
-		connection.Connector.SystemToken,
-		"en",
-	).WithConnectionID(connection.ID)
+	client := s.newSubscribeClient(connection)
 
-	// Initialize operation to get operation token
-	operation, err := systemClient.InitOperation(ctx, connection.Details, connection.Settings)
-	if err != nil {
-		return fmt.Errorf("failed to initialize connector operation: %w", err)
-	}
-
-	// Create operation client
-	opClient := connectorsclient.NewClient(
-		connection.Connector.APIBaseURL,
-		operation.Token,
-		"en",
-	).WithConnectionID(connection.ID)
-
-	// Unsubscribe from changes. No explicit operation cancel is issued
-	// afterwards; the legacy form-bodied /operation/cancel has been
-	// removed. Operation tokens expire via TTL on the connector side.
-	if unsubErr := opClient.UnsubscribeFromChanges(ctx, connectorSubscriptionID); unsubErr != nil {
+	if unsubErr := client.UnsubscribeFromChanges(ctx, connectorSubscriptionID); unsubErr != nil {
 		return fmt.Errorf("failed to unsubscribe from connector changes: %w", unsubErr)
 	}
 

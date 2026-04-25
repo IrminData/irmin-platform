@@ -1,7 +1,10 @@
 package engine_test
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"irmin-api/connectorjobs"
 	"irmin-api/duckdb"
 	"irmin-api/engine"
 	"irmin-api/lib"
@@ -27,7 +30,7 @@ func setupDataMovementIntegrationTestSuite(t *testing.T) *DataMovementIntegratio
 	}
 
 	// Initialize engine client with proper fields
-	engineClient, err := engine.NewClient(t.Context(), "en", testSuite.Logger, testSuite.Env, testSuite.DB)
+	engineClient, err := engine.NewClient(t.Context(), testSuite.Logger, testSuite.Env, testSuite.DB)
 	if err != nil {
 		t.Fatalf("Failed to create engine client: %v", err)
 	}
@@ -372,4 +375,15 @@ Widget B,North,Q1,15000`)
 	assert.True(t, strings.Contains(summaryStr, "sales"))
 	assert.True(t, strings.Contains(summaryStr, "Widget A"))
 	assert.True(t, strings.Contains(summaryStr, "10000"))
+}
+
+func TestShouldDeletePresignedPushObject(t *testing.T) {
+	if !engine.ShouldDeletePresignedPushObjectForTest(errors.New("terminal job failure")) {
+		t.Fatalf("terminal job failures should allow S3 cleanup")
+	}
+
+	waitErr := &connectorjobs.WaitError{Err: context.Canceled}
+	if engine.ShouldDeletePresignedPushObjectForTest(waitErr) {
+		t.Fatalf("wait failures should preserve the S3 object for the remote worker")
+	}
 }

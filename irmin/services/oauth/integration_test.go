@@ -107,7 +107,6 @@ func createTestConnector(t *testing.T, d *db.Database) *db.Connector {
 		StructureVersion: "1",
 		Author:           "integration-test",
 		Capabilities:     []string{"pull"},
-		Locales:          []string{"en"},
 	}
 	if err := d.Create(connector).Error; err != nil {
 		t.Fatalf("create connector: %v", err)

@@ -775,8 +775,6 @@ type Connector struct {
 	LogoURL string `json:"logo_url"`
 	// List of capabilities supported by the connector e.g. pull, push, webhook_pull, webhook_patch
 	Capabilities []string `json:"capabilities"               gorm:"type:jsonb;serializer:json"`
-	// List of locales supported by the connector
-	Locales []string `json:"locales"                    gorm:"type:jsonb;serializer:json"`
 	// (optional) Primary category of the connector
 	PrimaryCategory string `json:"primary_category,omitempty" gorm:"type:varchar(255)"`
 	// (optional) List of categories the connector belongs to

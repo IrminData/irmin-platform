@@ -22,7 +22,6 @@ type PermissionChecker interface {
 // Client represents the Irmin Data Engine API client.
 type Client struct {
 	ctx               context.Context
-	Locale            string
 	LakeFSClient      *lakefs.Client
 	Logger            *slog.Logger
 	Env               *utils.CoreAPIEnv
@@ -30,10 +29,12 @@ type Client struct {
 	PermissionChecker PermissionChecker
 }
 
-// NewClient creates a new Irmin Data Engine API client with default settings.
+// NewClient creates a new Irmin Data Engine API client with default
+// settings. Connector responses are English-only — the client carries
+// no locale state and stamps no Accept-Language header on outbound
+// connector calls.
 func NewClient(
 	ctx context.Context,
-	locale string,
 	logger *slog.Logger,
 	env *utils.CoreAPIEnv,
 	db *db.Database,
@@ -48,7 +49,6 @@ func NewClient(
 	// Construct the Client
 	client := &Client{
 		ctx:          ctx,
-		Locale:       locale,
 		LakeFSClient: lakefsClient,
 		Env:          env,
 		Logger:       logger,

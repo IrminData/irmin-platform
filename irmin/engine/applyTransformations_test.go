@@ -25,7 +25,7 @@ func setupApplyTransformationsTestSuite(t *testing.T) *ApplyTransformationsTestS
 	}
 
 	// Initialize engine client with proper fields
-	engineClient, err := engine.NewClient(t.Context(), "en", testSuite.Logger, testSuite.Env, testSuite.DB)
+	engineClient, err := engine.NewClient(t.Context(), testSuite.Logger, testSuite.Env, testSuite.DB)
 	if err != nil {
 		t.Fatalf("Failed to create engine client: %v", err)
 	}

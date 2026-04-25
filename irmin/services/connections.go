@@ -3,12 +3,13 @@ package services
 import (
 	"context"
 	"fmt"
-	connectorsclient "irmin-api/connectors-client"
 	"irmin-api/db"
 	"irmin-api/lib"
 	"irmin-api/permissions"
 	"irmin-api/utils"
 	"maps"
+
+	"github.com/IrminData/irmin-sdk-go/connectorsclient"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -174,7 +175,7 @@ func (api *APIServices) CreateConnection(
 	}
 
 	// Create a connector client scoped to the user's locale for localized validation errors
-	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
+	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken)
 
 	// Validate the connection using the provided configuration
 	validationResult, err := client.ValidateConfigFields(c, detailsStr, settingsStr)
@@ -364,10 +365,9 @@ func (api *APIServices) UpdateConnectionConfiguration(
 		return nil, err
 	}
 
-	// Create a connector client scoped to the user's locale for localized validation errors.
 	// Stamp the connection ID on outbound calls so OAuth-backed connectors can fetch
 	// the right access token from Core during validation that hits vendor APIs.
-	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale).
+	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken).
 		WithConnectionID(fullConnection.ID)
 
 	// Validate the connection using the new configuration
@@ -720,7 +720,7 @@ func (api *APIServices) resolveConnectorSchemas(
 
 		// Lazy backfill for rows that predate the cached schema column.
 		// Use "en" locale for internal schema fetching.
-		client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, "en")
+		client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken)
 		fetched, complete := api.fetchConnectorSchema(c, client, connector.Name)
 		if !complete {
 			// Transient failure on at least one side — applySecretMasking will
@@ -810,7 +810,7 @@ func (api *APIServices) TestConnection(
 	// Create a connector client. Stamp the connection ID so OAuth-backed
 	// connectors can resolve the right access token from Core while the
 	// test call exercises vendor endpoints.
-	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale).
+	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken).
 		WithConnectionID(fullConnection.ID)
 
 	// Validate the connection using the stored credentials

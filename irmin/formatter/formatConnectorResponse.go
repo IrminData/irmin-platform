@@ -33,7 +33,6 @@ func FormatConnectorResponse(
 		Author:           connector.Author,
 		LogoURL:          connector.LogoURL,
 		Capabilities:     capabilities,
-		Locales:          connector.Locales,
 		Categories:       categories,
 		PrimaryCategory:  irminmodels.ConnectorCategory(connector.PrimaryCategory),
 		AuthorEmail:      connector.AuthorEmail,

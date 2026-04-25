@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	irmincache "irmin-api/cache"
+	"irmin-api/connectorjobs"
 	"irmin-api/db"
 	"irmin-api/lakefs"
 	"irmin-api/lib"
@@ -12,6 +13,7 @@ import (
 	"strings"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	"github.com/IrminData/irmin-sdk-go/observability"
 )
 
 // workflowOperation represents the type of workflow operation.
@@ -22,12 +24,140 @@ const (
 	operationExport workflowOperation = "export"
 )
 
+// progressLogSink builds a progress handler that maps each connector
+// observability.ProgressEvent to a rendered ConnectorOperationLog entry,
+// captured for later inclusion in the workflow run log. Returns the
+// handler (passed to engine via connectorjobs.ContextWithProgress) and
+// a drain closure that yields the captured strings, so processOperationResults
+// can emit them between errors and the operation summary.
+//
+// Single-threaded by construction: the progress handler is invoked
+// synchronously from the polling loop, which runs in the same
+// goroutine as performImport/performExport. No locking required.
+func progressLogSink(connectorName string) (observability.ProgressHandler, func() []string) {
+	var captured []string
+	lb := NewWorkflowLogBuilder()
+	return func(evt observability.ProgressEvent) {
+		captured = append(captured, lb.ConnectorOp(ConnectorOperationLog{
+			BaseLogEntry:  BaseLogEntry{Message: renderProgressEvent(connectorName, evt)},
+			ConnectorName: connectorName,
+			OperationType: evt.Kind,
+			Metadata:      progressEventMetadata(evt),
+		}))
+	}, func() []string { return captured }
+}
+
+// progressEventMetadata projects ProgressEvent into a metadata map so
+// the log entry's structured fields survive (page numbers, retry
+// attempts, byte counts) for downstream filtering even though the
+// log row's stable shape is just a generic ConnectorOperationLog.
+func progressEventMetadata(evt observability.ProgressEvent) map[string]any {
+	m := map[string]any{}
+	if evt.ResourcePath != "" {
+		m["resource_path"] = evt.ResourcePath
+	}
+	if evt.Page != 0 {
+		m["page"] = evt.Page
+	}
+	if evt.RecordsSoFar != 0 {
+		m["records_so_far"] = evt.RecordsSoFar
+	}
+	if evt.Cursor != "" {
+		m["cursor"] = evt.Cursor
+	}
+	if evt.Attempt != 0 {
+		m["attempt"] = evt.Attempt
+	}
+	if evt.Wait != 0 {
+		m["wait"] = evt.Wait.String()
+	}
+	if evt.Batch != 0 {
+		m["batch"] = evt.Batch
+	}
+	if evt.BatchSize != 0 {
+		m["batch_size"] = evt.BatchSize
+	}
+	if evt.Rows != 0 {
+		m["rows"] = evt.Rows
+	}
+	if evt.File != "" {
+		m["file"] = evt.File
+	}
+	if evt.BytesTransferred != 0 {
+		m["bytes_transferred"] = evt.BytesTransferred
+	}
+	if evt.BytesTotal != 0 {
+		m["bytes_total"] = evt.BytesTotal
+	}
+	if len(m) == 0 {
+		return nil
+	}
+	return m
+}
+
+// renderProgressEvent turns a single ProgressEvent into the human-readable
+// message string we put on a ConnectorOperationLog. The connector-side
+// vocabulary is small; the per-kind shape is documented in
+// observability.ProgressKind* — see the SDK package for the full enum.
+func renderProgressEvent(connectorName string, evt observability.ProgressEvent) string {
+	prefix := connectorName
+	if prefix == "" {
+		prefix = "connector"
+	}
+	switch evt.Kind {
+	case observability.ProgressKindPage:
+		return fmt.Sprintf(
+			"%s: page %d (%d records so far) at %s",
+			prefix, evt.Page, evt.RecordsSoFar, evt.ResourcePath,
+		)
+	case observability.ProgressKindBatch:
+		return fmt.Sprintf(
+			"%s: batch %d (%d records) at %s",
+			prefix, evt.Batch, evt.BatchSize, evt.ResourcePath,
+		)
+	case observability.ProgressKindRateLimit:
+		return fmt.Sprintf(
+			"%s: rate-limit retry %d, sleeping %s before %s",
+			prefix, evt.Attempt, evt.Wait, evt.ResourcePath,
+		)
+	case observability.ProgressKindQuery:
+		return fmt.Sprintf("%s: %d rows scanned at %s", prefix, evt.Rows, evt.ResourcePath)
+	case observability.ProgressKindFile:
+		if evt.BytesTotal > 0 {
+			return fmt.Sprintf(
+				"%s: %s %d/%d bytes",
+				prefix, evt.File, evt.BytesTransferred, evt.BytesTotal,
+			)
+		}
+		return fmt.Sprintf("%s: %s %d bytes", prefix, evt.File, evt.BytesTransferred)
+	case observability.ProgressKindHeartbeat:
+		return fmt.Sprintf("%s: heartbeat at %s", prefix, evt.ResourcePath)
+	default:
+		return fmt.Sprintf("%s: %s at %s", prefix, evt.Kind, evt.ResourcePath)
+	}
+}
+
 // operationResult holds the results of an import or export operation.
 type operationResult struct {
 	importedObjects  []lakefs.ObjectMetadata
 	exportedPaths    []string
 	transferredBytes int64
 	errors           []error
+	// progressLogs are the rendered ConnectorOperationLog entries
+	// captured during the operation by an observability.ProgressHandler
+	// attached via connectorjobs.ContextWithProgress. processOperationResults
+	// emits them between any errors and the import/export summary.
+	progressLogs []string
+}
+
+// connectorNameForLogs returns the user-visible connection name we
+// stamp on per-operation progress entries. Falls back to "connector"
+// to keep messages parseable when no name is set.
+func connectorNameForLogs(connection *db.Connection) string {
+	if connection != nil && connection.Name != "" {
+		return connection.Name
+	}
+	return "connector"
 }
 
 // aggregateOperationErrors collapses a slice of per-file import/export
@@ -70,6 +200,9 @@ func (o *Orchestrator) performImportOperation(
 		repositoryPath = repositoryPaths[0]
 	}
 
+	handler, drain := progressLogSink(connectorNameForLogs(connection))
+	ctx = connectorjobs.ContextWithProgress(ctx, handler)
+
 	importedObjects, errors := o.dataEngine.DataImport(
 		ctx,
 		connection,
@@ -85,6 +218,7 @@ func (o *Orchestrator) performImportOperation(
 		importedObjects:  importedObjects,
 		transferredBytes: sumImportedObjectBytes(importedObjects),
 		errors:           errors,
+		progressLogs:     drain(),
 	}
 }
 
@@ -104,6 +238,9 @@ func (o *Orchestrator) performExportOperation(
 		connectionPath = connectionPaths[0]
 	}
 
+	handler, drain := progressLogSink(connectorNameForLogs(connection))
+	ctx = connectorjobs.ContextWithProgress(ctx, handler)
+
 	exportedPaths, transferredBytes, errors := o.dataEngine.DataExport(
 		ctx,
 		connection,
@@ -119,6 +256,7 @@ func (o *Orchestrator) performExportOperation(
 		exportedPaths:    exportedPaths,
 		transferredBytes: transferredBytes,
 		errors:           errors,
+		progressLogs:     drain(),
 	}
 }
 
@@ -166,14 +304,15 @@ func (o *Orchestrator) processOperationResults(
 		}
 	}
 
-	// Live per-connector-operation progress logs used to be surfaced here
-	// via POST /operation/status. That endpoint was form-bodied and
-	// coupled to the legacy sync protocol; async pull now forwards
-	// progress events through the SDK poll loop (slog.Debug on the
-	// server) rather than attaching them to workflow run logs. Push and
-	// patch operations remain sync on the connector side but have also
-	// lost their per-operation log surfacing here — re-add via a
-	// dedicated ticket if users miss it.
+	// Live per-connector-operation progress logs, captured during
+	// the async data movement by an observability.ProgressHandler
+	// attached to ctx via connectorjobs.ContextWithProgress. Each
+	// page / batch / file / rate-limit / heartbeat event the
+	// connector emitted into OperationJobStatusResponse.Progress is
+	// rendered here as a ConnectorOperationLog row so the workflow
+	// run timeline shows the same fine-grained signal the old
+	// synchronous []OperationLog path produced.
+	logs = append(logs, result.progressLogs...)
 
 	// Log import summary and individual objects
 	if operation == operationImport && len(result.importedObjects) > 0 {
