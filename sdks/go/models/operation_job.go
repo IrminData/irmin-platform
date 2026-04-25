@@ -60,13 +60,14 @@ func (s OperationJobStatus) IsTerminal() bool {
 }
 
 // OperationJob is the metadata record for an asynchronous connector
-// operation (currently: pull; push/patch to follow).
+// operation (pull / push / patch).
 //
-// The connector service creates one of these on POST /operation/pull,
-// returns its ID to the caller, then fills in status/progress as the
+// The connector service creates one of these on POST /operation/{pull,
+// push,patch}, returns its ID + per-job operation token to the caller
+// in StartOperationJobResponse, then fills in status/progress as the
 // worker runs. The full job payload is typically only returned inside
-// status responses; POST /operation/pull itself returns the slimmer
-// StartOperationPullResponse to keep the accept-fast path fast.
+// status responses; the start route itself returns the slimmer
+// StartOperationJobResponse to keep the accept-fast path fast.
 type OperationJob struct {
 	// JobID is the connector-service-issued identifier for this job.
 	// Opaque to clients — used to poll status, fetch result, or
@@ -170,13 +171,6 @@ type StartOperationJobResponse struct {
 	// underlying OperationJob row.
 	OperationToken string `json:"operation_token" example:"optk_7f3d2a9c1e6b"`
 }
-
-// StartOperationPullResponse is the legacy name for StartOperationJobResponse.
-// Kept as an alias so existing connector-service handlers compile unchanged
-// while the rename propagates.
-//
-// Deprecated: use StartOperationJobResponse.
-type StartOperationPullResponse = StartOperationJobResponse
 
 // AlreadyRunningBody is the wire shape returned by any connector
 // endpoint that refuses a request because the same operation is

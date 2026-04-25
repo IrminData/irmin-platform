@@ -3770,17 +3770,9 @@ const HeaderConnectionID = "X-Irmin-Connection-Id"
 var ErrJobFailed = errors.New("operation job ended in a non-success terminal state")
 ```
 
-<a name="ErrLegacySyncPullResponse"></a>ErrLegacySyncPullResponse is an alias retained because the SDK PR that introduced it was cited externally as a pull\-specific sentinel. New call sites should use ErrLegacySyncResponse.
-
-Deprecated: use ErrLegacySyncResponse. Kept for one release cycle so existing errors.Is checks keep matching.
-
-```go
-var ErrLegacySyncPullResponse = ErrLegacySyncResponse
-```
-
 <a name="ErrLegacySyncResponse"></a>ErrLegacySyncResponse is returned by any Start\*Operation call when the connector service responds with a 200 OK \+ body instead of the expected 202 Accepted \+ \{job\_id, operation\_token\}. Its presence means the connector service is still on the pre\-async protocol and the caller is talking to an unmigrated deployment; the Core poll wrapper should bail out with an actionable message rather than attempt a silent fallback, per the "no backward\-compat shim" decision in the async\-protocol plan.
 
-Returned by StartOperationPull, StartOperationPush, and StartOperationPatch alike; the earlier pull\-specific name ErrLegacySyncPullResponse aliases this for back\-compat.
+Returned by StartOperationPull, StartOperationPush, and StartOperationPatch alike.
 
 ```go
 var ErrLegacySyncResponse = errors.New(
@@ -4908,7 +4900,6 @@ import "github.com/IrminData/irmin-sdk-go/models"
 - [type SearchResult](<#SearchResult>)
 - [type SelectOption](<#SelectOption>)
 - [type StartOperationJobResponse](<#StartOperationJobResponse>)
-- [type StartOperationPullResponse](<#StartOperationPullResponse>)
 - [type StoredQuery](<#StoredQuery>)
 - [type StoredScript](<#StoredScript>)
 - [type SubscriptionStatus](<#SubscriptionStatus>)
@@ -6305,9 +6296,9 @@ const (
 <a name="OperationJob"></a>
 ## type OperationJob
 
-OperationJob is the metadata record for an asynchronous connector operation \(currently: pull; push/patch to follow\).
+OperationJob is the metadata record for an asynchronous connector operation \(pull / push / patch\).
 
-The connector service creates one of these on POST /operation/pull, returns its ID to the caller, then fills in status/progress as the worker runs. The full job payload is typically only returned inside status responses; POST /operation/pull itself returns the slimmer StartOperationPullResponse to keep the accept\-fast path fast.
+The connector service creates one of these on POST /operation/\{pull, push,patch\}, returns its ID \+ per\-job operation token to the caller in StartOperationJobResponse, then fills in status/progress as the worker runs. The full job payload is typically only returned inside status responses; the start route itself returns the slimmer StartOperationJobResponse to keep the accept\-fast path fast.
 
 ```go
 type OperationJob struct {
@@ -7455,17 +7446,6 @@ type StartOperationJobResponse struct {
     // underlying OperationJob row.
     OperationToken string `json:"operation_token" example:"optk_7f3d2a9c1e6b"`
 }
-```
-
-<a name="StartOperationPullResponse"></a>
-## type StartOperationPullResponse
-
-StartOperationPullResponse is the legacy name for StartOperationJobResponse. Kept as an alias so existing connector\-service handlers compile unchanged while the rename propagates.
-
-Deprecated: use StartOperationJobResponse.
-
-```go
-type StartOperationPullResponse = StartOperationJobResponse
 ```
 
 <a name="StoredQuery"></a>

@@ -38,20 +38,11 @@ func (e *APIError) Error() string {
 // decision in the async-protocol plan.
 //
 // Returned by StartOperationPull, StartOperationPush, and
-// StartOperationPatch alike; the earlier pull-specific name
-// ErrLegacySyncPullResponse aliases this for back-compat.
+// StartOperationPatch alike.
 var ErrLegacySyncResponse = errors.New(
 	"connector returned legacy synchronous response (HTTP 200 with body); " +
 		"expected 202 Accepted from async protocol — upgrade the connector service",
 )
-
-// ErrLegacySyncPullResponse is an alias retained because the SDK PR
-// that introduced it was cited externally as a pull-specific
-// sentinel. New call sites should use ErrLegacySyncResponse.
-//
-// Deprecated: use ErrLegacySyncResponse. Kept for one release cycle
-// so existing errors.Is checks keep matching.
-var ErrLegacySyncPullResponse = ErrLegacySyncResponse
 
 // ErrResultNotReady is returned by FetchOperationResult when the job
 // is still in a non-terminal state (pending or running) at the time

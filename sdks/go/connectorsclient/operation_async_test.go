@@ -248,7 +248,7 @@ func TestStartOperationPatch_CarriesDetailsAndSettings(t *testing.T) {
 }
 
 // TestStartOperationPull_LegacySyncResponse verifies that a 200 OK
-// from an unmigrated connector surfaces the ErrLegacySyncPullResponse
+// from an unmigrated connector surfaces the ErrLegacySyncResponse
 // sentinel rather than silently degrading to a sync path.
 func TestStartOperationPull_LegacySyncResponse(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -263,8 +263,8 @@ func TestStartOperationPull_LegacySyncResponse(t *testing.T) {
 		context.Background(),
 		connectorsclient.StartOperationPullRequest{Path: "/v1/customers"},
 	)
-	if !errors.Is(err, connectorsclient.ErrLegacySyncPullResponse) {
-		t.Fatalf("err = %v, want ErrLegacySyncPullResponse", err)
+	if !errors.Is(err, connectorsclient.ErrLegacySyncResponse) {
+		t.Fatalf("err = %v, want ErrLegacySyncResponse", err)
 	}
 }
 

@@ -986,13 +986,14 @@ type OperationJob struct {
 	ExpiresAt *time.Time `json:"expires_at,omitempty"`
 }
     OperationJob is the metadata record for an asynchronous connector operation
-    (currently: pull; push/patch to follow).
+    (pull / push / patch).
 
-    The connector service creates one of these on POST /operation/pull, returns
-    its ID to the caller, then fills in status/progress as the worker runs.
+    The connector service creates one of these on POST /operation/{pull,
+    push,patch}, returns its ID + per-job operation token to the caller in
+    StartOperationJobResponse, then fills in status/progress as the worker runs.
     The full job payload is typically only returned inside status responses;
-    POST /operation/pull itself returns the slimmer StartOperationPullResponse
-    to keep the accept-fast path fast.
+    the start route itself returns the slimmer StartOperationJobResponse to keep
+    the accept-fast path fast.
 
 type OperationJobStatus string
     OperationJobStatus enumerates the lifecycle states of an asynchronous
@@ -1745,13 +1746,6 @@ type StartOperationJobResponse struct {
     The SDK's Client.StartOperation{Pull,Push,Patch} converts this body into a
     *connectorsclient.OperationJob handle that encapsulates the token so callers
     never pass it around manually.
-
-type StartOperationPullResponse = StartOperationJobResponse
-    StartOperationPullResponse is the legacy name for StartOperationJobResponse.
-    Kept as an alias so existing connector-service handlers compile unchanged
-    while the rename propagates.
-
-    Deprecated: use StartOperationJobResponse.
 
 type StoredQuery struct {
 	ID          string    `json:"id"             validate:"required,validsqid=queries" example:"query_1a2b3c4d5e"`

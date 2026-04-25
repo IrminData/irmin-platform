@@ -49,14 +49,6 @@ var ErrJobFailed = errors.New("operation job ended in a non-success terminal sta
     wrap this can surface the original connector-supplied error message from
     OperationJobStatusResponse.Error.
 
-var ErrLegacySyncPullResponse = ErrLegacySyncResponse
-    ErrLegacySyncPullResponse is an alias retained because the SDK PR that
-    introduced it was cited externally as a pull-specific sentinel. New call
-    sites should use ErrLegacySyncResponse.
-
-    Deprecated: use ErrLegacySyncResponse. Kept for one release cycle so
-    existing errors.Is checks keep matching.
-
 var ErrLegacySyncResponse = errors.New(
 	"connector returned legacy synchronous response (HTTP 200 with body); " +
 		"expected 202 Accepted from async protocol — upgrade the connector service",
@@ -70,8 +62,7 @@ var ErrLegacySyncResponse = errors.New(
     backward-compat shim" decision in the async-protocol plan.
 
     Returned by StartOperationPull, StartOperationPush, and StartOperationPatch
-    alike; the earlier pull-specific name ErrLegacySyncPullResponse aliases this
-    for back-compat.
+    alike.
 
 var ErrMissingOperationToken = errors.New(
 	"connector accepted the operation (HTTP 202) but did not return an operation_token; " +
