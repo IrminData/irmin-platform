@@ -178,11 +178,11 @@ nothing in the shared base requires them.
 
 The provider methods that wire these together:
 
-- `OperationInitProvider.GetOperationFormFields` — return the
+- `OperationConfigProvider.GetOperationFormFields` — return the
   required + optional field names (use
   `common.GetRequiredFieldNames` / `GetOptionalFieldNames` against
   your DynamicField definitions to derive them automatically).
-- `OperationInitProvider.BuildDetails` /
+- `OperationConfigProvider.BuildDetails` /
   `BuildSettings` — turn the parsed form into the
   `map[string]string` shape Core expects (use
   `common.BuildDetailsFromFields` /

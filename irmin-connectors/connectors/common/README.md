@@ -110,7 +110,7 @@ functions that take `cs.Logger` and `cs.DB`.
 
 ```go
 // OperationInit — pass the controller itself as the provider when it
-// implements the OperationInitProvider methods (most connectors do).
+// implements the OperationConfigProvider methods (most connectors do).
 func (cs *Controllers) OperationInit(c fiber.Ctx) error {
 	return cs.HandleOperationInit(c, cs)
 }
@@ -158,7 +158,7 @@ func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error {
 
 **OperationInit:**
 ```go
-type OperationInitProvider interface {
+type OperationConfigProvider interface {
 	GetOperationFormFields() (required []string, optional []string)
 	BuildDetails(fields map[string]string) (map[string]string, error)
 	BuildSettings(fields map[string]string) (map[string]string, error)
@@ -276,7 +276,7 @@ config-field code small:
   `GetOptionalFieldNames(detailsDefs, settingsDefs)` — reflection
   over a `map[string]irminmodels.DynamicField` to derive which
   fields are required/optional. Use these from
-  `OperationInitProvider.GetOperationFormFields` and
+  `OperationConfigProvider.GetOperationFormFields` and
   `ConfigValidationProvider.GetRequiredFormFields`.
 - `CreateSelectOptions(values []string)` /
   `CreateSelectOptionsWithLabels(map[string]string)` — build

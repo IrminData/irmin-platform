@@ -52,7 +52,7 @@ func ValidateSystemToken(
 func EnsureOperation(
 	c fiber.Ctx,
 	database *db.Database,
-	provider OperationInitProvider,
+	provider OperationConfigProvider,
 ) error {
 	info, ok := c.Locals("connectorInfo").(*models.ConnectorDetails)
 	if !ok || info == nil {
@@ -70,13 +70,13 @@ func EnsureOperation(
 
 // CreateEnsureOperationMiddleware returns a fiber.Handler that runs
 // EnsureOperation against the connector's controller (which must
-// satisfy OperationInitProvider). Each per-connector controller
+// satisfy OperationConfigProvider). Each per-connector controller
 // supplies its own concrete provider; this factory keeps the route-
 // wiring boilerplate in setupConnectorRoutes free of generic-method
 // gymnastics.
 func CreateEnsureOperationMiddleware(
 	app *models.ConnectorsApp,
-	provider OperationInitProvider,
+	provider OperationConfigProvider,
 ) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		return EnsureOperation(c, app.DB, provider)

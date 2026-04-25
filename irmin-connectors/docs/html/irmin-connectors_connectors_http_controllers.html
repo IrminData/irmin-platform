@@ -25,10 +25,10 @@ func NewControllers(app *models.ConnectorsApp) *Controllers
     dependencies.
 
 func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
-    BuildDetails implements the OperationInitProvider interface.
+    BuildDetails implements the OperationConfigProvider interface.
 
 func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
-    BuildSettings implements the OperationInitProvider interface.
+    BuildSettings implements the OperationConfigProvider interface.
 
 func (cs *Controllers) ConfigFields(c fiber.Ctx) error
     ConfigFields godoc @Summary Get HTTP connector configuration fields
@@ -82,7 +82,7 @@ func (cs *Controllers) GetDynamicFields(
     GetDynamicFields implements the ConfigFieldProvider interface.
 
 func (cs *Controllers) GetOperationFormFields() ([]string, []string)
-    GetOperationFormFields implements the OperationInitProvider interface.
+    GetOperationFormFields implements the OperationConfigProvider interface.
 
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
     GetRequiredFormFields implements the ConfigValidationProvider interface.

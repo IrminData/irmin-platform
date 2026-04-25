@@ -34,14 +34,14 @@ type ConnectorController interface {
 	SubscribeToChanges(c fiber.Ctx) error
 	UnsubscribeFromChanges(c fiber.Ctx) error
 
-	// OperationInitProvider methods. Embedded directly on the
+	// OperationConfigProvider methods. Embedded directly on the
 	// controller because each connector's Controllers struct already
 	// implements them. Phase-4 routes call EnsureOperationFromRequest
 	// with the controller as the provider so Start* requests can
 	// upsert the Operation row inline from the details / settings
 	// carried on the request body — the same fields the legacy
 	// /operation/init handshake used to ship once and then cache.
-	OperationInitProvider
+	OperationConfigProvider
 }
 
 // ConnectorRouteConfig holds the configuration for setting up connector routes.

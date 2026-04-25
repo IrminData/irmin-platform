@@ -13,15 +13,26 @@ import (
 	"gorm.io/gorm"
 )
 
-// OperationInitProvider defines the interface for initializing connector operations.
-type OperationInitProvider interface {
-	// GetOperationFormFields returns the list of required and optional form field names
+// OperationConfigProvider exposes a connector's request-time
+// configuration shape. EnsureOperationFromRequest consumes it on every
+// data route to parse the SDK's `details[<key>]` / `settings[<key>]`
+// form fields, build the per-connector credential maps, and upsert the
+// matching Operation row keyed on (Connector, ConfigHash).
+//
+// The interface used to be called OperationInitProvider when its sole
+// caller was the (now-retired) /operation/init handler. Phase 4 retired
+// init; the methods here drive the inline upsert path on every Start*
+// request, so the name reflects the surviving role: build the request-
+// time config, not initialise anything.
+type OperationConfigProvider interface {
+	// GetOperationFormFields returns the list of required and optional
+	// form field names ParseFormFields should look up on the request.
 	GetOperationFormFields() (required []string, optional []string)
 
-	// BuildDetails constructs the details JSON from parsed form fields
+	// BuildDetails constructs the details JSON from parsed form fields.
 	BuildDetails(fields map[string]string) (map[string]string, error)
 
-	// BuildSettings constructs the settings JSON from parsed form fields
+	// BuildSettings constructs the settings JSON from parsed form fields.
 	BuildSettings(fields map[string]string) (map[string]string, error)
 }
 
@@ -60,7 +71,7 @@ func (e *EnsureOperationFromRequestError) Unwrap() error {
 // `details[<key>]=<value>` and `settings[<key>]=<value>` form fields
 // (the SDK's StartOperation*Request.Details / .Settings) — this
 // helper parses them through the connector's existing
-// OperationInitProvider, marshals + hashes the result, and atomically
+// OperationConfigProvider, marshals + hashes the result, and atomically
 // upserts the matching Operation row keyed on
 // (ConnectorRegistrationID, ConfigHash). Subsequent calls with the
 // same credentials reuse the same row, so worker code that reads
@@ -76,7 +87,7 @@ func EnsureOperationFromRequest(
 	c fiber.Ctx,
 	database *db.Database,
 	info *models.ConnectorDetails,
-	provider OperationInitProvider,
+	provider OperationConfigProvider,
 ) (*db.Operation, *EnsureOperationFromRequestError) {
 	if info == nil {
 		return nil, &EnsureOperationFromRequestError{
