@@ -17,16 +17,14 @@ type TestRunner struct {
 	Config  *TestConfig
 	Summary *TestSummary
 	Verbose bool
-	Locale  string
 }
 
 // NewTestRunner creates a new test runner.
-func NewTestRunner(config *TestConfig, verbose bool, locale string) *TestRunner {
+func NewTestRunner(config *TestConfig, verbose bool) *TestRunner {
 	return &TestRunner{
 		Config:  config,
 		Summary: NewTestSummary(),
 		Verbose: verbose,
-		Locale:  locale,
 	}
 }
 
@@ -128,7 +126,7 @@ func (r *TestRunner) initOperationForType(
 func (r *TestRunner) runConnectorTests(ctx context.Context, name string, cfg ConnectorConfig, specificTest string) {
 	const testTypeOperation = "operation"
 
-	client := helpers.NewConnectorClient(name, cfg.URL, cfg.SystemToken, r.Locale)
+	client := helpers.NewConnectorClient(name, cfg.URL, cfg.SystemToken)
 
 	// Test 1: Info endpoint
 	if specificTest == "" || specificTest == "info" {

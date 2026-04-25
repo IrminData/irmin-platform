@@ -93,7 +93,7 @@ func HandleOperationSchemaGet(
 		OperationID:             operation.ID,
 		ConnectorRegistrationID: operation.ConnectorRegistrationID,
 		ConnectorName:           connectorName,
-		Kind:                    "schema",
+		Kind:                    operationKindSchema,
 	})
 	if alreadyErr != nil {
 		return RespondAlreadyRunning(c, alreadyErr)

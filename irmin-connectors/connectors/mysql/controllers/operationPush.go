@@ -1,6 +1,7 @@
 package mysqlcontrollers
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/binary"
 	"encoding/json"
@@ -43,11 +44,11 @@ func (p *MySQLPushProvider) ProgressHandler(operation *db.Operation) common.Prog
 
 // InitializeClient initializes the MySQL client for push operations.
 func (p *MySQLPushProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
-	client, databaseName, err := mysqlclient.InitMySQLClient(c, logger, operation)
+	client, databaseName, err := mysqlclient.InitMySQLClient(ctx, logger, operation)
 	if err != nil {
 		return nil, nil, func() {}, fmt.Errorf("failed to initialise MySQL client: %w", err)
 	}
@@ -57,7 +58,7 @@ func (p *MySQLPushProvider) InitializeClient(
 
 	cleanup := func() {
 		if closeErr := client.Close(); closeErr != nil {
-			logger.Error("Failed to close MySQL client", "error", closeErr)
+			logger.ErrorContext(ctx, "Failed to close MySQL client", "error", closeErr)
 		}
 	}
 
@@ -66,8 +67,9 @@ func (p *MySQLPushProvider) InitializeClient(
 
 // ProcessFiles processes the extracted files and inserts them into MySQL tables.
 func (p *MySQLPushProvider) ProcessFiles(
-	c fiber.Ctx,
+	ctx context.Context,
 	client any,
+	operation *db.Operation,
 	files map[string][]byte,
 	rawPath string,
 ) error {
@@ -76,13 +78,11 @@ func (p *MySQLPushProvider) ProcessFiles(
 		return errors.New("invalid client type for MySQL push provider")
 	}
 
-	operation, _ := c.Locals("operation").(*db.Operation)
-
 	// Use the existing database-specific path processing utility with proper database name
 	targetPath := processRawPath(rawPath, p.databaseName)
 
 	// Get available tables
-	tables, err := mysqlClient.GetTables(c)
+	tables, err := mysqlClient.GetTables(ctx)
 	if err != nil {
 		if operation != nil && p.dbInstance != nil && p.logger != nil {
 			common.LogOperationEvent(
@@ -115,7 +115,7 @@ func (p *MySQLPushProvider) ProcessFiles(
 			continue
 		}
 
-		err = p.processTableDataWithLogging(c, mysqlClient, tableName, files[filePath], tables, operation)
+		err = p.processTableDataWithLogging(ctx, mysqlClient, tableName, files[filePath], tables, operation)
 		if err != nil {
 			return fmt.Errorf("failed to process table data: %w", err)
 		}
@@ -128,17 +128,18 @@ func (p *MySQLPushProvider) ProcessFiles(
 // @Summary Push data to MySQL database
 // @Description Insert data into MySQL database tables using the operation token and JSON file containing table data. Use the path parameter to specify a target table name.
 // @Tags mysql
-// @Security SystemTokenAuth
+// @Security OperationTokenAuth
 // @Accept multipart/form-data
 // @Produce json
 // @Param operation_token formData string true "Operation token received from operation/init"
 // @Param file formData file true "JSON file containing table data to insert"
 // @Param path formData string false "Target table name (e.g., customers). If not specified, uses the filename from the uploaded file"
-// @Success 200 {object} fiber.Map "Data pushed successfully"
+// @Success 202 {object} irminmodels.StartOperationJobResponse "Push job accepted; poll /operation/status/:job_id"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token or file format"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
 // @Failure 404 {object} fiber.Map "Operation not found"
-// @Failure 500 {object} fiber.Map "Internal server error"
+// @Failure 409 {object} irminmodels.AlreadyRunningBody "Operation already running"
+// @Failure 500 {object} irminmodels.JobErrorBody "Internal server error"
 // @Router /mysql/operation/push [post]
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	provider := &MySQLPushProvider{
@@ -150,7 +151,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 
 // processTableDataWithLogging is a wrapper around processTableData that adds logging.
 func (p *MySQLPushProvider) processTableDataWithLogging(
-	c fiber.Ctx,
+	ctx context.Context,
 	client *mysqlclient.MySQLClient,
 	tableName string,
 	fileData []byte,
@@ -229,7 +230,7 @@ func (p *MySQLPushProvider) processTableDataWithLogging(
 	columns := getSortedColumns(records[0])
 	insertSQL := buildInsertStatement(tableName, columns)
 
-	err := p.executeTransactionWithLogging(c, client, tableName, records, columns, insertSQL, operation)
+	err := p.executeTransactionWithLogging(ctx, client, tableName, records, columns, insertSQL, operation)
 	if err != nil {
 		if operation != nil && p.dbInstance != nil && p.logger != nil {
 			common.LogOperationEvent(
@@ -270,7 +271,7 @@ func (p *MySQLPushProvider) processTableDataWithLogging(
 
 // executeTransactionWithLogging wraps executeTransaction with logging for retries.
 func (p *MySQLPushProvider) executeTransactionWithLogging(
-	c fiber.Ctx,
+	ctx context.Context,
 	client *mysqlclient.MySQLClient,
 	tableName string,
 	records []map[string]any,
@@ -292,7 +293,7 @@ func (p *MySQLPushProvider) executeTransactionWithLogging(
 			handler, resourcePath,
 			queryProgressMinRows, queryProgressMinInterval,
 		)
-		err := executeTransactionStep(c, client, tableName, records, columns, insertSQL, emit)
+		err := executeTransactionStep(ctx, client, tableName, records, columns, insertSQL, emit)
 		if err == nil {
 			return nil
 		}
@@ -348,11 +349,11 @@ func buildInsertStatement(tableName string, columns []string) string {
 }
 
 // executeDelete executes the DELETE and TRUNCATE operations within a transaction.
-func executeDelete(c fiber.Ctx, tx *mysqlclient.Tx, tableName string) error {
+func executeDelete(ctx context.Context, tx *mysqlclient.Tx, tableName string) error {
 	// First try TRUNCATE
-	if _, truncateErr := tx.Exec(c, fmt.Sprintf("TRUNCATE TABLE %s", escapeIdentifier(tableName))); truncateErr != nil {
+	if _, truncateErr := tx.Exec(ctx, fmt.Sprintf("TRUNCATE TABLE %s", escapeIdentifier(tableName))); truncateErr != nil {
 		// If TRUNCATE fails, fall back to DELETE
-		if _, deleteErr := tx.Exec(c, fmt.Sprintf("DELETE FROM %s", escapeIdentifier(tableName))); deleteErr != nil {
+		if _, deleteErr := tx.Exec(ctx, fmt.Sprintf("DELETE FROM %s", escapeIdentifier(tableName))); deleteErr != nil {
 			return fmt.Errorf("failed to delete/truncate rows: %w", deleteErr)
 		}
 	}
@@ -365,7 +366,7 @@ func executeDelete(c fiber.Ctx, tx *mysqlclient.Tx, tableName string) error {
 // use common.ThrottledQueryEmitter, which returns one for nil
 // handlers).
 func executeInserts(
-	c fiber.Ctx,
+	ctx context.Context,
 	tx *mysqlclient.Tx,
 	records []map[string]any,
 	columns []string,
@@ -378,7 +379,7 @@ func executeInserts(
 		for i, col := range columns {
 			args[i] = record[col]
 		}
-		if _, err := tx.Exec(c, insertSQL, args...); err != nil {
+		if _, err := tx.Exec(ctx, insertSQL, args...); err != nil {
 			return fmt.Errorf("failed to insert row: %w", err)
 		}
 		inserted++
@@ -389,7 +390,7 @@ func executeInserts(
 
 // executeTransactionStep executes a single attempt of the transaction.
 func executeTransactionStep(
-	c fiber.Ctx,
+	ctx context.Context,
 	client *mysqlclient.MySQLClient,
 	tableName string,
 	records []map[string]any,
@@ -397,19 +398,19 @@ func executeTransactionStep(
 	insertSQL string,
 	onProgress func(int64),
 ) error {
-	tx, err := client.BeginTransaction(c)
+	tx, err := client.BeginTransaction(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
 	// defer all constraints until commit
-	if _, err = tx.Exec(c, "SET FOREIGN_KEY_CHECKS = 0"); err != nil {
+	if _, err = tx.Exec(ctx, "SET FOREIGN_KEY_CHECKS = 0"); err != nil {
 		// best-effort, continue even if this fails
 		_ = err
 	}
 
 	// delete existing rows
-	err = executeDelete(c, tx, tableName)
+	err = executeDelete(ctx, tx, tableName)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			// Log the rollback error but don't return it
@@ -419,7 +420,7 @@ func executeTransactionStep(
 	}
 
 	// insert each new record
-	err = executeInserts(c, tx, records, columns, insertSQL, onProgress)
+	err = executeInserts(ctx, tx, records, columns, insertSQL, onProgress)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			// Log the rollback error but don't return it
@@ -429,7 +430,7 @@ func executeTransactionStep(
 	}
 
 	// enable foreign key checks again before commit
-	if _, err = tx.Exec(c, "SET FOREIGN_KEY_CHECKS = 1"); err != nil {
+	if _, err = tx.Exec(ctx, "SET FOREIGN_KEY_CHECKS = 1"); err != nil {
 		// best-effort, continue even if this fails
 		_ = err
 	}

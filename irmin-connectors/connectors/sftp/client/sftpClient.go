@@ -1,6 +1,7 @@
 package sftpclient
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
@@ -334,16 +335,28 @@ func (c *SftpClient) verifyHostKeyFingerprint(_ string, _ net.Addr, key ssh.Publ
 
 // executeWithRetry executes a function with retry logic.
 func (c *SftpClient) executeWithRetry(operation string, fn func() error) error {
+	return c.executeWithRetryContext(context.Background(), operation, fn)
+}
+
+// executeWithRetryContext executes a function with retry logic and aborts when ctx is cancelled.
+func (c *SftpClient) executeWithRetryContext(ctx context.Context, operation string, fn func() error) error {
 	var lastErr error
 	delay := c.retryConfig.InitialDelay
 
 	for attempt := 0; attempt <= c.retryConfig.MaxRetries; attempt++ {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if attempt > 0 {
 			// Surface the upcoming sleep before we take it — a flaky
 			// network mid-transfer looks identical to a hung
 			// operation otherwise.
 			c.emitRetryProgress(operation, attempt, delay)
-			time.Sleep(delay)
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(delay):
+			}
 			delay = min(
 				time.Duration(float64(delay)*c.retryConfig.BackoffFactor),
 				c.retryConfig.MaxDelay,
@@ -524,6 +537,11 @@ func (c *SftpClient) DownloadFile(remotePath string) ([]byte, error) {
 
 // UploadFile uploads a single file to the remote server.
 func (c *SftpClient) UploadFile(localData []byte, remotePath string) error {
+	return c.UploadFileContext(context.Background(), localData, remotePath)
+}
+
+// UploadFileContext uploads a single file to the remote server and aborts when ctx is cancelled.
+func (c *SftpClient) UploadFileContext(ctx context.Context, localData []byte, remotePath string) error {
 	if c.sftpClient == nil {
 		return errors.New("SFTP client not connected")
 	}
@@ -547,7 +565,10 @@ func (c *SftpClient) UploadFile(localData []byte, remotePath string) error {
 	// Sanitize path
 	cleanPath := SanitizePath(remotePath)
 
-	return c.executeWithRetry("upload_file", func() error {
+	return c.executeWithRetryContext(ctx, "upload_file", func() error {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
 		// Create remote file for writing
 		remoteFile, err := c.sftpClient.Create(cleanPath)
 		if err != nil {
@@ -556,6 +577,9 @@ func (c *SftpClient) UploadFile(localData []byte, remotePath string) error {
 		defer remoteFile.Close()
 
 		// Write file content
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
 		_, err = remoteFile.Write(localData)
 		if err != nil {
 			return fmt.Errorf("failed to write to remote file %s: %w", cleanPath, err)
@@ -668,6 +692,11 @@ func (c *SftpClient) downloadDirectoryRecursive(remotePath, relativePath string,
 
 // UploadDirectory uploads multiple files maintaining directory structure.
 func (c *SftpClient) UploadDirectory(files map[string][]byte, remotePath string) error {
+	return c.UploadDirectoryContext(context.Background(), files, remotePath)
+}
+
+// UploadDirectoryContext uploads multiple files maintaining directory structure and aborts when ctx is cancelled.
+func (c *SftpClient) UploadDirectoryContext(ctx context.Context, files map[string][]byte, remotePath string) error {
 	if c.sftpClient == nil {
 		return errors.New("SFTP client not connected")
 	}
@@ -699,6 +728,9 @@ func (c *SftpClient) UploadDirectory(files map[string][]byte, remotePath string)
 	// Upload each file
 	var bytesUploaded int64
 	for relativeFilePath, content := range files {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
 		fullRemotePath := filepath.Join(cleanBasePath, relativeFilePath)
 
 		// Validate each file path and name
@@ -721,7 +753,7 @@ func (c *SftpClient) UploadDirectory(files map[string][]byte, remotePath string)
 		}
 
 		// Upload file
-		err = c.UploadFile(content, fullRemotePath)
+		err = c.UploadFileContext(ctx, content, fullRemotePath)
 		if err != nil {
 			return fmt.Errorf("failed to upload file %s: %w", fullRemotePath, err)
 		}

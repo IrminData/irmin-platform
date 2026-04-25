@@ -137,7 +137,6 @@ func GetConnectorInfo() models.ConnectorDetails {
 			irminmodels.ConnectorCapabilityPush,
 			irminmodels.ConnectorCapabilityApplyPatch,
 		},
-		Locales:         []string{"en"},
 		PrimaryCategory: irminmodels.ConnectorCategoryPayment,
 		Categories: []irminmodels.ConnectorCategory{
 			irminmodels.ConnectorCategoryPayment,

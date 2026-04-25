@@ -71,26 +71,51 @@ Called when the user clicks "Test Connection" and when Core wants to
 re-verify a stored connection. Should actually attempt a connection to
 the external system — `can_connect: false` is a real signal.
 
-### Operation lifecycle
+### Operation lifecycle (async job protocol)
 
-An "operation" is a scoped unit of work on a connection. Core creates
-an operation, then issues one or more calls against it, then cancels
-it. The connector holds per-operation state (file downloads, buffers,
-in-flight auth) only for the duration.
+An "operation" is a scoped unit of work on a connection. Pull, push,
+and patch all run asynchronously: Core POSTs a start request, the
+connector returns **202 Accepted** with a `{job_id, operation_token}`,
+and Core polls / fetches results / cancels via per-job lifecycle routes
+authenticated with the per-job operation token.
+
+#### Start routes (system-token authenticated; mint a job)
 
 | Endpoint | Method | Auth | Purpose |
 |---|---|---|---|
-| `/{connector}/operation/init` | POST | System token | Create an operation. Input: details+settings. Output: `{id, token}` — the operation ID and a short-lived operation token. |
-| `/{connector}/operation/cancel` | POST | System token | Tear down an operation and any in-flight work. |
-| `/{connector}/operation/status` | POST | System token | Read operation state + accumulated logs. |
-| `/{connector}/operation/schema/{method}` | POST | Operation token | Return the schema for what `method` would produce/consume. |
-| `/{connector}/operation/pull` | POST | Operation token | Stream data out of the external system. |
-| `/{connector}/operation/push` | POST | Operation token | Apply bulk data into the external system. |
-| `/{connector}/operation/patch` | POST | Operation token | Apply JSON-Patch operations to the external system. |
-| `/{connector}/operation/subscribe` | POST | Operation token | Register a webhook; connector will POST back to Core when the external system changes. |
-| `/{connector}/operation/unsubscribe` | POST | Operation token | Tear down a subscription. |
+| `/{connector}/operation/pull` | POST | System token | Start a pull job. Input: details+settings+path. Output: 202 `{job_id, operation_token}`. |
+| `/{connector}/operation/push` | POST | System token | Start a push job. Input: details+settings+files (or presigned URL)+path. Output: 202 `{job_id, operation_token}`. |
+| `/{connector}/operation/patch` | POST | System token | Start a patch job. Input: details+settings+JSON Patch payload. Output: 202 `{job_id, operation_token}`. |
+| `/{connector}/operation/schema/{method}` | POST | System token | Return the schema for what `method` would produce/consume. Sync (cheap metadata). |
+| `/{connector}/operation/subscribe` | POST | System token | Register a webhook. Sync — webhook registration is fast and idempotent, no job needed. |
+| `/{connector}/operation/unsubscribe` | POST | System token | Tear down a subscription. Sync. |
+
+#### Lifecycle routes (per-job operation-token authenticated; kind-agnostic)
+
+| Endpoint | Method | Auth | Purpose |
+|---|---|---|---|
+| `/operation/status/:job_id` | GET | **Per-job** operation token | Return the current state — `pending`/`running`/`complete`/`failed`/`cancelled` — plus the cumulative `progress` slice. |
+| `/operation/result/:job_id` | GET | **Per-job** operation token | For pull: stream the ZIP archive. For push/patch: 204 No Content (the success summary is in `progress`). |
+| `/operation/cancel/:job_id` | POST | **Per-job** operation token | Best-effort cancel; the worker is signalled to wind down and the row transitions to `cancelled`. |
 
 Only endpoints corresponding to declared capabilities are exposed.
+
+The operation token returned in the 202 response is **scoped to that
+single job**. The connectors service rejects the system token on the
+lifecycle routes by design — a leaked or compromised system token cannot
+poll, fetch, or cancel a job it did not start. The token is valid until
+the job's `OperationJob` row is reaped by the janitor (default 15 min)
+or cancelled, whichever comes first.
+
+> **Note.** A previous transitional shape relied on a separate
+> `/operation/init` round-trip to mint a long-lived per-Connection
+> `Operation.Token` consumed by every operation route. That handshake
+> is retired — Start* directly mint a per-job token and return it on
+> 202. The `OperationInit` controller method and the legacy
+> operation-id-scoped `/operation/cancel`, `/operation/status` routes
+> remain in the codebase as temporary back-compat scaffolding and
+> will be removed in a follow-up Phase 4 PR once all Core deployments
+> have rolled forward.
 
 ## Authentication, in layers
 
@@ -103,24 +128,32 @@ calling and what's being done. Keep them distinct.
   `system_token`. One system token per connector *registration*, not
   per connection.
 - **Where it's sent**: `Authorization: Bearer {system_token}` on every
-  inbound request to lifecycle endpoints.
+  inbound request to **start** routes (pull / push / patch start,
+  schema, subscribe / unsubscribe, info, configuration).
 - **What it authorises**: "this caller is authorised to create
   operations on this connector." It does *not* imply permission to
-  operate on any specific connection — that's operation-token scope.
+  poll, fetch results, or cancel an in-flight job — that's per-job
+  operation-token scope.
 - **Rotation**: connectors can regenerate their system token by
   re-registering with Core; old tokens invalidate immediately.
 
-### Operation token (Core → connector)
+### Operation token (per-job, Core → connector)
 
-- **Who holds it**: Core generates it during `/operation/init`; lives
-  only on Core and is re-sent on every subsequent call to that operation.
+- **Who holds it**: returned to Core in the 202 body of a Start*
+  request as `operation_token`. Core re-sends it on every subsequent
+  call against that specific job (status / result / cancel). Never
+  shared across jobs.
 - **Where it's sent**: `Authorization: Bearer {operation_token}` on
-  every operation-phase endpoint (pull/push/patch/subscribe).
-- **What it authorises**: "this caller is authorised to execute
-  operation N." Short-lived; the connector revokes it on `cancel` or
-  when the operation finishes.
-- **Scope**: one operation token → one specific operation on one
-  specific connection. Never reuse across operations.
+  the lifecycle routes — `/operation/status/:job_id`,
+  `/operation/result/:job_id`, `/operation/cancel/:job_id`.
+- **What it authorises**: "this caller is authorised to interact with
+  this specific job's lifecycle." Short-lived: valid until the
+  `OperationJob` row is reaped (15-minute janitor TTL by default) or
+  the job is cancelled, whichever comes first.
+- **Why a separate token**: scope limitation. The connectors service
+  rejects the system token on lifecycle routes — a leaked or
+  compromised system token cannot poll or cancel jobs it did not
+  start, narrowing the blast radius.
 
 ### Connection credentials (external auth, static-credential path)
 
@@ -158,26 +191,38 @@ calling and what's being done. Keep them distinct.
 
 ### What an operation is
 
-An operation is a stateful handle on one specific action against one
-specific connection. Typically:
+An operation is a job — a single async unit of work on a connection
+keyed by `job_id`. The flow is consistent across pull / push / patch:
 
 ```
-Core: POST /operation/init {details, settings}
-  → connector: create operation state, return {id, token}
+Core: POST /operation/{pull|push|patch} {details, settings, ...}
+       Authorization: Bearer <system_token>
+  → connector: Begin job (advisory lock, OperationJob row),
+       launch worker goroutine, return 202 {job_id, operation_token}
 
-Core: POST /operation/pull + Authorization: Bearer <operation_token>
-  → connector: call external system using details+token, return ZIP
+Core: GET /operation/status/:job_id
+       Authorization: Bearer <operation_token>
+  → connector: return {status, progress[], error}; status is
+       pending → running → {complete | failed | cancelled}
 
-Core: POST /operation/status
-  → connector: return logs, current state
+# pull only — push/patch return 204 No Content because the success
+# signal is status=complete on the job row, not a downloadable file
+Core: GET /operation/result/:job_id
+       Authorization: Bearer <operation_token>
+  → connector: stream the ZIP archive built by the worker
 
-Core: POST /operation/cancel
-  → connector: tear everything down
+# any time before terminal status
+Core: POST /operation/cancel/:job_id
+       Authorization: Bearer <operation_token>
+  → connector: signal worker to wind down, transition row to cancelled
 ```
 
-The operation lifetime is bounded by Core — the connector doesn't
-time it out on its own, though it can reject operations that have
-been open unreasonably long (>24h).
+The job's lifetime is bounded by the connector's
+`JobManager.DefaultJobTTL` (15 minutes by default) — the janitor
+reaps OperationJob rows past that, freeing both the result file
+and the per-job operation token. Workers that haven't heartbeated
+in `DefaultStuckThreshold` (30 minutes) are reclaimed by probing
+the advisory lock.
 
 ### Operation types
 
@@ -194,42 +239,64 @@ endpoints corresponding to declared capabilities.
 
 ### Observability and progress
 
-Long-running operations need to surface intermediate progress, or
-an apparently-stuck run is undiagnosable. Shared vocabulary lives
-in `connectors/common`; the data path:
+Long-running operations need to surface intermediate progress, or an
+apparently-stuck run is undiagnosable. The vocabulary is the SDK's
+`observability.ProgressEvent` — a stable enum of kinds (`page`,
+`rate_limit`, `batch`, `query`, `file`, `heartbeat`) with per-kind
+fields. Every Irmin service (connectors, Core, AI) sees the same
+shapes on the wire.
+
+End-to-end data path on a job:
 
 ```
 provider.GetAllFiles / ProcessFiles
         │
         │ (per-iteration emit during pagination / batching / scans)
         ▼
-common.ProgressHandler  ←──────┐
-        │                      │
-        ▼                      │ (provider-supplied closure)
-common.LogOperationProgress    │
-        │ (per-kind throttling)│
-        ▼                      │
-common.LogOperationEvent       │
-        │                      │
-        ▼                      │
-db.OperationLog row  ──────────┘
-        │
-        ▼
-workflow run log stream
+observability.ProgressHandler  ←──────┐ (provider-supplied closure)
+        │                             │
+        ▼                             │
+common.LogOperationProgress           │
+        │ (per-kind throttling — every 5 pages, every 10 batches, …)
+        ▼                             │
+common.LogOperationEvent              │
+        │                             │
+        ├──→ db.OperationLog row      │
+        │                             │
+        └──→ JobManager.appendProgress (event appended to
+                 OperationJob.Progress slice in DB)
+                 │
+                 ▼
+        GET /operation/status/:job_id  (Core polls)
+                 │
+                 ▼
+        connectorjobs.RunWithProgress  (in Core)
+                 │ diffs cumulative slice against count seen,
+                 │ delivers each event exactly once
+                 ▼
+        observability.ProgressHandler  (orchestrator-side sink)
+                 │
+                 ▼
+        ConnectorOperationLog row      (workflow run log timeline)
 ```
 
-Two enforcement layers:
+Three enforcement layers:
 
 - **Per-iteration emission** is the connector's job. The provider
-  returns a `common.ProgressHandler` from
+  returns an `observability.ProgressHandler` from
   `ProgressHandler(operation)`; the client wires it into its inner
-  loops. Throttling (every 5 pages, every 10 batches, etc.) lives
-  in `common.LogOperationProgress`.
+  loops. Throttling lives in `common.LogOperationProgress`.
 - **30-second heartbeat** is the common handler's job. A goroutine
-  in `HandleOperationPull` / `HandleOperationPush` fires
-  `ProgressKindHeartbeat` for the operation's lifetime, even when
-  the provider's handler returns nil. No connector ships a silent
-  10-minute operation by accident.
+  in `HandleOperationPull` / `HandleOperationPush` /
+  `HandleOperationPatch` fires `ProgressKindHeartbeat` for the
+  job's lifetime, even when the provider's handler returns nil.
+  No connector ships a silent 10-minute operation by accident.
+- **Core-side fan-out**: `connectorjobs.ContextWithProgress` wraps
+  the workflow ctx with an `observability.ProgressHandler` that
+  appends each new event as a `ConnectorOperationLog` entry on the
+  workflow run. The orchestrator's `progressLogSink` is the
+  reference implementation; see
+  `irmin/orchestrator/executeWorkflowableCommon.go`.
 
 [`connectors/progress_audit_test.go`](../connectors/progress_audit_test.go)
 fails CI when a connector lands in `RegisterAllConnectors` without
@@ -270,7 +337,9 @@ These two concepts look similar and mean different things:
 - **Who sees them**: Core (encrypted at rest) and the connector (in
   memory during operations). **Never** shown in the console after the
   initial form — they're masked as "SECRET" in all API responses.
-- **When**: part of `/operation/init`'s input.
+- **When**: part of every Start* request body. Re-sent on each call
+  rather than mounted via a long-lived "init" handshake — there is
+  no shared connection-level state between jobs on the connector.
 - **For OAuth-backed connectors**: this field is typically empty or
   absent — OAuth handles external auth via a separate channel.
 
@@ -282,7 +351,7 @@ These two concepts look similar and mean different things:
   the form rendered from `/configuration/settings/fields`.
 - **Who sees them**: Core (plaintext) and the connector. **Visible** in
   the console; editable after creation.
-- **When**: part of `/operation/init`'s input.
+- **When**: part of every Start* request body, alongside details.
 
 Rule of thumb: if revealing this value would be a security issue, it's
 a **detail**. Otherwise it's a **setting**.
@@ -337,15 +406,30 @@ they must keep is:
 - **Connector registrations table**: the mapping from a running
   connector instance to its Core-issued `system_token`. One row per
   registration.
-- **Operations table**: active and recently-completed operations + their
-  operation tokens. Rows age out after operation completion +
-  retention.
+- **OperationJob table**: one row per started job. Carries the
+  `JobID` (PK), `OperationID` (FK to the connection's Operation row
+  for back-references), `Kind` (`pull` / `push` / `patch`),
+  `Status`, cumulative `Progress` JSON (the
+  `[]observability.ProgressEvent` slice surfaced by status polls),
+  optional `Error`, optional `ResultPath` (the on-disk ZIP path for
+  pulls), and `ExpiresAt`. Reaped by the janitor after 15 min.
+- **Operations table**: long-lived per-Connection rows holding the
+  legacy operation token. After the migration to per-job operation
+  tokens, the column remains for back-compat scaffolding only — no
+  client reads it via the consolidated SDK; it'll be retired in a
+  follow-up Phase 4 PR.
 - **Subscriptions table**: active `patch_event` subscriptions so the
   connector can map inbound external events back to their webhook
   config.
 
+The result store at `/tmp/irmin-connectors/` holds the on-disk ZIPs
+that pull jobs build. Push and patch do not produce artifacts; their
+"result" is `Status=complete` on the job row, surfaced as 204 from
+`/operation/result/:job_id`. Files are reaped by the same janitor
+that reaps the rows.
+
 That's it. **No credentials, no user data, no cached schemas** — all
-of those are per-operation in-memory state.
+of those are per-job in-memory state.
 
 ## What connectors return
 

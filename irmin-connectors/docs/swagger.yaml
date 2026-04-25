@@ -116,6 +116,51 @@ definitions:
         description: Valid is true if Time is not NULL
         type: boolean
     type: object
+  irminmodels.AlreadyRunningBody:
+    properties:
+      error:
+        description: |-
+          Error is the stable human-readable message. Always
+          "Operation is already running" — kept for backwards
+          compatibility with clients that key off the error string.
+        example: Operation is already running
+        type: string
+      job_id:
+        description: |-
+          JobID is the opaque identifier of the currently-running job.
+          Clients can pass this straight to CancelOperationJob or
+          GetOperationJobStatus. Empty only for legacy holders that have
+          not migrated to the JobManager.Begin path yet.
+        example: opjob_9m3x7k2n8q5p
+        type: string
+      kind:
+        description: |-
+          Kind is the operation kind holding the lock. One of "pull",
+          "push", "patch", "schema". Helps operators distinguish a
+          long-running pull from a fast sync push when triaging
+          contention.
+        example: pull
+        type: string
+      operation_id:
+        description: |-
+          OperationID is the connector-service-local numeric ID of the
+          operation the lock was taken on. Present so operator-facing
+          logs can cross-reference the operation row directly.
+        example: 42
+        type: integer
+      started_at:
+        description: |-
+          StartedAt is when the in-flight job was accepted. Clients can
+          compute elapsed time to decide whether to wait or cancel. nil
+          for legacy sync holders with no registered row.
+
+          Pointer rather than time.Time + omitempty because encoding/json's
+          omitempty does not treat a zero time.Time as empty — it would
+          serialise as "0001-01-01T00:00:00Z" on the wire. Matches the
+          convention used by ExpiresAt above and the *time.Time fields
+          in the other models in this package.
+        type: string
+    type: object
   irminmodels.ConnectionOAuthConfig:
     properties:
       authorization_url:
@@ -564,6 +609,50 @@ definitions:
     required:
     - type
     type: object
+  irminmodels.JobErrorBody:
+    properties:
+      error:
+        description: |-
+          Error is the operator-facing human-readable message. Stable
+          enough for log grep but not a machine-readable code.
+        example: failed to load job
+        type: string
+      job_id:
+        description: |-
+          JobID echoes the ID from the URL when the server could parse
+          one. Empty for request-level failures (malformed URL, missing
+          path parameter).
+        example: opjob_9m3x7k2n8q5p
+        type: string
+      reason:
+        allOf:
+        - $ref: '#/definitions/irminmodels.JobErrorReason'
+        description: |-
+          Reason is the machine-readable failure classification. See
+          JobErrorReason for the stable value set.
+        example: transient_db_error
+      retryable:
+        description: |-
+          Retryable reports whether the caller should retry the same
+          request after a short backoff. False for any terminal failure
+          mode (not_found, corrupted_job_state, invalid_request).
+        example: true
+        type: boolean
+    type: object
+  irminmodels.JobErrorReason:
+    enum:
+    - transient_db_error
+    - corrupted_job_state
+    - not_found
+    - invalid_request
+    - internal
+    type: string
+    x-enum-varnames:
+    - JobErrorReasonTransientDB
+    - JobErrorReasonCorruptedRow
+    - JobErrorReasonNotFound
+    - JobErrorReasonInvalidRequest
+    - JobErrorReasonInternal
   irminmodels.ObjectSchema:
     properties:
       children:
@@ -640,6 +729,15 @@ definitions:
     - key
     - value
     type: object
+  irminmodels.StartOperationPullResponse:
+    properties:
+      job_id:
+        description: |-
+          JobID is the identifier the caller uses on subsequent
+          /operation/status and /operation/result calls.
+        example: opjob_9m3x7k2n8q5p
+        type: string
+    type: object
   models.ConnectorDetails:
     properties:
       api_base_url:
@@ -697,13 +795,6 @@ definitions:
       description:
         example: Connect to MySQL databases for data extraction and synchronization
         type: string
-      locales:
-        example:
-        - en
-        - fi
-        items:
-          type: string
-        type: array
       logo_url:
         example: https://cdn.irmin.co/connectors/mysql.png
         type: string
@@ -1841,10 +1932,10 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: Data patched successfully
+        "202":
+          description: Patch job accepted; poll /operation/status/:job_id
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/irminmodels.StartOperationPullResponse'
         "400":
           description: Bad request - invalid operation token or patch format
           schema:
@@ -1857,12 +1948,16 @@ paths:
           description: Operation not found
           schema:
             $ref: '#/definitions/fiber.Map'
+        "409":
+          description: Operation already running
+          schema:
+            $ref: '#/definitions/irminmodels.AlreadyRunningBody'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/irminmodels.JobErrorBody'
       security:
-      - SystemTokenAuth: []
+      - OperationTokenAuth: []
       summary: Patch data in MySQL database
       tags:
       - mysql
@@ -1937,10 +2032,10 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: Data pushed successfully
+        "202":
+          description: Push job accepted; poll /operation/status/:job_id
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/irminmodels.StartOperationPullResponse'
         "400":
           description: Bad request - invalid operation token or file format
           schema:
@@ -1953,12 +2048,16 @@ paths:
           description: Operation not found
           schema:
             $ref: '#/definitions/fiber.Map'
+        "409":
+          description: Operation already running
+          schema:
+            $ref: '#/definitions/irminmodels.AlreadyRunningBody'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/irminmodels.JobErrorBody'
       security:
-      - SystemTokenAuth: []
+      - OperationTokenAuth: []
       summary: Push data to MySQL database
       tags:
       - mysql
@@ -2400,10 +2499,10 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: Data pushed successfully
+        "202":
+          description: Push job accepted; poll /operation/status/:job_id
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/irminmodels.StartOperationPullResponse'
         "400":
           description: Bad request - invalid operation token or file format
           schema:
@@ -2416,10 +2515,14 @@ paths:
           description: Operation not found
           schema:
             $ref: '#/definitions/fiber.Map'
+        "409":
+          description: Operation already running
+          schema:
+            $ref: '#/definitions/irminmodels.AlreadyRunningBody'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/irminmodels.JobErrorBody'
       security:
       - OperationTokenAuth: []
       summary: Push data to Pinecone
@@ -2744,10 +2847,10 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: Data patched successfully
+        "202":
+          description: Patch job accepted; poll /operation/status/:job_id
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/irminmodels.StartOperationPullResponse'
         "400":
           description: Bad request - invalid operation token or patch format
           schema:
@@ -2760,10 +2863,14 @@ paths:
           description: Operation not found
           schema:
             $ref: '#/definitions/fiber.Map'
+        "409":
+          description: Operation already running
+          schema:
+            $ref: '#/definitions/irminmodels.AlreadyRunningBody'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/irminmodels.JobErrorBody'
       security:
       - OperationTokenAuth: []
       summary: Patch data in PostgreSQL database
@@ -2840,10 +2947,10 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: Data pushed successfully
+        "202":
+          description: Push job accepted; poll /operation/status/:job_id
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/irminmodels.StartOperationPullResponse'
         "400":
           description: Bad request - invalid operation token or file format
           schema:
@@ -2856,10 +2963,14 @@ paths:
           description: Operation not found
           schema:
             $ref: '#/definitions/fiber.Map'
+        "409":
+          description: Operation already running
+          schema:
+            $ref: '#/definitions/irminmodels.AlreadyRunningBody'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/fiber.Map'
+            $ref: '#/definitions/irminmodels.JobErrorBody'
       security:
       - OperationTokenAuth: []
       summary: Push data to PostgreSQL database

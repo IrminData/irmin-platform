@@ -12,6 +12,13 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	operationKindPull   = "pull"
+	operationKindPush   = "push"
+	operationKindPatch  = "patch"
+	operationKindSchema = "schema"
+)
+
 // AlreadyRunningError is returned by JobManager.Begin when the
 // operation-execution advisory lock is already held by another
 // session. Fields are populated from the row FindActiveOperationJob

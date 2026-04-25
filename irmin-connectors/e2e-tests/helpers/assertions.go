@@ -115,9 +115,6 @@ func AssertValidConnectorInfo(info *connectorsclient.ConnectorInfo) error {
 	if len(info.Capabilities) == 0 {
 		return &TestError{Message: "Expected at least one capability"}
 	}
-	if len(info.Locales) == 0 {
-		return &TestError{Message: "Expected at least one locale"}
-	}
 	return nil
 }
 

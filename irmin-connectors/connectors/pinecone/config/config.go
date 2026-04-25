@@ -101,7 +101,6 @@ func GetConnectorInfo() models.ConnectorDetails {
 			irminmodels.ConnectorCapabilityPush,
 			irminmodels.ConnectorCapabilityApplyPatch,
 		},
-		Locales:         []string{"en"},
 		PrimaryCategory: irminmodels.ConnectorCategoryDatabase,
 		Categories: []irminmodels.ConnectorCategory{
 			irminmodels.ConnectorCategoryDatabase,

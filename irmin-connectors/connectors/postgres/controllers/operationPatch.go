@@ -1,6 +1,7 @@
 package postgrescontrollers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"irmin-connectors/connectors/common"
@@ -19,11 +20,11 @@ type PostgresPatchProvider struct{}
 
 // InitializeClient initializes the PostgreSQL client for patch operations.
 func (p *PostgresPatchProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, func(), error) {
-	dbClient, database, err := postgresclient.InitPostgresClient(c, logger, operation)
+	dbClient, database, err := postgresclient.InitPostgresClient(ctx, logger, operation)
 	if err != nil || database == nil || dbClient == nil {
 		return nil, func() {}, err
 	}
@@ -37,7 +38,7 @@ func (p *PostgresPatchProvider) InitializeClient(
 
 // ExecutePatchOperation executes a single patch operation within its own transaction.
 func (p *PostgresPatchProvider) ExecutePatchOperation(
-	c fiber.Ctx,
+	ctx context.Context,
 	client any,
 	op irminmodels.PatchOperation,
 	tableName, rowIdentifier, columnName string,
@@ -47,24 +48,34 @@ func (p *PostgresPatchProvider) ExecutePatchOperation(
 	if !ok {
 		return errors.New("invalid client type for PostgreSQL patch provider")
 	}
-	return executePatchOperation(c, dbClient, op, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn)
+	return executePatchOperation(
+		ctx,
+		dbClient,
+		op,
+		tableName,
+		rowIdentifier,
+		columnName,
+		fromTable,
+		fromRow,
+		fromColumn,
+	)
 }
 
 // executePatchOperation executes a single patch operation within its own transaction.
 func executePatchOperation(
-	c fiber.Ctx,
+	ctx context.Context,
 	dbClient *postgresclient.PostgresClient,
 	op irminmodels.PatchOperation,
 	tableName, rowIdentifier, columnName string,
 	fromTable, fromRow, fromColumn string,
 ) error {
 	// Start a transaction to ensure that each operation is atomic
-	tx, txErr := dbClient.BeginTransaction(c)
+	tx, txErr := dbClient.BeginTransaction(ctx)
 	if txErr != nil {
 		return txErr
 	}
 	defer func() {
-		if rollbackErr := tx.Rollback(c); rollbackErr != nil {
+		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
 			// Log the error but don't return it since we're in a defer
 			// The transaction might have already been committed
 			_ = rollbackErr
@@ -85,15 +96,15 @@ func executePatchOperation(
 	var err error
 	switch op.Op {
 	case "add":
-		err = handleAddOperation(c, tx, tableName, value)
+		err = handleAddOperation(ctx, tx, tableName, value)
 	case "remove":
-		err = handleRemoveOperation(c, tx, tableName, rowIdentifier)
+		err = handleRemoveOperation(ctx, tx, tableName, rowIdentifier)
 	case "replace":
-		err = handleReplaceOperation(c, tx, tableName, rowIdentifier, columnName, value)
+		err = handleReplaceOperation(ctx, tx, tableName, rowIdentifier, columnName, value)
 	case "move":
-		err = handleMoveOperation(c, tx, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn)
+		err = handleMoveOperation(ctx, tx, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn)
 	case "copy":
-		err = handleCopyOperation(c, tx, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn)
+		err = handleCopyOperation(ctx, tx, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn)
 	default:
 		return errors.New("invalid operation type: " + op.Op)
 	}
@@ -103,7 +114,7 @@ func executePatchOperation(
 	}
 
 	// Commit the transaction if everything succeeded
-	if err = tx.Commit(c); err != nil {
+	if err = tx.Commit(ctx); err != nil {
 		return err
 	}
 
@@ -119,19 +130,20 @@ func executePatchOperation(
 // @Produce json
 // @Param operation_token formData string true "Operation token received from operation/init"
 // @Param patch formData file true "JSON patch file containing update operations"
-// @Success 200 {object} fiber.Map "Data patched successfully"
+// @Success 202 {object} irminmodels.StartOperationJobResponse "Patch job accepted; poll /operation/status/:job_id"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token or patch format"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
 // @Failure 404 {object} fiber.Map "Operation not found"
-// @Failure 500 {object} fiber.Map "Internal server error"
+// @Failure 409 {object} irminmodels.AlreadyRunningBody "Operation already running"
+// @Failure 500 {object} irminmodels.JobErrorBody "Internal server error"
 // @Router /postgres/operation/patch [post]
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
 	provider := &PostgresPatchProvider{}
-	return common.HandleOperationPatch(c, provider, cs.Logger, cs.DB)
+	return common.HandleOperationPatch(c, provider, cs.Logger, cs.DB, cs.App)
 }
 
 // handleAddOperation handles the "add" patch operation.
-func handleAddOperation(c fiber.Ctx, tx *postgresclient.Tx, tableName string, value any) error {
+func handleAddOperation(ctx context.Context, tx *postgresclient.Tx, tableName string, value any) error {
 	// Make sure the value is an object
 	newRow, ok := value.(map[string]any)
 	if !ok {
@@ -163,7 +175,7 @@ func handleAddOperation(c fiber.Ctx, tx *postgresclient.Tx, tableName string, va
 	}
 
 	// Execute the INSERT
-	if _, err := tx.Exec(c, insertSQL, args...); err != nil {
+	if _, err := tx.Exec(ctx, insertSQL, args...); err != nil {
 		return fmt.Errorf("failed to insert row: %w", err)
 	}
 
@@ -171,9 +183,9 @@ func handleAddOperation(c fiber.Ctx, tx *postgresclient.Tx, tableName string, va
 }
 
 // handleRemoveOperation handles the "remove" patch operation.
-func handleRemoveOperation(c fiber.Ctx, tx *postgresclient.Tx, tableName string, rowIdentifier any) error {
+func handleRemoveOperation(ctx context.Context, tx *postgresclient.Tx, tableName string, rowIdentifier any) error {
 	// Get primary key columns for this table
-	primaryKeys, primaryKeysErr := getPrimaryKeyColumns(c, tx, tableName)
+	primaryKeys, primaryKeysErr := getPrimaryKeyColumns(ctx, tx, tableName)
 	if primaryKeysErr != nil {
 		return fmt.Errorf("failed to get primary key columns: %w", primaryKeysErr)
 	}
@@ -185,7 +197,7 @@ func handleRemoveOperation(c fiber.Ctx, tx *postgresclient.Tx, tableName string,
 	}
 
 	deleteSQL := fmt.Sprintf(`DELETE FROM %s WHERE %s`, quoteIdentifier(tableName), whereClause)
-	if _, execErr := tx.Exec(c, deleteSQL, whereArgs...); execErr != nil {
+	if _, execErr := tx.Exec(ctx, deleteSQL, whereArgs...); execErr != nil {
 		return fmt.Errorf("failed to remove row: %w", execErr)
 	}
 	return nil
@@ -193,7 +205,7 @@ func handleRemoveOperation(c fiber.Ctx, tx *postgresclient.Tx, tableName string,
 
 // handleReplaceOperation handles the "replace" patch operation.
 func handleReplaceOperation(
-	c fiber.Ctx,
+	ctx context.Context,
 	tx *postgresclient.Tx,
 	tableName string,
 	rowIdentifier any,
@@ -201,7 +213,7 @@ func handleReplaceOperation(
 	value any,
 ) error {
 	// Get primary key columns for this table
-	primaryKeys, primaryKeysErr := getPrimaryKeyColumns(c, tx, tableName)
+	primaryKeys, primaryKeysErr := getPrimaryKeyColumns(ctx, tx, tableName)
 	if primaryKeysErr != nil {
 		return fmt.Errorf("failed to get primary key columns: %w", primaryKeysErr)
 	}
@@ -225,7 +237,7 @@ func handleReplaceOperation(
 			whereClause,
 		)
 		args := append([]any{value}, whereArgs...)
-		if _, execErr := tx.Exec(c, updateSQL, args...); execErr != nil {
+		if _, execErr := tx.Exec(ctx, updateSQL, args...); execErr != nil {
 			return fmt.Errorf("failed to replace column value: %w", execErr)
 		}
 		return nil
@@ -267,7 +279,7 @@ func handleReplaceOperation(
 	// Append the WHERE arguments
 	args = append(args, whereArgs...)
 
-	if _, execErr := tx.Exec(c, updateSQL, args...); execErr != nil {
+	if _, execErr := tx.Exec(ctx, updateSQL, args...); execErr != nil {
 		return fmt.Errorf("failed to replace row: %w", execErr)
 	}
 
@@ -277,25 +289,25 @@ func handleReplaceOperation(
 // handleMoveOperation handles the "move" patch operation.
 // It copies data from the source location to the destination, then removes it from the source.
 func handleMoveOperation(
-	c fiber.Ctx,
+	ctx context.Context,
 	tx *postgresclient.Tx,
 	tableName, rowIdentifier, columnName string,
 	fromTable, fromRow, fromColumn string,
 ) error {
 	// First copy the data
-	if err := handleCopyOperation(c, tx, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn); err != nil {
+	if err := handleCopyOperation(ctx, tx, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn); err != nil {
 		return fmt.Errorf("failed to copy data during move operation: %w", err)
 	}
 
 	// Then remove from source
 	if fromColumn != "" {
 		// Column-level move: set the source column to NULL
-		if err := handleReplaceOperation(c, tx, fromTable, fromRow, fromColumn, nil); err != nil {
+		if err := handleReplaceOperation(ctx, tx, fromTable, fromRow, fromColumn, nil); err != nil {
 			return fmt.Errorf("failed to remove source data during move operation: %w", err)
 		}
 	} else {
 		// Row-level move: delete the entire source row
-		if err := handleRemoveOperation(c, tx, fromTable, fromRow); err != nil {
+		if err := handleRemoveOperation(ctx, tx, fromTable, fromRow); err != nil {
 			return fmt.Errorf("failed to remove source row during move operation: %w", err)
 		}
 	}
@@ -306,18 +318,18 @@ func handleMoveOperation(
 // handleCopyOperation handles the "copy" patch operation.
 // It copies data from the source location to the destination without removing the source.
 func handleCopyOperation(
-	c fiber.Ctx,
+	ctx context.Context,
 	tx *postgresclient.Tx,
 	tableName, rowIdentifier, columnName string,
 	fromTable, fromRow, fromColumn string,
 ) error {
 	if fromColumn != "" && columnName != "" {
 		// Column-to-column copy
-		return handleColumnCopy(c, tx, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn)
+		return handleColumnCopy(ctx, tx, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn)
 	}
 	if fromColumn == "" && columnName == "" {
 		// Row-to-row copy
-		return handleRowCopy(c, tx, tableName, rowIdentifier, fromTable, fromRow)
+		return handleRowCopy(ctx, tx, tableName, rowIdentifier, fromTable, fromRow)
 	}
 	return errors.New(
 		"copy operation requires both source and destination to be at the same level (column-to-column or row-to-row)",
@@ -326,13 +338,13 @@ func handleCopyOperation(
 
 // handleColumnCopy copies a single column value from source to destination.
 func handleColumnCopy(
-	c fiber.Ctx,
+	ctx context.Context,
 	tx *postgresclient.Tx,
 	tableName, rowIdentifier, columnName string,
 	fromTable, fromRow, fromColumn string,
 ) error {
 	// Get primary key columns for the source table
-	primaryKeys, primaryKeysErr := getPrimaryKeyColumns(c, tx, fromTable)
+	primaryKeys, primaryKeysErr := getPrimaryKeyColumns(ctx, tx, fromTable)
 	if primaryKeysErr != nil {
 		return fmt.Errorf("failed to get primary key columns for source table: %w", primaryKeysErr)
 	}
@@ -352,18 +364,18 @@ func handleColumnCopy(
 	)
 
 	var value any
-	if err := tx.QueryRow(c, selectSQL, whereArgs...).Scan(&value); err != nil {
+	if err := tx.QueryRow(ctx, selectSQL, whereArgs...).Scan(&value); err != nil {
 		return fmt.Errorf("failed to read source column value: %w", err)
 	}
 
 	// Update the destination column
-	return handleReplaceOperation(c, tx, tableName, rowIdentifier, columnName, value)
+	return handleReplaceOperation(ctx, tx, tableName, rowIdentifier, columnName, value)
 }
 
 // handleUpsertOperation handles inserting or updating a row (UPSERT).
 // If the row exists (based on primary key), it updates; otherwise it inserts.
 func handleUpsertOperation(
-	c fiber.Ctx,
+	ctx context.Context,
 	tx *postgresclient.Tx,
 	tableName string,
 	value any,
@@ -437,7 +449,7 @@ func handleUpsertOperation(
 	}
 
 	// Execute the UPSERT
-	if _, err := tx.Exec(c, upsertSQL, args...); err != nil {
+	if _, err := tx.Exec(ctx, upsertSQL, args...); err != nil {
 		return fmt.Errorf("failed to upsert row: %w", err)
 	}
 
@@ -446,30 +458,30 @@ func handleUpsertOperation(
 
 // handleRowCopy copies an entire row from source to destination.
 func handleRowCopy(
-	c fiber.Ctx,
+	ctx context.Context,
 	tx *postgresclient.Tx,
 	tableName, rowIdentifier string,
 	fromTable, fromRow string,
 ) error {
 	// Get primary key columns for both tables
-	sourcePrimaryKeys, err := getPrimaryKeyColumns(c, tx, fromTable)
+	sourcePrimaryKeys, err := getPrimaryKeyColumns(ctx, tx, fromTable)
 	if err != nil {
 		return fmt.Errorf("failed to get primary key columns for source table: %w", err)
 	}
 
-	destPrimaryKeys, err := getPrimaryKeyColumns(c, tx, tableName)
+	destPrimaryKeys, err := getPrimaryKeyColumns(ctx, tx, tableName)
 	if err != nil {
 		return fmt.Errorf("failed to get primary key columns for destination table: %w", err)
 	}
 
 	// Get table columns
-	columns, err := getTableColumns(c, tx, fromTable)
+	columns, err := getTableColumns(ctx, tx, fromTable)
 	if err != nil {
 		return fmt.Errorf("failed to get table columns: %w", err)
 	}
 
 	// Read source row data
-	values, err := readSourceRowData(c, tx, fromTable, fromRow, sourcePrimaryKeys, columns)
+	values, err := readSourceRowData(ctx, tx, fromTable, fromRow, sourcePrimaryKeys, columns)
 	if err != nil {
 		return fmt.Errorf("failed to read source row: %w", err)
 	}
@@ -481,20 +493,20 @@ func handleRowCopy(
 	}
 
 	// Upsert the row (insert or update if exists)
-	return handleUpsertOperation(c, tx, tableName, newRowData, destPrimaryKeys)
+	return handleUpsertOperation(ctx, tx, tableName, newRowData, destPrimaryKeys)
 }
 
 // getTableColumns retrieves all column names for a table.
-func getTableColumns(c fiber.Ctx, tx *postgresclient.Tx, tableName string) ([]string, error) {
+func getTableColumns(ctx context.Context, tx *postgresclient.Tx, tableName string) ([]string, error) {
 	columnsSQL := `
-		SELECT column_name 
-		FROM information_schema.columns 
-		WHERE table_name = $1 
+		SELECT column_name
+		FROM information_schema.columns
+		WHERE table_name = $1
 		AND table_schema = current_schema()
 		ORDER BY ordinal_position
 	`
 
-	rows, err := tx.Query(c, columnsSQL, tableName)
+	rows, err := tx.Query(ctx, columnsSQL, tableName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get table columns: %w", err)
 	}
@@ -522,7 +534,7 @@ func getTableColumns(c fiber.Ctx, tx *postgresclient.Tx, tableName string) ([]st
 
 // readSourceRowData reads the source row data for all columns.
 func readSourceRowData(
-	c fiber.Ctx,
+	ctx context.Context,
 	tx *postgresclient.Tx,
 	fromTable, fromRow string,
 	primaryKeys, columns []string,
@@ -542,7 +554,7 @@ func readSourceRowData(
 		whereClause,
 	)
 
-	sourceRow, err := tx.Query(c, selectSQL, whereArgs...)
+	sourceRow, err := tx.Query(ctx, selectSQL, whereArgs...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read source row: %w", err)
 	}

@@ -73,28 +73,41 @@ Every connector must implement these endpoints:
 
 #### System Token Authenticated Endpoints
 
-These endpoints are called by the Irmin API and require a system token for authentication:
+These endpoints are called by Irmin Core and authenticate with the
+connector's system token. Start* return 202 + a per-job operation
+token; sync metadata routes return their result inline.
 
-- **`GET /{connector-slug}/info`** - Returns connector information and capabilities
-- **`POST /{connector-slug}/configuration/{key}/fields`** - Returns dynamic configuration fields
-- **`POST /{connector-slug}/configuration/validate`** - Validates connection configuration
-- **`POST /{connector-slug}/operation/init`** - Initializes a new operation
-- **`POST /{connector-slug}/operation/cancel`** - Cancels a running operation
-- **`POST /{connector-slug}/operation/status`** - Returns operation status
+- **`GET /{connector-slug}/info`** — Connector information and capabilities
+- **`POST /{connector-slug}/configuration/{key}/fields`** — Dynamic configuration fields
+- **`POST /{connector-slug}/configuration/validate`** — Validate connection configuration
+- **`POST /{connector-slug}/operation/pull`** — **Start** a pull job (202)
+- **`POST /{connector-slug}/operation/push`** — **Start** a push job (202)
+- **`POST /{connector-slug}/operation/patch`** — **Start** a patch job (202)
+- **`POST /{connector-slug}/operation/schema/{operation}`** — Schema for the operation (sync)
+- **`POST /{connector-slug}/operation/subscribe`** — Register a webhook (sync)
+- **`POST /{connector-slug}/operation/unsubscribe`** — Unregister a webhook (sync)
 
-#### Operation Token Authenticated Endpoints
+#### Per-Job Operation Token Authenticated Endpoints
 
-These endpoints are called during active operations and require an operation token:
+These are kind-agnostic lifecycle routes — they work for any job
+identified by `:job_id`, regardless of whether it's pull / push /
+patch. The bearer is the `operation_token` returned in the Start*
+202 response, NOT the connector's system token. The service
+rejects the system token here by design (scope limitation).
 
-- **`POST /{connector-slug}/operation/schema/{operation}`** - Returns schema for the operation
-- **`POST /{connector-slug}/operation/push`** - Pushes data to the external system
-- **`POST /{connector-slug}/operation/patch`** - Updates data in the external system
-- **`POST /{connector-slug}/operation/pull`** - Pulls data from the external system
-- **`POST /{connector-slug}/operation/subscribe`** - Subscribes to changes (optional)
+- **`GET /operation/status/:job_id`** — Current status + cumulative `Progress` slice
+- **`GET /operation/result/:job_id`** — Pull: stream the ZIP. Push/patch: 204 No Content.
+- **`POST /operation/cancel/:job_id`** — Best-effort cancel
 
 #### Public Endpoints
 
-- **`GET /{connector-slug}/details`** - Public information about the connector (uses HTML templates)
+- **`GET /{connector-slug}/details`** — Public information about the connector (uses HTML templates)
+
+> **Legacy / transitional**: `/operation/init`, the operation-id-
+> scoped `/operation/cancel`, and the operation-id-scoped
+> `/operation/status` remain in the codebase for back-compat but
+> are not called by the consolidated SDK client. They will be
+> retired in a follow-up Phase 4 PR.
 
 ### 4. Authentication
 
@@ -104,11 +117,15 @@ These endpoints are called during active operations and require an operation tok
 - Validated against the database
 - Required for configuration and operation lifecycle endpoints
 
-#### Operation Tokens
-- Used for data operations within a specific workflow
-- Generated when an operation is initialized
-- Have limited lifetime and scope
-- Required for data push/pull/patch operations
+#### Per-Job Operation Tokens
+- Minted on every `Start*` request; returned in the 202 body as
+  `operation_token` alongside `job_id`
+- Required only on the per-job lifecycle routes
+  (`/operation/status/:job_id`, `/operation/result/:job_id`,
+  `/operation/cancel/:job_id`); the system token is rejected there
+  by design (scope limitation)
+- Lifetime bounded by the OperationJob row's `ExpiresAt`
+  (default 15-minute janitor TTL) or the next `cancel`
 
 ### 5. Data Structures
 
@@ -315,14 +332,22 @@ func SetupRoutes(app *models.ConnectorsApp) {
 }
 ```
 
-`SetupConnectorRoutes` registers (with the `system-token`
-middleware): `GET /info`, `POST /configuration/:key/fields`,
-`POST /configuration/validate`, `POST /operation/init`,
-`POST /operation/cancel`, `POST /operation/status`. With the
-`operation-token` middleware: `POST /operation/schema/:operation`
-plus one of `pull` / `push` / `patch` / `subscribe` /
-`unsubscribe` per declared capability. And without auth:
-`GET /details`. See
+`SetupConnectorRoutes` wires:
+
+- **System-token middleware** in front of: `GET /info`,
+  `POST /configuration/:key/fields`,
+  `POST /configuration/validate`, the Start* routes
+  (`/operation/pull`, `/operation/push`, `/operation/patch`),
+  `POST /operation/schema/:operation`, and (when supported)
+  `POST /operation/subscribe` + `POST /operation/unsubscribe`.
+- **Per-job operation-token middleware** in front of the
+  kind-agnostic lifecycle routes registered by `JobManager`:
+  `GET /operation/status/:job_id`,
+  `GET /operation/result/:job_id`,
+  `POST /operation/cancel/:job_id`.
+- **No auth** on `GET /details` (public preview).
+
+See
 [`connectors/common/README.md`](../connectors/common/README.md) for
 the full API reference.
 
@@ -337,17 +362,39 @@ Before submitting:
 
 ## Observability — progress events
 
-A 10-minute Stripe import once produced zero log rows between
-`operation/init` and a `context deadline exceeded`. The connector
-wasn't broken — Stripe pagination was slow — but without per-page
-emission inside the pagination loop, operators saw nothing for 10
-minutes, then a timeout. Silent multi-minute operations are
-chronically hard to triage.
+A 10-minute Stripe import once produced zero log rows between the
+job starting and `context deadline exceeded`. The connector wasn't
+broken — Stripe pagination was slow — but without per-page emission
+inside the pagination loop, operators saw nothing for 10 minutes,
+then a timeout. Silent multi-minute operations are chronically hard
+to triage.
 
 Every long-running connector loop — paginated HTTP, retry/backoff,
 chunked upload, SQL row scan, multi-file SFTP transfer — needs
-per-iteration emission. Shared vocabulary in
-[`connectors/common/progress.go`](../connectors/common/progress.go).
+per-iteration emission. The vocabulary lives in the SDK at
+[`github.com/IrminData/irmin-sdk-go/observability`](https://github.com/IrminData/irmin-sdk-go/tree/main/observability)
+so every Irmin service (connectors, Core orchestrator, AI agents)
+and external connector authors reach the same shapes. Inside this
+repo, [`connectors/common/progress.go`](../connectors/common/progress.go)
+re-exports the SDK types as `common.ProgressEvent`,
+`common.ProgressHandler`, `common.ProgressKind*` for
+backward-compatibility — new code can use either import path
+interchangeably (Go alias identity).
+
+When a job is in flight, the progress events the provider emits
+flow two ways simultaneously:
+
+1. Into `db.OperationLog` rows (the connector's own log table),
+   throttled per-kind by `common.LogOperationProgress`.
+2. Into the OperationJob row's cumulative `Progress` JSON slice
+   via the worker's `appendProgress` closure (smuggled through
+   ctx by `common.WithJobProgress`). This is what the SDK client
+   on Core surfaces back to the orchestrator's workflow run logs
+   via `connectorjobs.RunWithProgress`.
+
+A single `Emit(...)` from a provider therefore lights up the
+connector log AND the workflow run timeline in Core — the operator
+sees the same page/batch/file event in both places.
 
 ### The contract
 

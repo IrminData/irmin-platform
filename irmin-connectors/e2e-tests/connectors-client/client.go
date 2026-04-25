@@ -29,16 +29,16 @@ const DefaultConnectorTimeout = 30 * time.Second
 type Client struct {
 	BaseURL    string
 	Token      string
-	Locale     string
 	HTTPClient *http.Client
 }
 
 // NewClient creates a new Connector API client with default settings.
-func NewClient(baseURL, token, locale string) *Client {
+// Connector responses are English-only — there is no Accept-Language
+// negotiation.
+func NewClient(baseURL, token string) *Client {
 	return &Client{
 		BaseURL: baseURL,
 		Token:   token,
-		Locale:  locale,
 		HTTPClient: &http.Client{
 			Timeout: DefaultConnectorTimeout,
 		},
@@ -243,7 +243,6 @@ func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, erro
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
-	req.Header.Set("Accept-Language", c.Locale)
 	req.Header.Set("Accept", "application/json")
 
 	for k, v := range headers {
@@ -301,7 +300,6 @@ func (c *Client) FetchStreamFiles(ctx context.Context, opts RequestOptions) ([]P
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
-	req.Header.Set("Accept-Language", c.Locale)
 	if _, exists := headers["Accept"]; !exists {
 		req.Header.Set("Accept", "application/octet-stream")
 	}

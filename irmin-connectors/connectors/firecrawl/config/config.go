@@ -137,7 +137,6 @@ func GetConnectorInfo() models.ConnectorDetails {
 		Capabilities: []irminmodels.ConnectorCapability{
 			irminmodels.ConnectorCapabilityPull,
 		},
-		Locales:         []string{"en"},
 		PrimaryCategory: irminmodels.ConnectorCategoryOther,
 		Categories:      []irminmodels.ConnectorCategory{irminmodels.ConnectorCategoryOther},
 		AuthorEmail:     "hello@irmin.co",

@@ -14,7 +14,6 @@ type ConnectorInfo struct {
 	APIBaseURL       string                            `json:"api_base_url"`
 	LogoURL          string                            `json:"logo_url"`
 	Capabilities     []irminmodels.ConnectorCapability `json:"capabilities"`
-	Locales          []string                          `json:"locales"`
 	PrimaryCategory  irminmodels.ConnectorCategory     `json:"primary_category"`
 	Categories       []irminmodels.ConnectorCategory   `json:"categories"`
 	AuthorEmail      string                            `json:"author_email"`

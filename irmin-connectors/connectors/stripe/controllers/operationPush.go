@@ -37,7 +37,7 @@ func (p *StripePushProvider) ProgressHandler(_ *db.Operation) common.ProgressHan
 // InitializeClient constructs the Stripe client from the Operation's
 // stored details + settings.
 func (p *StripePushProvider) InitializeClient(
-	_ fiber.Ctx,
+	_ context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
@@ -73,8 +73,9 @@ type pushStats struct {
 // to infer completion from the generic "Push operation completed"
 // line from the common package.
 func (p *StripePushProvider) ProcessFiles(
-	c fiber.Ctx,
+	ctx context.Context,
 	clientAny any,
+	operation *db.Operation,
 	files map[string][]byte,
 	targetPath string,
 ) error {
@@ -82,8 +83,6 @@ func (p *StripePushProvider) ProcessFiles(
 	if !ok {
 		return errors.New("stripe: invalid client type for push")
 	}
-	operation, _ := c.Locals("operation").(*db.Operation)
-	ctx := c.Context()
 
 	if len(files) == 0 {
 		return errors.New("stripe: no files to push")

@@ -191,7 +191,6 @@ func GetConnectorInfo() models.ConnectorDetails {
 			irminmodels.ConnectorCapabilityPush,       // Upload files to SFTP server
 			irminmodels.ConnectorCapabilityApplyPatch, // Apply patch operations to SFTP files
 		},
-		Locales:         []string{"en"},
 		PrimaryCategory: irminmodels.ConnectorCategoryOther,
 		Categories:      []irminmodels.ConnectorCategory{irminmodels.ConnectorCategoryOther},
 		AuthorEmail:     "hello@irmin.co",

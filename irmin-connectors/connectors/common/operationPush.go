@@ -18,6 +18,7 @@ import (
 	"time"
 
 	sdkmodels "github.com/IrminData/irmin-sdk-go/models"
+	sdkprogress "github.com/IrminData/irmin-sdk-go/observability"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 )
@@ -45,42 +46,66 @@ const maxDecompressedEntryBytes int64 = 1024 * 1024 * 1024
 // Prevents zip bombs with many small entries that collectively exhaust memory.
 const maxTotalDecompressedBytes int64 = 5 * 1024 * 1024 * 1024
 
-// PushOperationProvider defines the interface for connector-specific push operation handling.
+// PushOperationProvider defines the interface for connector-specific
+// push operation handling.
+//
+// Under the async protocol the push body runs in a worker goroutine
+// detached from the fiber request lifecycle, so providers receive an
+// explicit context.Context (derived from the job's cancel scope) and
+// the preloaded *db.Operation rather than a fiber.Ctx. Providers that
+// previously reached for c.Locals("operation") or c.Context() inside
+// each method now get both passed in explicitly.
 type PushOperationProvider interface {
-	// InitializeClient initializes the client for push operations
+	// InitializeClient initializes the client for push operations.
+	// ctx is the job-scoped context — cancellation flows to the
+	// underlying vendor client via this ctx when the job is cancelled.
 	InitializeClient(
-		c fiber.Ctx,
+		ctx context.Context,
 		logger *slog.Logger,
 		operation *db.Operation,
 	) (client any, databaseName *string, cleanup func(), err error)
 
-	// ProcessFiles processes the extracted files and uploads/inserts them
-	ProcessFiles(c fiber.Ctx, client any, files map[string][]byte, targetPath string) error
+	// ProcessFiles processes the extracted files and uploads/inserts
+	// them. Must honour ctx — long-running inserts/uploads should pass
+	// ctx through to the underlying driver so /operation/cancel takes
+	// effect.
+	ProcessFiles(
+		ctx context.Context,
+		client any,
+		operation *db.Operation,
+		files map[string][]byte,
+		targetPath string,
+	) error
 
 	// ProgressHandler returns the observability callback this
 	// provider wires into its client for per-batch / per-file
 	// events. Return nil only if the underlying operations are
 	// short enough not to need progress events — the common push
-	// handler always wraps the provider call with a baseline
+	// worker always wraps the provider call with a baseline
 	// heartbeat, so returning nil does not leave the operation
 	// silent.
 	ProgressHandler(operation *db.Operation) ProgressHandler
 }
 
-// HandleOperationPush provides a common HTTP handler for push operation endpoints.
+// HandleOperationPush starts an async push job and returns HTTP 202
+// Accepted with {"job_id": "..."}. The actual push runs in a
+// background worker owned by the app's JobManager; callers poll
+// /operation/status/:job_id and observe status=complete when the job
+// finishes. Push produces no result artifact so /operation/result
+// returns 204 No Content; the status row alone is the success signal.
 //
-// Under the unified Guard API the push handler is synchronous but
-// still persists an OperationJob row via manager.Begin so concurrent
-// pushes against the same operation get a structured 409 carrying
-// the blocking job_id. Release is deferred; a provider panic is
-// recovered so the row never sticks at status=running.
+// The request body (file upload or presigned URL) is consumed in the
+// HTTP goroutine before the worker is launched because fiber.Ctx is
+// not safe to dereference once the response has been written. Form
+// parsing failures surface as structured 4xx before the guard is
+// taken, so a malformed request does not hold the lock.
 func HandleOperationPush(
 	c fiber.Ctx,
 	provider PushOperationProvider,
 	logger *slog.Logger,
 	dbInstance *db.Database,
 	app *models.ConnectorsApp,
-) (retErr error) {
+) error {
 	manager, managerOK := app.JobManager.(*JobManager)
 	if !managerOK || manager == nil {
 		return RespondJobError(
@@ -92,7 +117,6 @@ func HandleOperationPush(
 		)
 	}
 
-	// Get the operation from the context
 	operation, ok := c.Locals("operation").(*db.Operation)
 	if !ok {
 		return RespondJobError(
@@ -106,11 +130,39 @@ func HandleOperationPush(
 
 	connectorName := resolveConnectorName(c)
 
+	// Parse form fields + materialise the upload BEFORE taking the
+	// guard. fiber.Ctx is bound to the HTTP request goroutine; once
+	// this handler returns, the body reader is gone and any worker
+	// reaching for it crashes. Both error paths fail the request with
+	// a 4xx before any DB row exists — no lock held, no cleanup owed.
+	fields, parseErr := utils.ParseFormFields(c, nil, []string{"path"})
+	if parseErr != nil {
+		return RespondJobError(
+			c,
+			fiber.StatusBadRequest,
+			sdkmodels.JobErrorReasonInvalidRequest,
+			fmt.Errorf("parse form fields: %w", parseErr),
+			"",
+		)
+	}
+	rawPath := fields["path"]
+
+	source, srcErr := acquirePushSource(c)
+	if srcErr != nil {
+		return RespondJobError(
+			c,
+			fiber.StatusBadRequest,
+			sdkmodels.JobErrorReasonInvalidRequest,
+			srcErr,
+			"",
+		)
+	}
+
 	guard, alreadyErr, beginErr := manager.Begin(BeginOperationJobInput{
 		OperationID:             operation.ID,
 		ConnectorRegistrationID: operation.ConnectorRegistrationID,
 		ConnectorName:           connectorName,
-		Kind:                    "push",
+		Kind:                    operationKindPush,
 	})
 	if alreadyErr != nil {
 		return RespondAlreadyRunning(c, alreadyErr)
@@ -127,152 +179,187 @@ func HandleOperationPush(
 		)
 	}
 
-	// Pessimistic default — only overwritten on successful
-	// completion. Release deferred so any early return (panic,
-	// error path) still marks the row terminal and frees the
-	// advisory lock.
-	outcome := JobOutcome{
-		Status: sdkmodels.OperationJobStatusFailed,
-		Error:  "handler exited without setting outcome",
-	}
-	defer func() {
-		// Recover any panic inside the handler body so we can emit
-		// a structured 500 via RespondJobError (overwriting retErr
-		// on the named return) instead of re-panicking and letting
-		// fiber's panic middleware produce a generic body. The
-		// guard's terminal-status write still happens synchronously
-		// below so /operation/status observes the failure.
-		if r := recover(); r != nil {
-			logger.Error("push handler panic recovered",
-				"error", fmt.Sprintf("%v", r), "operation_id", operation.ID)
-			outcome = JobOutcome{
-				Status: sdkmodels.OperationJobStatusFailed,
-				Error:  fmt.Sprintf("handler panic: %v", r),
-			}
-			retErr = RespondJobError(
-				c,
-				fiber.StatusInternalServerError,
-				sdkmodels.JobErrorReasonInternal,
-				fmt.Errorf("handler panic: %v", r),
-				guard.JobID(),
-			)
-		}
-		guard.Release(outcome)
-	}()
+	fn := buildPushWorker(provider, logger, dbInstance, operation, source, rawPath)
+	job := manager.StartJobWithGuard(guard, fn)
 
-	// Log operation execution start
-	LogOperationEvent(
-		dbInstance,
-		logger,
-		operation.ID,
-		db.LogEventTypeInfo,
-		"Push operation execution started",
-		nil,
-	)
-
-	// Baseline heartbeat — fires every heartbeatInterval for the
-	// duration of the push, even if the provider's ProgressHandler
-	// is nil. Push can silently spend minutes inside ProcessFiles or
-	// inside the presigned-URL download path (10-minute timeout), so
-	// a floor-level cadence is essential.
-	heartbeatStop := make(chan struct{})
-	go startHeartbeat(dbInstance, logger, operation.ID, "operation/push", heartbeatStop)
-	defer close(heartbeatStop)
-
-	client, _, cleanup, err := provider.InitializeClient(c, logger, operation)
-	if err != nil {
-		logPushFailure(dbInstance, logger, operation.ID,
-			"Failed to initialize client for push operation", err)
-		return MarkFailedAndRespond(c, &outcome, fiber.StatusInternalServerError, "initialize client", err)
-	}
-	defer cleanup()
-
-	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
-	if err != nil {
-		logPushFailure(dbInstance, logger, operation.ID,
-			"Failed to parse form fields for push operation", err)
-		return MarkFailedAndRespond(c, &outcome, fiber.StatusBadRequest, "parse form fields", err)
-	}
-
-	// Pass raw path to provider for connector-specific processing
-	rawPath := fields["path"]
-
-	files, srcStage, srcErr := acquirePushFiles(c)
-	if srcErr != nil {
-		logPushFailure(dbInstance, logger, operation.ID,
-			"Failed to acquire files for push operation", srcErr)
-		return MarkFailedAndRespond(c, &outcome, fiber.StatusBadRequest, srcStage, srcErr)
-	}
-
-	if len(files) == 0 {
-		LogOperationEvent(dbInstance, logger, operation.ID,
-			db.LogEventTypeError, "No files found in uploaded ZIP", nil)
-		return MarkFailedAndRespond(c, &outcome, fiber.StatusBadRequest,
-			"upload", errors.New("no files found in uploaded zip"))
-	}
-
-	if procErr := provider.ProcessFiles(c, client, files, rawPath); procErr != nil {
-		logger.Error("failed to process files", "error", procErr)
-		LogOperationEvent(dbInstance, logger, operation.ID,
-			db.LogEventTypeError, "Failed to process files during push operation",
-			map[string]any{"error": procErr.Error(), "path": rawPath})
-		return MarkFailedAndRespond(c, &outcome, fiber.StatusInternalServerError,
-			"process files", procErr)
-	}
-
-	// Log successful completion
-	LogOperationEvent(
-		dbInstance,
-		logger,
-		operation.ID,
-		db.LogEventTypeInfo,
-		"Push operation completed successfully",
-		map[string]any{
-			"file_count": len(files),
-			"path":       rawPath,
-		},
-	)
-
-	outcome = JobOutcome{Status: sdkmodels.OperationJobStatusComplete}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Successfully pushed data",
-		"status":  "completed",
+	return c.Status(fiber.StatusAccepted).JSON(sdkmodels.StartOperationJobResponse{
+		JobID:          job.JobID,
+		OperationToken: operation.Token,
 	})
 }
 
-// logPushFailure emits the canonical error-level operation log
-// entry used throughout HandleOperationPush. Centralised so the log
-// shape stays consistent and the handler body stays short.
-func logPushFailure(dbInstance *db.Database, logger *slog.Logger, operationID uint, msg string, err error) {
-	LogOperationEvent(
-		dbInstance,
-		logger,
-		operationID,
-		db.LogEventTypeError,
-		msg,
-		map[string]any{"error": err.Error()},
-	)
+// pushSource captures one of two ways the worker will obtain the
+// files to push. Direct-upload files have to be pre-extracted in the
+// HTTP request goroutine because fiber.Ctx's body reader is invalid
+// once the handler returns. The presigned-URL path is just a string
+// — the actual S3 download happens inside the worker so the 202
+// response is not held up by a multi-minute fetch and concurrent
+// duplicate requests don't each pay the full download cost before
+// one of them is rejected with 409.
+type pushSource struct {
+	// files holds the pre-extracted zip contents. Set when the
+	// caller used the multipart `file` field. nil when presignedURL
+	// is set instead.
+	files map[string][]byte
+
+	// presignedURL is the URL the worker should fetch the zip from.
+	// Set when the caller passed `presigned_url`; nil otherwise.
+	presignedURL string
 }
 
-// acquirePushFiles picks between the presigned-URL and direct-upload
-// source for a push request. Returns (files, "", nil) on success; on
-// failure the second return is a short stage label ("presigned
-// download" / "upload") used for the handler's outcome message so
-// operators can tell the two paths apart without re-reading the
-// error.
-func acquirePushFiles(c fiber.Ctx) (map[string][]byte, string, error) {
-	if presignedURL := c.FormValue("presigned_url"); presignedURL != "" {
-		files, err := handlePresignedURLFile(presignedURL)
-		if err != nil {
-			return nil, "presigned download", err
+// buildPushWorker composes the WorkerFunc the JobManager runs for a
+// push job. The worker body runs outside the fiber request lifecycle,
+// so every value it dereferences (source, operation, provider) is
+// pre-captured from the HTTP goroutine. Providers MUST NOT reach for
+// fiber.Ctx state from inside the worker.
+//
+// When the caller supplied a presigned URL, the actual S3 download
+// happens inside the worker rather than in the HTTP goroutine. This
+// keeps the 202 response fast even on a slow connector and prevents
+// concurrent duplicate requests from each paying the full 10-minute
+// download cost before one of them is rejected with 409.
+//
+// Push has no result artifact — the worker returns nil on success and
+// does not write to resultPath. /operation/result handles this by
+// returning 204 No Content when the status row says complete and
+// ResultPath is empty.
+func buildPushWorker(
+	provider PushOperationProvider,
+	logger *slog.Logger,
+	dbInstance *db.Database,
+	operation *db.Operation,
+	source pushSource,
+	rawPath string,
+) WorkerFunc {
+	return func(
+		ctx context.Context,
+		appendProgress func(sdkprogress.ProgressEvent),
+		_ string,
+	) error {
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Push operation execution started",
+			nil,
+		)
+
+		// Heartbeat — push can silently spend minutes inside
+		// ProcessFiles (bulk inserts, large uploads) so a floor-level
+		// cadence keeps the progress slice moving and the janitor's
+		// stuck-reclaim pass from false-positiving.
+		heartbeatStop := make(chan struct{})
+		go startJobHeartbeat(ctx, "operation/push", appendProgress, heartbeatStop)
+		defer close(heartbeatStop)
+
+		// Inject the job's appendProgress into ctx so that
+		// NewProgressHandlerWithContext picks it up and fans every
+		// vendor-originated batch / file event into the job's
+		// cumulative Progress slice. Mirrors the pull worker — the
+		// provider's OperationLog path is unchanged; this is purely
+		// an additional sink.
+		jobCtx := WithJobProgress(ctx, appendProgress)
+
+		// Materialise the files inside the worker. Direct-upload
+		// callers passed pre-extracted bytes; presigned-URL callers
+		// only passed the URL — fetching it here keeps the original
+		// 202 response fast and lets two duplicate concurrent calls
+		// hit the 409-already-running guard before either pays the
+		// full S3 download cost.
+		files, srcErr := source.materialize(jobCtx)
+		if srcErr != nil {
+			LogOperationEvent(
+				dbInstance, logger, operation.ID,
+				db.LogEventTypeError,
+				"Failed to acquire push source",
+				map[string]any{"error": srcErr.Error()},
+			)
+			return fmt.Errorf("acquire push source: %w", srcErr)
 		}
-		return files, "", nil
+
+		client, _, cleanup, err := provider.InitializeClient(jobCtx, logger, operation)
+		if err != nil {
+			LogOperationEvent(
+				dbInstance,
+				logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to initialize client for push operation",
+				map[string]any{"error": err.Error()},
+			)
+			return fmt.Errorf("initialize client: %w", err)
+		}
+		defer cleanup()
+
+		if procErr := provider.ProcessFiles(jobCtx, client, operation, files, rawPath); procErr != nil {
+			LogOperationEvent(
+				dbInstance, logger, operation.ID,
+				db.LogEventTypeError,
+				"Failed to process files during push operation",
+				map[string]any{"error": procErr.Error(), "path": rawPath},
+			)
+			return fmt.Errorf("process files: %w", procErr)
+		}
+
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Push operation completed successfully",
+			map[string]any{
+				"file_count": len(files),
+				"path":       rawPath,
+			},
+		)
+		return nil
+	}
+}
+
+// materialize resolves a pushSource into the actual file map. Direct
+// uploads return the pre-extracted contents unchanged; presigned-URL
+// sources fetch from S3 here, inside the worker goroutine, so the HTTP
+// 202 path stays fast. The worker's ctx (job-scoped, cancelled by
+// /operation/cancel/:job_id) is threaded through so a cancel issued
+// while the URL download is still in flight aborts the fetch instead
+// of letting it run to the 10-minute presignedDownloadTimeout ceiling.
+func (s pushSource) materialize(ctx context.Context) (map[string][]byte, error) {
+	if s.files != nil {
+		return s.files, nil
+	}
+	if s.presignedURL == "" {
+		return nil, errors.New("push source has neither files nor presigned URL")
+	}
+	files, err := handlePresignedURLFile(ctx, s.presignedURL)
+	if err != nil {
+		return nil, fmt.Errorf("presigned download: %w", err)
+	}
+	if len(files) == 0 {
+		return nil, errors.New("presigned download returned no files")
+	}
+	return files, nil
+}
+
+// acquirePushSource picks between the presigned-URL and direct-upload
+// source for a push request. The direct-upload path materialises the
+// zip in the HTTP goroutine because fiber.Ctx's body reader cannot be
+// dereferenced from a worker. The presigned-URL path captures only the
+// URL string — the actual S3 download is deferred to the worker so
+// the 202 response is not held up by the fetch (which can run for the
+// full presignedDownloadTimeout, currently 10 minutes).
+func acquirePushSource(c fiber.Ctx) (pushSource, error) {
+	if presignedURL := c.FormValue("presigned_url"); presignedURL != "" {
+		return pushSource{presignedURL: presignedURL}, nil
 	}
 	files, err := handleUploadedFile(c)
 	if err != nil {
-		return nil, "upload", err
+		return pushSource{}, fmt.Errorf("upload: %w", err)
 	}
-	return files, "", nil
+	if len(files) == 0 {
+		return pushSource{}, errors.New("upload: no files found in uploaded zip")
+	}
+	return pushSource{files: files}, nil
 }
 
 // handleUploadedFile processes the uploaded ZIP file and returns the extracted files.
@@ -314,7 +401,7 @@ type NotSupportedPushProvider struct{}
 
 // InitializeClient returns an error indicating push operations are not supported.
 func (p *NotSupportedPushProvider) InitializeClient(
-	_ fiber.Ctx,
+	_ context.Context,
 	_ *slog.Logger,
 	_ *db.Operation,
 ) (any, *string, func(), error) {
@@ -323,8 +410,9 @@ func (p *NotSupportedPushProvider) InitializeClient(
 
 // ProcessFiles returns an error indicating push operations are not supported.
 func (p *NotSupportedPushProvider) ProcessFiles(
-	_ fiber.Ctx,
+	_ context.Context,
 	_ any,
+	_ *db.Operation,
 	_ map[string][]byte,
 	_ string,
 ) error {
@@ -332,7 +420,7 @@ func (p *NotSupportedPushProvider) ProcessFiles(
 }
 
 // ProgressHandler returns nil — providers that reject every push
-// call have nothing to observe. The common push handler's baseline
+// call have nothing to observe. The common push worker's baseline
 // heartbeat is still installed anyway.
 func (p *NotSupportedPushProvider) ProgressHandler(
 	_ *db.Operation,
@@ -422,12 +510,17 @@ func ssrfSafeDialContext(ctx context.Context, network, addr string) (net.Conn, e
 	return nil, fmt.Errorf("failed to connect to %s: %w", host, lastDialErr)
 }
 
-func handlePresignedURLFile(presignedURL string) (map[string][]byte, error) {
+func handlePresignedURLFile(parent context.Context, presignedURL string) (map[string][]byte, error) {
 	if err := validatePresignedURL(presignedURL); err != nil {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), presignedDownloadTimeout)
+	// Cap the download at presignedDownloadTimeout but inherit from
+	// the worker's ctx so /operation/cancel/:job_id (which cancels the
+	// worker ctx) tears down an in-flight download promptly. Without
+	// the parent inheritance, a cancelled push job continued downloading
+	// from a slow / unreachable URL until the 10-minute ceiling.
+	ctx, cancel := context.WithTimeout(parent, presignedDownloadTimeout)
 	defer cancel()
 
 	req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, presignedURL, nil)

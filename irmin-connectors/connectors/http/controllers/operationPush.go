@@ -1,6 +1,7 @@
 package httpcontrollers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -30,11 +31,11 @@ func (p *HTTPPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandl
 
 // InitializeClient initializes the HTTP client for push operations.
 func (p *HTTPPushProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
-	client, err := httpclient.InitHTTPClient(c, logger, operation)
+	client, err := httpclient.InitHTTPClient(ctx, logger, operation)
 	if err != nil {
 		return nil, nil, func() {}, fmt.Errorf("failed to initialize HTTP client: %w", err)
 	}
@@ -52,8 +53,9 @@ func (p *HTTPPushProvider) InitializeClient(
 //
 //nolint:gocognit // Complex? Maybe, but it's okay for now
 func (p *HTTPPushProvider) ProcessFiles(
-	c fiber.Ctx,
+	ctx context.Context,
 	client any,
+	operation *db.Operation,
 	files map[string][]byte,
 	rawPath string,
 ) error {
@@ -61,8 +63,6 @@ func (p *HTTPPushProvider) ProcessFiles(
 	if !ok {
 		return errors.New("invalid client type for HTTP push provider")
 	}
-
-	operation, _ := c.Locals("operation").(*db.Operation)
 
 	// If a path is provided, use it to modify the request URL
 	if rawPath != "" {
@@ -146,7 +146,7 @@ func (p *HTTPPushProvider) ProcessFiles(
 	}
 
 	// Make the HTTP request
-	resp, err := tempClient.MakeRequest()
+	resp, err := tempClient.MakeRequestWithContext(ctx)
 	if err != nil {
 		if operation != nil && p.dbInstance != nil && p.logger != nil {
 			common.LogOperationEvent(

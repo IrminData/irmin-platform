@@ -189,9 +189,23 @@ func handleJobResult(c fiber.Ctx, manager *JobManager) error {
 	}
 
 	if row.ResultPath == "" {
-		return c.Status(fiber.StatusGone).JSON(fiber.Map{
-			"error": "result path not recorded",
-		})
+		if row.Kind == operationKindPull {
+			// Distinct from the os.Stat 410 below: that path means the
+			// file existed on disk and was reaped (TTL signal). This
+			// path means the worker reached status=complete without
+			// ever populating ResultPath — a worker bug, not a TTL
+			// expiry. Operators should be able to tell them apart in
+			// the connector logs.
+			return c.Status(fiber.StatusGone).JSON(fiber.Map{
+				"error": "result path not recorded",
+			})
+		}
+		// Some operation kinds (push, patch, schema) have no artifact —
+		// their success signal is status=complete on the job row, not a
+		// downloadable file. Surface 204 No Content so the SDK client
+		// distinguishes "succeeded, nothing to download" from "result
+		// expired" (410) or "not ready yet" (409).
+		return c.SendStatus(fiber.StatusNoContent)
 	}
 	if _, statErr := os.Stat(row.ResultPath); statErr != nil {
 		// The DB still claims we have a zip, but it's gone from

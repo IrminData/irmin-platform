@@ -105,12 +105,18 @@ func InitHTTPClient(c any, logger *slog.Logger, operation *db.Operation) (*HTTPC
 // MakeRequest makes an HTTP request and returns the response.
 // This method is not safe for concurrent use on the same HTTPClient instance.
 func (h *HTTPClient) MakeRequest() (*http.Response, error) {
+	return h.MakeRequestWithContext(context.Background())
+}
+
+// MakeRequestWithContext makes an HTTP request tied to ctx so async
+// operation cancellation interrupts in-flight network I/O.
+func (h *HTTPClient) MakeRequestWithContext(ctx context.Context) (*http.Response, error) {
 	var bodyReader io.Reader
 	if len(h.Body) > 0 {
 		bodyReader = bytes.NewReader(h.Body)
 	}
 
-	req, err := http.NewRequestWithContext(context.Background(), h.Method, h.URL, bodyReader)
+	req, err := http.NewRequestWithContext(ctx, h.Method, h.URL, bodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

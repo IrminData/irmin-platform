@@ -6,11 +6,13 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
 	"irmin-connectors/db"
 
+	sdkmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -280,5 +282,136 @@ func TestJobAuthReturnsInternalServerErrorOnOperationLookupFailure(t *testing.T)
 	)
 	if resp.StatusCode != http.StatusInternalServerError {
 		t.Fatalf("status = %d, want 500", resp.StatusCode)
+	}
+}
+
+func TestJobResultEmptyResultPathDependsOnOperationKind(t *testing.T) {
+	app, store, opStore := newJobHandlerTestApp(t)
+	opStore.operations[88] = &db.Operation{
+		Model: gorm.Model{ID: 88},
+		Token: "result-kind-token",
+	}
+
+	tests := []struct {
+		name       string
+		jobID      string
+		kind       string
+		wantStatus int
+	}{
+		{
+			name:       "push has no artifact",
+			jobID:      "opjob_push_no_artifact",
+			kind:       operationKindPush,
+			wantStatus: http.StatusNoContent,
+		},
+		{
+			name:       "patch has no artifact",
+			jobID:      "opjob_patch_no_artifact",
+			kind:       operationKindPatch,
+			wantStatus: http.StatusNoContent,
+		},
+		{
+			name:       "pull missing artifact is expired",
+			jobID:      "opjob_pull_missing_artifact",
+			kind:       operationKindPull,
+			wantStatus: http.StatusGone,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, err := store.CreateOperationJob(&db.OperationJob{
+				JobID:                   tt.jobID,
+				ConnectorRegistrationID: 1,
+				ConnectorName:           "test",
+				OperationID:             88,
+				Kind:                    tt.kind,
+				Status:                  "complete",
+				Progress:                []byte("[]"),
+			}); err != nil {
+				t.Fatalf("seed complete job: %v", err)
+			}
+
+			resp := doJobRequest(
+				t,
+				app,
+				http.MethodGet,
+				"http://localhost/operation/result/"+tt.jobID,
+				"Bearer result-kind-token",
+			)
+			if resp.StatusCode != tt.wantStatus {
+				t.Fatalf("status = %d, want %d", resp.StatusCode, tt.wantStatus)
+			}
+		})
+	}
+}
+
+func TestJobResultReturnsGoneWhenPersistedFileMissing(t *testing.T) {
+	app, store, opStore := newJobHandlerTestApp(t)
+	operationID := uint(801)
+	job := &db.OperationJob{
+		JobID:                   "opjob_missing_file",
+		ConnectorRegistrationID: 1,
+		ConnectorName:           "test",
+		OperationID:             operationID,
+		Kind:                    "pull",
+		Status:                  string(sdkmodels.OperationJobStatusComplete),
+		Progress:                []byte("[]"),
+		ResultPath:              t.TempDir() + "/missing.zip",
+	}
+	if _, err := store.CreateOperationJob(job); err != nil {
+		t.Fatalf("seed job: %v", err)
+	}
+	opStore.operations[operationID] = &db.Operation{
+		Model: gorm.Model{ID: operationID},
+		Token: "result-token",
+	}
+
+	resp := doJobRequest(
+		t,
+		app,
+		http.MethodGet,
+		"http://localhost/operation/result/opjob_missing_file",
+		"Bearer result-token",
+	)
+	if resp.StatusCode != http.StatusGone {
+		t.Fatalf("status = %d, want 410", resp.StatusCode)
+	}
+}
+
+func TestJobResultStreamsExistingFile(t *testing.T) {
+	app, store, opStore := newJobHandlerTestApp(t)
+	operationID := uint(802)
+	resultPath := t.TempDir() + "/result.zip"
+	if err := os.WriteFile(resultPath, []byte("zip-bytes"), 0o600); err != nil {
+		t.Fatalf("write result: %v", err)
+	}
+	job := &db.OperationJob{
+		JobID:                   "opjob_existing_file",
+		ConnectorRegistrationID: 1,
+		ConnectorName:           "test",
+		OperationID:             operationID,
+		Kind:                    "pull",
+		Status:                  string(sdkmodels.OperationJobStatusComplete),
+		Progress:                []byte("[]"),
+		ResultPath:              resultPath,
+	}
+	if _, err := store.CreateOperationJob(job); err != nil {
+		t.Fatalf("seed job: %v", err)
+	}
+	opStore.operations[operationID] = &db.Operation{
+		Model: gorm.Model{ID: operationID},
+		Token: "result-token",
+	}
+
+	resp := doJobRequest(
+		t,
+		app,
+		http.MethodGet,
+		"http://localhost/operation/result/opjob_existing_file",
+		"Bearer result-token",
+	)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want 200", resp.StatusCode)
 	}
 }

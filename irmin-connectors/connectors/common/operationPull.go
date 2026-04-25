@@ -10,6 +10,7 @@ import (
 	"irmin-connectors/utils"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
 
 	sdkmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -123,7 +124,7 @@ func HandleOperationPull(
 		OperationID:             operation.ID,
 		ConnectorRegistrationID: operation.ConnectorRegistrationID,
 		ConnectorName:           connectorName,
-		Kind:                    "pull",
+		Kind:                    operationKindPull,
 	})
 	if alreadyErr != nil {
 		return RespondAlreadyRunning(c, alreadyErr)
@@ -142,18 +143,42 @@ func HandleOperationPull(
 	fn := buildPullWorker(provider, logger, dbInstance, operation, rawPath, formFields)
 	job := manager.StartJobWithGuard(guard, fn)
 
-	return c.Status(fiber.StatusAccepted).JSON(sdkmodels.StartOperationPullResponse{
-		JobID: job.JobID,
+	return c.Status(fiber.StatusAccepted).JSON(sdkmodels.StartOperationJobResponse{
+		JobID:          job.JobID,
+		OperationToken: operation.Token,
 	})
 }
 
-// resolveConnectorName pulls the connector slug out of the request
-// context when available. Returns "" on unknown — the caller uses
-// this purely for auditing on the OperationJob row, so an empty
-// value is an acceptable "unknown connector" marker.
+// resolveConnectorName pulls the connector identifier out of request
+// context and force-lowercases the result so OperationJob.ConnectorName
+// is canonical regardless of which signal was available. The fallback
+// order is middleware-stamped connector info → registration label →
+// route slug. connectorInfo wins because it survives the route layout —
+// a future shared prefix (an API version like /v1/pinecone/...) or a
+// hand-mounted hand-wired route would mis-identify the connector if we
+// keyed off the path's first segment. The route slug stays as the last
+// resort so tests and any path that bypasses the validate middleware
+// still get a sensible label.
+//
+// All three signals produce different casings in the wild — slugs are
+// lowercase, info.Name is "Pinecone", registration labels vary — so the
+// strings.ToLower on each path is what makes the column safe for
+// downstream filters / log greps / dashboards. Existing mixed-case rows
+// from before this PR live their 15-min OperationJob TTL and disappear,
+// so the column converges on a single canonical casing.
 func resolveConnectorName(c fiber.Ctx) string {
-	if info, ok := c.Locals("connectorInfo").(*models.ConnectorDetails); ok && info != nil {
-		return info.Name
+	if info, ok := c.Locals("connectorInfo").(*models.ConnectorDetails); ok &&
+		info != nil &&
+		strings.TrimSpace(info.Name) != "" {
+		return strings.ToLower(info.Name)
+	}
+	if registration, ok := c.Locals("registration").(*db.ConnectorRegistration); ok &&
+		registration != nil &&
+		strings.TrimSpace(registration.ConnectorName) != "" {
+		return strings.ToLower(registration.ConnectorName)
+	}
+	if firstSegment := strings.Split(strings.Trim(c.Path(), "/"), "/")[0]; firstSegment != "" {
+		return strings.ToLower(firstSegment)
 	}
 	return ""
 }

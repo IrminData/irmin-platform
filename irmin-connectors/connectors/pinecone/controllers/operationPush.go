@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
 	"os"
 	"strconv"
@@ -15,11 +14,8 @@ import (
 	"irmin-connectors/connectors/common"
 	pineconeclient "irmin-connectors/connectors/pinecone/client"
 	"irmin-connectors/db"
-	"irmin-connectors/utils"
 
 	"github.com/IrminData/irmin-sdk-go/duckdb"
-	sdkmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -54,15 +50,19 @@ func (p *PineconePushProvider) getNamespaceValue() string {
 
 // InitializeClient initializes the Pinecone client for push operations.
 func (p *PineconePushProvider) InitializeClient(
-	_ fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
 	// Hydrate logger before building the handler so the closure
-	// p.ProgressHandler returns has a valid logger.
+	// p.ProgressHandler returns has a valid logger. The job-scoped
+	// ctx is threaded into InitPineconeClient so a /operation/cancel
+	// /:job_id while the client is initialising (e.g. the SDK
+	// describe-index probe to validate the API key + index name) can
+	// abort the round-trip instead of running it to completion.
 	p.logger = logger
 	client, namespace, err := pineconeclient.InitPineconeClient(
-		nil, logger, operation,
+		ctx, logger, operation,
 		pineconeclient.WithProgressHandler(p.ProgressHandler(operation)),
 	)
 	if err != nil {
@@ -80,8 +80,9 @@ func (p *PineconePushProvider) InitializeClient(
 
 // ProcessFiles processes the extracted files and upserts them to Pinecone.
 func (p *PineconePushProvider) ProcessFiles(
-	c fiber.Ctx,
+	ctx context.Context,
 	client any,
+	operation *db.Operation,
 	files map[string][]byte,
 	_ string,
 ) error {
@@ -90,8 +91,7 @@ func (p *PineconePushProvider) ProcessFiles(
 		return errors.New("invalid client type for Pinecone push provider")
 	}
 
-	operation, _ := c.Locals("operation").(*db.Operation)
-	totalRecords, err := p.processParquetFiles(pineconeClient, files, operation)
+	totalRecords, err := p.processParquetFiles(ctx, pineconeClient, files, operation)
 	if err != nil {
 		return err
 	}
@@ -105,11 +105,11 @@ func (p *PineconePushProvider) ProcessFiles(
 
 // processParquetFiles processes all parquet files and returns total record count.
 func (p *PineconePushProvider) processParquetFiles(
+	ctx context.Context,
 	pineconeClient *pineconeclient.PineconeClient,
 	files map[string][]byte,
 	operation *db.Operation,
 ) (int, error) {
-	ctx := context.Background()
 	var totalRecords int
 
 	for filePath, fileData := range files {
@@ -138,7 +138,7 @@ func (p *PineconePushProvider) processSingleParquetFile(
 	fileData []byte,
 	operation *db.Operation,
 ) (int, error) {
-	records, err := p.parseParquetFile(fileData)
+	records, err := p.parseParquetFile(ctx, fileData)
 	if err != nil {
 		p.logParseError(operation, filePath, err)
 		return 0, fmt.Errorf("failed to parse parquet file %s: %w", filePath, err)
@@ -217,14 +217,17 @@ func (p *PineconePushProvider) logUpsertSuccess(operation *db.Operation, filePat
 }
 
 // parseParquetFile parses a parquet file and returns EmbeddingRecords.
-func (p *PineconePushProvider) parseParquetFile(data []byte) ([]pineconeclient.EmbeddingRecord, error) {
+func (p *PineconePushProvider) parseParquetFile(
+	ctx context.Context,
+	data []byte,
+) ([]pineconeclient.EmbeddingRecord, error) {
 	tempPath, err := p.writeTempFile(data)
 	if err != nil {
 		return nil, err
 	}
 	defer os.Remove(tempPath)
 
-	return p.readParquetRecords(tempPath)
+	return p.readParquetRecords(ctx, tempPath)
 }
 
 // writeTempFile writes data to a temporary file and returns the path.
@@ -250,9 +253,10 @@ func (p *PineconePushProvider) writeTempFile(data []byte) (string, error) {
 
 // readParquetRecords reads embedding records from a parquet file using DuckDB.
 // This supports both native array types and string (JSON) embeddings.
-func (p *PineconePushProvider) readParquetRecords(tempPath string) ([]pineconeclient.EmbeddingRecord, error) {
-	ctx := context.Background()
-
+func (p *PineconePushProvider) readParquetRecords(
+	ctx context.Context,
+	tempPath string,
+) ([]pineconeclient.EmbeddingRecord, error) {
 	// Create DuckDB client for reading parquet
 	duckDBClient, err := duckdb.NewInMemoryClient(ctx, p.logger)
 	if err != nil {
@@ -269,7 +273,7 @@ func (p *PineconePushProvider) readParquetRecords(tempPath string) ([]pineconecl
 	// Query parquet file with DuckDB, casting embedding to string for consistent handling
 	// This handles both native array types and string embeddings
 	query := fmt.Sprintf(`
-		SELECT 
+		SELECT
 			COALESCE(id, '') as id,
 			COALESCE(source_file, '') as source_file,
 			COALESCE(chunk_index, 0) as chunk_index,
@@ -298,7 +302,7 @@ func (p *PineconePushProvider) readParquetRecords(tempPath string) ([]pineconecl
 		embedding, parseErr := p.parseEmbedding(embeddingStr)
 		if parseErr != nil {
 			if p.logger != nil {
-				p.logger.Warn("skipping record with invalid embedding",
+				p.logger.WarnContext(ctx, "skipping record with invalid embedding",
 					"id", id,
 					"error", parseErr.Error(),
 				)
@@ -307,7 +311,7 @@ func (p *PineconePushProvider) readParquetRecords(tempPath string) ([]pineconecl
 		}
 		if len(embedding) == 0 {
 			if p.logger != nil {
-				p.logger.Warn("skipping record with zero-dimensional embedding",
+				p.logger.WarnContext(ctx, "skipping record with zero-dimensional embedding",
 					"id", id,
 					"embedding_value", embeddingStr,
 				)
@@ -440,7 +444,7 @@ func (p *PineconePushProvider) validateParquetSchema(
 	// Get column names from the parquet file using parquet_schema function
 	// The 'name' column contains the field names in the parquet schema
 	schemaQuery := fmt.Sprintf(`
-		SELECT name 
+		SELECT name
 		FROM parquet_schema('%s')
 		WHERE name = 'embedding'
 	`, escapedPath)
@@ -479,196 +483,17 @@ func (p *PineconePushProvider) validateParquetSchema(
 // @Param operation_token formData string true "Operation token received from operation/init"
 // @Param file formData file true "ZIP file containing parquet embedding files"
 // @Param path formData string false "Target path (not used for Pinecone)"
-// @Success 200 {object} fiber.Map "Data pushed successfully"
+// @Success 202 {object} irminmodels.StartOperationJobResponse "Push job accepted; poll /operation/status/:job_id"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token or file format"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
 // @Failure 404 {object} fiber.Map "Operation not found"
-// @Failure 500 {object} fiber.Map "Internal server error"
+// @Failure 409 {object} irminmodels.AlreadyRunningBody "Operation already running"
+// @Failure 500 {object} irminmodels.JobErrorBody "Internal server error"
 // @Router /pinecone/operation/push [post]
-func (cs *Controllers) OperationPush(c fiber.Ctx) (retErr error) {
-	manager, managerOK := cs.App.JobManager.(*common.JobManager)
-	if !managerOK || manager == nil {
-		return common.RespondJobError(
-			c,
-			fiber.StatusInternalServerError,
-			sdkmodels.JobErrorReasonInternal,
-			errors.New("job manager not configured"),
-			"",
-		)
-	}
-
-	// Get the operation from the context
-	operation, ok := c.Locals("operation").(*db.Operation)
-	if !ok {
-		return common.RespondJobError(
-			c,
-			fiber.StatusInternalServerError,
-			sdkmodels.JobErrorReasonInternal,
-			errors.New("invalid operation type in context"),
-			"",
-		)
-	}
-
-	guard, alreadyErr, beginErr := manager.Begin(common.BeginOperationJobInput{
-		OperationID:             operation.ID,
-		ConnectorRegistrationID: operation.ConnectorRegistrationID,
-		ConnectorName:           "pinecone",
-		Kind:                    "push",
-	})
-	if alreadyErr != nil {
-		return common.RespondAlreadyRunning(c, alreadyErr)
-	}
-	if beginErr != nil {
-		cs.Logger.Error("failed to acquire operation execution lock",
-			"error", beginErr, "operation_id", operation.ID)
-		return common.RespondJobError(
-			c,
-			fiber.StatusInternalServerError,
-			sdkmodels.JobErrorReasonTransientDB,
-			beginErr,
-			"",
-		)
-	}
-
-	outcome := common.JobOutcome{
-		Status: sdkmodels.OperationJobStatusFailed,
-		Error:  "handler exited without setting outcome",
-	}
-	defer func() {
-		// See common/operationPush.go for the rationale on
-		// overwriting retErr with a structured 500 rather than
-		// re-panicking into fiber's generic panic middleware.
-		if r := recover(); r != nil {
-			cs.Logger.Error("pinecone push panic recovered",
-				"error", fmt.Sprintf("%v", r), "operation_id", operation.ID)
-			outcome = common.JobOutcome{
-				Status: sdkmodels.OperationJobStatusFailed,
-				Error:  fmt.Sprintf("handler panic: %v", r),
-			}
-			retErr = common.RespondJobError(
-				c,
-				fiber.StatusInternalServerError,
-				sdkmodels.JobErrorReasonInternal,
-				fmt.Errorf("handler panic: %v", r),
-				guard.JobID(),
-			)
-		}
-		guard.Release(outcome)
-	}()
-
-	// Log operation execution start
-	common.LogOperationEvent(
-		cs.DB,
-		cs.Logger,
-		operation.ID,
-		db.LogEventTypeInfo,
-		"Push operation execution started",
-		nil,
-	)
-
+func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	provider := &PineconePushProvider{
 		dbInstance: cs.DB,
 		logger:     cs.Logger,
 	}
-
-	client, _, cleanup, initErr := provider.InitializeClient(c, cs.Logger, operation)
-	if initErr != nil {
-		logPineconePushFailure(cs, operation.ID,
-			"Failed to initialize Pinecone client for push operation", initErr)
-		return common.MarkFailedAndRespond(c, &outcome,
-			fiber.StatusInternalServerError, "initialize client", initErr)
-	}
-	defer cleanup()
-
-	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
-	if err != nil {
-		logPineconePushFailure(cs, operation.ID,
-			"Failed to parse form fields for push operation", err)
-		return common.MarkFailedAndRespond(c, &outcome,
-			fiber.StatusBadRequest, "parse form fields", err)
-	}
-	rawPath := fields["path"]
-
-	files, err := handleUploadedFile(c)
-	if err != nil {
-		logPineconePushFailure(cs, operation.ID,
-			"Failed to handle uploaded file for push operation", err)
-		return common.MarkFailedAndRespond(c, &outcome,
-			fiber.StatusBadRequest, "upload", err)
-	}
-
-	if len(files) == 0 {
-		common.LogOperationEvent(cs.DB, cs.Logger, operation.ID,
-			db.LogEventTypeError, "No files found in uploaded ZIP", nil)
-		return common.MarkFailedAndRespond(c, &outcome,
-			fiber.StatusBadRequest, "upload", errors.New("no files found in uploaded zip"))
-	}
-
-	if procErr := provider.ProcessFiles(c, client, files, rawPath); procErr != nil {
-		cs.Logger.Error("failed to process files", "error", procErr)
-		common.LogOperationEvent(cs.DB, cs.Logger, operation.ID,
-			db.LogEventTypeError, "Failed to process files during push operation",
-			map[string]any{"error": procErr.Error(), "path": rawPath})
-		return common.MarkFailedAndRespond(c, &outcome,
-			fiber.StatusInternalServerError, "process files", procErr)
-	}
-
-	// Log successful completion
-	common.LogOperationEvent(
-		cs.DB,
-		cs.Logger,
-		operation.ID,
-		db.LogEventTypeInfo,
-		"Push operation completed successfully",
-		map[string]any{
-			"file_count": len(files),
-			"path":       rawPath,
-		},
-	)
-
-	outcome = common.JobOutcome{Status: sdkmodels.OperationJobStatusComplete}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Successfully pushed data to Pinecone",
-		"status":  "completed",
-	})
-}
-
-// logPineconePushFailure emits the canonical error-level operation
-// log entry used throughout OperationPush. Centralised so the log
-// shape stays consistent and the handler stays short.
-func logPineconePushFailure(cs *Controllers, operationID uint, msg string, err error) {
-	common.LogOperationEvent(
-		cs.DB,
-		cs.Logger,
-		operationID,
-		db.LogEventTypeError,
-		msg,
-		map[string]any{"error": err.Error()},
-	)
-}
-
-// handleUploadedFile processes the uploaded ZIP file and returns the extracted files.
-func handleUploadedFile(c fiber.Ctx) (map[string][]byte, error) {
-	fileHeader, err := c.FormFile("file")
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve form file: %w", err)
-	}
-
-	file, err := fileHeader.Open()
-	if err != nil {
-		return nil, fmt.Errorf("failed to open form file: %w", err)
-	}
-	defer file.Close()
-
-	bytesData, err := io.ReadAll(file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read uploaded file: %w", err)
-	}
-
-	files, err := irminutils.UnzipFiles(bytesData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unzip file: %w", err)
-	}
-
-	return files, nil
+	return common.HandleOperationPush(c, provider, cs.Logger, cs.DB, cs.App)
 }

@@ -1,6 +1,7 @@
 package postgrescontrollers
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/binary"
 	"encoding/json"
@@ -44,11 +45,11 @@ func (p *PostgresPushProvider) ProgressHandler(operation *db.Operation) common.P
 
 // InitializeClient initializes the PostgreSQL client for push operations.
 func (p *PostgresPushProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
-	client, databaseName, err := postgresclient.InitPostgresClient(c, logger, operation)
+	client, databaseName, err := postgresclient.InitPostgresClient(ctx, logger, operation)
 	if err != nil {
 		return nil, nil, func() {}, fmt.Errorf("failed to initialise Postgres client: %w", err)
 	}
@@ -65,8 +66,9 @@ func (p *PostgresPushProvider) InitializeClient(
 
 // ProcessFiles processes the extracted files and inserts them into PostgreSQL tables.
 func (p *PostgresPushProvider) ProcessFiles(
-	c fiber.Ctx,
+	ctx context.Context,
 	client any,
+	operation *db.Operation,
 	files map[string][]byte,
 	rawPath string,
 ) error {
@@ -75,13 +77,11 @@ func (p *PostgresPushProvider) ProcessFiles(
 		return errors.New("invalid client type for PostgreSQL push provider")
 	}
 
-	operation, _ := c.Locals("operation").(*db.Operation)
-
 	// Use the existing database-specific path processing utility with proper database name
 	targetPath := processRawPath(rawPath, p.databaseName)
 
 	// Get available tables
-	tables, err := postgresClient.GetTables(c)
+	tables, err := postgresClient.GetTables(ctx)
 	if err != nil {
 		if operation != nil && p.dbInstance != nil && p.logger != nil {
 			common.LogOperationEvent(
@@ -114,7 +114,7 @@ func (p *PostgresPushProvider) ProcessFiles(
 			continue
 		}
 
-		err = p.processTableDataWithLogging(c, postgresClient, tableName, files[filePath], tables, operation)
+		err = p.processTableDataWithLogging(ctx, postgresClient, tableName, files[filePath], tables, operation)
 		if err != nil {
 			return fmt.Errorf("failed to process table data: %w", err)
 		}
@@ -133,11 +133,12 @@ func (p *PostgresPushProvider) ProcessFiles(
 // @Param operation_token formData string true "Operation token received from operation/init"
 // @Param file formData file true "JSON file containing table data to insert"
 // @Param path formData string false "Target table name (e.g., customers). If not specified, uses the filename from the uploaded file"
-// @Success 200 {object} fiber.Map "Data pushed successfully"
+// @Success 202 {object} irminmodels.StartOperationJobResponse "Push job accepted; poll /operation/status/:job_id"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token or file format"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
 // @Failure 404 {object} fiber.Map "Operation not found"
-// @Failure 500 {object} fiber.Map "Internal server error"
+// @Failure 409 {object} irminmodels.AlreadyRunningBody "Operation already running"
+// @Failure 500 {object} irminmodels.JobErrorBody "Internal server error"
 // @Router /postgres/operation/push [post]
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	provider := &PostgresPushProvider{
@@ -149,7 +150,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 
 // processTableDataWithLogging is a wrapper around processTableData that adds logging.
 func (p *PostgresPushProvider) processTableDataWithLogging(
-	c fiber.Ctx,
+	ctx context.Context,
 	client *postgresclient.PostgresClient,
 	tableName string,
 	fileData []byte,
@@ -228,7 +229,7 @@ func (p *PostgresPushProvider) processTableDataWithLogging(
 	columns := getSortedColumns(records[0])
 	insertSQL := buildInsertStatement(tableName, columns)
 
-	err := p.executeTransactionWithLogging(c, client, tableName, records, columns, insertSQL, operation)
+	err := p.executeTransactionWithLogging(ctx, client, tableName, records, columns, insertSQL, operation)
 	if err != nil {
 		if operation != nil && p.dbInstance != nil && p.logger != nil {
 			common.LogOperationEvent(
@@ -269,7 +270,7 @@ func (p *PostgresPushProvider) processTableDataWithLogging(
 
 // executeTransactionWithLogging wraps executeTransaction with logging for retries.
 func (p *PostgresPushProvider) executeTransactionWithLogging(
-	c fiber.Ctx,
+	ctx context.Context,
 	client *postgresclient.PostgresClient,
 	tableName string,
 	records []map[string]any,
@@ -293,7 +294,7 @@ func (p *PostgresPushProvider) executeTransactionWithLogging(
 			handler, resourcePath,
 			queryProgressMinRows, queryProgressMinInterval,
 		)
-		err := executeTransactionStep(c, client, tableName, records, columns, insertSQL, emit)
+		err := executeTransactionStep(ctx, client, tableName, records, columns, insertSQL, emit)
 		if err == nil {
 			return nil
 		}
@@ -349,11 +350,11 @@ func buildInsertStatement(tableName string, columns []string) string {
 }
 
 // executeDelete executes the DELETE and TRUNCATE operations within a transaction.
-func executeDelete(c fiber.Ctx, tx *postgresclient.Tx, tableName string) error {
+func executeDelete(ctx context.Context, tx *postgresclient.Tx, tableName string) error {
 	// First try TRUNCATE
-	if _, truncateErr := tx.Exec(c, fmt.Sprintf(`TRUNCATE TABLE "%s" CASCADE`, tableName)); truncateErr != nil {
+	if _, truncateErr := tx.Exec(ctx, fmt.Sprintf(`TRUNCATE TABLE "%s" CASCADE`, tableName)); truncateErr != nil {
 		// If TRUNCATE fails, fall back to DELETE
-		if _, deleteErr := tx.Exec(c, fmt.Sprintf(`DELETE FROM "%s"`, tableName)); deleteErr != nil {
+		if _, deleteErr := tx.Exec(ctx, fmt.Sprintf(`DELETE FROM "%s"`, tableName)); deleteErr != nil {
 			return fmt.Errorf("failed to delete/truncate rows: %w", deleteErr)
 		}
 	}
@@ -366,7 +367,7 @@ func executeDelete(c fiber.Ctx, tx *postgresclient.Tx, tableName string) error {
 // use common.ThrottledQueryEmitter, which returns one for nil
 // handlers).
 func executeInserts(
-	c fiber.Ctx,
+	ctx context.Context,
 	tx *postgresclient.Tx,
 	records []map[string]any,
 	columns []string,
@@ -379,7 +380,7 @@ func executeInserts(
 		for i, col := range columns {
 			args[i] = record[col]
 		}
-		if _, err := tx.Exec(c, insertSQL, args...); err != nil {
+		if _, err := tx.Exec(ctx, insertSQL, args...); err != nil {
 			return fmt.Errorf("failed to insert row: %w", err)
 		}
 		inserted++
@@ -390,7 +391,7 @@ func executeInserts(
 
 // executeTransactionStep executes a single attempt of the transaction.
 func executeTransactionStep(
-	c fiber.Ctx,
+	ctx context.Context,
 	client *postgresclient.PostgresClient,
 	tableName string,
 	records []map[string]any,
@@ -398,21 +399,21 @@ func executeTransactionStep(
 	insertSQL string,
 	onProgress func(int64),
 ) error {
-	tx, err := client.BeginTransaction(c)
+	tx, err := client.BeginTransaction(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
 	// defer all constraints until commit
-	if _, err = tx.Exec(c, "SET CONSTRAINTS ALL DEFERRED"); err != nil {
+	if _, err = tx.Exec(ctx, "SET CONSTRAINTS ALL DEFERRED"); err != nil {
 		// best-effort, continue even if this fails
 		_ = err
 	}
 
 	// delete existing rows
-	err = executeDelete(c, tx, tableName)
+	err = executeDelete(ctx, tx, tableName)
 	if err != nil {
-		if rollbackErr := tx.Rollback(c); rollbackErr != nil {
+		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
 			// Log the rollback error but don't return it
 			_ = rollbackErr
 		}
@@ -420,9 +421,9 @@ func executeTransactionStep(
 	}
 
 	// insert each new record
-	err = executeInserts(c, tx, records, columns, insertSQL, onProgress)
+	err = executeInserts(ctx, tx, records, columns, insertSQL, onProgress)
 	if err != nil {
-		if rollbackErr := tx.Rollback(c); rollbackErr != nil {
+		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
 			// Log the rollback error but don't return it
 			_ = rollbackErr
 		}
@@ -430,7 +431,7 @@ func executeTransactionStep(
 	}
 
 	// commit transaction
-	err = tx.Commit(c)
+	err = tx.Commit(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}

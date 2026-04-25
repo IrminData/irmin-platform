@@ -15,7 +15,6 @@ import (
 const (
 	defaultConfigPath = "test-config.json"
 	exampleConfigPath = "test-config.example.json"
-	defaultLocale     = "en"
 )
 
 func main() {
@@ -29,7 +28,6 @@ func main() {
 			"Run a specific test type (info, config, operation, pull, push, patch, schema, subscribe, roundtrip)",
 		)
 		verbose    = flag.Bool("v", false, "Enable verbose output")
-		locale     = flag.String("locale", defaultLocale, "Locale for connector API requests")
 		initConfig = flag.Bool("init", false, "Generate a test-config.json from the example template")
 		help       = flag.Bool("help", false, "Show help message")
 	)
@@ -70,7 +68,7 @@ func main() {
 	}
 
 	// Create test runner
-	testRunner := runner.NewTestRunner(config, *verbose, *locale)
+	testRunner := runner.NewTestRunner(config, *verbose)
 
 	// Run tests
 	ctx := context.Background()
@@ -97,8 +95,6 @@ Flags:
         Run a specific test type: info, config, operation, pull, push, patch, schema, subscribe, roundtrip
   -v
         Enable verbose output
-  -locale string
-        Locale for connector API requests (default "en")
   -init
         Generate a test-config.json from the example template
   -help

@@ -1647,7 +1647,7 @@
             "post": {
                 "security": [
                     {
-                        "SystemTokenAuth": []
+                        "OperationTokenAuth": []
                     }
                 ],
                 "description": "Apply granular updates to MySQL database records using JSON patch operations",
@@ -1678,10 +1678,10 @@
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "Data patched successfully",
+                    "202": {
+                        "description": "Patch job accepted; poll /operation/status/:job_id",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/irminmodels.StartOperationPullResponse"
                         }
                     },
                     "400": {
@@ -1702,10 +1702,16 @@
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
+                    "409": {
+                        "description": "Operation already running",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.AlreadyRunningBody"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/irminmodels.JobErrorBody"
                         }
                     }
                 }
@@ -1783,7 +1789,7 @@
             "post": {
                 "security": [
                     {
-                        "SystemTokenAuth": []
+                        "OperationTokenAuth": []
                     }
                 ],
                 "description": "Insert data into MySQL database tables using the operation token and JSON file containing table data. Use the path parameter to specify a target table name.",
@@ -1820,10 +1826,10 @@
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "Data pushed successfully",
+                    "202": {
+                        "description": "Push job accepted; poll /operation/status/:job_id",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/irminmodels.StartOperationPullResponse"
                         }
                     },
                     "400": {
@@ -1844,10 +1850,16 @@
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
+                    "409": {
+                        "description": "Operation already running",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.AlreadyRunningBody"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/irminmodels.JobErrorBody"
                         }
                     }
                 }
@@ -2517,10 +2529,10 @@
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "Data pushed successfully",
+                    "202": {
+                        "description": "Push job accepted; poll /operation/status/:job_id",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/irminmodels.StartOperationPullResponse"
                         }
                     },
                     "400": {
@@ -2541,10 +2553,16 @@
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
+                    "409": {
+                        "description": "Operation already running",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.AlreadyRunningBody"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/irminmodels.JobErrorBody"
                         }
                     }
                 }
@@ -3024,10 +3042,10 @@
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "Data patched successfully",
+                    "202": {
+                        "description": "Patch job accepted; poll /operation/status/:job_id",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/irminmodels.StartOperationPullResponse"
                         }
                     },
                     "400": {
@@ -3048,10 +3066,16 @@
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
+                    "409": {
+                        "description": "Operation already running",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.AlreadyRunningBody"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/irminmodels.JobErrorBody"
                         }
                     }
                 }
@@ -3166,10 +3190,10 @@
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "Data pushed successfully",
+                    "202": {
+                        "description": "Push job accepted; poll /operation/status/:job_id",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/irminmodels.StartOperationPullResponse"
                         }
                     },
                     "400": {
@@ -3190,10 +3214,16 @@
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
+                    "409": {
+                        "description": "Operation already running",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.AlreadyRunningBody"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/fiber.Map"
+                            "$ref": "#/definitions/irminmodels.JobErrorBody"
                         }
                     }
                 }
@@ -4905,6 +4935,35 @@
                 }
             }
         },
+        "irminmodels.AlreadyRunningBody": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "Error is the stable human-readable message. Always\n\"Operation is already running\" — kept for backwards\ncompatibility with clients that key off the error string.",
+                    "type": "string",
+                    "example": "Operation is already running"
+                },
+                "job_id": {
+                    "description": "JobID is the opaque identifier of the currently-running job.\nClients can pass this straight to CancelOperationJob or\nGetOperationJobStatus. Empty only for legacy holders that have\nnot migrated to the JobManager.Begin path yet.",
+                    "type": "string",
+                    "example": "opjob_9m3x7k2n8q5p"
+                },
+                "kind": {
+                    "description": "Kind is the operation kind holding the lock. One of \"pull\",\n\"push\", \"patch\", \"schema\". Helps operators distinguish a\nlong-running pull from a fast sync push when triaging\ncontention.",
+                    "type": "string",
+                    "example": "pull"
+                },
+                "operation_id": {
+                    "description": "OperationID is the connector-service-local numeric ID of the\noperation the lock was taken on. Present so operator-facing\nlogs can cross-reference the operation row directly.",
+                    "type": "integer",
+                    "example": 42
+                },
+                "started_at": {
+                    "description": "StartedAt is when the in-flight job was accepted. Clients can\ncompute elapsed time to decide whether to wait or cancel. nil\nfor legacy sync holders with no registered row.\n\nPointer rather than time.Time + omitempty because encoding/json's\nomitempty does not treat a zero time.Time as empty — it would\nserialise as \"0001-01-01T00:00:00Z\" on the wire. Matches the\nconvention used by ExpiresAt above and the *time.Time fields\nin the other models in this package.",
+                    "type": "string"
+                }
+            }
+        },
         "irminmodels.ConnectionOAuthConfig": {
             "type": "object",
             "required": [
@@ -5458,6 +5517,52 @@
                 }
             }
         },
+        "irminmodels.JobErrorBody": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "Error is the operator-facing human-readable message. Stable\nenough for log grep but not a machine-readable code.",
+                    "type": "string",
+                    "example": "failed to load job"
+                },
+                "job_id": {
+                    "description": "JobID echoes the ID from the URL when the server could parse\none. Empty for request-level failures (malformed URL, missing\npath parameter).",
+                    "type": "string",
+                    "example": "opjob_9m3x7k2n8q5p"
+                },
+                "reason": {
+                    "description": "Reason is the machine-readable failure classification. See\nJobErrorReason for the stable value set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.JobErrorReason"
+                        }
+                    ],
+                    "example": "transient_db_error"
+                },
+                "retryable": {
+                    "description": "Retryable reports whether the caller should retry the same\nrequest after a short backoff. False for any terminal failure\nmode (not_found, corrupted_job_state, invalid_request).",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "irminmodels.JobErrorReason": {
+            "type": "string",
+            "enum": [
+                "transient_db_error",
+                "corrupted_job_state",
+                "not_found",
+                "invalid_request",
+                "internal"
+            ],
+            "x-enum-varnames": [
+                "JobErrorReasonTransientDB",
+                "JobErrorReasonCorruptedRow",
+                "JobErrorReasonNotFound",
+                "JobErrorReasonInvalidRequest",
+                "JobErrorReasonInternal"
+            ]
+        },
         "irminmodels.ObjectSchema": {
             "type": "object",
             "required": [
@@ -5568,6 +5673,16 @@
                 }
             }
         },
+        "irminmodels.StartOperationPullResponse": {
+            "type": "object",
+            "properties": {
+                "job_id": {
+                    "description": "JobID is the identifier the caller uses on subsequent\n/operation/status and /operation/result calls.",
+                    "type": "string",
+                    "example": "opjob_9m3x7k2n8q5p"
+                }
+            }
+        },
         "models.ConnectorDetails": {
             "type": "object",
             "properties": {
@@ -5634,16 +5749,6 @@
                 "description": {
                     "type": "string",
                     "example": "Connect to MySQL databases for data extraction and synchronization"
-                },
-                "locales": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "en",
-                        "fi"
-                    ]
                 },
                 "logo_url": {
                     "type": "string",

@@ -1,6 +1,7 @@
 package sftpcontrollers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"irmin-connectors/connectors/common"
@@ -31,14 +32,14 @@ func (p *SFTPPushProvider) ProgressHandler(operation *db.Operation) common.Progr
 
 // InitializeClient initializes the SFTP client for push operations.
 func (p *SFTPPushProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error) {
 	// Hydrate logger before building the handler so the closure
 	// p.ProgressHandler returns has a valid logger.
 	p.logger = logger
-	client, err := sftpclient.InitSftpClient(c, logger, operation)
+	client, err := sftpclient.InitSftpClient(ctx, logger, operation)
 	if err != nil {
 		return nil, nil, func() {}, fmt.Errorf("failed to initialize SFTP client: %w", err)
 	}
@@ -52,7 +53,7 @@ func (p *SFTPPushProvider) InitializeClient(
 
 	cleanup := func() {
 		if closeErr := client.Close(); closeErr != nil {
-			logger.Error("Failed to close SFTP client", "error", closeErr)
+			logger.ErrorContext(ctx, "Failed to close SFTP client", "error", closeErr)
 		}
 	}
 
@@ -62,8 +63,9 @@ func (p *SFTPPushProvider) InitializeClient(
 
 // ProcessFiles processes the extracted files and uploads them to the SFTP server.
 func (p *SFTPPushProvider) ProcessFiles(
-	c fiber.Ctx,
+	ctx context.Context,
 	client any,
+	operation *db.Operation,
 	files map[string][]byte,
 	rawPath string,
 ) error {
@@ -71,8 +73,6 @@ func (p *SFTPPushProvider) ProcessFiles(
 	if !ok {
 		return errors.New("invalid client type for SFTP push provider")
 	}
-
-	operation, _ := c.Locals("operation").(*db.Operation)
 
 	// SFTP-specific path processing
 	targetPath := "/"
@@ -108,7 +108,7 @@ func (p *SFTPPushProvider) ProcessFiles(
 	}
 
 	// Upload files to SFTP server
-	err := sftpClient.UploadDirectory(files, targetPath)
+	err := sftpClient.UploadDirectoryContext(ctx, files, targetPath)
 	if err != nil {
 		tracker.Finish(false, err.Error())
 		if operation != nil && p.dbInstance != nil && p.logger != nil {

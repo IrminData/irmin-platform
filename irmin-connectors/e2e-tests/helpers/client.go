@@ -17,9 +17,9 @@ type ConnectorClient struct {
 }
 
 // NewConnectorClient creates a new connector client for testing.
-func NewConnectorClient(connectorName, url, systemToken, locale string) *ConnectorClient {
+func NewConnectorClient(connectorName, url, systemToken string) *ConnectorClient {
 	return &ConnectorClient{
-		Client:        connectorsclient.NewClient(url, systemToken, locale),
+		Client:        connectorsclient.NewClient(url, systemToken),
 		ConnectorName: connectorName,
 		URL:           url,
 		SystemToken:   systemToken,
@@ -29,7 +29,7 @@ func NewConnectorClient(connectorName, url, systemToken, locale string) *Connect
 // WithOperationToken creates a new client with an operation token instead of system token.
 func (c *ConnectorClient) WithOperationToken(operationToken string) *ConnectorClient {
 	return &ConnectorClient{
-		Client:        connectorsclient.NewClient(c.URL, operationToken, c.Client.Locale),
+		Client:        connectorsclient.NewClient(c.URL, operationToken),
 		ConnectorName: c.ConnectorName,
 		URL:           c.URL,
 		SystemToken:   c.SystemToken,
