@@ -306,10 +306,9 @@ func (p *SFTPPullProvider) downloadFromPath(
 // @Summary Pull files from SFTP server
 // @Description Download files from an SFTP server using the operation token and specified path
 // @Tags sftp
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param path formData string true "Path to file or directory on SFTP server to download"
 // @Success 200 {object} fiber.Map "Files pulled successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token or path"

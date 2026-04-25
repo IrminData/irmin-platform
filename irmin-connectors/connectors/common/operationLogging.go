@@ -10,6 +10,11 @@ import (
 
 // LogOperationEvent creates an operation log entry with the specified type, message, and metadata.
 // This is a helper function to standardize operation logging across all connector handlers.
+//
+// logger is nil-safe — callers that haven't wired one in (notably the
+// Phase-4 inline EnsureOperationFromRequest path, which has no
+// per-call logger to thread) fall through to slog.Default() so a
+// metadata-marshal or DB-write failure still surfaces somewhere.
 func LogOperationEvent(
 	dbInstance *db.Database,
 	logger *slog.Logger,
@@ -18,6 +23,9 @@ func LogOperationEvent(
 	message string,
 	metadata map[string]any,
 ) {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	// Marshal metadata to JSON
 	var metadataJSON datatypes.JSON
 	if metadata != nil {

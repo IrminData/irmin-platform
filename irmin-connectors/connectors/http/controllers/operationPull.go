@@ -306,10 +306,9 @@ func (p *HTTPPullProvider) GetFileByPath(
 // @Summary Pull data from HTTP endpoint
 // @Description Make a request to the configured HTTP endpoint and return the response as a file. Use the path parameter to modify the request URL (absolute path replaces, relative path appends).
 // @Tags http
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param path formData string false "Path to append/replace in the request URL (e.g., /api/users or customers)"
 // @Success 200 {object} fiber.Map "Data pulled successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token"

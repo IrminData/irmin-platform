@@ -21,10 +21,9 @@ import (
 // @Summary Apply patch operations via HTTP requests
 // @Description Apply JSON Patch operations by making HTTP requests to the configured endpoint. Each patch operation becomes an HTTP request.
 // @Tags http
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param patches formData file true "JSON file containing array of patch operations"
 // @Success 200 {object} fiber.Map "Patch operations applied successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid patch format"

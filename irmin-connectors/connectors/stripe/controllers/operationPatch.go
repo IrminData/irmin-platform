@@ -37,10 +37,9 @@ import (
 // @Summary Apply JSON-Patch operations to Stripe resources
 // @Description Translate a JSON-Patch document into one partial-update call per targeted Stripe resource. Only add / replace / remove are supported; move and copy are rejected because Stripe's fields aren't structurally rearrangeable.
 // @Tags stripe
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param patches formData file true "JSON file containing a JSON-Patch array"
 // @Success 200 {object} fiber.Map "Patches applied successfully"
 // @Failure 400 {object} fiber.Map "Bad request"

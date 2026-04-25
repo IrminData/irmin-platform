@@ -395,10 +395,9 @@ func extractIDForLog(raw json.RawMessage) string {
 // @Summary Push data to Stripe
 // @Description Push JSON records to Stripe. Files under `<resource>/new-*.json` create new records; files under `<resource>/<id>.json` update existing ones. Supported resources: customers, invoices, products, prices.
 // @Tags stripe
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param file formData file true "ZIP containing JSON resource files"
 // @Param path formData string false "Optional target path selector (file or directory prefix like `customers/`)"
 // @Success 200 {object} fiber.Map "Data pushed successfully"

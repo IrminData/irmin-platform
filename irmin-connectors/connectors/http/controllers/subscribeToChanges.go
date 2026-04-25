@@ -8,10 +8,9 @@ import (
 // @Summary HTTP connector does not support webhook subscriptions
 // @Description HTTP connector does not support webhook subscriptions
 // @Tags http
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Success 501 {object} fiber.Map "Not implemented - HTTP connector does not support webhook subscriptions"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
 // @Router /http/operation/subscribe [post]
@@ -25,10 +24,9 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error {
 // @Summary HTTP connector does not support webhook subscriptions
 // @Description HTTP connector does not support webhook subscriptions
 // @Tags http
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param subscription_id formData string true "Subscription ID"
 // @Success 501 {object} fiber.Map "Not implemented - HTTP connector does not support webhook subscriptions"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"

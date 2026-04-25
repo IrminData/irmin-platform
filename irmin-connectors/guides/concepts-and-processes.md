@@ -427,13 +427,13 @@ These are kind-agnostic — they work for any job kind, identified by `:job_id`:
 #### Public Endpoints
 - **`GET /{connector-slug}/details`** — Public information about the connector
 
-> **Legacy / transitional**: `/operation/init`,
-> `/operation/cancel` (operation-id-scoped), and `/operation/status`
-> (operation-id-scoped) remain in the codebase as system-token-
-> authenticated routes for back-compat with pre-consolidation
-> deployments. The consolidated SDK client does not call them. They
-> will be retired in a follow-up Phase 4 PR once all Core deployments
-> have rolled forward.
+> **Phase 4 cleanup landed**: `/operation/init`, the operation-id-
+> scoped `/operation/cancel`, and the operation-id-scoped
+> `/operation/status` are gone. The Operation row a worker needs is
+> upserted inline by the `EnsureOperation` middleware on every
+> Start\* request — credentials flow on the request body via
+> `details[<key>]=<value>` / `settings[<key>]=<value>` fields the SDK
+> ships under `StartOperation*Request.Details` / `.Settings`.
 
 ### File Structure Convention
 

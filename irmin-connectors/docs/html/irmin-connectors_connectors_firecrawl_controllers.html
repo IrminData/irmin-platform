@@ -60,6 +60,12 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
     connector details" @Failure 500 {string} string "Internal server error"
     @Router /firecrawl/details [get]
 
+func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
+    EnsureOperationMiddleware upserts the Operation row from the `details[]`
+    / `settings[]` form fields the SDK's StartOperation* requests now
+    carry. Registered as the second handler on every data route after
+    ValidateSystemToken — see common/routes.go.
+
 func (cs *Controllers) GetDynamicFields(
 	_ fiber.Ctx,
 	key string,
@@ -83,80 +89,57 @@ func (cs *Controllers) Info(c fiber.Ctx) error
     missing authentication" @Failure 500 {object} fiber.Map "Internal server
     error" @Router /firecrawl/info [get]
 
-func (cs *Controllers) OperationInit(c fiber.Ctx) error
-    OperationInit godoc @Summary Initialize Firecrawl operation @Description
-    Initialize a new Firecrawl operation with connection details and settings,
-    returning an operation token for subsequent requests @Tags firecrawl
-    @Security SystemTokenAuth @Accept multipart/form-data @Produce json
-    @Param details[api_key] formData string true "Firecrawl API key" @Param
-    details[operation_type] formData string true "Operation type (scrape,
-    crawl, map, search)" @Param details[url] formData string false "Target URL
-    (required for scrape, crawl, map)" @Param details[query] formData string
-    false "Search query (required for search)" @Param details[output_format]
-    formData string false "Output format (markdown, html, json)" @Param
-    details[limit] formData integer false "Maximum pages/results limit" @Success
-    200 {object} fiber.Map "Operation initialized successfully with operation
-    token" @Failure 400 {object} fiber.Map "Bad request - invalid operation
-    data" @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing
-    authentication" @Failure 500 {object} fiber.Map "Internal server error"
-    @Router /firecrawl/operation/init [post]
-
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
     OperationPatch godoc @Summary Firecrawl connector does not support
     patch operations @Description Firecrawl connector does not support patch
-    operations - it is read-only @Tags firecrawl @Security OperationTokenAuth
-    @Accept multipart/form-data @Produce json @Param operation_token formData
-    string true "Operation token received from operation/init" @Success 501
-    {object} fiber.Map "Not implemented - Firecrawl connector does not support
-    patch operations" @Failure 401 {object} fiber.Map "Unauthorized - invalid or
-    missing authentication" @Router /firecrawl/operation/patch [post]
+    operations - it is read-only @Tags firecrawl @Security SystemTokenAuth
+    @Accept multipart/form-data @Produce json @Success 501 {object} fiber.Map
+    "Not implemented - Firecrawl connector does not support patch operations"
+    @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing
+    authentication" @Router /firecrawl/operation/patch [post]
 
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
     OperationPull godoc @Summary Pull data from Firecrawl @Description Execute
     the configured Firecrawl operation (scrape, crawl, map, or search) and
-    return the results as files. @Tags firecrawl @Security OperationTokenAuth
-    @Accept multipart/form-data @Produce json @Param operation_token formData
-    string true "Operation token received from operation/init" @Param path
-    formData string false "Optional URL to scrape (overrides configured URL
-    for single-page scraping)" @Success 200 {object} fiber.Map "Data pulled
-    successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
-    operation token" @Failure 401 {object} fiber.Map "Unauthorized - invalid
-    or missing authentication" @Failure 500 {object} fiber.Map "Internal server
-    error" @Router /firecrawl/operation/pull [post]
+    return the results as files. @Tags firecrawl @Security SystemTokenAuth
+    @Accept multipart/form-data @Produce json @Param path formData string false
+    "Optional URL to scrape (overrides configured URL for single-page scraping)"
+    @Success 200 {object} fiber.Map "Data pulled successfully" @Failure 400
+    {object} fiber.Map "Bad request - invalid operation token" @Failure 401
+    {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /firecrawl/operation/pull [post]
 
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
     OperationPush godoc @Summary Firecrawl connector does not support push
     operations @Description Firecrawl connector does not support push operations
-    - it is read-only @Tags firecrawl @Security OperationTokenAuth @Accept
-    multipart/form-data @Produce json @Param operation_token formData string
-    true "Operation token received from operation/init" @Success 501 {object}
-    fiber.Map "Not implemented - Firecrawl connector does not support push
-    operations" @Failure 401 {object} fiber.Map "Unauthorized - invalid or
-    missing authentication" @Router /firecrawl/operation/push [post]
+    - it is read-only @Tags firecrawl @Security SystemTokenAuth @Accept
+    multipart/form-data @Produce json @Success 501 {object} fiber.Map "Not
+    implemented - Firecrawl connector does not support push operations" @Failure
+    401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Router /firecrawl/operation/push [post]
 
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
     OperationSchemaGet godoc @Summary Get Firecrawl operation schema
     @Description Get the response schema for Firecrawl operations, returning
     an Irmin-compatible ObjectSchema based on the configured operation type
-    and output format @Tags firecrawl @Security OperationTokenAuth @Accept json
+    and output format @Tags firecrawl @Security SystemTokenAuth @Accept json
     @Produce json @Param operation path string true "Operation type" Enums(pull)
-    @Param operation_token formData string true "Operation token received from
-    operation/init" @Success 200 {object} irminmodels.ObjectSchema "Operation
-    schema retrieved successfully" @Failure 400 {object} fiber.Map "Bad
-    request - invalid operation type or token" @Failure 401 {object} fiber.Map
-    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
-    fiber.Map "Operation not found" @Failure 500 {object} fiber.Map "Internal
-    server error" @Router /firecrawl/operation/schema/{operation} [post]
+    @Success 200 {object} irminmodels.ObjectSchema "Operation schema retrieved
+    successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    operation type or token" @Failure 401 {object} fiber.Map "Unauthorized
+    - invalid or missing authentication" @Failure 404 {object} fiber.Map
+    "Operation not found" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /firecrawl/operation/schema/{operation} [post]
 
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
     SubscribeToChanges godoc @Summary Firecrawl connector does not support
     webhook subscriptions @Description Firecrawl connector does not support
-    webhook subscriptions @Tags firecrawl @Security OperationTokenAuth @Accept
-    multipart/form-data @Produce json @Param operation_token formData string
-    true "Operation token received from operation/init" @Success 501 {object}
-    fiber.Map "Not implemented - Firecrawl connector does not support webhook
-    subscriptions" @Failure 401 {object} fiber.Map "Unauthorized - invalid or
-    missing authentication" @Router /firecrawl/operation/subscribe [post]
+    webhook subscriptions @Tags firecrawl @Security SystemTokenAuth @Accept
+    multipart/form-data @Produce json @Success 501 {object} fiber.Map "Not
+    implemented - Firecrawl connector does not support webhook subscriptions"
+    @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing
+    authentication" @Router /firecrawl/operation/subscribe [post]
 
 func (cs *Controllers) TestConnection(
 	_ fiber.Ctx,
@@ -170,19 +153,15 @@ func (cs *Controllers) TestConnection(
 func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
     UnsubscribeFromChanges godoc @Summary Firecrawl connector does not support
     webhook subscriptions @Description Firecrawl connector does not support
-    webhook subscriptions @Tags firecrawl @Security OperationTokenAuth @Accept
-    multipart/form-data @Produce json @Param operation_token formData string
-    true "Operation token received from operation/init" @Param subscription_id
-    formData string true "Subscription ID" @Success 501 {object} fiber.Map "Not
-    implemented - Firecrawl connector does not support webhook subscriptions"
-    @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing
-    authentication" @Router /firecrawl/operation/unsubscribe [post]
+    webhook subscriptions @Tags firecrawl @Security SystemTokenAuth @Accept
+    multipart/form-data @Produce json @Param subscription_id formData string
+    true "Subscription ID" @Success 501 {object} fiber.Map "Not implemented
+    - Firecrawl connector does not support webhook subscriptions" @Failure
+    401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Router /firecrawl/operation/unsubscribe [post]
 
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
     ValidateFields implements the ConfigValidationProvider interface.
-
-func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error
-    ValidateOperationTokenMiddleware validates the operation token.
 
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
     ValidateSystemTokenMiddleware validates the system token.

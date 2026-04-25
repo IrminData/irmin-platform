@@ -477,10 +477,9 @@ func (p *PineconePushProvider) validateParquetSchema(
 // @Summary Push data to Pinecone
 // @Description Push embedding vectors from parquet files to Pinecone index
 // @Tags pinecone
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param file formData file true "ZIP file containing parquet embedding files"
 // @Param path formData string false "Target path (not used for Pinecone)"
 // @Success 202 {object} irminmodels.StartOperationJobResponse "Push job accepted; poll /operation/status/:job_id"

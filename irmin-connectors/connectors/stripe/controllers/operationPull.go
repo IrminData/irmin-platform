@@ -355,10 +355,9 @@ func (p *StripePullProvider) logPullTruncated(
 // @Summary Pull data from Stripe
 // @Description Pull Stripe resources (customers, charges, subscriptions, invoices, payouts) as JSON files. If path is empty, every pull-enabled resource is returned. Response is a ZIP archive of the resulting files.
 // @Tags stripe
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce application/zip
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param path formData string false "Optional resource name (e.g., 'customers') or `resource/id` for single-record pull"
 // @Success 200 {file} binary "ZIP archive of pulled JSON files (one per resource)"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token"

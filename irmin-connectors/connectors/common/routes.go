@@ -1,6 +1,7 @@
 package common
 
 import (
+	"errors"
 	"irmin-connectors/models"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -13,13 +14,18 @@ type ConnectorController interface {
 	Info(c fiber.Ctx) error
 	ConfigFields(c fiber.Ctx) error
 	ConfigValidate(c fiber.Ctx) error
-	OperationInit(c fiber.Ctx) error
 	OperationSchemaGet(c fiber.Ctx) error
 	DetailsPage(c fiber.Ctx) error
 
-	// Middleware methods
+	// Middleware methods. Phase 4 added EnsureOperationMiddleware
+	// (system-token + inline Operation upsert) and retired the
+	// per-Connection ValidateOperationTokenMiddleware — every data
+	// route now flows through EnsureOperationMiddleware, while the
+	// per-job lifecycle routes (status / result / cancel) authenticate
+	// with the per-job operation token via validateJobOperationToken
+	// in operationJobHandlers.go.
 	ValidateSystemTokenMiddleware(c fiber.Ctx) error
-	ValidateOperationTokenMiddleware(c fiber.Ctx) error
+	EnsureOperationMiddleware(c fiber.Ctx) error
 
 	// Capability-based methods (optional - will only be called if capability is supported)
 	OperationPull(c fiber.Ctx) error
@@ -27,6 +33,15 @@ type ConnectorController interface {
 	OperationPatch(c fiber.Ctx) error
 	SubscribeToChanges(c fiber.Ctx) error
 	UnsubscribeFromChanges(c fiber.Ctx) error
+
+	// OperationInitProvider methods. Embedded directly on the
+	// controller because each connector's Controllers struct already
+	// implements them. Phase-4 routes call EnsureOperationFromRequest
+	// with the controller as the provider so Start* requests can
+	// upsert the Operation row inline from the details / settings
+	// carried on the request body — the same fields the legacy
+	// /operation/init handshake used to ship once and then cache.
+	OperationInitProvider
 }
 
 // ConnectorRouteConfig holds the configuration for setting up connector routes.
@@ -54,20 +69,23 @@ func SetupConnectorRoutes(config ConnectorRouteConfig) {
 		config.Controller.ValidateSystemTokenMiddleware,
 		config.Controller.ConfigValidate,
 	)
-	connectorRoutes.Post(
-		"/operation/init",
-		config.Controller.ValidateSystemTokenMiddleware,
-		config.Controller.OperationInit,
-	)
 
-	// Setup operation routes that require operation token
+	// Phase-4 data routes — system token + inline Operation upsert.
+	//
+	// EnsureOperationMiddleware runs after ValidateSystemTokenMiddleware
+	// (which stamps connectorInfo on the locals); it parses the
+	// `details[<key>]=<value>` / `settings[<key>]=<value>` fields the
+	// SDK now sends on every Start* request, finds-or-creates the
+	// matching Operation row keyed on (Connector, ConfigHash), and
+	// stamps the row on c.Locals("operation"). Handlers that read
+	// c.Locals("operation") are unchanged.
 	connectorRoutes.Post(
 		"/operation/schema/:operation",
-		config.Controller.ValidateOperationTokenMiddleware,
+		config.Controller.ValidateSystemTokenMiddleware,
+		config.Controller.EnsureOperationMiddleware,
 		config.Controller.OperationSchemaGet,
 	)
 
-	// Setup capability-based routes (operation token required)
 	setupCapabilityRoutes(connectorRoutes, config.Controller, config.Capabilities)
 
 	// Public information about the connector (no authentication required)
@@ -75,33 +93,33 @@ func SetupConnectorRoutes(config ConnectorRouteConfig) {
 }
 
 // setupCapabilityRoutes sets up routes based on the connector's capabilities.
+//
+// All data routes use the same Phase-4 chain: system token (proves the
+// caller is Core), then EnsureOperationMiddleware (upserts the
+// Operation row from request-body credentials so the worker has
+// details / settings to operate against). The lifecycle routes
+// /operation/status/:job_id, /operation/result/:job_id,
+// /operation/cancel/:job_id are registered separately by the
+// connectors-app bootstrap and use the per-job operation token via
+// validateJobOperationToken — see operationJobHandlers.go.
 func setupCapabilityRoutes(
 	routes fiber.Router,
 	controller ConnectorController,
 	capabilities []irminmodels.ConnectorCapability,
 ) {
+	system := controller.ValidateSystemTokenMiddleware
+	ensureOp := controller.EnsureOperationMiddleware
 	for _, capability := range capabilities {
 		switch capability {
 		case irminmodels.ConnectorCapabilityPull:
-			routes.Post("/operation/pull", controller.ValidateOperationTokenMiddleware, controller.OperationPull)
-
+			routes.Post("/operation/pull", system, ensureOp, controller.OperationPull)
 		case irminmodels.ConnectorCapabilityPush:
-			routes.Post("/operation/push", controller.ValidateOperationTokenMiddleware, controller.OperationPush)
-
+			routes.Post("/operation/push", system, ensureOp, controller.OperationPush)
 		case irminmodels.ConnectorCapabilityApplyPatch:
-			routes.Post("/operation/patch", controller.ValidateOperationTokenMiddleware, controller.OperationPatch)
-
+			routes.Post("/operation/patch", system, ensureOp, controller.OperationPatch)
 		case irminmodels.ConnectorCapabilityPatchEvent:
-			routes.Post(
-				"/operation/subscribe",
-				controller.ValidateOperationTokenMiddleware,
-				controller.SubscribeToChanges,
-			)
-			routes.Post(
-				"/operation/unsubscribe",
-				controller.ValidateOperationTokenMiddleware,
-				controller.UnsubscribeFromChanges,
-			)
+			routes.Post("/operation/subscribe", system, ensureOp, controller.SubscribeToChanges)
+			routes.Post("/operation/unsubscribe", system, ensureOp, controller.UnsubscribeFromChanges)
 		}
 	}
 }
@@ -112,3 +130,8 @@ func GetConnectorCapabilitiesFromConfig(
 ) []irminmodels.ConnectorCapability {
 	return getConnectorInfo().Capabilities
 }
+
+// ErrConnectorInfoMissing is returned by EnsureOperationMiddleware
+// when the system-token middleware did not run (or did not stamp the
+// connector info on locals). Indicates a route-wiring bug.
+var ErrConnectorInfoMissing = errors.New("connector info not stamped on context")

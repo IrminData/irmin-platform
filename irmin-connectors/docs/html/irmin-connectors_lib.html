@@ -117,15 +117,6 @@ func ValidateConnectorSystemToken(
     ValidateConnectorSystemToken validates the provided token against the system
     token of the connector registration instance.
 
-func ValidateOperationToken(
-	d *db.Database,
-	logger *slog.Logger,
-	c fiber.Ctx,
-	connectorName string,
-) (bool, *db.ConnectorRegistration, *db.Operation)
-    ValidateOperationToken validates the provided token against the operation
-    token of the connector registration instance.
-
 
 TYPES
 

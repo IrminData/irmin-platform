@@ -62,6 +62,12 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
     connector details page" @Failure 500 {object} fiber.Map "Internal server
     error" @Router /stripe/details [get]
 
+func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
+    EnsureOperationMiddleware upserts the Operation row from the `details[]`
+    / `settings[]` form fields the SDK's StartOperation* requests now
+    carry. Registered as the second handler on every data route after
+    ValidateSystemToken — see common/routes.go.
+
 func (cs *Controllers) GetDynamicFields(
 	_ fiber.Ctx,
 	key string,
@@ -87,20 +93,7 @@ func (cs *Controllers) Info(c fiber.Ctx) error
     missing authentication" @Failure 500 {object} fiber.Map "Internal server
     error" @Router /stripe/info [get]
 
-func (cs *Controllers) OperationInit(c fiber.Ctx) error
-    OperationInit godoc @Summary Initialize Stripe operation @Description
-    Initialize a new Stripe operation with connection details and settings,
-    returning an operation token for subsequent requests @Tags stripe
-    @Security SystemTokenAuth @Accept multipart/form-data @Produce json @Param
-    details[api_key] formData string true "Stripe restricted or secret API key"
-    @Param settings[api_version] formData string false "Pinned Stripe-Version
-    header (optional)" @Success 200 {object} fiber.Map "Operation initialized
-    successfully with operation token" @Failure 400 {object} fiber.Map
-    "Bad request - invalid operation data" @Failure 401 {object} fiber.Map
-    "Unauthorized - invalid or missing authentication" @Failure 500 {object}
-    fiber.Map "Internal server error" @Router /stripe/operation/init [post]
-
-func (cs *Controllers) OperationPatch(c fiber.Ctx) error
+func (cs *Controllers) OperationPatch(c fiber.Ctx) (retErr error)
     OperationPatch applies a JSON-Patch document to Stripe resources. Each patch
     op's `path` is a JSON-Pointer that starts with a Stripe resource file path
     (e.g., `/customers/cus_abc.json/email`). The suffix after the file path is
@@ -119,54 +112,49 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error
     Translate a JSON-Patch document into one partial-update call per targeted
     Stripe resource. Only add / replace / remove are supported; move and copy
     are rejected because Stripe's fields aren't structurally rearrangeable.
-    @Tags stripe @Security OperationTokenAuth @Accept multipart/form-data
-    @Produce json @Param operation_token formData string true "Operation token
-    received from operation/init" @Param patches formData file true "JSON file
-    containing a JSON-Patch array" @Success 200 {object} fiber.Map "Patches
-    applied successfully" @Failure 400 {object} fiber.Map "Bad request" @Failure
-    401 {object} fiber.Map "Unauthorized" @Failure 500 {object} fiber.Map
-    "Internal server error" @Router /stripe/operation/patch [post]
+    @Tags stripe @Security SystemTokenAuth @Accept multipart/form-data @Produce
+    json @Param patches formData file true "JSON file containing a JSON-Patch
+    array" @Success 200 {object} fiber.Map "Patches applied successfully"
+    @Failure 400 {object} fiber.Map "Bad request" @Failure 401 {object}
+    fiber.Map "Unauthorized" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /stripe/operation/patch [post]
 
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
     OperationPull godoc @Summary Pull data from Stripe @Description Pull
     Stripe resources (customers, charges, subscriptions, invoices, payouts)
     as JSON files. If path is empty, every pull-enabled resource is returned.
     Response is a ZIP archive of the resulting files. @Tags stripe @Security
-    OperationTokenAuth @Accept multipart/form-data @Produce application/zip
-    @Param operation_token formData string true "Operation token received from
-    operation/init" @Param path formData string false "Optional resource name
-    (e.g., 'customers') or `resource/id` for single-record pull" @Success 200
-    {file} binary "ZIP archive of pulled JSON files (one per resource)" @Failure
-    400 {object} fiber.Map "Bad request - invalid operation token" @Failure
-    401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
-    @Failure 404 {object} fiber.Map "Operation not found" @Failure 409 {object}
-    fiber.Map "Operation already running" @Failure 500 {object} fiber.Map
-    "Internal server error" @Router /stripe/operation/pull [post]
+    SystemTokenAuth @Accept multipart/form-data @Produce application/zip @Param
+    path formData string false "Optional resource name (e.g., 'customers')
+    or `resource/id` for single-record pull" @Success 200 {file} binary "ZIP
+    archive of pulled JSON files (one per resource)" @Failure 400 {object}
+    fiber.Map "Bad request - invalid operation token" @Failure 401 {object}
+    fiber.Map "Unauthorized - invalid or missing authentication" @Failure 404
+    {object} fiber.Map "Operation not found" @Failure 409 {object} fiber.Map
+    "Operation already running" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /stripe/operation/pull [post]
 
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
-    OperationPush godoc @Summary Push data to Stripe @Description Push
-    JSON records to Stripe. Files under `&lt;resource&gt;/new-*.json` create
-    new records; files under `&lt;resource&gt;/&lt;id&gt;.json` update existing ones.
-    Supported resources: customers, invoices, products, prices. @Tags stripe
-    @Security OperationTokenAuth @Accept multipart/form-data @Produce json
-    @Param operation_token formData string true "Operation token received
-    from operation/init" @Param file formData file true "ZIP containing
-    JSON resource files" @Param path formData string false "Optional target
-    path selector (file or directory prefix like `customers/`)" @Success
-    200 {object} fiber.Map "Data pushed successfully" @Failure 400 {object}
-    fiber.Map "Bad request - invalid operation token or file format" @Failure
-    401 {object} fiber.Map "Unauthorized" @Failure 404 {object} fiber.Map
-    "Operation not found" @Failure 409 {object} fiber.Map "Operation already
-    running" @Failure 500 {object} fiber.Map "Internal server error" @Router
-    /stripe/operation/push [post]
+    OperationPush godoc @Summary Push data to Stripe @Description Push JSON
+    records to Stripe. Files under `&lt;resource&gt;/new-*.json` create new records;
+    files under `&lt;resource&gt;/&lt;id&gt;.json` update existing ones. Supported
+    resources: customers, invoices, products, prices. @Tags stripe @Security
+    SystemTokenAuth @Accept multipart/form-data @Produce json @Param file
+    formData file true "ZIP containing JSON resource files" @Param path formData
+    string false "Optional target path selector (file or directory prefix like
+    `customers/`)" @Success 200 {object} fiber.Map "Data pushed successfully"
+    @Failure 400 {object} fiber.Map "Bad request - invalid operation token or
+    file format" @Failure 401 {object} fiber.Map "Unauthorized" @Failure 404
+    {object} fiber.Map "Operation not found" @Failure 409 {object} fiber.Map
+    "Operation already running" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /stripe/operation/push [post]
 
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
-    OperationSchemaGet godoc @Summary Get Stripe operation schema @Description
-    Get the schema for Stripe pull / push / patch operations as an
-    Irmin-compatible ObjectSchema. @Tags stripe @Security OperationTokenAuth
-    @Accept json @Produce json @Param operation path string true "Operation
-    type" Enums(pull, push, patch) @Param operation_token formData string
-    true "Operation token received from operation/init" @Success 200 {object}
+    OperationSchemaGet godoc @Summary Get Stripe operation schema
+    @Description Get the schema for Stripe pull / push / patch operations
+    as an Irmin-compatible ObjectSchema. @Tags stripe @Security
+    SystemTokenAuth @Accept json @Produce json @Param operation path string
+    true "Operation type" Enums(pull, push, patch) @Success 200 {object}
     irminmodels.ObjectSchema "Operation schema retrieved successfully"
     @Failure 400 {object} fiber.Map "Bad request" @Failure 401 {object}
     fiber.Map "Unauthorized" @Failure 404 {object} fiber.Map "Operation not
@@ -192,9 +180,6 @@ func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map
     ValidateFields implements the ConfigValidationProvider interface.
     Checks structural validity of the provided details without hitting Stripe.
     TestConnection below does the live round-trip.
-
-func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error
-    ValidateOperationTokenMiddleware validates the operation token.
 
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
     ValidateSystemTokenMiddleware validates the system token.
@@ -267,7 +252,7 @@ type StripePushProvider struct {
     with a deterministic Idempotency-Key.
 
 func (p *StripePushProvider) InitializeClient(
-	_ fiber.Ctx,
+	_ context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error)
@@ -275,8 +260,9 @@ func (p *StripePushProvider) InitializeClient(
     details + settings.
 
 func (p *StripePushProvider) ProcessFiles(
-	c fiber.Ctx,
+	ctx context.Context,
 	clientAny any,
+	operation *db.Operation,
 	files map[string][]byte,
 	targetPath string,
 ) error

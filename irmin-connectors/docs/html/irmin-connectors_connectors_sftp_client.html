@@ -245,8 +245,16 @@ func (c *SftpClient) TestConnection() error
 func (c *SftpClient) UploadDirectory(files map[string][]byte, remotePath string) error
     UploadDirectory uploads multiple files maintaining directory structure.
 
+func (c *SftpClient) UploadDirectoryContext(ctx context.Context, files map[string][]byte, remotePath string) error
+    UploadDirectoryContext uploads multiple files maintaining directory
+    structure and aborts when ctx is cancelled.
+
 func (c *SftpClient) UploadFile(localData []byte, remotePath string) error
     UploadFile uploads a single file to the remote server.
+
+func (c *SftpClient) UploadFileContext(ctx context.Context, localData []byte, remotePath string) error
+    UploadFileContext uploads a single file to the remote server and aborts when
+    ctx is cancelled.
 
 type TransferSpeedCalculator struct {
 	// Has unexported fields.

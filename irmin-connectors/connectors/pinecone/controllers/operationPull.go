@@ -403,10 +403,9 @@ func escapeSQLString(s string) string {
 // @Summary Pull data from Pinecone
 // @Description Pull vectors from Pinecone. If path is provided, performs a semantic search and returns JSON results. If path is empty, exports all vectors as a parquet file.
 // @Tags pinecone
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param path formData string false "Query vector as JSON array for search, or empty for full export"
 // @Success 200 {object} fiber.Map "Data pulled successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token"

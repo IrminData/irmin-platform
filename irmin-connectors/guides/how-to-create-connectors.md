@@ -103,11 +103,12 @@ rejects the system token here by design (scope limitation).
 
 - **`GET /{connector-slug}/details`** — Public information about the connector (uses HTML templates)
 
-> **Legacy / transitional**: `/operation/init`, the operation-id-
-> scoped `/operation/cancel`, and the operation-id-scoped
-> `/operation/status` remain in the codebase for back-compat but
-> are not called by the consolidated SDK client. They will be
-> retired in a follow-up Phase 4 PR.
+> **Phase 4 retired routes** — `/operation/init` and the operation-
+> id-scoped `/operation/cancel` / `/operation/status` are gone.
+> Credentials flow on every Start\* request via the SDK's
+> `details[<key>]` / `settings[<key>]` form fields; the
+> `EnsureOperation` middleware parses them and upserts the
+> matching `Operation` row inline before the worker runs.
 
 ### 4. Authentication
 

@@ -10,10 +10,9 @@ import (
 // @Summary Unsubscribe from PostgreSQL database changes
 // @Description Stop monitoring PostgreSQL database changes and remove the subscription
 // @Tags postgres
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param subscription_id formData string true "ID of the subscription to remove"
 // @Success 200 {object} fiber.Map "Subscription removed successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid parameters"

@@ -60,7 +60,7 @@ func registerJobHandlers(app *fiber.App, manager *JobManager, operationStore ope
 	})
 }
 
-func validateJobOperationToken(c fiber.Ctx, manager *JobManager, operationStore operationStore) error {
+func validateJobOperationToken(c fiber.Ctx, manager *JobManager, _ operationStore) error {
 	jobID := c.Params("job_id")
 	if jobID == "" {
 		return RespondJobError(
@@ -90,13 +90,15 @@ func validateJobOperationToken(c fiber.Ctx, manager *JobManager, operationStore 
 		return RespondJobError(c, status, reason, err, jobID)
 	}
 
-	operation, err := operationStore.GetOperationByID(row.OperationID)
-	if err != nil {
-		status, reason := ClassifyJobReadError(err)
-		return RespondJobError(c, status, reason, err, jobID)
-	}
-
-	if subtle.ConstantTimeCompare([]byte(token), []byte(operation.Token)) != 1 {
+	// Authenticate against the per-job operation token persisted on
+	// the OperationJob row, NOT the legacy long-lived Operation.Token.
+	// Phase 4: scope-limited credential — a bearer that authorised
+	// job A cannot poll, fetch results from, or cancel job B even
+	// though both jobs may share an Operation row. The connector's
+	// system token is rejected here by design (it never matches a
+	// per-row 64-char hex token), narrowing the blast radius of a
+	// leaked system token.
+	if subtle.ConstantTimeCompare([]byte(token), []byte(row.OperationToken)) != 1 {
 		return RespondJobError(
 			c,
 			fiber.StatusUnauthorized,

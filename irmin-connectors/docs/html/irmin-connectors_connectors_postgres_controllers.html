@@ -84,6 +84,12 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
     string "PostgreSQL connector details page" @Failure 500 {object} fiber.Map
     "Internal server error" @Router /postgres/details [get]
 
+func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
+    EnsureOperationMiddleware upserts the Operation row from the `details[]`
+    / `settings[]` form fields the SDK's StartOperation* requests now
+    carry. Registered as the second handler on every data route after
+    ValidateSystemToken — see common/routes.go.
+
 func (cs *Controllers) GetDynamicFields(
 	c fiber.Ctx,
 	key string,
@@ -110,78 +116,60 @@ func (cs *Controllers) Info(c fiber.Ctx) error
     missing authentication" @Failure 500 {object} fiber.Map "Internal server
     error" @Router /postgres/info [get]
 
-func (cs *Controllers) OperationInit(c fiber.Ctx) error
-    OperationInit godoc @Summary Initialize PostgreSQL operation @Description
-    Initialize a new PostgreSQL operation with connection details and settings,
-    returning an operation token for subsequent requests @Tags postgres
-    @Security SystemTokenAuth @Accept multipart/form-data @Produce json @Param
-    details[host] formData string true "PostgreSQL server hostname or IP
-    address" @Param details[port] formData integer false "PostgreSQL server port
-    (default: 5432)" @Param details[username] formData string true "Username
-    for PostgreSQL authentication" @Param details[password] formData string
-    true "Password for PostgreSQL authentication" @Param details[default_db]
-    formData string false "Default database for initial connection" @Param
-    details[ssl_mode] formData boolean false "Enable SSL mode for secure
-    connections" @Param settings[database] formData string true "Target database
-    name for operations" @Success 200 {object} fiber.Map "Operation initialized
-    successfully with operation token" @Failure 400 {object} fiber.Map
-    "Bad request - invalid operation data" @Failure 401 {object} fiber.Map
-    "Unauthorized - invalid or missing authentication" @Failure 500 {object}
-    fiber.Map "Internal server error" @Router /postgres/operation/init [post]
-
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
     OperationPatch godoc @Summary Patch data in PostgreSQL database
-    @Description Apply granular updates to PostgreSQL database records using
-    JSON patch operations @Tags postgres @Security OperationTokenAuth @Accept
-    multipart/form-data @Produce json @Param operation_token formData string
-    true "Operation token received from operation/init" @Param patch formData
-    file true "JSON patch file containing update operations" @Success 200
-    {object} fiber.Map "Data patched successfully" @Failure 400 {object}
-    fiber.Map "Bad request - invalid operation token or patch format" @Failure
-    401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
-    @Failure 404 {object} fiber.Map "Operation not found" @Failure 500 {object}
-    fiber.Map "Internal server error" @Router /postgres/operation/patch [post]
+    @Description Apply granular updates to PostgreSQL database records
+    using JSON patch operations @Tags postgres @Security SystemTokenAuth
+    @Accept multipart/form-data @Produce json @Param patch formData file
+    true "JSON patch file containing update operations" @Success 202
+    {object} irminmodels.StartOperationJobResponse "Patch job accepted;
+    poll /operation/status/:job_id" @Failure 400 {object} fiber.Map "Bad
+    request - invalid operation token or patch format" @Failure 401 {object}
+    fiber.Map "Unauthorized - invalid or missing authentication" @Failure
+    404 {object} fiber.Map "Operation not found" @Failure 409 {object}
+    irminmodels.AlreadyRunningBody "Operation already running" @Failure
+    500 {object} irminmodels.JobErrorBody "Internal server error" @Router
+    /postgres/operation/patch [post]
 
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
     OperationPull godoc @Summary Pull data from PostgreSQL database @Description
-    Extract data from PostgreSQL database tables using the operation token and
-    specified path (table name) @Tags postgres @Security OperationTokenAuth
-    @Accept multipart/form-data @Produce json @Param operation_token formData
-    string true "Operation token received from operation/init" @Param path
-    formData string true "Table name to extract data from" @Success 200 {object}
-    fiber.Map "Data pulled successfully" @Failure 400 {object} fiber.Map "Bad
-    request - invalid operation token or table name" @Failure 401 {object}
-    fiber.Map "Unauthorized - invalid or missing authentication" @Failure
-    404 {object} fiber.Map "Table not found" @Failure 500 {object} fiber.Map
-    "Internal server error" @Router /postgres/operation/pull [post]
+    Extract data from PostgreSQL database tables using the operation token
+    and specified path (table name) @Tags postgres @Security SystemTokenAuth
+    @Accept multipart/form-data @Produce json @Param path formData string true
+    "Table name to extract data from" @Success 200 {object} fiber.Map "Data
+    pulled successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    operation token or table name" @Failure 401 {object} fiber.Map "Unauthorized
+    - invalid or missing authentication" @Failure 404 {object} fiber.Map "Table
+    not found" @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /postgres/operation/pull [post]
 
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
     OperationPush godoc @Summary Push data to PostgreSQL database @Description
     Insert data into PostgreSQL database tables using the operation token
     and JSON file containing table data. Use the path parameter to specify
-    a target table name. @Tags postgres @Security OperationTokenAuth @Accept
-    multipart/form-data @Produce json @Param operation_token formData string
-    true "Operation token received from operation/init" @Param file formData
-    file true "JSON file containing table data to insert" @Param path formData
-    string false "Target table name (e.g., customers). If not specified,
-    uses the filename from the uploaded file" @Success 200 {object} fiber.Map
-    "Data pushed successfully" @Failure 400 {object} fiber.Map "Bad request
-    - invalid operation token or file format" @Failure 401 {object} fiber.Map
-    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
-    fiber.Map "Operation not found" @Failure 500 {object} fiber.Map "Internal
-    server error" @Router /postgres/operation/push [post]
+    a target table name. @Tags postgres @Security SystemTokenAuth @Accept
+    multipart/form-data @Produce json @Param file formData file true "JSON file
+    containing table data to insert" @Param path formData string false "Target
+    table name (e.g., customers). If not specified, uses the filename from the
+    uploaded file" @Success 202 {object} irminmodels.StartOperationJobResponse
+    "Push job accepted; poll /operation/status/:job_id" @Failure 400 {object}
+    fiber.Map "Bad request - invalid operation token or file format" @Failure
+    401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Failure 404 {object} fiber.Map "Operation not found" @Failure 409 {object}
+    irminmodels.AlreadyRunningBody "Operation already running" @Failure
+    500 {object} irminmodels.JobErrorBody "Internal server error" @Router
+    /postgres/operation/push [post]
 
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
     OperationSchemaGet godoc @Summary Get PostgreSQL operation schema
-    @Description Get the database schema for PostgreSQL operations, returning an
-    Irmin-compatible ObjectSchema grouping each table as a JSON array based on
-    the operation type (pull or push). Use the path query parameter to specify
-    which database to analyze. @Tags postgres @Security OperationTokenAuth
-    @Accept json @Produce json @Param operation path string true "Operation
-    type" Enums(pull, push) @Param operation_token formData string true
-    "Operation token received from operation/init" @Param path query string
-    false "Database name to get schema for (e.g., my_database)" @Success 200
-    {object} irminmodels.ObjectSchema "Operation schema retrieved successfully"
+    @Description Get the database schema for PostgreSQL operations,
+    returning an Irmin-compatible ObjectSchema grouping each table as a JSON
+    array based on the operation type (pull or push). Use the path query
+    parameter to specify which database to analyze. @Tags postgres @Security
+    SystemTokenAuth @Accept json @Produce json @Param operation path string
+    true "Operation type" Enums(pull, push) @Param path query string false
+    "Database name to get schema for (e.g., my_database)" @Success 200 {object}
+    irminmodels.ObjectSchema "Operation schema retrieved successfully"
     @Failure 400 {object} fiber.Map "Bad request - invalid operation type
     or token" @Failure 401 {object} fiber.Map "Unauthorized - invalid or
     missing authentication" @Failure 404 {object} fiber.Map "Operation not
@@ -192,16 +180,15 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
     SubscribeToChanges godoc @Summary Subscribe to PostgreSQL database changes
     @Description Set up real-time monitoring of PostgreSQL database changes
     using notification triggers and webhook notifications @Tags postgres
-    @Security OperationTokenAuth @Accept multipart/form-data @Produce json
-    @Param operation_token formData string true "Operation token received from
-    operation/init" @Param webhook_url formData string true "Webhook URL to
-    receive change notifications" @Param webhook_access_token formData string
-    true "Access token for webhook authentication" @Success 200 {object}
-    db.Subscription "Subscription created successfully" @Failure 400 {object}
-    fiber.Map "Bad request - invalid parameters" @Failure 401 {object} fiber.Map
-    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
-    fiber.Map "Operation not found" @Failure 500 {object} fiber.Map "Internal
-    server error" @Router /postgres/operation/subscribe [post]
+    @Security SystemTokenAuth @Accept multipart/form-data @Produce json
+    @Param webhook_url formData string true "Webhook URL to receive change
+    notifications" @Param webhook_access_token formData string true "Access
+    token for webhook authentication" @Success 200 {object} db.Subscription
+    "Subscription created successfully" @Failure 400 {object} fiber.Map "Bad
+    request - invalid parameters" @Failure 401 {object} fiber.Map "Unauthorized
+    - invalid or missing authentication" @Failure 404 {object} fiber.Map
+    "Operation not found" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /postgres/operation/subscribe [post]
 
 func (cs *Controllers) TestConnection(
 	ctx fiber.Ctx,
@@ -213,23 +200,18 @@ func (cs *Controllers) TestConnection(
 func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
     UnsubscribeFromChanges godoc @Summary Unsubscribe from PostgreSQL database
     changes @Description Stop monitoring PostgreSQL database changes and
-    remove the subscription @Tags postgres @Security OperationTokenAuth @Accept
-    multipart/form-data @Produce json @Param operation_token formData string
-    true "Operation token received from operation/init" @Param subscription_id
-    formData string true "ID of the subscription to remove" @Success 200
-    {object} fiber.Map "Subscription removed successfully" @Failure 400
-    {object} fiber.Map "Bad request - invalid parameters" @Failure 401
-    {object} fiber.Map "Unauthorized - invalid or missing authentication"
-    @Failure 403 {object} fiber.Map "Forbidden - subscription does not belong
-    to this operation" @Failure 404 {object} fiber.Map "Subscription not
-    found" @Failure 500 {object} fiber.Map "Internal server error" @Router
-    /postgres/operation/unsubscribe [post]
+    remove the subscription @Tags postgres @Security SystemTokenAuth @Accept
+    multipart/form-data @Produce json @Param subscription_id formData string
+    true "ID of the subscription to remove" @Success 200 {object} fiber.Map
+    "Subscription removed successfully" @Failure 400 {object} fiber.Map "Bad
+    request - invalid parameters" @Failure 401 {object} fiber.Map "Unauthorized
+    - invalid or missing authentication" @Failure 403 {object} fiber.Map
+    "Forbidden - subscription does not belong to this operation" @Failure 404
+    {object} fiber.Map "Subscription not found" @Failure 500 {object} fiber.Map
+    "Internal server error" @Router /postgres/operation/unsubscribe [post]
 
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
     ValidateFields implements the ConfigValidationProvider interface.
-
-func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error
-    ValidateOperationTokenMiddleware validates the operation token.
 
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
     ValidateSystemTokenMiddleware validates the system token.
@@ -263,7 +245,7 @@ type PostgresPatchProvider struct{}
     PostgreSQL.
 
 func (p *PostgresPatchProvider) ExecutePatchOperation(
-	c fiber.Ctx,
+	ctx context.Context,
 	client any,
 	op irminmodels.PatchOperation,
 	tableName, rowIdentifier, columnName string,
@@ -273,7 +255,7 @@ func (p *PostgresPatchProvider) ExecutePatchOperation(
     transaction.
 
 func (p *PostgresPatchProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, func(), error)
@@ -324,15 +306,16 @@ type PostgresPushProvider struct {
     PostgreSQL.
 
 func (p *PostgresPushProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error)
     InitializeClient initializes the PostgreSQL client for push operations.
 
 func (p *PostgresPushProvider) ProcessFiles(
-	c fiber.Ctx,
+	ctx context.Context,
 	client any,
+	operation *db.Operation,
 	files map[string][]byte,
 	rawPath string,
 ) error

@@ -291,7 +291,6 @@ func (p *MySQLPullProvider) GetFileByPath(
 // @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param path formData string true "Table name to extract data from"
 // @Success 200 {object} fiber.Map "Data pulled successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token or table name"

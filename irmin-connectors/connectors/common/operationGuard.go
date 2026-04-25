@@ -129,6 +129,13 @@ type OperationGuard struct {
 	kind        string
 	resultPath  string
 
+	// operationToken is the per-job credential persisted on the
+	// OperationJob row inside Begin and surfaced to handlers via
+	// OperationToken(). Stored here so the value is available to
+	// the 202 Start* response without a DB re-read. See
+	// db.OperationJob.OperationToken for the long-form rationale.
+	operationToken string
+
 	manager *JobManager
 
 	// release is closed by Release() to signal the lock-holder
@@ -162,6 +169,21 @@ func (g *OperationGuard) JobID() string {
 		return ""
 	}
 	return g.jobID
+}
+
+// OperationToken returns the per-job credential the connector
+// returns to Core in the 202 Start* response. Core re-sends this
+// on every subsequent call against the job's lifecycle routes
+// (status / result / cancel); see db.OperationJob.OperationToken
+// for the full contract. Empty when the guard is nil — handlers
+// are expected to nil-check before constructing the response, but
+// the empty-string fallback is safe for tests / hand-wired guards
+// that bypass Begin.
+func (g *OperationGuard) OperationToken() string {
+	if g == nil {
+		return ""
+	}
+	return g.operationToken
 }
 
 // OperationID returns the numeric operation identifier this guard
@@ -291,18 +313,24 @@ func (m *JobManager) Begin(
 		return nil, nil, fmt.Errorf("failed to generate job id: %w", err)
 	}
 
+	operationToken, err := generateJobOperationToken()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate operation token: %w", err)
+	}
+
 	guard := &OperationGuard{
-		jobID:       jobID,
-		operationID: input.OperationID,
-		kind:        input.Kind,
-		manager:     m,
-		release:     make(chan struct{}),
-		done:        make(chan struct{}),
+		jobID:          jobID,
+		operationID:    input.OperationID,
+		kind:           input.Kind,
+		operationToken: operationToken,
+		manager:        m,
+		release:        make(chan struct{}),
+		done:           make(chan struct{}),
 	}
 
 	resultCh := make(chan beginResult, 1)
 
-	go m.runLockHolder(input, jobID, guard, resultCh)
+	go m.runLockHolder(input, jobID, operationToken, guard, resultCh)
 
 	r := <-resultCh
 	if r.err != nil {
@@ -322,6 +350,7 @@ func (m *JobManager) Begin(
 func (m *JobManager) runLockHolder(
 	input BeginOperationJobInput,
 	jobID string,
+	operationToken string,
 	guard *OperationGuard,
 	resultCh chan<- beginResult,
 ) {
@@ -347,6 +376,7 @@ func (m *JobManager) runLockHolder(
 				Kind:                    input.Kind,
 				Status:                  string(sdkmodels.OperationJobStatusPending),
 				Progress:                []byte("[]"),
+				OperationToken:          operationToken,
 			}); createErr != nil {
 				// Surface to Begin; releasing the closure without
 				// further work frees the advisory lock immediately.

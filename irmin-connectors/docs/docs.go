@@ -235,97 +235,11 @@ const docTemplate = `{
                 }
             }
         },
-        "/firecrawl/operation/init": {
-            "post": {
-                "security": [
-                    {
-                        "SystemTokenAuth": []
-                    }
-                ],
-                "description": "Initialize a new Firecrawl operation with connection details and settings, returning an operation token for subsequent requests",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "firecrawl"
-                ],
-                "summary": "Initialize Firecrawl operation",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Firecrawl API key",
-                        "name": "details[api_key]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Operation type (scrape, crawl, map, search)",
-                        "name": "details[operation_type]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Target URL (required for scrape, crawl, map)",
-                        "name": "details[url]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Search query (required for search)",
-                        "name": "details[query]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Output format (markdown, html, json)",
-                        "name": "details[output_format]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Maximum pages/results limit",
-                        "name": "details[limit]",
-                        "in": "formData"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Operation initialized successfully with operation token",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - invalid operation data",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    }
-                }
-            }
-        },
         "/firecrawl/operation/patch": {
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Firecrawl connector does not support patch operations - it is read-only",
@@ -339,15 +253,6 @@ const docTemplate = `{
                     "firecrawl"
                 ],
                 "summary": "Firecrawl connector does not support patch operations",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "401": {
                         "description": "Unauthorized - invalid or missing authentication",
@@ -368,7 +273,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Execute the configured Firecrawl operation (scrape, crawl, map, or search) and return the results as files.",
@@ -383,13 +288,6 @@ const docTemplate = `{
                 ],
                 "summary": "Pull data from Firecrawl",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Optional URL to scrape (overrides configured URL for single-page scraping)",
@@ -429,7 +327,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Firecrawl connector does not support push operations - it is read-only",
@@ -443,15 +341,6 @@ const docTemplate = `{
                     "firecrawl"
                 ],
                 "summary": "Firecrawl connector does not support push operations",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "401": {
                         "description": "Unauthorized - invalid or missing authentication",
@@ -472,7 +361,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Get the response schema for Firecrawl operations, returning an Irmin-compatible ObjectSchema based on the configured operation type and output format",
@@ -495,13 +384,6 @@ const docTemplate = `{
                         "description": "Operation type",
                         "name": "operation",
                         "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
                         "required": true
                     }
                 ],
@@ -543,7 +425,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Firecrawl connector does not support webhook subscriptions",
@@ -557,15 +439,6 @@ const docTemplate = `{
                     "firecrawl"
                 ],
                 "summary": "Firecrawl connector does not support webhook subscriptions",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "401": {
                         "description": "Unauthorized - invalid or missing authentication",
@@ -586,7 +459,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Firecrawl connector does not support webhook subscriptions",
@@ -601,13 +474,6 @@ const docTemplate = `{
                 ],
                 "summary": "Firecrawl connector does not support webhook subscriptions",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Subscription ID",
@@ -850,97 +716,11 @@ const docTemplate = `{
                 }
             }
         },
-        "/http/operation/init": {
-            "post": {
-                "security": [
-                    {
-                        "SystemTokenAuth": []
-                    }
-                ],
-                "description": "Initialize a new HTTP operation with connection details and settings, returning an operation token for subsequent requests",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "http"
-                ],
-                "summary": "Initialize HTTP operation",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "HTTP endpoint URL",
-                        "name": "details[url]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "HTTP method (GET, POST, PUT, PATCH, DELETE)",
-                        "name": "details[method]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "HTTP headers as JSON object",
-                        "name": "details[headers]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Request body content",
-                        "name": "details[body]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Request timeout in seconds (default: 30)",
-                        "name": "details[timeout]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Verify SSL certificates (default: true)",
-                        "name": "details[verify_ssl]",
-                        "in": "formData"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Operation initialized successfully with operation token",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - invalid operation data",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    }
-                }
-            }
-        },
         "/http/operation/patch": {
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Apply JSON Patch operations by making HTTP requests to the configured endpoint. Each patch operation becomes an HTTP request.",
@@ -955,13 +735,6 @@ const docTemplate = `{
                 ],
                 "summary": "Apply patch operations via HTTP requests",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "file",
                         "description": "JSON file containing array of patch operations",
@@ -1002,7 +775,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Make a request to the configured HTTP endpoint and return the response as a file. Use the path parameter to modify the request URL (absolute path replaces, relative path appends).",
@@ -1017,13 +790,6 @@ const docTemplate = `{
                 ],
                 "summary": "Pull data from HTTP endpoint",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Path to append/replace in the request URL (e.g., /api/users or customers)",
@@ -1069,7 +835,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Send file content to the configured HTTP endpoint using the specified method and headers. Use the path parameter to modify the request URL (absolute path replaces, relative path appends).",
@@ -1084,13 +850,6 @@ const docTemplate = `{
                 ],
                 "summary": "Push data to HTTP endpoint",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "file",
                         "description": "File to send to HTTP endpoint",
@@ -1143,7 +902,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Get the response schema for HTTP operations, returning an Irmin-compatible ObjectSchema based on the operation type (pull or push). Use the path query parameter to specify which API endpoint or resource to analyze.",
@@ -1167,13 +926,6 @@ const docTemplate = `{
                         "description": "Operation type",
                         "name": "operation",
                         "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
                         "required": true
                     },
                     {
@@ -1221,7 +973,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "HTTP connector does not support webhook subscriptions",
@@ -1235,15 +987,6 @@ const docTemplate = `{
                     "http"
                 ],
                 "summary": "HTTP connector does not support webhook subscriptions",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "401": {
                         "description": "Unauthorized - invalid or missing authentication",
@@ -1264,7 +1007,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "HTTP connector does not support webhook subscriptions",
@@ -1279,13 +1022,6 @@ const docTemplate = `{
                 ],
                 "summary": "HTTP connector does not support webhook subscriptions",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Subscription ID",
@@ -1559,99 +1295,11 @@ const docTemplate = `{
                 }
             }
         },
-        "/mysql/operation/init": {
-            "post": {
-                "security": [
-                    {
-                        "SystemTokenAuth": []
-                    }
-                ],
-                "description": "Initialize a new MySQL operation with connection details and settings, returning an operation token for subsequent requests",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "mysql"
-                ],
-                "summary": "Initialize MySQL operation",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "MySQL server hostname or IP address",
-                        "name": "details[host]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "MySQL server port (default: 3306)",
-                        "name": "details[port]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Username for MySQL authentication",
-                        "name": "details[username]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Password for MySQL authentication",
-                        "name": "details[password]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Default database for initial connection",
-                        "name": "details[default_db]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Target database name for operations",
-                        "name": "settings[database]",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Operation initialized successfully with operation token",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - invalid operation data",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    }
-                }
-            }
-        },
         "/mysql/operation/patch": {
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Apply granular updates to MySQL database records using JSON patch operations",
@@ -1667,13 +1315,6 @@ const docTemplate = `{
                 "summary": "Patch data in MySQL database",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
                         "type": "file",
                         "description": "JSON patch file containing update operations",
                         "name": "patch",
@@ -1685,7 +1326,7 @@ const docTemplate = `{
                     "202": {
                         "description": "Patch job accepted; poll /operation/status/:job_id",
                         "schema": {
-                            "$ref": "#/definitions/irminmodels.StartOperationPullResponse"
+                            "$ref": "#/definitions/irminmodels.StartOperationJobResponse"
                         }
                     },
                     "400": {
@@ -1742,13 +1383,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "Table name to extract data from",
                         "name": "path",
                         "in": "formData",
@@ -1793,7 +1427,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Insert data into MySQL database tables using the operation token and JSON file containing table data. Use the path parameter to specify a target table name.",
@@ -1808,13 +1442,6 @@ const docTemplate = `{
                 ],
                 "summary": "Push data to MySQL database",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "file",
                         "description": "JSON file containing table data to insert",
@@ -1833,7 +1460,7 @@ const docTemplate = `{
                     "202": {
                         "description": "Push job accepted; poll /operation/status/:job_id",
                         "schema": {
-                            "$ref": "#/definitions/irminmodels.StartOperationPullResponse"
+                            "$ref": "#/definitions/irminmodels.StartOperationJobResponse"
                         }
                     },
                     "400": {
@@ -1901,13 +1528,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "Database name to get schema for (e.g., my_database)",
                         "name": "path",
                         "in": "query"
@@ -1968,13 +1588,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "Webhook URL to receive change notifications",
                         "name": "webhook_url",
                         "in": "formData",
@@ -2026,7 +1639,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Stop monitoring MySQL database changes and remove the subscription",
@@ -2041,13 +1654,6 @@ const docTemplate = `{
                 ],
                 "summary": "Unsubscribe from MySQL database changes",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "ID of the subscription to remove",
@@ -2295,79 +1901,11 @@ const docTemplate = `{
                 }
             }
         },
-        "/pinecone/operation/init": {
-            "post": {
-                "security": [
-                    {
-                        "SystemTokenAuth": []
-                    }
-                ],
-                "description": "Initialize a new Pinecone operation with connection details and settings, returning an operation token for subsequent requests",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "pinecone"
-                ],
-                "summary": "Initialize Pinecone operation",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Pinecone API key",
-                        "name": "details[api_key]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Pinecone index host URL",
-                        "name": "settings[host]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Target namespace within the index",
-                        "name": "settings[namespace]",
-                        "in": "formData"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Operation initialized successfully with operation token",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - invalid operation data",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    }
-                }
-            }
-        },
         "/pinecone/operation/patch": {
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Apply JSON Patch operations to vectors in the Pinecone index. Supports add (upsert), remove (delete), and replace (upsert) operations.",
@@ -2382,13 +1920,6 @@ const docTemplate = `{
                 ],
                 "summary": "Apply patch operations to Pinecone vectors",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "file",
                         "description": "JSON file containing array of patch operations",
@@ -2429,7 +1960,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Pull vectors from Pinecone. If path is provided, performs a semantic search and returns JSON results. If path is empty, exports all vectors as a parquet file.",
@@ -2444,13 +1975,6 @@ const docTemplate = `{
                 ],
                 "summary": "Pull data from Pinecone",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Query vector as JSON array for search, or empty for full export",
@@ -2496,7 +2020,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Push embedding vectors from parquet files to Pinecone index",
@@ -2511,13 +2035,6 @@ const docTemplate = `{
                 ],
                 "summary": "Push data to Pinecone",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "file",
                         "description": "ZIP file containing parquet embedding files",
@@ -2536,7 +2053,7 @@ const docTemplate = `{
                     "202": {
                         "description": "Push job accepted; poll /operation/status/:job_id",
                         "schema": {
-                            "$ref": "#/definitions/irminmodels.StartOperationPullResponse"
+                            "$ref": "#/definitions/irminmodels.StartOperationJobResponse"
                         }
                     },
                     "400": {
@@ -2576,7 +2093,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Get the schema for Pinecone operations, returning an Irmin-compatible ObjectSchema",
@@ -2600,13 +2117,6 @@ const docTemplate = `{
                         "description": "Operation type",
                         "name": "operation",
                         "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
                         "required": true
                     }
                 ],
@@ -2917,105 +2427,11 @@ const docTemplate = `{
                 }
             }
         },
-        "/postgres/operation/init": {
-            "post": {
-                "security": [
-                    {
-                        "SystemTokenAuth": []
-                    }
-                ],
-                "description": "Initialize a new PostgreSQL operation with connection details and settings, returning an operation token for subsequent requests",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "postgres"
-                ],
-                "summary": "Initialize PostgreSQL operation",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "PostgreSQL server hostname or IP address",
-                        "name": "details[host]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "PostgreSQL server port (default: 5432)",
-                        "name": "details[port]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Username for PostgreSQL authentication",
-                        "name": "details[username]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Password for PostgreSQL authentication",
-                        "name": "details[password]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Default database for initial connection",
-                        "name": "details[default_db]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Enable SSL mode for secure connections",
-                        "name": "details[ssl_mode]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Target database name for operations",
-                        "name": "settings[database]",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Operation initialized successfully with operation token",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - invalid operation data",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    }
-                }
-            }
-        },
         "/postgres/operation/patch": {
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Apply granular updates to PostgreSQL database records using JSON patch operations",
@@ -3031,13 +2447,6 @@ const docTemplate = `{
                 "summary": "Patch data in PostgreSQL database",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
                         "type": "file",
                         "description": "JSON patch file containing update operations",
                         "name": "patch",
@@ -3049,7 +2458,7 @@ const docTemplate = `{
                     "202": {
                         "description": "Patch job accepted; poll /operation/status/:job_id",
                         "schema": {
-                            "$ref": "#/definitions/irminmodels.StartOperationPullResponse"
+                            "$ref": "#/definitions/irminmodels.StartOperationJobResponse"
                         }
                     },
                     "400": {
@@ -3089,7 +2498,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Extract data from PostgreSQL database tables using the operation token and specified path (table name)",
@@ -3104,13 +2513,6 @@ const docTemplate = `{
                 ],
                 "summary": "Pull data from PostgreSQL database",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Table name to extract data from",
@@ -3157,7 +2559,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Insert data into PostgreSQL database tables using the operation token and JSON file containing table data. Use the path parameter to specify a target table name.",
@@ -3172,13 +2574,6 @@ const docTemplate = `{
                 ],
                 "summary": "Push data to PostgreSQL database",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "file",
                         "description": "JSON file containing table data to insert",
@@ -3197,7 +2592,7 @@ const docTemplate = `{
                     "202": {
                         "description": "Push job accepted; poll /operation/status/:job_id",
                         "schema": {
-                            "$ref": "#/definitions/irminmodels.StartOperationPullResponse"
+                            "$ref": "#/definitions/irminmodels.StartOperationJobResponse"
                         }
                     },
                     "400": {
@@ -3237,7 +2632,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Get the database schema for PostgreSQL operations, returning an Irmin-compatible ObjectSchema grouping each table as a JSON array based on the operation type (pull or push). Use the path query parameter to specify which database to analyze.",
@@ -3261,13 +2656,6 @@ const docTemplate = `{
                         "description": "Operation type",
                         "name": "operation",
                         "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
                         "required": true
                     },
                     {
@@ -3315,7 +2703,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Set up real-time monitoring of PostgreSQL database changes using notification triggers and webhook notifications",
@@ -3330,13 +2718,6 @@ const docTemplate = `{
                 ],
                 "summary": "Subscribe to PostgreSQL database changes",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Webhook URL to receive change notifications",
@@ -3390,7 +2771,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Stop monitoring PostgreSQL database changes and remove the subscription",
@@ -3405,13 +2786,6 @@ const docTemplate = `{
                 ],
                 "summary": "Unsubscribe from PostgreSQL database changes",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "ID of the subscription to remove",
@@ -3684,103 +3058,11 @@ const docTemplate = `{
                 }
             }
         },
-        "/sftp/operation/init": {
-            "post": {
-                "security": [
-                    {
-                        "SystemTokenAuth": []
-                    }
-                ],
-                "description": "Initialize a new SFTP operation with connection details and settings, returning an operation token for subsequent requests",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "sftp"
-                ],
-                "summary": "Initialize SFTP operation",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "SFTP server hostname or IP address",
-                        "name": "details[host]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "SFTP server port (default: 22)",
-                        "name": "details[port]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Username for SFTP authentication",
-                        "name": "details[username]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Password for SFTP authentication (if not using private key)",
-                        "name": "details[password]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Private key for SFTP authentication (if not using password)",
-                        "name": "details[private_key]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Passphrase for encrypted private key",
-                        "name": "details[private_key_passphrase]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Expected host key fingerprint for security verification",
-                        "name": "details[host_key_fingerprint]",
-                        "in": "formData"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Operation initialized successfully with operation token",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - invalid operation data",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    }
-                }
-            }
-        },
         "/sftp/operation/patch": {
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Apply JSON Patch operations to files on the SFTP server. Supports add (upload), remove (delete), replace (overwrite), move, and copy operations.",
@@ -3795,13 +3077,6 @@ const docTemplate = `{
                 ],
                 "summary": "Apply patch operations to SFTP files",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "file",
                         "description": "JSON file containing array of patch operations",
@@ -3842,7 +3117,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Download files from an SFTP server using the operation token and specified path",
@@ -3857,13 +3132,6 @@ const docTemplate = `{
                 ],
                 "summary": "Pull files from SFTP server",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Path to file or directory on SFTP server to download",
@@ -3910,7 +3178,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Upload files to an SFTP server using the operation token and file data",
@@ -3925,13 +3193,6 @@ const docTemplate = `{
                 ],
                 "summary": "Push files to SFTP server",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "file",
                         "description": "File to upload to SFTP server",
@@ -3984,7 +3245,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Get the schema and directory structure for SFTP file operations based on the operation type (pull or push). Use the path query parameter to navigate to specific files or directories on the SFTP server.",
@@ -4008,13 +3269,6 @@ const docTemplate = `{
                         "description": "Operation type",
                         "name": "operation",
                         "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
                         "required": true
                     },
                     {
@@ -4062,7 +3316,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "SFTP connector does not support real-time subscriptions as SFTP is a file transfer protocol without webhook capabilities",
@@ -4077,13 +3331,6 @@ const docTemplate = `{
                 ],
                 "summary": "Subscribe to changes (not supported)",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Webhook URL (not supported for SFTP)",
@@ -4112,7 +3359,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "SFTP connector does not support real-time subscriptions as SFTP is a file transfer protocol without webhook capabilities",
@@ -4127,13 +3374,6 @@ const docTemplate = `{
                 ],
                 "summary": "Unsubscribe from changes (not supported)",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Subscription ID (not supported for SFTP)",
@@ -4351,72 +3591,11 @@ const docTemplate = `{
                 }
             }
         },
-        "/stripe/operation/init": {
-            "post": {
-                "security": [
-                    {
-                        "SystemTokenAuth": []
-                    }
-                ],
-                "description": "Initialize a new Stripe operation with connection details and settings, returning an operation token for subsequent requests",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "stripe"
-                ],
-                "summary": "Initialize Stripe operation",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Stripe restricted or secret API key",
-                        "name": "details[api_key]",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Pinned Stripe-Version header (optional)",
-                        "name": "settings[api_version]",
-                        "in": "formData"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Operation initialized successfully with operation token",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - invalid operation data",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/fiber.Map"
-                        }
-                    }
-                }
-            }
-        },
         "/stripe/operation/patch": {
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Translate a JSON-Patch document into one partial-update call per targeted Stripe resource. Only add / replace / remove are supported; move and copy are rejected because Stripe's fields aren't structurally rearrangeable.",
@@ -4431,13 +3610,6 @@ const docTemplate = `{
                 ],
                 "summary": "Apply JSON-Patch operations to Stripe resources",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "file",
                         "description": "JSON file containing a JSON-Patch array",
@@ -4478,7 +3650,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Pull Stripe resources (customers, charges, subscriptions, invoices, payouts) as JSON files. If path is empty, every pull-enabled resource is returned. Response is a ZIP archive of the resulting files.",
@@ -4493,13 +3665,6 @@ const docTemplate = `{
                 ],
                 "summary": "Pull data from Stripe",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Optional resource name (e.g., 'customers') or ` + "`" + `resource/id` + "`" + ` for single-record pull",
@@ -4551,7 +3716,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Push JSON records to Stripe. Files under ` + "`" + `\u003cresource\u003e/new-*.json` + "`" + ` create new records; files under ` + "`" + `\u003cresource\u003e/\u003cid\u003e.json` + "`" + ` update existing ones. Supported resources: customers, invoices, products, prices.",
@@ -4566,13 +3731,6 @@ const docTemplate = `{
                 ],
                 "summary": "Push data to Stripe",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "file",
                         "description": "ZIP containing JSON resource files",
@@ -4631,7 +3789,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "OperationTokenAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Get the schema for Stripe pull / push / patch operations as an Irmin-compatible ObjectSchema.",
@@ -4656,13 +3814,6 @@ const docTemplate = `{
                         "description": "Operation type",
                         "name": "operation",
                         "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Operation token received from operation/init",
-                        "name": "operation_token",
-                        "in": "formData",
                         "required": true
                     }
                 ],
@@ -5677,13 +4828,18 @@ const docTemplate = `{
                 }
             }
         },
-        "irminmodels.StartOperationPullResponse": {
+        "irminmodels.StartOperationJobResponse": {
             "type": "object",
             "properties": {
                 "job_id": {
                     "description": "JobID is the identifier the caller uses on subsequent\n/operation/status and /operation/result calls.",
                     "type": "string",
                     "example": "opjob_9m3x7k2n8q5p"
+                },
+                "operation_token": {
+                    "description": "OperationToken is the per-job bearer credential for lifecycle\nroutes. Minted by the server on Start*; TTL matches the\nunderlying OperationJob row.",
+                    "type": "string",
+                    "example": "optk_7f3d2a9c1e6b"
                 }
             }
         },

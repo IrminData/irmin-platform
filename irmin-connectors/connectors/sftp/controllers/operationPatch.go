@@ -22,10 +22,9 @@ import (
 // @Summary Apply patch operations to SFTP files
 // @Description Apply JSON Patch operations to files on the SFTP server. Supports add (upload), remove (delete), replace (overwrite), move, and copy operations.
 // @Tags sftp
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param patches formData file true "JSON file containing array of patch operations"
 // @Success 200 {object} fiber.Map "Patch operations applied successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid patch format"

@@ -8,10 +8,9 @@ import (
 // @Summary Subscribe to changes (not supported)
 // @Description SFTP connector does not support real-time subscriptions as SFTP is a file transfer protocol without webhook capabilities
 // @Tags sftp
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept json
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param webhook formData string true "Webhook URL (not supported for SFTP)"
 // @Success 501 {object} fiber.Map "Not implemented - SFTP does not support subscriptions"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
@@ -26,10 +25,9 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error {
 // @Summary Unsubscribe from changes (not supported)
 // @Description SFTP connector does not support real-time subscriptions as SFTP is a file transfer protocol without webhook capabilities
 // @Tags sftp
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept json
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param subscription_id formData string true "Subscription ID (not supported for SFTP)"
 // @Success 501 {object} fiber.Map "Not implemented - SFTP does not support subscriptions"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"

@@ -107,15 +107,16 @@ poll, fetch, or cancel a job it did not start. The token is valid until
 the job's `OperationJob` row is reaped by the janitor (default 15 min)
 or cancelled, whichever comes first.
 
-> **Note.** A previous transitional shape relied on a separate
-> `/operation/init` round-trip to mint a long-lived per-Connection
-> `Operation.Token` consumed by every operation route. That handshake
-> is retired — Start* directly mint a per-job token and return it on
-> 202. The `OperationInit` controller method and the legacy
-> operation-id-scoped `/operation/cancel`, `/operation/status` routes
-> remain in the codebase as temporary back-compat scaffolding and
-> will be removed in a follow-up Phase 4 PR once all Core deployments
-> have rolled forward.
+> **Note.** A previous shape required a separate `/operation/init`
+> round-trip to mint a long-lived per-Connection `Operation.Token`,
+> then re-sent that token on every operation route. Phase 4 retired
+> that handshake: Start\* requests carry their credentials inline
+> (the SDK's `details[<key>]` / `settings[<key>]` form fields), the
+> server upserts the matching `Operation` row inside the request
+> handler via `EnsureOperationFromRequest`, and the per-job
+> operation token returned on 202 is the only token the lifecycle
+> routes accept. The `Operation.Token` column stays in the schema
+> for rollback safety but no client reads it anymore.
 
 ## Authentication, in layers
 
@@ -158,8 +159,9 @@ calling and what's being done. Keep them distinct.
 ### Connection credentials (external auth, static-credential path)
 
 - **Who holds them**: Core, inside `connection.details` (encrypted at
-  rest). They arrive at the connector in the `details` field of
-  `/operation/init`.
+  rest). They arrive at the connector on every Start\* request as
+  `details[<key>]=<value>` form fields, parsed by the
+  `EnsureOperation` middleware before the worker runs.
 - **What they authorise**: the *external* system to trust the call
   coming from this connector. Connector holds them only in memory for
   the duration of the operation.

@@ -8,10 +8,9 @@ import (
 // @Summary Firecrawl connector does not support webhook subscriptions
 // @Description Firecrawl connector does not support webhook subscriptions
 // @Tags firecrawl
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Success 501 {object} fiber.Map "Not implemented - Firecrawl connector does not support webhook subscriptions"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
 // @Router /firecrawl/operation/subscribe [post]
@@ -25,10 +24,9 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error {
 // @Summary Firecrawl connector does not support webhook subscriptions
 // @Description Firecrawl connector does not support webhook subscriptions
 // @Tags firecrawl
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param subscription_id formData string true "Subscription ID"
 // @Success 501 {object} fiber.Map "Not implemented - Firecrawl connector does not support webhook subscriptions"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"

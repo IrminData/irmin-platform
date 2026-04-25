@@ -68,10 +68,9 @@ func (p *MySQLPatchProvider) ExecutePatchOperation(
 // @Summary Patch data in MySQL database
 // @Description Apply granular updates to MySQL database records using JSON patch operations
 // @Tags mysql
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param patch formData file true "JSON patch file containing update operations"
 // @Success 202 {object} irminmodels.StartOperationJobResponse "Patch job accepted; poll /operation/status/:job_id"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token or patch format"

@@ -729,13 +729,20 @@ definitions:
     - key
     - value
     type: object
-  irminmodels.StartOperationPullResponse:
+  irminmodels.StartOperationJobResponse:
     properties:
       job_id:
         description: |-
           JobID is the identifier the caller uses on subsequent
           /operation/status and /operation/result calls.
         example: opjob_9m3x7k2n8q5p
+        type: string
+      operation_token:
+        description: |-
+          OperationToken is the per-job bearer credential for lifecycle
+          routes. Minted by the server on Start*; TTL matches the
+          underlying OperationJob row.
+        example: optk_7f3d2a9c1e6b
         type: string
     type: object
   models.ConnectorDetails:
@@ -968,74 +975,11 @@ paths:
       summary: Get Firecrawl connector information
       tags:
       - firecrawl
-  /firecrawl/operation/init:
-    post:
-      consumes:
-      - multipart/form-data
-      description: Initialize a new Firecrawl operation with connection details and
-        settings, returning an operation token for subsequent requests
-      parameters:
-      - description: Firecrawl API key
-        in: formData
-        name: details[api_key]
-        required: true
-        type: string
-      - description: Operation type (scrape, crawl, map, search)
-        in: formData
-        name: details[operation_type]
-        required: true
-        type: string
-      - description: Target URL (required for scrape, crawl, map)
-        in: formData
-        name: details[url]
-        type: string
-      - description: Search query (required for search)
-        in: formData
-        name: details[query]
-        type: string
-      - description: Output format (markdown, html, json)
-        in: formData
-        name: details[output_format]
-        type: string
-      - description: Maximum pages/results limit
-        in: formData
-        name: details[limit]
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation initialized successfully with operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "400":
-          description: Bad request - invalid operation data
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Initialize Firecrawl operation
-      tags:
-      - firecrawl
   /firecrawl/operation/patch:
     post:
       consumes:
       - multipart/form-data
       description: Firecrawl connector does not support patch operations - it is read-only
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -1049,7 +993,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Firecrawl connector does not support patch operations
       tags:
       - firecrawl
@@ -1060,11 +1004,6 @@ paths:
       description: Execute the configured Firecrawl operation (scrape, crawl, map,
         or search) and return the results as files.
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: Optional URL to scrape (overrides configured URL for single-page
           scraping)
         in: formData
@@ -1090,7 +1029,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Pull data from Firecrawl
       tags:
       - firecrawl
@@ -1099,12 +1038,6 @@ paths:
       consumes:
       - multipart/form-data
       description: Firecrawl connector does not support push operations - it is read-only
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -1118,7 +1051,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Firecrawl connector does not support push operations
       tags:
       - firecrawl
@@ -1135,11 +1068,6 @@ paths:
         - pull
         in: path
         name: operation
-        required: true
-        type: string
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
         required: true
         type: string
       produces:
@@ -1166,7 +1094,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Get Firecrawl operation schema
       tags:
       - firecrawl
@@ -1175,12 +1103,6 @@ paths:
       consumes:
       - multipart/form-data
       description: Firecrawl connector does not support webhook subscriptions
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -1194,7 +1116,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Firecrawl connector does not support webhook subscriptions
       tags:
       - firecrawl
@@ -1204,11 +1126,6 @@ paths:
       - multipart/form-data
       description: Firecrawl connector does not support webhook subscriptions
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: Subscription ID
         in: formData
         name: subscription_id
@@ -1227,7 +1144,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Firecrawl connector does not support webhook subscriptions
       tags:
       - firecrawl
@@ -1376,63 +1293,6 @@ paths:
       summary: Get HTTP connector information
       tags:
       - http
-  /http/operation/init:
-    post:
-      consumes:
-      - multipart/form-data
-      description: Initialize a new HTTP operation with connection details and settings,
-        returning an operation token for subsequent requests
-      parameters:
-      - description: HTTP endpoint URL
-        in: formData
-        name: details[url]
-        required: true
-        type: string
-      - description: HTTP method (GET, POST, PUT, PATCH, DELETE)
-        in: formData
-        name: details[method]
-        required: true
-        type: string
-      - description: HTTP headers as JSON object
-        in: formData
-        name: details[headers]
-        type: string
-      - description: Request body content
-        in: formData
-        name: details[body]
-        type: string
-      - description: 'Request timeout in seconds (default: 30)'
-        in: formData
-        name: details[timeout]
-        type: integer
-      - description: 'Verify SSL certificates (default: true)'
-        in: formData
-        name: details[verify_ssl]
-        type: boolean
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation initialized successfully with operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "400":
-          description: Bad request - invalid operation data
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Initialize HTTP operation
-      tags:
-      - http
   /http/operation/patch:
     post:
       consumes:
@@ -1440,11 +1300,6 @@ paths:
       description: Apply JSON Patch operations by making HTTP requests to the configured
         endpoint. Each patch operation becomes an HTTP request.
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: JSON file containing array of patch operations
         in: formData
         name: patches
@@ -1470,7 +1325,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Apply patch operations via HTTP requests
       tags:
       - http
@@ -1482,11 +1337,6 @@ paths:
         as a file. Use the path parameter to modify the request URL (absolute path
         replaces, relative path appends).
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: Path to append/replace in the request URL (e.g., /api/users or
           customers)
         in: formData
@@ -1516,7 +1366,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Pull data from HTTP endpoint
       tags:
       - http
@@ -1528,11 +1378,6 @@ paths:
         method and headers. Use the path parameter to modify the request URL (absolute
         path replaces, relative path appends).
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: File to send to HTTP endpoint
         in: formData
         name: file
@@ -1567,7 +1412,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Push data to HTTP endpoint
       tags:
       - http
@@ -1585,11 +1430,6 @@ paths:
         - push
         in: path
         name: operation
-        required: true
-        type: string
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
         required: true
         type: string
       - description: API endpoint or resource path to get schema for (e.g., /api/users
@@ -1621,7 +1461,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Get HTTP operation schema
       tags:
       - http
@@ -1630,12 +1470,6 @@ paths:
       consumes:
       - multipart/form-data
       description: HTTP connector does not support webhook subscriptions
-      parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -1648,7 +1482,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: HTTP connector does not support webhook subscriptions
       tags:
       - http
@@ -1658,11 +1492,6 @@ paths:
       - multipart/form-data
       description: HTTP connector does not support webhook subscriptions
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: Subscription ID
         in: formData
         name: subscription_id
@@ -1680,7 +1509,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: HTTP connector does not support webhook subscriptions
       tags:
       - http
@@ -1853,65 +1682,6 @@ paths:
       summary: Get MySQL connector information
       tags:
       - mysql
-  /mysql/operation/init:
-    post:
-      consumes:
-      - multipart/form-data
-      description: Initialize a new MySQL operation with connection details and settings,
-        returning an operation token for subsequent requests
-      parameters:
-      - description: MySQL server hostname or IP address
-        in: formData
-        name: details[host]
-        required: true
-        type: string
-      - description: 'MySQL server port (default: 3306)'
-        in: formData
-        name: details[port]
-        type: integer
-      - description: Username for MySQL authentication
-        in: formData
-        name: details[username]
-        required: true
-        type: string
-      - description: Password for MySQL authentication
-        in: formData
-        name: details[password]
-        required: true
-        type: string
-      - description: Default database for initial connection
-        in: formData
-        name: details[default_db]
-        type: string
-      - description: Target database name for operations
-        in: formData
-        name: settings[database]
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation initialized successfully with operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "400":
-          description: Bad request - invalid operation data
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Initialize MySQL operation
-      tags:
-      - mysql
   /mysql/operation/patch:
     post:
       consumes:
@@ -1919,11 +1689,6 @@ paths:
       description: Apply granular updates to MySQL database records using JSON patch
         operations
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: JSON patch file containing update operations
         in: formData
         name: patch
@@ -1935,7 +1700,7 @@ paths:
         "202":
           description: Patch job accepted; poll /operation/status/:job_id
           schema:
-            $ref: '#/definitions/irminmodels.StartOperationPullResponse'
+            $ref: '#/definitions/irminmodels.StartOperationJobResponse'
         "400":
           description: Bad request - invalid operation token or patch format
           schema:
@@ -1957,7 +1722,7 @@ paths:
           schema:
             $ref: '#/definitions/irminmodels.JobErrorBody'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Patch data in MySQL database
       tags:
       - mysql
@@ -1968,11 +1733,6 @@ paths:
       description: Extract data from MySQL database tables using the operation token
         and specified path (table name)
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: Table name to extract data from
         in: formData
         name: path
@@ -2014,11 +1774,6 @@ paths:
         and JSON file containing table data. Use the path parameter to specify a target
         table name.
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: JSON file containing table data to insert
         in: formData
         name: file
@@ -2035,7 +1790,7 @@ paths:
         "202":
           description: Push job accepted; poll /operation/status/:job_id
           schema:
-            $ref: '#/definitions/irminmodels.StartOperationPullResponse'
+            $ref: '#/definitions/irminmodels.StartOperationJobResponse'
         "400":
           description: Bad request - invalid operation token or file format
           schema:
@@ -2057,7 +1812,7 @@ paths:
           schema:
             $ref: '#/definitions/irminmodels.JobErrorBody'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Push data to MySQL database
       tags:
       - mysql
@@ -2076,11 +1831,6 @@ paths:
         - push
         in: path
         name: operation
-        required: true
-        type: string
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
         required: true
         type: string
       - description: Database name to get schema for (e.g., my_database)
@@ -2122,11 +1872,6 @@ paths:
       description: Set up real-time monitoring of MySQL database changes using binary
         log tracking and webhook notifications
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: Webhook URL to receive change notifications
         in: formData
         name: webhook_url
@@ -2171,11 +1916,6 @@ paths:
       - multipart/form-data
       description: Stop monitoring MySQL database changes and remove the subscription
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: ID of the subscription to remove
         in: formData
         name: subscription_id
@@ -2209,7 +1949,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Unsubscribe from MySQL database changes
       tags:
       - mysql
@@ -2345,51 +2085,6 @@ paths:
       summary: Get Pinecone connector information
       tags:
       - pinecone
-  /pinecone/operation/init:
-    post:
-      consumes:
-      - multipart/form-data
-      description: Initialize a new Pinecone operation with connection details and
-        settings, returning an operation token for subsequent requests
-      parameters:
-      - description: Pinecone API key
-        in: formData
-        name: details[api_key]
-        required: true
-        type: string
-      - description: Pinecone index host URL
-        in: formData
-        name: settings[host]
-        required: true
-        type: string
-      - description: Target namespace within the index
-        in: formData
-        name: settings[namespace]
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation initialized successfully with operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "400":
-          description: Bad request - invalid operation data
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Initialize Pinecone operation
-      tags:
-      - pinecone
   /pinecone/operation/patch:
     post:
       consumes:
@@ -2397,11 +2092,6 @@ paths:
       description: Apply JSON Patch operations to vectors in the Pinecone index. Supports
         add (upsert), remove (delete), and replace (upsert) operations.
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: JSON file containing array of patch operations
         in: formData
         name: patches
@@ -2427,7 +2117,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Apply patch operations to Pinecone vectors
       tags:
       - pinecone
@@ -2439,11 +2129,6 @@ paths:
         search and returns JSON results. If path is empty, exports all vectors as
         a parquet file.
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: Query vector as JSON array for search, or empty for full export
         in: formData
         name: path
@@ -2472,7 +2157,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Pull data from Pinecone
       tags:
       - pinecone
@@ -2482,11 +2167,6 @@ paths:
       - multipart/form-data
       description: Push embedding vectors from parquet files to Pinecone index
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: ZIP file containing parquet embedding files
         in: formData
         name: file
@@ -2502,7 +2182,7 @@ paths:
         "202":
           description: Push job accepted; poll /operation/status/:job_id
           schema:
-            $ref: '#/definitions/irminmodels.StartOperationPullResponse'
+            $ref: '#/definitions/irminmodels.StartOperationJobResponse'
         "400":
           description: Bad request - invalid operation token or file format
           schema:
@@ -2524,7 +2204,7 @@ paths:
           schema:
             $ref: '#/definitions/irminmodels.JobErrorBody'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Push data to Pinecone
       tags:
       - pinecone
@@ -2541,11 +2221,6 @@ paths:
         - push
         in: path
         name: operation
-        required: true
-        type: string
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
         required: true
         type: string
       produces:
@@ -2572,7 +2247,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Get Pinecone operation schema
       tags:
       - pinecone
@@ -2764,69 +2439,6 @@ paths:
       summary: Get PostgreSQL connector information
       tags:
       - postgres
-  /postgres/operation/init:
-    post:
-      consumes:
-      - multipart/form-data
-      description: Initialize a new PostgreSQL operation with connection details and
-        settings, returning an operation token for subsequent requests
-      parameters:
-      - description: PostgreSQL server hostname or IP address
-        in: formData
-        name: details[host]
-        required: true
-        type: string
-      - description: 'PostgreSQL server port (default: 5432)'
-        in: formData
-        name: details[port]
-        type: integer
-      - description: Username for PostgreSQL authentication
-        in: formData
-        name: details[username]
-        required: true
-        type: string
-      - description: Password for PostgreSQL authentication
-        in: formData
-        name: details[password]
-        required: true
-        type: string
-      - description: Default database for initial connection
-        in: formData
-        name: details[default_db]
-        type: string
-      - description: Enable SSL mode for secure connections
-        in: formData
-        name: details[ssl_mode]
-        type: boolean
-      - description: Target database name for operations
-        in: formData
-        name: settings[database]
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation initialized successfully with operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "400":
-          description: Bad request - invalid operation data
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Initialize PostgreSQL operation
-      tags:
-      - postgres
   /postgres/operation/patch:
     post:
       consumes:
@@ -2834,11 +2446,6 @@ paths:
       description: Apply granular updates to PostgreSQL database records using JSON
         patch operations
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: JSON patch file containing update operations
         in: formData
         name: patch
@@ -2850,7 +2457,7 @@ paths:
         "202":
           description: Patch job accepted; poll /operation/status/:job_id
           schema:
-            $ref: '#/definitions/irminmodels.StartOperationPullResponse'
+            $ref: '#/definitions/irminmodels.StartOperationJobResponse'
         "400":
           description: Bad request - invalid operation token or patch format
           schema:
@@ -2872,7 +2479,7 @@ paths:
           schema:
             $ref: '#/definitions/irminmodels.JobErrorBody'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Patch data in PostgreSQL database
       tags:
       - postgres
@@ -2883,11 +2490,6 @@ paths:
       description: Extract data from PostgreSQL database tables using the operation
         token and specified path (table name)
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: Table name to extract data from
         in: formData
         name: path
@@ -2917,7 +2519,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Pull data from PostgreSQL database
       tags:
       - postgres
@@ -2929,11 +2531,6 @@ paths:
         token and JSON file containing table data. Use the path parameter to specify
         a target table name.
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: JSON file containing table data to insert
         in: formData
         name: file
@@ -2950,7 +2547,7 @@ paths:
         "202":
           description: Push job accepted; poll /operation/status/:job_id
           schema:
-            $ref: '#/definitions/irminmodels.StartOperationPullResponse'
+            $ref: '#/definitions/irminmodels.StartOperationJobResponse'
         "400":
           description: Bad request - invalid operation token or file format
           schema:
@@ -2972,7 +2569,7 @@ paths:
           schema:
             $ref: '#/definitions/irminmodels.JobErrorBody'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Push data to PostgreSQL database
       tags:
       - postgres
@@ -2991,11 +2588,6 @@ paths:
         - push
         in: path
         name: operation
-        required: true
-        type: string
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
         required: true
         type: string
       - description: Database name to get schema for (e.g., my_database)
@@ -3026,7 +2618,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Get PostgreSQL operation schema
       tags:
       - postgres
@@ -3037,11 +2629,6 @@ paths:
       description: Set up real-time monitoring of PostgreSQL database changes using
         notification triggers and webhook notifications
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: Webhook URL to receive change notifications
         in: formData
         name: webhook_url
@@ -3076,7 +2663,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Subscribe to PostgreSQL database changes
       tags:
       - postgres
@@ -3086,11 +2673,6 @@ paths:
       - multipart/form-data
       description: Stop monitoring PostgreSQL database changes and remove the subscription
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: ID of the subscription to remove
         in: formData
         name: subscription_id
@@ -3124,7 +2706,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Unsubscribe from PostgreSQL database changes
       tags:
       - postgres
@@ -3277,67 +2859,6 @@ paths:
       summary: Get SFTP connector information
       tags:
       - sftp
-  /sftp/operation/init:
-    post:
-      consumes:
-      - multipart/form-data
-      description: Initialize a new SFTP operation with connection details and settings,
-        returning an operation token for subsequent requests
-      parameters:
-      - description: SFTP server hostname or IP address
-        in: formData
-        name: details[host]
-        required: true
-        type: string
-      - description: 'SFTP server port (default: 22)'
-        in: formData
-        name: details[port]
-        type: integer
-      - description: Username for SFTP authentication
-        in: formData
-        name: details[username]
-        required: true
-        type: string
-      - description: Password for SFTP authentication (if not using private key)
-        in: formData
-        name: details[password]
-        type: string
-      - description: Private key for SFTP authentication (if not using password)
-        in: formData
-        name: details[private_key]
-        type: string
-      - description: Passphrase for encrypted private key
-        in: formData
-        name: details[private_key_passphrase]
-        type: string
-      - description: Expected host key fingerprint for security verification
-        in: formData
-        name: details[host_key_fingerprint]
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation initialized successfully with operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "400":
-          description: Bad request - invalid operation data
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Initialize SFTP operation
-      tags:
-      - sftp
   /sftp/operation/patch:
     post:
       consumes:
@@ -3345,11 +2866,6 @@ paths:
       description: Apply JSON Patch operations to files on the SFTP server. Supports
         add (upload), remove (delete), replace (overwrite), move, and copy operations.
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: JSON file containing array of patch operations
         in: formData
         name: patches
@@ -3375,7 +2891,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Apply patch operations to SFTP files
       tags:
       - sftp
@@ -3386,11 +2902,6 @@ paths:
       description: Download files from an SFTP server using the operation token and
         specified path
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: Path to file or directory on SFTP server to download
         in: formData
         name: path
@@ -3420,7 +2931,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Pull files from SFTP server
       tags:
       - sftp
@@ -3431,11 +2942,6 @@ paths:
       description: Upload files to an SFTP server using the operation token and file
         data
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: File to upload to SFTP server
         in: formData
         name: file
@@ -3469,7 +2975,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Push files to SFTP server
       tags:
       - sftp
@@ -3487,11 +2993,6 @@ paths:
         - push
         in: path
         name: operation
-        required: true
-        type: string
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
         required: true
         type: string
       - description: Path to file or directory to get schema for (e.g., /data/customers.csv
@@ -3523,7 +3024,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Get SFTP operation schema
       tags:
       - sftp
@@ -3534,11 +3035,6 @@ paths:
       description: SFTP connector does not support real-time subscriptions as SFTP
         is a file transfer protocol without webhook capabilities
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: Webhook URL (not supported for SFTP)
         in: formData
         name: webhook
@@ -3556,7 +3052,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Subscribe to changes (not supported)
       tags:
       - sftp
@@ -3567,11 +3063,6 @@ paths:
       description: SFTP connector does not support real-time subscriptions as SFTP
         is a file transfer protocol without webhook capabilities
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: Subscription ID (not supported for SFTP)
         in: formData
         name: subscription_id
@@ -3589,7 +3080,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Unsubscribe from changes (not supported)
       tags:
       - sftp
@@ -3721,46 +3212,6 @@ paths:
       summary: Get Stripe connector information
       tags:
       - stripe
-  /stripe/operation/init:
-    post:
-      consumes:
-      - multipart/form-data
-      description: Initialize a new Stripe operation with connection details and settings,
-        returning an operation token for subsequent requests
-      parameters:
-      - description: Stripe restricted or secret API key
-        in: formData
-        name: details[api_key]
-        required: true
-        type: string
-      - description: Pinned Stripe-Version header (optional)
-        in: formData
-        name: settings[api_version]
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation initialized successfully with operation token
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "400":
-          description: Bad request - invalid operation data
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/fiber.Map'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/fiber.Map'
-      security:
-      - SystemTokenAuth: []
-      summary: Initialize Stripe operation
-      tags:
-      - stripe
   /stripe/operation/patch:
     post:
       consumes:
@@ -3769,11 +3220,6 @@ paths:
         targeted Stripe resource. Only add / replace / remove are supported; move
         and copy are rejected because Stripe's fields aren't structurally rearrangeable.
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: JSON file containing a JSON-Patch array
         in: formData
         name: patches
@@ -3799,7 +3245,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Apply JSON-Patch operations to Stripe resources
       tags:
       - stripe
@@ -3811,11 +3257,6 @@ paths:
         payouts) as JSON files. If path is empty, every pull-enabled resource is returned.
         Response is a ZIP archive of the resulting files.
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: Optional resource name (e.g., 'customers') or `resource/id` for
           single-record pull
         in: formData
@@ -3849,7 +3290,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Pull data from Stripe
       tags:
       - stripe
@@ -3861,11 +3302,6 @@ paths:
         create new records; files under `<resource>/<id>.json` update existing ones.
         Supported resources: customers, invoices, products, prices.'
       parameters:
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
-        required: true
-        type: string
       - description: ZIP containing JSON resource files
         in: formData
         name: file
@@ -3904,7 +3340,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Push data to Stripe
       tags:
       - stripe
@@ -3922,11 +3358,6 @@ paths:
         - patch
         in: path
         name: operation
-        required: true
-        type: string
-      - description: Operation token received from operation/init
-        in: formData
-        name: operation_token
         required: true
         type: string
       produces:
@@ -3953,7 +3384,7 @@ paths:
           schema:
             $ref: '#/definitions/fiber.Map'
       security:
-      - OperationTokenAuth: []
+      - SystemTokenAuth: []
       summary: Get Stripe operation schema
       tags:
       - stripe

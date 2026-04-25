@@ -58,6 +58,12 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
     "Pinecone connector details page" @Failure 500 {object} fiber.Map "Internal
     server error" @Router /pinecone/details [get]
 
+func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
+    EnsureOperationMiddleware upserts the Operation row from the `details[]`
+    / `settings[]` form fields the SDK's StartOperation* requests now
+    carry. Registered as the second handler on every data route after
+    ValidateSystemToken — see common/routes.go.
+
 func (cs *Controllers) GetDynamicFields(
 	_ fiber.Ctx,
 	key string,
@@ -84,74 +90,57 @@ func (cs *Controllers) Info(c fiber.Ctx) error
     missing authentication" @Failure 500 {object} fiber.Map "Internal server
     error" @Router /pinecone/info [get]
 
-func (cs *Controllers) OperationInit(c fiber.Ctx) error
-    OperationInit godoc @Summary Initialize Pinecone operation @Description
-    Initialize a new Pinecone operation with connection details and settings,
-    returning an operation token for subsequent requests @Tags pinecone
-    @Security SystemTokenAuth @Accept multipart/form-data @Produce json
-    @Param details[api_key] formData string true "Pinecone API key" @Param
-    settings[host] formData string true "Pinecone index host URL" @Param
-    settings[namespace] formData string false "Target namespace within the
-    index" @Success 200 {object} fiber.Map "Operation initialized successfully
-    with operation token" @Failure 400 {object} fiber.Map "Bad request - invalid
-    operation data" @Failure 401 {object} fiber.Map "Unauthorized - invalid or
-    missing authentication" @Failure 500 {object} fiber.Map "Internal server
-    error" @Router /pinecone/operation/init [post]
-
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
     OperationPatch godoc @Summary Apply patch operations to Pinecone vectors
     @Description Apply JSON Patch operations to vectors in the Pinecone index.
     Supports add (upsert), remove (delete), and replace (upsert) operations.
-    @Tags pinecone @Security OperationTokenAuth @Accept multipart/form-data
-    @Produce json @Param operation_token formData string true "Operation token
-    received from operation/init" @Param patches formData file true "JSON file
-    containing array of patch operations" @Success 200 {object} fiber.Map
-    "Patch operations applied successfully" @Failure 400 {object} fiber.Map
-    "Bad request - invalid patch format" @Failure 401 {object} fiber.Map
-    "Unauthorized - invalid or missing authentication" @Failure 500 {object}
-    fiber.Map "Internal server error" @Router /pinecone/operation/patch [post]
+    @Tags pinecone @Security SystemTokenAuth @Accept multipart/form-data
+    @Produce json @Param patches formData file true "JSON file containing array
+    of patch operations" @Success 200 {object} fiber.Map "Patch operations
+    applied successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    patch format" @Failure 401 {object} fiber.Map "Unauthorized - invalid or
+    missing authentication" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /pinecone/operation/patch [post]
 
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
     OperationPull godoc @Summary Pull data from Pinecone @Description Pull
-    vectors from Pinecone. If path is provided, performs a semantic search
-    and returns JSON results. If path is empty, exports all vectors as
-    a parquet file. @Tags pinecone @Security OperationTokenAuth @Accept
-    multipart/form-data @Produce json @Param operation_token formData string
-    true "Operation token received from operation/init" @Param path formData
-    string false "Query vector as JSON array for search, or empty for full
-    export" @Success 200 {object} fiber.Map "Data pulled successfully" @Failure
-    400 {object} fiber.Map "Bad request - invalid operation token" @Failure
-    401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
-    @Failure 404 {object} fiber.Map "Operation not found" @Failure 500 {object}
-    fiber.Map "Internal server error" @Router /pinecone/operation/pull [post]
+    vectors from Pinecone. If path is provided, performs a semantic search and
+    returns JSON results. If path is empty, exports all vectors as a parquet
+    file. @Tags pinecone @Security SystemTokenAuth @Accept multipart/form-data
+    @Produce json @Param path formData string false "Query vector as JSON array
+    for search, or empty for full export" @Success 200 {object} fiber.Map "Data
+    pulled successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    operation token" @Failure 401 {object} fiber.Map "Unauthorized - invalid
+    or missing authentication" @Failure 404 {object} fiber.Map "Operation not
+    found" @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /pinecone/operation/pull [post]
 
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
     OperationPush godoc @Summary Push data to Pinecone @Description Push
     embedding vectors from parquet files to Pinecone index @Tags pinecone
-    @Security OperationTokenAuth @Accept multipart/form-data @Produce json
-    @Param operation_token formData string true "Operation token received from
-    operation/init" @Param file formData file true "ZIP file containing parquet
-    embedding files" @Param path formData string false "Target path (not used
-    for Pinecone)" @Success 200 {object} fiber.Map "Data pushed successfully"
-    @Failure 400 {object} fiber.Map "Bad request - invalid operation token
-    or file format" @Failure 401 {object} fiber.Map "Unauthorized - invalid
-    or missing authentication" @Failure 404 {object} fiber.Map "Operation not
-    found" @Failure 500 {object} fiber.Map "Internal server error" @Router
+    @Security SystemTokenAuth @Accept multipart/form-data @Produce json @Param
+    file formData file true "ZIP file containing parquet embedding files" @Param
+    path formData string false "Target path (not used for Pinecone)" @Success
+    202 {object} irminmodels.StartOperationJobResponse "Push job accepted;
+    poll /operation/status/:job_id" @Failure 400 {object} fiber.Map "Bad
+    request - invalid operation token or file format" @Failure 401 {object}
+    fiber.Map "Unauthorized - invalid or missing authentication" @Failure
+    404 {object} fiber.Map "Operation not found" @Failure 409 {object}
+    irminmodels.AlreadyRunningBody "Operation already running" @Failure
+    500 {object} irminmodels.JobErrorBody "Internal server error" @Router
     /pinecone/operation/push [post]
 
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
     OperationSchemaGet godoc @Summary Get Pinecone operation schema @Description
     Get the schema for Pinecone operations, returning an Irmin-compatible
-    ObjectSchema @Tags pinecone @Security OperationTokenAuth @Accept json
-    @Produce json @Param operation path string true "Operation type" Enums(pull,
-    push) @Param operation_token formData string true "Operation token received
-    from operation/init" @Success 200 {object} irminmodels.ObjectSchema
-    "Operation schema retrieved successfully" @Failure 400 {object} fiber.Map
-    "Bad request - invalid operation type or token" @Failure 401 {object}
-    fiber.Map "Unauthorized - invalid or missing authentication" @Failure 404
-    {object} fiber.Map "Operation not found" @Failure 500 {object} fiber.Map
-    "Internal server error" @Router /pinecone/operation/schema/{operation}
-    [post]
+    ObjectSchema @Tags pinecone @Security SystemTokenAuth @Accept json @Produce
+    json @Param operation path string true "Operation type" Enums(pull, push)
+    @Success 200 {object} irminmodels.ObjectSchema "Operation schema retrieved
+    successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    operation type or token" @Failure 401 {object} fiber.Map "Unauthorized
+    - invalid or missing authentication" @Failure 404 {object} fiber.Map
+    "Operation not found" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /pinecone/operation/schema/{operation} [post]
 
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
     SubscribeToChanges is not supported by Pinecone connector.
@@ -168,9 +157,6 @@ func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
 
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
     ValidateFields implements the ConfigValidationProvider interface.
-
-func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error
-    ValidateOperationTokenMiddleware validates the operation token.
 
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
     ValidateSystemTokenMiddleware validates the system token.
@@ -218,15 +204,16 @@ type PineconePushProvider struct {
     Pinecone.
 
 func (p *PineconePushProvider) InitializeClient(
-	_ fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error)
     InitializeClient initializes the Pinecone client for push operations.
 
 func (p *PineconePushProvider) ProcessFiles(
-	c fiber.Ctx,
+	ctx context.Context,
 	client any,
+	operation *db.Operation,
 	files map[string][]byte,
 	_ string,
 ) error

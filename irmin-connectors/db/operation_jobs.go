@@ -68,6 +68,29 @@ type OperationJob struct {
 	// once the worker has finished. Empty until then.
 	ResultPath string `gorm:"type:text" json:"result_path"`
 
+	// OperationToken is the per-job credential the connector returns
+	// to Core in the 202 Start* response and accepts on the per-job
+	// lifecycle routes (/operation/status/:job_id,
+	// /operation/result/:job_id, /operation/cancel/:job_id).
+	//
+	// Distinct from the legacy long-lived Operation.Token (which was
+	// minted once per (Connector, ConfigHash) by /operation/init):
+	// this token is bound to one job, expires when the row does
+	// (default 15-minute janitor TTL), and narrows the blast radius
+	// of a leaked credential to the job's lifecycle. The connectors
+	// service rejects the connector's system token on those routes
+	// by design — only the per-job token authorises status / result
+	// / cancel. See HandleOperationPull / Push / Patch for where
+	// it's minted, and validateJobOperationToken for where it's
+	// checked.
+	//
+	// Stored as a GORM-managed not-null column; populated atomically
+	// alongside the row's other fields inside JobManager.Begin.
+	// Indexed because constant-time-comparing a bearer against a
+	// per-row token still benefits from a btree lookup of the
+	// candidate row before the comparison.
+	OperationToken string `gorm:"type:varchar(64);not null" json:"-"`
+
 	// CreatedAt / UpdatedAt are standard GORM-managed timestamps.
 	// They are used by the janitor together with ExpiresAt to drive
 	// GC decisions.

@@ -85,6 +85,11 @@ const JobResultDirSegment = "irmin-connectors"
 
 VARIABLES
 
+var ErrConnectorInfoMissing = errors.New("connector info not stamped on context")
+    ErrConnectorInfoMissing is returned by EnsureOperationMiddleware when the
+    system-token middleware did not run (or did not stamp the connector info on
+    locals). Indicates a route-wiring bug.
+
 var ErrOAuthNotConfigured = errors.New(
 	"oauth: connector has no ConnectionOAuthConfig; cannot resolve vendor token",
 )
@@ -131,12 +136,15 @@ func ConvertFormFieldsToMaps(fields map[string]string) (map[string]any, map[stri
     ConvertFormFieldsToMaps converts form fields into separate details and
     settings maps.
 
-func CreateOperationTokenMiddleware(
+func CreateEnsureOperationMiddleware(
 	app *models.ConnectorsApp,
-	getConnectorInfo func() models.ConnectorDetails,
+	provider OperationInitProvider,
 ) fiber.Handler
-    CreateOperationTokenMiddleware creates an operation token validation
-    middleware for a specific connector.
+    CreateEnsureOperationMiddleware returns a fiber.Handler that runs
+    EnsureOperation against the connector's controller (which must satisfy
+    OperationInitProvider). Each per-connector controller supplies its own
+    concrete provider; this factory keeps the route- wiring boilerplate in
+    setupConnectorRoutes free of generic-method gymnastics.
 
 func CreateSelectOptions(values []string) []irminmodels.SelectOption
     CreateSelectOptions creates select options from a slice of strings.
@@ -150,6 +158,26 @@ func CreateSystemTokenMiddleware(
 ) fiber.Handler
     CreateSystemTokenMiddleware creates a system token validation middleware for
     a specific connector.
+
+func EnsureOperation(
+	c fiber.Ctx,
+	database *db.Database,
+	provider OperationInitProvider,
+) error
+    EnsureOperation is the Phase-4 middleware that runs after
+    ValidateSystemToken on every data route (pull / push / patch / schema
+    / subscribe / unsubscribe). It parses `details[&lt;key&gt;]=&lt;value&gt;`
+    / `settings[&lt;key&gt;]=&lt;value&gt;` form fields the SDK ships on every
+    Start* request, finds-or-creates the matching Operation row
+    keyed on (ConnectorRegistrationID, ConfigHash), and stamps it
+    on c.Locals("operation") so handlers that read it (the bulk of
+    common/operation*.go) keep working unchanged.
+
+    Why this isn't merged into ValidateSystemToken: cheap metadata routes
+    (info / configuration/{key}/fields / configuration/validate) don't need
+    an Operation row, and EnsureOperationFromRequest does real work (DB
+    transaction, advisory lock). Splitting them keeps metadata fast and avoids
+    creating empty-credential Operation rows for the cases that don't need them.
 
 func GetConnectorCapabilitiesFromConfig(
 	getConnectorInfo func() models.ConnectorDetails,
@@ -214,9 +242,17 @@ func HandleOperationPatch(
 	provider PatchOperationProvider,
 	logger *slog.Logger,
 	dbInstance *db.Database,
+	app *models.ConnectorsApp,
 ) error
-    HandleOperationPatch provides a common HTTP handler for patch operation
-    endpoints.
+    HandleOperationPatch starts an async patch job and returns HTTP 202 Accepted
+    with {"job_id": "..."}. The patch body (upload parsing + per-operation
+    execution) runs in a background worker owned by the JobManager; callers poll
+    /operation/status/:job_id. Patch produces no result artifact — the status
+    row is the success signal.
+
+    The uploaded patch file is read in the HTTP goroutine before the worker is
+    launched because fiber.Ctx is not safe to dereference once the response has
+    been written.
 
 func HandleOperationPull(
 	c fiber.Ctx,
@@ -245,14 +281,18 @@ func HandleOperationPush(
 	dbInstance *db.Database,
 	app *models.ConnectorsApp,
 ) error
-    HandleOperationPush provides a common HTTP handler for push operation
-    endpoints.
+    HandleOperationPush starts an async push job and returns HTTP 202 Accepted
+    with {"job_id": "..."}. The actual push runs in a background worker owned
+    by the app's JobManager; callers poll /operation/status/:job_id and observe
+    status=complete when the job finishes. Push produces no result artifact
+    so /operation/result returns 204 No Content; the status row alone is the
+    success signal.
 
-    Under the unified Guard API the push handler is synchronous but still
-    persists an OperationJob row via manager.Begin so concurrent pushes against
-    the same operation get a structured 409 carrying the blocking job_id.
-    Release is deferred; a provider panic is recovered so the row never sticks
-    at status=running.
+    The request body (file upload or presigned URL) is consumed in the HTTP
+    goroutine before the worker is launched because fiber.Ctx is not safe to
+    dereference once the response has been written. Form parsing failures
+    surface as structured 4xx before the guard is taken, so a malformed request
+    does not hold the lock.
 
 func HandleOperationSchemaGet(
 	c fiber.Ctx,
@@ -260,7 +300,7 @@ func HandleOperationSchemaGet(
 	logger *slog.Logger,
 	dbInstance *db.Database,
 	app *models.ConnectorsApp,
-) error
+) (retErr error)
     HandleOperationSchemaGet provides a common HTTP handler for schema operation
     endpoints.
 
@@ -280,6 +320,11 @@ func LogOperationEvent(
     LogOperationEvent creates an operation log entry with the specified type,
     message, and metadata. This is a helper function to standardize operation
     logging across all connector handlers.
+
+    logger is nil-safe — callers that haven't wired one in (notably the Phase-4
+    inline EnsureOperationFromRequest path, which has no per-call logger to
+    thread) fall through to slog.Default() so a metadata-marshal or DB-write
+    failure still surfaces somewhere.
 
 func LogOperationProgress(
 	dbInstance *db.Database,
@@ -412,14 +457,6 @@ func ThrottledQueryEmitter(
     Returns a no-op when handler is nil so the row-loop call site can invoke it
     unconditionally.
 
-func ValidateOperationToken(
-	c fiber.Ctx,
-	app *models.ConnectorsApp,
-	getConnectorInfo func() models.ConnectorDetails,
-) error
-    ValidateOperationToken validates the operation token for connector data
-    operations. It automatically gets connector info and sets context locals.
-
 func ValidateSystemToken(
 	c fiber.Ctx,
 	app *models.ConnectorsApp,
@@ -535,13 +572,18 @@ type ConnectorController interface {
 	Info(c fiber.Ctx) error
 	ConfigFields(c fiber.Ctx) error
 	ConfigValidate(c fiber.Ctx) error
-	OperationInit(c fiber.Ctx) error
 	OperationSchemaGet(c fiber.Ctx) error
 	DetailsPage(c fiber.Ctx) error
 
-	// Middleware methods
+	// Middleware methods. Phase 4 added EnsureOperationMiddleware
+	// (system-token + inline Operation upsert) and retired the
+	// per-Connection ValidateOperationTokenMiddleware — every data
+	// route now flows through EnsureOperationMiddleware, while the
+	// per-job lifecycle routes (status / result / cancel) authenticate
+	// with the per-job operation token via validateJobOperationToken
+	// in operationJobHandlers.go.
 	ValidateSystemTokenMiddleware(c fiber.Ctx) error
-	ValidateOperationTokenMiddleware(c fiber.Ctx) error
+	EnsureOperationMiddleware(c fiber.Ctx) error
 
 	// Capability-based methods (optional - will only be called if capability is supported)
 	OperationPull(c fiber.Ctx) error
@@ -549,6 +591,15 @@ type ConnectorController interface {
 	OperationPatch(c fiber.Ctx) error
 	SubscribeToChanges(c fiber.Ctx) error
 	UnsubscribeFromChanges(c fiber.Ctx) error
+
+	// OperationInitProvider methods. Embedded directly on the
+	// controller because each connector's Controllers struct already
+	// implements them. Phase-4 routes call EnsureOperationFromRequest
+	// with the controller as the provider so Start* requests can
+	// upsert the Operation row inline from the details / settings
+	// carried on the request body — the same fields the legacy
+	// /operation/init handshake used to ship once and then cache.
+	OperationInitProvider
 }
     ConnectorController defines the interface that all connector controllers
     must implement.
@@ -581,10 +632,6 @@ func (cs *Controllers) HandleConfigValidation(c fiber.Ctx, provider ConfigValida
     HandleConfigValidation provides a common HTTP handler for configuration
     validation endpoints.
 
-func (cs *Controllers) HandleOperationInit(c fiber.Ctx, provider OperationInitProvider) error
-    HandleOperationInit provides a common HTTP handler for operation
-    initialization endpoints.
-
 func (cs *Controllers) HandleUnsubscribeFromChanges(
 	c fiber.Ctx,
 	provider UnsubscribeProvider,
@@ -600,6 +647,44 @@ type DetailsPageConfig struct {
 }
     DetailsPageConfig holds configuration for rendering a connector details
     page.
+
+type EnsureOperationFromRequestError struct {
+	Status  int
+	Message string
+	Cause   error
+}
+    EnsureOperationFromRequestError carries an HTTP-shaped error returned by
+    EnsureOperationFromRequest. Handlers translate it into the appropriate
+    JobError envelope or other HTTP response.
+
+func EnsureOperationFromRequest(
+	c fiber.Ctx,
+	database *db.Database,
+	info *models.ConnectorDetails,
+	provider OperationInitProvider,
+) (*db.Operation, *EnsureOperationFromRequestError)
+    EnsureOperationFromRequest is the Phase 4 replacement for the
+    /operation/init handshake. Each Start* request now carries
+    `details[&lt;key&gt;]=&lt;value&gt;` and `settings[&lt;key&gt;]=&lt;value&gt;` form fields
+    (the SDK's StartOperation*Request.Details / .Settings) — this helper
+    parses them through the connector's existing OperationInitProvider,
+    marshals + hashes the result, and atomically upserts the matching Operation
+    row keyed on (ConnectorRegistrationID, ConfigHash). Subsequent calls
+    with the same credentials reuse the same row, so worker code that reads
+    `operation.Details` / `.Settings` keeps working unchanged.
+
+    Returns *EnsureOperationFromRequestError on failure so handlers
+    can translate the carried HTTP status into their preferred envelope
+    (RespondJobError for Start*, plain fiber.Map for the legacy init route
+    during the transitional release).
+
+func (e *EnsureOperationFromRequestError) Error() string
+    Error implements the error interface so the type works with errors.Is
+    / errors.As and so a bare `return err` from a handler still produces an
+    operator-facing message in the worst case.
+
+func (e *EnsureOperationFromRequestError) Unwrap() error
+    Unwrap exposes the underlying cause for errors.Is / errors.As.
 
 type JobManager struct {
 	// Has unexported fields.
@@ -861,9 +946,9 @@ type NotSupportedPatchProvider struct{}
     that don't support patch operations.
 
 func (p *NotSupportedPatchProvider) ExecutePatchOperation(
-	_ fiber.Ctx,
+	_ context.Context,
 	_ any,
-	_ irminmodels.PatchOperation,
+	_ sdkmodels.PatchOperation,
 	_, _, _ string,
 	_, _, _, _ string,
 ) error
@@ -871,7 +956,7 @@ func (p *NotSupportedPatchProvider) ExecutePatchOperation(
     supported.
 
 func (p *NotSupportedPatchProvider) InitializeClient(
-	_ fiber.Ctx,
+	_ context.Context,
 	_ *slog.Logger,
 	_ *db.Operation,
 ) (any, func(), error)
@@ -914,7 +999,7 @@ type NotSupportedPushProvider struct{}
     that don't support push operations.
 
 func (p *NotSupportedPushProvider) InitializeClient(
-	_ fiber.Ctx,
+	_ context.Context,
 	_ *slog.Logger,
 	_ *db.Operation,
 ) (any, *string, func(), error)
@@ -922,8 +1007,9 @@ func (p *NotSupportedPushProvider) InitializeClient(
     supported.
 
 func (p *NotSupportedPushProvider) ProcessFiles(
-	_ fiber.Ctx,
+	_ context.Context,
 	_ any,
+	_ *db.Operation,
 	_ map[string][]byte,
 	_ string,
 ) error
@@ -933,7 +1019,7 @@ func (p *NotSupportedPushProvider) ProgressHandler(
 	_ *db.Operation,
 ) ProgressHandler
     ProgressHandler returns nil — providers that reject every push call have
-    nothing to observe. The common push handler's baseline heartbeat is still
+    nothing to observe. The common push worker's baseline heartbeat is still
     installed anyway.
 
 type NotSupportedSchemaProvider struct{}
@@ -1110,6 +1196,15 @@ func (g *OperationGuard) OperationID() uint
     protecting. Exposed for logging and for callers that want to correlate the
     guard with their existing Operation row handle.
 
+func (g *OperationGuard) OperationToken() string
+    OperationToken returns the per-job credential the connector returns to
+    Core in the 202 Start* response. Core re-sends this on every subsequent
+    call against the job's lifecycle routes (status / result / cancel);
+    see db.OperationJob.OperationToken for the full contract. Empty when the
+    guard is nil — handlers are expected to nil-check before constructing the
+    response, but the empty-string fallback is safe for tests / hand-wired
+    guards that bypass Begin.
+
 func (g *OperationGuard) Release(outcome JobOutcome)
     Release transitions the underlying OperationJob row to a terminal state and
     frees the advisory lock. Safe to call multiple times; only the first call
@@ -1143,20 +1238,29 @@ type OperationInitProvider interface {
     operations.
 
 type PatchOperationProvider interface {
-	// InitializeClient initializes the database client for patch operations
-	InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (client any, cleanup func(), err error)
+	// InitializeClient initializes the database client for patch operations.
+	InitializeClient(
+		ctx context.Context,
+		logger *slog.Logger,
+		operation *db.Operation,
+	) (client any, cleanup func(), err error)
 
-	// ExecutePatchOperation executes a single patch operation within a transaction
+	// ExecutePatchOperation executes a single patch operation within a transaction.
 	ExecutePatchOperation(
-		c fiber.Ctx,
+		ctx context.Context,
 		client any,
-		op irminmodels.PatchOperation,
+		op sdkmodels.PatchOperation,
 		tableName, rowIdentifier, columnName string,
 		fromDB, fromTable, fromRow, fromColumn string,
 	) error
 }
     PatchOperationProvider defines the interface for connector-specific patch
     operation handling.
+
+    Under the async protocol the patch body runs in a worker goroutine
+    detached from the fiber request lifecycle, so providers receive an explicit
+    context.Context (derived from the job's cancel scope) and the preloaded
+    *db.Operation rather than a fiber.Ctx.
 
 type ProgressEvent = sdkprogress.ProgressEvent
     ProgressEvent — see sdkprogress.ProgressEvent.
@@ -1243,27 +1347,45 @@ type PullOperationProvider interface {
     adjusted to accept them as arguments.
 
 type PushOperationProvider interface {
-	// InitializeClient initializes the client for push operations
+	// InitializeClient initializes the client for push operations.
+	// ctx is the job-scoped context — cancellation flows to the
+	// underlying vendor client via this ctx when the job is cancelled.
 	InitializeClient(
-		c fiber.Ctx,
+		ctx context.Context,
 		logger *slog.Logger,
 		operation *db.Operation,
 	) (client any, databaseName *string, cleanup func(), err error)
 
-	// ProcessFiles processes the extracted files and uploads/inserts them
-	ProcessFiles(c fiber.Ctx, client any, files map[string][]byte, targetPath string) error
+	// ProcessFiles processes the extracted files and uploads/inserts
+	// them. Must honour ctx — long-running inserts/uploads should pass
+	// ctx through to the underlying driver so /operation/cancel takes
+	// effect.
+	ProcessFiles(
+		ctx context.Context,
+		client any,
+		operation *db.Operation,
+		files map[string][]byte,
+		targetPath string,
+	) error
 
 	// ProgressHandler returns the observability callback this
 	// provider wires into its client for per-batch / per-file
 	// events. Return nil only if the underlying operations are
 	// short enough not to need progress events — the common push
-	// handler always wraps the provider call with a baseline
+	// worker always wraps the provider call with a baseline
 	// heartbeat, so returning nil does not leave the operation
 	// silent.
 	ProgressHandler(operation *db.Operation) ProgressHandler
 }
     PushOperationProvider defines the interface for connector-specific push
     operation handling.
+
+    Under the async protocol the push body runs in a worker goroutine detached
+    from the fiber request lifecycle, so providers receive an explicit
+    context.Context (derived from the job's cancel scope) and the preloaded
+    *db.Operation rather than a fiber.Ctx. Providers that previously reached for
+    c.Locals("operation") or c.Context() inside each method now get both passed
+    in explicitly.
 
 type SchemaOperationProvider interface {
 	// InitializeClient initializes the client for schema operations

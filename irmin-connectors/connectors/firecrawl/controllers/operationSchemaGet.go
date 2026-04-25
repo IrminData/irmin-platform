@@ -185,11 +185,10 @@ func (p *FirecrawlSchemaProvider) GetSupportedOperationTypes() []string {
 // @Summary Get Firecrawl operation schema
 // @Description Get the response schema for Firecrawl operations, returning an Irmin-compatible ObjectSchema based on the configured operation type and output format
 // @Tags firecrawl
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept json
 // @Produce json
 // @Param operation path string true "Operation type" Enums(pull)
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Success 200 {object} irminmodels.ObjectSchema "Operation schema retrieved successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation type or token"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"

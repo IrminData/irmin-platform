@@ -127,10 +127,9 @@ func (p *PostgresPushProvider) ProcessFiles(
 // @Summary Push data to PostgreSQL database
 // @Description Insert data into PostgreSQL database tables using the operation token and JSON file containing table data. Use the path parameter to specify a target table name.
 // @Tags postgres
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param file formData file true "JSON file containing table data to insert"
 // @Param path formData string false "Target table name (e.g., customers). If not specified, uses the filename from the uploaded file"
 // @Success 202 {object} irminmodels.StartOperationJobResponse "Push job accepted; poll /operation/status/:job_id"

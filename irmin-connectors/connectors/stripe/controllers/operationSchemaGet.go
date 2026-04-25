@@ -1084,11 +1084,10 @@ func strPtr(s string) *string {
 // @Summary Get Stripe operation schema
 // @Description Get the schema for Stripe pull / push / patch operations as an Irmin-compatible ObjectSchema.
 // @Tags stripe
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept json
 // @Produce json
 // @Param operation path string true "Operation type" Enums(pull, push, patch)
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Success 200 {object} irminmodels.ObjectSchema "Operation schema retrieved successfully"
 // @Failure 400 {object} fiber.Map "Bad request"
 // @Failure 401 {object} fiber.Map "Unauthorized"

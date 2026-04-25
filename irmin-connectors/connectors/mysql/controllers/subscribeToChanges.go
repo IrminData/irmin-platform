@@ -18,7 +18,6 @@ const ConnectorName = "MySQL"
 // @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param webhook_url formData string true "Webhook URL to receive change notifications"
 // @Param webhook_access_token formData string true "Access token for webhook authentication"
 // @Success 200 {object} db.Subscription "Subscription created successfully"

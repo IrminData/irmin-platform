@@ -78,6 +78,12 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
     details page" @Failure 500 {object} fiber.Map "Internal server error"
     @Router /mysql/details [get]
 
+func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
+    EnsureOperationMiddleware upserts the Operation row from the `details[]`
+    / `settings[]` form fields the SDK's StartOperation* requests now
+    carry. Registered as the second handler on every data route after
+    ValidateSystemToken — see common/routes.go.
+
 func (cs *Controllers) GetDynamicFields(
 	c fiber.Ctx,
 	key string,
@@ -104,64 +110,47 @@ func (cs *Controllers) Info(c fiber.Ctx) error
     authentication" @Failure 500 {object} fiber.Map "Internal server error"
     @Router /mysql/info [get]
 
-func (cs *Controllers) OperationInit(c fiber.Ctx) error
-    OperationInit godoc @Summary Initialize MySQL operation @Description
-    Initialize a new MySQL operation with connection details and settings,
-    returning an operation token for subsequent requests @Tags mysql
-    @Security SystemTokenAuth @Accept multipart/form-data @Produce json @Param
-    details[host] formData string true "MySQL server hostname or IP address"
-    @Param details[port] formData integer false "MySQL server port (default:
-    3306)" @Param details[username] formData string true "Username for MySQL
-    authentication" @Param details[password] formData string true "Password
-    for MySQL authentication" @Param details[default_db] formData string
-    false "Default database for initial connection" @Param settings[database]
-    formData string true "Target database name for operations" @Success 200
-    {object} fiber.Map "Operation initialized successfully with operation
-    token" @Failure 400 {object} fiber.Map "Bad request - invalid operation
-    data" @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing
-    authentication" @Failure 500 {object} fiber.Map "Internal server error"
-    @Router /mysql/operation/init [post]
-
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
     OperationPatch godoc @Summary Patch data in MySQL database @Description
     Apply granular updates to MySQL database records using JSON patch operations
     @Tags mysql @Security SystemTokenAuth @Accept multipart/form-data @Produce
-    json @Param operation_token formData string true "Operation token received
-    from operation/init" @Param patch formData file true "JSON patch file
-    containing update operations" @Success 200 {object} fiber.Map "Data
-    patched successfully" @Failure 400 {object} fiber.Map "Bad request -
-    invalid operation token or patch format" @Failure 401 {object} fiber.Map
-    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
-    fiber.Map "Operation not found" @Failure 500 {object} fiber.Map "Internal
-    server error" @Router /mysql/operation/patch [post]
+    json @Param patch formData file true "JSON patch file containing update
+    operations" @Success 202 {object} irminmodels.StartOperationJobResponse
+    "Patch job accepted; poll /operation/status/:job_id" @Failure 400 {object}
+    fiber.Map "Bad request - invalid operation token or patch format" @Failure
+    401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Failure 404 {object} fiber.Map "Operation not found" @Failure 409 {object}
+    irminmodels.AlreadyRunningBody "Operation already running" @Failure
+    500 {object} irminmodels.JobErrorBody "Internal server error" @Router
+    /mysql/operation/patch [post]
 
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
     OperationPull godoc @Summary Pull data from MySQL database @Description
     Extract data from MySQL database tables using the operation token and
     specified path (table name) @Tags mysql @Security SystemTokenAuth @Accept
-    multipart/form-data @Produce json @Param operation_token formData string
-    true "Operation token received from operation/init" @Param path formData
-    string true "Table name to extract data from" @Success 200 {object}
-    fiber.Map "Data pulled successfully" @Failure 400 {object} fiber.Map "Bad
-    request - invalid operation token or table name" @Failure 401 {object}
-    fiber.Map "Unauthorized - invalid or missing authentication" @Failure
-    404 {object} fiber.Map "Table not found" @Failure 500 {object} fiber.Map
-    "Internal server error" @Router /mysql/operation/pull [post]
+    multipart/form-data @Produce json @Param path formData string true "Table
+    name to extract data from" @Success 200 {object} fiber.Map "Data pulled
+    successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    operation token or table name" @Failure 401 {object} fiber.Map "Unauthorized
+    - invalid or missing authentication" @Failure 404 {object} fiber.Map "Table
+    not found" @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /mysql/operation/pull [post]
 
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
     OperationPush godoc @Summary Push data to MySQL database @Description Insert
     data into MySQL database tables using the operation token and JSON file
     containing table data. Use the path parameter to specify a target table
     name. @Tags mysql @Security SystemTokenAuth @Accept multipart/form-data
-    @Produce json @Param operation_token formData string true "Operation token
-    received from operation/init" @Param file formData file true "JSON file
-    containing table data to insert" @Param path formData string false "Target
-    table name (e.g., customers). If not specified, uses the filename from the
-    uploaded file" @Success 200 {object} fiber.Map "Data pushed successfully"
-    @Failure 400 {object} fiber.Map "Bad request - invalid operation token
-    or file format" @Failure 401 {object} fiber.Map "Unauthorized - invalid
-    or missing authentication" @Failure 404 {object} fiber.Map "Operation not
-    found" @Failure 500 {object} fiber.Map "Internal server error" @Router
+    @Produce json @Param file formData file true "JSON file containing table
+    data to insert" @Param path formData string false "Target table name (e.g.,
+    customers). If not specified, uses the filename from the uploaded file"
+    @Success 202 {object} irminmodels.StartOperationJobResponse "Push job
+    accepted; poll /operation/status/:job_id" @Failure 400 {object} fiber.Map
+    "Bad request - invalid operation token or file format" @Failure 401
+    {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Failure 404 {object} fiber.Map "Operation not found" @Failure 409 {object}
+    irminmodels.AlreadyRunningBody "Operation already running" @Failure
+    500 {object} irminmodels.JobErrorBody "Internal server error" @Router
     /mysql/operation/push [post]
 
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
@@ -170,30 +159,28 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
     ObjectSchema grouping each table as a JSON array based on the operation
     type (pull or push). Use the path query parameter to specify which database
     to analyze. @Tags mysql @Security SystemTokenAuth @Accept json @Produce
-    json @Param operation path string true "Operation type" Enums(pull, push)
-    @Param operation_token formData string true "Operation token received from
-    operation/init" @Param path query string false "Database name to get schema
-    for (e.g., my_database)" @Success 200 {object} irminmodels.ObjectSchema
-    "Operation schema retrieved successfully" @Failure 400 {object} fiber.Map
-    "Bad request - invalid operation type or token" @Failure 401 {object}
-    fiber.Map "Unauthorized - invalid or missing authentication" @Failure 404
-    {object} fiber.Map "Operation not found" @Failure 500 {object} fiber.Map
-    "Internal server error" @Router /mysql/operation/schema/{operation} [post]
+    json @Param operation path string true "Operation type" Enums(pull,
+    push) @Param path query string false "Database name to get schema for (e.g.,
+    my_database)" @Success 200 {object} irminmodels.ObjectSchema "Operation
+    schema retrieved successfully" @Failure 400 {object} fiber.Map "Bad
+    request - invalid operation type or token" @Failure 401 {object} fiber.Map
+    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
+    fiber.Map "Operation not found" @Failure 500 {object} fiber.Map "Internal
+    server error" @Router /mysql/operation/schema/{operation} [post]
 
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
     SubscribeToChanges godoc @Summary Subscribe to MySQL database changes
     @Description Set up real-time monitoring of MySQL database changes using
     binary log tracking and webhook notifications @Tags mysql @Security
-    SystemTokenAuth @Accept multipart/form-data @Produce json @Param
-    operation_token formData string true "Operation token received from
-    operation/init" @Param webhook_url formData string true "Webhook URL to
-    receive change notifications" @Param webhook_access_token formData string
-    true "Access token for webhook authentication" @Success 200 {object}
-    db.Subscription "Subscription created successfully" @Failure 400 {object}
-    fiber.Map "Bad request - invalid parameters" @Failure 401 {object} fiber.Map
-    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
-    fiber.Map "Operation not found" @Failure 500 {object} fiber.Map "Internal
-    server error" @Router /mysql/operation/subscribe [post]
+    SystemTokenAuth @Accept multipart/form-data @Produce json @Param webhook_url
+    formData string true "Webhook URL to receive change notifications" @Param
+    webhook_access_token formData string true "Access token for webhook
+    authentication" @Success 200 {object} db.Subscription "Subscription created
+    successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    parameters" @Failure 401 {object} fiber.Map "Unauthorized - invalid or
+    missing authentication" @Failure 404 {object} fiber.Map "Operation not
+    found" @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /mysql/operation/subscribe [post]
 
 func (cs *Controllers) TestConnection(
 	ctx fiber.Ctx,
@@ -204,24 +191,19 @@ func (cs *Controllers) TestConnection(
 
 func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
     UnsubscribeFromChanges godoc @Summary Unsubscribe from MySQL database
-    changes @Description Stop monitoring MySQL database changes and remove
-    the subscription @Tags mysql @Security OperationTokenAuth @Accept
-    multipart/form-data @Produce json @Param operation_token formData string
-    true "Operation token received from operation/init" @Param subscription_id
-    formData string true "ID of the subscription to remove" @Success 200
-    {object} fiber.Map "Subscription removed successfully" @Failure 400
-    {object} fiber.Map "Bad request - invalid parameters" @Failure 401
-    {object} fiber.Map "Unauthorized - invalid or missing authentication"
-    @Failure 403 {object} fiber.Map "Forbidden - subscription does not belong
-    to this operation" @Failure 404 {object} fiber.Map "Subscription not
-    found" @Failure 500 {object} fiber.Map "Internal server error" @Router
-    /mysql/operation/unsubscribe [post]
+    changes @Description Stop monitoring MySQL database changes and
+    remove the subscription @Tags mysql @Security SystemTokenAuth @Accept
+    multipart/form-data @Produce json @Param subscription_id formData string
+    true "ID of the subscription to remove" @Success 200 {object} fiber.Map
+    "Subscription removed successfully" @Failure 400 {object} fiber.Map "Bad
+    request - invalid parameters" @Failure 401 {object} fiber.Map "Unauthorized
+    - invalid or missing authentication" @Failure 403 {object} fiber.Map
+    "Forbidden - subscription does not belong to this operation" @Failure 404
+    {object} fiber.Map "Subscription not found" @Failure 500 {object} fiber.Map
+    "Internal server error" @Router /mysql/operation/unsubscribe [post]
 
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
     ValidateFields implements the ConfigValidationProvider interface.
-
-func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error
-    ValidateOperationTokenMiddleware validates the operation token.
 
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
     ValidateSystemTokenMiddleware validates the system token.
@@ -231,7 +213,7 @@ type MySQLPatchProvider struct{}
     MySQL.
 
 func (p *MySQLPatchProvider) ExecutePatchOperation(
-	c fiber.Ctx,
+	ctx context.Context,
 	client any,
 	op irminmodels.PatchOperation,
 	tableName, rowIdentifier, columnName string,
@@ -241,7 +223,7 @@ func (p *MySQLPatchProvider) ExecutePatchOperation(
     transaction.
 
 func (p *MySQLPatchProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, func(), error)
@@ -288,15 +270,16 @@ type MySQLPushProvider struct {
     MySQLPushProvider implements the PushOperationProvider interface for MySQL.
 
 func (p *MySQLPushProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error)
     InitializeClient initializes the MySQL client for push operations.
 
 func (p *MySQLPushProvider) ProcessFiles(
-	c fiber.Ctx,
+	ctx context.Context,
 	client any,
+	operation *db.Operation,
 	files map[string][]byte,
 	rawPath string,
 ) error

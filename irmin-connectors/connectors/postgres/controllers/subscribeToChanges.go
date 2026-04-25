@@ -15,10 +15,9 @@ const ConnectorName = "PostgreSQL"
 // @Summary Subscribe to PostgreSQL database changes
 // @Description Set up real-time monitoring of PostgreSQL database changes using notification triggers and webhook notifications
 // @Tags postgres
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param webhook_url formData string true "Webhook URL to receive change notifications"
 // @Param webhook_access_token formData string true "Access token for webhook authentication"
 // @Success 200 {object} db.Subscription "Subscription created successfully"

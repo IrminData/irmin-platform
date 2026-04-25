@@ -153,10 +153,9 @@ func (p *SFTPPushProvider) ProcessFiles(
 // @Summary Push files to SFTP server
 // @Description Upload files to an SFTP server using the operation token and file data
 // @Tags sftp
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param file formData file true "File to upload to SFTP server"
 // @Param path formData string false "Target path on SFTP server (defaults to root directory)"
 // @Success 200 {object} fiber.Map "File uploaded successfully"

@@ -2,7 +2,6 @@
 package common
 
 import (
-	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -53,7 +52,13 @@ func newJobHandlerTestApp(t *testing.T) (*fiber.App, *memJobStore, *fakeOperatio
 	return app, store, operationStore
 }
 
-func seedJob(t *testing.T, store *memJobStore, jobID string, operationID uint) {
+// seedJobWithToken seeds an OperationJob row with an explicit per-job
+// operation token. Phase 4 lifecycle routes authenticate against
+// OperationJob.OperationToken, not Operation.Token, so tests that
+// exercise the auth boundary now plug in the token they expect to
+// pass through validateJobOperationToken. Pass "" for the legacy
+// behaviour (token mismatch on every Authorization header).
+func seedJobWithToken(t *testing.T, store *memJobStore, jobID string, operationID uint, token string) {
 	t.Helper()
 	job := &db.OperationJob{
 		JobID:                   jobID,
@@ -62,6 +67,7 @@ func seedJob(t *testing.T, store *memJobStore, jobID string, operationID uint) {
 		OperationID:             operationID,
 		Status:                  "running",
 		Progress:                []byte("[]"),
+		OperationToken:          token,
 	}
 	if _, err := store.CreateOperationJob(job); err != nil {
 		t.Fatalf("seed job: %v", err)
@@ -92,10 +98,16 @@ func doJobRequest(
 
 func TestJobRoutesRequireMatchingOperationToken(t *testing.T) {
 	app, store, opStore := newJobHandlerTestApp(t)
-	seedJob(t, store, "opjob_abc", 99)
+	// Phase 4: lifecycle auth keys off OperationJob.OperationToken,
+	// not the long-lived per-Connection Operation.Token. The
+	// Operation row is still seeded so the worker can read its
+	// Details / Settings, but its Token field is irrelevant to the
+	// per-job lifecycle routes — tests still populate it for parity
+	// with the legacy schema.
+	seedJobWithToken(t, store, "opjob_abc", 99, "token-123")
 	opStore.operations[99] = &db.Operation{
 		Model: gorm.Model{ID: 99},
-		Token: "token-123",
+		Token: "legacy-unused",
 	}
 
 	t.Run("missing authorization", func(t *testing.T) {
@@ -134,10 +146,10 @@ func TestJobRoutesRequireMatchingOperationToken(t *testing.T) {
 
 func TestAllJobRoutesRequireAuthorizationHeader(t *testing.T) {
 	app, store, opStore := newJobHandlerTestApp(t)
-	seedJob(t, store, "opjob_auth_required", 51)
+	seedJobWithToken(t, store, "opjob_auth_required", 51, "job-token")
 	opStore.operations[51] = &db.Operation{
 		Model: gorm.Model{ID: 51},
-		Token: "job-token",
+		Token: "legacy-unused",
 	}
 
 	tests := []struct {
@@ -174,10 +186,10 @@ func TestAllJobRoutesRequireAuthorizationHeader(t *testing.T) {
 
 func TestJobCancelRouteRequiresMatchingOperationToken(t *testing.T) {
 	app, store, opStore := newJobHandlerTestApp(t)
-	seedJob(t, store, "opjob_cancel", 7)
+	seedJobWithToken(t, store, "opjob_cancel", 7, "cancel-token")
 	opStore.operations[7] = &db.Operation{
 		Model: gorm.Model{ID: 7},
-		Token: "cancel-token",
+		Token: "legacy-unused",
 	}
 
 	unauth := doJobRequest(t, app, http.MethodPost, "http://localhost/operation/cancel/opjob_cancel", "")
@@ -210,10 +222,10 @@ func TestJobCancelRouteRequiresMatchingOperationToken(t *testing.T) {
 
 func TestJobResultRouteRequiresMatchingOperationToken(t *testing.T) {
 	app, store, opStore := newJobHandlerTestApp(t)
-	seedJob(t, store, "opjob_result", 33)
+	seedJobWithToken(t, store, "opjob_result", 33, "result-token")
 	opStore.operations[33] = &db.Operation{
 		Model: gorm.Model{ID: 33},
-		Token: "result-token",
+		Token: "legacy-unused",
 	}
 
 	resp := doJobRequest(
@@ -253,43 +265,19 @@ func TestJobAuthReturnsNotFoundWhenJobMissing(t *testing.T) {
 	}
 }
 
-func TestJobAuthReturnsNotFoundWhenOperationMissing(t *testing.T) {
-	app, store, _ := newJobHandlerTestApp(t)
-	seedJob(t, store, "opjob_orphan", 321)
-	resp := doJobRequest(
-		t,
-		app,
-		http.MethodGet,
-		"http://localhost/operation/status/opjob_orphan",
-		"Bearer token",
-	)
-	if resp.StatusCode != http.StatusNotFound {
-		t.Fatalf("status = %d, want 404", resp.StatusCode)
-	}
-}
-
-func TestJobAuthReturnsInternalServerErrorOnOperationLookupFailure(t *testing.T) {
-	app, store, opStore := newJobHandlerTestApp(t)
-	seedJob(t, store, "opjob_lookup_failure", 11)
-	opStore.err = errors.New("db unavailable")
-
-	resp := doJobRequest(
-		t,
-		app,
-		http.MethodGet,
-		"http://localhost/operation/status/opjob_lookup_failure",
-		"Bearer token",
-	)
-	if resp.StatusCode != http.StatusInternalServerError {
-		t.Fatalf("status = %d, want 500", resp.StatusCode)
-	}
-}
+// Phase 4 retired the orphan-operation and operation-lookup-failure
+// branches in validateJobOperationToken — the lifecycle auth path no
+// longer reads the Operation row at all (the per-job operation token
+// lives on OperationJob.OperationToken), so those branches are
+// unreachable and the tests that exercised them have been removed.
+// The job-not-found path is still covered by
+// TestJobAuthReturnsNotFoundWhenJobMissing above.
 
 func TestJobResultEmptyResultPathDependsOnOperationKind(t *testing.T) {
 	app, store, opStore := newJobHandlerTestApp(t)
 	opStore.operations[88] = &db.Operation{
 		Model: gorm.Model{ID: 88},
-		Token: "result-kind-token",
+		Token: "legacy-unused",
 	}
 
 	tests := []struct {
@@ -328,6 +316,7 @@ func TestJobResultEmptyResultPathDependsOnOperationKind(t *testing.T) {
 				Kind:                    tt.kind,
 				Status:                  "complete",
 				Progress:                []byte("[]"),
+				OperationToken:          "result-kind-token",
 			}); err != nil {
 				t.Fatalf("seed complete job: %v", err)
 			}
@@ -358,13 +347,14 @@ func TestJobResultReturnsGoneWhenPersistedFileMissing(t *testing.T) {
 		Status:                  string(sdkmodels.OperationJobStatusComplete),
 		Progress:                []byte("[]"),
 		ResultPath:              t.TempDir() + "/missing.zip",
+		OperationToken:          "result-token",
 	}
 	if _, err := store.CreateOperationJob(job); err != nil {
 		t.Fatalf("seed job: %v", err)
 	}
 	opStore.operations[operationID] = &db.Operation{
 		Model: gorm.Model{ID: operationID},
-		Token: "result-token",
+		Token: "legacy-unused",
 	}
 
 	resp := doJobRequest(
@@ -395,13 +385,14 @@ func TestJobResultStreamsExistingFile(t *testing.T) {
 		Status:                  string(sdkmodels.OperationJobStatusComplete),
 		Progress:                []byte("[]"),
 		ResultPath:              resultPath,
+		OperationToken:          "result-token",
 	}
 	if _, err := store.CreateOperationJob(job); err != nil {
 		t.Fatalf("seed job: %v", err)
 	}
 	opStore.operations[operationID] = &db.Operation{
 		Model: gorm.Model{ID: operationID},
-		Token: "result-token",
+		Token: "legacy-unused",
 	}
 
 	resp := doJobRequest(

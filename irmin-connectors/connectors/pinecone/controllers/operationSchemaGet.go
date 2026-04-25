@@ -167,11 +167,10 @@ func (p *PineconeSchemaProvider) GetSupportedOperationTypes() []string {
 // @Summary Get Pinecone operation schema
 // @Description Get the schema for Pinecone operations, returning an Irmin-compatible ObjectSchema
 // @Tags pinecone
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept json
 // @Produce json
 // @Param operation path string true "Operation type" Enums(pull, push)
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Success 200 {object} irminmodels.ObjectSchema "Operation schema retrieved successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation type or token"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"

@@ -442,11 +442,10 @@ func (p *SFTPSchemaProvider) getContentTypeFromExtension(ext string) string {
 // @Summary Get SFTP operation schema
 // @Description Get the schema and directory structure for SFTP file operations based on the operation type (pull or push). Use the path query parameter to navigate to specific files or directories on the SFTP server.
 // @Tags sftp
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept json
 // @Produce json
 // @Param operation path string true "Operation type" Enums(pull, push)
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param path query string false "Path to file or directory to get schema for (e.g., /data/customers.csv or /reports/)"
 // @Success 200 {object} irminmodels.ObjectSchema "Operation schema retrieved successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation type or token"

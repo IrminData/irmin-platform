@@ -122,7 +122,6 @@ func (p *MySQLSchemaProvider) GetSupportedOperationTypes() []string {
 // @Accept json
 // @Produce json
 // @Param operation path string true "Operation type" Enums(pull, push)
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param path query string false "Database name to get schema for (e.g., my_database)"
 // @Success 200 {object} irminmodels.ObjectSchema "Operation schema retrieved successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation type or token"

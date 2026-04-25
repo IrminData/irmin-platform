@@ -184,7 +184,7 @@ func HandleOperationPush(
 
 	return c.Status(fiber.StatusAccepted).JSON(sdkmodels.StartOperationJobResponse{
 		JobID:          job.JobID,
-		OperationToken: operation.Token,
+		OperationToken: guard.OperationToken(),
 	})
 }
 

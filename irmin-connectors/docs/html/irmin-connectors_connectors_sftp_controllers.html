@@ -79,6 +79,12 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
     page" @Failure 500 {object} fiber.Map "Internal server error" @Router
     /sftp/details [get]
 
+func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
+    EnsureOperationMiddleware upserts the Operation row from the `details[]`
+    / `settings[]` form fields the SDK's StartOperation* requests now
+    carry. Registered as the second handler on every data route after
+    ValidateSystemToken — see common/routes.go.
+
 func (cs *Controllers) GetDynamicFields(
 	_ fiber.Ctx,
 	key string,
@@ -101,95 +107,66 @@ func (cs *Controllers) Info(c fiber.Ctx) error
     fiber.Map "Unauthorized - invalid or missing authentication" @Failure 500
     {object} fiber.Map "Internal server error" @Router /sftp/info [get]
 
-func (cs *Controllers) OperationInit(c fiber.Ctx) error
-    OperationInit godoc @Summary Initialize SFTP operation @Description
-    Initialize a new SFTP operation with connection details and settings,
-    returning an operation token for subsequent requests @Tags sftp @Security
-    SystemTokenAuth @Accept multipart/form-data @Produce json @Param
-    details[host] formData string true "SFTP server hostname or IP address"
-    @Param details[port] formData integer false "SFTP server port (default:
-    22)" @Param details[username] formData string true "Username for SFTP
-    authentication" @Param details[password] formData string false "Password for
-    SFTP authentication (if not using private key)" @Param details[private_key]
-    formData string false "Private key for SFTP authentication (if not using
-    password)" @Param details[private_key_passphrase] formData string false
-    "Passphrase for encrypted private key" @Param details[host_key_fingerprint]
-    formData string false "Expected host key fingerprint for security
-    verification" @Success 200 {object} fiber.Map "Operation initialized
-    successfully with operation token" @Failure 400 {object} fiber.Map
-    "Bad request - invalid operation data" @Failure 401 {object} fiber.Map
-    "Unauthorized - invalid or missing authentication" @Failure 500 {object}
-    fiber.Map "Internal server error" @Router /sftp/operation/init [post]
-
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
     OperationPatch godoc @Summary Apply patch operations to SFTP files
     @Description Apply JSON Patch operations to files on the SFTP server.
-    Supports add (upload), remove (delete), replace (overwrite), move,
-    and copy operations. @Tags sftp @Security OperationTokenAuth @Accept
-    multipart/form-data @Produce json @Param operation_token formData string
-    true "Operation token received from operation/init" @Param patches formData
-    file true "JSON file containing array of patch operations" @Success 200
-    {object} fiber.Map "Patch operations applied successfully" @Failure 400
-    {object} fiber.Map "Bad request - invalid patch format" @Failure 401
-    {object} fiber.Map "Unauthorized - invalid or missing authentication"
-    @Failure 500 {object} fiber.Map "Internal server error" @Router
-    /sftp/operation/patch [post]
+    Supports add (upload), remove (delete), replace (overwrite), move, and copy
+    operations. @Tags sftp @Security SystemTokenAuth @Accept multipart/form-data
+    @Produce json @Param patches formData file true "JSON file containing array
+    of patch operations" @Success 200 {object} fiber.Map "Patch operations
+    applied successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    patch format" @Failure 401 {object} fiber.Map "Unauthorized - invalid or
+    missing authentication" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /sftp/operation/patch [post]
 
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
     OperationPull godoc @Summary Pull files from SFTP server @Description
     Download files from an SFTP server using the operation token and specified
-    path @Tags sftp @Security OperationTokenAuth @Accept multipart/form-data
-    @Produce json @Param operation_token formData string true "Operation token
-    received from operation/init" @Param path formData string true "Path
-    to file or directory on SFTP server to download" @Success 200 {object}
-    fiber.Map "Files pulled successfully" @Failure 400 {object} fiber.Map "Bad
-    request - invalid operation token or path" @Failure 401 {object} fiber.Map
-    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
-    fiber.Map "File or directory not found" @Failure 500 {object} fiber.Map
-    "Internal server error" @Router /sftp/operation/pull [post]
+    path @Tags sftp @Security SystemTokenAuth @Accept multipart/form-data
+    @Produce json @Param path formData string true "Path to file or directory
+    on SFTP server to download" @Success 200 {object} fiber.Map "Files pulled
+    successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    operation token or path" @Failure 401 {object} fiber.Map "Unauthorized -
+    invalid or missing authentication" @Failure 404 {object} fiber.Map "File or
+    directory not found" @Failure 500 {object} fiber.Map "Internal server error"
+    @Router /sftp/operation/pull [post]
 
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
     OperationPush godoc @Summary Push files to SFTP server @Description Upload
     files to an SFTP server using the operation token and file data @Tags sftp
-    @Security OperationTokenAuth @Accept multipart/form-data @Produce json
-    @Param operation_token formData string true "Operation token received
-    from operation/init" @Param file formData file true "File to upload to
-    SFTP server" @Param path formData string false "Target path on SFTP server
-    (defaults to root directory)" @Success 200 {object} fiber.Map "File uploaded
-    successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
-    operation token or file" @Failure 401 {object} fiber.Map "Unauthorized
-    - invalid or missing authentication" @Failure 404 {object} fiber.Map
-    "Operation not found" @Failure 500 {object} fiber.Map "Internal server
-    error" @Router /sftp/operation/push [post]
+    @Security SystemTokenAuth @Accept multipart/form-data @Produce json @Param
+    file formData file true "File to upload to SFTP server" @Param path formData
+    string false "Target path on SFTP server (defaults to root directory)"
+    @Success 200 {object} fiber.Map "File uploaded successfully" @Failure 400
+    {object} fiber.Map "Bad request - invalid operation token or file" @Failure
+    401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Failure 404 {object} fiber.Map "Operation not found" @Failure 500 {object}
+    fiber.Map "Internal server error" @Router /sftp/operation/push [post]
 
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
     OperationSchemaGet godoc @Summary Get SFTP operation schema @Description
-    Get the schema and directory structure for SFTP file operations based
-    on the operation type (pull or push). Use the path query parameter
-    to navigate to specific files or directories on the SFTP server.
-    @Tags sftp @Security OperationTokenAuth @Accept json @Produce json @Param
-    operation path string true "Operation type" Enums(pull, push) @Param
-    operation_token formData string true "Operation token received from
-    operation/init" @Param path query string false "Path to file or directory
-    to get schema for (e.g., /data/customers.csv or /reports/)" @Success 200
-    {object} irminmodels.ObjectSchema "Operation schema retrieved successfully"
-    @Failure 400 {object} fiber.Map "Bad request - invalid operation type
-    or token" @Failure 401 {object} fiber.Map "Unauthorized - invalid or
-    missing authentication" @Failure 404 {object} fiber.Map "Operation not
-    found" @Failure 500 {object} fiber.Map "Internal server error" @Router
-    /sftp/operation/schema/{operation} [post]
+    Get the schema and directory structure for SFTP file operations based on
+    the operation type (pull or push). Use the path query parameter to navigate
+    to specific files or directories on the SFTP server. @Tags sftp @Security
+    SystemTokenAuth @Accept json @Produce json @Param operation path string
+    true "Operation type" Enums(pull, push) @Param path query string false
+    "Path to file or directory to get schema for (e.g., /data/customers.csv
+    or /reports/)" @Success 200 {object} irminmodels.ObjectSchema "Operation
+    schema retrieved successfully" @Failure 400 {object} fiber.Map "Bad
+    request - invalid operation type or token" @Failure 401 {object} fiber.Map
+    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
+    fiber.Map "Operation not found" @Failure 500 {object} fiber.Map "Internal
+    server error" @Router /sftp/operation/schema/{operation} [post]
 
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
     SubscribeToChanges godoc @Summary Subscribe to changes (not supported)
-    @Description SFTP connector does not support real-time subscriptions
-    as SFTP is a file transfer protocol without webhook capabilities
-    @Tags sftp @Security OperationTokenAuth @Accept json @Produce json
-    @Param operation_token formData string true "Operation token received
-    from operation/init" @Param webhook formData string true "Webhook
-    URL (not supported for SFTP)" @Success 501 {object} fiber.Map "Not
-    implemented - SFTP does not support subscriptions" @Failure 401 {object}
-    fiber.Map "Unauthorized - invalid or missing authentication" @Router
-    /sftp/operation/subscribe [post]
+    @Description SFTP connector does not support real-time subscriptions as
+    SFTP is a file transfer protocol without webhook capabilities @Tags sftp
+    @Security SystemTokenAuth @Accept json @Produce json @Param webhook formData
+    string true "Webhook URL (not supported for SFTP)" @Success 501 {object}
+    fiber.Map "Not implemented - SFTP does not support subscriptions" @Failure
+    401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Router /sftp/operation/subscribe [post]
 
 func (cs *Controllers) TestConnection(
 	_ fiber.Ctx,
@@ -202,20 +179,15 @@ func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
     UnsubscribeFromChanges godoc @Summary Unsubscribe from changes (not
     supported) @Description SFTP connector does not support real-time
     subscriptions as SFTP is a file transfer protocol without webhook
-    capabilities @Tags sftp @Security OperationTokenAuth @Accept json @Produce
-    json @Param operation_token formData string true "Operation token
-    received from operation/init" @Param subscription_id formData string true
-    "Subscription ID (not supported for SFTP)" @Success 501 {object} fiber.Map
-    "Not implemented - SFTP does not support subscriptions" @Failure 401
-    {object} fiber.Map "Unauthorized - invalid or missing authentication"
-    @Router /sftp/operation/unsubscribe [post]
+    capabilities @Tags sftp @Security SystemTokenAuth @Accept json @Produce json
+    @Param subscription_id formData string true "Subscription ID (not supported
+    for SFTP)" @Success 501 {object} fiber.Map "Not implemented - SFTP does
+    not support subscriptions" @Failure 401 {object} fiber.Map "Unauthorized
+    - invalid or missing authentication" @Router /sftp/operation/unsubscribe
+    [post]
 
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
     ValidateFields implements the ConfigValidationProvider interface.
-
-func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error
-    ValidateOperationTokenMiddleware validates the operation token for SFTP data
-    operations.
 
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
     ValidateSystemTokenMiddleware validates the system token for SFTP connector
@@ -263,15 +235,16 @@ type SFTPPushProvider struct {
     SFTPPushProvider implements the PushOperationProvider interface for SFTP.
 
 func (p *SFTPPushProvider) InitializeClient(
-	c fiber.Ctx,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error)
     InitializeClient initializes the SFTP client for push operations.
 
 func (p *SFTPPushProvider) ProcessFiles(
-	c fiber.Ctx,
+	ctx context.Context,
 	client any,
+	operation *db.Operation,
 	files map[string][]byte,
 	rawPath string,
 ) error

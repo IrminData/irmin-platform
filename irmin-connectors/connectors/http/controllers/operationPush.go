@@ -243,10 +243,9 @@ func (p *HTTPPushProvider) ProcessFiles(
 // @Summary Push data to HTTP endpoint
 // @Description Send file content to the configured HTTP endpoint using the specified method and headers. Use the path parameter to modify the request URL (absolute path replaces, relative path appends).
 // @Tags http
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param file formData file true "File to send to HTTP endpoint"
 // @Param path formData string false "Path to append/replace in the request URL (e.g., /api/users or customers)"
 // @Success 200 {object} fiber.Map "Data pushed successfully"

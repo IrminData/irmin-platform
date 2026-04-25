@@ -200,10 +200,9 @@ func (p *FirecrawlPullProvider) logOperationEvent(
 // @Summary Pull data from Firecrawl
 // @Description Execute the configured Firecrawl operation (scrape, crawl, map, or search) and return the results as files.
 // @Tags firecrawl
-// @Security OperationTokenAuth
+// @Security SystemTokenAuth
 // @Accept multipart/form-data
 // @Produce json
-// @Param operation_token formData string true "Operation token received from operation/init"
 // @Param path formData string false "Optional URL to scrape (overrides configured URL for single-page scraping)"
 // @Success 200 {object} fiber.Map "Data pulled successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token"

@@ -311,6 +311,11 @@ func (m *JobManager) StartJob(
 		return nil, fmt.Errorf("failed to generate job id: %w", err)
 	}
 
+	operationToken, err := generateJobOperationToken()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate operation token: %w", err)
+	}
+
 	resultPath := filepath.Join(m.cfg.ResultDir, jobID+".zip")
 
 	job := &db.OperationJob{
@@ -320,6 +325,7 @@ func (m *JobManager) StartJob(
 		OperationID:             operationID,
 		Status:                  string(sdkmodels.OperationJobStatusPending),
 		Progress:                []byte("[]"),
+		OperationToken:          operationToken,
 		// ResultPath is intentionally left empty until the terminal
 		// success transition. Pre-populating this at creation time can
 		// leak a non-existent path if the terminal status write fails.
@@ -1041,4 +1047,26 @@ func generateJobID() (string, error) {
 		return "", err
 	}
 	return jobIDPrefix + hex.EncodeToString(buf), nil
+}
+
+// jobOperationTokenByteLen is the entropy budget for the per-job
+// operation token. 32 bytes (256 bits) hex-encoded gives a 64-char
+// opaque bearer — comfortably above any practical brute-force ceiling
+// inside the token's 15-minute lifetime, and shaped to fit the
+// operation_jobs.operation_token column's varchar(64) cap exactly.
+const jobOperationTokenByteLen = 32
+
+// generateJobOperationToken returns the opaque bearer the connector
+// service hands back to Core in the 202 Start* response and accepts
+// on the per-job lifecycle routes. Distinct from generateJobID: the
+// job id is observable on logs and the wire (operators paste it into
+// dashboards), so it's prefixed for visual marker. The token is a
+// credential — no prefix, no structure, just entropy — so it leaks
+// less when copied into logs by accident.
+func generateJobOperationToken() (string, error) {
+	buf := make([]byte, jobOperationTokenByteLen)
+	if _, err := rand.Read(buf); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(buf), nil
 }
