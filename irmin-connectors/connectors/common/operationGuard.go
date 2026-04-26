@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"irmin-connectors/db"
@@ -9,6 +10,7 @@ import (
 
 	sdkmodels "github.com/IrminData/irmin-sdk-go/models"
 	sdkprogress "github.com/IrminData/irmin-sdk-go/observability"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -403,7 +405,7 @@ func (m *JobManager) runLockHolder(
 			guard.outcomeMu.Lock()
 			outcome := guard.outcome
 			guard.outcomeMu.Unlock()
-			m.applyTerminalOutcome(jobID, outcome)
+			m.applyTerminalOutcome(jobID, input.OperationID, outcome)
 			return nil
 		},
 	)
@@ -464,7 +466,13 @@ func (m *JobManager) registerGuardWorker(jobID string) {
 // job row and sets ExpiresAt so the janitor eventually reaps the
 // row. Errors are logged only — the lock is about to be released
 // regardless.
-func (m *JobManager) applyTerminalOutcome(jobID string, outcome JobOutcome) {
+//
+// When the resolved status is Cancelled, an INFO operation log is
+// written so the audit trail records the cancellation moment in a
+// queryable form (progress events alone don't tell a reader "this is
+// where the run was cancelled"). The log write is best-effort — a
+// failure does not block the row update or the lock release.
+func (m *JobManager) applyTerminalOutcome(jobID string, operationID uint, outcome JobOutcome) {
 	var errMsg *string
 	if outcome.Error != "" {
 		errMsg = &outcome.Error
@@ -475,18 +483,126 @@ func (m *JobManager) applyTerminalOutcome(jobID string, outcome JobOutcome) {
 	resultPath := outcome.ResultPath
 	pathPtr := &resultPath
 	expires := time.Now().Add(m.cfg.TTL)
-	if updateErr := m.db.UpdateOperationJobStatus(
+	updateErr := m.db.UpdateOperationJobStatus(
 		jobID,
 		string(outcome.Status),
 		errMsg,
 		pathPtr,
 		&expires,
-	); updateErr != nil {
+	)
+	if updateErr != nil {
 		m.logger.Error(
 			"guard failed to write terminal outcome",
 			"job_id", jobID,
 			"status", outcome.Status,
 			"error", updateErr,
+		)
+	}
+
+	// Only write the cancellation audit row if the row actually
+	// transitioned. If UpdateOperationJobStatus failed, the job is
+	// still in its previous (non-terminal) state and the janitor will
+	// reclaim it later — claiming "Operation cancelled" in the audit
+	// trail while the row stays running would mislead post-mortems.
+	if updateErr == nil &&
+		outcome.Status == sdkmodels.OperationJobStatusCancelled &&
+		operationID != 0 {
+		m.recordCancellationLog(jobID, operationID)
+	}
+}
+
+// recordCancellationRequest writes an INFO operation_logs row marking
+// the moment a /operation/cancel call landed. Best-effort; mirrors
+// recordCancellationLog's failure semantics. Captures the requester's
+// IP for audit. Distinct from recordCancellationLog so a cancel
+// against an already-terminal row still leaves an audit trail (the
+// guard's terminal log only fires when applyTerminalOutcome runs).
+func (m *JobManager) recordCancellationRequest(jobID string, operationID uint, requesterIP string) {
+	if operationID == 0 {
+		return
+	}
+	metadataBytes, marshalErr := json.Marshal(map[string]any{
+		"job_id":       jobID,
+		"requester_ip": requesterIP,
+	})
+	if marshalErr != nil {
+		m.logger.Error(
+			"failed to marshal cancellation request log metadata",
+			"job_id", jobID,
+			"operation_id", operationID,
+			"error", marshalErr,
+		)
+		return
+	}
+	if _, err := m.db.CreateOperationLog(&db.OperationLog{
+		Type:        db.LogEventTypeInfo,
+		Message:     "Cancellation requested",
+		Metadata:    datatypes.JSON(metadataBytes),
+		OperationID: operationID,
+	}); err != nil {
+		m.logger.Error(
+			"failed to write cancellation request operation log",
+			"job_id", jobID,
+			"operation_id", operationID,
+			"error", err,
+		)
+	}
+}
+
+// recordCancellationLog writes a single INFO operation_logs row
+// marking the cancellation moment for operationID. Best-effort: a
+// failed write is logged but not surfaced to the caller. Metadata
+// includes the in-memory progress count when the worker is still
+// tracked, so post-mortems can correlate the audit row with the
+// progress timeline persisted on the job.
+//
+// Goes via the JobStore interface (rather than the package-level
+// LogOperationEvent helper, which is typed against *db.Database) so
+// the in-memory test fake observes the write too.
+func (m *JobManager) recordCancellationLog(jobID string, operationID uint) {
+	// Match the lock-ordering convention used by the rest of this
+	// file (linkWorkerCancel, CancelWithOutcome, Snapshot, Release):
+	// release m.mu before acquiring worker.progressMu. The worker
+	// pointer remains valid after the map lookup releases m.mu — the
+	// jobWorker struct is heap-allocated and only Release will close
+	// its done channel. Keeping a single ordering convention prevents
+	// a future code path that holds progressMu from deadlocking when
+	// it reaches for m.mu.
+	progressCount := 0
+	m.mu.Lock()
+	worker, ok := m.workers[jobID]
+	m.mu.Unlock()
+	if ok {
+		worker.progressMu.Lock()
+		progressCount = len(worker.progress)
+		worker.progressMu.Unlock()
+	}
+
+	metadataBytes, marshalErr := json.Marshal(map[string]any{
+		"job_id":          jobID,
+		"progress_events": progressCount,
+	})
+	if marshalErr != nil {
+		m.logger.Error(
+			"failed to marshal cancellation log metadata",
+			"job_id", jobID,
+			"operation_id", operationID,
+			"error", marshalErr,
+		)
+		return
+	}
+
+	if _, err := m.db.CreateOperationLog(&db.OperationLog{
+		Type:        db.LogEventTypeInfo,
+		Message:     "Operation cancelled",
+		Metadata:    datatypes.JSON(metadataBytes),
+		OperationID: operationID,
+	}); err != nil {
+		m.logger.Error(
+			"failed to write cancellation operation log",
+			"job_id", jobID,
+			"operation_id", operationID,
+			"error", err,
 		)
 	}
 }

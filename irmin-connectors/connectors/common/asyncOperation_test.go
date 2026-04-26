@@ -35,6 +35,11 @@ type memJobStore struct {
 
 	lockMu sync.Mutex
 	locks  map[uint]bool
+
+	// logsMu guards opLogs. Tests that assert on the cancellation
+	// audit trail read this slice; production code only writes.
+	logsMu sync.Mutex
+	opLogs []*db.OperationLog
 }
 
 func newMemJobStore() *memJobStore {
@@ -42,6 +47,28 @@ func newMemJobStore() *memJobStore {
 		jobs:  make(map[string]*db.OperationJob),
 		locks: make(map[uint]bool),
 	}
+}
+
+// CreateOperationLog records the log row in memory so tests can
+// assert on cancellation audit entries without a real database. The
+// store does not assign IDs — tests that need them can fill the
+// gorm.Model fields via the returned pointer.
+func (s *memJobStore) CreateOperationLog(operationLog *db.OperationLog) (*db.OperationLog, error) {
+	s.logsMu.Lock()
+	defer s.logsMu.Unlock()
+	cp := *operationLog
+	s.opLogs = append(s.opLogs, &cp)
+	return operationLog, nil
+}
+
+// operationLogs returns a snapshot copy of the recorded log rows so
+// callers can assert on them without racing the manager.
+func (s *memJobStore) operationLogs() []*db.OperationLog {
+	s.logsMu.Lock()
+	defer s.logsMu.Unlock()
+	out := make([]*db.OperationLog, len(s.opLogs))
+	copy(out, s.opLogs)
+	return out
 }
 
 func (s *memJobStore) CreateOperationJob(job *db.OperationJob) (*db.OperationJob, error) {

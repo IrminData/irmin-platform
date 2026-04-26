@@ -272,10 +272,21 @@ func handleJobCancel(c fiber.Ctx, manager *JobManager) error {
 	// instead of a 200 for silently no-opping. Cancel()'s in-memory
 	// map lookup returns false for both "unknown" and "already
 	// reaped", so we need the store check to disambiguate.
-	if _, err := manager.getJob(jobID); err != nil {
+	row, err := manager.getJob(jobID)
+	if err != nil {
 		status, reason := ClassifyJobReadError(err)
 		return RespondJobError(c, status, reason, err, jobID)
 	}
+
+	// Audit the cancellation request before signalling the worker.
+	// Captured here (rather than inside CancelWithOutcome) so the row
+	// records who asked, even when the worker is no longer active —
+	// otherwise a cancel against a terminal job would leave no
+	// operator-visible trace of the attempt. The accompanying
+	// "Operation cancelled" log fires from applyTerminalOutcome when
+	// the worker actually transitions; the two together bracket the
+	// cancellation window.
+	manager.recordCancellationRequest(jobID, row.OperationID, c.IP())
 
 	// manager.CancelWithOutcome reports whether a live worker was
 	// actually signalled. Callers use this (via WasActive on the

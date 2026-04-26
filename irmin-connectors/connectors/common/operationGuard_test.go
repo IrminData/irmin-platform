@@ -3,7 +3,9 @@ package common
 
 import (
 	"context"
+	"io"
 	"irmin-connectors/db"
+	"log/slog"
 	"strings"
 	"sync"
 	"testing"
@@ -633,5 +635,136 @@ func TestJanitorReclaimDoesNotClobberRaceWinnerTerminal(t *testing.T) {
 	}
 	if row.Error != "" {
 		t.Fatalf("row.Error = %q, want empty (no reclaim message)", row.Error)
+	}
+}
+
+// TestApplyTerminalOutcomeWritesCancellationLog asserts that when a
+// guard releases with status=cancelled, an INFO operation_logs row
+// is written with the job_id in metadata. Callers (the audit trail,
+// post-mortem queries) rely on this row to bracket the cancellation
+// window — without it, only the run's progress events survive, and
+// they don't say "this is where someone pulled the plug".
+func TestApplyTerminalOutcomeWritesCancellationLog(t *testing.T) {
+	m, store := newTestManager(t)
+
+	const operationID uint = 1234
+	guard, alreadyErr, err := m.Begin(BeginOperationJobInput{
+		OperationID: operationID,
+		Kind:        "pull",
+	})
+	if err != nil || alreadyErr != nil {
+		t.Fatalf("Begin failed: err=%v conflict=%v", err, alreadyErr)
+	}
+
+	guard.Release(JobOutcome{Status: sdkmodels.OperationJobStatusCancelled})
+
+	logs := store.operationLogs()
+	if len(logs) != 1 {
+		t.Fatalf("operation_logs count = %d, want 1 (the cancellation log)", len(logs))
+	}
+	got := logs[0]
+	if got.Type != db.LogEventTypeInfo {
+		t.Fatalf("log.Type = %q, want INFO", got.Type)
+	}
+	if got.OperationID != operationID {
+		t.Fatalf("log.OperationID = %d, want %d", got.OperationID, operationID)
+	}
+	if !strings.Contains(got.Message, "Operation cancelled") {
+		t.Fatalf("log.Message = %q, want substring %q", got.Message, "Operation cancelled")
+	}
+	if !strings.Contains(string(got.Metadata), guard.JobID()) {
+		t.Fatalf("log.Metadata = %s, want it to embed job_id %q", got.Metadata, guard.JobID())
+	}
+}
+
+// TestApplyTerminalOutcomeNoLogWhenStatusUpdateFails pins the gate
+// added when /review noticed that a failed terminal status write
+// would still emit a cancellation audit row — leaving operators
+// looking at a "cancelled" log entry attached to a job whose row
+// is still 'running'. The audit log must only land if the row
+// actually transitioned.
+func TestApplyTerminalOutcomeNoLogWhenStatusUpdateFails(t *testing.T) {
+	mem := newMemJobStore()
+	failing := &failTerminalStatusStore{memJobStore: mem}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	m := NewJobManagerWithStore(failing, logger, JobManagerConfig{
+		TTL:             200 * time.Millisecond,
+		JanitorInterval: 24 * time.Hour,
+		ResultDir:       t.TempDir(),
+	})
+	t.Cleanup(m.StopJanitor)
+
+	guard, _, err := m.Begin(BeginOperationJobInput{
+		OperationID: 7,
+		Kind:        "pull",
+	})
+	if err != nil {
+		t.Fatalf("Begin failed: %v", err)
+	}
+
+	guard.Release(JobOutcome{Status: sdkmodels.OperationJobStatusCancelled})
+
+	if got := mem.operationLogs(); len(got) != 0 {
+		t.Fatalf("operation_logs count = %d, want 0 (no audit row when status update failed)", len(got))
+	}
+}
+
+// TestApplyTerminalOutcomeNoLogOnNonCancel pins the negative case:
+// only cancellation triggers the audit log; complete and failed do
+// not. Without this guard, every terminal write would emit a log
+// row, drowning real cancellations in noise.
+func TestApplyTerminalOutcomeNoLogOnNonCancel(t *testing.T) {
+	m, store := newTestManager(t)
+
+	guard, _, err := m.Begin(BeginOperationJobInput{OperationID: 1, Kind: "pull"})
+	if err != nil {
+		t.Fatalf("Begin failed: %v", err)
+	}
+	guard.Release(JobOutcome{Status: sdkmodels.OperationJobStatusComplete})
+
+	if got := store.operationLogs(); len(got) != 0 {
+		t.Fatalf("operation_logs count = %d, want 0 (complete must not write)", len(got))
+	}
+
+	guard2, _, err := m.Begin(BeginOperationJobInput{OperationID: 2, Kind: "pull"})
+	if err != nil {
+		t.Fatalf("Begin failed: %v", err)
+	}
+	guard2.Release(JobOutcome{Status: sdkmodels.OperationJobStatusFailed, Error: "kaboom"})
+
+	if got := store.operationLogs(); len(got) != 0 {
+		t.Fatalf("operation_logs count = %d, want 0 (failed must not write)", len(got))
+	}
+}
+
+// TestRecordCancellationRequestWritesAuditLog covers the
+// /operation/cancel handler's pre-signal audit log: the row goes in
+// the moment the cancel request lands, regardless of whether the
+// underlying worker is still active. This is what makes the audit
+// trail useful for "user clicked cancel against an already-finished
+// job" cases — the terminal-time log only fires when the worker
+// actually transitions.
+func TestRecordCancellationRequestWritesAuditLog(t *testing.T) {
+	m, store := newTestManager(t)
+
+	m.recordCancellationRequest("opjob_xyz", 99, "10.0.0.1")
+
+	logs := store.operationLogs()
+	if len(logs) != 1 {
+		t.Fatalf("operation_logs count = %d, want 1 (the request log)", len(logs))
+	}
+	got := logs[0]
+	if got.Type != db.LogEventTypeInfo {
+		t.Fatalf("log.Type = %q, want INFO", got.Type)
+	}
+	if got.OperationID != 99 {
+		t.Fatalf("log.OperationID = %d, want 99", got.OperationID)
+	}
+	if !strings.Contains(got.Message, "Cancellation requested") {
+		t.Fatalf("log.Message = %q, want substring %q", got.Message, "Cancellation requested")
+	}
+	meta := string(got.Metadata)
+	if !strings.Contains(meta, "10.0.0.1") || !strings.Contains(meta, "opjob_xyz") {
+		t.Fatalf("log.Metadata = %s, want both job_id and requester_ip", meta)
 	}
 }

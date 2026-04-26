@@ -142,6 +142,12 @@ type JobStore interface {
 	// janitor's stuck-row reclaim path.
 	ListStuckOperationJobs(threshold time.Time) ([]db.OperationJob, error)
 
+	// CreateOperationLog persists a log entry tied to an Operation.
+	// Used by the cancel path to record an audit-trail row when a job
+	// transitions to cancelled — progress events alone don't tell an
+	// operator "this is where the user pulled the plug".
+	CreateOperationLog(operationLog *db.OperationLog) (*db.OperationLog, error)
+
 	// WithOperationExecutionLock runs fn inside a session-scoped
 	// advisory lock on operationID. Returns (true, err) if the lock
 	// was acquired (err is fn's return); (false, nil) if the lock
