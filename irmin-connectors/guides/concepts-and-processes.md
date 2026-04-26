@@ -101,7 +101,9 @@ The local database serves several critical functions:
 
 - **Connector Registrations**: Links between local connectors and Irmin API registrations
 - **System Tokens**: Authentication tokens for each registered connector
-- **Operation Tokens**: Temporary tokens for active data operations
+- **Per-Job Operation Tokens**: Short-lived credentials minted on every
+  Start\* request, scoped to one job's lifecycle (status / result /
+  cancel by `job_id`)
 - **Subscription Data**: Information about active change subscriptions
 - **Configuration Cache**: Cached configuration data for performance
 
@@ -109,12 +111,13 @@ The local database serves several critical functions:
 
 The database maintains tables for:
 - `connector_registrations`: Connector registration and token information
-- `operations`: Long-lived per-Connection rows. Carry the legacy
-  operation-token column kept for back-compat scaffolding only —
-  no consolidated SDK client reads it.
+- `operations`: Long-lived per-Connection rows. Carry the
+  upserted-on-every-Start\* details + settings keyed on
+  `(ConnectorRegistrationID, ConfigHash)` so the worker can read
+  credentials without re-parsing them on every request.
 - `operation_jobs`: Per-job async lifecycle rows. Status, cumulative
-  Progress JSON, ResultPath, ExpiresAt. Reaped by the janitor at
-  `JobManager.DefaultJobTTL` (15 min).
+  Progress JSON, ResultPath, OperationToken, ExpiresAt. Reaped by
+  the janitor at `JobManager.DefaultJobTTL` (15 min).
 - `subscriptions`: Real-time change subscription configurations
 
 ## Data Transmission

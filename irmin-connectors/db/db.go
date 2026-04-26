@@ -144,6 +144,44 @@ func (d *Database) Migrate() error {
 		return err
 	}
 
+	if err := d.dropDeprecatedColumns(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// dropDeprecatedColumns removes columns retired by an earlier migration
+// pass. AutoMigrate is additive only by design, so destructive schema
+// changes have to be issued explicitly. Each step here is idempotent
+// (HasColumn-then-DropColumn) so a deploy that already applied the
+// drop on a previous boot is a no-op.
+//
+// Current entries:
+//
+//   - operations.token — the legacy per-Connection credential minted by
+//     the retired /operation/init route. Phase 4 moved auth to the
+//     per-job OperationJob.OperationToken column; nothing reads
+//     operations.token anymore. Dropping it removes a varchar(255)
+//     not-null column that EnsureOperationFromRequest had to populate
+//     with a throwaway value to satisfy the constraint.
+func (d *Database) dropDeprecatedColumns() error {
+	type deprecatedColumn struct {
+		model  any
+		column string
+	}
+	deprecated := []deprecatedColumn{
+		{model: &Operation{}, column: "token"},
+	}
+	migrator := d.Migrator()
+	for _, dc := range deprecated {
+		if !migrator.HasColumn(dc.model, dc.column) {
+			continue
+		}
+		if err := migrator.DropColumn(dc.model, dc.column); err != nil {
+			return fmt.Errorf("failed to drop column %T.%s: %w", dc.model, dc.column, err)
+		}
+	}
 	return nil
 }
 

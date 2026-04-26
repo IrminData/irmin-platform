@@ -113,13 +113,12 @@ func validateJobOperationToken(c fiber.Ctx, manager *JobManager, _ operationStor
 	}
 
 	// Authenticate against the per-job operation token persisted on
-	// the OperationJob row, NOT the legacy long-lived Operation.Token.
-	// Phase 4: scope-limited credential — a bearer that authorised
-	// job A cannot poll, fetch results from, or cancel job B even
-	// though both jobs may share an Operation row. The connector's
-	// system token is rejected here by design (it never matches a
-	// per-row 64-char hex token), narrowing the blast radius of a
-	// leaked system token.
+	// the OperationJob row. Scope-limited credential — a bearer that
+	// authorised job A cannot poll, fetch results from, or cancel
+	// job B even though both jobs may share an Operation row. The
+	// connector's system token is rejected here by design (it never
+	// matches a per-row 64-char hex token), narrowing the blast
+	// radius of a leaked system token.
 	if subtle.ConstantTimeCompare([]byte(token), []byte(row.OperationToken)) != 1 {
 		return RespondJobError(
 			c,

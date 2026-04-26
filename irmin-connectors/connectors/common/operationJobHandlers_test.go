@@ -114,7 +114,7 @@ func TestJobRoutesMountedUnderConnectorSlug(t *testing.T) {
 	t.Cleanup(manager.StopJanitor)
 
 	operationStore := &fakeOperationStore{operations: map[uint]*db.Operation{
-		42: {Model: gorm.Model{ID: 42}, Token: "legacy-unused"},
+		42: {Model: gorm.Model{ID: 42}},
 	}}
 
 	app := fiber.New()
@@ -147,7 +147,6 @@ func TestJobRoutesRequireMatchingOperationToken(t *testing.T) {
 	seedJobWithToken(t, store, "opjob_abc", 99, "token-123")
 	opStore.operations[99] = &db.Operation{
 		Model: gorm.Model{ID: 99},
-		Token: "legacy-unused",
 	}
 
 	t.Run("missing authorization", func(t *testing.T) {
@@ -189,7 +188,6 @@ func TestAllJobRoutesRequireAuthorizationHeader(t *testing.T) {
 	seedJobWithToken(t, store, "opjob_auth_required", 51, "job-token")
 	opStore.operations[51] = &db.Operation{
 		Model: gorm.Model{ID: 51},
-		Token: "legacy-unused",
 	}
 
 	tests := []struct {
@@ -229,7 +227,6 @@ func TestJobCancelRouteRequiresMatchingOperationToken(t *testing.T) {
 	seedJobWithToken(t, store, "opjob_cancel", 7, "cancel-token")
 	opStore.operations[7] = &db.Operation{
 		Model: gorm.Model{ID: 7},
-		Token: "legacy-unused",
 	}
 
 	unauth := doJobRequest(t, app, http.MethodPost, "http://localhost/operation/cancel/opjob_cancel", "")
@@ -265,7 +262,6 @@ func TestJobResultRouteRequiresMatchingOperationToken(t *testing.T) {
 	seedJobWithToken(t, store, "opjob_result", 33, "result-token")
 	opStore.operations[33] = &db.Operation{
 		Model: gorm.Model{ID: 33},
-		Token: "legacy-unused",
 	}
 
 	resp := doJobRequest(
@@ -317,7 +313,6 @@ func TestJobResultEmptyResultPathDependsOnOperationKind(t *testing.T) {
 	app, store, opStore := newJobHandlerTestApp(t)
 	opStore.operations[88] = &db.Operation{
 		Model: gorm.Model{ID: 88},
-		Token: "legacy-unused",
 	}
 
 	tests := []struct {
@@ -394,7 +389,6 @@ func TestJobResultReturnsGoneWhenPersistedFileMissing(t *testing.T) {
 	}
 	opStore.operations[operationID] = &db.Operation{
 		Model: gorm.Model{ID: operationID},
-		Token: "legacy-unused",
 	}
 
 	resp := doJobRequest(
@@ -432,7 +426,6 @@ func TestJobResultStreamsExistingFile(t *testing.T) {
 	}
 	opStore.operations[operationID] = &db.Operation{
 		Model: gorm.Model{ID: operationID},
-		Token: "legacy-unused",
 	}
 
 	resp := doJobRequest(

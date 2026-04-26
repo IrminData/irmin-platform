@@ -3995,9 +3995,6 @@ const docTemplate = `{
                         "type": "integer"
                     }
                 },
-                "token": {
-                    "type": "string"
-                },
                 "updatedAt": {
                     "type": "string"
                 }

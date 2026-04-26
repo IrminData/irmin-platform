@@ -192,20 +192,15 @@ func EnsureOperationFromRequest(
 			return nil
 		}
 
-		// Phase 4 retires Operation.Token as a client-facing
-		// credential; the per-job operation_token persisted on
-		// OperationJob is what handlers / Core use now. The
-		// column stays for back-compat (rollback safety to a
-		// pre-Phase-4 binary) but we populate it with a fresh
-		// throwaway value rather than a useful credential.
-		throwawayToken, tokenErr := utils.GenerateToken(utils.DefaultTokenLength)
-		if tokenErr != nil {
-			return fmt.Errorf("generate placeholder token: %w", tokenErr)
-		}
+		// Phase 4 retired the long-lived per-Connection token that
+		// /operation/init used to mint on this row; the per-job
+		// operation_token now lives on OperationJob.OperationToken
+		// and is the only credential the lifecycle routes accept.
+		// The legacy `token` column is dropped by Migrate() on this
+		// release.
 		newOperation := &db.Operation{
 			Details:                 datatypes.JSON(details),
 			Settings:                datatypes.JSON(settings),
-			Token:                   throwawayToken,
 			ConfigHash:              &configHash,
 			ConnectorRegistrationID: connectorRegistration.ID,
 		}

@@ -73,9 +73,7 @@ type OperationJob struct {
 	// lifecycle routes (/operation/status/:job_id,
 	// /operation/result/:job_id, /operation/cancel/:job_id).
 	//
-	// Distinct from the legacy long-lived Operation.Token (which was
-	// minted once per (Connector, ConfigHash) by /operation/init):
-	// this token is bound to one job, expires when the row does
+	// The token is bound to one job, expires when the row does
 	// (default 15-minute janitor TTL), and narrows the blast radius
 	// of a leaked credential to the job's lifecycle. The connectors
 	// service rejects the connector's system token on those routes
@@ -86,9 +84,6 @@ type OperationJob struct {
 	//
 	// Stored as a GORM-managed not-null column; populated atomically
 	// alongside the row's other fields inside JobManager.Begin.
-	// Indexed because constant-time-comparing a bearer against a
-	// per-row token still benefits from a btree lookup of the
-	// candidate row before the comparison.
 	OperationToken string `gorm:"type:varchar(64);not null" json:"-"`
 
 	// CreatedAt / UpdatedAt are standard GORM-managed timestamps.

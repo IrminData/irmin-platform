@@ -52,8 +52,6 @@ definitions:
         items:
           type: integer
         type: array
-      token:
-        type: string
       updatedAt:
         type: string
     type: object

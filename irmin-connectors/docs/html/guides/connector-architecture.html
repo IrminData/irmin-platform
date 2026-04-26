@@ -137,8 +137,8 @@ or cancelled, whichever comes first.
 > server upserts the matching `Operation` row inside the request
 > handler via `EnsureOperationFromRequest`, and the per-job
 > operation token returned on 202 is the only token the lifecycle
-> routes accept. The `Operation.Token` column stays in the schema
-> for rollback safety but no client reads it anymore.
+> routes accept. The legacy `operations.token` column has been
+> dropped from the schema by this release's migration.
 
 ## Authentication, in layers
 

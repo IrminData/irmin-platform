@@ -9,12 +9,18 @@ import (
 )
 
 // Operation represents a record of an initiated operation tied to a connector.
+//
+// The legacy `Token` column (varchar(255), the long-lived per-Connection
+// credential minted by /operation/init) was retired in Phase 4 and is
+// dropped by Migrate(). After Phase 4 the per-job token lives on
+// OperationJob.OperationToken; this row carries Details / Settings only,
+// keyed on (Connector, ConfigHash) so the worker can read credentials
+// without re-parsing them on every Start* request.
 type Operation struct {
 	gorm.Model
 
 	Details    datatypes.JSON `json:"details"    gorm:"type:json"`
 	Settings   datatypes.JSON `json:"settings"   gorm:"type:json"`
-	Token      string         `json:"token"      gorm:"type:varchar(255);not null"`
 	ConfigHash *string        `json:"configHash" gorm:"type:varchar(64);index:idx_connector_config"`
 
 	Logs []OperationLog `json:"logs,omitempty" gorm:"foreignKey:OperationID"`
