@@ -5,6 +5,7 @@ import { formatDistanceToNow, intervalToDuration } from 'date-fns';
 import { TbClock, TbFileText, TbHourglassLow } from 'react-icons/tb';
 
 import LogFeed from '@/components/logs/LogFeed';
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { QueryError } from '@/components/ui/error/QueryError';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -13,7 +14,8 @@ import WorkflowRunTriggerDetails from '@/components/workflow/WorkflowRunTriggerD
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useWorkflowRun } from '@/hooks/api';
+import { useCancelWorkflowRun, useWorkflowRun } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
 import { formatDurationForUI } from '@/utils/formatDurationForUI';
 
@@ -32,7 +34,10 @@ export default function WorkflowRunLogsSection({
   runID: string;
 }) {
   const { dict, locale } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
+  const canCancelRun = isResourceAllowed('workflow_run', 'delete');
 
+  const { cancelMutation, confirmAndCancel } = useCancelWorkflowRun();
   const { workflowRunQuery } = useWorkflowRun(workflowID, runID, {
     refetchInterval: (query) => {
       const runData = query.state.data;
@@ -42,7 +47,8 @@ export default function WorkflowRunLogsSection({
       const hasInProgressStatus =
         run.status === 'pending' ||
         run.status === 'initiating' ||
-        run.status === 'running';
+        run.status === 'running' ||
+        run.status === 'cancelling';
 
       const hasLogs = run.logs && run.logs.length > 0;
 
@@ -118,8 +124,17 @@ export default function WorkflowRunLogsSection({
     workflowRun.status === 'initiating' ||
     workflowRun.status === 'running';
 
+  const isCancelling = workflowRun.status === 'cancelling';
+
+  // Cancelling counts as "still working" for the empty-logs UI: the
+  // poll loop is ticking and the server may still flush partial logs
+  // up to the cancellation point. Showing "No logs found" here would
+  // contradict the spinner-style status that's still in flight.
   const showLogsWaitingState =
-    hasInProgressStatus && (!workflowRun.logs || workflowRun.logs.length === 0);
+    (hasInProgressStatus || isCancelling) &&
+    (!workflowRun.logs || workflowRun.logs.length === 0);
+
+  const canCancel = canCancelRun && (hasInProgressStatus || isCancelling);
 
   return (
     <div
@@ -203,6 +218,20 @@ export default function WorkflowRunLogsSection({
                 : '-'}
             </p>
           </div>
+          {canCancel && (
+            <div className='ml-auto flex flex-col gap-1'>
+              <Button
+                variant='destructive'
+                size='sm'
+                disabled={isCancelling || cancelMutation.isPending}
+                onClick={() => {
+                  void confirmAndCancel({ workflowID, runID });
+                }}
+              >
+                {dict.workflow.cancelRun.label}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

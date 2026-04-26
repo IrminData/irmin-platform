@@ -1170,6 +1170,13 @@ const en = {
     exports: 'Exports',
     pipelines: 'Pipelines',
     triggerRun: 'Trigger workflow run',
+    cancelRun: {
+      label: 'Cancel run',
+      confirm:
+        'Cancel this workflow run? Logs collected so far will be preserved.',
+      success: 'Workflow run cancelled',
+      failed: 'Failed to cancel workflow run',
+    },
     workflow: 'Workflow',
     import: 'Import',
     action: 'Action',

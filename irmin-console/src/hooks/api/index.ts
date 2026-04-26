@@ -32,6 +32,7 @@ export * from './useWorkspaceTags';
 
 // Workflow hooks
 export * from './useAllWorkflowRuns';
+export * from './useCancelWorkflowRun';
 export * from './useWorkflow';
 export * from './useWorkflows';
 export * from './useWorkflowRun';

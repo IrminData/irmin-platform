@@ -1166,6 +1166,13 @@ const fi = {
     exports: 'Viennit',
     pipelines: 'Dataputket',
     triggerRun: 'Käynnistä ajo',
+    cancelRun: {
+      label: 'Peruuta ajo',
+      confirm:
+        'Peruutetaanko tämä prosessin ajo? Tähän asti kerätyt lokit säilytetään.',
+      success: 'Prosessin ajo peruutettu',
+      failed: 'Prosessin ajon peruutus epäonnistui',
+    },
     workflow: 'Prosessi',
     import: 'Tuonti',
     action: 'Toiminto',

@@ -37,6 +37,7 @@ const statusBadgeVariants = cva(
         error: 'bg-destructive/15 text-destructive',
         complete: 'bg-muted text-muted-foreground',
         running: 'bg-accent/15 text-accent',
+        cancelling: 'bg-accent/15 text-accent',
         paused: 'bg-muted text-muted-foreground',
         pending: 'bg-accent/15 text-accent',
         initiating: 'bg-accent/15 text-accent',

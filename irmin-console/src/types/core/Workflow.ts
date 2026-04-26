@@ -133,6 +133,7 @@ export type WorkflowStatus =
   | 'pending'
   | 'initiating'
   | 'running'
+  | 'cancelling'
   | 'complete'
   | 'error'
   | 'cancelled';
