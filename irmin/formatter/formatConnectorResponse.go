@@ -25,18 +25,19 @@ func FormatConnectorResponse(
 		categories = append(categories, irminmodels.ConnectorCategory(category))
 	}
 	connectorResponse := irminmodels.Connector{
-		ID:               connectorSqid,
-		Name:             connector.Name,
-		Description:      connector.Description,
-		Version:          connector.Version,
-		StructureVersion: connector.StructureVersion,
-		Author:           connector.Author,
-		LogoURL:          connector.LogoURL,
-		Capabilities:     capabilities,
-		Categories:       categories,
-		PrimaryCategory:  irminmodels.ConnectorCategory(connector.PrimaryCategory),
-		AuthorEmail:      connector.AuthorEmail,
-		ReadMoreURL:      connector.ReadMoreURL,
+		ID:                    connectorSqid,
+		Name:                  connector.Name,
+		Description:           connector.Description,
+		Version:               connector.Version,
+		StructureVersion:      connector.StructureVersion,
+		Author:                connector.Author,
+		LogoURL:               connector.LogoURL,
+		Capabilities:          capabilities,
+		Categories:            categories,
+		PrimaryCategory:       irminmodels.ConnectorCategory(connector.PrimaryCategory),
+		AuthorEmail:           connector.AuthorEmail,
+		ReadMoreURL:           connector.ReadMoreURL,
+		ConnectionOAuthConfig: connector.ConnectionOAuthConfig,
 	}
 
 	return &connectorResponse, nil

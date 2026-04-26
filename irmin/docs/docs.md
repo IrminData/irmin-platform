@@ -4037,7 +4037,7 @@ type Connector struct {
     gorm.Model
 
     // Base URL for the connector's REST API
-    APIBaseURL string `json:"api_base_url"               gorm:"index"`
+    APIBaseURL string `json:"api_base_url"                      gorm:"index"`
     // Token to authenticate system requests to the Connector's API
     SystemToken string `json:"system_token"`
     // Name of the connector
@@ -4053,11 +4053,11 @@ type Connector struct {
     // URL to the connector's logo image
     LogoURL string `json:"logo_url"`
     // List of capabilities supported by the connector e.g. pull, push, webhook_pull, webhook_patch
-    Capabilities []string `json:"capabilities"               gorm:"type:jsonb;serializer:json"`
+    Capabilities []string `json:"capabilities"                      gorm:"type:jsonb;serializer:json"`
     // (optional) Primary category of the connector
-    PrimaryCategory string `json:"primary_category,omitempty" gorm:"type:varchar(255)"`
+    PrimaryCategory string `json:"primary_category,omitempty"        gorm:"type:varchar(255)"`
     // (optional) List of categories the connector belongs to
-    Categories []string `json:"categories,omitempty"       gorm:"type:jsonb;serializer:json"`
+    Categories []string `json:"categories,omitempty"              gorm:"type:jsonb;serializer:json"`
     // (optional) Email address of the author
     AuthorEmail string `json:"author_email,omitempty"`
     // (optional) URL to read more about the connector, such as documentation
@@ -4067,7 +4067,13 @@ type Connector struct {
     // register/update from the connector's /configuration/{type}/fields
     // endpoints so secret-masking on the connection list path doesn't have
     // to fan out to every connector on every read.
-    Schema map[string]irminmodels.DynamicField `json:"schema,omitempty"           gorm:"type:jsonb;serializer:json"`
+    Schema map[string]irminmodels.DynamicField `json:"schema,omitempty"                  gorm:"type:jsonb;serializer:json"`
+    // Cached OAuth config from the connector's /info response. Populated
+    // at register/update time so the console can detect on connector
+    // list/detail reads whether a connector wants the OAuth flow without
+    // fanning out to the connector service. Nil for password / API-key
+    // connectors.
+    ConnectionOAuthConfig *irminmodels.ConnectionOAuthConfig `json:"connection_oauth_config,omitempty" gorm:"type:jsonb;serializer:json"`
 }
 ```
 

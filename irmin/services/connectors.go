@@ -57,6 +57,7 @@ func (api *APIServices) updateConnectorFromInfo(
 	connector.Categories = utils.ConvertToStringSlice(connectorInfo.Categories)
 	connector.AuthorEmail = connectorInfo.AuthorEmail
 	connector.ReadMoreURL = connectorInfo.ReadMoreURL
+	connector.ConnectionOAuthConfig = connectorInfo.ConnectionOAuthConfig
 }
 
 func (api *APIServices) CreateConnector(

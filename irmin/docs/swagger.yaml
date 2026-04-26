@@ -1753,6 +1753,81 @@ definitions:
     - ConnectionEventDelete
     - ConnectionEventUpsert
     - ConnectionEventBatch
+  irminmodels.ConnectionOAuthConfig:
+    properties:
+      authorization_url:
+        description: |-
+          AuthorizationURL is the user-agent-facing endpoint where the end
+          user approves the connection. Absolute https:// URL.
+        example: https://app.hubspot.com/oauth/authorize
+        type: string
+      dcr_endpoint:
+        description: |-
+          DCREndpoint is optional (RFC 7591). When set, the Core can
+          dynamically register an OAuth client per workspace on first use,
+          skipping the need for an admin-configured app. MCP-compatible
+          vendors (Intercom, Linear, Sentry, ...) typically provide this.
+        example: https://api.example.com/oauth/register
+        type: string
+      extra_params:
+        additionalProperties:
+          type: string
+        description: |-
+          ExtraParams are vendor-specific parameters appended to the
+          authorization request (e.g., access_type=offline, prompt=consent).
+          Keys that would override security-critical OAuth params are
+          silently dropped by the Core.
+        example:
+          access_type: offline
+        type: object
+      pkce:
+        description: |-
+          PKCE must be true for new connectors. The Core refuses to run a
+          flow when this is false. Retained as a field (rather than an
+          always-true default) so the contract is explicit on the wire.
+        example: true
+        type: boolean
+      provider:
+        description: |-
+          Provider is a short canonical identifier for the vendor, e.g.
+          "hubspot", "stripe", "intercom". Used in logs + error messages.
+        example: hubspot
+        maxLength: 64
+        type: string
+      revocation_url:
+        description: |-
+          RevocationURL is optional (RFC 7009). When set, the Core POSTs the
+          token here on disconnect so the vendor drops the grant immediately.
+        example: https://api.example.com/oauth/revoke
+        type: string
+      scopes:
+        description: |-
+          Scopes is the set of OAuth scopes the connector declares it needs.
+          Read-only by default; connectors should follow least-privilege.
+        example:
+        - crm.objects.contacts.read
+        - crm.objects.deals.read
+        items:
+          type: string
+        type: array
+      token_url:
+        description: TokenURL is the token endpoint (RFC 6749 §3.2). Absolute https://
+          URL.
+        example: https://api.hubapi.com/oauth/v1/token
+        type: string
+      userinfo_url:
+        description: |-
+          UserinfoURL is optional. When set, the Core may call it after a
+          successful exchange to populate a friendly "connected as <who>"
+          label in the UI. Not used in the Phase 2 wiring; reserved.
+        example: https://api.example.com/oauth/userinfo
+        type: string
+    required:
+    - authorization_url
+    - provider
+    - scopes
+    - token_url
+    type: object
   irminmodels.ConnectionSubscription:
     properties:
       connection_id:
@@ -1883,6 +1958,15 @@ definitions:
         items:
           $ref: '#/definitions/irminmodels.ConnectorCategory'
         type: array
+      connection_oauth_config:
+        allOf:
+        - $ref: '#/definitions/irminmodels.ConnectionOAuthConfig'
+        description: |-
+          (optional) OAuth 2.0 metadata declared by the connector. Present
+          when the connector authenticates via OAuth (auth-code + PKCE);
+          absent for password / API-key connectors. The console reads this
+          to decide whether the wizard runs the OAuth flow instead of
+          rendering DynamicField inputs for credentials.
       description:
         description: Description of the connector
         example: Connect to MySQL databases for data extraction and synchronization
