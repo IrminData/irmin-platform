@@ -1046,6 +1046,452 @@ const docTemplate = `{
                 }
             }
         },
+        "/linear/configuration/validate": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Validates the Linear Connection's settings (e.g., team_key shape, max_records cap). Linear authenticates via OAuth, so there are no credential fields to validate here — the OAuth flow's completion in Core is the actual auth check, surfaced through /v1/connections/:id/oauth/start.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "linear"
+                ],
+                "summary": "Validate Linear connector configuration",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Optional Linear team key (e.g., IRM)",
+                        "name": "settings[team_key]",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Optional cap on records returned per pull",
+                        "name": "settings[max_records_per_resource]",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Optional MCP endpoint override",
+                        "name": "settings[mcp_endpoint]",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Validation result",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.ConnectorConfigurationValidationResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/linear/configuration/{key}/fields": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Returns dynamic configuration field definitions for the Linear connector. The \"details\" key returns an empty map because Linear authenticates via OAuth; the \"settings\" key returns user-tunable options like team_key.",
+                "consumes": [
+                    "application/json",
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "linear"
+                ],
+                "summary": "Get Linear connector configuration fields",
+                "parameters": [
+                    {
+                        "enum": [
+                            "details",
+                            "settings"
+                        ],
+                        "type": "string",
+                        "description": "Configuration key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Configuration fields",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "$ref": "#/definitions/irminmodels.DynamicField"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/linear/details": {
+            "get": {
+                "description": "Renders an HTML page describing what the Linear connector does, what it supports, and how to set it up. Public — no authentication required.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "linear"
+                ],
+                "summary": "Get Linear connector details page",
+                "responses": {
+                    "200": {
+                        "description": "Linear connector details page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/linear/info": {
+            "get": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Returns connector metadata including capabilities, OAuth configuration, and dynamic field schema. The embedded ConnectionOAuthConfig is what tells the console to render a Connect-with-Linear button instead of a credential form.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "linear"
+                ],
+                "summary": "Get Linear connector information",
+                "responses": {
+                    "200": {
+                        "description": "Linear connector information",
+                        "schema": {
+                            "$ref": "#/definitions/models.ConnectorDetails"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/linear/operation/patch": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Translates a JSON-Patch document into one save_issue MCP tool call per targeted Linear issue. Only add/replace/remove are supported. The patch path must reference an issue file (e.g., ` + "`" + `/issues/\u003cuuid\u003e.json/title` + "`" + `) where ` + "`" + `\u003cuuid\u003e` + "`" + ` is the Linear UUID, not the identifier (IRM-42).",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "linear"
+                ],
+                "summary": "Apply JSON-Patch operations to Linear issues",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "JSON file containing a JSON-Patch array",
+                        "name": "patches",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Patches applied successfully",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/linear/operation/pull": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Pulls Linear issues, projects, cycles, and teams as JSON files. The connection ID is captured from the request before the async worker starts so the worker can resolve OAuth tokens without a fiber.Ctx. If ` + "`" + `path` + "`" + ` is empty, every pull-enabled resource is returned; a ` + "`" + `\u003cresource\u003e` + "`" + ` or ` + "`" + `\u003cresource\u003e.json` + "`" + ` path narrows the pull to a single resource. Single-record paths are not yet supported.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/zip"
+                ],
+                "tags": [
+                    "linear"
+                ],
+                "summary": "Pull data from Linear",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Optional resource name (e.g., 'issues')",
+                        "name": "path",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ZIP archive of pulled JSON files",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Operation not found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "409": {
+                        "description": "Operation already running",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/linear/operation/push": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Creates new Linear issues from JSON files in the uploaded ZIP. Files matching ` + "`" + `issues/new-*.json` + "`" + ` are turned into IssueCreate mutations; every other file is skipped with a log line. Each file's JSON must be a valid Linear IssueCreateInput including a ` + "`" + `teamId` + "`" + ` UUID (Linear's input type has no ` + "`" + `teamKey` + "`" + ` field — copy the UUID from a pulled issue's ` + "`" + `team.id` + "`" + `).",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "linear"
+                ],
+                "summary": "Push data to Linear",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "ZIP containing JSON issue files (issues/new-*.json)",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Async push job accepted ({job_id, operation_token})",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Operation not found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "409": {
+                        "description": "Operation already running",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/linear/operation/schema/{operation}": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Returns an Irmin ObjectSchema describing the on-disk file layout the Linear connector emits on pull and accepts on push/patch.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "linear"
+                ],
+                "summary": "Get Linear operation schema",
+                "parameters": [
+                    {
+                        "enum": [
+                            "pull",
+                            "push",
+                            "patch"
+                        ],
+                        "type": "string",
+                        "description": "Operation type",
+                        "name": "operation",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Operation schema",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.ObjectSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/mysql/configuration/validate": {
             "post": {
                 "security": [

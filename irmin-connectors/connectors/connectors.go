@@ -6,6 +6,7 @@ import (
 
 	firecrawlconnector "irmin-connectors/connectors/firecrawl"
 	httpconnector "irmin-connectors/connectors/http"
+	linearconnector "irmin-connectors/connectors/linear"
 	mysqlconnector "irmin-connectors/connectors/mysql"
 	pineconeconnector "irmin-connectors/connectors/pinecone"
 	postgresconnector "irmin-connectors/connectors/postgres"
@@ -27,6 +28,7 @@ func SetupConnectorRoutes(app *models.ConnectorsApp) {
 	firecrawlconnector.SetupRoutes(app)
 	pineconeconnector.SetupRoutes(app)
 	stripeconnector.SetupRoutes(app)
+	linearconnector.SetupRoutes(app)
 	// ... Add new connectors here ...
 }
 
@@ -61,6 +63,7 @@ func RegisterAllConnectors(
 		{"Firecrawl", "firecrawl"},
 		{"Pinecone", "pinecone"},
 		{"Stripe", "stripe"},
+		{"Linear", "linear"},
 		// ... Add new connectors here ...
 	}
 

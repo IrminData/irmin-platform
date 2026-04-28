@@ -1511,6 +1511,314 @@ paths:
       summary: HTTP connector does not support webhook subscriptions
       tags:
       - http
+  /linear/configuration/{key}/fields:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Returns dynamic configuration field definitions for the Linear
+        connector. The "details" key returns an empty map because Linear authenticates
+        via OAuth; the "settings" key returns user-tunable options like team_key.
+      parameters:
+      - description: Configuration key
+        enum:
+        - details
+        - settings
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration fields
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/irminmodels.DynamicField'
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get Linear connector configuration fields
+      tags:
+      - linear
+  /linear/configuration/validate:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Validates the Linear Connection's settings (e.g., team_key shape,
+        max_records cap). Linear authenticates via OAuth, so there are no credential
+        fields to validate here — the OAuth flow's completion in Core is the actual
+        auth check, surfaced through /v1/connections/:id/oauth/start.
+      parameters:
+      - description: Optional Linear team key (e.g., IRM)
+        in: formData
+        name: settings[team_key]
+        type: string
+      - description: Optional cap on records returned per pull
+        in: formData
+        name: settings[max_records_per_resource]
+        type: string
+      - description: Optional MCP endpoint override
+        in: formData
+        name: settings[mcp_endpoint]
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Validation result
+          schema:
+            $ref: '#/definitions/irminmodels.ConnectorConfigurationValidationResult'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Validate Linear connector configuration
+      tags:
+      - linear
+  /linear/details:
+    get:
+      consumes:
+      - application/json
+      description: Renders an HTML page describing what the Linear connector does,
+        what it supports, and how to set it up. Public — no authentication required.
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: Linear connector details page
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Get Linear connector details page
+      tags:
+      - linear
+  /linear/info:
+    get:
+      consumes:
+      - application/json
+      description: Returns connector metadata including capabilities, OAuth configuration,
+        and dynamic field schema. The embedded ConnectionOAuthConfig is what tells
+        the console to render a Connect-with-Linear button instead of a credential
+        form.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Linear connector information
+          schema:
+            $ref: '#/definitions/models.ConnectorDetails'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get Linear connector information
+      tags:
+      - linear
+  /linear/operation/patch:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Translates a JSON-Patch document into one save_issue MCP tool call
+        per targeted Linear issue. Only add/replace/remove are supported. The patch
+        path must reference an issue file (e.g., `/issues/<uuid>.json/title`) where
+        `<uuid>` is the Linear UUID, not the identifier (IRM-42).
+      parameters:
+      - description: JSON file containing a JSON-Patch array
+        in: formData
+        name: patches
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Patches applied successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Apply JSON-Patch operations to Linear issues
+      tags:
+      - linear
+  /linear/operation/pull:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Pulls Linear issues, projects, cycles, and teams as JSON files.
+        The connection ID is captured from the request before the async worker starts
+        so the worker can resolve OAuth tokens without a fiber.Ctx. If `path` is empty,
+        every pull-enabled resource is returned; a `<resource>` or `<resource>.json`
+        path narrows the pull to a single resource. Single-record paths are not yet
+        supported.
+      parameters:
+      - description: Optional resource name (e.g., 'issues')
+        in: formData
+        name: path
+        type: string
+      produces:
+      - application/zip
+      responses:
+        "200":
+          description: ZIP archive of pulled JSON files
+          schema:
+            type: file
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "409":
+          description: Operation already running
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Pull data from Linear
+      tags:
+      - linear
+  /linear/operation/push:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Creates new Linear issues from JSON files in the uploaded ZIP.
+        Files matching `issues/new-*.json` are turned into IssueCreate mutations;
+        every other file is skipped with a log line. Each file's JSON must be a valid
+        Linear IssueCreateInput including a `teamId` UUID (Linear's input type has
+        no `teamKey` field — copy the UUID from a pulled issue's `team.id`).
+      parameters:
+      - description: ZIP containing JSON issue files (issues/new-*.json)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Async push job accepted ({job_id, operation_token})
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "409":
+          description: Operation already running
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Push data to Linear
+      tags:
+      - linear
+  /linear/operation/schema/{operation}:
+    post:
+      consumes:
+      - application/json
+      description: Returns an Irmin ObjectSchema describing the on-disk file layout
+        the Linear connector emits on pull and accepts on push/patch.
+      parameters:
+      - description: Operation type
+        enum:
+        - pull
+        - push
+        - patch
+        in: path
+        name: operation
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation schema
+          schema:
+            $ref: '#/definitions/irminmodels.ObjectSchema'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get Linear operation schema
+      tags:
+      - linear
   /mysql/configuration/{key}/fields:
     post:
       consumes:

@@ -134,7 +134,7 @@ func (p *HTTPSchemaProvider) GetSupportedOperationTypes() []string {
 // @Router /http/operation/schema/{operation} [post]
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 	provider := &HTTPSchemaProvider{
-		APIBaseURL: cs.App.Env.APIBaseURL,
+		APIBaseURL: cs.App.Env.SDKBaseURL(),
 		APIToken:   cs.App.Env.APIToken,
 	}
 	return common.HandleOperationSchemaGet(c, provider, cs.Logger, cs.DB, cs.App)

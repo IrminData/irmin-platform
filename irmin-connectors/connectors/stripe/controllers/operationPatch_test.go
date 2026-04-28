@@ -8,41 +8,11 @@ import (
 	"strings"
 	"testing"
 
+	"irmin-connectors/connectors/common"
 	"irmin-connectors/db"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
-
-func TestExtractFileKey(t *testing.T) {
-	cases := []struct {
-		in      string
-		want    string
-		wantErr bool
-	}{
-		{in: "/customers/cus_abc.json/email", want: "customers/cus_abc.json"},
-		{in: "customers/cus_abc.json/metadata/plan", want: "customers/cus_abc.json"},
-		{in: "/invoices/new-foo.json/description", want: "invoices/new-foo.json"},
-		{in: "", wantErr: true},
-		{in: "/customers/cus_abc/email", wantErr: true}, // no .json
-	}
-	for _, tc := range cases {
-		t.Run(tc.in, func(t *testing.T) {
-			got, err := extractFileKey(tc.in)
-			if tc.wantErr {
-				if err == nil {
-					t.Fatalf("expected error, got %q", got)
-				}
-				return
-			}
-			if err != nil {
-				t.Fatalf("extractFileKey: %v", err)
-			}
-			if got != tc.want {
-				t.Errorf("got %q, want %q", got, tc.want)
-			}
-		})
-	}
-}
 
 func TestJSONPointerToFormKey(t *testing.T) {
 	cases := map[string]string{
@@ -60,31 +30,6 @@ func TestJSONPointerToFormKey(t *testing.T) {
 	}
 }
 
-func TestTrimFilePrefix(t *testing.T) {
-	got, err := trimFilePrefix("/customers/cus_abc.json/metadata/plan", "customers/cus_abc.json")
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-	if got != "metadata/plan" {
-		t.Errorf("got %q, want metadata/plan", got)
-	}
-
-	// Pointer that's exactly the file key → empty suffix (whole-resource
-	// replacement, which the caller rejects).
-	got, err = trimFilePrefix("/customers/cus_abc.json", "customers/cus_abc.json")
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-	if got != "" {
-		t.Errorf("got %q, want empty", got)
-	}
-
-	// Pointer with a different file key → error.
-	if _, err = trimFilePrefix("/invoices/in_xyz.json/total", "customers/cus_abc.json"); err == nil {
-		t.Errorf("expected mismatch error")
-	}
-}
-
 func TestGroupPatchesByResource(t *testing.T) {
 	emailValue := any("new@example.com")
 	planValue := any("pro")
@@ -93,7 +38,7 @@ func TestGroupPatchesByResource(t *testing.T) {
 		{Op: "replace", Path: "/customers/cus_abc.json/metadata/plan", Value: &planValue},
 		{Op: "replace", Path: "/invoices/in_xyz.json/description", Value: &emailValue},
 	}
-	grouped, err := groupPatchesByResource(ops)
+	grouped, err := common.GroupPatchesByFileKey(ops)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}

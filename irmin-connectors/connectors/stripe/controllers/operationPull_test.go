@@ -2,82 +2,14 @@
 package stripecontrollers
 
 import (
-	"encoding/json"
 	"testing"
 )
 
-func TestParsePositiveInt_JSONNumberAndInt64(t *testing.T) {
-	// If any upstream uses json.Decoder.UseNumber, the settings
-	// payload arrives as json.Number. Earlier revisions missed the
-	// case and silently treated it as "no cap" — defeating the
-	// max_records_per_resource OOM guard.
-	if got := parsePositiveInt(json.Number("500")); got != 500 {
-		t.Errorf("json.Number(500): got %d, want 500", got)
-	}
-	if got := parsePositiveInt(json.Number("-1")); got != 0 {
-		t.Errorf("json.Number(-1): got %d, want 0", got)
-	}
-	if got := parsePositiveInt(json.Number("not a number")); got != 0 {
-		t.Errorf("json.Number('not a number'): got %d, want 0", got)
-	}
-	if got := parsePositiveInt(int64(42)); got != 42 {
-		t.Errorf("int64(42): got %d, want 42", got)
-	}
-	if got := parsePositiveInt(int64(-1)); got != 0 {
-		t.Errorf("int64(-1): got %d, want 0", got)
-	}
-}
-
-func TestMarshalJSONArray(t *testing.T) {
-	if string(marshalJSONArray(nil)) != "[]" {
-		t.Errorf("nil should produce []")
-	}
-	if string(marshalJSONArray([]json.RawMessage{})) != "[]" {
-		t.Errorf("empty slice should produce []")
-	}
-
-	got := marshalJSONArray([]json.RawMessage{
-		json.RawMessage(`{"id":"a"}`),
-		json.RawMessage(`{"id":"b"}`),
-	})
-	// Passthrough of Stripe's exact shape — no re-parsing.
-	if string(got) != `[{"id":"a"},{"id":"b"}]` {
-		t.Errorf("got %s", string(got))
-	}
-
-	// Single element.
-	got = marshalJSONArray([]json.RawMessage{json.RawMessage(`{"id":"a"}`)})
-	if string(got) != `[{"id":"a"}]` {
-		t.Errorf("got %s", string(got))
-	}
-}
-
-func TestParsePositiveInt(t *testing.T) {
-	cases := []struct {
-		in   any
-		want int
-	}{
-		{in: nil, want: 0},
-		{in: "", want: 0},
-		{in: "   ", want: 0},
-		{in: "0", want: 0},
-		{in: "-5", want: 0},
-		{in: "abc", want: 0},
-		{in: "42", want: 42},
-		{in: "  42  ", want: 42},
-		{in: 42, want: 42},
-		{in: -1, want: 0},
-		{in: float64(1000), want: 1000},
-		{in: float64(-1), want: 0},
-		// Unsupported types fall through to zero rather than panicking.
-		{in: []string{"42"}, want: 0},
-	}
-	for _, tc := range cases {
-		if got := parsePositiveInt(tc.in); got != tc.want {
-			t.Errorf("parsePositiveInt(%v) = %d, want %d", tc.in, got, tc.want)
-		}
-	}
-}
+// Tests for parsePositiveInt and marshalJSONArray previously lived here
+// when those helpers were duplicated in stripe/. They moved to
+// connectors/common/operationDataHelpers_test.go alongside the helpers
+// themselves so a future fix lands once. See the package doc on
+// connectors/common/operationDataHelpers.go.
 
 func TestResolveWholeResource(t *testing.T) {
 	// The workflow in the field wrote `customers.json` as its source

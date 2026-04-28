@@ -82,8 +82,23 @@ const JobResultDirSegment = "irmin-connectors"
     zips. Scoped to the service so concurrent services running on the same host
     don't collide.
 
+const MaxPatchFileBytes = 4 * 1024 * 1024
+    MaxPatchFileBytes caps the size of an uploaded JSON-Patch document read
+    into memory before unmarshal. The global Fiber BodyLimit is 5 GB (sized
+    for bulk pushes on other connectors), which would let a caller OOM the
+    connector process by posting a multi-gigabyte `patches` upload. A JSON-Patch
+    document with 10 000 ops weighs in at ~1 MB; 4 MB is a comfortable ceiling.
+    Patch handlers that need a different cap can read the upload themselves.
+
 
 VARIABLES
+
+var ErrAsyncOAuthMissingDeps = errors.New(
+	"oauth_async: token client or connection id not configured",
+)
+    ErrAsyncOAuthMissingDeps is returned when the round-tripper is constructed
+    without a token client or with a zero connection ID. Surfaces a wiring bug
+    rather than a transient failure.
 
 var ErrConnectorInfoMissing = errors.New("connector info not stamped on context")
     ErrConnectorInfoMissing is returned by EnsureOperationMiddleware when the
@@ -178,6 +193,17 @@ func EnsureOperation(
     an Operation row, and EnsureOperationFromRequest does real work (DB
     transaction, advisory lock). Splitting them keeps metadata fast and avoids
     creating empty-credential Operation rows for the cases that don't need them.
+
+func ExtractPatchFileKey(pointer string) (string, error)
+    ExtractPatchFileKey peels the `&lt;resource&gt;/&lt;id&gt;.json` prefix off a
+    JSON-Pointer path. Returns the file-key component (without the leading
+    slash) so callers can group patch ops by record.
+
+    Boundary is strict: the `.json` segment must be followed by either a `/`
+    (field pointer, e.g., `/customers/cus_abc.json/email`) or end of string
+    (whole-file pointer). An earlier revision used `strings.Index(trimmed,
+    ".json")` which would accept `customers/cus_abc.jsonEVIL/email` and silently
+    produce a malformed field path — fixed once, in this shared helper.
 
 func GetConnectorCapabilitiesFromConfig(
 	getConnectorInfo func() models.ConnectorDetails,
@@ -370,6 +396,15 @@ func MountJobHandlersOnGroup(group fiber.Router, connectorsApp *models.Connector
     Called from SetupConnectorRoutes — see the RegisterJobHandlers doc comment
     for why both mounts are needed.
 
+func ReadPatchesFromForm(c fiber.Ctx) ([]irminmodels.PatchOperation, error)
+    ReadPatchesFromForm reads the `patches` form-file out of the inbound
+    multipart body and decodes it into a JSON-Patch slice. All filesystem and
+    body reads happen while fiber.Ctx is still live so the result is safely
+    usable in a background worker.
+
+    Returns an error wrapping http.ErrMissingFile when no `patches` field was
+    uploaded; callers map that to a 400.
+
 func RegisterJobHandlers(app *fiber.App, connectorsApp *models.ConnectorsApp)
     RegisterJobHandlers mounts the async-job HTTP lifecycle endpoints (status
     / result / cancel) at the connectors-app root. Called from main at startup,
@@ -470,6 +505,12 @@ func ThrottledQueryEmitter(
     Returns a no-op when handler is nil so the row-loop call site can invoke it
     unconditionally.
 
+func TrimPatchFilePrefix(pointer, fileKey string) (string, error)
+    TrimPatchFilePrefix removes the file-path prefix from a JSON- Pointer and
+    returns just the field-path component (e.g., `email` or `metadata/plan`).
+    Returns "" when the pointer is exactly the file key — vendor callers reject
+    that case as "whole-record replace; use push instead".
+
 func ValidateSystemToken(
 	c fiber.Ctx,
 	app *models.ConnectorsApp,
@@ -496,6 +537,16 @@ func WrapHTTPClient(
     OAuthRoundTripper around the input client's transport. Preserves the input
     client's Timeout, CheckRedirect, Jar — only the Transport is replaced.
     Pass nil to start from an empty client.
+
+func WrapHTTPClientForJob(
+	client *http.Client,
+	tc *lib.OAuthTokenClient,
+	connectionID uint,
+) *http.Client
+    WrapHTTPClientForJob returns a new *http.Client whose Transport is an
+    AsyncOAuthRoundTripper around the input client's transport. Mirrors
+    WrapHTTPClient (the sync variant) but takes the connection ID + token client
+    directly so the result is safe to use inside a worker goroutine.
 
 
 TYPES
@@ -534,6 +585,40 @@ func (e *AlreadyRunningError) Error() string
     Error implements the error interface so AlreadyRunningError can be returned
     from anywhere an error is expected. The message is operator-facing;
     machine-readable consumers should type-assert via errors.As.
+
+type AsyncOAuthRoundTripper struct {
+	// Base is the transport we wrap. Must not be nil after construction
+	// (NewAsyncOAuthRoundTripper installs http.DefaultTransport when
+	// the caller passes nil).
+	Base http.RoundTripper
+
+	// TokenClient talks to Core's internal access-token endpoint. Same
+	// instance the OAuthConnector base holds — workers reach for it via
+	// (*OAuthConnector).TokenClient at request time and pass it here.
+	TokenClient *lib.OAuthTokenClient
+
+	// ConnectionID identifies which Connection's token to fetch on
+	// every outbound request. Captured from the inbound fiber.Ctx in
+	// the handler before the worker is launched; never changes during
+	// the worker's lifetime.
+	ConnectionID uint
+}
+    AsyncOAuthRoundTripper is the worker-safe outbound middleware. Wrap the
+    connector's *http.Client transport with this once at the start of the
+    worker, then drive the client normally — no fiber.Ctx required.
+
+func NewAsyncOAuthRoundTripper(
+	base http.RoundTripper,
+	tc *lib.OAuthTokenClient,
+	connectionID uint,
+) *AsyncOAuthRoundTripper
+    NewAsyncOAuthRoundTripper constructs a round-tripper for the given
+    connection. Base defaults to http.DefaultTransport when nil.
+
+func (rt *AsyncOAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
+    RoundTrip stamps Authorization and retries once on 401 with a forced
+    refresh, mirroring OAuthRoundTripper but driven from req.Context() instead
+    of a captured fiber.Ctx.
 
 type BeginOperationJobInput struct {
 	// OperationID keys the advisory lock and the job's FK back to
@@ -929,6 +1014,12 @@ type JobStore interface {
 	// updated_at is older than threshold — candidates for the
 	// janitor's stuck-row reclaim path.
 	ListStuckOperationJobs(threshold time.Time) ([]db.OperationJob, error)
+
+	// CreateOperationLog persists a log entry tied to an Operation.
+	// Used by the cancel path to record an audit-trail row when a job
+	// transitions to cancelled — progress events alone don't tell an
+	// operator "this is where the user pulled the plug".
+	CreateOperationLog(operationLog *db.OperationLog) (*db.OperationLog, error)
 
 	// WithOperationExecutionLock runs fn inside a session-scoped
 	// advisory lock on operationID. Returns (true, err) if the lock

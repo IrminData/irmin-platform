@@ -1,13 +1,11 @@
 package stripecontrollers
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 
 	"irmin-connectors/connectors/common"
@@ -188,44 +186,7 @@ func (p *StripePullProvider) pullLimit(operation *db.Operation) int {
 	if err := json.Unmarshal(operation.Settings, &settingsMap); err != nil {
 		return 0
 	}
-	return parsePositiveInt(settingsMap["max_records_per_resource"])
-}
-
-// parsePositiveInt coerces a settings value (which arrives as a string
-// through DynamicField, but may also come in as int / int64 / float64
-// / json.Number depending on the decoder) to a positive int, or 0 if
-// parsing fails or the value is non-positive.
-//
-// json.Number and int64 were originally missed — if any upstream
-// layer ever uses json.Decoder.UseNumber() (to preserve integer
-// precision), the cap would silently fall through to unbounded and
-// defeat the OOM guard that `max_records_per_resource` exists to
-// enforce.
-func parsePositiveInt(raw any) int {
-	switch v := raw.(type) {
-	case int:
-		if v > 0 {
-			return v
-		}
-	case int64:
-		if v > 0 {
-			return int(v)
-		}
-	case float64:
-		if v > 0 {
-			return int(v)
-		}
-	case json.Number:
-		if n, err := v.Int64(); err == nil && n > 0 {
-			return int(n)
-		}
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(v))
-		if err == nil && n > 0 {
-			return n
-		}
-	}
-	return 0
+	return common.ParsePositiveInt(settingsMap["max_records_per_resource"])
 }
 
 // pullResource fetches up to maxRecords of a given resource type and
@@ -243,7 +204,7 @@ func (p *StripePullProvider) pullResource(
 		p.logPullError(operation, resource.Name, err)
 		return "", nil, fmt.Errorf("stripe: pull %s: %w", resource.Name, err)
 	}
-	blob := marshalJSONArray(records)
+	blob := common.MarshalJSONArray(records)
 	if truncated {
 		p.logPullTruncated(operation, resource.Name, len(records), maxRecords /* limit */)
 	} else {
@@ -282,26 +243,6 @@ func (p *StripePullProvider) pullSingleRecord(
 	}
 
 	return parsed.Resource.Name + "/" + parsed.ID + ".json", []byte(record), nil
-}
-
-// marshalJSONArray collapses a slice of raw records into a compact
-// JSON array. We avoid re-parsing individual records — they're
-// already valid JSON objects from Stripe — so the output is a faithful
-// passthrough of Stripe's shape.
-func marshalJSONArray(records []json.RawMessage) []byte {
-	if len(records) == 0 {
-		return []byte("[]")
-	}
-	var buf bytes.Buffer
-	buf.WriteByte('[')
-	for i, r := range records {
-		if i > 0 {
-			buf.WriteByte(',')
-		}
-		buf.Write(r)
-	}
-	buf.WriteByte(']')
-	return buf.Bytes()
 }
 
 func (p *StripePullProvider) logPullError(operation *db.Operation, resource string, err error) {

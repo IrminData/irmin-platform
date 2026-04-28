@@ -202,6 +202,29 @@ func TestFetchVendorAccessTokenTrimsTrailingSlash(t *testing.T) {
 	}
 }
 
+func TestFetchVendorAccessTokenStripsAPIPrefix(t *testing.T) {
+	// Regression: prod IRMIN_API_BASE_URL was set to ".../api", which
+	// produced a /api/api/v1/... request that Core 404s on. The
+	// normalizer should strip the trailing /api so the eventual path is
+	// the canonical /api/v1/system/oauth/access-token.
+	var seenPath string
+	base, httpClient := newFakeCore(t, func(w http.ResponseWriter, r *http.Request) {
+		seenPath = r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"data":{"access_token":"a","token_type":"Bearer"}}`)
+	})
+	client := NewOAuthTokenClient(base+"/api", "tok")
+	client.HTTPClient = httpClient
+
+	_, err := client.FetchVendorAccessToken(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("FetchVendorAccessToken: %v", err)
+	}
+	if seenPath != "/api/v1/system/oauth/access-token" {
+		t.Fatalf("path = %q; want canonical /api/v1/... after /api was stripped from base", seenPath)
+	}
+}
+
 func TestConnectionIDFromRequestHeader(t *testing.T) {
 	cases := []struct {
 		name    string
@@ -244,7 +267,37 @@ func TestVendorAccessTokenAuthorizationHeaderDefaultsBearer(t *testing.T) {
 	}
 	t2 := &VendorAccessToken{Value: "y", TokenType: "MAC"}
 	if got := t2.AuthorizationHeader(); got != "MAC y" {
-		t.Fatalf("explicit token_type should win, got %q", got)
+		t.Fatalf("explicit non-bearer token_type should win, got %q", got)
+	}
+}
+
+// TestVendorAccessTokenAuthorizationHeaderCanonicalisesBearer pins a
+// real-world bug: Linear's /token endpoint returns
+// `token_type: "bearer"` (lowercase, exactly as in RFC 6749 §5.1's
+// example). Linear's MCP resource server then rejects
+// `Authorization: bearer …` with `invalid_token: Missing or invalid
+// access token`. RFC 6750 §2.1 specifies the literal "Bearer" with a
+// capital B in its ABNF and §1.2 says parsing should be case-
+// insensitive, but real-world resource servers vary. Canonicalising
+// to "Bearer" on the way out keeps us interoperable with both strict
+// and lenient implementations.
+func TestVendorAccessTokenAuthorizationHeaderCanonicalisesBearer(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"lowercase", "bearer"},
+		{"mixed", "BeArEr"},
+		{"upper", "BEARER"},
+		{"already canonical", "Bearer"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tok := &VendorAccessToken{Value: "x", TokenType: tc.in}
+			if got := tok.AuthorizationHeader(); got != "Bearer x" {
+				t.Errorf("token_type=%q → %q, want %q", tc.in, got, "Bearer x")
+			}
+		})
 	}
 }
 

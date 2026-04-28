@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"sort"
 	"strings"
 
 	"irmin-connectors/connectors/common"
@@ -100,7 +99,7 @@ func (p *StripePushProvider) ProcessFiles(
 	}
 
 	stats := &pushStats{}
-	orderedPaths := sortedPaths(files)
+	orderedPaths := common.SortedPaths(files)
 	for _, path := range orderedPaths {
 		if resolvedTarget != "" && !pathMatchesTarget(path, resolvedTarget) {
 			continue
@@ -275,19 +274,6 @@ func pathMatchesTarget(filePath, target string) bool {
 		return true
 	}
 	return false
-}
-
-// sortedPaths returns the map keys in sorted order for deterministic
-// iteration (zip archives don't preserve order and Go map iteration is
-// randomized). sort.Strings matches the convention used by every
-// sibling connector's push path.
-func sortedPaths(files map[string][]byte) []string {
-	paths := make([]string, 0, len(files))
-	for k := range files {
-		paths = append(paths, k)
-	}
-	sort.Strings(paths)
-	return paths
 }
 
 // logPushSummary emits a single structured event with the accurate

@@ -1,0 +1,63 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/linear/config</title></head><body>
+<h1>Package irmin-connectors/connectors/linear/config</h1>
+<pre>
+package config // import "irmin-connectors/connectors/linear/config"
+
+Package config declares Linear's DynamicField schema and the ConnectorDetails
+payload served from the /info endpoint.
+
+Auth is **OAuth 2.1 with Dynamic Client Registration** against Linear's MCP
+OAuth server (https://mcp.linear.app). Per the OAuth roadmap (Phase 4),
+this is the first real connector that exercises the DCR path end-to-end
+— there is no admin-configured static OAuth app per environment, so the
+connector ships with no `details` form fields. The user clicks Connect,
+Core creates a per-workspace OAuth client via DCR, the user approves the grant,
+and the connector authenticates every vendor call from that point on with a
+transparently-refreshed bearer token resolved from Core at request time.
+
+FUNCTIONS
+
+func GetConnectorInfo() models.ConnectorDetails
+    GetConnectorInfo returns the static connector metadata. The embedded
+    ConnectionOAuthConfig is what makes the console render a Connect button on
+    the Connection wizard — Core reads it through the registration call and the
+    DynamicForm path on the frontend branches off `connection_oauth_config !=
+    nil`.
+
+func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
+    GetDetailsFieldDefinitions returns the connection details schema.
+
+    Linear is OAuth-backed so there are no user-entered detail fields — the
+    credential is the OAuth bearer token Core mints on behalf of the workspace,
+    and the console renders a Connect button instead of a form. The empty map
+    keeps the embed uniform with the static- credential connectors and lets
+    common helpers no-op cleanly.
+
+func GetOptionalFields() []string
+    GetOptionalFields returns optional field names from both maps.
+
+func GetRequiredDetailsFields() []string
+    GetRequiredDetailsFields returns only the required detail field names (none
+    today; reserved for future extensions).
+
+func GetRequiredFields() []string
+    GetRequiredFields returns the union of required detail and settings
+    field names. Linear has no required fields today — OAuth supplies the
+    credential and every setting defaults sensibly — so this returns an
+    empty slice; the helper exists so the OperationConfigProvider contract
+    (GetOperationFormFields) is met uniformly with sibling connectors.
+
+func GetRequiredSettingsFields() []string
+    GetRequiredSettingsFields returns only required settings field names (none
+    today).
+
+func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
+    GetSettingsFieldDefinitions returns the per-Connection settings. Settings
+    are user-tunable knobs that don't carry auth material.
+
+func GetSettingsFields() []string
+    GetSettingsFields returns every settings field name.
+
+</pre>
+</body></html>

@@ -455,7 +455,7 @@ func (p *SFTPSchemaProvider) getContentTypeFromExtension(ext string) string {
 // @Router /sftp/operation/schema/{operation} [post]
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 	provider := &SFTPSchemaProvider{
-		APIBaseURL: cs.App.Env.APIBaseURL,
+		APIBaseURL: cs.App.Env.SDKBaseURL(),
 		APIToken:   cs.App.Env.APIToken,
 		Logger:     cs.Logger,
 	}

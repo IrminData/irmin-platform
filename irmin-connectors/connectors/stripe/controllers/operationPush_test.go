@@ -2,7 +2,6 @@
 package stripecontrollers
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 )
@@ -78,32 +77,6 @@ func TestPathMatchesTarget(t *testing.T) {
 	}
 }
 
-func TestSortedPaths(t *testing.T) {
-	// Empty.
-	if got := sortedPaths(map[string][]byte{}); len(got) != 0 {
-		t.Errorf("empty map should yield empty slice, got %v", got)
-	}
-
-	// Single element.
-	if got := sortedPaths(map[string][]byte{"a": nil}); !reflect.DeepEqual(got, []string{"a"}) {
-		t.Errorf("single element, got %v", got)
-	}
-
-	// Deterministic order across runs.
-	files := map[string][]byte{
-		"customers/cus_c.json": nil,
-		"customers/cus_a.json": nil,
-		"customers/cus_b.json": nil,
-		"invoices/in_1.json":   nil,
-	}
-	got := sortedPaths(files)
-	want := []string{
-		"customers/cus_a.json",
-		"customers/cus_b.json",
-		"customers/cus_c.json",
-		"invoices/in_1.json",
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, want %v", got, want)
-	}
-}
+// sortedPaths previously lived here as a stripe-only helper. It moved
+// to connectors/common/operationDataHelpers.go and the consolidated
+// tests live in connectors/common/operationDataHelpers_test.go.

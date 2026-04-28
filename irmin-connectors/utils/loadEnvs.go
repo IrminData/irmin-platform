@@ -17,7 +17,7 @@ type ConnectorsEnv struct {
 	CorsEnabled              bool   // Whether CORS is enabled
 	CorsOrigins              string // Origins allowed to access the connectors server
 	UniversalConnectorAPIKey string // Universal API Key for all connectors.
-	APIBaseURL               string // Base URL of the Irmin Core API
+	APIBaseURL               string // APIBaseURL is the canonical Core base URL — host only, no path
 	APIToken                 string // Token to authenticate system requests to the Irmin Core API
 	DatabaseConnectionString string // Connection string for the database
 	// Sentry — SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN are read
@@ -27,6 +27,21 @@ type ConnectorsEnv struct {
 	SentryDSN              string  // Sentry DSN for error reporting
 	SentryEnvironment      string  // Sentry environment name (default "development")
 	SentryTracesSampleRate float64 // Sentry traces sample rate (default 0.1)
+}
+
+// SDKBaseURL returns the Core base URL formatted for the irmin-sdk-go
+// `api.NewClient` constructor, which expects a base of the form
+// `https://host/api` (the SDK's endpoint constants are `/v1/...` and the
+// Request method does a literal string concat). Callers that POST to
+// system endpoints directly (the OAuth token client) use APIBaseURL
+// instead because those callers append the full `/api/v1/...` path.
+//
+// Keeping the conversion here means env value normalization stays in one
+// place — APIBaseURL is canonical, and any "this caller needs a different
+// shape" knowledge lives next to the env definition rather than scattered
+// across SDK callsites.
+func (e *ConnectorsEnv) SDKBaseURL() string {
+	return e.APIBaseURL + "/api"
 }
 
 // getEnv retrieves a single environment variable. If required and missing, returns an error.
@@ -105,6 +120,12 @@ func LoadEnv() (*ConnectorsEnv, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Strip a trailing slash and any `/api[/v1]` suffix so downstream
+	// callers can each append the prefix they need without producing
+	// `/api/api/v1/...` paths when the env value was already
+	// path-prefixed. Tolerates both shapes: `https://api.example.com`
+	// and `https://api.example.com/api`.
+	apiBaseURL = NormalizeCoreBaseURL(apiBaseURL)
 	apiToken, err := getEnv("IRMIN_API_TOKEN", true, "")
 	if err != nil {
 		return nil, err

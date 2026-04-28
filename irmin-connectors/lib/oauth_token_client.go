@@ -58,6 +58,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"irmin-connectors/utils"
 )
 
 // HeaderConnectionID is the header Core stamps on every outbound
@@ -85,10 +87,6 @@ const (
 	// protecting us from a pathological response that could otherwise
 	// exhaust memory during log capture.
 	bodyReadLimit = 64 * 1024
-
-	// errorSnippetLimit is the maximum length of a Core response body
-	// preview included in unexpected-status error messages.
-	errorSnippetLimit = 200
 )
 
 // Sentinel errors for the small set of failure modes connector handlers
@@ -143,9 +141,14 @@ type OAuthTokenClient struct {
 // NewOAuthTokenClient returns a client wired with a sensible default
 // timeout. Callers that need custom retries, TLS config, or proxy
 // handling can assign .HTTPClient after construction.
+//
+// The provided coreBaseURL is normalized via utils.NormalizeCoreBaseURL
+// so a `/api[/v1]`-suffixed value still produces correct paths. This
+// duplicates the normalization done at env-load time so direct callers
+// (tests, third-party uses) get the same behavior as the env-loader path.
 func NewOAuthTokenClient(coreBaseURL, systemToken string) *OAuthTokenClient {
 	return &OAuthTokenClient{
-		CoreBaseURL: strings.TrimRight(coreBaseURL, "/"),
+		CoreBaseURL: utils.NormalizeCoreBaseURL(coreBaseURL),
 		SystemToken: systemToken,
 		HTTPClient:  &http.Client{Timeout: coreHTTPTimeoutSeconds * time.Second},
 	}
@@ -162,11 +165,24 @@ type VendorAccessToken struct {
 }
 
 // AuthorizationHeader returns the exact value a connector should set on
-// outbound vendor requests, e.g. "Bearer ya29...". Uses "Bearer" when
-// the vendor omitted token_type, matching OAuth 2.0 §5.1 convention.
+// outbound vendor requests, e.g. "Bearer ya29...".
+//
+// We canonicalise any case-variant of "bearer" to the spec-grammar form
+// "Bearer". RFC 6750 §2.1's ABNF uses the literal token "Bearer" with a
+// capital B, and while §1.2 says the scheme should be parsed case-
+// insensitively (per HTTP/1.1 norms), some resource servers — Linear's
+// MCP server included — reject the lowercase form with
+// `invalid_token: Missing or invalid access token`. The vendor's
+// /token response often returns "bearer" lowercase (RFC 6749 §5.1
+// shows it lowercase in the example), so we cannot assume the stored
+// type is already normalised. Empty token_type also defaults to
+// "Bearer" matching OAuth 2.0 §5.1 convention.
+//
+// Non-bearer schemes (theoretical; we don't currently support any vendor
+// using MAC, DPoP, etc.) are preserved verbatim.
 func (t *VendorAccessToken) AuthorizationHeader() string {
 	typ := t.TokenType
-	if typ == "" {
+	if typ == "" || strings.EqualFold(typ, "bearer") {
 		typ = "Bearer"
 	}
 	return typ + " " + t.Value
@@ -264,11 +280,12 @@ func parseAccessTokenResponse(resp *http.Response) (*VendorAccessToken, error) {
 	case resp.StatusCode >= http.StatusInternalServerError:
 		return nil, fmt.Errorf("%w: core returned %d", ErrCoreUnavailable, resp.StatusCode)
 	case resp.StatusCode < 200 || resp.StatusCode >= 300:
-		return nil, fmt.Errorf(
-			"oauth: unexpected core response %d: %s",
-			resp.StatusCode,
-			truncate(raw, errorSnippetLimit),
-		)
+		// Status code only — Core's response body could in pathological
+		// cases echo a token (e.g., a 4xx that still carries the
+		// `data.access_token` field). Operators have Core's own logs
+		// for the body content; the connector's error chain must not
+		// be a vector for token leakage.
+		return nil, fmt.Errorf("oauth: unexpected core response %d", resp.StatusCode)
 	}
 
 	var envelope struct {
@@ -298,13 +315,4 @@ func ConnectionIDFromRequestHeader(getHeader func(string) string) (uint, error) 
 		return 0, ErrMissingConnectionHeader
 	}
 	return uint(parsed), nil
-}
-
-// truncate returns at most n bytes of b as a string, for embedding in
-// error messages without accidentally dumping kilobytes of HTML.
-func truncate(b []byte, n int) string {
-	if len(b) > n {
-		return string(b[:n])
-	}
-	return string(b)
 }
