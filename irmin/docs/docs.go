@@ -15009,7 +15009,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Revokes the vendor token (best effort) and removes the stored credentials.",
+                "description": "Revokes the vendor token (best effort) and removes the stored credentials. Idempotent — disconnecting an already-disconnected connection succeeds.",
                 "tags": [
                     "oauth"
                 ],
@@ -15045,6 +15045,18 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Connection not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error during revoke",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -15104,6 +15116,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
+                    },
+                    "404": {
+                        "description": "Connection or OAuth client not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Vendor unreachable or internal error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
                     }
                 }
             }
@@ -15148,11 +15172,17 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/oauth.ConnectionStatus"
+                                            "$ref": "#/definitions/connectionoauth.ConnectionStatus"
                                         }
                                     }
                                 }
                             ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
                     },
                     "401": {
@@ -15166,12 +15196,48 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
+                    },
+                    "404": {
+                        "description": "Connection not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error reading status",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
                     }
                 }
             }
         }
     },
     "definitions": {
+        "connectionoauth.ConnectionStatus": {
+            "type": "object",
+            "properties": {
+                "connected": {
+                    "type": "boolean"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "last_refresh_at": {
+                    "type": "string"
+                },
+                "needs_refresh": {
+                    "description": "NeedsRefresh flags that the current access token is inside the\nrefresh skew window and the next GetAccessToken will trigger a\nrefresh. Useful for UIs that want to hint \"reconnecting...\" before\nthe user initiates an action.",
+                    "type": "boolean"
+                },
+                "scope": {
+                    "type": "string"
+                },
+                "token_type": {
+                    "type": "string"
+                }
+            }
+        },
         "controllers.ConnectorWebhookPayload": {
             "type": "object"
         },
@@ -21534,30 +21600,6 @@ const docTemplate = `{
                 "workflow_count": {
                     "type": "integer",
                     "example": 8
-                }
-            }
-        },
-        "oauth.ConnectionStatus": {
-            "type": "object",
-            "properties": {
-                "connected": {
-                    "type": "boolean"
-                },
-                "expires_at": {
-                    "type": "string"
-                },
-                "last_refresh_at": {
-                    "type": "string"
-                },
-                "needs_refresh": {
-                    "description": "NeedsRefresh flags that the current access token is inside the\nrefresh skew window and the next GetAccessToken will trigger a\nrefresh. Useful for UIs that want to hint \"reconnecting...\" before\nthe user initiates an action.",
-                    "type": "boolean"
-                },
-                "scope": {
-                    "type": "string"
-                },
-                "token_type": {
-                    "type": "string"
                 }
             }
         },

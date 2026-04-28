@@ -8,21 +8,27 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-// oauthBase is the minimal subset of gorm.Model for OAuth rows. We keep ID
-// and timestamps but intentionally drop DeletedAt: OAuth artifacts (tokens,
-// sessions, clients) have no audit value after removal. A soft-deleted
-// ghost row would also collide with the unique index on connection_id and
-// silently defeat later upserts.
+// oauthBase is the minimal shape OAuth rows share. ID only — we
+// intentionally do not embed `gorm.Model` and do not carry CreatedAt /
+// UpdatedAt / DeletedAt:
+//
+//   - DeletedAt would let soft-deleted ghost rows collide with the
+//     unique index on connection_id and silently defeat later upserts.
+//   - CreatedAt / UpdatedAt have no consumer on these tables. The
+//     domain temporal fields people actually care about are
+//     ExpiresAt (sessions, tokens) and LastRefreshAt (tokens).
+//     Carrying generic timestamps just to have them invited a class
+//     of bugs around AutoMigrate not adding the columns to existing
+//     tables and ON CONFLICT clauses referencing nonexistent
+//     `excluded.updated_at` columns.
 type oauthBase struct {
-	ID        uint      `json:"id"         gorm:"primarykey"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID uint `json:"id" gorm:"primarykey"`
 }
 
 // Secret-map keys used by the ConnectionOAuth* tables. Values live in the
 // `Secrets` column of the respective model, which is encrypted at rest via
 // the encrypted_json GORM serializer. Constants keep key strings from
-// drifting across the services/oauth package and the DB layer.
+// drifting across the services/connectionoauth package and the DB layer.
 //
 // These constants are map keys, not credentials themselves — gosec's G101
 // pattern match on names like "token"/"secret" is a false positive here.
@@ -97,7 +103,7 @@ type ConnectionOAuthSession struct {
 	//
 	// Implementation note: the column name reads as "HMAC" for historical
 	// schema reasons, but the value stored here is a 256-bit cryptographic
-	// random string produced by the services/oauth package — not an HMAC.
+	// random string produced by the services/connectionoauth package — not an HMAC.
 	// The callback looks up the session by exact-match on this column, so
 	// any unguessable, unique-per-session value works. The uniqueIndex
 	// converts a replayed state into a DB-level collision at session create
@@ -190,6 +196,45 @@ func (d *Database) GetConnectionOAuthTokenByConnectionID(connectionID uint) (*Co
 	return &token, nil
 }
 
+// ConnectionOAuthTokenStatus is the non-secret subset of a token row used
+// by hot-path read endpoints (status polling). Excludes Secrets so the
+// encrypted_json serializer never has to AES-decrypt access/refresh tokens
+// for callers that only need expiry/scope/type metadata.
+type ConnectionOAuthTokenStatus struct {
+	ConnectionID  uint
+	ExpiresAt     *time.Time
+	Scope         string
+	TokenType     string
+	LastRefreshAt *time.Time
+}
+
+// GetConnectionOAuthTokenStatusByConnectionID returns just the status-
+// relevant columns for a token row. Console polls this every 2.5s during
+// an active OAuth flow; loading the full row would force the encrypted_json
+// serializer to decrypt access_token + refresh_token on every poll, ~24×/min
+// per active connection across all watching consoles. Use the full
+// GetConnectionOAuthTokenByConnectionID only on the refresh / revoke paths
+// that actually need the secrets.
+func (d *Database) GetConnectionOAuthTokenStatusByConnectionID(
+	connectionID uint,
+) (*ConnectionOAuthTokenStatus, error) {
+	if connectionID == 0 {
+		return nil, ErrConnectionOAuthTokenNotFound
+	}
+	var status ConnectionOAuthTokenStatus
+	err := d.Model(&ConnectionOAuthToken{}).
+		Select("connection_id", "expires_at", "scope", "token_type", "last_refresh_at").
+		Where("connection_id = ?", connectionID).
+		Take(&status).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrConnectionOAuthTokenNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &status, nil
+}
+
 // UpsertConnectionOAuthToken writes the given token, replacing any existing
 // row for the same connection atomically via ON CONFLICT DO UPDATE. Used by
 // the callback handler (new connection) and the refresh flow (rotated access
@@ -210,7 +255,6 @@ func (d *Database) UpsertConnectionOAuthToken(tx *gorm.DB, token *ConnectionOAut
 			"scope",
 			"token_type",
 			"last_refresh_at",
-			"updated_at",
 		}),
 	}).Create(token).Error
 }
@@ -313,14 +357,21 @@ func (d *Database) GetConnectionOAuthSessionByStateHMAC(stateHMAC string) (*Conn
 	return &session, nil
 }
 
-// DeleteConnectionOAuthSession removes a session row by ID. Called after a
-// successful callback to enforce the single-use property of the state
-// parameter.
-func (d *Database) DeleteConnectionOAuthSession(tx *gorm.DB, sessionID uint) error {
-	if sessionID == 0 {
-		return errors.New("zero sessionID")
+// DeleteConnectionOAuthSessionByStateHMAC removes a session row by its
+// state_hmac. Called after a successful callback to enforce the single-
+// use property of the state parameter, and on expired-session cleanup.
+//
+// We delete by state_hmac instead of synthetic ID because state_hmac is
+// the natural unique key (and what the caller already has in scope) and
+// because synthetic IDs on these tables have been an unreliable migration
+// surface — embedded primary-key fields don't always make it through
+// AutoMigrate cleanly on existing schemas. state_hmac is the signal we
+// trust.
+func (d *Database) DeleteConnectionOAuthSessionByStateHMAC(tx *gorm.DB, stateHMAC string) error {
+	if stateHMAC == "" {
+		return errors.New("empty stateHMAC")
 	}
-	return tx.Delete(&ConnectionOAuthSession{}, sessionID).Error
+	return tx.Where("state_hmac = ?", stateHMAC).Delete(&ConnectionOAuthSession{}).Error
 }
 
 // DeleteConnectionOAuthSessionsByConnectionID removes every pending session

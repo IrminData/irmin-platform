@@ -88,7 +88,7 @@ Key pieces:
 
 Shipped on this branch. Surface area:
 
-**DB (`db/oauth.go`):**
+**DB (`db/connection-oauth.go`):**
 - `connection_oauth_clients` — per-`(connector, workspace)` row with
   partial UNIQUE indexes (one for `workspace_id IS NOT NULL`, one for
   global `IS NULL`). Encrypted `client_secret` + RFC 7592
@@ -99,7 +99,7 @@ Shipped on this branch. Surface area:
   scope, expiry. Separated from `Connection.Details` so the existing
   mask/merge paths stay untouched.
 
-**Service (`services/oauth/`):**
+**Service (`services/connectionoauth/`):**
 - `StartFlow`, `HandleCallback`, `RefreshToken`, `GetAccessToken`,
   `Revoke` in `flow.go` / `token.go`.
 - `state.go` — HMAC signing, expiry, single-use via row deletion;
@@ -110,7 +110,7 @@ Shipped on this branch. Surface area:
   `ConnectionOAuthConfig` (either static env-driven or via DCR)
   during a flow start.
 
-**Endpoints (`controllers/oauth.go` + routes):**
+**Endpoints (`controllers/connection-oauth.go` + routes):**
 - `POST /v1/connections/{id}/oauth/start` → `{authorization_url}`
 - `GET /v1/oauth/callback` → HTML page that `postMessage`s back to
   the console origin and closes the popup
@@ -142,14 +142,14 @@ vendor-specific code (acceptance criterion #5).
 
 **Core side** (`irmin#424`)
 
-- `controllers/oauth.go::SystemOAuthAccessToken` accepts an optional
+- `controllers/connection-oauth.go::SystemOAuthAccessToken` accepts an optional
   `force_refresh: true` flag. When set, Core bypasses the local
   skew-window short-circuit and rotates the token unconditionally.
   The same `is_system` gate guards both variants — no parallel auth
   surface. Cross-service contract: `IRMIN_API_TOKEN` (connectors)
   must equal `TOKEN` (Core); covered by
   `TestSystemOAuthAccessTokenAuthGate`.
-- `services/oauth/token.go::ForceRefreshAccessToken` reuses the
+- `services/connectionoauth/token.go::ForceRefreshAccessToken` reuses the
   existing `RefreshToken` row-locking + upsert via a private
   `refreshToken(force bool)` helper. Extracted
   `loadLockedTokenRow` and `performRefresh` so cognitive complexity

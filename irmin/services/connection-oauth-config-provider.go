@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"irmin-api/db"
-	"irmin-api/services/oauth"
+	"irmin-api/services/connectionoauth"
 
 	"github.com/IrminData/irmin-sdk-go/connectorsclient"
 
@@ -15,7 +15,7 @@ import (
 // connectorsClientOAuthConfigProvider is the production ConfigProvider.
 // It resolves a connector's ConnectionOAuthConfig by calling the connector
 // service's /info endpoint via the SDK client and translating the SDK
-// shape into the internal oauth.Config consumed by the flow.
+// shape into the internal connectionoauth.Config consumed by the flow.
 //
 // The struct holds no state — it exists as a named type so the oauth
 // flow can inject a mock provider in tests.
@@ -27,35 +27,35 @@ func newConnectorsClientOAuthConfigProvider() *connectorsClientOAuthConfigProvid
 }
 
 // GetOAuthConfig fetches the connector's /info response and extracts the
-// OAuthConfig block. Returns oauth.ErrConfigUnavailable when either the
+// OAuthConfig block. Returns connectionoauth.ErrConfigUnavailable when either the
 // fetch fails, or /info succeeds without an oauth_config block (meaning
 // the connector isn't OAuth-backed).
 func (p *connectorsClientOAuthConfigProvider) GetOAuthConfig(
 	ctx context.Context,
 	connector *db.Connector,
-) (*oauth.Config, error) {
+) (*connectionoauth.Config, error) {
 	if connector == nil || connector.APIBaseURL == "" || connector.SystemToken == "" {
-		return nil, oauth.ErrConfigUnavailable
+		return nil, connectionoauth.ErrConfigUnavailable
 	}
 	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken)
 	info, err := client.GetInfo(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("%w: fetch /info: %w", oauth.ErrConfigUnavailable, err)
+		return nil, fmt.Errorf("%w: fetch /info: %w", connectionoauth.ErrConfigUnavailable, err)
 	}
 	if info == nil || info.ConnectionOAuthConfig == nil {
-		return nil, oauth.ErrConfigUnavailable
+		return nil, connectionoauth.ErrConfigUnavailable
 	}
-	return sdkToServiceOAuthConfig(info.ConnectionOAuthConfig), nil
+	return sdkToServiceConnectionOAuthConfig(info.ConnectionOAuthConfig), nil
 }
 
-// sdkToServiceOAuthConfig maps the SDK ConnectionOAuthConfig to the
-// internal one used by services/oauth. Pure — no I/O, no side effects —
+// sdkToServiceConnectionOAuthConfig maps the SDK ConnectionOAuthConfig to the
+// internal one used by services/connectionoauth. Pure — no I/O, no side effects —
 // so unit-testable without standing up a network or a DB.
-func sdkToServiceOAuthConfig(src *irminmodels.ConnectionOAuthConfig) *oauth.Config {
+func sdkToServiceConnectionOAuthConfig(src *irminmodels.ConnectionOAuthConfig) *connectionoauth.Config {
 	if src == nil {
 		return nil
 	}
-	return &oauth.Config{
+	return &connectionoauth.Config{
 		Provider:         src.Provider,
 		AuthorizationURL: src.AuthorizationURL,
 		TokenURL:         src.TokenURL,

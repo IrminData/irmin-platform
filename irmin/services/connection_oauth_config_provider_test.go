@@ -1,6 +1,6 @@
 // Internal test for the SDK → service OAuthConfig mapping. Intentionally
 // lives in `package services` so it can reach the unexported
-// sdkToServiceOAuthConfig helper without widening the API surface.
+// sdkToServiceConnectionOAuthConfig helper without widening the API surface.
 //
 //nolint:testpackage // intentional internal test for unexported helper
 package services
@@ -12,7 +12,7 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func TestSDKToServiceOAuthConfigPreservesEveryField(t *testing.T) {
+func TestSDKToServiceConnectionOAuthConfigPreservesEveryField(t *testing.T) {
 	src := &irminmodels.ConnectionOAuthConfig{
 		Provider:         "hubspot",
 		AuthorizationURL: "https://app.hubspot.com/oauth/authorize",
@@ -27,7 +27,7 @@ func TestSDKToServiceOAuthConfigPreservesEveryField(t *testing.T) {
 			"prompt":      "consent",
 		},
 	}
-	got := sdkToServiceOAuthConfig(src)
+	got := sdkToServiceConnectionOAuthConfig(src)
 	if got == nil {
 		t.Fatalf("got nil, want populated Config")
 	}
@@ -62,8 +62,8 @@ func TestSDKToServiceOAuthConfigPreservesEveryField(t *testing.T) {
 	}
 }
 
-func TestSDKToServiceOAuthConfigNilIn(t *testing.T) {
-	if got := sdkToServiceOAuthConfig(nil); got != nil {
+func TestSDKToServiceConnectionOAuthConfigNilIn(t *testing.T) {
+	if got := sdkToServiceConnectionOAuthConfig(nil); got != nil {
 		t.Fatalf("nil input should produce nil output, got %+v", got)
 	}
 }

@@ -1,4 +1,4 @@
-package oauth
+package connectionoauth
 
 import (
 	"context"
@@ -45,6 +45,12 @@ type ConnectionStatus struct {
 //
 // Returns (status{Connected:false}, nil) when the connection has no token
 // row — that's a normal "not connected yet" state, not an error.
+//
+// Hot-path: Console polls this every 2.5s during the OAuth popup flow, so
+// we read the status-only column subset (no secrets) to avoid forcing the
+// encrypted_json serializer to AES-decrypt access/refresh tokens on every
+// poll. The needsRefresh check is recomputed locally from ExpiresAt — it
+// doesn't actually inspect the secret material.
 func (s *Service) GetConnectionOAuthStatus(
 	_ context.Context,
 	connectionID uint,
@@ -52,20 +58,20 @@ func (s *Service) GetConnectionOAuthStatus(
 	if connectionID == 0 {
 		return &ConnectionStatus{Connected: false}, nil
 	}
-	token, err := s.db.GetConnectionOAuthTokenByConnectionID(connectionID)
+	status, err := s.db.GetConnectionOAuthTokenStatusByConnectionID(connectionID)
 	if err != nil {
 		if errors.Is(err, db.ErrConnectionOAuthTokenNotFound) {
 			return &ConnectionStatus{Connected: false}, nil
 		}
-		return nil, fmt.Errorf("oauth: load token for status: %w", err)
+		return nil, fmt.Errorf("oauth: load token status: %w", err)
 	}
 	return &ConnectionStatus{
 		Connected:     true,
-		ExpiresAt:     token.ExpiresAt,
-		Scope:         token.Scope,
-		TokenType:     token.TokenType,
-		LastRefreshAt: token.LastRefreshAt,
-		NeedsRefresh:  s.needsRefresh(token),
+		ExpiresAt:     status.ExpiresAt,
+		Scope:         status.Scope,
+		TokenType:     status.TokenType,
+		LastRefreshAt: status.LastRefreshAt,
+		NeedsRefresh:  s.needsRefreshForExpiry(status.ExpiresAt),
 	}, nil
 }
 
@@ -334,10 +340,17 @@ func (s *Service) lookupConfigAndClient(
 // needsRefresh reports whether token is expired or will expire within
 // RefreshSkew. Tokens with no ExpiresAt (nil) are assumed non-expiring.
 func (s *Service) needsRefresh(token *db.ConnectionOAuthToken) bool {
-	if token.ExpiresAt == nil {
+	return s.needsRefreshForExpiry(token.ExpiresAt)
+}
+
+// needsRefreshForExpiry is the same predicate keyed only on ExpiresAt, used
+// by GetConnectionOAuthStatus where we deliberately don't load the
+// encrypted Secrets column on the polling hot path.
+func (s *Service) needsRefreshForExpiry(expiresAt *time.Time) bool {
+	if expiresAt == nil {
 		return false
 	}
-	return !s.clock.Now().Add(s.RefreshSkew).Before(*token.ExpiresAt)
+	return !s.clock.Now().Add(s.RefreshSkew).Before(*expiresAt)
 }
 
 // accessTokenFromRow flattens the DB row into the small struct callers want.

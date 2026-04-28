@@ -9,7 +9,7 @@ import (
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/services"
-	"irmin-api/services/oauth"
+	"irmin-api/services/connectionoauth"
 	"regexp"
 	"strings"
 	"time"
@@ -24,25 +24,25 @@ import (
 // malicious vendor shouldn't be able to balloon the response body or
 // inject markup by piggybacking on the error channel.
 const (
-	// oauthCallbackMaxErrorCodeLen caps the `error` query param. RFC 6749
+	// connectionOAuthCallbackMaxErrorCodeLen caps the `error` query param. RFC 6749
 	// defines error codes as short ASCII tokens (invalid_request,
 	// access_denied, etc.); anything wildly longer is abuse and is
 	// replaced with a sentinel.
-	oauthCallbackMaxErrorCodeLen = 64
-	// oauthCallbackMaxDescriptionLen caps `error_description`. The spec
+	connectionOAuthCallbackMaxErrorCodeLen = 64
+	// connectionOAuthCallbackMaxDescriptionLen caps `error_description`. The spec
 	// allows free-form text but it's meant for humans; 1 KiB is more than
 	// enough for any legitimate message.
-	oauthCallbackMaxDescriptionLen = 1024
-	// oauthCallbackInvalidErrorSentinel replaces `error` codes that don't
+	connectionOAuthCallbackMaxDescriptionLen = 1024
+	// connectionOAuthCallbackInvalidErrorSentinel replaces `error` codes that don't
 	// match the shape we accept. Keeps the console's branching stable
 	// regardless of what the vendor sent.
-	oauthCallbackInvalidErrorSentinel = "vendor_error_invalid"
+	connectionOAuthCallbackInvalidErrorSentinel = "vendor_error_invalid"
 )
 
-// oauthErrorCodePattern is the RFC 6749 shape we accept for `error`
+// connectionOAuthErrorCodePattern is the RFC 6749 shape we accept for `error`
 // tokens — lowercase ASCII letters, digits, and underscores, starting
 // with a letter. Validated as a whole match, not a find.
-var oauthErrorCodePattern = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}$`)
+var connectionOAuthErrorCodePattern = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}$`)
 
 // --- User-auth endpoints ------------------------------------------------------
 
@@ -57,6 +57,8 @@ var oauthErrorCodePattern = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}$`)
 // @Failure 400 {object} irminmodels.IrminAPIResponse "OAuth not available for this connector"
 // @Failure 401 {object} irminmodels.IrminAPIResponse
 // @Failure 403 {object} irminmodels.IrminAPIResponse
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Connection or OAuth client not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Vendor unreachable or internal error"
 // @Router /workspaces/{workspace}/connections/{connection}/oauth/start [post]
 func (api *APIControllers) StartConnectionOAuth(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
@@ -77,14 +79,14 @@ func (api *APIControllers) StartConnectionOAuth(c fiber.Ctx) error {
 			dict,
 		)
 	}
-	if api.Services.OAuthService == nil {
+	if api.Services.ConnectionOAuthService == nil {
 		return api.handleServiceError(c, "OAuth service unavailable",
 			services.NewInternalError("oauth service is not initialised"), dict)
 	}
 
-	authURL, startErr := api.Services.OAuthService.StartFlow(c.Context(), connection, user.ID)
+	authURL, startErr := api.Services.ConnectionOAuthService.StartFlow(c.Context(), connection, user.ID)
 	if startErr != nil {
-		return api.mapOAuthError(c, "Failed to start OAuth flow", startErr, dict)
+		return api.mapConnectionOAuthError(c, "Failed to start OAuth flow", startErr, dict)
 	}
 
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
@@ -107,9 +109,12 @@ func (api *APIControllers) StartConnectionOAuth(c fiber.Ctx) error {
 // @Security ApiKeyAuth
 // @Param workspace path string true "Workspace slug"
 // @Param connection path string true "Connection SQID"
-// @Success 200 {object} irminmodels.IrminAPIResponse{data=oauth.ConnectionStatus}
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=connectionoauth.ConnectionStatus}
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Invalid request parameters"
 // @Failure 401 {object} irminmodels.IrminAPIResponse
 // @Failure 403 {object} irminmodels.IrminAPIResponse
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Connection not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal error reading status"
 // @Router /workspaces/{workspace}/connections/{connection}/oauth/status [get]
 func (api *APIControllers) GetConnectionOAuthStatus(c fiber.Ctx) error {
 	_, dict, _, _, err := api.validateWorkspaceParams(c)
@@ -130,16 +135,16 @@ func (api *APIControllers) GetConnectionOAuthStatus(c fiber.Ctx) error {
 			dict,
 		)
 	}
-	if api.Services.OAuthService == nil {
+	if api.Services.ConnectionOAuthService == nil {
 		return api.handleServiceError(c, "OAuth service unavailable",
 			services.NewInternalError("oauth service is not initialised"), dict)
 	}
 
-	status, statusErr := api.Services.OAuthService.GetConnectionOAuthStatus(
+	status, statusErr := api.Services.ConnectionOAuthService.GetConnectionOAuthStatus(
 		c.Context(), connection.ID,
 	)
 	if statusErr != nil {
-		return api.mapOAuthError(c, "Failed to read OAuth status", statusErr, dict)
+		return api.mapConnectionOAuthError(c, "Failed to read OAuth status", statusErr, dict)
 	}
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: status,
@@ -148,7 +153,7 @@ func (api *APIControllers) GetConnectionOAuthStatus(c fiber.Ctx) error {
 
 // DisconnectConnectionOAuth godoc
 // @Summary Disconnect the OAuth connection
-// @Description Revokes the vendor token (best effort) and removes the stored credentials.
+// @Description Revokes the vendor token (best effort) and removes the stored credentials. Idempotent — disconnecting an already-disconnected connection succeeds.
 // @Tags oauth
 // @Security ApiKeyAuth
 // @Param workspace path string true "Workspace slug"
@@ -156,6 +161,8 @@ func (api *APIControllers) GetConnectionOAuthStatus(c fiber.Ctx) error {
 // @Success 200 {object} irminmodels.IrminAPIResponse
 // @Failure 401 {object} irminmodels.IrminAPIResponse
 // @Failure 403 {object} irminmodels.IrminAPIResponse
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Connection not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal error during revoke"
 // @Router /workspaces/{workspace}/connections/{connection}/oauth/disconnect [post]
 func (api *APIControllers) DisconnectConnectionOAuth(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
@@ -176,13 +183,13 @@ func (api *APIControllers) DisconnectConnectionOAuth(c fiber.Ctx) error {
 			dict,
 		)
 	}
-	if api.Services.OAuthService == nil {
+	if api.Services.ConnectionOAuthService == nil {
 		return api.handleServiceError(c, "OAuth service unavailable",
 			services.NewInternalError("oauth service is not initialised"), dict)
 	}
 
-	if revokeErr := api.Services.OAuthService.Revoke(c.Context(), connection.ID); revokeErr != nil {
-		return api.mapOAuthError(c, "Failed to disconnect OAuth", revokeErr, dict)
+	if revokeErr := api.Services.ConnectionOAuthService.Revoke(c.Context(), connection.ID); revokeErr != nil {
+		return api.mapConnectionOAuthError(c, "Failed to disconnect OAuth", revokeErr, dict)
 	}
 
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
@@ -200,7 +207,7 @@ func (api *APIControllers) DisconnectConnectionOAuth(c fiber.Ctx) error {
 
 // --- Public callback ----------------------------------------------------------
 
-// OAuthCallback godoc
+// ConnectionOAuthCallback godoc
 // @Summary OAuth authorization callback (public)
 // @Description Vendor redirects here after user approval. Exchanges the code for tokens and posts a message to the opener window.
 // @Tags oauth
@@ -211,8 +218,8 @@ func (api *APIControllers) DisconnectConnectionOAuth(c fiber.Ctx) error {
 // @Param error_description query string false "Vendor-reported error message"
 // @Success 200 {string} string "HTML with postMessage script"
 // @Router /oauth/callback [get]
-func (api *APIControllers) OAuthCallback(c fiber.Ctx) error {
-	if api.Services.OAuthService == nil {
+func (api *APIControllers) ConnectionOAuthCallback(c fiber.Ctx) error {
+	if api.Services.ConnectionOAuthService == nil {
 		return renderOAuthCallbackHTML(c, api.Env.ConsoleURL, oauthCallbackResult{
 			Error: "server_error", Description: "oauth service unavailable",
 		})
@@ -225,18 +232,33 @@ func (api *APIControllers) OAuthCallback(c fiber.Ctx) error {
 	// console's `error` branching on a known-shape token.
 	if errCode := c.Query("error"); errCode != "" {
 		return renderOAuthCallbackHTML(c, api.Env.ConsoleURL, oauthCallbackResult{
-			Error:       sanitizeOAuthErrorCode(errCode),
-			Description: truncateRunes(c.Query("error_description"), oauthCallbackMaxDescriptionLen),
+			Error:       sanitizeConnectionOAuthErrorCode(errCode),
+			Description: truncateRunes(c.Query("error_description"), connectionOAuthCallbackMaxDescriptionLen),
 		})
 	}
 	state := c.Query("state")
 	code := c.Query("code")
 
-	result, cbErr := api.Services.OAuthService.HandleCallback(c.Context(), state, code)
+	result, cbErr := api.Services.ConnectionOAuthService.HandleCallback(c.Context(), state, code)
 	if cbErr != nil {
-		api.Logger.InfoContext(c.Context(), "oauth callback rejected", "error", cbErr)
+		classified := classifyCallbackError(cbErr)
+		// Unclassified errors fall through to "internal_error" — the
+		// generic bucket. Log at Error level so they're visible in
+		// Sentry / log dashboards as bugs to investigate. Classified
+		// errors stay at Info level: state_invalid, vendor_error etc.
+		// are expected failure modes (user denied, session expired).
+		if classified == "internal_error" {
+			api.Logger.ErrorContext(c.Context(),
+				"oauth callback unclassified error — investigate",
+				"error", cbErr,
+				"error_type", fmt.Sprintf("%T", cbErr),
+				"classified", classified)
+		} else {
+			api.Logger.InfoContext(c.Context(), "oauth callback rejected",
+				"error", cbErr, "classified", classified)
+		}
 		return renderOAuthCallbackHTML(c, api.Env.ConsoleURL, oauthCallbackResult{
-			Error:       classifyCallbackError(cbErr),
+			Error:       classified,
 			Description: callbackErrorDescription(cbErr),
 		})
 	}
@@ -295,7 +317,7 @@ type systemAccessTokenResponse struct {
 	Scope       string     `json:"scope,omitempty"`
 }
 
-// SystemOAuthAccessToken godoc
+// SystemConnectionOAuthAccessToken godoc
 // @Summary Fetch a fresh access token (system token only)
 // @Description Returns a non-expired access token for a connection, refreshing transparently if needed. Called by irmin-connectors.
 // @Tags oauth
@@ -308,7 +330,7 @@ type systemAccessTokenResponse struct {
 // @Failure 403 {object} irminmodels.IrminAPIResponse
 // @Router /system/oauth/access-token [post]
 //
-// Auth chain (covered by TestSystemOAuthAccessTokenAuthGate):
+// Auth chain (covered by TestSystemConnectionOAuthAccessTokenAuthGate):
 //   - AuthMiddleware on /api/v1 strips the Bearer token and stamps
 //     c.Locals("is_system", true) iff the token equals env.SystemToken.
 //   - This handler additionally enforces is_system == true before
@@ -318,7 +340,7 @@ type systemAccessTokenResponse struct {
 //
 // Cross-service contract: irmin-connectors must run with
 // IRMIN_API_TOKEN set to the same value as Core's TOKEN env var.
-func (api *APIControllers) SystemOAuthAccessToken(c fiber.Ctx) error {
+func (api *APIControllers) SystemConnectionOAuthAccessToken(c fiber.Ctx) error {
 	// Middleware normally populates the locale dictionary; if something
 	// upstream didn't, fall back to an empty dict so every error path
 	// still flows through handleServiceError (consistent logging,
@@ -330,7 +352,7 @@ func (api *APIControllers) SystemOAuthAccessToken(c fiber.Ctx) error {
 	if !isSystemOk || !isSystem {
 		return api.handleServiceError(c, "access denied", services.ErrAccessDenied, dict)
 	}
-	if api.Services.OAuthService == nil {
+	if api.Services.ConnectionOAuthService == nil {
 		return api.handleServiceError(c, "OAuth service unavailable",
 			services.NewInternalError("oauth service is not initialised"), dict)
 	}
@@ -346,16 +368,16 @@ func (api *APIControllers) SystemOAuthAccessToken(c fiber.Ctx) error {
 	}
 
 	var (
-		token  *oauth.AccessToken
+		token  *connectionoauth.AccessToken
 		tokErr error
 	)
 	if req.ForceRefresh {
-		token, tokErr = api.Services.OAuthService.ForceRefreshAccessToken(c.Context(), req.ConnectionID)
+		token, tokErr = api.Services.ConnectionOAuthService.ForceRefreshAccessToken(c.Context(), req.ConnectionID)
 	} else {
-		token, tokErr = api.Services.OAuthService.GetAccessToken(c.Context(), req.ConnectionID)
+		token, tokErr = api.Services.ConnectionOAuthService.GetAccessToken(c.Context(), req.ConnectionID)
 	}
 	if tokErr != nil {
-		return api.mapOAuthError(c, "Failed to get access token", tokErr, dict)
+		return api.mapConnectionOAuthError(c, "Failed to get access token", tokErr, dict)
 	}
 	if req.ForceRefresh {
 		api.recordForcedRefreshAuditEvent(req.ConnectionID)
@@ -420,78 +442,78 @@ func buildForcedRefreshLogEvent(connID uint, conn *db.Connection) *db.LogEvent {
 
 // oauthErrorCategory is the HTTP-level class an oauth error collapses to.
 // Extracted so tests can lock in the mapping without standing up a Fiber
-// context; mapOAuthError is the thin adapter that turns a category into a
+// context; mapConnectionOAuthError is the thin adapter that turns a category into a
 // handleServiceError call.
 type oauthErrorCategory int
 
 const (
-	// oauthCategoryInternal is the fallback for unrecognized errors — 500.
-	oauthCategoryInternal oauthErrorCategory = iota
-	// oauthCategoryBadRequest covers misconfig and invalid state → 400.
-	oauthCategoryBadRequest
-	// oauthCategoryUnauthorized is "vendor rejected your refresh, please
+	// connectionOAuthCategoryInternal is the fallback for unrecognized errors — 500.
+	connectionOAuthCategoryInternal oauthErrorCategory = iota
+	// connectionOAuthCategoryBadRequest covers misconfig and invalid state → 400.
+	connectionOAuthCategoryBadRequest
+	// connectionOAuthCategoryUnauthorized is "vendor rejected your refresh, please
 	// reconnect" → 401-ish (ErrAccessDenied).
-	oauthCategoryUnauthorized
-	// oauthCategoryNotFound is "this connection has no OAuth token" → 404.
-	oauthCategoryNotFound
-	// oauthCategoryVendor is a non-2xx from the vendor's endpoint — logged
+	connectionOAuthCategoryUnauthorized
+	// connectionOAuthCategoryNotFound is "this connection has no OAuth token" → 404.
+	connectionOAuthCategoryNotFound
+	// connectionOAuthCategoryVendor is a non-2xx from the vendor's endpoint — logged
 	// with details server-side and surfaced as generic internal error to
 	// the client.
-	oauthCategoryVendor
+	connectionOAuthCategoryVendor
 )
 
-// categorizeOAuthError pattern-matches the error against the package
+// categorizeConnectionOAuthError pattern-matches the error against the package
 // sentinels + *VendorError and returns the HTTP category. Pure and fully
 // table-testable.
-func categorizeOAuthError(err error) oauthErrorCategory {
+func categorizeConnectionOAuthError(err error) oauthErrorCategory {
 	if err == nil {
-		return oauthCategoryInternal
+		return connectionOAuthCategoryInternal
 	}
 	switch {
-	case errors.Is(err, oauth.ErrConfigUnavailable),
-		errors.Is(err, oauth.ErrPKCERequired),
-		errors.Is(err, oauth.ErrClientUnconfigured),
-		errors.Is(err, oauth.ErrDCRUnavailable),
-		errors.Is(err, oauth.ErrStateInvalid):
-		return oauthCategoryBadRequest
-	case errors.Is(err, oauth.ErrNotConnected):
-		return oauthCategoryNotFound
-	case errors.Is(err, oauth.ErrRefreshRejected):
-		return oauthCategoryUnauthorized
+	case errors.Is(err, connectionoauth.ErrConfigUnavailable),
+		errors.Is(err, connectionoauth.ErrPKCERequired),
+		errors.Is(err, connectionoauth.ErrClientUnconfigured),
+		errors.Is(err, connectionoauth.ErrDCRUnavailable),
+		errors.Is(err, connectionoauth.ErrStateInvalid):
+		return connectionOAuthCategoryBadRequest
+	case errors.Is(err, connectionoauth.ErrNotConnected):
+		return connectionOAuthCategoryNotFound
+	case errors.Is(err, connectionoauth.ErrRefreshRejected):
+		return connectionOAuthCategoryUnauthorized
 	}
-	var vendorErr *oauth.VendorError
+	var vendorErr *connectionoauth.VendorError
 	if errors.As(err, &vendorErr) {
-		return oauthCategoryVendor
+		return connectionOAuthCategoryVendor
 	}
-	return oauthCategoryInternal
+	return connectionOAuthCategoryInternal
 }
 
-// mapOAuthError translates the package sentinels and *VendorError into HTTP
+// mapConnectionOAuthError translates the package sentinels and *VendorError into HTTP
 // responses using the shared error handler. The goal is a stable wire
 // contract: the same logical failure always produces the same status code
 // across start/callback/disconnect/access-token endpoints.
-func (api *APIControllers) mapOAuthError(
+func (api *APIControllers) mapConnectionOAuthError(
 	c fiber.Ctx,
 	consoleLogPrefix string,
 	err error,
 	dict locales.Dictionary,
 ) error {
-	category := categorizeOAuthError(err)
+	category := categorizeConnectionOAuthError(err)
 	switch category {
-	case oauthCategoryBadRequest:
+	case connectionOAuthCategoryBadRequest:
 		return api.handleServiceError(c, consoleLogPrefix,
 			fmt.Errorf("%w: %w", services.ErrInvalidRequest, err), dict)
-	case oauthCategoryNotFound:
+	case connectionOAuthCategoryNotFound:
 		return api.handleServiceError(c, consoleLogPrefix,
 			fmt.Errorf("%w: %w", services.ErrNotFound, err), dict)
-	case oauthCategoryUnauthorized:
+	case connectionOAuthCategoryUnauthorized:
 		// Vendor rejected refresh; user needs to reconnect. ErrAccessDenied
 		// is the closest semantic match for "credentials no longer valid".
 		return api.handleServiceError(c, consoleLogPrefix,
 			fmt.Errorf("%w: %w", services.ErrAccessDenied, err), dict)
-	case oauthCategoryVendor:
-		var vendorErr *oauth.VendorError
-		_ = errors.As(err, &vendorErr) // guaranteed by categorizeOAuthError
+	case connectionOAuthCategoryVendor:
+		var vendorErr *connectionoauth.VendorError
+		_ = errors.As(err, &vendorErr) // guaranteed by categorizeConnectionOAuthError
 		// Don't leak vendor response bodies to end users; log them and
 		// return a generic "upstream failed" message.
 		api.Logger.WarnContext(c.Context(),
@@ -502,7 +524,7 @@ func (api *APIControllers) mapOAuthError(
 		return api.handleServiceError(c, consoleLogPrefix,
 			services.NewInternalErrorf("vendor error: stage=%s status=%d",
 				vendorErr.Stage, vendorErr.StatusCode), dict)
-	case oauthCategoryInternal:
+	case connectionOAuthCategoryInternal:
 		fallthrough
 	default:
 		return api.handleServiceError(c, consoleLogPrefix, err, dict)
@@ -539,15 +561,15 @@ func renderOAuthCallbackHTML(c fiber.Ctx, consoleURL string, result oauthCallbac
 	return c.Status(fiber.StatusOK).SendString(buildCallbackHTML(consoleURL, result))
 }
 
-// sanitizeOAuthErrorCode returns the input if it matches RFC 6749's
+// sanitizeConnectionOAuthErrorCode returns the input if it matches RFC 6749's
 // error-code shape, otherwise a fixed sentinel. Keeps vendor-controlled
 // data from bypassing the console's branching on known error strings,
 // and bounds what a misbehaving vendor can sneak into the response.
-func sanitizeOAuthErrorCode(s string) string {
-	if oauthErrorCodePattern.MatchString(s) {
+func sanitizeConnectionOAuthErrorCode(s string) string {
+	if connectionOAuthErrorCodePattern.MatchString(s) {
 		return s
 	}
-	return oauthCallbackInvalidErrorSentinel
+	return connectionOAuthCallbackInvalidErrorSentinel
 }
 
 // truncateRunes caps a string at maxRunes runes, appending a visible
@@ -630,9 +652,9 @@ func buildCallbackHTML(consoleURL string, result oauthCallbackResult) string {
 		// query-layer truncate already caps this, but the defense here
 		// survives refactors that forget to apply it upstream.
 		if result.Description != "" {
-			body = html.EscapeString(truncateRunes(result.Description, oauthCallbackMaxDescriptionLen))
+			body = html.EscapeString(truncateRunes(result.Description, connectionOAuthCallbackMaxDescriptionLen))
 		} else if result.Error != "" {
-			body = html.EscapeString(truncateRunes(result.Error, oauthCallbackMaxErrorCodeLen))
+			body = html.EscapeString(truncateRunes(result.Error, connectionOAuthCallbackMaxErrorCodeLen))
 		}
 	}
 
@@ -642,12 +664,52 @@ func buildCallbackHTML(consoleURL string, result oauthCallbackResult) string {
 		body,
 		payloadJSON,
 		targetOriginJSON,
+		callbackCloseDelayDeliveredMs,
+		callbackCloseDelaySuccessNoOpenerMs,
+		callbackCloseDelayErrorNoOpenerMs,
 	)
 }
+
+// Close-delay tiers for the OAuth callback popup, in milliseconds. The
+// three values are a coordinated set; tweak together if you change the
+// product behaviour. See the doc comment on callbackHTMLTemplate for the
+// rationale on each tier.
+const (
+	// callbackCloseDelayDeliveredMs runs when the popup successfully
+	// posted the result to its opener. Fast close so the user barely
+	// sees a flash of the page.
+	callbackCloseDelayDeliveredMs = 200
+	// callbackCloseDelaySuccessNoOpenerMs runs when COOP severed the
+	// opener AND the OAuth flow succeeded. The Console recovers via
+	// status polling; we just give the user a moment to read
+	// "Connection complete." before closing.
+	callbackCloseDelaySuccessNoOpenerMs = 1500
+	// callbackCloseDelayErrorNoOpenerMs runs when COOP severed the
+	// opener AND the OAuth flow errored. The status poll won't flip to
+	// "connected" in this case, so the rendered error message is the
+	// only signal the user gets — keep the window open long enough to
+	// read it.
+	callbackCloseDelayErrorNoOpenerMs = 10000
+)
 
 // callbackHTMLTemplate is the shell of the popup page. Kept small and
 // dependency-free — it renders in any browser and degrades to a plain page
 // with a close-this-window hint if scripts are disabled.
+//
+// Close timing is tiered:
+//   - postMessage delivered → close after 200ms (fast happy path; user
+//     barely sees the page).
+//   - postMessage NOT delivered + success → close after 1500ms. The
+//     Console recovers via status polling, so this is a non-event from
+//     the user's perspective. We don't surface a scary banner about a
+//     mechanism the user didn't ask about; we just give them a moment
+//     to read "Connection complete." before closing.
+//   - postMessage NOT delivered + error → stay open for 10s so the user
+//     can actually read the error. The status poll won't flip to
+//     "connected" in this case, so the message is the only signal.
+//
+// COOP-severed openers are diagnostically logged (console.warn) but never
+// rendered visibly — they're internal plumbing the user can't act on.
 const callbackHTMLTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -659,6 +721,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0
 main{max-width:440px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
 h1{font-size:20px;margin:0 0 8px}
 p{color:#54606d;margin:0;line-height:1.5}
+p + p{margin-top:8px}
 </style>
 </head>
 <body>
@@ -671,12 +734,48 @@ p{color:#54606d;margin:0;line-height:1.5}
 (function(){
   var payload = %s;
   var origin = %s;
+  // Diagnostic: log what the popup sees so dev users can tell why a
+  // postMessage didn't reach the console. Common cause is a COOP-
+  // severed opener (a page earlier in the redirect chain set
+  // Cross-Origin-Opener-Policy: same-origin, so window.opener is null
+  // by the time we get here even though window.open() created us).
+  var hasOpener = !!window.opener;
+  var posted = false;
+  var isSuccess = payload && payload.type === 'irmin:oauth:success';
   try {
-    if (window.opener && origin) {
-      window.opener.postMessage(payload, origin);
-    }
+    console.log('[irmin oauth] callback running. opener=', window.opener,
+      'targetOrigin=', origin, 'payload=', payload);
   } catch (e) {}
-  setTimeout(function(){ try { window.close(); } catch(e){} }, 200);
+  try {
+    if (hasOpener && origin) {
+      window.opener.postMessage(payload, origin);
+      posted = true;
+    }
+  } catch (e) {
+    try { console.error('[irmin oauth] postMessage threw', e); } catch (ee) {}
+  }
+  // Pick close delay. Values are templated from Go-side constants
+  // (callbackCloseDelay*Ms) so tests and product behaviour stay in sync:
+  //   delivered:                fastDelayMs   (close fast)
+  //   not delivered + success:  successDelayMs (polling recovers; let user read)
+  //   not delivered + error:    errorDelayMs   (only signal user gets)
+  var fastDelayMs = %d;
+  var successDelayMs = %d;
+  var errorDelayMs = %d;
+  var delay = posted ? fastDelayMs : (isSuccess ? successDelayMs : errorDelayMs);
+  if (!posted) {
+    try {
+      console.warn('[irmin oauth] postMessage NOT delivered.' +
+        ' hasOpener=' + hasOpener + ' origin=' + origin + '.' +
+        ' Most likely cause: a page in the OAuth redirect chain set' +
+        ' Cross-Origin-Opener-Policy: same-origin and severed the' +
+        ' opener relationship.' +
+        (isSuccess
+          ? ' Console will recover via status polling.'
+          : ' Window will auto-close in ' + (errorDelayMs / 1000) + ' seconds.'));
+    } catch (e) {}
+  }
+  setTimeout(function(){ try { window.close(); } catch (e) {} }, delay);
 })();
 </script>
 </body>
@@ -688,19 +787,19 @@ p{color:#54606d;margin:0;line-height:1.5}
 // regardless of which sentinel fired, decoupling UI copy from internals.
 func classifyCallbackError(err error) string {
 	switch {
-	case errors.Is(err, oauth.ErrStateInvalid):
+	case errors.Is(err, connectionoauth.ErrStateInvalid):
 		return "state_invalid"
-	case errors.Is(err, oauth.ErrConfigUnavailable),
-		errors.Is(err, oauth.ErrPKCERequired),
-		errors.Is(err, oauth.ErrClientUnconfigured),
-		errors.Is(err, oauth.ErrDCRUnavailable):
+	case errors.Is(err, connectionoauth.ErrConfigUnavailable),
+		errors.Is(err, connectionoauth.ErrPKCERequired),
+		errors.Is(err, connectionoauth.ErrClientUnconfigured),
+		errors.Is(err, connectionoauth.ErrDCRUnavailable):
 		return "config_unavailable"
-	case errors.Is(err, oauth.ErrRefreshRejected):
+	case errors.Is(err, connectionoauth.ErrRefreshRejected):
 		return "refresh_rejected"
-	case errors.Is(err, oauth.ErrNotConnected):
+	case errors.Is(err, connectionoauth.ErrNotConnected):
 		return "not_connected"
 	}
-	var ve *oauth.VendorError
+	var ve *connectionoauth.VendorError
 	if errors.As(err, &ve) {
 		return "vendor_error"
 	}
@@ -709,23 +808,48 @@ func classifyCallbackError(err error) string {
 
 // callbackErrorDescription returns a short human description derived from
 // the sentinel. Intentionally scrubbed of vendor body snippets — those go
-// to server logs only via mapOAuthError.
+// to server logs only via mapConnectionOAuthError.
 func callbackErrorDescription(err error) string {
 	switch {
-	case errors.Is(err, oauth.ErrStateInvalid):
+	case errors.Is(err, connectionoauth.ErrStateInvalid):
 		return "The OAuth session has expired or is invalid. Try again."
-	case errors.Is(err, oauth.ErrConfigUnavailable),
-		errors.Is(err, oauth.ErrPKCERequired):
+	case errors.Is(err, connectionoauth.ErrConfigUnavailable),
+		errors.Is(err, connectionoauth.ErrPKCERequired):
 		return "OAuth is not available for this connector."
-	case errors.Is(err, oauth.ErrClientUnconfigured),
-		errors.Is(err, oauth.ErrDCRUnavailable):
+	case errors.Is(err, connectionoauth.ErrClientUnconfigured),
+		errors.Is(err, connectionoauth.ErrDCRUnavailable):
 		return "No OAuth client is configured. Ask an administrator."
-	case errors.Is(err, oauth.ErrRefreshRejected):
+	case errors.Is(err, connectionoauth.ErrRefreshRejected):
 		return "Reconnect is required."
 	}
-	var ve *oauth.VendorError
+	var ve *connectionoauth.VendorError
 	if errors.As(err, &ve) {
-		return "The external service rejected the request."
+		// Surface stage + status so users + dev have at least a hint
+		// what the vendor was unhappy about. Body content stays in the
+		// server log only. Three buckets:
+		//   - 0 → no HTTP response (transport / DNS / TLS).
+		//   - 2xx → vendor said success but body was unusable
+		//     (malformed JSON, missing access_token).
+		//   - 4xx/5xx → vendor explicitly rejected.
+		switch {
+		case ve.StatusCode == 0:
+			return fmt.Sprintf(
+				"Could not reach the external service for %s.", ve.Stage)
+		case ve.StatusCode >= 200 && ve.StatusCode < 300:
+			return fmt.Sprintf(
+				"The external service returned an unexpected response for %s (status %d).",
+				ve.Stage, ve.StatusCode)
+		default:
+			return fmt.Sprintf(
+				"The external service rejected the %s request (status %d).",
+				ve.Stage, ve.StatusCode)
+		}
 	}
-	return "An unexpected error occurred."
+	// Internal_error path: a stable, opaque message. The Go error type
+	// and message live only in the slog Error record (see
+	// ConnectionOAuthCallback) — they have correlation value for dev users
+	// reading server logs but no value to a user staring at the popup, and
+	// `*pkg.someInternalErr` exposes implementation details on a public,
+	// no-auth endpoint.
+	return "An unexpected error occurred. Please try again or contact support."
 }

@@ -3,7 +3,7 @@
 // package-private.
 //
 //nolint:testpackage // intentional internal test for unexported helpers
-package oauth
+package connectionoauth
 
 import (
 	"context"

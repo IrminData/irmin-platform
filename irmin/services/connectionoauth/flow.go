@@ -1,4 +1,4 @@
-package oauth
+package connectionoauth
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -109,13 +110,13 @@ func (s *Service) HandleCallback(ctx context.Context, state, code string) (*Call
 	if !s.clock.Now().Before(session.ExpiresAt) {
 		// Even if the row is still there, reject expired sessions.
 		// Delete-best-effort so the row doesn't linger.
-		_ = s.db.DeleteConnectionOAuthSession(s.db.DB, session.ID)
+		_ = s.db.DeleteConnectionOAuthSessionByStateHMAC(s.db.DB, state)
 		return nil, ErrStateInvalid
 	}
 	if session.Connection.ID == 0 {
 		// Preload returned zero because the Connection was deleted.
 		// Treat as session-invalid; the caller gets a generic error.
-		_ = s.db.DeleteConnectionOAuthSession(s.db.DB, session.ID)
+		_ = s.db.DeleteConnectionOAuthSessionByStateHMAC(s.db.DB, state)
 		return nil, ErrStateInvalid
 	}
 	verifier := session.Secrets[db.ConnectionOAuthSecretKeyPKCEVerifier]
@@ -140,7 +141,7 @@ func (s *Service) HandleCallback(ctx context.Context, state, code string) (*Call
 		if upErr := s.db.UpsertConnectionOAuthToken(tx, token); upErr != nil {
 			return fmt.Errorf("upsert token: %w", upErr)
 		}
-		if delErr := s.db.DeleteConnectionOAuthSession(tx, session.ID); delErr != nil {
+		if delErr := s.db.DeleteConnectionOAuthSessionByStateHMAC(tx, state); delErr != nil {
 			return fmt.Errorf("delete session: %w", delErr)
 		}
 		return nil
@@ -308,28 +309,61 @@ func (s *Service) postToken(
 
 	resp, doErr := s.httpClient.Do(req)
 	if doErr != nil {
-		return nil, fmt.Errorf("oauth: %s transport: %w", stage, doErr)
+		// Network / DNS / TLS failure reaching the vendor. Classify as
+		// VendorError so the user sees "vendor_error" (the vendor side
+		// is unreachable from our PoV), not "internal_error" which
+		// implies an Irmin bug.
+		return nil, &VendorError{
+			Stage:      stage,
+			StatusCode: 0,
+			Snippet:    fmt.Sprintf("transport error: %v", doErr),
+		}
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	body, readErr := io.ReadAll(io.LimitReader(resp.Body, bodyReadLimit))
 	if readErr != nil {
-		return nil, fmt.Errorf("oauth: %s read body: %w", stage, readErr)
+		return nil, &VendorError{
+			Stage:      stage,
+			StatusCode: resp.StatusCode,
+			Snippet:    fmt.Sprintf("body read error: %v", readErr),
+		}
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, &VendorError{
 			Stage:      stage,
 			StatusCode: resp.StatusCode,
-			Snippet:    asciiSnippet(body, snippetLimit),
+			Snippet:    redactedSnippet(body, snippetLimit),
 		}
 	}
 
 	var parsed tokenResponse
 	if unmarshalErr := json.Unmarshal(body, &parsed); unmarshalErr != nil {
-		return nil, fmt.Errorf("oauth: parse %s response: %w", stage, unmarshalErr)
+		// 2xx with un-parseable body — the vendor said success but we
+		// can't read what they sent. That's their bug, not ours.
+		// Body bytes flow into mapConnectionOAuthError's Warn log, so
+		// any access_token / refresh_token plaintext is redacted before
+		// they reach the snippet — a malformed-JSON body could still
+		// contain partial token material around the parse error point.
+		return nil, &VendorError{
+			Stage:      stage,
+			StatusCode: resp.StatusCode,
+			Snippet: fmt.Sprintf("malformed JSON: %v; body: %s",
+				unmarshalErr, redactedSnippet(body, snippetLimit)),
+		}
 	}
 	if parsed.AccessToken == "" {
-		return nil, fmt.Errorf("oauth: %s response missing access_token", stage)
+		// 2xx, valid JSON, but no access_token field. Same story:
+		// vendor protocol violation. The body parsed cleanly so we know
+		// it doesn't have an `access_token` key, but it could still have
+		// `refresh_token`, `id_token`, or vendor-specific credential
+		// keys we redact defensively.
+		return nil, &VendorError{
+			Stage:      stage,
+			StatusCode: resp.StatusCode,
+			Snippet: "response missing access_token; body: " +
+				redactedSnippet(body, snippetLimit),
+		}
 	}
 	return &parsed, nil
 }
@@ -338,11 +372,22 @@ func (s *Service) postToken(
 // is true the caller must merge the result with the existing row before
 // Upsert to preserve the refresh_token in case the vendor omitted it
 // (common — only some vendors rotate refresh tokens).
+//
+// LastRefreshAt is stamped on every grant — both initial and refresh. The
+// field's semantic is "when did this row last receive a freshly-issued
+// token from the vendor", which is meaningful for either case. The
+// Console's status-poll fallback (useOAuthFlow.tsx) detects fresh
+// issuance on Reconnect by comparing the polled value to the pre-flight
+// snapshot — without stamping it on initial grants, the polling path
+// can never resolve a Reconnect when COOP severs window.opener, and the
+// user falls through to a popup-closed timeout. The isRefresh flag is
+// kept for callers that want to distinguish in audit/log lines but no
+// longer gates the timestamp.
 func buildTokenRow(
 	connectionID uint,
 	resp *tokenResponse,
 	now time.Time,
-	isRefresh bool,
+	_ bool, // isRefresh — retained for signature compatibility; see doc above
 ) *db.ConnectionOAuthToken {
 	secrets := db.CustomFieldValues{
 		db.ConnectionOAuthSecretKeyAccessToken: resp.AccessToken,
@@ -355,18 +400,15 @@ func buildTokenRow(
 		t := now.Add(time.Duration(resp.ExpiresIn) * time.Second)
 		expiresAt = &t
 	}
-	row := &db.ConnectionOAuthToken{
-		ConnectionID: connectionID,
-		Secrets:      secrets,
-		ExpiresAt:    expiresAt,
-		Scope:        resp.Scope,
-		TokenType:    resp.TokenType,
+	nowCopy := now
+	return &db.ConnectionOAuthToken{
+		ConnectionID:  connectionID,
+		Secrets:       secrets,
+		ExpiresAt:     expiresAt,
+		Scope:         resp.Scope,
+		TokenType:     resp.TokenType,
+		LastRefreshAt: &nowCopy,
 	}
-	if isRefresh {
-		nowCopy := now
-		row.LastRefreshAt = &nowCopy
-	}
-	return row
 }
 
 // asciiSnippet returns up to max bytes of b, filtered to printable ASCII
@@ -385,4 +427,28 @@ func asciiSnippet(b []byte, maxBytes int) string {
 		}
 	}
 	return out.String()
+}
+
+// redactedTokenKeysPattern matches values for any of the credential-bearing
+// JSON keys we know vendors use, in either JSON ("key":"value"), form-encoded
+// (key=value), or sloppy mixtures. The value is matched with `+` rather than
+// a bounded repetition because (a) the input is already capped by
+// asciiSnippet/snippetLimit, and (b) RE2 caps `{n,m}` at 1000 anyway. The
+// terminator class (`,`/`"`/`&`/whitespace/`}`) ensures we stop at the next
+// JSON or form delimiter so adjacent fields aren't swallowed. Used by
+// redactedSnippet so a 2xx-malformed-JSON or 2xx-missing-access_token
+// vendor body cannot leak token plaintext into VendorError.Snippet (which
+// mapConnectionOAuthError logs at slog.Warn).
+var redactedTokenKeysPattern = regexp.MustCompile(
+	`(?i)("?(?:access_token|refresh_token|id_token|client_secret|registration_access_token)"?\s*[:=]\s*"?)[^",&\s}]+("?)`,
+)
+
+// redactedSnippet is asciiSnippet followed by a token-redaction pass. Use
+// for any snippet derived from a vendor response body — the 4xx/5xx
+// rejection bucket, the 2xx-with-malformed-JSON bucket, and the 2xx-
+// missing-access_token bucket all flow through here. Transport / body-
+// read errors don't carry response bytes and use asciiSnippet directly.
+func redactedSnippet(b []byte, maxBytes int) string {
+	return redactedTokenKeysPattern.ReplaceAllString(
+		asciiSnippet(b, maxBytes), `${1}REDACTED${2}`)
 }

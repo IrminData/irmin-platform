@@ -1,5 +1,25 @@
 basePath: /api/v1
 definitions:
+  connectionoauth.ConnectionStatus:
+    properties:
+      connected:
+        type: boolean
+      expires_at:
+        type: string
+      last_refresh_at:
+        type: string
+      needs_refresh:
+        description: |-
+          NeedsRefresh flags that the current access token is inside the
+          refresh skew window and the next GetAccessToken will trigger a
+          refresh. Useful for UIs that want to hint "reconnecting..." before
+          the user initiates an action.
+        type: boolean
+      scope:
+        type: string
+      token_type:
+        type: string
+    type: object
   controllers.ConnectorWebhookPayload:
     type: object
   controllers.UsageReportRequest:
@@ -4743,26 +4763,6 @@ definitions:
     - name
     - owner
     - slug
-    type: object
-  oauth.ConnectionStatus:
-    properties:
-      connected:
-        type: boolean
-      expires_at:
-        type: string
-      last_refresh_at:
-        type: string
-      needs_refresh:
-        description: |-
-          NeedsRefresh flags that the current access token is inside the
-          refresh skew window and the next GetAccessToken will trigger a
-          refresh. Useful for UIs that want to hint "reconnecting..." before
-          the user initiates an action.
-        type: boolean
-      scope:
-        type: string
-      token_type:
-        type: string
     type: object
   services.PresignedUploadResult:
     properties:
@@ -14206,6 +14206,7 @@ paths:
   /workspaces/{workspace}/connections/{connection}/oauth/disconnect:
     post:
       description: Revokes the vendor token (best effort) and removes the stored credentials.
+        Idempotent — disconnecting an already-disconnected connection succeeds.
       parameters:
       - description: Workspace slug
         in: path
@@ -14228,6 +14229,14 @@ paths:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "403":
           description: Forbidden
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Connection not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal error during revoke
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
@@ -14267,6 +14276,14 @@ paths:
           description: Forbidden
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Connection or OAuth client not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Vendor unreachable or internal error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
       - ApiKeyAuth: []
       summary: Start an OAuth connection flow
@@ -14296,14 +14313,26 @@ paths:
             - $ref: '#/definitions/irminmodels.IrminAPIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/oauth.ConnectionStatus'
+                  $ref: '#/definitions/connectionoauth.ConnectionStatus'
               type: object
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "401":
           description: Unauthorized
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "403":
           description: Forbidden
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Connection not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal error reading status
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:

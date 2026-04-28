@@ -23,7 +23,7 @@
 //
 // All stored secrets go through the encrypted_json GORM serializer; this
 // package only sees plaintext values in memory.
-package oauth
+package connectionoauth
 
 import (
 	"context"

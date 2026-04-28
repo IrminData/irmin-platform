@@ -8,9 +8,9 @@ Controllers should be thin. Engines (LakeFS, DuckDB, compute sandbox) expose low
 
 ## Key entry points
 
-- `APIServices` (`services.go`) — aggregate holding every service plus shared deps (DB, Logger, Env, Orchestrator, SQIDManager, LocaleManager, PermissionService, Validator, CacheStorage, BillingService, UsageTracker, OAuthService, compute sandbox).
+- `APIServices` (`services.go`) — aggregate holding every service plus shared deps (DB, Logger, Env, Orchestrator, SQIDManager, LocaleManager, PermissionService, Validator, CacheStorage, BillingService, UsageTracker, ConnectionOAuthService, compute sandbox).
 - `NewAPIServices(...)` — constructor that wires all of the above.
-- Domain services: `BillingService` (`billing.go`), `UsageTracker` (`usage.go`), `OAuthService` (`oauth/`), `AuthCache` (`auth.go`), plus a file per noun (`workspaces.go`, `repositories.go`, `workflows.go`, `connections.go`, `queries.go`, `policies.go`, `users.go`, `ai-applications.go`, etc.).
+- Domain services: `BillingService` (`billing.go`), `UsageTracker` (`usage.go`), `ConnectionOAuthService` (`connectionoauth/`), `AuthCache` (`auth.go`), plus a file per noun (`workspaces.go`, `repositories.go`, `workflows.go`, `connections.go`, `queries.go`, `policies.go`, `users.go`, `ai-applications.go`, etc.).
 - `ErrorHandler` (`errors.go`) — translates service errors into locale-aware HTTP responses; used by both controllers and middlewares.
 
 ## Integration

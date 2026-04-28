@@ -17,16 +17,16 @@ import (
 	"irmin-api/db"
 	"irmin-api/locales"
 	"irmin-api/services"
-	"irmin-api/services/oauth"
+	"irmin-api/services/connectionoauth"
 
 	"github.com/gofiber/fiber/v3"
 )
 
 // newSystemAccessTokenTestController stitches together the smallest
-// APIControllers that can handle SystemOAuthAccessToken requests. It
-// leaves Services.OAuthService nil on purpose: the auth-gate tests want
+// APIControllers that can handle SystemConnectionOAuthAccessToken requests. It
+// leaves Services.ConnectionOAuthService nil on purpose: the auth-gate tests want
 // to stop at the gate without ever touching the service. When the gate
-// allows the call through, the handler hits the nil OAuthService check
+// allows the call through, the handler hits the nil ConnectionOAuthService check
 // next and returns a distinct "OAuth service unavailable" error — which
 // is exactly the signal we use to assert the gate did pass.
 func newSystemAccessTokenTestController(t *testing.T) *APIControllers {
@@ -37,7 +37,7 @@ func newSystemAccessTokenTestController(t *testing.T) *APIControllers {
 	}
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	return &APIControllers{
-		Services:     &services.APIServices{}, // OAuthService deliberately nil
+		Services:     &services.APIServices{}, // ConnectionOAuthService deliberately nil
 		Logger:       logger,
 		lm:           lm,
 		errorHandler: services.NewErrorHandler(logger, lm),
@@ -63,7 +63,7 @@ func mountSystemAccessTokenRoute(t *testing.T, api *APIControllers) *fiber.App {
 			}
 			return c.Next()
 		},
-		api.SystemOAuthAccessToken,
+		api.SystemConnectionOAuthAccessToken,
 	)
 	return app
 }
@@ -138,13 +138,13 @@ func TestBuildForcedRefreshLogEventNilConnectionStillTrails(t *testing.T) {
 	}
 }
 
-// TestSystemOAuthAccessTokenAuthGate verifies the system-token gate is
+// TestSystemConnectionOAuthAccessTokenAuthGate verifies the system-token gate is
 // in front of the access-token endpoint for both the lazy and forced
 // variants. This is the single auth check that lets irmin-connectors
 // (running with IRMIN_API_TOKEN === Core's TOKEN env var) reach the
 // service layer; any future refactor that loses this check would let
 // any authenticated user mint vendor tokens for arbitrary connections.
-func TestSystemOAuthAccessTokenAuthGate(t *testing.T) {
+func TestSystemConnectionOAuthAccessTokenAuthGate(t *testing.T) {
 	api := newSystemAccessTokenTestController(t)
 	app := mountSystemAccessTokenRoute(t, api)
 
@@ -171,7 +171,7 @@ func TestSystemOAuthAccessTokenAuthGate(t *testing.T) {
 		},
 		{
 			// Distinct status (500 vs 403) proves we got past the auth
-			// gate and into the next check: OAuthService is nil in this
+			// gate and into the next check: ConnectionOAuthService is nil in this
 			// stub, which is internal-only so it surfaces as the
 			// generic "Error occurred" body.
 			name:       "system token, lazy variant: gate passes",
@@ -297,15 +297,15 @@ func TestClassifyCallbackError(t *testing.T) {
 		err  error
 		want string
 	}{
-		{oauth.ErrStateInvalid, "state_invalid"},
-		{fmt.Errorf("wrapped: %w", oauth.ErrStateInvalid), "state_invalid"},
-		{oauth.ErrConfigUnavailable, "config_unavailable"},
-		{oauth.ErrPKCERequired, "config_unavailable"},
-		{oauth.ErrClientUnconfigured, "config_unavailable"},
-		{oauth.ErrDCRUnavailable, "config_unavailable"},
-		{oauth.ErrRefreshRejected, "refresh_rejected"},
-		{oauth.ErrNotConnected, "not_connected"},
-		{&oauth.VendorError{Stage: "dcr", StatusCode: 500}, "vendor_error"},
+		{connectionoauth.ErrStateInvalid, "state_invalid"},
+		{fmt.Errorf("wrapped: %w", connectionoauth.ErrStateInvalid), "state_invalid"},
+		{connectionoauth.ErrConfigUnavailable, "config_unavailable"},
+		{connectionoauth.ErrPKCERequired, "config_unavailable"},
+		{connectionoauth.ErrClientUnconfigured, "config_unavailable"},
+		{connectionoauth.ErrDCRUnavailable, "config_unavailable"},
+		{connectionoauth.ErrRefreshRejected, "refresh_rejected"},
+		{connectionoauth.ErrNotConnected, "not_connected"},
+		{&connectionoauth.VendorError{Stage: "dcr", StatusCode: 500}, "vendor_error"},
 		{errors.New("something else"), "internal_error"},
 	}
 	for _, tc := range cases {
@@ -317,48 +317,48 @@ func TestClassifyCallbackError(t *testing.T) {
 	}
 }
 
-func TestCategorizeOAuthError(t *testing.T) {
+func TestCategorizeConnectionOAuthError(t *testing.T) {
 	cases := []struct {
 		name string
 		err  error
 		want oauthErrorCategory
 	}{
-		{"nil falls back to internal", nil, oauthCategoryInternal},
+		{"nil falls back to internal", nil, connectionOAuthCategoryInternal},
 
 		// BadRequest family — flow misconfig or invalid/expired state.
 		{"ErrConfigUnavailable → bad request",
-			oauth.ErrConfigUnavailable, oauthCategoryBadRequest},
+			connectionoauth.ErrConfigUnavailable, connectionOAuthCategoryBadRequest},
 		{"ErrPKCERequired → bad request",
-			oauth.ErrPKCERequired, oauthCategoryBadRequest},
+			connectionoauth.ErrPKCERequired, connectionOAuthCategoryBadRequest},
 		{"ErrClientUnconfigured → bad request",
-			oauth.ErrClientUnconfigured, oauthCategoryBadRequest},
+			connectionoauth.ErrClientUnconfigured, connectionOAuthCategoryBadRequest},
 		{"ErrDCRUnavailable → bad request",
-			oauth.ErrDCRUnavailable, oauthCategoryBadRequest},
+			connectionoauth.ErrDCRUnavailable, connectionOAuthCategoryBadRequest},
 		{"ErrStateInvalid → bad request",
-			oauth.ErrStateInvalid, oauthCategoryBadRequest},
+			connectionoauth.ErrStateInvalid, connectionOAuthCategoryBadRequest},
 		{"wrapped ErrStateInvalid still matches",
-			fmt.Errorf("outer: %w", oauth.ErrStateInvalid), oauthCategoryBadRequest},
+			fmt.Errorf("outer: %w", connectionoauth.ErrStateInvalid), connectionOAuthCategoryBadRequest},
 
 		// Specific statuses.
 		{"ErrNotConnected → not found",
-			oauth.ErrNotConnected, oauthCategoryNotFound},
+			connectionoauth.ErrNotConnected, connectionOAuthCategoryNotFound},
 		{"ErrRefreshRejected → unauthorized",
-			oauth.ErrRefreshRejected, oauthCategoryUnauthorized},
+			connectionoauth.ErrRefreshRejected, connectionOAuthCategoryUnauthorized},
 
 		// Vendor errors — by concrete type.
 		{"*VendorError → vendor",
-			&oauth.VendorError{Stage: "dcr", StatusCode: 500}, oauthCategoryVendor},
+			&connectionoauth.VendorError{Stage: "dcr", StatusCode: 500}, connectionOAuthCategoryVendor},
 		{"wrapped *VendorError still matches",
-			fmt.Errorf("outer: %w", &oauth.VendorError{Stage: "refresh", StatusCode: 503}),
-			oauthCategoryVendor},
+			fmt.Errorf("outer: %w", &connectionoauth.VendorError{Stage: "refresh", StatusCode: 503}),
+			connectionOAuthCategoryVendor},
 
 		// Unknown errors.
-		{"random error → internal", errors.New("boom"), oauthCategoryInternal},
+		{"random error → internal", errors.New("boom"), connectionOAuthCategoryInternal},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := categorizeOAuthError(tc.err); got != tc.want {
-				t.Fatalf("categorizeOAuthError(%v) = %d, want %d", tc.err, got, tc.want)
+			if got := categorizeConnectionOAuthError(tc.err); got != tc.want {
+				t.Fatalf("categorizeConnectionOAuthError(%v) = %d, want %d", tc.err, got, tc.want)
 			}
 		})
 	}
@@ -366,9 +366,9 @@ func TestCategorizeOAuthError(t *testing.T) {
 
 func TestCallbackErrorDescriptionIsScrubbed(t *testing.T) {
 	// Vendor bodies must never surface in the user-facing description —
-	// they go to server logs via mapOAuthError. Here we just check that
+	// they go to server logs via mapConnectionOAuthError. Here we just check that
 	// the description for *VendorError is a generic string.
-	desc := callbackErrorDescription(&oauth.VendorError{
+	desc := callbackErrorDescription(&connectionoauth.VendorError{
 		Stage:      "token_exchange",
 		StatusCode: 400,
 		Snippet:    `{"error":"invalid_grant","leaked_client_secret":"oops"}`,
@@ -381,7 +381,7 @@ func TestCallbackErrorDescriptionIsScrubbed(t *testing.T) {
 	}
 }
 
-func TestSanitizeOAuthErrorCode(t *testing.T) {
+func TestSanitizeConnectionOAuthErrorCode(t *testing.T) {
 	// Accepted shapes stay as-is; everything else collapses to the
 	// sentinel. Keeps vendor-controlled text from polluting the
 	// machine-readable `error` channel that the console branches on.
@@ -392,21 +392,21 @@ func TestSanitizeOAuthErrorCode(t *testing.T) {
 		{"invalid_request", "invalid_request"},
 		{"error0", "error0"},
 		// Empty — fails the leading-letter rule, becomes sentinel.
-		{"", oauthCallbackInvalidErrorSentinel},
+		{"", connectionOAuthCallbackInvalidErrorSentinel},
 		// Uppercase — rejected.
-		{"Access_Denied", oauthCallbackInvalidErrorSentinel},
+		{"Access_Denied", connectionOAuthCallbackInvalidErrorSentinel},
 		// Leading digit — rejected.
-		{"1bad", oauthCallbackInvalidErrorSentinel},
+		{"1bad", connectionOAuthCallbackInvalidErrorSentinel},
 		// Spaces — rejected.
-		{"access denied", oauthCallbackInvalidErrorSentinel},
+		{"access denied", connectionOAuthCallbackInvalidErrorSentinel},
 		// Contains HTML — rejected (also what this guard exists for).
-		{"<script>", oauthCallbackInvalidErrorSentinel},
+		{"<script>", connectionOAuthCallbackInvalidErrorSentinel},
 		// Longer than 64 chars — rejected even though the letters are fine.
-		{strings.Repeat("a", 65), oauthCallbackInvalidErrorSentinel},
+		{strings.Repeat("a", 65), connectionOAuthCallbackInvalidErrorSentinel},
 	}
 	for _, tc := range cases {
-		if got := sanitizeOAuthErrorCode(tc.in); got != tc.want {
-			t.Errorf("sanitizeOAuthErrorCode(%q) = %q, want %q", tc.in, got, tc.want)
+		if got := sanitizeConnectionOAuthErrorCode(tc.in); got != tc.want {
+			t.Errorf("sanitizeConnectionOAuthErrorCode(%q) = %q, want %q", tc.in, got, tc.want)
 		}
 	}
 }
@@ -468,7 +468,7 @@ func TestBuildCallbackHTMLBoundsVisibleBody(t *testing.T) {
 	// A vendor that blasts a huge description should not be able to
 	// blow up the response. The HTML-visible body respects the
 	// description cap even if the query-layer truncate was bypassed.
-	huge := strings.Repeat("a", oauthCallbackMaxDescriptionLen*4)
+	huge := strings.Repeat("a", connectionOAuthCallbackMaxDescriptionLen*4)
 	got := buildCallbackHTML("https://console.irmin.dev", oauthCallbackResult{
 		Error:       "vendor_err",
 		Description: huge,

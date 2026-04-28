@@ -4,7 +4,7 @@
 // testpackage would widen the public API for no runtime benefit.
 //
 //nolint:testpackage // intentional internal test for unexported helpers
-package oauth
+package connectionoauth
 
 import (
 	"context"
@@ -179,13 +179,93 @@ func TestBuildTokenRow(t *testing.T) {
 	if row.Scope != "read.a read.b" || row.TokenType != "Bearer" {
 		t.Fatalf("row: %+v", row)
 	}
-	if row.LastRefreshAt != nil {
-		t.Fatalf("LastRefreshAt should be nil for non-refresh")
+	// LastRefreshAt is stamped on every grant — initial AND refresh.
+	// The Console's status-poll fallback uses a strictly-newer comparison
+	// against the pre-flight snapshot to detect fresh issuance on
+	// Reconnect; if we left it nil on initial grants, the polling path
+	// could never resolve under COOP-severed openers.
+	if row.LastRefreshAt == nil || !row.LastRefreshAt.Equal(now) {
+		t.Fatalf("LastRefreshAt should be stamped on initial grant: %v", row.LastRefreshAt)
 	}
 
 	rowR := buildTokenRow(42, resp, now, true)
 	if rowR.LastRefreshAt == nil || !rowR.LastRefreshAt.Equal(now) {
 		t.Fatalf("LastRefreshAt wrong for refresh: %v", rowR.LastRefreshAt)
+	}
+}
+
+func TestBuildTokenRowStampsLastRefreshAtOnInitialGrant(t *testing.T) {
+	// Regression: this used to leave LastRefreshAt nil when isRefresh was
+	// false, which meant the Console couldn't detect a fresh Reconnect via
+	// status polling whenever COOP severed window.opener. Pinned here so a
+	// future "let's only stamp on refresh" tweak fails loudly with the
+	// correct context.
+	now := time.Date(2026, 4, 27, 16, 30, 0, 0, time.UTC)
+	resp := &tokenResponse{AccessToken: "at-1", TokenType: "Bearer"}
+	row := buildTokenRow(7, resp, now, false /* not a refresh */)
+	if row.LastRefreshAt == nil {
+		t.Fatalf(
+			"LastRefreshAt nil on initial grant — Reconnect polling can no longer detect fresh issuance under COOP",
+		)
+	}
+	if !row.LastRefreshAt.Equal(now) {
+		t.Fatalf("LastRefreshAt = %v, want %v", *row.LastRefreshAt, now)
+	}
+}
+
+func TestRedactedSnippetMasksTokenMaterial(t *testing.T) {
+	// VendorError.Snippet flows into mapConnectionOAuthError's Warn log.
+	// Pin that no path through redactedSnippet ever hands token plaintext
+	// into the connector logs — vendor 4xx/5xx, malformed-2xx-JSON, and
+	// 2xx-missing-access_token all need to scrub the same key set.
+	cases := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{
+			name: "json access_token",
+			in:   `{"access_token":"secret-abc","token_type":"Bearer"}`,
+			want: `{"access_token":"REDACTED","token_type":"Bearer"}`,
+		},
+		{
+			name: "json refresh_token",
+			in:   `{"refresh_token":"rtok-xyz","scope":"read"}`,
+			want: `{"refresh_token":"REDACTED","scope":"read"}`,
+		},
+		{
+			name: "form-encoded access_token",
+			in:   `error=invalid&access_token=foo123&error_description=test`,
+			want: `error=invalid&access_token=REDACTED&error_description=test`,
+		},
+		{
+			name: "case-insensitive key",
+			in:   `{"Access_Token":"foo"}`,
+			want: `{"Access_Token":"REDACTED"}`,
+		},
+		{
+			name: "registration_access_token from DCR",
+			in:   `{"registration_access_token":"reg-secret","client_id":"abc"}`,
+			want: `{"registration_access_token":"REDACTED","client_id":"abc"}`,
+		},
+		{
+			name: "id_token JWT",
+			in:   `{"id_token":"eyJabc.eyJdef.sig","token_type":"Bearer"}`,
+			want: `{"id_token":"REDACTED","token_type":"Bearer"}`,
+		},
+		{
+			name: "non-token field untouched",
+			in:   `{"error":"invalid_grant","error_description":"bad code"}`,
+			want: `{"error":"invalid_grant","error_description":"bad code"}`,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := redactedSnippet([]byte(tc.in), 1024)
+			if got != tc.want {
+				t.Errorf("redactedSnippet:\n got:  %q\n want: %q", got, tc.want)
+			}
+		})
 	}
 }
 

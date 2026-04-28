@@ -17,7 +17,7 @@
 //  3. Refresh-token carry-forward when the vendor omits refresh_token in
 //     its response (common — many vendors don't rotate).
 
-package oauth_test
+package connectionoauth_test
 
 import (
 	"context"
@@ -35,7 +35,7 @@ import (
 
 	"irmin-api/db"
 	"irmin-api/lib"
-	"irmin-api/services/oauth"
+	"irmin-api/services/connectionoauth"
 
 	"gorm.io/gorm"
 )
@@ -61,13 +61,13 @@ func ensureIntegrationEnv(t *testing.T) (*db.Database, *db.User, *db.Workspace) 
 // testConfigProvider returns the Config its Fn closure produces. Tests wire
 // it up to point at their vendor mock's URLs.
 type testConfigProvider struct {
-	fn func(connector *db.Connector) (*oauth.Config, error)
+	fn func(connector *db.Connector) (*connectionoauth.Config, error)
 }
 
 func (p *testConfigProvider) GetOAuthConfig(
 	_ context.Context,
 	c *db.Connector,
-) (*oauth.Config, error) {
+) (*connectionoauth.Config, error) {
 	return p.fn(c)
 }
 
@@ -77,10 +77,10 @@ func (p *testConfigProvider) GetOAuthConfig(
 func newIntegrationService(
 	t *testing.T,
 	d *db.Database,
-	provider oauth.ConfigProvider,
-) *oauth.Service {
+	provider connectionoauth.ConfigProvider,
+) *connectionoauth.Service {
 	t.Helper()
-	svc, err := oauth.NewService(oauth.Options{
+	svc, err := connectionoauth.NewService(connectionoauth.Options{
 		DB:          d,
 		Provider:    provider,
 		HTTPClient:  http.DefaultClient,
@@ -237,8 +237,8 @@ func newVendorMock(t *testing.T) *vendorMock {
 // configFor returns a Config pointing at the vendor mock with the scopes
 // the test wants. Keeps DCREndpoint empty (non-DCR path is the norm for
 // the HubSpot/Stripe family).
-func configFor(v *vendorMock, scopes ...string) *oauth.Config {
-	return &oauth.Config{
+func configFor(v *vendorMock, scopes ...string) *connectionoauth.Config {
+	return &connectionoauth.Config{
 		Provider:         "integration-test",
 		AuthorizationURL: v.URL("/authorize"),
 		TokenURL:         v.URL("/token"),
@@ -313,7 +313,7 @@ func assertStartFlow(
 func assertCallbackOutcome(
 	t *testing.T,
 	d *db.Database,
-	result *oauth.CallbackResult,
+	result *connectionoauth.CallbackResult,
 	capture *tokenExchangeCapture,
 	state string,
 	conn *db.Connection,
@@ -377,7 +377,7 @@ func TestIntegrationStartFlowAndHandleCallback(t *testing.T) {
 	)
 	capture := captureTokenExchange(vendor)
 	svc := newIntegrationService(t, d, &testConfigProvider{
-		fn: func(_ *db.Connector) (*oauth.Config, error) {
+		fn: func(_ *db.Connector) (*connectionoauth.Config, error) {
 			return configFor(vendor, "read.a", "read.b"), nil
 		},
 	})
@@ -421,7 +421,7 @@ func TestIntegrationRevokeCleansSessions(t *testing.T) {
 	)
 
 	svc := newIntegrationService(t, d, &testConfigProvider{
-		fn: func(_ *db.Connector) (*oauth.Config, error) {
+		fn: func(_ *db.Connector) (*connectionoauth.Config, error) {
 			return configFor(vendor), nil
 		},
 	})
@@ -498,7 +498,7 @@ func TestIntegrationRefreshPreservesOldRefreshToken(t *testing.T) {
 	}
 
 	svc := newIntegrationService(t, d, &testConfigProvider{
-		fn: func(_ *db.Connector) (*oauth.Config, error) {
+		fn: func(_ *db.Connector) (*connectionoauth.Config, error) {
 			return configFor(vendor), nil
 		},
 	})
@@ -569,7 +569,7 @@ func TestIntegrationForceRefreshBypassesSkewWindow(t *testing.T) {
 		})
 	}
 	svc := newIntegrationService(t, d, &testConfigProvider{
-		fn: func(_ *db.Connector) (*oauth.Config, error) {
+		fn: func(_ *db.Connector) (*connectionoauth.Config, error) {
 			return configFor(vendor), nil
 		},
 	})

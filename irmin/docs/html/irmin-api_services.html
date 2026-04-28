@@ -375,18 +375,18 @@ func (e *AIAppToolExecutor) WriteFile(
     WriteFile uploads or updates a file in a data source.
 
 type APIServices struct {
-	DB                *db.Database
-	Logger            *slog.Logger
-	Env               *utils.CoreAPIEnv
-	Orchestrator      *orchestrator.Orchestrator
-	SQIDManager       *irminsqids.SQIDManager
-	LocaleManager     *locales.LocaleManager
-	PermissionService *permissions.Service
-	Validator         *irminvalidator.Validator
-	CacheStorage      fiber.Storage
-	BillingService    *BillingService
-	UsageTracker      *UsageTracker
-	OAuthService      *oauth.Service
+	DB                     *db.Database
+	Logger                 *slog.Logger
+	Env                    *utils.CoreAPIEnv
+	Orchestrator           *orchestrator.Orchestrator
+	SQIDManager            *irminsqids.SQIDManager
+	LocaleManager          *locales.LocaleManager
+	PermissionService      *permissions.Service
+	Validator              *irminvalidator.Validator
+	CacheStorage           fiber.Storage
+	BillingService         *BillingService
+	UsageTracker           *UsageTracker
+	ConnectionOAuthService *connectionoauth.Service
 
 	// Has unexported fields.
 }

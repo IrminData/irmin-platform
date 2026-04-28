@@ -4,7 +4,7 @@
 // testpackage lint, which is not worth the API-surface bloat.
 //
 //nolint:testpackage // intentional internal test for unexported helpers
-package oauth
+package connectionoauth
 
 import (
 	"crypto/sha256"

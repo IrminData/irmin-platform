@@ -28,7 +28,7 @@ top. Complementary to `irmin-connectors/guides/connector-architecture.md`
 (same topics viewed from the connector's side).
 
 If you are touching any code in `services/connections.go`,
-`services/oauth/`, `db/oauth.go`, `controllers/oauth.go`, or
+`services/connectionoauth/`, `db/connection-oauth.go`, `controllers/connection-oauth.go`, or
 `connectors-client/`, this is the file that explains why the shape is
 what it is.
 
@@ -176,17 +176,17 @@ of collecting credentials via `details`.
 
 Core-side pieces:
 
-- `services/oauth/` — flow orchestration: `StartFlow`, `HandleCallback`,
+- `services/connectionoauth/` — flow orchestration: `StartFlow`, `HandleCallback`,
   `GetAccessToken`, `RefreshToken`, `Revoke`.
-- `services/oauth/dcr.go` — RFC 7591 Dynamic Client Registration
+- `services/connectionoauth/dcr.go` — RFC 7591 Dynamic Client Registration
   (lazy: registers a workspace-scoped client on first use).
-- `controllers/oauth.go` — four HTTP surfaces:
+- `controllers/connection-oauth.go` — four HTTP surfaces:
   - `POST /workspaces/:w/connections/:c/oauth/start`
   - `GET /api/v1/oauth/callback` (public; state-authenticated)
   - `POST /workspaces/:w/connections/:c/oauth/disconnect`
   - `GET /workspaces/:w/connections/:c/oauth/status`
   - `POST /api/v1/system/oauth/access-token` (connector-to-Core)
-- `db/oauth.go` — three tables:
+- `db/connection-oauth.go` — three tables:
   - `connection_oauth_clients` (per-workspace DCR + global admin-configured)
   - `connection_oauth_sessions` (in-flight authorization flows, 10-min TTL)
   - `connection_oauth_tokens` (persisted access + refresh tokens, encrypted)
@@ -339,7 +339,7 @@ result to LakeFS.
   list + static-vs-DCR
 - [`oauth-roadmap.md`](./oauth-roadmap.md) — what's shipping when
   (temporary; removed after launch)
-- `services/oauth/` — the flow orchestration code
+- `services/connectionoauth/` — the flow orchestration code
 - `lib/crypto/` — encryption at rest for `details` and OAuth tokens
 
 </script>

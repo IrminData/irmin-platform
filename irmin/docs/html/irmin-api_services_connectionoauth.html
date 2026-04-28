@@ -1,0 +1,324 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/services/connectionoauth</title></head><body>
+<h1>Package irmin-api/services/connectionoauth</h1>
+<pre>
+package connectionoauth // import "irmin-api/services/connectionoauth"
+
+Package oauth implements the authorization-code + PKCE OAuth 2.0 flow that users
+go through when connecting Irmin to an external SaaS vendor.
+
+The package owns five responsibilities:
+
+ 1. StartFlow: build an authorization URL, persisting per-attempt state (opaque
+    state value + PKCE verifier) in a short-lived session row.
+ 2. HandleCallback: exchange the returned authorization code for access +
+    refresh tokens, store them encrypted, and delete the session.
+ 3. GetAccessToken: return a fresh access token for a Connection, refreshing
+    transparently if the current one is expiring.
+ 4. RefreshToken: explicit refresh entry point, used by GetAccessToken and by
+    any future background-refresh sweeper. Serializes concurrent refreshes per
+    connection via SELECT ... FOR UPDATE.
+ 5. Revoke: hit the vendor's revocation endpoint (best-effort) and delete the
+    stored token row.
+
+The package does not know how to talk to irmin-connectors. The vendor's OAuth
+metadata (auth URL, token URL, scopes, PKCE requirement, ...) is injected
+via a ConfigProvider so tests can supply a fake. In production wiring,
+the provider calls through to irmin-connectors via the connectors client,
+reading the OAuthConfig block the connector declares.
+
+All stored secrets go through the encrypted_json GORM serializer; this package
+only sees plaintext values in memory.
+
+VARIABLES
+
+var (
+	// ErrConfigUnavailable means the ConfigProvider returned no OAuth
+	// metadata for the connector — either the connector does not support
+	// OAuth, or the provider failed to reach it.
+	ErrConfigUnavailable = errors.New("oauth: vendor config unavailable")
+
+	// ErrPKCERequired is returned when a Config has PKCE=false. New
+	// connectors must use PKCE; we do not fall back.
+	ErrPKCERequired = errors.New("oauth: PKCE is required but the config disables it")
+
+	// ErrClientUnconfigured means no OAuth client row exists for the
+	// (connector, workspace) pair. For DCR-capable vendors the caller
+	// should run the DCR flow; for static clients the admin must
+	// configure one.
+	ErrClientUnconfigured = errors.New("oauth: no client registered for connector+workspace")
+
+	// ErrStateInvalid covers every "the vendor's reply doesn't match a
+	// valid session" case — expired, missing, replayed, or forged state.
+	// We use a single sentinel so the callback never reveals which.
+	ErrStateInvalid = errors.New("oauth: state is invalid or expired")
+
+	// ErrNotConnected means the connection has no token row yet — the
+	// user never completed OAuth, or the row was revoked.
+	ErrNotConnected = errors.New("oauth: connection has no oauth token")
+
+	// ErrRefreshRejected indicates the vendor rejected a refresh attempt.
+	// Usually means the user revoked the app on the vendor side; the
+	// caller should surface a "reconnect" CTA.
+	ErrRefreshRejected = errors.New("oauth: vendor rejected refresh token")
+)
+    Sentinel errors callers (controllers, connectors service) use to map failure
+    modes onto HTTP responses without importing gorm or inspecting wrapped error
+    text.
+
+var ErrDCRUnavailable = errors.New("oauth: dynamic client registration is not supported by this connector")
+    ErrDCRUnavailable is returned when DCR is attempted but the Config's
+    DCREndpoint is empty. Callers should surface a "please ask your admin to
+    configure an OAuth client" message — this is the non-DCR-capable path.
+
+
+FUNCTIONS
+
+func NewService(opts Options) (*Service, error)
+    NewService builds a Service. All required fields are validated; missing
+    optional fields fall back to safe defaults.
+
+
+TYPES
+
+type AccessToken struct {
+	Value     string
+	TokenType string
+	ExpiresAt *time.Time
+	Scope     string
+}
+    AccessToken is the minimal view of a token that downstream callers need.
+    Returned by GetAccessToken so callers don't have to know how the DB row is
+    shaped or refresh it themselves.
+
+type CallbackResult struct {
+	Connection       *db.Connection
+	InitiatingUserID *uint
+}
+    CallbackResult bundles what a successful callback produces: the Connection
+    the vendor was linked to, and the user who originally clicked "Connect"
+    (pulled off the session row). Controllers use InitiatingUserID to credit the
+    audit event back to the actual clicker, since the callback itself runs on a
+    public endpoint with no user context.
+
+type Clock interface {
+	Now() time.Time
+}
+    Clock is injected for testability. Production wiring uses realClock{}.
+
+type Config struct {
+	// Provider is a short canonical identifier for the vendor: "hubspot",
+	// "stripe", "intercom", etc. Used in audit logs and error messages.
+	Provider string
+
+	// AuthorizationURL is the user-agent-facing endpoint where the user
+	// approves the connection.
+	AuthorizationURL string
+
+	// TokenURL exchanges authorization codes and refresh tokens for
+	// access tokens.
+	TokenURL string
+
+	// RevocationURL is optional. When non-empty, Revoke POSTs the token
+	// here so the vendor drops the grant immediately.
+	RevocationURL string
+
+	// DCREndpoint is optional (RFC 7591). When set, the DCR helper can
+	// dynamically register a client per workspace. Unused in Phase 2b.
+	DCREndpoint string
+
+	// Scopes is the set of OAuth scopes the connector declares it needs.
+	// Read-only by default; connectors should follow least-privilege.
+	Scopes []string
+
+	// PKCE should always be true for new connectors. Flow code refuses
+	// to start a flow when false — there is no reason to run without it.
+	PKCE bool
+
+	// UserinfoURL is optional. If set, the service can populate a friendly
+	// "connected as &lt;who&gt;" label in the UI after a successful exchange.
+	// Not used in Phase 2b wiring; reserved for future work.
+	UserinfoURL string
+
+	// ExtraParams are vendor-specific parameters appended to the
+	// authorization request (e.g., access_type=offline, prompt=consent).
+	ExtraParams map[string]string
+}
+    Config is the vendor-side OAuth metadata needed to run a flow. All URLs are
+    expected to be absolute https:// URLs; scopes are space-joined on the wire
+    but kept as a slice here for legibility and lint-friendliness.
+
+    This mirrors the OAuthConfig shape we will later declare in the SDK.
+    We define a local copy so this package can be built independently of the SDK
+    extension.
+
+type ConfigProvider interface {
+	GetOAuthConfig(ctx context.Context, connector *db.Connector) (*Config, error)
+}
+    ConfigProvider returns the OAuth metadata for a given connector. The real
+    implementation calls irmin-connectors through the connectors client;
+    tests inject a stub.
+
+type ConnectionStatus struct {
+	Connected     bool       `json:"connected"`
+	ExpiresAt     *time.Time `json:"expires_at,omitempty"`
+	Scope         string     `json:"scope,omitempty"`
+	TokenType     string     `json:"token_type,omitempty"`
+	LastRefreshAt *time.Time `json:"last_refresh_at,omitempty"`
+	// NeedsRefresh flags that the current access token is inside the
+	// refresh skew window and the next GetAccessToken will trigger a
+	// refresh. Useful for UIs that want to hint "reconnecting..." before
+	// the user initiates an action.
+	NeedsRefresh bool `json:"needs_refresh"`
+}
+    ConnectionStatus is the small shape consoles need to render a Connect /
+    Reconnect / Disconnect UI without having to reason about encrypted rows or
+    sentinel errors.
+
+    Connected = false means the Connection has no token row yet (ErrNotConnected
+    when fetching). The remaining fields apply when Connected = true.
+
+    ExpiresAt is nil for non-expiring tokens; Scope is the space-separated
+    string the vendor returned; TokenType is usually "Bearer". LastRefreshAt is
+    nil if the original issuance is still current.
+
+type Options struct {
+	DB          *db.Database
+	Provider    ConfigProvider
+	HTTPClient  *http.Client // required; pass lib.NewSafeHTTPClient(ctx) in production
+	Logger      *slog.Logger
+	Clock       Clock // optional; defaults to realClock{}
+	RedirectURI string
+	SessionTTL  time.Duration // optional; defaults to 10m
+	RefreshSkew time.Duration // optional; defaults to 60s
+}
+    Options configures the Service at construction.
+
+type Service struct {
+
+	// RedirectURI is the exact callback URL registered with every vendor
+	// (e.g. "https://api.irmin.dev/api/v1/oauth/callback"). Kept as a
+	// service-level constant because the URI is part of the token exchange
+	// and must match byte-for-byte what the vendor has on file.
+	RedirectURI string
+
+	// SessionTTL bounds how long an in-flight authorization flow can stay
+	// open. 10 minutes is plenty — the user is interactively clicking
+	// through consent pages.
+	SessionTTL time.Duration
+
+	// RefreshSkew is the safety margin before token expiry at which
+	// GetAccessToken proactively refreshes. Prevents downstream calls
+	// that land right at the expiry instant.
+	RefreshSkew time.Duration
+	// Has unexported fields.
+}
+    Service orchestrates OAuth flows for connections. It is safe for use
+    by multiple goroutines; the only mutable state is the HTTP client
+    (concurrency-safe by design).
+
+func (s *Service) ForceRefreshAccessToken(
+	ctx context.Context,
+	connectionID uint,
+) (*AccessToken, error)
+    ForceRefreshAccessToken rotates the stored token unconditionally and returns
+    the freshly-issued access token. Callers use this when the vendor rejected
+    a previously-cached token mid-operation (401 on a token that hadn't yet
+    entered the skew window) — the only remedy is to force a refresh regardless
+    of local expiry state.
+
+    Returns ErrNotConnected when the connection has no token row. Returns
+    ErrRefreshRejected if the vendor rejects the refresh.
+
+func (s *Service) GetAccessToken(ctx context.Context, connectionID uint) (*AccessToken, error)
+    GetAccessToken returns a fresh access token for the connection. If the
+    current token is expired — or within RefreshSkew of expiring — the refresh
+    flow runs transparently before returning.
+
+    Returns ErrNotConnected when the connection has no token row. Returns
+    ErrRefreshRejected if the vendor rejects the refresh (the user has
+    likely revoked the app on the vendor side; the caller should prompt for
+    reconnection). Other vendor errors bubble up as *VendorError.
+
+func (s *Service) GetConnectionOAuthStatus(
+	_ context.Context,
+	connectionID uint,
+) (*ConnectionStatus, error)
+    GetConnectionOAuthStatus returns a read-only snapshot of the OAuth
+    status for a connection. Intended for console UIs that render the
+    Connect/Reconnect/Disconnect button. Never refreshes tokens.
+
+    Returns (status{Connected:false}, nil) when the connection has no token row
+    — that's a normal "not connected yet" state, not an error.
+
+    Hot-path: Console polls this every 2.5s during the OAuth popup flow,
+    so we read the status-only column subset (no secrets) to avoid forcing the
+    encrypted_json serializer to AES-decrypt access/refresh tokens on every
+    poll. The needsRefresh check is recomputed locally from ExpiresAt — it
+    doesn't actually inspect the secret material.
+
+func (s *Service) HandleCallback(ctx context.Context, state, code string) (*CallbackResult, error)
+    HandleCallback consumes the authorization code the vendor returned via
+    the redirect. On success: tokens are stored encrypted, the session row is
+    deleted (single-use), and a CallbackResult is returned so the caller can
+    emit an audit event or redirect the browser.
+
+    Failure modes are translated to the package sentinels: ErrStateInvalid for
+    anything session-related (forged, expired, replayed) and *VendorError when
+    the token endpoint itself returns non-2xx.
+
+func (s *Service) RefreshToken(
+	ctx context.Context,
+	connectionID uint,
+) (*db.ConnectionOAuthToken, error)
+    RefreshToken rotates the stored access token using the refresh token.
+    Runs inside a transaction with SELECT ... FOR UPDATE on the token row,
+    so concurrent callers (two connector requests, or a scheduled sweep plus
+    a user-triggered call) serialize cleanly — the second caller observes the
+    first caller's freshly-written token and skips the network round-trip when
+    still valid.
+
+    Returns the (possibly untouched) up-to-date row. Returns ErrNotConnected
+    if no token row exists. Returns ErrRefreshRejected when the vendor responds
+    400/401 to the refresh request (commonly "user revoked").
+
+func (s *Service) Revoke(ctx context.Context, connectionID uint) error
+    Revoke calls the vendor's revocation endpoint (if one is configured)
+    and removes the stored token row. A vendor-side revoke is best-effort:
+    we always delete our local state, even if the vendor returns an error,
+    because the user's intent is clear and failing to delete locally would leave
+    them unable to reconnect without admin help.
+
+func (s *Service) StartFlow(
+	ctx context.Context,
+	connection *db.Connection,
+	initiatingUserID uint,
+) (string, error)
+    StartFlow creates a short-lived OAuthSession row for the connection and
+    returns the URL the user's browser should be redirected to. The caller is
+    responsible for opening the URL in a popup and watching for the callback
+    completion signal.
+
+    initiatingUserID identifies the user who clicked "Connect" and is persisted
+    on the session row. The callback is a public endpoint, so the audit log
+    uses this ID to credit completion to the actual clicker rather than the
+    connection owner. Pass 0 for server-initiated flows.
+
+type VendorError struct {
+	Stage      string
+	StatusCode int
+	Snippet    string // first 500 bytes of body, ascii-safe
+}
+    VendorError wraps a non-2xx response from a vendor endpoint. Embeds the
+    status code and a truncated, ASCII-safe body snippet for server-side
+    debugging without leaking secrets back to end users.
+
+    Stage names currently emitted: "token_exchange" (authorization-code
+    exchange), "refresh" (refresh-token exchange), "dcr" (RFC 7591 dynamic
+    client registration). Revoke failures are logged but never returned as
+    VendorError — they are best-effort from the caller's perspective.
+
+func (e *VendorError) Error() string
+
+</pre>
+</body></html>

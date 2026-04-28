@@ -79,7 +79,7 @@ func RegisterAPIRoutes(
 
 	// OAuth callback (public — vendor redirects here after user approval).
 	// No auth middleware: the `state` parameter self-authenticates the flow.
-	app.Get("/api/v1/oauth/callback", apiControllers.OAuthCallback)
+	app.Get("/api/v1/oauth/callback", apiControllers.ConnectionOAuthCallback)
 
 	// Connector webhook routes (authenticated by webhook token, not user auth)
 	// These endpoints receive events from external connectors when data changes
@@ -123,8 +123,8 @@ func RegisterAPIRoutes(
 	//      separate code path for force-refresh.
 	// Cross-service contract: irmin-connectors must run with
 	// IRMIN_API_TOKEN set to Core's TOKEN env var. Tested in
-	// controllers/oauth_test.go::TestSystemOAuthAccessTokenAuthGate.
-	system.Post("/oauth/access-token", apiControllers.SystemOAuthAccessToken)
+	// controllers/connection_oauth_test.go::TestSystemConnectionOAuthAccessTokenAuthGate.
+	system.Post("/oauth/access-token", apiControllers.SystemConnectionOAuthAccessToken)
 
 	// Profile routes
 	v1.Get("/profile", apiControllers.ProfileShow)

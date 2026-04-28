@@ -69,18 +69,6 @@ const (
     and data transfer limits are in bytes (used for internal enforcement).
 
 const (
-	LogAssetTypeRepository       = "repository"
-	LogAssetTypeWorkflow         = "workflow"
-	LogAssetTypeUser             = "user"
-	LogAssetTypeConnection       = "connection"
-	LogAssetTypeStoredQuery      = "stored_query"
-	LogAssetTypePolicy           = "policy"
-	LogAssetTypeRepositoryObject = "repository_object"
-	LogAssetTypeAIApplication    = "ai_application"
-)
-    LogAssetType constants for filtering log events by asset type.
-
-const (
 	ConnectionOAuthSecretKeyClientSecret = "client_secret"
 	ConnectionOAuthSecretKeyAccessToken  = "access_token"
 	ConnectionOAuthSecretKeyRefreshToken = "refresh_token"
@@ -94,10 +82,22 @@ const (
     Secret-map keys used by the ConnectionOAuth* tables. Values live in the
     `Secrets` column of the respective model, which is encrypted at rest via the
     encrypted_json GORM serializer. Constants keep key strings from drifting
-    across the services/oauth package and the DB layer.
+    across the services/connectionoauth package and the DB layer.
 
     These constants are map keys, not credentials themselves — gosec's G101
     pattern match on names like "token"/"secret" is a false positive here.
+
+const (
+	LogAssetTypeRepository       = "repository"
+	LogAssetTypeWorkflow         = "workflow"
+	LogAssetTypeUser             = "user"
+	LogAssetTypeConnection       = "connection"
+	LogAssetTypeStoredQuery      = "stored_query"
+	LogAssetTypePolicy           = "policy"
+	LogAssetTypeRepositoryObject = "repository_object"
+	LogAssetTypeAIApplication    = "ai_application"
+)
+    LogAssetType constants for filtering log events by asset type.
 
 const (
 	// Minimum relevance threshold for filtering search results.
@@ -636,7 +636,7 @@ type ConnectionOAuthSession struct {
 	//
 	// Implementation note: the column name reads as "HMAC" for historical
 	// schema reasons, but the value stored here is a 256-bit cryptographic
-	// random string produced by the services/oauth package — not an HMAC.
+	// random string produced by the services/connectionoauth package — not an HMAC.
 	// The callback looks up the session by exact-match on this column, so
 	// any unguessable, unique-per-session value works. The uniqueIndex
 	// converts a replayed state into a DB-level collision at session create
@@ -693,6 +693,18 @@ type ConnectionOAuthToken struct {
     know about OAuth tokens.
 
 func (ConnectionOAuthToken) TableName() string
+
+type ConnectionOAuthTokenStatus struct {
+	ConnectionID  uint
+	ExpiresAt     *time.Time
+	Scope         string
+	TokenType     string
+	LastRefreshAt *time.Time
+}
+    ConnectionOAuthTokenStatus is the non-secret subset of a token row used
+    by hot-path read endpoints (status polling). Excludes Secrets so the
+    encrypted_json serializer never has to AES-decrypt access/refresh tokens for
+    callers that only need expiry/scope/type metadata.
 
 type ConnectionSchemaCache struct {
 	gorm.Model
@@ -924,10 +936,16 @@ func (d *Database) DeleteConnection(tx *gorm.DB, id uint) error
     DeleteConnection deletes a connection and its associated data from the
     database.
 
-func (d *Database) DeleteConnectionOAuthSession(tx *gorm.DB, sessionID uint) error
-    DeleteConnectionOAuthSession removes a session row by ID. Called after
-    a successful callback to enforce the single-use property of the state
-    parameter.
+func (d *Database) DeleteConnectionOAuthSessionByStateHMAC(tx *gorm.DB, stateHMAC string) error
+    DeleteConnectionOAuthSessionByStateHMAC removes a session row by its
+    state_hmac. Called after a successful callback to enforce the single- use
+    property of the state parameter, and on expired-session cleanup.
+
+    We delete by state_hmac instead of synthetic ID because state_hmac is the
+    natural unique key (and what the caller already has in scope) and because
+    synthetic IDs on these tables have been an unreliable migration surface —
+    embedded primary-key fields don't always make it through AutoMigrate cleanly
+    on existing schemas. state_hmac is the signal we trust.
 
 func (d *Database) DeleteConnectionOAuthSessionsByConnectionID(tx *gorm.DB, connectionID uint) error
     DeleteConnectionOAuthSessionsByConnectionID removes every pending session
@@ -1104,6 +1122,17 @@ func (d *Database) GetConnectionOAuthTokenByConnectionID(connectionID uint) (*Co
 
     Rejects connectionID == 0 up front so a buggy caller can't accidentally
     match an arbitrary row via GORM's zero-value Where semantics.
+
+func (d *Database) GetConnectionOAuthTokenStatusByConnectionID(
+	connectionID uint,
+) (*ConnectionOAuthTokenStatus, error)
+    GetConnectionOAuthTokenStatusByConnectionID returns just the status-
+    relevant columns for a token row. Console polls this every 2.5s during an
+    active OAuth flow; loading the full row would force the encrypted_json
+    serializer to decrypt access_token + refresh_token on every poll,
+    ~24×/min per active connection across all watching consoles. Use the full
+    GetConnectionOAuthTokenByConnectionID only on the refresh / revoke paths
+    that actually need the secrets.
 
 func (d *Database) GetConnectionSubscriptionByID(id uint) (*ConnectionSubscription, error)
     GetConnectionSubscriptionByID retrieves a subscription by its ID.

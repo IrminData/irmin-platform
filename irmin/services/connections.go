@@ -635,33 +635,40 @@ func (api *APIServices) addConnectionTags(
 
 // MaskConnectionSecrets masks secret fields in connection details and settings based on connector schema.
 func (api *APIServices) MaskConnectionSecrets(c context.Context, connections ...*db.Connection) {
-	// 1. Identify unique connectors and fetch any that aren't preloaded
+	// 1. Identify unique connectors and fetch any that aren't preloaded.
+	//    The `_, ok := connectorMap[id]` guard is important: when listing N
+	//    connections from the same connector with no preload, the naive loop
+	//    issued N GetConnector calls; one cache check turns that into 1.
 	connectorMap := make(map[uint]*db.Connector)
 	for _, conn := range connections {
-		if conn.ConnectorID != 0 {
-			if conn.Connector.ID != 0 {
-				// Connector is preloaded, use it
-				connectorMap[conn.ConnectorID] = &conn.Connector
-			} else {
-				// Connector is not preloaded, fetch it from the database
-				connector, fetchErr := api.DB.GetConnector(conn.ConnectorID)
-				if fetchErr != nil {
-					api.Logger.WarnContext(
-						c,
-						"Connector not preloaded and failed to fetch from database, all fields will be masked as fail-safe",
-						"connection_id",
-						conn.ID,
-						"connector_id",
-						conn.ConnectorID,
-						"error",
-						fetchErr,
-					)
-					// Continue without this connector - applySecretMasking will mask all fields as fail-safe
-					continue
-				}
-				connectorMap[conn.ConnectorID] = connector
-			}
+		if conn.ConnectorID == 0 {
+			continue
 		}
+		if _, alreadyResolved := connectorMap[conn.ConnectorID]; alreadyResolved {
+			continue
+		}
+		if conn.Connector.ID != 0 {
+			// Connector is preloaded, use it
+			connectorMap[conn.ConnectorID] = &conn.Connector
+			continue
+		}
+		// Connector is not preloaded, fetch it from the database
+		connector, fetchErr := api.DB.GetConnector(conn.ConnectorID)
+		if fetchErr != nil {
+			api.Logger.WarnContext(
+				c,
+				"Connector not preloaded and failed to fetch from database, all fields will be masked as fail-safe",
+				"connection_id",
+				conn.ID,
+				"connector_id",
+				conn.ConnectorID,
+				"error",
+				fetchErr,
+			)
+			// Continue without this connector - applySecretMasking will mask all fields as fail-safe
+			continue
+		}
+		connectorMap[conn.ConnectorID] = connector
 	}
 
 	// 2. Resolve schema for each connector (cached on the Connector row;
@@ -721,16 +728,24 @@ func (api *APIServices) resolveConnectorSchemas(
 		// Lazy backfill for rows that predate the cached schema column.
 		// Use "en" locale for internal schema fetching.
 		client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken)
-		fetched, complete := api.fetchConnectorSchema(c, client, connector.Name)
-		if !complete {
-			// Transient failure on at least one side — applySecretMasking will
-			// mask everything as fail-safe. Don't persist; retry next request.
-			continue
-		}
-
-		// `fetched` may legitimately be empty (connector declares no fields);
-		// cache it anyway so we stop fanning out on every read. Use a
-		// non-nil empty map so the presence check above hits.
+		fetched, _ := api.fetchConnectorSchema(c, client, connector.Name)
+		// We deliberately ignore the `complete` flag here. Some
+		// connectors (e.g. database connectors like MySQL/Postgres)
+		// cannot describe their settings schema statically — the
+		// settings depend on runtime credentials. Their /configuration/
+		// settings/fields endpoint 500s with "missing required
+		// connection details", `complete` returns false, and previously
+		// we'd never cache anything and fan out on EVERY subsequent
+		// read of the connection list. That produced a permanent error
+		// log loop and burned a vendor request per page load.
+		//
+		// Cache whatever we managed to fetch (details, partial, or
+		// empty) so the fan-out stops. Anything missing from the cached
+		// schema is masked fail-safe by applySecretMasking — same
+		// behavior we had under `complete=false`, just without the
+		// repeated network call. A connector update via /info still
+		// refreshes the cached schema, so a transient failure here
+		// self-heals on the next register/update.
 		if fetched == nil {
 			fetched = map[string]irminmodels.DynamicField{}
 		}

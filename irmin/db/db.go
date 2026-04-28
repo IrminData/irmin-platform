@@ -274,6 +274,54 @@ func (d *Database) Migrate() error {
 		return fmt.Errorf("failed to ensure oauth client indexes: %w", err)
 	}
 
+	// Belt-and-braces ADD COLUMN for environments where the previous
+	// schema iteration successfully created created_at/updated_at on the
+	// connection_oauth_* tables. Old pods running the previous code
+	// version still issue UpsertConnectionOAuthToken with `updated_at` in
+	// DoUpdates; if those columns don't exist yet on this environment
+	// (the documented past failure mode), old-pod traffic crashloops on
+	// every token write through the rollover window. ADD COLUMN IF NOT
+	// EXISTS is a no-op where the columns already exist and a one-shot
+	// fix where they don't, so this stays idempotent across boots and
+	// across environments. Drop the columns in a follow-up deploy after
+	// all old pods have drained.
+	if err := d.ensureConnectionOAuthLegacyTimestampColumns(); err != nil {
+		return fmt.Errorf("failed to ensure oauth legacy timestamp columns: %w", err)
+	}
+
+	return nil
+}
+
+// ensureConnectionOAuthLegacyTimestampColumns adds nullable created_at /
+// updated_at columns to the connection_oauth_* tables if they're missing.
+// See the call site in autoMigrate for why — short version: rolling-deploy
+// safety for old pods that still write `updated_at` via the previous
+// schema's DoUpdates list.
+//
+// All three statements use ADD COLUMN IF NOT EXISTS so they're safe to run
+// on any environment regardless of which previous iteration's schema state
+// it's currently in. The columns are nullable with no default, so existing
+// rows are unaffected and the new columns add no write cost on inserts.
+//
+// Once the previous deploy is fully drained, a follow-up migration should
+// `DROP COLUMN IF EXISTS` these to remove the schema drift permanently.
+func (d *Database) ensureConnectionOAuthLegacyTimestampColumns() error {
+	tables := []string{
+		"connection_oauth_clients",
+		"connection_oauth_sessions",
+		"connection_oauth_tokens",
+	}
+	for _, t := range tables {
+		stmt := fmt.Sprintf(
+			`ALTER TABLE %s
+				ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ,
+				ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ`,
+			t,
+		)
+		if err := d.Exec(stmt).Error; err != nil {
+			return fmt.Errorf("ensure legacy timestamp columns on %s: %w", t, err)
+		}
+	}
 	return nil
 }
 
