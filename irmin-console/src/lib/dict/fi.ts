@@ -1069,6 +1069,50 @@ const fi = {
       updateFailed: 'Yhteyden päivitys epäonnistui. Tarkista virheet.',
     },
 
+    oauth: {
+      statusTitle: 'OAuth-yhteys',
+      statusBadgeConnected: 'Yhdistetty',
+      statusBadgeNeedsRefresh: 'Päivitetään pian',
+      statusBadgeDisconnected: 'Yhteys katkaistu',
+      providerLabel: 'Palveluntarjoaja',
+      lastRefreshLabel: 'Viimeksi päivitetty',
+      expiresAtLabel: 'Token vanhenee',
+      scopesLabel: 'Myönnetyt oikeudet',
+      scopesExplainerTitle: 'Mitä tämä yhteys voi käyttää',
+      scopesExplainerBody:
+        'Sinut ohjataan palveluun {provider} hyväksymään alla olevat oikeudet. Irmin tallentaa pääsyn puolestasi ja päivittää sen automaattisesti.',
+      connectWithProvider: 'Yhdistä palveluun {provider}',
+      connecting: 'Yhdistetään…',
+      reconnect: 'Yhdistä uudelleen',
+      reconnectSuccess: 'Yhteys palautettu onnistuneesti',
+      disconnect: 'Katkaise yhteys',
+      disconnectSuccess: 'Yhteys palveluun katkaistu',
+      disconnectError: 'Yhteyden katkaiseminen epäonnistui',
+      confirmDisconnect:
+        'Katkaistaanko tämä OAuth-yhteys? Olemassa olevat työnkulut epäonnistuvat, kunnes yhteys palautetaan.',
+      disconnectedTitle: 'Ei yhdistetty',
+      disconnectedBody:
+        'Tällä yhteydellä ei ole aktiivista tokenia. Napsauta Yhdistä uudelleen valtuuttaaksesi Irminin palvelun {provider} kanssa.',
+      errors: {
+        state_invalid:
+          'OAuth-istunto vanheni ennen kuin prosessi valmistui. Yritä uudelleen.',
+        config_unavailable:
+          'OAuth ei ole tällä hetkellä käytettävissä tälle liittimelle.',
+        refresh_rejected:
+          'Palveluntarjoaja hylkäsi päivityksen — olet ehkä peruuttanut pääsyn. Yhdistä uudelleen.',
+        not_connected: 'Tällä yhteydellä ei ole vielä aktiivista tokenia.',
+        vendor_error:
+          'Palveluntarjoaja palautti virheen OAuth-prosessin aikana.',
+        internal_error: 'Jotakin meni pieleen prosessin aikana.',
+        popup_blocked:
+          'Selain esti OAuth-ponnahdusikkunan. Salli ponnahdusikkunat tälle sivustolle ja yritä uudelleen.',
+        popup_closed: 'OAuth-ikkuna suljettiin ennen kuin prosessi valmistui.',
+        timeout: 'OAuth-prosessi kesti liian kauan.',
+        unmounted:
+          'OAuth-prosessia suorittava sivu suljettiin tai siirryttiin pois ennen kuin prosessi valmistui.',
+      },
+    },
+
     schemaValidation: {
       title: 'Skeeman validointi',
       viewTab: 'Näytä skeema',

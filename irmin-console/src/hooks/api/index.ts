@@ -7,6 +7,8 @@ export * from './useConnections';
 export * from './useConnectionSubscriptions';
 export * from './useConnector';
 export * from './useConnectors';
+export * from './useOAuthFlow';
+export * from './useOAuthStatus';
 
 // Repository hooks
 export * from './useRepositories';

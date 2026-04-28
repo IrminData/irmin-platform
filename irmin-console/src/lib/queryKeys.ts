@@ -175,6 +175,11 @@ export const connectionSubscriptionsQueryKey = (
   connectionID: string
 ) => ['connection-subscriptions', workspaceSlug, connectionID] as const;
 
+export const connectionOAuthStatusQueryKey = (
+  workspaceSlug: string,
+  connectionID: string
+) => ['connection-oauth-status', workspaceSlug, connectionID] as const;
+
 export const connectionSchemaQueryKey = (
   workspaceSlug: string,
   connectionID: string,

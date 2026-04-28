@@ -1073,6 +1073,49 @@ const en = {
       updateFailed: 'Failed to update connection. Please review the errors.',
     },
 
+    oauth: {
+      statusTitle: 'OAuth connection',
+      statusBadgeConnected: 'Connected',
+      statusBadgeNeedsRefresh: 'Refreshing soon',
+      statusBadgeDisconnected: 'Disconnected',
+      providerLabel: 'Provider',
+      lastRefreshLabel: 'Last refreshed',
+      expiresAtLabel: 'Token expires',
+      scopesLabel: 'Granted scopes',
+      scopesExplainerTitle: 'What this connection can access',
+      scopesExplainerBody:
+        'You will be redirected to {provider} to approve the scopes below. Irmin stores access on your behalf and refreshes it automatically.',
+      connectWithProvider: 'Connect with {provider}',
+      connecting: 'Connecting…',
+      reconnect: 'Reconnect',
+      reconnectSuccess: 'Reconnected successfully',
+      disconnect: 'Disconnect',
+      disconnectSuccess: 'Disconnected from provider',
+      disconnectError: 'Failed to disconnect from provider',
+      confirmDisconnect:
+        'Disconnect this OAuth connection? Existing workflows will fail until you reconnect.',
+      disconnectedTitle: 'Not connected',
+      disconnectedBody:
+        'This connection has no active token. Click Reconnect to authorize Irmin with {provider}.',
+      errors: {
+        state_invalid:
+          'The OAuth session expired before the flow finished. Please try again.',
+        config_unavailable:
+          'OAuth is not currently available for this connector.',
+        refresh_rejected:
+          'The provider rejected the refresh — you may have revoked access. Please reconnect.',
+        not_connected: 'There is no active token for this connection yet.',
+        vendor_error: 'The provider returned an error during the OAuth flow.',
+        internal_error: 'Something went wrong while completing the flow.',
+        popup_blocked:
+          'The browser blocked the OAuth popup. Allow popups for this site and try again.',
+        popup_closed: 'The OAuth window was closed before the flow finished.',
+        timeout: 'The OAuth flow took too long to complete.',
+        unmounted:
+          'The page running the OAuth flow was closed or navigated away before the flow finished.',
+      },
+    },
+
     schemaValidation: {
       title: 'Schema Validation',
       viewTab: 'View Schema',

@@ -13,6 +13,7 @@ import type {
 import { ContentTooLargeError, isContentTooLargePayload } from './errors';
 import AIApplicationService from './resources/AIApplicationService';
 import BillingService from './resources/BillingService';
+import ConnectionOAuthService from './resources/ConnectionOAuthService';
 import ConnectionService from './resources/ConnectionService';
 import ConnectionSubscriptionService from './resources/ConnectionSubscriptionService';
 import ConnectorService from './resources/ConnectorService';
@@ -81,6 +82,7 @@ class IrminCore {
   public policyService: PolicyService;
   public tagService: TagService;
   public embeddingsService: EmbeddingsService;
+  public connectionOAuthService: ConnectionOAuthService;
 
   /**
    * Updates the authentication token.
@@ -133,6 +135,7 @@ class IrminCore {
     this.policyService = new PolicyService(this);
     this.tagService = new TagService(this);
     this.embeddingsService = new EmbeddingsService(this);
+    this.connectionOAuthService = new ConnectionOAuthService(this);
   }
 
   /**

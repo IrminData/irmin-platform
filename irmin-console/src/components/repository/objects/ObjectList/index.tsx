@@ -308,7 +308,10 @@ export default function ObjectList({
                           {getIcon(obj)}
                           <Button
                             variant='link'
-                            className='no-underline hover:underline'
+                            className='
+                              no-underline
+                              hover:underline
+                            '
                             onClick={() => {
                               if (obj.type === 'group') {
                                 setCurrentPath(obj.path);

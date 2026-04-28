@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import ConnectionConfigTable from '@/components/connection/ConnectionConfigTable';
+import ConnectionOAuthCard from '@/components/connection/ConnectionOAuthCard';
 import ConnectionSubscriptionsSection from '@/components/connection/ConnectionSubscriptionsSection';
 import EditConnectionConfigurationModal from '@/components/connection/EditConnectionConfigurationModal';
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
@@ -152,6 +153,11 @@ const ConnectionSection = () => {
               />
             )}
           </div>
+          {/* OAuth status card for OAuth-backed connectors */}
+          {connection.connector.connection_oauth_config && (
+            <ConnectionOAuthCard />
+          )}
+
           {/* Connection Subscriptions for patch_event capable connectors */}
           <ConnectionSubscriptionsSection />
 

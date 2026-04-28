@@ -84,9 +84,29 @@ export default function DefineSettingsStep({
     ]
   );
 
+  // OAuth path: when the connector authenticates via OAuth, the wizard
+  // doesn't collect details (the ConnectOAuthStep replaces the details
+  // form). Validating settings here would call the validate endpoint
+  // with empty details and fail can_connect / connection_details_valid,
+  // surfacing an unresolvable error to a user with no details form to
+  // fix it in. Skip pre-save validation on this step the same way
+  // ConfigureConnectionStep does — runtime auth is bound to the OAuth
+  // token Core stores per connection, and the connector's own pull/push
+  // path will catch real misconfiguration.
+  const isOAuthPath =
+    !isEditMode && !!wizardData.connector?.connection_oauth_config;
+
   const handleContinue = useCallback(
     async (formValues: DynamicFieldValues) => {
       try {
+        // OAuth path: store settings and advance without validating.
+        // Mirrors the skip in ConfigureConnectionStep.
+        if (isOAuthPath) {
+          updateWizardData({ connectionSettings: formValues });
+          goNext();
+          return;
+        }
+
         // In edit mode, skip validation when any stored secret is still the
         // backend SECRET_PLACEHOLDER — validating would fail because the
         // connector receives the literal placeholder. PATCH will preserve
@@ -133,6 +153,7 @@ export default function DefineSettingsStep({
       }
     },
     [
+      isOAuthPath,
       wizardData.connectionDetails,
       validateConnectorConfigurationMutation,
       irminAlert,

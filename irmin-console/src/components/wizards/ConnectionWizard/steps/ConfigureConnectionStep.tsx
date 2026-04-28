@@ -100,14 +100,27 @@ export default function ConfigureConnectionStep({
           });
         }
 
+        // OAuth path: when the connector authenticates via OAuth, there
+        // are no user-editable details for the validate endpoint to
+        // judge — auth is bound to the token Core stores per
+        // connection. Calling validate with empty details would fail
+        // `connection_details_valid` and try to redirect to step 2,
+        // which in the OAuth wizard is ConnectOAuthStep (no details
+        // form). The user would be deadlocked. Skip pre-save
+        // validation; the configure-step PATCH and the connector's
+        // own runtime checks cover correctness.
+        const isOAuthPath =
+          !isEditMode && !!wizardData.connector?.connection_oauth_config;
+
         // In edit mode, skip pre-save validation when stored secrets are
         // still the SECRET_PLACEHOLDER. The validate endpoint would pass the
         // literal placeholder through to the connector and fail auth; the
         // PATCH submit will preserve those secrets server-side.
         const skipValidation =
-          isEditMode &&
-          (hasUnchangedSecrets(wizardData.connectionDetails) ||
-            hasUnchangedSecrets(wizardData.connectionSettings));
+          isOAuthPath ||
+          (isEditMode &&
+            (hasUnchangedSecrets(wizardData.connectionDetails) ||
+              hasUnchangedSecrets(wizardData.connectionSettings)));
 
         if (!skipValidation) {
           // Validate connection configuration before creating
@@ -150,10 +163,11 @@ export default function ConfigureConnectionStep({
           ),
         };
 
-        if (isEditMode) {
-          if (!onSubmitConfiguration) {
-            throw new Error('Missing update handler for edit mode');
-          }
+        // If the caller supplied a custom submit handler, prefer it
+        // over create. Used by edit mode and by the OAuth-create path
+        // (where the connection already exists from step 2 and needs
+        // to be PATCH-updated rather than POST-created).
+        if (onSubmitConfiguration) {
           setIsSubmittingEdit(true);
           try {
             const res = await onSubmitConfiguration(payload);
@@ -172,6 +186,9 @@ export default function ConfigureConnectionStep({
             setIsSubmittingEdit(false);
           }
           return;
+        }
+        if (isEditMode) {
+          throw new Error('Missing update handler for edit mode');
         }
 
         // Create connection only if validation passed
@@ -272,7 +289,8 @@ export default function ConfigureConnectionStep({
           onSubmit={handleSubmitConnection}
           loading={
             createConnectionMutation.isPending ||
-            validateConnectorConfigurationMutation.isPending
+            validateConnectorConfigurationMutation.isPending ||
+            isSubmittingEdit
           }
           submitButtonText={dict.connections.create.createConnection}
           formProps={{

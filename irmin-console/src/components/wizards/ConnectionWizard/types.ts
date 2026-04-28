@@ -20,6 +20,13 @@ export interface ConnectionWizardData {
   connectionDetails: DynamicFieldValues | undefined;
   connectionSettings: DynamicFieldValues | undefined;
   tags?: Tag[];
+  /**
+   * SQID of the draft connection created in step 2 of the OAuth path.
+   * Set after the connection record is persisted so subsequent steps
+   * (and the cancel cleanup) can reference it. Undefined for
+   * non-OAuth connectors.
+   */
+  draftConnectionID?: string;
 }
 
 export interface ConnectionConfigurationSubmission {

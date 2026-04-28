@@ -1,3 +1,5 @@
+import type { ConnectionOAuthConfig } from './ConnectionOAuthConfig';
+
 /**
  * Irmin connector type
  */
@@ -28,6 +30,12 @@ export interface Connector {
   author_email: string;
   /** URL to read more about the connector, eg. a website where the connector is described, such as documentation */
   read_more_url: string;
+  /**
+   * OAuth 2.0 metadata when the connector authenticates via OAuth.
+   * Absent for password / API-key connectors. When present, the
+   * console runs the OAuth flow instead of rendering credential inputs.
+   */
+  connection_oauth_config?: ConnectionOAuthConfig;
 }
 
 /**
