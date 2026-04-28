@@ -522,6 +522,14 @@ const RepositoryFiletree = ({
                           {getIcon(object.type)}
                           <Button
                             variant='link'
+                            className={
+                              isCurrentPath
+                                ? 'underline'
+                                : `
+                                  no-underline
+                                  hover:underline
+                                `
+                            }
                             onClick={() => handleObjectClick(object)}
                           >
                             {object.name}
