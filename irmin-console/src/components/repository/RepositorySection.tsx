@@ -545,6 +545,7 @@ function RepositorySectionContent({
             >
               <ObjectList
                 selectObject={handleObjectSelection}
+                selectedObjectPath={selectedObject?.path}
                 currentPath={currentDirectoryPath}
                 setCurrentPath={setCurrentDirectoryPath}
                 repositoryObjectQuery={repositoryObjectQuery}

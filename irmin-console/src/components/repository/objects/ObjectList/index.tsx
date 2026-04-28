@@ -32,6 +32,8 @@ import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { cn } from '@/utils/tw';
+
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { RepositoryObject } from '@/types/core/RepositoryObject';
 
@@ -74,17 +76,20 @@ const isEmbeddingFile = (obj: RepositoryObject): boolean =>
  *
  * @param props - The component props
  * @param props.selectObject - The function to call when an object is selected
+ * @param props.selectedObjectPath - Path of the currently selected object, used to highlight its row
  * @param props.currentPath - The current path in the repository
  * @param props.setCurrentPath - The function to set the current path
  * @param props.repositoryObjectQuery - The query result for the repository object
  */
 export default function ObjectList({
   selectObject,
+  selectedObjectPath,
   currentPath,
   setCurrentPath,
   repositoryObjectQuery,
 }: {
   selectObject: (object: RepositoryObject) => void;
+  selectedObjectPath?: string;
   currentPath: string;
   setCurrentPath: (path: string) => void;
   repositoryObjectQuery: UseQueryResult<
@@ -308,10 +313,18 @@ export default function ObjectList({
                           {getIcon(obj)}
                           <Button
                             variant='link'
-                            className='
-                              no-underline
-                              hover:underline
-                            '
+                            className={cn(
+                              `
+                                no-underline decoration-1
+                                hover:underline hover:decoration-1
+                              `,
+                              obj.type !== 'group' &&
+                                obj.path === selectedObjectPath &&
+                                `
+                                  underline decoration-2
+                                  hover:decoration-2
+                                `
+                            )}
                             onClick={() => {
                               if (obj.type === 'group') {
                                 setCurrentPath(obj.path);
