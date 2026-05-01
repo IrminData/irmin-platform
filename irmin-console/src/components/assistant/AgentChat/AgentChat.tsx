@@ -567,12 +567,14 @@ const AgentChat = ({
                 {showContextBanner && (
                   <div
                     className={`
-                      mt-4 flex items-center gap-2 rounded-md border
-                      border-accent/20 bg-accent/10 p-2 text-xs text-foreground
-                      dark:text-accent-foreground
+                      mt-4 flex items-center gap-2 rounded-md border border-border
+                      bg-muted/60 p-2 text-xs text-muted-foreground
                     `}
                   >
-                    <TbInfoCircle className='size-4 shrink-0' />
+                    <TbInfoCircle
+                      className='size-4 shrink-0 text-accent'
+                      aria-hidden='true'
+                    />
                     <span>{dict.assistant.contextAwareBanner}</span>
                   </div>
                 )}
