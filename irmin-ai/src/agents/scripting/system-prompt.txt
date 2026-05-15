@@ -48,6 +48,14 @@ SQL and DuckDB in scripts
 - Best practices: Use COPY TO to export processed results back to LakeFS repositories
 - Note: While queries (as action executables) can also accept input files as virtual tables, scripts must use the SDK `irminutils` package to handle inputs and outputs. Both approaches work in workflows.
 
+SQL delegation (REQUIRED)
+- For ANY non-trivial DuckDB/SQL question — placeholder syntax, joins, window functions, schema exploration, COPY TO targets, JSON unnesting — call the `query_sql_assistant` tool instead of guessing.
+- Pass the script's repository context (`repository-slug`, `repository-object-path`, `repository-ref`) when known, so the SQL expert can resolve schemas.
+- The tool returns one of three shapes:
+  - `{"success": true, "sql": "..."}` — inline the SQL verbatim as a Go string literal inside the generated script. Do not rewrite, abbreviate, or "tidy" it.
+  - `{"success": false, "clarification": "..."}` — the SQL expert itself needs more information (workspace, repository, object path, etc.). Surface this verbatim to the user as your own clarification message. Do NOT fabricate SQL.
+  - `{"success": false, "message": "..."}` — the delegation failed (empty response, transport error). Return a clarification message explaining that the SQL portion of the script could not be authored and listing what information would unblock it.
+
 MCP tools available
 - You have access to the full Irmin MCP toolset, including script management tools:
   - `irmin_list_scripts`: List all stored scripts in a workspace

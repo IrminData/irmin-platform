@@ -9,6 +9,7 @@ import { LLMOptions, llmService } from '@/services/llm';
 import { toolsService } from '@/services/tools';
 
 import { BaseAgent } from '@/agents/base';
+import { createQueryAssistantTool } from '@/agents/tools/queryAssistantTool';
 import type { AgentInput } from '@/agents/types';
 
 import { ANTHROPIC_FALLBACK_CHAIN } from '@/config/models';
@@ -57,6 +58,15 @@ export class ScriptingAgent extends BaseAgent {
         requiredToolNames.includes(tool.name)
       );
       tools.push(...filteredTools);
+
+      // Delegate SQL authoring to the dedicated query agent rather than
+      // guessing DuckDB syntax. Workspace + user must be present — the
+      // route handler always provides them for authenticated requests.
+      if (input.workspace && input.user) {
+        tools.push(
+          createQueryAssistantTool(input.authToken, input.workspace, input.user)
+        );
+      }
     }
 
     // Fallbacks must stay on Anthropic because the primary emits thinking
@@ -95,7 +105,7 @@ export class ScriptingAgent extends BaseAgent {
         llmToolSelectorMiddleware({
           model: cheaperLLM,
           maxTools: 10,
-          alwaysInclude: ['irmin_retrieve_docs_context'],
+          alwaysInclude: ['irmin_retrieve_docs_context', 'query_sql_assistant'],
         }),
         modelFallbackMiddleware(...fallbackLLMs),
       ],
