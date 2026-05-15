@@ -17,7 +17,7 @@ function DisplayTitle({
     <h1
       className={cn(
         `
-          scroll-mt-20 font-display text-2xl font-semibold tracking-[-0.025em]
+          scroll-mt-20 font-display text-2xl font-semibold tracking-tight
           text-balance text-foreground
           sm:text-3xl
         `,

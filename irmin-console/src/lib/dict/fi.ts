@@ -1717,6 +1717,54 @@ const fi = {
     },
   },
 
+  scriptHelper: {
+    title: 'Skriptiassistentti',
+    generateScript: 'Luo skripti',
+    referenceTab: 'Ohje',
+    poweredBy: 'Käyttövoimana Irminin Go SDK',
+    sdkDocs: 'Go SDK GitHubissa',
+    runtimeDescription:
+      'Skriptit suoritetaan eristetyssä sandbox-ympäristössä. Assistentti luo Go-ohjelmia, jotka käyttävät Irminin SDK:ta lukemaan repositoryjen syötteitä, suorittamaan logiikkaa ja palauttamaan tuloksia.',
+    contractTitle: 'Skriptin rakenne',
+    contractDescription:
+      'Jokaisen skriptin on noudatettava samaa muotoa, jotta ympäristö voi suorittaa sen luotettavasti:',
+    contractPoints: {
+      singleFile:
+        'Yksi Go-tiedosto, jossa package main ja func main() -aloituspiste.',
+      stdlibOnly: 'Vain Go:n vakiokirjasto ja Irminin SDK ovat sallittuja.',
+      apiFlags:
+        'Käytä irminutils.GetAPIFromFlags() ja irmincore.NewClient -kutsuja API-clientin alustamiseen.',
+      errors: 'Päätä virheisiin nopeasti log.Fatalf-kutsulla.',
+    },
+    skeletonTitle: 'Skriptin runko',
+    inputOutputTitle: 'Syötteiden lukeminen ja tulosten kirjoittaminen',
+    inputOutputDescription:
+      'Ympäristö tarjoaa repository-objektit virtuaalitiedostoina ja kerää lähettämäsi tulostiedostot vastaavasti.',
+    readInputsTitle: 'Lue syötetiedostot',
+    writeOutputsTitle: 'Lähetä tulostiedosto',
+    sqlInScriptsTitle: 'Datan kyseleminen skripteistä',
+    sqlInScriptsDescription:
+      'Skriptit voivat suorittaa DuckDB-kyselyitä repositoryja vasten Irminin SDK:lla. Käytä samaa paikkamerkkisyntaksia kuin SQL-editorissa:',
+    sqlInScriptsNote:
+      'Kun pyydät assistentilta kyselyä, se delegoi sen SQL-asiantuntijalle ja liittää tuloksen suoraan luotuun skriptiin.',
+    explanations: {
+      skeleton:
+        'Minimirunko jokaista Irmin-skriptiä varten. Lisää oma logiikkasi paikkamerkin tilalle — jätä virheenkäsittely ja clientin alustus ennalleen.',
+      readInputs:
+        'Työnkulun syötteet näkyvät tiedostoina. Käy listaus läpi ja lue jokainen tavuina; pura sisältö ilmoitetun content-typen mukaan.',
+      writeOutputs:
+        'Jokainen tulostiedosto tallennetaan ja se voidaan välittää seuraaville vaiheille tai tallentaa takaisin repositoryyn.',
+    },
+    scriptGeneration: {
+      placeholder: 'Kuvaile, mitä skriptin tulisi tehdä...',
+      send: 'Lähetä',
+      clearChat: 'Tyhjennä',
+      loading: 'Luodaan skriptiä...',
+      error: 'Skriptin luominen epäonnistui',
+      noMessages: 'Aloita keskustelu luodaksesi skriptin',
+    },
+  },
+
   fileNavigator: {
     open: 'Avaa',
     root: 'Juuri',

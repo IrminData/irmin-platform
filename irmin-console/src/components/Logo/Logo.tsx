@@ -34,7 +34,7 @@ export function Logo({ className }: LogoProps) {
       <span
         aria-hidden='true'
         className='
-          ml-[0.18em] size-[0.32em] -translate-y-[0.08em] rounded-full bg-accent
+          ml-[0.18em] size-[0.32em] translate-y-[-0.08em] rounded-full bg-accent
         '
       />
     </span>

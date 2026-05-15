@@ -1727,6 +1727,54 @@ const en = {
     },
   },
 
+  scriptHelper: {
+    title: 'Script Assistant',
+    generateScript: 'Generate Script',
+    referenceTab: 'Reference',
+    poweredBy: 'Powered by the Irmin Go SDK',
+    sdkDocs: 'Go SDK on GitHub',
+    runtimeDescription:
+      'Scripts run in an isolated compute sandbox. The assistant generates Go programs that use the Irmin SDK to read repository inputs, run logic, and emit results.',
+    contractTitle: 'Script Contract',
+    contractDescription:
+      'Every script must follow the same shape so the runtime can execute it predictably:',
+    contractPoints: {
+      singleFile:
+        'One Go file with package main and a func main() entry point.',
+      stdlibOnly: 'Only the Go standard library and the Irmin SDK are allowed.',
+      apiFlags:
+        'Use irminutils.GetAPIFromFlags() and irmincore.NewClient to initialise the API client.',
+      errors: 'Fail fast on errors with log.Fatalf.',
+    },
+    skeletonTitle: 'Script Skeleton',
+    inputOutputTitle: 'Reading Inputs & Writing Outputs',
+    inputOutputDescription:
+      'The runtime maps repository objects into virtual input files and collects whatever you send back as results.',
+    readInputsTitle: 'Read input files',
+    writeOutputsTitle: 'Send a result file',
+    sqlInScriptsTitle: 'Querying Data from Scripts',
+    sqlInScriptsDescription:
+      'Scripts can run DuckDB queries against repositories using the Irmin SDK. Use the same placeholder syntax as the SQL editor:',
+    sqlInScriptsNote:
+      'When you ask the assistant for a query, it delegates to the SQL expert and inlines the result into the generated script.',
+    explanations: {
+      skeleton:
+        'Minimal scaffolding for every Irmin script. Drop your logic where the placeholder lives — keep error handling and the client initialisation as-is.',
+      readInputs:
+        'Workflow inputs are surfaced as files. Iterate over the listing and read each one as bytes; decode according to its declared content type.',
+      writeOutputs:
+        'Each result file is persisted by the runtime and can be passed to subsequent stages or stored back into a repository.',
+    },
+    scriptGeneration: {
+      placeholder: 'Describe what the script should do...',
+      send: 'Send',
+      clearChat: 'Clear',
+      loading: 'Generating script...',
+      error: 'Failed to generate script',
+      noMessages: 'Start a conversation to generate a script',
+    },
+  },
+
   fileNavigator: {
     open: 'Open',
     root: 'Root',

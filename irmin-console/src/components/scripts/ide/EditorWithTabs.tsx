@@ -2,7 +2,7 @@
 
 import { IoAdd, IoClose, IoSave } from 'react-icons/io5';
 
-import SqlHelper from '@/components/query/helper/SqlHelper';
+import ScriptHelper from '@/components/scripts/helper/ScriptHelper';
 import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -107,7 +107,11 @@ const EditorWithTabs = () => {
                 <option value='go'>Go</option>
               </select>
             </div>
-            <SqlHelper />
+            <ScriptHelper
+              scriptName={currentTab?.name}
+              language={currentTab?.language}
+              currentContent={currentTab?.content}
+            />
             <Button
               onClick={saveCurrentTab}
               variant='default'

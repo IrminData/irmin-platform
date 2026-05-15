@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IoSave } from 'react-icons/io5';
 import { TbExternalLink } from 'react-icons/tb';
 
-import SqlHelper from '@/components/query/helper/SqlHelper';
+import ScriptHelper from '@/components/scripts/helper/ScriptHelper';
 import CodeMirrorEditor from '@/components/scripts/ide/CodeMirrorEditor';
 import CreateScriptModal from '@/components/scripts/modals/CreateScriptModal';
 import { Button } from '@/components/ui/button';
@@ -414,7 +414,11 @@ export default function InlineScriptEditor({
           >
             <option value='go'>Go</option>
           </select>
-          <SqlHelper currentSql={editorContent} />
+          <ScriptHelper
+            scriptName={currentScript?.name}
+            language={language}
+            currentContent={editorContent}
+          />
         </div>
         <Button
           onClick={handleSave}
