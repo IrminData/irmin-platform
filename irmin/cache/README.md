@@ -16,4 +16,4 @@ Cache `GET`/`HEAD`/`OPTIONS` responses for a short TTL (default 5 minutes) to sh
 
 ## Integration
 
-Mounted by the HTTP pipeline before controllers (see the pipeline diagram in `../CLAUDE.md`). Invalidation is the responsibility of the controller/service layer — whenever a write path changes data that a cached `GET` exposed, it must call one of the `Invalidate*` helpers to evict the stale entry and its `_body`, `_GET`, `_auth_<hash>` variants that Fiber v3 maintains internally.
+Mounted by the HTTP pipeline before controllers (see the pipeline diagram in `../AGENTS.md`). Invalidation is the responsibility of the controller/service layer — whenever a write path changes data that a cached `GET` exposed, it must call one of the `Invalidate*` helpers to evict the stale entry and its `_body`, `_GET`, `_auth_<hash>` variants that Fiber v3 maintains internally.

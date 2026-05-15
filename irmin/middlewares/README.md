@@ -19,4 +19,4 @@ Middlewares own cross-cutting concerns:
 
 ## Integration
 
-Registered in `../routes` in the order shown by the request pipeline diagram in `../CLAUDE.md`. Middlewares report translation-aware errors through the shared `services.ErrorHandler` so the client sees localized messages while the server log keeps the raw cause.
+Registered in `../routes` in the order shown by the request pipeline diagram in `../AGENTS.md`. Middlewares report translation-aware errors through the shared `services.ErrorHandler` so the client sees localized messages while the server log keeps the raw cause.
