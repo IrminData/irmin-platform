@@ -19,6 +19,8 @@ import {
   createBatchContextTool,
   createLazyContextTool,
 } from '@/agents/tools/lazyContextTool';
+import { createQueryAssistantTool } from '@/agents/tools/queryAssistantTool';
+import { createScriptingAssistantTool } from '@/agents/tools/scriptingAssistantTool';
 import type { AgentInput, AgentResponse } from '@/agents/types';
 
 import { ANTHROPIC_FALLBACK_CHAIN } from '@/config/models';
@@ -35,10 +37,12 @@ export class AssistantAgent extends BaseAgent {
     'irmin_retrieve_docs_context',
     'irmin_list_repositories',
     'irmin_execute_sql',
+    'query_sql_assistant',
+    'scripting_assistant',
   ];
 
   // Maximum tools for LLM selector (keeps context manageable)
-  private static readonly MAX_SELECTED_TOOLS = 12;
+  private static readonly MAX_SELECTED_TOOLS = 14;
 
   // Patterns that indicate a docs-only query (no tools needed beyond docs retrieval)
   // NOTE: Be careful not to match queries about user data (e.g., "What connections do I have?")
@@ -55,6 +59,9 @@ export class AssistantAgent extends BaseAgent {
     /\bdo\s+I\s+have\b/i, // "What connections do I have?"
     /\b(sql|duckdb|database)\b/i,
     /\b(repositor(y|ies)|branch(es)?|commits?|objects?|schemas?|connections?|workflows?)\b/i,
+    /\bscript(s|ing)?\b/i,
+    /\b(golang)\b|\bgo\s+(script|code|program|sdk)\b/i,
+    /\bwrite\b.*\bscript\b/i,
   ];
 
   /**
@@ -119,6 +126,23 @@ export class AssistantAgent extends BaseAgent {
     if (!docsOnly && input.authToken && input.workspace?.slug) {
       tools.push(createLazyContextTool(input.authToken, input.workspace.slug));
       tools.push(createBatchContextTool(input.authToken, input.workspace.slug));
+    }
+
+    // Delegate SQL authoring and Go script authoring to dedicated sub-agents
+    // rather than producing them inline. The assistant routes any non-trivial
+    // SQL or scripting work through these tools so users get expert-quality
+    // output without the assistant having to specialize.
+    if (!docsOnly && input.authToken && input.workspace && input.user) {
+      tools.push(
+        createQueryAssistantTool(input.authToken, input.workspace, input.user)
+      );
+      tools.push(
+        createScriptingAssistantTool(
+          input.authToken,
+          input.workspace,
+          input.user
+        )
+      );
     }
 
     // Fallbacks must stay on Anthropic because the primary emits thinking

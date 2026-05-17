@@ -35,11 +35,11 @@ export function createQueryAssistantTool(
     name: 'query_sql_assistant',
     description:
       'Delegate a DuckDB/SQL authoring question to the dedicated Irmin SQL ' +
-      'expert agent. Use this whenever the script needs to embed a SQL ' +
-      'query — do NOT guess DuckDB syntax or Irmin placeholder formats ' +
-      'yourself. Pass the repository context from your own context so the ' +
-      'SQL expert can resolve schemas. Inline the returned SQL verbatim ' +
-      'inside the generated Go script.',
+      'expert agent. Use this whenever you need a SQL query — do NOT guess ' +
+      'DuckDB syntax or Irmin placeholder formats yourself. Pass the ' +
+      'repository context from your own context so the SQL expert can ' +
+      'resolve schemas. Inline the returned SQL verbatim in your output ' +
+      '(directly in your response, or inside a Go script if generating one).',
     schema: z.object({
       question: z
         .string()
