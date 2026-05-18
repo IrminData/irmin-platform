@@ -11859,6 +11859,7 @@ import "irmin-api/lib"
 - [func SaveObject\(d \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, object \*irminmodels.Object, ref string, repositoryID uint\) \(\*db.RepositoryObject, error\)](<#SaveObject>)
 - [func ScheduleModelToDBSchedule\(scheduleReq \*irminmodels.Schedule, d \*db.Database, workspace db.Workspace, sqidManager \*irminsqids.SQIDManager\) \(\*db.Schedule, error\)](<#ScheduleModelToDBSchedule>)
 - [func SeedDefaultTags\(dbConn \*gorm.DB, workspaceID uint\) error](<#SeedDefaultTags>)
+- [func SeedOAuthClients\(d \*db.Database, env \*utils.CoreAPIEnv\) error](<#SeedOAuthClients>)
 - [func SeedRoles\(d \*db.Database\) error](<#SeedRoles>)
 - [func SetDefaultPolicies\(dbConn \*gorm.DB, workspaceID uint, overridePolicies bool\) error](<#SetDefaultPolicies>)
 - [func SetupTestSuite\(t \*testing.T\) error](<#SetupTestSuite>)
@@ -11871,6 +11872,7 @@ import "irmin-api/lib"
   - [func SendNovuInviteNotification\(ctx context.Context, database \*db.Database, sqidManager \*irminsqids.SQIDManager, env \*utils.CoreAPIEnv, logger \*slog.Logger, params InviteNotificationParams\) \(\*InviteNotificationResult, error\)](<#SendNovuInviteNotification>)
 - [type NovuWorkflowDefinition](<#NovuWorkflowDefinition>)
   - [func GetNovuWorkflowDefinitions\(\) \[\]NovuWorkflowDefinition](<#GetNovuWorkflowDefinitions>)
+- [type OAuthClientSeedConfig](<#OAuthClientSeedConfig>)
 - [type SchemaCacheManager](<#SchemaCacheManager>)
   - [func NewSchemaCacheManager\(env \*utils.CoreAPIEnv, logger \*slog.Logger, db \*db.Database\) \*SchemaCacheManager](<#NewSchemaCacheManager>)
   - [func \(scm \*SchemaCacheManager\) GetConnectionSchema\(ctx context.Context, connection \*db.Connection, operationMethod, path, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, error\)](<#SchemaCacheManager.GetConnectionSchema>)
@@ -12208,6 +12210,17 @@ func SeedDefaultTags(dbConn *gorm.DB, workspaceID uint) error
 
 SeedDefaultTags seeds a workspace with default tags.
 
+<a name="SeedOAuthClients"></a>
+## func SeedOAuthClients
+
+```go
+func SeedOAuthClients(d *db.Database, env *utils.CoreAPIEnv) error
+```
+
+SeedOAuthClients upserts a global \(workspace\_id = NULL\) ConnectionOAuthClient row for every connector listed in oauthClientSeeds whose CLIENT\_ID \+ CLIENT\_SECRET env vars are both set. Connectors with missing credentials are skipped silently so the flag is a no\-op in environments that don't have any admin\-configured OAuth apps.
+
+Idempotent: re\-running updates the client\_id, redirect\_uri and encrypted secret on the existing row instead of inserting a duplicate.
+
 <a name="SeedRoles"></a>
 ## func SeedRoles
 
@@ -12346,6 +12359,18 @@ func GetNovuWorkflowDefinitions() []NovuWorkflowDefinition
 ```
 
 GetNovuWorkflowDefinitions returns all Novu workflow definitions that should exist. Add new workflows here as the notification system grows.
+
+<a name="OAuthClientSeedConfig"></a>
+## type OAuthClientSeedConfig
+
+OAuthClientSeedConfig declares one connector that participates in the \`\-seed\-oauth\-clients\` flow. Each entry maps a connector by its exact DB name to an env\-var prefix; the loader reads \`\<PREFIX\>\_CLIENT\_ID\` and \`\<PREFIX\>\_CLIENT\_SECRET\` from the already\-parsed CoreAPIEnv struct.
+
+```go
+type OAuthClientSeedConfig struct {
+    EnvPrefix     string
+    ConnectorName string
+}
+```
 
 <a name="SchemaCacheManager"></a>
 ## type SchemaCacheManager
@@ -17754,6 +17779,11 @@ type CoreAPIEnv struct {
     MaxStreamSizeMB            int // Max file size for streaming through API in MB (default 500)
     MaxAsyncJobSizeMB          int // Size above which async jobs are required in MB (default 5000)
     MaxWorkflowInputFileSizeMB int // Max input file size for workflow actions in MB (default 500)
+
+    // Connector OAuth client seed configuration (optional)
+    GoogleDriveClientID       string // Google Drive OAuth client ID (required for -seed-oauth-clients)
+    GoogleDriveClientSecret   string // Google Drive OAuth client secret (required for -seed-oauth-clients)
+    ConnectorOAuthRedirectURI string // Redirect URI for connector OAuth flows (default: https://localhost:8082/api/v1/connectors/oauth/callback)
 }
 ```
 

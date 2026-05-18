@@ -256,6 +256,16 @@ func ScheduleModelToDBSchedule(
 func SeedDefaultTags(dbConn *gorm.DB, workspaceID uint) error
     SeedDefaultTags seeds a workspace with default tags.
 
+func SeedOAuthClients(d *db.Database, env *utils.CoreAPIEnv) error
+    SeedOAuthClients upserts a global (workspace_id = NULL)
+    ConnectionOAuthClient row for every connector listed in oauthClientSeeds
+    whose CLIENT_ID + CLIENT_SECRET env vars are both set. Connectors with
+    missing credentials are skipped silently so the flag is a no-op in
+    environments that don't have any admin-configured OAuth apps.
+
+    Idempotent: re-running updates the client_id, redirect_uri and encrypted
+    secret on the existing row instead of inserting a duplicate.
+
 func SeedRoles(d *db.Database) error
     SeedRoles seeds the database with the default roles.
 
@@ -361,6 +371,15 @@ type NovuWorkflowDefinition struct {
 func GetNovuWorkflowDefinitions() []NovuWorkflowDefinition
     GetNovuWorkflowDefinitions returns all Novu workflow definitions that should
     exist. Add new workflows here as the notification system grows.
+
+type OAuthClientSeedConfig struct {
+	EnvPrefix     string
+	ConnectorName string
+}
+    OAuthClientSeedConfig declares one connector that participates in the
+    `-seed-oauth-clients` flow. Each entry maps a connector by its exact
+    DB name to an env-var prefix; the loader reads `&lt;PREFIX&gt;_CLIENT_ID` and
+    `&lt;PREFIX&gt;_CLIENT_SECRET` from the already-parsed CoreAPIEnv struct.
 
 type SchemaCacheManager struct {
 	// Has unexported fields.

@@ -76,6 +76,11 @@ type CoreAPIEnv struct {
 	MaxStreamSizeMB            int // Max file size for streaming through API in MB (default 500)
 	MaxAsyncJobSizeMB          int // Size above which async jobs are required in MB (default 5000)
 	MaxWorkflowInputFileSizeMB int // Max input file size for workflow actions in MB (default 500)
+
+	// Connector OAuth client seed configuration (optional)
+	GoogleDriveClientID       string // Google Drive OAuth client ID (required for -seed-oauth-clients)
+	GoogleDriveClientSecret   string // Google Drive OAuth client secret (required for -seed-oauth-clients)
+	ConnectorOAuthRedirectURI string // Redirect URI for connector OAuth flows (default: https://localhost:8082/api/v1/connectors/oauth/callback)
 }
 
 // getEnv retrieves a single environment variable. If required and missing, returns an error.
@@ -445,6 +450,19 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		}
 	}
 
+	googleDriveClientID, err := getEnv("GOOGLE_DRIVE_CLIENT_ID", false, "")
+	if err != nil {
+		return nil, err
+	}
+	googleDriveClientSecret, err := getEnv("GOOGLE_DRIVE_CLIENT_SECRET", false, "")
+	if err != nil {
+		return nil, err
+	}
+	connectorOAuthRedirectURI, err := getEnv("CONNECTOR_OAUTH_REDIRECT_URI", false, "")
+	if err != nil {
+		return nil, err
+	}
+
 	return &CoreAPIEnv{
 		Port:                         port,
 		URL:                          url,
@@ -500,6 +518,9 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		PolarWebhookSecret:           polarWebhookSecret,
 		PolarProductID:               polarProductID,
 		PolarBaseURL:                 polarBaseURL,
+		GoogleDriveClientID:          googleDriveClientID,
+		GoogleDriveClientSecret:      googleDriveClientSecret,
+		ConnectorOAuthRedirectURI:    connectorOAuthRedirectURI,
 	}, nil
 }
 

@@ -165,6 +165,7 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, bool, error) {
 	overridePolicies := flag.Bool("override-policies", false, "Override existing policies")
 	seedTags := flag.Bool("seed-tags", false, "Seed default tags for all workspaces")
 	seedTemplates := flag.Bool("seed-templates", false, "Seed templates from embedded files")
+	seedOAuthClients := flag.Bool("seed-oauth-clients", false, "Seed global OAuth clients from environment variables")
 	gcRun := flag.Bool("gc", false, "Run garbage collection operations")
 	gcDryRun := flag.Bool("gc-dry-run", false, "Run garbage collection in dry-run mode (no deletions)")
 	reencrypt := flag.Bool(
@@ -197,18 +198,8 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, bool, error) {
 		return d, true, nil
 	}
 
-	// Seed default tags for all workspaces if the seedTags flag is set
-	if *seedTags {
-		if setupDefaultTagsErr := setupDefaultTags(d); setupDefaultTagsErr != nil {
-			return nil, false, setupDefaultTagsErr
-		}
-	}
-
-	// Seed templates if the seedTemplates flag is set
-	if *seedTemplates {
-		if seedTemplatesErr := templatefiles.SeedTemplates(d, slog.Default()); seedTemplatesErr != nil {
-			return nil, false, seedTemplatesErr
-		}
+	if seedErr := runSeedFlags(d, env, *seedTags, *seedTemplates, *seedOAuthClients); seedErr != nil {
+		return nil, false, seedErr
 	}
 
 	// Run garbage collection if either GC flag is set.
@@ -221,6 +212,29 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, bool, error) {
 	}
 
 	return d, false, nil
+}
+
+// runSeedFlags runs optional seeding operations based on CLI flags.
+func runSeedFlags(d *db.Database, env *utils.CoreAPIEnv, seedTags, seedTemplates, seedOAuthClients bool) error {
+	if seedTags {
+		if err := setupDefaultTags(d); err != nil {
+			return err
+		}
+	}
+
+	if seedTemplates {
+		if err := templatefiles.SeedTemplates(d, slog.Default()); err != nil {
+			return err
+		}
+	}
+
+	if seedOAuthClients {
+		if err := lib.SeedOAuthClients(d, env); err != nil {
+			return fmt.Errorf("seed OAuth clients: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // runMigrations runs schema migrations and role/policy setup unless skipped.

@@ -337,6 +337,11 @@ type CoreAPIEnv struct {
 	MaxStreamSizeMB            int // Max file size for streaming through API in MB (default 500)
 	MaxAsyncJobSizeMB          int // Size above which async jobs are required in MB (default 5000)
 	MaxWorkflowInputFileSizeMB int // Max input file size for workflow actions in MB (default 500)
+
+	// Connector OAuth client seed configuration (optional)
+	GoogleDriveClientID       string // Google Drive OAuth client ID (required for -seed-oauth-clients)
+	GoogleDriveClientSecret   string // Google Drive OAuth client secret (required for -seed-oauth-clients)
+	ConnectorOAuthRedirectURI string // Redirect URI for connector OAuth flows (default: https://localhost:8082/api/v1/connectors/oauth/callback)
 }
     CoreAPIEnv is a struct that holds the environment variables for the data
     engine.

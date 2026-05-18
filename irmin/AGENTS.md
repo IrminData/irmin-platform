@@ -52,6 +52,9 @@ go run main.go -seed-tags
 # Seed templates from embedded files
 go run main.go -seed-templates
 
+# Seed global OAuth clients from environment variables
+go run main.go -seed-oauth-clients
+
 # Run garbage collection (clean up orphans, stale records, temp files, sync LakeFS GC rules)
 go run main.go -gc
 

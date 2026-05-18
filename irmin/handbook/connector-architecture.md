@@ -307,6 +307,101 @@ Core's engine spins up an operation against the connector, streams the
 ZIP back, applies configured field mappings via DuckDB, uploads the
 result to LakeFS.
 
+## Seeding global OAuth clients (`-seed-oauth-clients`)
+
+Static-client OAuth connectors (Google Drive, Stripe Connect, etc.) need a
+single admin-configured `connection_oauth_clients` row per environment
+before any user can run the flow. The `-seed-oauth-clients` flag automates
+that step from environment variables so the same boot pipeline that ships
+schema migrations also ships OAuth credentials, with no manual SQL.
+
+```bash
+go run main.go -seed-oauth-clients
+```
+
+The flag is idempotent: re-running upserts `client_id`, `redirect_uri`, and
+the encrypted client secret on the existing global row. Connectors with no
+env vars set are silently skipped — the flag is a no-op in environments
+that don't have any admin-configured OAuth apps.
+
+### Env var naming convention
+
+Each seedable connector uses a stable env prefix:
+
+| Env var | Purpose |
+|---|---|
+| `<PREFIX>_CLIENT_ID` | OAuth client ID issued by the vendor |
+| `<PREFIX>_CLIENT_SECRET` | OAuth client secret (stored encrypted at rest) |
+| `CONNECTOR_OAUTH_REDIRECT_URI` | Shared redirect URI for every connector (default: `https://localhost:8082/api/v1/connectors/oauth/callback`) |
+
+The redirect URI is a single value across all seeded connectors because
+every vendor callback lands on the same Core endpoint — the connector is
+disambiguated by the `state` parameter, not by URL.
+
+### Adding a new connector to the seed registry
+
+1. Add the seed config in `lib/seedOAuthClients.go::oauthClientSeeds`:
+
+   ```go
+   {EnvPrefix: "STRIPE", ConnectorName: "Stripe"},
+   ```
+
+   `ConnectorName` must match the `name` column on the `connectors` row
+   exactly. Lookup is by name, not SQID, so the seeder works on a fresh
+   install where the connector ID isn't known yet.
+
+2. Add matching fields on `utils.CoreAPIEnv` and load them in
+   `utils/loadEnvs.go` (`<PREFIX>_CLIENT_ID`, `<PREFIX>_CLIENT_SECRET`).
+
+3. Wire the new env-var pair into `credsForSeed` in
+   `lib/seedOAuthClients.go`. The switch is explicit on purpose so a
+   missing wiring is a compile error rather than a silent no-op.
+
+4. Document the new env vars in `.env.example`.
+
+### Seeding vs Dynamic Client Registration
+
+These two paths populate the same `connection_oauth_clients` table from
+opposite directions; pick the one the vendor supports.
+
+| | Seeding (`-seed-oauth-clients`) | DCR (RFC 7591) |
+|---|---|---|
+| **Triggered by** | Admin running the flag at deploy time | First user starting a flow on a DCR-capable connector |
+| **Row scope** | Global — `workspace_id IS NULL`, shared across all workspaces | Workspace-scoped — `workspace_id = <user's workspace>` |
+| **Rows per connector** | One per environment | One per (connector, workspace) pair |
+| **Vendor support needed** | OAuth 2.0 + manually creatable apps | RFC 7591 `dcr_endpoint` |
+| **Example vendors** | Google Drive, Stripe Connect, HubSpot | Linear, Intercom, Sentry |
+| **Admin work per workspace** | None after initial seed | None ever |
+
+The partial unique indexes on `(connector_id, workspace_id)` keep both
+paths from stepping on each other: a DCR registration for a workspace
+never collides with the global seed, and concurrent seed runs collapse
+to one row via the `(connector_id) WHERE workspace_id IS NULL` index.
+
+### Worked example: Google Drive
+
+```bash
+# 1. Register the OAuth app in Google Cloud Console (one time per environment).
+#    Authorized redirect URI must match CONNECTOR_OAUTH_REDIRECT_URI exactly.
+
+# 2. Put credentials in the deployment's env / .env file.
+export GOOGLE_DRIVE_CLIENT_ID=1234567890-abc.apps.googleusercontent.com
+export GOOGLE_DRIVE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx
+export CONNECTOR_OAUTH_REDIRECT_URI=https://api.example.com/api/v1/connectors/oauth/callback
+
+# 3. Run the seed flag (also works from a Docker entrypoint or migration job).
+go run main.go -seed-oauth-clients
+
+# Logs:
+#   level=INFO msg="seeded global OAuth client" connector="Google Drive" \
+#     connector_id=42 client_id=1234567890-abc.apps.googleusercontent.com
+```
+
+After this, any workspace can create a Google Drive Connection and start
+the OAuth flow without further admin intervention — Core resolves the
+global client via `GetConnectionOAuthClientForConnector`, which falls back
+to `workspace_id IS NULL` when no workspace-scoped row exists.
+
 ## Further reading
 
 - `irmin-connectors/guides/connector-architecture.md` — same topics
