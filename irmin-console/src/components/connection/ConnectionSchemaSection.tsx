@@ -6,7 +6,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { useConnectionSchema } from '@/hooks/api';
+import { useConnectionSchema, useConnectionSchemaFetcher } from '@/hooks/api';
 
 /**
  * Connection Schema section component
@@ -28,6 +28,10 @@ const ConnectionSchemaSection = ({
     operationMethod,
     undefined // Get the root schema, so no paths specified
   );
+  const { fetchPath } = useConnectionSchemaFetcher(
+    connectionID,
+    operationMethod
+  );
 
   if (connectionSchemaQuery.isLoading) {
     return <LoadingSkeleton className='h-80 w-full' />;
@@ -43,9 +47,11 @@ const ConnectionSchemaSection = ({
   return (
     <div className='min-h-96 w-full overflow-y-scroll rounded-sm bg-background'>
       <SchemaViewer
+        key={`${connectionID}:${operationMethod ?? 'pull'}`}
         schema={connectionSchemaQuery.data.data}
         isExpanded={true}
         focusedPath={focusedPath}
+        loadChildren={fetchPath}
       />
     </div>
   );

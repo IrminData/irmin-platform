@@ -37,6 +37,13 @@ export function StructuredItemViewer({
 
   if (item.type !== 'structured') return <></>;
 
+  // Some sources (e.g. Google Drive native docs) ship structured leaves with
+  // no JSON schema. Suppress the toggle + empty schema panel in that case.
+  const hasSchema =
+    item.schema !== undefined &&
+    item.schema !== null &&
+    (typeof item.schema !== 'object' || Object.keys(item.schema).length > 0);
+
   const handleCopyJson = async () => {
     await navigator.clipboard.writeText(JSON.stringify(item.schema, null, 2));
     setCopied(true);
@@ -165,16 +172,18 @@ export function StructuredItemViewer({
             </div>
           )}
           <div className='mt-2 flex items-center gap-2'>
-            <Button
-              className='-ml-2'
-              variant='ghost'
-              onClick={() => setExpanded(!expanded)}
-              aria-expanded={expanded}
-            >
-              {expanded
-                ? dict.repository.objects.hideSchema
-                : dict.repository.objects.showSchema}
-            </Button>
+            {hasSchema && (
+              <Button
+                className='-ml-2'
+                variant='ghost'
+                onClick={() => setExpanded(!expanded)}
+                aria-expanded={expanded}
+              >
+                {expanded
+                  ? dict.repository.objects.hideSchema
+                  : dict.repository.objects.showSchema}
+              </Button>
+            )}
             <SqlHelper
               schema={item}
               title={item.name}
@@ -186,7 +195,7 @@ export function StructuredItemViewer({
               selector={item.sql_selector}
             />
           </div>
-          {expanded && (
+          {hasSchema && expanded && (
             <div
               className={`
                 mt-2 rounded-md border border-gray-200 bg-gray-50 p-3

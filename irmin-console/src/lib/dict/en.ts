@@ -1783,6 +1783,8 @@ const en = {
 
     errors: {
       invalidPath: 'Invalid path',
+      lazyLoadError: 'Could not load folder contents.',
+      lazyRetry: 'Retry',
     },
   },
 

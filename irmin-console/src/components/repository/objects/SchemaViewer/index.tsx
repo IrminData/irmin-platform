@@ -21,6 +21,7 @@ function ObjectSchemaViewer({
   depth = 0,
   isExpanded = false,
   focusedPath,
+  loadChildren,
 }: {
   /** The schema object plus metadata */
   schema: ObjectSchema;
@@ -30,6 +31,13 @@ function ObjectSchemaViewer({
   isExpanded?: boolean;
   /** The path to focus on */
   focusedPath?: string;
+  /**
+   * Optional fetcher invoked when a group node with no `children` is
+   * expanded. Lets connection-side callers lazily resolve deeper levels
+   * via the path-aware schema endpoint. Repository / query / script
+   * callers pass nothing and the lazy code path stays inert.
+   */
+  loadChildren?: (path: string) => Promise<ObjectSchema>;
 }) {
   const { dict } = useLocale();
 
@@ -56,6 +64,7 @@ function ObjectSchemaViewer({
           isExpanded={shouldExpand}
           focusedPath={focusedPath}
           isFocused={shouldFocus}
+          loadChildren={loadChildren}
         />
       );
     default:

@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { connectionSchemaQueryKey } from '@/lib/queryKeys';
 
@@ -127,4 +127,59 @@ export function useConnectionSchema(
   return {
     connectionSchemaQuery,
   };
+}
+
+/**
+ * Hook returning an on-demand fetcher for a single connection-schema path.
+ *
+ * Used by tree pickers that lazy-load deeper levels as the user expands them.
+ * Results are cached in React Query under the same key shape as
+ * {@link useConnectionSchema}, so repeated expansions of the same node are
+ * served from cache without a network round-trip.
+ *
+ * @param connectionID - The connection to query.
+ * @param operationMethod - Whether this is a pull or push operation.
+ * @returns An object exposing `fetchPath(path)` which resolves with the
+ *   `ObjectSchema` for that path, or rejects on failure.
+ */
+export function useConnectionSchemaFetcher(
+  connectionID: string,
+  operationMethod?: 'pull' | 'push'
+) {
+  const { getCore } = useIrminCore();
+  const { workspaceSlug } = useWorkspaceContext();
+  const queryClient = useQueryClient();
+
+  const fetchPath = useCallback(
+    async (path: string): Promise<ObjectSchema> => {
+      const result = await queryClient.fetchQuery<
+        IrminAPIResponse<ObjectSchema>,
+        Error
+      >({
+        queryKey: connectionSchemaQueryKey(
+          workspaceSlug,
+          connectionID,
+          operationMethod,
+          [path]
+        ),
+        queryFn: async () => {
+          const core = await getCore();
+          return await core.connectionService.fetchConnectionSchema({
+            workspace: workspaceSlug,
+            connectionID,
+            operationMethod: operationMethod ?? 'pull',
+            path,
+          });
+        },
+        staleTime: 60_000,
+      });
+      if (!result.data) {
+        throw new Error('Schema response missing data');
+      }
+      return result.data;
+    },
+    [queryClient, workspaceSlug, connectionID, operationMethod, getCore]
+  );
+
+  return { fetchPath };
 }

@@ -1773,6 +1773,8 @@ const fi = {
 
     errors: {
       invalidPath: 'Virheellinen polku',
+      lazyLoadError: 'Kansion sisältöä ei voitu ladata.',
+      lazyRetry: 'Yritä uudelleen',
     },
   },
 
