@@ -190,8 +190,7 @@ Core-side pieces:
   doesn't block the inline postMessage script.
 
 See `irmin-connectors/guides/oauth-connectors.md` for the
-connector-facing details and [oauth-roadmap.md](./oauth-roadmap.md)
-for the vendor rollout plan.
+connector-facing details.
 
 ## Connection testing
 
@@ -410,7 +409,5 @@ to `workspace_id IS NULL` when no workspace-scoped row exists.
   new connector
 - `irmin-connectors/guides/oauth-connectors.md` — OAuth flow + vendor
   list + static-vs-DCR
-- [`oauth-roadmap.md`](./oauth-roadmap.md) — what's shipping when
-  (temporary; removed after launch)
 - `services/connectionoauth/` — the flow orchestration code
 - `lib/crypto/` — encryption at rest for `details` and OAuth tokens

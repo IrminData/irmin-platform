@@ -16,8 +16,9 @@ End-to-end user guides for a handful of connectors available on Irmin.
 The picks below are intentionally diverse — they cover the different
 connector **types** Irmin supports (databases, generic APIs, SaaS,
 storage, scraping), the different **authentication shapes**
-(static credentials vs. OAuth), and the different **operation mixes**
-(pull / push / patch / subscribe). If you understand these five, every
+(static credentials, restricted API keys, OAuth with DCR, OAuth with a
+shared admin-registered app), and the different **operation mixes**
+(pull / push / patch / subscribe). If you understand these, every
 other connector in the catalogue fits one of these patterns.
 
 | Connector | Type | Auth | Operations |
@@ -25,6 +26,8 @@ other connector in the catalogue fits one of these patterns.
 | [Postgres](#postgres) | Database | Static credentials | pull · push · patch · subscribe |
 | [REST / HTTP](#rest--http) | Generic API | Bearer / basic / header | pull · push · patch |
 | [Stripe](#stripe) | SaaS | Restricted API key | pull · push · patch (subscribe planned) |
+| [Linear](#linear) | SaaS / project mgmt | OAuth 2.1 with DCR | pull · push · patch |
+| [Google Drive](#google-drive) | Storage | OAuth 2.0 (shared app) | pull · push |
 | [Pinecone](#pinecone) | Vector store | API key | pull · push |
 | [Firecrawl](#firecrawl) | Web scraping | API key | pull (async) |
 
@@ -163,8 +166,9 @@ Irmin treats the response body as the data to version.
 - The data you're pulling is simple enough to represent as a single
   JSON document per pull.
 - The external system uses Bearer tokens, API keys in headers, or
-  basic auth — not OAuth-with-PKCE. (For OAuth, wait for the
-  vendor-specific connector.)
+  basic auth — not OAuth-with-PKCE. (For OAuth, use a vendor-
+  specific connector like [Linear](#linear) or
+  [Google Drive](#google-drive).)
 
 For more structured data, better schema discovery, or vendor-specific
 features (pagination, rate-limit handling), use the dedicated
@@ -288,8 +292,9 @@ Stripe's OAuth (Stripe Connect) requires you to register a platform
 app per environment and doesn't support dynamic client registration
 (RFC 7591). That's a lot of ops setup for the same end result — a
 scoped credential — that a Stripe restricted API key already gives
-you. Future OAuth-backed connectors will ship for vendors that
-actually benefit from the flow (Linear, Intercom, Monday, Sentry).
+you. The OAuth-backed connectors that ship today ([Linear](#linear)
+with DCR, [Google Drive](#google-drive) with a shared admin app) are
+the ones that actually benefit from the flow.
 
 #### Setting up the connection
 
@@ -430,6 +435,387 @@ copy on another machine couldn't still use it), visit the
   restricted-key creation in the account's audit log. Naming the key
   descriptively (e.g., `Irmin — production pull`) makes it easy to
   find and revoke later.
+
+### Linear
+
+Connect Irmin to a Linear workspace to pull issues, projects, cycles,
+and teams into a versioned LakeFS branch, and push or patch issues
+back. The canonical OAuth-with-DCR connector: no Google-Cloud-Console
+detour, no per-environment app registration. You click **Connect with
+Linear**, approve the grant in your Linear workspace, and Irmin is
+talking to Linear's MCP OAuth server through a per-workspace client
+that Core registered on the fly via RFC 7591 Dynamic Client
+Registration.
+
+#### Capabilities
+
+| Operation | Supported | What it does |
+|---|:-:|---|
+| Pull | ✅ | Export Linear `issues`, `projects`, `cycles`, and `teams` as JSON snapshots into a LakeFS branch |
+| Push | ✅ | Create or update issues by writing JSON files at `issues/{id}.json` or `issues/new-*.json` |
+| Patch | ✅ | Apply JSON-Patch operations to existing issues — partial edits like "change status" or "reassign" without round-tripping the whole record |
+| Subscribe | — | Not yet — Linear webhooks are on the parking lot |
+
+#### Prerequisites
+
+- A Linear account, and permission to approve OAuth apps on the
+  workspace you want to connect (typically Admin or Owner).
+- That's it. No Linear OAuth app to register, no client_id to
+  copy-paste — Core registers a per-workspace OAuth client with
+  Linear's MCP server the first time anyone in your workspace
+  connects.
+
+#### Setting up the connection
+
+From the connections page in your workspace, click **New connection**
+and pick **Linear** from the catalogue.
+
+Because Linear ships OAuth, the wizard skips the credential form and
+shows a **Connect with Linear** button instead.
+
+**Settings** (workspace-scoped choices; visible and editable after
+save):
+
+| Field | What it means | Example |
+|---|---|---|
+| **Team key** | Optional Linear team key. When set, pulls of `issues` and `cycles` are filtered to this team and pushes default to it. Leave empty to operate across every team the grant has access to. | `IRM` |
+| **Max records per resource** | Cap on records pulled per resource (issues, projects, cycles, teams). Leave empty for the default cap of 100,000. | `100000` |
+| **MCP endpoint override** | Only set if you're pointing at a self-hosted Linear MCP instance or a test fixture. Defaults to `https://mcp.linear.app`. The host must be in the connector's allowlist. | *(leave empty)* |
+
+**Connect.** Click **Connect with Linear**. A centred popup opens on
+`linear.app` showing the Linear consent screen with the scopes the
+connector is asking for (read + write on issues, projects, cycles,
+teams). Approve, and the popup closes itself. The wizard advances
+automatically.
+
+If the popup closes before you approve, or the network drops mid-
+flow, you'll see a **Retry** CTA. No state is corrupted — Core's
+one-shot OAuth session is single-use and times out after 10 minutes.
+
+**Configure + test.** After the OAuth grant lands, Irmin calls
+Linear's `viewer` query to confirm the bearer token is valid and the
+workspace identity matches. If this succeeds, the connection is
+saved.
+
+If the test fails:
+
+- **"OAuth grant rejected"** — you cancelled the consent popup, or
+  Linear refused the scope set. Click **Connect with Linear** again.
+- **"Linear rejected the bearer token"** — the grant landed but
+  Linear immediately invalidated it. Most commonly because the
+  workspace admin revoked the app between approval and the first
+  call. Retry.
+
+#### First pull
+
+1. From the connection detail page, click **Pull** → **Configure new
+   pull**.
+2. Leave the path empty to pull every supported resource, or set it
+   to a single resource name (`issues`, `projects`, `cycles`,
+   `teams`) for a focused pull.
+3. Pick a target LakeFS repository and branch.
+4. Click **Run**.
+
+Irmin runs the MCP query for each requested resource, auto-paginates
+through Linear's cursor-based list APIs, and writes one JSON file per
+resource (`issues.json`, `projects.json`, `cycles.json`,
+`teams.json`) to the target branch. Subsequent pulls land as new
+commits — `diff` between commits shows exactly what changed.
+
+If a **Team key** is set in settings, `issues` and `cycles` are
+filtered to that team server-side. `projects` and `teams` always pull
+the full set you have access to.
+
+#### Pushing and patching issues
+
+Linear's writeable surface in this release is **issues** — pushing
+projects/cycles/teams is not supported (Linear treats them as
+admin-tier objects with a different shape). Both writes use the
+"Everything is a File" pattern from
+[How connections work](./how-connections-work.md):
+
+**Push** — create or update an issue:
+
+- `issues/IRM-42.json` — update an existing issue. Send the JSON body
+  you want; Linear merges it (so you can send a partial document).
+- `issues/new-customer-bug.json` — any filename starting with `new-`
+  creates a new issue. Linear assigns the real `IRM-…` identifier;
+  the file path on the LakeFS side keeps your chosen slug for
+  history.
+
+**Patch** — apply a JSON-Patch to an existing issue. Useful for the
+"flip status to In Progress" or "reassign to Alice" case without
+sending the whole record:
+
+```
+PATCH issues/IRM-42.json
+[
+  {"op": "replace", "path": "/state", "value": "In Progress"},
+  {"op": "replace", "path": "/assigneeEmail", "value": "alice@irmin.co"}
+]
+```
+
+Irmin coalesces every patch op targeting the same issue into a single
+Linear update call, sending only the changed fields. Safer than a
+full push for concurrent edits.
+
+Failures surface Linear's error message directly —
+`assignee not found`, `invalid state for team`, etc. — so you can see
+exactly what Linear rejected.
+
+#### Operating patterns
+
+- **Nightly issue snapshots.** Schedule a pull workflow that lands
+  on a `linear/snapshots` branch every night. The diff between
+  commits becomes a free changelog of who closed what.
+- **Postgres → Linear flow.** Chain a Postgres pull (e.g., a queue
+  of incoming support reports) → compute sandbox action that turns
+  each row into a `new-{slug}.json` issue payload → push to Linear.
+  Idempotency keys derived from file contents keep retries from
+  duplicating issues.
+- **Reconnect on token revoke.** If a workspace admin revokes Irmin
+  inside Linear, the next operation surfaces an
+  `oauth_refresh_rejected` error and the connection card flips to
+  **Reconnect**. Click it to re-run the OAuth flow without changing
+  the connection's ID, history, or pinned settings.
+
+#### Disconnecting
+
+Click **Disconnect** on the connection page. Irmin makes a
+best-effort revocation call to Linear, then deletes the local OAuth
+tokens. The connection row stays in place so you can re-authenticate
+later without rebuilding workflows.
+
+To revoke from Linear's side too (so any stale token copy can't be
+used), open Linear → Workspace settings → API → **Authorized
+applications** and remove Irmin.
+
+#### Gotchas
+
+- **DCR creates a per-workspace OAuth client.** The first connection
+  for your Irmin workspace registers a new client with Linear's MCP
+  server. Subsequent connections in the same workspace reuse it. You
+  won't see anything to manage in Linear's UI for this — DCR-
+  registered clients are invisible there by design.
+- **Team key is a filter, not an authorisation boundary.** Setting
+  it scopes pulls and default pushes to that team, but the OAuth
+  grant covers every team your user can see. If you need true
+  per-team isolation (e.g., separate connections for two teams that
+  shouldn't see each other), create two connections and approve the
+  grant on two different Linear accounts — not one connection with
+  different team keys.
+- **Refresh tokens never leave Core.** The connector host gets a
+  short-lived access token JIT, and Core rotates it on 401 via the
+  `force_refresh` path. A compromised connectors host can't mint
+  new tokens indefinitely — it has to come back through Core for
+  every refresh.
+- **Issue identifiers are sticky.** Linear's `IRM-42` identifier
+  doesn't change when you move the issue between teams. A pulled
+  `issues.json` snapshot taken before a move still references the
+  pre-move identifier, which is how Linear behaves natively.
+- **Irreversible writes.** Reverting a LakeFS commit that contained
+  a push doesn't undo the Linear-side change. For risky pushes,
+  test against a sandbox Linear workspace first.
+
+### Google Drive
+
+Connect Irmin to a Google Drive account to pull file metadata and
+contents into a versioned LakeFS branch, and push files back to
+Drive. The canonical **OAuth-with-a-shared-admin-app** connector:
+Google does not support Dynamic Client Registration, so the Irmin
+deployment maintainer registers one OAuth app per environment in
+Google Cloud Console. Users only see a **Connect with Google**
+button — they never touch Google Cloud Console.
+
+#### Capabilities
+
+| Operation | Supported | What it does |
+|---|:-:|---|
+| Pull | ✅ | Walk a Drive folder (optionally recursively), write a `files.json` metadata index, and save file contents as byte-blob snapshots on the target branch |
+| Push | ✅ | Upload local files (from LakeFS) into Drive as new app-owned files |
+| Patch | — | Drive's update semantics map onto push; explicit JSON-Patch isn't supported |
+| Subscribe | — | Drive change notifications are on the parking lot |
+
+#### Prerequisites
+
+**For end users:**
+
+- A Google account (personal Gmail, or Google Workspace user).
+- Read (and optionally write) access to the Drive files you want to
+  pull or push.
+
+**For the Irmin deployment maintainer (one-time, per environment):**
+
+- A Google Cloud project with the **Drive API** enabled.
+- An **OAuth 2.0 client** of type *Web application* in that project,
+  with `https://api.{your-irmin-domain}/v1/oauth/callback` as the
+  authorised redirect URI.
+- An OAuth **consent screen** configured and published. Set the user
+  type to *External* (for personal Gmail users) or *Internal* (for
+  a single Workspace domain). The screen must list the scopes
+  `https://www.googleapis.com/auth/drive.readonly` and
+  `https://www.googleapis.com/auth/drive.file` at minimum (add
+  `.../auth/drive` if you want users to be able to pick the
+  Full-access scope).
+- The resulting `client_id` and `client_secret` configured on Core
+  as a global `connection_oauth_clients` row for the
+  `google_drive` provider — typically via the
+  `-seed-oauth-clients` startup flag and env vars
+  (`GOOGLE_DRIVE_OAUTH_CLIENT_ID`,
+  `GOOGLE_DRIVE_OAUTH_CLIENT_SECRET`).
+
+Once seeded, the connector is available to every workspace on that
+Irmin deployment.
+
+#### Setting up the connection
+
+From the connections page, click **New connection** and pick
+**Google Drive** from the catalogue. The wizard skips the credential
+form and shows a **Connect with Google** button instead.
+
+**Settings** (workspace-scoped choices; visible and editable after
+save):
+
+| Field | What it means | Example |
+|---|---|---|
+| **OAuth scope** | Which Drive scope to request. *Read-only* is safe for imports. *App-specific* lets push create files Irmin owns. *Full access* allows reading and writing any file the user can access. | `Read only (file metadata + contents)` |
+| **Max records per resource** | Cap on files pulled per operation. Leave empty for the default (100,000). | `100000` |
+| **Max file size (MB)** | Per-file size cap. Files larger than this are recorded in `files.json` with `skipped=true`. Default 50, maximum 500. | `50` |
+| **MIME type filter** | Comma-separated MIME types to include (trailing `/*` wildcard supported). Empty includes all types. Folders are always traversed regardless. | `application/pdf, image/*` |
+| **Google-native files** | How to handle Google Docs / Sheets / Slides, which have no native binary form. Skip metadata-only, or export as PDF / Office. | `Skip — metadata only, no bytes` |
+| **Walk subfolders** | When the pull path is a folder, also walk its subfolders. Off by default. | `false` |
+
+Changing the scope on an existing connection forces re-authorisation
+— Google won't widen a previously-granted scope without a fresh
+consent screen.
+
+**Connect.** Click **Connect with Google**. A centred popup opens on
+`accounts.google.com` showing Google's standard consent screen,
+listing the scope you selected. Approve, and the popup closes
+itself. The wizard advances automatically.
+
+The connector requests `access_type=offline` and `prompt=consent`
+under the hood, so Google issues a refresh token (not just a one-
+shot access token) and shows the consent screen even on a re-
+connect — that's deliberate, so users always see what they're
+granting after a scope change.
+
+**Configure + test.** After the OAuth grant lands, Irmin calls
+Drive's `about.get` to confirm the bearer token works and resolves
+the user identity. If this succeeds, the connection is saved.
+
+#### First pull
+
+1. From the connection detail page, click **Pull** → **Configure new
+   pull**.
+2. Fill in:
+   - **Path** — the folder or file in Drive to pull from. Leave
+     empty for the root of *My Drive*, or set to a folder ID, or a
+     human path like `Marketing/Decks/Q3`.
+   - **Resource** — `files` (metadata only) or `contents` (metadata
+     + byte blobs). Use `files` for a quick index; `contents` when
+     you actually need the bytes.
+3. Pick a target LakeFS repository and branch.
+4. Click **Run**.
+
+Irmin walks the path (recursively if **Walk subfolders** is on),
+applies the MIME-type filter, and writes:
+
+- `files.json` — a metadata index of every file encountered (id,
+  name, MIME type, size, parents, owners, modifiedTime, plus a
+  `skipped` flag for entries over the size cap or filtered out).
+- For `contents` pulls: a byte blob per file under a path mirroring
+  the Drive folder structure, e.g.,
+  `Marketing/Decks/Q3/Roadmap.pdf`.
+
+Google-native Docs / Sheets / Slides are handled per the
+**Google-native files** setting — either skipped, exported as PDF,
+or exported as the matching Office binary.
+
+This is the first OAuth connector that pulls **non-JSON byte
+blobs**. Downstream compute actions can read the raw bytes,
+e.g., to OCR PDFs into searchable text or to extract metadata from
+images.
+
+#### Pushing files
+
+The push operation uploads files from a LakeFS branch into Drive.
+Path semantics:
+
+- `drive/{folder-id}/{filename}` — upload `{filename}` (read from
+  LakeFS) into the Drive folder with id `{folder-id}`.
+- The destination folder must already exist in Drive and the OAuth
+  grant must cover it (the *App-specific* scope only lets Irmin
+  create files; *Full access* lets it write anywhere the user can).
+
+Drive assigns the new file's id; Irmin records the mapping in the
+operation's output.
+
+#### Operating patterns
+
+- **Snapshot a shared folder nightly.** Schedule a `contents` pull
+  on a Drive folder every night. Each pull becomes a commit on the
+  branch — `diff` to see who added, edited, or removed files, and
+  to recover the byte contents of any earlier version of any file.
+- **Drive → DuckDB tabular pulls.** Drop a CSV into a watched Drive
+  folder, schedule a Google Drive pull → DuckDB compute action that
+  parses the CSV and commits a normalised table to a different
+  branch. Lightweight "ingest from spreadsheet" loop.
+- **Compute action → Drive report drop.** Generate a PDF or Office
+  file via a compute sandbox action, then push it back to a Drive
+  folder for a non-technical recipient to find through their normal
+  workflow.
+
+#### Disconnecting
+
+Click **Disconnect** on the connection page. Irmin calls Google's
+revocation endpoint, then deletes the local OAuth tokens. The
+connection row stays in place so you can re-authenticate later
+without rebuilding workflows.
+
+To audit or revoke from Google's side, open
+[myaccount.google.com](https://myaccount.google.com/permissions)
+→ *Third-party apps & services* → find the Irmin entry → **Remove
+access**.
+
+#### Gotchas
+
+- **Refresh-token lifetime is tied to your consent screen.** Google
+  issues refresh tokens that expire after 7 days when the consent
+  screen is in *Testing* mode, regardless of `access_type=offline`.
+  Publish the consent screen (move to *In production* in Google
+  Cloud Console) to get long-lived refresh tokens. Symptom of a
+  testing-mode consent screen: every connection works for a week,
+  then suddenly surfaces `oauth_refresh_rejected` and demands a
+  reconnect.
+- **Scope changes require a re-consent.** Google does not widen an
+  existing grant. Changing the OAuth scope setting on a connection
+  forces the user to click **Reconnect** and approve the new scope.
+- **Google-native files have no native bytes.** Docs / Sheets /
+  Slides only exist as PDF or Office *exports*. The default *Skip*
+  policy records them in `files.json` but stores no contents. Pick
+  PDF or Office in settings if you want round-trippable bytes —
+  remembering that PDFs of Docs lose the editable structure.
+- **Per-file size cap is enforced before download.** Files larger
+  than **Max file size (MB)** are written to `files.json` with
+  `skipped=true` and **never downloaded**. Bump the cap (up to 500)
+  for backups of large files; bear in mind the connector buffers
+  blobs in memory before zipping the result.
+- **Folder walks are bounded.** A `recursive=true` pull on a very
+  large shared drive can hit the **Max records per resource** cap
+  before reaching every file. The cap is per-resource and per-
+  operation; the truncation is visible in the operation log and on
+  `files.json` (entries cut off mid-walk).
+- **Drive API quotas.** Google's per-project quota covers all users
+  of your Irmin deployment, not just one connection. Heavy
+  parallel pulls across many workspaces can throttle each other.
+  Schedule large backfills off-peak, or raise the project quota in
+  Google Cloud Console.
+- **One OAuth app per environment.** Staging and production must
+  point at different Google Cloud OAuth apps (different
+  redirect URIs anyway). Don't share a single OAuth app across
+  environments — a misconfiguration on staging would surface on
+  every production user's consent screen.
 
 ### Pinecone
 
