@@ -665,6 +665,48 @@ func TestApplyFieldMappingsIrrelevantMappings(t *testing.T) {
 	assert.Equal(t, fileContent, content)
 }
 
+// TestApplyFieldMappingsBinaryPassthrough exercises the early-passthrough
+// path for files DuckDB cannot read (PDFs, images, archives). Folder-pull
+// connectors (Google Drive, S3, SharePoint) return a structured catalogue
+// alongside arbitrary binary blobs; mappings only target the catalogue,
+// so the binaries must passthrough without triggering getReadOptions on
+// their MIME. Before the fix, the PDF path failed with
+// "unsupported content type: application/pdf" because the read-options
+// lookup ran before the per-file mapping filter.
+func TestApplyFieldMappingsBinaryPassthrough(t *testing.T) {
+	suite := setupApplyFieldMappingsTestSuite(t)
+
+	pdfBytes := []byte("%PDF-1.4\n%binary-blob-not-real-pdf")
+
+	idField := "id"
+	mappings := []irminmodels.FieldMapping{
+		{
+			SourcePath:       "files.json",
+			SourceField:      &idField,
+			DestinationPath:  "dest.json",
+			DestinationField: &idField,
+		},
+	}
+
+	// A PDF blob with no mappings that target it must passthrough — the
+	// fact that DuckDB has no reader for application/pdf is irrelevant
+	// when there's nothing to map.
+	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
+		suite.DuckDBClient,
+		pdfBytes,
+		"files/abc123-doc.pdf",
+		mappings,
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 1, len(result))
+
+	content, exists := result["files/abc123-doc.pdf"]
+	assert.True(t, exists)
+	assert.Equal(t, pdfBytes, content)
+}
+
 // TestApplyFieldMappingsJSONUnwrap tests JSON unwrapping via source_json_path.
 func TestApplyFieldMappingsJSONUnwrap(t *testing.T) {
 	suite := setupApplyFieldMappingsTestSuite(t)

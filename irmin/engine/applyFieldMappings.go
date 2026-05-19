@@ -67,6 +67,17 @@ func (c *Client) ApplyFieldMappings(
 		return map[string][]byte{originalFilePath: fileContent}, nil
 	}
 
+	// Filter mappings before any DuckDB work so files that no mapping
+	// targets (binary blobs from folder-pull connectors like Google
+	// Drive, sibling assets in a multi-file zip, etc.) passthrough
+	// without paying the cost of getReadOptions or a temp-file round
+	// trip — and without failing on content types DuckDB can't parse
+	// (PDFs, images, etc.).
+	relevantMappings := c.filterMappingsForSourceFile(mappings, originalFilePath)
+	if len(relevantMappings) == 0 {
+		return map[string][]byte{originalFilePath: fileContent}, nil
+	}
+
 	// Parse file details and get read options
 	objectDetails := irminutils.ParseObjectDetailsFromPath(originalFilePath)
 	readOpts, err := c.getReadOptions(&objectDetails, originalFilePath)
@@ -80,12 +91,6 @@ func (c *Client) ApplyFieldMappings(
 		return nil, err
 	}
 	defer cleanup1()
-
-	// Filter mappings to only include those relevant to this source file
-	relevantMappings := c.filterMappingsForSourceFile(mappings, originalFilePath)
-	if len(relevantMappings) == 0 {
-		return map[string][]byte{originalFilePath: fileContent}, nil
-	}
 
 	// If JSON unwrapping is needed, validate and apply it
 	effectiveInputPath, effectiveReadOpts, cleanupUnwrap, unwrapErr := c.applyJSONUnwrapIfNeeded(
