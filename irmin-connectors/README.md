@@ -8,8 +8,9 @@ A collection of deployable connectors for Irmin that enable universal interactio
 
 - **[PostgreSQL](connectors/postgres/README.md)** - Database connector for PostgreSQL.
 - **[MySQL](connectors/mysql/README.md)** - Database connector for MySQL.
-- **[SFTP](connectors/sftp/README.md)** - File transfer protocol connector for SFTP.
-- **[HTTP](connectors/http/README.md)** - Generic HTTP connector for connecting to any HTTP endpoint.
+- **[Stripe](connectors/stripe/README.md)** - Payment connector for Stripe.
+- **[Linear](connectors/linear/README.md)** - Project management connector for Linear.
+- **[Google Drive](connectors/googledrive/README.md)** - File storage connector for Google Drive.
 
 ## What are Irmin Connectors?
 

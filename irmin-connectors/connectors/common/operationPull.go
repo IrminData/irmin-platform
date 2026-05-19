@@ -58,6 +58,25 @@ type PullOperationProvider interface {
 	ProgressHandler(operation *db.Operation) ProgressHandler
 }
 
+// PullByPathMultiProvider is an optional capability mixin. A connector
+// implements it when a single path can resolve to multiple output files
+// (e.g. a folder of PDFs in a cloud-storage connector). The framework
+// prefers GetFilesByPath over GetFileByPath via a type assertion in
+// collectPullResults, so existing single-file implementations are
+// unaffected — they simply don't satisfy this interface.
+//
+// Contract: the returned filePaths and fileContents slices MUST have
+// the same length, paired by index. collectPullResults validates this
+// and surfaces a job error rather than panicking on mismatch.
+type PullByPathMultiProvider interface {
+	GetFilesByPath(
+		ctx context.Context,
+		client any,
+		operation *db.Operation,
+		path string,
+	) (filePaths []string, fileContents [][]byte, err error)
+}
+
 // HandleOperationPull starts an async pull job and returns
 // HTTP 202 Accepted with {"job_id": "..."}. The actual pull runs in a
 // background worker owned by the app's JobManager; callers poll
@@ -330,6 +349,47 @@ func collectPullResults(
 				map[string]any{"error": err.Error()},
 			)
 			return nil, fmt.Errorf("get all files: %w", err)
+		}
+		for i, p := range paths {
+			resultFiles[p] = contents[i]
+		}
+		return resultFiles, nil
+	}
+
+	// Prefer GetFilesByPath when the provider implements it — a single
+	// path can resolve to multiple output files (e.g. a folder pull in
+	// a cloud-storage connector). Providers without this capability
+	// fall back to the original single-file path.
+	if multi, ok := provider.(PullByPathMultiProvider); ok {
+		paths, contents, err := multi.GetFilesByPath(ctx, client, operation, rawPath)
+		if err != nil {
+			LogOperationEvent(
+				dbInstance, logger, operation.ID,
+				db.LogEventTypeError,
+				"Failed to get files by path during pull operation",
+				map[string]any{"error": err.Error(), "path": rawPath},
+			)
+			return nil, fmt.Errorf("get files by path: %w", err)
+		}
+		if len(paths) != len(contents) {
+			// Defensive: a misbehaving provider must not panic the worker.
+			// The interface contract is now documented to require
+			// equal-length slices; surface a job error so the failure is
+			// visible instead of an index-out-of-range crash.
+			LogOperationEvent(
+				dbInstance, logger, operation.ID,
+				db.LogEventTypeError,
+				"Provider returned mismatched paths/contents lengths",
+				map[string]any{
+					"paths_len":    len(paths),
+					"contents_len": len(contents),
+					"path":         rawPath,
+				},
+			)
+			return nil, fmt.Errorf(
+				"get files by path: provider returned %d paths but %d contents",
+				len(paths), len(contents),
+			)
 		}
 		for i, p := range paths {
 			resultFiles[p] = contents[i]

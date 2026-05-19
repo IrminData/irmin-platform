@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	firecrawlconnector "irmin-connectors/connectors/firecrawl"
+	googledriveconnector "irmin-connectors/connectors/googledrive"
 	httpconnector "irmin-connectors/connectors/http"
 	linearconnector "irmin-connectors/connectors/linear"
 	mysqlconnector "irmin-connectors/connectors/mysql"
@@ -29,6 +30,7 @@ func SetupConnectorRoutes(app *models.ConnectorsApp) {
 	pineconeconnector.SetupRoutes(app)
 	stripeconnector.SetupRoutes(app)
 	linearconnector.SetupRoutes(app)
+	googledriveconnector.SetupRoutes(app)
 	// ... Add new connectors here ...
 }
 
@@ -64,6 +66,7 @@ func RegisterAllConnectors(
 		{"Pinecone", "pinecone"},
 		{"Stripe", "stripe"},
 		{"Linear", "linear"},
+		{"Google Drive", "googledrive"},
 		// ... Add new connectors here ...
 	}
 
