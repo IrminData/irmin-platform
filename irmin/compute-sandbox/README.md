@@ -41,6 +41,55 @@ Works on any platform - no special configuration needed. Recommended: 2-4GB RAM 
 - **`resultParser.go`**: Output file collection and parsing
 - **`types.go`**: Execution result and metrics types
 - **`constants.go`**: Configuration constants and limits
+- **`daytona.go`**: Daytona SDK wrapper; selects snapshot vs raw image per runtime
+- **`seed_snapshots.go`**: Builds pre-baked Daytona snapshots for fast cold starts
+
+## Daytona Snapshots (Baked-In SDK)
+
+Each runtime can boot from a pre-built Daytona **snapshot** instead of pulling a raw language image and installing the Irmin SDK on every run. The snapshot bakes the runtime's package-manager init + SDK install against `/workspace` ahead of time, so per-execution cold start skips the SDK install entirely. See `installRuntimeSDK` in [`executor.go`](executor.go) — when `createSandbox` returns `snapshotUsed=true`, that step is bypassed.
+
+**Today only Go is wired up.** Python and Node fall back to raw images until their SDKs ship and we seed snapshots for them. The pattern below is what to extend when that happens.
+
+### Configuration
+
+| Env var | Purpose | Default |
+| --- | --- | --- |
+| `DAYTONA_API_KEY` | Required for sandbox execution | — |
+| `DAYTONA_API_URL` | Daytona API endpoint | `https://app.daytona.io/api` |
+| `DAYTONA_TARGET` | Region (`eu`, `us`, etc.). Snapshots are per-region — seed and runtime must agree. | `""` (org default) |
+| `DAYTONA_SNAPSHOT_GO` | Snapshot name for the Go runtime. Empty = fall back to raw `golang:1.25` image (SDK installed per-run). | `""` |
+| `DAYTONA_SNAPSHOT_PYTHON` *(reserved)* | Snapshot name for the Python runtime. Not yet honoured. | — |
+| `DAYTONA_SNAPSHOT_NODE` *(reserved)* | Snapshot name for the Node runtime. Not yet honoured. | — |
+
+Opt-in is explicit per runtime: with `DAYTONA_SNAPSHOT_<RUNTIME>` unset, that runtime falls back to its raw image and runs `installRuntimeSDK` at execute time.
+
+### Rebuild flow (Go today, same shape for future runtimes)
+
+When the base image or baked SDK packages change:
+
+1. Bump the version suffix on the runtime's default constant in [`constants.go`](constants.go) (e.g. `SnapshotGoDefault` `-v1` → `-v2`).
+2. Run the seed against each region:
+
+   ```bash
+   export DAYTONA_API_KEY=<key>
+   export DAYTONA_TARGET=eu     # repeat for us, etc.
+   go run main.go -seed-snapshots
+   ```
+
+   `-seed-snapshots` seeds every runtime defined in [`seed_snapshots.go`](seed_snapshots.go), so adding Python/Node snapshots later is one entry per runtime. The seed is idempotent — existing snapshots with the target name are left alone. To force a rebuild, bump the version (never delete in-place, or in-flight workflows on the old name will break).
+
+3. Deploy with the new `DAYTONA_SNAPSHOT_<RUNTIME>` value(s) pointing at the new snapshot(s).
+
+### Adding a new runtime snapshot
+
+When the Python or Node SDK lands and you want to bake it in, touch these four places — they are tightly coupled and the comment on `installRuntimeSDK` in [`executor.go`](executor.go) calls this out:
+
+1. **[`constants.go`](constants.go)** — add `SnapshotPythonDefault` / `SnapshotNodeDefault` (versioned name).
+2. **[`utils/loadEnvs.go`](../utils/loadEnvs.go)** — add `DaytonaSnapshotPython` / `DaytonaSnapshotNode` field + loader (`getEnv("DAYTONA_SNAPSHOT_PYTHON", false, "")`).
+3. **`snapshotForRuntime`** in [`daytona.go`](daytona.go) — add the runtime case returning the env value.
+4. **`SeedSnapshots`** in [`seed_snapshots.go`](seed_snapshots.go) — build the runtime's image with the declarative builder (e.g. `daytona.Base("python:3.11").Run("pip install irmin-sdk-python ...")`) and create the snapshot. Today the function seeds Go; extend it to iterate over runtimes.
+
+If you add a new runtime to `snapshotForRuntime` but forget to bake the SDK install into its snapshot, `installRuntimeSDK` will be skipped at runtime and scripts will fail with a missing-import error at execute time. The unit tests in [`sandbox_test.go`](sandbox_test.go) (`TestSnapshotForRuntime`) are the natural place to add coverage for the new runtime case.
 
 ## Features
 

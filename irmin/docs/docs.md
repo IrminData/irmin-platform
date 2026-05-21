@@ -334,6 +334,7 @@ import "irmin-api/compute-sandbox"
 
 - [Constants](<#constants>)
 - [Variables](<#variables>)
+- [func SeedSnapshots\(ctx context.Context, env \*utils.CoreAPIEnv, logger \*slog.Logger\) error](<#SeedSnapshots>)
 - [type ComputeSandbox](<#ComputeSandbox>)
   - [func NewComputeSandbox\(env \*utils.CoreAPIEnv, d \*db.Database, logger \*slog.Logger\) \*ComputeSandbox](<#NewComputeSandbox>)
   - [func \(s \*ComputeSandbox\) ExecutedStoredScript\(ctx context.Context, inputFiles map\[string\]\[\]byte, responsibleUser db.User, script \*db.StoredScript\) \(ExecutionResult, error\)](<#ComputeSandbox.ExecutedStoredScript>)
@@ -357,6 +358,8 @@ const (
     DockerImagePython = "python:3.11"
     DockerImageNode   = "node:24"
 
+    SnapshotGoDefault = "irmin-go-1.25-sdk-v1"
+
     SandboxWorkDir = "/workspace"
 
     LatestGoVersion = "1.25.0"
@@ -378,6 +381,21 @@ const (
 ```go
 var ErrScriptAlreadyRunning = errors.New("script is already being executed")
 ```
+
+<a name="SeedSnapshots"></a>
+## func SeedSnapshots
+
+```go
+func SeedSnapshots(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Logger) error
+```
+
+SeedSnapshots builds and registers the Daytona snapshots used by the compute sandbox.
+
+Today it only seeds the Go runtime. When a new runtime's SDK ships \(Python, Node\), add another seed block here mirroring the Go one and update the four touchpoints listed in compute\-sandbox/README.md \("Adding a new runtime snapshot"\): snapshotForRuntime, the env loader, the runtime's default constant, and this function.
+
+The seed is idempotent per runtime: if a snapshot with the target name already exists, that runtime is skipped. To rebuild, bump the version suffix on the runtime's default constant \(e.g. SnapshotGoDefault\) and re\-run.
+
+The seed targets DAYTONA\_TARGET \(region\) — snapshots are per\-region, so the seed must be run against the same region as the runtime API.
 
 <a name="ComputeSandbox"></a>
 ## type ComputeSandbox
@@ -17746,6 +17764,8 @@ type CoreAPIEnv struct {
     SkipOptionalDuckDBExtensions bool   // Flag to skip installation of optional DuckDB extensions
     DaytonaAPIKey                string // API key for Daytona sandbox service
     DaytonaAPIURL                string // Base URL for Daytona sandbox service API
+    DaytonaTarget                string // Daytona region target (e.g. "eu", "us"); empty => org default
+    DaytonaSnapshotGo            string // Pre-built Daytona snapshot for Go runtime; empty => fall back to raw image
     TestObjectName               string // Name of the test object which is expected to be a structured JSON file
     TestUserEmail                string // Email of the test user
     TestWorkspace                string // Workspace to test with

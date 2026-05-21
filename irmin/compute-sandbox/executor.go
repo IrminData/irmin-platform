@@ -54,7 +54,7 @@ func (s *ComputeSandbox) executeDaytona(
 		"LC_ALL": "C.UTF-8",
 	}
 
-	sb, err := s.daytona.createSandbox(ctx, runtimeType, envVars)
+	sb, snapshotUsed, err := s.daytona.createSandbox(ctx, runtimeType, envVars)
 	if err != nil {
 		return result, fmt.Errorf("failed to create sandbox: %w", err)
 	}
@@ -72,9 +72,12 @@ func (s *ComputeSandbox) executeDaytona(
 		return result, fmt.Errorf("failed to upload input files: %w", uploadErr)
 	}
 
-	// Install runtime SDK if needed
-	if installErr := s.installRuntimeSDK(ctx, sb, runtimeType); installErr != nil {
-		return result, fmt.Errorf("failed to install runtime SDK: %w", installErr)
+	// Install runtime SDK if needed. Skipped when the sandbox booted from a snapshot,
+	// since the snapshot is expected to have the SDK pre-baked (see seed-snapshots).
+	if !snapshotUsed {
+		if installErr := s.installRuntimeSDK(ctx, sb, runtimeType); installErr != nil {
+			return result, fmt.Errorf("failed to install runtime SDK: %w", installErr)
+		}
 	}
 
 	// Execute the script
@@ -203,6 +206,12 @@ func (s *ComputeSandbox) createParentDirs(
 }
 
 // installRuntimeSDK installs the appropriate SDK inside the sandbox.
+//
+// Coupling note: this is bypassed by executeDaytona when the sandbox booted from a
+// Daytona snapshot. If you extend snapshotForRuntime to a new runtime (e.g. Python,
+// Node), you MUST also bake that runtime's SDK install into the corresponding snapshot
+// inside SeedSnapshots — otherwise scripts will fail at execute time with a missing
+// import. Keep snapshotForRuntime, SeedSnapshots, and this function in sync.
 func (s *ComputeSandbox) installRuntimeSDK(
 	ctx context.Context,
 	sb *daytona.Sandbox,

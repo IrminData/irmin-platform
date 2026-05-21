@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sandbox "irmin-api/compute-sandbox"
+	"irmin-api/utils"
 
 	"github.com/zeebo/assert"
 )
@@ -196,6 +197,54 @@ func TestDockerImageForRuntime(t *testing.T) {
 			}
 			assert.NoError(t, err)
 			assert.Equal(t, tt.wantImage, image)
+		})
+	}
+}
+
+// --- snapshotForRuntime ---
+
+func TestSnapshotForRuntime(t *testing.T) {
+	tests := []struct {
+		name        string
+		env         *utils.CoreAPIEnv
+		runtimeType string
+		want        string
+	}{
+		{
+			name:        "go with snapshot configured returns env value",
+			env:         &utils.CoreAPIEnv{DaytonaSnapshotGo: "irmin-go-1.25-sdk-v1"},
+			runtimeType: sandbox.RuntimeTypeGo,
+			want:        "irmin-go-1.25-sdk-v1",
+		},
+		{
+			name:        "go with empty env falls back to image (no snapshot)",
+			env:         &utils.CoreAPIEnv{},
+			runtimeType: sandbox.RuntimeTypeGo,
+			want:        "",
+		},
+		{
+			name:        "python never returns a snapshot",
+			env:         &utils.CoreAPIEnv{DaytonaSnapshotGo: "irmin-go-1.25-sdk-v1"},
+			runtimeType: sandbox.RuntimeTypePython,
+			want:        "",
+		},
+		{
+			name:        "node never returns a snapshot",
+			env:         &utils.CoreAPIEnv{DaytonaSnapshotGo: "irmin-go-1.25-sdk-v1"},
+			runtimeType: sandbox.RuntimeTypeNode,
+			want:        "",
+		},
+		{
+			name:        "nil env returns empty",
+			env:         nil,
+			runtimeType: sandbox.RuntimeTypeGo,
+			want:        "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, sandbox.ExportSnapshotForRuntime(tt.env, tt.runtimeType))
 		})
 	}
 }

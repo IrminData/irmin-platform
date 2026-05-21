@@ -29,6 +29,7 @@ import (
 	"flag"
 	"fmt"
 	"irmin-api/cache"
+	sandbox "irmin-api/compute-sandbox"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/gc"
@@ -173,6 +174,11 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, bool, error) {
 		false,
 		"Re-encrypt all connection secrets with the active key (idempotent, safe to repeat)",
 	)
+	seedSnapshots := flag.Bool(
+		"seed-snapshots",
+		false,
+		"Seed Daytona snapshots used by the compute sandbox (idempotent; targets DAYTONA_TARGET region)",
+	)
 	// Keep -migrate flag for backwards compatibility (now a no-op since migrations run by default)
 	_ = flag.Bool("migrate", false, "Run database migrations (deprecated: migrations now run automatically)")
 	flag.Parse()
@@ -207,6 +213,19 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, bool, error) {
 	if *gcRun || *gcDryRun {
 		if gcErr := runGarbageCollection(d, env, *gcDryRun); gcErr != nil {
 			return nil, false, gcErr
+		}
+		return d, true, nil
+	}
+
+	// Seed Daytona snapshots when requested. One-shot, exits after completion.
+	// Snapshot builds run for several minutes; wire Ctrl-C / SIGTERM to ctx so the
+	// SDK's log-streaming goroutine and any in-flight HTTP call shut down cleanly
+	// instead of leaving the operator staring at a hung CLI.
+	if *seedSnapshots {
+		seedCtx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer cancel()
+		if seedErr := sandbox.SeedSnapshots(seedCtx, env, slog.Default()); seedErr != nil {
+			return nil, false, fmt.Errorf("seed snapshots: %w", seedErr)
 		}
 		return d, true, nil
 	}

@@ -62,20 +62,25 @@ func (s *ComputeSandbox) TestFormatLogsWithTiming(startTime, endTime time.Time, 
 // ExportDockerImageForRuntime wraps dockerImageForRuntime for testing.
 var ExportDockerImageForRuntime = dockerImageForRuntime
 
+// ExportSnapshotForRuntime wraps snapshotForRuntime for testing.
+var ExportSnapshotForRuntime = snapshotForRuntime
+
 // NewTestSandboxWithDaytona creates a ComputeSandbox with a real Daytona client
 // but no database, suitable for integration tests that call TestExecuteDaytona directly.
-func NewTestSandboxWithDaytona(apiKey, apiURL string, logger *slog.Logger) (*ComputeSandbox, error) {
-	env := &utils.CoreAPIEnv{
-		DaytonaAPIKey: apiKey,
-		DaytonaAPIURL: apiURL,
-	}
-
+//
+// Pass the full env (typically the result of utils.LoadEnv) so every Daytona field
+// flows through — DaytonaTarget, DaytonaSnapshotGo, and any future runtime snapshot
+// env vars must be propagated for tests to exercise the same code paths as production.
+// Earlier versions of this helper accepted only apiKey + apiURL and silently dropped
+// the rest, which made the snapshot path untestable.
+func NewTestSandboxWithDaytona(env *utils.CoreAPIEnv, logger *slog.Logger) (*ComputeSandbox, error) {
 	dc, err := newDaytonaClient(env, logger)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ComputeSandbox{
+		env:     env,
 		logger:  logger,
 		daytona: dc,
 	}, nil

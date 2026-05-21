@@ -43,6 +43,8 @@ type CoreAPIEnv struct {
 	SkipOptionalDuckDBExtensions bool   // Flag to skip installation of optional DuckDB extensions
 	DaytonaAPIKey                string // API key for Daytona sandbox service
 	DaytonaAPIURL                string // Base URL for Daytona sandbox service API
+	DaytonaTarget                string // Daytona region target (e.g. "eu", "us"); empty => org default
+	DaytonaSnapshotGo            string // Pre-built Daytona snapshot for Go runtime; empty => fall back to raw image
 	TestObjectName               string // Name of the test object which is expected to be a structured JSON file
 	TestUserEmail                string // Email of the test user
 	TestWorkspace                string // Workspace to test with
@@ -392,6 +394,16 @@ func LoadEnv() (*CoreAPIEnv, error) {
 	if err != nil {
 		return nil, err
 	}
+	daytonaTarget, err := getEnv("DAYTONA_TARGET", false, "")
+	if err != nil {
+		return nil, err
+	}
+	// Default snapshot name lives in the sandbox package (constants.go) to avoid an
+	// import cycle here; if this comes back empty, the sandbox layer applies the default.
+	daytonaSnapshotGo, err := getEnv("DAYTONA_SNAPSHOT_GO", false, "")
+	if err != nil {
+		return nil, err
+	}
 
 	sentryEnabledStr, err := getEnv("SENTRY_ENABLED", false, "false")
 	if err != nil {
@@ -496,6 +508,8 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		SkipOptionalDuckDBExtensions: skipOptionalDuckDBExtensions,
 		DaytonaAPIKey:                daytonaAPIKey,
 		DaytonaAPIURL:                daytonaAPIURL,
+		DaytonaTarget:                daytonaTarget,
+		DaytonaSnapshotGo:            daytonaSnapshotGo,
 		TestObjectName:               testObjectName,
 		TestUserEmail:                testUserEmail,
 		TestWorkspace:                testWorkspace,

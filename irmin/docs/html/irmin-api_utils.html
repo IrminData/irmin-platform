@@ -304,6 +304,8 @@ type CoreAPIEnv struct {
 	SkipOptionalDuckDBExtensions bool   // Flag to skip installation of optional DuckDB extensions
 	DaytonaAPIKey                string // API key for Daytona sandbox service
 	DaytonaAPIURL                string // Base URL for Daytona sandbox service API
+	DaytonaTarget                string // Daytona region target (e.g. "eu", "us"); empty =&gt; org default
+	DaytonaSnapshotGo            string // Pre-built Daytona snapshot for Go runtime; empty =&gt; fall back to raw image
 	TestObjectName               string // Name of the test object which is expected to be a structured JSON file
 	TestUserEmail                string // Email of the test user
 	TestWorkspace                string // Workspace to test with

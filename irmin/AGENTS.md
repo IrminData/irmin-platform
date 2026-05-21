@@ -55,6 +55,9 @@ go run main.go -seed-templates
 # Seed global OAuth clients from environment variables
 go run main.go -seed-oauth-clients
 
+# Seed Daytona snapshots for the compute sandbox (idempotent; targets DAYTONA_TARGET region)
+go run main.go -seed-snapshots
+
 # Run garbage collection (clean up orphans, stale records, temp files, sync LakeFS GC rules)
 go run main.go -gc
 
@@ -159,11 +162,12 @@ Core Operations Layer (LakeFS, DuckDB, Database, Connectors)
 - HTTP dispatch pattern for horizontal scaling
 
 **4. Compute Sandbox** (`/compute-sandbox`)
-- Isolated code execution for Python 3.11+, Node.js, and Go 1.25
+- Isolated code execution for Python 3.11+, Node.js, and Go 1.25 via Daytona sandboxes
 - Limits: 50 concurrent executions, 10-minute timeout
 - Features: Script locking (PostgreSQL advisory locks), input/output file management
 - Security: Separate temp directories, automatic cleanup
-- Note: Direct process execution; production deployments should add container/VM isolation
+- **Baked-in SDKs via Daytona snapshots**: each runtime can boot from a pre-built snapshot that has its SDK install already applied — per-run `installRuntimeSDK` is skipped when the sandbox booted from a snapshot. Today only Go is wired up (`DAYTONA_SNAPSHOT_GO`); Python and Node fall back to raw images until their SDKs ship. `DAYTONA_TARGET` (`eu`/`us`) selects the region; snapshots are per-region. See [compute-sandbox/README.md](./compute-sandbox/README.md) for the per-runtime extension recipe.
+- **Snapshot rebuild flow**: bump the runtime's `Snapshot<Runtime>Default` version suffix in [`compute-sandbox/constants.go`](./compute-sandbox/constants.go) → set `DAYTONA_TARGET` → `go run main.go -seed-snapshots` (seeds every wired-up runtime, idempotent per name) → deploy with new `DAYTONA_SNAPSHOT_<RUNTIME>`.
 
 **5. Database Layer** (`/db`)
 - PostgreSQL with pgx + GORM

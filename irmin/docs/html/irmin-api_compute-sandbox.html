@@ -17,6 +17,8 @@ const (
 	DockerImagePython = "python:3.11"
 	DockerImageNode   = "node:24"
 
+	SnapshotGoDefault = "irmin-go-1.25-sdk-v1"
+
 	SandboxWorkDir = "/workspace"
 
 	LatestGoVersion = "1.25.0"
@@ -35,6 +37,26 @@ VARIABLES
 var ErrScriptAlreadyRunning = errors.New("script is already being executed")
     ErrScriptAlreadyRunning is returned when attempting to execute a script that
     is already being executed by another session.
+
+
+FUNCTIONS
+
+func SeedSnapshots(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Logger) error
+    SeedSnapshots builds and registers the Daytona snapshots used by the compute
+    sandbox.
+
+    Today it only seeds the Go runtime. When a new runtime's SDK ships (Python,
+    Node), add another seed block here mirroring the Go one and update the
+    four touchpoints listed in compute-sandbox/README.md ("Adding a new runtime
+    snapshot"): snapshotForRuntime, the env loader, the runtime's default
+    constant, and this function.
+
+    The seed is idempotent per runtime: if a snapshot with the target name
+    already exists, that runtime is skipped. To rebuild, bump the version suffix
+    on the runtime's default constant (e.g. SnapshotGoDefault) and re-run.
+
+    The seed targets DAYTONA_TARGET (region) — snapshots are per-region,
+    so the seed must be run against the same region as the runtime API.
 
 
 TYPES

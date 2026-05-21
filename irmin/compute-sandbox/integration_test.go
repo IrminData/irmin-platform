@@ -31,7 +31,7 @@ func setupTestSandbox(t *testing.T) *sandbox.ComputeSandbox {
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
-	sb, err := sandbox.NewTestSandboxWithDaytona(env.DaytonaAPIKey, env.DaytonaAPIURL, logger)
+	sb, err := sandbox.NewTestSandboxWithDaytona(env, logger)
 	if err != nil {
 		t.Fatalf("Failed to create test sandbox: %v", err)
 	}

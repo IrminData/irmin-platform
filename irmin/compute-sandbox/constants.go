@@ -16,6 +16,12 @@ const (
 	DockerImagePython = "python:3.11"
 	DockerImageNode   = "node:24"
 
+	// Daytona snapshot defaults. Bump the version suffix whenever the snapshot
+	// contents change (base image, baked SDK version, etc.) so old and new
+	// workflows do not collide mid-deploy. Re-seed with `-seed-snapshots`.
+
+	SnapshotGoDefault = "irmin-go-1.25-sdk-v1"
+
 	// Workspace directory inside Daytona sandbox.
 
 	SandboxWorkDir = "/workspace"
