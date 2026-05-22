@@ -168,3 +168,7 @@ Copy `.env.example` to `.env` and configure:
 ## Swagger Documentation
 
 Interactive API docs at `http://localhost:3000/docs` when running locally.
+
+## Handoff
+
+Before handing off work — finishing a task, opening a PR, or passing to another agent — run the `document-release` skill to reconcile docs (README, ARCHITECTURE, CONTRIBUTING, this AGENTS.md) with what actually shipped. This is required, not optional: it prevents doc drift and ensures the next agent picks up accurate context.
