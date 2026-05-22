@@ -386,3 +386,7 @@ To extend the platform:
 4. **Custom Connectors**: Implement connector interface in separate service, use via connectors-client
 5. **Additional Formatters**: Add to `/formatter` for new data formats (CSV, JSON, Parquet, etc.)
 6. **Custom Middleware**: Add to `/middlewares` for request processing hooks
+
+## Handoff
+
+Before handing off work — finishing a task, opening a PR, or passing to another agent — run the `document-release` skill to reconcile docs (README, ARCHITECTURE, CONTRIBUTING, this AGENTS.md) with what actually shipped. This is required, not optional: it prevents doc drift and ensures the next agent picks up accurate context.
