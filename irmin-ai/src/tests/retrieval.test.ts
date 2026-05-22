@@ -1,4 +1,3 @@
-/* eslint-disable import-x/no-unused-modules */
 // Comprehensive Test for Document Retrieval and Context Generation
 // Tests search, context retrieval, and various query patterns based on llm-docs content
 import { db } from '@/database';

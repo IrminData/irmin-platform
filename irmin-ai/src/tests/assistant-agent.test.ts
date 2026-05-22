@@ -1,4 +1,3 @@
-/* eslint-disable import-x/no-unused-modules */
 // Assistant Agent API Test Utility for Irmin AI
 // Tests the assistant agent functionality including both streaming and non-streaming modes
 import type { AgentConfig, TestResults } from './types';

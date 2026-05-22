@@ -332,7 +332,10 @@ export abstract class BaseAgent implements BaseAgentInterface {
   /**
    * Creates a configured LangChain agent ready for execution
    */
-  async createAgent(input: AgentInput, conversationId: string) {
+  async createAgent(
+    input: AgentInput,
+    conversationId: string
+  ): Promise<Awaited<ReturnType<typeof agentService.getAgent>>> {
     const createStart = Date.now();
 
     // 1. Validate input

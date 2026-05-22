@@ -18,8 +18,7 @@ const GO_STARTS_LINE =
 // Real Go keyword patterns — `//` and `/*` comment markers alone are not
 // reliable because they're common in English prose (e.g. "// For example...").
 // Require a real Go keyword to be present before treating the response as Go.
-const GO_KEYWORD =
-  /^\s*(?:package\s+\w+|import\s*[("]|func\s+\w+)/;
+const GO_KEYWORD = /^\s*(?:package\s+\w+|import\s*[("]|func\s+\w+)/;
 
 /**
  * Scans backwards from the end of the response to trim trailing explanatory

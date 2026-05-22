@@ -1,4 +1,3 @@
-/* eslint-disable import-x/no-unused-modules */
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 

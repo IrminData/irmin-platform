@@ -1,4 +1,3 @@
-/* eslint-disable import-x/no-unused-modules */
 // Scripting Agent API test utility for Irmin AI.
 // Mirrors assistant-agent.test.ts but targets the synchronous scripting agent
 // and exercises the query_sql_assistant sub-agent delegation tool.

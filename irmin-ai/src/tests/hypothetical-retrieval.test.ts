@@ -1,4 +1,3 @@
-/* eslint-disable import-x/no-unused-modules */
 // Comprehensive Test for Hypothetical Content-Based Retrieval
 // Tests the new hypothetical content generation approach vs baseline retrieval
 import { db } from '@/database';

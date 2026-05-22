@@ -1,4 +1,3 @@
-/* eslint-disable import-x/no-unused-modules */
 // Comprehensive Test for Vectorize Docs Script
 // Tests the entire vectorization pipeline: script execution, vector operations, retrievals, and database tracking
 import { db } from '@/database';

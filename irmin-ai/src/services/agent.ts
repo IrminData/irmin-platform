@@ -40,7 +40,9 @@ class AgentService {
     return this.postgresSaverPromise;
   }
 
-  async getAgent(options: AgentOptions) {
+  async getAgent(
+    options: AgentOptions
+  ): Promise<ReturnType<typeof createAgent>> {
     if (!this.postgresSaver) {
       await this.configurePostgresSaver();
     }
