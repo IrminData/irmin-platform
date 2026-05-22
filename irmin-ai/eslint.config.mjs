@@ -70,6 +70,24 @@ export default tseslint.config(
     },
   },
   {
+    // Entry points and standalone scripts: not imported anywhere, so
+    // `missingExports: true` and `unusedExports: true` will always fire.
+    // - instrument.ts/server.ts boot the Fastify app
+    // - src/tests/* are standalone tsx scripts (see AGENTS.md "Testing")
+    // - src/vector/index.ts is a barrel re-export consumed externally
+    // - src/scripts/* are CLI scripts
+    files: [
+      'src/instrument.ts',
+      'src/server.ts',
+      'src/tests/**/*.ts',
+      'src/vector/index.ts',
+      'src/scripts/**/*.ts',
+    ],
+    rules: {
+      'import-x/no-unused-modules': 'off',
+    },
+  },
+  {
     files: ['**/*.mjs', '**/*.js'],
     ...tseslint.configs.disableTypeChecked,
     languageOptions: {
