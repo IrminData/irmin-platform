@@ -175,3 +175,7 @@ pnpm dict:fix             # Auto-fix missing translations in fi.ts
 - Always access dict via `useLocale()` hook: `const { dict } = useLocale();`
 - Never use optional chaining (`dict?.key`) - dict is always defined
 - Never use fallback patterns (`dict.key ?? 'fallback'`) for existing keys
+
+## Handoff
+
+Before handing off work — finishing a task, opening a PR, or passing to another agent — run the `document-release` skill to reconcile docs (README, ARCHITECTURE, CONTRIBUTING, this AGENTS.md) with what actually shipped. This is required, not optional: it prevents doc drift and ensures the next agent picks up accurate context.
