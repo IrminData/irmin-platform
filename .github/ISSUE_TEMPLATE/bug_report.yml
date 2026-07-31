@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a reproducible defect in an Irmin project
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: project
+    attributes:
+      label: Affected project
+      options:
+        - Core
+        - AI
+        - Console
+        - Connectors
+        - Go SDK
+        - Cross-project
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Revision
+      description: Commit, tag, or deployed version
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Minimal steps, with secrets and personal data removed
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: "Security vulnerabilities must be reported privately using SECURITY.md."

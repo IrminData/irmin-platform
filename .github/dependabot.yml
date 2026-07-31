@@ -1,0 +1,50 @@
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    target-branch: main
+    groups:
+      all:
+        patterns: ["*"]
+
+  - package-ecosystem: gomod
+    directory: /irmin
+    schedule:
+      interval: weekly
+    target-branch: main
+    groups:
+      all:
+        patterns: ["*"]
+
+  - package-ecosystem: gomod
+    directory: /irmin-connectors
+    schedule:
+      interval: weekly
+    target-branch: main
+    groups:
+      all:
+        patterns: ["*"]
+
+  - package-ecosystem: gomod
+    directory: /sdks/go
+    schedule:
+      interval: weekly
+    target-branch: main
+    groups:
+      all:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /irmin-ai
+    schedule:
+      interval: weekly
+    target-branch: main
+
+  - package-ecosystem: npm
+    directory: /irmin-console
+    schedule:
+      interval: weekly
+    target-branch: main

@@ -1,0 +1,20 @@
+# Historical synthetic fixtures and documentation examples reviewed during
+# monorepo migration on 2026-08-01. Exceptions are fingerprint-specific so new
+# findings in the same files still fail.
+a4c020fc55131cf1569c6b0928014c0f95c395ff:irmin/middlewares/billing_test.go:generic-api-key:123
+19a8ce9d9695bf0581185e27027fa0f7e1694163:irmin-console/src/types/examples/core/apiTokens.ts:generic-api-key:15
+19a8ce9d9695bf0581185e27027fa0f7e1694163:irmin-console/src/types/examples/core/apiTokens.ts:generic-api-key:23
+19a8ce9d9695bf0581185e27027fa0f7e1694163:irmin-console/src/types/examples/core/apiTokens.ts:generic-api-key:31
+19a8ce9d9695bf0581185e27027fa0f7e1694163:irmin-console/src/types/examples/core/apiTokens.ts:generic-api-key:39
+19a8ce9d9695bf0581185e27027fa0f7e1694163:irmin-console/src/types/examples/core/apiTokens.ts:generic-api-key:47
+20458807a25b14d566baf4e94363118b89029d92:irmin-console/src/types/examples/core/systemToken.ts:generic-api-key:15
+20458807a25b14d566baf4e94363118b89029d92:irmin-console/src/types/examples/core/systemToken.ts:generic-api-key:21
+20458807a25b14d566baf4e94363118b89029d92:irmin-console/src/types/examples/core/systemToken.ts:generic-api-key:27
+20458807a25b14d566baf4e94363118b89029d92:irmin-console/src/types/examples/core/systemToken.ts:generic-api-key:33
+20458807a25b14d566baf4e94363118b89029d92:irmin-console/src/types/examples/core/systemToken.ts:generic-api-key:39
+83647f7f43052c75e58c8f9bdf75054b0815147e:irmin/cache/cache_test.go:generic-api-key:156
+95bb1e0607045b8bce25270a3daef8fce3d3a4ed:irmin-ai/src/scripts/README.md:curl-auth-header:31
+b505f39c2de903815b7e798add6310a58635730a:irmin-connectors/connectors/stripe/models/connectionDetails_test.go:generic-api-key:18
+b505f39c2de903815b7e798add6310a58635730a:irmin-connectors/connectors/stripe/models/connectionDetails_test.go:generic-api-key:22
+b505f39c2de903815b7e798add6310a58635730a:irmin-connectors/connectors/stripe/models/connectionDetails_test.go:generic-api-key:26
+b505f39c2de903815b7e798add6310a58635730a:irmin-connectors/connectors/stripe/models/connectionDetails_test.go:generic-api-key:30

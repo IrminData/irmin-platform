@@ -1,0 +1,41 @@
+name: Generated docs
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "irmin/**/*.go"
+      - "irmin/generate-docs.sh"
+      - "irmin-connectors/**/*.go"
+      - "irmin-connectors/generate-docs.sh"
+      - "sdks/go/**/*.go"
+      - "sdks/go/generate-docs.sh"
+      - ".github/workflows/docs.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify ${{ matrix.name }} docs
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Core
+            module: irmin
+          - name: Connectors
+            module: irmin-connectors
+          - name: Go SDK
+            module: sdks/go
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "${{ matrix.module }}/go.mod"
+          cache-dependency-path: "${{ matrix.module }}/go.sum"
+      - run: bash ./generate-docs.sh
+        working-directory: ${{ matrix.module }}
+      - run: git diff --exit-code -- docs
+        working-directory: ${{ matrix.module }}
