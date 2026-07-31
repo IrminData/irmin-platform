@@ -13,7 +13,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sqids/sqids-go v0.4.1 // indirect
 	github.com/teambition/rrule-go v1.8.2 // indirect
-	golang.org/x/crypto v0.50.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/crypto v0.52.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 )
