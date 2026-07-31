@@ -122,7 +122,7 @@
     "babel-plugin-react-compiler": "19.1.0-rc.3",
     "baseline-browser-mapping": "^2.10.32",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.2.12",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-better-tailwindcss": "^4.5.0",
