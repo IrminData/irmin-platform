@@ -1,0 +1,477 @@
+import IrminCore from '@/irmin-api';
+import fs from 'fs/promises';
+import { AgentMiddleware, BaseMessage, DynamicStructuredTool } from 'langchain';
+import path from 'path';
+
+import agentService from '@/services/agent';
+import type { LLMOptions } from '@/services/llm';
+import {
+  DOC_SETS,
+  type DocFile,
+  loadDocs,
+  loadDocSet,
+} from '@/services/staticDocs';
+import { systemPromptBuilder } from '@/services/systemPromptBuilder';
+
+import type {
+  AgentConfig,
+  AgentInput,
+  AgentResponse,
+  BaseAgentInterface,
+} from '@/agents/types';
+
+export abstract class BaseAgent implements BaseAgentInterface {
+  public config: AgentConfig;
+
+  constructor(config: AgentConfig) {
+    this.config = config;
+  }
+
+  /**
+   * Subclasses override this to specify LLM config, tools, and middleware
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected async getAgentOptions(_input: AgentInput): Promise<{
+    llmOptions: LLMOptions;
+    tools?: DynamicStructuredTool[];
+    middleware?: AgentMiddleware[];
+    systemPrompt?: string;
+  }> {
+    // Default: cheap Groq model as fallback
+    return {
+      llmOptions: {
+        provider: 'groq',
+        model: 'llama-3.1-8b-instant',
+        temperature: 0.7,
+      },
+    };
+  }
+
+  /**
+   * Subclasses can override to add custom context (e.g., vector search)
+   *
+   * NOTE: Upfront vector search is DISABLED to reduce latency.
+   * The agent has access to irmin_hyde_search and irmin_retrieve_docs_context tools
+   * for on-demand documentation retrieval when needed.
+   * This saves ~1.5s (embedding API call) on every request.
+   *
+   * Static docs can be injected via the agent's config.staticDocs setting.
+   */
+  protected async prepareContext(
+    input: AgentInput
+  ): Promise<Record<string, unknown>> {
+    const prepareStart = Date.now();
+    const context: Record<string, unknown> = { ...(input.context || {}) };
+
+    // Run static docs loading and API context fetching in parallel
+    const staticDocsPromise = this.loadStaticDocs();
+    const nonDocsPromise = this.prepareNonDocsContext(input, context);
+
+    const [staticDocs] = await Promise.all([staticDocsPromise, nonDocsPromise]);
+
+    // Add static docs to context if available
+    if (staticDocs) {
+      context['irmin-documentation'] = staticDocs;
+    }
+
+    console.log(
+      `[Agent Timing] prepareContext total: ${Date.now() - prepareStart}ms`
+    );
+
+    return context;
+  }
+
+  /**
+   * Load static documentation based on agent config
+   */
+  protected async loadStaticDocs(): Promise<string | null> {
+    const staticDocsConfig = this.config.staticDocs;
+    if (!staticDocsConfig) {
+      return null;
+    }
+
+    const docsStart = Date.now();
+
+    let docs: string;
+    if (typeof staticDocsConfig === 'string') {
+      // It's a doc set name
+      docs = await loadDocSet(staticDocsConfig as keyof typeof DOC_SETS);
+    } else {
+      // It's an array of specific doc files
+      docs = await loadDocs(staticDocsConfig as DocFile[]);
+    }
+
+    console.log(
+      `[Agent Timing] loadStaticDocs: ${Date.now() - docsStart}ms (${docs.length} chars)`
+    );
+
+    return docs || null;
+  }
+
+  protected async prepareNonDocsContext(
+    input: AgentInput,
+    context: Record<string, unknown>
+  ): Promise<void> {
+    // Initialize IrminCore
+    const irmin = new IrminCore(input.authToken || '');
+    const workspace = input.workspace?.slug || '';
+
+    if (!workspace || !input.authToken) {
+      return;
+    }
+
+    try {
+      const promises: Promise<void>[] = [];
+
+      // 1. Fetch Connection
+      if (input.context?.['connection-id']) {
+        promises.push(
+          (async () => {
+            const connectionId = input.context?.['connection-id'] as string;
+            try {
+              const res = await irmin.connectionService.fetchConnection({
+                workspace,
+                connectionID: connectionId,
+              });
+              if (res.data) {
+                context['connection'] = JSON.stringify(res.data, null, 2);
+              }
+            } catch (e) {
+              console.error(`Failed to fetch connection ${connectionId}:`, e);
+            }
+          })()
+        );
+      }
+
+      // 2. Fetch Workflow
+      if (input.context?.['workflow-id']) {
+        promises.push(
+          (async () => {
+            const workflowId = input.context?.['workflow-id'] as string;
+            try {
+              const res = await irmin.workflowService.fetchWorkflow({
+                workspace,
+                workflowID: workflowId,
+              });
+              if (res.data) {
+                context['workflow'] = JSON.stringify(res.data, null, 2);
+              }
+            } catch (e) {
+              console.error(`Failed to fetch workflow ${workflowId}:`, e);
+            }
+          })()
+        );
+      }
+
+      // 3. Fetch Stored Query
+      if (input.context?.['stored-query-id']) {
+        promises.push(
+          (async () => {
+            const queryId = input.context?.['stored-query-id'] as string;
+            try {
+              const res = await irmin.queryService.getStoredQuery({
+                workspace,
+                queryID: queryId,
+              });
+              if (res.data) {
+                context['stored-query'] = JSON.stringify(res.data, null, 2);
+              }
+            } catch (e) {
+              console.error(`Failed to fetch stored query ${queryId}:`, e);
+            }
+          })()
+        );
+      }
+
+      // 4. Fetch Repository
+      if (input.context?.['repository-slug']) {
+        promises.push(
+          (async () => {
+            const repoSlug = input.context?.['repository-slug'] as string;
+            try {
+              const res = await irmin.repositoryService.fetchRepository({
+                workspace,
+                slug: repoSlug,
+              });
+              if (res.data) {
+                context['repository'] = JSON.stringify(res.data, null, 2);
+              }
+            } catch (e) {
+              console.error(`Failed to fetch repository ${repoSlug}:`, e);
+            }
+          })()
+        );
+
+        // 5. Fetch Repository Object Schema
+        // If we have a repository slug, fetch the object schema (root or specific path)
+        promises.push(
+          (async () => {
+            const repoSlug = input.context?.['repository-slug'] as string;
+            const objectPath =
+              (input.context?.['repository-object-path'] as string) || '';
+            const ref =
+              (input.context?.['repository-ref'] as string) || undefined; // When not provided, the default branch of the repository is used
+            try {
+              const res = await irmin.objectService.getObjectSchema({
+                workspace,
+                repository: repoSlug,
+                path: objectPath,
+                ref,
+              });
+              if (res.data) {
+                context['repository-object-schema'] = JSON.stringify(
+                  res.data,
+                  null,
+                  2
+                );
+              }
+            } catch (e) {
+              console.error(
+                `Failed to fetch object schema ${objectPath || 'root'} in ${repoSlug}:`,
+                e
+              );
+            }
+          })()
+        );
+      }
+
+      // 6. Fetch Editor Items (Scripts)
+      if (
+        input.context?.['script-ids'] &&
+        typeof input.context['script-ids'] === 'string'
+      ) {
+        const scriptIds = input.context['script-ids']
+          .split(',')
+          .filter(Boolean);
+        if (scriptIds.length > 0) {
+          promises.push(
+            (async () => {
+              try {
+                const scripts = await Promise.all(
+                  scriptIds.map(async (id) => {
+                    try {
+                      const res = await irmin.scriptService.getScript({
+                        workspace,
+                        scriptId: id.trim(),
+                      });
+                      if (res.data) {
+                        return {
+                          scriptId: id.trim(),
+                          name: res.data.name,
+                          content: res.data.content,
+                        };
+                      }
+                      return null;
+                    } catch (e) {
+                      console.error(`Failed to fetch script ${id}:`, e);
+                      return {
+                        scriptId: id.trim(),
+                        name: '',
+                        content: '',
+                        error: 'Failed to fetch script',
+                      };
+                    }
+                  })
+                );
+                context['scripts'] = JSON.stringify(
+                  scripts.filter((s) => s !== null),
+                  null,
+                  2
+                );
+              } catch (e) {
+                console.error('Failed to fetch scripts:', e);
+              }
+            })()
+          );
+        }
+      }
+
+      await Promise.all(promises);
+    } catch (e) {
+      console.error('Error fetching context objects:', e);
+    }
+  }
+
+  /**
+   * Load system prompt from file
+   */
+  protected async loadSystemPrompt(): Promise<string> {
+    try {
+      const promptPath = path.join(
+        process.cwd(),
+        'src/agents',
+        this.config.id,
+        'system-prompt.txt'
+      );
+      return await fs.readFile(promptPath, 'utf-8');
+    } catch {
+      // Fallback to config-based prompt
+      return `You are ${this.config.name}. ${this.config.description}`;
+    }
+  }
+
+  /**
+   * Validate input based on context requirements
+   */
+  validateInput(input: AgentInput): boolean {
+    // Check message
+    if (!input.message || input.message.trim() === '') {
+      return false;
+    }
+
+    // Check context requirements
+    for (const requirement of this.config.contextRequirements) {
+      if (requirement.required && !input.context?.[requirement.name]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Creates a configured LangChain agent ready for execution
+   */
+  async createAgent(
+    input: AgentInput,
+    conversationId: string
+  ): Promise<Awaited<ReturnType<typeof agentService.getAgent>>> {
+    const createStart = Date.now();
+
+    // 1. Validate input
+    if (!this.validateInput(input)) {
+      throw new Error('Invalid input for agent');
+    }
+
+    // 2. Run independent operations in parallel for faster agent creation
+    // This saves 100-500ms by not waiting for each operation sequentially
+    const parallelStart = Date.now();
+    const [options, context, basePrompt] = await Promise.all([
+      this.getAgentOptions(input).then((r) => {
+        console.log(
+          `[Agent Timing] getAgentOptions completed: ${Date.now() - parallelStart}ms`
+        );
+        return r;
+      }),
+      this.prepareContext(input).then((r) => {
+        console.log(
+          `[Agent Timing] prepareContext completed: ${Date.now() - parallelStart}ms`
+        );
+        return r;
+      }),
+      this.loadSystemPrompt().then((r) => {
+        console.log(
+          `[Agent Timing] loadSystemPrompt completed: ${Date.now() - parallelStart}ms`
+        );
+        return r;
+      }),
+    ]);
+    console.log(
+      `[Agent Timing] Parallel ops total: ${Date.now() - parallelStart}ms`
+    );
+
+    // 3. Build system prompt (depends on context, so runs after parallel ops)
+    // Extract context descriptions from config
+    const contextDescriptions: Record<string, string> = {};
+    if (this.config.contextRequirements) {
+      for (const req of this.config.contextRequirements) {
+        contextDescriptions[req.name] = req.description;
+      }
+    }
+
+    const systemPrompt = systemPromptBuilder.buildSystemPrompt(basePrompt, {
+      user: input.user,
+      workspace: input.workspace,
+      conversationId,
+      agentId: this.config.id,
+      customContext: context,
+      contextDescriptions,
+    });
+
+    // 4. Create LangChain agent via AgentService
+    const agentCreateStart = Date.now();
+    const agent = await agentService.getAgent({
+      llmOptions: options.llmOptions,
+      systemPrompt,
+      tools: options.tools,
+      middleware: options.middleware,
+    });
+    console.log(
+      `[Agent Timing] agentService.getAgent: ${Date.now() - agentCreateStart}ms`
+    );
+    console.log(
+      `[Agent Timing] Total createAgent: ${Date.now() - createStart}ms`
+    );
+
+    return agent;
+  }
+
+  /**
+   * Main execute method - subclasses can override for custom behavior (e.g., streaming)
+   */
+  async execute(
+    input: AgentInput,
+    conversationId: string
+  ): Promise<AgentResponse> {
+    // Create the agent
+    const agent = await this.createAgent(input, conversationId);
+
+    // Invoke agent with thread_id = conversationId
+    const result = await agentService.invokeAgent(
+      agent,
+      input.message,
+      conversationId
+    );
+
+    // Extract content from result
+    const messages = Array.isArray(result.messages) ? result.messages : [];
+
+    // Return response
+    return { messages };
+  }
+
+  /**
+   * Get conversation history messages for a conversation
+   */
+  async getConversationHistory(conversationId: string): Promise<BaseMessage[]> {
+    // Create a simple agent
+    const agent = await agentService.getAgent({
+      llmOptions: {
+        provider: 'groq',
+        model: 'llama-3.1-8b-instant',
+        temperature: 0.7,
+      },
+      systemPrompt: `You are a helpful assistant.`,
+      tools: [],
+      middleware: [],
+    });
+
+    // Get the agent state from memory
+    const agentState: unknown = await agentService.getAgentState(
+      agent,
+      conversationId
+    );
+
+    const messages: BaseMessage[] = [];
+    if (
+      typeof agentState === 'object' &&
+      agentState !== null &&
+      'values' in agentState &&
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      typeof (agentState as any).values === 'object' &&
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (agentState as any).values !== null &&
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Array.isArray((agentState as any).values.messages)
+    ) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const message of (agentState as any).values.messages) {
+        if (BaseMessage.isInstance(message)) {
+          messages.push(message);
+        }
+      }
+    }
+
+    return messages;
+  }
+}

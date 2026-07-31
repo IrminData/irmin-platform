@@ -1,0 +1,39 @@
+name: Format, Lint & Typecheck
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+jobs:
+  workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Prettier
+        run: pnpm format
+      - name: ESLint
+        run: pnpm lint:fix
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Knip (unused code detection)
+        run: pnpm knip
+      - name: PR Comment (Success)
+        if: success()
+        run: |
+          echo "Lint and typecheck succeeded. PR is allowed to be created."
+          # You can use GitHub API to post a comment on the PR here if you want.
+      - name: PR Comment (Failure)
+        if: failure()
+        run: |
+          echo "Lint and typecheck failed. Please fix the errors and try again."
+          # You can use GitHub API to post a comment on the PR here if you want.

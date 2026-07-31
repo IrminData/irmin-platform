@@ -1,0 +1,10 @@
+packages:
+  - .
+
+onlyBuiltDependencies:
+  - '@sentry/cli'
+  - '@swc/core'
+  - better-sqlite3
+  - esbuild
+  - protobufjs
+  - unrs-resolver

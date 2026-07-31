@@ -1,0 +1,862 @@
+import { indexingService } from '@/vector';
+import { qdrantService } from '@/vector/QdrantService';
+import { collectionService } from '@/vector/vectorCollections';
+import * as cheerio from 'cheerio';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+
+import { analyticsService } from '@/services/analytics';
+
+// Configuration for Irmin SDK documentation URLs
+const IRMIN_SDK_URLS = [
+  // IRMIN Go-lang SDK docs
+  'https://raw.githubusercontent.com/IrminData/irmin-sdk-go/refs/heads/development/README.md',
+  'https://raw.githubusercontent.com/IrminData/irmin-sdk-go/refs/heads/development/docs/docs.md',
+];
+
+// Configuration for DuckDB SQL documentation URLs
+const DUCKDB_DOCS_URLS = [
+  // DuckDB docs
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/introduction.md',
+  // Query syntax
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/filter.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/from.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/groupby.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/having.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/limit.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/orderby.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/prepared_statements.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/qualify.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/sample.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/select.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/setops.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/unnest.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/values.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/where.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/window.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/with.md',
+  // Statements
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/vacuum.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/use.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/update_extensions.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/update.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/unpivot.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/transactions.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/summarize.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/show.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/set_variable.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/set.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/select.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/profiling.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/alter_table.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/alter_view.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/analyze.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/attach.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/call.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/checkpoint.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/comment_on.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/copy.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_index.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_macro.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_schema.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_secret.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_sequence.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_table.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_type.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_view.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/delete.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/describe.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/drop.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/export.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/insert.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/load_and_install.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/merge_into.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/overview.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/pivot.md',
+  // Data types
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/array.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/bitstring.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/blob.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/boolean.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/date.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/enum.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/interval.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/list.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/literal_types.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/map.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/nulls.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/numeric.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/overview.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/struct.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/text.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/time.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/timestamp.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/timezones.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/typecasting.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/union.md',
+];
+
+// Configuration for local LLM documentation files
+const LOCAL_DOCUMENT_PATHS = [
+  // LLM documentation files
+  'llm-docs/concepts.md',
+  'llm-docs/workflows.md',
+  'llm-docs/connections.md',
+  'llm-docs/object-schema.md',
+  'llm-docs/scripting.md',
+  'llm-docs/sql.md',
+];
+
+interface ScriptResult {
+  success: boolean;
+  message: string;
+  data?: Record<string, unknown>;
+  error?: string;
+  executionTime: number;
+  timestamp: string;
+}
+
+interface DocumentChunk {
+  content: string;
+  metadata: {
+    url?: string; // For remote URLs
+    filePath?: string; // For local files
+    title: string;
+    section?: string;
+    timestamp: string;
+    chunkIndex: number;
+    totalChunks: number;
+    documentId: string; // Unique ID for consistent replacement
+    source: 'url' | 'local'; // Track source type
+  };
+}
+
+/**
+ * VectorizeDocsScript - Fetches and indexes documentation from URLs and local files
+ */
+export class VectorizeDocsScript {
+  private config: {
+    collectionName: string;
+    chunkSize: number;
+    chunkOverlap: number;
+    maxConcurrent: number;
+    urls: string[]; // URLs to vectorize
+    localPaths: string[]; // Local file paths to vectorize
+    replaceMode: boolean; // Whether to replace existing documents or append
+  };
+
+  private collectionService: typeof collectionService;
+
+  constructor(config: typeof VectorizeDocsScript.prototype.config) {
+    this.config = {
+      ...config,
+      replaceMode: config.replaceMode ?? true, // Default to replace mode
+      localPaths: config.localPaths ?? [], // Default to empty array
+    };
+    this.collectionService = collectionService;
+  }
+
+  /**
+   * Execute the vectorization script
+   */
+  async execute(): Promise<ScriptResult> {
+    const startTime = Date.now();
+    const timestamp = new Date().toISOString();
+
+    try {
+      // Use provided URLs or default to empty array (will be handled by factory function)
+      const urls = this.config.urls || [];
+      // Use provided local paths or default to empty array
+      const localPaths = this.config.localPaths || [];
+
+      // Fetch and parse documents from URLs and local files
+      const documents = await this.fetchDocuments(urls, localPaths);
+
+      // Chunk documents
+      const chunks = this.chunkDocuments(documents);
+
+      // Ensure collection exists or create it
+      await this.ensureCollection();
+
+      let existingChunkIds: string[] = [];
+      let actualDeletedCount = 0;
+
+      if (this.config.replaceMode) {
+        // Phase 1: Get existing chunk IDs before adding new ones
+        existingChunkIds = await this.getExistingChunkIds();
+      }
+
+      // Phase 2: Index new documents in vector store
+      await this.indexDocuments(chunks);
+
+      // Phase 3: Remove old documents (only after new ones are successfully indexed)
+      if (this.config.replaceMode && existingChunkIds.length > 0) {
+        const deletionResult = await this.removeOldDocuments(existingChunkIds);
+        actualDeletedCount = deletionResult.deletedCount;
+      }
+
+      const executionTime = Date.now() - startTime;
+
+      // Log analytics
+      analyticsService.logEvent({
+        eventType: 'documents_indexed',
+        eventData: {
+          collectionName: this.config.collectionName,
+          documentCount: documents.length,
+        },
+      });
+
+      return {
+        success: true,
+        message: `Successfully vectorized ${documents.length} documents into ${chunks.length} chunks${
+          this.config.replaceMode
+            ? ` and removed ${actualDeletedCount} of ${existingChunkIds.length} old chunks`
+            : ''
+        }`,
+        data: {
+          documentsProcessed: documents.length,
+          chunksCreated: chunks.length,
+          urlsProcessed: urls.length,
+          localFilesProcessed: localPaths.length,
+          replaceMode: this.config.replaceMode,
+          oldChunksRemoved: actualDeletedCount,
+          oldChunksAttempted: existingChunkIds.length,
+        },
+        executionTime,
+        timestamp,
+      };
+    } catch (error) {
+      const executionTime = Date.now() - startTime;
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+
+      analyticsService.logEvent({
+        eventType: 'script_vectorize_docs',
+        eventData: {
+          collectionName: this.config.collectionName,
+          executionTime,
+          replaceMode: this.config.replaceMode,
+        },
+      });
+
+      return {
+        success: false,
+        message: 'Failed to vectorize documents',
+        error: errorMessage,
+        executionTime,
+        timestamp,
+      };
+    }
+  }
+
+  /**
+   * Fetch and parse documents from URLs and local files
+   */
+  private async fetchDocuments(
+    urls: string[],
+    localPaths: string[]
+  ): Promise<DocumentChunk[]> {
+    const documents: DocumentChunk[] = [];
+    const errors: string[] = [];
+
+    // Process URLs in batches to avoid overwhelming servers
+    const urlBatches = this.chunkArray(urls, this.config.maxConcurrent);
+
+    for (const batch of urlBatches) {
+      const promises = batch.map((url) => this.fetchSingleDocument(url));
+      const results = await Promise.allSettled(promises);
+
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          documents.push(result.value);
+        } else {
+          errors.push(`Failed to fetch ${batch[index]}: ${result.reason}`);
+        }
+      });
+    }
+
+    // Process local files
+    const localFileBatches = this.chunkArray(
+      localPaths,
+      this.config.maxConcurrent
+    );
+
+    for (const batch of localFileBatches) {
+      const promises = batch.map((filePath) => this.fetchLocalFile(filePath));
+      const results = await Promise.allSettled(promises);
+
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          documents.push(result.value);
+        } else {
+          errors.push(`Failed to fetch ${batch[index]}: ${result.reason}`);
+        }
+      });
+    }
+
+    if (errors.length > 0) {
+      console.warn('Some documents failed to fetch:', errors);
+    }
+
+    return documents;
+  }
+
+  /**
+   * Fetch and parse a single document
+   */
+  private async fetchSingleDocument(url: string): Promise<DocumentChunk> {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Irmin-AI-Docs-Bot/1.0',
+          Accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
+        signal: AbortSignal.timeout(30000), // 30 second timeout
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const html = await response.text();
+      const $ = cheerio.load(html);
+
+      // Remove script and style elements
+      $('script, style, nav, header, footer').remove();
+
+      // Extract title
+      const title =
+        $('title').text().trim() || $('h1').first().text().trim() || 'Untitled';
+
+      // Extract main content
+      const mainContent = $(
+        'main, article, .content, .post, .page-content'
+      ).first();
+      const content = mainContent.length
+        ? mainContent.text().trim()
+        : $('body').text().trim();
+
+      // Clean up whitespace
+      const cleanedContent = content.replace(/\s+/g, ' ').trim();
+
+      if (!cleanedContent) {
+        throw new Error('No content found in document');
+      }
+
+      return {
+        content: cleanedContent,
+        metadata: {
+          url,
+          title,
+          timestamp: new Date().toISOString(),
+          chunkIndex: 0,
+          totalChunks: 1,
+          documentId: this.generateDocumentId(url, title),
+          source: 'url',
+        },
+      };
+    } catch (error) {
+      throw new Error(
+        `Failed to fetch document from ${url}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Fetch and parse a local file
+   */
+  private async fetchLocalFile(filePath: string): Promise<DocumentChunk> {
+    try {
+      // Resolve the file path relative to the project root
+      const resolvedPath = path.resolve(process.cwd(), filePath);
+
+      // Check if file exists
+      try {
+        await fs.access(resolvedPath);
+      } catch {
+        throw new Error(`File not found: ${resolvedPath}`);
+      }
+
+      // Read file content
+      const content = await fs.readFile(resolvedPath, 'utf-8');
+
+      if (!content.trim()) {
+        throw new Error('File is empty');
+      }
+
+      // Extract title from filename or first heading
+      const fileName = path.basename(filePath, path.extname(filePath));
+      let title = fileName;
+
+      // Try to extract title from markdown content
+      const firstHeadingMatch = content.match(/^#\s+(.+)$/m);
+      if (firstHeadingMatch) {
+        title = firstHeadingMatch[1].trim();
+      }
+
+      // Clean up content (remove markdown syntax for better vectorization)
+      const cleanedContent = this.cleanMarkdownContent(content);
+
+      return {
+        content: cleanedContent,
+        metadata: {
+          filePath,
+          title,
+          timestamp: new Date().toISOString(),
+          chunkIndex: 0,
+          totalChunks: 1,
+          documentId: this.generateDocumentId(filePath, title),
+          source: 'local',
+        },
+      };
+    } catch (error) {
+      throw new Error(
+        `Failed to fetch local file ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Clean markdown content for better vectorization
+   */
+  private cleanMarkdownContent(content: string): string {
+    return (
+      content
+        // Remove markdown headers but keep the text
+        .replace(/^#{1,6}\s+/gm, '')
+        // Remove markdown links but keep the text
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        // Remove markdown bold/italic formatting
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/__([^_]+)__/g, '$1')
+        .replace(/_([^_]+)_/g, '$1')
+        // Remove code blocks but keep inline code
+        .replace(/```[\s\S]*?```/g, '')
+        // Remove horizontal rules
+        .replace(/^---+$/gm, '')
+        // Clean up extra whitespace
+        .replace(/\s+/g, ' ')
+        .trim()
+    );
+  }
+
+  /**
+   * Chunk documents into smaller pieces for better vectorization
+   */
+  private chunkDocuments(documents: DocumentChunk[]): DocumentChunk[] {
+    const chunks: DocumentChunk[] = [];
+
+    documents.forEach((doc) => {
+      const textChunks = this.chunkText(
+        doc.content,
+        this.config.chunkSize,
+        this.config.chunkOverlap
+      );
+
+      textChunks.forEach((chunkText, index) => {
+        chunks.push({
+          content: chunkText,
+          metadata: {
+            ...doc.metadata,
+            chunkIndex: index,
+            totalChunks: textChunks.length,
+            documentId: `${doc.metadata.documentId}-chunk-${index}`,
+          },
+        });
+      });
+    });
+
+    return chunks;
+  }
+
+  /**
+   * Split text into chunks with overlap
+   */
+  private chunkText(
+    text: string,
+    chunkSize: number,
+    overlap: number
+  ): string[] {
+    if (text.length <= chunkSize) {
+      return [text];
+    }
+
+    const chunks: string[] = [];
+    let start = 0;
+
+    while (start < text.length) {
+      let end = start + chunkSize;
+
+      // Try to break at sentence boundaries
+      if (end < text.length) {
+        const lastPeriod = text.lastIndexOf('.', end);
+        const lastNewline = text.lastIndexOf('\n', end);
+        const breakPoint = Math.max(lastPeriod, lastNewline);
+
+        if (breakPoint > start + chunkSize * 0.5) {
+          end = breakPoint + 1;
+        }
+      }
+
+      chunks.push(text.slice(start, end).trim());
+      start = end - overlap;
+
+      if (start >= text.length) break;
+    }
+
+    return chunks.filter((chunk) => chunk.length > 0);
+  }
+
+  /**
+   * Ensure the collection exists or create it
+   * Creates both the database record and the Qdrant collection
+   */
+  private async ensureCollection(): Promise<string> {
+    try {
+      // Try to get existing collection
+      const existingCollection =
+        await this.collectionService.getCollectionByName(
+          this.config.collectionName,
+          undefined,
+          undefined,
+          true
+        );
+
+      if (existingCollection) {
+        // Collection exists in DB, ensure it exists in Qdrant
+        await qdrantService.ensureCollection(existingCollection.name);
+        return existingCollection.id;
+      }
+
+      // Create new system collection (both DB and Qdrant)
+      await indexingService.createSystemVectorStore(
+        this.config.collectionName,
+        `Auto-generated collection for ${this.config.collectionName} documentation`
+      );
+
+      const collection = await this.collectionService.getCollectionByName(
+        this.config.collectionName,
+        undefined,
+        undefined,
+        true
+      );
+
+      if (!collection) {
+        throw new Error('Collection was not created');
+      }
+
+      return collection.id;
+    } catch (error) {
+      throw new Error(
+        `Failed to ensure collection exists: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Index documents in the vector store
+   */
+  private async indexDocuments(chunks: DocumentChunk[]): Promise<void> {
+    try {
+      // Get collection config
+      const collectionConfig = await this.collectionService.getCollectionByName(
+        this.config.collectionName,
+        undefined,
+        undefined,
+        true
+      );
+      if (!collectionConfig) {
+        throw new Error('Collection not found');
+      }
+
+      // Convert chunks to vector documents
+      const vectorDocuments = chunks.map((chunk) => ({
+        pageContent: chunk.content,
+        metadata: chunk.metadata,
+      }));
+
+      // Process in batches to avoid payload size limits
+      // Using a batch size of 100 to stay safely under the 32MB limit
+      const BATCH_SIZE = 100;
+      const batches = this.chunkArray(vectorDocuments, BATCH_SIZE);
+
+      console.log(
+        `Indexing ${vectorDocuments.length} chunks in ${batches.length} batches...`
+      );
+
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        console.log(
+          `Processing batch ${i + 1}/${batches.length} (${batch.length} chunks)`
+        );
+
+        await indexingService.indexDocuments(collectionConfig.name, batch);
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to index documents: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Helper to chunk array into smaller batches
+   */
+  private chunkArray<T>(array: T[], size: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += size) {
+      chunks.push(array.slice(i, i + size));
+    }
+    return chunks;
+  }
+
+  /**
+   * Generate a unique document ID based on URL, title, and timestamp
+   */
+  private generateDocumentId(url: string, title: string): string {
+    // Create a hash-like ID from URL and title for consistency
+    const baseString = `${url}-${title}`;
+    // Simple hash function for consistent IDs
+    let hash = 0;
+    for (let i = 0; i < baseString.length; i++) {
+      const char = baseString.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    // Add timestamp to make each execution unique
+    const timestamp = Date.now().toString(36);
+    return `doc-${Math.abs(hash).toString(36)}-${timestamp}`;
+  }
+
+  /**
+   * Get existing chunk IDs from the vector store using pagination
+   */
+  private async getExistingChunkIds(): Promise<string[]> {
+    try {
+      const collectionConfig = await this.collectionService.getCollectionByName(
+        this.config.collectionName,
+        undefined,
+        undefined,
+        true
+      );
+      if (!collectionConfig) {
+        return [];
+      }
+
+      // If collection has no documents, skip querying Qdrant
+      if (
+        !collectionConfig.documentCount ||
+        collectionConfig.documentCount === 0
+      ) {
+        console.log(
+          `Collection ${collectionConfig.name} has no documents, skipping chunk retrieval`
+        );
+        return [];
+      }
+
+      try {
+        await indexingService.validateCollectionAccess(
+          collectionConfig.name,
+          true
+        );
+      } catch (error) {
+        console.warn(
+          `Failed to connect to Qdrant collection ${collectionConfig.name}, assuming no existing chunks: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+        return [];
+      }
+
+      const chunkIds: string[] = [];
+      const batchSize = 1000; // Process in smaller batches for better memory management
+      let offset: string | number | undefined = undefined;
+      let totalPointsProcessed = 0;
+
+      console.log(
+        `Starting to retrieve existing chunks from collection ${collectionConfig.name}`
+      );
+
+      // Use Qdrant's scroll API with pagination to retrieve all points
+      while (true) {
+        const scrollResult = await qdrantService.scroll(
+          collectionConfig.name,
+          undefined,
+          batchSize,
+          offset
+        );
+
+        const points = scrollResult.points;
+
+        if (points.length === 0) {
+          // No more points to process
+          break;
+        }
+
+        // Process points in this batch
+        for (const point of points) {
+          const payload = point.payload as Record<string, unknown> | undefined;
+          const metadata = payload?.metadata as
+            | Record<string, unknown>
+            | undefined;
+
+          if (metadata && typeof metadata.documentId === 'string') {
+            const chunkDocId = metadata.documentId;
+            if (chunkDocId && !chunkIds.includes(chunkDocId)) {
+              chunkIds.push(chunkDocId);
+            }
+          }
+        }
+
+        totalPointsProcessed += points.length;
+
+        // Update offset for next iteration
+        if (points.length < batchSize) {
+          // Last batch (partial or complete)
+          break;
+        }
+
+        // Use the returned next offset
+        offset = scrollResult.nextOffset || undefined;
+        if (!offset) break;
+      }
+
+      console.log(
+        `Retrieved ${totalPointsProcessed} points from collection ${collectionConfig.name}, found ${chunkIds.length} unique document chunks`
+      );
+
+      return chunkIds;
+    } catch (error) {
+      console.warn('Failed to get existing document IDs:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Remove old documents from the vector store
+   */
+  private async removeOldDocuments(
+    documentIds: string[]
+  ): Promise<{ deletedCount: number; errors: string[] }> {
+    try {
+      const collectionConfig = await this.collectionService.getCollectionByName(
+        this.config.collectionName,
+        undefined,
+        undefined,
+        true
+      );
+      if (!collectionConfig) {
+        throw new Error('Collection not found');
+      }
+
+      await indexingService.validateCollectionAccess(
+        collectionConfig.name,
+        true
+      );
+
+      // Remove specific existing chunks that were present before indexing new ones
+      const deletionResult = await indexingService.deleteSpecificChunks(
+        collectionConfig.name,
+        documentIds
+      );
+
+      if (deletionResult.errors.length > 0) {
+        console.warn('Some documents failed to delete:', deletionResult.errors);
+      }
+
+      console.log(
+        `Successfully removed ${deletionResult.deletedCount} old documents from collection`
+      );
+
+      return {
+        deletedCount: deletionResult.deletedCount,
+        errors: deletionResult.errors,
+      };
+    } catch (error) {
+      throw new Error(
+        `Failed to remove old documents: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+}
+
+/**
+ * Factory function to execute the vectorize docs script with default configuration
+ * This function runs two separate vectorization passes:
+ * 1. irmin-docs collection: Irmin SDK docs + local LLM docs
+ * 2. duckdb-sql-syntax-docs collection: DuckDB SQL documentation
+ */
+export async function vectorizeDocsScript(): Promise<ScriptResult> {
+  const startTime = Date.now();
+  const timestamp = new Date().toISOString();
+
+  try {
+    // Pass 1: Vectorize Irmin documentation
+    const irminScript = new VectorizeDocsScript({
+      collectionName: 'irmin-docs',
+      chunkSize: 700,
+      chunkOverlap: 200,
+      maxConcurrent: 3,
+      urls: IRMIN_SDK_URLS,
+      localPaths: LOCAL_DOCUMENT_PATHS,
+      replaceMode: true,
+    });
+
+    const irminResult = await irminScript.execute();
+
+    // Pass 2: Vectorize DuckDB SQL documentation
+    const duckdbScript = new VectorizeDocsScript({
+      collectionName: 'duckdb-sql-syntax-docs',
+      chunkSize: 700,
+      chunkOverlap: 200,
+      maxConcurrent: 3,
+      urls: DUCKDB_DOCS_URLS,
+      localPaths: [], // No local files for DuckDB docs
+      replaceMode: true,
+    });
+
+    const duckdbResult = await duckdbScript.execute();
+
+    const executionTime = Date.now() - startTime;
+
+    // Combine results
+    const bothSuccessful = irminResult.success && duckdbResult.success;
+    const totalDocuments =
+      ((irminResult.data?.documentsProcessed as number) || 0) +
+      ((duckdbResult.data?.documentsProcessed as number) || 0);
+    const totalChunks =
+      ((irminResult.data?.chunksCreated as number) || 0) +
+      ((duckdbResult.data?.chunksCreated as number) || 0);
+
+    return {
+      success: bothSuccessful,
+      message: bothSuccessful
+        ? `Successfully vectorized ${totalDocuments} documents into ${totalChunks} chunks across 2 collections (irmin-docs: ${irminResult.data?.chunksCreated || 0} chunks, duckdb-sql-syntax-docs: ${duckdbResult.data?.chunksCreated || 0} chunks)`
+        : `Vectorization completed with errors. Irmin docs: ${irminResult.success ? 'success' : 'failed'}, DuckDB docs: ${duckdbResult.success ? 'success' : 'failed'}`,
+      data: {
+        irminDocs: irminResult.data,
+        duckdbDocs: duckdbResult.data,
+        totalDocumentsProcessed: totalDocuments,
+        totalChunksCreated: totalChunks,
+        collectionsProcessed: 2,
+      },
+      executionTime,
+      timestamp,
+      error: bothSuccessful
+        ? undefined
+        : `Irmin: ${irminResult.error || 'OK'}, DuckDB: ${duckdbResult.error || 'OK'}`,
+    };
+  } catch (error) {
+    const executionTime = Date.now() - startTime;
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+
+    return {
+      success: false,
+      message: 'Failed to vectorize documents',
+      error: errorMessage,
+      executionTime,
+      timestamp,
+    };
+  }
+}
