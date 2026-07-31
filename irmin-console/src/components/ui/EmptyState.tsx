@@ -1,0 +1,140 @@
+'use client';
+
+import type { FC, ReactNode } from 'react';
+
+import { TbInbox } from 'react-icons/tb';
+
+import { Button } from '@/components/ui/button';
+
+import type { EmptyStateAction } from '@/types/internal/ListProps';
+
+interface EmptyStateProps {
+  /**
+   * The title of the empty state
+   */
+  title?: string;
+  /**
+   * The description/subtitle of the empty state
+   */
+  description?: string;
+  /**
+   * Custom icon to display (default is inbox icon)
+   */
+  icon?: ReactNode;
+  /**
+   * Action button configuration
+   */
+  action?: EmptyStateAction;
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
+  /**
+   * Size variant
+   */
+  size?: 'lg' | 'md' | 'sm';
+  /**
+   * Whether to hide the action button
+   */
+  hideActionButton?: boolean;
+}
+
+/**
+ * EmptyState component for displaying when lists or content areas are empty
+ *
+ * @remarks
+ * This component provides a consistent, sleek empty state across the application.
+ * It includes an icon, title, description, and optional action button.
+ */
+export const EmptyState: FC<EmptyStateProps> = ({
+  title,
+  description,
+  icon,
+  action,
+  hideActionButton = false,
+  className = '',
+  size = 'md',
+}) => {
+  const sizeClasses: Record<string, string> = {
+    sm: 'py-4 px-2',
+    md: 'py-8 px-4',
+    lg: 'py-12 px-6',
+  };
+
+  const iconSizeClasses: Record<string, string> = {
+    sm: 'h-12 w-12',
+    md: 'h-16 w-16',
+    lg: 'h-20 w-20',
+  };
+
+  const titleSizeClasses: Record<string, string> = {
+    sm: 'text-lg',
+    md: 'text-xl',
+    lg: 'text-2xl',
+  };
+
+  const descriptionSizeClasses: Record<string, string> = {
+    sm: 'text-sm',
+    md: 'text-base',
+    lg: 'text-lg',
+  };
+
+  return (
+    <div
+      className={`
+        flex flex-col items-center justify-center text-center
+        ${sizeClasses[size]}
+        ${className}
+      `}
+    >
+      {/* Icon */}
+      <div
+        className={`
+          ${iconSizeClasses[size]}
+          mb-4 text-gray-400
+          dark:text-gray-500
+        `}
+      >
+        {icon || <TbInbox className='size-full' />}
+      </div>
+
+      {/* Title */}
+      {title && (
+        <h3
+          className={`
+            mb-2 font-semibold text-gray-700
+            dark:text-gray-300
+            ${titleSizeClasses[size]}
+          `}
+        >
+          {title}
+        </h3>
+      )}
+
+      {/* Description */}
+      {description && (
+        <p
+          className={`
+            mb-6 max-w-md text-gray-500
+            dark:text-gray-400
+            ${descriptionSizeClasses[size]}
+          `}
+        >
+          {description}
+        </p>
+      )}
+
+      {/* Action Button */}
+      {action && !hideActionButton && (
+        <Button
+          variant={action.variant || 'gradient'}
+          onClick={action.onClick}
+          href={action.href}
+          className='mt-2'
+        >
+          {action.label}
+        </Button>
+      )}
+    </div>
+  );
+};

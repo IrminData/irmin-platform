@@ -1,0 +1,17 @@
+{
+  "ignorePatterns": [
+    "node_modules/**",
+    ".next/**",
+    "dist/**",
+    "build/**",
+    "public/**",
+    "*.config.js",
+    "*.config.ts",
+    "*.config.mjs",
+    "playwright/**",
+    "tests/**",
+    "test-results/**",
+    "playwright-report/**",
+    "tmp/**"
+  ]
+}

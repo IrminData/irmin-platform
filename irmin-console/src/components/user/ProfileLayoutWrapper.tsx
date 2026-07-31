@@ -1,0 +1,73 @@
+'use client';
+
+import { useMemo } from 'react';
+
+import { usePathname } from 'next/navigation';
+
+import { TbKey, TbLogout, TbSettings } from 'react-icons/tb';
+
+import DisplayTitle from '@/components/ui/display-title';
+import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
+
+import { useIAM } from '@/context/IAMContext';
+import { useLocale } from '@/context/LocaleContext';
+
+/**
+ * Component to wrap the User's profile Settings pages in.
+ * Provides tabs and title.
+ *
+ * @param props - The component properties
+ * @param props.children - The children to render
+ */
+export default function ProfileLayoutWrapper({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const { dict, locale } = useLocale();
+  const { signOut } = useIAM();
+  const tabs = useMemo(
+    () => [
+      {
+        name: dict.workspace.general,
+        link: `/${locale}/profile`,
+        active: pathname === `/${locale}/profile`,
+        icon: <TbSettings size={14} />,
+      },
+      {
+        name: dict.tokens.apiTokens,
+        link: `/${locale}/profile/tokens`,
+        active: pathname === `/${locale}/profile/tokens`,
+        icon: <TbKey size={14} />,
+      },
+      {
+        name: dict.consoleNavigation.signOut,
+        icon: <TbLogout size={14} />,
+        onClick: signOut,
+      },
+    ],
+    [pathname, dict, locale, signOut]
+  );
+
+  return (
+    <>
+      <div className='relative container mx-auto max-w-7xl'>
+        <div
+          className={`
+            mx-auto my-8 flex w-full flex-col gap-2 px-2
+            md:px-4
+          `}
+        >
+          <DisplayTitle>{dict.consoleNavigation.myProfile}</DisplayTitle>
+        </div>
+        <TabsWithBackButton
+          backHref={`/${locale}/workspace`}
+          backTooltip={dict.consoleNavigation.irminConsole}
+          tabs={tabs}
+        />
+      </div>
+      <div>{children}</div>
+    </>
+  );
+}

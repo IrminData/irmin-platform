@@ -1,0 +1,134 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { workflowsQueryKey } from '@/lib/queryKeys';
+
+import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
+
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { Workflow, WorkflowableType } from '@/types/core/Workflow';
+import type { WorkflowRequest } from '@/types/internal/WorkflowInput';
+
+import { createMutationHandlers } from './mutations/utils';
+
+export function useWorkflows(type?: WorkflowableType) {
+  const { getCore } = useIrminCore();
+  const { dict } = useLocale();
+  const { irminAlert } = usePopup();
+  const { workspaceSlug } = useWorkspaceContext();
+  const queryClient = useQueryClient();
+
+  const workflowsQuery = useQuery<IrminAPIResponse<Workflow[]>, Error>({
+    queryKey: workflowsQueryKey(workspaceSlug, type),
+    queryFn: async () => {
+      const core = await getCore();
+      if (type) {
+        return await core.workflowService.fetchWorkflowsOfType({
+          workspace: workspaceSlug,
+          workflowType: type,
+        });
+      }
+      return await core.workflowService.fetchWorkflows({
+        workspace: workspaceSlug,
+      });
+    },
+  });
+
+  const createWorkflowMutation = useMutation<
+    IrminAPIResponse<Workflow>,
+    Error,
+    WorkflowRequest
+  >({
+    mutationFn: async (data) => {
+      const core = await getCore();
+      return await core.workflowService.createWorkflow({
+        workspace: workspaceSlug,
+        type: data.type,
+        name: data.name,
+        description: data.description,
+        documentation: data.documentation,
+        workflowable: data.workflowable,
+        schedule: data.schedule,
+        tags: data.tags,
+      });
+    },
+    ...createMutationHandlers<Workflow, WorkflowRequest>(
+      queryClient,
+      'workflows',
+      {
+        cacheConfig: {
+          primaryQueryKey: workflowsQueryKey(workspaceSlug),
+          relatedQueryKeys: type
+            ? [
+                workflowsQueryKey(workspaceSlug, type),
+                ['workflows', workspaceSlug],
+              ]
+            : [['workflows', workspaceSlug]],
+          getItemId: (workflow) => workflow.id,
+          createOptimisticItem: (input: WorkflowRequest, tempId: string) =>
+            ({
+              id: tempId,
+              name: input.name,
+              description: input.description,
+              documentation: input.documentation,
+              type: input.type,
+              status: 'pending',
+              owner: {
+                id: 'temp-owner',
+                first_name: 'Current',
+                last_name: 'User',
+                email: '',
+                phone: '',
+                company: '',
+                language: '',
+                profile_picture: '',
+              },
+              tags: [],
+              schedule: input.schedule,
+              workflowable: input.workflowable,
+            }) as Workflow,
+        },
+        onSuccess: (res, input) => {
+          irminAlert(
+            'success',
+            res.message ?? dict.workflow.create.workflowCreatedSuccessfully
+          );
+          // Update typed workflows cache if applicable
+          if (type && input.type === type && res.data) {
+            queryClient.setQueryData<IrminAPIResponse<Workflow[]>>(
+              workflowsQueryKey(workspaceSlug, type),
+              (old: IrminAPIResponse<Workflow[]> | undefined) => {
+                if (!old?.data) return old;
+                return {
+                  ...old,
+                  data: [...old.data, res.data!],
+                };
+              }
+            );
+          }
+          // Invalidate all workflow queries to ensure consistency
+          void queryClient.invalidateQueries({
+            queryKey: ['workflows', workspaceSlug],
+          });
+        },
+        onError: (error) => {
+          irminAlert(
+            'error',
+            error.message ?? dict.workflow.create.failedToCreateWorkflow
+          );
+        },
+      }
+    ),
+  });
+
+  return {
+    // Queries
+    workflowsQuery,
+    workflows: workflowsQuery.data?.data,
+
+    // Mutations
+    createWorkflowMutation,
+  };
+}

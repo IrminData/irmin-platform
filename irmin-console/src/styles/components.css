@@ -1,0 +1,331 @@
+/*
+ ============================================================================
+ Layer: components
+ Purpose: Reusable component classes and third-party overrides.
+ ============================================================================
+*/
+
+/* Apply the default border color to the border class */
+.border {
+  @apply border-border;
+}
+
+/* ============================================================================
+   DATA SHEET GRID
+   ============================================================================ */
+.data-sheet-grid {
+  font-size: 12px;
+  /* Create a stacking context so the body::after grain overlay doesn't
+     mix-blend through the grid's canvas. */
+  isolation: isolate;
+  --dsg-border-color: hsl(var(--border));
+  --dsg-selection-border-color: hsl(var(--accent));
+  --dsg-header-text-color: hsl(var(--muted-foreground));
+  --dsg-header-active-text-color: hsl(var(--foreground));
+  --dsg-cell-background-color: hsl(var(--card));
+  --dsg-cell-disabled-background-color: hsl(var(--muted));
+  --dsg-corner-indicator-width: 10px;
+}
+.data-sheet-grid .dsg-container {
+  height: 100% !important;
+  color: hsl(var(--foreground));
+}
+.data-sheet-grid .dsg-input {
+  font-size: 12px;
+  @apply px-1.5;
+}
+.data-sheet-grid .dsg-corner-indicator {
+  opacity: 0.5;
+}
+
+/* ============================================================================
+   CODEMIRROR EDITOR
+   ============================================================================
+   Previously `all: unset !important` was applied to `.cm-editor` — that
+   flattened every style CodeMirror itself ships, including the syntax
+   highlighter's token colors. Let CodeMirror's own theme render and
+   only override the focus ring (we draw our own focus via a parent
+   wrapper where relevant).
+*/
+.cm-editor.cm-focused {
+  outline: none;
+}
+.codemirror-editor {
+  /* Isolate from body::after grain blend — keeps syntax-highlight colors
+     true rather than multiplied through the paper texture. */
+  isolation: isolate;
+}
+.codemirror-editor .cm-theme {
+  height: 100%;
+}
+
+/* ============================================================================
+   MDX EDITOR & VIEWER
+   ============================================================================ */
+
+/* --- Base Styles --- */
+.mdxeditor,
+.mdx-viewer {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: hsl(var(--foreground));
+}
+
+/* --- MDX Editor Specific --- */
+.mdxeditor .mdxeditor-toolbar {
+  background-color: hsl(var(--card));
+  border-radius: 0;
+}
+.dark .mdxeditor .mdxeditor-toolbar {
+  color: hsl(var(--foreground));
+}
+.dark .mdxeditor .mdxeditor-toolbar button {
+  color: hsl(var(--foreground));
+}
+.dark .mdxeditor .mdxeditor-toolbar button:hover {
+  background-color: hsl(var(--muted));
+}
+.dark .mdxeditor .mdxeditor-toolbar svg {
+  filter: invert(0.9);
+}
+.dark .mdxeditor .mdxeditor-toolbar select {
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--card));
+}
+.dark .mdxeditor [role='tooltip'],
+.dark .mdxeditor .mdxeditor-toolbar [data-state] {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+.dark .mdxeditor .mdxeditor-select-content,
+.dark .mdxeditor [role='listbox'],
+.dark .mdxeditor [role='menu'],
+.dark .mdxeditor [data-radix-popper-content-wrapper] div {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+.dark .mdxeditor [role='option']:hover,
+.dark .mdxeditor [role='menuitem']:hover {
+  background-color: hsl(var(--muted)) !important;
+}
+
+/* --- MDX Viewer Specific --- */
+.mdx-viewer {
+  background-color: transparent !important;
+}
+.mdx-viewer .prose {
+  @apply max-w-none;
+}
+
+/* --- Typography Styles --- */
+.mdxeditor h1,
+.mdxeditor h2,
+.mdxeditor h3,
+.mdxeditor h4,
+.mdxeditor h5,
+.mdxeditor h6,
+.mdx-viewer h1,
+.mdx-viewer h2,
+.mdx-viewer h3,
+.mdx-viewer h4,
+.mdx-viewer h5,
+.mdx-viewer h6 {
+  color: hsl(var(--foreground));
+  margin-bottom: 0.5em;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  @media screen and (max-width: 768px) {
+    margin-bottom: 0.25em;
+    line-height: 1;
+  }
+}
+
+.mdx-viewer .prose h1,
+.mdx-viewer .prose h2,
+.mdx-viewer .prose h3,
+.mdx-viewer .prose h4,
+.mdx-viewer .prose h5,
+.mdx-viewer .prose h6 {
+  @apply text-foreground font-semibold;
+}
+
+.mdxeditor h1,
+.mdx-viewer h1 {
+  font-size: 2em;
+  @media screen and (max-width: 768px) {
+    font-size: 1.5em;
+  }
+}
+
+.mdxeditor h2,
+.mdx-viewer h2 {
+  font-size: 1.75em;
+  @media screen and (max-width: 768px) {
+    font-size: 1.25em;
+  }
+}
+
+.mdxeditor h3,
+.mdx-viewer h3 {
+  font-size: 1.5em;
+  @media screen and (max-width: 768px) {
+    font-size: 1em;
+  }
+}
+
+.mdxeditor h4,
+.mdx-viewer h4 {
+  font-size: 1.25em;
+  @media screen and (max-width: 768px) {
+    font-size: 0.9em;
+  }
+}
+
+.mdxeditor h5,
+.mdx-viewer h5 {
+  font-size: 1em;
+  @media screen and (max-width: 768px) {
+    font-size: 0.8em;
+  }
+}
+
+.mdxeditor h6,
+.mdx-viewer h6 {
+  font-size: 0.875em;
+  @media screen and (max-width: 768px) {
+    font-size: 0.7em;
+  }
+}
+
+/* --- Paragraph Styles --- */
+.mdxeditor p,
+.mdx-viewer p {
+  font-size: 1em;
+  margin-bottom: 1em;
+  @media screen and (max-width: 768px) {
+    font-size: 0.8em;
+    margin-bottom: 0.5em;
+  }
+}
+
+.mdx-viewer .prose p {
+  @apply text-muted-foreground leading-relaxed;
+}
+
+/* --- Link Styles --- */
+.mdxeditor a,
+.mdx-viewer a {
+  color: hsl(var(--accent));
+  text-decoration: none;
+}
+.mdxeditor a:hover,
+.mdx-viewer a:hover {
+  text-decoration: underline;
+}
+
+.mdx-viewer .prose a {
+  @apply text-accent underline underline-offset-4 decoration-1 hover:decoration-2 transition-[text-decoration-thickness];
+}
+
+/* --- List Styles --- */
+.mdxeditor ul,
+.mdxeditor ol,
+.mdx-viewer ul,
+.mdx-viewer ol {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+.mdxeditor ul,
+.mdx-viewer ul {
+  list-style-type: disc;
+}
+
+.mdxeditor ol,
+.mdx-viewer ol {
+  list-style-type: decimal;
+}
+
+.mdx-viewer .prose ul,
+.mdx-viewer .prose ol {
+  @apply text-muted-foreground space-y-1;
+}
+
+/* --- Blockquote Styles --- */
+.mdxeditor blockquote,
+.mdx-viewer blockquote {
+  border-left: 1px solid hsl(var(--border));
+  padding-left: 1em;
+  color: hsl(var(--muted-foreground));
+  margin: 1em 0;
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.mdx-viewer .prose blockquote {
+  @apply border-l border-border pl-4 py-1 italic text-muted-foreground font-display;
+}
+
+/* --- Code Styles --- */
+.mdxeditor code,
+.mdx-viewer code {
+  font-family: var(--font-mono);
+  background-color: hsl(var(--muted));
+  padding: 0.2em 0.4em;
+  border-radius: 2px;
+}
+
+.mdx-viewer .prose code {
+  @apply bg-muted/50 text-muted-foreground px-1.5 py-0.5 rounded-[2px] text-xs font-mono;
+}
+
+.mdxeditor pre,
+.mdx-viewer pre {
+  font-family: var(--font-mono);
+  background-color: hsl(var(--muted));
+  padding: 1em;
+  overflow-x: auto;
+  border-radius: 2px;
+}
+
+.mdx-viewer .prose pre {
+  @apply bg-muted/40 border border-border/60 rounded-[2px] p-4 overflow-x-auto;
+}
+
+/* --- Table Styles --- */
+.mdxeditor table,
+.mdx-viewer table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+}
+
+.mdxeditor th,
+.mdxeditor td,
+.mdx-viewer th,
+.mdx-viewer td {
+  border: 1px solid hsl(var(--border));
+  padding: 0.5em;
+  text-align: left;
+}
+
+.mdxeditor th,
+.mdx-viewer th {
+  background-color: hsl(var(--muted));
+}
+
+/* ============================================================================
+   REACT DOC VIEWER
+   ============================================================================ */
+#react-doc-viewer {
+  background: transparent;
+}
+#react-doc-viewer * {
+  background: transparent;
+}
+#react-doc-viewer #header-bar {
+  display: none;
+}

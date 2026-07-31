@@ -1,0 +1,333 @@
+import type IrminCore from '@/lib/core';
+
+import type { Branch } from '@/types/core/Branch';
+import type { Commit } from '@/types/core/Commit';
+import type { Diff } from '@/types/core/Diff';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+
+/**
+ * Interface for creating a branch
+ */
+export interface CreateBranchRequest {
+  name: string;
+  from: string;
+  is_immutable?: boolean;
+}
+
+/**
+ * Interface for updating a branch
+ */
+interface UpdateBranchRequest {
+  name?: string;
+  is_immutable?: boolean;
+}
+
+/**
+ * Interface for resetting a branch to a specific commit
+ */
+interface ResetBranchRequest {
+  commit_ref: string;
+  force?: boolean;
+}
+
+/**
+ * Interface for reverting a commit on a branch
+ */
+export interface RevertCommitRequest {
+  commit_ref: string;
+  parent_number?: number;
+}
+
+/**
+ * Repository Branch API service
+ *
+ * Responsible for all repository branch related API calls
+ */
+class RepositoryBranchService {
+  private irminCore: IrminCore;
+
+  constructor(irminCore: IrminCore) {
+    this.irminCore = irminCore;
+    // Bind methods
+    this.fetchBranches = this.fetchBranches.bind(this);
+    this.fetchBranch = this.fetchBranch.bind(this);
+    this.createBranch = this.createBranch.bind(this);
+    this.deleteBranch = this.deleteBranch.bind(this);
+    this.updateBranch = this.updateBranch.bind(this);
+    this.getUncommittedChanges = this.getUncommittedChanges.bind(this);
+    this.resetBranch = this.resetBranch.bind(this);
+    this.revertCommit = this.revertCommit.bind(this);
+  }
+
+  /**
+   * Fetch all available branches for a repository
+   *
+   * @param props
+   * @param props.workspace - The workspace to fetch the branches from
+   * @param props.repository - The repository slug to fetch the branches from
+   */
+  async fetchBranches({
+    workspace,
+    repository,
+  }: {
+    workspace: string;
+    repository: string;
+  }): Promise<IrminAPIResponse<Branch[]>> {
+    try {
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches`,
+        {
+          method: 'GET',
+        }
+      )) as IrminAPIResponse<Branch[]>;
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch Branches error');
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch a branch by name in a repository
+   *
+   * @param props
+   * @param props.workspace - The workspace to fetch the branch from
+   * @param props.repository - The repository slug to fetch the branch from
+   * @param props.branch - The branch name to fetch
+   */
+  async fetchBranch({
+    workspace,
+    repository,
+    branch,
+  }: {
+    workspace: string;
+    repository: string;
+    branch: string;
+  }): Promise<IrminAPIResponse<Branch>> {
+    try {
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}`,
+        {
+          method: 'GET',
+        }
+      )) as IrminAPIResponse<Branch>;
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch Branch error');
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a branch
+   *
+   * @param props
+   * @param props.workspace - The workspace to delete the branch from
+   * @param props.repository - The repository slug to delete the branch from
+   * @param props.branch - The branch name to delete
+   */
+  async deleteBranch({
+    workspace,
+    repository,
+    branch,
+  }: {
+    workspace: string;
+    repository: string;
+    branch: string;
+  }) {
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}`,
+        {
+          method: 'DELETE',
+        }
+      );
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Delete branch error');
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new branch
+   *
+   * @param props
+   * @param props.workspace - The workspace to create the branch in
+   * @param props.repository - The repository slug to create the branch in
+   * @param props.name - The name of the new branch
+   * @param props.from - The branch to create the new branch from
+   * @param props.isImmutable - Whether the branch should be immutable
+   */
+  async createBranch({
+    workspace,
+    repository,
+    request,
+  }: {
+    workspace: string;
+    repository: string;
+    request: CreateBranchRequest;
+  }): Promise<IrminAPIResponse<Branch>> {
+    try {
+      const res = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(request),
+        }
+      );
+      return res as IrminAPIResponse<Branch>;
+    } catch (error) {
+      console.error((error as Error).message, 'Failed to create branch');
+      throw error;
+    }
+  }
+
+  /**
+   * Update a branch
+   *
+   * @param props
+   * @param props.workspace - The workspace to update the branch in
+   * @param props.branch - The branch to update
+   * @param props.repository - The repository slug to update the branch in
+   * @param props.name - The new name of the branch
+   * @param props.isImmutable - Whether the branch should be immutable
+   */
+  async updateBranch({
+    workspace,
+    repository,
+    branch,
+    request,
+  }: {
+    workspace: string;
+    repository: string;
+    branch: string;
+    request: UpdateBranchRequest;
+  }) {
+    try {
+      const res = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(request),
+        }
+      );
+      return res;
+    } catch (error) {
+      console.error((error as Error).message, 'Failed to update branch');
+      throw error;
+    }
+  }
+
+  /**
+   * Get uncommitted changes in a branch
+   *
+   * @param props
+   * @param props.workspace - The workspace to get the changes from
+   * @param props.repository - The repository slug to get the changes from
+   * @param props.branch - The branch name to get the changes from
+   */
+  async getUncommittedChanges({
+    workspace,
+    repository,
+    branch,
+  }: {
+    workspace: string;
+    repository: string;
+    branch: string;
+  }): Promise<IrminAPIResponse<Diff>> {
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}/changes`,
+        {
+          method: 'GET',
+        }
+      );
+      return response as IrminAPIResponse<Diff>;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Failed to get uncommitted changes'
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Reset a branch to a specific commit
+   *
+   * @param props
+   * @param props.workspace - The workspace containing the repository
+   * @param props.repository - The repository slug
+   * @param props.branch - The branch name to reset
+   * @param props.request - The reset request containing commit_ref and optional force flag
+   */
+  async resetBranch({
+    workspace,
+    repository,
+    branch,
+    request,
+  }: {
+    workspace: string;
+    repository: string;
+    branch: string;
+    request: ResetBranchRequest;
+  }): Promise<IrminAPIResponse<void>> {
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}/reset`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(request),
+        }
+      );
+      return response as IrminAPIResponse<void>;
+    } catch (error) {
+      console.error((error as Error).message, 'Failed to reset branch');
+      throw error;
+    }
+  }
+
+  /**
+   * Revert a commit on a branch by creating a new commit that undoes its changes
+   *
+   * @param props
+   * @param props.workspace - The workspace containing the repository
+   * @param props.repository - The repository slug
+   * @param props.branch - The branch name to revert the commit on
+   * @param props.request - The revert request containing commit_ref and optional parent_number
+   */
+  async revertCommit({
+    workspace,
+    repository,
+    branch,
+    request,
+  }: {
+    workspace: string;
+    repository: string;
+    branch: string;
+    request: RevertCommitRequest;
+  }): Promise<IrminAPIResponse<Commit>> {
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}/revert`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(request),
+        }
+      );
+      return response as IrminAPIResponse<Commit>;
+    } catch (error) {
+      console.error((error as Error).message, 'Failed to revert commit');
+      throw error;
+    }
+  }
+}
+
+export default RepositoryBranchService;

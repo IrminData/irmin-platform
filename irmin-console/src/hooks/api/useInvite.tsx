@@ -1,0 +1,127 @@
+import { useRouter } from 'next/navigation';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import {
+  inviteInboxQueryKey,
+  inviteQueryKey,
+  workspacesQueryKey,
+  workspaceSummariesQueryKey,
+} from '@/lib/queryKeys';
+
+import { useIrminCore } from '@/context/IrminCoreContext';
+import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
+
+import { isTempId } from '@/utils/generateTempId';
+
+import type { Invite } from '@/types/core/Invite';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+
+type UseInviteOptions = {
+  /** Skip navigation after decline (useful when already on the workspace list page) */
+  skipDeclineNavigation?: boolean;
+  /** Skip fetching the invite query (useful when only mutations are needed) */
+  skipQuery?: boolean;
+};
+
+export function useInvite(inviteID: string, options?: UseInviteOptions) {
+  const { getCore } = useIrminCore();
+  const { locale, dict } = useLocale();
+  const { irminAlert } = usePopup();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  // Query for fetching a single invite by ID
+  const inviteQuery = useQuery<IrminAPIResponse<Invite>, Error>({
+    queryKey: inviteQueryKey(inviteID),
+    queryFn: async () => {
+      const core = await getCore();
+      return await core.inviteService.fetchInvite({
+        inviteID,
+      });
+    },
+    initialData: () => {
+      const invites =
+        queryClient.getQueryData<IrminAPIResponse<Invite[]>>(
+          inviteInboxQueryKey
+        );
+      return invites?.data?.find((i: Invite) => i.id === inviteID)
+        ? {
+            data: invites.data.find((i: Invite) => i.id === inviteID),
+            success: true,
+            message: 'Cached data',
+          }
+        : undefined;
+    },
+    // Skip server fetch on optimistic-create temp ids — the list
+    // cache already holds the placeholder.
+    enabled: !!inviteID && !isTempId(inviteID) && !options?.skipQuery,
+  });
+
+  // Mutation to accept an invite
+  const acceptInviteMutation = useMutation({
+    mutationFn: async (inviteID: string) => {
+      if (!inviteID) throw new Error('Invite ID is required');
+      const core = await getCore();
+      return await core.inviteService.acceptInvite({ inviteID });
+    },
+    onSuccess: (res) => {
+      void queryClient.invalidateQueries({
+        queryKey: inviteInboxQueryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: workspaceSummariesQueryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: workspacesQueryKey,
+      });
+      irminAlert('success', res.message ?? 'Invite accepted successfully');
+      const slug = res.data?.workspace?.slug;
+      router.push(
+        slug ? `/${locale}/workspace/${slug}` : `/${locale}/workspace`
+      );
+    },
+    onError: (error) => {
+      irminAlert(
+        'error',
+        (error as Error)?.message ??
+          dict.common.errors.mutations.acceptInviteFailed
+      );
+    },
+  });
+
+  // Mutation to decline an invite
+  const declineInviteMutation = useMutation({
+    mutationFn: async (inviteID: string) => {
+      if (!inviteID) throw new Error('Invite ID is required');
+      const core = await getCore();
+      return await core.inviteService.declineInvite({ inviteID });
+    },
+    onSuccess: (res) => {
+      void queryClient.invalidateQueries({
+        queryKey: inviteInboxQueryKey,
+      });
+      irminAlert('success', res.message ?? 'Invite declined successfully');
+      if (!options?.skipDeclineNavigation) {
+        router.push(`/${locale}/workspace`);
+      }
+    },
+    onError: (error) => {
+      irminAlert(
+        'error',
+        (error as Error)?.message ??
+          dict.common.errors.mutations.declineInviteFailed
+      );
+    },
+  });
+
+  return {
+    // Queries
+    inviteQuery,
+
+    // Mutations
+    acceptInviteMutation,
+    declineInviteMutation,
+  };
+}

@@ -1,0 +1,60 @@
+{
+  "compilerOptions": {
+    "target": "es2015",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "src/**/*",
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": ["node_modules", ".next", ".yarn", "certificates", "public"],
+  "typedocOptions": {
+    "out": "public/frontend-docs",
+    "includeVersion": true,
+    "readme": "README.md",
+    "plugin": ["typedoc-plugin-missing-exports"],
+    "blockTags": [
+      "@todo",
+      "@param",
+      "@returns",
+      "@example",
+      "@deprecated",
+      "@remarks",
+      "@see"
+    ],
+    "exclude": ["**/node_modules/**/*"],
+    "highlightLanguages": [
+      "text",
+      "css",
+      "html",
+      "javascript",
+      "json",
+      "tsx",
+      "typescript",
+      "yaml",
+      "xml"
+    ]
+  }
+}

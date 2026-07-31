@@ -1,0 +1,117 @@
+/*
+ ============================================================================
+ Layer: base
+ Purpose: Raw element styling and grain overlay (Almanac paper aesthetic).
+ ============================================================================
+*/
+@layer base {
+  /* --- Global Styles & Typography --- */
+  body {
+    @apply bg-background text-foreground font-sans tracking-normal antialiased;
+    font-size: 14px; /* console density — tighter than website 17px */
+    line-height: 1.6;
+    position: relative;
+  }
+
+  code,
+  pre,
+  kbd,
+  samp {
+    @apply font-mono;
+    font-size: 0.875em;
+  }
+
+  blockquote {
+    @apply font-display italic;
+  }
+
+  /* Kill the "single word on the last line" orphan in body prose.
+     `balance` is reserved for headings (see h2/h3 below and DisplayTitle). */
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Balance multi-line headings across their column so the last line isn't
+     a lonely word. DisplayTitle (h1) already handles this; h2/h3 here. */
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  /*
+   * Grain overlay — fractal SVG noise fixed to the viewport. Mirrors the
+   * Almanac paper feel without adding any network request (inline data URL).
+   * Sits above backgrounds but below interactive chrome; never captures
+   * pointer events.
+   */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.06;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.45 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  .dark body::after {
+    opacity: 0.12;
+    mix-blend-mode: overlay;
+  }
+
+  /* --- Form Element Base Styles --- */
+  button,
+  a,
+  [role='button'] {
+    touch-action: manipulation;
+    /* Suppress the default gray flash on mobile tap. We paint our own
+       pressed state via active:scale on Button — this one is noise. */
+    -webkit-tap-highlight-color: transparent;
+  }
+  button {
+    @apply cursor-pointer;
+  }
+  select {
+    @apply border-border rounded-[2px] border outline-none focus-visible:ring-1 focus-visible:ring-ring appearance-none bg-no-repeat;
+
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAQCAYAAAAMJL+VAAAABGdBTUEAALGPC/xhBQAAAQtJREFUOBG1lEEOgjAQRalbGj2OG9caOACn4ALGtfEuHACiazceR1PWOH/CNA3aMiTaBDpt/7zPdBKy7M/DCL9pGkvxxVp7KsvyJftL5rZt1865M+Ucq6pyyF3hNcI7Cuu+728QYn/JQA5yKaempxuZmQngOwEaYx55nu+1lQh8GIatMGi+01NwBcEmhxBqK4nAPZJ78K0KKFAJmR3oPp8+Iwgob0Oa6+TLoeCvRx+mTUYf/FVBGTPRwDkfLxnaSrRwcH0FWhNOmrkWYbE2XEicqgSa1J0LQ+aPCuQgZiLnwewbGuz5MGoAhcIkCQcjaTBjMgtXGURMVHC1wcQEy0J+Zlj8bKAnY1/UzDe2dbAVqfXn6wAAAABJRU5ErkJggg==');
+    background-size: 0.7rem;
+    background-position: right 0.7rem center;
+  }
+
+  input[type='checkbox'],
+  input[type='radio'] {
+    @apply appearance-auto;
+  }
+
+  /*
+    Tailwind v4 changed the default border color to `currentColor`. Rather
+    than rewrite every element using `border` to also set `border-color`,
+    we keep a single shorthand fallback on `*` so `border` without an
+    explicit color picks up the theme token. Longhand overrides were
+    previously applied here too — they forced the color onto all four
+    sides individually and defeated utility classes like `border-transparent`,
+    which is why "everything had a border" in earlier builds. Keep the
+    shorthand only and let utilities win via cascade-layer order.
+  */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: hsl(var(--border));
+  }
+
+  /* --- Reduced Motion --- */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

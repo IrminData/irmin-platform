@@ -1,0 +1,10 @@
+onlyBuiltDependencies:
+  - '@clerk/shared'
+  - '@sentry/cli'
+  - '@tailwindcss/oxide'
+  - '@vercel/speed-insights'
+  - canvas
+  - core-js
+  - es5-ext
+  - sharp
+  - unrs-resolver

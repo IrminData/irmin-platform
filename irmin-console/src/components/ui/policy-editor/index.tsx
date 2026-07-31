@@ -1,0 +1,175 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+
+import { TbPlus } from 'react-icons/tb';
+
+import { Button } from '@/components/ui/button';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+
+import { useLocale } from '@/context/LocaleContext';
+
+import { useResourceAllowed } from '@/hooks/utils';
+
+import PolicyBulkActions from './PolicyBulkActions';
+import type { PolicyFilterState } from './PolicyFilters';
+import PolicyFilters from './PolicyFilters';
+import PolicyTable from './PolicyTable';
+import type { PolicyEditorProps } from './types';
+import { usePolicyForm } from './usePolicyForm';
+
+export default function PolicyEditor({
+  policies,
+  policiesLoading,
+  policiesError,
+  defaultResourceType,
+  defaultResourceId,
+  defaultPrincipalType,
+  defaultRoleId,
+  defaultUserId,
+  title,
+  description,
+  showResourceColumn = true,
+  showResourceIdColumn = true,
+  allowCreate = true,
+  allowEdit = true,
+  allowDelete = true,
+}: PolicyEditorProps) {
+  const { dict } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
+
+  const canCreate = useMemo(
+    () => isResourceAllowed('policy', 'create'),
+    [isResourceAllowed]
+  );
+
+  const canEdit = useMemo(
+    () => isResourceAllowed('policy', 'update'),
+    [isResourceAllowed]
+  );
+
+  const canDelete = useMemo(
+    () => isResourceAllowed('policy', 'delete'),
+    [isResourceAllowed]
+  );
+
+  const canView = useMemo(
+    () => isResourceAllowed('policy', 'read'),
+    [isResourceAllowed]
+  );
+
+  const { showCreateForm, showEditForm, isCreating } = usePolicyForm({
+    defaultResourceType,
+    defaultResourceId,
+    defaultPrincipalType,
+    defaultRoleId,
+    defaultUserId,
+  });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [filters, setFilters] = useState<PolicyFilterState>({
+    effect: 'all',
+    action: 'all',
+    principal: 'all',
+    resource: 'all',
+  });
+
+  const handleFiltersChange = (newFilters: PolicyFilterState) => {
+    setFilters(newFilters);
+    setSelectedIds(new Set());
+  };
+
+  const filteredPolicies = useMemo(() => {
+    return policies.filter((policy) => {
+      if (filters.effect !== 'all' && policy.effect !== filters.effect)
+        return false;
+      if (filters.action !== 'all' && policy.action !== filters.action)
+        return false;
+      if (filters.principal !== 'all' && policy.principal !== filters.principal)
+        return false;
+      if (filters.resource !== 'all' && policy.resource !== filters.resource)
+        return false;
+      return true;
+    });
+  }, [policies, filters]);
+
+  const showSelectable = allowDelete && canDelete;
+
+  if (!canView) {
+    return (
+      <div className='flex flex-col gap-4 p-4'>
+        <div className='flex items-center justify-center py-8'>
+          <div className='text-lg text-muted-foreground'>
+            {dict.common.insufficientPermissions}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className='flex flex-col gap-4 p-4'>
+      <div className='flex items-center justify-between'>
+        <div>
+          <h2 className='text-lg font-semibold'>
+            {title || dict.policy.title}
+          </h2>
+          <p className='text-sm text-muted-foreground'>
+            {description || dict.policy.description}
+          </p>
+        </div>
+        {allowCreate && canCreate && (
+          <Button onClick={showCreateForm} loading={isCreating}>
+            <TbPlus className='mr-2 size-4' />
+            {dict.policy.addPolicy}
+          </Button>
+        )}
+      </div>
+
+      <div className='w-full'>
+        {policiesLoading ? (
+          <div className='flex items-center justify-center py-8'>
+            <LoadingSkeleton className='h-80 w-full' />
+          </div>
+        ) : policiesError ? (
+          <div className='flex items-center justify-center py-8'>
+            <div className='text-lg text-destructive'>{dict.policy.error}</div>
+          </div>
+        ) : policies.length === 0 ? (
+          <div className='flex items-center justify-center py-8'>
+            <div className='text-lg text-muted-foreground'>
+              {dict.policy.noPolicies}
+            </div>
+          </div>
+        ) : (
+          <>
+            <PolicyFilters
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              showResourceFilter={showResourceColumn}
+            />
+
+            {selectedIds.size > 0 && (
+              <PolicyBulkActions
+                selectedIds={selectedIds}
+                onSelectionChange={setSelectedIds}
+              />
+            )}
+
+            <PolicyTable
+              policies={filteredPolicies}
+              showResourceColumn={showResourceColumn}
+              showResourceIdColumn={showResourceIdColumn}
+              allowEdit={allowEdit && canEdit}
+              allowDelete={allowDelete && canDelete}
+              onEditClick={showEditForm}
+              selectable={showSelectable}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
+            />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

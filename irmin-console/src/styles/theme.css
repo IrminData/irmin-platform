@@ -1,0 +1,219 @@
+/**
+ * TAILWIND THEME CONFIGURATION — ALMANAC PALETTE
+ *
+ * Cream paper + warm ink, single lime accent, hairline borders, 2px radii.
+ * Visual parity with irmin-website. See ./DESIGN.md for rules.
+ *
+ * Token conventions:
+ *  - Semantic shadcn tokens (`--background`, `--foreground`, …) are the
+ *    canonical source. Everything below derives from them.
+ *  - Legacy `irmin-*` palette names are kept as aliases only so existing
+ *    callers don't break. New code must use semantic tokens.
+ */
+
+/* Enable dark mode variant */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Base theme variables — LIGHT (cream paper / ink) */
+:root {
+  color-scheme: light;
+
+  --background: 42 30% 95%; /* warm paper / cream */
+  --foreground: 180 10% 10%; /* ink */
+
+  --primary: 180 10% 10%; /* ink — same as foreground */
+  --primary-foreground: 42 30% 95%;
+
+  --card: 42 28% 97%;
+  --card-foreground: 180 10% 10%;
+
+  --popover: 42 30% 95%;
+  --popover-foreground: 180 10% 10%;
+
+  --secondary: 42 18% 86%;
+  --secondary-foreground: 180 10% 10%;
+
+  /*
+   * `muted` is tuned one step darker than `background` so table headers,
+   * search fields, and skeletons read distinctly on cream. Earlier value
+   * (42 15% 90%) against background (42 30% 95%) was only 5% lightness
+   * apart and disappeared against the paper.
+   */
+  --muted: 42 18% 87%;
+  --muted-foreground: 180 5% 38%;
+
+  --accent: 72 80% 32%; /* lime — AA against cream */
+  --accent-foreground: 42 30% 95%;
+
+  --destructive: 0 70% 50%;
+  --destructive-foreground: 42 30% 95%;
+
+  --success: 145 45% 40%;
+  --warning: 38 85% 50%;
+
+  /*
+   * Warmer, more present border so hairline rules and form underlines
+   * are actually visible on cream paper.
+   */
+  --border: 42 12% 78%;
+  --input: 42 12% 76%;
+  --ring: 72 80% 32%;
+
+  /* Chart palette — tuned for cream canvas + lime anchor */
+  --chart-1: 72 70% 38%; /* lime-olive (accent anchor) */
+  --chart-2: 200 55% 40%; /* muted slate-teal */
+  --chart-3: 25 75% 48%; /* rust */
+  --chart-4: 280 35% 50%; /* plum */
+  --chart-5: 42 30% 40%; /* warm brown */
+
+  --radius: 0.125rem; /* 2px — minimal */
+}
+
+/* Dark mode theme variables — warm near-black + brighter lime */
+.dark {
+  color-scheme: dark;
+
+  --background: 170 8% 6%; /* warm near-black */
+  --foreground: 42 28% 92%; /* paper */
+
+  --primary: 42 28% 92%; /* paper — same as foreground */
+  --primary-foreground: 170 8% 6%;
+
+  --card: 170 8% 9%;
+  --card-foreground: 42 28% 92%;
+
+  --popover: 170 8% 6%;
+  --popover-foreground: 42 28% 92%;
+
+  --secondary: 170 6% 14%;
+  --secondary-foreground: 42 28% 92%;
+
+  --muted: 170 6% 12%;
+  --muted-foreground: 42 12% 62%;
+
+  --accent: 72 88% 62%; /* brighter lime for dark */
+  --accent-foreground: 170 8% 6%;
+
+  --destructive: 0 65% 55%;
+  --destructive-foreground: 42 28% 92%;
+
+  --success: 145 40% 55%;
+  --warning: 38 80% 60%;
+
+  --border: 170 6% 16%;
+  --input: 170 6% 18%;
+  --ring: 72 88% 62%;
+
+  --chart-1: 72 80% 58%;
+  --chart-2: 200 60% 58%;
+  --chart-3: 25 80% 62%;
+  --chart-4: 280 45% 68%;
+  --chart-5: 42 30% 62%;
+}
+
+/* Tailwind v4 Theme Configuration */
+@theme inline {
+  /*
+   * Fonts. Names match the three CSS vars injected by next/font in
+   * src/app/layout.tsx (--font-plex-sans / --font-plex-mono / --font-fraunces).
+   *
+   * Legacy aliases (`--font-main`, `--font-serif`) are kept so classes like
+   * `font-main` / `font-serif` still resolve without sweeping the codebase.
+   * In the Almanac system `font-serif` means display (Fraunces), not Lora.
+   */
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+  --font-main: var(--font-plex-sans); /* legacy alias */
+  --font-serif: var(--font-fraunces); /* legacy alias — now display face */
+
+  /* Shadcn UI theme variables */
+  --color-background: hsla(var(--background));
+  --color-foreground: hsla(var(--foreground));
+  --color-card: hsla(var(--card));
+  --color-card-foreground: hsla(var(--card-foreground));
+  --color-popover: hsla(var(--popover));
+  --color-popover-foreground: hsla(var(--popover-foreground));
+  --color-primary: hsla(var(--primary));
+  --color-primary-foreground: hsla(var(--primary-foreground));
+  --color-secondary: hsla(var(--secondary));
+  --color-secondary-foreground: hsla(var(--secondary-foreground));
+  --color-muted: hsla(var(--muted));
+  --color-muted-foreground: hsla(var(--muted-foreground));
+  --color-accent: hsla(var(--accent));
+  --color-accent-foreground: hsla(var(--accent-foreground));
+  --color-destructive: hsla(var(--destructive));
+  --color-destructive-foreground: hsla(var(--destructive-foreground));
+  --color-success: hsla(var(--success));
+  --color-warning: hsla(var(--warning));
+  --color-border: hsla(var(--border));
+  --color-input: hsla(var(--input));
+  --color-ring: hsla(var(--ring));
+  --color-chart-1: hsla(var(--chart-1));
+  --color-chart-2: hsla(var(--chart-2));
+  --color-chart-3: hsla(var(--chart-3));
+  --color-chart-4: hsla(var(--chart-4));
+  --color-chart-5: hsla(var(--chart-5));
+  --color-sidebar: hsla(var(--background));
+  --color-sidebar-foreground: hsla(var(--foreground));
+  --color-sidebar-primary: hsla(var(--primary));
+  --color-sidebar-primary-foreground: hsla(var(--primary-foreground));
+  --color-sidebar-accent: hsla(var(--accent));
+  --color-sidebar-accent-foreground: hsla(var(--accent-foreground));
+  --color-sidebar-border: hsla(var(--border));
+  --color-sidebar-ring: hsla(var(--ring));
+
+  /*
+   * Legacy `irmin-*` palette aliases — do NOT introduce new references.
+   * Each stop maps to a semantic Almanac token so old callers render in
+   * the new palette without per-file rewrites:
+   *   irmin-green-*  → lime accent scale
+   *   irmin-blue-*   → ink / paper neutrals
+   *   irmin-teal-*   → warm greyscale (muted)
+   *   irmin-black-*  → deep ink for dark surfaces
+   */
+
+  /* Lime / accent (was HSL 137 green) */
+  --color-irmin-green-100: hsla(72 50% 94%);
+  --color-irmin-green-200: hsla(72 55% 86%);
+  --color-irmin-green-300: hsla(72 60% 72%);
+  --color-irmin-green-400: hsla(72 70% 52%);
+  --color-irmin-green-500: hsla(72 80% 38%);
+  --color-irmin-green-600: hsla(72 80% 32%);
+  --color-irmin-green-700: hsla(72 80% 26%);
+  --color-irmin-green-800: hsla(72 70% 20%);
+  --color-irmin-green-900: hsla(72 60% 14%);
+
+  /* Ink / paper (was HSL 197 deep blue) */
+  --color-irmin-blue-100: hsla(42 20% 92%);
+  --color-irmin-blue-200: hsla(42 15% 84%);
+  --color-irmin-blue-300: hsla(180 5% 62%);
+  --color-irmin-blue-400: hsla(180 5% 42%);
+  --color-irmin-blue-500: hsla(180 10% 18%);
+  --color-irmin-blue-600: hsla(180 10% 14%);
+  --color-irmin-blue-700: hsla(180 10% 10%);
+  --color-irmin-blue-800: hsla(180 10% 8%);
+  --color-irmin-blue-900: hsla(170 8% 6%);
+
+  /* Warm greyscale (was HSL 197 neutrals) */
+  --color-irmin-teal-100: hsla(42 15% 92%);
+  --color-irmin-teal-200: hsla(42 10% 84%);
+  --color-irmin-teal-300: hsla(180 5% 72%);
+  --color-irmin-teal-400: hsla(180 5% 58%);
+  --color-irmin-teal-500: hsla(180 5% 44%);
+  --color-irmin-teal-600: hsla(180 5% 32%);
+  --color-irmin-teal-700: hsla(180 6% 22%);
+  --color-irmin-teal-800: hsla(170 6% 14%);
+  --color-irmin-teal-900: hsla(170 8% 8%);
+
+  /* Deep ink for dark surfaces (was near-black saturated blue) */
+  --color-irmin-black-100: hsla(42 28% 92%);
+  --color-irmin-black-200: hsla(42 15% 72%);
+  --color-irmin-black-300: hsla(180 5% 50%);
+  --color-irmin-black-400: hsla(180 6% 22%);
+  --color-irmin-black-500: hsla(170 8% 9%);
+  --color-irmin-black-600: hsla(170 8% 7%);
+  --color-irmin-black-700: hsla(170 8% 5%);
+  --color-irmin-black-800: hsla(170 8% 4%);
+  --color-irmin-black-900: hsla(170 8% 3%);
+}

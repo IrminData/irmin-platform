@@ -1,0 +1,197 @@
+import { useCallback, useRef, useState } from 'react';
+
+import type { UseQueryOptions } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { logEventsQueryKey } from '@/lib/queryKeys';
+
+import { useIrminCore } from '@/context/IrminCoreContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
+
+import type {
+  IrminAPIPaginationMetadata,
+  IrminAPIResponse,
+} from '@/types/core/IrminAPIResponse';
+import type { LogEvent } from '@/types/core/Log';
+
+/**
+ * Types of entities for which logs can be fetched
+ */
+export type LogsForType =
+  | 'connection'
+  | 'policy'
+  | 'repository_object'
+  | 'repository'
+  | 'stored_query'
+  | 'user'
+  | 'workflow'
+  | 'workspace';
+
+interface LogEventsResponse extends IrminAPIResponse<LogEvent[]> {
+  pagination?: IrminAPIPaginationMetadata;
+}
+
+/**
+ * Fetch paginated log events for a workspace, workflow, repository, connection, or user.
+ *
+ * @param options - hook configuration
+ * @returns pagination state and control functions
+ */
+export const useLogEvents = (
+  options: {
+    /** number of events per page */
+    perPage?: number;
+    /** type of logs to fetch */
+    logsForType?: LogsForType;
+    /** ID or slug of the target entity */
+    logsFor?: string;
+  } = {}
+) => {
+  const { perPage = 100, logsForType = 'workspace', logsFor = '' } = options;
+
+  const { getCore } = useIrminCore();
+  const { workspaceSlug } = useWorkspaceContext();
+  const queryClient = useQueryClient();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const fetchLogs = useCallback(
+    async (search?: string) => {
+      const irminCore = await getCore();
+
+      switch (logsForType) {
+        case 'workspace':
+          return irminCore.logService.fetchLogEvents({
+            workspace: workspaceSlug,
+            search,
+            perPage,
+            page: currentPage,
+          });
+
+        case 'workflow':
+          return irminCore.logService.fetchLogEvents({
+            workspace: workspaceSlug,
+            workflow_id: logsFor,
+            search,
+            perPage,
+            page: currentPage,
+          });
+
+        case 'repository':
+          return irminCore.logService.fetchLogEvents({
+            workspace: workspaceSlug,
+            repository: logsFor,
+            search,
+            perPage,
+            page: currentPage,
+          });
+
+        case 'connection':
+          return irminCore.logService.fetchLogEvents({
+            workspace: workspaceSlug,
+            connection_id: logsFor,
+            perPage,
+            page: currentPage,
+          });
+
+        case 'user':
+          return irminCore.logService.fetchLogEvents({
+            workspace: workspaceSlug,
+            user_id: logsFor,
+            perPage,
+            page: currentPage,
+          });
+
+        case 'stored_query':
+          return irminCore.logService.fetchLogEvents({
+            workspace: workspaceSlug,
+            stored_query_id: logsFor,
+            perPage,
+            page: currentPage,
+          });
+
+        case 'policy':
+          return irminCore.logService.fetchLogEvents({
+            workspace: workspaceSlug,
+            policy_id: logsFor,
+            perPage,
+            page: currentPage,
+          });
+
+        case 'repository_object':
+          return irminCore.logService.fetchLogEvents({
+            workspace: workspaceSlug,
+            repository_object_id: logsFor,
+            perPage,
+            page: currentPage,
+          });
+
+        default:
+          throw new Error(`Unknown logsForType: ${logsForType}`);
+      }
+    },
+    [getCore, workspaceSlug, logsForType, logsFor, perPage, currentPage]
+  );
+
+  const queryOptions: UseQueryOptions<LogEventsResponse, Error> = {
+    queryKey: logEventsQueryKey(
+      workspaceSlug,
+      logsForType,
+      logsFor,
+      currentPage,
+      searchQuery
+    ),
+    queryFn: () => fetchLogs(searchQuery),
+  };
+
+  const logEventsQuery = useQuery<LogEventsResponse, Error>(queryOptions);
+
+  // All hooks must be called before any conditional logic
+  const goToPage = useCallback(
+    (page: number) => {
+      const totalPages = logEventsQuery.data?.pagination?.total_pages ?? 1;
+      if (page < 1 || page > totalPages) {
+        console.error('Invalid page number', page);
+        return;
+      }
+      setCurrentPage(page);
+    },
+    [logEventsQuery.data?.pagination?.total_pages]
+  );
+
+  const refresh = useCallback(() => {
+    void queryClient.invalidateQueries({
+      queryKey: ['log-events', workspaceSlug, logsForType, logsFor],
+    });
+  }, [queryClient, workspaceSlug, logsForType, logsFor]);
+
+  // Debounced search query effect
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleSearchQueryChange = useCallback((query: string) => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      const q = query.trim();
+      if (q.length === 0 || q.length >= 3) {
+        setCurrentPage(1);
+        setSearchQuery(q);
+      }
+    }, 400);
+  }, []);
+
+  return {
+    logEvents: logEventsQuery.data?.data ?? [],
+    loading: logEventsQuery.isLoading,
+    error: logEventsQuery.error,
+    totalItems: logEventsQuery.data?.pagination?.total ?? 0,
+    currentPage,
+    totalPages: logEventsQuery.data?.pagination?.total_pages ?? 1,
+    refresh,
+    goToPage,
+    setSearchQuery: handleSearchQueryChange,
+    refetch: logEventsQuery.refetch,
+  };
+};

@@ -1,0 +1,119 @@
+'use client';
+
+import { useMemo } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import NormalList from '@/components/ui/list/NormalList';
+
+import { useLocale } from '@/context/LocaleContext';
+
+import type { Branch } from '@/types/core/Branch';
+import type {
+  EmptyStateAction,
+  GridRow,
+  TableRowAction,
+} from '@/types/internal/ListProps';
+
+interface BranchListProps {
+  currentRef: string | undefined;
+  branches: Branch[];
+  handleViewBranch: (branch: string) => void;
+  handleDeleteBranch?: (branch: string) => void;
+  loading: boolean;
+  immutable: boolean;
+  emptyStateAction?: EmptyStateAction;
+}
+
+/**
+ * Component to display a list of branches
+ *
+ * @param props - The props
+ * @param props.currentRef - (optional) The current ref
+ * @param props.branches - The list of branches to display
+ * @param props.handleViewBranch - The function to handle the viewing of a branch
+ * @param props.handleDeleteBranch - The function to handle the deletion of a branch
+ * @param props.loading - Whether the branches are loading
+ * @param props.immutable - Whether the branches are immutable
+ */
+export default function BranchList({
+  currentRef,
+  branches,
+  handleViewBranch,
+  handleDeleteBranch,
+  loading,
+  immutable,
+  emptyStateAction,
+}: BranchListProps) {
+  const { dict } = useLocale();
+
+  const rows: GridRow[] = useMemo(
+    () =>
+      branches.map((branch) => ({
+        columns: [
+          <div
+            key={`branch-${branch.name}-name`}
+            className='inline-flex flex-row items-center gap-2'
+          >
+            <p className='text-base'>{branch.name}</p>
+            {branch.default && (
+              <Badge>{dict.repository.branches.primary}</Badge>
+            )}
+            {branch.name === currentRef && (
+              <Badge variant='secondary'>
+                {dict.repository.branches.currentBranch}
+              </Badge>
+            )}
+            {(branch.is_immutable || immutable) && (
+              <Badge variant='secondary'>{dict.list.immutable}</Badge>
+            )}
+          </div>,
+        ],
+        actions: (() => {
+          const addActions: TableRowAction[] = [
+            {
+              label: dict.common.view,
+              primary: true,
+              onClick: () => {
+                handleViewBranch(branch.name);
+              },
+            },
+          ];
+          if (
+            !branch.is_immutable &&
+            !branch.default &&
+            !immutable &&
+            handleDeleteBranch
+          ) {
+            addActions.push({
+              label: dict.common.delete,
+              primary: false,
+              onClick: () => {
+                handleDeleteBranch(branch.name);
+              },
+            });
+          }
+          return addActions;
+        })(),
+      })),
+    [
+      branches,
+      currentRef,
+      dict,
+      handleDeleteBranch,
+      handleViewBranch,
+      immutable,
+    ]
+  );
+
+  return (
+    <div id='branches-list'>
+      <NormalList
+        headers={[dict.common.name, dict.common.actions]}
+        hideHeaders={false}
+        loading={loading}
+        rows={rows}
+        emptyStateAction={emptyStateAction}
+      />
+    </div>
+  );
+}

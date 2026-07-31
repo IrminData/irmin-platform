@@ -1,0 +1,452 @@
+'use client';
+
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { TbArrowDown, TbChevronDown, TbChevronRight } from 'react-icons/tb';
+
+import { Button } from '@/components/ui/button';
+
+import { useLocale } from '@/context/LocaleContext';
+
+import type { PipelineStage } from '@/types/core/Workflow';
+
+import Stage from './Stage';
+
+// Extended type for internal use with stable React keys
+type PipelineStageWithId = PipelineStage & { _id: string };
+
+type PipelineStageEditorProps = {
+  initialStages?: PipelineStage[];
+  onSubmit?: (_stages: PipelineStage[]) => void;
+  readOnly?: boolean;
+  hideSaveButton?: boolean;
+  defaultCollapsed?: boolean;
+  currentWorkflowID?: string;
+};
+
+// Generate unique ID for stages
+let stageIdCounter = 0;
+const generateStageId = () => `stage_${Date.now()}_${++stageIdCounter}`;
+
+/**
+ * UI component for editing pipeline stages.
+ *
+ * @param props - The component props.
+ * @param props.initialStages - The initial stages to display.
+ * @param props.onSubmit - The function to call when the form is submitted.
+ * @param props.readOnly - Whether the form is read-only.
+ * @param props.hideSaveButton - Whether to hide the save button.
+ * @param props.currentWorkflowID - The current workflow ID (to prevent self-reference).
+ *
+ * @returns The rendered component.
+ */
+const EMPTY_STAGES: PipelineStage[] = [];
+
+function PipelineStageEditor({
+  initialStages = EMPTY_STAGES,
+  onSubmit,
+  readOnly = false,
+  hideSaveButton = false,
+  defaultCollapsed = false,
+  currentWorkflowID,
+}: PipelineStageEditorProps) {
+  const { dict } = useLocale();
+
+  // Ensure the first stage never has write: true and the last stage never has read: true
+  // Also add stable _id for React keys
+  const sanitizedInitialStages = useMemo(
+    () =>
+      initialStages.map((stage, index) => {
+        const isFirst = index === 0;
+        const isLast = index === initialStages.length - 1;
+        return {
+          ...stage,
+          _id: generateStageId(),
+          write: isFirst ? false : stage.write,
+          read: isLast ? false : stage.read,
+        };
+      }),
+    [initialStages]
+  );
+
+  const [stages, setStages] = useState<PipelineStageWithId[]>(
+    sanitizedInitialStages
+  );
+
+  // Track collapsed state of each stage by _id
+  // Initialize based on defaultCollapsed prop
+  const [collapsedStages, setCollapsedStages] = useState<Set<string>>(
+    () =>
+      new Set(defaultCollapsed ? sanitizedInitialStages.map((s) => s._id) : [])
+  );
+
+  const prevStagesRef = useRef<PipelineStageWithId[]>(stages);
+  const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync stages when initialStages changes
+  // We use a state tracking variable to update during render instead of useEffect
+  // to avoid cascading renders and satisfy linter rules.
+  const [prevSanitizedInitialStages, setPrevSanitizedInitialStages] = useState(
+    sanitizedInitialStages
+  );
+
+  if (sanitizedInitialStages !== prevSanitizedInitialStages) {
+    setPrevSanitizedInitialStages(sanitizedInitialStages);
+    setStages((prevStages) => {
+      // If we have the same number of stages, preserve the IDs to prevent
+      // unmounting components and losing focus/scroll position.
+      if (prevStages.length === sanitizedInitialStages.length) {
+        return sanitizedInitialStages.map((stage, index) => ({
+          ...stage,
+          _id: prevStages[index]._id,
+        }));
+      }
+      return sanitizedInitialStages;
+    });
+  }
+
+  // Fold/unfold all handlers
+  const foldAll = useCallback(() => {
+    setCollapsedStages(new Set(stages.map((s) => s._id)));
+  }, [stages]);
+
+  const unfoldAll = useCallback(() => {
+    setCollapsedStages(new Set());
+  }, []);
+
+  // Helper function to strip internal UI properties (_id, inputHasData) from stages before submitting
+  const stripStageIds = useCallback(
+    (
+      stagesWithIds: Array<PipelineStageWithId & { inputHasData?: boolean }>
+    ): PipelineStage[] => {
+      return stagesWithIds.map(
+        ({ _id, inputHasData: _inputHasData, ...stage }) => stage
+      );
+    },
+    []
+  );
+
+  // Watch for changes and trigger onSubmit if the save button is disabled
+  useEffect(() => {
+    if (!hideSaveButton || !onSubmit) return;
+
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+
+    updateTimeoutRef.current = setTimeout(() => {
+      const hasChanged =
+        JSON.stringify(prevStagesRef.current) !== JSON.stringify(stages);
+      if (hasChanged) {
+        prevStagesRef.current = stages;
+        onSubmit(stripStageIds(stages));
+      }
+    }, 300);
+
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, [stages, onSubmit, hideSaveButton, stripStageIds]);
+
+  const addStage = useCallback(() => {
+    setStages((prevStages) => {
+      const newStage: PipelineStageWithId = {
+        _id: generateStageId(),
+        description: '',
+        write: prevStages.length > 0,
+        read: false,
+        type: 'action',
+        executable_type: 'script',
+        script_id: undefined,
+        query_id: undefined,
+        order_sequence: prevStages.length,
+      };
+      const newStages = [...prevStages, newStage];
+      // If there was a previous last stage, enable its read flag
+      if (prevStages.length > 0) {
+        newStages[prevStages.length - 1] = {
+          ...newStages[prevStages.length - 1],
+          read: true,
+        };
+      }
+      // Don't collapse the newly added stage
+      setCollapsedStages((prev) => {
+        const next = new Set(prev);
+        next.delete(newStage._id);
+        return next;
+      });
+      return newStages;
+    });
+  }, []);
+
+  const removeStage = useCallback((index: number) => {
+    setStages((prevStages) => {
+      const removedStageId = prevStages[index]._id;
+      const newStages = prevStages
+        .filter((_, i) => i !== index)
+        .map((stage, i) => ({
+          ...stage,
+          order_sequence: i,
+        }));
+      // Ensure the first stage never has write: true
+      if (newStages.length > 0) {
+        newStages[0] = {
+          ...newStages[0],
+          write: false,
+        };
+      }
+      // Ensure the last stage never has read: true
+      if (newStages.length > 0) {
+        newStages[newStages.length - 1] = {
+          ...newStages[newStages.length - 1],
+          read: false,
+        };
+      }
+      // Clean up the removed stage's ID from collapsedStages
+      setCollapsedStages((prev) => {
+        const next = new Set(prev);
+        next.delete(removedStageId);
+        return next;
+      });
+      return newStages;
+    });
+  }, []);
+
+  const moveStage = useCallback((fromIndex: number, toIndex: number) => {
+    setStages((prevStages) => {
+      const newStages = [...prevStages];
+      const [movedStage] = newStages.splice(fromIndex, 1);
+      newStages.splice(toIndex, 0, movedStage);
+      // Re-index all order_sequence values and create new objects
+      const reindexedStages = newStages.map((stage, i) => ({
+        ...stage,
+        order_sequence: i,
+      }));
+      // Ensure the first stage never has write: true
+      if (reindexedStages.length > 0) {
+        reindexedStages[0] = {
+          ...reindexedStages[0],
+          write: false,
+        };
+      }
+      // Ensure the last stage never has read: true
+      if (reindexedStages.length > 0) {
+        reindexedStages[reindexedStages.length - 1] = {
+          ...reindexedStages[reindexedStages.length - 1],
+          read: false,
+        };
+      }
+      return reindexedStages;
+    });
+  }, []);
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (onSubmit) {
+        onSubmit(stripStageIds(stages));
+      }
+    },
+    [stages, onSubmit, stripStageIds]
+  );
+
+  // Calculate flow state
+  const stagesWithFlow = useMemo(() => {
+    return stages.reduce<{
+      items: Array<PipelineStageWithId & { inputHasData: boolean }>;
+      hasData: boolean;
+    }>(
+      (acc, stage) => {
+        const inputHasData = acc.hasData;
+        const nextHasData = acc.hasData || stage.read;
+        acc.items.push({ ...stage, inputHasData });
+        return { items: acc.items, hasData: nextHasData };
+      },
+      { items: [], hasData: false }
+    ).items;
+  }, [stages]);
+
+  // Check if all stages are collapsed
+  const allCollapsed = stages.every((stage) => collapsedStages.has(stage._id));
+
+  return (
+    <form onSubmit={handleSubmit} className='relative'>
+      {/* Fold/Unfold All Controls */}
+      {stages.length > 0 && (
+        <div className='mb-2 flex items-center justify-end gap-2'>
+          {allCollapsed ? (
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              onClick={unfoldAll}
+              icon={<TbChevronRight className='size-4' />}
+            >
+              {dict.workflow.pipeline.unfoldAll}
+            </Button>
+          ) : (
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              onClick={foldAll}
+              icon={<TbChevronDown className='size-4' />}
+            >
+              {dict.workflow.pipeline.foldAll}
+            </Button>
+          )}
+        </div>
+      )}
+      <div className='relative'>
+        {stagesWithFlow.length === 0 && (
+          <p
+            className={`
+              py-8 text-center text-xl text-foreground/50
+              lg:text-3xl
+            `}
+          >
+            {dict.workflow.pipeline.noStages}
+          </p>
+        )}
+        {stagesWithFlow.map((stage, index) => {
+          const isLast = index === stagesWithFlow.length - 1;
+          const nextStage = !isLast ? stagesWithFlow[index + 1] : null;
+
+          return (
+            <div
+              key={stage._id}
+              className={`
+                relative z-10 mb-6 flex gap-4
+                last:mb-0
+              `}
+            >
+              {/* Stage Marker / Timeline Node */}
+              <div className='relative flex flex-col items-center pt-6'>
+                {/* Line going DOWN from this marker to bottom of row */}
+                {!isLast && (
+                  <div
+                    className={`
+                      absolute top-6 bottom-0 left-4.5 w-0.5 -translate-x-1/2
+                      ${nextStage?.inputHasData ? 'bg-primary' : 'bg-border'}
+                    `}
+                  />
+                )}
+
+                {/* Connector line segment from previous stage */}
+                {index > 0 && (
+                  <div
+                    className={`
+                      absolute -top-6 left-4.5 h-12 w-0.5 -translate-x-1/2
+                      ${stage.inputHasData ? 'bg-primary' : 'bg-border'}
+                    `}
+                  />
+                )}
+
+                {/* Arrow Indicator on the line */}
+                {index > 0 && (
+                  <div
+                    className={`
+                      absolute -top-3 left-4.5 z-20 -translate-1/2 rounded-full
+                      bg-background p-0.5
+                      ${stage.inputHasData ? 'text-primary' : 'text-border'}
+                    `}
+                  >
+                    <TbArrowDown className='size-4' />
+                  </div>
+                )}
+
+                {/* The Node Circle */}
+                <div
+                  className={`
+                    relative z-20 flex size-9 shrink-0 items-center
+                    justify-center rounded-full border-4 border-background
+                    font-mono text-sm font-medium transition-colors
+                    ${
+                      stage.write
+                        ? `
+                          bg-primary text-primary-foreground ring-2 ring-primary
+                          ring-offset-2
+                        `
+                        : 'bg-muted text-foreground'
+                    }
+                    ${stage.read ? 'border-primary' : ''}
+                  `}
+                >
+                  {index + 1}
+                </div>
+
+                {/* Output flow line (only visual start here) */}
+                {/* The actual line is the background spine or next stage's connector */}
+              </div>
+
+              {/* The Card */}
+              <div className='min-w-0 flex-1'>
+                <Stage
+                  index={index}
+                  updateStage={(updatedStage) => {
+                    setStages((prevStages) => {
+                      const newStages = [...prevStages];
+                      newStages[index] = { ...updatedStage, _id: stage._id };
+                      return newStages;
+                    });
+                  }}
+                  moveStageUp={
+                    index > 0 ? () => moveStage(index, index - 1) : undefined
+                  }
+                  moveStageDown={
+                    index < stages.length - 1
+                      ? () => moveStage(index, index + 1)
+                      : undefined
+                  }
+                  removeStage={() => removeStage(index)}
+                  initialStage={stage}
+                  readOnly={readOnly}
+                  defaultCollapsed={collapsedStages.has(stage._id)}
+                  isLastStage={index === stages.length - 1}
+                  currentWorkflowID={currentWorkflowID}
+                  onToggleCollapse={(isCollapsed) => {
+                    setCollapsedStages((prev) => {
+                      const next = new Set(prev);
+                      if (isCollapsed) {
+                        next.add(stage._id);
+                      } else {
+                        next.delete(stage._id);
+                      }
+                      return next;
+                    });
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {!readOnly && (
+        <Button
+          type='button'
+          onClick={addStage}
+          className='mt-8 w-full'
+          variant={'secondary'}
+        >
+          {dict.workflow.pipeline.addStage}
+        </Button>
+      )}
+
+      {!readOnly && !hideSaveButton && (
+        <Button
+          type='submit'
+          className='mt-4 w-full'
+          size={'lg'}
+          variant={'accent'}
+        >
+          {dict.workflow.pipeline.savePipelineStages}
+        </Button>
+      )}
+    </form>
+  );
+}
+
+export default memo(PipelineStageEditor);

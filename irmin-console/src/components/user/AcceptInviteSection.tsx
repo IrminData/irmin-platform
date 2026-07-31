@@ -1,0 +1,266 @@
+'use client';
+
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+
+import { clientEnv } from '@/config/env.client';
+import { SignIn, SignUp, useAuth } from '@clerk/nextjs';
+import { dark } from '@clerk/themes';
+import { useTheme } from 'next-themes';
+
+import { TbCheck, TbX } from 'react-icons/tb';
+
+import { Logo } from '@/components/Logo/Logo';
+import { Button } from '@/components/ui/button';
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import { Separator } from '@/components/ui/separator';
+import ThemeSwitch from '@/components/ui/ThemeSwitch';
+
+import { useLocale } from '@/context/LocaleContext';
+
+import { useInvite } from '@/hooks/api';
+
+const websiteUrl = clientEnv.NEXT_PUBLIC_WEBSITE_URL;
+
+export default function AcceptInviteSection({
+  inviteID,
+}: {
+  inviteID: string;
+}) {
+  const { dict, locale } = useLocale();
+  const { isLoaded, isSignedIn } = useAuth();
+  const { resolvedTheme } = useTheme();
+  const searchParams = useSearchParams();
+  const { inviteQuery, acceptInviteMutation, declineInviteMutation } =
+    useInvite(inviteID, { skipQuery: !isSignedIn });
+
+  // Determine if user arrived via Clerk sign-up ticket
+  const clerkStatus = searchParams.get('__clerk_status');
+  const isSignUpFlow = clerkStatus === 'sign_up';
+
+  if (!isLoaded) {
+    return (
+      <div className='container mx-auto my-8 max-w-3xl'>
+        <div className='flex items-center justify-center'>
+          <LoadingSkeleton className='h-80 w-full' />
+        </div>
+      </div>
+    );
+  }
+
+  // User is not signed in — show Clerk sign-in/sign-up inline
+  // so the Clerk ticket params are preserved and consumed
+  if (!isSignedIn) {
+    const inviteUrl = `/${locale}/invite/${inviteID}`;
+    const clerkAppearance = {
+      baseTheme: resolvedTheme === 'dark' ? dark : undefined,
+      variables: { colorPrimary: '#a3c2ac' },
+    };
+
+    return (
+      <div
+        id='sign-in-section'
+        className={`
+          mx-auto flex h-full flex-col justify-center gap-8 px-4 py-16
+          md:mb-0 md:py-28
+        `}
+      >
+        <div className='flex w-full flex-row justify-between gap-4 px-4'>
+          <Link
+            href={websiteUrl}
+            className={`
+              transition-opacity
+              hover:opacity-80
+            `}
+            aria-label='Go to website'
+          >
+            <Logo
+              className='
+                text-[1.5rem]
+                md:text-[1.6rem]
+              '
+            />
+          </Link>
+          <div className='ml-auto' />
+          <LanguageSwitcher />
+          <ThemeSwitch />
+        </div>
+        {isSignUpFlow ? (
+          <SignUp
+            routing='hash'
+            signInUrl={inviteUrl}
+            forceRedirectUrl={inviteUrl}
+            appearance={clerkAppearance}
+          />
+        ) : (
+          <SignIn
+            routing='hash'
+            signUpUrl={inviteUrl}
+            forceRedirectUrl={inviteUrl}
+            appearance={clerkAppearance}
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (inviteQuery.isLoading) {
+    return (
+      <div className='container mx-auto my-8 max-w-3xl'>
+        <div className='flex items-center justify-center'>
+          <LoadingSkeleton className='h-80 w-full' />
+        </div>
+      </div>
+    );
+  }
+
+  if (inviteQuery.isError || !inviteQuery.data?.data) {
+    return (
+      <div className='container mx-auto my-8 max-w-3xl'>
+        <div
+          className={`
+            rounded-[2px] border border-destructive/40 bg-destructive/10 px-4
+            py-3 text-destructive
+          `}
+          role='alert'
+        >
+          <div className='flex gap-4'>
+            <TbX className='size-6 text-destructive' />
+            <div>
+              <p className='font-bold'>Invalid Invitation</p>
+              <p className='text-sm'>
+                The invitation link appears to be invalid or expired. Please
+                contact support for assistance.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const invite = inviteQuery.data.data;
+
+  return (
+    <div
+      id='sign-in-section'
+      className={`
+        mx-auto flex h-full flex-col justify-center gap-8 px-4 py-16
+        md:mb-0 md:py-28
+      `}
+    >
+      <div className='flex w-full flex-row justify-between gap-4 px-4'>
+        <Link
+          href={websiteUrl}
+          className={`
+            transition-opacity
+            hover:opacity-80
+          `}
+          aria-label='Go to website'
+        >
+          <Logo
+            className='
+              text-[1.5rem]
+              md:text-[1.6rem]
+            '
+          />
+        </Link>
+        <div className='ml-auto' />
+        <LanguageSwitcher />
+        <ThemeSwitch />
+      </div>
+      <div className='w-screen max-w-sm space-y-4 rounded-sm bg-background p-4'>
+        <div>
+          <h2 className='text-2xl font-semibold text-foreground'>
+            {dict.invite.workspaceInvitation}
+          </h2>
+          <p className='mt-1 text-sm text-muted-foreground'>
+            {dict.invite.workspaceInvitationDescription}
+          </p>
+        </div>
+
+        <Separator />
+
+        <div className='space-y-2 text-sm'>
+          <p className='flex justify-between'>
+            <span className='font-medium'>{dict.invite.invitedBy}:</span>{' '}
+            <span className='text-foreground'>{invite.invited_by.email}</span>
+          </p>
+          <p className='flex justify-between'>
+            <span className='font-medium'>{dict.invite.workspace}:</span>{' '}
+            <span className='text-foreground'>{invite.workspace.name}</span>
+          </p>
+          <p className='flex justify-between'>
+            <span className='font-medium'>{dict.invite.role}:</span>{' '}
+            <span className='text-foreground'>{invite.role.role}</span>
+          </p>
+        </div>
+
+        <Separator />
+
+        <div className='flex w-full flex-col gap-2'>
+          <Button
+            variant='outline'
+            onClick={() => declineInviteMutation.mutate(invite.id)}
+            disabled={
+              declineInviteMutation.isPending || acceptInviteMutation.isPending
+            }
+            className='w-full'
+          >
+            <TbX className='mr-2 size-4' />{' '}
+            {declineInviteMutation.isPending
+              ? dict.invite.declining
+              : dict.invite.declineInvitation}
+          </Button>
+          <Button
+            onClick={() => acceptInviteMutation.mutate(invite.id)}
+            disabled={
+              acceptInviteMutation.isPending || declineInviteMutation.isPending
+            }
+            className='w-full'
+          >
+            <TbCheck className='mr-2 size-4' />{' '}
+            {acceptInviteMutation.isPending
+              ? dict.invite.accepting
+              : dict.invite.acceptInvitation}
+          </Button>
+        </div>
+
+        {acceptInviteMutation.error && (
+          <div
+            className={`
+              rounded-[2px] border border-destructive/40 bg-destructive/10 px-4
+              py-3 text-destructive
+            `}
+          >
+            <div className='flex gap-4'>
+              <TbX className='size-6 text-destructive' />
+              <div>
+                <p className='font-bold'>{dict.common.ohNo}:</p>
+                <p className='text-sm'>{acceptInviteMutation.error.message}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {declineInviteMutation.error && (
+          <div
+            className={`
+              rounded-[2px] border border-destructive/40 bg-destructive/10 px-4
+              py-3 text-destructive
+            `}
+          >
+            <div className='flex gap-4'>
+              <TbX className='size-6 text-destructive' />
+              <div>
+                <p className='font-bold'>{dict.common.ohNo}:</p>
+                <p className='text-sm'>{declineInviteMutation.error.message}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

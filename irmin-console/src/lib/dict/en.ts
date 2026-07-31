@@ -1,0 +1,2538 @@
+/**
+ * English dictionary, key-value pairs for static strings in the application
+ */
+const en = {
+  // === CORE APPLICATION ===
+  common: {
+    // Basic actions
+    loading: 'Loading...',
+    cancel: 'Cancel',
+    confirm: 'Confirm',
+    save: 'Save',
+    delete: 'Delete',
+    edit: 'Edit',
+    view: 'View',
+    create: 'Create',
+    update: 'Update',
+    add: 'Add',
+    remove: 'Remove',
+    download: 'Download',
+    back: 'Back',
+    next: 'Next',
+    continue: 'Continue',
+    previous: 'Previous',
+    saveChanges: 'Save Changes',
+    close: 'Close',
+    refresh: 'Refresh',
+    tryAgain: 'Try again',
+    hideAdvancedOption: 'Hide advanced options',
+    showAdvancedOptions: 'Show advanced options',
+
+    // Error display
+    pageNotFoundDescription:
+      "The page you're looking for doesn't exist or has been moved.",
+    errorDetails: 'Error details',
+    reportIssue: 'Report issue',
+    showDetails: 'Show details',
+    hideDetails: 'Hide details',
+    copy: 'Copy',
+    copied: 'Copied',
+    visual: 'Visual',
+    stackTrace: 'Stack trace',
+
+    // Search and navigation
+    search: 'Search',
+    filters: 'Filters',
+    noResults: 'No results',
+    loadMore: 'Load more',
+    more: 'More',
+    selectAll: 'Select All',
+
+    // Status and feedback
+    success: 'Success',
+    successful: 'Successful',
+    error: 'Error',
+    failed: 'Failed',
+    info: 'Info',
+    optional: 'Optional',
+    all: 'All',
+
+    // Pagination and filtering
+    showing: 'Showing',
+    of: 'of',
+    page: 'Page',
+    clearFilters: 'Clear filters',
+
+    // Content
+    name: 'Name',
+    description: 'Description',
+    email: 'Email',
+    overview: 'Overview',
+    resources: 'Resources',
+    actions: 'Actions',
+    logs: 'Logs',
+    timestamp: 'Timestamp',
+    lastModified: 'Last modified',
+    size: 'Size',
+    color: 'Color',
+    owner: 'Owner',
+    tags: 'Tags',
+
+    // Forms
+    fieldRequired: 'This field is required',
+    fieldInvalid: 'This field is invalid',
+    resetForm: 'Clear form',
+    pleaseFixErrors: 'Please fix the errors above',
+
+    // Messages and alerts
+    insufficientPermissions: 'Insufficient permissions',
+    ohNo: 'Oh no!',
+    pageNotFound: 'Page not found',
+    somethingWentWrong: 'Something went wrong',
+    weEncounteredError: 'We encountered an error',
+    tryAgainOrContactSupport: 'Please try again or contact support',
+    goBackHome: 'Go back to the home page',
+    noOptionsMessage: 'No options',
+    downloadSuccess: 'Download successful',
+    dangerZone: 'Danger zone',
+
+    // Confirmations
+    areYouSureYouWantToDelete: 'Are you sure you want to delete this item?',
+    areYouSureYouWantToTransferOwnership:
+      'Are you sure you want to transfer the ownership of this item?',
+    saved: 'Saved successfully',
+    deleted: 'Deleted successfully',
+
+    createFromTemplate: 'Create from Template',
+    templates: {
+      title: 'Template Library',
+      description: 'Choose a template to get started quickly',
+      searchTemplates: 'Search templates...',
+      noTemplatesFound: 'No templates found',
+      noPlaceholders: 'No placeholders to fill in this template',
+      selectTemplate: 'Select a template',
+      fillPlaceholders: 'Fill Template Placeholders',
+      example: 'Example',
+      preview: 'Preview',
+      createNew: 'Create New',
+      replaceCurrent: 'Replace Current',
+    },
+
+    // Contact and support
+    contactUs: 'Contact Us',
+    readMore: 'Read more',
+
+    // Language and localization
+    selectLanguage: 'Select language',
+
+    // Error boundary fallback messages (shown when a component tree throws)
+    errors: {
+      repositoryTitle: "Couldn't load the repository",
+      repositoryDescription:
+        'Something went wrong while loading this repository. Try refreshing the page.',
+      branchesTitle: "Couldn't load branches",
+      branchesDescription:
+        'Something went wrong while loading branches. Try refreshing the page.',
+      documentationTitle: "Couldn't load documentation",
+      documentationDescription:
+        'Something went wrong while loading the documentation. Try refreshing the page.',
+      schemaTitle: "Couldn't load the schema",
+      schemaDescription:
+        'Something went wrong while loading the schema. Try refreshing the page.',
+      tagsTitle: "Couldn't load tags",
+      tagsDescription:
+        'Something went wrong while loading tags. Try refreshing the page.',
+      policiesTitle: "Couldn't load access policies",
+      policiesDescription:
+        'Something went wrong while loading access policies. Try refreshing the page.',
+      objectHistoryTitle: "Couldn't load object history",
+      objectHistoryDescription:
+        'Something went wrong while loading the object history. Try refreshing the page.',
+      uncommittedChangesTitle: "Couldn't load uncommitted changes",
+      uncommittedChangesDescription:
+        'Something went wrong while loading uncommitted changes. Try refreshing the page.',
+      repositorySettingsTitle: "Couldn't load repository settings",
+      repositorySettingsDescription:
+        'Something went wrong while loading the settings. Try refreshing the page.',
+      commitsTitle: "Couldn't load commits",
+      commitsDescription:
+        'Something went wrong while loading the commit history. Try refreshing the page.',
+      pendingWritesTitle: "Couldn't load pending writes",
+      pendingWritesDescription:
+        'Something went wrong while loading pending writes. Try refreshing the page.',
+      appSettingsTitle: "Couldn't load app settings",
+      appSettingsDescription:
+        'Something went wrong while loading the settings. Try refreshing the page.',
+      activityTitle: "Couldn't load activity",
+      activityDescription:
+        'Something went wrong while loading the activity log. Try refreshing the page.',
+      overviewTitle: "Couldn't load overview",
+      overviewDescription:
+        'Something went wrong while loading the overview. Try refreshing the page.',
+      consoleTitle: 'Something went wrong',
+      consoleDescription:
+        "The console couldn't load. Try refreshing the page — if it keeps happening, contact support.",
+      connectionTitle: "Couldn't display the connection",
+      connectionDescription:
+        'Something went wrong while rendering the connection. Try refreshing the page.',
+
+      // Query failure (network / server error) — shown with a Retry button
+      failedToLoadRepository: "Couldn't load the repository",
+      failedToLoadConnection: "Couldn't load the connection",
+      failedToLoadWorkflow: "Couldn't load the workflow",
+      failedToLoadAIApplication: "Couldn't load the AI application",
+      failedToLoadWorkflowRuns: "Couldn't load workflow runs",
+      failedToLoadConversations: "Couldn't load conversations",
+      failedToLoadConversation: "Couldn't load this conversation",
+      failedToLoadStoredQueries: "Couldn't load saved queries",
+      failedToLoadUser: "Couldn't load the user",
+      failedToLoadPolicy: "Couldn't load the access policy",
+      failedToLoadConnector: "Couldn't load the connector configuration",
+      failedToLoadQuery: "Couldn't load the saved query",
+      failedToLoadScript: "Couldn't load the script",
+      failedToLoadBillingSubscription: "Couldn't load your subscription",
+      failedToLoadEmbedding: "Couldn't load embedding info",
+      failedToLoadPendingWrites: "Couldn't load pending writes",
+      failedToLoadTag: "Couldn't load the tag",
+      failedToLoadWorkspace: "Couldn't load the workspace",
+      failedToLoadDiff: "Couldn't load the comparison",
+      failedToLoadDiffDescription:
+        "We couldn't load the diff between these refs. Try a different branch or refresh.",
+      // Collection-level failures
+      failedToLoadAIApplications: "Couldn't load AI applications",
+      failedToLoadRepositories: "Couldn't load repositories",
+      failedToLoadConnections: "Couldn't load connections",
+      failedToLoadWorkflows: "Couldn't load workflows",
+      failedToLoadScripts: "Couldn't load scripts",
+      failedToLoadBranches: "Couldn't load branches",
+      failedToLoadCommits: "Couldn't load the commit history",
+      failedToLoadObjects: "Couldn't load objects",
+      failedToLoadInvites: "Couldn't load invites",
+      failedToLoadUsers: "Couldn't load users",
+      failedToLoadLogs: "Couldn't load logs",
+      failedToLoadSchema: "Couldn't load the schema",
+      failedToLoadDocumentation: "Couldn't load the documentation",
+      failedToLoadSearchResults: "Couldn't load search results",
+      failedToLoadActivity: "Couldn't load activity",
+      failedToLoadAgain:
+        "We couldn't reach the server. Check your connection and try again.",
+
+      // Not-found fallbacks (entity in URL but API returned null)
+      repositoryNotFound: 'Repository not found',
+      repositoryNotFoundDescription:
+        'This repository may have been deleted, or you may not have access to it.',
+      connectionNotFound: 'Connection not found',
+      connectionNotFoundDescription:
+        'This connection may have been deleted, or you may not have access to it.',
+      workflowNotFound: 'Workflow not found',
+      workflowNotFoundDescription:
+        'This workflow may have been deleted, or you may not have access to it.',
+      aiApplicationNotFound: 'AI application not found',
+      aiApplicationNotFoundDescription:
+        'This AI application may have been deleted, or you may not have access to it.',
+      storedQueryNotFound: 'Saved query not found',
+      storedQueryNotFoundDescription:
+        'This saved query may have been deleted, or you may not have access to it.',
+      userNotFound: 'User not found',
+      userNotFoundDescription:
+        "This user may not exist, or isn't part of this workspace.",
+      policyNotFound: 'Access policy not found',
+      policyNotFoundDescription:
+        'This access policy may have been deleted, or you may not have access to it.',
+      tagNotFound: 'Tag not found',
+      tagNotFoundDescription:
+        'This tag may have been deleted, or you may not have access to it.',
+
+      // Permissions
+      noPermissionsToViewRepository:
+        "You don't have permission to view this repository.",
+      noPermissionsToViewConnection:
+        "You don't have permission to view this connection.",
+      noPermissionsToViewWorkflow:
+        "You don't have permission to view this workflow.",
+      noPermissionsToViewWorkflowRuns:
+        "You don't have permission to view workflow runs.",
+
+      // Authentication error handler
+      serviceUnavailable: 'Service unavailable',
+      serviceUnavailableDescription:
+        "We couldn't reach the server right now. Try again in a moment.",
+      authenticationRequired: 'Sign-in required',
+      authenticationRequiredDescription:
+        'You need to sign in to access this content.',
+      authenticationError: "Couldn't sign you in",
+      authenticationErrorDescription:
+        'Something went wrong during sign-in. Try again.',
+
+      // Mutation/action failures (fallbacks when an API error has no message)
+      mutations: {
+        // Repository
+        createRepositoryFailed: "Couldn't create the repository",
+        deleteRepositoryFailed: "Couldn't delete the repository",
+        updateRepositoryFailed: "Couldn't update the repository",
+        transferRepositoryFailed: "Couldn't transfer the repository",
+        // Branch / commit
+        createBranchFailed: "Couldn't create the branch",
+        deleteBranchFailed: "Couldn't delete the branch",
+        resetBranchFailed: "Couldn't reset the branch",
+        revertCommitFailed: "Couldn't revert the commit",
+        createCommitFailed: "Couldn't create the commit",
+        revertChangesFailed: "Couldn't revert changes",
+        mergeRefsFailed: "Couldn't merge branches",
+        // Tag
+        createTagFailed: "Couldn't create the tag",
+        deleteTagFailed: "Couldn't delete the tag",
+        updateTagFailed: "Couldn't update the tag",
+        addTagToEntityFailed: "Couldn't add the tag",
+        removeTagFromEntityFailed: "Couldn't remove the tag",
+        // Object
+        deleteObjectFailed: "Couldn't delete the object",
+        moveObjectFailed: "Couldn't move the object",
+        copyObjectFailed: "Couldn't copy the object",
+        uploadObjectFailed: "Couldn't upload the object",
+        downloadObjectFailed: "Couldn't download the object",
+        createPointerFailed: "Couldn't create the pointer",
+        // Connection
+        createConnectionFailed: "Couldn't create the connection",
+        deleteConnectionFailed: "Couldn't delete the connection",
+        updateConnectionFailed: "Couldn't update the connection",
+        transferConnectionFailed: "Couldn't transfer the connection",
+        testConnectionFailed: "Couldn't test the connection",
+        validateConnectorConfigurationFailed:
+          "Couldn't validate the connector configuration",
+        validateSchemaFailed: "Couldn't validate the schema",
+        compareSchemasFailed: "Couldn't compare schemas",
+        // Workflow
+        createWorkflowFailed: "Couldn't create the workflow",
+        deleteWorkflowFailed: "Couldn't delete the workflow",
+        updateWorkflowFailed: "Couldn't update the workflow",
+        updateWorkflowScheduleFailed: "Couldn't update the workflow schedule",
+        transferWorkflowFailed: "Couldn't transfer the workflow",
+        pauseWorkflowFailed: "Couldn't pause the workflow",
+        resumeWorkflowFailed: "Couldn't resume the workflow",
+        createWorkflowRunFailed: "Couldn't start the workflow run",
+        updateWorkflowableFailed: "Couldn't update the workflow target",
+        // AI Application
+        createAIApplicationFailed: "Couldn't create the AI application",
+        deleteAIApplicationFailed: "Couldn't delete the AI application",
+        updateAIApplicationFailed: "Couldn't update the AI application",
+        transferAIApplicationFailed: "Couldn't transfer the AI application",
+        approveWriteFailed: "Couldn't approve the pending write",
+        rejectWriteFailed: "Couldn't reject the pending write",
+        // Script
+        createScriptFailed: "Couldn't create the script",
+        deleteScriptFailed: "Couldn't delete the script",
+        updateScriptFailed: "Couldn't update the script",
+        saveScriptFailed: "Couldn't save the script",
+        executeScriptFailed: "Couldn't run the script",
+        loadScriptFailed: "Couldn't load the script",
+        transferScriptFailed: "Couldn't transfer the script",
+        // Stored query
+        createQueryFailed: "Couldn't create the query",
+        deleteQueryFailed: "Couldn't delete the query",
+        updateQueryFailed: "Couldn't update the query",
+        transferQueryFailed: "Couldn't transfer the query",
+        executeQueryFailed: "Couldn't run the query",
+        // Workspace
+        createWorkspaceFailed: "Couldn't create the workspace",
+        deleteWorkspaceFailed: "Couldn't delete the workspace",
+        updateWorkspaceFailed: "Couldn't update the workspace",
+        transferWorkspaceFailed: "Couldn't transfer the workspace",
+        leaveWorkspaceFailed: "Couldn't leave the workspace",
+        switchWorkspaceFailed: "Couldn't switch workspace",
+        fetchWorkspaceSchemaFailed: "Couldn't load workspace schema",
+        // Policy
+        createPolicyFailed: "Couldn't create the access policy",
+        deletePolicyFailed: "Couldn't delete the access policy",
+        updatePolicyFailed: "Couldn't update the access policy",
+        // User / invite
+        deleteUserFailed: "Couldn't remove the user",
+        changeRoleFailed: "Couldn't change the user's role",
+        deleteInviteFailed: "Couldn't delete the invite",
+        sendInviteFailed: "Couldn't send the invite",
+        resendInviteFailed: "Couldn't resend the invite",
+        changeInviteRoleFailed: "Couldn't change the invite's role",
+        acceptInviteFailed: "Couldn't accept the invite",
+        declineInviteFailed: "Couldn't decline the invite",
+        updateProfileFailed: "Couldn't update your profile",
+        // Embeddings (AI)
+        upsertEmbeddingsFailed: "Couldn't save embeddings",
+        updateEmbeddingMetadataFailed: "Couldn't update metadata",
+        updateEmbeddingPriorityFailed: "Couldn't update priority",
+        // Conversation
+        createConversationFailed: "Couldn't create the conversation",
+        deleteConversationFailed: "Couldn't delete the conversation",
+        updateConversationFailed: "Couldn't update the conversation",
+        // Billing / credentials
+        createCheckoutFailed: "Couldn't start checkout",
+        openBillingPortalFailed: "Couldn't open the billing portal",
+        updateBillingFailed: "Couldn't update billing info",
+        deleteCredentialFailed: "Couldn't delete the credential",
+        createCredentialFailed: "Couldn't create the credential",
+        // Sharing
+        createShareLinkFailed: "Couldn't create the share link",
+        createZipShareLinkFailed: "Couldn't create the zip share link",
+      },
+    },
+  },
+
+  // === USER INTERFACE ===
+  theme: {
+    toggle: 'Toggle theme',
+    light: 'Light',
+    dark: 'Dark',
+    system: 'System',
+  },
+
+  search: {
+    advancedSearch: 'Advanced search',
+    searchDescription:
+      'Search across repositories, workflows, connections, and more',
+    searchPlaceholder: 'Search for anything...',
+    contentTypes: 'Content Types',
+    fromDate: 'From Date',
+    toDate: 'To Date',
+    resultsPerPage: 'Results per page',
+    noResultsFound: 'No results found',
+    tryAdjustingFilters: 'Try adjusting your search terms or filters',
+    startSearching: 'Start searching',
+    startSearchingDescription:
+      'Enter a search term above to find repositories, workflows, connections, and more',
+    searchingText: 'Searching...',
+    resultsFoundFor: 'results found for',
+    resultFoundFor: 'result found for',
+  },
+
+  // === NAVIGATION ===
+  consoleNavigation: {
+    searchPlaceholder: 'Search for data and more',
+    irmin: 'Irmin',
+    irminConsole: 'Irmin Console',
+    irminWebsite: 'Irmin Website',
+    workspace: 'Workspace',
+    workspaces: 'Workspaces',
+    settings: 'Settings',
+    usefulLinks: 'Useful links',
+    scripts: 'Scripts',
+    queries: 'Queries',
+    aiApplications: 'AI Applications',
+    workspaceSettings: 'Workspace',
+    goToWebsite: 'Go to website',
+    myProfile: 'My Profile',
+    signOut: 'Sign out',
+    guides: 'Guides',
+    contactSupport: 'Contact our team',
+    developerDocs: 'Developer Docs',
+    workspaceNavigationAriaLabel: 'Workspace navigation',
+    openMenu: 'Open navigation menu',
+    closeMenu: 'Close navigation menu',
+    expandSidebar: 'Expand the side navigation',
+    foldSidebar: 'Fold the side navigation',
+    searchShortcutHint: 'Press {mod} K to focus search',
+    searchResults: 'Search results',
+    resultsCountOne: '{n} result',
+    resultsCountOther: '{n} results',
+
+    staticSearchItems: {
+      guides: 'Irmin Guides',
+      documentation: 'Irmin Documentation',
+      termsAndPrivacy: 'Terms of Use & Privacy Policy',
+      createWorkspace: 'Create new workspace',
+      workspaceDocumentation: 'Workspace Catalog',
+      myProfile: 'My Profile',
+      manageWorkspaces: 'Manage Workspaces',
+      workspaceSettings: 'Workspace settings',
+      createWorkflow: 'Create new workflow',
+      createConnection: 'Create new connection',
+      createRepository: 'Create new repository',
+
+      description: {
+        irminWebsite: 'Go to the Irmin website',
+        contactUs: 'Contact our team',
+        guides: 'Read the Irmin guides',
+        documentation: 'Read the Irmin documentation',
+        termsAndPrivacy: 'Read the terms and privacy policy',
+        createWorkspace: 'Create a new workspace on Irmin',
+        logs: 'View logs of your current workspace',
+        workspaceDocumentation: 'View the workspace catalog and data lineage',
+        myProfile: 'View and edit your profile',
+        manageWorkspaces: 'Manage your workspaces',
+        scripts: 'Write and run scripts',
+        workspaceSettings: 'Edit workspace settings',
+        workflows: 'View and manage workflows',
+        actions: 'View and manage action workflows',
+        imports: 'View and manage import workflows',
+        exports: 'View and manage export workflows',
+        pipelines: 'View and manage pipeline workflows',
+        createWorkflow: 'Create a new workflow of any type',
+        connections: 'View and manage connections',
+        createConnection: 'Create a new connection to use in your workflows',
+        repositories: 'View and manage repositories',
+        createRepository: 'Create a new repository to store your data',
+        createAIApplication:
+          'Create a new AI application to expose your data to AI tools',
+      },
+    },
+  },
+
+  // === AI APPLICATIONS ===
+  aiApplication: {
+    aiApplication: 'AI Application',
+    createAIApplication: 'Create AI Application',
+    noDescription: 'No description',
+    dataSources: 'data sources',
+    dataSource: 'data source',
+    toolsEnabled: 'tools enabled',
+    toolEnabled: 'tool enabled',
+    dataSourcesDescription:
+      'Configure which repositories and paths this AI Application can access. Data sources define the scope of data available to connected LLM agents.',
+    noDataSourcesConfigured:
+      'No data sources configured. Add a data source to allow the AI Application to access your workspace data.',
+    dataSourcePathHint:
+      'Leave empty or use "/" to include the entire repository',
+    deleteAIApplication: 'Delete AI Application',
+    deleteWarning:
+      'Deleting this AI Application will revoke all API keys and remove access for any connected LLM agents. This action cannot be undone.',
+    // Overview section
+    apiKey: 'API Key',
+    apiKeyDescription:
+      'Use this API key to authenticate requests to the AI Application API and MCP server.',
+    apiKeyOnlyShownOnce:
+      'API key is only shown once when the AI Application is created. Contact the owner if you need access.',
+    mcpEndpoint: 'MCP Endpoint',
+    restApiEndpoint: 'REST API Endpoint',
+    enabledTools: 'Enabled Tools',
+    // Tools
+    toolQueryName: 'SQL Query',
+    toolQueryDescription: 'Execute SQL queries on workspace data',
+    toolSchemaName: 'Schema',
+    toolSchemaDescription: 'Get data schema for repository objects',
+    toolListObjectsName: 'List Objects',
+    toolListObjectsDescription: 'List files and folders in repositories',
+    toolGetContentName: 'Get Content',
+    toolGetContentDescription: 'Read content of text-based files',
+    toolVectorSearchName: 'Vector Search',
+    toolVectorSearchDescription: 'Semantic search on embeddings',
+    toolDocsName: 'Documentation',
+    toolDocsDescription: 'Access AI Application documentation',
+    // Write Tools
+    toolWriteName: 'Write Operations',
+    toolWriteDescription: 'Allow agents to modify data in repositories',
+    writeConfigTitle: 'Write Configuration',
+    writeFileUpload: 'File Upload',
+    writeFileUpdate: 'File Update',
+    writePatch: 'JSON Patch Operations',
+    writeAutoCommit: 'Auto-commit changes',
+    writeRequireCommitMessage: 'Require commit message',
+    writeCommitMessagePrefix: 'Commit message prefix',
+    writeRequireApproval: 'Require human approval',
+    // Pending Writes
+    pendingWritesTitle: 'Pending Writes',
+    pendingWritesDescription:
+      'Review and approve write operations from AI agents',
+    noPendingWrites: 'No pending writes to review',
+    howToConnect: 'How to Connect',
+    howToConnectMcpPrefix: 'Use the ',
+    howToConnectMcpBold: 'MCP Endpoint',
+    howToConnectMcpSuffix:
+      ' to connect with Cursor, Claude Desktop, or other MCP clients.',
+    howToConnectApiKeyPrefix: 'Include your ',
+    howToConnectApiKeyBold: 'API Key',
+    howToConnectApiKeySuffix: ' as a Bearer token in the Authorization header.',
+    howToConnectTools:
+      'Enable specific tools below to expose capabilities to your AI agent.',
+    apiReference: 'API Reference',
+    toolsControlDescription:
+      'Control which capabilities are exposed via the MCP server.',
+    hideApiKey: 'Hide API Key',
+    showApiKey: 'Show API Key',
+    copyApiKey: 'Copy API Key',
+    // Custom Tools
+    customTools: 'Custom Tools',
+    customToolsDescription:
+      'Define custom tools that AI can use to execute specific queries, workflows, or searches.',
+    noCustomTools:
+      'No custom tools defined yet. Add a custom tool to extend AI capabilities.',
+    addCustomTool: 'Add Custom Tool',
+    editCustomTool: 'Edit Custom Tool',
+    customToolDialogDescription: 'Configure a custom tool that AI can use.',
+    toolName: 'Tool Name',
+    toolNameHint:
+      'Lowercase letters, numbers, and underscores only. Must start with a letter.',
+    toolDescriptionHint:
+      'This description helps AI understand when to use this tool.',
+    toolType: 'Type',
+    storedQuery: 'Stored Query',
+    selectQuery: 'Select a query',
+    workflow: 'Workflow',
+    selectWorkflow: 'Select a workflow',
+    embeddingPath: 'Embedding Path',
+    embeddingPathHint: 'Unified path to the embedding file.',
+    topK: 'Top K Results',
+    embeddingFilter: 'Metadata Filter',
+    embeddingFilterHint:
+      'Filter results by metadata. One key=value pair per line.',
+    // Activity / Tool Logs
+    activity: 'Activity',
+    activityDescription:
+      'View all tool calls made through this AI Application, including inputs, execution time, and status.',
+    noActivityYet: 'No activity recorded yet',
+    noActivityDescription:
+      'Tool calls made through the AI Application will appear here.',
+    toolCalls: 'Tool Calls',
+    avgDuration: 'Avg Duration',
+    noInputs: 'No inputs',
+  },
+
+  // === WORKSPACE ===
+  workspace: {
+    general: 'General',
+    users: 'Users',
+    policies: 'Policies',
+    invites: 'Invites',
+    tags: 'Tags',
+    billing: 'Billing',
+    deletionWarning:
+      'Are you sure you want to delete this workspace? This action cannot be undone and will remove all data associated with this workspace.',
+    workspaceName: 'Workspace Name',
+    workspaceDescription: 'Workspace Description',
+    deletionNote:
+      'Deleting your workspace will remove all data associated with it. This action is irreversible.',
+    deleteWorkspace: 'Delete Workspace',
+    billingCurrentPlan: 'Current Plan',
+    billingManageBilling: 'Manage Billing',
+    billingAddPaymentMethod: 'Add Payment Method',
+    billingFreeUser: 'Free — usage-based limits apply',
+    billingSubscribed: 'Subscribed — unlimited usage',
+    billingCancelled: 'Cancelled — usage-based limits apply after period ends',
+    billingPastDue: 'Payment issue — please update your payment method',
+    billingStatusActive: 'Active',
+    billingStatusCancelled: 'Cancelled',
+    billingStatusPastDue: 'Past Due',
+    billingStatusTrialing: 'Trial',
+    billingStatusNone: 'No Subscription',
+    billingDimensionStorage: 'Storage',
+    billingDimensionWorkflowRuns: 'Workflow Runs',
+    billingDimensionAiRequests: 'AI Requests',
+    billingDimensionApiRequests: 'API Requests',
+    billingDimensionDataTransfer: 'Data Transfer',
+    billingDimensionSeats: 'Seats',
+    billingDimensionComputeInvocations: 'Compute Invocations',
+    billingDimensionVectorizations: 'Vectorizations',
+    billingRenewsOn: 'Renews on',
+    billingAccessUntil: 'Access until',
+    billingCheckoutSuccess: 'Checkout Successful',
+    billingCheckoutSuccessNote:
+      'Your subscription is being processed. This may take a moment.',
+    billingCheckoutSuccessTimeout:
+      'Processing is taking longer than expected. Please check your billing settings shortly.',
+    billingCheckoutSuccessError:
+      'Something went wrong while verifying your subscription. Please check your billing settings.',
+    billingCheckoutSuccessPaymentIssue:
+      'Your payment could not be processed. Please check your payment method and try again.',
+    billingCheckoutError:
+      'Could not start the checkout process. Please try again.',
+    billingPortalError: 'Could not open the billing portal. Please try again.',
+    // Usage credit
+    billingIncludedCredit: 'Free credit',
+    billingIncluded: 'included',
+    billingOverage: 'Overage',
+    billingCreditPerMeter: 'Credit per meter',
+    billingBannerTitle: 'Free Plan',
+    billingBannerDescription: 'Add a payment method to unlock unlimited usage',
+    billingBannerAction: 'Configure Billing',
+    billingLimitsResetIn: 'Limits reset in {n} days',
+    billingInfo: 'Billing Information',
+    billingInfoDescription:
+      'Company details used on invoices. Changes are reflected on future invoices.',
+    billingCompanyName: 'Company / Business Name',
+    billingTaxID: 'Tax / VAT ID',
+    billingAddressLine1: 'Address Line 1',
+    billingAddressLine2: 'Address Line 2',
+    billingCity: 'City',
+    billingState: 'State / Region',
+    billingPostalCode: 'Postal Code',
+    billingCountry: 'Country Code',
+    billingAddress: 'Billing Address',
+    billingInfoSaved: 'Billing information saved successfully',
+    apiMcp: 'API/MCP',
+    api: {
+      settings: 'API/MCP Settings',
+      restApi: 'REST API',
+      mcp: 'MCP',
+      apiBaseUrl: 'API Base URL',
+      mcpUrl: 'MCP Server URL',
+      apiDescription:
+        'Use the REST API to programmatically interact with your workspace data, repositories, workflows, and more.',
+      mcpDescription:
+        'Use the Model Context Protocol (MCP) server to integrate Irmin with AI assistants and development tools like Claude Desktop.',
+      getApiToken: 'Get API Token',
+      getMcpToken: 'Get MCP Token',
+      viewApiDocs: 'View API Documentation',
+      apiUsageNote:
+        'To use the API, you need an API token. Create one in your profile settings.',
+      apiExampleTitle: 'Example API Request',
+      apiExampleDescription: 'Make a request to the API using curl:',
+      apiExampleCurl:
+        'curl -X GET "<API_URL>/api/v1/workspaces" \\\n  -H "Authorization: Bearer <your-api-token>" \\\n  -H "Content-Type: application/json"',
+      apiExampleNote:
+        'Replace <your-api-token> above with your personal API token from the tokens page.',
+      mcpUsageNote:
+        'To use the MCP server, you need an API token. Create one in your profile settings.',
+      mcpAuthHeader: 'Authorization: Bearer <your-api-token>',
+      mcpAuthHeaderLabel: 'Authorization Header',
+      mcpClaudeDesktopTitle: 'Add to Claude Desktop',
+      mcpClaudeDesktopDescription:
+        'Add this configuration to your Claude Desktop config file:',
+      mcpStreamableHttpTab: 'Streamable HTTP',
+      mcpRemoteTab: 'mcp-remote',
+      mcpStreamableHttpConfig:
+        '{\n  "mcpServers": {\n    "irmin": {\n      "url": "<MCP_URL>",\n      "headers": {\n        "Authorization": "Bearer <your-api-token>"\n      }\n    }\n  }\n}',
+      mcpRemoteConfig:
+        '{\n  "mcpServers": {\n    "irmin": {\n      "command": "npx",\n      "args": [\n        "-y",\n        "mcp-remote@latest",\n        "<MCP_URL>",\n        "--header",\n        "Authorization: Bearer ${AUTH_TOKEN}"\n      ],\n      "env": {\n        "AUTH_TOKEN": "<your-api-token>"\n      }\n    }\n  }\n}',
+      mcpConfigNote:
+        'Replace <MCP_URL> with the MCP Server URL above and <your-api-token> with your API token from the tokens page.',
+      viewMcpDocs: 'View MCP Documentation',
+    },
+    addTags: 'Add tags',
+    failedToLoadTags: 'Failed to load tags',
+    failedToLoadWorkspaces: 'Failed to load workspaces',
+    recentlyUsed: 'Recently used',
+    goToWorkspaceAriaLabel: 'Go to {name} workspace',
+    stats: {
+      members: 'members',
+      repositories: 'repositories',
+      workflows: 'workflows',
+      connections: 'connections',
+    },
+    dashboardTooltips: {
+      profile: 'Your personal settings and API tokens.',
+      settings: 'Workspace configuration and defaults.',
+      tags: 'Manage tags used to label resources in this workspace.',
+      users: 'Members and their roles in this workspace.',
+      invites: 'Pending invitations to this workspace.',
+      billing: 'Subscription, usage, and invoices.',
+      logs: 'Audit log of actions taken in this workspace.',
+      apiMcp: 'API tokens, MCP configuration, and SDK references.',
+    },
+  },
+
+  workspaceSwitcher: {
+    selectWorkspace: 'Select a workspace',
+    createNewWorkspace: 'Create new workspace',
+    createNewWorkspaceDescription:
+      'Set up a new workspace to organize your data, workflows, and team collaboration.',
+    createFirstWorkspace: 'Create your first workspace',
+    createFirstWorkspaceDescription:
+      'Workspaces help you organize your data, workflows, and team collaboration. Get started by creating your first workspace.',
+    workspace: 'Workspace',
+    leaveWorkspace: 'Leave workspace',
+    leaveWorkspaceConfirm: 'Are you sure you want to leave this workspace?',
+    workspaceCountOne:
+      '{n} workspace. Pick one to continue, or spin up a new one.',
+    workspaceCountOther:
+      '{n} workspaces. Pick one to continue, or spin up a new one.',
+  },
+
+  // === DATA MANAGEMENT ===
+  repository: {
+    repository: 'Repository',
+    repositories: 'Repositories',
+    sqlQuery: 'SQL Query',
+    runQuery: 'Run query',
+    createNewRepository: 'Create new repository',
+    immutableWarning: 'Immutable repository or branch',
+    immutableWarningDescription:
+      'Current repository or selected branch are immutable and cannot be edited.',
+    shareZipLink: 'Share as zip',
+    shareZipLinkCopied: 'Zip link copied to clipboard',
+
+    branches: {
+      branches: 'Branches',
+      currentBranch: 'Current',
+      branch: 'Branch',
+      selectBranch: 'Select branch',
+      ref: 'Ref',
+      createBranch: 'Create branch',
+      primary: 'Primary',
+      primaryBranch: 'Primary branch',
+      newBranchName: 'New branch name',
+      fromBranch: 'From branch',
+      confirmDeleteBranch: 'Are you sure you want to delete this branch?',
+    },
+
+    tags: {
+      tags: 'Tags',
+      createTag: 'Create tag',
+      newTagName: 'New tag name',
+      fromCommit: 'From commit',
+      confirmDeleteTag: 'Are you sure you want to delete this tag?',
+      currentlyViewing: 'Currently viewing',
+    },
+
+    commit: {
+      commits: 'Commits',
+      commitHash: 'Commit hash',
+      copyHash: 'Copy hash',
+      commitHashCopied: 'Commit hash copied to clipboard',
+      uncommittedChanges: 'Uncommitted changes',
+      showingUncommittedChangesFor: 'Showing uncommitted changes for',
+      commitChanges: 'Commit changes',
+      revertChanges: 'Revert changes',
+      confirmRevertChanges:
+        'Are you sure you want to revert all uncommitted changes?',
+      noUncommittedChanges: 'There are no uncommitted changes',
+      noUncommittedChangesDescription:
+        'To compare changes, you need to have uncommitted changes in the current branch',
+      commitNewChangesTo: 'Commit new changes to',
+      commitMessage: 'Commit message',
+      commitMessagePlaceholder: 'Describe your changes',
+      changes: 'Changes',
+      resetBranch: 'Reset branch to this commit',
+      confirmResetBranch: 'Reset branch to commit?',
+      resetBranchDescription:
+        'This will move the current branch pointer to this commit. Any commits after this point will no longer be on this branch. This action cannot be undone.',
+      revertCommit: 'Revert this commit',
+      confirmRevertCommit: 'Revert this commit?',
+      revertCommitDescription:
+        'This will create a new commit that undoes the changes from this commit. The original commit will remain in history. This is a safe, non-destructive operation.',
+    },
+
+    compare: {
+      compare: 'Compare',
+      switchDirection: 'Switch direction',
+      baseBranch: 'Base ref',
+      compareBranch: 'Compare to ref',
+      customRef: 'Custom ref',
+      enterCustomRef: 'Enter tag name or commit hash',
+      customRefPlaceholder: 'e.g., v1.0.0 or abc123...',
+      merge: 'Merge',
+      into: 'into',
+      comparing: 'Comparing',
+      and: 'and',
+      bytes: 'bytes',
+      modified: 'modified',
+      moved: 'moved',
+      conflict: 'conflict',
+      hideChanges: 'Hide changes',
+      fetchChanges: 'Fetch changes',
+      thereIsNothingToCompare: 'There is nothing to compare or merge',
+      thereIsNothingToCompareSubtitle:
+        'You need to use two different sources to get a valid comparison.',
+      baseContent: 'Base content',
+      comparedContent: 'Compared content',
+      mergeStrategy: 'Merge strategy',
+      squashCommits: 'Squash commits',
+      mergeCommitDescription: 'Merge commit description',
+      defaultStrategy: 'Default',
+      destWinsStrategy: 'Destination wins',
+      sourceWinsStrategy: 'Source wins',
+      mergeExplanation:
+        'In case of a merge conflict, this option will force the merge process to automatically favour changes from the base ("Destination wins") or from the comparison ("Source wins"). In case no selection is made, the merge process will fail in case of a conflict.',
+      schemaChanges: 'Schema Changes',
+      breakingChanges: 'Breaking Changes',
+      nonBreakingChanges: 'Non-Breaking Changes',
+      file: 'file',
+      files: 'files',
+    },
+
+    objects: {
+      object: 'Object',
+      objects: 'Objects',
+      noObjects: 'No objects found',
+      noObjectsMessage:
+        'Start by uploading files or create a workflow to populate this repository.',
+      uploadObject: 'Upload object',
+      uploadFiles: {
+        title: 'Upload Files',
+        dropZone: 'Drop files here or click to select',
+        browseFiles: 'Browse Files',
+        addMore: 'Add More Files',
+        uploadingTo: 'Uploading to:',
+        startUpload: 'Upload {count} Files',
+        done: 'Done',
+        conflict: {
+          title: 'File Already Exists',
+          message: '"{filename}" already exists at this location.',
+          replace: 'Replace',
+          skip: 'Skip',
+          replaceAll: 'Replace All',
+          skipAll: 'Skip All',
+        },
+        status: {
+          pending: 'Pending',
+          checking: 'Checking...',
+          uploading: 'Uploading...',
+          completed: 'Uploaded',
+          failed: 'Failed',
+          skipped: 'Skipped',
+          conflict: 'Conflict',
+        },
+        summary: {
+          uploaded: '{count} uploaded',
+          skipped: '{count} skipped',
+          failed: '{count} failed',
+        },
+      },
+      path: 'Path',
+      currentPath: 'Current path',
+      currentName: 'Current name',
+      type: 'Type',
+      contentType: 'Content-Type',
+      view: 'View',
+      unsupportedContentType: 'Unsupported content type',
+      contentUnavailable: 'Object content unavailable',
+      viewRendered: 'Rendered',
+      viewSource: 'Source',
+      contentTooLarge:
+        'This file is too large to display. Please download it instead.',
+      viewSchema: 'View schema',
+      filterObjects: 'Filter objects',
+      uploadAndReplace: 'Upload and replace',
+      moveOrRename: 'Move or rename',
+      changeHistory: 'Change history',
+      shareLink: 'Share link',
+      shareLinkCopied: 'Link copied to clipboard',
+      shareLinkExpiryLabel: 'Link expires after',
+      shareLinkGenerate: 'Copy link',
+      shareLinkCustomHours: 'Hours',
+      shareLinkExpiryOptions: {
+        '1': '1 hour',
+        '24': '24 hours',
+        '72': '3 days',
+        '168': '7 days',
+        custom: 'Custom',
+        never: 'Never',
+      },
+      targetRepository: 'Target repository',
+      targetBranch: 'Target branch',
+      objectName: 'Object name',
+      fileToUpload: 'File to upload',
+      pathInRepository: 'Path in the repository',
+      noFilesSelected: 'Select files to upload before submitting',
+      binary: 'Binary',
+      group: 'Group',
+      structured: 'Structured',
+      children: 'Children',
+      hideChildren: 'Hide children',
+      showChildren: 'Show children',
+      unknownType: 'Unknown type',
+      hideSchema: 'Hide schema',
+      showSchema: 'Show schema',
+      enterPath: 'Enter repository path (e.g. path/to/file.json)',
+      newObjectWillBeCreated: 'New object will be created',
+      validate: 'Validate',
+      validateObject: 'Validate Object',
+      validateObjectDescription: 'Validate this object against a schema',
+      validationMode: 'Validation Mode',
+      validationModeStrict: 'Strict (fail on any error)',
+      validationModePermissive: 'Permissive (log errors but continue)',
+      validationSchemaJson: 'Validation Schema (JSON)',
+      validationPassed: 'Validation Passed',
+      validationFailed: 'Validation Failed',
+      validationLogs: 'Validation Logs',
+      validationSuccessMessage: 'Object validation passed',
+      validationFailedMessage: 'Object validation failed',
+      validationErrorMessage: 'Failed to validate object',
+      invalidJsonSchema: 'Invalid JSON schema or validation error',
+      vectors: 'Vectors',
+      vectorize: 'Vectorize',
+      vectorizeSuccess: 'Embeddings created successfully',
+      vectorizeError: 'Failed to create embeddings',
+      vectorizeSourcePaths: 'Source Files',
+      vectorizeSourcePathsDescription: 'Paths to the files to vectorize',
+      vectorizeSourcePathPlaceholder: 'e.g., data/documents/doc.txt',
+      vectorizeAddSourcePath: 'Add Source Path',
+      vectorizeOutputPath: 'Output Path',
+      vectorizeOutputPathDescription:
+        'Path where the embedding file will be saved (must end with .parquet)',
+      vectorizeOutputPathPlaceholder: 'e.g., embeddings/documents.parquet',
+      embeddingFile: 'Embedding File',
+      embeddingsModel: 'Model',
+      embeddingsDimensions: 'Dimensions',
+      embeddingsChunkSize: 'Chunk Size',
+      embeddingsOverlap: 'Overlap',
+      embeddingsChunkCount: 'Chunks',
+      embeddingsSourceFiles: 'Source Files',
+      embeddingsTopK: 'Results',
+      searchVectors: 'Search Vectors',
+      searchVectorsPlaceholder: 'Enter your search query...',
+      searchVectorsError: 'Failed to search embeddings',
+      searchResults: 'Search Results',
+      noSearchResults: 'No results found',
+      embeddingsScore: 'Score',
+      embeddingsContent: 'Content',
+      embeddingsSourceFile: 'Source',
+      embeddingsChunk: 'Chunk',
+      embeddingsPriority: 'Priority',
+      embeddingsPriorityDescription:
+        'Higher priority embeddings are favored in RAG retrieval (0.0-1.0)',
+      embeddingsConfigLoaded: 'Using existing file configuration',
+      embeddingsConfigLoadedDescription:
+        'Configuration was loaded from the existing embedding file to ensure compatibility.',
+      embeddingsMetadata: 'Metadata',
+      embeddingsMetadataKey: 'Key',
+      embeddingsMetadataValue: 'Value',
+      embeddingsMetadataAddField: 'Add Field',
+      embeddingsMetadataRemoveField: 'Remove',
+      embeddingsMetadataImportJson: 'Import JSON',
+      embeddingsMetadataExportJson: 'Export JSON',
+      embeddingsContentHash: 'Content Hash',
+      embeddingsUpsert: 'Upsert Embeddings',
+      embeddingsUpsertInserted: 'Inserted',
+      embeddingsUpsertSkipped: 'Skipped (already exists)',
+      embeddingsUpsertUpdated: 'Updated',
+      embeddingsWizardTitle: 'Create Embeddings',
+      embeddingsWizardSelectSource: 'Select Source',
+      embeddingsWizardConfigureChunking: 'Configure Chunking',
+      embeddingsWizardAddMetadata: 'Add Metadata',
+      embeddingsWizardGenerate: 'Generate Embeddings',
+      embeddingsWizardPreviewChunks: 'Preview Chunks',
+      embeddingsWizardGenerating: 'Generating embeddings...',
+      embeddingsEditTitle: 'Edit Embedding',
+      embeddingsEditDescription:
+        'Update the metadata and priority for this embedding chunk',
+      embeddingsEditSave: 'Save Changes',
+      embeddingsEditSaving: 'Saving...',
+      pointer: 'Pointer',
+      pointsTo: 'Points to',
+      createPointer: 'Create Pointer',
+      createPointerDescription:
+        'Create a pointer to reference an object from another repository',
+      targetBranchRef: 'Target Branch/Ref',
+      targetObject: 'Target Object',
+      pointerName: 'Pointer Name',
+      pointerWillBeSavedAs: 'Will be saved as',
+      pleaseSelectTargetRepository: 'Please select a target repository',
+      pleaseSelectTargetObject: 'Please select a target object',
+      pleaseEnterPointerName: 'Please enter a name for the pointer',
+      pleaseEnterTargetRef: 'Please enter a target ref',
+      couldNotCreatePointer: 'Could not create pointer',
+      selectRepository: 'Select a repository',
+    },
+
+    settings: {
+      deletionNote:
+        'Deleting this repository will remove all data associated with it. This action is irreversible.',
+      deleteRepository: 'Delete repository',
+    },
+
+    schema: {
+      schema: 'Schema',
+      noSchema: 'No schema available',
+    },
+  },
+
+  // === CONNECTIONS ===
+  connections: {
+    connection: 'Connection',
+    connections: 'Connections',
+    testConnection: 'Test Connection',
+
+    settings: {
+      saveChanges: 'Save changes',
+      deletionNote:
+        'Deleting this connection will remove all data associated with it. This action is irreversible.',
+      delete: 'Delete connection',
+    },
+
+    create: {
+      selectConnector: 'Select a connector',
+      establishConnection: 'Establish connection',
+      configureSettings: 'Configure settings',
+      configureConnection: 'Configure connection',
+      createNewConnection: 'Create new connection',
+      confirmConnectorSelection: 'Confirm connector selection and continue',
+      selectedConnector: 'Selected connector',
+      connectionName: 'Connection name',
+      connectionNamePlaceholder: 'e.g., My Google Analytics connection',
+      connectionDescription: 'Connection description',
+      connectionDescriptionPlaceholder:
+        'Enter a description for the connection, so you can remember what it is used for',
+      addCustomConnector: 'Add custom connector',
+      continueAndTest: 'Continue & test connection',
+      createConnection: 'Create connection',
+      goBack: 'Go back',
+      success: 'Connection successful',
+      failed: 'Connection failed',
+      configuration_valid: 'Connection configuration valid',
+      configuration_invalid: 'Connection configuration invalid',
+      contactSupport: 'Contact support',
+    },
+
+    config: {
+      details: 'Connection Details',
+      settings: 'Connection Settings',
+      cannotCopySecret: 'Cannot copy secret value',
+      editConfiguration: 'Edit configuration',
+      editConfigurationAction: 'Edit configuration',
+      editDescription:
+        'Update connection credentials and settings, then validate before saving.',
+      secretUnchangedHelp: 'Leave unchanged to keep the stored value',
+      updateConfiguration: 'Update configuration',
+      updateFailed: 'Failed to update connection. Please review the errors.',
+    },
+
+    oauth: {
+      statusTitle: 'OAuth connection',
+      statusBadgeConnected: 'Connected',
+      statusBadgeNeedsRefresh: 'Refreshing soon',
+      statusBadgeDisconnected: 'Disconnected',
+      providerLabel: 'Provider',
+      lastRefreshLabel: 'Last refreshed',
+      expiresAtLabel: 'Token expires',
+      scopesLabel: 'Granted scopes',
+      scopesExplainerTitle: 'What this connection can access',
+      scopesExplainerBody:
+        'You will be redirected to {provider} to approve the scopes below. Irmin stores access on your behalf and refreshes it automatically.',
+      connectWithProvider: 'Connect with {provider}',
+      connecting: 'Connecting…',
+      reconnect: 'Reconnect',
+      reconnectSuccess: 'Reconnected successfully',
+      disconnect: 'Disconnect',
+      disconnectSuccess: 'Disconnected from provider',
+      disconnectError: 'Failed to disconnect from provider',
+      confirmDisconnect:
+        'Disconnect this OAuth connection? Existing workflows will fail until you reconnect.',
+      disconnectedTitle: 'Not connected',
+      disconnectedBody:
+        'This connection has no active token. Click Reconnect to authorize Irmin with {provider}.',
+      errors: {
+        state_invalid:
+          'The OAuth session expired before the flow finished. Please try again.',
+        config_unavailable:
+          'OAuth is not currently available for this connector.',
+        refresh_rejected:
+          'The provider rejected the refresh — you may have revoked access. Please reconnect.',
+        not_connected: 'There is no active token for this connection yet.',
+        vendor_error: 'The provider returned an error during the OAuth flow.',
+        internal_error: 'Something went wrong while completing the flow.',
+        popup_blocked:
+          'The browser blocked the OAuth popup. Allow popups for this site and try again.',
+        popup_closed: 'The OAuth window was closed before the flow finished.',
+        timeout: 'The OAuth flow took too long to complete.',
+        unmounted:
+          'The page running the OAuth flow was closed or navigated away before the flow finished.',
+      },
+    },
+
+    schemaValidation: {
+      title: 'Schema Validation',
+      viewTab: 'View Schema',
+      validateTab: 'Validate',
+      mode: 'Mode',
+      validateMode: 'Validate Data',
+      diffMode: 'Compare Schemas',
+      operationMethod: 'Operation Method',
+      uploadFile: 'Upload JSON File',
+      selectFile: 'Select a file...',
+      validateButton: 'Validate',
+      compareButton: 'Compare',
+      validationPassed: 'Validation Passed',
+      validationFailed: 'Validation Failed',
+      errors: 'error(s)',
+      errorsTitle: 'Errors',
+      warningsTitle: 'Warnings',
+      schemasCompatible: 'Schemas Compatible',
+      schemasIncompatible: 'Breaking Changes Detected',
+      breakingChanges: 'Breaking Changes',
+      nonBreakingChanges: 'Non-Breaking Changes',
+    },
+  },
+
+  // === SUBSCRIPTIONS ===
+  subscriptions: {
+    title: 'Subscriptions',
+    autoConfigureNotice:
+      'This connection supports automatic change detection. When you create a subscription, the connector will automatically listen for changes in the external system and notify Irmin. No additional configuration is required.',
+    manualWebhookNotice:
+      'The webhook URL and token below are for advanced use cases only, such as custom integrations or debugging. For most use cases, the connector handles notifications automatically.',
+    create: 'Create Subscription',
+    createTitle: 'Create Subscription',
+    createDescription:
+      'Subscribe to data changes in this connection. You will receive webhook notifications when data changes.',
+    editTitle: 'Edit Subscription',
+    editDescription: 'Update subscription settings and filter configuration.',
+    activeHelp:
+      'When disabled, webhooks using this subscription will be rejected.',
+    noSubscriptions: 'No subscriptions yet',
+    status: 'Status',
+    active: 'Active',
+    inactive: 'Inactive',
+    eventTypes: 'Event Types',
+    selectEventTypes: 'Select event types',
+    allEvents: 'All events',
+    filterPaths: 'Filter Paths',
+    filterPathsPlaceholder: 'leads, contacts, orders',
+    filterPathsHelp:
+      'Comma-separated list of paths to filter events (leave empty for all)',
+    allPaths: 'All paths',
+    namePlaceholder: 'e.g., CRM Lead Changes',
+    descriptionPlaceholder: 'e.g., Subscribe to lead changes in the CRM',
+    webhookCredentials: 'Webhook Credentials',
+    webhookCredentialsDescription:
+      'Save these credentials securely. The token will not be shown again.',
+    webhookUrl: 'Webhook URL',
+    webhookToken: 'Webhook Token',
+    tokenWarning:
+      'This token will only be shown once. Save it securely before closing this dialog.',
+    copyWebhookUrl: 'Copy webhook URL',
+    regenerateToken: 'Regenerate token',
+  },
+
+  connectors: {
+    connector: 'Connector',
+    version: 'Version',
+    author: 'Author',
+    authorEmail: 'Author email',
+    categories: 'Categories',
+    capabilities: 'Capabilities',
+    capabilitiesDescription: {
+      pull: 'Can import data from external source',
+      push: 'Can export data to external source',
+      apply_patch: 'Can receive and apply patch operations',
+      patch_event: 'Can emit patch events when data changes',
+    },
+    locales: 'Locales',
+    customConnectorNotAvailable:
+      'This feature is not available yet. To build and use custom connectors, please contact support.',
+  },
+
+  // === WORKFLOWS ===
+  workflow: {
+    workflows: 'Workflows',
+    scheduledWorkflows: 'Scheduled workflows',
+    allWorkflowRuns: 'All workflow runs',
+    recentRuns: 'Recent runs',
+    importWorkflows: 'Import workflows',
+    actionWorkflows: 'Action workflows',
+    exportWorkflows: 'Export workflows',
+    pipelineWorkflows: 'Pipeline workflows',
+    actions: 'Actions',
+    imports: 'Imports',
+    exports: 'Exports',
+    pipelines: 'Pipelines',
+    triggerRun: 'Trigger workflow run',
+    cancelRun: {
+      label: 'Cancel run',
+      confirm:
+        'Cancel this workflow run? Logs collected so far will be preserved.',
+      success: 'Workflow run cancelled',
+      failed: 'Failed to cancel workflow run',
+    },
+    workflow: 'Workflow',
+    import: 'Import',
+    action: 'Action',
+    export: 'Export',
+    run: 'Run',
+    noStatus: 'No status',
+    startedAt: 'Started at',
+    finishedAt: 'Finished at',
+    scheduled: 'Scheduled',
+    notScheduled: 'Not scheduled',
+    scriptInputData: 'Input data',
+    selectRepository: 'Select repository',
+    selectConnection: 'Select connection',
+    executableType: 'Executable type',
+
+    scriptInputFiles: {
+      title: 'Script Input Files',
+      inputFile: 'Input File',
+      addInputFile: 'Add Input File',
+      path: 'Path',
+      save: 'Save Input Files',
+    },
+
+    scriptResultDestinationRepository: 'Result to repository',
+    scriptResultDestinationBranch: 'Result to branch',
+    scriptResultDestinationPath: 'Result to path',
+    importSourceConnection: 'Import from connection',
+    importSourceConnectionPath: 'Import from connection path',
+    importDestinationRepository: 'Import to repository',
+    importDestinationBranch: 'Import to branch',
+    importDestinationPath: 'Import to path',
+    exportDestinationConnection: 'Export to connection',
+    exportDestinationConnectionPath: 'Export to connection path',
+    exportSourceRepository: 'Export from repository',
+    exportSourceBranch: 'Export from branch',
+    exportSourcePath: 'Export from path',
+    syncMode: 'Sync Mode',
+    syncModeAuto: 'Auto',
+    syncModeFull: 'Full',
+    syncModePatch: 'Patch',
+    syncModeDescription:
+      'Auto: Full sync on schedule, patch on events. Full: Always full sync. Patch: Only patch-based sync (requires event trigger).',
+    syncModeImportExplanation:
+      'Sync mode controls how data is imported. In "Auto" mode, scheduled imports perform a full data sync, while connection event triggers apply only the changed data (patches). Use "Patch" mode when your connection emits change events and you only want incremental updates.',
+    syncModeExportExplanation:
+      'Sync mode controls how data is exported. In "Auto" mode, scheduled exports push all data, while repository event triggers send only the changed data (patches). Use "Patch" mode for incremental exports when the destination connection supports applying patches.',
+    triggeredBy: 'Triggered by',
+    duration: 'Duration',
+    addPath: 'Add Path',
+    removePath: 'Remove path',
+
+    tabs: {
+      data: 'Data',
+      schedule: 'Schedule',
+    },
+
+    settings: {
+      saveChanges: 'Save changes',
+      deletionNote:
+        'Deleting this workflow will remove all data associated with it. This action is irreversible.',
+      delete: 'Delete workflow',
+      resumeWorkflow: 'Resume',
+      pauseWorkflow: 'Pause',
+    },
+
+    create: {
+      createNewWorkflow: 'Create new workflow',
+      createNewActionWorkflow: 'Create new action workflow',
+      createNewImportWorkflow: 'Create new import workflow',
+      createNewExportWorkflow: 'Create new export workflow',
+      createNewPipelineWorkflow: 'Create new pipeline workflow',
+      selectWorkflowType: 'Select workflow type',
+      configureFieldMappings: 'Field mappings',
+      configureImport: 'Configure import',
+      configureAction: 'Configure action',
+      configureExport: 'Configure export',
+      configurePipeline: 'Configure pipeline',
+      configureWorkflow: 'Configure workflow',
+      confirmAndCreate: 'Confirm and create',
+      confirmAndContinue: 'Confirm and continue',
+      goBack: 'Go back',
+      typeDescription: {
+        import:
+          'Import workflows facilitate the ingestion of data from external sources into Irmin repositories.',
+        export:
+          'Export workflows enable the transfer of data from Irmin repositories to external systems or destinations.',
+        action:
+          'Action workflows execute custom code, accepting input data and returning output data.',
+        pipeline:
+          'Pipeline workflows move data through a series of stages, passing results from one stage to the next.',
+      },
+      validation: {
+        workflowableConfigurationMissing:
+          'Workflowable configuration is missing',
+        pleaseSelectConnection: 'Please select a connection',
+        pleaseSelectDestinationRepository:
+          'Please select a destination repository',
+        pleaseSpecifyDestinationBranch: 'Please specify a destination branch',
+        pleaseSpecifyDestinationPathInRepository:
+          'Please specify a destination path in repository',
+        pleaseAddAtLeastOneSourcePathFromConnection:
+          'Please add at least one source path from connection',
+        pleaseSelectSourceRepository: 'Please select a source repository',
+        pleaseSpecifySourceBranch: 'Please specify a source branch',
+        pleaseSpecifyDestinationPathInConnection:
+          'Please specify a destination path in connection',
+        pleaseAddAtLeastOneSourcePathFromRepository:
+          'Please add at least one source path from repository',
+        pleaseSelectExecutableScript: 'Please select an executable script',
+        pleaseSelectExecutableQuery: 'Please select an executable query',
+        pleaseEnterWorkflowName: 'Please enter a workflow name',
+        pleaseAddAtLeastOnePipelineStage:
+          'Please add at least one pipeline stage',
+        pleaseSpecifyResultsRepositoryBranch:
+          'Please specify a branch for the results repository',
+        pleaseSpecifyResultsRepositoryPath:
+          'Please specify a path for the results repository',
+      },
+      failedToCreateWorkflow: 'Failed to create workflow',
+      workflowCreatedSuccessfully: 'Workflow created successfully',
+    },
+
+    pipeline: {
+      pipeline: 'Pipeline',
+      addStage: 'Add stage',
+      descriptionPlaceholder: 'Describe what this pipeline stage does',
+      foldAll: 'Fold All',
+      unfoldAll: 'Unfold All',
+      write: 'Write',
+      writeDescription: 'Use results from previous stages',
+      read: 'Read',
+      readDescription: 'Pass results to next stages',
+      firstStageCannotWrite: 'first stage cannot consume previous results',
+      lastStageCannotRead:
+        'last stage has no subsequent stages to pass results to',
+      executableScript: 'Executable script',
+      executableQuery: 'Executable query',
+      connectionWritePath: 'Write Path',
+      connectionWritePathDescription:
+        'Path to write within the connection e.g. /path/to/write',
+      connectionReadPath: 'Read Path',
+      connectionReadPathDescription:
+        'Path to read within the connection e.g. /path/to/read',
+      moveUp: 'Move up',
+      moveDown: 'Move down',
+      savePipelineStages: 'Save pipeline stages',
+      noStages: 'No stages',
+      repositoryAction: 'Repository Action',
+      triggerWorkflow: 'Trigger Workflow',
+      validation: 'Validation',
+      validationMode: 'Validation Mode',
+      validationModeSingle: 'Single File (alphabetically first)',
+      validationModeAll: 'All Files',
+      failOnError: 'Fail on validation error',
+      validationTargetName: 'Target file name (optional)',
+      validationTargetNamePlaceholder: 'e.g., customers.json',
+      validationSchema: 'Validation Schema',
+      transform: 'Transform',
+      transformOperation: 'Transform Operation',
+      transformFieldRename: 'Rename Fields',
+      transformFieldRemove: 'Remove Fields',
+      transformFileRename: 'Rename File',
+      transformFileRemove: 'Remove File',
+      transformFormatConvert: 'Convert Format',
+      transformMode: 'Transform Mode',
+      transformModeSingle: 'Single File',
+      transformModeAll: 'All Files',
+      transformTargetName: 'Target file name',
+      transformTargetNamePlaceholder: 'e.g., customers.csv',
+      transformFieldRenames: 'Field Renames',
+      transformOldFieldName: 'Original name',
+      transformNewFieldName: 'New name',
+      addFieldRename: 'Add field rename',
+      transformFieldsToRemove: 'Fields to remove',
+      transformFieldsToRemovePlaceholder: 'field1, field2, field3',
+      transformFieldsToRemoveHint:
+        'Comma-separated list of field names to remove',
+      transformOutputName: 'Output file name',
+      transformOutputNamePlaceholder: 'e.g., output.csv',
+      transformOutputFormat: 'Output format',
+      embeddings: 'Embeddings',
+      embeddingsOperation: 'Operation',
+      embeddingsVectorize: 'Vectorize',
+      embeddingsSearch: 'Search',
+      embeddingsRepository: 'Repository',
+      embeddingsRepositoryPlaceholder: 'Select a repository',
+      embeddingsBranch: 'Branch',
+      embeddingsModel: 'Model',
+      embeddingsDimensions: 'Dimensions',
+      embeddingsChunkSize: 'Chunk Size',
+      embeddingsOverlap: 'Overlap',
+      embeddingsOutputPath: 'Output Path',
+      embeddingsOutputPathPlaceholder: 'e.g., embeddings/documents.parquet',
+      embeddingsPath: 'Embedding File Path',
+      embeddingsPathPlaceholder: 'e.g., embeddings/documents.parquet',
+      embeddingsQuery: 'Search Query',
+      embeddingsQueryPlaceholder: 'Enter your search query...',
+      embeddingsTopK: 'Number of Results',
+      embeddingsPriority: 'Priority',
+      embeddingsPriorityDescription:
+        'Higher priority embeddings are favored in RAG retrieval (0.0-1.0)',
+      actionType: 'Action Type',
+      commit: 'Commit',
+      merge: 'Merge',
+      revert: 'Revert',
+      delete: 'Delete',
+      targetBranch: 'Target Branch',
+      mergeStrategy: 'Merge Strategy',
+      mergeStrategyDefault: 'Default',
+      mergeStrategyOurs: 'Ours',
+      mergeStrategyTheirs: 'Theirs',
+      mergeStrategyRecursive: 'Recursive',
+      squashCommits: 'Squash Commits',
+      squashCommitsDescription: 'Combine all commits into one',
+      allowEmptyCommits: 'Allow Empty Commits',
+      allowEmptyCommitsDescription: 'Permit merge without changes',
+      commitMessage: 'Commit Message',
+      commitMessagePlaceholder: 'Automated commit from workflow',
+      revertPath: 'Revert Path',
+      deletePath: 'Delete Path',
+      stageTypeDescription: {
+        action:
+          'Action stages execute custom scripts to process data, accepting input from previous stages and producing output for subsequent stages.',
+        connection:
+          'Connection stages interact with external data sources, reading from or writing to connections like databases, APIs, or file systems.',
+        repository:
+          'Repository stages read from or write to Irmin repositories, enabling data versioning and storage within the pipeline workflow.',
+        validation:
+          'Validation stages validate data from previous stages against a user-defined schema, ensuring data quality before proceeding.',
+        transform:
+          'Transform stages modify data by renaming fields, removing fields, renaming files, or converting between formats (CSV, JSON, Parquet).',
+        embeddings:
+          'Embeddings stages create vector representations of documents for semantic search, or search existing embeddings using natural language queries.',
+        patch:
+          'Patch stages apply incremental changes from incoming events to repositories or connections, enabling real-time data synchronization.',
+        field_mapping:
+          'Field Mapping stages apply field-level transformations to data, including renaming fields, casting types, and unwrapping nested JSON structures.',
+      },
+      fieldMapping: 'Field Mapping',
+      fieldMappingMode: 'Target Mode',
+      fieldMappingTargetName: 'Target File Name',
+      fieldMappingOutputName: 'Output File Name',
+      patch: 'Patch',
+      patchDirection: 'Patch direction',
+      patchToRepository: 'To repository',
+      patchToConnection: 'To connection',
+      patchSourceFile: 'Source file',
+      patchSourceFileHelp:
+        'File containing the patch data (default: trigger_event.json from connection event)',
+      patchTargetPath: 'Target path',
+      patchStageExplanation:
+        'The Patch stage applies incremental changes (JSON patches) from a source file to either a repository or a connection. Use "To repository" to apply incoming patches (e.g., from connection events) to your data. Use "To connection" to push patches (e.g., from repository changes) to an external system.',
+      dataPassMode: 'Data Pass Mode',
+      dataPassModeMerge: 'Merge',
+      dataPassModeReplace: 'Replace',
+      dataPassModeMergeDescription: 'Add/modify files in pipeline data',
+      dataPassModeReplaceDescription:
+        "Replace all pipeline data with this stage's output",
+      outputPreview: 'Expected Output',
+      outputPreviewDynamic: 'Output determined at runtime',
+    },
+
+    schedule: {
+      workflowSchedule: 'Workflow schedule',
+      trigger: 'Trigger',
+      timeTrigger: 'Time based trigger',
+      repositoryEventTrigger: 'Repository event trigger',
+      workflowRunEventTrigger: 'Workflow run event trigger',
+      connectionEventTrigger: 'Connection event trigger',
+      selectConnection: 'Select connection',
+      connectionEventType: 'Event type',
+      anyEvent: 'Any event',
+      connectionPaths: 'Filter paths',
+      connectionPathsPlaceholder: 'leads, contacts, orders',
+      connectionPathsHelp:
+        'Comma-separated list of paths to filter events (leave empty for all)',
+      addTrigger: 'Add trigger',
+      maxRetries: 'Max Retries',
+      maxRuntime: 'Max Runtime (seconds)',
+      minInterval: 'Min Interval (seconds)',
+      triggerType: 'Trigger Type',
+      timeFormat: 'Time Format',
+      recurrenceRule: 'Recurrence Rule',
+      cronExpression: 'Cron Expression',
+      event: 'Event',
+      saveSchedule: 'Save Schedule',
+      presets: 'Presets',
+      custom: 'Custom',
+
+      // Trigger details
+      manualTrigger: 'Manual Trigger',
+      scheduledTrigger: 'Scheduled Trigger',
+      unknownTrigger: 'Unknown Trigger',
+      noTriggerInformation: 'No Trigger Information',
+      rawTriggerData: 'Raw Trigger Data',
+      sourceWorkflow: 'Source Workflow',
+
+      cron: {
+        selectPreset: 'Select a preset schedule',
+        generatedCron: 'Generated Cron Expression',
+        nextExecutionTimes: 'Next Execution Times',
+        invalidCron: 'Invalid cron expression. Please check your syntax.',
+        minutes: 'Minutes',
+        hours: 'Hours',
+        dayOfMonth: 'Day of Month',
+        month: 'Month',
+        dayOfWeek: 'Day of Week',
+        everyMinute: 'Every minute (*)',
+        everyHour: 'Every hour (*)',
+        everyDay: 'Every day (*)',
+        everyMonth: 'Every month (*)',
+        everyWeekday: 'Every day (*)',
+        specificMinute: 'Specific minute',
+        specificHour: 'Specific hour',
+        specificDay: 'Specific day',
+        specificMonth: 'Specific month',
+        specificWeekday: 'Specific day',
+        cronSyntax: 'Cron Syntax',
+        cronSyntaxDescription: 'A cron expression consists of 5 fields:',
+        cronSyntaxNote: '* = any value, 0 = Sunday for weekday',
+        copyToClipboard: 'Copy to clipboard',
+        copied: 'Copied!',
+        copyCron: 'Copy cron expression',
+        cronSyntaxHelp: 'Cron syntax help',
+      },
+
+      rrule: {
+        selectPreset: 'Select a preset schedule',
+        generatedRRule: 'Generated RRule',
+        nextExecutionTimes: 'Next Execution Times',
+        invalidRRule: 'Invalid RRule. Please check your settings.',
+        frequency: 'Frequency',
+        interval: 'Interval',
+        weekdays: 'Weekdays',
+        startDate: 'Start Date',
+        none: 'None',
+        everyDay: 'Every day',
+        selected: 'selected',
+        rruleSyntax: 'RRule Syntax',
+        rruleSyntaxDescription:
+          'RRule (Recurrence Rule) is a standard format for defining recurring events. Common options include:',
+        rruleSyntaxOptions: {
+          freq: 'FREQ: Frequency (SECONDLY, MINUTELY, HOURLY, DAILY, WEEKLY, MONTHLY, YEARLY)',
+          interval: 'INTERVAL: Interval between recurrences',
+          byday: 'BYDAY: Days of the week (MO, TU, WE, TH, FR, SA, SU)',
+          byhour: 'BYHOUR: Hours of the day (0-23)',
+          byminute: 'BYMINUTE: Minutes of the hour (0-59)',
+        },
+        copyToClipboard: 'Copy to clipboard',
+        copied: 'Copied!',
+        copyRRule: 'Copy RRule',
+        rruleSyntaxHelp: 'RRule syntax help',
+      },
+    },
+  },
+
+  // === DEVELOPMENT TOOLS ===
+  scripts: {
+    script: 'Script',
+    writeYourJS: 'Write your JavaScript here...',
+    writeYourGo: 'Write your Go script here...',
+    writeYourSQL: 'Write your SQL query here...',
+    writeYourPython: 'Write your Python script here...',
+    writeYourText: 'Write your text here...',
+    writeYourMarkdown: 'Write your Markdown here...',
+    writeYourJSON: 'Write your JSON here...',
+    newScriptTitle: 'Create a new script',
+    newScriptSubtitle:
+      'Start writing your script in your preferred language and save it as a workflow',
+    browseRepositories: 'Browse repositories',
+    browseRepositoriesDescription:
+      'Browse repositories to find the one you want to write your script in',
+    scriptExecutionStarted: 'Script execution started',
+    scriptNeedsToBeSaved:
+      'Script needs to be saved before running. Save the script and run it again.',
+    selectScript: 'Select a script',
+    searchScripts: 'Search scripts...',
+    createScript: 'Create Script',
+    updateScript: 'Update Script',
+    owner: 'Owner',
+    scriptManagement: 'Script Management',
+    scriptName: 'Script name',
+    scriptDescription: 'Script description',
+    scriptNotFound: 'Script not found. Resetting to blank editor.',
+    scriptDeleted: 'Script was deleted. Resetting to blank editor.',
+    unsavedChangesDiscard:
+      'You have unsaved changes. Do you want to discard them?',
+    failedToCreateScript: 'Failed to create script',
+    failedToUpdateScript: 'Failed to update script',
+    saving: 'Saving...',
+    reset: 'Reset',
+  },
+
+  query: {
+    query: 'Query',
+    queries: 'Queries',
+    queryExecutionStarted: 'Query execution started',
+    results: 'Results',
+    errors: 'Errors',
+    queryResults: 'Query results',
+    createQuery: 'Create query',
+    saveQuery: 'Save Query',
+    run: 'Run',
+    rowsReturnedIn: 'rows returned in',
+    exportTable: 'export table (.csv)',
+    search: 'Search in results',
+    newQuery: 'New query',
+    selectedQuery: 'Selected query',
+    editor: 'SQL Editor',
+    queryNotFound: 'Query not found',
+    queryDeleted: 'Query was deleted',
+    searchQueries: 'Search queries...',
+    failedToCreateQuery: 'Failed to create query',
+    failedToUpdateQuery: 'Failed to update query',
+    saveAs: 'Save as',
+  },
+
+  queryHelper: {
+    title: 'SQL Syntax Helper',
+    poweredBy: 'Powered by DuckDB',
+    duckDbDescription:
+      'Irmin uses DuckDB, a high-performance analytical database. All standard SQL syntax and DuckDB-specific functions are supported.',
+    duckDbDocs: 'DuckDB SQL Documentation',
+    context: 'Query Context',
+    recommended: 'Recommended',
+    placeholderSyntax: 'Placeholder Syntax',
+    placeholderDescription:
+      'Irmin uses a special placeholder syntax to reference data across workspaces, repositories, and versions. This is the recommended syntax for most use cases.',
+    placeholderSyntaxNote:
+      'Ref (branch/commit) is optional. Workspace is optional if running in the same workspace.',
+    alternativeS3Syntax: 'Alternative: Native DuckDB S3 Syntax',
+    alternativeS3Description:
+      'For advanced use cases, you can also use native DuckDB functions with direct S3 paths.',
+    s3FormatNote: 'S3 format: s3://workspace-repository/branch/path',
+    alternativeS3Example: 'Native DuckDB S3 Syntax (Alternative)',
+    alternativeS3ExampleExplanation:
+      'Use native DuckDB functions with S3 paths for advanced use cases. Both syntaxes enforce the same permissions.',
+    examples: 'Query Examples',
+    basicQueries: 'Basic Queries',
+    advancedAnalytics: 'Advanced Analytics',
+    jsonOperations: 'JSON Operations',
+    crossRepoAndBranch: 'Cross-Repository & Branch',
+    queryDocumentationTab: 'SQL Syntax',
+    generateSql: 'Generate SQL',
+    copySelector: 'Copy selector',
+    availableColumns: 'Available Columns',
+    basicSelect: 'Basic Select',
+    filterAndSort: 'Filter & Sort',
+    aggregations: 'Aggregations',
+    windowFunctions: 'Window Functions',
+    nestedJson: 'Nested JSON (UNNEST)',
+    jsonExtract: 'Extract JSON Fields',
+    crossBranchQuery: 'Cross-Branch Query',
+    timeSeries: 'Time Series Analysis',
+    writeOperations: 'Write Operations',
+    exportResults: 'Export Query Results',
+    tempViewWithQuery: 'Temporary View + Query',
+    joinExport: 'Export JOIN Results',
+    aggregationExport: 'Export Aggregations',
+    multiStepTransform: 'Multi-Step Transformation',
+    queryInputsOutputs: 'Query Inputs & Outputs',
+    workflowInputs: 'Workflow Input Files',
+    inputFileProcessing: 'Process Input Files',
+    multipleInputJoin: 'Join Multiple Inputs',
+    queryOutputFormat: 'Query Output Format',
+    explanations: {
+      basicSelect: 'Retrieve the first 10 rows from the object.',
+      filterAndSort: 'Filter rows by id and sort by creation date.',
+      aggregations: 'Group data by category and calculate statistics.',
+      windowFunctions:
+        'Calculate rank and previous values using window functions.',
+      nestedJson: 'Expand the "data" array into rows to query its fields.',
+      jsonExtract: 'Extract specific fields from a JSON string column.',
+      crossBranchQuery: 'Combine results from main and dev branches.',
+      timeSeries: 'Aggregate data by hour to analyze trends.',
+      exportResults:
+        'Use COPY TO to export query results to LakeFS. Requires write permissions on the target repository and branch.',
+      tempViewWithQuery:
+        'Create temporary views for complex queries, then query them. Multiple statements separated by semicolons.',
+      joinExport:
+        'Export results from JOIN queries combining multiple data sources. Useful for creating enriched datasets.',
+      aggregationExport:
+        'Export aggregated analytics (GROUP BY, COUNT, AVG, SUM) directly to files. Perfect for reports and dashboards.',
+      multiStepTransform:
+        'Use multiple temporary tables to build complex data transformations step-by-step, then export final results.',
+      workflowInputs:
+        'In workflows, input files are automatically loaded as virtual tables. Table names are derived from file paths (e.g., /data/customers.csv → data_customers_csv).',
+      inputFileProcessing:
+        'Filter and transform data from workflow input files. Input files are loaded as virtual tables based on their path.',
+      multipleInputJoin:
+        'Join multiple input files loaded as virtual tables. Perfect for combining data from different sources in workflows.',
+      queryOutputFormat:
+        'Query results are automatically converted to CSV format (query_results.csv). The output can be saved to repositories or passed to subsequent pipeline stages.',
+    },
+    sqlGeneration: {
+      placeholder: 'Describe what you want to query...',
+      send: 'Send',
+      generatedSql: 'Generated SQL',
+      copySql: 'Copy SQL',
+      response: 'Response',
+      clearChat: 'Clear',
+      loading: 'Generating SQL...',
+      error: 'Failed to generate SQL',
+      noMessages: 'Start a conversation to generate SQL queries',
+    },
+  },
+
+  scriptHelper: {
+    title: 'Script Assistant',
+    generateScript: 'Generate Script',
+    referenceTab: 'Reference',
+    poweredBy: 'Powered by the Irmin Go SDK',
+    sdkDocs: 'Go SDK on GitHub',
+    runtimeDescription:
+      'Scripts run in an isolated compute sandbox. The assistant generates Go programs that use the Irmin SDK to read repository inputs, run logic, and emit results.',
+    contractTitle: 'Script Contract',
+    contractDescription:
+      'Every script must follow the same shape so the runtime can execute it predictably:',
+    contractPoints: {
+      singleFile:
+        'One Go file with package main and a func main() entry point.',
+      stdlibOnly: 'Only the Go standard library and the Irmin SDK are allowed.',
+      apiFlags:
+        'Use irminutils.GetAPIFromFlags() and irmincore.NewClient to initialise the API client.',
+      errors: 'Fail fast on errors with log.Fatalf.',
+    },
+    skeletonTitle: 'Script Skeleton',
+    inputOutputTitle: 'Reading Inputs & Writing Outputs',
+    inputOutputDescription:
+      'The runtime maps repository objects into virtual input files and collects whatever you send back as results.',
+    readInputsTitle: 'Read input files',
+    writeOutputsTitle: 'Send a result file',
+    sqlInScriptsTitle: 'Querying Data from Scripts',
+    sqlInScriptsDescription:
+      'Scripts can run DuckDB queries against repositories using the Irmin SDK. Use the same placeholder syntax as the SQL editor:',
+    sqlInScriptsNote:
+      'When you ask the assistant for a query, it delegates to the SQL expert and inlines the result into the generated script.',
+    explanations: {
+      skeleton:
+        'Minimal scaffolding for every Irmin script. Drop your logic where the placeholder lives — keep error handling and the client initialisation as-is.',
+      readInputs:
+        'Workflow inputs are surfaced as files. Iterate over the listing and read each one as bytes; decode according to its declared content type.',
+      writeOutputs:
+        'Each result file is persisted by the runtime and can be passed to subsequent stages or stored back into a repository.',
+    },
+    scriptGeneration: {
+      placeholder: 'Describe what the script should do...',
+      send: 'Send',
+      clearChat: 'Clear',
+      loading: 'Generating script...',
+      error: 'Failed to generate script',
+      noMessages: 'Start a conversation to generate a script',
+    },
+  },
+
+  fileNavigator: {
+    open: 'Open',
+    root: 'Root',
+    rootDirectory: 'Root directory',
+    deleteConfirmation: 'Are you sure you want to delete',
+
+    errors: {
+      invalidPath: 'Invalid path',
+      lazyLoadError: 'Could not load folder contents.',
+      lazyRetry: 'Retry',
+    },
+  },
+
+  // === WIZARDS ===
+  wizard: {
+    // Wizard Selector
+    dataImport: 'Configure data import',
+    dataImportDescription:
+      'Import data from external sources into your repositories',
+    dataExport: 'Configure data export',
+    dataExportDescription:
+      'Export data from repositories to external destinations',
+    repositoryDescription: 'Create a new repository to store data',
+    connectionDescription: 'Connect to external data sources',
+    workflowDescription: 'Create automated data workflows',
+
+    // Data Import Wizard Steps
+    connectDataSource: 'Connect',
+    setupRepository: 'Store',
+    configure: 'Configure',
+    reviewAndCreate: 'Review & create',
+    setupDataImportWizard: 'Setup data import wizard',
+    setupDataExportWizard: 'Setup data export wizard',
+
+    // Data Export Wizard Steps
+    selectDestination: 'Destination',
+    selectRepository: 'Repository',
+    selectExportDestination: 'Select Export Destination',
+    selectExportDestinationDescription:
+      'Choose where you want to export your data to',
+    selectSourceRepository: 'Select Source Repository',
+    selectSourceRepositoryDescription:
+      'Choose the repository you want to export data from',
+    configureExportSettings: 'Configure Export Settings',
+    configureExportSettingsDescription:
+      'Configure how data will be exported from your repository to the destination',
+    reviewAndCreateExportWorkflow: 'Review & Create Export Workflow',
+    reviewAndCreateExportWorkflowDescription:
+      'Review your configuration and create the export workflow',
+
+    // Connect Data Source Step
+    connectToDataSource: 'Connect to Your Data Source',
+    connectToDataSourceDescription:
+      'Choose how you want to connect to your data source. You can use an existing connection or create a new one.',
+    useExistingConnection: 'Use Existing Connection',
+    createNewConnection: 'Create New Connection',
+    selectFromExistingConnections: 'Select from your existing connections',
+    setupNewConnectionToDataSource:
+      'Set up a new connection to your data source',
+    selectConnection: 'Select Connection',
+    searchConnections: 'Search connections...',
+    pleaseSelectConnection: 'Please select a connection',
+    noConnectionsFound: 'No connections found matching your search.',
+    noConnectionsAvailable: 'No connections available.',
+    noDescription: 'No description',
+    goToSupportPage: 'Go to support page',
+
+    // Setup Repository Step
+    setupRepositoryDescription:
+      'Choose where to store your imported data. You can use an existing repository or create a new one.',
+    selectFromExistingRepositories: 'Select from your existing repositories',
+    searchRepositories: 'Search repositories...',
+    defaultBranch: 'Default branch:',
+    pleaseSelectRepository: 'Please select a repository',
+    createNewRepositoryDescription: 'Create a new repository for your data',
+    noRepositoriesFound: 'No repositories found matching your search.',
+    noRepositoriesAvailable: 'No repositories available.',
+
+    // Configure Import Step
+    pleaseSpecifyImportPath: 'Please specify at least one import path',
+    failedToConfigureImport: 'Failed to configure import settings',
+
+    // Review and Create Step
+    reviewYourSetup: 'Review Your Setup',
+    reviewConfigurationDescription:
+      'Review your configuration before creating the import workflow.',
+    importPaths: 'Import paths:',
+    connector: 'Connector:',
+    destination: 'Destination:',
+    branch: 'Branch:',
+    settingUpDataImport: 'Setting up your data import...',
+    creatingConnection: 'Creating connection',
+    creatingRepository: 'Creating repository',
+    creatingImportWorkflow: 'Creating import workflow',
+    dataImportSetupCompleted: 'Data import setup completed successfully!',
+    failedToCompleteSetup: 'Failed to complete setup. Please try again.',
+
+    // Common wizard strings
+    configureImportDescription:
+      'Configure how data will be imported from your connection to the repository.',
+    workflowInformation: 'Workflow Information',
+    repositorySettings: 'Repository Settings',
+    repositoryBranch: 'Repository Branch',
+    fieldMappingsDescription:
+      'Field mappings allow you to transform data during import. This feature will be available in the next step.',
+    useExistingRepository: 'Use Existing Repository',
+
+    // Export-specific strings
+    exportFromRepositoryPaths: 'Export From Repository Paths',
+    exportToConnectionPath: 'Export To Connection Path',
+    exportPath: 'Export Path',
+    exportPaths: 'Export Paths',
+    exportDestination: 'Export Destination',
+    sourceRepository: 'Source Repository',
+    workflowDetails: 'Workflow Details',
+    workflowName: 'Workflow Name',
+    creatingExportWorkflow: 'Creating Export Workflow',
+    creatingWorkflow: 'Creating Workflow',
+    createExportWorkflow: 'Create Export Workflow',
+    exportWorkflowCreatedSuccessfully: 'Export workflow created successfully!',
+
+    // Additional missing translations
+    pleaseEnterWorkflowName: 'Please enter a workflow name',
+    pleaseSelectRepositoryBranch: 'Please select a repository branch',
+    pleaseSelectRepositoryPaths: 'Please select repository paths',
+    pleaseSelectConnectionPath: 'Please select a connection path',
+    pleaseSelectConnector: 'Please select a connector',
+    workflowNamePlaceholder: 'Enter workflow name',
+    workflowDescriptionPlaceholder: 'Enter workflow description',
+    workflowDocumentationPlaceholder: 'Enter workflow documentation',
+    repositoryBranchPlaceholder: 'Enter repository branch',
+    workflowDocumentation: 'Workflow Documentation',
+    connection: 'Connection',
+    repository: 'Repository',
+    documentation: 'Documentation',
+    fieldMappingsNotAvailableNewResources:
+      'Field mappings are not available when creating new connections or repositories. You can configure field mappings after the workflow is created.',
+    fieldMappingsNotAvailable: 'Field mappings are not available at this time.',
+  },
+
+  // === ASSISTANT ===
+  assistant: {
+    // Assistant Section
+    title: 'Assistant',
+    conversations: 'Conversations',
+    noConversationSelectedDescription:
+      'Select an existing conversation from the sidebar or create a new one to start chatting with the AI assistant.',
+    noMessagesInTheConversation: 'No messages in the conversation',
+    noMessagesInTheConversationDescription:
+      'This conversation has no messages. Start by sending a message to the assistant.',
+    assistantInterfaceError: 'Assistant Interface Error',
+    failedToLoadAssistantInterface: 'Failed to load assistant interface',
+    openInFullPage: 'Open in full page',
+    contextAwareBanner:
+      "I'm context-aware! I can see the page you are on, your open files, and selected objects.",
+
+    // Conversations List
+    newConversation: 'New Conversation',
+    noConversations: 'No conversations yet',
+    searchConversations: 'Search conversations...',
+    noSearchResults: 'No conversations found',
+
+    // Assistant Chat
+    askMeAnything:
+      'Ask me anything - coding, business, writing, or general questions...',
+
+    // Chat Suggestions
+    querySyntaxExamples: 'Show me query syntax examples',
+    whatIsIrmin: 'What is Irmin?',
+    whatRepositoriesDoIHave: 'What repositories do I have?',
+    whatConnectionsAndWorkflowsDoIHave:
+      'What connections and workflows do I have?',
+
+    // Message Actions
+    copyMessage: 'Copy message',
+    messageCopied: 'Message copied to clipboard',
+    copyFailed: 'Failed to copy message',
+
+    // Tool and Reasoning Elements
+    iteration: 'Iteration',
+    error: 'Error',
+    likeThisResponse: 'Like this response',
+    dislikeThisResponse: 'Dislike this response',
+    thisResponseWasGeneratedThrough: 'This response was generated through',
+    ofReasoningAndToolUsage: 'of reasoning and tool usage',
+  },
+
+  // === USER MANAGEMENT ===
+  users: {
+    inviteUser: 'Invite a User',
+    changeProfilePicture: 'Change profile picture',
+    firstName: 'First name',
+    lastName: 'Last name',
+    phone: 'Phone',
+    company: 'Company',
+    role: 'Role',
+    noRole: 'No role',
+    updateProfile: 'Update profile',
+    transferOwnership: 'Transfer ownership',
+    removeFromWorkspace: 'Remove from workspace',
+    resendInvite: 'Resend invite',
+    cancelInvite: 'Cancel invite',
+    invite: 'Invite',
+  },
+
+  invite: {
+    acceptInvitation: 'Accept Invitation',
+    declineInvitation: 'Decline invitation',
+    workspaceInvitation: 'Workspace Invitation',
+    workspaceInvitationDescription: 'You have been invited to join a workspace',
+    invitedBy: 'Invited by',
+    workspace: 'Workspace',
+    role: 'Role',
+    pendingInvites: 'Pending Invites',
+    pendingInvitesDescription:
+      'You have been invited to join the following workspaces',
+    expires: 'Expires',
+    accept: 'Accept',
+    decline: 'Decline',
+    accepting: 'Accepting...',
+    declining: 'Declining...',
+    asRole: 'as',
+  },
+
+  tokens: {
+    apiTokens: 'API tokens',
+    createAPIToken: 'Create API token',
+    validFor: 'Valid for (in seconds)',
+    expiresAt: 'Expires at',
+    expiresOn: 'Expires on',
+    revokeToken: 'Revoke token',
+    yourAPIToken: 'Your API Token',
+    storeTokenDescription:
+      'This token will only be shown once. Please copy it and store it securely.',
+    tokenRevealed: 'Token Revealed',
+    revealToken: 'Reveal token',
+    copied: 'Copied!',
+    copyToken: 'Copy token',
+    explainer:
+      'API tokens allow you to call the Irmin API or use Irmin MCP under your name with your permissions.',
+    learnMoreApiDocs: 'Learn more in the API documentation',
+    valueMustBePositive: 'Value must be positive',
+    valueMustBeValidNumber: 'Value must be a valid number',
+    valueTooLarge: 'Value is too large and would cause overflow',
+    durations: {
+      oneHour: '1 hour',
+      sixHours: '6 hours',
+      oneDay: '1 day',
+      sevenDays: '7 days',
+      thirtyDays: '30 days',
+      ninetyDays: '90 days',
+      custom: 'Custom (seconds)',
+    },
+  },
+
+  policy: {
+    title: 'Access Policies',
+    description: 'Manage access policies and permissions',
+    addPolicy: 'Add Policy',
+    createPolicy: 'Create New Policy',
+    editPolicy: 'Edit Policy',
+    deletePolicyDescription:
+      'Are you sure you want to delete this policy? This action cannot be undone.',
+    effect: 'Effect',
+    action: 'Action',
+    resource: 'Resource',
+    principal: 'Principal',
+    resourceId: 'Resource ID (Optional)',
+    error: 'Error loading policies',
+    noPolicies: 'No policies found',
+    creating: 'Creating...',
+    effectAllow: 'Allow',
+    effectDeny: 'Deny',
+    actionRead: 'Read',
+    principalWorkspaceUser: 'User',
+    principalRole: 'Role',
+    principalEveryone: 'Everyone',
+
+    tooltips: {
+      effect: 'Whether the policy explicitly denies or allows the action',
+      action:
+        'What action is being allowed or denied (create, read, update, delete)',
+      resource: 'The type of resource on which the action can be performed',
+      principal:
+        'Who this policy applies to (specific user, role, or everyone)',
+      resourceId:
+        'Optional specific resource ID. Leave empty to apply to all resources of this type',
+      denyExplanation:
+        'Deny policies override role defaults and explicitly revoke access',
+    },
+
+    // Bulk actions
+    bulkDelete: 'Delete Selected',
+    bulkDeleteConfirm:
+      'Are you sure you want to delete the selected policies? This action cannot be undone.',
+    policiesSelected: 'policies selected',
+    clearSelection: 'Clear Selection',
+
+    // Filters
+    filterByEffect: 'Filter by effect',
+    filterByAction: 'Filter by action',
+    filterByPrincipal: 'Filter by principal',
+    filterByResource: 'Filter by resource',
+    allEffects: 'All Effects',
+    allActions: 'All Actions',
+    allPrincipals: 'All Principals',
+    allResources: 'All Resources',
+
+    // Batch creation
+    createdPolicies: 'Created policies',
+    failedCount: 'failed',
+    alreadyExisted: 'already existed',
+    batchNoSelections:
+      'Please select at least one action and one resource to create policies.',
+
+    // Bulk delete results
+    bulkDeleteSuccess: 'Deleted policies',
+
+    // Share
+    share: {
+      title: 'Share',
+      shareThis: 'Share this',
+      currentAccess: 'Current Access',
+      addAccess: 'Add Access',
+      readOnly: 'Read Only',
+      readWrite: 'Read & Write',
+      fullAccess: 'Full Access',
+      custom: 'Custom',
+      removeAccessConfirm:
+        'Are you sure you want to remove access? This will delete all policies for this user/role on this resource.',
+      noOneHasAccess: 'No one has been granted specific access yet',
+      accessGranted: 'Access granted successfully',
+      grantAccessPartial:
+        'Some permissions were granted, but others failed. Please check and try again.',
+      grantAccessFailed: 'Failed to grant access. Please try again.',
+      changeLevelDeleteFailed:
+        'Failed to update permission level. Could not remove existing policies.',
+      changeLevelDeletePartial:
+        'Failed to update permission level. Some existing policies were removed but others could not be deleted. Please check permissions manually.',
+      changeLevelCreateFailed:
+        'Old permissions were removed but new ones could not be created. Please re-grant access manually.',
+      changeLevelSuccess: 'Permission level updated successfully.',
+      accessRemoved: 'Access removed successfully',
+      removeAccessFailed: 'Failed to remove access. Please try again.',
+      grantAccess: 'Grant Access',
+    },
+
+    ownerRoleProtected: 'Owner role always has full access',
+
+    // Permission overview
+    permissionOverview: {
+      rolePermissions: 'Role Permissions',
+      userPermissions: 'User Permissions',
+      inheritedFromRole: 'Inherited from role',
+      directPermission: 'Direct permission',
+      fullAccess: 'Full Access',
+      partialAccess: 'Partial Access',
+      noAccess: 'No Access',
+      denied: 'Denied',
+      additionalPolicies: 'additional policies',
+    },
+  },
+
+  // === LOGGING & MONITORING ===
+  logs: {
+    workspaceLogs: 'Workspace audit logs',
+    connectionLogs: 'Connection audit logs',
+    repositoryLogs: 'Repository audit logs',
+    userAuditLogs: 'User audit logs',
+    workflowLogs: 'Workflow audit logs',
+    noLogsFound: 'No logs found',
+    system: 'System',
+    foundLogEvents: 'Found log events',
+    storedQueryLogs: 'Query audit logs',
+    policyLogs: 'Policy audit logs',
+    repositoryObjectLogs: 'Repository object audit logs',
+    waitingForLogs: 'Waiting for logs...',
+    waitingForResults: 'Waiting for results...',
+  },
+
+  // === CATALOG & LINEAGE (workspace documentation view) ===
+  catalog: {
+    documentation: 'Catalog',
+    catalogAndLineage: 'Catalog & Lineage',
+    catalogAndLineageTooltip:
+      'Browse every resource in this workspace and the data lineage that connects them.',
+    readme: 'README',
+    readmeTooltip:
+      'Notes and documentation for this resource. Shows up in the workspace catalog.',
+    workspaceDocumentation: 'Workspace catalog',
+    downloadPdf: 'Download PDF',
+    startTypingDocumentation: 'Start typing your notes here...',
+    schema: 'Lineage',
+    workspace: 'Workspace',
+    createdBy: 'Created by',
+    searchPlaceholder: 'Search documentation...',
+    summaryTitle: 'Workspace summary',
+    summaryDescription:
+      'Snapshot of repositories, connections, and workflows in this workspace.',
+    workspaceIdentifier: 'Workspace identifier',
+    repositorySectionDescription:
+      'Ownership details, tags, and repository documentation.',
+    repositorySearchEmptyTitle: 'No repositories match your search',
+    repositorySearchEmptyDescription:
+      'Adjust your search term to see repository documentation.',
+    clearSearch: 'Clear search',
+    visibilityLabel: 'Visibility',
+    visibilityPrivate: 'Private',
+    notesHeading: 'Notes',
+    connectionSectionDescription:
+      'Connection ownership, connector types, tags, and documentation.',
+    connectionSearchEmptyTitle: 'No connections match your search',
+    connectionSearchEmptyDescription:
+      'Adjust your search term to see connection documentation.',
+    workflowSectionDescription:
+      'Workflow ownership, status, tags, and related resources.',
+    workflowSearchEmptyTitle: 'No workflows match your search',
+    workflowSearchEmptyDescription:
+      'Adjust your search term to see workflow documentation.',
+    scriptSectionDescription:
+      'Executable scripts for data processing and automation.',
+    scriptSearchEmptyTitle: 'No scripts match your search',
+    scriptSearchEmptyDescription:
+      'Adjust your search term to see script documentation.',
+    querySectionDescription:
+      'Saved SQL queries for data analysis and reporting.',
+    querySearchEmptyTitle: 'No queries match your search',
+    querySearchEmptyDescription:
+      'Adjust your search term to see query documentation.',
+    aiApplicationSectionDescription:
+      'AI Applications connected to this workspace — which repositories they read, which tools they expose.',
+    aiApplicationSearchEmptyTitle: 'No AI Applications match your search',
+    aiApplicationSearchEmptyDescription:
+      'Adjust your search term to see AI Application documentation.',
+    aiApplicationDataSources: 'Data sources',
+    aiApplicationCustomTools: 'Custom tools',
+    aiApplicationWriteEnabled: 'Write access enabled',
+    aiApplicationReadOnly: 'Read only',
+    aiApplicationNoDataSources: 'No data sources configured',
+    aiApplicationCustomToolsBreakdown:
+      '{storedQueries} stored queries · {workflows} workflows · {embeddings} embedding searches',
+    aiApplicationFlowsTitle: 'AI Application flows',
+    aiApplicationFlowsEmptyDescription:
+      'Adjust your search term to see AI Application flows.',
+    consumes: 'consumes',
+    directoryAIApplicationsEmpty: 'No AI Applications defined.',
+    scheduleLabel: 'Schedule',
+    workspaceEmptyTitle: 'Workspace is empty',
+    workspaceEmptyDescription:
+      'Start by creating your first repository, connection, or workflow to generate documentation.',
+    goToWorkspace: 'Go to workspace',
+    schemaTitle: 'Data flows',
+    schemaIntro:
+      'Visual overview of how connections, workflows, and repositories relate to each other.',
+    schemaSearchPlaceholder: 'Search workflows or components...',
+    dataFlowsTitle: 'Data flows',
+    workflowRelationshipsEmptyDescription:
+      'Adjust your search term to see workflow relationships.',
+    componentDirectoryTitle: 'Component directory',
+    directoryRepositoriesEmpty: 'No repositories defined.',
+    directoryConnectionsEmpty: 'No connections defined.',
+    referencedBy: 'Referenced by',
+    unknownConnector: 'Unknown connector',
+    branches: 'Branches',
+    gitTags: 'Git tags',
+    defaultBranch: 'Default branch',
+    schemaObjects: 'Schema objects',
+    expandDetails: 'Show details',
+    collapseDetails: 'Hide details',
+    noBranches: 'No branches found.',
+    noGitTags: 'No git tags found.',
+    noObjects: 'No objects found.',
+    loadingDetails: 'Loading details...',
+    andMoreObjects: 'and {count} more...',
+    relatedWorkflows: 'Related workflows',
+    relatedAIApplications: 'Related AI Applications',
+  },
+
+  // === LIST COMPONENTS ===
+  list: {
+    status: 'Status',
+    runs: 'Runs',
+    viewAll: 'View all',
+    lastUpdated: 'Last updated',
+    createdAt: 'Created at',
+    immutable: 'Immutable',
+    searchPlaceholder: 'Type to search...',
+    noItemsFound: 'No items found',
+    noItems: 'No items found',
+
+    emptyState: {
+      repositories: {
+        title: 'No repositories yet',
+        description:
+          'Repositories store your data in a Git-like structure. Create your first repository to get started.',
+      },
+      workflows: {
+        title: 'No workflows yet',
+        description:
+          'Workflows automate your data tasks. Create import, export, action, or pipeline workflows to get started.',
+      },
+      workflowRunsForWorkflow: {
+        title: 'This workflow has not yet been run',
+        description:
+          'Start by triggering a workflow run or wait until it is triggered by the schedule.',
+      },
+      allWorkflowRuns: {
+        title: 'No workflow runs yet',
+        description:
+          'Workflow runs will appear here once workflows are executed. Trigger a workflow run or wait for scheduled workflows to run.',
+      },
+      connections: {
+        title: 'No connections yet',
+        description:
+          'Connections allow you to import from and export to external data sources. Create your first connection to get started.',
+      },
+      invites: {
+        title: 'No pending invites',
+        description:
+          "When you invite people to this workspace, they'll appear here until they accept or decline.",
+      },
+      queries: {
+        title: 'No saved queries',
+        description:
+          'Start by writing a SQL query in the editor and save it for future use.',
+      },
+      tokens: {
+        title: 'No API tokens',
+        description:
+          'API tokens allow you to authenticate with the Irmin API programmatically. Create your first token to get started.',
+      },
+      scripts: {
+        title: 'No scripts yet',
+        description: 'Create your first script to get started',
+      },
+      aiApplications: {
+        title: 'No AI applications yet',
+        description:
+          'AI Applications let you expose your data to AI-powered tools and assistants. Create your first AI application to get started.',
+      },
+      generic: {
+        title: 'No items found',
+        description:
+          "Try adjusting your search or filters to find what you're looking for.",
+      },
+    },
+  },
+
+  // === UTILITIES ===
+  schemaFieldMapper: {
+    title: 'Field Mapper',
+    description:
+      'Click a source field, then click a destination field to create a mapping',
+    descriptionWithSelection:
+      'Click a destination field to map "{fieldName}" from {source}',
+    sourceSchema: 'Source Schema',
+    destinationSchema: 'Destination Schema',
+    fieldMappings: 'Field Mappings',
+    noMappingsYet: 'No mappings yet',
+    autoMapIdenticalFields: 'Auto-Map Identical Fields',
+    clearAllMappings: 'Clear All Mappings',
+    fields: 'fields',
+    mapped: 'mapped',
+    required: 'required',
+    fileSize: '{size}KB',
+    autoMappedSuccess: 'Auto-mapped {count} identical fields!',
+    noIdenticalFieldsFound: 'No identical fields found to auto-map.',
+    sourceEmpty: 'Source is empty - no fields to map',
+    destinationEmpty: 'Destination is empty - nothing needs replacement',
+    noFieldsToMap:
+      'Field mappings are not available because one or both sides do not have predefined fields. Fields will be created automatically during the workflow execution.',
+    jsonPathPlaceholder: 'JSON path to unwrap (e.g., data)',
+    noCastType: 'No type cast',
+    unwrapLabel: 'unwrap',
+    fieldMappingStageDescription:
+      'Apply field mappings to rename, retype, or restructure data',
+    addFieldPlaceholder: 'Field name...',
+    nestedFieldsTruncated: 'Deeper nested fields are not shown',
+  },
+
+  dataSizeWarning: {
+    // Titles
+    tableTooLarge: 'Table Too Large',
+    jsonTooLarge: 'JSON Too Large',
+    fileTooLarge: 'File Too Large',
+    largeTableWarning: 'Large Table Warning',
+    largeJsonWarning: 'Large JSON Warning',
+    largeFileWarning: 'Large File Warning',
+
+    // Messages - Errors
+    tableTooLargeMessage:
+      'This table is too large to render safely in your browser. Please download it as CSV instead.',
+    jsonTooLargeMessage:
+      'This JSON object is too large to render safely in your browser. Please download it instead.',
+    fileTooLargeMessage:
+      'This file is too large to display in your browser. Please download it instead.',
+
+    // Messages - Warnings
+    largeTableMessage:
+      'This table is large and may cause performance issues. You can download it or try to render it anyway.',
+    largeJsonMessage:
+      'This JSON object is large and may cause performance issues. You can download it or try to render it anyway.',
+    largeFileMessage: 'This file is large and may take time to load.',
+
+    // Actions
+    renderAnyway: 'Render Anyway',
+    downloadCsv: 'Download CSV',
+
+    // Additional info
+    sizeLabel: 'Size:',
+    performanceWarning:
+      'Rendering large data may cause your browser to slow down or become unresponsive.',
+  },
+
+  // === SCHEMA BUILDER ===
+  schemaBuilder: {
+    builder: 'Schema Builder',
+    rawJson: 'Raw JSON',
+    invalidJson: 'Invalid JSON',
+    type: 'Type',
+    name: 'Name',
+    path: 'Path',
+    contentType: 'Content Type',
+    size: 'Size',
+    metadata: 'Metadata',
+    restrictions: 'Restrictions',
+    properties: 'Properties',
+    addProperty: 'Add Property',
+    constraints: 'Constraints',
+    required: 'Required',
+    format: 'Format',
+    enum: 'Enum Values',
+    enumPlaceholder: 'Enter values separated by commas',
+    pattern: 'Pattern (Regex)',
+    minLength: 'Min Length',
+    maxLength: 'Max Length',
+    minimum: 'Minimum',
+    maximum: 'Maximum',
+    minItems: 'Min Items',
+    maxItems: 'Max Items',
+    default: 'Default Value',
+    items: 'Array Items',
+    noStructured: 'No Structured Children',
+    noBinary: 'No Binary Children',
+    noGroups: 'No Group Children',
+    onlyStructured: 'Only Structured Children',
+    onlyBinary: 'Only Binary Children',
+    onlyGroups: 'Only Group Children',
+    allowedContentTypes: 'Allowed Content Types',
+    restrictedContentTypes: 'Restricted Content Types',
+    maxSize: 'Max Size (bytes)',
+    minSize: 'Min Size (bytes)',
+    maxCount: 'Max Count',
+    minCount: 'Min Count',
+    namePattern: 'Name Pattern (Regex)',
+    types: {
+      string: 'String',
+      number: 'Number',
+      integer: 'Integer',
+      boolean: 'Boolean',
+      object: 'Object',
+      array: 'Array',
+      null: 'Null',
+    },
+    formats: {
+      email: 'Email',
+      uri: 'URI',
+      date: 'Date',
+      'date-time': 'Date Time',
+      time: 'Time',
+      uuid: 'UUID',
+      hostname: 'Hostname',
+      ipv4: 'IPv4',
+      ipv6: 'IPv6',
+    },
+    errors: {
+      invalidRegex: 'Invalid regular expression',
+      nameRequired: 'Property name is required',
+    },
+  },
+
+  // === BROWSER-TAB / SOCIAL-SHARE METADATA ===
+  // Short noun phrases used as page titles across the console. They compose
+  // with `title.template` in each layout to produce strings like
+  // "Schema – demo-data – Tim's Office · Irmin". See `src/lib/metadata.ts`.
+  metadata: {
+    app: {
+      description: 'The data platform for engineering teams.',
+    },
+    auth: {
+      signIn: 'Sign in',
+      signUp: 'Sign up',
+      invite: 'Accept invitation',
+      resolving: 'Signing in',
+    },
+    error: {
+      notFoundTitle: 'Page not found',
+    },
+    workspace: {
+      select: 'Select a workspace',
+      dashboard: 'Dashboard',
+      search: 'Search',
+      profile: 'Profile',
+      profileTokens: 'API tokens',
+    },
+    sections: {
+      repositories: 'Repositories',
+      connections: 'Connections',
+      workflows: 'Workflows',
+      workflowsActions: 'Actions',
+      workflowsExports: 'Exports',
+      workflowsImports: 'Imports',
+      workflowsPipelines: 'Pipelines',
+      workflowsRuns: 'Runs',
+      queries: 'Queries',
+      aiApplications: 'AI applications',
+      catalog: 'Catalog',
+      lineage: 'Lineage',
+      assistant: 'Assistant',
+      settings: 'Settings',
+      scripts: 'Scripts',
+      logs: 'Logs',
+    },
+    resource: {
+      branches: 'Branches',
+      commits: 'Commits',
+      compare: 'Compare',
+      documentation: 'Documentation',
+      object: 'Object',
+      objectHistory: 'Object history',
+      policies: 'Policies',
+      policiesBranches: 'Branch policies',
+      policiesCommits: 'Commit policies',
+      policiesObjects: 'Object policies',
+      policiesTags: 'Tag policies',
+      policiesRuns: 'Run policies',
+      schema: 'Schema',
+      tags: 'Tags',
+      settings: 'Settings',
+      uncommittedChanges: 'Uncommitted changes',
+      run: 'Run',
+      schedule: 'Schedule',
+      fieldMapper: 'Field mapper',
+      activity: 'Activity',
+      workflowable: 'Source',
+    },
+    settingsSection: {
+      apiMcp: 'API & MCP',
+      billing: 'Billing',
+      billingSuccess: 'Billing · Success',
+      invites: 'Invites',
+      tags: 'Tags',
+      users: 'Users',
+    },
+    fallback: {
+      tag: 'Tag',
+    },
+  },
+};
+
+export default en;

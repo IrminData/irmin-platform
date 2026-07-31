@@ -1,0 +1,38 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/app/**/page.tsx",
+    "src/app/**/layout.tsx",
+    "src/app/**/error.tsx",
+    "src/app/**/not-found.tsx",
+    "src/app/**/loading.tsx",
+    "src/app/**/global-error.tsx",
+    "src/app/**/route.ts",
+    "sentry.*.config.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": [
+    "src/components/ui/command.tsx",
+    "src/components/ui/dialog.tsx",
+    "src/components/ui/dropdown-menu.tsx",
+    "src/components/ui/popover.tsx",
+    "src/components/ui/select.tsx",
+    "src/components/ui/ai-elements/*.tsx",
+    "src/components/scripts/ScriptSelector.tsx",
+    "src/hooks/api/useConnector.tsx",
+    "src/utils/cookie.ts",
+    "src/utils/queryParams.ts",
+    "src/types/ai/responses.ts"
+  ],
+  "ignoreDependencies": [
+    "@sentry/types",
+    "@types/eslint",
+    "sharp",
+    "tw-animate-css",
+    "baseline-browser-mapping",
+    "eslint-config-next",
+    "import-in-the-middle",
+    "require-in-the-middle"
+  ],
+  "ignoreExportsUsedInFile": true
+}
