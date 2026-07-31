@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/IrminData/irmin-sdk-go/duckdb"
+	"github.com/IrminData/irmin-platform/sdks/go/duckdb"
 )
 
 func TestNewInMemoryClient(t *testing.T) {

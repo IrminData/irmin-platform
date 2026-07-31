@@ -4,7 +4,7 @@ import (
 	"path"
 	"strings"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // ObjectDetails holds details about an object parsed from its path.

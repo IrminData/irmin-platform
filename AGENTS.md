@@ -32,9 +32,10 @@ specific instructions win for files inside that project.
 
 ## Shared development
 
-The root go.work resolves github.com/IrminData/irmin-sdk-go to sdks/go for local
-Core and Connectors development. Keep the published dependency in go.mod and do
-not commit local replace directives.
+The root go.work resolves
+github.com/IrminData/irmin-platform/sdks/go from sdks/go for local Core and
+Connectors development. Keep the published dependency in go.mod and do not
+commit local replace directives.
 
 Node projects retain independent pnpm lockfiles. Run pnpm commands from the
 project directory; do not consolidate lockfiles without a dedicated migration.
@@ -78,7 +79,9 @@ configuration. Connector contracts shared with Core belong in sdks/go/.
 
 Use a language directory per SDK. Public types require concrete domain names,
 compatibility review, tests, documentation, and an explicit release plan.
-The Go SDK keeps module path github.com/IrminData/irmin-sdk-go.
+The Go SDK module path is github.com/IrminData/irmin-platform/sdks/go. Release
+tags must use the nested-module prefix sdks/go/vX.Y.Z; use the documented
+release workflow rather than creating tags by hand.
 
 ## Quality rules
 

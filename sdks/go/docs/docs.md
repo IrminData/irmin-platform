@@ -3,7 +3,7 @@
 # irminsdkgo
 
 ```go
-import "github.com/IrminData/irmin-sdk-go"
+import "github.com/IrminData/irmin-platform/sdks/go"
 ```
 
 ## Index
@@ -130,7 +130,7 @@ const (
 # irmincore
 
 ```go
-import "github.com/IrminData/irmin-sdk-go/api"
+import "github.com/IrminData/irmin-platform/sdks/go/api"
 ```
 
 ## Index
@@ -3690,7 +3690,7 @@ type WorkflowRequest struct {
 # connectorsclient
 
 ```go
-import "github.com/IrminData/irmin-sdk-go/connectorsclient"
+import "github.com/IrminData/irmin-platform/sdks/go/connectorsclient"
 ```
 
 Package connectorsclient is the Irmin SDK client for the connector\-service HTTP plugin protocol. It is the single client every Irmin service \(Core, orchestrator, CLI\) uses to talk to the connectors service; per\-service re\-implementations were folded in here so the wire contract lives in one place.
@@ -4451,7 +4451,7 @@ type Subscription struct {
 # duckdb
 
 ```go
-import "github.com/IrminData/irmin-sdk-go/duckdb"
+import "github.com/IrminData/irmin-platform/sdks/go/duckdb"
 ```
 
 ## Index
@@ -4776,7 +4776,7 @@ GetDuckDBReadOptionsByMIMEType maps a MIME type to the appropriate DuckDB read o
 # irminmodels
 
 ```go
-import "github.com/IrminData/irmin-sdk-go/models"
+import "github.com/IrminData/irmin-platform/sdks/go/models"
 ```
 
 ## Index
@@ -8040,7 +8040,7 @@ type WorkspaceSummary struct {
 # observability
 
 ```go
-import "github.com/IrminData/irmin-sdk-go/observability"
+import "github.com/IrminData/irmin-platform/sdks/go/observability"
 ```
 
 Package observability defines the shared progress\-event vocabulary used across Irmin services and connectors. The types here are pure data — no database, no logger, no transport. Sink\-aware helpers \(e.g., emission to an OperationLog table or a stream response\) live in the consuming service since the right sink differs per service:
@@ -8161,7 +8161,7 @@ type ProgressHandler func(ProgressEvent)
 # irminsqids
 
 ```go
-import "github.com/IrminData/irmin-sdk-go/sqids"
+import "github.com/IrminData/irmin-platform/sdks/go/sqids"
 ```
 
 ## Index
@@ -8228,7 +8228,7 @@ Encode encodes the given ID with a content type identifier. The content type str
 # irminutils
 
 ```go
-import "github.com/IrminData/irmin-sdk-go/utils"
+import "github.com/IrminData/irmin-platform/sdks/go/utils"
 ```
 
 ## Index
@@ -8491,7 +8491,7 @@ This function uses a hybrid approach for MIME type detection: \- Specialized dat
 # irminsdkvalidator
 
 ```go
-import "github.com/IrminData/irmin-sdk-go/validator"
+import "github.com/IrminData/irmin-platform/sdks/go/validator"
 ```
 
 ## Index

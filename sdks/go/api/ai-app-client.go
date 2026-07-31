@@ -8,8 +8,8 @@ import (
 	"io"
 	"net/http"
 
-	irminsdkgo "github.com/IrminData/irmin-sdk-go"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsdkgo "github.com/IrminData/irmin-platform/sdks/go"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // AIAppClient is a client for the AI Application API.

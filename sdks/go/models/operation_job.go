@@ -3,7 +3,7 @@ package irminmodels
 import (
 	"time"
 
-	"github.com/IrminData/irmin-sdk-go/observability"
+	"github.com/IrminData/irmin-platform/sdks/go/observability"
 )
 
 // OperationJobStatus enumerates the lifecycle states of an asynchronous

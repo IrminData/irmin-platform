@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 func TestDetectMimeType(t *testing.T) {

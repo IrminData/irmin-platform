@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/IrminData/irmin-sdk-go/observability"
+	"github.com/IrminData/irmin-platform/sdks/go/observability"
 )
 
 // TestProgressKind_WireFormat pins the string values of the kind

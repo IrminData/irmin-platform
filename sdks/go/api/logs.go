@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // LogEventFilters contains optional filters for log event queries.

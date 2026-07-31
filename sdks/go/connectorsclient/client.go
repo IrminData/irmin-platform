@@ -17,7 +17,7 @@ import (
 	"strconv"
 	"strings"
 
-	irminsdkgo "github.com/IrminData/irmin-sdk-go"
+	irminsdkgo "github.com/IrminData/irmin-platform/sdks/go"
 )
 
 // HeaderConnectionID is sent on every outbound connector request so

@@ -57,7 +57,8 @@ validates only affected projects. A successful monorepo merge does not imply
 that every project must be deployed.
 
 SDK releases require their own compatibility review, language-specific tag,
-and publication workflow.
+and publication workflow. The Go SDK uses `sdks/go/vX.Y.Z` repository tags;
+follow [docs/releasing-go-sdk.md](docs/releasing-go-sdk.md).
 
 ## Documentation
 

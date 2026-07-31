@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 
 	// Import DuckDB driver to register it with database/sql package.
 	// The blank import is necessary as the driver needs to register itself

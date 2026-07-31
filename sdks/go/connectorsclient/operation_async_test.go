@@ -11,9 +11,9 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/IrminData/irmin-sdk-go/connectorsclient"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	"github.com/IrminData/irmin-sdk-go/observability"
+	"github.com/IrminData/irmin-platform/sdks/go/connectorsclient"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	"github.com/IrminData/irmin-platform/sdks/go/observability"
 )
 
 // TestStartOperationPull_HappyPath verifies the 202 + job_id path.

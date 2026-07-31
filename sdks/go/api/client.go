@@ -15,10 +15,10 @@ import (
 
 	"maps"
 
-	irminsdkgo "github.com/IrminData/irmin-sdk-go"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
-	irminvalidator "github.com/IrminData/irmin-sdk-go/validator"
+	irminsdkgo "github.com/IrminData/irmin-platform/sdks/go"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminsqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
+	irminvalidator "github.com/IrminData/irmin-platform/sdks/go/validator"
 )
 
 // Timeout constants are now defined in the root constants.go file

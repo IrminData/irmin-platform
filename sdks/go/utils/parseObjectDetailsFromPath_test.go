@@ -3,8 +3,8 @@ package irminutils_test
 import (
 	"testing"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 func TestParseObjectDetailsFromPath(t *testing.T) {

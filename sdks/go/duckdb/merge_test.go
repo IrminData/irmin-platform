@@ -3,7 +3,7 @@ package duckdb_test
 import (
 	"testing"
 
-	"github.com/IrminData/irmin-sdk-go/duckdb"
+	"github.com/IrminData/irmin-platform/sdks/go/duckdb"
 )
 
 func TestCleanTableName(t *testing.T) {

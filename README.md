@@ -90,11 +90,15 @@ before changing a project.
 
 ## SDK publishing
 
-The Go SDK keeps its established module path,
-github.com/IrminData/irmin-sdk-go. The existing standalone repository remains
-untouched during the monorepo migration. Mirroring and release automation from
-sdks/go/ must be introduced and validated before the monorepo becomes the SDK
-release source.
+The Go SDK is published directly from `sdks/go/` as
+`github.com/IrminData/irmin-platform/sdks/go`. Install the current release with:
+
+    go get github.com/IrminData/irmin-platform/sdks/go@v0.1.0
+
+Because it is a nested Go module, repository tags use the directory-prefixed
+form `sdks/go/vX.Y.Z`. Future language SDKs use their own directory, module
+metadata, compatibility policy, and tag namespace. See
+[docs/releasing-go-sdk.md](docs/releasing-go-sdk.md) for the release process.
 
 ## Contributing and security
 
@@ -103,6 +107,6 @@ issues using SECURITY.md rather than a public issue.
 
 ## License
 
-Except where a subdirectory contains its own LICENSE file, this repository is
-licensed under the Elastic License 2.0 in LICENSE. The Go SDK retains its
-existing MIT license in sdks/go/LICENSE.
+This repository, including the Go SDK, is licensed under the
+[Elastic License 2.0](LICENSE). Component directories keep local copies of the
+same terms where their standalone build or package needs to include a license.

@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"testing"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/api"
+	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 )
 
 func TestClient_ValidationIntegration(t *testing.T) {

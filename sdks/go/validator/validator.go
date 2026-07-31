@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
+	irminsqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
 	"github.com/go-playground/validator/v10"
 )
 

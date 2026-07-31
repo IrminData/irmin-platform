@@ -3,6 +3,9 @@
 - Status: Accepted
 - Date: 2026-08-01
 
+The standalone Go SDK distribution decision in this record is superseded by
+[ADR 0002](0002-monorepo-sdk-releases.md).
+
 ## Context
 
 Core, AI, Console, Connectors, and the Go SDK frequently require coordinated
