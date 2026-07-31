@@ -1,10 +1,12 @@
 # Platform TODO
 
-## Repository cutover
+## Repository follow-up
 
-- [ ] Complete a legal and licensing review before changing repository
-  visibility.
-- [ ] Enable private vulnerability reporting and appropriate repository
+- [ ] Complete a legal and licensing review of the root ELv2 license and the
+  Go SDK's retained MIT license.
+- [x] Publish the repository after a full-history secret scan and critical
+  dependency remediation.
+- [x] Enable private vulnerability reporting and appropriate repository
   rulesets.
 - [ ] Reconnect deployment providers only after the monorepo pipelines are
   validated.
