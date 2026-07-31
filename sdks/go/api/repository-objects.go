@@ -1,0 +1,503 @@
+package irmincore
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"net/http"
+	"net/url"
+
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+)
+
+// MoveObjectRequest represents the JSON request body for moving/copying repository objects.
+type MoveObjectRequest struct {
+	NewPath string `json:"new_path" validate:"required" example:"path/to/new/location"`
+}
+
+// UploadObjectFromURLRequest represents the JSON request body for uploading objects from URLs.
+type UploadObjectFromURLRequest struct {
+	URL     string            `json:"url"            validate:"required"                      example:"https://example.com/file.json"`
+	Headers map[string]string `json:"headers"        validate:"omitempty"                     example:"Authorization: Bearer <token>"`
+	Tags    []string          `json:"tags,omitempty" validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
+}
+
+// ValidateObjectRequest represents the JSON request body for validating repository objects.
+type ValidateObjectRequest struct {
+	ValidationSchema *irminmodels.ObjectSchema `json:"validation_schema" validate:"required"`
+	ValidationMode   string                    `json:"validation_mode"   validate:"required,oneof=strict permissive" example:"strict"`
+}
+
+// ValidateObjectResponse represents the response from validating a repository object.
+type ValidateObjectResponse struct {
+	Valid bool     `json:"valid"`
+	Logs  []string `json:"logs"`
+	Error string   `json:"error,omitempty"`
+}
+
+// CreatePointerRequest represents the JSON request body for creating pointer objects.
+type CreatePointerRequest struct {
+	// TargetWorkspace is the workspace containing the target object.
+	// Empty string means same workspace (reserved for future cross-workspace support).
+	TargetWorkspace string `json:"target_workspace,omitempty" validate:"omitempty,max=100" example:""`
+	// TargetRepository is the slug of the repository containing the target object.
+	TargetRepository string `json:"target_repository"          validate:"required,max=100"  example:"other-repo"`
+	// TargetPath is the path to the target object.
+	TargetPath string `json:"target_path"                validate:"required"          example:"data/customers.json"`
+	// TargetRef is the branch name or commit hash of the target object.
+	TargetRef string `json:"target_ref"                 validate:"required,max=100"  example:"main"`
+}
+
+// PresignedUploadResult represents the response from generating a presigned upload URL.
+type PresignedUploadResult struct {
+	UploadURL       string `json:"upload_url"       example:"https://s3.example.com/upload"`
+	PhysicalAddress string `json:"physical_address" example:"s3://bucket/key"`
+	Expiry          int64  `json:"expiry"           example:"1706270400"`
+}
+
+// AssociatePresignedUploadRequest represents the JSON request body for associating a staged upload.
+type AssociatePresignedUploadRequest struct {
+	PhysicalAddress string `json:"physical_address" validate:"required"  example:"s3://bucket/key"`
+	Checksum        string `json:"checksum"         validate:"omitempty" example:"d41d8cd98f00b204e9800998ecf8427e"`
+	SizeBytes       int64  `json:"size_bytes"       validate:"required"  example:"1048576"`
+	ContentType     string `json:"content_type"     validate:"required"  example:"application/octet-stream"`
+}
+
+// CreateSignedURLRequest represents the JSON request body for creating a signed download URL.
+type CreateSignedURLRequest struct {
+	Path           string `json:"path"                       validate:"required"        example:"data/file.csv"`
+	Ref            string `json:"ref,omitempty"                                         example:"main"`
+	ExpiresInHours *int   `json:"expires_in_hours,omitempty" validate:"omitempty,min=0" example:"24"`
+}
+
+// CreateSignedZipURLRequest represents the JSON request body for creating a signed repository zip download URL.
+type CreateSignedZipURLRequest struct {
+	Ref            string `json:"ref,omitempty"              example:"main"`
+	ExpiresInHours *int   `json:"expires_in_hours,omitempty" example:"24"   validate:"omitempty,min=0"`
+}
+
+// SignedURLResponse represents the response from creating a signed download URL.
+type SignedURLResponse struct {
+	URL       string `json:"url"        example:"https://api.irmin.co/api/v1/signed/download?token=..."`
+	ExpiresAt string `json:"expires_at" example:"2024-02-07T12:00:00Z"`
+}
+
+// GetObjectAtPath fetches the object at the given path and ref.
+func (c *Client) GetObjectAtPath(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
+	var objects irminmodels.Object
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodGet,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
+	}, &objects)
+	if err != nil {
+		return nil, nil, fmt.Errorf("fetch objects error: %w", err)
+	}
+	return &objects, apiResp, nil
+}
+
+// GetObjectHistory fetches the history of an object at the given path and ref.
+func (c *Client) GetObjectHistory(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+) ([]irminmodels.Commit, *irminmodels.IrminAPIResponse, error) {
+	var commits []irminmodels.Commit
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodGet,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/history?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
+	}, &commits)
+	if err != nil {
+		return nil, nil, fmt.Errorf("fetch object history error: %w", err)
+	}
+	return commits, apiResp, nil
+}
+
+// GetObjectSchema fetches the schema of an object at the given path and ref.
+func (c *Client) GetObjectSchema(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error) {
+	var schema irminmodels.ObjectSchema
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodGet,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/schema?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
+	}, &schema)
+	if err != nil {
+		return nil, nil, fmt.Errorf("fetch object schema error: %w", err)
+	}
+	return &schema, apiResp, nil
+}
+
+// UploadObject uploads a file to the given path and ref.
+func (c *Client) UploadObject(
+	ctx context.Context,
+	workspace, repository, ref, path string,
+	files map[string][]byte,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
+	var formFiles []FormFile
+	for fileName, fileContent := range files {
+		// Use bytes.NewReader for in-memory file data
+		reader := bytes.NewReader(fileContent)
+		formFiles = append(formFiles, FormFile{
+			FieldName: "file",   // The multipart form field name
+			FileName:  fileName, // The filename to send in the multipart
+			Reader:    reader,   // The file contents
+		})
+	}
+
+	var object irminmodels.Object
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
+		Files:       formFiles,
+		ContentType: "multipart/form-data",
+	}, &object)
+	if err != nil {
+		return nil, nil, fmt.Errorf("upload object error: %w", err)
+	}
+
+	return &object, apiResp, nil
+}
+
+// UploadObjectFromURL uploads an object from a URL to the given path and ref.
+func (c *Client) UploadObjectFromURL(
+	ctx context.Context,
+	workspace, repository, ref, path string,
+	req UploadObjectFromURLRequest,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
+	var object irminmodels.Object
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/upload-from-url?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &object)
+	if err != nil {
+		return nil, nil, fmt.Errorf("upload object from URL error: %w", err)
+	}
+	return &object, apiResp, nil
+}
+
+// GetObjectContent fetches the content of an object at the given path and ref.
+func (c *Client) GetObjectContent(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+	limitResponse bool,
+) ([]byte, error) {
+	endpoint := fmt.Sprintf(
+		"/v1/workspaces/%s/repositories/%s/objects/content?ref=%s&path=%s",
+		workspace,
+		repository,
+		ref,
+		path,
+	)
+	if limitResponse {
+		endpoint = AddLimitResponseParam(endpoint)
+	}
+
+	apiResp, err := c.FetchBinary(ctx, RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: endpoint,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("fetch content error: %w", err)
+	}
+	return apiResp, nil
+}
+
+// GetObjectStructuredContent fetches the parsed structured content of an object at the given path and ref.
+// The returned data is an array of maps, where each map represents a row of data from the file.
+func (c *Client) GetObjectStructuredContent(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+	limitResponse bool,
+) ([]map[string]any, *irminmodels.IrminAPIResponse, error) {
+	endpoint := fmt.Sprintf(
+		"/v1/workspaces/%s/repositories/%s/objects/content/structured?ref=%s&path=%s",
+		workspace,
+		repository,
+		ref,
+		path,
+	)
+	if limitResponse {
+		endpoint = AddLimitResponseParam(endpoint)
+	}
+
+	var structuredContent []map[string]any
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: endpoint,
+	}, &structuredContent)
+	if err != nil {
+		return nil, nil, fmt.Errorf("fetch structured content error: %w", err)
+	}
+	return structuredContent, apiResp, nil
+}
+
+// DownloadObject creates a zip file of the object at the given path and ref and returns the binary data.
+func (c *Client) DownloadObject(ctx context.Context, workspace, repository, path, ref string) ([]byte, error) {
+	apiResp, err := c.FetchBinary(ctx, RequestOptions{
+		Method: http.MethodGet,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/download?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("fetch object download zip error: %w", err)
+	}
+	return apiResp, nil
+}
+
+func (c *Client) MoveObject(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+	req MoveObjectRequest,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
+	var object irminmodels.Object
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/move?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &object)
+	if err != nil {
+		return nil, nil, fmt.Errorf("move object error: %w", err)
+	}
+	return &object, apiResp, nil
+}
+
+func (c *Client) CopyObject(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+	req MoveObjectRequest,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
+	var object irminmodels.Object
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/copy?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &object)
+	if err != nil {
+		return nil, nil, fmt.Errorf("copy object error: %w", err)
+	}
+	return &object, apiResp, nil
+}
+
+func (c *Client) DeleteObject(
+	ctx context.Context,
+	workspace, repository, ref, path string,
+) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodDelete,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
+	}, nil)
+	if err != nil {
+		return nil, fmt.Errorf("delete object error: %w", err)
+	}
+	return apiResp, nil
+}
+
+func (c *Client) ValidateObject(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+	req ValidateObjectRequest,
+) (*ValidateObjectResponse, *irminmodels.IrminAPIResponse, error) {
+	var response ValidateObjectResponse
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/validate?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &response)
+	if err != nil {
+		return nil, nil, fmt.Errorf("validate object error: %w", err)
+	}
+	return &response, apiResp, nil
+}
+
+// CreatePointer creates a pointer file that references an object in another repository.
+// The pointer path will be automatically prefixed with "_ptr." if not already.
+func (c *Client) CreatePointer(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+	req CreatePointerRequest,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
+	var object irminmodels.Object
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/pointer?ref=%s&path=%s",
+			workspace,
+			repository,
+			url.QueryEscape(ref),
+			url.QueryEscape(path),
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &object)
+	if err != nil {
+		return nil, nil, fmt.Errorf("create pointer error: %w", err)
+	}
+	return &object, apiResp, nil
+}
+
+// CreateSignedObjectURL creates a time-limited signed download URL for a repository object.
+// The URL can be shared with external users who do not have Irmin accounts.
+// Permissions are checked at creation time, not at download time.
+func (c *Client) CreateSignedObjectURL(
+	ctx context.Context,
+	workspace, repoSlug string,
+	req CreateSignedURLRequest,
+) (*SignedURLResponse, *irminmodels.IrminAPIResponse, error) {
+	var response SignedURLResponse
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/signed-url",
+			workspace,
+			repoSlug,
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &response)
+	if err != nil {
+		return nil, nil, fmt.Errorf("create signed object URL error: %w", err)
+	}
+	return &response, apiResp, nil
+}
+
+// CreateSignedRepositoryZipURL creates a time-limited signed download URL for an entire repository as a ZIP.
+// The URL can be shared with external users who do not have Irmin accounts.
+// Permissions are checked at creation time, not at download time.
+func (c *Client) CreateSignedRepositoryZipURL(
+	ctx context.Context,
+	workspace, repoSlug string,
+	req CreateSignedZipURLRequest,
+) (*SignedURLResponse, *irminmodels.IrminAPIResponse, error) {
+	var response SignedURLResponse
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/signed-zip-url",
+			workspace,
+			repoSlug,
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &response)
+	if err != nil {
+		return nil, nil, fmt.Errorf("create signed repository zip URL error: %w", err)
+	}
+	return &response, apiResp, nil
+}
+
+// GeneratePresignedUploadURL generates a presigned URL for direct-to-storage upload.
+// The client uploads directly to the storage backend using the returned URL,
+// then calls AssociatePresignedUpload to link the object in the repository.
+func (c *Client) GeneratePresignedUploadURL(
+	ctx context.Context,
+	workspace, repository, ref, path string,
+) (*PresignedUploadResult, *irminmodels.IrminAPIResponse, error) {
+	var result PresignedUploadResult
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/upload/presigned?ref=%s&path=%s",
+			workspace,
+			repository,
+			url.QueryEscape(ref),
+			url.QueryEscape(path),
+		),
+	}, &result)
+	if err != nil {
+		return nil, nil, fmt.Errorf("generate presigned upload URL error: %w", err)
+	}
+	return &result, apiResp, nil
+}
+
+// AssociatePresignedUpload links a previously uploaded object (via presigned URL)
+// with a path in the repository.
+func (c *Client) AssociatePresignedUpload(
+	ctx context.Context,
+	workspace, repository, ref, path string,
+	req AssociatePresignedUploadRequest,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
+	var object irminmodels.Object
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/upload/associate?ref=%s&path=%s",
+			workspace,
+			repository,
+			url.QueryEscape(ref),
+			url.QueryEscape(path),
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &object)
+	if err != nil {
+		return nil, nil, fmt.Errorf("associate presigned upload error: %w", err)
+	}
+	return &object, apiResp, nil
+}

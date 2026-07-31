@@ -1,0 +1,48 @@
+package irminmodels
+
+// ObjectType represents the type of the object ("group", "structured", or "binary").
+type ObjectType string
+
+const (
+	// ObjectTypeGroup is a folder object, which can contain other objects.
+	ObjectTypeGroup ObjectType = "group"
+	// ObjectTypeStructured is a tabular file, which can be parsed and queried (e.g. CSV, JSON, Parquet, etc.)
+	ObjectTypeStructured ObjectType = "structured"
+	// ObjectTypeBinary is a binary file, which can't be parsed or queried (e.g. image, video, audio, etc.)
+	ObjectTypeBinary ObjectType = "binary"
+)
+
+// PointerTarget represents the target of a pointer object.
+type PointerTarget struct {
+	// Workspace is the target workspace slug. Empty string means same workspace.
+	Workspace string `json:"target_workspace,omitempty" validate:"omitempty,max=100" example:""`
+	// Repository is the target repository slug.
+	Repository string `json:"target_repository"          validate:"required,max=100"  example:"other-repo"`
+	// Path is the path to the target object.
+	Path string `json:"target_path"                validate:"required"          example:"data/customers.json"`
+	// Ref is the target branch name or commit hash.
+	Ref string `json:"target_ref"                 validate:"required,max=100"  example:"main"`
+}
+
+type Object struct {
+	ID                    string            `json:"id"                                validate:"required,validsqid=repository_objects"  example:"obj_3x7k9m2n5q8p"`
+	Name                  string            `json:"name"                              validate:"omitempty,max=255"                      example:"customers.json"`                 // Empty name signifies root directory object
+	Path                  string            `json:"path"                              validate:"omitempty,required_if=Name !=''"        example:"/data/customers/customers.json"` // Path required if Name is NOT empty
+	RepositorySlug        string            `json:"repository_slug"                   validate:"required,max=100"                       example:"customer-analytics"`
+	Ref                   string            `json:"ref"                               validate:"required,max=100"                       example:"main"`
+	Type                  ObjectType        `json:"type"                              validate:"required,oneof=group structured binary" example:"structured"`
+	ContentType           string            `json:"content_type,omitempty"            validate:"max=100,excluded_if=Type group"         example:"application/json"`
+	PhysicalAddress       string            `json:"physical_address,omitempty"        validate:"omitempty,uri"                          example:"s3://bucket/path/to/customers.json"`
+	PhysicalAddressExpiry *int64            `json:"physical_address_expiry,omitempty" validate:"omitempty,min=0"                        example:"1672531200"`
+	SizeBytes             int64             `json:"size_bytes,omitempty"              validate:"omitempty,min=0"                        example:"1048576"`
+	LastModified          string            `json:"last_modified,omitempty"                                                             example:"2025-12-01T14:22:30Z"`
+	Metadata              map[string]string `json:"metadata,omitempty"`
+	S3PathSelector        string            `json:"s3_path_selector,omitempty"        validate:"omitempty"                              example:"s3://workspace-slug-repository-slug/main/file.json"`
+	SQLSelector           string            `json:"sql_selector,omitempty"            validate:"omitempty"                              example:"$['workspace-slug;repository-slug;file.json@main']"`
+	Tags                  []Tag             `json:"tags,omitempty"                    validate:"dive,omitempty"`
+	Children              []Object          `json:"children,omitempty"                validate:"dive,omitempty"`
+	// IsPointer indicates if this object is a pointer to another object.
+	IsPointer bool `json:"is_pointer,omitempty"                                                                example:"false"`
+	// PointerTarget contains the target information if this object is a pointer.
+	PointerTarget *PointerTarget `json:"pointer_target,omitempty"          validate:"omitempty"`
+}
