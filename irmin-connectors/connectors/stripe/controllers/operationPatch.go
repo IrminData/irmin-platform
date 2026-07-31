@@ -1,0 +1,457 @@
+package stripecontrollers
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/url"
+	"sort"
+	"strings"
+
+	"irmin-connectors/connectors/common"
+	stripeclient "irmin-connectors/connectors/stripe/client"
+	"irmin-connectors/db"
+
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	"github.com/gofiber/fiber/v3"
+)
+
+// OperationPatch applies a JSON-Patch document to Stripe resources.
+// Each patch op's `path` is a JSON-Pointer that starts with a Stripe
+// resource file path (e.g., `/customers/cus_abc.json/email`). The
+// suffix after the file path is the pointer into the resource record;
+// we translate it to Stripe's bracketed form field (e.g., `email`,
+// `metadata[plan]`, `items[0][price]`).
+//
+// Unlike push (which sends the whole record), patch sends only the
+// touched fields — safer for concurrent edits because it won't clobber
+// fields modified between pull + patch.
+//
+// Multiple patch ops targeting the same resource are coalesced into a
+// single Stripe update call so that Stripe's partial-update semantics
+// apply atomically per resource.
+//
+// @Summary Apply JSON-Patch operations to Stripe resources
+// @Description Translate a JSON-Patch document into one partial-update call per targeted Stripe resource. Only add / replace / remove are supported; move and copy are rejected because Stripe's fields aren't structurally rearrangeable.
+// @Tags stripe
+// @Security SystemTokenAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param patches formData file true "JSON file containing a JSON-Patch array"
+// @Success 200 {object} fiber.Map "Patches applied successfully"
+// @Failure 400 {object} fiber.Map "Bad request"
+// @Failure 401 {object} fiber.Map "Unauthorized"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /stripe/operation/patch [post]
+func (cs *Controllers) OperationPatch(c fiber.Ctx) (retErr error) {
+	manager, managerOK := cs.App.JobManager.(*common.JobManager)
+	if !managerOK || manager == nil {
+		return common.RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.JobErrorReasonInternal,
+			errors.New("job manager not configured"),
+			"",
+		)
+	}
+
+	operation, ok := c.Locals("operation").(*db.Operation)
+	if !ok {
+		return common.RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.JobErrorReasonInternal,
+			errors.New("invalid operation type in context"),
+			"",
+		)
+	}
+
+	// Execution lock via the unified JobManager.Begin path. The
+	// legacy TryLockOperationExecution / UnlockOperationExecution
+	// pair this replaced had a latent bug: the unlock could run on
+	// a different pooled connection than the one that took the
+	// lock (session-scoped advisory locks are conn-bound in
+	// Postgres). Begin pins the conn via WithSessionLock, and
+	// Release frees it synchronously before returning — so the
+	// row transition and the lock release happen under the same
+	// session.
+	guard, alreadyErr, beginErr := manager.Begin(common.BeginOperationJobInput{
+		OperationID:             operation.ID,
+		ConnectorRegistrationID: operation.ConnectorRegistrationID,
+		ConnectorName:           "stripe",
+		Kind:                    "patch",
+	})
+	if alreadyErr != nil {
+		return common.RespondAlreadyRunning(c, alreadyErr)
+	}
+	if beginErr != nil {
+		cs.Logger.Error(
+			"failed to acquire operation execution lock",
+			"error", beginErr, "operation_id", operation.ID,
+		)
+		return common.RespondJobError(
+			c,
+			fiber.StatusInternalServerError,
+			irminmodels.JobErrorReasonTransientDB,
+			beginErr,
+			"",
+		)
+	}
+
+	outcome := common.JobOutcome{
+		Status: irminmodels.OperationJobStatusFailed,
+		Error:  "handler exited without setting outcome",
+	}
+	defer func() {
+		// See common/operationPush.go for the rationale on
+		// overwriting retErr with a structured 500 rather than
+		// re-panicking into fiber's generic panic middleware.
+		if r := recover(); r != nil {
+			cs.Logger.Error(
+				"stripe patch panic recovered",
+				"error", fmt.Sprintf("%v", r), "operation_id", operation.ID,
+			)
+			outcome = common.JobOutcome{
+				Status: irminmodels.OperationJobStatusFailed,
+				Error:  fmt.Sprintf("handler panic: %v", r),
+			}
+			retErr = common.RespondJobError(
+				c,
+				fiber.StatusInternalServerError,
+				irminmodels.JobErrorReasonInternal,
+				fmt.Errorf("handler panic: %v", r),
+				guard.JobID(),
+			)
+		}
+		guard.Release(outcome)
+	}()
+
+	common.LogOperationEvent(
+		cs.DB, cs.Logger, operation.ID,
+		db.LogEventTypeInfo,
+		"Stripe patch operation execution started",
+		nil,
+	)
+
+	stripe, _, _, err := stripeclient.InitFromOperation(cs.Logger, operation)
+	if err != nil {
+		common.LogOperationEvent(
+			cs.DB, cs.Logger, operation.ID,
+			db.LogEventTypeError,
+			"Failed to initialize Stripe client for patch",
+			map[string]any{"error": err.Error()},
+		)
+		outcome = common.JobOutcome{
+			Status: irminmodels.OperationJobStatusFailed,
+			Error:  "initialize stripe client: " + err.Error(),
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to initialize Stripe client: " + err.Error(),
+		})
+	}
+
+	patches, err := common.ReadPatchesFromForm(c)
+	if err != nil {
+		common.LogOperationEvent(
+			cs.DB, cs.Logger, operation.ID,
+			db.LogEventTypeError,
+			"Failed to read patches from form",
+			map[string]any{"error": err.Error()},
+		)
+		outcome = common.JobOutcome{
+			Status: irminmodels.OperationJobStatusFailed,
+			Error:  "read patches: " + err.Error(),
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	grouped, err := common.GroupPatchesByFileKey(patches)
+	if err != nil {
+		outcome = common.JobOutcome{
+			Status: irminmodels.OperationJobStatusFailed,
+			Error:  "group patches: " + err.Error(),
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	// Sort resource keys so cross-resource apply order is deterministic
+	// across retries — otherwise the operation-log event sequence (and
+	// the "which resources got updated before an abort" story on partial
+	// failure) shuffles with Go's map iteration.
+	ctx := c.Context()
+	keys := make([]string, 0, len(grouped))
+	for k := range grouped {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		ops := grouped[key]
+		if applyErr := cs.applyResourcePatches(
+			ctx, stripe, key, ops, operation,
+		); applyErr != nil {
+			outcome = common.JobOutcome{
+				Status: irminmodels.OperationJobStatusFailed,
+				Error:  "apply patches: " + applyErr.Error(),
+			}
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": applyErr.Error(),
+			})
+		}
+	}
+
+	common.LogOperationEvent(
+		cs.DB, cs.Logger, operation.ID,
+		db.LogEventTypeInfo,
+		"Stripe patch operation completed successfully",
+		map[string]any{"patch_count": len(patches), "resource_count": len(grouped)},
+	)
+
+	outcome = common.JobOutcome{Status: irminmodels.OperationJobStatusComplete}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Patch operations applied successfully",
+		"count":   len(patches),
+	})
+}
+
+// applyResourcePatches coalesces every JSON-Patch op targeting a
+// single Stripe resource into one form body and issues one update
+// call.
+//
+// Ordering within the coalesced form:
+//   - add / replace use url.Values.Set semantics (last-write-wins per
+//     form key). Two ops targeting the same field produce the later
+//     value; this matches Stripe's form-parser semantics anyway, and
+//     avoids the accumulation bug where the first value leaks through.
+//   - remove renders as `key=""` (Stripe's "clear this field" idiom
+//     for scalars). Array-index removes are rejected because Stripe
+//     doesn't renumber arrays and the JSON-Patch semantic ("remove
+//     element 2, renumber 3→2") can't be honored over a partial-
+//     update form API.
+//
+// Cross-resource ordering is handled by the caller via sorted keys;
+// intra-resource ordering is the op list order from the patch file.
+//
+// Idempotency: the client internally composes the Idempotency-Key
+// from the form body + the endpoint scope + the pinned Stripe-Version
+// (see Client.idempotencyFor) so (a) whitespace-only edits in the
+// patch file don't change the key, (b) cross-endpoint writes in the
+// same patch don't collide, and (c) bumping Stripe-Version
+// invalidates cached responses so clients don't get stale shapes.
+func (cs *Controllers) applyResourcePatches(
+	ctx context.Context,
+	stripe *stripeclient.Client,
+	fileKey string,
+	ops []irminmodels.PatchOperation,
+	operation *db.Operation,
+) error {
+	parsed, err := stripeclient.ParsePath(fileKey)
+	if err != nil {
+		return fmt.Errorf("patch: %w", err)
+	}
+	if !parsed.Resource.Write {
+		return fmt.Errorf("patch: resource %q is read-only", parsed.Resource.Name)
+	}
+	if parsed.IsNew || parsed.ID == "" {
+		return fmt.Errorf(
+			"patch: path %q is a create target; use push instead of patch",
+			fileKey,
+		)
+	}
+
+	form := url.Values{}
+	for _, op := range ops {
+		fieldPath, innerErr := common.TrimPatchFilePrefix(op.Path, fileKey)
+		if innerErr != nil {
+			return innerErr
+		}
+		if fieldPath == "" {
+			return errors.New("patch: cannot replace an entire resource via patch; use push")
+		}
+		if err = applySingleOp(op, fieldPath, form); err != nil {
+			return err
+		}
+	}
+
+	scope := parsed.Resource.Path + "/" + parsed.ID
+	_, err = stripe.Update(ctx, parsed.Resource.Path, parsed.ID, scope, form)
+	if err != nil {
+		common.LogOperationEvent(
+			cs.DB, cs.Logger, operation.ID,
+			db.LogEventTypeError,
+			"Stripe patch update failed",
+			map[string]any{
+				"resource": parsed.Resource.Name,
+				"id":       parsed.ID,
+				"error":    err.Error(),
+			},
+		)
+		return fmt.Errorf(
+			"patch: update %s/%s: %w",
+			parsed.Resource.Name, parsed.ID, err,
+		)
+	}
+
+	common.LogOperationEvent(
+		cs.DB, cs.Logger, operation.ID,
+		db.LogEventTypeInfo,
+		"Stripe patch update succeeded",
+		map[string]any{
+			"resource":  parsed.Resource.Name,
+			"id":        parsed.ID,
+			"op_count":  len(ops),
+			"form_keys": len(form),
+		},
+	)
+	return nil
+}
+
+// jsonPointerToFormKey converts a JSON-Pointer field suffix
+// ("metadata/plan" or "items/0/price") into Stripe's form key
+// convention ("metadata[plan]" or "items[0][price]"). Unescaping
+// handles `~1` → `/` and `~0` → `~` per RFC 6901.
+func jsonPointerToFormKey(ptr string) string {
+	parts := strings.Split(ptr, "/")
+	for i, p := range parts {
+		p = strings.ReplaceAll(p, "~1", "/")
+		p = strings.ReplaceAll(p, "~0", "~")
+		parts[i] = p
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	head := parts[0]
+	var sb strings.Builder
+	sb.WriteString(head)
+	for _, p := range parts[1:] {
+		sb.WriteByte('[')
+		sb.WriteString(p)
+		sb.WriteByte(']')
+	}
+	return sb.String()
+}
+
+// applySingleOp applies one JSON-Patch op to the coalesced form.
+// Split out of applyResourcePatches to keep the inner loop readable
+// and give the op-by-op branches a clean unit-test surface.
+func applySingleOp(op irminmodels.PatchOperation, fieldPath string, form url.Values) error {
+	formKey := jsonPointerToFormKey(fieldPath)
+	switch op.Op {
+	case "add", "replace":
+		if op.Value == nil {
+			return fmt.Errorf("patch: op %q requires a value", op.Op)
+		}
+		// JSON null as the value ("replace": {"path":"/name","value":null})
+		// is a valid JSON-Patch payload meaning "clear this field". Route
+		// it through the same scalar-clear path `remove` uses rather than
+		// letting it fall into setValueInForm, which would render it as
+		// {"key":null} — JSONToForm skips nulls, produces an empty form,
+		// and the user gets "refusing to send an empty payload" instead
+		// of a clear field-clear.
+		if *op.Value == nil {
+			if isArrayIndexPath(fieldPath) {
+				return fmt.Errorf(
+					"patch: op %q with null value on array element %q is not supported: "+
+						"Stripe doesn't renumber arrays, so clearing a single element "+
+						"can't be honored; replace the whole array instead",
+					op.Op, op.Path,
+				)
+			}
+			// Stripe's "clear this field" idiom for scalars — same as
+			// the remove case below.
+			form.Set(formKey, "")
+			return nil
+		}
+		if err := setValueInForm(formKey, *op.Value, form); err != nil {
+			return fmt.Errorf("patch: encode %s: %w", op.Path, err)
+		}
+		return nil
+	case "remove":
+		if isArrayIndexPath(fieldPath) {
+			return fmt.Errorf(
+				"patch: op %q on array element %q is not supported: "+
+					"Stripe doesn't renumber arrays, so JSON-Patch remove "+
+					"semantics can't be honored; replace the whole array instead",
+				op.Op, op.Path,
+			)
+		}
+		// Stripe's "clear this field" idiom for scalars.
+		form.Set(formKey, "")
+		return nil
+	case "move", "copy":
+		return fmt.Errorf("patch: op %q is not supported for Stripe resources", op.Op)
+	default:
+		return fmt.Errorf("patch: unsupported op %q", op.Op)
+	}
+}
+
+// isArrayIndexPath reports whether any segment of the JSON-Pointer
+// field path is a pure integer — which in JSON-Patch semantics means
+// "array element at this index". Stripe's form API can't handle
+// remove-by-index because it doesn't renumber arrays on partial
+// update; we reject these up front instead of pretending.
+func isArrayIndexPath(fieldPath string) bool {
+	for _, seg := range strings.Split(fieldPath, "/") {
+		if seg == "" {
+			continue
+		}
+		isAllDigits := true
+		for _, r := range seg {
+			if r < '0' || r > '9' {
+				isAllDigits = false
+				break
+			}
+		}
+		if isAllDigits {
+			return true
+		}
+	}
+	return false
+}
+
+// setValueInForm writes a JSON value into the form under the given
+// key, using last-write-wins semantics (url.Values.Set) for scalar
+// fields and bracketed child keys for objects/arrays. Swallowed
+// errors were a prior-round bug; marshal/flatten failures now
+// propagate so the caller aborts the patch and the user doesn't see
+// a misleading "patch applied" message while Stripe got nothing.
+func setValueInForm(key string, value any, out url.Values) error {
+	return appendValueToForm(key, value, out)
+}
+
+// appendValueToForm encodes a JSON value into the form under the
+// given key and returns an error if the value can't be marshaled or
+// flattened. Errors propagate (rather than being swallowed) so the
+// caller can abort the patch — silently dropping a malformed field
+// while letting the Stripe update succeed would leave the user with
+// a "patch applied" message and a field change that never happened.
+//
+// For scalar values, writes one form entry at key. For object/array
+// values, the key becomes a bracketed prefix: passing key="metadata"
+// with value {"plan":"pro","region":"eu"} emits metadata[plan]=pro
+// and metadata[region]=eu. Matches the bracketed convention
+// JSONToForm uses on the push path so patch + push stay semantically
+// aligned.
+func appendValueToForm(key string, value any, out url.Values) error {
+	// Re-marshal the single value to JSON and flatten under the
+	// target key. Not the fastest path, but the values are small
+	// and this keeps the encoding centralized in JSONToForm.
+	buf, err := json.Marshal(map[string]any{key: value})
+	if err != nil {
+		return fmt.Errorf("marshal value for key %q: %w", key, err)
+	}
+	form, err := stripeclient.JSONToForm(buf)
+	if err != nil {
+		return fmt.Errorf("flatten value for key %q: %w", key, err)
+	}
+	// Last-write-wins on each form key. Earlier revisions appended,
+	// which meant two ops targeting the same scalar field produced
+	// multi-value form entries — url.Values.Encode emits both and
+	// Stripe's parser picks whichever comes last, but the ambiguity
+	// isn't worth the accumulation. Direct assignment matches
+	// Stripe's form-parser semantics cleanly.
+	for k, v := range form {
+		out[k] = v
+	}
+	return nil
+}

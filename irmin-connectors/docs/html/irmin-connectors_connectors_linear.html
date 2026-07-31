@@ -1,0 +1,19 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/linear</title></head><body>
+<h1>Package irmin-connectors/connectors/linear</h1>
+<pre>
+package linearconnector // import "irmin-connectors/connectors/linear"
+
+Package linearconnector wires the Linear connector's controllers into the shared
+HTTP router. Call SetupRoutes once at startup; every request flows through
+common.SetupConnectorRoutes from there.
+
+FUNCTIONS
+
+func SetupRoutes(app *models.ConnectorsApp)
+    SetupRoutes mounts the Linear connector under /linear. The controller embeds
+    *common.OAuthConnector so every operation inherits the OAuth machinery
+    without per-route wiring.
+
+</pre>
+</body></html>

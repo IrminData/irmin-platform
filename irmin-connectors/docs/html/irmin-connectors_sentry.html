@@ -1,0 +1,43 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/sentry</title></head><body>
+<h1>Package irmin-connectors/sentry</h1>
+<pre>
+package sentryutil // import "irmin-connectors/sentry"
+
+Package sentryutil provides Sentry error tracking utilities for Irmin
+Connectors.
+
+CONSTANTS
+
+const FlushTimeout = 2 * time.Second
+    FlushTimeout is the default timeout for flushing buffered Sentry events.
+
+
+FUNCTIONS
+
+func CaptureError(err error)
+    CaptureError reports an error to Sentry.
+
+func FiberMiddleware() fiber.Handler
+    FiberMiddleware returns a Fiber middleware that clones the Sentry hub per
+    request, sets request metadata, stores the hub in c.Locals, and manages a
+    Sentry transaction.
+
+func Flush(timeout time.Duration)
+    Flush waits for buffered events to be sent to Sentry, up to the given
+    timeout.
+
+func GetHubFromFiber(c fiber.Ctx) *sentry.Hub
+    GetHubFromFiber retrieves the Sentry hub from Fiber context locals. Falls
+    back to sentry.CurrentHub() if not found.
+
+func Init(logger *slog.Logger, env *utils.ConnectorsEnv)
+    Init initializes the Sentry SDK using the provided environment
+    configuration. Returns early if Sentry is disabled or no DSN is configured.
+
+func RecoverAndCapture(logger *slog.Logger, component string)
+    RecoverAndCapture is a deferred function for goroutines that recovers from
+    panics, captures the panic as a Sentry event, and logs it.
+
+</pre>
+</body></html>

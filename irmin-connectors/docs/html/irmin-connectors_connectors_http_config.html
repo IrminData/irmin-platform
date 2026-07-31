@@ -1,0 +1,33 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/http/config</title></head><body>
+<h1>Package irmin-connectors/connectors/http/config</h1>
+<pre>
+package config // import "irmin-connectors/connectors/http/config"
+
+
+FUNCTIONS
+
+func GetConnectorInfo() models.ConnectorDetails
+    GetConnectorInfo returns the default connector information for HTTP.
+
+func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
+    GetDetailsFieldDefinitions returns all detail fields with their metadata.
+
+func GetDetailsFields() []string
+    GetDetailsFields returns the detail-specific fields.
+
+func GetOptionalFields() []string
+    GetOptionalFields returns the optional form fields for HTTP.
+
+func GetRequiredFields() []string
+    GetRequiredFields returns the mandatory form fields for HTTP.
+
+func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
+    GetSettingsFieldDefinitions returns static settings fields (dynamic ones are
+    handled in controllers).
+
+func GetSettingsFields() []string
+    GetSettingsFields returns the settings-specific fields.
+
+</pre>
+</body></html>

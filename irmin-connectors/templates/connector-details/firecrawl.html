@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo img {
+            max-width: 200px;
+            height: auto;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            color: #34495e;
+            border-bottom: 2px solid #f97316;
+            padding-bottom: 10px;
+        }
+        ul {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .highlight {
+            background-color: #fff7ed;
+            padding: 15px;
+            border-left: 4px solid #f97316;
+            margin: 20px 0;
+        }
+        .docs-link {
+            display: inline-block;
+            background-color: #f97316;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .docs-link:hover {
+            background-color: #ea580c;
+        }
+        .operation-card {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .operation-card h3 {
+            margin-top: 0;
+            color: #f97316;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="{{.LogoPath}}" alt="{{.LogoAlt}}">
+        </div>
+        
+        <h1>{{.Title}}</h1>
+        
+        <div class="section">
+            <p>{{.Description}}</p>
+        </div>
+        
+        <div class="section">
+            <h2>Connection Setup</h2>
+            <p>Steps for establishing the Firecrawl connection:</p>
+            <ul>
+                <li><strong>API Key:</strong> Obtain your API key from <a href="https://firecrawl.dev" target="_blank">firecrawl.dev</a> and enter it in the configuration.</li>
+                <li><strong>Operation Type:</strong> Choose the type of operation: scrape, crawl, map, or search.</li>
+                <li><strong>Target URL:</strong> Specify the URL to scrape, crawl, or map (required for non-search operations).</li>
+                <li><strong>Output Format:</strong> Select your preferred output format: Markdown, HTML, or JSON with metadata.</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Available Operations</h2>
+            
+            <div class="operation-card">
+                <h3>Scrape</h3>
+                <p>Extract content from a single URL. Returns clean markdown, HTML, or JSON representation of the page content. Ideal for extracting specific pages or articles.</p>
+            </div>
+            
+            <div class="operation-card">
+                <h3>Crawl</h3>
+                <p>Automatically discover and extract content from a URL and all its accessible subpages. Perfect for converting entire websites into structured data. Configure limits to control the scope.</p>
+            </div>
+            
+            <div class="operation-card">
+                <h3>Map</h3>
+                <p>Quickly discover all URLs from a website without extracting content. Returns a JSON file containing all discovered links. Useful for site audits and understanding website structure.</p>
+            </div>
+            
+            <div class="operation-card">
+                <h3>Search</h3>
+                <p>Search the web and get full content from search results. Enter a search query and receive extracted content from the top results.</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Output Formats</h2>
+            <ul>
+                <li><strong>Markdown (.md):</strong> Clean, readable markdown format ideal for documentation and LLM applications.</li>
+                <li><strong>HTML (.html):</strong> Full HTML content for web applications and detailed analysis.</li>
+                <li><strong>JSON (.json):</strong> Structured JSON with content, metadata, and extracted links for programmatic use.</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Key Features</h2>
+            <ul>
+                <li><strong>LLM-Ready Output:</strong> Content is automatically cleaned and formatted for use with AI/LLM applications.</li>
+                <li><strong>Metadata Extraction:</strong> Automatically extracts title, description, Open Graph tags, and other metadata.</li>
+                <li><strong>Link Discovery:</strong> Discovers and returns all links found on scraped pages.</li>
+                <li><strong>No Sitemap Required:</strong> Intelligent crawling that works without requiring a sitemap.</li>
+                <li><strong>Configurable Limits:</strong> Control the scope of crawl operations with page limits.</li>
+            </ul>
+        </div>
+        
+        <div class="highlight">
+            <strong>Event Listening:</strong> {{.EventListeningDescription}}
+        </div>
+        
+        <a href="{{.DocsPath}}" class="docs-link">Read connector documentation</a>
+    </div>
+</body>
+</html>
+

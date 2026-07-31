@@ -1,0 +1,67 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/http/client</title></head><body>
+<h1>Package irmin-connectors/connectors/http/client</h1>
+<pre>
+package client // import "irmin-connectors/connectors/http/client"
+
+
+FUNCTIONS
+
+func ValidateConfiguration(config map[string]any) error
+    ValidateConfiguration validates the HTTP client configuration.
+
+
+TYPES
+
+type HTTPClient struct {
+	URL                 string
+	Method              string
+	Headers             map[string]string // Not safe for concurrent map iteration
+	Body                []byte
+	Timeout             int
+	VerifySSL           bool
+	AcceptedStatusCodes []int
+	Client              *http.Client // Safe for concurrent use
+}
+    HTTPClient represents an HTTP client for making requests. Note: HTTPClient
+    instances should not be shared across goroutines. The Headers map is not
+    protected by synchronization. For concurrent use, create separate HTTPClient
+    instances (the underlying http.Client can be shared).
+
+func InitHTTPClient(c any, logger *slog.Logger, operation *db.Operation) (*HTTPClient, error)
+    InitHTTPClient initializes an HTTP client from operation configuration.
+
+func (h *HTTPClient) GetContentType(resp *http.Response) string
+    GetContentType returns the content type from response headers.
+
+func (h *HTTPClient) GetFileNameFromResponse(resp *http.Response) string
+    GetFileNameFromResponse generates a filename based on response headers, URL,
+    and content type.
+
+func (h *HTTPClient) GetResponseBody(resp *http.Response) ([]byte, error)
+    GetResponseBody reads and returns the response body as bytes. Note:
+    The caller is responsible for closing the response body.
+
+func (h *HTTPClient) IsAcceptedStatusCode(statusCode int) bool
+    IsAcceptedStatusCode checks if the given status code is in the accepted
+    list.
+
+func (h *HTTPClient) MakeRequest() (*http.Response, error)
+    MakeRequest makes an HTTP request and returns the response. This method is
+    not safe for concurrent use on the same HTTPClient instance.
+
+func (h *HTTPClient) MakeRequestWithContext(ctx context.Context) (*http.Response, error)
+    MakeRequestWithContext makes an HTTP request tied to ctx so async operation
+    cancellation interrupts in-flight network I/O.
+
+func (h *HTTPClient) WithPath(newPath string) *HTTPClient
+    WithPath creates a new HTTPClient with the URL path replaced or appended.
+    If the path is absolute (starts with /), it replaces the URL path entirely.
+    If the path is relative, it appends it to the existing URL path. If the path
+    is empty, the URL remains unchanged but a new client is still returned.
+    This method always returns a new client instance with deep copies of all
+    mutable fields. Exception: If URL parsing fails, returns the original client
+    as an error condition.
+
+</pre>
+</body></html>

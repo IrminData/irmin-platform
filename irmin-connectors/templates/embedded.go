@@ -1,0 +1,26 @@
+package templates
+
+import (
+	_ "embed"
+)
+
+//go:embed connector-details/http.html
+var HTTPDetailsHTML []byte
+
+//go:embed connector-details/mysql.html
+var MySQLDetailsHTML []byte
+
+//go:embed connector-details/postgres.html
+var PostgresDetailsHTML []byte
+
+//go:embed connector-details/sftp.html
+var SFTPDetailsHTML []byte
+
+//go:embed connector-details/firecrawl.html
+var FirecrawlDetailsHTML []byte
+
+//go:embed connector-details/pinecone.html
+var PineconeDetailsHTML []byte
+
+//go:embed swagger/swagger-ui.html
+var SwaggerUIHTML []byte

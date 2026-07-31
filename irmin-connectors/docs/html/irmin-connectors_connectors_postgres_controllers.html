@@ -1,0 +1,339 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/postgres/controllers</title></head><body>
+<h1>Package irmin-connectors/connectors/postgres/controllers</h1>
+<pre>
+package postgrescontrollers // import "irmin-connectors/connectors/postgres/controllers"
+
+
+CONSTANTS
+
+const ConnectorName = "PostgreSQL"
+    ConnectorName is the name used to identify this connector in the listener
+    manager.
+
+
+TYPES
+
+type Controllers struct {
+	*common.Controllers
+}
+    Controllers holds the dependencies for the PostgreSQL connector controllers.
+
+func NewControllers(app *models.ConnectorsApp) *Controllers
+    NewControllers creates a new instance of controllers with the required
+    dependencies.
+
+func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
+    BuildDetails implements the OperationConfigProvider interface.
+
+func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
+    BuildSettings implements the OperationConfigProvider interface.
+
+func (cs *Controllers) ConfigFields(c fiber.Ctx) error
+    ConfigFields godoc @Summary Get PostgreSQL connector configuration fields
+    @Description Get dynamic configuration fields for the PostgreSQL connector
+    based on the configuration key (details or settings). For settings,
+    dynamically fetches available databases from the PostgreSQL server. @Tags
+    postgres @Security SystemTokenAuth @Accept json @Accept multipart/form-data
+    @Produce json @Param key path string true "Configuration key" Enums(details,
+    settings) @Param details[host] formData string false "PostgreSQL
+    server hostname (required for settings key to fetch databases)" @Param
+    details[port] formData integer false "PostgreSQL server port (required for
+    settings key to fetch databases)" @Param details[username] formData string
+    false "Username (required for settings key to fetch databases)" @Param
+    details[password] formData string false "Password (required for settings
+    key to fetch databases)" @Param details[default_db] formData string false
+    "Default database (required for settings key to fetch databases)" @Param
+    details[ssl_mode] formData boolean false "SSL mode enabled (required for
+    settings key to fetch databases)" @Param details[channel_binding] formData
+    string false "Channel binding mode for SCRAM authentication (disable,
+    prefer, require)" @Success 200 {object} map[string]irminmodels.DynamicField
+    "Configuration fields retrieved successfully" @Failure 400 {object}
+    fiber.Map "Bad request - invalid configuration key or missing connection
+    details" @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing
+    authentication" @Failure 500 {object} fiber.Map "Internal server error"
+    @Router /postgres/configuration/{key}/fields [post]
+
+func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
+    ConfigValidate godoc @Summary Validate PostgreSQL connector configuration
+    @Description Validate PostgreSQL connection details and settings by testing
+    the actual connection to the PostgreSQL server and specified database @Tags
+    postgres @Security SystemTokenAuth @Accept multipart/form-data @Produce json
+    @Param details[host] formData string true "PostgreSQL server hostname or IP
+    address" @Param details[port] formData integer false "PostgreSQL server port
+    (default: 5432)" @Param details[username] formData string true "Username
+    for PostgreSQL authentication" @Param details[password] formData string
+    true "Password for PostgreSQL authentication" @Param details[default_db]
+    formData string false "Default database for initial connection" @Param
+    details[ssl_mode] formData boolean false "Enable SSL mode for secure
+    connections" @Param details[channel_binding] formData string false "Channel
+    binding mode for SCRAM authentication (disable, prefer, require)" @Param
+    settings[database] formData string false "Target database name to validate
+    connection (optional for details-only validation)" @Success 200 {object}
+    irminmodels.ConnectorConfigurationValidationResult "Configuration validation
+    result" @Failure 400 {object} fiber.Map "Bad request - invalid configuration
+    data" @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing
+    authentication" @Failure 500 {object} fiber.Map "Internal server error"
+    @Router /postgres/configuration/validate [post]
+
+func (cs *Controllers) DetailsPage(c fiber.Ctx) error
+    DetailsPage godoc @Summary Get PostgreSQL connector details page
+    @Description Get an HTML page with detailed information about the PostgreSQL
+    connector including capabilities, authentication methods, and usage examples
+    @Tags postgres @Accept json @Produce text/html @Success 200 {string}
+    string "PostgreSQL connector details page" @Failure 500 {object} fiber.Map
+    "Internal server error" @Router /postgres/details [get]
+
+func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
+    EnsureOperationMiddleware upserts the Operation row from the `details[]`
+    / `settings[]` form fields the SDK's StartOperation* requests now
+    carry. Registered as the second handler on every data route after
+    ValidateSystemToken — see common/routes.go.
+
+func (cs *Controllers) GetDynamicFields(
+	c fiber.Ctx,
+	key string,
+	fields map[string]string,
+) (map[string]irminmodels.DynamicField, error)
+    GetDynamicFields implements the ConfigFieldProvider interface.
+
+func (cs *Controllers) GetOperationFormFields() ([]string, []string)
+    GetOperationFormFields implements the OperationConfigProvider interface.
+
+func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
+    GetRequiredFormFields implements the ConfigValidationProvider interface.
+    For validation, only required details fields are strictly required upfront.
+    Settings fields are optional - TestConnection will validate them if
+    provided.
+
+func (cs *Controllers) Info(c fiber.Ctx) error
+    Info godoc @Summary Get PostgreSQL connector information @Description Get
+    detailed information about the PostgreSQL connector including capabilities,
+    configuration fields, and API endpoints @Tags postgres @Security
+    SystemTokenAuth @Accept json @Produce json @Success 200 {object}
+    models.ConnectorDetails "PostgreSQL connector information retrieved
+    successfully" @Failure 401 {object} fiber.Map "Unauthorized - invalid or
+    missing authentication" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /postgres/info [get]
+
+func (cs *Controllers) OperationPatch(c fiber.Ctx) error
+    OperationPatch godoc @Summary Patch data in PostgreSQL database
+    @Description Apply granular updates to PostgreSQL database records
+    using JSON patch operations @Tags postgres @Security SystemTokenAuth
+    @Accept multipart/form-data @Produce json @Param patch formData file
+    true "JSON patch file containing update operations" @Success 202
+    {object} irminmodels.StartOperationJobResponse "Patch job accepted;
+    poll /operation/status/:job_id" @Failure 400 {object} fiber.Map "Bad
+    request - invalid operation token or patch format" @Failure 401 {object}
+    fiber.Map "Unauthorized - invalid or missing authentication" @Failure
+    404 {object} fiber.Map "Operation not found" @Failure 409 {object}
+    irminmodels.AlreadyRunningBody "Operation already running" @Failure
+    500 {object} irminmodels.JobErrorBody "Internal server error" @Router
+    /postgres/operation/patch [post]
+
+func (cs *Controllers) OperationPull(c fiber.Ctx) error
+    OperationPull godoc @Summary Pull data from PostgreSQL database @Description
+    Extract data from PostgreSQL database tables using the operation token
+    and specified path (table name) @Tags postgres @Security SystemTokenAuth
+    @Accept multipart/form-data @Produce json @Param path formData string true
+    "Table name to extract data from" @Success 200 {object} fiber.Map "Data
+    pulled successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    operation token or table name" @Failure 401 {object} fiber.Map "Unauthorized
+    - invalid or missing authentication" @Failure 404 {object} fiber.Map "Table
+    not found" @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /postgres/operation/pull [post]
+
+func (cs *Controllers) OperationPush(c fiber.Ctx) error
+    OperationPush godoc @Summary Push data to PostgreSQL database @Description
+    Insert data into PostgreSQL database tables using the operation token
+    and JSON file containing table data. Use the path parameter to specify
+    a target table name. @Tags postgres @Security SystemTokenAuth @Accept
+    multipart/form-data @Produce json @Param file formData file true "JSON file
+    containing table data to insert" @Param path formData string false "Target
+    table name (e.g., customers). If not specified, uses the filename from the
+    uploaded file" @Success 202 {object} irminmodels.StartOperationJobResponse
+    "Push job accepted; poll /operation/status/:job_id" @Failure 400 {object}
+    fiber.Map "Bad request - invalid operation token or file format" @Failure
+    401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Failure 404 {object} fiber.Map "Operation not found" @Failure 409 {object}
+    irminmodels.AlreadyRunningBody "Operation already running" @Failure
+    500 {object} irminmodels.JobErrorBody "Internal server error" @Router
+    /postgres/operation/push [post]
+
+func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
+    OperationSchemaGet godoc @Summary Get PostgreSQL operation schema
+    @Description Get the database schema for PostgreSQL operations,
+    returning an Irmin-compatible ObjectSchema grouping each table as a JSON
+    array based on the operation type (pull or push). Use the path query
+    parameter to specify which database to analyze. @Tags postgres @Security
+    SystemTokenAuth @Accept json @Produce json @Param operation path string
+    true "Operation type" Enums(pull, push) @Param path query string false
+    "Database name to get schema for (e.g., my_database)" @Success 200 {object}
+    irminmodels.ObjectSchema "Operation schema retrieved successfully"
+    @Failure 400 {object} fiber.Map "Bad request - invalid operation type
+    or token" @Failure 401 {object} fiber.Map "Unauthorized - invalid or
+    missing authentication" @Failure 404 {object} fiber.Map "Operation not
+    found" @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /postgres/operation/schema/{operation} [post]
+
+func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
+    SubscribeToChanges godoc @Summary Subscribe to PostgreSQL database changes
+    @Description Set up real-time monitoring of PostgreSQL database changes
+    using notification triggers and webhook notifications @Tags postgres
+    @Security SystemTokenAuth @Accept multipart/form-data @Produce json
+    @Param webhook_url formData string true "Webhook URL to receive change
+    notifications" @Param webhook_access_token formData string true "Access
+    token for webhook authentication" @Success 200 {object} db.Subscription
+    "Subscription created successfully" @Failure 400 {object} fiber.Map "Bad
+    request - invalid parameters" @Failure 401 {object} fiber.Map "Unauthorized
+    - invalid or missing authentication" @Failure 404 {object} fiber.Map
+    "Operation not found" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /postgres/operation/subscribe [post]
+
+func (cs *Controllers) TestConnection(
+	ctx fiber.Ctx,
+	details map[string]any,
+	settings map[string]any,
+) (bool, bool, bool, []string)
+    TestConnection implements the ConfigValidationProvider interface.
+
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+    UnsubscribeFromChanges godoc @Summary Unsubscribe from PostgreSQL database
+    changes @Description Stop monitoring PostgreSQL database changes and
+    remove the subscription @Tags postgres @Security SystemTokenAuth @Accept
+    multipart/form-data @Produce json @Param subscription_id formData string
+    true "ID of the subscription to remove" @Success 200 {object} fiber.Map
+    "Subscription removed successfully" @Failure 400 {object} fiber.Map "Bad
+    request - invalid parameters" @Failure 401 {object} fiber.Map "Unauthorized
+    - invalid or missing authentication" @Failure 403 {object} fiber.Map
+    "Forbidden - subscription does not belong to this operation" @Failure 404
+    {object} fiber.Map "Subscription not found" @Failure 500 {object} fiber.Map
+    "Internal server error" @Router /postgres/operation/unsubscribe [post]
+
+func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
+    ValidateFields implements the ConfigValidationProvider interface.
+
+func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
+    ValidateSystemTokenMiddleware validates the system token.
+
+type PostgreSQLSchemaProvider struct{}
+    PostgreSQLSchemaProvider implements the SchemaOperationProvider interface
+    for PostgreSQL databases.
+
+func (p *PostgreSQLSchemaProvider) GetSchema(
+	c fiber.Ctx,
+	client any,
+	_ string,
+	databaseName *string,
+) (*irminmodels.ObjectSchema, error)
+    GetSchema retrieves the PostgreSQL database schema and returns an
+    Irmin-compatible ObjectSchema.
+
+func (p *PostgreSQLSchemaProvider) GetSupportedOperationTypes() []string
+    GetSupportedOperationTypes returns the list of supported operation types for
+    PostgreSQL.
+
+func (p *PostgreSQLSchemaProvider) InitializeClient(
+	c fiber.Ctx,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient initializes the PostgreSQL client for schema operations.
+
+type PostgresPatchProvider struct{}
+    PostgresPatchProvider implements the PatchOperationProvider interface for
+    PostgreSQL.
+
+func (p *PostgresPatchProvider) ExecutePatchOperation(
+	ctx context.Context,
+	client any,
+	op irminmodels.PatchOperation,
+	tableName, rowIdentifier, columnName string,
+	_, fromTable, fromRow, fromColumn string,
+) error
+    ExecutePatchOperation executes a single patch operation within its own
+    transaction.
+
+func (p *PostgresPatchProvider) InitializeClient(
+	ctx context.Context,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, func(), error)
+    InitializeClient initializes the PostgreSQL client for patch operations.
+
+type PostgresPullProvider struct {
+	// Has unexported fields.
+}
+    PostgresPullProvider implements the PullOperationProvider interface for
+    PostgreSQL.
+
+func (p *PostgresPullProvider) GetAllFiles(
+	ctx context.Context, client any, operation *db.Operation,
+) ([]string, [][]byte, error)
+    GetAllFiles retrieves all tables as JSON files.
+
+func (p *PostgresPullProvider) GetFileByPath(
+	ctx context.Context, client any, operation *db.Operation, rawPath string,
+) (string, []byte, error)
+    GetFileByPath retrieves a specific table as a JSON file.
+
+func (p *PostgresPullProvider) InitializeClient(
+	ctx context.Context,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient initializes the PostgreSQL client for pull operations.
+
+func (p *PostgresPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler returns the per-row-batch observability callback that
+    Postgres' row-scan loop fires from inside buildRecordsFromRows. Without it,
+    a 10M-row table pull emits zero events between operation/init and the final
+    response — same silent-window failure mode Stripe got fixed for, but worse
+    since SQL scans can run 30+ minutes.
+
+    Always returns a non-nil handler. Nil-safety lives one layer down in
+    common.LogOperationProgress.
+
+    Throttling lives in common.ThrottledQueryEmitter at the call site (every
+    1000 rows OR every 5s) — Query is unthrottled in LogOperationProgress so
+    callers control their own granularity, since "every page" doesn't translate
+    cleanly to row scans.
+
+type PostgresPushProvider struct {
+	// Has unexported fields.
+}
+    PostgresPushProvider implements the PushOperationProvider interface for
+    PostgreSQL.
+
+func (p *PostgresPushProvider) InitializeClient(
+	ctx context.Context,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient initializes the PostgreSQL client for push operations.
+
+func (p *PostgresPushProvider) ProcessFiles(
+	ctx context.Context,
+	client any,
+	operation *db.Operation,
+	files map[string][]byte,
+	rawPath string,
+) error
+    ProcessFiles processes the extracted files and inserts them into PostgreSQL
+    tables.
+
+func (p *PostgresPushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler returns the per-row-batch observability callback that
+    Postgres' single-row INSERT loop fires from inside executeInserts.
+    A million-row push without progress emission looks identical to a hung
+    connection until the final COMMIT — same field-incident shape that Stripe
+    got fixed for.
+
+    Always returns a non-nil handler. Nil-safety lives one layer down in
+    common.LogOperationProgress.
+
+    Throttling lives in common.ThrottledQueryEmitter at the call site (every
+    1000 rows OR every 5s).
+
+</pre>
+</body></html>

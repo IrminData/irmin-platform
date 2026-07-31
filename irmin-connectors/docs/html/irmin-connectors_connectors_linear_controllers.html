@@ -1,0 +1,303 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/linear/controllers</title></head><body>
+<h1>Package irmin-connectors/connectors/linear/controllers</h1>
+<pre>
+package linearcontrollers // import "irmin-connectors/connectors/linear/controllers"
+
+Package linearcontrollers wires the Linear connector's HTTP handlers.
+The Controllers struct embeds *common.OAuthConnector so every method inherits
+the shared OAuth machinery (token resolution, sentinel-to-HTTP mapping, /info
+OAuth-config stamping) alongside *common.Controllers for the per-connector base
+routes.
+
+TYPES
+
+type Controllers struct {
+	*common.Controllers
+	*common.OAuthConnector
+}
+    Controllers holds the dependencies for every Linear handler.
+    The composition mirrors the README example for OAuth-backed connectors:
+    embed common.Controllers for the base machinery (DB, App, Logger,
+    HandleConfigFields/HandleConfigValidation), and embed common.OAuthConnector
+    to pick up token resolution + /info OAuth stamping.
+
+func NewControllers(app *models.ConnectorsApp) *Controllers
+    NewControllers wires the Linear controller from the connector app.
+    NewOAuthConnector reads IRMIN_API_BASE_URL + IRMIN_API_TOKEN from the
+    app's environment to build the underlying OAuthTokenClient, and pulls the
+    connector's static OAuth config off config.GetConnectorInfo so the Connect
+    button renders without a separate metadata fetch on the frontend.
+
+func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
+    BuildDetails implements common.OperationConfigProvider. Linear has
+    no detail fields; the result is an empty map by construction because
+    GetDetailsFieldDefinitions returns an empty map.
+
+func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
+    BuildSettings implements common.OperationConfigProvider.
+
+func (cs *Controllers) ConfigFields(c fiber.Ctx) error
+    ConfigFields godoc @Summary Get Linear connector configuration fields
+    @Description Returns dynamic configuration field definitions for the
+    Linear connector. The "details" key returns an empty map because Linear
+    authenticates via OAuth; the "settings" key returns user-tunable options
+    like team_key. @Tags linear @Security SystemTokenAuth @Accept json
+    @Accept multipart/form-data @Produce json @Param key path string true
+    "Configuration key" Enums(details, settings) @Success 200 {object}
+    map[string]irminmodels.DynamicField "Configuration fields" @Failure
+    400 {object} fiber.Map "Bad request" @Failure 401 {object} fiber.Map
+    "Unauthorized" @Failure 500 {object} fiber.Map "Internal server error"
+    @Router /linear/configuration/{key}/fields [post]
+
+func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
+    ConfigValidate godoc @Summary Validate Linear connector configuration
+    @Description Validates the Linear Connection's settings (e.g.,
+    team_key shape, max_records cap). Linear authenticates via OAuth,
+    so there are no credential fields to validate here — the OAuth
+    flow's completion in Core is the actual auth check, surfaced through
+    /v1/connections/:id/oauth/start. @Tags linear @Security SystemTokenAuth
+    @Accept multipart/form-data @Produce json @Param settings[team_key]
+    formData string false "Optional Linear team key (e.g., IRM)" @Param
+    settings[max_records_per_resource] formData string false "Optional cap
+    on records returned per pull" @Param settings[api_endpoint] formData
+    string false "Optional GraphQL endpoint override" @Success 200 {object}
+    irminmodels.ConnectorConfigurationValidationResult "Validation result"
+    @Failure 400 {object} fiber.Map "Bad request" @Failure 401 {object}
+    fiber.Map "Unauthorized" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /linear/configuration/validate [post]
+
+func (cs *Controllers) DetailsPage(c fiber.Ctx) error
+    DetailsPage godoc @Summary Get Linear connector details page @Description
+    Renders an HTML page describing what the Linear connector does, what it
+    supports, and how to set it up. Public — no authentication required.
+    @Tags linear @Accept json @Produce text/html @Success 200 {string} string
+    "Linear connector details page" @Failure 500 {object} fiber.Map "Internal
+    server error" @Router /linear/details [get]
+
+func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
+    EnsureOperationMiddleware upserts the Operation row from the `details[]`
+    / `settings[]` form fields the SDK's StartOperation* requests carry.
+    Linear has no `details[]` fields (OAuth supplies the credential), but the
+    middleware still runs so settings get captured uniformly across operations.
+
+func (cs *Controllers) GetDynamicFields(
+	_ fiber.Ctx,
+	key string,
+	_ map[string]string,
+) (map[string]irminmodels.DynamicField, error)
+    GetDynamicFields implements common.ConfigFieldProvider. Returns the static
+    schema for the requested key — Linear's config is fully declarative so the
+    provider does no per-request decisions.
+
+func (cs *Controllers) GetOperationFormFields() ([]string, []string)
+    GetOperationFormFields implements common.OperationConfigProvider. Linear has
+    no required fields (OAuth supplies the credential and every setting defaults
+    sensibly), so the required slice is empty.
+
+func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
+    GetRequiredFormFields implements common.ConfigValidationProvider. Returns
+    no required fields — Linear is OAuth-backed and every setting is optional.
+    The optional list is the full settings shape so the form parser surfaces
+    them on the validation response.
+
+func (cs *Controllers) Info(c fiber.Ctx) error
+    Info godoc @Summary Get Linear connector information @Description Returns
+    connector metadata including capabilities, OAuth configuration, and dynamic
+    field schema. The embedded ConnectionOAuthConfig is what tells the console
+    to render a Connect-with-Linear button instead of a credential form. @Tags
+    linear @Security SystemTokenAuth @Accept json @Produce json @Success 200
+    {object} models.ConnectorDetails "Linear connector information" @Failure 401
+    {object} fiber.Map "Unauthorized" @Failure 500 {object} fiber.Map "Internal
+    server error" @Router /linear/info [get]
+
+func (cs *Controllers) OperationPatch(c fiber.Ctx) (retErr error)
+    OperationPatch applies a JSON-Patch document to Linear issues. The shape
+    mirrors the Stripe patch handler: each patch op's `path` starts with the
+    file path of a Linear record (e.g., `/issues/&lt;uuid&gt;.json/title`); the suffix
+    is the field to touch. Operations targeting the same issue are coalesced
+    into one issueUpdate mutation so Linear sees a single atomic write per issue
+    rather than one mutation per field.
+
+    Only `add`, `replace`, and `remove` are supported — Linear's update input
+    is flat enough that JSON-Patch's `move` / `copy` don't have well-defined
+    semantics, and silently approximating them would mask real bugs in the patch
+    generator.
+
+    The handler bypasses common.HandleOperationPatch because that helper's
+    per-op `(table, row, column)` model is built for SQL connectors and
+    doesn't fit GraphQL inputs cleanly. Stripe makes the same choice; see
+    stripe/controllers/operationPatch.go for the rationale.
+
+    Note: `&lt;id&gt;` in the path must be the Linear UUID (the `id` field from a
+    pulled issue), not the human-readable identifier. The connector documents
+    this on the patch endpoint so callers reading the OpenAPI know which to use.
+
+    @Summary Apply JSON-Patch operations to Linear issues @Description
+    Translates a JSON-Patch document into one issueUpdate mutation per targeted
+    Linear issue. Only add/replace/remove are supported. The patch path must
+    reference an issue file (e.g., `/issues/&lt;uuid&gt;.json/title`) where `&lt;uuid&gt;`
+    is the Linear UUID, not the identifier (IRM-42). @Tags linear @Security
+    SystemTokenAuth @Accept multipart/form-data @Produce json @Param patches
+    formData file true "JSON file containing a JSON-Patch array" @Success 200
+    {object} fiber.Map "Patches applied successfully" @Failure 400 {object}
+    fiber.Map "Bad request" @Failure 401 {object} fiber.Map "Unauthorized"
+    @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /linear/operation/patch [post]
+
+func (cs *Controllers) OperationPull(c fiber.Ctx) error
+    OperationPull godoc @Summary Pull data from Linear @Description Pulls
+    Linear issues, projects, cycles, and teams as JSON files. The connection
+    ID is captured from the request before the async worker starts so the
+    worker can resolve OAuth tokens without a fiber.Ctx. If `path` is empty,
+    every pull-enabled resource is returned; a `&lt;resource&gt;` or `&lt;resource&gt;.json`
+    path narrows the pull to a single resource. Single-record paths are
+    not yet supported. @Tags linear @Security SystemTokenAuth @Accept
+    multipart/form-data @Produce application/zip @Param path formData string
+    false "Optional resource name (e.g., 'issues')" @Success 200 {file} binary
+    "ZIP archive of pulled JSON files" @Failure 400 {object} fiber.Map "Bad
+    request" @Failure 401 {object} fiber.Map "Unauthorized" @Failure 404
+    {object} fiber.Map "Operation not found" @Failure 409 {object} fiber.Map
+    "Operation already running" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /linear/operation/pull [post]
+
+func (cs *Controllers) OperationPush(c fiber.Ctx) error
+    OperationPush godoc @Summary Push data to Linear @Description Creates
+    new Linear issues from JSON files in the uploaded ZIP. Files matching
+    `issues/new-*.json` are turned into IssueCreate mutations; every other
+    file is skipped with a log line. Each file's JSON must be a valid Linear
+    IssueCreateInput; the `teamKey` setting on the Connection fills in the
+    team if the file omits it. @Tags linear @Security SystemTokenAuth @Accept
+    multipart/form-data @Produce json @Param file formData file true "ZIP
+    containing JSON issue files (issues/new-*.json)" @Success 202 {object}
+    fiber.Map "Async push job accepted ({job_id, operation_token})" @Failure
+    400 {object} fiber.Map "Bad request" @Failure 401 {object} fiber.Map
+    "Unauthorized" @Failure 404 {object} fiber.Map "Operation not found"
+    @Failure 409 {object} fiber.Map "Operation already running" @Failure 500
+    {object} fiber.Map "Internal server error" @Router /linear/operation/push
+    [post]
+
+func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
+    OperationSchemaGet godoc @Summary Get Linear operation schema @Description
+    Returns an Irmin ObjectSchema describing the on-disk file layout the
+    Linear connector emits on pull and accepts on push/patch. @Tags linear
+    @Security SystemTokenAuth @Accept json @Produce json @Param operation
+    path string true "Operation type" Enums(pull, push, patch) @Success 200
+    {object} irminmodels.ObjectSchema "Operation schema" @Failure 400 {object}
+    fiber.Map "Bad request" @Failure 401 {object} fiber.Map "Unauthorized"
+    @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /linear/operation/schema/{operation} [post]
+
+func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
+    SubscribeToChanges is not supported.
+
+func (cs *Controllers) TestConnection(
+	_ fiber.Ctx, _, _ map[string]any,
+) (bool, bool, bool, []string)
+    TestConnection implements common.ConfigValidationProvider. We cannot
+    probe Linear here because no bearer token is available (the OAuth flow
+    lives on Core, not on connectors), so we report success unconditionally.
+    The console's Connection wizard renders this as "validated" once the OAuth
+    handshake completes.
+
+    canConnect=true / detailsValid=true / settingsValid=true reflects reality:
+    the user has not asked us to validate anything we can reach from here.
+    Returning false would block the UI from advancing past validation when
+    nothing's actually wrong.
+
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+    UnsubscribeFromChanges is not supported.
+
+func (cs *Controllers) ValidateFields(_ fiber.Ctx, _, _ map[string]any) []string
+    ValidateFields implements common.ConfigValidationProvider. Performs
+    structural validation of optional settings — the validation surface is
+    intentionally narrow because the OAuth flow itself is the credential check.
+
+func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
+    ValidateSystemTokenMiddleware verifies the inbound system token
+    (cross-service auth from Core) and stamps the connector info on the request
+    locals so EnsureOperationMiddleware can pick it up.
+
+type LinearPullProvider struct {
+	// Has unexported fields.
+}
+    LinearPullProvider implements common.PullOperationProvider. The connection
+    ID is captured up-front in OperationPull (request goroutine) so the worker
+    can construct an OAuth-wrapped HTTP client without a fiber.Ctx — see
+    common/oauth_async.go for the rationale.
+
+func (p *LinearPullProvider) GetAllFiles(
+	ctx context.Context,
+	clientAny any,
+	operation *db.Operation,
+) ([]string, [][]byte, error)
+    GetAllFiles pulls every pull-enabled resource and returns one JSON array
+    file per resource. Mirrors the Stripe shape so workflows that copy the same
+    path pattern across connectors round-trip uniformly.
+
+func (p *LinearPullProvider) GetFileByPath(
+	ctx context.Context,
+	clientAny any,
+	operation *db.Operation,
+	rawPath string,
+) (string, []byte, error)
+    GetFileByPath supports whole-resource pulls only in the first connector
+    cut (`issues`, `issues.json`, etc.). Single-record fetches like
+    `issues/IRM-42.json` are reserved for a follow-up — implementing them
+    properly requires a per-vendor identifier- to-UUID lookup that doesn't
+    materially advance the OAuth-path proof Phase 4 is meant to deliver.
+
+func (p *LinearPullProvider) InitializeClient(
+	_ context.Context,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient builds the GraphQL client for this operation. The HTTP
+    client is wrapped by AsyncOAuthRoundTripper so every outbound call carries a
+    fresh Linear bearer token resolved from Core, with a once-on-401 retry that
+    asks Core to rotate.
+
+func (p *LinearPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler emits per-page events into the job's progress slice. Linear
+    pulls can iterate hundreds of pages on large workspaces; the heartbeat from
+    common.NewProgressHandlerWithContext keeps the operation log moving so the
+    janitor doesn't false- positive a live worker as stuck.
+
+type LinearPushProvider struct {
+	// Has unexported fields.
+}
+    LinearPushProvider implements common.PushOperationProvider. The connection
+    ID is captured up-front in OperationPush; the worker then constructs an
+    OAuth-wrapped HTTP client around it.
+
+    Only `issues/new-*.json` files are honored on push — every other path is
+    skipped with a log line so an accidentally over-broad ZIP (e.g., a full
+    pull's contents being re-pushed) doesn't fail the whole operation.
+
+func (p *LinearPushProvider) InitializeClient(
+	_ context.Context,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient builds the OAuth-wrapped GraphQL client.
+
+func (p *LinearPushProvider) ProcessFiles(
+	ctx context.Context,
+	clientAny any,
+	operation *db.Operation,
+	files map[string][]byte,
+	_ string,
+) error
+    ProcessFiles iterates the ZIP and creates one Linear issue per
+    `issues/new-*.json` file. Stops on the first hard error — Linear writes
+    aren't transactional, so a partial run is harder to reason about than an
+    abort.
+
+func (p *LinearPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
+    ProgressHandler returns nil — Linear push is a per-record GraphQL mutation
+    loop and the volume per push is small (typically one or two issues at
+    a time). The baseline heartbeat from the common push worker keeps the
+    operation log moving.
+
+</pre>
+</body></html>

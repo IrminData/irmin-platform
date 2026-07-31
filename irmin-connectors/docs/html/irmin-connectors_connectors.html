@@ -1,0 +1,26 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors</title></head><body>
+<h1>Package irmin-connectors/connectors</h1>
+<pre>
+package connectors // import "irmin-connectors/connectors"
+
+
+FUNCTIONS
+
+func RegisterAllConnectors(
+	ctx context.Context,
+	database *db.Database,
+	logger *slog.Logger,
+	apiBaseURL, apiToken, url string,
+) error
+    RegisterAllConnectors registers all connectors.
+
+func SetupConnectorRoutes(app *models.ConnectorsApp)
+    SetupConnectorRoutes sets up the routes for all connectors.
+
+func SetupListenerManager(logger *slog.Logger, database *db.Database) *listeners.Manager
+    SetupListenerManager creates a new listener manager and registers all
+    connector listeners.
+
+</pre>
+</body></html>

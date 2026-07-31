@@ -1,0 +1,66 @@
+name: Generate docs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, development]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out PR head ref
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+          check-latest: true
+
+      - name: Cache Go build and module downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Generate docs
+        run: |
+          bash ./generate-docs.sh
+
+      - name: Check for changes in docs/
+        id: check-changes
+        run: |
+          if [ -n "$(git status --porcelain docs)" ]; then
+            echo "changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # NOTE: Do not auto-push docs commits from PR runs. A push made
+      # with GITHUB_TOKEN does not trigger a full follow-up workflow run,
+      # which leaves the PR head in "action_required" check states.
+      - name: Commit generated docs to PR head ref
+        if: false
+        run: |
+          echo "Auto-commit disabled on pull_request runs."
+
+      - name: Create or update PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          header: docs
+          message: |
+            ${{ steps.check-changes.outputs.changes == 'true' && '📚 Documentation generation produced changes in CI. Please run `bash ./generate-docs.sh` locally and commit the updated `docs/` files.' || '📚 Documentation is up to date — no changes needed.' }}

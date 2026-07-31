@@ -1,0 +1,56 @@
+# If you prefer the allow list template instead of the deny list, see community template:
+# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
+#
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+irmin-connectors
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Binaries built with `go build`
+out
+tmp
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+
+# Environment variables file
+.env
+
+# SQLite database files
+*.db
+
+# Mac OS X Finder directory files
+.DS_Store
+
+# E2E test configuration (contains sensitive credentials)
+e2e-tests/test-config.json
+
+# Editors
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Claude Code
+.claude/
+
+# AI tool local config (may contain secrets / MCP tokens)
+.cursor/mcp.json
+.vscode/mcp.json
+.aider*
+
+# Claude Code / git worktrees used for isolated work
+.worktrees/

@@ -1,0 +1,112 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/firecrawl/client</title></head><body>
+<h1>Package irmin-connectors/connectors/firecrawl/client</h1>
+<pre>
+package client // import "irmin-connectors/connectors/firecrawl/client"
+
+
+CONSTANTS
+
+const (
+	// Operation types
+	OperationTypeScrape = "scrape"
+	OperationTypeCrawl  = "crawl"
+	OperationTypeMap    = "map"
+	OperationTypeSearch = "search"
+
+	// Output formats
+	OutputFormatMarkdown = "markdown"
+	OutputFormatHTML     = "html"
+	OutputFormatJSON     = "json"
+
+	// Default API URL
+	DefaultAPIURL = "https://api.firecrawl.dev"
+)
+const CrawlMaxDuration = 30 * time.Minute
+    CrawlMaxDuration caps the entire async crawl + poll operation. Firecrawl
+    crawls of even huge sites finish in well under this; hitting this limit
+    means the job is genuinely stuck (an unexpected status the SDK doesn't
+    surface, a runaway scrape against a site we can't bound, etc.) and we should
+    bail rather than holding the operation execution lock forever.
+
+const CrawlPollInterval = 5 * time.Second
+    CrawlPollInterval is how often the Crawl loop polls CheckCrawlStatus for
+    progress + completion. Chosen to be short enough that operators see steady
+    progress on a multi-minute crawl, long enough not to spam Firecrawl's API.
+
+
+FUNCTIONS
+
+func DeduplicateFilename(filename string, filenameCounts map[string]int, existingFiles map[string][]byte) string
+    DeduplicateFilename ensures filename uniqueness by adding a counter suffix
+    when collisions occur.
+
+func SanitizeFilename(filename string) string
+    SanitizeFilename removes or replaces invalid characters from a filename.
+
+func URLToFilename(urlStr string) string
+    URLToFilename converts a URL to a valid filename.
+
+func ValidateConfiguration(config map[string]any) error
+    ValidateConfiguration validates the Firecrawl client configuration.
+
+
+TYPES
+
+type Config struct {
+	APIKey        string `json:"api_key"`
+	OperationType string `json:"operation_type"`
+	OutputFormat  string `json:"output_format"`
+	URL           string `json:"url"`
+	Query         string `json:"query"`
+	Limit         *int   `json:"limit,omitempty"`
+	WaitFor       *int   `json:"wait_for,omitempty"`
+}
+    Config holds the configuration for the Firecrawl client.
+
+type FirecrawlClient struct {
+	App           *firecrawl.FirecrawlApp
+	OperationType string
+	OutputFormat  string
+	URL           string
+	Query         string
+	Limit         *int
+	WaitFor       *int
+
+	// Has unexported fields.
+}
+    FirecrawlClient represents a client for interacting with the Firecrawl API.
+
+func InitFirecrawlClient(_ any, logger *slog.Logger, operation *db.Operation) (*FirecrawlClient, error)
+    InitFirecrawlClient initializes a Firecrawl client from operation
+    configuration.
+
+func (c *FirecrawlClient) Crawl() (map[string][]byte, error)
+    Crawl performs a crawl operation on a URL and all its subpages. When a
+    progress handler is installed via SetProgressHandler, Crawl switches from
+    the SDK's synchronous CrawlURL to AsyncCrawlURL + CheckCrawlStatus polling
+    so per-poll progress (completed/total page counts) surfaces into the
+    operation log. Without a handler, Crawl preserves the original synchronous
+    path so existing callers that don't wire progress are unaffected.
+
+func (c *FirecrawlClient) Execute() (map[string][]byte, error)
+    Execute runs the configured operation and returns the resulting files.
+
+func (c *FirecrawlClient) Map() (map[string][]byte, error)
+    Map performs a map operation to discover all URLs from a website.
+
+func (c *FirecrawlClient) Scrape() (map[string][]byte, error)
+    Scrape performs a scrape operation on a single URL.
+
+func (c *FirecrawlClient) Search() (map[string][]byte, error)
+    Search performs a search operation (note: may not be available in all API
+    versions).
+
+func (c *FirecrawlClient) SetProgressHandler(h common.ProgressHandler)
+    SetProgressHandler installs an observability hook for Crawl's status-poll
+    loop. Pass nil to disable — Crawl falls back to the SDK's synchronous
+    CrawlURL when no handler is set, preserving existing behavior for callers
+    that don't wire progress.
+
+</pre>
+</body></html>

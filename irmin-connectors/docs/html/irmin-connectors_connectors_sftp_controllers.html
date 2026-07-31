@@ -1,0 +1,292 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/sftp/controllers</title></head><body>
+<h1>Package irmin-connectors/connectors/sftp/controllers</h1>
+<pre>
+package sftpcontrollers // import "irmin-connectors/connectors/sftp/controllers"
+
+
+CONSTANTS
+
+const (
+	// MaxSampleFiles is the maximum number of files to sample for schema generation.
+	MaxSampleFiles = 10
+	// MaxSampleSize is the maximum size of each file sample in bytes.
+	MaxSampleSize = 1024 * 1024 // 1MB
+	// MaxChildrenPerDirectory is the maximum number of children to include in a directory schema.
+	MaxChildrenPerDirectory = 100
+	// MaxSchemaDepth is the maximum depth to recurse when building directory schemas.
+	MaxSchemaDepth = 1
+)
+const (
+	// DefaultTestTimeoutSeconds is the default timeout for testing connections.
+	DefaultTestTimeoutSeconds = 30
+)
+
+TYPES
+
+type Controllers struct {
+	*common.Controllers
+}
+    Controllers holds the dependencies for the SFTP connector controllers.
+
+func NewControllers(app *models.ConnectorsApp) *Controllers
+    NewControllers creates a new instance of controllers with the required
+    dependencies.
+
+func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
+    BuildDetails implements the OperationConfigProvider interface.
+
+func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
+    BuildSettings implements the OperationConfigProvider interface.
+
+func (cs *Controllers) ConfigFields(c fiber.Ctx) error
+    ConfigFields godoc @Summary Get SFTP connector configuration fields
+    @Description Get dynamic configuration fields for the SFTP connector
+    based on the configuration key (details or settings) @Tags sftp @Security
+    SystemTokenAuth @Accept json @Accept multipart/form-data @Produce json
+    @Param key path string true "Configuration key" Enums(details, settings)
+    @Success 200 {object} map[string]irminmodels.DynamicField "Configuration
+    fields retrieved successfully" @Failure 400 {object} fiber.Map "Bad request
+    - invalid configuration key" @Failure 401 {object} fiber.Map "Unauthorized -
+    invalid or missing authentication" @Failure 500 {object} fiber.Map "Internal
+    server error" @Router /sftp/configuration/{key}/fields [post]
+
+func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
+    ConfigValidate godoc @Summary Validate SFTP connector configuration
+    @Description Validate SFTP connection settings and credentials by testing
+    the actual connection @Tags sftp @Security SystemTokenAuth @Accept
+    multipart/form-data @Produce json @Param details[host] formData string
+    true "SFTP server hostname or IP address" @Param details[port] formData
+    integer false "SFTP server port (default: 22)" @Param details[username]
+    formData string true "Username for SFTP authentication" @Param
+    details[password] formData string false "Password for SFTP authentication
+    (if not using private key)" @Param details[private_key] formData string
+    false "Private key for SFTP authentication (if not using password)" @Param
+    details[private_key_passphrase] formData string false "Passphrase for
+    encrypted private key" @Param details[host_key_fingerprint] formData string
+    false "Expected host key fingerprint for security verification" @Success 200
+    {object} irminmodels.ConnectorConfigurationValidationResult "Configuration
+    validation result" @Failure 400 {object} fiber.Map "Bad request - invalid
+    configuration data" @Failure 401 {object} fiber.Map "Unauthorized - invalid
+    or missing authentication" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /sftp/configuration/validate [post]
+
+func (cs *Controllers) DetailsPage(c fiber.Ctx) error
+    DetailsPage godoc @Summary Get SFTP connector details page @Description Get
+    an HTML page with detailed information about the SFTP connector including
+    capabilities, authentication methods, and usage examples @Tags sftp @Accept
+    json @Produce text/html @Success 200 {string} string "SFTP connector details
+    page" @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /sftp/details [get]
+
+func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
+    EnsureOperationMiddleware upserts the Operation row from the `details[]`
+    / `settings[]` form fields the SDK's StartOperation* requests now
+    carry. Registered as the second handler on every data route after
+    ValidateSystemToken — see common/routes.go.
+
+func (cs *Controllers) GetDynamicFields(
+	_ fiber.Ctx,
+	key string,
+	_ map[string]string,
+) (map[string]irminmodels.DynamicField, error)
+    GetDynamicFields implements the ConfigFieldProvider interface.
+
+func (cs *Controllers) GetOperationFormFields() ([]string, []string)
+    GetOperationFormFields implements the OperationConfigProvider interface.
+
+func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
+    GetRequiredFormFields implements the ConfigValidationProvider interface.
+
+func (cs *Controllers) Info(c fiber.Ctx) error
+    Info godoc @Summary Get SFTP connector information @Description Get
+    detailed information about the SFTP connector including capabilities,
+    configuration fields, and API endpoints @Tags sftp @Security SystemTokenAuth
+    @Accept json @Produce json @Success 200 {object} models.ConnectorDetails
+    "SFTP connector information retrieved successfully" @Failure 401 {object}
+    fiber.Map "Unauthorized - invalid or missing authentication" @Failure 500
+    {object} fiber.Map "Internal server error" @Router /sftp/info [get]
+
+func (cs *Controllers) OperationPatch(c fiber.Ctx) error
+    OperationPatch godoc @Summary Apply patch operations to SFTP files
+    @Description Apply JSON Patch operations to files on the SFTP server.
+    Supports add (upload), remove (delete), replace (overwrite), move, and copy
+    operations. @Tags sftp @Security SystemTokenAuth @Accept multipart/form-data
+    @Produce json @Param patches formData file true "JSON file containing array
+    of patch operations" @Success 200 {object} fiber.Map "Patch operations
+    applied successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    patch format" @Failure 401 {object} fiber.Map "Unauthorized - invalid or
+    missing authentication" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /sftp/operation/patch [post]
+
+func (cs *Controllers) OperationPull(c fiber.Ctx) error
+    OperationPull godoc @Summary Pull files from SFTP server @Description
+    Download files from an SFTP server using the operation token and specified
+    path @Tags sftp @Security SystemTokenAuth @Accept multipart/form-data
+    @Produce json @Param path formData string true "Path to file or directory
+    on SFTP server to download" @Success 200 {object} fiber.Map "Files pulled
+    successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    operation token or path" @Failure 401 {object} fiber.Map "Unauthorized -
+    invalid or missing authentication" @Failure 404 {object} fiber.Map "File or
+    directory not found" @Failure 500 {object} fiber.Map "Internal server error"
+    @Router /sftp/operation/pull [post]
+
+func (cs *Controllers) OperationPush(c fiber.Ctx) error
+    OperationPush godoc @Summary Push files to SFTP server @Description Upload
+    files to an SFTP server using the operation token and file data @Tags sftp
+    @Security SystemTokenAuth @Accept multipart/form-data @Produce json @Param
+    file formData file true "File to upload to SFTP server" @Param path formData
+    string false "Target path on SFTP server (defaults to root directory)"
+    @Success 200 {object} fiber.Map "File uploaded successfully" @Failure 400
+    {object} fiber.Map "Bad request - invalid operation token or file" @Failure
+    401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Failure 404 {object} fiber.Map "Operation not found" @Failure 500 {object}
+    fiber.Map "Internal server error" @Router /sftp/operation/push [post]
+
+func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
+    OperationSchemaGet godoc @Summary Get SFTP operation schema @Description
+    Get the schema and directory structure for SFTP file operations based on
+    the operation type (pull or push). Use the path query parameter to navigate
+    to specific files or directories on the SFTP server. @Tags sftp @Security
+    SystemTokenAuth @Accept json @Produce json @Param operation path string
+    true "Operation type" Enums(pull, push) @Param path query string false
+    "Path to file or directory to get schema for (e.g., /data/customers.csv
+    or /reports/)" @Success 200 {object} irminmodels.ObjectSchema "Operation
+    schema retrieved successfully" @Failure 400 {object} fiber.Map "Bad
+    request - invalid operation type or token" @Failure 401 {object} fiber.Map
+    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
+    fiber.Map "Operation not found" @Failure 500 {object} fiber.Map "Internal
+    server error" @Router /sftp/operation/schema/{operation} [post]
+
+func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
+    SubscribeToChanges godoc @Summary Subscribe to changes (not supported)
+    @Description SFTP connector does not support real-time subscriptions as
+    SFTP is a file transfer protocol without webhook capabilities @Tags sftp
+    @Security SystemTokenAuth @Accept json @Produce json @Param webhook formData
+    string true "Webhook URL (not supported for SFTP)" @Success 501 {object}
+    fiber.Map "Not implemented - SFTP does not support subscriptions" @Failure
+    401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Router /sftp/operation/subscribe [post]
+
+func (cs *Controllers) TestConnection(
+	_ fiber.Ctx,
+	details map[string]any,
+	settings map[string]any,
+) (bool, bool, bool, []string)
+    TestConnection implements the ConfigValidationProvider interface.
+
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+    UnsubscribeFromChanges godoc @Summary Unsubscribe from changes (not
+    supported) @Description SFTP connector does not support real-time
+    subscriptions as SFTP is a file transfer protocol without webhook
+    capabilities @Tags sftp @Security SystemTokenAuth @Accept json @Produce json
+    @Param subscription_id formData string true "Subscription ID (not supported
+    for SFTP)" @Success 501 {object} fiber.Map "Not implemented - SFTP does
+    not support subscriptions" @Failure 401 {object} fiber.Map "Unauthorized
+    - invalid or missing authentication" @Router /sftp/operation/unsubscribe
+    [post]
+
+func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
+    ValidateFields implements the ConfigValidationProvider interface.
+
+func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
+    ValidateSystemTokenMiddleware validates the system token for SFTP connector
+    endpoints.
+
+type SFTPPullProvider struct {
+	// Has unexported fields.
+}
+    SFTPPullProvider implements the PullOperationProvider interface for SFTP.
+
+func (p *SFTPPullProvider) GetAllFiles(
+	_ context.Context, client any, operation *db.Operation,
+) ([]string, [][]byte, error)
+    GetAllFiles downloads all files from the root directory.
+
+func (p *SFTPPullProvider) GetFileByPath(
+	_ context.Context, client any, operation *db.Operation, rawPath string,
+) (string, []byte, error)
+    GetFileByPath downloads a specific file by path.
+
+func (p *SFTPPullProvider) InitializeClient(
+	ctx context.Context,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient initializes the SFTP client for pull operations.
+
+func (p *SFTPPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler returns the per-file observability callback the SFTP
+    client fires from inside DownloadDirectory's recursive walk and the
+    executeWithRetry backoff loop. Without it, a 10k-file directory pull
+    or a flaky-network retry storm silently consumes 5-10 minutes between
+    operation/init and the final response — same field-incident shape Stripe got
+    fixed for.
+
+    Always returns a non-nil handler. Nil-safety lives one layer down in
+    common.LogOperationProgress.
+
+    File events fire per file (caller-throttled — one file = one emission);
+    rate-limit events fire per retry attempt.
+
+type SFTPPushProvider struct {
+	// Has unexported fields.
+}
+    SFTPPushProvider implements the PushOperationProvider interface for SFTP.
+
+func (p *SFTPPushProvider) InitializeClient(
+	ctx context.Context,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient initializes the SFTP client for push operations.
+
+func (p *SFTPPushProvider) ProcessFiles(
+	ctx context.Context,
+	client any,
+	operation *db.Operation,
+	files map[string][]byte,
+	rawPath string,
+) error
+    ProcessFiles processes the extracted files and uploads them to the SFTP
+    server.
+
+func (p *SFTPPushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler returns the per-file observability callback the SFTP client
+    fires from inside UploadDirectory's per-file loop and the executeWithRetry
+    backoff loop. Without it, a 10k-file upload or a flaky-network retry
+    storm silently consumes 5-10 minutes between operation/init and the final
+    response.
+
+    Always returns a non-nil handler. Nil-safety lives one layer down in
+    common.LogOperationProgress.
+
+type SFTPSchemaProvider struct {
+	APIBaseURL string
+	APIToken   string
+	Logger     *slog.Logger
+}
+    SFTPSchemaProvider implements the SchemaOperationProvider interface for SFTP
+    file operations.
+
+func (p *SFTPSchemaProvider) GetSchema(
+	ctx fiber.Ctx,
+	client any,
+	operationType string,
+	remotePath *string,
+) (*irminmodels.ObjectSchema, error)
+    GetSchema returns schema information for SFTP file operations.
+
+func (p *SFTPSchemaProvider) GetSupportedOperationTypes() []string
+    GetSupportedOperationTypes returns the list of supported operation types for
+    SFTP.
+
+func (p *SFTPSchemaProvider) InitializeClient(
+	ctx fiber.Ctx,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient initializes an SFTP client for schema analysis.
+
+</pre>
+</body></html>

@@ -1,0 +1,62 @@
+name: Lint
+
+on:
+  pull_request:
+    branches: [main, development]
+
+# Prevent concurrent runs of the same workflow on the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Set permissions
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.0"
+          cache: true
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.6.1
+          args: --timeout=5m
+          # skip-cache was true historically, which made every run
+          # analyse the full module from cold and pushed the lint
+          # job toward its timeout ceiling. The action's built-in
+          # cache keys on go.sum + tool version, so warm starts
+          # across PRs are safe and produce the expected speedup.
+          skip-cache: false
+
+      - name: Create or update PR comment on failure
+        if: failure()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          header: lint
+          message: |
+            ❌ Linting failed!
+
+            Please check the workflow run for details and fix the issues manually.
+
+      - name: Create or update PR comment on success
+        if: success()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          header: lint
+          message: |
+            ✅ Linting passed successfully!
+
+            All code style checks and static analysis completed without issues.

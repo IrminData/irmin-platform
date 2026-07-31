@@ -1,0 +1,482 @@
+# Connector Architecture (connector perspective)
+
+This document describes what a connector is *from its own perspective* —
+what requests it receives, from whom, how they're authenticated, what it
+must return, and what state it holds. It is deliberately complementary
+to the Core-side handbook at `irmin/handbook/connector-architecture.md`,
+which covers the same topic viewed from Irmin Core.
+
+If you are building a new connector, read this before
+`how-to-create-connectors.md`. If you're debugging an integration issue,
+this is the mental model for "what should I have seen on the wire."
+
+## What is a connector?
+
+A connector is an HTTP service that sits between Irmin Core and a
+specific external system (Postgres, Stripe, HubSpot, a REST API, an
+SFTP server, ...). Its job is three things:
+
+1. **Describe itself** — declare its name, capabilities, required
+   configuration fields, and authentication style via `/info` and
+   `/configuration/{type}/fields`.
+2. **Validate configurations** — when the user fills in a connection
+   form, tell Core whether the settings are viable.
+3. **Execute operations** — given a configured connection, pull/push/
+   patch data between the external system and Irmin.
+
+Connectors are deliberately small and focused. One connector per
+external system. Stateless between operations (see "What state a
+connector holds" below for the narrow exceptions).
+
+## Who talks to a connector
+
+**Only Irmin Core.** Every inbound request to a connector comes from the
+Core service at `{IRMIN_API_BASE_URL}`. Connectors don't expose APIs to
+end users, to the console, or to other connectors. This means:
+
+- The only authentication method we need to support is system-token +
+  operation-token (see below).
+- CORS doesn't apply — requests are service-to-service.
+- Rate-limiting, caching, and observability are all from Core's
+  perspective; connectors focus on correctness.
+
+External systems (Postgres, Stripe, ...) are *outbound* from the
+connector's perspective — the connector calls them, never the reverse.
+(Exception: webhooks, below.)
+
+## Inbound request types
+
+Every operation a connector handles falls into one of these buckets:
+
+### Describing the connector
+
+| Endpoint | Method | Auth | Called when |
+|---|---|---|---|
+| `/{connector}/info` | GET | System token | Connector startup (registration), console loads the connector list, flow-start fetches OAuth config |
+| `/{connector}/details` | GET | *public* | Console's "details" page for the connector |
+| `/{connector}/configuration/details/fields` | POST | System token | Console renders the connection-create form |
+| `/{connector}/configuration/settings/fields` | POST | System token | Console renders the settings step of the form |
+
+The `fields` endpoints take the current partial form state as input so
+a connector can return conditional fields (e.g., "you picked database
+`postgres`, now choose a schema").
+
+### Validating configuration
+
+| Endpoint | Method | Auth | Input | Output |
+|---|---|---|---|---|
+| `/{connector}/configuration/validate` | POST | System token | `{details, settings}` | `{ok, can_connect, connection_details_valid, connection_settings_valid, errors}` |
+
+Called when the user clicks "Test Connection" and when Core wants to
+re-verify a stored connection. Should actually attempt a connection to
+the external system — `can_connect: false` is a real signal.
+
+### Operation lifecycle (async job protocol)
+
+An "operation" is a scoped unit of work on a connection. Pull, push,
+and patch all run asynchronously: Core POSTs a start request, the
+connector returns **202 Accepted** with a `{job_id, operation_token}`,
+and Core polls / fetches results / cancels via per-job lifecycle routes
+authenticated with the per-job operation token.
+
+#### Start routes (system-token authenticated; mint a job)
+
+| Endpoint | Method | Auth | Purpose |
+|---|---|---|---|
+| `/{connector}/operation/pull` | POST | System token | Start a pull job. Input: details+settings+path. Output: 202 `{job_id, operation_token}`. |
+| `/{connector}/operation/push` | POST | System token | Start a push job. Input: details+settings+files (or presigned URL)+path. Output: 202 `{job_id, operation_token}`. |
+| `/{connector}/operation/patch` | POST | System token | Start a patch job. Input: details+settings+JSON Patch payload. Output: 202 `{job_id, operation_token}`. |
+| `/{connector}/operation/schema/{method}` | POST | System token | Return the schema for what `method` would produce/consume. Sync (cheap metadata). |
+| `/{connector}/operation/subscribe` | POST | System token | Register a webhook. Sync — webhook registration is fast and idempotent, no job needed. |
+| `/{connector}/operation/unsubscribe` | POST | System token | Tear down a subscription. Sync. |
+
+#### Lifecycle routes (per-job operation-token authenticated; kind-agnostic)
+
+| Endpoint | Method | Auth | Purpose |
+|---|---|---|---|
+| `/operation/status/:job_id` | GET | **Per-job** operation token | Return the current state — `pending`/`running`/`complete`/`failed`/`cancelled` — plus the cumulative `progress` slice. |
+| `/operation/result/:job_id` | GET | **Per-job** operation token | For pull: stream the ZIP archive. For push/patch: 204 No Content (the success summary is in `progress`). |
+| `/operation/cancel/:job_id` | POST | **Per-job** operation token | Best-effort cancel; the worker is signalled to wind down and the row transitions to `cancelled`. |
+
+Only endpoints corresponding to declared capabilities are exposed.
+
+The operation token returned in the 202 response is **scoped to that
+single job**. The connectors service rejects the system token on the
+lifecycle routes by design — a leaked or compromised system token cannot
+poll, fetch, or cancel a job it did not start. The token is valid until
+the job's `OperationJob` row is reaped by the janitor (default 15 min)
+or cancelled, whichever comes first.
+
+> **Note.** A previous shape required a separate `/operation/init`
+> round-trip to mint a long-lived per-Connection `Operation.Token`,
+> then re-sent that token on every operation route. Phase 4 retired
+> that handshake: Start\* requests carry their credentials inline
+> (the SDK's `details[<key>]` / `settings[<key>]` form fields), the
+> server upserts the matching `Operation` row inside the request
+> handler via `EnsureOperationFromRequest`, and the per-job
+> operation token returned on 202 is the only token the lifecycle
+> routes accept. The legacy `operations.token` column has been
+> dropped from the schema by this release's migration.
+
+## Authentication, in layers
+
+A connector sees four different auth contexts depending on who's
+calling and what's being done. Keep them distinct.
+
+### System token (Core → connector)
+
+- **Who holds it**: Core, stored in the `connectors` table as
+  `system_token`. One system token per connector *registration*, not
+  per connection.
+- **Where it's sent**: `Authorization: Bearer {system_token}` on every
+  inbound request to **start** routes (pull / push / patch start,
+  schema, subscribe / unsubscribe, info, configuration).
+- **What it authorises**: "this caller is authorised to create
+  operations on this connector." It does *not* imply permission to
+  poll, fetch results, or cancel an in-flight job — that's per-job
+  operation-token scope.
+- **Rotation**: connectors can regenerate their system token by
+  re-registering with Core; old tokens invalidate immediately.
+
+### Operation token (per-job, Core → connector)
+
+- **Who holds it**: returned to Core in the 202 body of a Start*
+  request as `operation_token`. Core re-sends it on every subsequent
+  call against that specific job (status / result / cancel). Never
+  shared across jobs.
+- **Where it's sent**: `Authorization: Bearer {operation_token}` on
+  the lifecycle routes — `/operation/status/:job_id`,
+  `/operation/result/:job_id`, `/operation/cancel/:job_id`.
+- **What it authorises**: "this caller is authorised to interact with
+  this specific job's lifecycle." Short-lived: valid until the
+  `OperationJob` row is reaped (15-minute janitor TTL by default) or
+  the job is cancelled, whichever comes first.
+- **Why a separate token**: scope limitation. The connectors service
+  rejects the system token on lifecycle routes — a leaked or
+  compromised system token cannot poll or cancel jobs it did not
+  start, narrowing the blast radius.
+
+### Connection credentials (external auth, static-credential path)
+
+- **Who holds them**: Core, inside `connection.details` (encrypted at
+  rest). They arrive at the connector on every Start\* request as
+  `details[<key>]=<value>` form fields, parsed by the
+  `EnsureOperation` middleware before the worker runs.
+- **What they authorise**: the *external* system to trust the call
+  coming from this connector. Connector holds them only in memory for
+  the duration of the operation.
+- **Form**: whatever shape `/configuration/details/fields` declares
+  (username+password, API key, TLS cert, etc.).
+
+### OAuth access token (external auth, OAuth path)
+
+- **Who holds it**: Core. Never leaves Core's database row.
+- **How the connector gets one**: the connector reads the
+  `X-Irmin-Connection-Id` header from the inbound request, then POSTs
+  to `{IRMIN_API_BASE_URL}/api/v1/system/oauth/access-token` with its
+  own system token and the connection ID. Response is a short-lived
+  bearer token to use against the external system.
+- **Why this indirection**: Core is the single point of token refresh
+  with row-locking. Connectors never cache, store, or refresh tokens
+  themselves.
+- **Implementation**: embed `*common.OAuthConnector` in your
+  controllers and call vendor APIs through `common.WrapHTTPClient`.
+  The wrapped client stamps the bearer on every outbound request and
+  transparently retries once on a vendor 401 after force-refreshing
+  the token. `lib.OAuthTokenClient` is the lower-level primitive the
+  base wraps; only call it directly if the round-tripper can't see
+  the call (e.g. WebSocket URLs with the bearer in a query param).
+  Full API reference in
+  [`connectors/common/README.md`](../connectors/common/README.md).
+
+## Operations in detail
+
+### What an operation is
+
+An operation is a job — a single async unit of work on a connection
+keyed by `job_id`. The flow is consistent across pull / push / patch:
+
+```
+Core: POST /operation/{pull|push|patch} {details, settings, ...}
+       Authorization: Bearer <system_token>
+  → connector: Begin job (advisory lock, OperationJob row),
+       launch worker goroutine, return 202 {job_id, operation_token}
+
+Core: GET /operation/status/:job_id
+       Authorization: Bearer <operation_token>
+  → connector: return {status, progress[], error}; status is
+       pending → running → {complete | failed | cancelled}
+
+# pull only — push/patch return 204 No Content because the success
+# signal is status=complete on the job row, not a downloadable file
+Core: GET /operation/result/:job_id
+       Authorization: Bearer <operation_token>
+  → connector: stream the ZIP archive built by the worker
+
+# any time before terminal status
+Core: POST /operation/cancel/:job_id
+       Authorization: Bearer <operation_token>
+  → connector: signal worker to wind down, transition row to cancelled
+```
+
+The job's lifetime is bounded by the connector's
+`JobManager.DefaultJobTTL` (15 minutes by default) — the janitor
+reaps OperationJob rows past that, freeing both the result file
+and the per-job operation token. Workers that haven't heartbeated
+in `DefaultStuckThreshold` (30 minutes) are reclaimed by probing
+the advisory lock.
+
+### Operation types
+
+| Type | Direction | Data format | Triggers |
+|---|---|---|---|
+| `pull` | External → Irmin | ZIP archive containing files (CSV, JSON, Parquet, raw files) | Workflow, manual import, schedule |
+| `push` | Irmin → External | ZIP archive containing files | Workflow, manual export, schedule |
+| `patch` | Irmin → External, incremental | JSON Patch (RFC 6902) applied to a target | Workflow reacting to a commit |
+| `patch_event` | External → Irmin, incremental | Connector emits JSON Patches via webhook | External system change |
+| `subscribe` / `unsubscribe` | Setup/teardown of the above | — | `patch_event` lifecycle |
+
+Connectors declare capabilities via `/info`; Core only calls the
+endpoints corresponding to declared capabilities.
+
+### Observability and progress
+
+Long-running operations need to surface intermediate progress, or an
+apparently-stuck run is undiagnosable. The vocabulary is the SDK's
+`observability.ProgressEvent` — a stable enum of kinds (`page`,
+`rate_limit`, `batch`, `query`, `file`, `heartbeat`) with per-kind
+fields. Every Irmin service (connectors, Core, AI) sees the same
+shapes on the wire.
+
+End-to-end data path on a job:
+
+```
+provider.GetAllFiles / ProcessFiles
+        │
+        │ (per-iteration emit during pagination / batching / scans)
+        ▼
+observability.ProgressHandler  ←──────┐ (provider-supplied closure)
+        │                             │
+        ▼                             │
+common.LogOperationProgress           │
+        │ (per-kind throttling — every 5 pages, every 10 batches, …)
+        ▼                             │
+common.LogOperationEvent              │
+        │                             │
+        ├──→ db.OperationLog row      │
+        │                             │
+        └──→ JobManager.appendProgress (event appended to
+                 OperationJob.Progress slice in DB)
+                 │
+                 ▼
+        GET /operation/status/:job_id  (Core polls)
+                 │
+                 ▼
+        connectorjobs.RunWithProgress  (in Core)
+                 │ diffs cumulative slice against count seen,
+                 │ delivers each event exactly once
+                 ▼
+        observability.ProgressHandler  (orchestrator-side sink)
+                 │
+                 ▼
+        ConnectorOperationLog row      (workflow run log timeline)
+```
+
+Three enforcement layers:
+
+- **Per-iteration emission** is the connector's job. The provider
+  returns an `observability.ProgressHandler` from
+  `ProgressHandler(operation)`; the client wires it into its inner
+  loops. Throttling lives in `common.LogOperationProgress`.
+- **30-second heartbeat** is the common handler's job. A goroutine
+  in `HandleOperationPull` / `HandleOperationPush` /
+  `HandleOperationPatch` fires `ProgressKindHeartbeat` for the
+  job's lifetime, even when the provider's handler returns nil.
+  No connector ships a silent 10-minute operation by accident.
+- **Core-side fan-out**: `connectorjobs.ContextWithProgress` wraps
+  the workflow ctx with an `observability.ProgressHandler` that
+  appends each new event as a `ConnectorOperationLog` entry on the
+  workflow run. The orchestrator's `progressLogSink` is the
+  reference implementation; see
+  `irmin/orchestrator/executeWorkflowableCommon.go`.
+
+[`connectors/progress_audit_test.go`](../connectors/progress_audit_test.go)
+fails CI when a connector lands in `RegisterAllConnectors` without
+a `ProgressHandler` declaration.
+
+For the implementation cookbook see
+[**how-to-create-connectors.md → Observability**](./how-to-create-connectors.md#observability--progress-events).
+
+### "Everything is a File"
+
+Connectors normalise diverse external data into files. This is the
+philosophy that lets LakeFS version anything:
+
+| External shape | File representation |
+|---|---|
+| Database table | CSV file in a ZIP archive |
+| REST JSON response | JSON file |
+| Vendor document (PDF, image, etc.) | Original binary file |
+| Spreadsheet row/column | CSV |
+| GraphQL query result | JSON |
+| Vendor webhook event | JSON Patch entries |
+
+Connectors never return "rows" or "records" — they return files. The
+file *contents* can represent rows/records, but the transport unit is
+always the file. This keeps LakeFS versioning consistent regardless of
+the source.
+
+## Connection settings vs details
+
+These two concepts look similar and mean different things:
+
+### Connection details
+
+- **What**: external-system credentials and connection-target information
+  (host, port, API key, database name).
+- **Who fills them in**: the end user, at connection-creation time, via
+  the form rendered from `/configuration/details/fields`.
+- **Who sees them**: Core (encrypted at rest) and the connector (in
+  memory during operations). **Never** shown in the console after the
+  initial form — they're masked as "SECRET" in all API responses.
+- **When**: part of every Start* request body. Re-sent on each call
+  rather than mounted via a long-lived "init" handshake — there is
+  no shared connection-level state between jobs on the connector.
+- **For OAuth-backed connectors**: this field is typically empty or
+  absent — OAuth handles external auth via a separate channel.
+
+### Connection settings
+
+- **What**: workspace-level choices that scope what data gets
+  pulled/pushed (which project, which schema, which folder).
+- **Who fills them in**: the end user, at connection-creation time, via
+  the form rendered from `/configuration/settings/fields`.
+- **Who sees them**: Core (plaintext) and the connector. **Visible** in
+  the console; editable after creation.
+- **When**: part of every Start* request body, alongside details.
+
+Rule of thumb: if revealing this value would be a security issue, it's
+a **detail**. Otherwise it's a **setting**.
+
+## Schema discovery
+
+Every operation has a schema — a typed description of the files the
+operation produces or consumes. Connectors return this via
+`/operation/schema/{method}`.
+
+Schema shape: `irminmodels.ObjectSchema` (defined in the SDK) —
+hierarchical, supports nested objects and arrays, each field typed as
+one of the primitive types (string, integer, float, boolean, date,
+datetime, bytes) or a nested schema.
+
+Schema is how DuckDB (on the Core side) knows how to parse the data,
+how the console renders tables, how field-mapping transforms work, and
+how Irmin's versioned diffs compute structural changes.
+
+A connector that can't derive a schema statically (e.g., HTTP connector
+with a user-specified endpoint) is expected to introspect the
+external system at `/schema/...` time and return what it finds.
+
+## Webhooks (patch events)
+
+Connectors with the `patch_event` capability can subscribe to changes
+in the external system and emit JSON Patches back to Irmin.
+
+Flow:
+
+1. Core calls `/operation/subscribe` with a webhook URL (at Core) and
+   a webhook token.
+2. The connector subscribes to the external system's change feed
+   (e.g., Postgres logical replication slot, Stripe webhook
+   registration, Slack event subscription).
+3. When a change arrives, the connector translates it into a JSON
+   Patch and POSTs to the Core webhook URL with
+   `Authorization: Bearer {webhook_token}`.
+4. Core ingests the patch event into the workflow queue.
+5. On `/operation/unsubscribe`, the connector tears down its external
+   subscription.
+
+Webhook requests are signed with the webhook token, which Core
+generated and gave to the connector — a different token from the
+system/operation tokens. Don't confuse them.
+
+## What state a connector holds
+
+Connectors aim to be stateless between operations. The minimum state
+they must keep is:
+
+- **Connector registrations table**: the mapping from a running
+  connector instance to its Core-issued `system_token`. One row per
+  registration.
+- **OperationJob table**: one row per started job. Carries the
+  `JobID` (PK), `OperationID` (FK to the connection's Operation row
+  for back-references), `Kind` (`pull` / `push` / `patch`),
+  `Status`, cumulative `Progress` JSON (the
+  `[]observability.ProgressEvent` slice surfaced by status polls),
+  optional `Error`, optional `ResultPath` (the on-disk ZIP path for
+  pulls), and `ExpiresAt`. Reaped by the janitor after 15 min.
+- **Operations table**: long-lived per-Connection rows holding the
+  legacy operation token. After the migration to per-job operation
+  tokens, the column remains for back-compat scaffolding only — no
+  client reads it via the consolidated SDK; it'll be retired in a
+  follow-up Phase 4 PR.
+- **Subscriptions table**: active `patch_event` subscriptions so the
+  connector can map inbound external events back to their webhook
+  config.
+
+The result store at `/tmp/irmin-connectors/` holds the on-disk ZIPs
+that pull jobs build. Push and patch do not produce artifacts; their
+"result" is `Status=complete` on the job row, surfaced as 204 from
+`/operation/result/:job_id`. Files are reaped by the same janitor
+that reaps the rows.
+
+That's it. **No credentials, no user data, no cached schemas** — all
+of those are per-job in-memory state.
+
+## What connectors return
+
+### On success (JSON endpoints)
+
+Wrapped in the common `IrminAPIResponse` envelope:
+
+```json
+{
+  "data": { ... },
+  "message": "optional"
+}
+```
+
+### On success (file streams)
+
+Raw ZIP bytes with `Content-Type: application/zip` and
+`Content-Disposition: attachment; filename="..."`. Schema information
+for the contents was already returned by a prior `/schema` call.
+
+### On failure
+
+Structured error response:
+
+```json
+{
+  "errors": ["error message 1", "error message 2"],
+  "message": "user-facing summary"
+}
+```
+
+HTTP status code matches the failure category:
+
+- **400** — invalid request, bad config
+- **401** — auth token invalid (system or operation)
+- **404** — operation or resource not found
+- **409** — conflict (e.g., subscription already exists)
+- **500** — unexpected failure
+
+## Further reading
+
+- `how-to-create-connectors.md` — step-by-step guide to adding a new
+  connector, including OAuth
+- `concepts-and-processes.md` — lifecycle, registration, "Everything is
+  a File"
+- `oauth-connectors.md` — OAuth specifics + vendor list + flow diagram
+- `irmin/handbook/connector-architecture.md` — the same topics from the
+  Core-side perspective (request/auth from Irmin Core's angle)

@@ -1,0 +1,29 @@
+[
+  {
+    "op": "replace",
+    "path": "/users.json/1/name",
+    "value": "John Doe Updated"
+  },
+  {
+    "op": "replace",
+    "path": "/users.json/1/email",
+    "value": "john.updated@example.com"
+  },
+  {
+    "op": "add",
+    "path": "/users.json/6",
+    "value": {
+      "id": 6,
+      "name": "New User",
+      "email": "new.user@example.com",
+      "age": 25,
+      "department": "HR",
+      "active": true
+    }
+  },
+  {
+    "op": "remove",
+    "path": "/users.json/3"
+  }
+]
+

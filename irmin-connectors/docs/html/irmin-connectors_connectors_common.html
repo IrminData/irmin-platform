@@ -1,0 +1,1550 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/common</title></head><body>
+<h1>Package irmin-connectors/connectors/common</h1>
+<pre>
+package common // import "irmin-connectors/connectors/common"
+
+Package common hosts the shared pieces every connector composes into its own
+controller. oauth_base.go introduces OAuthConnector — an embeddable struct that
+handles the grunt work of authenticating a connector request against Core's
+OAuth system:
+
+  - Reads X-Irmin-Connection-Id from the inbound Fiber request.
+  - Calls lib.OAuthTokenClient.FetchVendorAccessToken (and the force variant on
+    retry) so the vendor always sees a currently-valid bearer token.
+  - Maps the package sentinel errors from lib onto HTTP status codes Core knows
+    how to surface in the console ("reconnect required" → 428, Core unreachable
+    → 502, bad inbound header → 400).
+  - Stamps the connector's declared ConnectionOAuthConfig onto the /info
+    response so the console can render the Connect button for OAuth-backed
+    connectors without a separate metadata call.
+
+Concrete connectors compose *OAuthConnector into their Controllers struct.
+Static-credential connectors (HTTP, Postgres, etc.) can embed it too — the
+helpers no-op cleanly when ConnectionOAuthConfig is nil, which keeps the embed
+uniform across the connector family.
+
+CONSTANTS
+
+const (
+	// DefaultJobTTL is how long a completed job's row + result file
+	// persist before the janitor reaps them. 15 minutes is a
+	// conservative window: Core's poll cadence is ~5s and the
+	// download is a single GET, so 15m covers multi-minute Core
+	// stalls without letting result files linger indefinitely.
+	DefaultJobTTL = 15 * time.Minute
+
+	// DefaultJanitorInterval is the cadence at which the janitor
+	// scans for expired jobs. Set to 1m so a 15m TTL has 15
+	// opportunities to be reaped — misaligned timings mean a row may
+	// survive up to DefaultJobTTL+DefaultJanitorInterval, which is
+	// acceptable.
+	DefaultJanitorInterval = 1 * time.Minute
+
+	// DefaultJobIDByteLen controls the entropy of the opaque job ID.
+	// 16 bytes → 32 hex chars → 2^128 namespace, large enough that
+	// collisions are a non-concern for the janitor's purge window.
+	DefaultJobIDByteLen = 16
+
+	// DefaultStuckThreshold is the default "no updates in this long
+	// means the worker is dead" window used by the janitor's
+	// stuck-row reclaim path. 30 minutes is ~60x the heartbeat
+	// cadence (30s), so a live-but-quiet worker has to miss many
+	// heartbeats before being considered dead. Deployments with
+	// much shorter job lifetimes can tune this down via
+	// JobManagerConfig.StuckThreshold.
+	DefaultStuckThreshold = 30 * time.Minute
+)
+    Default knobs tuned for the connector-service runtime. All are exposed via
+    JobManagerConfig so deployments can override without recompiling (especially
+    TTL — we may want a much shorter window on small result payloads or a longer
+    one when core is wedged).
+
+const (
+	ProgressKindPage      = sdkprogress.ProgressKindPage
+	ProgressKindRateLimit = sdkprogress.ProgressKindRateLimit
+	ProgressKindBatch     = sdkprogress.ProgressKindBatch
+	ProgressKindQuery     = sdkprogress.ProgressKindQuery
+	ProgressKindFile      = sdkprogress.ProgressKindFile
+	ProgressKindHeartbeat = sdkprogress.ProgressKindHeartbeat
+)
+    ProgressKind* — see sdkprogress for documentation. String values are the
+    cross-language wire format and remain stable.
+
+const AlreadyRunningErrorMessage = "Operation is already running"
+    AlreadyRunningErrorMessage is the canonical error message surfaced on every
+    409 "operation is already running" response. Kept as a package-level const
+    so the string does not drift across call sites — some clients still match
+    against it for backwards compat with the pre-envelope wire.
+
+const JobResultDirSegment = "irmin-connectors"
+    JobResultDirSegment is the subdirectory under os.TempDir() that holds result
+    zips. Scoped to the service so concurrent services running on the same host
+    don't collide.
+
+const MaxPatchFileBytes = 4 * 1024 * 1024
+    MaxPatchFileBytes caps the size of an uploaded JSON-Patch document read
+    into memory before unmarshal. The global Fiber BodyLimit is 5 GB (sized
+    for bulk pushes on other connectors), which would let a caller OOM the
+    connector process by posting a multi-gigabyte `patches` upload. A JSON-Patch
+    document with 10 000 ops weighs in at ~1 MB; 4 MB is a comfortable ceiling.
+    Patch handlers that need a different cap can read the upload themselves.
+
+
+VARIABLES
+
+var ErrAsyncOAuthMissingDeps = errors.New(
+	"oauth_async: token client or connection id not configured",
+)
+    ErrAsyncOAuthMissingDeps is returned when the round-tripper is constructed
+    without a token client or with a zero connection ID. Surfaces a wiring bug
+    rather than a transient failure.
+
+var ErrConnectorInfoMissing = errors.New("connector info not stamped on context")
+    ErrConnectorInfoMissing is returned by EnsureOperationMiddleware when the
+    system-token middleware did not run (or did not stamp the connector info on
+    locals). Indicates a route-wiring bug.
+
+var ErrOAuthNotConfigured = errors.New(
+	"oauth: connector has no ConnectionOAuthConfig; cannot resolve vendor token",
+)
+    ErrOAuthNotConfigured is returned by the resolver helpers when a
+    static-credential connector accidentally asks for a vendor token. It's never
+    surfaced from a correctly-wired connector; exists so the embed stays uniform
+    without `if o != nil { … }` dances at call sites.
+
+
+FUNCTIONS
+
+func BuildDetailsFromFields(
+	fields map[string]string,
+	definitions map[string]irminmodels.DynamicField,
+) map[string]string
+    BuildDetailsFromFields creates a details map from form fields using the
+    provided field definitions.
+
+func BuildSettingsFromFields(
+	fields map[string]string,
+	definitions map[string]irminmodels.DynamicField,
+) map[string]string
+    BuildSettingsFromFields creates a settings map from form fields using the
+    provided field definitions.
+
+func CapabilitiesToOperationTypes(capabilities []irminmodels.ConnectorCapability) []string
+    CapabilitiesToOperationTypes converts connector capabilities to supported
+    operation types.
+
+func ClassifyJobReadError(err error) (int, sdkmodels.JobErrorReason)
+    ClassifyJobReadError maps a DB / IO error observed on a read path
+    (GetOperationJob, Snapshot, etc.) to the right (HTTP status, JobErrorReason)
+    pair for RespondJobError. Centralised so every read path uses the same
+    taxonomy.
+
+      - gorm.ErrRecordNotFound → 404 + not_found (not retryable)
+      - context.DeadlineExceeded → 500 + transient_db_error (retryable)
+      - *net.OpError → 500 + transient_db_error (retryable)
+      - any json.Unmarshal failure (corrupted progress JSON) → 500 +
+        corrupted_job_state (not retryable)
+      - anything else → 500 + internal (not retryable)
+
+func ConvertFormFieldsToMaps(fields map[string]string) (map[string]any, map[string]any)
+    ConvertFormFieldsToMaps converts form fields into separate details and
+    settings maps.
+
+func CreateEnsureOperationMiddleware(
+	app *models.ConnectorsApp,
+	provider OperationConfigProvider,
+) fiber.Handler
+    CreateEnsureOperationMiddleware returns a fiber.Handler that runs
+    EnsureOperation against the connector's controller (which must satisfy
+    OperationConfigProvider). Each per-connector controller supplies its own
+    concrete provider; this factory keeps the route- wiring boilerplate in
+    setupConnectorRoutes free of generic-method gymnastics.
+
+func CreateSelectOptions(values []string) []irminmodels.SelectOption
+    CreateSelectOptions creates select options from a slice of strings.
+
+func CreateSelectOptionsWithLabels(keyValuePairs map[string]string) []irminmodels.SelectOption
+    CreateSelectOptionsWithLabels creates select options with custom labels.
+
+func CreateSystemTokenMiddleware(
+	app *models.ConnectorsApp,
+	getConnectorInfo func() models.ConnectorDetails,
+) fiber.Handler
+    CreateSystemTokenMiddleware creates a system token validation middleware for
+    a specific connector.
+
+func EnsureOperation(
+	c fiber.Ctx,
+	database *db.Database,
+	provider OperationConfigProvider,
+) error
+    EnsureOperation is the Phase-4 middleware that runs after
+    ValidateSystemToken on every data route (pull / push / patch / schema
+    / subscribe / unsubscribe). It parses `details[&lt;key&gt;]=&lt;value&gt;`
+    / `settings[&lt;key&gt;]=&lt;value&gt;` form fields the SDK ships on every
+    Start* request, finds-or-creates the matching Operation row
+    keyed on (ConnectorRegistrationID, ConfigHash), and stamps it
+    on c.Locals("operation") so handlers that read it (the bulk of
+    common/operation*.go) keep working unchanged.
+
+    Why this isn't merged into ValidateSystemToken: cheap metadata routes
+    (info / configuration/{key}/fields / configuration/validate) don't need
+    an Operation row, and EnsureOperationFromRequest does real work (DB
+    transaction, advisory lock). Splitting them keeps metadata fast and avoids
+    creating empty-credential Operation rows for the cases that don't need them.
+
+func ExtractPatchFileKey(pointer string) (string, error)
+    ExtractPatchFileKey peels the `&lt;resource&gt;/&lt;id&gt;.json` prefix off a
+    JSON-Pointer path. Returns the file-key component (without the leading
+    slash) so callers can group patch ops by record.
+
+    Boundary is strict: the `.json` segment must be followed by either a `/`
+    (field pointer, e.g., `/customers/cus_abc.json/email`) or end of string
+    (whole-file pointer). An earlier revision used `strings.Index(trimmed,
+    ".json")` which would accept `customers/cus_abc.jsonEVIL/email` and silently
+    produce a malformed field path — fixed once, in this shared helper.
+
+func GetConnectorCapabilitiesFromConfig(
+	getConnectorInfo func() models.ConnectorDetails,
+) []irminmodels.ConnectorCapability
+    GetConnectorCapabilitiesFromConfig is a helper function to extract
+    capabilities from connector info.
+
+func GetDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []string
+    GetDetailsFieldNames returns all detail field names from the provided
+    definitions.
+
+func GetOptionalDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []string
+    GetOptionalDetailsFieldNames returns only detail field names that are marked
+    as optional.
+
+func GetOptionalFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string
+    GetOptionalFieldNames returns field names that are marked as
+    optional from both details and settings definitions. This composes
+    GetOptionalDetailsFieldNames and GetOptionalSettingsFieldNames.
+
+func GetOptionalSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string
+    GetOptionalSettingsFieldNames returns only settings field names that are
+    marked as optional.
+
+func GetRequiredDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []string
+    GetRequiredDetailsFieldNames returns only detail field names that are marked
+    as required. Use this when validating connection details separately from
+    settings.
+
+func GetRequiredFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string
+    GetRequiredFieldNames returns field names that are marked as
+    required from both details and settings definitions. This composes
+    GetRequiredDetailsFieldNames and GetRequiredSettingsFieldNames.
+
+func GetRequiredSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string
+    GetRequiredSettingsFieldNames returns only settings field names that are
+    marked as required. Use this when validating connection settings separately
+    from details.
+
+func GetSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string
+    GetSettingsFieldNames returns all settings field names from the provided
+    definitions.
+
+func HandleNotSupportedPatch(c fiber.Ctx) error
+    HandleNotSupportedPatch provides a common handler for connectors that don't
+    support patch operations.
+
+func HandleNotSupportedPull(c fiber.Ctx) error
+    HandleNotSupportedPull provides a common handler for connectors that don't
+    support pull operations.
+
+func HandleNotSupportedPush(c fiber.Ctx) error
+    HandleNotSupportedPush provides a common handler for connectors that don't
+    support push operations.
+
+func HandleNotSupportedSchemaGet(c fiber.Ctx) error
+    HandleNotSupportedSchemaGet provides a common handler for connectors that
+    don't support schema operations.
+
+func HandleOperationPatch(
+	c fiber.Ctx,
+	provider PatchOperationProvider,
+	logger *slog.Logger,
+	dbInstance *db.Database,
+	app *models.ConnectorsApp,
+) error
+    HandleOperationPatch starts an async patch job and returns HTTP 202 Accepted
+    with {"job_id": "..."}. The patch body (upload parsing + per-operation
+    execution) runs in a background worker owned by the JobManager; callers poll
+    /operation/status/:job_id. Patch produces no result artifact — the status
+    row is the success signal.
+
+    The uploaded patch file is read in the HTTP goroutine before the worker is
+    launched because fiber.Ctx is not safe to dereference once the response has
+    been written.
+
+func HandleOperationPull(
+	c fiber.Ctx,
+	provider PullOperationProvider,
+	logger *slog.Logger,
+	dbInstance *db.Database,
+	app *models.ConnectorsApp,
+) error
+    HandleOperationPull starts an async pull job and returns HTTP 202 Accepted
+    with {"job_id": "..."}. The actual pull runs in a background worker owned
+    by the app's JobManager; callers poll /operation/status/:job_id and fetch
+    /operation/result/:job_id when it reaches status=complete.
+
+    Streaming is intentionally avoided here. The pre-async handler buffered
+    the full zip in memory because SendStreamWriter's callback runs after the
+    handler returns, which deadlocks against the session-scoped advisory lock
+    held by WithOperationExecutionLock. Under the async protocol we go one step
+    further: the zip is written to a tmpfile inside the worker goroutine and
+    served from disk via /operation/result/:job_id, so neither the accept path
+    nor the result path holds the advisory lock across a long file transfer.
+
+func HandleOperationPush(
+	c fiber.Ctx,
+	provider PushOperationProvider,
+	logger *slog.Logger,
+	dbInstance *db.Database,
+	app *models.ConnectorsApp,
+) error
+    HandleOperationPush starts an async push job and returns HTTP 202 Accepted
+    with {"job_id": "..."}. The actual push runs in a background worker owned
+    by the app's JobManager; callers poll /operation/status/:job_id and observe
+    status=complete when the job finishes. Push produces no result artifact
+    so /operation/result returns 204 No Content; the status row alone is the
+    success signal.
+
+    The request body (file upload or presigned URL) is consumed in the HTTP
+    goroutine before the worker is launched because fiber.Ctx is not safe to
+    dereference once the response has been written. Form parsing failures
+    surface as structured 4xx before the guard is taken, so a malformed request
+    does not hold the lock.
+
+func HandleOperationSchemaGet(
+	c fiber.Ctx,
+	provider SchemaOperationProvider,
+	logger *slog.Logger,
+	dbInstance *db.Database,
+	app *models.ConnectorsApp,
+) (retErr error)
+    HandleOperationSchemaGet provides a common HTTP handler for schema operation
+    endpoints.
+
+    Under the unified Guard API the handler persists an OperationJob row via
+    manager.Begin so concurrent schema requests against the same operation
+    get a structured 409 carrying the blocking job_id. Release is deferred;
+    a provider panic is recovered so the row never sticks at running.
+
+func LogOperationEvent(
+	dbInstance *db.Database,
+	logger *slog.Logger,
+	operationID uint,
+	eventType db.LogEventType,
+	message string,
+	metadata map[string]any,
+)
+    LogOperationEvent creates an operation log entry with the specified type,
+    message, and metadata. This is a helper function to standardize operation
+    logging across all connector handlers.
+
+    logger is nil-safe — callers that haven't wired one in (notably the Phase-4
+    inline EnsureOperationFromRequest path, which has no per-call logger to
+    thread) fall through to slog.Default() so a metadata-marshal or DB-write
+    failure still surfaces somewhere.
+
+func LogOperationProgress(
+	dbInstance *db.Database,
+	logger *slog.Logger,
+	operationID uint,
+	event ProgressEvent,
+)
+    LogOperationProgress emits a ProgressEvent as an operation log row,
+    applying per-kind throttling. Connectors should call this instead of ripping
+    throttling logic back into each connector's makeProgressHandler — that's how
+    Stripe got here in the first place.
+
+    Throttling rules:
+      - Page: logs on page 1 and every progressLogIntervalPage pages.
+      - Batch: logs on batch 1 and every progressLogIntervalBatch batches.
+      - Query, File, RateLimit, Heartbeat: always log. Callers of Query and File
+        should pre-throttle at the call site (e.g., every 1000 rows, every 5s of
+        wall clock) to avoid one-row-per-event floods.
+
+    Nil-safe for dbInstance + logger — used by tests that don't want DB side
+    effects.
+
+func MarkFailedAndRespond(
+	c fiber.Ctx,
+	outcome *JobOutcome,
+	status int,
+	stage string,
+	err error,
+) error
+    MarkFailedAndRespond is a small helper used by sync handlers (push, patch,
+    schema) to collapse the common three-line pattern of setting the guard's
+    outcome to failed and returning a matching HTTP error into a single call.
+    The caller passes a pointer to its in-scope outcome variable so the deferred
+    guard.Release picks up the terminal status.
+
+    Keeps the handler bodies short enough to satisfy funlen and centralises
+    the "outcome reason" string format so all connectors emit the same shape in
+    status responses.
+
+func MountJobHandlersOnGroup(group fiber.Router, connectorsApp *models.ConnectorsApp)
+    MountJobHandlersOnGroup mirrors the lifecycle routes onto a per- connector
+    router group so the SDK's slug-prefixed URLs hit the expected handlers.
+    Called from SetupConnectorRoutes — see the RegisterJobHandlers doc comment
+    for why both mounts are needed.
+
+func ReadPatchesFromForm(c fiber.Ctx) ([]irminmodels.PatchOperation, error)
+    ReadPatchesFromForm reads the `patches` form-file out of the inbound
+    multipart body and decodes it into a JSON-Patch slice. All filesystem and
+    body reads happen while fiber.Ctx is still live so the result is safely
+    usable in a background worker.
+
+    Returns an error wrapping http.ErrMissingFile when no `patches` field was
+    uploaded; callers map that to a 400.
+
+func RegisterJobHandlers(app *fiber.App, connectorsApp *models.ConnectorsApp)
+    RegisterJobHandlers mounts the async-job HTTP lifecycle endpoints (status
+    / result / cancel) at the connectors-app root. Called from main at startup,
+    once.
+
+    The same routes are also mirrored per-connector by SetupConnectorRoutes
+    — see MountJobHandlersOnGroup. The SDK client builds lifecycle URLs as
+    "{connector_base_url}/operation/{status,result,cancel}/{job_id}" where
+    connector_base_url already carries the "/{slug}" prefix Core resolved at
+    registration time, so a root-only mount returns 404 on every poll. Both
+    mounts route to the same handlers and the same JobManager — job_id alone
+    disambiguates which job — so the duplication is cheap routing-table noise,
+    not duplicated state.
+
+    Routes (registered both here and per-connector):
+
+        GET  /operation/status/:job_id   — job status snapshot
+        GET  /operation/result/:job_id   — result zip stream (409 until ready)
+        POST /operation/cancel/:job_id   — cancel an in-flight job
+
+    All routes require the per-job operation token returned in the 202 body of
+    the corresponding Start* request. The connector's system token is rejected
+    by design.
+
+func RenderConnectorDetailsPage(
+	c fiber.Ctx,
+	app *models.ConnectorsApp,
+	connectorSlug string,
+	getConnectorInfo func() models.ConnectorDetails,
+	eventDescription ...string,
+) error
+    RenderConnectorDetailsPage is a helper function for connectors to easily
+    render their details page.
+
+func RenderConnectorInfo(
+	c fiber.Ctx,
+	app *models.ConnectorsApp,
+	getConnectorInfo func() models.ConnectorDetails,
+) error
+    RenderConnectorInfo handles the common logic for connector info endpoints.
+    It retrieves connector information, prefixes URLs with the base URL,
+    and returns the JSON response.
+
+func RenderDetailsPage(c fiber.Ctx, config DetailsPageConfig) error
+    RenderDetailsPage handles the common logic for rendering connector details
+    pages.
+
+func RespondAlreadyRunning(c fiber.Ctx, err *AlreadyRunningError) error
+    RespondAlreadyRunning writes the 409 Conflict response for a "operation is
+    already running" collision. Surfaces the existing in-flight job's ID + kind
+    + started_at via the SDK's AlreadyRunningBody shape so the caller can poll
+    status or cancel the blocker without a second round trip.
+
+    err is the AlreadyRunningError returned by JobManager.Begin; it carries the
+    pre-populated JobID/Kind/OperationID/StartedAt from the lookup done inside
+    Begin. Callers should not reach for the individual fields — this helper
+    is the only place the wire shape is serialised so the shape stays uniform
+    across all connectors.
+
+func RespondJobError(
+	c fiber.Ctx,
+	status int,
+	reason sdkmodels.JobErrorReason,
+	err error,
+	jobID string,
+) error
+    RespondJobError writes a structured error response using the
+    SDK's JobErrorBody envelope. The handler is the single place that
+    decides status + reason + retryability for failures observed on the
+    /operation/{status,result,cancel} endpoints, and this helper is the single
+    place those decisions land on the wire.
+
+    jobID may be empty when the handler couldn't parse the path parameter — the
+    body then omits the field so the caller doesn't misread the URL they sent.
+
+func SetupConnectorRoutes(config ConnectorRouteConfig)
+    SetupConnectorRoutes sets up all routes for a connector based on its
+    capabilities.
+
+func ThrottledQueryEmitter(
+	handler ProgressHandler,
+	resourcePath string,
+	minRows int64,
+	minInterval time.Duration,
+) func(rowsScanned int64)
+    ThrottledQueryEmitter returns a closure that wraps handler with a "fire at
+    most every minRows of progress OR every minInterval of wall clock, whichever
+    first" gate. The first call always emits so the operator immediately sees
+    the operation is alive.
+
+    Designed for ProgressKindQuery (and any future per-row / per-byte kind
+    that LogOperationProgress doesn't pre-throttle): callers know the natural
+    per-iteration granularity and want to emit once per "interesting amount of
+    progress" rather than every row. SQL row scans (Postgres / MySQL) are the
+    immediate use case — millions of rows.Next() iterations would flood the log
+    otherwise.
+
+    Returns a no-op when handler is nil so the row-loop call site can invoke it
+    unconditionally.
+
+func TrimPatchFilePrefix(pointer, fileKey string) (string, error)
+    TrimPatchFilePrefix removes the file-path prefix from a JSON- Pointer and
+    returns just the field-path component (e.g., `email` or `metadata/plan`).
+    Returns "" when the pointer is exactly the file key — vendor callers reject
+    that case as "whole-record replace; use push instead".
+
+func ValidateSystemToken(
+	c fiber.Ctx,
+	app *models.ConnectorsApp,
+	getConnectorInfo func() models.ConnectorDetails,
+) error
+    ValidateSystemToken validates the system token for connector endpoints.
+    It automatically gets connector info and sets context locals.
+
+func WithJobProgress(
+	ctx context.Context,
+	appendProgress func(sdkprogress.ProgressEvent),
+) context.Context
+    WithJobProgress returns a new ctx that carries appendProgress — consumed
+    by NewProgressHandler inside the provider's InitializeClient to fan out
+    events to the job status response. The async-pull worker is the only caller;
+    no production code outside asyncOperation.go should use this directly.
+
+func WrapHTTPClient(
+	client *http.Client,
+	o *OAuthConnector,
+	c fiber.Ctx,
+) *http.Client
+    WrapHTTPClient returns a new *http.Client whose Transport is an
+    OAuthRoundTripper around the input client's transport. Preserves the input
+    client's Timeout, CheckRedirect, Jar — only the Transport is replaced.
+    Pass nil to start from an empty client.
+
+func WrapHTTPClientForJob(
+	client *http.Client,
+	tc *lib.OAuthTokenClient,
+	connectionID uint,
+) *http.Client
+    WrapHTTPClientForJob returns a new *http.Client whose Transport is an
+    AsyncOAuthRoundTripper around the input client's transport. Mirrors
+    WrapHTTPClient (the sync variant) but takes the connection ID + token client
+    directly so the result is safe to use inside a worker goroutine.
+
+
+TYPES
+
+type AlreadyRunningError struct {
+	// JobID of the job currently holding the lock, empty only when
+	// no OperationJob row exists for this operation (legacy caller
+	// or race between row lookup and lock observation).
+	JobID string
+
+	// OperationID echoed so RespondAlreadyRunning can populate the
+	// wire body without re-threading it through the handler.
+	OperationID uint
+
+	// Kind is the operation-kind string holding the lock:
+	// "pull" | "push" | "patch" | "schema". Empty when the
+	// blocking job was started by a caller that did not supply
+	// one — treat as "unknown".
+	Kind string
+
+	// StartedAt is the CreatedAt of the blocking row; zero when no
+	// row was found.
+	StartedAt time.Time
+}
+    AlreadyRunningError is returned by JobManager.Begin when the
+    operation-execution advisory lock is already held by another session.
+    Fields are populated from the row FindActiveOperationJob returns; when no
+    active row exists (legacy sync holder), JobID is empty and StartedAt is the
+    zero time.
+
+    Handlers pass this to RespondAlreadyRunning to emit the 409 response with
+    the SDK's AlreadyRunningBody shape. Construct via Begin; do not instantiate
+    directly in handler code.
+
+func (e *AlreadyRunningError) Error() string
+    Error implements the error interface so AlreadyRunningError can be returned
+    from anywhere an error is expected. The message is operator-facing;
+    machine-readable consumers should type-assert via errors.As.
+
+type AsyncOAuthRoundTripper struct {
+	// Base is the transport we wrap. Must not be nil after construction
+	// (NewAsyncOAuthRoundTripper installs http.DefaultTransport when
+	// the caller passes nil).
+	Base http.RoundTripper
+
+	// TokenClient talks to Core's internal access-token endpoint. Same
+	// instance the OAuthConnector base holds — workers reach for it via
+	// (*OAuthConnector).TokenClient at request time and pass it here.
+	TokenClient *lib.OAuthTokenClient
+
+	// ConnectionID identifies which Connection's token to fetch on
+	// every outbound request. Captured from the inbound fiber.Ctx in
+	// the handler before the worker is launched; never changes during
+	// the worker's lifetime.
+	ConnectionID uint
+}
+    AsyncOAuthRoundTripper is the worker-safe outbound middleware. Wrap the
+    connector's *http.Client transport with this once at the start of the
+    worker, then drive the client normally — no fiber.Ctx required.
+
+func NewAsyncOAuthRoundTripper(
+	base http.RoundTripper,
+	tc *lib.OAuthTokenClient,
+	connectionID uint,
+) *AsyncOAuthRoundTripper
+    NewAsyncOAuthRoundTripper constructs a round-tripper for the given
+    connection. Base defaults to http.DefaultTransport when nil.
+
+func (rt *AsyncOAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
+    RoundTrip stamps Authorization and retries once on 401 with a forced
+    refresh, mirroring OAuthRoundTripper but driven from req.Context() instead
+    of a captured fiber.Ctx.
+
+type BeginOperationJobInput struct {
+	// OperationID keys the advisory lock and the job's FK back to
+	// the Operation row. Required.
+	OperationID uint
+
+	// ConnectorRegistrationID is persisted on the row for audit.
+	// Required in production; tests may pass 0.
+	ConnectorRegistrationID uint
+
+	// ConnectorName is persisted on the row as a human-readable
+	// connector slug. Passed through to the SDK status response.
+	ConnectorName string
+
+	// Kind tags the row with the operation kind (pull / push /
+	// patch / schema) so 409 responses can surface which flavor is
+	// blocking. Required.
+	Kind string
+}
+    BeginOperationJobInput carries the caller-specified knobs that the
+    OperationJob row needs at creation time. Kept as a struct so new fields can
+    be added without breaking every call site.
+
+type ConfigFieldProvider interface {
+	GetDynamicFields(ctx fiber.Ctx, key string, fields map[string]string) (map[string]irminmodels.DynamicField, error)
+}
+    ConfigFieldProvider defines the interface for providing configuration
+    fields.
+
+type ConfigValidationProvider interface {
+	// GetRequiredFormFields returns the list of required and optional form field names
+	GetRequiredFormFields() (required []string, optional []string)
+
+	// ValidateFields performs connector-specific field validation
+	ValidateFields(ctx fiber.Ctx, details map[string]any, settings map[string]any) []string
+
+	// TestConnection tests the actual connection and returns status flags and errors
+	TestConnection(
+		ctx fiber.Ctx,
+		details map[string]any,
+		settings map[string]any,
+	) (canConnect, detailsValid, settingsValid bool, errors []string)
+}
+    ConfigValidationProvider defines the interface for validating connector
+    configurations.
+
+type ConnectorController interface {
+	// Required base controller methods
+	Info(c fiber.Ctx) error
+	ConfigFields(c fiber.Ctx) error
+	ConfigValidate(c fiber.Ctx) error
+	OperationSchemaGet(c fiber.Ctx) error
+	DetailsPage(c fiber.Ctx) error
+
+	// Middleware methods. Phase 4 added EnsureOperationMiddleware
+	// (system-token + inline Operation upsert) and retired the
+	// per-Connection ValidateOperationTokenMiddleware — every data
+	// route now flows through EnsureOperationMiddleware, while the
+	// per-job lifecycle routes (status / result / cancel) authenticate
+	// with the per-job operation token via validateJobOperationToken
+	// in operationJobHandlers.go.
+	ValidateSystemTokenMiddleware(c fiber.Ctx) error
+	EnsureOperationMiddleware(c fiber.Ctx) error
+
+	// Capability-based methods (optional - will only be called if capability is supported)
+	OperationPull(c fiber.Ctx) error
+	OperationPush(c fiber.Ctx) error
+	OperationPatch(c fiber.Ctx) error
+	SubscribeToChanges(c fiber.Ctx) error
+	UnsubscribeFromChanges(c fiber.Ctx) error
+
+	// OperationConfigProvider methods. Embedded directly on the
+	// controller because each connector's Controllers struct already
+	// implements them. Phase-4 routes call EnsureOperationFromRequest
+	// with the controller as the provider so Start* requests can
+	// upsert the Operation row inline from the details / settings
+	// carried on the request body — the same fields the legacy
+	// /operation/init handshake used to ship once and then cache.
+	OperationConfigProvider
+}
+    ConnectorController defines the interface that all connector controllers
+    must implement.
+
+type ConnectorRouteConfig struct {
+	App           *models.ConnectorsApp
+	Controller    ConnectorController
+	ConnectorSlug string
+	Capabilities  []irminmodels.ConnectorCapability
+}
+    ConnectorRouteConfig holds the configuration for setting up connector
+    routes.
+
+type Controllers struct {
+	App    *models.ConnectorsApp
+	DB     *db.Database
+	Logger *slog.Logger
+}
+    Controllers holds the dependencies for connector controllers.
+
+func NewControllers(app *models.ConnectorsApp) *Controllers
+    NewControllers creates a new instance of controllers with the required
+    dependencies.
+
+func (cs *Controllers) HandleConfigFields(c fiber.Ctx, provider ConfigFieldProvider) error
+    HandleConfigFields provides a common HTTP handler for configuration fields
+    endpoints.
+
+func (cs *Controllers) HandleConfigValidation(c fiber.Ctx, provider ConfigValidationProvider) error
+    HandleConfigValidation provides a common HTTP handler for configuration
+    validation endpoints.
+
+func (cs *Controllers) HandleUnsubscribeFromChanges(
+	c fiber.Ctx,
+	provider UnsubscribeProvider,
+) error
+    HandleUnsubscribeFromChanges provides common logic for unsubscribing from
+    database changes. It validates the request, verifies subscription ownership,
+    stops any active listeners, and deletes the subscription from the database.
+
+type DetailsPageConfig struct {
+	ConnectorSlug             string
+	ConnectorInfo             models.ConnectorDetails
+	EventListeningDescription string // Custom description for event listening capabilities
+}
+    DetailsPageConfig holds configuration for rendering a connector details
+    page.
+
+type EnsureOperationFromRequestError struct {
+	Status  int
+	Message string
+	Cause   error
+}
+    EnsureOperationFromRequestError carries an HTTP-shaped error returned by
+    EnsureOperationFromRequest. Handlers translate it into the appropriate
+    JobError envelope or other HTTP response.
+
+func EnsureOperationFromRequest(
+	c fiber.Ctx,
+	database *db.Database,
+	info *models.ConnectorDetails,
+	provider OperationConfigProvider,
+) (*db.Operation, *EnsureOperationFromRequestError)
+    EnsureOperationFromRequest is the Phase 4 replacement for the
+    /operation/init handshake. Each Start* request now carries
+    `details[&lt;key&gt;]=&lt;value&gt;` and `settings[&lt;key&gt;]=&lt;value&gt;` form fields
+    (the SDK's StartOperation*Request.Details / .Settings) — this helper
+    parses them through the connector's existing OperationConfigProvider,
+    marshals + hashes the result, and atomically upserts the matching Operation
+    row keyed on (ConnectorRegistrationID, ConfigHash). Subsequent calls
+    with the same credentials reuse the same row, so worker code that reads
+    `operation.Details` / `.Settings` keeps working unchanged.
+
+    Returns *EnsureOperationFromRequestError on failure so handlers
+    can translate the carried HTTP status into their preferred envelope
+    (RespondJobError for Start*, plain fiber.Map for the legacy init route
+    during the transitional release).
+
+func (e *EnsureOperationFromRequestError) Error() string
+    Error implements the error interface so the type works with errors.Is
+    / errors.As and so a bare `return err` from a handler still produces an
+    operator-facing message in the worst case.
+
+func (e *EnsureOperationFromRequestError) Unwrap() error
+    Unwrap exposes the underlying cause for errors.Is / errors.As.
+
+type JobManager struct {
+	// Has unexported fields.
+}
+    JobManager owns the lifecycle of async operation jobs: persistence,
+    worker goroutines, cancellation, and janitor GC. Construct one per process
+    and share by reference; it is safe for concurrent use.
+
+func NewJobManager(
+	dbInstance *db.Database,
+	logger *slog.Logger,
+	cfg JobManagerConfig,
+) *JobManager
+    NewJobManager builds a JobManager against the provided database and logger.
+    Defaults are applied for any zero-value config field; the caller is
+    responsible for eventually invoking StartJanitor on the returned manager so
+    expired jobs get reaped.
+
+func NewJobManagerWithStore(
+	store JobStore,
+	logger *slog.Logger,
+	cfg JobManagerConfig,
+) *JobManager
+    NewJobManagerWithStore is the test-friendly constructor: it accepts any
+    JobStore (real DB, in-memory fake) so unit tests don't need a running
+    Postgres. Production callers should use NewJobManager with a *db.Database
+    — the latter satisfies JobStore directly via the methods defined on
+    db.Database.
+
+func (m *JobManager) Begin(
+	input BeginOperationJobInput,
+) (*OperationGuard, *AlreadyRunningError, error)
+    Begin acquires the operation-execution advisory lock for input.OperationID
+    on a pinned PG session, persists a pending OperationJob row, and returns a
+    Guard the caller uses to transition the row and release the lock.
+
+    Return values:
+      - (guard, nil, nil) — lock acquired; row created
+      - (nil, alreadyErr, nil) — lock held by another session; alreadyErr
+        carries the blocking job's details for RespondAlreadyRunning
+      - (nil, nil, err) — DB / lock-plumbing failure; the caller should surface
+        a structured 500 via RespondJobError(..., JobErrorReasonTransientDB,
+        err, "")
+
+    Implementation note: the Guard holds the advisory lock for the lifetime of
+    its Release call via a goroutine that pins a PG connection. The goroutine's
+    WithOperationExecutionLock closure blocks on a release channel, applies the
+    terminal status write while the lock is still held, then returns — which
+    triggers Postgres's pg_advisory_unlock on the same session.
+
+func (m *JobManager) Cancel(jobID string) bool
+    Cancel marks a job for cancellation. Returns true if the job was known to
+    this manager (and the context was cancelled), false if the job ID is not
+    tracked (either unknown or already reaped). Idempotent: a second Cancel call
+    on a job whose worker has already exited returns true and no-ops.
+
+    Prefer CancelWithOutcome for new handler code — it reports whether the live
+    worker's context was actually signalled (vs. a no-op against a placeholder
+    or already-exited worker), which the structured cancel response exposes as
+    was_active.
+
+func (m *JobManager) CancelWithOutcome(jobID string) (bool, bool)
+    CancelWithOutcome is the enriched form of Cancel. Returns (active, tracked):
+    active is true when a non-placeholder worker's cancel fn was invoked — i.e.,
+    there is actually a live worker goroutine that will observe the ctx
+    cancellation and wind down. tracked is true when any entry existed in the
+    in-memory worker map, including placeholders and already-exited workers;
+    false only for unknown or janitor-reaped job IDs.
+
+    Handlers surface active as was_active on the cancel response so clients can
+    tell "we signalled a running worker" apart from "no-op against a terminal
+    row".
+
+func (m *JobManager) EnsureResultDir() error
+    EnsureResultDir creates the result directory if it does not exist. Called
+    lazily by StartJob so the first pull on a fresh pod works without an init
+    step, and idempotent so repeated calls are free.
+
+func (m *JobManager) RunJanitor()
+    RunJanitor executes one GC pass. Exposed for tests so they can drive the
+    janitor deterministically instead of waiting on the ticker. Swallows per-row
+    errors (logs only) because a single bad row must not block cleanup of the
+    rest.
+
+    Two reclaim passes run on each tick:
+
+     1. Expired-TTL pass: rows whose ExpiresAt is in the past are deleted and
+        their result files unlinked. This is the only path that removes DB rows
+        outright.
+     2. Stuck-row pass: rows still in pending/running whose updated_at is older
+        than cfg.StuckThreshold have their advisory lock probed. If the probe
+        acquires (i.e., the original holder's PG connection is gone), the row is
+        marked failed so /operation/status reports a terminal state instead of
+        sticking at running indefinitely.
+
+func (m *JobManager) Snapshot(jobID string) (*db.OperationJob, []sdkprogress.ProgressEvent, error)
+    Snapshot returns the current in-memory progress slice and the persisted
+    status row. The status row is always fetched from the DB so a caller
+    hitting this right after StartJob sees the running transition even if the
+    worker goroutine hasn't emitted any progress yet. If the DB lookup returns
+    NotFound, the (row, err) pair carries that upward so the handler can surface
+    404.
+
+func (m *JobManager) StartJanitor()
+    StartJanitor launches the periodic GC goroutine. Safe to call multiple
+    times — only the first call has effect, so startup code can invoke it
+    unconditionally. The janitor runs until StopJanitor is called or the process
+    exits.
+
+func (m *JobManager) StartJob(
+	ctx context.Context,
+	connectorRegistrationID uint,
+	connectorName string,
+	operationID uint,
+	fn WorkerFunc,
+) (*db.OperationJob, error)
+    StartJob persists a new OperationJob row in status=pending, spawns a worker
+    goroutine that runs fn under a job-scoped context, and returns the job
+    record to the caller (so the HTTP handler can write 202 + {job_id}).
+
+    The caller owns: selecting the connector / operation fields on the
+    OperationJob. This function fills in JobID, Status, CreatedAt, Progress
+    (empty), and triggers the worker.
+
+    If fn returns nil, the worker transitions the job to complete and writes
+    ExpiresAt = now + TTL. If fn returns a non-nil error, the worker transitions
+    to failed and records the error message. If the job's context is cancelled
+    before fn returns, the worker transitions to cancelled (even if fn
+    eventually returns nil — cancel wins the race).
+
+func (m *JobManager) StartJobWithGuard(guard *OperationGuard, fn WorkerFunc) *db.OperationJob
+    StartJobWithGuard takes ownership of a guard returned by JobManager.Begin
+    and spawns a background worker goroutine that runs fn. The guard is released
+    with the terminal outcome fn produces — success → complete, error → failed,
+    ctx cancelled → cancelled, panic → failed (recovered; not rethrown). Returns
+    immediately so the caller can write its 202 Accepted response.
+
+    Unlike the legacy StartJob path, this function does NOT take the advisory
+    lock inside the worker — the guard's goroutine is already holding it on a
+    pinned PG session. The worker purely runs user code.
+
+    The resultPath the worker writes to is placed under the manager's ResultDir
+    and named after the guard's jobID; callers that need a different layout can
+    pre-compute a path and have their WorkerFunc ignore the one we pass.
+
+func (m *JobManager) StopJanitor()
+    StopJanitor signals the janitor goroutine to exit. Idempotent; a second
+    call is a no-op. Intended for graceful shutdown tests — in production,
+    the process exit handles it.
+
+func (m *JobManager) WaitForJob(ctx context.Context, jobID string) error
+    WaitForJob blocks until the worker for jobID has exited, or until ctx is
+    done. Returns nil on a clean worker exit, ctx.Err on cancellation/deadline.
+    Unknown job IDs return nil immediately — the worker is already gone,
+    treat it as done.
+
+    Useful for tests; not used on the hot path.
+
+type JobManagerConfig struct {
+	// TTL is how long a terminal job (complete/failed/cancelled)
+	// lives before the janitor deletes it. Zero → DefaultJobTTL.
+	TTL time.Duration
+
+	// JanitorInterval is the janitor tick cadence. Zero →
+	// DefaultJanitorInterval. Set to a large value in tests to
+	// disable automatic sweeping and drive it by hand via RunJanitor.
+	JanitorInterval time.Duration
+
+	// ResultDir is the directory result zips are written under. Zero
+	// → filepath.Join(os.TempDir(), JobResultDirSegment). Tests pass
+	// a t.TempDir() so the janitor's filesystem unlinks don't touch
+	// /tmp/irmin-connectors between test runs.
+	ResultDir string
+
+	// StuckThreshold controls the janitor's layer-B reclaim: rows
+	// in pending/running whose updated_at is older than now-threshold
+	// are candidates for being marked failed (after the janitor
+	// confirms their advisory lock is free). Zero →
+	// DefaultStuckThreshold. Tests drive this to a small value so
+	// they can exercise the reclaim path without waiting 30 minutes.
+	StuckThreshold time.Duration
+}
+    JobManagerConfig parameterises the manager. Zero-value fields fall back to
+    the Default* constants. Kept small on purpose — the production deployment
+    never needs more than TTL/janitor/result-dir.
+
+type JobOutcome struct {
+	// Status must be one of OperationJobStatusComplete / Failed /
+	// Cancelled. Guard.Release rejects the other (non-terminal)
+	// statuses.
+	Status sdkmodels.OperationJobStatus
+
+	// Error is the operator-facing failure message when
+	// Status=failed. Ignored for complete/cancelled — cancel has no
+	// server-side reason, complete has nothing to say.
+	Error string
+
+	// ResultPath is the filesystem path of the finished zip when
+	// Status=complete. Ignored otherwise. The Guard serialises this
+	// into the OperationJob row so /operation/result can serve it.
+	ResultPath string
+}
+    JobOutcome is the terminal state a Guard caller reports on Release: success
+    → complete, failure → failed, cooperative stop → cancelled. Zero value is
+    a failed outcome with no message so a caller that forgets to populate it at
+    least surfaces as failure rather than accidentally masking a bug as success.
+
+type JobStore interface {
+	CreateOperationJob(job *db.OperationJob) (*db.OperationJob, error)
+	GetOperationJob(jobID string) (*db.OperationJob, error)
+	UpdateOperationJobStatus(
+		jobID string,
+		status string,
+		errMsg *string,
+		resultPath *string,
+		expiresAt *time.Time,
+	) error
+	UpdateOperationJobProgress(jobID string, progressJSON []byte) error
+	DeleteExpiredOperationJobs(now time.Time) (int64, error)
+	ListExpiredOperationJobs(now time.Time) ([]db.OperationJob, error)
+
+	// FindActiveOperationJob returns the most recent non-terminal
+	// job for operationID, or gorm.ErrRecordNotFound if none exists.
+	// Used by Begin to populate AlreadyRunningError.JobID when a
+	// lock contention happens.
+	FindActiveOperationJob(operationID uint) (*db.OperationJob, error)
+
+	// ListStuckOperationJobs returns non-terminal jobs whose
+	// updated_at is older than threshold — candidates for the
+	// janitor's stuck-row reclaim path.
+	ListStuckOperationJobs(threshold time.Time) ([]db.OperationJob, error)
+
+	// CreateOperationLog persists a log entry tied to an Operation.
+	// Used by the cancel path to record an audit-trail row when a job
+	// transitions to cancelled — progress events alone don't tell an
+	// operator "this is where the user pulled the plug".
+	CreateOperationLog(operationLog *db.OperationLog) (*db.OperationLog, error)
+
+	// WithOperationExecutionLock runs fn inside a session-scoped
+	// advisory lock on operationID. Returns (true, err) if the lock
+	// was acquired (err is fn's return); (false, nil) if the lock
+	// was already held by another session.
+	WithOperationExecutionLock(
+		operationID uint,
+		fn func(conn *gorm.DB) error,
+	) (bool, error)
+}
+    JobStore is the minimal persistence surface the JobManager relies on.
+    Production code passes a *db.Database (adapted via gormJobStore); tests can
+    provide an in-memory implementation so the manager's state-machine behaviour
+    is unit-testable without a Postgres instance.
+
+type ListenerManagerUnsubscribeProvider struct {
+	App *models.ConnectorsApp
+}
+    ListenerManagerUnsubscribeProvider implements UnsubscribeProvider using a
+    ListenerManager.
+
+func (p *ListenerManagerUnsubscribeProvider) StopListener(subscriptionID uint) error
+    StopListener implements UnsubscribeProvider by delegating to the
+    ListenerManager.
+
+type NotSupportedPatchProvider struct{}
+    NotSupportedPatchProvider provides a default implementation for connectors
+    that don't support patch operations.
+
+func (p *NotSupportedPatchProvider) ExecutePatchOperation(
+	_ context.Context,
+	_ any,
+	_ sdkmodels.PatchOperation,
+	_, _, _ string,
+	_, _, _, _ string,
+) error
+    ExecutePatchOperation returns an error indicating patch operations are not
+    supported.
+
+func (p *NotSupportedPatchProvider) InitializeClient(
+	_ context.Context,
+	_ *slog.Logger,
+	_ *db.Operation,
+) (any, func(), error)
+    InitializeClient returns an error indicating patch operations are not
+    supported.
+
+type NotSupportedPullProvider struct{}
+    NotSupportedPullProvider provides a default implementation for connectors
+    that don't support pull operations.
+
+func (p *NotSupportedPullProvider) GetAllFiles(
+	_ context.Context,
+	_ any,
+	_ *db.Operation,
+) ([]string, [][]byte, error)
+    GetAllFiles returns an error indicating pull operations are not supported.
+
+func (p *NotSupportedPullProvider) GetFileByPath(
+	_ context.Context,
+	_ any,
+	_ *db.Operation,
+	_ string,
+) (string, []byte, error)
+    GetFileByPath returns an error indicating pull operations are not supported.
+
+func (p *NotSupportedPullProvider) InitializeClient(
+	_ context.Context,
+	_ *slog.Logger,
+	_ *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient returns an error indicating pull operations are not
+    supported.
+
+func (p *NotSupportedPullProvider) ProgressHandler(_ *db.Operation) ProgressHandler
+    ProgressHandler returns nil — providers that reject every pull call have
+    nothing to observe.
+
+type NotSupportedPushProvider struct{}
+    NotSupportedPushProvider provides a default implementation for connectors
+    that don't support push operations.
+
+func (p *NotSupportedPushProvider) InitializeClient(
+	_ context.Context,
+	_ *slog.Logger,
+	_ *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient returns an error indicating push operations are not
+    supported.
+
+func (p *NotSupportedPushProvider) ProcessFiles(
+	_ context.Context,
+	_ any,
+	_ *db.Operation,
+	_ map[string][]byte,
+	_ string,
+) error
+    ProcessFiles returns an error indicating push operations are not supported.
+
+func (p *NotSupportedPushProvider) ProgressHandler(
+	_ *db.Operation,
+) ProgressHandler
+    ProgressHandler returns nil — providers that reject every push call have
+    nothing to observe. The common push worker's baseline heartbeat is still
+    installed anyway.
+
+type NotSupportedSchemaProvider struct{}
+    NotSupportedSchemaProvider provides a default implementation for connectors
+    that don't support schema operations.
+
+func (p *NotSupportedSchemaProvider) GetSchema(
+	_ fiber.Ctx,
+	_ any,
+	_ string,
+	_ *string,
+) (*irminmodels.ObjectSchema, error)
+    GetSchema returns an error indicating schema operations are not supported.
+
+func (p *NotSupportedSchemaProvider) GetSupportedOperationTypes() []string
+    GetSupportedOperationTypes returns an empty slice for unsupported
+    connectors.
+
+func (p *NotSupportedSchemaProvider) InitializeClient(
+	_ fiber.Ctx,
+	_ *slog.Logger,
+	_ *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient returns an error indicating schema operations are not
+    supported.
+
+type OAuthConnector struct {
+	// Config is the vendor-side OAuth metadata this connector declares.
+	// When nil, the connector is static-credential and
+	// InjectInfoOAuthConfig leaves the /info response untouched.
+	Config *irminmodels.ConnectionOAuthConfig
+
+	// TokenClient fetches a fresh vendor token from Core on every
+	// outbound call. Populated from env (IRMIN_API_BASE_URL +
+	// IRMIN_API_TOKEN) during app bootstrap; shared across every
+	// connector that embeds this struct.
+	TokenClient *lib.OAuthTokenClient
+}
+    OAuthConnector holds the shared OAuth machinery a concrete connector
+    composes into its controller. One instance per connector process; safe for
+    concurrent use (every method operates on the immutable Config + a stateless
+    token client).
+
+    TokenClient may be nil when the connector doesn't use OAuth — in that
+    case every helper short-circuits to the equivalent no-op, which means
+    static-credential connectors can embed *OAuthConnector uniformly without
+    conditional wiring in each call site.
+
+func NewOAuthConnector(
+	app *models.ConnectorsApp,
+	cfg *irminmodels.ConnectionOAuthConfig,
+) *OAuthConnector
+    NewOAuthConnector wires an OAuthConnector from the connector app's
+    environment. Pass the connector's declared ConnectionOAuthConfig to enable
+    the Connect button on the /info response; pass nil for static-credential
+    connectors that still want the uniform embed (the resolver methods then
+    return ErrOAuthNotConfigured).
+
+    The caller retains ownership of the app — the OAuthConnector keeps only the
+    token client + logger references it needs.
+
+func (o *OAuthConnector) ForceRefreshAccessToken(c fiber.Ctx) (*lib.VendorAccessToken, error)
+    ForceRefreshAccessToken is the retry variant: it asks Core to rotate the
+    stored token unconditionally. Callers use this after a vendor returns 401
+    on a token that was still within the local expiry window (i.e., the user
+    revoked Irmin at the vendor side mid-flight).
+
+func (o *OAuthConnector) InjectInfoOAuthConfig(info *models.ConnectorDetails)
+    InjectInfoOAuthConfig stamps this connector's ConnectionOAuthConfig onto the
+    provided /info response. No-op when the connector declared no OAuth config
+    — callers pass their regular ConnectorDetails through this method uniformly
+    regardless of OAuth status.
+
+func (o *OAuthConnector) ResolveAccessToken(c fiber.Ctx) (*lib.VendorAccessToken, error)
+    ResolveAccessToken returns a currently-valid vendor access token for the
+    Connection identified by the inbound request's X-Irmin-Connection-Id header.
+    Safe to call on every outbound vendor request; Core's fast path is a single
+    HTTPS round-trip with no vendor I/O when the stored token isn't near expiry.
+
+    The returned *VendorAccessToken has an AuthorizationHeader() helper that
+    callers stamp straight onto vendor requests. Sentinel errors are translated
+    to HTTP status codes by the companion WriteResolveError.
+
+func (o *OAuthConnector) ResolveOrWriteError(c fiber.Ctx) (*lib.VendorAccessToken, bool)
+    ResolveOrWriteError is a convenience for the common "one-shot" call pattern:
+    resolve the token, or write the error and stop. Returns (token, true) on
+    success, (nil, false) when the error response has already been written.
+    Lets concrete controllers keep the happy-path branch short:
+
+        tok, ok := o.ResolveOrWriteError(c)
+        if !ok {
+            return nil
+        }
+        // ... make vendor call with tok.AuthorizationHeader()
+
+func (o *OAuthConnector) WriteResolveError(c fiber.Ctx, err error) error
+    WriteResolveError maps a resolver error onto the appropriate HTTP response.
+    Centralized so every connector surfaces identical status codes for the same
+    failure modes — the console relies on 428 as the "render Reconnect CTA"
+    signal, for instance.
+
+    Status mapping:
+
+      - ErrNotConnected → 428 Precondition Required (reconnect needed)
+      - ErrRefreshRejected → 428 Precondition Required (reconnect needed)
+      - ErrMissingConnectionHeader → 400 Bad Request
+      - ErrOAuthNotConfigured → 500 Internal Server Error (wiring bug)
+      - ErrCoreUnavailable → 502 Bad Gateway (transient)
+      - anything else → 500 Internal Server Error
+
+type OAuthRoundTripper struct {
+	// Base is the transport we wrap; usually http.DefaultTransport or a
+	// vendor's pre-configured transport. Must not be nil.
+	Base http.RoundTripper
+
+	// OAuth is the embeddable base this round-tripper reads the
+	// connection ID and token from. A nil/empty OAuth short-circuits
+	// every call to ErrOAuthNotConfigured — static-credential
+	// connectors wouldn't install this transport in the first place.
+	OAuth *OAuthConnector
+
+	// Ctx is the inbound Fiber context. Captured once so every outbound
+	// request (including retries) reads the same X-Irmin-Connection-Id
+	// header and uses the operation's context deadline.
+	Ctx fiber.Ctx
+}
+    OAuthRoundTripper is the outbound middleware that stamps a vendor access
+    token on every request and retries once on 401 with a forced refresh.
+    Wrap the connector's existing http.Client transport with this once at
+    construction, then let vendor-specific code drive the client normally.
+
+    The Fiber request context is captured at construction so we can propagate
+    cancellations and deadlines into Core's token fetch — the inbound operation
+    has a bounded lifetime, and a refresh shouldn't outlive it.
+
+func NewOAuthRoundTripper(
+	base http.RoundTripper,
+	o *OAuthConnector,
+	c fiber.Ctx,
+) *OAuthRoundTripper
+    NewOAuthRoundTripper constructs a RoundTripper wired to the given Fiber
+    request. Base defaults to http.DefaultTransport when nil.
+
+func (rt *OAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
+    RoundTrip stamps the Authorization header and, on a 401 response, retries
+    once after forcing Core to rotate the stored token.
+
+    The retry needs a re-readable request body. We buffer the body once at entry
+    so the second attempt can replay it; connectors typically send small JSON
+    payloads to vendor APIs so the memory cost is negligible. If the body is too
+    large for that tradeoff, the caller should set req.GetBody themselves and
+    we'll honor it.
+
+type OperationConfigProvider interface {
+	// GetOperationFormFields returns the list of required and optional
+	// form field names ParseFormFields should look up on the request.
+	GetOperationFormFields() (required []string, optional []string)
+
+	// BuildDetails constructs the details JSON from parsed form fields.
+	BuildDetails(fields map[string]string) (map[string]string, error)
+
+	// BuildSettings constructs the settings JSON from parsed form fields.
+	BuildSettings(fields map[string]string) (map[string]string, error)
+}
+    OperationConfigProvider exposes a connector's request-time configuration
+    shape. EnsureOperationFromRequest consumes it on every data route to parse
+    the SDK's `details[&lt;key&gt;]` / `settings[&lt;key&gt;]` form fields, build the
+    per-connector credential maps, and upsert the matching Operation row keyed
+    on (Connector, ConfigHash).
+
+    The interface used to be called OperationInitProvider when its sole caller
+    was the (now-retired) /operation/init handler. Phase 4 retired init;
+    the methods here drive the inline upsert path on every Start* request,
+    so the name reflects the surviving role: build the request- time config,
+    not initialise anything.
+
+type OperationGuard struct {
+	// Has unexported fields.
+}
+    OperationGuard is the handle returned by JobManager.Begin. It represents a
+    successfully-acquired operation lock and an associated pending OperationJob
+    row. The caller is obligated to invoke Release exactly once, ideally via
+    defer, to transition the row to a terminal state and free the advisory lock.
+
+    The Guard is safe for concurrent Release calls: only the first wins;
+    subsequent calls no-op. The row id is exposed via JobID() so handler
+    responses can surface it (most relevantly on the 202 Accepted for async
+    pulls).
+
+func (g *OperationGuard) JobID() string
+    JobID returns the opaque identifier of the underlying OperationJob row.
+    Handlers surface this on their successful response (202 Accepted for async
+    pulls, 200 for sync push/patch/schema).
+
+func (g *OperationGuard) OperationID() uint
+    OperationID returns the numeric operation identifier this guard is
+    protecting. Exposed for logging and for callers that want to correlate the
+    guard with their existing Operation row handle.
+
+func (g *OperationGuard) OperationToken() string
+    OperationToken returns the per-job credential the connector returns to
+    Core in the 202 Start* response. Core re-sends this on every subsequent
+    call against the job's lifecycle routes (status / result / cancel);
+    see db.OperationJob.OperationToken for the full contract. Empty when the
+    guard is nil — handlers are expected to nil-check before constructing the
+    response, but the empty-string fallback is safe for tests / hand-wired
+    guards that bypass Begin.
+
+func (g *OperationGuard) Release(outcome JobOutcome)
+    Release transitions the underlying OperationJob row to a terminal state and
+    frees the advisory lock. Safe to call multiple times; only the first call
+    has effect. Blocks until the lock-holder goroutine has applied the terminal
+    write and returned.
+
+    outcome.Status must be one of OperationJobStatusComplete / Failed /
+    Cancelled. Guard converts any other value (including the zero value) into
+    Failed with a defensive error message, so a buggy caller can't accidentally
+    leave the row in a non-terminal state.
+
+func (g *OperationGuard) SetResultPath(path string)
+    SetResultPath records the path the worker wrote the result to. The guard
+    forwards this into the terminal-status update so that /operation/result can
+    serve the file. Callers that have no result (push/patch/schema) leave it
+    unset.
+
+    Must be called before Release; calling after Release is a no-op.
+
+type PatchOperationProvider interface {
+	// InitializeClient initializes the database client for patch operations.
+	InitializeClient(
+		ctx context.Context,
+		logger *slog.Logger,
+		operation *db.Operation,
+	) (client any, cleanup func(), err error)
+
+	// ExecutePatchOperation executes a single patch operation within a transaction.
+	ExecutePatchOperation(
+		ctx context.Context,
+		client any,
+		op sdkmodels.PatchOperation,
+		tableName, rowIdentifier, columnName string,
+		fromDB, fromTable, fromRow, fromColumn string,
+	) error
+}
+    PatchOperationProvider defines the interface for connector-specific patch
+    operation handling.
+
+    Under the async protocol the patch body runs in a worker goroutine
+    detached from the fiber request lifecycle, so providers receive an explicit
+    context.Context (derived from the job's cancel scope) and the preloaded
+    *db.Operation rather than a fiber.Ctx.
+
+type ProgressEvent = sdkprogress.ProgressEvent
+    ProgressEvent — see sdkprogress.ProgressEvent.
+
+type ProgressHandler = sdkprogress.ProgressHandler
+    ProgressHandler — see sdkprogress.ProgressHandler.
+
+func NewProgressHandler(
+	dbInstance *db.Database,
+	logger *slog.Logger,
+	operation *db.Operation,
+) ProgressHandler
+    NewProgressHandler returns a ProgressHandler that forwards every event
+    to LogOperationProgress with the given dbInstance + logger, using the
+    operation's ID. The standard implementation every Phase 3 connector returns
+    from its provider's ProgressHandler(operation) method — written once here
+    so a future bug fix to the dispatch shape (e.g. tagging events with the
+    operation slug, capturing per-event timing) propagates everywhere instead of
+    needing a patch in 5+ closures.
+
+    nil-operation safe: an event arriving before the operation is hydrated logs
+    against operationID=0, which the LogOperationProgress → LogOperationEvent
+    path tolerates. Callers that want to drop events when operation is nil can
+    wrap this themselves.
+
+func NewProgressHandlerWithContext(
+	ctx context.Context,
+	dbInstance *db.Database,
+	logger *slog.Logger,
+	operation *db.Operation,
+) ProgressHandler
+    NewProgressHandlerWithContext is the async-aware variant: if ctx carries
+    a WithJobProgress closure, the returned handler fans every event out
+    to the job's Progress slice in addition to LogOperationProgress, so GET
+    /operation/status/:job_id surfaces per-page / per-batch / rate-limit events
+    to polling clients. When ctx is nil or carries no appendProgress, behaviour
+    collapses to plain NewProgressHandler — legacy call sites stay unchanged.
+
+    Providers that want the fan-out should call this from inside
+    InitializeClient (which now receives a job-scoped ctx), and pass
+    the returned handler to their vendor client in place of the ctx-less
+    NewProgressHandler. New connectors should prefer this variant; the older one
+    is retained for non-async callers (push, patch) until they migrate.
+
+type PullOperationProvider interface {
+	// InitializeClient initializes the client for pull operations.
+	// ctx is the job-scoped context — cancellation flows to the
+	// underlying vendor client via this ctx when the job is
+	// cancelled.
+	InitializeClient(
+		ctx context.Context,
+		logger *slog.Logger,
+		operation *db.Operation,
+	) (client any, databaseName *string, cleanup func(), err error)
+
+	// GetAllFiles retrieves all available data as files.
+	GetAllFiles(
+		ctx context.Context,
+		client any,
+		operation *db.Operation,
+	) (filePaths []string, fileContents [][]byte, err error)
+
+	// GetFileByPath retrieves a specific file by path.
+	GetFileByPath(
+		ctx context.Context,
+		client any,
+		operation *db.Operation,
+		path string,
+	) (filePath string, fileContent []byte, err error)
+
+	// ProgressHandler returns the observability callback this
+	// provider wires into its client for per-page / per-batch /
+	// per-file events.
+	ProgressHandler(operation *db.Operation) ProgressHandler
+}
+    PullOperationProvider defines the interface for connector-specific pull
+    operation handling.
+
+    Under the async protocol the pull body runs in a worker goroutine detached
+    from the fiber request lifecycle, so providers receive an explicit
+    context.Context (derived from the job's cancel scope) and the preloaded
+    *db.Operation rather than a fiber.Ctx. Providers that previously grabbed
+    these off c.Context() / c.Locals("operation") inside each method are
+    adjusted to accept them as arguments.
+
+type PushOperationProvider interface {
+	// InitializeClient initializes the client for push operations.
+	// ctx is the job-scoped context — cancellation flows to the
+	// underlying vendor client via this ctx when the job is cancelled.
+	InitializeClient(
+		ctx context.Context,
+		logger *slog.Logger,
+		operation *db.Operation,
+	) (client any, databaseName *string, cleanup func(), err error)
+
+	// ProcessFiles processes the extracted files and uploads/inserts
+	// them. Must honour ctx — long-running inserts/uploads should pass
+	// ctx through to the underlying driver so /operation/cancel takes
+	// effect.
+	ProcessFiles(
+		ctx context.Context,
+		client any,
+		operation *db.Operation,
+		files map[string][]byte,
+		targetPath string,
+	) error
+
+	// ProgressHandler returns the observability callback this
+	// provider wires into its client for per-batch / per-file
+	// events. Return nil only if the underlying operations are
+	// short enough not to need progress events — the common push
+	// worker always wraps the provider call with a baseline
+	// heartbeat, so returning nil does not leave the operation
+	// silent.
+	ProgressHandler(operation *db.Operation) ProgressHandler
+}
+    PushOperationProvider defines the interface for connector-specific push
+    operation handling.
+
+    Under the async protocol the push body runs in a worker goroutine detached
+    from the fiber request lifecycle, so providers receive an explicit
+    context.Context (derived from the job's cancel scope) and the preloaded
+    *db.Operation rather than a fiber.Ctx. Providers that previously reached for
+    c.Locals("operation") or c.Context() inside each method now get both passed
+    in explicitly.
+
+type SchemaOperationProvider interface {
+	// InitializeClient initializes the client for schema operations
+	InitializeClient(
+		c fiber.Ctx,
+		logger *slog.Logger,
+		operation *db.Operation,
+	) (client any, path *string, cleanup func(), err error)
+
+	// GetSchema retrieves the schema for the specified operation type
+	GetSchema(c fiber.Ctx, client any, operationType string, path *string) (*irminmodels.ObjectSchema, error)
+
+	// GetSupportedOperationTypes returns the list of supported operation types for this connector
+	GetSupportedOperationTypes() []string
+}
+    SchemaOperationProvider defines the interface for connector-specific schema
+    operation handling.
+
+type UnsubscribeProvider interface {
+	// StopListener stops the listener for the given subscription ID.
+	// Returns nil if no listener management is needed or if the listener was stopped successfully.
+	StopListener(subscriptionID uint) error
+}
+    UnsubscribeProvider defines the interface for handling subscription
+    unsubscription.
+
+type WorkerFunc func(
+	ctx context.Context,
+	appendProgress func(sdkprogress.ProgressEvent),
+	resultPath string,
+) error
+    WorkerFunc is the body the JobManager runs on a background goroutine after
+    StartJob returns 202 to the caller. It receives:
+      - ctx: a job-scoped Context. Canceled when the client calls
+        /operation/cancel/:job_id or when the service is shutting down. Workers
+        MUST honour ctx.Done — the cancel handler relies on ctx cancellation to
+        stop the pull.
+      - appendProgress: thread-safe append into the job's cumulative progress
+        slice. Wire this into the provider's ProgressHandler.
+      - resultPath: absolute path where the worker MUST write the finished zip.
+        The path is pre-allocated inside JobResultDirSegment; the worker is free
+        to overwrite it.
+
+    Return nil on success; any error marks the job as failed and is surfaced on
+    the status response.
+
+</pre>
+</body></html>

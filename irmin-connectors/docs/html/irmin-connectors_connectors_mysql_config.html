@@ -1,0 +1,47 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/mysql/config</title></head><body>
+<h1>Package irmin-connectors/connectors/mysql/config</h1>
+<pre>
+package config // import "irmin-connectors/connectors/mysql/config"
+
+
+CONSTANTS
+
+const (
+	// DefaultMySQLPort is the default MySQL port number.
+	DefaultMySQLPort = 3306
+)
+
+FUNCTIONS
+
+func GetConnectorInfo() models.ConnectorDetails
+    GetConnectorInfo returns the default connector information for MySQL.
+
+func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
+    GetDetailsFieldDefinitions returns all detail fields with their metadata.
+
+func GetDetailsFields() []string
+    GetDetailsFields returns the detail-specific fields.
+
+func GetOptionalFields() []string
+    GetOptionalFields returns the optional form fields for MySQL.
+
+func GetRequiredDetailsFields() []string
+    GetRequiredDetailsFields returns only the required detail-specific fields.
+
+func GetRequiredFields() []string
+    GetRequiredFields returns the mandatory form fields for MySQL.
+
+func GetRequiredSettingsFields() []string
+    GetRequiredSettingsFields returns only the required settings-specific
+    fields.
+
+func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
+    GetSettingsFieldDefinitions returns static settings fields (dynamic ones are
+    handled in controllers).
+
+func GetSettingsFields() []string
+    GetSettingsFields returns the settings-specific fields.
+
+</pre>
+</body></html>

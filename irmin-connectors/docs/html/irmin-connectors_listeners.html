@@ -1,0 +1,53 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/listeners</title></head><body>
+<h1>Package irmin-connectors/listeners</h1>
+<pre>
+package listeners // import "irmin-connectors/listeners"
+
+
+TYPES
+
+type ListenerFunc func(ctx context.Context, logger *slog.Logger, subscription db.Subscription, database *db.Database) error
+    ListenerFunc is a function type for starting a connector-specific listener.
+    It should block until the context is cancelled or an error occurs.
+
+type Manager struct {
+
+	// ConnectorListeners maps connector names to their listener functions.
+	// This is populated during initialization.
+	ConnectorListeners map[string]ListenerFunc
+	// Has unexported fields.
+}
+    Manager manages active listeners for subscriptions. It provides thread-safe
+    methods to start and stop listeners dynamically.
+
+func NewManager(logger *slog.Logger, database *db.Database) *Manager
+    NewManager creates a new listener manager.
+
+func (m *Manager) GetActiveListenerCount() int
+    GetActiveListenerCount returns the number of active listeners.
+
+func (m *Manager) IsListenerRunning(subscriptionID uint) bool
+    IsListenerRunning checks if a listener is running for the given subscription
+    ID.
+
+func (m *Manager) RegisterConnectorListener(connectorName string, listenerFunc ListenerFunc)
+    RegisterConnectorListener registers a listener function for a connector.
+
+func (m *Manager) StartListener(connectorName string, subscription db.Subscription) error
+    StartListener starts a listener for the given subscription. If a listener is
+    already running for this subscription, it returns an error.
+
+func (m *Manager) StopAll()
+    StopAll stops all active listeners. This should be called during graceful
+    shutdown.
+
+func (m *Manager) StopListener(subscriptionID uint) error
+    StopListener stops the listener for the given subscription ID. It waits for
+    the listener to fully stop before returning.
+
+func (m *Manager) StopListenerAsync(subscriptionID uint) error
+    StopListenerAsync stops the listener without waiting for it to finish.
+
+</pre>
+</body></html>

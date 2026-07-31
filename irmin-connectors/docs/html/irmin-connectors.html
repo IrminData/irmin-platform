@@ -1,0 +1,43 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors</title></head><body>
+<h1>Package irmin-connectors</h1>
+<pre>
+
+
+CONSTANTS
+
+const (
+	// StartupTimeoutSeconds is the duration for which the startup is allowed to take.
+	StartupTimeoutSeconds = 30
+
+	// MaxStartupAttempts is the maximum number of attempts to start the server.
+	MaxStartupAttempts = 600
+
+	// StartupAttemptsInterval is the interval between startup attempts.
+	StartupAttemptsInterval = 50 * time.Millisecond
+
+	// ConnectionTimeout is the timeout for TCP connection attempts.
+	ConnectionTimeout = 100 * time.Millisecond
+
+	// CacheExpirationDuration is the duration for which responses are cached.
+	CacheExpirationDuration = 10 * time.Second
+
+	// MaxRequestBodySize is the maximum body size in bytes (5 GB).
+	MaxRequestBodySize = 5 * 1024 * 1024 * 1024
+
+	// ReadBufferSize is the size of the read buffer in bytes (10 MB).
+	ReadBufferSize = 10 * 1024 * 1024
+
+	// URLHealthCheckTimeout is the timeout for URL health check requests.
+	URLHealthCheckTimeout = 5 * time.Second
+
+	// MaxURLHealthCheckAttempts is the maximum number of attempts to check if the service URL is accessible.
+	MaxURLHealthCheckAttempts = 60
+
+	// URLHealthCheckInterval is the interval between URL health check attempts.
+	URLHealthCheckInterval = 1 * time.Second
+)
+    Constants for the application.
+
+</pre>
+</body></html>

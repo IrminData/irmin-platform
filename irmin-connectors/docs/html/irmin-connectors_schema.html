@@ -1,0 +1,82 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/schema</title></head><body>
+<h1>Package irmin-connectors/schema</h1>
+<pre>
+package schema // import "irmin-connectors/schema"
+
+
+CONSTANTS
+
+const (
+	// DefaultSampleSize is the default sample size for schema generation.
+	DefaultSampleSize = 1000
+)
+
+TYPES
+
+type Field struct {
+	Name     string  `json:"name"`
+	Type     string  `json:"type"`
+	Required bool    `json:"required"`
+	Children []Field `json:"children,omitempty"`
+}
+    Field represents one column or nested field in the DuckDB schema. Used
+    internally for DuckDB introspection before converting to JSONSchema. Name
+    is the column name or nested field name. Type is the DuckDB data type (e.g.
+    "VARCHAR", "STRUCT", or "ARRAY&lt;STRUCT&gt;"). Required indicates whether the
+    field is non-nullable in DuckDB (is_nullable = 'NO'). Children holds nested
+    struct fields if this column is a STRUCT or array of STRUCTs.
+
+type GenerationOptions struct {
+	IncludeJSONSchema bool
+	SampleSize        int
+	InferTypes        bool
+	DetectRequired    bool
+}
+    GenerationOptions represents legacy options for backward compatibility.
+
+func DefaultSchemaGenerationOptions() GenerationOptions
+    DefaultSchemaGenerationOptions returns default options (for test
+    compatibility).
+
+type Generator struct {
+	// Has unexported fields.
+}
+    Generator provides schema generation capabilities for in-memory data
+    processing.
+
+func NewGenerator(c context.Context, logger *slog.Logger) (*Generator, error)
+    NewGenerator creates a new schema generator with DuckDB backend.
+
+func (g *Generator) Close() error
+    Close closes the underlying DuckDB connection.
+
+func (g *Generator) GenerateObjectSchema(
+	data []byte,
+	filename string,
+) (*irminmodels.ObjectSchema, error)
+    GenerateObjectSchema analyzes file content and generates an ObjectSchema.
+    This follows the EXACT same pattern as the Core API's GenerateObjectSchema.
+    The only difference: we work with in-memory data instead of S3/LakeFS files.
+
+func (g *Generator) GenerateObjectSchemaFromData(
+	data []map[string]any,
+) (*irminmodels.ObjectSchema, error)
+    GenerateObjectSchemaFromData analyzes Go data structures and generates an
+    ObjectSchema. This follows the same pattern as the Core API but works with
+    in-memory Go data.
+
+func (g *Generator) GenerateSchemaFromBytes(data []byte, filename string) (*irminmodels.ObjectSchema, error)
+    GenerateSchemaFromBytes is deprecated - use GenerateObjectSchema instead.
+    This exists only for backward compatibility and will be removed.
+
+func (g *Generator) GenerateSchemaFromData(data []map[string]any) (*irminmodels.ObjectSchema, error)
+    GenerateSchemaFromData is deprecated - use GenerateObjectSchemaFromData
+    instead. This exists only for backward compatibility and will be removed.
+
+func (g *Generator) SupportsStructuredAnalysis(filename string) bool
+    SupportsStructuredAnalysis checks if the file format supports structured
+    data analysis.
+
+</pre>
+</body></html>

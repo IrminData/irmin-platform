@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/mysql</title></head><body>
+<h1>Package irmin-connectors/connectors/mysql</h1>
+<pre>
+package mysqlconnector // import "irmin-connectors/connectors/mysql"
+
+
+FUNCTIONS
+
+func SetupRoutes(app *models.ConnectorsApp)
+    SetupRoutes sets up the routes for the MySQL connector.
+
+func StartListener(
+	ctx context.Context,
+	logger *slog.Logger,
+	subscription db.Subscription,
+	database *db.Database,
+) error
+    StartListener starts the MySQL change listener for a subscription.
+
+</pre>
+</body></html>

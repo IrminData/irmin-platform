@@ -1,0 +1,7 @@
+id,name,email,age,department,active,created_at
+1,John Doe,john.doe@example.com,30,Engineering,true,2024-01-01T00:00:00Z
+2,Jane Smith,jane.smith@example.com,28,Marketing,true,2024-01-02T00:00:00Z
+3,Bob Johnson,bob.johnson@example.com,35,Sales,false,2024-01-03T00:00:00Z
+4,Alice Williams,alice.williams@example.com,32,Engineering,true,2024-01-04T00:00:00Z
+5,Charlie Brown,charlie.brown@example.com,27,Support,true,2024-01-05T00:00:00Z
+

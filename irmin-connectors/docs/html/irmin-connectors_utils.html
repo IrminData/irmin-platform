@@ -1,0 +1,195 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/utils</title></head><body>
+<h1>Package irmin-connectors/utils</h1>
+<pre>
+package utils // import "irmin-connectors/utils"
+
+
+CONSTANTS
+
+const (
+	// MaxRetries defines how many times to retry the transaction on deadlock.
+	MaxRetries = 3
+
+	// BaseBackoff is the minimum jitter wait (in milliseconds) before retrying.
+	BaseBackoff = 50
+
+	// MaxJitter is the additional random backoff (in milliseconds).
+	MaxJitter = 100
+
+	// MaxPortNumber is the maximum valid port number (2^16 - 1).
+	MaxPortNumber = 65535
+
+	// DefaultTokenLength is the default length for generated tokens.
+	DefaultTokenLength = 32
+
+	// DefaultMultipartFormMemory is the default memory limit for multipart form parsing (32MB).
+	DefaultMultipartFormMemory = 32 &lt;&lt; 20
+)
+
+FUNCTIONS
+
+func ConstructPath(databaseName, tableName, rowIdentifier, columnName string) string
+    ConstructPath takes a database name, table name, row identifier, and column
+    name and returns a path matching the format used by ExtractPathComponents.
+    Example: "/myDatabase/myTable.json/42/name".
+
+func ConvertStringToType(stringValue string, referenceValue any) (any, error)
+    ConvertStringToType attempts to convert a string value to match the type
+    of the reference value. Returns an error if the conversion fails, ensuring
+    early failure detection.
+
+func DecodeBinaryValue(contentType *string, value any) (any, bool, error)
+    DecodeBinaryValue decodes a base64-encoded binary value from a patch
+    operation. It first checks if the content type indicates binary data.
+    If not binary, returns the original value unchanged. Returns:
+      - decoded: the decoded value ([]byte for binary, original value otherwise)
+      - isBinary: true if this was binary content that was decoded
+      - err: any error that occurred during decoding
+
+func DecodeCompositeKey(identifier string, expectedCount int) ([]string, error)
+    DecodeCompositeKey decodes a composite key identifier back into individual
+    values. This is the counterpart to EncodeCompositeKey and handles
+    URL-encoded values.
+
+func DecodePatchValue(op irminmodels.PatchOperation) ([]byte, bool, error)
+    DecodePatchValue decodes the value of a patch operation. If the patch has a
+    binary content type, it decodes the base64-encoded value. Returns:
+      - decoded: the decoded bytes (or original value bytes for non-binary)
+      - isBinary: true if this was binary content
+      - err: any error that occurred during decoding
+
+func EncodeCompositeKey(values []string) string
+    EncodeCompositeKey encodes multiple primary key values into a single string
+    identifier. Values containing colon characters are URL-encoded to prevent
+    parsing conflicts.
+
+func ExtractPathComponents(pathStr string) (string, string, string, string)
+    ExtractPathComponents splits a path like:
+
+        "/database1/users.json/0/name"
+
+    into its components:
+
+        databaseName, tableName, rowIdentifier, columnName
+
+    It handles:
+
+      - a single segment (e.g. "users.json") → tableName="users"
+      - two segments ("db/users.json") → databaseName="db", tableName="users"
+      - three segments (.../0) → adds rowIdentifier="0"
+      - four+ segments (.../name/extra) → columnName="name" (extras ignored)
+
+    Returns empty strings for any missing component.
+
+func FindProjectRoot() (string, error)
+    FindProjectRoot traverses upwards from the current file's directory until it
+    finds a "go.mod" file.
+
+func GenerateToken(length int) (string, error)
+    GenerateToken creates a secure random token for system-level authentication.
+    The token is base64 encoded to ensure it's a string that can be easily used
+    in headers.
+
+func GetIntFromMap(m map[string]any, key string, defaultValue int) int
+    GetIntFromMap extracts an integer value from a map with type conversion.
+
+func GetStringFromMap(m map[string]any, key string, defaultValue string) string
+    GetStringFromMap extracts a string value from a map with type conversion.
+
+func HashConfigMap(config map[string]string) (string, error)
+    HashConfigMap generates a deterministic hash from a configuration map.
+    Keys are sorted alphabetically before hashing to ensure consistent hashes
+    regardless of map iteration order.
+
+func HashJSONFields(details, settings []byte) (string, error)
+    HashJSONFields generates a deterministic hash from JSON fields (Details and
+    Settings). Both fields are unmarshaled, keys are sorted, and then hashed
+    together.
+
+func IsBinaryContentType(contentType *string) bool
+    IsBinaryContentType checks if the given content type indicates binary data.
+    Returns true if the content type should be treated as binary. It delegates
+    to the unified MIME utility in irmin-sdk-go.
+
+func JoinURL(baseURL, path string) string
+    JoinURL properly joins a base URL with a path, handling absolute URLs and
+    slashes correctly. Used to properly format full URLs to public links,
+    like the connector web pages, and assets like logos. It prevents malformed
+    URLs like: - https://example.com/https://other.com/path (absolute
+    URL concatenation) - https://example.com//path (double slashes) -
+    https://example.compath (missing slash)
+
+func ParseFormFields(c fiber.Ctx, required, optional []string) (map[string]string, error)
+    ParseFormFields parses the form data from a Fiber context and checks for
+    required and optional fields.
+
+    Params: - c: The Fiber context containing the form data. - required:
+    A slice of strings representing the required field names. - optional:
+    A slice of strings representing the optional field names.
+
+    Returns:
+      - A map where the key is the field name and the value is the field value.
+        The map will include all required fields and any optional fields that
+        are present.
+      - An error if any required fields are missing.
+
+func ParseHeaders(r *http.Request, required, optional []string) (map[string]string, error)
+    ParseHeaders parses the header parameters from an HTTP request, retrieving
+    both required and optional headers.
+
+    Params: - r: The HTTP request containing the headers. - required: A slice
+    of strings representing the required header names. - optional: A slice of
+    strings representing the optional header names.
+
+    Returns:
+      - A map where the key is the header name and the value is the header
+        value. The map will include all required headers and any optional
+        headers that are present.
+      - An error if any required headers are missing.
+
+func ParseQueryParams(r *http.Request, required, optional []string) (map[string]string, error)
+    ParseQueryParams parses the query parameters from an HTTP request,
+    retrieving both required and optional parameters.
+
+    Params: - r: The HTTP request containing the query parameters. - required:
+    A slice of strings representing the required parameter names. - optional:
+    A slice of strings representing the optional parameter names.
+
+    Returns:
+      - A map where the key is the parameter name and the value is the parameter
+        value. The map will include all required parameters and any optional
+        parameters that are present.
+      - An error if any required parameters are missing.
+
+
+TYPES
+
+type ConnectorsEnv struct {
+	Port                     string // Port to run the connectors server on
+	URL                      string // URL of the connectors server
+	HelmetEnabled            bool   // Whether helmet is enabled
+	CorsEnabled              bool   // Whether CORS is enabled
+	CorsOrigins              string // Origins allowed to access the connectors server
+	UniversalConnectorAPIKey string // Universal API Key for all connectors.
+	APIBaseURL               string // Base URL of the Irmin Core API
+	APIToken                 string // Token to authenticate system requests to the Irmin Core API
+	DatabaseConnectionString string // Connection string for the database
+	// Sentry — SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN are read
+	// directly from the environment by release tagging / CI scripts, not by
+	// the running service, so they are intentionally not loaded here.
+	SentryEnabled          bool    // Flag to enable Sentry error tracking
+	SentryDSN              string  // Sentry DSN for error reporting
+	SentryEnvironment      string  // Sentry environment name (default "development")
+	SentryTracesSampleRate float64 // Sentry traces sample rate (default 0.1)
+}
+    ConnectorsEnv is a struct that holds the environment variables for the
+    connectors server.
+
+func LoadEnv() (*ConnectorsEnv, error)
+    LoadEnv loads environment variables from the .env file in the project root,
+    sets default values for required system variables if not present, and
+    returns a ConnectorsEnv struct with the loaded environment variables.
+
+</pre>
+</body></html>

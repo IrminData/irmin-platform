@@ -1,0 +1,258 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/pinecone/controllers</title></head><body>
+<h1>Package irmin-connectors/connectors/pinecone/controllers</h1>
+<pre>
+package pineconecontrollers // import "irmin-connectors/connectors/pinecone/controllers"
+
+
+TYPES
+
+type Controllers struct {
+	*common.Controllers
+}
+    Controllers holds the dependencies for the Pinecone connector controllers.
+
+func NewControllers(app *models.ConnectorsApp) *Controllers
+    NewControllers creates a new instance of controllers with the required
+    dependencies.
+
+func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
+    BuildDetails implements the OperationConfigProvider interface.
+
+func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
+    BuildSettings implements the OperationConfigProvider interface.
+
+func (cs *Controllers) ConfigFields(c fiber.Ctx) error
+    ConfigFields godoc @Summary Get Pinecone connector configuration fields
+    @Description Get dynamic configuration fields for the Pinecone connector
+    based on the configuration key (details or settings) @Tags pinecone
+    @Security SystemTokenAuth @Accept json @Accept multipart/form-data @Produce
+    json @Param key path string true "Configuration key" Enums(details,
+    settings) @Success 200 {object} map[string]irminmodels.DynamicField
+    "Configuration fields retrieved successfully" @Failure 400 {object}
+    fiber.Map "Bad request - invalid configuration key" @Failure 401
+    {object} fiber.Map "Unauthorized - invalid or missing authentication"
+    @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /pinecone/configuration/{key}/fields [post]
+
+func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
+    ConfigValidate godoc @Summary Validate Pinecone connector configuration
+    @Description Validate Pinecone connection details and settings by
+    testing the actual connection to the Pinecone index @Tags pinecone
+    @Security SystemTokenAuth @Accept multipart/form-data @Produce json
+    @Param details[api_key] formData string true "Pinecone API key" @Param
+    settings[host] formData string false "Pinecone index host URL (optional
+    for details-only validation)" @Param settings[namespace] formData
+    string false "Target namespace within the index" @Success 200 {object}
+    irminmodels.ConnectorConfigurationValidationResult "Configuration validation
+    result" @Failure 400 {object} fiber.Map "Bad request - invalid configuration
+    data" @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing
+    authentication" @Failure 500 {object} fiber.Map "Internal server error"
+    @Router /pinecone/configuration/validate [post]
+
+func (cs *Controllers) DetailsPage(c fiber.Ctx) error
+    DetailsPage godoc @Summary Get Pinecone connector details page @Description
+    Get an HTML page with detailed information about the Pinecone connector
+    including capabilities, authentication methods, and usage examples @Tags
+    pinecone @Accept json @Produce text/html @Success 200 {string} string
+    "Pinecone connector details page" @Failure 500 {object} fiber.Map "Internal
+    server error" @Router /pinecone/details [get]
+
+func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
+    EnsureOperationMiddleware upserts the Operation row from the `details[]`
+    / `settings[]` form fields the SDK's StartOperation* requests now
+    carry. Registered as the second handler on every data route after
+    ValidateSystemToken — see common/routes.go.
+
+func (cs *Controllers) GetDynamicFields(
+	_ fiber.Ctx,
+	key string,
+	_ map[string]string,
+) (map[string]irminmodels.DynamicField, error)
+    GetDynamicFields implements the ConfigFieldProvider interface.
+
+func (cs *Controllers) GetOperationFormFields() ([]string, []string)
+    GetOperationFormFields implements the OperationConfigProvider interface.
+
+func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
+    GetRequiredFormFields implements the ConfigValidationProvider interface.
+    For validation, only required details fields (api_key) are strictly required
+    upfront. Settings fields are optional - TestConnection will validate them if
+    provided.
+
+func (cs *Controllers) Info(c fiber.Ctx) error
+    Info godoc @Summary Get Pinecone connector information @Description Get
+    detailed information about the Pinecone connector including capabilities,
+    configuration fields, and API endpoints @Tags pinecone @Security
+    SystemTokenAuth @Accept json @Produce json @Success 200 {object}
+    models.ConnectorDetails "Pinecone connector information retrieved
+    successfully" @Failure 401 {object} fiber.Map "Unauthorized - invalid or
+    missing authentication" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /pinecone/info [get]
+
+func (cs *Controllers) OperationPatch(c fiber.Ctx) error
+    OperationPatch godoc @Summary Apply patch operations to Pinecone vectors
+    @Description Apply JSON Patch operations to vectors in the Pinecone index.
+    Supports add (upsert), remove (delete), and replace (upsert) operations.
+    @Tags pinecone @Security SystemTokenAuth @Accept multipart/form-data
+    @Produce json @Param patches formData file true "JSON file containing array
+    of patch operations" @Success 200 {object} fiber.Map "Patch operations
+    applied successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    patch format" @Failure 401 {object} fiber.Map "Unauthorized - invalid or
+    missing authentication" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /pinecone/operation/patch [post]
+
+func (cs *Controllers) OperationPull(c fiber.Ctx) error
+    OperationPull godoc @Summary Pull data from Pinecone @Description Pull
+    vectors from Pinecone. If path is provided, performs a semantic search and
+    returns JSON results. If path is empty, exports all vectors as a parquet
+    file. @Tags pinecone @Security SystemTokenAuth @Accept multipart/form-data
+    @Produce json @Param path formData string false "Query vector as JSON array
+    for search, or empty for full export" @Success 200 {object} fiber.Map "Data
+    pulled successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    operation token" @Failure 401 {object} fiber.Map "Unauthorized - invalid
+    or missing authentication" @Failure 404 {object} fiber.Map "Operation not
+    found" @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /pinecone/operation/pull [post]
+
+func (cs *Controllers) OperationPush(c fiber.Ctx) error
+    OperationPush godoc @Summary Push data to Pinecone @Description Push
+    embedding vectors from parquet files to Pinecone index @Tags pinecone
+    @Security SystemTokenAuth @Accept multipart/form-data @Produce json @Param
+    file formData file true "ZIP file containing parquet embedding files" @Param
+    path formData string false "Target path (not used for Pinecone)" @Success
+    202 {object} irminmodels.StartOperationJobResponse "Push job accepted;
+    poll /operation/status/:job_id" @Failure 400 {object} fiber.Map "Bad
+    request - invalid operation token or file format" @Failure 401 {object}
+    fiber.Map "Unauthorized - invalid or missing authentication" @Failure
+    404 {object} fiber.Map "Operation not found" @Failure 409 {object}
+    irminmodels.AlreadyRunningBody "Operation already running" @Failure
+    500 {object} irminmodels.JobErrorBody "Internal server error" @Router
+    /pinecone/operation/push [post]
+
+func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
+    OperationSchemaGet godoc @Summary Get Pinecone operation schema @Description
+    Get the schema for Pinecone operations, returning an Irmin-compatible
+    ObjectSchema @Tags pinecone @Security SystemTokenAuth @Accept json @Produce
+    json @Param operation path string true "Operation type" Enums(pull, push)
+    @Success 200 {object} irminmodels.ObjectSchema "Operation schema retrieved
+    successfully" @Failure 400 {object} fiber.Map "Bad request - invalid
+    operation type or token" @Failure 401 {object} fiber.Map "Unauthorized
+    - invalid or missing authentication" @Failure 404 {object} fiber.Map
+    "Operation not found" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /pinecone/operation/schema/{operation} [post]
+
+func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
+    SubscribeToChanges is not supported by Pinecone connector.
+
+func (cs *Controllers) TestConnection(
+	_ fiber.Ctx,
+	details map[string]any,
+	settings map[string]any,
+) (bool, bool, bool, []string)
+    TestConnection implements the ConfigValidationProvider interface.
+
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+    UnsubscribeFromChanges is not supported by Pinecone connector.
+
+func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
+    ValidateFields implements the ConfigValidationProvider interface.
+
+func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
+    ValidateSystemTokenMiddleware validates the system token.
+
+type PineconePullProvider struct {
+	// Has unexported fields.
+}
+    PineconePullProvider implements the PullOperationProvider interface for
+    Pinecone.
+
+func (p *PineconePullProvider) GetAllFiles(
+	ctx context.Context, client any, operation *db.Operation,
+) ([]string, [][]byte, error)
+    GetAllFiles retrieves all vectors from Pinecone as a parquet file.
+
+func (p *PineconePullProvider) GetFileByPath(
+	ctx context.Context, client any, operation *db.Operation, rawPath string,
+) (string, []byte, error)
+    GetFileByPath handles both search (path = query) and fetch operations.
+
+func (p *PineconePullProvider) InitializeClient(
+	ctx context.Context,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient initializes the Pinecone client for pull operations.
+
+func (p *PineconePullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler returns the per-page observability callback the Pinecone
+    client fires from inside FetchAll's cursor-pagination loop. Without it,
+    a 100k-vector pull emits zero events between operation/init and
+    operation/pull's final response — the same silent-window failure mode Stripe
+    got fixed for.
+
+    Always returns a non-nil handler. Nil-safety lives one layer down in
+    common.LogOperationProgress, which no-ops on nil dbInstance / logger / nil
+    operation.
+
+    Throttling lives in common.LogOperationProgress (every 5 pages).
+
+type PineconePushProvider struct {
+	// Has unexported fields.
+}
+    PineconePushProvider implements the PushOperationProvider interface for
+    Pinecone.
+
+func (p *PineconePushProvider) InitializeClient(
+	ctx context.Context,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient initializes the Pinecone client for push operations.
+
+func (p *PineconePushProvider) ProcessFiles(
+	ctx context.Context,
+	client any,
+	operation *db.Operation,
+	files map[string][]byte,
+	_ string,
+) error
+    ProcessFiles processes the extracted files and upserts them to Pinecone.
+
+func (p *PineconePushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler returns the per-batch observability callback the Pinecone
+    client fires from inside the Upsert batching loop. Without it, a 100k-vector
+    upsert emits zero events between operation/init and the final response —
+    same silent-window failure mode Stripe got fixed for.
+
+    Always returns a non-nil handler. Nil-safety lives one layer down in
+    common.LogOperationProgress.
+
+    Throttling lives in common.LogOperationProgress (every 10th batch).
+
+type PineconeSchemaProvider struct{}
+    PineconeSchemaProvider implements the SchemaOperationProvider interface for
+    Pinecone.
+
+func (p *PineconeSchemaProvider) GetSchema(
+	_ fiber.Ctx,
+	_ any,
+	operationType string,
+	namespace *string,
+) (*irminmodels.ObjectSchema, error)
+    GetSchema retrieves the Pinecone schema and returns an Irmin-compatible
+    ObjectSchema.
+
+func (p *PineconeSchemaProvider) GetSupportedOperationTypes() []string
+    GetSupportedOperationTypes returns the list of supported operation types for
+    Pinecone.
+
+func (p *PineconeSchemaProvider) InitializeClient(
+	_ fiber.Ctx,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient initializes the Pinecone client for schema operations.
+
+</pre>
+</body></html>

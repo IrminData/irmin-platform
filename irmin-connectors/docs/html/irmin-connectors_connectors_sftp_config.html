@@ -1,0 +1,45 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/sftp/config</title></head><body>
+<h1>Package irmin-connectors/connectors/sftp/config</h1>
+<pre>
+package config // import "irmin-connectors/connectors/sftp/config"
+
+
+CONSTANTS
+
+const (
+	// DefaultPort is the default SFTP port number.
+	DefaultPort = 22
+	// DefaultMaxHostnameLen is the default maximum hostname length.
+	DefaultMaxHostnameLen = 255
+	// DefaultMaxUsernameLen is the default maximum username length.
+	DefaultMaxUsernameLen = 100
+	// MaxPortNumber is the maximum valid port number.
+	MaxPortNumber = 65535
+)
+
+FUNCTIONS
+
+func GetConnectorInfo() models.ConnectorDetails
+    GetConnectorInfo returns the connector information for SFTP.
+
+func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
+    GetDetailsFieldDefinitions returns all detail fields with their metadata.
+
+func GetDetailsFields() []string
+    GetDetailsFields returns the detail-specific fields.
+
+func GetOptionalFields() []string
+    GetOptionalFields returns the optional form fields for SFTP.
+
+func GetRequiredFields() []string
+    GetRequiredFields returns the mandatory form fields for SFTP.
+
+func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
+    GetSettingsFieldDefinitions returns all settings fields with their metadata.
+
+func GetSettingsFields() []string
+    GetSettingsFields returns the settings-specific fields.
+
+</pre>
+</body></html>
